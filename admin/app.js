@@ -798,6 +798,836 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════
+// ALUNOS EM SUPERVISÃO
+// ═══════════════════════════════════════════════════════
+function Alunos() {
+  const [alunos, setAlunos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState("ativo");
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});
+  const [salvando, setSalvando] = useState(false);
+  const [detalhe, setDetalhe] = useState(null);
+  const [editando, setEditando] = useState(null);
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_alunos").onSnapshot(snap=>{
+      setAlunos(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  const filtrados = alunos.filter(a=>{
+    const fOk = filtro==="todos" || a.status===filtro;
+    const bOk = !busca || a.nome?.toLowerCase().includes(busca.toLowerCase()) || a.email?.toLowerCase().includes(busca.toLowerCase());
+    return fOk && bOk;
+  });
+
+  async function salvar(){
+    if(!form.nome||!form.email){alert("Nome e e-mail obrigatorios.");return;}
+    if(!editando&&!form.senha){alert("Senha obrigatoria para novo aluno.");return;}
+    setSalvando(true);
+    if(editando){
+      const {senha,...dados}=form;
+      await db.collection("clinica_alunos").doc(editando).update(dados);
+    } else {
+      await db.collection("clinica_alunos").add({...form,status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModal(false);setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setSalvando(false);
+  }
+
+  async function excluir(id){
+    if(!confirm("Remover aluno?"))return;
+    await db.collection("clinica_alunos").doc(id).delete();
+  }
+
+  function abrirEditar(a){
+    setForm({nome:a.nome||"",email:a.email||"",telefone:a.telefone||"",instituicao:a.instituicao||"",semestre:a.semestre||"",senha:"",obs:a.obs||""});
+    setEditando(a.id);setModal(true);
+  }
+
+  if(loading) return <Spinner/>;
+
+  return (
+    <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div>
+          <div className="page-title">Alunos em Supervisao</div>
+          <div className="page-subtitle">{alunos.filter(a=>a.status==="ativo").length} aluno(s) cadastrado(s)</div>
+        </div>
+        <button className="btn btn-purple" onClick={()=>{setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setModal(true);}}>
+          <Icon name="user-plus" size={16}/> Cadastrar Aluno
+        </button>
+      </div>
+      <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap"}}>
+        <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome ou e-mail..." value={busca} onChange={e=>setBusca(e.target.value)}/>
+        {[["todos","Todos"],["ativo","Ativos"],["inativo","Inativos"]].map(([f,l])=>(
+          <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>{l}</button>
+        ))}
+      </div>
+      {filtrados.length===0?(
+        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="graduation-cap" size={40}/>
+          <div style={{marginTop:12}}>{busca?"Nenhum aluno encontrado.":"Nenhum aluno cadastrado ainda."}</div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {filtrados.map(a=>(
+            <div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"14px 20px"}}>
+              <div style={{width:42,height:42,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"var(--purple)",flexShrink:0,fontSize:16}}>{(a.nome||"?")[0].toUpperCase()}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontWeight:600}}>{a.nome}</span>
+                  <span className={"badge "+(a.status==="ativo"?"badge-green":"badge-gray")}>{a.status==="ativo"?"Ativo":"Inativo"}</span>
+                </div>
+                <div style={{fontSize:13,color:"var(--text-muted)",display:"flex",gap:12,marginTop:2,flexWrap:"wrap"}}>
+                  <span>✉ {a.email}</span>
+                  {a.instituicao&&<span>🏛 {a.instituicao}{a.semestre?" · "+a.semestre:""}</span>}
+                  <span>👤 {a.pacientesVinculados||0} paciente(s)</span>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",padding:"6px 12px"}} onClick={()=>setDetalhe(a)}>
+                  <Icon name="eye" size={13}/> Ver
+                </button>
+                <button className="btn btn-ghost" style={{padding:"6px 10px"}} onClick={()=>abrirEditar(a)}><Icon name="pencil" size={13}/></button>
+                <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(a.id)}><Icon name="trash-2" size={13}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal cadastro */}
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>{editando?"Editar Aluno":"Cadastrar Novo Aluno"}</div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">NOME COMPLETO *</label>
+              <input className="form-input" value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Nome do aluno" autoFocus/>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+              <div className="form-group">
+                <label className="form-label">E-MAIL *</label>
+                <input className="form-input" type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="aluno@email.com" disabled={!!editando}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">TELEFONE</label>
+                <input className="form-input" value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})} placeholder="(00) 9 0000-0000"/>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+              <div className="form-group">
+                <label className="form-label">INSTITUIÇÃO</label>
+                <input className="form-input" value={form.instituicao} onChange={e=>setForm({...form,instituicao:e.target.value})} placeholder="Nome da faculdade"/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">SEMESTRE</label>
+                <input className="form-input" value={form.semestre} onChange={e=>setForm({...form,semestre:e.target.value})} placeholder="Ex: 8º semestre"/>
+              </div>
+            </div>
+            {!editando&&(
+              <div className="form-group" style={{marginBottom:14}}>
+                <label className="form-label">SENHA DE ACESSO *</label>
+                <input className="form-input" type="password" value={form.senha} onChange={e=>setForm({...form,senha:e.target.value})} placeholder="Senha para o aluno acessar o portal"/>
+              </div>
+            )}
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">OBSERVAÇÕES</label>
+              <textarea className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre o aluno..."/>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>{salvando?"Salvando...":editando?"Salvar":"Cadastrar aluno"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detalhe aluno */}
+      {detalhe&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"flex-end",justifyContent:"flex-end",zIndex:500}} onClick={()=>setDetalhe(null)}>
+          <div style={{background:"white",width:"100%",maxWidth:480,height:"100%",overflowY:"auto",padding:28}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+              <Icon name="graduation-cap" size={20}/>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,flex:1}}>{detalhe.nome}</div>
+              <button onClick={()=>setDetalhe(null)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:20}}>
+              <span className={"badge "+(detalhe.status==="ativo"?"badge-green":"badge-gray")}>{detalhe.status==="ativo"?"Ativo":"Inativo"}</span>
+              {detalhe.instituicao&&<span className="badge badge-purple">{detalhe.instituicao}</span>}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,fontSize:14}}>
+              {detalhe.email&&<div><div style={{fontSize:12,color:"var(--text-muted)"}}>E-mail</div><div style={{fontWeight:500}}>{detalhe.email}</div></div>}
+              {detalhe.telefone&&<div><div style={{fontSize:12,color:"var(--text-muted)"}}>Telefone</div><div style={{fontWeight:500}}>{detalhe.telefone}</div></div>}
+              {detalhe.instituicao&&<div><div style={{fontSize:12,color:"var(--text-muted)"}}>Instituicao</div><div style={{fontWeight:500}}>{detalhe.instituicao}</div></div>}
+              {detalhe.semestre&&<div><div style={{fontSize:12,color:"var(--text-muted)"}}>Semestre</div><div style={{fontWeight:500}}>{detalhe.semestre}</div></div>}
+            </div>
+            {detalhe.obs&&<div style={{marginTop:16,padding:12,background:"var(--gray-50)",borderRadius:8,fontSize:13,color:"var(--text-muted)"}}>{detalhe.obs}</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// TERAPIA DE CASAIS
+// ═══════════════════════════════════════════════════════
+function TerapiaCasais() {
+  const { data:pacientes } = useCollection("clinica_pacientes","nome");
+  const [casais, setCasais] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({nomeCasal:"",p1:"",p2:""});
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_casais").onSnapshot(snap=>{
+      setCasais(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  async function vincular(){
+    if(!form.p1||!form.p2||form.p1===form.p2){alert("Selecione dois pacientes diferentes.");return;}
+    setSalvando(true);
+    const p1 = pacientes.find(p=>p.id===form.p1);
+    const p2 = pacientes.find(p=>p.id===form.p2);
+    await db.collection("clinica_casais").add({
+      nomeCasal:form.nomeCasal||null,
+      p1Id:form.p1, p1Nome:p1?.nome||"",
+      p2Id:form.p2, p2Nome:p2?.nome||"",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setModal(false);setForm({nomeCasal:"",p1:"",p2:""});setSalvando(false);
+  }
+
+  async function excluir(id){
+    if(!confirm("Remover vinculo?"))return;
+    await db.collection("clinica_casais").doc(id).delete();
+  }
+
+  const getNomeExibicao = (c) => c.nomeCasal || `${c.p1Nome} & ${c.p2Nome}`;
+
+  if(loading) return <Spinner/>;
+
+  return (
+    <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div>
+          <div className="page-title">Terapia de Casais</div>
+          <div className="page-subtitle">{casais.length} casal{casais.length!==1?"is":""} em acompanhamento</div>
+        </div>
+        <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Vincular Casal</button>
+      </div>
+
+      {casais.length===0?(
+        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="heart" size={40}/>
+          <div style={{marginTop:12}}>Nenhum casal vinculado ainda.</div>
+          <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal(true)}><Icon name="plus" size={14}/> Vincular primeiro casal</button>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {casais.map(c=>(
+            <div key={c.id} className="card" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 24px"}}>
+              <div style={{width:44,height:44,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <Icon name="heart" size={20}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{fontWeight:600}}>{c.nomeCasal||`${c.p1Nome} & ${c.p2Nome}`}</span>
+                  {c.nomeCasal&&<span style={{fontSize:13,color:"var(--text-muted)"}}>({c.p1Nome} & {c.p2Nome})</span>}
+                </div>
+                {(c.satisfacao||c.estadoCivil)&&(
+                  <div style={{display:"flex",gap:8,marginTop:4}}>
+                    {c.satisfacao&&<span className="badge badge-purple">Satisfacao: {c.satisfacao}/10</span>}
+                    {c.estadoCivil&&<span className="badge badge-gray">{c.estadoCivil}</span>}
+                  </div>
+                )}
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(c.id)}><Icon name="trash-2" size={14}/></button>
+                <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>alert("Detalhe do casal — em breve")}>Ver detalhes <Icon name="chevron-right" size={14}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:440}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <Icon name="heart" size={18}/>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Vincular Casal</div>
+            </div>
+            <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Selecione dois pacientes cadastrados para vincular como casal em terapia.</p>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Nome do casal (opcional)</label>
+              <input className="form-input" value={form.nomeCasal} onChange={e=>setForm({...form,nomeCasal:e.target.value})} placeholder="Ex: Silva & Costa"/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Parceiro(a) 1 *</label>
+              <select className="form-input" value={form.p1} onChange={e=>setForm({...form,p1:e.target.value})}>
+                <option value="">Selecionar paciente...</option>
+                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Parceiro(a) 2 *</label>
+              <select className="form-input" value={form.p2} onChange={e=>setForm({...form,p2:e.target.value})}>
+                <option value="">Selecionar paciente...</option>
+                {pacientes.filter(p=>p.status==="ativo"&&p.id!==form.p1).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={vincular} disabled={salvando}><Icon name="heart" size={15}/> {salvando?"Salvando...":"Vincular"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// RECURSOS TERAPÊUTICOS
+// ═══════════════════════════════════════════════════════
+const CATEGORIAS_RECURSOS = [
+  {id:"relaxamento",  label:"Relaxamento e Bem-estar",         cor:"#0284c7", bg:"#e0f2fe"},
+  {id:"tcc",          label:"Terapia Cognitivo-Comportamental", cor:"#7c3aed", bg:"#ede9fe"},
+  {id:"avaliacao",    label:"Avaliacao e Anamnese",             cor:"#6d28d9", bg:"#f5f3ff"},
+  {id:"psicoeducacao",label:"Psicoeducacao",                    cor:"#b45309", bg:"#fef3c7"},
+  {id:"mindfulness",  label:"Mindfulness",                      cor:"#059669", bg:"#d1fae5"},
+  {id:"musicoterapia",label:"Musicoterapia",                    cor:"#be185d", bg:"#fce7f3"},
+  {id:"outro",        label:"Outros Recursos",                  cor:"#6b7280", bg:"#f3f4f6"},
+];
+
+const FERRAMENTAS_INTERATIVAS = [
+  {key:"breathing-478",       label:"Exercicio de Respiracao 4-7-8"},
+  {key:"abc-record",          label:"Registro ABC de Pensamentos"},
+  {key:"muscle-relaxation",   label:"Relaxamento Muscular Progressivo"},
+  {key:"anxiety-management",  label:"Gestao da Ansiedade"},
+  {key:"entrevista-clinica",  label:"Entrevista Clinica Inicial"},
+  {key:"emotional-eating",    label:"Rastreamento Emocional da Alimentacao"},
+  {key:"treino-neuro-auditivo",label:"Treino Neuro-Auditivo"},
+  {key:"decision-tree",       label:"Arvore da Decisao"},
+  {key:"anamnese",            label:"Anamnese — Marcos do Desenvolvimento"},
+];
+
+function RecursosTerapeuticos() {
+  const [recursos, setRecursos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [filtroCateg, setFiltroCateg] = useState("todos");
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:""});
+  const [salvando, setSalvando] = useState(false);
+  const [abaView, setAbaView] = useState("ferramentas");
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_recursos").onSnapshot(snap=>{
+      setRecursos(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  const abaRecursos = recursos.filter(r=>abaView==="ferramentas"?r.categoria!=="casal":r.categoria==="casal");
+  const filtrados = abaRecursos.filter(r=>{
+    const cOk = filtroCateg==="todos" || r.categoria===filtroCateg;
+    const bOk = !busca || r.titulo?.toLowerCase().includes(busca.toLowerCase()) || r.descricao?.toLowerCase().includes(busca.toLowerCase());
+    return cOk && bOk;
+  });
+
+  const porCategoria = CATEGORIAS_RECURSOS.reduce((acc,cat)=>{
+    const itens = filtrados.filter(r=>r.categoria===cat.id);
+    if(itens.length>0) acc.push({...cat, itens});
+    return acc;
+  },[]);
+
+  async function salvar(){
+    if(!form.titulo){alert("Titulo obrigatorio.");return;}
+    setSalvando(true);
+    if(editando){
+      await db.collection("clinica_recursos").doc(editando).update(form);
+    } else {
+      await db.collection("clinica_recursos").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModal(false);setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:""});setEditando(null);setSalvando(false);
+  }
+
+  async function excluir(id){if(!confirm("Excluir recurso?"))return;await db.collection("clinica_recursos").doc(id).delete();}
+
+  function abrirEditar(r){
+    setForm({titulo:r.titulo||"",descricao:r.descricao||"",categoria:r.categoria||"tcc",tipo:r.tipo||"interativa",formularioKey:r.formularioKey||""});
+    setEditando(r.id);setModal(true);
+  }
+
+  const getCatInfo = (id) => CATEGORIAS_RECURSOS.find(c=>c.id===id)||CATEGORIAS_RECURSOS[6];
+
+  if(loading) return <Spinner/>;
+
+  return (
+    <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div>
+          <div className="page-title">Recursos Terapeuticos</div>
+          <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
+        </div>
+        <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:""});setEditando(null);setModal(true);}}>
+          <Icon name="plus" size={16}/> Nova Ferramenta
+        </button>
+      </div>
+
+      {/* Abas */}
+      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
+        {[["ferramentas","Ferramentas"],["casais","Terapia de Casais"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setAbaView(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:abaView===id?"var(--purple)":"var(--gray-600)",borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:abaView===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
+            <Icon name={id==="ferramentas"?"wrench":"heart"} size={15}/>{label}
+          </button>
+        ))}
+      </div>
+
+      {/* Busca + filtros */}
+      <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
+        <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          <button className={"btn "+(filtroCateg==="todos"?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>setFiltroCateg("todos")}>Todas {recursos.length}</button>
+          {CATEGORIAS_RECURSOS.map(c=>{
+            const n = recursos.filter(r=>r.categoria===c.id).length;
+            if(!n) return null;
+            return <button key={c.id} className={"btn "+(filtroCateg===c.id?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>setFiltroCateg(c.id)}>{c.label.split(" ")[0]} {n}</button>;
+          })}
+        </div>
+      </div>
+
+      {/* Grid por categoria */}
+      {filtrados.length===0?(
+        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="wrench" size={40}/>
+          <div style={{marginTop:12}}>Nenhuma ferramenta encontrada.</div>
+        </div>
+      ):(
+        porCategoria.map(cat=>(
+          <div key={cat.id} style={{marginBottom:28}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+              <span style={{fontWeight:700,fontSize:12,color:cat.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{cat.label}</span>
+              <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}}>{cat.itens.length}</span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+              {cat.itens.map(r=>(
+                <div key={r.id} style={{background:"white",border:"1.5px solid",borderColor:cat.cor+"40",borderRadius:14,padding:18,display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                    <div style={{background:cat.bg,borderRadius:8,padding:8,flexShrink:0}}><Icon name={r.tipo==="interativa"?"zap":"file-text"} size={16}/></div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
+                        <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30"}}>INTERATIVA</span>
+                        {r.tipo==="musicoterapia"&&<span style={{background:"#fce7f3",color:"#be185d",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Musica</span>}
+                      </div>
+                      <div style={{fontWeight:600,fontSize:14}}>{r.titulo}</div>
+                    </div>
+                  </div>
+                  <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>{r.descricao}</p>
+                  {r.formularioKey&&<span style={{fontSize:11,color:"var(--gray-400)",background:"var(--gray-50)",borderRadius:6,padding:"2px 8px",display:"inline-block",width:"fit-content"}}>{r.formularioKey}</span>}
+                  <div style={{display:"flex",gap:8,borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
+                    <button className="btn btn-ghost" style={{fontSize:12,flex:1,color:"var(--purple)"}}><Icon name="eye" size={13}/> Visualizar</button>
+                    <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
+                    <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* Modal novo/editar recurso */}
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editando?"Editar Ferramenta":"Nova Ferramenta"}</div>
+              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Titulo da Ferramenta *</label>
+              <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} autoFocus/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Descricao curta</label>
+              <textarea className="form-input" rows={2} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Categoria</label>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8}}>
+                {CATEGORIAS_RECURSOS.map(c=>(
+                  <button key={c.id} onClick={()=>setForm({...form,categoria:c.id})} style={{padding:"10px 12px",borderRadius:8,border:"1.5px solid",borderColor:form.categoria===c.id?c.cor:"var(--gray-200)",background:form.categoria===c.id?c.bg:"white",cursor:"pointer",fontSize:13,textAlign:"left",fontFamily:"var(--font-body)",color:form.categoria===c.id?c.cor:"var(--gray-700)"}}>
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Tipo de ferramenta</label>
+              <div style={{display:"flex",gap:10}}>
+                {[["conteudo","Conteudo para leitura","file-text"],["interativa","Formulario interativo","zap"]].map(([v,l,ic])=>(
+                  <button key={v} onClick={()=>setForm({...form,tipo:v})} style={{flex:1,padding:"12px",borderRadius:10,border:"1.5px solid",borderColor:form.tipo===v?"var(--purple)":"var(--gray-200)",background:form.tipo===v?"var(--purple-bg)":"white",cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",color:form.tipo===v?"var(--purple)":"var(--gray-700)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    <Icon name={ic} size={15}/>{l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {form.tipo==="interativa"&&(
+              <div className="form-group" style={{marginBottom:14}}>
+                <label className="form-label">Formulario interativo</label>
+                <select className="form-input" value={form.formularioKey} onChange={e=>setForm({...form,formularioKey:e.target.value})}>
+                  <option value="">Selecionar formulario...</option>
+                  {FERRAMENTAS_INTERATIVAS.map(f=><option key={f.key} value={f.key}>{f.label}</option>)}
+                </select>
+              </div>
+            )}
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
+              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvar} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alteracoes"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// LAUDOS NEUROPSICOLÓGICOS
+// ═══════════════════════════════════════════════════════
+function Laudos() {
+  const { data:pacientes } = useCollection("clinica_pacientes","nome");
+  const [laudos, setLaudos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({titulo:"",pacienteId:"",tipo:"Avaliacao Neuropsicologica",status:"rascunho",conteudo:""});
+  const [salvando, setSalvando] = useState(false);
+  const [laudoAberto, setLaudoAberto] = useState(null);
+
+  const TIPOS_LAUDO = ["Avaliacao Neuropsicologica","Avaliacao Psicologica","Avaliacao Infantil","Avaliacao de TDAH","Avaliacao de Altas Habilidades","Pericia Psicologica","Demandas Judiciais","Orientacao de Carreira","Relatorio de Acompanhamento","Outro"];
+
+  const STATUS_CONFIG = {
+    rascunho: {label:"Rascunho", bg:"#fef3c7", cor:"#b45309"},
+    assinado: {label:"Assinado", bg:"#d1fae5", cor:"#065f46"},
+    finalizado:{label:"Finalizado",bg:"#dbeafe",cor:"#1e40af"},
+  };
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_laudos").orderBy("createdAt","desc").onSnapshot(snap=>{
+      setLaudos(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  async function salvar(){
+    if(!form.titulo){alert("Titulo obrigatorio.");return;}
+    setSalvando(true);
+    const pac = pacientes.find(p=>p.id===form.pacienteId);
+    await db.collection("clinica_laudos").add({
+      ...form,
+      pacienteNome:pac?.nome||"",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setModal(false);setForm({titulo:"",pacienteId:"",tipo:"Avaliacao Neuropsicologica",status:"rascunho",conteudo:""});setSalvando(false);
+  }
+
+  async function excluir(id){if(!confirm("Excluir laudo?"))return;await db.collection("clinica_laudos").doc(id).delete();}
+
+  async function mudarStatus(id,novoStatus){
+    await db.collection("clinica_laudos").doc(id).update({status:novoStatus,assinadoEm:novoStatus==="assinado"?new Date().toISOString():null});
+    setLaudoAberto(l=>l?{...l,status:novoStatus}:null);
+  }
+
+  const totalRascunho = laudos.filter(l=>l.status==="rascunho").length;
+  const totalAssinado = laudos.filter(l=>l.status==="assinado").length;
+  const totalFinalizado = laudos.filter(l=>l.status==="finalizado").length;
+
+  if(loading) return <Spinner/>;
+
+  // Tela de edição do laudo
+  if(laudoAberto){
+    const st = STATUS_CONFIG[laudoAberto.status]||STATUS_CONFIG.rascunho;
+    return (
+      <div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+          <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setLaudoAberto(null)}><Icon name="arrow-left" size={16}/></button>
+          <div style={{flex:1}}>
+            <div className="page-title" style={{fontSize:22}}>{laudoAberto.titulo}</div>
+            <div style={{fontSize:13,color:"var(--text-muted)"}}>{laudoAberto.pacienteNome} · {laudoAberto.tipo}</div>
+          </div>
+          <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"4px 14px",fontSize:13,fontWeight:600}}>{st.label}</span>
+        </div>
+        <div className="card" style={{marginBottom:16}}>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mudar status:</span>
+            {Object.entries(STATUS_CONFIG).map(([k,v])=>(
+              <button key={k} className={"btn "+(laudoAberto.status===k?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>mudarStatus(laudoAberto.id,k)}>{v.label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          <label className="form-label" style={{marginBottom:8,display:"block"}}>Conteudo do Laudo</label>
+          <textarea
+            className="form-input"
+            rows={20}
+            value={laudoAberto.conteudo||""}
+            onChange={async e=>{
+              const novoConteudo = e.target.value;
+              setLaudoAberto(l=>({...l,conteudo:novoConteudo}));
+              await db.collection("clinica_laudos").doc(laudoAberto.id).update({conteudo:novoConteudo});
+            }}
+            placeholder="Digite o conteudo do laudo aqui..."
+            style={{fontSize:14,lineHeight:1.7,minHeight:400}}
+          />
+          <div style={{marginTop:10,fontSize:12,color:"var(--text-muted)"}}>Autosalvo automaticamente.</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div>
+          <div className="page-title">Laudos Neuropsicologicos</div>
+          <div className="page-subtitle">{laudos.length} laudo(s)</div>
+        </div>
+        <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Novo Laudo</button>
+      </div>
+
+      <div className="metrics-grid" style={{gridTemplateColumns:"repeat(3,1fr)",marginBottom:24}}>
+        {[["rascunho","Rascunho",totalRascunho],["assinado","Assinado",totalAssinado],["finalizado","Finalizado",totalFinalizado]].map(([k,l,n])=>(
+          <div key={k} className="metric-card" style={{textAlign:"center"}}>
+            <div className="metric-value" style={{fontSize:28}}>{n}</div>
+            <div className="metric-label">{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {laudos.length===0?(
+        <div className="card" style={{textAlign:"center",padding:60,color:"var(--text-muted)"}}>
+          <Icon name="file-text" size={48}/>
+          <div style={{marginTop:12,fontWeight:500}}>Nenhum laudo criado ainda</div>
+          <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal(true)}><Icon name="plus" size={14}/> Criar primeiro laudo</button>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {laudos.map(l=>{
+            const st = STATUS_CONFIG[l.status]||STATUS_CONFIG.rascunho;
+            return (
+              <div key={l.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",cursor:"pointer"}}
+                onClick={()=>setLaudoAberto(l)}
+                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 20px rgba(123,0,196,0.12)"}
+                onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
+                <div style={{width:42,height:42,background:"var(--purple-soft)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Icon name="file-text" size={18}/>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <span style={{fontWeight:600}}>{l.titulo}</span>
+                    <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{st.label}</span>
+                  </div>
+                  <div style={{fontSize:13,color:"var(--text-muted)",display:"flex",gap:10,marginTop:2}}>
+                    <span>{l.pacienteNome||"—"}</span>
+                    <span>{l.tipo}</span>
+                    {l.createdAt?.seconds&&<span>{new Date(l.createdAt.seconds*1000).toLocaleDateString("pt-BR")}</span>}
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:6}}>
+                  <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={e=>{e.stopPropagation();excluir(l.id);}}><Icon name="trash-2" size={13}/></button>
+                  <Icon name="chevron-right" size={16}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Novo Laudo</div>
+              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Titulo do Laudo *</label>
+              <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Ex: Avaliacao Neuropsicologica — Nome do Paciente" autoFocus/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Paciente</label>
+              <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
+                <option value="">Selecionar paciente...</option>
+                {pacientes.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Tipo de Laudo</label>
+              <select className="form-input" value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})}>
+                {TIPOS_LAUDO.map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>{salvando?"Criando...":"Criar Laudo"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ═══════════════════════════════════════════════════════
+function Configuracoes() {
+  const [tiposLaudo, setTiposLaudo] = useState([
+    "Avaliacao Neuropsicologica","Avaliacao Psicologica","Avaliacao Infantil",
+    "Avaliacao de TDAH","Avaliacao de Altas Habilidades","Pericia Psicologica",
+    "Demandas Judiciais","Orientacao de Carreira","Relatorio de Acompanhamento","Outro"
+  ]);
+  const [novoTipo, setNovoTipo] = useState("");
+  const [logoUrl, setLogoUrl] = useState("../logo.png");
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmSenha, setConfirmSenha] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  function adicionarTipo(){
+    const t = novoTipo.trim();
+    if(!t||tiposLaudo.includes(t))return;
+    setTiposLaudo(prev=>[...prev,t]);
+    setNovoTipo("");
+  }
+
+  async function salvarTipos(){
+    setSalvando(true);
+    await db.collection("clinica_config").doc("laudoTypes").set({tipos:tiposLaudo});
+    setMsg("Tipos de laudo salvos!");
+    setSalvando(false);
+    setTimeout(()=>setMsg(""),3000);
+  }
+
+  async function alterarSenha(){
+    if(senhaAtual!=="1234"){setMsg("Senha atual incorreta.");return;}
+    if(novaSenha.length<4){setMsg("Nova senha deve ter ao menos 4 caracteres.");return;}
+    if(novaSenha!==confirmSenha){setMsg("Senhas nao conferem.");return;}
+    await db.collection("clinica_config").doc("admin").set({senha:novaSenha});
+    setMsg("Senha alterada! Atualize o arquivo app.js com a nova senha.");
+    setSenhaAtual("");setNovaSenha("");setConfirmSenha("");
+  }
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-title">Configuracoes</div>
+        <div className="page-subtitle">Personalize sua identidade clinica e documentos</div>
+      </div>
+
+      {msg&&<div style={{background:"var(--purple-bg)",border:"1px solid var(--purple)",borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:14,color:"var(--purple)",fontWeight:500}}>{msg}</div>}
+
+      {/* Identidade Visual */}
+      <div className="card" style={{marginBottom:20}}>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Identidade Visual</div>
+        <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Logotipo e assinatura digital para laudos e documentos oficiais.</p>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:12,border:"1px solid var(--gray-200)"}}>
+            <div style={{width:44,height:44,background:"var(--purple-soft)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon name="image" size={22}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600}}>Logo / Identidade Visual</div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>Logotipo que aparecera no cabecalho dos laudos e documentos oficiais. Formatos aceitos: PNG, JPG, SVG.</div>
+            </div>
+            <button className="btn btn-outline" style={{fontSize:13}}><Icon name="upload" size={14}/> Enviar Logo</button>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:12,border:"1px solid var(--gray-200)"}}>
+            <div style={{width:44,height:44,background:"#f5f3ff",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <Icon name="pen-line" size={22}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600}}>Assinatura Digital</div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>Imagem da sua assinatura manuscrita para uso nos laudos assinados. Recomendado fundo transparente (PNG).</div>
+            </div>
+            <button className="btn btn-outline" style={{fontSize:13}}><Icon name="upload" size={14}/> Enviar Assinatura</button>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:12,border:"1px solid var(--gray-200)",background:"var(--gray-50)"}}>
+            <img src="../logo.png" alt="Logo padrao" style={{width:52,height:52,borderRadius:10,objectFit:"contain",background:"white",padding:4}} onError={e=>e.target.style.display="none"}/>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600}}>Logo Padrao do Sistema</div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>Esta e a logo padrao. Ela e usada automaticamente enquanto voce nao enviar uma logo personalizada.</div>
+              <div style={{fontSize:12,marginTop:4}}><strong>Dra. Lucia Kratz</strong> · Psicologa Doutora · CRP 09/20590</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sobre os Laudos */}
+      <div className="card" style={{marginBottom:20}}>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Sobre os Laudos</div>
+        <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.7}}>Os laudos gerados seguem a Resolucao CFP no 06/2019. Ao clicar em "Assinar Laudo", o documento recebe um registro de data/hora da assinatura e sua assinatura digital.</p>
+        <div style={{background:"var(--purple-bg)",borderRadius:10,padding:16}}>
+          <div style={{fontWeight:600,marginBottom:12}}>Tipos de Laudo disponíveis</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+            {tiposLaudo.map((t,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,background:"white",borderRadius:8,padding:"10px 14px",border:"1px solid var(--gray-200)"}}>
+                <span style={{flex:1,fontSize:14}}>{t}</span>
+                <button style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4}} onClick={()=>setTiposLaudo(prev=>prev.filter((_,idx)=>idx!==i))}>
+                  <Icon name="x" size={14}/>
+                </button>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <input className="form-input" style={{flex:1}} placeholder="Adicionar novo tipo..." value={novoTipo} onChange={e=>setNovoTipo(e.target.value)} onKeyDown={e=>e.key==="Enter"&&adicionarTipo()}/>
+            <button className="btn btn-outline" onClick={adicionarTipo}><Icon name="plus" size={16}/></button>
+          </div>
+          <button className="btn btn-purple" style={{marginTop:14,width:"100%"}} onClick={salvarTipos} disabled={salvando}>{salvando?"Salvando...":"Salvar tipos de laudo"}</button>
+        </div>
+      </div>
+
+      {/* Senha */}
+      <div className="card">
+        <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Segurança</div>
+        <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Alterar senha de acesso da Psicologa.</p>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:14}}>
+          <div className="form-group">
+            <label className="form-label">Senha atual</label>
+            <input className="form-input" type="password" value={senhaAtual} onChange={e=>setSenhaAtual(e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Nova senha</label>
+            <input className="form-input" type="password" value={novaSenha} onChange={e=>setNovaSenha(e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Confirmar nova senha</label>
+            <input className="form-input" type="password" value={confirmSenha} onChange={e=>setConfirmSenha(e.target.value)}/>
+          </div>
+        </div>
+        <button className="btn btn-purple" onClick={alterarSenha}><Icon name="key" size={15}/> Alterar Senha</button>
+      </div>
+    </div>
+  );
+}
+
 // APP
 function App() {
   const [user, setUser] = useState(null);
@@ -812,16 +1642,14 @@ function App() {
       <div className="main-content">
         {user.tipo==="psicologa"  &&tab==="dashboard"   &&<DashboardAdmin user={user}/>}
         {user.tipo==="psicologa"  &&tab==="pacientes"   &&<Pacientes user={user}/>}
-        {user.tipo==="psicologa"  &&tab==="alunos"      &&<EmBreve titulo="Alunos em Supervisao" subtitulo="Etapa 6"/>}
-        {user.tipo==="psicologa"  &&tab==="casais"      &&<EmBreve titulo="Terapia de Casais" subtitulo="Etapa 7"/>}
-        {user.tipo==="psicologa"  &&tab==="recursos"    &&<EmBreve titulo="Recursos Terapeuticos" subtitulo="Etapa 8"/>}
-        {user.tipo==="psicologa"  &&tab==="laudos"      &&<EmBreve titulo="Laudos" subtitulo="Etapa 10"/>}
-        {user.tipo==="psicologa"  &&tab==="agenda"      &&<EmBreve titulo="Agenda" subtitulo="Etapa 11"/>}
+        {user.tipo==="psicologa"  &&tab==="alunos"      &&<Alunos/>}
+        {user.tipo==="psicologa"  &&tab==="casais"      &&<TerapiaCasais/>}
+        {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos/>}
+        {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
-        {user.tipo==="psicologa"  &&tab==="config"      &&<EmBreve titulo="Configuracoes" subtitulo="Etapa 12"/>}
+        {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
-        {user.tipo==="secretaria" &&tab==="agenda"      &&<EmBreve titulo="Agenda" subtitulo="Etapa 11"/>}
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={true}/>}
       </div>
