@@ -1749,7 +1749,7 @@ function RecursosTerapeuticos() {
   const [filtroCateg, setFiltroCateg] = useState("todos");
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
-  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:""});
+  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});
   const [salvando, setSalvando] = useState(false);
   const [abaView, setAbaView] = useState("ferramentas");
 
@@ -1782,13 +1782,13 @@ function RecursosTerapeuticos() {
     } else {
       await db.collection("clinica_recursos").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     }
-    setModal(false);setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:""});setEditando(null);setSalvando(false);
+    setModal(false);setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setSalvando(false);
   }
 
   async function excluir(id){if(!confirm("Excluir recurso?"))return;await db.collection("clinica_recursos").doc(id).delete();}
 
   function abrirEditar(r){
-    setForm({titulo:r.titulo||"",descricao:r.descricao||"",categoria:r.categoria||"tcc",tipo:r.tipo||"interativa",formularioKey:r.formularioKey||""});
+    setForm({titulo:r.titulo||"",descricao:r.descricao||"",categoria:r.categoria||"tcc",tipo:r.tipo||"interativa",formularioKey:r.formularioKey||"",musicUrl:r.musicUrl||""});
     setEditando(r.id);setModal(true);
   }
 
@@ -1805,7 +1805,7 @@ function RecursosTerapeuticos() {
           <div className="page-title">Recursos Terapeuticos</div>
           <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:""});setEditando(null);setModal(true);}}>
+        <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
           <Icon name="plus" size={16}/> Nova Ferramenta
         </button>
       </div>
@@ -1921,6 +1921,13 @@ function RecursosTerapeuticos() {
                   <option value="">Selecionar formulario...</option>
                   {FERRAMENTAS_INTERATIVAS.map(f=><option key={f.key} value={f.key}>{f.label}</option>)}
                 </select>
+              </div>
+            )}
+            {(form.formularioKey==="breathing-478"||form.formularioKey==="muscle-relaxation")&&(
+              <div className="form-group" style={{marginBottom:14}}>
+                <label className="form-label">🎵 Link da Música (YouTube) — opcional</label>
+                <input className="form-input" value={form.musicUrl||""} onChange={e=>setForm({...form,musicUrl:e.target.value})} placeholder="https://www.youtube.com/watch?v=..."/>
+                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Cole o link do YouTube. A música tocará em loop durante o exercício no portal do paciente.</div>
               </div>
             )}
             <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
