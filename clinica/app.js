@@ -96,12 +96,6 @@ function Login({ onLogin }) {
 
   const perfis = [
     {
-      id: "psicologa",
-      nome: "Sou Psicóloga",
-      desc: "Acesso ao painel clínico completo",
-      icon: "stethoscope"
-    },
-    {
       id: "paciente",
       nome: "Sou Paciente",
       desc: "Portal do paciente — ferramentas e acompanhamento",
@@ -207,8 +201,11 @@ function Login({ onLogin }) {
                 </button>
               ))}
             </div>
-            <div className="login-footer">
-              Plataforma protegida · Dra. Lucia Kratz · CRP 09/20590
+            <div className="login-footer" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+              <span>Plataforma protegida · Dra. Lucia Kratz · CRP 09/20590</span>
+              <a href="../" style={{color:"var(--purple)",fontSize:13,display:"flex",alignItems:"center",gap:4}}>
+                ← Voltar ao site
+              </a>
             </div>
           </>
         )}
@@ -406,6 +403,9 @@ function Sidebar({ user, tab, setTab, onLogout }) {
             {user.email && !user.crp && <div className="sidebar-user-crp">{user.email}</div>}
           </div>
         </div>
+        <a href="../" className="nav-item" style={{color:"rgba(255,255,255,0.6)"}}>
+          <Icon name="arrow-left" size={18}/> Voltar ao site
+        </a>
         <button className="nav-item nav-item-danger" onClick={onLogout}>
           <Icon name="log-out" size={18} /> Sair
         </button>
