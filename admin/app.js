@@ -1123,6 +1123,625 @@ const FERRAMENTAS_INTERATIVAS = [
   {key:"anamnese",            label:"Anamnese — Marcos do Desenvolvimento"},
 ];
 
+
+// ═══════════════════════════════════════════════════════
+// FERRAMENTAS INTERATIVAS — MODAL VISUALIZAR
+// ═══════════════════════════════════════════════════════
+
+// ── helpers compartilhados ──
+function getYouTubeEmbed(url){
+  if(!url||!url.trim()) return null;
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+  if(!m) return null;
+  return `https://www.youtube.com/embed/${m[1]}?autoplay=1&loop=1&playlist=${m[1]}&controls=1&rel=0`;
+}
+function falarTexto(txt){
+  if(!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(txt);
+  u.lang="pt-BR"; u.rate=0.85; u.pitch=1.05;
+  const v = window.speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"));
+  if(v) u.voice=v;
+  window.speechSynthesis.speak(u);
+}
+
+// ── Respiração 4-7-8 ──
+function FerramentaRespiracao({musicUrl}){
+  const FASES=[{fase:"inhale",label:"Inspire",seg:4,cor:"#6366f1",speech:"Inspire pelo nariz"},
+               {fase:"hold",  label:"Segure", seg:7,cor:"#f59e0b",speech:"Segure o ar"},
+               {fase:"exhale",label:"Expire", seg:8,cor:"#10b981",speech:"Expire pela boca"}];
+  const TOTAL=19;
+  const [running,setRunning]=useState(false);
+  const [elapsed,setElapsed]=useState(0);
+  const [ciclos,setCiclos]=useState(0);
+  const [voz,setVoz]=useState(true);
+  const [showMusic,setShowMusic]=useState(false);
+  const ref=useRef(0); const iv=useRef(null); const faseAnterior=useRef(null);
+  const embedUrl=getYouTubeEmbed(musicUrl||"");
+
+  function getFase(e){
+    let acc=0;
+    for(let i=0;i<FASES.length;i++){acc+=FASES[i].seg;if(e<acc)return{...FASES[i],restante:acc-e};}
+    return{...FASES[0],restante:FASES[0].seg};
+  }
+
+  useEffect(()=>{
+    if(!running){if(iv.current)clearInterval(iv.current);return;}
+    iv.current=setInterval(()=>{
+      ref.current+=1;
+      if(ref.current>=TOTAL){ref.current=0;setCiclos(c=>c+1);}
+      setElapsed(ref.current);
+    },1000);
+    return()=>clearInterval(iv.current);
+  },[running]);
+
+  const fase=getFase(elapsed);
+  useEffect(()=>{
+    if(running&&voz&&fase.fase!==faseAnterior.current){falarTexto(fase.speech);faseAnterior.current=fase.fase;}
+  },[fase.fase,running,voz]);
+
+  const pct=(elapsed/TOTAL)*100;
+  const raio=80; const circ=2*Math.PI*raio;
+  const phaseColors={"inhale":"#6366f1","hold":"#f59e0b","exhale":"#10b981"};
+  const cor=phaseColors[fase.fase];
+
+  return(
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      {embedUrl&&showMusic&&<iframe src={embedUrl} style={{width:"100%",height:60,border:"none",borderRadius:8,marginBottom:16}} allow="autoplay"/>}
+      <div style={{position:"relative",width:200,height:200,margin:"0 auto 20px"}}>
+        <svg width={200} height={200} style={{transform:"rotate(-90deg)"}}>
+          <circle cx={100} cy={100} r={raio} fill="none" stroke="#e5e7eb" strokeWidth={8}/>
+          <circle cx={100} cy={100} r={raio} fill="none" stroke={cor} strokeWidth={8}
+            strokeDasharray={circ} strokeDashoffset={circ*(1-pct/100)} strokeLinecap="round"
+            style={{transition:"stroke-dashoffset 0.9s linear,stroke 0.3s"}}/>
+        </svg>
+        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <div style={{fontSize:28,fontWeight:700,color:cor}}>{fase.restante}</div>
+          <div style={{fontSize:14,fontWeight:600,color:cor}}>{fase.label}</div>
+          <div style={{fontSize:11,color:"#9ca3af",marginTop:2}}>ciclo {ciclos+1}</div>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",marginBottom:16}}>
+        {FASES.map(f=><span key={f.fase} style={{background:f.fase===fase.fase?f.cor+"20":"#f3f4f6",color:f.fase===fase.fase?f.cor:"#6b7280",borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:600,border:"1px solid "+(f.fase===fase.fase?f.cor+"40":"#e5e7eb")}}>{f.label} {f.seg}s</span>)}
+      </div>
+      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+        <button className="btn btn-purple" style={{minWidth:120}} onClick={()=>{setRunning(!running);if(!running){ref.current=elapsed;}}}>
+          <Icon name={running?"pause":"play"} size={16}/> {running?"Pausar":"Iniciar"}
+        </button>
+        <button className="btn btn-ghost" onClick={()=>{setRunning(false);setElapsed(0);ref.current=0;setCiclos(0);faseAnterior.current=null;}}>
+          <Icon name="rotate-ccw" size={16}/> Reiniciar
+        </button>
+        <button className="btn btn-ghost" onClick={()=>setVoz(!voz)} title={voz?"Desativar voz":"Ativar voz"}>
+          <Icon name={voz?"volume-2":"volume-x"} size={16}/>
+        </button>
+        {embedUrl&&<button className="btn btn-ghost" onClick={()=>setShowMusic(!showMusic)}><Icon name="music" size={16}/></button>}
+      </div>
+      <div style={{marginTop:16,fontSize:13,color:"#6b7280"}}>Inspire 4s → Segure 7s → Expire 8s · {ciclos} ciclo(s) completo(s)</div>
+    </div>
+  );
+}
+
+// ── Relaxamento Muscular Progressivo ──
+function FerramentaRelaxamento({musicUrl}){
+  const GRUPOS=[
+    {nome:"Pés",         instrucao:"Curve os dedos dos pés para baixo, fortemente.",  tensao:5, relax:15},
+    {nome:"Panturrilhas",instrucao:"Puxe os pés em direção a você, estique.",         tensao:5, relax:15},
+    {nome:"Coxas",       instrucao:"Aperte as coxas juntas, pressione a cadeira.",    tensao:5, relax:15},
+    {nome:"Abdômen",     instrucao:"Contraia o estômago fortemente.",                  tensao:5, relax:15},
+    {nome:"Mãos",        instrucao:"Feche os punhos com toda a sua força.",            tensao:5, relax:15},
+    {nome:"Braços",      instrucao:"Dobre os cotovelos e contraia os bíceps.",         tensao:5, relax:15},
+    {nome:"Ombros",      instrucao:"Levante-os até as orelhas, segure.",               tensao:5, relax:15},
+    {nome:"Rosto",       instrucao:"Feche os olhos com força, aperte os lábios.",      tensao:5, relax:15},
+  ];
+  const [running,setRunning]=useState(false);
+  const [done,setDone]=useState(false);
+  const [concluidos,setConcluidos]=useState([]);
+  const [grupoIdx,setGrupoIdx]=useState(0);
+  const [fase,setFase]=useState("tensao"); // tensao | relax
+  const [elapsed,setElapsed]=useState(0);
+  const [voz,setVoz]=useState(true);
+  const [showMusic,setShowMusic]=useState(false);
+  const stRef=useRef({grupoIdx:0,fase:"tensao",elapsed:0});
+  const concRef=useRef([]);
+  const iv=useRef(null);
+  const embedUrl=getYouTubeEmbed(musicUrl||"");
+
+  function tick(){
+    const s=stRef.current;
+    const g=GRUPOS[s.grupoIdx];
+    const lim=s.fase==="tensao"?g.tensao:g.relax;
+    const ne=s.elapsed+1;
+    if(ne>=lim){
+      if(s.fase==="tensao"){
+        const ns={...s,fase:"relax",elapsed:0};stRef.current=ns;setFase("relax");setElapsed(0);
+        if(voz)falarTexto("Relaxe.");
+      } else {
+        concRef.current=[...concRef.current,s.grupoIdx];setConcluidos([...concRef.current]);
+        const ng=s.grupoIdx+1;
+        if(ng>=GRUPOS.length){clearInterval(iv.current);setRunning(false);setDone(true);if(voz)falarTexto("Parabéns! Você completou o relaxamento muscular.");}
+        else{const ns={grupoIdx:ng,fase:"tensao",elapsed:0};stRef.current=ns;setGrupoIdx(ng);setFase("tensao");setElapsed(0);if(voz)falarTexto(GRUPOS[ng].nome+". Contraia.");}
+      }
+    } else {
+      stRef.current={...s,elapsed:ne};setElapsed(ne);
+    }
+  }
+
+  function iniciar(){
+    if(running){clearInterval(iv.current);setRunning(false);return;}
+    if(voz)falarTexto(GRUPOS[stRef.current.grupoIdx].nome+". Contraia.");
+    iv.current=setInterval(tick,1000);setRunning(true);
+  }
+  function reiniciar(){clearInterval(iv.current);setRunning(false);setDone(false);setConcluidos([]);concRef.current=[];stRef.current={grupoIdx:0,fase:"tensao",elapsed:0};setGrupoIdx(0);setFase("tensao");setElapsed(0);}
+
+  const g=GRUPOS[grupoIdx];
+  const lim=fase==="tensao"?g.tensao:g.relax;
+  const pct=Math.min((elapsed/lim)*100,100);
+
+  if(done) return(
+    <div style={{textAlign:"center",padding:40}}>
+      <div style={{fontSize:48,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
+      <div style={{fontSize:13,color:"#6b7280",marginBottom:20}}>Você completou todos os 8 grupos musculares.</div>
+      <button className="btn btn-purple" onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Reiniciar</button>
+    </div>
+  );
+
+  return(
+    <div>
+      {embedUrl&&showMusic&&<iframe src={embedUrl} style={{width:"100%",height:60,border:"none",borderRadius:8,marginBottom:16}} allow="autoplay"/>}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <div style={{fontSize:12,color:"#6b7280"}}>Progresso geral</div>
+        <div style={{fontSize:12,color:"#6b7280"}}>{concluidos.length}/{GRUPOS.length} grupos</div>
+      </div>
+      <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginBottom:20}}>
+        <div style={{background:"var(--purple)",height:6,borderRadius:20,transition:"width .3s",width:(concluidos.length/GRUPOS.length*100)+"%"}}/>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
+        {GRUPOS.map((g2,i)=>(
+          <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:8,background:concluidos.includes(i)?"#d1fae5":i===grupoIdx?"var(--purple-soft)":"#f9fafb",border:"1px solid",borderColor:concluidos.includes(i)?"#6ee7b7":i===grupoIdx?"var(--purple)":"#e5e7eb"}}>
+            <div style={{fontSize:10,fontWeight:600,color:concluidos.includes(i)?"#059669":i===grupoIdx?"var(--purple)":"#9ca3af"}}>{g2.nome}</div>
+            {concluidos.includes(i)&&<div style={{fontSize:12}}>✓</div>}
+          </div>
+        ))}
+      </div>
+      <div style={{background:fase==="tensao"?"#fef3c7":"#d1fae5",borderRadius:12,padding:24,textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:14,fontWeight:700,color:fase==="tensao"?"#d97706":"#059669",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.8px"}}>
+          {fase==="tensao"?"🔥 CONTRAIA":"✨ RELAXE"}
+        </div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>{g.nome}</div>
+        <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>{g.instrucao}</div>
+        <div style={{fontSize:48,fontWeight:700,color:fase==="tensao"?"#d97706":"#059669"}}>{lim-elapsed}</div>
+        <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginTop:12}}>
+          <div style={{background:fase==="tensao"?"#f59e0b":"#10b981",height:6,borderRadius:20,transition:"width .9s",width:pct+"%"}}/>
+        </div>
+      </div>
+      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+        <button className="btn btn-purple" style={{minWidth:120}} onClick={iniciar}>
+          <Icon name={running?"pause":"play"} size={16}/> {running?"Pausar":"Iniciar"}
+        </button>
+        <button className="btn btn-ghost" onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Reiniciar</button>
+        <button className="btn btn-ghost" onClick={()=>setVoz(!voz)}><Icon name={voz?"volume-2":"volume-x"} size={16}/></button>
+        {embedUrl&&<button className="btn btn-ghost" onClick={()=>setShowMusic(!showMusic)}><Icon name="music" size={16}/></button>}
+      </div>
+    </div>
+  );
+}
+
+// ── Árvore da Decisão ──
+function FerramentaArvore(){
+  const [step,setStep]=useState("home");
+  const [preocupacao,setPreocupacao]=useState("");
+  const [acoes,setAcoes]=useState("");
+  const [plano,setPlano]=useState("");
+  const [conclusao,setConclusao]=useState(null);
+  const [historico,setHistorico]=useState([]);
+
+  function reiniciar(){setStep("home");setPreocupacao("");setAcoes("");setPlano("");setConclusao(null);}
+
+  function salvarHistorico(c){
+    setHistorico(h=>[{data:new Date().toLocaleDateString("pt-BR"),preocupacao,conclusao:c},...h].slice(0,10));
+    setConclusao(c);setStep("conclusao");
+  }
+
+  const CONCLUSOES={
+    redirect:{emoji:"🌿",titulo:"Redirecione sua atenção",desc:"Esta situação está fora do seu controle agora. Direcione sua energia para algo que possa fazer.",cor:"#0891b2",bg:"#e0f2fe"},
+    "act-now":{emoji:"⚡",titulo:"Realize esta tarefa agora!",desc:"Você identificou uma ação que pode ser feita agora. Coloque-a em prática!",cor:"#059669",bg:"#d1fae5"},
+    plan:{emoji:"📋",titulo:"Siga o seu plano",desc:"Você tem um plano para agir no momento certo. Confie nele e direcione sua atenção.",cor:"#d97706",bg:"#fef3c7"},
+  };
+
+  if(step==="home") return(
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <div style={{fontSize:48,marginBottom:12}}>🌳</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Árvore da Decisão</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:8}}>Uma técnica da TCC para transformar preocupações em ações concretas — distinguindo o que está ou não no seu controle.</p>
+      <p style={{fontSize:12,color:"#9ca3af",marginBottom:24}}>💡 Preocupações <strong>produtivas</strong> levam à ação. <strong>Improdutivas</strong> paralisam.</p>
+      <button className="btn btn-purple" style={{fontSize:15,padding:"12px 32px"}} onClick={()=>setStep("worry")}>Iniciar exercício →</button>
+      {historico.length>0&&<div style={{marginTop:24,textAlign:"left"}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Registros anteriores</div>
+        {historico.map((h,i)=><div key={i} style={{padding:"8px 12px",background:"#f9fafb",borderRadius:8,marginBottom:6,fontSize:12,display:"flex",justifyContent:"space-between"}}>
+          <span style={{flex:1,color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.preocupacao}</span>
+          <span style={{color:"#9ca3af",marginLeft:8,flexShrink:0}}>{h.data}</span>
+        </div>)}
+      </div>}
+    </div>
+  );
+  if(step==="worry") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Qual é a sua preocupação agora?</div>
+      <textarea className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
+      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" onClick={()=>setStep("home")}>Voltar</button>
+        <button className="btn btn-purple" onClick={()=>setStep("can-intervene")} disabled={!preocupacao.trim()}>Próximo →</button>
+      </div>
+    </div>
+  );
+  if(step==="can-intervene") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Você pode fazer algo para resolver esta preocupação?</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:20}}>Pense se existe alguma ação concreta que você pode tomar.</p>
+      <div style={{display:"flex",gap:12}}>
+        <button className="btn btn-purple" style={{flex:1,padding:16}} onClick={()=>setStep("actions")}>✅ Sim, posso agir</button>
+        <button className="btn btn-outline" style={{flex:1,padding:16}} onClick={()=>salvarHistorico("redirect")}>❌ Não está no meu controle</button>
+      </div>
+    </div>
+  );
+  if(step==="actions") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Quais ações você pode tomar?</div>
+      <textarea className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
+      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" onClick={()=>setStep("can-intervene")}>Voltar</button>
+        <button className="btn btn-purple" onClick={()=>setStep("can-act-now")} disabled={!acoes.trim()}>Próximo →</button>
+      </div>
+    </div>
+  );
+  if(step==="can-act-now") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Você pode realizar alguma dessas ações agora?</div>
+      <div style={{display:"flex",gap:12,marginTop:16}}>
+        <button className="btn btn-purple" style={{flex:1,padding:16}} onClick={()=>salvarHistorico("act-now")}>⚡ Sim, agora</button>
+        <button className="btn btn-outline" style={{flex:1,padding:16}} onClick={()=>setStep("plan")}>📋 Preciso planejar</button>
+      </div>
+    </div>
+  );
+  if(step==="plan") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Crie um plano de ação:</div>
+      <textarea className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
+      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" onClick={()=>setStep("can-act-now")}>Voltar</button>
+        <button className="btn btn-purple" onClick={()=>salvarHistorico("plan")} disabled={!plano.trim()}>Finalizar →</button>
+      </div>
+    </div>
+  );
+  if(step==="conclusao"&&conclusao){
+    const c=CONCLUSOES[conclusao];
+    return(
+      <div>
+        <div style={{background:c.bg,borderRadius:16,padding:24,textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:40,marginBottom:8}}>{c.emoji}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:c.cor,marginBottom:8}}>{c.titulo}</div>
+          <p style={{fontSize:13,color:"#6b7280"}}>{c.desc}</p>
+        </div>
+        <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13}}>
+          <div style={{fontWeight:600,marginBottom:4}}>Sua preocupação:</div>
+          <div style={{color:"#6b7280"}}>{preocupacao}</div>
+          {acoes&&<><div style={{fontWeight:600,marginBottom:4,marginTop:10}}>Ações identificadas:</div><div style={{color:"#6b7280"}}>{acoes}</div></>}
+          {plano&&<><div style={{fontWeight:600,marginBottom:4,marginTop:10}}>Seu plano:</div><div style={{color:"#6b7280"}}>{plano}</div></>}
+        </div>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Nova preocupação</button>
+      </div>
+    );
+  }
+  return null;
+}
+
+// ── Ferramenta genérica (placeholder para as demais) ──
+function FerramentaGenerica({recurso}){
+  const INFO={
+    "abc-record":     {emoji:"📋",titulo:"Registro ABC de Pensamentos",   desc:"Identifique a Situação (A), o Pensamento Automático (B) e a Emoção/Consequência (C).",cor:"#7c3aed"},
+    "anxiety-management":{emoji:"🎯",titulo:"Gestão da Ansiedade",        desc:"Monitore seu nível de estresse, atividades anti-ansiedade, pensamentos e roda da vida.",cor:"#6366f1"},
+    "emotional-eating":  {emoji:"🍃",titulo:"Rastreamento Emocional da Alimentação",desc:"Registre a emoção, o gatilho e o comportamento alimentar.",cor:"#059669"},
+    "entrevista-clinica":{emoji:"📝",titulo:"Entrevista Clínica Inicial",  desc:"Instrumento de avaliação clínica inicial com perfil etário e hipóteses DSM-5.",cor:"#0891b2"},
+    "anamnese":          {emoji:"📄",titulo:"Anamnese — Marcos do Desenvolvimento",desc:"Formulário completo de anamnese para histórico do desenvolvimento.",cor:"#7c3aed"},
+    "treino-neuro-auditivo":{emoji:"🎵",titulo:"Treino Neuro-Auditivo",   desc:"Discriminação auditiva: sons graves/agudos, vozes, intensidade, ritmo e melodia.",cor:"#be185d"},
+  };
+  const info = INFO[recurso.formularioKey]||{emoji:"🔧",titulo:recurso.titulo,desc:recurso.descricao,cor:"#7c3aed"};
+  return(
+    <div style={{textAlign:"center",padding:"30px 20px"}}>
+      <div style={{width:80,height:80,borderRadius:20,background:info.cor+"15",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",fontSize:36}}>{info.emoji}</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>{info.titulo}</div>
+      <p style={{fontSize:13,color:"#6b7280",lineHeight:1.7,marginBottom:24,maxWidth:400,margin:"0 auto 24px"}}>{info.desc}</p>
+      <div style={{background:"#f9f5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:16,fontSize:13,color:"#7c3aed"}}>
+        Esta ferramenta está disponível no portal do paciente. O paciente acessa e preenche diretamente pelo login deles.
+      </div>
+    </div>
+  );
+}
+
+// ── Modal principal ──
+function ModalVisualizarFerramenta({recurso,onClose}){
+  function renderFerramenta(){
+    const k=recurso.formularioKey;
+    if(k==="breathing-478")    return <FerramentaRespiracao musicUrl={recurso.musicUrl}/>;
+    if(k==="muscle-relaxation")return <FerramentaRelaxamento musicUrl={recurso.musicUrl}/>;
+    if(k==="decision-tree")    return <FerramentaArvore/>;
+    return <FerramentaGenerica recurso={recurso}/>;
+  }
+  return(
+    <div>
+      <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={onClose}>
+        <Icon name="arrow-left" size={16}/> Voltar para Recursos
+      </button>
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:8,padding:"12px 16px",marginBottom:4,display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#6b7280"}}>
+        <Icon name="eye" size={14}/> <strong>Visualização do paciente</strong> — assim a ferramenta aparecerá na área do paciente
+      </div>
+      <div className="card">
+        <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:20,paddingBottom:16,borderBottom:"1px solid var(--gray-100)"}}>
+          <div style={{width:48,height:48,borderRadius:12,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name="zap" size={22}/>
+          </div>
+          <div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600}}>{recurso.titulo}</div>
+            <div style={{fontSize:13,color:"#6b7280",marginTop:4}}>{recurso.descricao}</div>
+          </div>
+        </div>
+        {renderFerramenta()}
+      </div>
+    </div>
+  );
+}
+
+// ── Protocolo de Terapia de Casais ──────────────────────────────────────────
+const PROTOCOLO_CASAIS = [
+  {
+    stage:0, titulo:"Diagnóstico Inicial de Casal", subtitulo:"Avaliação inicial do bem-estar conjugal antes da jornada", emoji:"🔍", cor:"#7c3aed", bg:"#f5f3ff",
+    atividades:[
+      {id:"inventario-bem-estar", titulo:"Inventário de Bem-Estar de Casais", desc:"42 questões sobre comunicação, resolução de conflitos, intimidade emocional, satisfação sexual e cooperação"},
+      {id:"roda-vida-relacionamento", titulo:"Roda da Vida do Relacionamento", desc:"Avalie 8 dimensões do relacionamento em formato visual"},
+      {id:"3-metas", titulo:"Nossas 3 Metas do Relacionamento", desc:"Definam juntos as 3 principais metas terapêuticas"},
+      {id:"quem-sou", titulo:"Quem Eu Sou no Relacionamento", desc:"Reflexão individual sobre identidade no relacionamento"},
+      {id:"o-que-quero", titulo:"O Que Eu Quero e Não Quero Mais", desc:"Mapeamento de expectativas e limites"}
+    ]
+  },
+  {
+    stage:1, titulo:"Reconexão e Segurança Emocional", subtitulo:"Reduzir defensividade e aumentar conexão emocional", emoji:"💚", cor:"#059669", bg:"#d1fae5",
+    atividades:[
+      {id:"detalhes-dia", titulo:"Detalhes do Dia a Dia", desc:"Compartilhem os pequenos detalhes que fazem diferença na conexão diária"},
+      {id:"plano-casal-ocupado", titulo:"Plano de Ação para um Casal Ocupado Demais", desc:"Estratégias práticas para manter conexão na correria"}
+    ]
+  },
+  {
+    stage:2, titulo:"Identidade e Vínculo do Casal", subtitulo:"Resgatar identidade afetiva e visão compartilhada", emoji:"💜", cor:"#7c3aed", bg:"#ede9fe",
+    atividades:[
+      {id:"renovando-votos", titulo:"Renovando os Votos", desc:"Recontem a história do casal e renovem seus compromissos através de 5 narrativas guiadas"}
+    ]
+  },
+  {
+    stage:3, titulo:"Conceitualização Cognitiva", subtitulo:"Identificar padrões cognitivos e crenças relacionais", emoji:"🧠", cor:"#0891b2", bg:"#e0f2fe",
+    atividades:[
+      {id:"mapa-cognitivo", titulo:"Mapa Cognitivo do Relacionamento", desc:"Identificar pensamentos automáticos, crenças e padrões que afetam o relacionamento"}
+    ]
+  },
+  {
+    stage:4, titulo:"Reestruturação Relacional", subtitulo:"Criar novos padrões emocionais e comportamentais", emoji:"🌱", cor:"#16a34a", bg:"#dcfce7",
+    atividades:[
+      {id:"novos-padroes", titulo:"Novos Padrões Relacionais", desc:"Desenvolver e praticar novos comportamentos e respostas emocionais"}
+    ]
+  }
+];
+
+const CHECKIN_SEMANAL = [
+  "Hoje eu me sinto conectado(a) com meu parceiro(a)",
+  "Sinto que fui ouvido(a) esta semana",
+  "Expressamos afeto um pelo outro",
+  "Resolvemos conflitos de forma saudável",
+  "Dedicamos tempo de qualidade juntos",
+  "Sinto que somos uma equipe",
+  "Me sinto seguro(a) emocionalmente com meu parceiro(a)"
+];
+
+function AbaProtocoloCasais() {
+  const [expandido, setExpandido] = useState(null);
+  return (
+    <div>
+      <div style={{background:"var(--purple-bg)",border:"1px solid var(--purple)30",borderRadius:12,padding:16,marginBottom:20,display:"flex",alignItems:"flex-start",gap:10}}>
+        <Icon name="heart" size={16}/>
+        <div style={{fontSize:13,color:"var(--gray-700)",lineHeight:1.6}}>
+          <strong>Protocolo de Terapia de Casais TCC</strong> — diagnóstico inicial + 4 etapas progressivas. Os casais realizam individualmente e você acompanha as respostas em <strong>Terapia de Casais</strong>.
+        </div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {PROTOCOLO_CASAIS.map(etapa=>(
+          <div key={etapa.stage} style={{borderRadius:12,border:"1.5px solid",borderColor:etapa.cor+"40",overflow:"hidden"}}>
+            <button onClick={()=>setExpandido(expandido===etapa.stage?null:etapa.stage)}
+              style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:etapa.bg,border:"none",cursor:"pointer",textAlign:"left"}}>
+              <span style={{fontSize:22}}>{etapa.emoji}</span>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:14,color:etapa.cor}}>
+                  {etapa.stage===0?"Diagnóstico":"Etapa "+etapa.stage} — {etapa.titulo}
+                </div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{etapa.subtitulo}</div>
+              </div>
+              <span style={{background:etapa.bg,color:etapa.cor,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600,border:"1px solid "+etapa.cor+"40"}}>
+                {etapa.atividades.length} ativ.
+              </span>
+              <Icon name={expandido===etapa.stage?"chevron-up":"chevron-down"} size={16}/>
+            </button>
+            {expandido===etapa.stage&&(
+              <div style={{background:"white",padding:"12px 18px",display:"flex",flexDirection:"column",gap:10}}>
+                {etapa.atividades.map(at=>(
+                  <div key={at.id} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 14px",background:"var(--gray-50)",borderRadius:10,border:"1px solid var(--gray-200)"}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:etapa.cor,marginTop:5,flexShrink:0}}/>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{at.titulo}</div>
+                      <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2,lineHeight:1.5}}>{at.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+        {/* Check-in Semanal */}
+        <div style={{borderRadius:12,border:"1.5px solid #fda4af",overflow:"hidden"}}>
+          <button onClick={()=>setExpandido(expandido==="checkin"?null:"checkin")}
+            style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:"linear-gradient(to right,#fff1f2,#fdf2f8)",border:"none",cursor:"pointer",textAlign:"left"}}>
+            <span style={{fontSize:22}}>✨</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:14,color:"#be185d"}}>Check-in Semanal do Casal</div>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>Recorrente · Manutenção e prevenção da conexão emocional</div>
+            </div>
+            <span style={{background:"#ffe4e6",color:"#be185d",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600,border:"1px solid #fda4af"}}>Recorrente</span>
+            <Icon name={expandido==="checkin"?"chevron-up":"chevron-down"} size={16}/>
+          </button>
+          {expandido==="checkin"&&(
+            <div style={{background:"white",padding:"12px 18px"}}>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:10}}>Escala: Nunca · Raramente · Às vezes · Frequentemente · Sempre</div>
+              {CHECKIN_SEMANAL.map((q,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 0",borderBottom:i<CHECKIN_SEMANAL.length-1?"1px solid var(--gray-100)":"none"}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",background:"#ffe4e6",color:"#be185d",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+                  <div style={{fontSize:13,lineHeight:1.5}}>{q}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Aba Fábulas ──────────────────────────────────────────────────────────────
+const CATS_FABULAS = {
+  ansiedade:   {label:"Ansiedade",          cor:"#6366f1", bg:"#eef2ff"},
+  resiliência: {label:"Resiliência",        cor:"#0ea5e9", bg:"#e0f2fe"},
+  crescimento: {label:"Crescimento",        cor:"#16a34a", bg:"#dcfce7"},
+  esperança:   {label:"Esperança",          cor:"#f59e0b", bg:"#fef3c7"},
+  autoconfiança:{label:"Autoconfiança",     cor:"#7c3aed", bg:"#ede9fe"},
+  tcc:         {label:"TCC",               cor:"#84cc16", bg:"#f7fee7"},
+  perdão:      {label:"Perdão",             cor:"#8b5cf6", bg:"#f5f3ff"},
+  autoestima:  {label:"Autoestima",         cor:"#ec4899", bg:"#fdf2f8"},
+  autoconhecimento:{label:"Autoconhecimento",cor:"#374151",bg:"#f9fafb"},
+  mindfulness: {label:"Mindfulness",       cor:"#059669", bg:"#d1fae5"},
+  relacionamentos:{label:"Relacionamentos",cor:"#d97706", bg:"#fef3c7"},
+  perspectiva: {label:"Perspectiva",       cor:"#1e3a5f", bg:"#e0f2fe"},
+  "expressão emocional":{label:"Expressão Emocional",cor:"#0891b2",bg:"#cffafe"},
+  "regulação emocional":{label:"Regulação Emocional",cor:"#2563eb",bg:"#dbeafe"},
+};
+
+function AbaFabulas() {
+  const [fabulas, setFabulas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fabulaAberta, setFabulaAberta] = useState(null);
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_fabulas").onSnapshot(snap=>{
+      setFabulas(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  if(loading) return <Spinner/>;
+
+  if(fabulaAberta){
+    const cat = CATS_FABULAS[fabulaAberta.categoria]||{label:fabulaAberta.categoria,cor:"#7c3aed",bg:"#ede9fe"};
+    return (
+      <div>
+        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setFabulaAberta(null)}>
+          <Icon name="arrow-left" size={16}/> Voltar
+        </button>
+        <div className="card" style={{marginBottom:16}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+            <span style={{fontSize:36}}>{fabulaAberta.emoji}</span>
+            <div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{fabulaAberta.titulo}</div>
+              <div style={{fontSize:13,color:"var(--text-muted)",fontStyle:"italic",marginTop:2}}>"{fabulaAberta.moral}"</div>
+            </div>
+            <span style={{marginLeft:"auto",background:cat.bg,color:cat.cor,borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:600}}>{cat.label}</span>
+          </div>
+        </div>
+        {(fabulaAberta.paginas||[]).map((pag,i)=>(
+          <div key={i} className="card" style={{marginBottom:12}}>
+            <div style={{fontSize:11,fontWeight:700,color:"var(--text-muted)",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.8px"}}>Página {i+1}</div>
+            <p style={{fontSize:14,lineHeight:1.8,color:"var(--gray-700)"}}>{pag}</p>
+          </div>
+        ))}
+        {(fabulaAberta.perguntas||[]).length>0&&(
+          <div className="card">
+            <div style={{fontWeight:600,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>
+              <Icon name="help-circle" size={16}/> Perguntas de Reflexão
+            </div>
+            {fabulaAberta.perguntas.map((p,i)=>(
+              <div key={i} style={{display:"flex",gap:10,padding:"10px 0",borderBottom:i<fabulaAberta.perguntas.length-1?"1px solid var(--gray-100)":"none"}}>
+                <div style={{width:24,height:24,borderRadius:"50%",background:"var(--purple-soft)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>{i+1}</div>
+                <p style={{fontSize:13,lineHeight:1.6,color:"var(--gray-700)"}}>{p}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if(fabulas.length===0) return (
+    <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+      <Icon name="book-open" size={40}/>
+      <div style={{marginTop:12,fontWeight:500}}>Nenhuma fábula cadastrada ainda.</div>
+      <div style={{fontSize:13,marginTop:6}}>Execute o arquivo <code>popular-recursos.html</code> para criar as 15 fábulas.</div>
+    </div>
+  );
+
+  // Agrupa por categoria
+  const porCat = fabulas.reduce((acc,f)=>{
+    const k = f.categoria||"outro";
+    if(!acc[k]) acc[k]=[];
+    acc[k].push(f);
+    return acc;
+  },{});
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>
+        {fabulas.length} fábulas · clique para visualizar páginas e perguntas de reflexão
+      </div>
+      {Object.entries(porCat).map(([cat,itens])=>{
+        const c = CATS_FABULAS[cat]||{label:cat,cor:"#7c3aed",bg:"#ede9fe"};
+        return (
+          <div key={cat} style={{marginBottom:24}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+              <span style={{fontWeight:700,fontSize:11,color:c.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{c.label}</span>
+              <span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{itens.length}</span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
+              {itens.map(f=>(
+                <div key={f.id} style={{background:"white",border:"1.5px solid",borderColor:c.cor+"40",borderRadius:14,padding:16,cursor:"pointer",transition:"box-shadow .15s"}}
+                  onClick={()=>setFabulaAberta(f)}
+                  onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px "+c.cor+"30"}
+                  onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{width:44,height:44,borderRadius:10,background:c.cor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{f.emoji||"📖"}</div>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13,lineHeight:1.3}}>{f.titulo}</div>
+                      <span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:600}}>{c.label}</span>
+                    </div>
+                  </div>
+                  <p style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",lineHeight:1.5,marginBottom:10}}>"{f.moral}"</p>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,color:"var(--text-muted)"}}>
+                    <span>{(f.paginas||[]).length} páginas · {(f.perguntas||[]).length} perguntas</span>
+                    <Icon name="eye" size={13}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function RecursosTerapeuticos() {
   const [recursos, setRecursos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1174,9 +1793,11 @@ function RecursosTerapeuticos() {
   }
 
   const getCatInfo = (id) => CATEGORIAS_RECURSOS.find(c=>c.id===id)||CATEGORIAS_RECURSOS[6];
+  const [visualizando, setVisualizando] = useState(null);
 
   if(loading) return <Spinner/>;
 
+  if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)}/>;
   return (
     <div>
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
@@ -1189,16 +1810,23 @@ function RecursosTerapeuticos() {
         </button>
       </div>
 
-      {/* Abas */}
+      {/* Abas — 3 abas */}
       <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
-        {[["ferramentas","Ferramentas"],["casais","Terapia de Casais"]].map(([id,label])=>(
+        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas Terapêuticas","book-open"],["casais","Terapia de Casais","heart"]].map(([id,label,ic])=>(
           <button key={id} onClick={()=>setAbaView(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:abaView===id?"var(--purple)":"var(--gray-600)",borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:abaView===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
-            <Icon name={id==="ferramentas"?"wrench":"heart"} size={15}/>{label}
+            <Icon name={ic} size={15}/>{label}
           </button>
         ))}
       </div>
 
-      {/* Busca + filtros */}
+      {/* Aba Fábulas */}
+      {abaView==="fabulas"&&<AbaFabulas/>}
+
+      {/* Aba Terapia de Casais */}
+      {abaView==="casais"&&<AbaProtocoloCasais/>}
+
+      {/* Aba Ferramentas — busca + filtros + grid */}
+      {abaView==="ferramentas"&&(<>
       <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -1210,8 +1838,6 @@ function RecursosTerapeuticos() {
           })}
         </div>
       </div>
-
-      {/* Grid por categoria */}
       {filtrados.length===0?(
         <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
           <Icon name="wrench" size={40}/>
@@ -1231,8 +1857,8 @@ function RecursosTerapeuticos() {
                     <div style={{background:cat.bg,borderRadius:8,padding:8,flexShrink:0}}><Icon name={r.tipo==="interativa"?"zap":"file-text"} size={16}/></div>
                     <div style={{flex:1}}>
                       <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
-                        <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30"}}>INTERATIVA</span>
-                        {r.tipo==="musicoterapia"&&<span style={{background:"#fce7f3",color:"#be185d",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Musica</span>}
+                        <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30"}}>{r.tipo==="interativa"?"INTERATIVA":"CONTEÚDO"}</span>
+                        {r.categoria==="musicoterapia"&&<span style={{background:"#fce7f3",color:"#be185d",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Música</span>}
                       </div>
                       <div style={{fontWeight:600,fontSize:14}}>{r.titulo}</div>
                     </div>
@@ -1240,7 +1866,7 @@ function RecursosTerapeuticos() {
                   <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>{r.descricao}</p>
                   {r.formularioKey&&<span style={{fontSize:11,color:"var(--gray-400)",background:"var(--gray-50)",borderRadius:6,padding:"2px 8px",display:"inline-block",width:"fit-content"}}>{r.formularioKey}</span>}
                   <div style={{display:"flex",gap:8,borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
-                    <button className="btn btn-ghost" style={{fontSize:12,flex:1,color:"var(--purple)"}}><Icon name="eye" size={13}/> Visualizar</button>
+                    <button className="btn btn-ghost" style={{fontSize:12,flex:1,color:"var(--purple)"}} onClick={()=>setVisualizando(r)}><Icon name="eye" size={13}/> Visualizar</button>
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
                     <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                   </div>
@@ -1250,6 +1876,7 @@ function RecursosTerapeuticos() {
           </div>
         ))
       )}
+      </>)}
 
       {/* Modal novo/editar recurso */}
       {modal&&(
