@@ -262,13 +262,31 @@
 
     /* GALERIA */
     .galeria-bg { background: var(--gray-50); }
-    .galeria-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 48px; }
+    .galeria-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 48px; }
     .galeria-item {
       border-radius: var(--radius); overflow: hidden;
       aspect-ratio: 3/4; background: var(--purple-soft);
     }
     .galeria-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
     .galeria-item:hover img { transform: scale(1.05); }
+
+    /* MÍDIA */
+    .midia-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 14px;
+      background: white; border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      color: var(--text); text-decoration: none;
+      transition: all .2s; line-height: 1.3;
+    }
+    .midia-card:hover {
+      border-color: var(--purple);
+      background: var(--purple-bg);
+      color: var(--purple);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(123,0,196,0.1);
+    }
 
     /* FOOTER */
     footer {
@@ -337,6 +355,7 @@
     <a href="#servicos">Serviços</a>
     <a href="#neuromodulacao">Neuromodulação</a>
     <a href="#contato">Contato</a>
+    <a href="#midia">Na Mídia</a>
     <a href="clinica/" class="btn-area-clinica">Área Clínica</a>
   </div>
   <button class="nav-mobile-toggle" onclick="document.querySelector('.navbar-links').style.display = document.querySelector('.navbar-links').style.display === 'flex' ? 'none' : 'flex'">
@@ -628,6 +647,72 @@
           <ul><li>A partir de 8 anos</li><li>Adolescentes e jovens adultos</li><li>Adultos e idosos</li></ul>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALERIA -->
+<section id="galeria" style="background:var(--gray-50)">
+  <div class="section-inner">
+    <div class="section-label">Fotos</div>
+    <h2 class="section-title">Galeria</h2>
+    <div class="galeria-grid">
+      <div class="galeria-item"><img src="foto.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto2.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto3.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto4.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto5.jpeg" alt="Dra. Lucia Kratz"/></div>
+    </div>
+  </div>
+</section>
+
+<!-- NA MÍDIA -->
+<section id="midia">
+  <div class="section-inner">
+    <div class="section-label">Imprensa</div>
+    <h2 class="section-title">Na Mídia</h2>
+    <p class="section-sub">A trajetória da Dra. Lucia Kratz na vanguarda da saúde mental através da Neuromodulação e Tecnologia.</p>
+
+    <!-- Destaque -->
+    <div style="background:var(--purple-bg);border:1px solid var(--purple-soft);border-radius:var(--radius);padding:28px;margin:40px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="font-size:32px">📰</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Matéria em destaque</div>
+        <div style="font-size:17px;font-weight:600;color:var(--text);margin-bottom:6px">Revolucionando a Saúde Mental através da Neuromodulação e Tecnologia</div>
+        <div style="font-size:13px;color:var(--text-muted)">A psicóloga contemporânea na linha de frente da transformação — unindo profundidade acadêmica à inovação tecnológica.</div>
+      </div>
+      <a href="https://bastidoresdosfamosos.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" style="background:var(--purple);color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap;">Ler matéria →</a>
+    </div>
+
+    <!-- Grid de portais -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">
+      <a href="https://www.clnews.com.br/2026/04/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia.html" target="_blank" class="midia-card">📰 CLNews</a>
+      <a href="https://tonamidia.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Tonamidia</a>
+      <a href="https://clickfato.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Click Fato</a>
+      <a href="https://namidia.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Namidia</a>
+      <a href="https://ab.pautabr.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Pauta BR</a>
+      <a href="https://www.bahia10.com.br/noticia/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia" target="_blank" class="midia-card">📰 Bahia 10</a>
+      <a href="https://gazetarj.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta RJ</a>
+      <a href="https://gazetadegoias.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta de Goiás</a>
+      <a href="https://diariobaiano.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Diário Baiano</a>
+      <a href="https://gazetatocantins.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Tocantins</a>
+      <a href="https://gazetapiaui.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Piauí</a>
+      <a href="https://bastidoresdosfamosos.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Bastidores dos Famosos</a>
+      <a href="https://tvnacional.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 TV Nacional</a>
+      <a href="https://folhasemanal.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Folha Semanal</a>
+      <a href="https://gazetanacional.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Nacional</a>
+      <a href="https://revistainfluencer.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Revista Influencer</a>
+      <a href="https://jornalnoticiasdobrasil.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Jornal Notícias do Brasil</a>
+      <a href="https://gazetaespiritosanto.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Espírito Santo</a>
+      <a href="https://diariomineiro.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Diário Mineiro</a>
+    </div>
+
+    <!-- Instagram -->
+    <div style="margin-top:32px;text-align:center;">
+      <a href="https://www.instagram.com/p/DXmDtmkEair/?igsh=MXE2YXJjNmcwdmhtN" target="_blank"
+        style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        📸 Ver no Instagram
+      </a>
     </div>
   </div>
 </section>
