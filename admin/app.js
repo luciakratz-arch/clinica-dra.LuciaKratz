@@ -200,7 +200,7 @@ const NAV_PSICOLOGA = [
   {id:"pacientes",   label:"Pacientes",          icon:"users"},
   {id:"alunos",      label:"Alunos",             icon:"graduation-cap"},
   {id:"casais",      label:"Terapia de Casais",  icon:"heart"},
-  {id:"recursos",    label:"Recursos",           icon:"tool"},
+  {id:"recursos",    label:"Recursos Terapeuticos", icon:"tool"},
   {id:"laudos",      label:"Laudos",             icon:"file-text"},
   {id:"agenda",      label:"Agenda",             icon:"calendar"},
   {id:"fin-clinica", label:"Fin. Clinica",       icon:"dollar-sign"},
@@ -223,7 +223,7 @@ function Sidebar({ user, tab, setTab, onLogout }) {
     <div className="sidebar-desktop">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <img src={LOGO_URL} alt="LK" onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
+          <img src={LOGO_URL} alt="LK" style={{width:44,height:44,objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
           <span className="sidebar-logo-placeholder" style={{display:"none"}}>LK</span>
         </div>
         <div>
@@ -2606,7 +2606,7 @@ function Configuracoes() {
     "Demandas Judiciais","Orientacao de Carreira","Relatorio de Acompanhamento","Outro"
   ]);
   const [novoTipo, setNovoTipo] = useState("");
-  const [logoUrl, setLogoUrl] = useState("../logo.png");
+  const [logoUrl, setLogoUrl] = useState("../logo-transparente.png");
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmSenha, setConfirmSenha] = useState("");
@@ -2672,7 +2672,7 @@ function Configuracoes() {
             <button className="btn btn-outline" style={{fontSize:13}}><Icon name="upload" size={14}/> Enviar Assinatura</button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:12,border:"1px solid var(--gray-200)",background:"var(--gray-50)"}}>
-            <img src="../logo.png" alt="Logo padrao" style={{width:52,height:52,borderRadius:10,objectFit:"contain",background:"white",padding:4}} onError={e=>e.target.style.display="none"}/>
+            <img src="../logo-transparente.png" alt="Logo padrao" style={{width:56,height:56,borderRadius:10,objectFit:"contain",background:"var(--purple)",padding:6}} onError={e=>e.target.style.display="none"}/>
             <div style={{flex:1}}>
               <div style={{fontWeight:600}}>Logo Padrao do Sistema</div>
               <div style={{fontSize:13,color:"var(--text-muted)"}}>Esta e a logo padrao. Ela e usada automaticamente enquanto voce nao enviar uma logo personalizada.</div>
