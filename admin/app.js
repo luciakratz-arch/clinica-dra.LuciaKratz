@@ -2727,20 +2727,31 @@ function Configuracoes() {
 // AGENDA — Doctoralia integrado via iframe
 // ═══════════════════════════════════════════════════════
 function Agenda() {
-  useEffect(()=>{
-    window.open("https://docplanner.doctoralia.com.br/#/calendar/week","_blank");
-  },[]);
   return (
-    <div className="card" style={{textAlign:"center",padding:60}}>
-      <div style={{fontSize:48,marginBottom:16}}>📅</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Agenda Doctoralia</div>
-      <p style={{fontSize:14,color:"var(--text-muted)",marginBottom:24,lineHeight:1.7}}>
-        Sua agenda foi aberta em nova aba.<br/>Se não abriu, clique no botão abaixo.
-      </p>
-      <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
-        className="btn btn-purple" style={{textDecoration:"none",display:"inline-flex",alignItems:"center",gap:8,fontSize:15,padding:"14px 32px"}}>
-        <Icon name="calendar" size={18}/> Abrir Agenda
-      </a>
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div>
+          <div className="page-title">Agenda</div>
+          <div className="page-subtitle">Gerenciada pelo Doctoralia</div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <a href="https://sa.doct.to/6xeof7yr" target="_blank" rel="noreferrer"
+            className="btn btn-ghost" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+            <Icon name="external-link" size={14}/> Abrir em nova aba
+          </a>
+          <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
+            className="btn btn-purple" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+            <Icon name="settings" size={14}/> Gerenciar no Doctoralia
+          </a>
+        </div>
+      </div>
+      <div style={{borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
+        <iframe
+          src="https://sa.doct.to/6xeof7yr"
+          style={{width:"100%",height:"calc(100vh - 160px)",minHeight:650,border:"none",display:"block"}}
+          title="Agenda Dra. Lucia Kratz"
+        />
+      </div>
     </div>
   );
 }
