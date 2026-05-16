@@ -129,7 +129,7 @@ function Login({ onLogin }) {
     <div className="login-page">
       <div className="login-left">
         <div className="login-logo">
-          <img src={LOGO_URL} alt="LK" onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
+          <img src={LOGO_URL} alt="LK" style={{width:120,height:120,objectFit:"contain",borderRadius:0,border:"none",background:"transparent",boxShadow:"none",padding:0}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
           <span className="login-logo-placeholder" style={{display:"none"}}>LK</span>
         </div>
         <div className="login-name">Dra. Lucia Kratz</div>
