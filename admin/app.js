@@ -130,8 +130,8 @@ function Login({ onLogin }) {
       <div className="login-left">
         <div className="login-logo">
           <div style={{textAlign:"center"}}>
-            <div style={{fontSize:48,marginBottom:4,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}>🦋</div>
-            <div style={{fontFamily:"Dancing Script, cursive",fontSize:42,fontWeight:600,color:"white",lineHeight:1.1,textShadow:"0 2px 12px rgba(0,0,0,0.2)"}}>Lucia Kratz</div>
+            <div style={{fontSize:44,lineHeight:1,marginBottom:8}}>🦋</div>
+            <div style={{fontFamily:"Dancing Script, cursive",fontSize:44,fontWeight:600,color:"white",lineHeight:1}}>Lucia Kratz</div>
           </div>
         </div>
         <div className="login-name">Dra. Lucia Kratz</div>

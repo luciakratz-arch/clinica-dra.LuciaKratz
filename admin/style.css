@@ -96,16 +96,16 @@ html, body {
 }
 
 .login-logo {
-  width: 100px; height: 100px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.12);
+  width: auto; height: auto;
+  border-radius: 0;
+  background: transparent;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 28px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.2);
-  overflow: hidden;
+  margin-bottom: 20px;
+  backdrop-filter: none;
+  border: none;
+  overflow: visible;
 }
-.login-logo img { width: 80px; height: 80px; object-fit: contain; }
+.login-logo img { display: none; }
 .login-logo-placeholder {
   font-family: var(--font-display);
   font-size: 36px;
