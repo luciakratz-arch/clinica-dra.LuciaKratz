@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acesso ao Portal — Dra. Lucia Kratz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"DM Sans",system-ui,sans-serif;min-height:100vh;background:linear-gradient(135deg,#f9f5ff 0%,#ede9fe 50%,#f5f3ff 100%);display:flex;align-items:center;justify-content:center;padding:20px;}
+    .card{background:white;border-radius:24px;padding:40px 36px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(123,0,196,0.12);}
+    .logo-area{text-align:center;margin-bottom:32px;}
+    .logo-img{width:72px;height:72px;border-radius:50%;object-fit:cover;margin-bottom:12px;border:3px solid #e9d5ff;}
+    .logo-nome{font-family:"Dancing Script",cursive;font-size:26px;color:#7B00C4;display:block;}
+    .logo-crp{font-size:12px;color:#9ca3af;margin-top:2px;}
+    .titulo{font-size:18px;font-weight:600;color:#1f2937;margin-bottom:6px;text-align:center;}
+    .subtitulo{font-size:13px;color:#6b7280;text-align:center;margin-bottom:28px;line-height:1.5;}
+    .form-group{margin-bottom:16px;}
+    label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+    input,select{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:inherit;color:#1f2937;transition:border-color .2s;outline:none;background:white;}
+    input:focus,select:focus{border-color:#7B00C4;box-shadow:0 0 0 3px rgba(123,0,196,0.08);}
+    .btn{width:100%;padding:14px;background:#7B00C4;color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s;margin-top:4px;}
+    .btn:hover{background:#6600a3;}
+    .btn:disabled{opacity:0.6;cursor:not-allowed;}
+    .btn-ghost{background:none;color:#7B00C4;border:1.5px solid #e9d5ff;margin-top:10px;}
+    .btn-ghost:hover{background:#f9f5ff;}
+    .erro{background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;border:1px solid #fca5a5;}
+    .sucesso{background:#d1fae5;color:#065f46;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;border:1px solid #6ee7b7;}
+    .divider{display:flex;align-items:center;gap:10px;margin:20px 0;color:#9ca3af;font-size:12px;}
+    .divider::before,.divider::after{content:"";flex:1;height:1px;background:#e5e7eb;}
+    .step-indicator{display:flex;gap:6px;justify-content:center;margin-bottom:24px;}
+    .step-dot{width:8px;height:8px;border-radius:50%;background:#e5e7eb;transition:background .3s;}
+    .step-dot.active{background:#7B00C4;}
+    .paciente-card{display:flex;align-items:center;gap:12px;padding:14px;background:#f9f5ff;border-radius:12px;border:1.5px solid #e9d5ff;margin-bottom:16px;cursor:pointer;transition:all .2s;}
+    .paciente-card:hover{border-color:#7B00C4;background:#f5f3ff;}
+    .avatar{width:44px;height:44px;border-radius:50%;background:#7B00C4;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;flex-shrink:0;}
+    .paciente-info .nome{font-weight:600;color:#1f2937;font-size:15px;}
+    .paciente-info .email{font-size:12px;color:#6b7280;margin-top:2px;}
+    .link-voltar{text-align:center;margin-top:20px;font-size:13px;color:#9ca3af;}
+    .link-voltar a{color:#7B00C4;text-decoration:none;font-weight:600;}
+    .novo-link{text-align:center;font-size:13px;margin-top:16px;}
+    .novo-link a{color:#7B00C4;text-decoration:none;font-weight:600;cursor:pointer;}
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-area">
+    <img class="logo-img" src="../logo.png" onerror="this.style.display='none'" alt="Logo"/>
+    <span class="logo-nome">Lucia Kratz</span>
+    <div class="logo-crp">Psicóloga · CRP 09/20590</div>
+  </div>
+
+  <!-- STEP 1: Email -->
+  <div id="step-email">
+    <div class="titulo">Acessar meu espaço</div>
+    <div class="subtitulo">Digite seu e-mail para entrar ou criar seu cadastro</div>
+    <div id="erro-email" class="erro" style="display:none"></div>
+    <div class="form-group">
+      <label>Seu e-mail</label>
+      <input type="email" id="input-email" placeholder="exemplo@email.com" autocomplete="email"/>
+    </div>
+    <button class="btn" id="btn-email" onclick="verificarEmail()">Continuar →</button>
+    <div class="link-voltar" style="margin-top:16px">
+      <a href="../index.html">← Voltar ao site</a>
+    </div>
+  </div>
+
+  <!-- STEP 2: Paciente encontrado → senha -->
+  <div id="step-senha" style="display:none">
+    <div class="titulo">Bem-vindo(a) de volta!</div>
+    <div class="subtitulo">Encontramos seu cadastro. Digite sua senha para entrar.</div>
+    <div id="paciente-encontrado" class="paciente-card" style="cursor:default"></div>
+    <div id="erro-senha" class="erro" style="display:none"></div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="input-senha" placeholder="Sua senha" autocomplete="current-password"/>
+    </div>
+    <button class="btn" id="btn-senha" onclick="fazerLogin()">Entrar →</button>
+    <button class="btn btn-ghost" onclick="voltarStep1()">← Trocar e-mail</button>
+  </div>
+
+  <!-- STEP 3: Novo cadastro -->
+  <div id="step-novo" style="display:none">
+    <div class="titulo">Criar meu cadastro</div>
+    <div class="subtitulo">Preencha seus dados para acessar o portal pela primeira vez.</div>
+    <div id="erro-novo" class="erro" style="display:none"></div>
+    <div class="form-group">
+      <label>Nome completo *</label>
+      <input type="text" id="input-nome" placeholder="Seu nome completo" autocomplete="name"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label>Telefone</label>
+        <input type="tel" id="input-tel" placeholder="(62) 9 0000-0000"/>
+      </div>
+      <div class="form-group">
+        <label>Data de nascimento</label>
+        <input type="date" id="input-nasc"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label>Gênero</label>
+        <select id="input-genero">
+          <option value="Não informar">Prefiro não informar</option>
+          <option value="Feminino">Feminino</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Não-binário">Não-binário</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>CPF</label>
+        <input type="text" id="input-cpf" placeholder="000.000.000-00"/>
+      </div>
+    </div>
+    <div class="divider">crie sua senha de acesso</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label>Senha *</label>
+        <input type="password" id="input-senha-nova" placeholder="Mínimo 4 caracteres"/>
+      </div>
+      <div class="form-group">
+        <label>Confirmar senha *</label>
+        <input type="password" id="input-senha-conf" placeholder="Repita a senha"/>
+      </div>
+    </div>
+    <button class="btn" id="btn-novo" onclick="criarCadastro()">Criar meu cadastro →</button>
+    <button class="btn btn-ghost" onclick="voltarStep1()">← Trocar e-mail</button>
+  </div>
+
+  <!-- STEP 4: Sucesso -->
+  <div id="step-sucesso" style="display:none;text-align:center;">
+    <div style="font-size:56px;margin-bottom:16px">🦋</div>
+    <div class="titulo">Tudo certo!</div>
+    <div class="subtitulo" style="margin-bottom:24px">Seu cadastro foi criado com sucesso. Redirecionando para o portal...</div>
+    <div style="width:100%;background:#e5e7eb;border-radius:20px;height:6px;overflow:hidden;">
+      <div id="barra-progress" style="height:6px;background:#7B00C4;border-radius:20px;width:0%;transition:width 3s linear;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+const db = firebase.firestore();
+
+let emailAtual = "";
+let pacienteDoc = null;
+
+// Enter nos campos
+document.getElementById("input-email").addEventListener("keydown",e=>{if(e.key==="Enter")verificarEmail();});
+document.getElementById("input-senha").addEventListener("keydown",e=>{if(e.key==="Enter")fazerLogin();});
+
+function mostrarErro(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg;el.style.display="block";
+  setTimeout(()=>el.style.display="none",5000);
+}
+function setLoading(btnId,loading,textoOriginal){
+  const btn=document.getElementById(btnId);
+  btn.disabled=loading;
+  btn.textContent=loading?"Aguarde...":textoOriginal;
+}
+
+async function verificarEmail(){
+  const email=document.getElementById("input-email").value.trim().toLowerCase();
+  if(!email||!email.includes("@")){mostrarErro("erro-email","Por favor, digite um e-mail válido.");return;}
+  emailAtual=email;
+  setLoading("btn-email",true,"Continuar →");
+  try{
+    const snap=await db.collection("clinica_pacientes").where("email","==",email).limit(1).get();
+    if(!snap.empty){
+      pacienteDoc={id:snap.docs[0].id,...snap.docs[0].data()};
+      const p=pacienteDoc;
+      const inicial=(p.nome||"?")[0].toUpperCase();
+      document.getElementById("paciente-encontrado").innerHTML=`
+        <div class="avatar">${inicial}</div>
+        <div class="paciente-info">
+          <div class="nome">${p.nome||"Paciente"}</div>
+          <div class="email">${email}</div>
+        </div>`;
+      document.getElementById("step-email").style.display="none";
+      document.getElementById("step-senha").style.display="block";
+      setTimeout(()=>document.getElementById("input-senha").focus(),100);
+    } else {
+      document.getElementById("step-email").style.display="none";
+      document.getElementById("step-novo").style.display="block";
+      setTimeout(()=>document.getElementById("input-nome").focus(),100);
+    }
+  }catch(e){mostrarErro("erro-email","Erro ao verificar. Tente novamente.");}
+  finally{setLoading("btn-email",false,"Continuar →");}
+}
+
+async function fazerLogin(){
+  const senha=document.getElementById("input-senha").value;
+  if(!senha){mostrarErro("erro-senha","Digite sua senha.");return;}
+  setLoading("btn-senha",true,"Entrar →");
+  try{
+    const p=pacienteDoc;
+    if(!p.senha){
+      // Primeira vez — define a senha digitada
+      await db.collection("clinica_pacientes").doc(p.id).update({senha});
+      irParaPortal(p);
+    } else if(p.senha===senha){
+      irParaPortal(p);
+    } else {
+      mostrarErro("erro-senha","Senha incorreta. Tente novamente.");
+    }
+  }catch(e){mostrarErro("erro-senha","Erro ao entrar. Tente novamente.");}
+  finally{setLoading("btn-senha",false,"Entrar →");}
+}
+
+async function criarCadastro(){
+  const nome=document.getElementById("input-nome").value.trim();
+  const tel=document.getElementById("input-tel").value.trim();
+  const nasc=document.getElementById("input-nasc").value;
+  const genero=document.getElementById("input-genero").value;
+  const cpf=document.getElementById("input-cpf").value.trim();
+  const senha=document.getElementById("input-senha-nova").value;
+  const conf=document.getElementById("input-senha-conf").value;
+  if(!nome){mostrarErro("erro-novo","Nome completo é obrigatório.");return;}
+  if(senha.length<4){mostrarErro("erro-novo","A senha deve ter ao menos 4 caracteres.");return;}
+  if(senha!==conf){mostrarErro("erro-novo","As senhas não conferem.");return;}
+  setLoading("btn-novo",true,"Criando cadastro...");
+  try{
+    const ref=await db.collection("clinica_pacientes").add({
+      nome,email:emailAtual,telefone:tel,dataNascimento:nasc,
+      genero,cpf,senha,status:"ativo",
+      objetivosTerapeuticos:"",observacoesClinicas:"",
+      origem:"auto-cadastro",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    pacienteDoc={id:ref.id,nome,email:emailAtual,senha};
+    irParaSucesso();
+  }catch(e){mostrarErro("erro-novo","Erro ao criar cadastro. Tente novamente.");}
+  finally{setLoading("btn-novo",false,"Criar meu cadastro →");}
+}
+
+function irParaPortal(p){
+  sessionStorage.setItem("paciente_id",p.id);
+  sessionStorage.setItem("paciente_nome",p.nome||"Paciente");
+  window.location.href="../clinica/index.html";
+}
+
+function irParaSucesso(){
+  document.getElementById("step-novo").style.display="none";
+  document.getElementById("step-sucesso").style.display="block";
+  setTimeout(()=>{
+    document.getElementById("barra-progress").style.width="100%";
+  },100);
+  setTimeout(()=>irParaPortal(pacienteDoc),3200);
+}
+
+function voltarStep1(){
+  document.getElementById("step-senha").style.display="none";
+  document.getElementById("step-novo").style.display="none";
+  document.getElementById("step-email").style.display="block";
+  document.getElementById("input-email").focus();
+}
+</script>
+</body>
+</html>

@@ -640,9 +640,66 @@ function Pacientes({ user }) {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
   const [modal, setModal] = useState(false);
+  const [modalImport, setModalImport] = useState(false);
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [perfilAberto, setPerfilAberto] = useState(null);
+  const [importLog, setImportLog] = useState([]);
+  const [importando, setImportando] = useState(false);
+
+  async function processarExcel(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    setImportando(true);setImportLog([{tipo:"info",msg:"Lendo arquivo..."}]);
+    const reader=new FileReader();
+    reader.onload=async(ev)=>{
+      try{
+        const text=ev.target.result;
+        const linhas=text.split(/\r?\n/).filter(l=>l.trim());
+        if(linhas.length<2){setImportLog([{tipo:"err",msg:"Arquivo vazio ou sem dados."}]);setImportando(false);return;}
+        const header=linhas[0].split(/[,;\t]/).map(h=>h.trim().toLowerCase().replace(/[^a-z]/g,""));
+        const idx={
+          nome:    header.findIndex(h=>h.includes("nome")),
+          email:   header.findIndex(h=>h.includes("email")||h.includes("mail")),
+          telefone:header.findIndex(h=>h.includes("tel")||h.includes("fone")||h.includes("celular")),
+          cpf:     header.findIndex(h=>h.includes("cpf")||h.includes("documento")),
+          nasc:    header.findIndex(h=>h.includes("nasc")||h.includes("data")),
+          genero:  header.findIndex(h=>h.includes("gen")||h.includes("sexo")),
+        };
+        const log=[];let ok=0,err=0;
+        for(let i=1;i<linhas.length;i++){
+          const cols=linhas[i].split(/[,;\t]/);
+          const nome=idx.nome>=0?cols[idx.nome]?.trim():"";
+          if(!nome)continue;
+          try{
+            const email=idx.email>=0?(cols[idx.email]?.trim()||`sem-email-${Date.now()}@interno.local`):`sem-email-${Date.now()}@interno.local`;
+            await db.collection("clinica_pacientes").add({
+              nome,email,
+              telefone:idx.telefone>=0?cols[idx.telefone]?.trim()||"":"",
+              cpf:idx.cpf>=0?cols[idx.cpf]?.trim()||"":"",
+              dataNascimento:idx.nasc>=0?cols[idx.nasc]?.trim()||"":"",
+              genero:idx.genero>=0?cols[idx.genero]?.trim()||"Não informar":"Não informar",
+              status:"ativo",senha:"",objetivosTerapeuticos:"",observacoesClinicas:"",
+              origem:"importacao-excel",
+              createdAt:firebase.firestore.FieldValue.serverTimestamp()
+            });
+            ok++;log.push({tipo:"ok",msg:`✓ ${nome}`});
+          }catch(er){err++;log.push({tipo:"err",msg:`✗ ${nome}: ${er.message}`});}
+        }
+        log.unshift({tipo:"info",msg:`Concluído: ${ok} importados · ${err} erro(s)`});
+        setImportLog(log);
+      }catch(er){setImportLog([{tipo:"err",msg:"Erro ao ler arquivo: "+er.message}]);}
+      finally{setImportando(false);}
+    };
+    reader.readAsText(file,"UTF-8");
+  }
+
+  function baixarTemplate(){
+    const csv="Nome,Email,Telefone,CPF,DataNascimento,Genero\nJoão Silva,joao@email.com,(62) 99999-0000,000.000.000-00,01/01/1990,Masculino\n";
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="template-pacientes.csv";a.click();
+  }
 
   if(perfilAberto) {
     const pac = pacientes.find(p=>p.id===perfilAberto);
@@ -672,7 +729,14 @@ function Pacientes({ user }) {
           <div className="page-title">Pacientes</div>
           <div className="page-subtitle">{pacientes.filter(p=>p.status==="ativo").length} ativos · {pacientes.filter(p=>p.status==="alta").length} com alta · {pacientes.filter(p=>p.status==="inativo").length} inativos</div>
         </div>
-        <button className="btn btn-purple" onClick={abrirNovo}><Icon name="user-plus" size={16}/> Novo Paciente</button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>setModalImport(true)}><Icon name="upload" size={15}/> Importar Excel</button>
+          <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>{
+            const url=window.location.origin+window.location.pathname.replace("admin/index.html","").replace("admin/","")+"clinica/cadastro.html";
+            navigator.clipboard.writeText(url).then(()=>alert("Link copiado!\n\n"+url)).catch(()=>prompt("Copie o link:",url));
+          }}><Icon name="link" size={15}/> Link de Cadastro</button>
+          <button className="btn btn-purple" onClick={abrirNovo}><Icon name="user-plus" size={16}/> Novo Paciente</button>
+        </div>
       </div>
       <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome ou e-mail..." value={busca} onChange={e=>setBusca(e.target.value)}/>
@@ -726,6 +790,40 @@ function Pacientes({ user }) {
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
               <button className="btn btn-purple" onClick={salvar} disabled={salvando}>{salvando?"Salvando...":"Salvar"}</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Importar Excel */}
+      {modalImport&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>{setModalImport(false);setImportLog([]);}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:520}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Importar Pacientes (Excel/CSV)</div>
+              <button onClick={()=>{setModalImport(false);setImportLog([]);}} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{background:"#f9f5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:14,marginBottom:16,fontSize:13,lineHeight:1.7}}>
+              <strong>Colunas aceitas:</strong> Nome, Email, Telefone, CPF, DataNascimento, Genero<br/>
+              <strong>Formatos:</strong> .csv ou .txt com separador vírgula, ponto-e-vírgula ou tab<br/>
+              <strong>Encoding:</strong> UTF-8
+            </div>
+            <div style={{display:"flex",gap:10,marginBottom:16}}>
+              <button className="btn btn-outline" style={{flex:1,fontSize:13}} onClick={baixarTemplate}>
+                <Icon name="download" size={14}/> Baixar template CSV
+              </button>
+              <label style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"10px",borderRadius:10,border:"1.5px solid var(--purple)",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,fontWeight:600}}>
+                <Icon name="upload" size={14}/> Selecionar arquivo
+                <input type="file" accept=".csv,.txt,.xls,.xlsx" style={{display:"none"}} onChange={processarExcel}/>
+              </label>
+            </div>
+            {importLog.length>0&&(
+              <div style={{background:"#f9fafb",borderRadius:10,padding:14,maxHeight:240,overflowY:"auto",fontSize:12,lineHeight:2,border:"1px solid #e5e7eb"}}>
+                {importLog.map((l,i)=>(
+                  <div key={i} style={{color:l.tipo==="ok"?"#059669":l.tipo==="err"?"#dc2626":"#7B00C4",fontWeight:l.tipo==="info"?600:400}}>{l.msg}</div>
+                ))}
+              </div>
+            )}
+            {importando&&<div style={{textAlign:"center",padding:12,color:"var(--purple)",fontSize:13}}>Importando... aguarde</div>}
           </div>
         </div>
       )}
