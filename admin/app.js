@@ -2727,31 +2727,267 @@ function Configuracoes() {
 // AGENDA — Doctoralia integrado via iframe
 // ═══════════════════════════════════════════════════════
 function Agenda() {
+  const { data:pacientes } = useCollection("clinica_pacientes","nome");
+  const [sessoes, setSessoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [semanaOffset, setSemanaOffset] = useState(0);
+  const [form, setForm] = useState({pacienteId:"",data:"",hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});
+  const [salvando, setSalvando] = useState(false);
+
+  const TIPOS = ["Psicoterapia","Avaliacao Neuropsicologica","Avaliacao Psicologica","Terapia de Casais","Musicoterapia","Orientacao de Carreira","Retorno","Outro"];
+  const STATUS_CONFIG = {
+    agendado:  {label:"Agendado",   cor:"#7B00C4", bg:"#f5f0ff"},
+    confirmado:{label:"Confirmado", cor:"#059669", bg:"#d1fae5"},
+    realizado: {label:"Realizado",  cor:"#0891b2", bg:"#e0f2fe"},
+    cancelado: {label:"Cancelado",  cor:"#dc2626", bg:"#fee2e2"},
+    falta:     {label:"Falta",      cor:"#d97706", bg:"#fef3c7"},
+  };
+  const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_sessoes").orderBy("data").onSnapshot(snap=>{
+      setSessoes(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  // Calcular semana atual
+  function getInicioSemana(offset=0){
+    const hoje = new Date();
+    const dia = hoje.getDay();
+    const inicio = new Date(hoje);
+    inicio.setDate(hoje.getDate() - dia + (offset*7));
+    inicio.setHours(0,0,0,0);
+    return inicio;
+  }
+
+  function getDiasSemana(offset=0){
+    const inicio = getInicioSemana(offset);
+    return Array.from({length:7},(_,i)=>{
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate()+i);
+      return d;
+    });
+  }
+
+  const dias = getDiasSemana(semanaOffset);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  function formatData(d){
+    return d.toISOString().split("T")[0];
+  }
+
+  function sessoesNoDia(dia){
+    const str = formatData(dia);
+    return sessoes.filter(s=>s.data===str).sort((a,b)=>a.hora.localeCompare(b.hora));
+  }
+
+  async function salvar(){
+    if(!form.pacienteId||!form.data||!form.hora){alert("Preencha paciente, data e hora.");return;}
+    setSalvando(true);
+    const pac = pacientes.find(p=>p.id===form.pacienteId);
+    const dados = {...form, pacienteNome:pac?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    if(editando){
+      await db.collection("clinica_sessoes").doc(editando).update(dados);
+    } else {
+      await db.collection("clinica_sessoes").add({...dados, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModal(false);setEditando(null);setForm({pacienteId:"",data:"",hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setSalvando(false);
+  }
+
+  function abrirEditar(s){
+    setForm({pacienteId:s.pacienteId||"",data:s.data||"",hora:s.hora||"09:00",duracao:s.duracao||"50",tipo:s.tipo||"Psicoterapia",status:s.status||"agendado",obs:s.obs||""});
+    setEditando(s.id);setModal(true);
+  }
+
+  async function mudarStatus(id,status){
+    await db.collection("clinica_sessoes").doc(id).update({status});
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir esta sessão?"))return;
+    await db.collection("clinica_sessoes").doc(id).delete();
+  }
+
+  // Sessões de hoje para o painel
+  const sessoesHoje = sessoesNoDia(hoje);
+  const proximas = sessoes.filter(s=>{
+    const d = new Date(s.data+"T00:00:00");
+    return d >= hoje && s.status!=="cancelado" && s.status!=="realizado";
+  }).slice(0,5);
+
+  if(loading) return <Spinner/>;
+
   return (
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      {/* Header */}
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
           <div className="page-title">Agenda</div>
-          <div className="page-subtitle">Gerenciada pelo Doctoralia</div>
+          <div className="page-subtitle">{sessoes.filter(s=>s.status==="agendado"||s.status==="confirmado").length} sessões agendadas</div>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <a href="https://sa.doct.to/6xeof7yr" target="_blank" rel="noreferrer"
-            className="btn btn-ghost" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
-            <Icon name="external-link" size={14}/> Abrir em nova aba
-          </a>
           <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
-            className="btn btn-purple" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
-            <Icon name="settings" size={14}/> Gerenciar no Doctoralia
+            className="btn btn-ghost" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+            <Icon name="external-link" size={13}/> Doctoralia
           </a>
+          <button className="btn btn-purple" onClick={()=>{setForm({pacienteId:"",data:formatData(hoje),hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}>
+            <Icon name="plus" size={16}/> Nova Sessão
+          </button>
         </div>
       </div>
-      <div style={{borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
-        <iframe
-          src="https://sa.doct.to/6xeof7yr"
-          style={{width:"100%",height:"calc(100vh - 160px)",minHeight:650,border:"none",display:"block"}}
-          title="Agenda Dra. Lucia Kratz"
-        />
+
+      {/* Métricas rápidas */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+        {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(new Date().toISOString().slice(0,7))).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
+          <div key={l} style={{background:bg,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
+            <div style={{fontSize:24,fontWeight:800,color:cor}}>{n}</div>
+            <div style={{fontSize:12,color:cor,fontWeight:500}}>{l}</div>
+          </div>
+        ))}
       </div>
+
+      {/* Navegação semana */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+        <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(s=>s-1)}><Icon name="chevron-left" size={18}/></button>
+        <div style={{flex:1,textAlign:"center",fontWeight:600,fontSize:15}}>
+          {dias[0].toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})} — {dias[6].toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})}
+        </div>
+        <button className="btn btn-ghost" style={{padding:"8px 10px",fontSize:12}} onClick={()=>setSemanaOffset(0)}>Hoje</button>
+        <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(s=>s+1)}><Icon name="chevron-right" size={18}/></button>
+      </div>
+
+      {/* Grade semanal */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginBottom:24}}>
+        {dias.map((dia,i)=>{
+          const isHoje = formatData(dia)===formatData(hoje);
+          const sessDia = sessoesNoDia(dia);
+          const isPassado = dia < hoje;
+          return (
+            <div key={i} style={{minHeight:120,background:isHoje?"var(--purple-soft)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
+              {/* Cabeçalho do dia */}
+              <div style={{padding:"8px 8px 6px",borderBottom:"1px solid",borderColor:isHoje?"var(--purple)20":"var(--gray-100)",background:isHoje?"var(--purple)":"transparent",textAlign:"center"}}>
+                <div style={{fontSize:11,fontWeight:600,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-600)",textTransform:"uppercase"}}>{DIAS_SEMANA[i]}</div>
+                <div style={{fontSize:18,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)"}}>{dia.getDate()}</div>
+              </div>
+              {/* Sessões do dia */}
+              <div style={{padding:4,display:"flex",flexDirection:"column",gap:3}}>
+                {sessDia.map(s=>{
+                  const st = STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+                  return (
+                    <div key={s.id} onClick={()=>abrirEditar(s)}
+                      style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:4,padding:"3px 5px",cursor:"pointer",fontSize:10,lineHeight:1.3}}>
+                      <div style={{fontWeight:700,color:st.cor}}>{s.hora}</div>
+                      <div style={{color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.pacienteNome?.split(" ")[0]||"—"}</div>
+                      <div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>
+                    </div>
+                  );
+                })}
+                {/* Adicionar */}
+                <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+                  style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"4px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:2}}>
+                  + 
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Lista próximas sessões */}
+      {proximas.length>0&&(
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>
+            <Icon name="clock" size={16}/> Próximas Sessões
+          </div>
+          {proximas.map(s=>{
+            const st = STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+            const dataFmt = new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
+            return (
+              <div key={s.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--gray-100)"}}>
+                <div style={{width:48,height:48,borderRadius:10,background:st.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <div style={{fontSize:11,fontWeight:700,color:st.cor}}>{s.hora}</div>
+                  <div style={{fontSize:9,color:st.cor}}>{s.duracao}min</div>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:13}}>{s.pacienteNome}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{dataFmt} · {s.tipo}</div>
+                </div>
+                <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                  <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>{st.label}</span>
+                  <select value={s.status} onChange={e=>mudarStatus(s.id,e.target.value)}
+                    style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px 4px",cursor:"pointer",background:"white",color:"#374151"}}>
+                    {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                  <button onClick={()=>excluir(s.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:4}}><Icon name="trash-2" size={13}/></button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal nova/editar sessão */}
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:480}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editando?"Editar Sessão":"Nova Sessão"}</div>
+              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Paciente *</label>
+              <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
+                <option value="">Selecionar paciente...</option>
+                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:14}}>
+              <div className="form-group">
+                <label className="form-label">Data *</label>
+                <input className="form-input" type="date" value={form.data} onChange={e=>setForm({...form,data:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Hora *</label>
+                <input className="form-input" type="time" value={form.hora} onChange={e=>setForm({...form,hora:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Duração (min)</label>
+                <select className="form-input" value={form.duracao} onChange={e=>setForm({...form,duracao:e.target.value})}>
+                  {["30","45","50","60","90"].map(d=><option key={d} value={d}>{d} min</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+              <div className="form-group">
+                <label className="form-label">Tipo</label>
+                <select className="form-input" value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})}>
+                  {TIPOS.map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select className="form-input" value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
+                  {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Observações</label>
+              <textarea className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre a sessão..."/>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
+                <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
