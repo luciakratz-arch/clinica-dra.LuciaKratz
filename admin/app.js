@@ -129,8 +129,10 @@ function Login({ onLogin }) {
     <div className="login-page">
       <div className="login-left">
         <div className="login-logo">
-          <img src={LOGO_URL} alt="LK" style={{width:120,height:120,objectFit:"contain",borderRadius:0,border:"none",background:"transparent",boxShadow:"none",padding:0}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
-          <span className="login-logo-placeholder" style={{display:"none"}}>LK</span>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:4,filter:"drop-shadow(0 2px 8px rgba(0,0,0,0.2))"}}>🦋</div>
+            <div style={{fontFamily:"Dancing Script, cursive",fontSize:42,fontWeight:600,color:"white",lineHeight:1.1,textShadow:"0 2px 12px rgba(0,0,0,0.2)"}}>Lucia Kratz</div>
+          </div>
         </div>
         <div className="login-name">Dra. Lucia Kratz</div>
         <div className="login-subtitle">Sistema Administrativo</div>
