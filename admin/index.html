@@ -18,7 +18,14 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src="ferramentas.js"></script>
   <script type="text/babel" src="app.js" data-presets="react"></script>
+  <script>
+    // Carrega ferramentas.js somente após o app.js compilar
+    window.addEventListener("load", function() {
+      var s = document.createElement("script");
+      s.src = "ferramentas.js";
+      document.body.appendChild(s);
+    });
+  </script>
 </body>
 </html>
