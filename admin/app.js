@@ -16,7 +16,7 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const LOGO_URL = "../logo.png";
+const LOGO_URL = "../logo-transparente.png";
 const SENHA_ADMIN = "1234";
 const SENHA_PAULO = "paulo123";
 const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
@@ -129,10 +129,7 @@ function Login({ onLogin }) {
     <div className="login-page">
       <div className="login-left">
         <div className="login-logo">
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:44,lineHeight:1,marginBottom:8}}>🦋</div>
-            <div style={{fontFamily:"Dancing Script, cursive",fontSize:44,fontWeight:600,color:"white",lineHeight:1}}>Lucia Kratz</div>
-          </div>
+          <img src={LOGO_URL} alt="Lucia Kratz" style={{width:140,height:140,objectFit:"contain"}}/>
         </div>
         <div className="login-name">Dra. Lucia Kratz</div>
         <div className="login-subtitle">Sistema Administrativo</div>

@@ -100,12 +100,12 @@ html, body {
   border-radius: 0;
   background: transparent;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   backdrop-filter: none;
   border: none;
   overflow: visible;
 }
-.login-logo img { display: none; }
+.login-logo img { width: 140px; height: 140px; object-fit: contain; }
 .login-logo-placeholder {
   font-family: var(--font-display);
   font-size: 36px;
