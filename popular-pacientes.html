@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Popular Pacientes — Clínica Dra. Lucia Kratz</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:700px;margin:40px auto;padding:20px;background:#f9f5ff;}
+    h1{color:#7B00C4;font-size:22px;margin-bottom:6px;}
+    p{color:#555;font-size:14px;line-height:1.6;margin-bottom:16px;}
+    .btn{background:#7B00C4;color:white;border:none;padding:14px 32px;border-radius:10px;font-size:15px;cursor:pointer;}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;}
+    #log{margin-top:20px;background:white;border-radius:10px;padding:16px;font-size:13px;line-height:2.2;border:1px solid #e9d5ff;max-height:500px;overflow-y:auto;}
+    .ok{color:#059669;} .err{color:#dc2626;} .info{color:#7B00C4;font-weight:600;}
+  </style>
+</head>
+<body>
+<h1>🦋 Popular Pacientes</h1>
+<p>Cadastra os <strong>17 pacientes</strong> do Doctoralia na coleção <code>clinica_pacientes</code>.<br>
+CPF e data de nascimento ficam em branco para você completar depois no admin.</p>
+<button class="btn" id="btn" onclick="popular()">🚀 Cadastrar 17 Pacientes</button>
+<div id="log"></div>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+const db = firebase.firestore();
+
+const PACIENTES = [
+  {nome:"Ádila Marques Sampaio",              email:"adigalaxy1997@gmail.com",           telefone:"+55 74 99963 8323", genero:"Feminino"},
+  {nome:"Adriele Santana Paixão Guimarães",   email:"adriele.santana1989@gmail.com",     telefone:"+55 62 98221 6016", genero:"Feminino", cpf:"029.366.861-21"},
+  {nome:"Amanda Azevedo",                      email:"ama.azv@gmail.com",                 telefone:"+55 21 97063 7681", genero:"Feminino"},
+  {nome:"Ana Christina Andrade Kratz",         email:"",                                   telefone:"+55 62 99219 8989", genero:"Feminino"},
+  {nome:"Daniele Paixão Guimarães Dantas",    email:"",                                   telefone:"+55 62 98101 5794", genero:"Feminino"},
+  {nome:"Fernando Luiz Kratz",                email:"",                                   telefone:"+55 62 99244 1151", genero:"Masculino"},
+  {nome:"Heitor Santos Siqueira",             email:"leonoraespacomada@gmail.com",        telefone:"+55 62 99268 6948", genero:"Masculino"},
+  {nome:"João Gabriel Martins Garcez Lisboa", email:"meiryelly0@gmail.com",               telefone:"+55 62 98214 8211", genero:"Masculino"},
+  {nome:"Júnior Leonardo Da Silva",           email:"",                                   telefone:"+55 62 98161 8779", genero:"Masculino"},
+  {nome:"Laiz Vitória",                       email:"laiz.vitoria23@gmail.com",           telefone:"+55 62 99504 9630", genero:"Feminino"},
+  {nome:"Lucia Kratz",                        email:"luciakratz@gmail.com",               telefone:"+55 62 99154 6757", genero:"Feminino"},
+  {nome:"Luís Rodrigues",                     email:"",                                   telefone:"+55 92 98134 0622", genero:"Masculino"},
+  {nome:"Marcio Ronney Dantas De Sousa",      email:"marcioronney@gmail.com",             telefone:"+55 62 98101 5714", genero:"Masculino"},
+  {nome:"Maria Eduarda Paciente Orientação Vocacional", email:"mariaeduardamelloalves17@gmail.com", telefone:"+55 62 99504 9630", genero:"Feminino"},
+  {nome:"Max Igreja",                         email:"maxgpmx@gmail.com",                 telefone:"+55 11 95199 1446", genero:"Masculino", cpf:"258.521.668-39"},
+  {nome:"Ronei Morais Lisboa Junior",         email:"",                                   telefone:"+55 62 99275 9155", genero:"Masculino"},
+  {nome:"Salomão Phillipe R. Leão",           email:"famile.leo@gmail.com",               telefone:"+55 62 99319 5195", genero:"Masculino"},
+];
+
+function log(html){
+  const el=document.getElementById("log");
+  el.innerHTML+=html;
+  el.scrollTop=el.scrollHeight;
+}
+
+async function popular(){
+  const btn=document.getElementById("btn");
+  btn.disabled=true;btn.textContent="Cadastrando...";
+  log('<div class="info">▶ Iniciando cadastro dos pacientes...</div>');
+
+  // Verifica duplicatas por email/nome
+  const snap = await db.collection("clinica_pacientes").get();
+  const existentes = snap.docs.map(d=>d.data().nome?.toLowerCase());
+
+  let ok=0,skip=0,err=0;
+  for(const p of PACIENTES){
+    if(existentes.includes(p.nome.toLowerCase())){
+      log(`<div style="color:#9ca3af">⟳ Já existe: ${p.nome}</div>`);
+      skip++;continue;
+    }
+    try{
+      const email = p.email||`sem-email.${Date.now()}@interno.local`;
+      await db.collection("clinica_pacientes").add({
+        nome:p.nome,
+        email,
+        telefone:p.telefone||"",
+        genero:p.genero||"Não informar",
+        cpf:p.cpf||"",
+        dataNascimento:"",
+        status:"ativo",
+        objetivosTerapeuticos:"",
+        observacoesClinicas:"",
+        senha:"",
+        origem:"doctoralia",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      ok++;
+      log(`<div class="ok">✓ ${p.nome}${p.email?"":" (sem e-mail)"}</div>`);
+    }catch(e){
+      err++;
+      log(`<div class="err">✗ ${p.nome}: ${e.message}</div>`);
+    }
+  }
+  btn.textContent=`✅ Concluído! ${ok} cadastrados · ${skip} já existiam · ${err} erro(s)`;
+  log(`<div class="info" style="margin-top:12px">
+    ✅ Pronto! Acesse o admin → Pacientes para ver e completar CPF e data de nascimento.<br>
+    🗑️ Apague este arquivo do repositório depois.
+  </div>`);
+}
+</script>
+</body>
+</html>
