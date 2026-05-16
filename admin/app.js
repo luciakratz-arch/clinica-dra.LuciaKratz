@@ -2728,7 +2728,7 @@ function Configuracoes() {
 // ═══════════════════════════════════════════════════════
 function Agenda() {
   const [iframeOk, setIframeOk] = useState(true);
-  const DOCTORALIA_URL = "https://www.doctoralia.com.br/pro/calendar";
+  const DOCTORALIA_URL = "https://docplanner.doctoralia.com.br/#/calendar/week";
 
   return (
     <div>
@@ -2737,7 +2737,7 @@ function Agenda() {
           <div className="page-title">Agenda</div>
           <div className="page-subtitle">Gerenciada pelo Doctoralia</div>
         </div>
-        <a href="https://www.doctoralia.com.br/pro/calendar" target="_blank" rel="noreferrer"
+        <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
           className="btn btn-outline" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
           <Icon name="external-link" size={14}/> Abrir em nova aba
         </a>
@@ -2762,7 +2762,7 @@ function Agenda() {
           <p style={{fontSize:14,color:"var(--text-muted)",marginBottom:24,lineHeight:1.7,maxWidth:400,margin:"0 auto 24px"}}>
             Por segurança, o Doctoralia bloqueia a abertura dentro de outros sistemas. Clique abaixo para acessar sua agenda diretamente.
           </p>
-          <a href="https://www.doctoralia.com.br/pro/calendar" target="_blank" rel="noreferrer"
+          <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
             className="btn btn-purple" style={{textDecoration:"none",display:"inline-flex",alignItems:"center",gap:8,fontSize:15,padding:"14px 32px"}}>
             <Icon name="calendar" size={18}/> Abrir Agenda no Doctoralia
           </a>
