@@ -200,7 +200,7 @@ const NAV_PSICOLOGA = [
   {id:"pacientes",   label:"Pacientes",          icon:"users"},
   {id:"alunos",      label:"Alunos",             icon:"graduation-cap"},
   {id:"casais",      label:"Terapia de Casais",  icon:"heart"},
-  {id:"recursos",    label:"Recursos Terapeuticos", icon:"tool"},
+  {id:"recursos",    label:"Recursos Terapeuticos", icon:"wrench"},
   {id:"laudos",      label:"Laudos",             icon:"file-text"},
   {id:"agenda",      label:"Agenda",             icon:"calendar"},
   {id:"fin-clinica", label:"Fin. Clinica",       icon:"dollar-sign"},
