@@ -2723,6 +2723,58 @@ function Configuracoes() {
   );
 }
 
+// ═══════════════════════════════════════════════════════
+// AGENDA — Doctoralia integrado via iframe
+// ═══════════════════════════════════════════════════════
+function Agenda() {
+  const [iframeOk, setIframeOk] = useState(true);
+  const DOCTORALIA_URL = "https://www.doctoralia.com.br/pro/calendar";
+
+  return (
+    <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+        <div>
+          <div className="page-title">Agenda</div>
+          <div className="page-subtitle">Gerenciada pelo Doctoralia</div>
+        </div>
+        <a href="https://www.doctoralia.com.br/pro/calendar" target="_blank" rel="noreferrer"
+          className="btn btn-outline" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+          <Icon name="external-link" size={14}/> Abrir em nova aba
+        </a>
+      </div>
+
+      {iframeOk ? (
+        <div style={{borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",background:"white",boxShadow:"0 2px 12px rgba(0,0,0,0.06)"}}>
+          <iframe
+            src={DOCTORALIA_URL}
+            style={{width:"100%",height:"calc(100vh - 160px)",minHeight:600,border:"none",display:"block"}}
+            title="Agenda Doctoralia"
+            onError={()=>setIframeOk(false)}
+          />
+        </div>
+      ) : (
+        /* Fallback se o iframe for bloqueado */
+        <div className="card" style={{textAlign:"center",padding:60}}>
+          <div style={{fontSize:48,marginBottom:16}}>📅</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>
+            O Doctoralia não permite visualização incorporada
+          </div>
+          <p style={{fontSize:14,color:"var(--text-muted)",marginBottom:24,lineHeight:1.7,maxWidth:400,margin:"0 auto 24px"}}>
+            Por segurança, o Doctoralia bloqueia a abertura dentro de outros sistemas. Clique abaixo para acessar sua agenda diretamente.
+          </p>
+          <a href="https://www.doctoralia.com.br/pro/calendar" target="_blank" rel="noreferrer"
+            className="btn btn-purple" style={{textDecoration:"none",display:"inline-flex",alignItems:"center",gap:8,fontSize:15,padding:"14px 32px"}}>
+            <Icon name="calendar" size={18}/> Abrir Agenda no Doctoralia
+          </a>
+          <div style={{marginTop:20,fontSize:12,color:"var(--text-muted)"}}>
+            Abre em nova aba — você pode manter as duas janelas abertas lado a lado
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // APP
 function App() {
   const [user, setUser] = useState(null);
@@ -2741,10 +2793,12 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="casais"      &&<TerapiaCasais/>}
         {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos/>}
         {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
+        {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
         {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
+        {user.tipo==="secretaria" &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={true}/>}
       </div>
