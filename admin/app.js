@@ -2417,16 +2417,15 @@ function Laudos() {
   const [laudos, setLaudos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({titulo:"",pacienteId:"",tipo:"Avaliacao Neuropsicologica",status:"rascunho",conteudo:""});
+  const [form, setForm] = useState({tipo:"Avaliacao Neuropsicologica",pacienteId:"",linkDrive:"",observacoes:""});
   const [salvando, setSalvando] = useState(false);
-  const [laudoAberto, setLaudoAberto] = useState(null);
+  const [enviando, setEnviando] = useState(null);
 
   const TIPOS_LAUDO = ["Avaliacao Neuropsicologica","Avaliacao Psicologica","Avaliacao Infantil","Avaliacao de TDAH","Avaliacao de Altas Habilidades","Pericia Psicologica","Demandas Judiciais","Orientacao de Carreira","Relatorio de Acompanhamento","Outro"];
-
   const STATUS_CONFIG = {
-    rascunho: {label:"Rascunho", bg:"#fef3c7", cor:"#b45309"},
-    assinado: {label:"Assinado", bg:"#d1fae5", cor:"#065f46"},
-    finalizado:{label:"Finalizado",bg:"#dbeafe",cor:"#1e40af"},
+    rascunho: {label:"Rascunho",  bg:"#fef3c7", cor:"#b45309", icon:"edit-3"},
+    enviado:  {label:"Enviado",   bg:"#d1fae5", cor:"#065f46", icon:"send"},
+    arquivado:{label:"Arquivado", bg:"#f3f4f6", cor:"#6b7280", icon:"archive"},
   };
 
   useEffect(()=>{
@@ -2438,86 +2437,52 @@ function Laudos() {
   },[]);
 
   async function salvar(){
-    if(!form.titulo){alert("Titulo obrigatorio.");return;}
+    if(!form.tipo||!form.pacienteId||!form.linkDrive){alert("Selecione o tipo, o paciente e cole o link do PDF.");return;}
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===form.pacienteId);
+    let link = form.linkDrive.trim();
+    const m = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(m) link = `https://drive.google.com/file/d/${m[1]}/view`;
     await db.collection("clinica_laudos").add({
-      ...form,
-      pacienteNome:pac?.nome||"",
+      tipo:form.tipo, titulo:form.tipo+" — "+(pac?.nome||""),
+      pacienteId:form.pacienteId, pacienteNome:pac?.nome||"",
+      linkDrive:link, observacoes:form.observacoes,
+      status:"rascunho", enviadoEm:null,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    setModal(false);setForm({titulo:"",pacienteId:"",tipo:"Avaliacao Neuropsicologica",status:"rascunho",conteudo:""});setSalvando(false);
+    setModal(false);setForm({tipo:"Avaliacao Neuropsicologica",pacienteId:"",linkDrive:"",observacoes:""});setSalvando(false);
   }
 
-  async function excluir(id){if(!confirm("Excluir laudo?"))return;await db.collection("clinica_laudos").doc(id).delete();}
-
-  async function mudarStatus(id,novoStatus){
-    await db.collection("clinica_laudos").doc(id).update({status:novoStatus,assinadoEm:novoStatus==="assinado"?new Date().toISOString():null});
-    setLaudoAberto(l=>l?{...l,status:novoStatus}:null);
+  async function enviarParaPaciente(laudo){
+    if(!confirm(`Enviar "${laudo.tipo}" para ${laudo.pacienteNome}?\n\nO paciente verá o documento no portal dele.`))return;
+    setEnviando(laudo.id);
+    await db.collection("clinica_laudos").doc(laudo.id).update({status:"enviado",enviadoEm:new Date().toISOString()});
+    setEnviando(null);
   }
 
-  const totalRascunho = laudos.filter(l=>l.status==="rascunho").length;
-  const totalAssinado = laudos.filter(l=>l.status==="assinado").length;
-  const totalFinalizado = laudos.filter(l=>l.status==="finalizado").length;
+  async function excluir(id){if(!confirm("Excluir laudo permanentemente?"))return;await db.collection("clinica_laudos").doc(id).delete();}
+  async function arquivar(id){await db.collection("clinica_laudos").doc(id).update({status:"arquivado"});}
 
   if(loading) return <Spinner/>;
 
-  // Tela de edição do laudo
-  if(laudoAberto){
-    const st = STATUS_CONFIG[laudoAberto.status]||STATUS_CONFIG.rascunho;
-    return (
-      <div>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
-          <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setLaudoAberto(null)}><Icon name="arrow-left" size={16}/></button>
-          <div style={{flex:1}}>
-            <div className="page-title" style={{fontSize:22}}>{laudoAberto.titulo}</div>
-            <div style={{fontSize:13,color:"var(--text-muted)"}}>{laudoAberto.pacienteNome} · {laudoAberto.tipo}</div>
-          </div>
-          <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"4px 14px",fontSize:13,fontWeight:600}}>{st.label}</span>
-        </div>
-        <div className="card" style={{marginBottom:16}}>
-          <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mudar status:</span>
-            {Object.entries(STATUS_CONFIG).map(([k,v])=>(
-              <button key={k} className={"btn "+(laudoAberto.status===k?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>mudarStatus(laudoAberto.id,k)}>{v.label}</button>
-            ))}
-          </div>
-        </div>
-        <div className="card">
-          <label className="form-label" style={{marginBottom:8,display:"block"}}>Conteudo do Laudo</label>
-          <textarea
-            className="form-input"
-            rows={20}
-            value={laudoAberto.conteudo||""}
-            onChange={async e=>{
-              const novoConteudo = e.target.value;
-              setLaudoAberto(l=>({...l,conteudo:novoConteudo}));
-              await db.collection("clinica_laudos").doc(laudoAberto.id).update({conteudo:novoConteudo});
-            }}
-            placeholder="Digite o conteudo do laudo aqui..."
-            style={{fontSize:14,lineHeight:1.7,minHeight:400}}
-          />
-          <div style={{marginTop:10,fontSize:12,color:"var(--text-muted)"}}>Autosalvo automaticamente.</div>
-        </div>
-      </div>
-    );
-  }
+  const totalEnviado = laudos.filter(l=>l.status==="enviado").length;
+  const totalRascunho = laudos.filter(l=>l.status==="rascunho").length;
 
   return (
     <div>
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
-          <div className="page-title">Laudos Neuropsicologicos</div>
-          <div className="page-subtitle">{laudos.length} laudo(s)</div>
+          <div className="page-title">Laudos</div>
+          <div className="page-subtitle">{laudos.length} laudo(s) · {totalEnviado} enviado(s) ao paciente</div>
         </div>
         <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Novo Laudo</button>
       </div>
 
-      <div className="metrics-grid" style={{gridTemplateColumns:"repeat(3,1fr)",marginBottom:24}}>
-        {[["rascunho","Rascunho",totalRascunho],["assinado","Assinado",totalAssinado],["finalizado","Finalizado",totalFinalizado]].map(([k,l,n])=>(
-          <div key={k} className="metric-card" style={{textAlign:"center"}}>
-            <div className="metric-value" style={{fontSize:28}}>{n}</div>
-            <div className="metric-label">{l}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24}}>
+        {[["Rascunho",totalRascunho,"#b45309","#fef3c7"],["Enviado ao Paciente",totalEnviado,"#065f46","#d1fae5"],["Total",laudos.length,"#7B00C4","var(--purple-soft)"]].map(([l,n,cor,bg])=>(
+          <div key={l} className="metric-card" style={{textAlign:"center",background:bg}}>
+            <div className="metric-value" style={{fontSize:28,color:cor}}>{n}</div>
+            <div className="metric-label" style={{color:cor}}>{l}</div>
           </div>
         ))}
       </div>
@@ -2526,34 +2491,56 @@ function Laudos() {
         <div className="card" style={{textAlign:"center",padding:60,color:"var(--text-muted)"}}>
           <Icon name="file-text" size={48}/>
           <div style={{marginTop:12,fontWeight:500}}>Nenhum laudo criado ainda</div>
-          <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal(true)}><Icon name="plus" size={14}/> Criar primeiro laudo</button>
+          <p style={{fontSize:13,marginTop:8,marginBottom:20,color:"var(--text-muted)"}}>Crie o laudo no Word/Google Docs, salve como PDF no Drive, cole o link aqui e envie ao paciente.</p>
+          <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={14}/> Criar primeiro laudo</button>
         </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {laudos.map(l=>{
             const st = STATUS_CONFIG[l.status]||STATUS_CONFIG.rascunho;
             return (
-              <div key={l.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",cursor:"pointer"}}
-                onClick={()=>setLaudoAberto(l)}
-                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 20px rgba(123,0,196,0.12)"}
-                onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
-                <div style={{width:42,height:42,background:"var(--purple-soft)",borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <Icon name="file-text" size={18}/>
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <span style={{fontWeight:600}}>{l.titulo}</span>
-                    <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{st.label}</span>
+              <div key={l.id} className="card" style={{padding:"18px 20px"}}>
+                <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
+                  <div style={{width:44,height:44,borderRadius:12,background:st.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Icon name={st.icon} size={20}/>
                   </div>
-                  <div style={{fontSize:13,color:"var(--text-muted)",display:"flex",gap:10,marginTop:2}}>
-                    <span>{l.pacienteNome||"—"}</span>
-                    <span>{l.tipo}</span>
-                    {l.createdAt?.seconds&&<span>{new Date(l.createdAt.seconds*1000).toLocaleDateString("pt-BR")}</span>}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                      <span style={{fontWeight:700,fontSize:15}}>{l.tipo}</span>
+                      <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{st.label}</span>
+                    </div>
+                    <div style={{fontSize:13,color:"var(--text-muted)",display:"flex",gap:12,flexWrap:"wrap"}}>
+                      <span>👤 {l.pacienteNome||"—"}</span>
+                      {l.createdAt?.seconds&&<span>📅 {new Date(l.createdAt.seconds*1000).toLocaleDateString("pt-BR")}</span>}
+                      {l.enviadoEm&&<span style={{color:"#059669",fontWeight:600}}>✉ Enviado em {new Date(l.enviadoEm).toLocaleDateString("pt-BR")}</span>}
+                    </div>
+                    {l.observacoes&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:4,fontStyle:"italic"}}>{l.observacoes}</div>}
                   </div>
                 </div>
-                <div style={{display:"flex",gap:6}}>
-                  <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={e=>{e.stopPropagation();excluir(l.id);}}><Icon name="trash-2" size={13}/></button>
-                  <Icon name="chevron-right" size={16}/>
+                <div style={{display:"flex",gap:8,marginTop:14,flexWrap:"wrap",borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
+                  {l.linkDrive&&(
+                    <a href={l.linkDrive} target="_blank" rel="noreferrer" className="btn btn-outline" style={{fontSize:12,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+                      <Icon name="external-link" size={13}/> Ver PDF
+                    </a>
+                  )}
+                  {l.status==="rascunho"&&(
+                    <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>enviarParaPaciente(l)} disabled={enviando===l.id}>
+                      <Icon name="send" size={13}/> {enviando===l.id?"Enviando...":"Enviar ao Paciente"}
+                    </button>
+                  )}
+                  {l.status==="enviado"&&(
+                    <div style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#059669",fontWeight:600}}>
+                      <Icon name="check-circle" size={14}/> Disponível no portal do paciente
+                    </div>
+                  )}
+                  {l.status!=="arquivado"&&(
+                    <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>arquivar(l.id)}>
+                      <Icon name="archive" size={13}/> Arquivar
+                    </button>
+                  )}
+                  <button className="btn btn-ghost" style={{fontSize:12,color:"var(--danger)",marginLeft:"auto"}} onClick={()=>excluir(l.id)}>
+                    <Icon name="trash-2" size={13}/>
+                  </button>
                 </div>
               </div>
             );
@@ -2569,25 +2556,30 @@ function Laudos() {
               <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
             </div>
             <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Titulo do Laudo *</label>
-              <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Ex: Avaliacao Neuropsicologica — Nome do Paciente" autoFocus/>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Paciente</label>
-              <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
-                <option value="">Selecionar paciente...</option>
-                {pacientes.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
-              </select>
-            </div>
-            <div className="form-group" style={{marginBottom:20}}>
-              <label className="form-label">Tipo de Laudo</label>
+              <label className="form-label">Tipo de Laudo *</label>
               <select className="form-input" value={form.tipo} onChange={e=>setForm({...form,tipo:e.target.value})}>
                 {TIPOS_LAUDO.map(t=><option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Paciente *</label>
+              <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
+                <option value="">Selecionar paciente...</option>
+                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Link do PDF (Google Drive) *</label>
+              <input className="form-input" value={form.linkDrive} onChange={e=>setForm({...form,linkDrive:e.target.value})} placeholder="https://drive.google.com/file/d/..."/>
+              <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>No Drive: botão direito no arquivo → "Obter link" → cole aqui</div>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Observações internas (opcional)</label>
+              <textarea className="form-input" rows={2} value={form.observacoes} onChange={e=>setForm({...form,observacoes:e.target.value})} placeholder="Notas internas sobre este laudo..."/>
+            </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>{salvando?"Criando...":"Criar Laudo"}</button>
+              <button className="btn btn-purple" onClick={salvar} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Laudo"}</button>
             </div>
           </div>
         </div>
@@ -2595,6 +2587,7 @@ function Laudos() {
     </div>
   );
 }
+
 
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
