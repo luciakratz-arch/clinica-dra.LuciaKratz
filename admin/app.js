@@ -1120,7 +1120,9 @@ function FinanceiroClinica() {
   const [pacotes, setPacotes] = useState([]);
   const [sessoes, setSessoes] = useState([]);
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
-  const [modal, setModal] = useState(false); // false | "avulso" | "pacote"
+  const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
+  const [periodoCard, setPeriodoCard] = useState("mes"); // "mes" | "ano"
+  const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [pacoteSelecionado, setPacoteSelecionado] = useState(null);
@@ -1143,12 +1145,21 @@ function FinanceiroClinica() {
 
   const getPacNome = id=>pacientes.find(p=>p.id===id)?.nome||"—";
 
-  // Agrupa lançamentos por mês
-  const mesesDisp = [...new Set(lancamentos.map(l=>l.data?.slice(0,7)).filter(Boolean))].sort().reverse();
-  if(!mesesDisp.includes(mesFiltro)) mesesDisp.unshift(mesFiltro);
+  // Anos disponíveis
+  const anosDisp = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].sort().reverse();
+  if(!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
+
+  // Lançamentos filtrados por mês
+  const mesesDisp = [...new Set(lancamentos.filter(l=>l.data?.startsWith(anoFiltro)).map(l=>l.data?.slice(0,7)).filter(Boolean))].sort().reverse();
+  if(!mesesDisp.includes(mesFiltro)&&mesFiltro.startsWith(anoFiltro)) mesesDisp.unshift(mesFiltro);
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
+  const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
+
+  // Métricas por período selecionado nos cards
+  const lancPeriodo = periodoCard==="mes"?lancMes:lancAno;
+  const totalRecebidoPeriodo = lancPeriodo.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
   const totalRecebidoMes = lancMes.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-  const totalPendente = lancamentos.filter(l=>l.status==="pendente").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+  const totalPendente = lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
 
   // Salvar lançamento avulso
   async function salvarAvulso(){
@@ -1334,18 +1345,43 @@ function FinanceiroClinica() {
         <button className="btn btn-purple" onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
       </div>
 
-      {/* Métricas */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
-        {[["Recebido (total)","#059669","#d1fae5",totalRecebido.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})],
-          ["Pendente","#d97706","#fef3c7",totalPendente.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})],
-          ["Pacotes ativos","#7B00C4","var(--purple-soft)",pacotes.filter(p=>p.status==="ativo").length],
-          ["Lançamentos (mês)","#0891b2","#e0f2fe",lancMes.length]
-        ].map(([l,cor,bg,v])=>(
-          <div key={l} style={{background:bg,borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
-            <div style={{fontSize:20,fontWeight:800,color:cor}}>{v}</div>
-            <div style={{fontSize:12,color:cor,fontWeight:500,marginTop:2}}>{l}</div>
-          </div>
+      {/* Seletor de Ano */}
+      <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
+        <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)"}}>Ano:</span>
+        {anosDisp.map(a=>(
+          <button key={a} onClick={()=>{setAnoFiltro(a);setMesFiltro(a+"-"+new Date().toISOString().slice(5,7));}}
+            style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+            {a}
+          </button>
         ))}
+      </div>
+
+      {/* Métricas clicáveis */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+        {/* Card Recebido — clicável mês/ano */}
+        <div onClick={()=>setPeriodoCard(p=>p==="mes"?"ano":"mes")}
+          style={{background:periodoCard==="mes"?"#d1fae5":"#a7f3d0",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:periodoCard==="mes"?"#6ee7b7":"#059669",transition:"all .2s",position:"relative"}}>
+          <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"#059669",fontWeight:600,background:"white",borderRadius:10,padding:"1px 6px"}}>
+            {periodoCard==="mes"?"mês ↕":"ano ↕"}
+          </div>
+          <div style={{fontSize:20,fontWeight:800,color:"#059669"}}>{totalRecebidoPeriodo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+          <div style={{fontSize:12,color:"#059669",fontWeight:500,marginTop:2}}>Recebido ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+        </div>
+        {/* Card Pendente */}
+        <div style={{background:"#fef3c7",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{totalPendente.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+          <div style={{fontSize:12,color:"#d97706",fontWeight:500,marginTop:2}}>Pendente ({anoFiltro})</div>
+        </div>
+        {/* Card Pacotes */}
+        <div style={{background:"var(--purple-soft)",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:800,color:"var(--purple)"}}>{pacotes.filter(p=>p.status==="ativo").length}</div>
+          <div style={{fontSize:12,color:"var(--purple)",fontWeight:500,marginTop:2}}>Pacotes ativos</div>
+        </div>
+        {/* Card Lançamentos */}
+        <div style={{background:"#e0f2fe",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancPeriodo.length}</div>
+          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+        </div>
       </div>
 
       {/* Abas */}
@@ -1360,10 +1396,10 @@ function FinanceiroClinica() {
       {/* ABA LANÇAMENTOS */}
       {aba==="lancamentos"&&(
         <div>
-          {/* Filtro mês */}
+          {/* Filtro mês com ano já selecionado acima */}
           <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês:</span>
-            {mesesDisp.slice(0,18).map(m=>(
+            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês ({anoFiltro}):</span>
+            {mesesDisp.slice(0,12).map(m=>(
               <button key={m} onClick={()=>setMesFiltro(m)}
                 style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro===m?"var(--purple)":"#e5e7eb",background:mesFiltro===m?"var(--purple)":"white",color:mesFiltro===m?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
                 {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
