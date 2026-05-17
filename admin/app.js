@@ -259,7 +259,7 @@ function Sidebar({ user, tab, setTab, onLogout }) {
 
 // DASHBOARD
 function DashboardAdmin({ user }) {
-  const { data:pacientes } = useCollection("clinica_pacientes");
+  const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const ativos = pacientes.filter(p=>p.status==="ativo").length;
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   return (
@@ -709,7 +709,7 @@ function Pacientes({ user }) {
     const ok=filtro==="todos"||p.status===filtro;
     const bk=!busca||p.nome?.toLowerCase().includes(busca.toLowerCase())||p.email?.toLowerCase().includes(busca.toLowerCase());
     return ok&&bk;
-  });
+  }).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
 
   function abrirNovo(){setForm({nome:"",email:"",telefone:"",status:"ativo",genero:"",dataNasc:"",cpf:"",objetivos:""});setModal(true);}
   async function salvar(){
@@ -1010,135 +1010,416 @@ function FinanceiroClinica() {
   }
 
   // ── Relatório de frequência ──
-  function RelatorioFrequencia({pacote}){
-    const sessPac=sessoes.filter(s=>s.pacoteId===pacote.id).sort((a,b)=>a.data?.localeCompare(b.data));
-    const pac=pacientes.find(p=>p.id===pacote.pacienteId);
-    const STATUS_S={agendado:{l:"Agendado",c:"#7B00C4"},confirmado:{l:"Confirmado",c:"#059669"},realizado:{l:"✓ Realizado",c:"#059669"},cancelado:{l:"Cancelado",c:"#dc2626"},falta:{l:"Falta",c:"#d97706"},remarcado:{l:"Remarcado",c:"#0891b2"}};
-    const lancPac=lancamentos.find(l=>l.pacoteId===pacote.id);
+  function RelatorioFrequencia({pacienteId}){
+    const pac = pacientes.find(p=>p.id===pacienteId);
+    const sessPac = sessoes.filter(s=>s.pacienteId===pacienteId).sort((a,b)=>a.data?.localeCompare(b.data));
+    const pacotesPac = pacotes.filter(p=>p.pacienteId===pacienteId);
+    const [mesFiltro, setMesFiltro] = useState("todos");
+    const [accordionAberto, setAccordionAberto] = useState({});
+
+    const STATUS_S={
+      agendado:  {l:"Agendado",   c:"#7B00C4"},
+      confirmado:{l:"Confirmado", c:"#059669"},
+      realizado: {l:"✓ Realizado",c:"#059669"},
+      cancelado: {l:"Cancelado",  c:"#dc2626"},
+      falta:     {l:"Falta",      c:"#d97706"},
+      remarcado: {l:"Remarcado",  c:"#0891b2"},
+    };
+
+    // Agrupa por mês
+    const porMes = sessPac.reduce((acc,s)=>{
+      const mes = s.data?.slice(0,7)||"sem-data";
+      if(!acc[mes]) acc[mes]=[];
+      acc[mes].push(s);
+      return acc;
+    },{});
+    const meses = Object.keys(porMes).sort();
+
+    // Totais gerais
+    const totalRecebido = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0)*(s.pagamento==="pago"?1:0),0);
+    const totalSaldo = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>{
+      const esperado=parseFloat(s.valorSessao)||0;
+      const pago=parseFloat(s.valorPago)||esperado;
+      return a+(pago-esperado);
+    },0);
+    const anoAtual = new Date().getFullYear();
+    const totalAno = sessPac.filter(s=>s.data?.startsWith(anoAtual+"")&&s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
+
+    // Sessões do filtro
+    const mesesFiltrados = mesFiltro==="todos"?meses:[mesFiltro];
+
+    async function atualizarPagamento(s, formaPag, valorPago){
+      const pago = formaPag!==""&&formaPag!=="pendente";
+      const vPago = parseFloat(valorPago)||(parseFloat(s.valorSessao)||0);
+      await atualizarSessao(s.id,{
+        formaPagamento:formaPag,
+        pagamento:pago?"pago":"pendente",
+        valorPago:pago?vPago:0,
+        dataPagamento:pago&&!s.dataPagamento?new Date().toISOString().slice(0,10):s.dataPagamento
+      });
+      // Integra com lançamentos — cria ou atualiza lançamento avulso da sessão
+      if(pago){
+        const lancExist = lancamentos.find(l=>l.sessaoId===s.id);
+        if(!lancExist){
+          await db.collection("clinica_lancamentos").add({
+            tipo_lancamento:"sessao",sessaoId:s.id,
+            pacienteId:s.pacienteId,pacienteNome:s.pacienteNome||"",
+            tipo:"Sessão #"+(s.numSessao||""),
+            valor:vPago,data:s.dataPagamento||new Date().toISOString().slice(0,10),
+            formaPag,status:"recebido",
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } else {
+          await db.collection("clinica_lancamentos").doc(lancExist.id).update({valor:vPago,formaPag,status:"recebido"});
+        }
+      }
+    }
+
     return(
       <div>
-        <button className="btn btn-ghost" style={{marginBottom:16}} onClick={()=>setPacoteSelecionado(null)}>← Voltar</button>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" onClick={()=>setPacoteSelecionado(null)}>← Voltar</button>
+          <div style={{flex:1,fontFamily:"var(--font-display)",fontSize:18,fontWeight:600}}>{pac?.nome}</div>
+          <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>window.print()}>
+            <Icon name="printer" size={14}/> Imprimir
+          </button>
+        </div>
+
+        {/* Cabeçalho */}
         <div style={{background:"white",borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",marginBottom:16}}>
           <div style={{background:"var(--purple)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div style={{fontFamily:"Dancing Script, cursive",fontSize:22,color:"white",fontWeight:600}}>Controle de Atendimento Terapêutico</div>
             <img src="../logo-transparente.png" style={{height:36,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
           </div>
-          <div style={{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
-            {[["Nome",pac?.nome||"—"],["Início",pacote.dataInicio?new Date(pacote.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"],["Recorrência",pacote.recorrencia],["Total Sessões",pacote.totalSessoes],["Valor/Sessão",(pacote.valorSessao||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})],["Total Pacote",(pacote.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})]].map(([l,v])=>(
-              <div key={l}><div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase"}}>{l}</div><div style={{fontWeight:600}}>{v}</div></div>
+          <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,borderBottom:"1px solid var(--gray-100)"}}>
+            {[["Nome",pac?.nome||"—"],["Início",pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"],["Horário",pacotesPac[0]?.horario||"—"],["Recorrência",pacotesPac[0]?.recorrencia||"—"]].map(([l,v])=>(
+              <div key={l}><div style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>{l}</div><div style={{fontWeight:600,fontSize:13}}>{v}</div></div>
             ))}
           </div>
-          {/* Status de pagamento do pacote */}
-          {lancPac&&(
-            <div style={{padding:"10px 20px",borderTop:"1px solid var(--gray-100)",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-              <span style={{fontSize:13,fontWeight:600}}>Pagamento do Pacote:</span>
-              <span style={{background:lancPac.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}}>{lancPac.status==="recebido"?"✓ Pago":"Pendente"}</span>
-              {lancPac.status!=="recebido"&&(
-                <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  <select style={{fontSize:12,border:"1px solid #e5e7eb",borderRadius:6,padding:"4px 8px",cursor:"pointer"}} id="formaPagPacote">
-                    <option value="">Forma de pagamento...</option>
-                    {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <button className="btn btn-purple" style={{fontSize:12,padding:"5px 14px"}} onClick={()=>{
-                    const el=document.getElementById("formaPagPacote");
-                    if(!el.value){alert("Selecione a forma de pagamento.");return;}
-                    marcarPacotePago(pacote.id,el.value);
-                  }}>✓ Marcar Tudo Pago</button>
+          {/* Resumo por período selecionado */}
+          <div style={{padding:"12px 20px",display:"flex",gap:20,flexWrap:"wrap",background:"var(--purple-soft)",borderBottom:"1px solid var(--gray-200)"}}>
+            {(()=>{
+              const sessFiltro = mesFiltro==="todos"?sessPac:sessPac.filter(s=>s.data?.startsWith(mesFiltro));
+              const recFiltro = sessFiltro.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
+              const pendFiltro = sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+              return [
+                ["Sessões",sessFiltro.length,"#7B00C4"],
+                ["Realizadas",sessFiltro.filter(s=>s.status==="realizado").length,"#059669"],
+                ["Pagas",sessFiltro.filter(s=>s.pagamento==="pago").length,"#059669"],
+                ["Pendentes",sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length,"#d97706"],
+                ["Faltas",sessFiltro.filter(s=>s.status==="falta").length,"#dc2626"],
+                ["Recebido",recFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#059669"],
+                ["A Receber",pendFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#d97706"],
+                ["Total "+anoAtual,totalAno.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#0891b2"],
+              ].map(([l,v,c])=>(
+                <div key={l} style={{textAlign:"center"}}>
+                  <div style={{fontSize:16,fontWeight:800,color:c}}>{v}</div>
+                  <div style={{fontSize:10,color:c,fontWeight:500}}>{l}</div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+
+        {/* Filtro de mês */}
+        <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+          <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)"}}>Mês:</span>
+          <button onClick={()=>setMesFiltro("todos")} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro==="todos"?"var(--purple)":"#e5e7eb",background:mesFiltro==="todos"?"var(--purple)":"white",color:mesFiltro==="todos"?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>Todos</button>
+          {meses.map(m=>(
+            <button key={m} onClick={()=>setMesFiltro(m)} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro===m?"var(--purple)":"#e5e7eb",background:mesFiltro===m?"var(--purple)":"white",color:mesFiltro===m?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+              {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
+            </button>
+          ))}
+        </div>
+
+        {/* Tabelas por mês com accordion */}
+        {mesesFiltrados.map(mes=>{
+          const sessMes = porMes[mes]||[];
+          const mesLabel = new Date(mes+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+          const recMes = sessMes.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
+          const aberto = accordionAberto[mes]!==false; // default aberto
+          return(
+            <div key={mes} style={{background:"white",borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",marginBottom:12}}>
+              {/* Header accordion */}
+              <button onClick={()=>setAccordionAberto(a=>({...a,[mes]:!aberto}))}
+                style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",background:"#f5f0ff",border:"none",cursor:"pointer",borderBottom:aberto?"2px solid var(--purple)":"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <span style={{fontWeight:700,fontSize:14,color:"var(--purple)",textTransform:"capitalize"}}>{mesLabel}</span>
+                  <span style={{fontSize:12,color:"var(--text-muted)"}}>{sessMes.length} sessões</span>
+                  <span style={{fontSize:12,fontWeight:600,color:"#059669"}}>{recMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
+                </div>
+                <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
+              </button>
+              {aberto&&(
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                    <thead>
+                      <tr style={{background:"var(--purple)",color:"white"}}>
+                        {["","Nº","Data","Presença","Modalidade","V. Sessão","V. Pago","Saldo","Forma Pagto","Data Pagto","Obs"].map(h=>(
+                          <th key={h} style={{padding:"8px 10px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap",fontSize:11}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sessMes.map((s,i)=>{
+                        const st=STATUS_S[s.status]||STATUS_S.agendado;
+                        const isPago=s.pagamento==="pago";
+                        const vSessao=parseFloat(s.valorSessao)||0;
+                        const vPago=parseFloat(s.valorPago)||(isPago?vSessao:0);
+                        const saldo=isPago?(vPago-vSessao):0;
+                        return(
+                          <tr key={s.id} style={{borderBottom:"1px solid var(--gray-100)",background:i%2===0?"white":"#fafafa"}}>
+                            <td style={{padding:"5px 6px"}}>
+                              <button onClick={()=>setModalExcluir({id:s.id,pacoteId:s.pacoteId,numSessao:s.numSessao||i+1,data:s.data})}
+                                style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"2px"}}>
+                                <Icon name="trash-2" size={12}/>
+                              </button>
+                            </td>
+                            <td style={{padding:"6px 10px",fontWeight:700,color:"var(--purple)"}}>{s.numSessao||"—"}</td>
+                            <td style={{padding:"6px 10px",whiteSpace:"nowrap"}}>
+                              {s.data?new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
+                              {s.remarcada&&<div style={{fontSize:9,color:"#0891b2"}}>Rem.</div>}
+                            </td>
+                            <td style={{padding:"6px 10px"}}>
+                              <select value={s.status} onChange={e=>atualizarSessao(s.id,{status:e.target.value})}
+                                style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",color:st.c,fontWeight:600,background:"white",cursor:"pointer",minWidth:90}}>
+                                {Object.entries(STATUS_S).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+                              </select>
+                              {s.status==="cancelado"&&(
+                                <button onClick={()=>remarcarSessao(s)} style={{marginTop:2,display:"block",fontSize:9,background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:3,padding:"1px 5px",cursor:"pointer"}}>Remarcar</button>
+                              )}
+                            </td>
+                            <td style={{padding:"6px 10px"}}>
+                              <input defaultValue={s.modalidade||"on-line"} onBlur={e=>atualizarSessao(s.id,{modalidade:e.target.value})}
+                                style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 5px",width:65}}/>
+                            </td>
+                            <td style={{padding:"6px 10px",fontWeight:600,color:"#374151",whiteSpace:"nowrap"}}>
+                              {vSessao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                            </td>
+                            <td style={{padding:"6px 10px"}}>
+                              <input type="number" defaultValue={isPago?vPago:""} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
+                                placeholder="0,00" style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 5px",width:70,color:isPago?"#059669":"#374151",fontWeight:isPago?600:400}}/>
+                            </td>
+                            <td style={{padding:"6px 10px",fontWeight:600,whiteSpace:"nowrap",color:saldo<0?"#dc2626":saldo>0?"#059669":"#9ca3af"}}>
+                              {isPago?(saldo===0?"—":saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})):"—"}
+                            </td>
+                            <td style={{padding:"6px 10px"}}>
+                              <select value={s.formaPagamento||""} onChange={e=>atualizarPagamento(s,e.target.value,s.valorPago||s.valorSessao)}
+                                style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 4px",color:isPago?"#059669":"#6b7280",fontWeight:isPago?600:400,cursor:"pointer",background:isPago?"#f0fdf4":"white",minWidth:75}}>
+                                <option value="">Pendente</option>
+                                {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
+                              </select>
+                            </td>
+                            <td style={{padding:"6px 10px"}}>
+                              <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                                style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:108}}/>
+                            </td>
+                            <td style={{padding:"6px 10px"}}>
+                              <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
+                                placeholder="—" style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 5px",width:75}}/>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr style={{background:"var(--purple-soft)"}}>
+                        <td colSpan={5} style={{padding:"8px 10px",fontWeight:700,fontSize:12}}>Total do mês</td>
+                        <td style={{padding:"8px 10px",fontWeight:700,fontSize:12}}>{sessMes.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
+                        <td style={{padding:"8px 10px",fontWeight:700,fontSize:12,color:"#059669"}}>{recMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
+                        <td style={{padding:"8px 10px",fontWeight:700,fontSize:12,color:sessMes.reduce((a,s)=>a+(s.pagamento==="pago"?(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0)-(parseFloat(s.valorSessao)||0):0),0)<0?"#dc2626":"#059669"}}>
+                          {(()=>{const sd=sessMes.reduce((a,s)=>a+(s.pagamento==="pago"?(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0)-(parseFloat(s.valorSessao)||0):0),0);return sd===0?"—":sd.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});})()}
+                        </td>
+                        <td colSpan={3}/>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               )}
-              {lancPac.formaPag&&<span style={{fontSize:12,color:"var(--text-muted)"}}>{lancPac.formaPag}</span>}
             </div>
-          )}
-        </div>
+          );
+        })}
 
-        <div style={{background:"white",borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)"}}>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-              <thead>
-                <tr style={{background:"var(--purple)",color:"white"}}>
-                  {["","Nº","Data","Presença","Modalidade","Forma Pagto","Data Pagto","Obs"].map(h=>(
-                    <th key={h} style={{padding:"10px 12px",textAlign:"left",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sessPac.map((s,i)=>{
-                  const st=STATUS_S[s.status]||STATUS_S.agendado;
-                  const isPago=s.pagamento==="pago";
-                  return(
-                    <tr key={s.id} style={{borderBottom:"1px solid var(--gray-100)",background:i%2===0?"white":"#fafafa"}}>
-                      <td style={{padding:"6px 8px"}}>
-                        <button onClick={()=>setModalExcluir({id:s.id,pacoteId:s.pacoteId,numSessao:s.numSessao||i+1,data:s.data})}
-                          style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"2px 4px"}}>
-                          <Icon name="trash-2" size={13}/>
-                        </button>
-                      </td>
-                      <td style={{padding:"8px 12px",fontWeight:700,color:"var(--purple)"}}>{s.numSessao||i+1}</td>
-                      <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>
-                        {s.data?new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
-                        {s.remarcada&&<div style={{fontSize:9,color:"#0891b2"}}>Rem.</div>}
-                      </td>
-                      <td style={{padding:"8px 12px"}}>
-                        <select value={s.status} onChange={e=>atualizarSessao(s.id,{status:e.target.value})}
-                          style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",color:st.c,fontWeight:600,background:"white",cursor:"pointer",minWidth:100}}>
-                          {Object.entries(STATUS_S).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
-                        </select>
-                        {s.status==="cancelado"&&(
-                          <button onClick={()=>remarcarSessao(s)} style={{marginTop:3,display:"block",fontSize:10,background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:4,padding:"1px 6px",cursor:"pointer"}}>Remarcar</button>
-                        )}
-                      </td>
-                      <td style={{padding:"8px 12px"}}>
-                        <input defaultValue={s.modalidade||"on-line"} onBlur={e=>atualizarSessao(s.id,{modalidade:e.target.value})}
-                          style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",width:80}}/>
-                      </td>
-                      <td style={{padding:"8px 12px"}}>
-                        <select value={s.formaPagamento||""} onChange={e=>atualizarSessao(s.id,{formaPagamento:e.target.value,pagamento:e.target.value?"pago":"pendente"})}
-                          style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",color:isPago?"#059669":"#6b7280",fontWeight:isPago?600:400,cursor:"pointer",minWidth:90}}>
-                          <option value="">Pendente</option>
-                          {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
-                        </select>
-                      </td>
-                      <td style={{padding:"8px 12px"}}>
-                        <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
-                          style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",width:120}}/>
-                      </td>
-                      <td style={{padding:"8px 12px"}}>
-                        <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
-                          placeholder="—" style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",width:90}}/>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div style={{padding:"12px 20px",borderTop:"2px solid var(--purple)",background:"var(--purple-soft)",display:"flex",gap:20,flexWrap:"wrap"}}>
-            <span style={{fontSize:13,fontWeight:600}}>Realizadas: <strong style={{color:"var(--purple)"}}>{sessPac.filter(s=>s.status==="realizado").length}</strong></span>
-            <span style={{fontSize:13,fontWeight:600}}>Pagas: <strong style={{color:"#059669"}}>{sessPac.filter(s=>s.pagamento==="pago").length}</strong></span>
-            <span style={{fontSize:13,fontWeight:600}}>Pendentes: <strong style={{color:"#d97706"}}>{sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length}</strong></span>
-            <span style={{fontSize:13,fontWeight:600}}>Faltas: <strong style={{color:"#dc2626"}}>{sessPac.filter(s=>s.status==="falta").length}</strong></span>
-            <span style={{fontSize:13,fontWeight:600,marginLeft:"auto"}}>Recebido: <strong style={{color:"#059669"}}>{(sessPac.filter(s=>s.pagamento==="pago").length*(pacote.valorSessao||0)).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</strong></span>
-          </div>
-        </div>
-        <div style={{marginTop:12,display:"flex",gap:10,justifyContent:"flex-end"}}>
-          <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>window.print()}>
-            <Icon name="printer" size={14}/> Imprimir Relatório
-          </button>
-        </div>
-
+        {/* Modal exclusão */}
         {modalExcluir&&(
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}}>
             <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:400,textAlign:"center"}}>
               <div style={{fontSize:32,marginBottom:12}}>🗑️</div>
               <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Excluir sessão #{modalExcluir.numSessao}?</div>
+              <p style={{fontSize:13,color:"#6b7280",marginBottom:20}}>{modalExcluir.data?new Date(modalExcluir.data+"T00:00:00").toLocaleDateString("pt-BR"):""}</p>
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
                 <button className="btn btn-ghost" style={{border:"1.5px solid #e5e7eb",textAlign:"left",padding:"12px 16px"}} onClick={()=>confirmarExclusao("este")}>
                   <div style={{fontWeight:600,fontSize:13}}>Só esta sessão</div>
-                  <div style={{fontSize:11,color:"#6b7280"}}>Remove apenas a sessão #{modalExcluir.numSessao}</div>
                 </button>
                 <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={()=>confirmarExclusao("daqui")}>
                   <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Esta e todas as próximas</div>
-                  <div style={{fontSize:11,color:"#6b7280"}}>Remove a #{modalExcluir.numSessao} e as seguintes</div>
+                </button>
+                <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={()=>confirmarExclusao("todos")}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Cancelar todo o pacote</div>
+                </button>
+              </div>
+              <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>setModalExcluir(null)}>Cancelar</button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+    const STATUS_S={
+      agendado:  {l:"Agendado",   c:"#7B00C4"},
+      confirmado:{l:"Confirmado", c:"#059669"},
+      realizado: {l:"✓",          c:"#059669"},
+      cancelado: {l:"Cancelado",  c:"#dc2626"},
+      falta:     {l:"Falta",      c:"#d97706"},
+      remarcado: {l:"Remarcado",  c:"#0891b2"},
+    };
+
+    // Agrupa sessões por mês
+    const porMes = sessPac.reduce((acc,s)=>{
+      const mes = s.data?.slice(0,7)||"sem-data";
+      if(!acc[mes]) acc[mes]=[];
+      acc[mes].push(s);
+      return acc;
+    },{});
+
+    const meses = Object.keys(porMes).sort();
+
+    // Totais gerais
+    const totalRealizadas = sessPac.filter(s=>s.status==="realizado").length;
+    const totalPagas = sessPac.filter(s=>s.pagamento==="pago").length;
+    const totalFaltas = sessPac.filter(s=>s.status==="falta").length;
+    const totalRecebido = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+
+    return(
+      <div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+          <button className="btn btn-ghost" onClick={()=>setPacoteSelecionado(null)}>← Voltar</button>
+          <div style={{flex:1,fontFamily:"var(--font-display)",fontSize:18,fontWeight:600}}>{pac?.nome} — Controle de Atendimento</div>
+          <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>window.print()}>
+            <Icon name="printer" size={14}/> Imprimir
+          </button>
+        </div>
+
+        {/* Cabeçalho do relatório */}
+        <div style={{background:"white",borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",marginBottom:16}}>
+          <div style={{background:"var(--purple)",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{fontFamily:"Dancing Script, cursive",fontSize:24,color:"white",fontWeight:600}}>Controle de Atendimento Terapêutico</div>
+            <img src="../logo-transparente.png" style={{height:40,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
+          </div>
+          <div style={{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,borderBottom:"1px solid var(--gray-100)"}}>
+            <div><div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:3}}>Nome</div><div style={{fontWeight:700,fontSize:15}}>{pac?.nome||"—"}</div></div>
+            <div><div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:3}}>Início</div><div style={{fontWeight:600}}>{pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</div></div>
+            <div><div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:3}}>Horário</div><div style={{fontWeight:600}}>{pacotesPac[0]?.horario||"—"}</div></div>
+            <div><div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:3}}>Recorrência</div><div style={{fontWeight:600}}>{pacotesPac[0]?.recorrencia||"—"}</div></div>
+          </div>
+          {/* Totais gerais */}
+          <div style={{padding:"12px 20px",background:"var(--purple-soft)",display:"flex",gap:24,flexWrap:"wrap"}}>
+            {[["Total Sessões",sessPac.length,"#7B00C4"],["Realizadas",totalRealizadas,"#059669"],["Pagas",totalPagas,"#059669"],["Faltas",totalFaltas,"#dc2626"],["Total Recebido",totalRecebido.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#059669"]].map(([l,v,c])=>(
+              <div key={l} style={{textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:800,color:c}}>{v}</div>
+                <div style={{fontSize:11,color:c,fontWeight:500}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabelas por mês */}
+        {meses.map(mes=>{
+          const sessMes = porMes[mes];
+          const mesLabel = new Date(mes+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+          const pagas = sessMes.filter(s=>s.pagamento==="pago").length;
+          const faltas = sessMes.filter(s=>s.status==="falta").length;
+          return(
+            <div key={mes} style={{background:"white",borderRadius:16,overflow:"hidden",border:"1px solid var(--gray-200)",marginBottom:16}}>
+              {/* Cabeçalho do mês */}
+              <div style={{background:"#f5f0ff",padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"2px solid var(--purple)"}}>
+                <div style={{fontWeight:700,fontSize:15,color:"var(--purple)",textTransform:"capitalize"}}>{mesLabel}</div>
+                <div style={{display:"flex",gap:16,fontSize:12}}>
+                  <span>Sessões: <strong>{sessMes.length}</strong></span>
+                  <span style={{color:"#059669"}}>Pagas: <strong>{pagas}</strong></span>
+                  {faltas>0&&<span style={{color:"#dc2626"}}>Faltas: <strong>{faltas}</strong></span>}
+                </div>
+              </div>
+              <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                  <thead>
+                    <tr style={{background:"var(--purple)",color:"white"}}>
+                      {["","Nº","Data","Presença","Modalidade","Forma Pagto","Data Pagto","Obs"].map(h=>(
+                        <th key={h} style={{padding:"8px 12px",textAlign:"left",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sessMes.map((s,i)=>{
+                      const st=STATUS_S[s.status]||STATUS_S.agendado;
+                      const isPago=s.pagamento==="pago";
+                      return(
+                        <tr key={s.id} style={{borderBottom:"1px solid var(--gray-100)",background:i%2===0?"white":"#fafafa"}}>
+                          <td style={{padding:"6px 8px"}}>
+                            <button onClick={()=>setModalExcluir({id:s.id,pacoteId:s.pacoteId,numSessao:s.numSessao||i+1,data:s.data})}
+                              style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"2px 4px"}}>
+                              <Icon name="trash-2" size={12}/>
+                            </button>
+                          </td>
+                          <td style={{padding:"8px 12px",fontWeight:700,color:"var(--purple)"}}>{s.numSessao||"—"}</td>
+                          <td style={{padding:"8px 12px",whiteSpace:"nowrap"}}>
+                            {s.data?new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
+                            {s.remarcada&&<div style={{fontSize:9,color:"#0891b2"}}>Rem.</div>}
+                          </td>
+                          <td style={{padding:"8px 12px"}}>
+                            <select value={s.status} onChange={e=>atualizarSessao(s.id,{status:e.target.value})}
+                              style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",color:st.c,fontWeight:600,background:"white",cursor:"pointer",minWidth:100}}>
+                              {Object.entries(STATUS_S).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+                            </select>
+                            {s.status==="cancelado"&&(
+                              <button onClick={()=>remarcarSessao(s)} style={{marginTop:2,display:"block",fontSize:10,background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:4,padding:"1px 5px",cursor:"pointer"}}>Remarcar</button>
+                            )}
+                          </td>
+                          <td style={{padding:"8px 12px"}}>
+                            <input defaultValue={s.modalidade||"on-line"} onBlur={e=>atualizarSessao(s.id,{modalidade:e.target.value})}
+                              style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",width:75}}/>
+                          </td>
+                          <td style={{padding:"8px 12px"}}>
+                            <select value={s.formaPagamento||""} onChange={e=>atualizarSessao(s.id,{formaPagamento:e.target.value,pagamento:e.target.value?"pago":"pendente"})}
+                              style={{fontSize:11,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:6,padding:"3px 6px",color:isPago?"#059669":"#6b7280",fontWeight:isPago?600:400,cursor:"pointer",background:isPago?"#f0fdf4":"white",minWidth:85}}>
+                              <option value="">Pendente</option>
+                              {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
+                            </select>
+                          </td>
+                          <td style={{padding:"8px 12px"}}>
+                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                              style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",width:115}}/>
+                          </td>
+                          <td style={{padding:"8px 12px"}}>
+                            <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
+                              placeholder="—" style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 6px",width:85}}/>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Modal exclusão */}
+        {modalExcluir&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}}>
+            <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:400,textAlign:"center"}}>
+              <div style={{fontSize:32,marginBottom:12}}>🗑️</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Excluir sessão #{modalExcluir.numSessao}?</div>
+              <p style={{fontSize:13,color:"#6b7280",marginBottom:20}}>{modalExcluir.data?new Date(modalExcluir.data+"T00:00:00").toLocaleDateString("pt-BR"):""}</p>
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                <button className="btn btn-ghost" style={{border:"1.5px solid #e5e7eb",textAlign:"left",padding:"12px 16px"}} onClick={()=>confirmarExclusao("este")}>
+                  <div style={{fontWeight:600,fontSize:13}}>Só esta sessão</div>
+                  <div style={{fontSize:11,color:"#6b7280"}}>Remove apenas esta sessão</div>
+                </button>
+                <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={()=>confirmarExclusao("daqui")}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Esta e todas as próximas</div>
+                  <div style={{fontSize:11,color:"#6b7280"}}>Remove esta e as sessões seguintes do pacote</div>
                 </button>
                 <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={()=>confirmarExclusao("todos")}>
                   <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Cancelar todo o pacote</div>
@@ -1154,8 +1435,7 @@ function FinanceiroClinica() {
   }
 
   if(pacoteSelecionado){
-    const pac=pacotes.find(p=>p.id===pacoteSelecionado);
-    if(pac) return <RelatorioFrequencia pacote={pac}/>;
+    return <RelatorioFrequencia pacienteId={pacoteSelecionado}/>;
   }
 
   // Métricas
@@ -1308,7 +1588,7 @@ function FinanceiroClinica() {
                       </div>
                     </div>
                     <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
-                      <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id)}>
+                      <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.pacienteId)}>
                         <Icon name="clipboard-list" size={13}/> Controle de Sessões e Frequência
                       </button>
                       <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
