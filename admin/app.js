@@ -880,19 +880,40 @@ function FinanceiroClinica() {
   async function excluirLanc(id){if(!confirm("Excluir lançamento?"))return;await db.collection("clinica_financeiro_clinica").doc(id).delete();}
 
   // Gerar sessões recorrentes a partir do pacote
-  function gerarDatas(dataInicio, recorrencia, total, diaSemana){
+  function gerarDatas(dataInicio, recorrencia, total, diasSemana){
     const datas = [];
     const inicio = new Date(dataInicio+"T00:00:00");
+
+    if(recorrencia==="Sessão única"){
+      return [dataInicio];
+    }
+
+    if(recorrencia==="Semanal (1x/semana)"||recorrencia==="Quinzenal"||recorrencia==="Mensal"){
+      let atual = new Date(inicio);
+      while(datas.length<total){
+        datas.push(atual.toISOString().split("T")[0]);
+        if(recorrencia==="Semanal (1x/semana)") atual.setDate(atual.getDate()+7);
+        else if(recorrencia==="Quinzenal") atual.setDate(atual.getDate()+14);
+        else atual.setMonth(atual.getMonth()+1);
+      }
+      return datas.slice(0,total);
+    }
+
+    // 2x ou 3x por semana — usa diasSemana selecionados
+    const dias = (diasSemana||[]).map(Number).sort();
+    if(dias.length===0) return [];
+
     let atual = new Date(inicio);
-    // Ajusta para o dia da semana desejado se necessário
-    while(datas.length < total){
-      datas.push(atual.toISOString().split("T")[0]);
-      if(recorrencia==="Semanal (1x/semana)") atual.setDate(atual.getDate()+7);
-      else if(recorrencia==="2x por semana") atual.setDate(atual.getDate()+3+(datas.length%2===0?4:3));
-      else if(recorrencia==="3x por semana") atual.setDate(atual.getDate()+2);
-      else if(recorrencia==="Quinzenal") atual.setDate(atual.getDate()+14);
-      else if(recorrencia==="Mensal") atual.setMonth(atual.getMonth()+1);
-      else break; // Sessão única
+    // Começa na semana da data de início
+    // Vai avançando dia a dia e pega os dias que batem
+    const fim = new Date(inicio);
+    fim.setFullYear(fim.getFullYear()+2); // limite máximo 2 anos
+
+    while(datas.length<total && atual<fim){
+      if(dias.includes(atual.getDay())){
+        datas.push(atual.toISOString().split("T")[0]);
+      }
+      atual.setDate(atual.getDate()+1);
     }
     return datas.slice(0,total);
   }
@@ -900,6 +921,10 @@ function FinanceiroClinica() {
   async function salvarPacote(){
     const {pacienteId,totalSessoes,valorSessao,valorTotal,recorrencia,dataInicio,horario,obs}=formPacote;
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, total de sessões e data de início são obrigatórios.");return;}
+    const diasSemana = formPacote.diasSemana||[];
+    if(recorrencia!=="Sessão única"&&recorrencia!=="Mensal"&&recorrencia!=="Quinzenal"&&recorrencia!=="Semanal (1x/semana)"&&diasSemana.length===0){
+      alert("Selecione os dias da semana para esta recorrência.");return;
+    }
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===pacienteId);
     const total = parseInt(totalSessoes)||1;
@@ -916,7 +941,7 @@ function FinanceiroClinica() {
     });
 
     // Gerar sessões na agenda
-    const datas = gerarDatas(dataInicio, recorrencia, total, formPacote.diaSemana);
+    const datas = gerarDatas(dataInicio, recorrencia, total, diasSemana);
     const batch = db.batch();
     datas.forEach((data,i)=>{
       const ref = db.collection("clinica_sessoes").doc();
@@ -1283,10 +1308,44 @@ function FinanceiroClinica() {
                 <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Máximo 40 sessões</div>
               </div>
               <div className="form-group"><label className="form-label">Recorrência *</label>
-                <select className="form-input" value={formPacote.recorrencia} onChange={e=>setFormPacote({...formPacote,recorrencia:e.target.value})}>
+                <select className="form-input" value={formPacote.recorrencia} onChange={e=>setFormPacote({...formPacote,recorrencia:e.target.value,diasSemana:[]})}>
                   {RECORRENCIAS.map(r=><option key={r}>{r}</option>)}
                 </select>
               </div>
+
+              {/* Dias da semana — aparece conforme recorrência */}
+              {formPacote.recorrencia!=="Sessão única"&&(()=>{
+                const DIAS=[{v:"0",l:"Dom"},{v:"1",l:"Seg"},{v:"2",l:"Ter"},{v:"3",l:"Qua"},{v:"4",l:"Qui"},{v:"5",l:"Sex"},{v:"6",l:"Sáb"}];
+                const maxDias = formPacote.recorrencia==="3x por semana"?3:formPacote.recorrencia==="2x por semana"?2:1;
+                const diasSel = formPacote.diasSemana||[];
+                function toggleDia(v){
+                  if(diasSel.includes(v)){setFormPacote({...formPacote,diasSemana:diasSel.filter(d=>d!==v)});}
+                  else if(diasSel.length<maxDias){setFormPacote({...formPacote,diasSemana:[...diasSel,v].sort()});}
+                }
+                return(
+                  <div className="form-group" style={{gridColumn:"1/-1"}}>
+                    <label className="form-label">
+                      {formPacote.recorrencia==="2x por semana"?"Dias da Semana (escolha 2) *":
+                       formPacote.recorrencia==="3x por semana"?"Dias da Semana (escolha 3) *":
+                       "Dia da Semana *"}
+                    </label>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+                      {DIAS.map(d=>{
+                        const sel=diasSel.includes(d.v);
+                        const disabled=!sel&&diasSel.length>=maxDias;
+                        return(
+                          <button key={d.v} type="button" onClick={()=>toggleDia(d.v)} disabled={disabled}
+                            style={{padding:"8px 14px",borderRadius:10,border:"1.5px solid",borderColor:sel?"var(--purple)":"#e5e7eb",background:sel?"var(--purple)":"white",color:sel?"white":disabled?"#d1d5db":"#374151",fontWeight:sel?700:400,cursor:disabled?"not-allowed":"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                            {d.l}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {diasSel.length===0&&<div style={{fontSize:11,color:"#dc2626",marginTop:4}}>Selecione o(s) dia(s)</div>}
+                  </div>
+                );
+              })()}
+
               <div className="form-group"><label className="form-label">Data de Início *</label>
                 <input className="form-input" type="date" value={formPacote.dataInicio} onChange={e=>setFormPacote({...formPacote,dataInicio:e.target.value})}/>
               </div>
