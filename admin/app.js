@@ -1150,16 +1150,28 @@ function FinanceiroClinica() {
   if(!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
 
   // Lançamentos filtrados por mês
-  const mesesDisp = [...new Set(lancamentos.filter(l=>l.data?.startsWith(anoFiltro)).map(l=>l.data?.slice(0,7)).filter(Boolean))].sort().reverse();
-  if(!mesesDisp.includes(mesFiltro)&&mesFiltro.startsWith(anoFiltro)) mesesDisp.unshift(mesFiltro);
+  // Meses do ano selecionado, do mais recente para o mais antigo
+  const mesesBase = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`).reverse();
+  const mesesComDados = new Set(lancamentos.filter(l=>l.data?.startsWith(anoFiltro)).map(l=>l.data?.slice(0,7)).filter(Boolean));
+  const mesesDisp = mesesBase; // mostra todos os 12 meses do ano, independente de ter dados
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
 
   // Métricas por período selecionado nos cards
   const lancPeriodo = periodoCard==="mes"?lancMes:lancAno;
-  const totalRecebidoPeriodo = lancPeriodo.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-  const totalRecebidoMes = lancMes.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-  const totalPendente = lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+  // Receitas somam, despesas deduzem
+  function calcSaldo(lista){
+    return lista.reduce((a,l)=>{
+      const v = parseFloat(l.valor)||0;
+      return l.tipo_lancamento==="despesa" ? a-v : a+v;
+    },0);
+  }
+  function calcReceitas(lista){ return lista.filter(l=>l.tipo_lancamento!=="despesa").reduce((a,l)=>a+(parseFloat(l.valor)||0),0); }
+  function calcDespesas(lista){ return lista.filter(l=>l.tipo_lancamento==="despesa").reduce((a,l)=>a+(parseFloat(l.valor)||0),0); }
+
+  const totalRecebidoPeriodo = calcSaldo(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago"));
+  const totalRecebidoMes = calcSaldo(lancMes.filter(l=>l.status==="recebido"||l.status==="pago"));
+  const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
 
   // Salvar lançamento avulso
   async function salvarAvulso(){
@@ -1360,12 +1372,17 @@ function FinanceiroClinica() {
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
         {/* Card Recebido — clicável mês/ano */}
         <div onClick={()=>setPeriodoCard(p=>p==="mes"?"ano":"mes")}
-          style={{background:periodoCard==="mes"?"#d1fae5":"#a7f3d0",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:periodoCard==="mes"?"#6ee7b7":"#059669",transition:"all .2s",position:"relative"}}>
-          <div style={{position:"absolute",top:6,right:8,fontSize:10,color:"#059669",fontWeight:600,background:"white",borderRadius:10,padding:"1px 6px"}}>
+          style={{background:totalRecebidoPeriodo>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:totalRecebidoPeriodo>=0?"#6ee7b7":"#fca5a5",transition:"all .2s",position:"relative"}}>
+          <div style={{position:"absolute",top:6,right:8,fontSize:10,color:totalRecebidoPeriodo>=0?"#059669":"#dc2626",fontWeight:600,background:"white",borderRadius:10,padding:"1px 6px"}}>
             {periodoCard==="mes"?"mês ↕":"ano ↕"}
           </div>
-          <div style={{fontSize:20,fontWeight:800,color:"#059669"}}>{totalRecebidoPeriodo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
-          <div style={{fontSize:12,color:"#059669",fontWeight:500,marginTop:2}}>Recebido ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+          <div style={{fontSize:20,fontWeight:800,color:totalRecebidoPeriodo>=0?"#059669":"#dc2626"}}>{totalRecebidoPeriodo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+          <div style={{fontSize:12,color:totalRecebidoPeriodo>=0?"#059669":"#dc2626",fontWeight:500,marginTop:2}}>
+            Saldo ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})
+          </div>
+          <div style={{fontSize:10,color:"#6b7280",marginTop:4}}>
+            +{calcReceitas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+          </div>
         </div>
         {/* Card Pendente */}
         <div style={{background:"#fef3c7",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
@@ -1458,8 +1475,8 @@ function FinanceiroClinica() {
                   ))}
                 </tbody>
                 <tfoot><tr style={{background:"var(--gray-50)"}}>
-                  <td colSpan={4} style={{padding:"10px 16px",fontWeight:700}}>Total recebido no mês</td>
-                  <td style={{padding:"10px 16px",fontWeight:800,color:"#059669",fontSize:15}}>{totalRecebidoMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
+                  <td colSpan={4} style={{padding:"10px 16px",fontWeight:700}}>Saldo do mês</td>
+                  <td style={{padding:"10px 16px",fontWeight:800,fontSize:15,color:totalRecebidoMes>=0?"#059669":"#dc2626"}}>{totalRecebidoMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
                   <td colSpan={2}/>
                 </tr></tfoot>
               </table>
