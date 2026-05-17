@@ -1051,7 +1051,7 @@ function FinanceiroClinica() {
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
               <thead>
                 <tr style={{background:"var(--purple)",color:"white"}}>
-                  {["Nº","Data","Presença","Assinatura/Modalidade","Forma Pagamento","Data Pagamento","Obs",""].map(h=>(
+                  {["","Nº","Data","Presença","Assinatura/Modalidade","Forma Pagamento","Data Pagamento","Obs"].map(h=>(
                     <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>{h}</th>
                   ))}
                 </tr>
@@ -1062,6 +1062,12 @@ function FinanceiroClinica() {
                   const isPago = s.pagamento==="pago";
                   return(
                     <tr key={s.id} style={{borderBottom:"1px solid var(--gray-100)",background:i%2===0?"white":"#fafafa"}}>
+                      <td style={{padding:"8px 8px"}}>
+                        <button onClick={()=>setModalExcluir({id:s.id,pacoteId:s.pacoteId,numSessao:s.numSessao||i+1,data:s.data})}
+                          style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"2px 4px"}} title="Excluir sessão">
+                          <Icon name="trash-2" size={13}/>
+                        </button>
+                      </td>
                       <td style={{padding:"8px 14px",fontWeight:700,color:"var(--purple)"}}>{s.numSessao||i+1}</td>
                       <td style={{padding:"8px 14px",whiteSpace:"nowrap"}}>
                         {s.data?new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
@@ -1092,12 +1098,6 @@ function FinanceiroClinica() {
                       <td style={{padding:"8px 14px"}}>
                         <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
                           placeholder="—" style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 8px",width:100}}/>
-                      </td>
-                      <td style={{padding:"8px 14px"}}>
-                        <button onClick={()=>setModalExcluir({id:s.id,pacoteId:s.pacoteId,numSessao:s.numSessao||i+1,data:s.data})}
-                          style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:4,opacity:0.6}} title="Excluir sessão">
-                          <Icon name="trash-2" size={13}/>
-                        </button>
                       </td>
                     </tr>
                   );
