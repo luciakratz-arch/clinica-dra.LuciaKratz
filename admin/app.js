@@ -935,19 +935,23 @@ function FinanceiroClinica() {
     const pacoteRef = await db.collection("clinica_pacotes").add({
       pacienteId, pacienteNome:pac?.nome||"",
       totalSessoes:total, valorSessao:vSessao, valorTotal:vTotal,
-      recorrencia, dataInicio, horario, obs,
+      recorrencia, dataInicio, horario, diasSemana,
+      horariosPorDia:formPacote.horariosPorDia||{}, obs,
       sessoesRealizadas:0, status:"ativo",
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Gerar sessões na agenda
+    // Gerar sessões na agenda com horário correto por dia
+    const horariosPorDia = formPacote.horariosPorDia||{};
     const datas = gerarDatas(dataInicio, recorrencia, total, diasSemana);
     const batch = db.batch();
     datas.forEach((data,i)=>{
       const ref = db.collection("clinica_sessoes").doc();
+      const diaSemanaNum = new Date(data+"T00:00:00").getDay().toString();
+      const horarioDia = horariosPorDia[diaSemanaNum]||horario;
       batch.set(ref,{
         pacienteId, pacienteNome:pac?.nome||"",
-        data, hora:horario,
+        data, hora:horarioDia,
         duracao:"50", tipo:"Psicoterapia",
         status:"agendado",
         numSessao:i+1,
@@ -966,6 +970,29 @@ function FinanceiroClinica() {
     setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",valorTotal:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diaSemana:"1",obs:""});
     setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
+  }
+
+  const [modalExcluir, setModalExcluir] = useState(null); // {id, pacoteId, numSessao, data}
+
+  async function confirmarExclusao(tipo){
+    if(!modalExcluir) return;
+    const {id, pacoteId, numSessao} = modalExcluir;
+    if(tipo==="este"){
+      await db.collection("clinica_sessoes").doc(id).delete();
+    } else if(tipo==="daqui"){
+      const futuros = sessoes.filter(s=>s.pacoteId===pacoteId && (s.numSessao||0)>=(numSessao||0));
+      const batch = db.batch();
+      futuros.forEach(s=>batch.delete(db.collection("clinica_sessoes").doc(s.id)));
+      await batch.commit();
+    } else if(tipo==="todos"){
+      const todas = sessoes.filter(s=>s.pacoteId===pacoteId);
+      const batch = db.batch();
+      todas.forEach(s=>batch.delete(db.collection("clinica_sessoes").doc(s.id)));
+      batch.delete(db.collection("clinica_pacotes").doc(pacoteId));
+      await batch.commit();
+      setPacoteSelecionado(null);
+    }
+    setModalExcluir(null);
   }
 
   async function atualizarSessao(id, campos){
@@ -1024,7 +1051,7 @@ function FinanceiroClinica() {
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
               <thead>
                 <tr style={{background:"var(--purple)",color:"white"}}>
-                  {["Nº","Data","Presença","Assinatura/Modalidade","Forma Pagamento","Data Pagamento","Obs"].map(h=>(
+                  {["Nº","Data","Presença","Assinatura/Modalidade","Forma Pagamento","Data Pagamento","Obs",""].map(h=>(
                     <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>{h}</th>
                   ))}
                 </tr>
@@ -1066,6 +1093,12 @@ function FinanceiroClinica() {
                         <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
                           placeholder="—" style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 8px",width:100}}/>
                       </td>
+                      <td style={{padding:"8px 14px"}}>
+                        <button onClick={()=>setModalExcluir({id:s.id,pacoteId:s.pacoteId,numSessao:s.numSessao||i+1,data:s.data})}
+                          style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:4,opacity:0.6}} title="Excluir sessão">
+                          <Icon name="trash-2" size={13}/>
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -1087,6 +1120,37 @@ function FinanceiroClinica() {
             <Icon name="printer" size={14}/> Imprimir Relatório
           </button>
         </div>
+
+        {/* Modal exclusão inteligente */}
+        {modalExcluir&&(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}}>
+            <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:420,textAlign:"center"}}>
+              <div style={{fontSize:32,marginBottom:12}}>🗑️</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Excluir sessão?</div>
+              <p style={{fontSize:13,color:"#6b7280",marginBottom:24,lineHeight:1.6}}>
+                Sessão <strong>#{modalExcluir.numSessao}</strong> — {modalExcluir.data?new Date(modalExcluir.data+"T00:00:00").toLocaleDateString("pt-BR"):""}
+              </p>
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+                <button className="btn btn-ghost" style={{border:"1.5px solid #e5e7eb",textAlign:"left",padding:"12px 16px"}}
+                  onClick={()=>confirmarExclusao("este")}>
+                  <div style={{fontWeight:600,fontSize:13}}>Excluir só esta sessão</div>
+                  <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>Remove apenas a sessão #{modalExcluir.numSessao}</div>
+                </button>
+                <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}}
+                  onClick={()=>confirmarExclusao("daqui")}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Excluir esta e todas as próximas</div>
+                  <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>Remove a sessão #{modalExcluir.numSessao} e todas as seguintes do pacote</div>
+                </button>
+                <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}}
+                  onClick={()=>confirmarExclusao("todos")}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Cancelar todo o pacote</div>
+                  <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>Remove todas as sessões e encerra o pacote</div>
+                </button>
+              </div>
+              <button className="btn btn-ghost" onClick={()=>setModalExcluir(null)} style={{width:"100%"}}>Cancelar</button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1224,7 +1288,7 @@ function FinanceiroClinica() {
                     </div>
                     <div style={{display:"flex",gap:8,marginTop:14,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
                       <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id)}>
-                        <Icon name="clipboard-list" size={13}/> Ver Controle de Sessões
+                        <Icon name="clipboard-list" size={13}/> Controle de Sessões e Frequência
                       </button>
                     </div>
                   </div>
@@ -1333,11 +1397,19 @@ function FinanceiroClinica() {
                       {DIAS.map(d=>{
                         const sel=diasSel.includes(d.v);
                         const disabled=!sel&&diasSel.length>=maxDias;
+                        const horarioDia = (formPacote.horariosPorDia||{})[d.v]||formPacote.horario||"09:00";
                         return(
-                          <button key={d.v} type="button" onClick={()=>toggleDia(d.v)} disabled={disabled}
-                            style={{padding:"8px 14px",borderRadius:10,border:"1.5px solid",borderColor:sel?"var(--purple)":"#e5e7eb",background:sel?"var(--purple)":"white",color:sel?"white":disabled?"#d1d5db":"#374151",fontWeight:sel?700:400,cursor:disabled?"not-allowed":"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
-                            {d.l}
-                          </button>
+                          <div key={d.v} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                            <button type="button" onClick={()=>toggleDia(d.v)} disabled={disabled}
+                              style={{padding:"8px 14px",borderRadius:10,border:"1.5px solid",borderColor:sel?"var(--purple)":"#e5e7eb",background:sel?"var(--purple)":"white",color:sel?"white":disabled?"#d1d5db":"#374151",fontWeight:sel?700:400,cursor:disabled?"not-allowed":"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                              {d.l}
+                            </button>
+                            {sel&&(
+                              <input type="time" value={horarioDia}
+                                onChange={e=>setFormPacote({...formPacote,horariosPorDia:{...(formPacote.horariosPorDia||{}), [d.v]:e.target.value}})}
+                                style={{fontSize:11,border:"1px solid #e9d5ff",borderRadius:6,padding:"3px 6px",width:72,textAlign:"center",color:"var(--purple)",fontWeight:600}}/>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
