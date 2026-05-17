@@ -832,10 +832,19 @@ function Pacientes({ user }) {
 
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
-function RelatorioFrequencia({pacienteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
+function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
   const pac = pacientes.find(p=>p.id===pacienteId);
-  const sessPac = sessoes.filter(s=>s.pacienteId===pacienteId).sort((a,b)=>a.data?.localeCompare(b.data));
-  const pacotesPac = pacotes.filter(p=>p.pacienteId===pacienteId);
+  const pacote = pacoteId ? pacotes.find(p=>p.id===pacoteId) : null;
+  const pacEfetivo = pac || pacientes.find(p=>p.id===pacote?.pacienteId);
+
+  // Se pacoteId → só sessões deste pacote; se pacienteId → todas do paciente
+  const sessPac = pacoteId
+    ? sessoes.filter(s=>s.pacoteId===pacoteId).sort((a,b)=>a.data?.localeCompare(b.data))
+    : sessoes.filter(s=>s.pacienteId===pacienteId).sort((a,b)=>a.data?.localeCompare(b.data));
+
+  const pacotesPac = pacoteId
+    ? [pacote].filter(Boolean)
+    : pacotes.filter(p=>p.pacienteId===pacienteId);
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
@@ -920,7 +929,7 @@ function RelatorioFrequencia({pacienteId, pacientes, sessoes, pacotes, lancament
           <Icon name="arrow-left" size={15}/> Voltar
         </button>
         <div style={{flex:1}}>
-          <div style={{fontFamily:"Dancing Script, cursive",fontSize:20,color:"white",fontWeight:600,lineHeight:1}}>{pac?.nome}</div>
+          <div style={{fontFamily:"Dancing Script, cursive",fontSize:20,color:"white",fontWeight:600,lineHeight:1}}>{pacEfetivo?.nome}</div>
           <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Controle de Sessões e Frequência</div>
         </div>
         <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>window.print()}>
@@ -935,7 +944,7 @@ function RelatorioFrequencia({pacienteId, pacientes, sessoes, pacotes, lancament
           <img src="../logo-transparente.png" style={{height:36,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
         </div>
         <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,borderBottom:"1px solid var(--gray-100)"}}>
-          {[["Nome",pac?.nome||"—"],["Início",pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"],["Horário",pacotesPac[0]?.horario||"—"],["Recorrência",pacotesPac[0]?.recorrencia||"—"]].map(([l,v])=>(
+          {[["Nome",pacEfetivo?.nome||"—"],["Início",pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"],["Horário",pacotesPac[0]?.horario||"—"],["Recorrência",pacotesPac[0]?.recorrencia||"—"]].map(([l,v])=>(
             <div key={l}><div style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>{l}</div><div style={{fontWeight:600,fontSize:13}}>{v}</div></div>
           ))}
         </div>
@@ -1146,7 +1155,7 @@ function FinanceiroClinica() {
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
-    const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pac?.nome||""};
+    const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pacEfetivo?.nome||""};
     if(editando){
       await db.collection("clinica_lancamentos").doc(editando).update(dados);
     } else {
@@ -1220,7 +1229,7 @@ function FinanceiroClinica() {
 
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
-      pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
+      pacienteId,pacienteNome:pacEfetivo?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
       status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1228,7 +1237,7 @@ function FinanceiroClinica() {
     // Cria lançamento financeiro do pacote
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
-      pacienteId,pacienteNome:pac?.nome||"",
+      pacienteId,pacienteNome:pacEfetivo?.nome||"",
       tipo:"Pacote "+recorrencia,
       valor:vTotal,data:dataInicio,
       formaPag:"",status:"pendente",obs,
@@ -1243,7 +1252,7 @@ function FinanceiroClinica() {
       const dia=new Date(data+"T00:00:00").getDay().toString();
       const horaDia=(horariosPorDia||{})[dia]||horario;
       batch.set(ref,{
-        pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
+        pacienteId,pacienteNome:pacEfetivo?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
         pagamento:"pendente",formaPagamento:"",dataPagamento:"",obs:"",
@@ -1285,8 +1294,24 @@ function FinanceiroClinica() {
 
 
   if(pacoteSelecionado){
+    // Modo editar pacote individual (id__pacote)
+    if(pacoteSelecionado.endsWith("__pacote")){
+      const pacoteId = pacoteSelecionado.replace("__pacote","");
+      return <RelatorioFrequencia
+        pacienteId={null}
+        pacoteId={pacoteId}
+        pacientes={pacientes}
+        sessoes={sessoes}
+        pacotes={pacotes}
+        lancamentos={lancamentos}
+        FORMAS={FORMAS}
+        onVoltar={()=>setPacoteSelecionado(null)}
+      />;
+    }
+    // Modo controle geral do paciente (pacienteId)
     return <RelatorioFrequencia
       pacienteId={pacoteSelecionado}
+      pacoteId={null}
       pacientes={pacientes}
       sessoes={sessoes}
       pacotes={pacotes}
@@ -1325,7 +1350,7 @@ function FinanceiroClinica() {
 
       {/* Abas */}
       <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
-        {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"]].map(([id,lbl,ic])=>(
+        {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"]].map(([id,lbl,ic])=>(
           <button key={id} onClick={()=>setAba(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:aba===id?"var(--purple)":"var(--gray-600)",borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
             <Icon name={ic} size={15}/>{lbl}
           </button>
@@ -1446,6 +1471,9 @@ function FinanceiroClinica() {
                       </div>
                     </div>
                     <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12,alignItems:"center"}}>
+                      <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                        <Icon name="edit-3" size={13}/> Editar este pacote
+                      </button>
                       <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.pacienteId)}>
                         <Icon name="clipboard-list" size={13}/> Ver Sessões e Frequência
                       </button>
@@ -1467,6 +1495,63 @@ function FinanceiroClinica() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ABA ACOMPANHAMENTO GERAL */}
+      {aba==="acompanhamento"&&(
+        <div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+            Clique em um paciente para abrir o Controle de Sessões e Frequência completo.
+          </div>
+          {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(pac=>{
+            const sessPac = sessoes.filter(s=>s.pacienteId===pac.id);
+            const pacotesPac = pacotes.filter(p=>p.pacienteId===pac.id);
+            if(pacotesPac.length===0) return null;
+            const totalSessoes = sessPac.length;
+            const realizadas = sessPac.filter(s=>s.status==="realizado").length;
+            const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
+            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length;
+            const recebido = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
+            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+            return(
+              <div key={pac.id} className="card" style={{padding:"14px 20px",cursor:"pointer",marginBottom:10,transition:"box-shadow .15s"}}
+                onClick={()=>setPacoteSelecionado(pac.id)}
+                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px rgba(123,0,196,0.12)"}
+                onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{width:40,height:40,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,flexShrink:0}}>
+                    {(pac.nome||"?")[0].toUpperCase()}
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14}}>{pac.nome}</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
+                      {pacotesPac[0]?.recorrencia} · {pacotesPac[0]?.horario}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}}>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:14,fontWeight:700,color:"var(--purple)"}}>{realizadas}/{totalSessoes}</div>
+                      <div style={{fontSize:10,color:"var(--text-muted)"}}>Sessões</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:14,fontWeight:700,color:"#059669"}}>{recebido.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                      <div style={{fontSize:10,color:"var(--text-muted)"}}>Recebido</div>
+                    </div>
+                    {aReceber>0&&<div style={{textAlign:"center"}}>
+                      <div style={{fontSize:14,fontWeight:700,color:"#d97706"}}>{aReceber.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                      <div style={{fontSize:10,color:"var(--text-muted)"}}>A Receber</div>
+                    </div>}
+                    <div style={{display:"flex",alignItems:"center",gap:4}}>
+                      {pendentes>0&&<span style={{background:"#fef3c7",color:"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{pendentes} pendente(s)</span>}
+                      {pendentes===0&&<span style={{background:"#d1fae5",color:"#065f46",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>✓ Em dia</span>}
+                    </div>
+                    <Icon name="chevron-right" size={16} style={{color:"var(--text-muted)"}}/>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -3190,8 +3275,8 @@ function Laudos() {
     const m = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if(m) link = `https://drive.google.com/file/d/${m[1]}/view`;
     await db.collection("clinica_laudos").add({
-      tipo:form.tipo, titulo:form.tipo+" — "+(pac?.nome||""),
-      pacienteId:form.pacienteId, pacienteNome:pac?.nome||"",
+      tipo:form.tipo, titulo:form.tipo+" — "+(pacEfetivo?.nome||""),
+      pacienteId:form.pacienteId, pacienteNome:pacEfetivo?.nome||"",
       linkDrive:link, observacoes:form.observacoes,
       status:"rascunho", enviadoEm:null,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -3535,7 +3620,7 @@ function Agenda() {
     if(!form.pacienteId||!form.data||!form.hora){alert("Preencha paciente, data e hora.");return;}
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===form.pacienteId);
-    const dados = {...form, pacienteNome:pac?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    const dados = {...form, pacienteNome:pacEfetivo?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
     if(editando){
       await db.collection("clinica_sessoes").doc(editando).update(dados);
     } else {
