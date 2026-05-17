@@ -1510,8 +1510,8 @@ function FinanceiroClinica() {
                       <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
                         <Icon name="edit-3" size={13}/> Editar este pacote
                       </button>
-                      <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.pacienteId)}>
-                        <Icon name="clipboard-list" size={13}/> Ver Sessões e Frequência
+                      <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                        <Icon name="clipboard-list" size={13}/> Ver Sessões deste Pacote
                       </button>
                       <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
                         if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
