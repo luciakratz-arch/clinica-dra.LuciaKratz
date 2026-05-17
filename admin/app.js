@@ -914,11 +914,17 @@ function RelatorioFrequencia({pacienteId, pacientes, sessoes, pacotes, lancament
 
   return(
     <div>
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
-        <button className="btn btn-ghost" onClick={onVoltar}>← Voltar</button>
-        <div style={{flex:1,fontFamily:"var(--font-display)",fontSize:18,fontWeight:600}}>{pac?.nome}</div>
-        <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>window.print()}>
-          <Icon name="printer" size={14}/> Imprimir
+      {/* Barra fixa de navegação */}
+      <div style={{background:"var(--purple)",borderRadius:12,padding:"12px 20px",display:"flex",alignItems:"center",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+        <button onClick={onVoltar} style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 12px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+          <Icon name="arrow-left" size={15}/> Voltar
+        </button>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"Dancing Script, cursive",fontSize:20,color:"white",fontWeight:600,lineHeight:1}}>{pac?.nome}</div>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Controle de Sessões e Frequência</div>
+        </div>
+        <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>window.print()}>
+          <Icon name="printer" size={15}/> Imprimir
         </button>
       </div>
 
@@ -1439,12 +1445,12 @@ function FinanceiroClinica() {
                         <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>{pct}% concluído</div>
                       </div>
                     </div>
-                    <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
+                    <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12,alignItems:"center"}}>
                       <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.pacienteId)}>
-                        <Icon name="clipboard-list" size={13}/> Controle de Sessões e Frequência
+                        <Icon name="clipboard-list" size={13}/> Ver Sessões e Frequência
                       </button>
                       <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
-                        if(!confirm(`Excluir pacote de ${p.pacienteNome}? Isso remove todas as sessões e o lançamento.`))return;
+                        if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
                         const todas=sessoes.filter(s=>s.pacoteId===p.id);
                         const b=db.batch();
                         todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
@@ -1453,7 +1459,7 @@ function FinanceiroClinica() {
                         if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
                         await b.commit();
                       }}>
-                        <Icon name="trash-2" size={13}/> Excluir Pacote
+                        <Icon name="trash-2" size={13}/>
                       </button>
                     </div>
                   </div>
