@@ -1311,6 +1311,18 @@ function FinanceiroClinica() {
                       <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id)}>
                         <Icon name="clipboard-list" size={13}/> Controle de Sessões e Frequência
                       </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
+                        if(!confirm(`Excluir pacote de ${p.pacienteNome}? Isso remove todas as sessões e o lançamento.`))return;
+                        const todas=sessoes.filter(s=>s.pacoteId===p.id);
+                        const b=db.batch();
+                        todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+                        b.delete(db.collection("clinica_pacotes").doc(p.id));
+                        const lp=lancamentos.find(l=>l.pacoteId===p.id);
+                        if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
+                        await b.commit();
+                      }}>
+                        <Icon name="trash-2" size={13}/> Excluir Pacote
+                      </button>
                     </div>
                   </div>
                 );
