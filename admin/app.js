@@ -1150,18 +1150,16 @@ function FinanceiroClinica() {
   const anosDisp = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].sort().reverse();
   if(!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
 
-  // Lançamentos filtrados por mês
-  // Meses do ano selecionado — jan → dez, todos os 12
+  // Meses do ano selecionado — sempre Jan (01) → Dez (12)
   const mesAtual = new Date().toISOString().slice(0,7);
-  const mesesBase = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
-  const mesesDisp = mesesBase;
+  const mesesDisp = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
 
-  // Cards do topo sempre mostram o MÊS ATUAL do ano selecionado — não mudam com filtro
+  // Cards do topo — mês atual do ano selecionado, fixo
   const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
-  const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
+  const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
 
   // Métricas por período selecionado nos cards
   // Receitas somam, despesas deduzem
@@ -1368,12 +1366,16 @@ function FinanceiroClinica() {
         <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)"}}>Ano:</span>
         {(()=>{
           const anoAtualNum = new Date().getFullYear();
-          const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))];
-          const anos = [...new Set([...anosExist, String(anoAtualNum), String(anoAtualNum+1)])].sort();
+          const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
+          const anosSet = new Set([...anosExist, anoAtualNum]);
+          const anos = [...anosSet].sort().map(String);
           return anos.map(a=>(
-            <button key={a} onClick={()=>{setAnoFiltro(a);setMesFiltro(a===String(anoAtualNum)?new Date().toISOString().slice(0,7):a+"-01");}}
+            <button key={a} onClick={()=>{
+              setAnoFiltro(a);
+              setMesFiltro(a===String(anoAtualNum)?mesAtual:a+"-01");
+            }}
               style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-              {a}
+              {a}{a===String(anoAtualNum)&&<span style={{marginLeft:3,fontSize:9}}>●</span>}
             </button>
           ));
         })()}
