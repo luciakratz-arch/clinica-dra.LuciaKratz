@@ -151,6 +151,7 @@ function Sidebar({ user, tab, setTab, onLogout }) {
 // ─── LOGIN ────────────────────────────────────────────────
 function Login({ onLogin }) {
   const [etapa, setEtapa]   = useState("perfil");
+  const [nome, setNome]     = useState("");
   const [email, setEmail]   = useState("");
   const [senha, setSenha]   = useState("");
   const [erro, setErro]     = useState("");
@@ -165,11 +166,13 @@ function Login({ onLogin }) {
     e.preventDefault();
     setErro(""); setLoading(true);
     try {
-      const snap = await db.collection("clinica_pacientes")
-        .where("email", "==", email.toLowerCase().trim()).get();
-      if (snap.empty) { setErro("Paciente não encontrado."); setLoading(false); return; }
-      const pac = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      if (pac.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
+      if (senha !== "1234") { setErro("Senha incorreta."); setLoading(false); return; }
+      const nomeNorm = nome.trim().toLowerCase();
+      if (!nomeNorm) { setErro("Digite seu nome completo."); setLoading(false); return; }
+      const snap = await db.collection("clinica_pacientes").get();
+      const match = snap.docs.find(d => (d.data().nome||"").trim().toLowerCase() === nomeNorm);
+      if (!match) { setErro("Paciente não encontrado. Verifique o nome completo."); setLoading(false); return; }
+      const pac = { id: match.id, ...match.data() };
       if (pac.status === "inativo") { setErro("Conta inativa. Entre em contato com a psicóloga."); setLoading(false); return; }
       onLogin({ tipo:"paciente", ...pac });
     } catch(err) { setErro("Erro ao conectar. Tente novamente."); }
@@ -206,7 +209,7 @@ function Login({ onLogin }) {
         <div className="login-crp">Psicóloga Doutora · CRP 09/20590</div>
         <div className="login-left-btns">
           {perfis.map(p => (
-            <button key={p.id} onClick={() => { setEtapa(p.id); setErro(""); setEmail(""); setSenha(""); }}>
+            <button key={p.id} onClick={() => { setEtapa(p.id); setErro(""); setNome(""); setEmail(""); setSenha(""); }}>
               {p.nome.replace("Sou ","")}
             </button>
           ))}
@@ -252,7 +255,7 @@ function Login({ onLogin }) {
         {/* Login Paciente */}
         {etapa === "paciente" && (
           <>
-            <button className="login-right-back" onClick={() => { setEtapa("perfil"); setErro(""); }}>
+            <button className="login-right-back" onClick={() => { setEtapa("perfil"); setErro(""); setNome(""); setSenha(""); }}>
               <Icon name="arrow-left" size={14} /> Voltar
             </button>
             <form className="login-form" onSubmit={handleLoginPaciente}>
@@ -262,10 +265,10 @@ function Login({ onLogin }) {
               </div>
               {erro && <div className="login-error">{erro}</div>}
               <div className="form-group">
-                <label className="form-label">E-mail</label>
-                <input className="form-input" type="email" value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="seu@email.com" autoFocus />
+                <label className="form-label">Nome Completo</label>
+                <input className="form-input" type="text" value={nome}
+                  onChange={e => setNome(e.target.value)}
+                  placeholder="Digite seu nome completo" autoFocus />
               </div>
               <div className="form-group">
                 <label className="form-label">Senha</label>
