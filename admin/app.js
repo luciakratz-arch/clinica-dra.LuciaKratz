@@ -1164,7 +1164,6 @@ function FinanceiroClinica() {
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
 
   // Métricas por período selecionado nos cards
-  const lancPeriodo = periodoCard==="mes"?lancMes:lancAno;
   // Receitas somam, despesas deduzem
   function calcSaldo(lista){
     return lista.reduce((a,l)=>{
