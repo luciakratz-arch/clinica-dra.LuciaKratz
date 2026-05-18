@@ -96,16 +96,10 @@ html, body {
 }
 
 .login-logo {
-  width: 100px; height: 100px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.12);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 28px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.2);
-  overflow: hidden;
 }
-.login-logo img { width: 80px; height: 80px; object-fit: contain; }
+.login-logo img { width: 140px; height: 140px; object-fit: contain; }
 .login-logo-placeholder {
   font-family: var(--font-display);
   font-size: 36px;
