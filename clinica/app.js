@@ -91,8 +91,8 @@ function navFiltradoPaciente(nav, user) {
 }
 
 // ─── SIDEBAR ─────────────────────────────────────────────
-function Sidebar({ user, tab, setTab, onLogout }) {
-  const eCasal = user.tipo === "paciente" && !!user.casalId;
+function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo }) {
+  const eCasal = modo === "casal";
   const navBase = user.tipo === "aluno" ? NAV_ALUNO : eCasal ? NAV_CASAL : NAV_INDIVIDUAL;
   const nav = (user.tipo === "paciente" && !eCasal) ? navFiltradoPaciente(navBase, user) : navBase;
 
@@ -128,6 +128,11 @@ function Sidebar({ user, tab, setTab, onLogout }) {
       </nav>
 
       <div className="sidebar-footer">
+        {onTrocarModo && (
+          <button className="nav-item" onClick={onTrocarModo} style={{color:"rgba(255,255,255,0.85)"}}>
+            <Icon name="refresh-cw" size={18}/> Trocar modo
+          </button>
+        )}
         <a href={SITE_URL} className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
           <Icon name="arrow-left" size={18}/> Voltar ao site
         </a>
@@ -611,29 +616,270 @@ function PainelCasal({ user }) {
 // ═══════════════════════════════════════════════════════
 function PainelAluno({ user }) {
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+  const hora = new Date().getHours();
+  const saudacao = hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
+
+  const FERRAMENTAS_ALUNO = [
+    { id:"tcc",       label:"Pensamentos Automáticos", sub:"Registre e questione pensamentos — TCC", icon:"brain",      cor:"#ede0fa" },
+    { id:"humor",     label:"Registro de Humor",       sub:"Escala de humor do paciente",            icon:"heart",      cor:"#fde8f0" },
+    { id:"diario",    label:"Diário Terapêutico",      sub:"Escrita reflexiva livre",                icon:"book-open",  cor:"#e0f0ff" },
+    { id:"metas",     label:"Metas Terapêuticas",      sub:"Defina objetivos com o paciente",        icon:"target",     cor:"#e0faed" },
+    { id:"fabulas",   label:"Fábulas Terapêuticas",    sub:"Histórias reflexivas para sessão",       icon:"book-heart", cor:"#fff3e0" },
+    { id:"reflexoes", label:"Reflexões Cognitivas",    sub:"Exercícios de insight e reestruturação", icon:"lightbulb",  cor:"#fefce0" },
+    { id:"ansiedade", label:"Gestão da Ansiedade",     sub:"Tracking, nível de estresse, roda",      icon:"activity",   cor:"#f0e8ff" },
+  ];
+
   return (
     <div>
-      <div className="page-header">
-        <div className="page-title">Olá, {user.nome.split(" ")[0]} 🎓</div>
-        <div className="page-subtitle" style={{textTransform:"capitalize"}}>{hoje}</div>
-      </div>
-      <div className="metrics-grid" style={{marginBottom:24}}>
-        <div className="metric-card">
-          <div className="metric-icon"><Icon name="file-bar-chart" size={20}/></div>
-          <div className="metric-label">Relatórios</div>
-          <div className="metric-value">0</div>
+      <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",borderRadius:16,padding:"28px 32px",marginBottom:24,color:"white",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}/>
+        <div style={{fontSize:13,opacity:0.8,marginBottom:6,textTransform:"capitalize"}}>{hoje}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:28,fontWeight:600,marginBottom:4}}>
+          {saudacao}, {user.nome.split(" ")[0]}! 🎓
         </div>
-        <div className="metric-card">
-          <div className="metric-icon"><Icon name="stethoscope" size={20}/></div>
-          <div className="metric-label">Ferramentas</div>
-          <div className="metric-value">5</div>
+        <div style={{fontSize:14,opacity:0.85}}>Portal de Supervisão Clínica — Dra. Lucia Kratz</div>
+      </div>
+
+      <LinkCompartilhavel user={user}/>
+
+      <div className="card" style={{marginBottom:24}}>
+        <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>Ferramentas Clínicas</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
+          {FERRAMENTAS_ALUNO.map(f=>(
+            <div key={f.id} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white"}}>
+              <div style={{width:44,height:44,borderRadius:12,background:f.cor,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <Icon name={f.icon} size={20}/>
+              </div>
+              <div>
+                <div style={{fontWeight:600,fontSize:14}}>{f.label}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>{f.sub}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-      <div className="card">
-        <div style={{fontWeight:600,marginBottom:8,fontSize:15}}>Portal de Supervisão Clínica</div>
-        <p style={{fontSize:14,color:"var(--text-muted)",lineHeight:1.7}}>
-          Aqui você terá acesso às ferramentas de supervisão, materiais de estudo e recursos para sua formação em psicologia clínica.
-        </p>
+
+      <HistoricoAluno user={user}/>
+    </div>
+  );
+}
+
+function LinkCompartilhavel({ user }) {
+  const [descricao, setDescricao]   = useState("");
+  const [ferramenta, setFerramenta] = useState("tcc");
+  const [salvando, setSalvando]     = useState(false);
+  const [links, setLinks]           = useState([]);
+  const [copiado, setCopiado]       = useState(null);
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  const FERRAMENTAS_LINK = [
+    {id:"tcc",       label:"Pensamentos Automáticos"},
+    {id:"humor",     label:"Registro de Humor"},
+    {id:"diario",    label:"Diário Terapêutico"},
+    {id:"metas",     label:"Metas Terapêuticas"},
+    {id:"fabulas",   label:"Fábulas Terapêuticas"},
+    {id:"reflexoes", label:"Reflexões Cognitivas"},
+    {id:"ansiedade", label:"Gestão da Ansiedade"},
+  ];
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_aluno_links")
+      .where("alunoId","==",user.id)
+      .orderBy("createdAt","desc")
+      .onSnapshot(s=>setLinks(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return unsub;
+  },[user.id]);
+
+  async function gerarLink(){
+    if(!descricao.trim()){alert("Digite uma identificação.");return;}
+    setSalvando(true);
+    const token = Math.random().toString(36).slice(2,10).toUpperCase();
+    await db.collection("clinica_aluno_links").add({
+      alunoId:user.id, alunoNome:user.nome,
+      token, ferramenta, descricao,
+      url:`${SITE_URL}/clinica/?link=${token}`,
+      usos:0, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setDescricao(""); setMostrarForm(false); setSalvando(false);
+  }
+
+  function copiar(url,id){
+    navigator.clipboard.writeText(url);
+    setCopiado(id);
+    setTimeout(()=>setCopiado(null),2000);
+  }
+
+  async function excluir(id){ if(!confirm("Excluir link?"))return; await db.collection("clinica_aluno_links").doc(id).delete(); }
+
+  return (
+    <div className="card" style={{marginBottom:24}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{fontWeight:700,fontSize:15,display:"flex",alignItems:"center",gap:8}}>
+          <Icon name="share-2" size={16}/> Links para Pacientes
+        </div>
+        <button className="btn btn-purple" style={{fontSize:13}} onClick={()=>setMostrarForm(f=>!f)}>
+          <Icon name="plus" size={15}/> Gerar Link
+        </button>
+      </div>
+
+      {mostrarForm&&(
+        <div style={{background:"var(--purple-bg)",borderRadius:12,padding:16,marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div className="form-group">
+              <label className="form-label">Ferramenta</label>
+              <select className="form-input" value={ferramenta} onChange={e=>setFerramenta(e.target.value)}>
+                {FERRAMENTAS_LINK.map(f=><option key={f.id} value={f.id}>{f.label}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Identificação (ex: nome do paciente)</label>
+              <input className="form-input" value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Ex: João — TCC sessão 3"/>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="btn btn-ghost" onClick={()=>setMostrarForm(false)}>Cancelar</button>
+            <button className="btn btn-purple" onClick={gerarLink} disabled={salvando}>{salvando?"Gerando...":"Gerar Link"}</button>
+          </div>
+        </div>
+      )}
+
+      {links.length===0&&!mostrarForm&&(
+        <div style={{textAlign:"center",padding:24,color:"var(--text-muted)",fontSize:14}}>
+          Nenhum link gerado ainda. Crie um link para compartilhar com seu paciente.
+        </div>
+      )}
+
+      {links.map(l=>(
+        <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid var(--gray-100)"}}>
+          <div style={{width:36,height:36,borderRadius:8,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name="link" size={16}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,fontSize:14}}>{l.descricao}</div>
+            <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.ferramenta} · {l.usos||0} uso(s)</div>
+          </div>
+          <button onClick={()=>copiar(l.url,l.id)}
+            style={{padding:"6px 14px",borderRadius:20,border:"1.5px solid var(--purple)",background:copiado===l.id?"var(--purple)":"white",color:copiado===l.id?"white":"var(--purple)",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .2s"}}>
+            {copiado===l.id?"✓ Copiado!":"Copiar Link"}
+          </button>
+          <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}>
+            <Icon name="trash-2" size={13}/>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HistoricoAluno({ user }) {
+  const [registros, setRegistros] = useState([]);
+  useEffect(()=>{
+    const unsub = db.collection("clinica_aluno_registros")
+      .where("alunoId","==",user.id)
+      .orderBy("createdAt","desc").limit(20)
+      .onSnapshot(s=>setRegistros(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return unsub;
+  },[user.id]);
+
+  if(registros.length===0) return null;
+  return (
+    <div className="card">
+      <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>Histórico de Registros</div>
+      {registros.map(r=>(
+        <div key={r.id} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"10px 0",borderBottom:"1px solid var(--gray-100)"}}>
+          <div style={{width:36,height:36,borderRadius:8,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name="file-text" size={16}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:500,fontSize:14}}>{r.ferramenta} — {r.descricao||"Sem descrição"}</div>
+            <div style={{fontSize:12,color:"var(--text-muted)"}}>{r.createdAt?.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString("pt-BR"):""}</div>
+            {r.conteudo&&<div style={{marginTop:6,fontSize:13,color:"var(--gray-600)",background:"var(--gray-50)",borderRadius:8,padding:"8px 12px"}}>{r.conteudo}</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  SELETOR DE MODO — individual ou casal
+// ═══════════════════════════════════════════════════════
+function SeletorModo({ user, onEscolha }) {
+  const [parceiro, setParceiro] = useState(null);
+  const temIndividual = (user.modulosAtivos||[]).length > 0;
+  const temCasal = !!user.casalId;
+
+  useEffect(()=>{
+    if(user.casalId){
+      db.collection("clinica_pacientes").doc(user.casalId).get()
+        .then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
+    }
+  },[user.casalId]);
+
+  // Se só tem um modo, vai direto
+  useEffect(()=>{
+    if(temCasal && !temIndividual) onEscolha("casal");
+    else if(!temCasal && temIndividual) onEscolha("individual");
+    else if(!temCasal && !temIndividual) onEscolha("individual"); // painel aguardando ativação
+  },[temCasal, temIndividual]);
+
+  // Se tem os dois, mostra seletor
+  if(!temCasal || !temIndividual) return <Spinner/>;
+
+  return (
+    <div style={{minHeight:"100vh",background:"var(--gray-50)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{width:"100%",maxWidth:480}}>
+        {/* Logo */}
+        <div style={{textAlign:"center",marginBottom:40}}>
+          <img src={LOGO_URL} alt="Lucia Kratz" style={{width:100,height:100,objectFit:"contain",marginBottom:16}} onError={e=>e.target.style.display="none"}/>
+          <div style={{fontFamily:"var(--font-display)",fontSize:24,fontWeight:600,color:"var(--purple)"}}>
+            Olá, {user.nome.split(" ")[0]}! 💜
+          </div>
+          <div style={{fontSize:14,color:"var(--text-muted)",marginTop:4}}>Como você quer acessar hoje?</div>
+        </div>
+
+        {/* Opções */}
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          <button onClick={()=>onEscolha("individual")}
+            style={{display:"flex",alignItems:"center",gap:20,padding:"24px 28px",borderRadius:16,border:"2px solid var(--gray-200)",background:"white",cursor:"pointer",textAlign:"left",transition:"all .2s",width:"100%"}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--purple)";e.currentTarget.style.background="var(--purple-bg)";}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--gray-200)";e.currentTarget.style.background="white";}}>
+            <div style={{width:56,height:56,borderRadius:16,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <Icon name="user" size={28}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,color:"var(--text)",marginBottom:4}}>
+                Meu Espaço Individual
+              </div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>
+                Ferramentas pessoais, humor, diário e metas terapêuticas
+              </div>
+            </div>
+            <Icon name="chevron-right" size={20}/>
+          </button>
+
+          <button onClick={()=>onEscolha("casal")}
+            style={{display:"flex",alignItems:"center",gap:20,padding:"24px 28px",borderRadius:16,border:"2px solid var(--gray-200)",background:"white",cursor:"pointer",textAlign:"left",transition:"all .2s",width:"100%"}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor="#e879f9";e.currentTarget.style.background:"#fdf4ff";}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--gray-200)";e.currentTarget.style.background="white";}}>
+            <div style={{width:56,height:56,borderRadius:16,background:"#fce7f3",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <Icon name="heart" size={28}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,color:"var(--text)",marginBottom:4}}>
+                Terapia de Casal
+              </div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>
+                {parceiro ? `Com ${parceiro.nome.split(" ")[0]}` : "Espaço do casal"} — check-ins, etapas e metas
+              </div>
+            </div>
+            <Icon name="chevron-right" size={20}/>
+          </button>
+        </div>
+
+        <div style={{textAlign:"center",marginTop:32,fontSize:12,color:"var(--gray-400)"}}>
+          Plataforma protegida · Dra. Lucia Kratz · CRP 09/20590
+        </div>
       </div>
     </div>
   );
@@ -643,27 +889,64 @@ function PainelAluno({ user }) {
 //  APP PRINCIPAL
 // ═══════════════════════════════════════════════════════
 function App() {
-  const [user, setUser] = useState(null);
-  const [tab, setTab]   = useState(null);
+  const [user, setUser]   = useState(null);
+  const [modo, setModo]   = useState(null); // null | "individual" | "casal"
+  const [tab, setTab]     = useState(null);
 
   function handleLogin(u) {
     setUser(u);
-    if (u.tipo==="paciente") setTab(u.casalId?"inicio-casal":"painel");
-    else if (u.tipo==="aluno") setTab("painel-aluno");
+    if (u.tipo==="aluno") setTab("painel-aluno");
+    // paciente vai para SeletorModo primeiro
   }
-  function handleLogout() { setUser(null); setTab(null); }
+
+  function handleEscolha(m) {
+    setModo(m);
+    setTab(m==="casal" ? "inicio-casal" : "painel");
+  }
+
+  function handleLogout() { setUser(null); setModo(null); setTab(null); }
 
   if (!user) return <Login onLogin={handleLogin}/>;
 
-  const eCasal = user.tipo==="paciente" && !!user.casalId;
-  const navBase = user.tipo==="aluno"?NAV_ALUNO:eCasal?NAV_CASAL:NAV_INDIVIDUAL;
-  const navMobile = (user.tipo==="paciente"&&!eCasal)
-    ? navFiltradoPaciente(navBase,user).slice(0,5)
-    : navBase.slice(0,5);
+  // Aluno vai direto
+  if (user.tipo === "aluno") {
+    return (
+      <div>
+        <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} modo="aluno"/>
+        <div className="header-mobile">
+          <div className="header-mobile-logo">Meu Espaço</div>
+          <button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button>
+        </div>
+        <div className="main-content">
+          {tab==="painel-aluno"      && <PainelAluno user={user}/>}
+          {tab==="ferramentas-aluno" && <EmBreve titulo="Ferramentas Clínicas" sub="Recursos de supervisão."/>}
+          {tab==="relatorios-aluno"  && <EmBreve titulo="Relatórios de Supervisão" sub="Em construção."/>}
+        </div>
+        <div className="nav-mobile">
+          {NAV_ALUNO.slice(0,5).map(item=>(
+            <button key={item.id} className={`nav-mobile-item ${tab===item.id?"active":""}`} onClick={()=>setTab(item.id)}>
+              <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Paciente — mostra seletor se ainda não escolheu
+  if (user.tipo === "paciente" && !modo) {
+    return <SeletorModo user={user} onEscolha={handleEscolha}/>;
+  }
+
+  const eCasal = modo === "casal";
+  const navBase = eCasal ? NAV_CASAL : NAV_INDIVIDUAL;
+  const navFinal = !eCasal ? navFiltradoPaciente(navBase, user) : navBase;
+  const navMobile = navFinal.slice(0,5);
 
   return (
     <div>
-      <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout}/>
+      <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} modo={modo}
+        onTrocarModo={user.casalId && (user.modulosAtivos||[]).length>0 ? ()=>{setModo(null);setTab(null);} : null}/>
 
       <div className="header-mobile">
         <div className="header-mobile-logo">{eCasal?"Terapia de Casal":"Meu Espaço"}</div>
@@ -671,38 +954,32 @@ function App() {
       </div>
 
       <div className="main-content">
-        {/* PACIENTE INDIVIDUAL */}
-        {user.tipo==="paciente"&&!eCasal&&tab==="painel"        &&<PainelIndividual user={user} setTab={setTab}/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="humor"         &&<RegistroHumor user={user}/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="pensamentos"   &&<EmBreve titulo="Pensamentos Automáticos" sub="Registre e questione seus pensamentos — TCC."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="diario"        &&<EmBreve titulo="Diário Terapêutico" sub="Escreva sobre o seu dia e acompanhe sua evolução."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="metas"         &&<EmBreve titulo="Minhas Metas" sub="Defina e acompanhe seus objetivos terapêuticos."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="ferramentas"   &&<EmBreve titulo="Ferramentas Clínicas" sub="Recursos terapêuticos disponibilizados pela psicóloga."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="fabulas"       &&<EmBreve titulo="Fábulas Terapêuticas" sub="Histórias reflexivas para seu processo."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="reflexoes"     &&<EmBreve titulo="Reflexões Cognitivas" sub="Exercícios de insight e reestruturação cognitiva."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="meus-laudos"   &&<EmBreve titulo="Meus Laudos" sub="Laudos disponibilizados pela psicóloga."/>}
-        {user.tipo==="paciente"&&!eCasal&&tab==="minha-conta"   &&<EmBreve titulo="Minha Conta" sub="Gerencie seus dados cadastrais."/>}
+        {/* INDIVIDUAL */}
+        {!eCasal&&tab==="painel"        &&<PainelIndividual user={user} setTab={setTab}/>}
+        {!eCasal&&tab==="humor"         &&<RegistroHumor user={user}/>}
+        {!eCasal&&tab==="pensamentos"   &&<EmBreve titulo="Pensamentos Automáticos" sub="Registre e questione seus pensamentos — TCC."/>}
+        {!eCasal&&tab==="diario"        &&<EmBreve titulo="Diário Terapêutico" sub="Escreva sobre o seu dia."/>}
+        {!eCasal&&tab==="metas"         &&<EmBreve titulo="Minhas Metas" sub="Defina e acompanhe seus objetivos."/>}
+        {!eCasal&&tab==="ferramentas"   &&<EmBreve titulo="Ferramentas Clínicas" sub="Recursos terapêuticos."/>}
+        {!eCasal&&tab==="fabulas"       &&<EmBreve titulo="Fábulas Terapêuticas" sub="Histórias reflexivas."/>}
+        {!eCasal&&tab==="reflexoes"     &&<EmBreve titulo="Reflexões Cognitivas" sub="Exercícios de insight."/>}
+        {!eCasal&&tab==="meus-laudos"   &&<EmBreve titulo="Meus Laudos"/>}
+        {!eCasal&&tab==="minha-conta"   &&<EmBreve titulo="Minha Conta"/>}
 
-        {/* PACIENTE CASAL */}
-        {user.tipo==="paciente"&&eCasal&&tab==="inicio-casal"      &&<PainelCasal user={user}/>}
-        {user.tipo==="paciente"&&eCasal&&tab==="diagnostico-casal" &&<EmBreve titulo="Diagnóstico Inicial" sub="Avaliação inicial do relacionamento."/>}
-        {user.tipo==="paciente"&&eCasal&&tab==="etapa1-casal"      &&<EmBreve titulo="Etapa 1 — Reconexão" sub="Exercícios de reconexão emocional."/>}
-        {user.tipo==="paciente"&&eCasal&&tab==="etapa2-casal"      &&<EmBreve titulo="Etapa 2 — Identidade" sub="Construção da identidade do casal."/>}
-        {user.tipo==="paciente"&&eCasal&&tab==="etapa3-casal"      &&<EmBreve titulo="Etapa 3 — Cognição" sub="Reestruturação cognitiva do relacionamento."/>}
-        {user.tipo==="paciente"&&eCasal&&tab==="etapa4-casal"      &&<EmBreve titulo="Etapa 4 — Reestruturação" sub="Consolidação e plano futuro."/>}
-        {user.tipo==="paciente"&&eCasal&&tab==="minha-conta"       &&<EmBreve titulo="Minha Conta" sub="Gerencie seus dados cadastrais."/>}
-
-        {/* ALUNO */}
-        {user.tipo==="aluno"&&tab==="painel-aluno"      &&<PainelAluno user={user}/>}
-        {user.tipo==="aluno"&&tab==="ferramentas-aluno" &&<EmBreve titulo="Ferramentas Clínicas" sub="Recursos de supervisão."/>}
-        {user.tipo==="aluno"&&tab==="relatorios-aluno"  &&<EmBreve titulo="Relatórios de Supervisão" sub="Em construção."/>}
+        {/* CASAL */}
+        {eCasal&&tab==="inicio-casal"      &&<PainelCasal user={user}/>}
+        {eCasal&&tab==="diagnostico-casal" &&<EmBreve titulo="Diagnóstico Inicial"/>}
+        {eCasal&&tab==="etapa1-casal"      &&<EmBreve titulo="Etapa 1 — Reconexão"/>}
+        {eCasal&&tab==="etapa2-casal"      &&<EmBreve titulo="Etapa 2 — Identidade"/>}
+        {eCasal&&tab==="etapa3-casal"      &&<EmBreve titulo="Etapa 3 — Cognição"/>}
+        {eCasal&&tab==="etapa4-casal"      &&<EmBreve titulo="Etapa 4 — Reestruturação"/>}
+        {eCasal&&tab==="minha-conta"       &&<EmBreve titulo="Minha Conta"/>}
       </div>
 
       <div className="nav-mobile">
         {navMobile.map(item=>(
           <button key={item.id} className={`nav-mobile-item ${tab===item.id?"active":""}`} onClick={()=>setTab(item.id)}>
-            <Icon name={item.icon} size={20}/>
-            <span>{item.label.split(" ")[0]}</span>
+            <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
           </button>
         ))}
       </div>
