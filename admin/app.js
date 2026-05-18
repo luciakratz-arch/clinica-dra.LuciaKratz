@@ -4513,6 +4513,24 @@ function Agenda() {
     return d >= hoje && s.status!=="cancelado" && s.status!=="realizado";
   }).slice(0,5);
 
+  const [modalSala, setModalSala] = useState(false);
+  const [formSala, setFormSala]   = useState({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:""});
+  const [salvandoSala, setSalvandoSala] = useState(false);
+
+  async function salvarBloqueioSala(){
+    if(!formSala.data||!formSala.horaInicio||!formSala.horaFim){alert("Preencha data, início e fim.");return;}
+    if(formSala.horaInicio>=formSala.horaFim){alert("Início deve ser antes do fim.");return;}
+    setSalvandoSala(true);
+    await db.collection("sala_reservas").add({
+      data:formSala.data, horaInicio:formSala.horaInicio, horaFim:formSala.horaFim,
+      titulo:formSala.titulo||"", usuarioId:"lucia", usuarioNome:"Lucia Kratz",
+      cor:"#7B00C4", createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setModalSala(false);
+    setFormSala({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:""});
+    setSalvandoSala(false);
+  }
+
   if(loading) return <Spinner/>;
 
   return (
@@ -4528,6 +4546,10 @@ function Agenda() {
             className="btn btn-ghost" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
             <Icon name="external-link" size={13}/> Doctoralia
           </a>
+          <button className="btn btn-ghost" style={{borderColor:"#ea580c",color:"#ea580c"}}
+            onClick={()=>{setFormSala({data:formatData(hoje),horaInicio:"09:00",horaFim:"10:00",titulo:""});setModalSala(true);}}>
+            <Icon name="lock" size={15}/> Bloquear Sala
+          </button>
           <button className="btn btn-purple" onClick={()=>{setForm({pacienteId:"",data:formatData(hoje),hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}>
             <Icon name="plus" size={16}/> Nova Sessão
           </button>
@@ -4682,12 +4704,49 @@ function Agenda() {
           </div>
         </div>
       )}
+      {/* MODAL BLOQUEAR SALA */}
+      {modalSala&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalSala(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:440}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
+                <Icon name="lock" size={18}/> Bloquear Sala
+              </div>
+              <button onClick={()=>setModalSala(false)} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#92400e"}}>
+              Este bloqueio aparece para a Thais como horário ocupado na agenda compartilhada.
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Data</label>
+                <input className="form-input" type="date" value={formSala.data} onChange={e=>setFormSala({...formSala,data:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Início</label>
+                <input className="form-input" type="time" value={formSala.horaInicio} onChange={e=>setFormSala({...formSala,horaInicio:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Fim</label>
+                <input className="form-input" type="time" value={formSala.horaFim} onChange={e=>setFormSala({...formSala,horaFim:e.target.value})}/>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Título (opcional)</label>
+                <input className="form-input" value={formSala.titulo} onChange={e=>setFormSala({...formSala,titulo:e.target.value})} placeholder="Ex: Sessão, Avaliação..."/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+              <button className="btn btn-ghost" onClick={()=>setModalSala(false)}>Cancelar</button>
+              <button style={{background:"#ea580c",color:"white",border:"none",borderRadius:10,padding:"10px 20px",fontWeight:600,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",gap:6,fontFamily:"var(--font-body)"}} onClick={salvarBloqueioSala} disabled={salvandoSala}>
+                <Icon name="lock" size={15}/> {salvandoSala?"Salvando...":"Bloquear"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-// APP
-function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
   function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");}
