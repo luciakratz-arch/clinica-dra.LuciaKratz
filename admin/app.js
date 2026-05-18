@@ -1430,20 +1430,19 @@ function FinanceiroClinica() {
       {aba==="lancamentos"&&(
         <div>
           {/* Filtro mês — jan→dez, mês atual destacado */}
-          <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês:</span>
+          <div style={{display:"flex",gap:6,marginBottom:16,alignItems:"center",overflowX:"auto",paddingBottom:4}}>
+            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Mês:</span>
             {mesesDisp.map(m=>{
               const isAtual=m===mesAtual;
               const isSel=m===mesFiltroEfetivo;
               return(
                 <button key={m} onClick={()=>setMesFiltro(m)}
-                  style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",
+                  style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",flexShrink:0,
                     borderColor:isSel?"var(--purple)":isAtual?"var(--purple)":"#e5e7eb",
                     background:isSel?"var(--purple)":"white",
                     color:isSel?"white":isAtual?"var(--purple)":"#6b7280",
                     fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer"}}>
-                  {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short"})}
-                  {isAtual&&!isSel&&<span style={{marginLeft:3,fontSize:9}}>●</span>}
+                  {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short"}).replace(".","")}{isAtual&&!isSel&&<span style={{marginLeft:2,fontSize:9}}>●</span>}
                 </button>
               );
             })}
