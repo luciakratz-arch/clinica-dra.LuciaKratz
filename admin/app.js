@@ -4747,6 +4747,9 @@ function Agenda() {
     </div>
   );
 }
+
+// APP
+function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
   function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");}
