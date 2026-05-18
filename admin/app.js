@@ -1154,10 +1154,13 @@ function FinanceiroClinica() {
   const mesAtual = new Date().toISOString().slice(0,7);
   const mesesDisp = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
 
+  // Se mesFiltro não pertence ao anoFiltro, corrige para mês atual
+  const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro) ? mesFiltro : mesAtual.startsWith(anoFiltro) ? mesAtual : anoFiltro+"-01";
+
   // Cards do topo — mês atual do ano selecionado, fixo
   const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
-  const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
+  const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
   const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
 
@@ -1431,7 +1434,7 @@ function FinanceiroClinica() {
             <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês:</span>
             {mesesDisp.map(m=>{
               const isAtual=m===mesAtual;
-              const isSel=m===mesFiltro;
+              const isSel=m===mesFiltroEfetivo;
               return(
                 <button key={m} onClick={()=>setMesFiltro(m)}
                   style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",
