@@ -1373,7 +1373,9 @@ function FinanceiroClinica() {
         {(()=>{
           const anoAtualNum = new Date().getFullYear();
           const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
-          const anosSet = new Set([...anosExist, anoAtualNum]);
+          // Sempre mostra: todos os anos com dados + ano atual + 1 ano antes e depois do atual
+          const anosSet = new Set([...anosExist, anoAtualNum-1, anoAtualNum, anoAtualNum+1]);
+          // Se houver dados fora dessa janela, eles já estão incluídos via anosExist
           const anos = [...anosSet].sort().map(String);
           return anos.map(a=>(
             <button key={a} onClick={()=>{
