@@ -172,10 +172,13 @@ function Login({ onLogin }) {
   async function handleLoginAluno(e) {
     e.preventDefault(); setErro(""); setLoading(true);
     try {
-      const snap = await db.collection("clinica_alunos").where("email","==",email.toLowerCase().trim()).get();
-      if (snap.empty) { setErro("Aluno não encontrado."); setLoading(false); return; }
-      const aluno = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      if (aluno.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
+      if (senha !== "1234") { setErro("Senha incorreta."); setLoading(false); return; }
+      const nomeNorm = nome.trim().toLowerCase();
+      if (!nomeNorm) { setErro("Digite seu nome completo."); setLoading(false); return; }
+      const snap = await db.collection("clinica_alunos").get();
+      const match = snap.docs.find(d => (d.data().nome||"").trim().toLowerCase() === nomeNorm);
+      if (!match) { setErro("Aluno não encontrado. Verifique o nome completo."); setLoading(false); return; }
+      const aluno = { id: match.id, ...match.data() };
       if (aluno.status === "inativo") { setErro("Conta inativa."); setLoading(false); return; }
       onLogin({ tipo:"aluno", ...aluno });
     } catch(err) { setErro("Erro ao conectar. Tente novamente."); }
@@ -252,7 +255,7 @@ function Login({ onLogin }) {
 
         {etapa==="aluno" && (
           <>
-            <button className="login-right-back" onClick={()=>{setEtapa("perfil");setErro("");setEmail("");setSenha("");}}>
+            <button className="login-right-back" onClick={()=>{setEtapa("perfil");setErro("");setNome("");setSenha("");}}>
               <Icon name="arrow-left" size={14}/> Voltar
             </button>
             <form className="login-form" onSubmit={handleLoginAluno}>
@@ -262,8 +265,8 @@ function Login({ onLogin }) {
               </div>
               {erro && <div className="login-error">{erro}</div>}
               <div className="form-group">
-                <label className="form-label">E-mail</label>
-                <input className="form-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" autoFocus/>
+                <label className="form-label">Nome Completo</label>
+                <input className="form-input" type="text" value={nome} onChange={e=>setNome(e.target.value)} placeholder="Digite seu nome completo" autoFocus/>
               </div>
               <div className="form-group">
                 <label className="form-label">Senha</label>
