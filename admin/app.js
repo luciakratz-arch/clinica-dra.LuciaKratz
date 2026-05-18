@@ -1543,37 +1543,32 @@ function FinanceiroClinica() {
                     <div style={{fontWeight:600,fontSize:13}}>Só este lançamento</div>
                     <div style={{fontSize:11,color:"#6b7280"}}>Remove apenas {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
                   </button>
-                  {modalExcluirLanc.descricaoRecorrente&&(
-                    <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
-                      // Exclui este e todos os futuros com mesma descrição
-                      const snap = await db.collection("clinica_lancamentos")
-                        .where("descricaoRecorrente","==",modalExcluirLanc.descricaoRecorrente)
-                        .get();
-                      const futuros = snap.docs.filter(d=>d.data().data>=modalExcluirLanc.data);
-                      const b=db.batch();
-                      futuros.forEach(d=>b.delete(d.ref));
-                      await b.commit();
-                      setModalExcluirLanc(null);
-                    }}>
-                      <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Este e todos os futuros</div>
-                      <div style={{fontSize:11,color:"#6b7280"}}>Remove {modalExcluirLanc.descricaoRecorrente} a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
-                    </button>
-                  )}
-                  {modalExcluirLanc.descricaoRecorrente&&(
-                    <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
-                      // Exclui todos com mesma descrição
-                      const snap = await db.collection("clinica_lancamentos")
-                        .where("descricaoRecorrente","==",modalExcluirLanc.descricaoRecorrente)
-                        .get();
-                      const b=db.batch();
-                      snap.docs.forEach(d=>b.delete(d.ref));
-                      await b.commit();
-                      setModalExcluirLanc(null);
-                    }}>
-                      <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Todos os lançamentos desta categoria</div>
-                      <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os meses de {modalExcluirLanc.descricaoRecorrente}</div>
-                    </button>
-                  )}
+                  <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
+                    const chave = modalExcluirLanc.descricaoRecorrente||modalExcluirLanc.tipo;
+                    const snap = await db.collection("clinica_lancamentos").get();
+                    const futuros = snap.docs.filter(d=>{
+                      const dd=d.data();
+                      return (dd.descricaoRecorrente===chave||dd.tipo===chave)&&dd.data>=modalExcluirLanc.data;
+                    });
+                    const b=db.batch();futuros.forEach(d=>b.delete(d.ref));await b.commit();
+                    setModalExcluirLanc(null);
+                  }}>
+                    <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Este e todos os futuros</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove "{modalExcluirLanc.tipo}" a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
+                  </button>
+                  <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
+                    const chave = modalExcluirLanc.descricaoRecorrente||modalExcluirLanc.tipo;
+                    const snap = await db.collection("clinica_lancamentos").get();
+                    const todos = snap.docs.filter(d=>{
+                      const dd=d.data();
+                      return dd.descricaoRecorrente===chave||dd.tipo===chave;
+                    });
+                    const b=db.batch();todos.forEach(d=>b.delete(d.ref));await b.commit();
+                    setModalExcluirLanc(null);
+                  }}>
+                    <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Todos — o ano inteiro</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os meses de "{modalExcluirLanc.tipo}"</div>
+                  </button>
                 </div>
                 <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>setModalExcluirLanc(null)}>Cancelar</button>
               </div>
