@@ -1,670 +1,577 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Agenda da Sala — Dra. Lucia Kratz</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Agenda da Sala</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
+:root{--purple:#7B00C4;--orange:#ea580c;--gray:#e5e7eb}
+
+/* LOGIN */
+.login{display:flex;min-height:100vh}
+.login-left{width:320px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;gap:12px}
+.login-left img{width:110px;height:110px;object-fit:contain;margin-bottom:8px}
+.login-left h1{font-family:'Playfair Display',serif;font-size:24px;color:white}
+.login-left p{font-size:13px;color:rgba(255,255,255,.7)}
+.login-right{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:20px}
+.profile-card{display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:14px;border:2px solid #e5e7eb;background:white;cursor:pointer;text-align:left;width:100%;max-width:440px;transition:all .2s}
+.profile-card:hover{border-color:var(--purple);background:#f5f0ff}
+.profile-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.profile-card h3{font-size:15px;font-weight:700;margin-bottom:2px}
+.profile-card p{font-size:12px;color:#6b7280}
+.back-btn{background:none;border:none;cursor:pointer;color:#6b7280;font-size:13px;align-self:flex-start;padding:0}
+.form-group{width:100%;max-width:440px}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;display:block;margin-bottom:4px}
+.form-input{width:100%;padding:10px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none}
+.form-input:focus{border-color:var(--purple)}
+.btn-primary{width:100%;max-width:440px;padding:12px;border-radius:10px;background:var(--purple);color:white;border:none;font-size:15px;font-weight:600;cursor:pointer}
+.error{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;padding:10px 14px;border-radius:10px;font-size:13px;width:100%;max-width:440px}
+
+/* APP */
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.s-header{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.s-header img{width:36px;height:36px;object-fit:contain}
+.s-title{font-size:13px;font-weight:600;color:white}
+.s-sub{font-size:11px;color:rgba(255,255,255,.6)}
+.s-user{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
+.s-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:white;flex-shrink:0}
+.s-name{font-size:13px;font-weight:600;color:white}
+.s-role{font-size:11px;color:rgba(255,255,255,.6)}
+.s-legend{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.s-legend-title{font-size:10px;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.s-legend-item{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.s-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.s-legend-name{font-size:12px;color:rgba(255,255,255,.8)}
+.s-legend-you{font-size:10px;font-weight:700;margin-left:auto}
+.s-footer{padding:10px 8px;margin-top:auto;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:4px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:none;background:none;color:rgba(255,255,255,.75);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;text-align:left;width:100%;text-decoration:none;transition:all .15s}
+.nav-btn:hover{background:rgba(255,255,255,.12);color:white}
+.nav-btn-danger:hover{background:rgba(220,38,38,.25);color:#fca5a5}
+.pedidos-box{margin:8px;background:rgba(239,68,68,.15);border-radius:10px;padding:12px 14px}
+.pedidos-title{font-size:12px;font-weight:700;color:#fca5a5;margin-bottom:10px}
+.pedido-item{margin-bottom:10px}
+.pedido-text{font-size:11px;color:rgba(255,255,255,.85);margin-bottom:6px}
+.pedido-btns{display:flex;gap:6px}
+.pedido-btn{flex:1;padding:5px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;color:white}
+
+/* MAIN */
+.main{margin-left:240px;padding:28px 32px;min-height:100vh}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700}
+.page-sub{font-size:14px;color:#6b7280;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all .15s}
+.btn-purple{background:var(--purple);color:white}
+.btn-ghost{background:none;color:#6b7280;border:1.5px solid #e5e7eb}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple)}
+
+/* SEMANA */
+.nav-semana{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.semana-label{flex:1;text-align:center;font-weight:600;font-size:15px}
+.grade-wrap{overflow-x:auto;margin-bottom:28px}
+.grade{width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed}
+.dia-th{padding:10px 6px;text-align:center;border-radius:10px;border:1.5px solid #e5e7eb;background:white;font-weight:normal}
+.dia-th.hoje{background:var(--purple);border-color:var(--purple)}
+.dia-weekday{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280}
+.dia-th.hoje .dia-weekday{color:rgba(255,255,255,.8)}
+.dia-num{font-size:22px;font-weight:800;color:#1f2937;line-height:1.1}
+.dia-th.hoje .dia-num{color:white}
+.dia-mes{font-size:10px;color:#9ca3af}
+.dia-th.hoje .dia-mes{color:rgba(255,255,255,.65)}
+.dia-td{vertical-align:top;padding:4px;border-radius:10px;border:1.5px solid #e5e7eb;background:white;min-height:90px}
+.dia-td.hoje{background:#faf5ff;border-color:rgba(123,0,196,.2)}
+.dia-body{display:flex;flex-direction:column;gap:4px;min-height:80px}
+.reserva-chip{border-radius:6px;padding:5px 7px;font-size:11px;border-left:3px solid}
+.chip-title{font-weight:700;font-size:12px}
+.chip-sub{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip-tag{font-size:9px;opacity:.7}
+.chip-btn{margin-top:4px;width:100%;font-size:10px;background:white;border-radius:4px;padding:2px 4px;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid}
+.add-btn{background:none;border:1px dashed #d1d5db;border-radius:6px;padding:6px;cursor:pointer;color:#9ca3af;font-size:14px;width:100%;margin-top:auto}
+.add-btn:hover{border-color:var(--purple);color:var(--purple)}
+
+/* PRÓXIMAS */
+.proximas-title{font-weight:700;font-size:15px;margin-bottom:12px}
+.card{background:white;border-radius:12px;border:1px solid #e5e7eb}
+.reserva-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f3f4f6}
+.reserva-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.reserva-data{font-weight:600;font-size:14px}
+.reserva-hora{font-size:12px;color:#6b7280}
+.reserva-actions{display:flex;gap:6px;margin-left:auto}
+.empty{text-align:center;padding:32px;color:#6b7280;font-size:14px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px}
+.modal{background:white;border-radius:16px;padding:28px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:#6b7280}
+.tipo-reserva{margin-bottom:16px}
+.tipo-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:8px;display:block}
+.tipo-btns{display:flex;gap:8px}
+.tipo-btn{flex:1;padding:12px 8px;border-radius:10px;border:2px solid #e5e7eb;background:white;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;text-align:center;transition:all .15s}
+.tipo-info{margin-top:8px;font-size:12px;color:#059669;background:#f0fdf4;border-radius:8px;padding:8px 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col2{grid-column:1/-1}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.conflito-box{background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:14px 18px;margin-bottom:16px}
+.conflito-title{font-weight:700;color:#b45309;margin-bottom:4px}
+.conflito-sub{font-size:13px;color:#92400e}
+.cancel-option{padding:16px;border-radius:12px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;width:100%;margin-bottom:10px}
+.cancel-option h4{font-size:14px;font-weight:700;margin-bottom:3px}
+.cancel-option p{font-size:12px}
+</style>
 </head>
 <body>
-  <div id="root"></div>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+<div id="app"></div>
 
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script defer>
 const firebaseConfig = {
-  apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
-  authDomain: "entrevista-inicial.firebaseapp.com",
-  projectId: "entrevista-inicial",
-  storageBucket: "entrevista-inicial.firebasestorage.app",
-  messagingSenderId: "437375609844",
-  appId: "1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
 };
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const LOGO_URL = "../logo-transparente.png";
 const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
-const WA_LUCIA = "5562991546757";
-const WA_THAIS = "5562995370858";
-
+const WA = { lucia:"5562991546757", thais:"5562995370858" };
 const USUARIOS = {
-  lucia: { nome:"Lucia Kratz",    senha:"1234", cor:"#7B00C4", bg:"#f5f0ff" },
-  thais: { nome:"Thais Cordeiro", senha:"1234", cor:"#ea580c", bg:"#fff7ed" },
+  lucia:{ nome:"Lucia Kratz",    senha:"1234", cor:"#7B00C4", bg:"#f5f0ff" },
+  thais:{ nome:"Thais Cordeiro", senha:"1234", cor:"#ea580c", bg:"#fff7ed" }
 };
 
-function Icon({ name, size=18 }) {
-  const ref = useRef(null);
-  useEffect(()=>{
-    try {
-      if(!ref.current||!window.lucide) return;
-      ref.current.innerHTML="";
-      const n=name.replace(/-([a-z])/g,(_,l)=>l.toUpperCase()).replace(/^./,s=>s.toUpperCase());
-      const fn=lucide[n]; if(!fn) return;
-      const ic=lucide.createElement(fn);
-      ic.setAttribute("width",size);ic.setAttribute("height",size);ic.setAttribute("stroke-width","1.8");
-      ref.current.appendChild(ic);
-    }catch(e){}
-  },[name,size]);
-  return <span ref={ref} style={{display:"inline-flex",alignItems:"center"}}/>;
+let state = {
+  user:null, reservas:[], pedidos:[],
+  semanaOffset:0,
+  modal:null,       // null | "reserva" | "cancelar" | "conflito"
+  editandoId:null,
+  modalData:null,   // dados extras do modal
+  form:{ data:"", horaInicio:"09:00", horaFim:"10:00", titulo:"", recorrencia:"unico" },
+  etapaLogin:"perfil", userIdLogin:"", senhaLogin:"", erroLogin:""
+};
+
+function fmt(d){ return d.toISOString().split("T")[0]; }
+function hoje(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function getDias(offset){
+  const h=hoje(), ini=new Date(h);
+  ini.setDate(h.getDate()-h.getDay()+(offset*7));
+  return Array.from({length:7},(_,i)=>{ const d=new Date(ini); d.setDate(ini.getDate()+i); return d; });
+}
+function mesLabel(d){ return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}); }
+function setState(patch){ state={...state,...patch}; render(); }
+
+// Firebase listeners
+let unsubReservas=null, unsubPedidos=null;
+function startListeners(userId){
+  if(unsubReservas) unsubReservas();
+  if(unsubPedidos)  unsubPedidos();
+  unsubReservas = db.collection("sala_reservas").orderBy("data")
+    .onSnapshot(s=>{ state.reservas=s.docs.map(d=>({id:d.id,...d.data()})); render(); });
+  unsubPedidos = db.collection("sala_pedidos").where("status","==","pendente")
+    .onSnapshot(s=>{ state.pedidos=s.docs.map(d=>({id:d.id,...d.data()})); render(); });
 }
 
-// LOGIN
-function Login({ onLogin }) {
-  const [etapa, setEtapa] = useState("perfil");
-  const [userId, setUserId] = useState("");
-  const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
-
-  function escolher(id){ setUserId(id); setEtapa("senha"); setErro(""); setSenha(""); }
-
-  function entrar(e){
-    e.preventDefault(); setErro("");
-    const u = USUARIOS[userId];
-    if(!u||senha!==u.senha){ setErro("Senha incorreta."); return; }
-    onLogin({ id:userId, ...u });
-  }
-
-  return (
-    <div className="login-page">
-      <div className="login-left">
-        <img src={LOGO_URL} alt="Logo" onError={e=>e.target.style.display="none"}/>
-        <div className="login-name">Agenda da Sala</div>
-        <div className="login-sub">Dra. Lucia Kratz · CRP 09/20590</div>
-      </div>
-      <div className="login-right">
-        {etapa==="perfil"&&(
-          <>
-            <div style={{width:"100%",maxWidth:440}}>
-              <div className="login-title">Quem é você?</div>
-              <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24}}>Selecione seu perfil.</div>
-            </div>
-            {Object.entries(USUARIOS).map(([id,u])=>(
-              <button key={id} className="profile-card" onClick={()=>escolher(id)}>
-                <div className="profile-card-icon" style={{background:u.bg}}>
-                  <Icon name="calendar" size={22}/>
-                </div>
-                <div style={{flex:1}}>
-                  <div className="profile-card-name" style={{color:u.cor}}>{u.nome}</div>
-                  <div className="profile-card-desc">Agenda compartilhada da sala</div>
-                </div>
-                <Icon name="chevron-right" size={18}/>
-              </button>
-            ))}
-            <a href={SITE_URL} style={{fontSize:12,color:"var(--purple)"}}>← Voltar ao site</a>
-          </>
-        )}
-        {etapa==="senha"&&(
-          <>
-            <button className="login-back" onClick={()=>setEtapa("perfil")}>
-              <Icon name="arrow-left" size={14}/> Voltar
-            </button>
-            <form className="login-form" onSubmit={entrar}>
-              <div>
-                <div className="login-form-title" style={{color:USUARIOS[userId]?.cor}}>{USUARIOS[userId]?.nome}</div>
-                <div style={{fontSize:13,color:"var(--text-muted)"}}>Acesse a agenda compartilhada</div>
-              </div>
-              {erro&&<div className="login-error">{erro}</div>}
-              <div>
-                <label className="form-label">Senha</label>
-                <input className="form-input" type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••" autoFocus/>
-              </div>
-              <button className="btn-primary" type="submit">Entrar</button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+async function gravar(){
+  const f = state.form;
+  if(!f.data||!f.horaInicio||!f.horaFim){ alert("Preencha todos os campos."); return; }
+  if(f.horaInicio>=f.horaFim){ alert("Início deve ser antes do fim."); return; }
+  // conflito?
+  const conflito = state.reservas.find(r=>
+    r.data===f.data && r.id!==state.editandoId &&
+    f.horaInicio<r.horaFim && f.horaFim>r.horaInicio
   );
+  if(conflito){ setState({modal:"conflito",modalData:{conflito,form:{...f}}}); return; }
+  await _gravar(f);
 }
 
-// APP PRINCIPAL
-function App() {
-  const [user, setUser] = useState(null);
-  const [reservas, setReservas] = useState([]);
-  const [pedidos, setPedidos] = useState([]);
-  const [semanaOffset, setSemanaOffset] = useState(0);
-  const [modal, setModal] = useState(false);
-  const [editando, setEditando] = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const [modalConflito, setModalConflito] = useState(null);
-  const [modalCancelar, setModalCancelar] = useState(null);
-  const [form, setForm] = useState({
-    data:"", horaInicio:"09:00", horaFim:"10:00", titulo:"", recorrencia:"unico"
-  });
-
-  useEffect(()=>{
-    if(!user) return;
-    const u1 = db.collection("sala_reservas").orderBy("data")
-      .onSnapshot(s=>setReservas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u2 = db.collection("sala_pedidos").where("status","==","pendente")
-      .onSnapshot(s=>setPedidos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    return()=>{ u1(); u2(); };
-  },[user]);
-
-  function hoje(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
-  function fmt(d){ return d.toISOString().split("T")[0]; }
-  function getDias(offset=0){
-    const h=hoje(); const ini=new Date(h); ini.setDate(h.getDate()-h.getDay()+(offset*7));
-    return Array.from({length:7},(_,i)=>{ const d=new Date(ini); d.setDate(ini.getDate()+i); return d; });
-  }
-  function mesLabel(d){ return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}); }
-
-  const dias = getDias(semanaOffset);
-
-  function resDia(dia){
-    return reservas.filter(r=>r.data===fmt(dia)).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
-  }
-
-  function temConflito(data, ini, fim, ignorar=null){
-    return reservas.some(r=>{
-      if(r.data!==data) return false;
-      if(ignorar&&r.id===ignorar) return false;
-      return ini<r.horaFim && fim>r.horaInicio;
-    });
-  }
-
-  function abrirNova(dia){
-    setForm({data:fmt(dia),horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});
-    setEditando(null); setModal(true);
-  }
-
-  function abrirEditar(r){
-    if(r.usuarioId!==user.id){ return; }
-    setForm({data:r.data,horaInicio:r.horaInicio,horaFim:r.horaFim,titulo:r.titulo||"",recorrencia:"unico"});
-    setEditando(r.id); setModal(true);
-  }
-
-  async function salvar(){
-    if(!form.data||!form.horaInicio||!form.horaFim){ alert("Preencha data, início e fim."); return; }
-    if(form.horaInicio>=form.horaFim){ alert("Início deve ser antes do fim."); return; }
-    if(temConflito(form.data,form.horaInicio,form.horaFim,editando)){
-      const conflito = reservas.find(r=>
-        r.data===form.data && r.id!==editando &&
-        form.horaInicio<r.horaFim && form.horaFim>r.horaInicio
-      );
-      setModalConflito({form:{...form},conflito});
-      return;
+async function _gravar(f){
+  const u = state.user;
+  const base = {
+    horaInicio:f.horaInicio, horaFim:f.horaFim, titulo:f.titulo||"",
+    usuarioId:u.id, usuarioNome:u.nome, cor:u.cor,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if(state.editandoId){
+    await db.collection("sala_reservas").doc(state.editandoId).update(base);
+  } else if(f.recorrencia==="recorrente"){
+    const ini = new Date(f.data+"T00:00:00");
+    const batch = db.batch();
+    for(let w=0;w<12;w++){
+      const d=new Date(ini); d.setDate(ini.getDate()+(w*7));
+      const ref=db.collection("sala_reservas").doc();
+      batch.set(ref,{...base,data:d.toISOString().split("T")[0],recorrenteRef:f.data});
     }
-    await gravar(form);
+    await batch.commit();
+  } else {
+    await db.collection("sala_reservas").add({...base,data:f.data});
   }
+  setState({modal:null,editandoId:null,form:{data:"",horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"}});
+}
 
-  async function gravar(dados){
-    setSalvando(true);
-    const base = {
-      horaInicio:dados.horaInicio, horaFim:dados.horaFim,
-      titulo:dados.titulo||"",
-      usuarioId:user.id, usuarioNome:user.nome, cor:user.cor,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if(editando){
-      await db.collection("sala_reservas").doc(editando).update(base);
-    } else if(dados.recorrencia==="recorrente"){
-      const dataInicio = new Date(dados.data+"T00:00:00");
-      const batch = db.batch();
-      const ref0 = dados.data;
-      for(let w=0;w<12;w++){
-        const d=new Date(dataInicio); d.setDate(dataInicio.getDate()+(w*7));
-        const ref=db.collection("sala_reservas").doc();
-        batch.set(ref,{...base,data:d.toISOString().split("T")[0],recorrenteRef:ref0});
-      }
-      await batch.commit();
-    } else {
-      await db.collection("sala_reservas").add({...base,data:dados.data});
-    }
-    setModal(false); setEditando(null);
-    setForm({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});
-    setModalConflito(null); setSalvando(false);
-  }
+async function cancelarReserva(r){
+  if(r.recorrenteRef){ setState({modal:"cancelar",modalData:r}); return; }
+  if(!confirm("Cancelar esta reserva?")) return;
+  await db.collection("sala_reservas").doc(r.id).delete();
+}
 
-  async function cancelar(r){
-    if(r.recorrenteRef){ setModalCancelar(r); return; }
-    if(!confirm("Cancelar esta reserva?")) return;
+async function confirmarCancelar(modo){
+  const r = state.modalData;
+  if(modo==="todas"){
+    const snap = await db.collection("sala_reservas")
+      .where("recorrenteRef","==",r.recorrenteRef)
+      .where("usuarioId","==",r.usuarioId).get();
+    const batch=db.batch();
+    snap.docs.forEach(d=>{ if(d.data().data>=r.data) batch.delete(d.ref); });
+    await batch.commit();
+  } else {
     await db.collection("sala_reservas").doc(r.id).delete();
   }
-
-  async function confirmarCancelar(modo){
-    const r = modalCancelar;
-    if(modo==="todas"){
-      const snap = await db.collection("sala_reservas")
-        .where("recorrenteRef","==",r.recorrenteRef)
-        .where("usuarioId","==",r.usuarioId).get();
-      const batch = db.batch();
-      snap.docs.forEach(d=>{ if(d.data().data>=r.data) batch.delete(d.ref); });
-      await batch.commit();
-    } else {
-      await db.collection("sala_reservas").doc(r.id).delete();
-    }
-    setModalCancelar(null);
-  }
-
-  async function pedirLiberacao(reserva){
-    const waNum = reserva.usuarioId==="lucia" ? WA_LUCIA : WA_THAIS;
-    const data  = new Date(reserva.data+"T00:00:00").toLocaleDateString("pt-BR");
-    const msg   = `Olá ${reserva.usuarioNome}! 😊 Você tem a sala reservada das ${reserva.horaInicio} às ${reserva.horaFim} do dia ${data}. Posso usar esse horário? Responda no sistema: ${window.location.href}`;
-    await db.collection("sala_pedidos").add({
-      reservaId:reserva.id, de:user.id, deNome:user.nome,
-      para:reserva.usuarioId, paraNome:reserva.usuarioNome,
-      data:reserva.data, horaInicio:reserva.horaInicio, horaFim:reserva.horaFim,
-      status:"pendente", createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`,"_blank");
-    setModalConflito(null);
-  }
-
-  async function responderPedido(pedidoId, aceitar){
-    const p = pedidos.find(x=>x.id===pedidoId);
-    if(!p) return;
-    const waNum = p.de==="lucia" ? WA_LUCIA : WA_THAIS;
-    if(aceitar){
-      await db.collection("sala_reservas").doc(p.reservaId).delete();
-      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(`${p.deNome}, liberei o horário das ${p.horaInicio} às ${p.horaFim}! Sala disponível. 🟣`)}`,"_blank");
-    } else {
-      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(`${p.deNome}, não consigo liberar das ${p.horaInicio} às ${p.horaFim}. Podemos tentar outro horário? 😊`)}`,"_blank");
-    }
-    await db.collection("sala_pedidos").doc(pedidoId).update({status:aceitar?"aceito":"recusado"});
-  }
-
-  const pedidosParaMim = pedidos.filter(p=>p.para===user?.id);
-
-  if(!user) return <Login onLogin={setUser}/>;
-
-  const hj = hoje();
-
-  return (
-    <div className="app">
-      {/* SIDEBAR */}
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <img src={LOGO_URL} alt="Logo" style={{width:36,height:36,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
-          <div>
-            <div className="sidebar-title">Agenda da Sala</div>
-            <div className="sidebar-sub">Espaço compartilhado</div>
-          </div>
-        </div>
-
-        <div className="sidebar-user">
-          <div className="sidebar-avatar" style={{background:user.cor}}>{user.nome[0]}</div>
-          <div>
-            <div className="sidebar-user-name">{user.nome}</div>
-            <div className="sidebar-user-role">Psicóloga</div>
-          </div>
-        </div>
-
-        {/* Legenda */}
-        <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(255,255,255,.1)"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,.55)",marginBottom:10,textTransform:"uppercase",letterSpacing:.5}}>Legenda</div>
-          {Object.entries(USUARIOS).map(([id,u])=>(
-            <div key={id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <div style={{width:12,height:12,borderRadius:3,background:u.cor,flexShrink:0}}/>
-              <span style={{fontSize:12,color:"rgba(255,255,255,.8)"}}>{u.nome.split(" ")[0]}</span>
-              {id===user.id&&<span style={{fontSize:10,color:u.cor,fontWeight:700,marginLeft:"auto"}}>você</span>}
-            </div>
-          ))}
-        </div>
-
-        {/* Pedidos pendentes */}
-        {pedidosParaMim.length>0&&(
-          <div style={{margin:"8px",background:"rgba(239,68,68,.15)",borderRadius:10,padding:"12px 14px"}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
-              <Icon name="bell" size={13}/> {pedidosParaMim.length} pedido(s)
-            </div>
-            {pedidosParaMim.map(p=>(
-              <div key={p.id} style={{marginBottom:10}}>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.85)",marginBottom:6}}>
-                  {p.deNome.split(" ")[0]} quer {p.horaInicio}–{p.horaFim}
-                </div>
-                <div style={{display:"flex",gap:6}}>
-                  <button onClick={()=>responderPedido(p.id,true)}
-                    style={{flex:1,padding:"5px",borderRadius:6,background:"#059669",color:"white",border:"none",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-                    ✓ Liberar
-                  </button>
-                  <button onClick={()=>responderPedido(p.id,false)}
-                    style={{flex:1,padding:"5px",borderRadius:6,background:"#dc2626",color:"white",border:"none",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-                    ✗ Manter
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="sidebar-footer">
-          <button className="nav-item" onClick={()=>{ setForm({data:fmt(hj),horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"}); setEditando(null); setModal(true); }}>
-            <Icon name="plus" size={16}/> Nova Reserva
-          </button>
-          <a href={SITE_URL} className="nav-item" style={{color:"rgba(255,255,255,.6)",textDecoration:"none"}}>
-            <Icon name="arrow-left" size={16}/> Site
-          </a>
-          <button className="nav-item nav-item-danger" onClick={()=>setUser(null)}>
-            <Icon name="log-out" size={16}/> Sair
-          </button>
-        </div>
-      </div>
-
-      {/* CONTEÚDO */}
-      <div className="main">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:12}}>
-          <div>
-            <div className="page-title">Agenda da Sala</div>
-            <div className="page-sub">Reservas do espaço compartilhado</div>
-          </div>
-          <button className="btn btn-purple"
-            onClick={()=>{ setForm({data:fmt(hj),horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"}); setEditando(null); setModal(true); }}>
-            <Icon name="plus" size={15}/> Nova Reserva
-          </button>
-        </div>
-
-        {/* Navegação semana */}
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-          <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(o=>o-1)}>
-            <Icon name="chevron-left" size={18}/>
-          </button>
-          <div style={{flex:1,textAlign:"center",fontWeight:600,fontSize:15}}>
-            {mesLabel(dias[0])} — {dias[6].toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})}
-          </div>
-          <button className="btn btn-ghost" style={{padding:"6px 12px",fontSize:12}} onClick={()=>setSemanaOffset(0)}>Hoje</button>
-          <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(o=>o+1)}>
-            <Icon name="chevron-right" size={18}/>
-          </button>
-        </div>
-
-        {/* Grade — colunas fixas */}
-        <div style={{overflowX:"auto",marginBottom:28}}>
-          <table style={{width:"100%",tableLayout:"fixed",borderCollapse:"separate",borderSpacing:4}}>
-            <thead>
-              <tr>
-                {dias.map((dia,i)=>{
-                  const isHoje = fmt(dia)===fmt(hj);
-                  const isPassado = dia < hj;
-                  return (
-                    <th key={i} style={{
-                      width:"calc(100%/7)",padding:"10px 6px",textAlign:"center",
-                      background:isHoje?"var(--purple)":"white",
-                      border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)",
-                      borderRadius:10,fontWeight:"normal"
-                    }}>
-                      <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:.5,
-                        color:isHoje?"rgba(255,255,255,.8)":isPassado?"#9ca3af":"var(--gray-500)"}}>
-                        {dia.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","").toUpperCase()}
-                      </div>
-                      <div style={{fontSize:22,fontWeight:800,lineHeight:1.1,
-                        color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)"}}>
-                        {dia.getDate()}
-                      </div>
-                      <div style={{fontSize:10,color:isHoje?"rgba(255,255,255,.65)":"var(--gray-400)"}}>
-                        {dia.toLocaleDateString("pt-BR",{month:"short"})}
-                      </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                {dias.map(dia=>{
-                  const isHoje = fmt(dia)===fmt(hj);
-                  const lista = resDia(dia);
-                  return (
-                    <td key={fmt(dia)} style={{
-                      verticalAlign:"top",padding:4,
-                      background:isHoje?"#faf5ff":"white",
-                      border:"1.5px solid",borderColor:isHoje?"rgba(123,0,196,.2)":"var(--gray-200)",
-                      borderRadius:10,minHeight:90
-                    }}>
-                      <div style={{display:"flex",flexDirection:"column",gap:4,minHeight:80}}>
-                        {lista.map(r=>{
-                          const eMinha = r.usuarioId===user.id;
-                          const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
-                          const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
-                          return (
-                            <div key={r.id}
-                              onClick={()=>eMinha&&abrirEditar(r)}
-                              style={{background:bg,borderLeft:"3px solid "+cor,borderRadius:6,
-                                padding:"5px 7px",cursor:eMinha?"pointer":"default",fontSize:11}}>
-                              <div style={{fontWeight:700,color:cor,fontSize:12}}>{r.horaInicio}–{r.horaFim}</div>
-                              <div style={{color:"#374151",fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                                {eMinha?(r.titulo||"Minha reserva"):`Ocupado — ${r.usuarioNome.split(" ")[0]}`}
-                              </div>
-                              {r.recorrenteRef&&<div style={{fontSize:9,color:cor,opacity:.7}}>↻ recorrente</div>}
-                              {!eMinha&&(
-                                <button onClick={e=>{e.stopPropagation();pedirLiberacao(r);}}
-                                  style={{marginTop:4,width:"100%",fontSize:10,background:"white",
-                                    border:"1px solid "+cor,borderRadius:4,padding:"2px 4px",
-                                    cursor:"pointer",color:cor,fontFamily:"var(--font-body)"}}>
-                                  Pedir horário
-                                </button>
-                              )}
-                              {eMinha&&(
-                                <button onClick={e=>{e.stopPropagation();cancelar(r);}}
-                                  style={{marginTop:4,width:"100%",fontSize:10,background:"white",
-                                    border:"1px solid #fca5a5",borderRadius:4,padding:"2px 4px",
-                                    cursor:"pointer",color:"#dc2626",fontFamily:"var(--font-body)"}}>
-                                  Cancelar
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                        <button onClick={()=>abrirNova(dia)}
-                          style={{background:"none",border:"1px dashed #d1d5db",borderRadius:6,
-                            padding:"6px",cursor:"pointer",color:"#9ca3af",fontSize:14,
-                            width:"100%",marginTop:"auto"}}>
-                          +
-                        </button>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Minhas próximas reservas */}
-        <div>
-          <div style={{fontWeight:700,fontSize:15,marginBottom:12}}>Minhas próximas reservas</div>
-          {reservas.filter(r=>r.usuarioId===user.id&&r.data>=fmt(hj)).length===0
-            ? <div className="card" style={{textAlign:"center",padding:32,color:"var(--text-muted)",fontSize:14}}>
-                Nenhuma reserva futura. Clique em "+ Nova Reserva".
-              </div>
-            : <div className="card" style={{padding:0}}>
-                {reservas
-                  .filter(r=>r.usuarioId===user.id&&r.data>=fmt(hj))
-                  .sort((a,b)=>a.data.localeCompare(b.data)||a.horaInicio.localeCompare(b.horaInicio))
-                  .map(r=>(
-                    <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                      <div style={{width:42,height:42,borderRadius:10,background:user.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                        <Icon name="calendar" size={18}/>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontWeight:600,fontSize:14}}>
-                          {new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
-                        </div>
-                        <div style={{fontSize:12,color:"var(--text-muted)"}}>
-                          {r.horaInicio} – {r.horaFim}{r.titulo?" · "+r.titulo:""}
-                          {r.recorrenteRef&&<span style={{marginLeft:6,fontSize:10,color:user.cor}}>↻ recorrente</span>}
-                        </div>
-                      </div>
-                      <div style={{display:"flex",gap:6}}>
-                        <button className="btn btn-ghost" style={{padding:"6px 10px"}} onClick={()=>abrirEditar(r)}>
-                          <Icon name="pencil" size={13}/>
-                        </button>
-                        <button className="btn btn-ghost" style={{padding:"6px 10px",color:"#dc2626"}} onClick={()=>cancelar(r)}>
-                          <Icon name="trash-2" size={13}/>
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                }
-              </div>
-          }
-        </div>
-      </div>
-
-      {/* ══ MODAL NOVA/EDITAR RESERVA ══ */}
-      {modal&&(
-        <div className="modal-bg" onClick={()=>{setModal(false);setEditando(null);}}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div className="modal-title">
-              {editando?"Editar Reserva":"Nova Reserva"}
-              <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}>
-                <Icon name="x" size={20}/>
-              </button>
-            </div>
-
-            {/* Tipo de reserva — só na criação */}
-            {!editando&&(
-              <div style={{marginBottom:16}}>
-                <label className="form-label">Tipo de reserva</label>
-                <div style={{display:"flex",gap:8,marginTop:4}}>
-                  {[
-                    ["unico","📅 Só este dia",user?.cor||"#7B00C4"],
-                    ["recorrente","🔁 Toda semana (12 sem.)","#059669"]
-                  ].map(([v,l,c])=>(
-                    <button key={v} type="button"
-                      onClick={()=>setForm(f=>({...f,recorrencia:v}))}
-                      style={{
-                        flex:1,padding:"12px 8px",borderRadius:10,
-                        border:"2px solid",
-                        borderColor:form.recorrencia===v?c:"#e5e7eb",
-                        background:form.recorrencia===v?c+"18":"white",
-                        color:form.recorrencia===v?c:"#6b7280",
-                        fontWeight:700,cursor:"pointer",fontSize:12,
-                        fontFamily:"var(--font-body)",textAlign:"center",
-                        transition:"all .15s"
-                      }}>
-                      {l}
-                    </button>
-                  ))}
-                </div>
-                {form.recorrencia==="recorrente"&&(
-                  <div style={{marginTop:8,fontSize:12,color:"#059669",background:"#f0fdf4",borderRadius:8,padding:"8px 12px"}}>
-                    ✓ Vai bloquear este mesmo dia da semana por 12 semanas consecutivas
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <div style={{gridColumn:"1/-1"}}>
-                <label className="form-label">Data</label>
-                <input className="form-input" type="date" value={form.data}
-                  onChange={e=>setForm(f=>({...f,data:e.target.value}))}/>
-              </div>
-              <div>
-                <label className="form-label">Início</label>
-                <input className="form-input" type="time" value={form.horaInicio}
-                  onChange={e=>setForm(f=>({...f,horaInicio:e.target.value}))}/>
-              </div>
-              <div>
-                <label className="form-label">Fim</label>
-                <input className="form-input" type="time" value={form.horaFim}
-                  onChange={e=>setForm(f=>({...f,horaFim:e.target.value}))}/>
-              </div>
-              <div style={{gridColumn:"1/-1"}}>
-                <label className="form-label">Título (opcional)</label>
-                <input className="form-input" value={form.titulo}
-                  onChange={e=>setForm(f=>({...f,titulo:e.target.value}))}
-                  placeholder="Ex: Sessão, Supervisão..."/>
-              </div>
-            </div>
-
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
-              <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar} disabled={salvando}
-                style={{background:user?.cor||"var(--purple)"}}>
-                {salvando?"Salvando...":editando?"Salvar":"Reservar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══ MODAL CANCELAR RECORRENTE ══ */}
-      {modalCancelar&&(
-        <div className="modal-bg" onClick={()=>setModalCancelar(null)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div className="modal-title">
-              Cancelar Reserva
-              <button onClick={()=>setModalCancelar(null)} style={{background:"none",border:"none",cursor:"pointer"}}>
-                <Icon name="x" size={20}/>
-              </button>
-            </div>
-            <p style={{fontSize:14,color:"var(--text-muted)",marginBottom:20,lineHeight:1.6}}>
-              Esta é uma reserva recorrente. O que deseja cancelar?
-            </p>
-            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-              <button onClick={()=>confirmarCancelar("esta")}
-                style={{padding:"16px",borderRadius:12,border:"1.5px solid #e5e7eb",
-                  background:"white",cursor:"pointer",textAlign:"left",fontFamily:"var(--font-body)",
-                  transition:"border-color .15s"}}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="var(--purple)"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#e5e7eb"}>
-                <div style={{fontWeight:700,fontSize:14,marginBottom:3}}>Só esta reserva</div>
-                <div style={{fontSize:12,color:"var(--text-muted)"}}>
-                  Cancela apenas {new Date(modalCancelar.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
-                </div>
-              </button>
-              <button onClick={()=>confirmarCancelar("todas")}
-                style={{padding:"16px",borderRadius:12,border:"1.5px solid #fca5a5",
-                  background:"#fef2f2",cursor:"pointer",textAlign:"left",fontFamily:"var(--font-body)"}}>
-                <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:"#dc2626"}}>Esta e as próximas</div>
-                <div style={{fontSize:12,color:"#dc2626",opacity:.8}}>
-                  Cancela a partir de {new Date(modalCancelar.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"long"})} em diante
-                </div>
-              </button>
-            </div>
-            <div style={{display:"flex",justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModalCancelar(null)}>Voltar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══ MODAL CONFLITO ══ */}
-      {modalConflito&&(
-        <div className="modal-bg" onClick={()=>setModalConflito(null)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div className="modal-title">
-              ⚠️ Conflito de Horário
-              <button onClick={()=>setModalConflito(null)} style={{background:"none",border:"none",cursor:"pointer"}}>
-                <Icon name="x" size={20}/>
-              </button>
-            </div>
-            <div style={{background:"#fef3c7",border:"1.5px solid #f59e0b",borderRadius:12,padding:"14px 18px",marginBottom:16}}>
-              <div style={{fontWeight:700,color:"#b45309",marginBottom:4}}>Horário já reservado</div>
-              <div style={{fontSize:13,color:"#92400e"}}>
-                {modalConflito.conflito?.usuarioNome} tem a sala das {modalConflito.conflito?.horaInicio} às {modalConflito.conflito?.horaFim} neste dia.
-              </div>
-            </div>
-            <p style={{fontSize:14,color:"var(--text-muted)",marginBottom:20,lineHeight:1.6}}>
-              Você pode pedir a liberação via WhatsApp. {modalConflito.conflito?.usuarioNome?.split(" ")[0]} pode liberar ou manter.
-            </p>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModalConflito(null)}>Cancelar</button>
-              <button className="btn btn-purple" style={{background:"#d97706"}}
-                onClick={()=>pedirLiberacao(modalConflito.conflito)}>
-                <Icon name="message-circle" size={15}/> Pedir via WhatsApp
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  setState({modal:null,modalData:null});
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+async function pedirLiberacao(reserva){
+  const waNum = WA[reserva.usuarioId]||WA.lucia;
+  const data  = new Date(reserva.data+"T00:00:00").toLocaleDateString("pt-BR");
+  const msg   = `Olá ${reserva.usuarioNome}! Você tem a sala das ${reserva.horaInicio} às ${reserva.horaFim} do dia ${data}. Posso usar esse horário? Responda: ${window.location.href}`;
+  await db.collection("sala_pedidos").add({
+    reservaId:reserva.id, de:state.user.id, deNome:state.user.nome,
+    para:reserva.usuarioId, paraNome:reserva.usuarioNome,
+    data:reserva.data, horaInicio:reserva.horaInicio, horaFim:reserva.horaFim,
+    status:"pendente", createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`,"_blank");
+  setState({modal:null,modalData:null});
+}
 
-  </script>
+async function responderPedido(pedidoId, aceitar){
+  const p = state.pedidos.find(x=>x.id===pedidoId);
+  if(!p) return;
+  const waNum = WA[p.de]||WA.lucia;
+  if(aceitar){
+    await db.collection("sala_reservas").doc(p.reservaId).delete();
+    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(`${p.deNome}, liberei o horário das ${p.horaInicio} às ${p.horaFim}!`)}`,"_blank");
+  } else {
+    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(`${p.deNome}, não consigo liberar das ${p.horaInicio} às ${p.horaFim}. Podemos tentar outro horário?`)}`,"_blank");
+  }
+  await db.collection("sala_pedidos").doc(pedidoId).update({status:aceitar?"aceito":"recusado"});
+}
+
+// RENDER
+function render(){
+  const s = state;
+  const app = document.getElementById("app");
+
+  // LOGIN
+  if(!s.user){
+    app.innerHTML = `
+    <div class="login">
+      <div class="login-left">
+        <img src="../logo-transparente.png" onerror="this.style.display='none'"/>
+        <h1>Agenda da Sala</h1>
+        <p>Dra. Lucia Kratz · CRP 09/20590</p>
+      </div>
+      <div class="login-right">
+        ${s.etapaLogin==="perfil" ? `
+          <div style="width:100%;max-width:440px">
+            <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;margin-bottom:8px">Quem é você?</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:24px">Selecione seu perfil.</div>
+          </div>
+          ${Object.entries(USUARIOS).map(([id,u])=>`
+            <button class="profile-card" onclick="escolher('${id}')">
+              <div class="profile-card-icon" style="background:${u.bg};font-size:22px">📅</div>
+              <div><h3 style="color:${u.cor}">${u.nome}</h3><p>Agenda compartilhada da sala</p></div>
+              <span style="margin-left:auto;color:#9ca3af">›</span>
+            </button>
+          `).join("")}
+          <a href="${SITE_URL}" style="font-size:12px;color:var(--purple)">← Voltar ao site</a>
+        ` : `
+          <button class="back-btn" onclick="setState({etapaLogin:'perfil',erroLogin:''})">← Voltar</button>
+          ${s.erroLogin?`<div class="error">${s.erroLogin}</div>`:""}
+          <div class="form-group">
+            <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:${USUARIOS[s.userIdLogin]?.cor};margin-bottom:4px">${USUARIOS[s.userIdLogin]?.nome}</div>
+            <div style="font-size:13px;color:#6b7280;margin-bottom:16px">Acesse a agenda compartilhada</div>
+            <label class="form-label">Senha</label>
+            <input class="form-input" type="password" id="senha-input" placeholder="••••" value="${s.senhaLogin}"
+              oninput="setState({senhaLogin:this.value})"
+              onkeydown="if(event.key==='Enter')fazerLogin()"/>
+          </div>
+          <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+        `}
+      </div>
+    </div>`;
+    if(s.etapaLogin==="senha") setTimeout(()=>{ const el=document.getElementById("senha-input"); if(el)el.focus(); },50);
+    return;
+  }
+
+  const u = s.user;
+  const dias = getDias(s.semanaOffset);
+  const hj = hoje();
+  const pedidosParaMim = s.pedidos.filter(p=>p.para===u.id);
+
+  app.innerHTML = `
+  <div class="app">
+    <div class="sidebar">
+      <div class="s-header">
+        <img src="../logo-transparente.png" style="width:36px;height:36px;object-fit:contain" onerror="this.style.display='none'"/>
+        <div><div class="s-title">Agenda da Sala</div><div class="s-sub">Espaço compartilhado</div></div>
+      </div>
+      <div class="s-user">
+        <div class="s-avatar" style="background:${u.cor}">${u.nome[0]}</div>
+        <div><div class="s-name">${u.nome}</div><div class="s-role">Psicóloga</div></div>
+      </div>
+      <div class="s-legend">
+        <div class="s-legend-title">Legenda</div>
+        ${Object.entries(USUARIOS).map(([id,us])=>`
+          <div class="s-legend-item">
+            <div class="s-legend-dot" style="background:${us.cor}"></div>
+            <span class="s-legend-name">${us.nome.split(" ")[0]}</span>
+            ${id===u.id?`<span class="s-legend-you" style="color:${us.cor}">você</span>`:""}
+          </div>
+        `).join("")}
+      </div>
+      ${pedidosParaMim.length>0?`
+        <div class="pedidos-box">
+          <div class="pedidos-title">🔔 ${pedidosParaMim.length} pedido(s)</div>
+          ${pedidosParaMim.map(p=>`
+            <div class="pedido-item">
+              <div class="pedido-text">${p.deNome.split(" ")[0]} quer ${p.horaInicio}–${p.horaFim}</div>
+              <div class="pedido-btns">
+                <button class="pedido-btn" style="background:#059669" onclick="responderPedido('${p.id}',true)">✓ Liberar</button>
+                <button class="pedido-btn" style="background:#dc2626" onclick="responderPedido('${p.id}',false)">✗ Manter</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `:""}
+      <div class="s-footer">
+        <button class="nav-btn" onclick="abrirNova(new Date())">＋ Nova Reserva</button>
+        <a href="${SITE_URL}" class="nav-btn">← Site</a>
+        <button class="nav-btn nav-btn-danger" onclick="setState({user:null})">→ Sair</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="page-header">
+        <div><div class="page-title">Agenda da Sala</div><div class="page-sub">Reservas do espaço compartilhado</div></div>
+        <button class="btn btn-purple" onclick="abrirNova(new Date())">＋ Nova Reserva</button>
+      </div>
+
+      <div class="nav-semana">
+        <button class="btn btn-ghost" style="padding:8px 12px" onclick="setState({semanaOffset:${s.semanaOffset-1}})">‹</button>
+        <div class="semana-label">${mesLabel(dias[0])} — ${dias[6].toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})}</div>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="setState({semanaOffset:0})">Hoje</button>
+        <button class="btn btn-ghost" style="padding:8px 12px" onclick="setState({semanaOffset:${s.semanaOffset+1}})">›</button>
+      </div>
+
+      <div class="grade-wrap">
+        <table class="grade">
+          <thead><tr>${dias.map((dia,i)=>{
+            const isHj = fmt(dia)===fmt(hj);
+            const isPass = dia<hj;
+            return `<th class="dia-th${isHj?" hoje":""}">
+              <div class="dia-weekday" ${!isHj&&isPass?'style="color:#9ca3af"':""}>${dia.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","").toUpperCase()}</div>
+              <div class="dia-num" ${!isHj&&isPass?'style="color:#9ca3af"':""}>${dia.getDate()}</div>
+              <div class="dia-mes">${dia.toLocaleDateString("pt-BR",{month:"short"})}</div>
+            </th>`;
+          }).join("")}</tr></thead>
+          <tbody><tr>${dias.map(dia=>{
+            const isHj = fmt(dia)===fmt(hj);
+            const lista = s.reservas.filter(r=>r.data===fmt(dia)).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
+            const diaFmt = fmt(dia);
+            return `<td class="dia-td${isHj?" hoje":""}">
+              <div class="dia-body">
+                ${lista.map(r=>{
+                  const eMinha = r.usuarioId===u.id;
+                  const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
+                  const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
+                  return `<div class="reserva-chip" style="background:${bg};border-color:${cor}">
+                    <div class="chip-title" style="color:${cor}">${r.horaInicio}–${r.horaFim}</div>
+                    <div class="chip-sub">${eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0]}</div>
+                    ${r.recorrenteRef?`<div class="chip-tag" style="color:${cor}">↻ recorrente</div>`:""}
+                    ${eMinha?`
+                      <button class="chip-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
+                    `:`
+                      <button class="chip-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>
+                    `}
+                  </div>`;
+                }).join("")}
+                <button class="add-btn" onclick="abrirNovaDia('${diaFmt}')">+</button>
+              </div>
+            </td>`;
+          }).join("")}</tr></tbody>
+        </table>
+      </div>
+
+      <div class="proximas-title">Minhas próximas reservas</div>
+      ${(()=>{
+        const minhas = s.reservas.filter(r=>r.usuarioId===u.id&&r.data>=fmt(hj))
+          .sort((a,b)=>a.data.localeCompare(b.data)||a.horaInicio.localeCompare(b.horaInicio));
+        if(!minhas.length) return `<div class="card"><div class="empty">Nenhuma reserva futura. Clique em "+ Nova Reserva".</div></div>`;
+        return `<div class="card">${minhas.map(r=>`
+          <div class="reserva-row">
+            <div class="reserva-icon" style="background:${u.bg}">📅</div>
+            <div>
+              <div class="reserva-data">${new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
+              <div class="reserva-hora">${r.horaInicio} – ${r.horaFim}${r.titulo?" · "+r.titulo:""}${r.recorrenteRef?` <span style="font-size:10px;color:${u.cor}">↻ recorrente</span>`:""}</div>
+            </div>
+            <div class="reserva-actions">
+              <button class="btn btn-ghost" style="padding:6px 10px" onclick="editarReserva('${r.id}')">✎</button>
+              <button class="btn btn-ghost" style="padding:6px 10px;color:#dc2626" onclick="cancelarReservaById('${r.id}')">🗑</button>
+            </div>
+          </div>
+        `).join("")}</div>`;
+      })()}
+    </div>
+  </div>
+
+  ${s.modal==="reserva"?renderModalReserva():""}
+  ${s.modal==="cancelar"?renderModalCancelar():""}
+  ${s.modal==="conflito"?renderModalConflito():""}
+  `;
+}
+
+function renderModalReserva(){
+  const f = state.form;
+  const u = state.user;
+  const editando = !!state.editandoId;
+  return `
+  <div class="modal-bg" onclick="fecharModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        ${editando?"Editar Reserva":"Nova Reserva"}
+        <button class="modal-close" onclick="setState({modal:null,editandoId:null})">×</button>
+      </div>
+
+      ${!editando?`
+      <div class="tipo-reserva">
+        <span class="tipo-label">Tipo de reserva</span>
+        <div class="tipo-btns">
+          <button class="tipo-btn" id="btn-unico"
+            style="border-color:${f.recorrencia==="unico"?(u?.cor||"#7B00C4"):"#e5e7eb"};background:${f.recorrencia==="unico"?(u?.cor||"#7B00C4")+"18":"white"};color:${f.recorrencia==="unico"?(u?.cor||"#7B00C4"):"#6b7280"}"
+            onclick="setRecorrencia('unico')">📅 Só este dia</button>
+          <button class="tipo-btn" id="btn-recorrente"
+            style="border-color:${f.recorrencia==="recorrente"?"#059669":"#e5e7eb"};background:${f.recorrencia==="recorrente"?"#05966918":"white"};color:${f.recorrencia==="recorrente"?"#059669":"#6b7280"}"
+            onclick="setRecorrencia('recorrente')">🔁 Toda semana (12 sem.)</button>
+        </div>
+        ${f.recorrencia==="recorrente"?`<div class="tipo-info">✓ Bloqueia este mesmo dia da semana por 12 semanas consecutivas</div>`:""}
+      </div>
+      `:""}
+
+      <div class="grid2">
+        <div class="col2">
+          <label class="form-label">Data</label>
+          <input class="form-input" type="date" value="${f.data}" oninput="updateForm('data',this.value)"/>
+        </div>
+        <div>
+          <label class="form-label">Início</label>
+          <input class="form-input" type="time" value="${f.horaInicio}" oninput="updateForm('horaInicio',this.value)"/>
+        </div>
+        <div>
+          <label class="form-label">Fim</label>
+          <input class="form-input" type="time" value="${f.horaFim}" oninput="updateForm('horaFim',this.value)"/>
+        </div>
+        <div class="col2">
+          <label class="form-label">Título (opcional)</label>
+          <input class="form-input" value="${f.titulo}" placeholder="Ex: Sessão, Supervisão..." oninput="updateForm('titulo',this.value)"/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="setState({modal:null,editandoId:null})">Cancelar</button>
+        <button class="btn btn-purple" style="background:${u?.cor||'#7B00C4'}" onclick="gravar()">${editando?"Salvar":"Reservar"}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderModalCancelar(){
+  const r = state.modalData;
+  const dataFmt = new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
+  const dataFmt2 = new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"long"});
+  return `
+  <div class="modal-bg" onclick="fecharModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        Cancelar Reserva
+        <button class="modal-close" onclick="setState({modal:null,modalData:null})">×</button>
+      </div>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;line-height:1.6">Esta é uma reserva recorrente. O que deseja cancelar?</p>
+      <button class="cancel-option" style="border:1.5px solid #e5e7eb;background:white" onclick="confirmarCancelar('esta')">
+        <h4>Só esta reserva</h4>
+        <p style="color:#6b7280">Cancela apenas ${dataFmt}</p>
+      </button>
+      <button class="cancel-option" style="border:1.5px solid #fca5a5;background:#fef2f2" onclick="confirmarCancelar('todas')">
+        <h4 style="color:#dc2626">Esta e as próximas</h4>
+        <p style="color:#dc2626;opacity:.8">Cancela a partir de ${dataFmt2} em diante</p>
+      </button>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="setState({modal:null,modalData:null})">Voltar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderModalConflito(){
+  const c = state.modalData?.conflito;
+  return `
+  <div class="modal-bg" onclick="fecharModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        ⚠️ Conflito de Horário
+        <button class="modal-close" onclick="setState({modal:null,modalData:null})">×</button>
+      </div>
+      <div class="conflito-box">
+        <div class="conflito-title">Horário já reservado</div>
+        <div class="conflito-sub">${c?.usuarioNome} tem a sala das ${c?.horaInicio} às ${c?.horaFim} neste dia.</div>
+      </div>
+      <p style="font-size:14px;color:#6b7280;margin-bottom:20px;line-height:1.6">
+        Você pode pedir a liberação via WhatsApp. ${c?.usuarioNome?.split(" ")[0]} pode liberar ou manter.
+      </p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="setState({modal:null,modalData:null})">Cancelar</button>
+        <button class="btn btn-purple" style="background:#d97706" onclick="pedirLiberacaoById('${c?.id}',true)">💬 Pedir via WhatsApp</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Helpers globais
+function fecharModal(e){ if(e.target===e.currentTarget) setState({modal:null,editandoId:null,modalData:null}); }
+function escolher(id){ setState({etapaLogin:"senha",userIdLogin:id,erroLogin:"",senhaLogin:""}); }
+function fazerLogin(){
+  const u = USUARIOS[state.userIdLogin];
+  if(!u||state.senhaLogin!==u.senha){ setState({erroLogin:"Senha incorreta."}); return; }
+  const user = {id:state.userIdLogin,...u};
+  startListeners(user.id);
+  setState({user,etapaLogin:"perfil",senhaLogin:"",erroLogin:""});
+}
+function abrirNova(dia){
+  const d = dia instanceof Date ? dia : new Date();
+  setState({modal:"reserva",editandoId:null,form:{data:fmt(d),horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"}});
+}
+function abrirNovaDia(dataStr){
+  setState({modal:"reserva",editandoId:null,form:{data:dataStr,horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"}});
+}
+function editarReserva(id){
+  const r = state.reservas.find(x=>x.id===id);
+  if(!r||r.usuarioId!==state.user.id) return;
+  setState({modal:"reserva",editandoId:id,form:{data:r.data,horaInicio:r.horaInicio,horaFim:r.horaFim,titulo:r.titulo||"",recorrencia:"unico"}});
+}
+function cancelarReservaById(id){ const r=state.reservas.find(x=>x.id===id); if(r) cancelarReserva(r); }
+function pedirLiberacaoById(id, fromConflito){
+  const r = state.reservas.find(x=>x.id===id);
+  if(r) pedirLiberacao(r);
+}
+function updateForm(key,val){ setState({form:{...state.form,[key]:val}}); }
+function setRecorrencia(val){ setState({form:{...state.form,recorrencia:val}}); }
+
+render();
+</script>
 </body>
 </html>
