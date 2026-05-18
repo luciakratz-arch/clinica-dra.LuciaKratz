@@ -102,21 +102,27 @@ const NAV_ALUNO = [
 function Sidebar({ user, tab, setTab, onLogout }) {
   const nav = user.tipo === "aluno" ? NAV_ALUNO : NAV_PACIENTE;
   return (
-    <div className="sidebar">
+    <div className="sidebar-desktop">
       <div className="sidebar-header">
-        <img src={LOGO_URL} alt="Logo" className="sidebar-logo"
-          onError={e => e.target.style.display="none"} />
-        <div className="sidebar-title">Dra. Lucia Kratz</div>
-        <div className="sidebar-sub">Plataforma Clínica</div>
-      </div>
-      <div className="sidebar-user">
-        <div className="sidebar-user-avatar">
-          {(user.nome||"U")[0].toUpperCase()}
+        <div className="sidebar-logo">
+          <img src={LOGO_URL} alt="Logo" style={{width:32,height:32,objectFit:"contain"}}
+            onError={e => e.target.style.display="none"} />
         </div>
         <div>
-          <div className="sidebar-user-name">{user.nome}</div>
-          <div className="sidebar-user-crp">
-            {user.tipo === "paciente" ? "Paciente" : "Aluno/Estagiário"}
+          <div className="sidebar-title">Dra. Lucia Kratz</div>
+          <div className="sidebar-role">Plataforma Clínica</div>
+        </div>
+      </div>
+      <div className="sidebar-footer" style={{borderTop:"none", paddingTop:12}}>
+        <div className="sidebar-user">
+          <div className="sidebar-avatar">
+            {(user.nome||"U")[0].toUpperCase()}
+          </div>
+          <div>
+            <div className="sidebar-user-name">{user.nome}</div>
+            <div className="sidebar-user-crp">
+              {user.tipo === "paciente" ? "Paciente" : "Aluno/Estagiário"}
+            </div>
           </div>
         </div>
       </div>
@@ -130,7 +136,7 @@ function Sidebar({ user, tab, setTab, onLogout }) {
           </button>
         ))}
       </nav>
-      <div style={{marginTop:"auto", padding:"0 12px", display:"flex", flexDirection:"column", gap:4}}>
+      <div className="sidebar-footer">
         <a href={SITE_URL} className="nav-item" style={{color:"rgba(255,255,255,0.6)", textDecoration:"none"}}>
           <Icon name="arrow-left" size={18}/> Voltar ao site
         </a>
