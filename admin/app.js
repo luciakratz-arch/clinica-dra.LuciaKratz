@@ -247,6 +247,9 @@ function Sidebar({ user, tab, setTab, onLogout }) {
             {user.crp && <div className="sidebar-user-crp">{user.crp}</div>}
           </div>
         </div>
+        <a href="../sala/" target="_blank" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(234,88,12,0.2)",borderRadius:8,marginBottom:2}}>
+          <Icon name="door-open" size={18}/> Agenda da Sala
+        </a>
         <a href="../" className="nav-item" style={{color:"rgba(255,255,255,0.6)"}}>
           <Icon name="globe" size={18}/> Site
         </a>
