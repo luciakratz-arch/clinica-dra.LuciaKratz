@@ -2009,26 +2009,28 @@ function FinanceiroClinica() {
     </div>
   );
 }
+
 function FinanceiroPessoal({ somenteLeitura=false }) {
   const [lancamentos, setLancamentos] = useState([]);
   const [recorrentes, setRecorrentes] = useState([]);
-  const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
-  const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
-  const [aba, setAba] = useState("lancamentos");
-  const [modal, setModal] = useState(false); // "avulso" | "recorrente" | "categoria"
-  const [editando, setEditando] = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const [categorias, setCategorias] = useState([]);
+  const [categorias, setCategorias]   = useState([]);
+  const [anoFiltro, setAnoFiltro]     = useState(new Date().getFullYear()+"");
+  const [mesFiltro, setMesFiltro]     = useState(new Date().toISOString().slice(0,7));
+  const [modal, setModal]             = useState(false);
+  const [editando, setEditando]       = useState(null);
+  const [salvando, setSalvando]       = useState(false);
   const [novaCategoria, setNovaCategoria] = useState({nome:"",tipo:"despesa"});
+  const [modalBaixa, setModalBaixa]   = useState(null); // recorrente para dar baixa
+  const [formBaixa, setFormBaixa]     = useState({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
   const mesAtual = new Date().toISOString().slice(0,7);
 
   const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Investimentos","Dividendos","Freelance","Outros"];
   const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Outros"];
-  const FORMAS = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Débito Automático","Outro"];
-  const RECORR = ["Mensal","Semanal","Quinzenal","Bimestral","Trimestral","Semestral","Anual"];
+  const FORMAS  = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Débito Automático","Outro"];
+  const RECORR  = ["Mensal","Semanal","Quinzenal","Bimestral","Trimestral","Semestral","Anual"];
 
-  const catsReceita = [...CATS_RECEITA_DEFAULT, ...categorias.filter(c=>c.tipo==="receita").map(c=>c.nome)];
-  const catsDespesa = [...CATS_DESPESA_DEFAULT, ...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
+  const catsReceita = [...CATS_RECEITA_DEFAULT,...categorias.filter(c=>c.tipo==="receita").map(c=>c.nome)];
+  const catsDespesa = [...CATS_DESPESA_DEFAULT,...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
 
   const [formAvulso, setFormAvulso] = useState({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:""});
   const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
@@ -2040,27 +2042,32 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     return()=>{u1();u2();u3();};
   },[]);
 
-  // Anos disponíveis
   const anoAtualNum = new Date().getFullYear();
-  const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
-  const anosSet = new Set([...anosExist,anoAtualNum-1,anoAtualNum,anoAtualNum+1]);
-  const anos = [...anosSet].sort().map(String);
-  const mesesDisp = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
+  const anosExist   = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
+  const anosSet     = new Set([...anosExist, anoAtualNum-1, anoAtualNum, anoAtualNum+1]);
+  const anos        = [...anosSet].sort().map(String);
+  const mesesDisp   = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
   const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro)?mesFiltro:mesAtual.startsWith(anoFiltro)?mesAtual:anoFiltro+"-01";
 
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
 
-  function calcRec(lista){ return lista.filter(l=>l.tipo==="receita"&&(l.status==="pago"||l.status==="recebido")).reduce((a,l)=>a+(parseFloat(l.valor)||0),0); }
-  function calcDesp(lista){ return lista.filter(l=>l.tipo==="despesa"&&(l.status==="pago"||l.status==="recebido")).reduce((a,l)=>a+(parseFloat(l.valor)||0),0); }
-  function calcPrev(lista){ return lista.reduce((a,l)=>a+(parseFloat(l.valorPrevisto||l.valor)||0),0); }
+  function fmt(v){ return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+  function mesLabel(m){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short"}); }catch(e){ return m; } }
+  function calcRec(l){ return l.filter(x=>x.tipo==="receita"&&(x.status==="pago"||x.status==="recebido")).reduce((a,x)=>a+(parseFloat(x.valor)||0),0); }
+  function calcDesp(l){ return l.filter(x=>x.tipo==="despesa"&&(x.status==="pago"||x.status==="recebido")).reduce((a,x)=>a+(parseFloat(x.valor)||0),0); }
 
   const recMes=calcRec(lancMes), despMes=calcDesp(lancMes), saldoMes=recMes-despMes;
-  const recAno=calcRec(lancAno), despAno=calcDesp(lancAno), saldoAno=recAno-despAno;
+  const recAno=calcRec(lancAno), despAno=calcDesp(lancAno);
   const pendMes=lancMes.filter(l=>l.status==="pendente").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+  const corTipo=t=>t==="receita"?"#059669":"#dc2626";
+  const bgTipo=t=>t==="receita"?"#d1fae5":"#fee2e2";
 
-  function fmt(v){ return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
-  function mesLabel(m){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short"}); }catch(e){ return m; } }
+  // Recorrentes ativos com baixa já registrada neste mês
+  const recorrAtivos = recorrentes.filter(r=>r.ativo!==false);
+  function jaDeuBaixaMes(r){
+    return lancamentos.some(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
+  }
 
   async function salvarAvulso(){
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
@@ -2084,30 +2091,58 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     setSalvando(false);
   }
 
-  async function darBaixa(rec){
-    const hoje=new Date().toISOString().slice(0,10);
-    const valor=prompt(`Dar baixa em "${rec.descricao||rec.categoria}" — valor real (R$):`, rec.valorPrevisto||"");
-    if(!valor) return;
-    await db.collection("clinica_financeiro_pessoal").add({
-      tipo:rec.tipo, categoria:rec.categoria, descricao:rec.descricao||rec.categoria,
-      valor:parseFloat(valor), data:hoje, formaPag:"", status:"pago",
-      recorrenteId:rec.id, obs:"Baixa automática",
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    alert("Baixa registrada!");
+  // Dar baixa — este mês ou este e os próximos (até dez)
+  async function confirmarBaixa(){
+    if(!formBaixa.valor){alert("Digite o valor.");return;}
+    setSalvando(true);
+    const r = modalBaixa;
+    const batch = db.batch();
+
+    if(formBaixa.modo==="este"){
+      // Só este mês
+      const dia = r.diaVencimento||"10";
+      const data = `${mesFiltroEfetivo}-${String(dia).padStart(2,"0")}`;
+      const ref = db.collection("clinica_financeiro_pessoal").doc();
+      batch.set(ref,{
+        tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||r.categoria,
+        valor:parseFloat(formBaixa.valor),data,formaPag:formBaixa.formaPag,
+        status:"pago",recorrenteId:r.id,obs:"",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      // Este e os próximos até dezembro do ano atual
+      const [anoMes, mesMes] = mesFiltroEfetivo.split("-").map(Number);
+      for(let m=mesMes; m<=12; m++){
+        const mesStr = `${anoMes}-${String(m).padStart(2,"0")}`;
+        const dia = r.diaVencimento||"10";
+        const data = `${mesStr}-${String(dia).padStart(2,"0")}`;
+        // Não duplicar se já existe baixa neste mês
+        const jaExiste = lancamentos.some(l=>l.recorrenteId===r.id&&l.data?.startsWith(mesStr));
+        if(!jaExiste){
+          const ref = db.collection("clinica_financeiro_pessoal").doc();
+          batch.set(ref,{
+            tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||r.categoria,
+            valor:parseFloat(formBaixa.valor),data,formaPag:formBaixa.formaPag,
+            status:"pago",recorrenteId:r.id,obs:"Baixa automática — série",
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+    }
+    await batch.commit();
+    setModalBaixa(null);
+    setFormBaixa({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
+    setSalvando(false);
   }
 
-  async function excluir(id){ if(!confirm("Excluir?"))return; await db.collection("clinica_financeiro_pessoal").doc(id).delete(); }
+  async function excluir(id){ if(!confirm("Excluir lançamento?"))return; await db.collection("clinica_financeiro_pessoal").doc(id).delete(); }
   async function excluirRec(id){ if(!confirm("Excluir recorrente?"))return; await db.collection("clinica_fin_pessoal_recorrentes").doc(id).delete(); }
   async function salvarCategoria(){
     if(!novaCategoria.nome.trim()){alert("Digite o nome.");return;}
     await db.collection("clinica_fin_pessoal_categorias").add({...novaCategoria,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     setNovaCategoria({nome:"",tipo:"despesa"});
   }
-  async function excluirCategoria(id){ if(!confirm("Excluir categoria?"))return; await db.collection("clinica_fin_pessoal_categorias").doc(id).delete(); }
-
-  const corTipo = t => t==="receita"?"#059669":"#dc2626";
-  const bgTipo  = t => t==="receita"?"#d1fae5":"#fee2e2";
+  async function excluirCategoria(id){ if(!confirm("Excluir?"))return; await db.collection("clinica_fin_pessoal_categorias").doc(id).delete(); }
 
   return (
     <div>
@@ -2120,8 +2155,8 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
         {!somenteLeitura&&(
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <button className="btn btn-ghost" onClick={()=>setModal("categoria")}><Icon name="tag" size={15}/> Categorias</button>
-            <button className="btn btn-outline" onClick={()=>{setModal("recorrente");setEditando(null);}}><Icon name="repeat" size={15}/> Recorrente</button>
-            <button className="btn btn-purple" onClick={()=>{setModal("avulso");setEditando(null);}}><Icon name="plus" size={15}/> Lançamento</button>
+            <button className="btn btn-outline" onClick={()=>{setModal("recorrente");setEditando(null);}}><Icon name="repeat" size={15}/> + Recorrente</button>
+            <button className="btn btn-purple" onClick={()=>{setModal("avulso");setEditando(null);}}><Icon name="plus" size={15}/> + Lançamento</button>
           </div>
         )}
       </div>
@@ -2145,7 +2180,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
           <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>+{fmt(recMes)} / -{fmt(despMes)}</div>
         </div>
         <div style={{background:"#fffbeb",borderRadius:12,padding:"14px 16px",border:"1.5px solid #fcd34d"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente ({anoFiltro})</div>
+          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente</div>
           <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{fmt(pendMes)}</div>
         </div>
         <div style={{background:"#f0fdf4",borderRadius:12,padding:"14px 16px",border:"1.5px solid #86efac"}}>
@@ -2159,142 +2194,152 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
       </div>
 
       {/* Seletor Mês */}
-      <div style={{display:"flex",gap:4,marginBottom:20,overflowX:"auto",paddingBottom:4}}>
+      <div style={{display:"flex",gap:4,marginBottom:24,overflowX:"auto",paddingBottom:4}}>
         {mesesDisp.map(m=>(
           <button key={m} onClick={()=>setMesFiltro(m)}
-            style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltroEfetivo===m?"var(--purple)":"#e5e7eb",background:mesFiltroEfetivo===m?"var(--purple)":"white",color:mesFiltroEfetivo===m?"white":"#6b7280",fontSize:12,fontWeight:mesFiltroEfetivo===m?700:400,cursor:"pointer",flexShrink:0,whiteSpace:"nowrap"}}>
+            style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltroEfetivo===m?"var(--purple)":"#e5e7eb",background:mesFiltroEfetivo===m?"var(--purple)":"white",color:mesFiltroEfetivo===m?"white":"#6b7280",fontSize:12,fontWeight:mesFiltroEfetivo===m?700:400,cursor:"pointer",flexShrink:0}}>
             {mesLabel(m)}
           </button>
         ))}
       </div>
 
-      {/* Abas */}
-      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"2px solid var(--gray-200)"}}>
-        {[["lancamentos","$ Lançamentos"],["recorrentes","↺ Recorrentes"]].map(([id,label])=>(
-          <button key={id} onClick={()=>setAba(id)}
-            style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontWeight:aba===id?600:400,color:aba===id?"var(--purple)":"#6b7280",borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",marginBottom:-2,fontSize:14,fontFamily:"var(--font-body)"}}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* ABA LANÇAMENTOS */}
-      {aba==="lancamentos"&&(
-        <div>
-          {/* Receitas */}
-          {lancMes.filter(l=>l.tipo==="receita").length>0&&(
-            <div style={{marginBottom:20}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div style={{fontWeight:700,color:"#059669",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-up" size={16}/> Receitas</div>
-                <div style={{fontWeight:700,color:"#059669"}}>{fmt(recMes)}</div>
-              </div>
-              <div className="card" style={{padding:0}}>
-                {lancMes.filter(l=>l.tipo==="receita").map(l=>(
-                  <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                    <div style={{width:36,height:36,borderRadius:8,background:"#d1fae5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                      <Icon name="arrow-down-left" size={16}/>
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                      <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data} {l.formaPag&&"· "+l.formaPag}</div>
-                    </div>
-                    <div style={{fontWeight:700,color:"#059669"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                    <span style={{background:l.status==="pago"||l.status==="recebido"?"#d1fae5":"#fef3c7",color:l.status==="pago"||l.status==="recebido"?"#065f46":"#92400e",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>
-                      {l.status==="pago"?"✓ Recebido":l.status}
-                    </span>
-                    {!somenteLeitura&&(
-                      <div style={{display:"flex",gap:4}}>
-                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria,descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                        <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Despesas */}
-          {lancMes.filter(l=>l.tipo==="despesa").length>0&&(
-            <div style={{marginBottom:20}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div style={{fontWeight:700,color:"#dc2626",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-down" size={16}/> Despesas</div>
-                <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(despMes)}</div>
-              </div>
-              <div className="card" style={{padding:0}}>
-                {lancMes.filter(l=>l.tipo==="despesa").map(l=>(
-                  <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                    <div style={{width:36,height:36,borderRadius:8,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                      <Icon name="arrow-up-right" size={16}/>
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                      <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data} {l.formaPag&&"· "+l.formaPag}</div>
-                    </div>
-                    <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                    <span style={{background:l.status==="pago"?"#d1fae5":l.status==="pendente"?"#fef3c7":"#f3f4f6",color:l.status==="pago"?"#065f46":l.status==="pendente"?"#92400e":"#6b7280",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>
-                      {l.status==="pago"?"✓ Pago":l.status}
-                    </span>
-                    {!somenteLeitura&&(
-                      <div style={{display:"flex",gap:4}}>
-                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria,descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                        <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {lancMes.length===0&&(
-            <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
-              <Icon name="wallet" size={40}/>
-              <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)}</div>
-              {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Clique em "+ Lançamento" para adicionar.</div>}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ABA RECORRENTES */}
-      {aba==="recorrentes"&&(
-        <div>
-          {recorrentes.length===0?(
-            <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
-              <Icon name="repeat" size={40}/>
-              <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento recorrente</div>
-              {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Cadastre receitas e despesas fixas mensais.</div>}
-            </div>
-          ):(
-            <div className="card" style={{padding:0}}>
-              {recorrentes.map(r=>(
-                <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:40,height:40,borderRadius:10,background:bgTipo(r.tipo),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <Icon name={r.tipo==="receita"?"trending-up":"trending-down"} size={18}/>
+      {/* RECORRENTES — sempre visível */}
+      {recorrAtivos.length>0&&(
+        <div style={{marginBottom:24}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:10,display:"flex",alignItems:"center",gap:6,color:"var(--text-muted)"}}>
+            <Icon name="repeat" size={15}/> Recorrentes — {mesLabel(mesFiltroEfetivo)}
+          </div>
+          <div className="card" style={{padding:0}}>
+            {recorrAtivos.map(r=>{
+              const baixaDone = jaDeuBaixaMes(r);
+              return (
+                <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
+                  <div style={{width:36,height:36,borderRadius:8,background:bgTipo(r.tipo),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Icon name={r.tipo==="receita"?"trending-up":"trending-down"} size={16}/>
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:14}}>{r.descricao||r.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{r.categoria} · {r.recorrencia} · vence dia {r.diaVencimento}</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{r.categoria} · vence dia {r.diaVencimento} · {r.recorrencia}</div>
                   </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontWeight:700,color:corTipo(r.tipo)}}>{fmt(parseFloat(r.valorPrevisto)||0)}</div>
-                    <div style={{fontSize:11,color:"var(--text-muted)"}}>previsto</div>
-                  </div>
-                  <span style={{background:r.ativo?"#d1fae5":"#f3f4f6",color:r.ativo?"#065f46":"#6b7280",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>
-                    {r.ativo?"Ativo":"Inativo"}
-                  </span>
+                  <div style={{fontWeight:700,color:corTipo(r.tipo),marginRight:8}}>{fmt(parseFloat(r.valorPrevisto)||0)}</div>
+                  {baixaDone
+                    ? <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20}}>✓ Pago</span>
+                    : !somenteLeitura&&<button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setModalBaixa(r);setFormBaixa({valor:r.valorPrevisto||"",data:`${mesFiltroEfetivo}-${String(r.diaVencimento||10).padStart(2,"0")}`,formaPag:"PIX",modo:"este"});}}>Dar baixa</button>
+                  }
                   {!somenteLeitura&&(
                     <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-purple" style={{padding:"6px 12px",fontSize:12}} onClick={()=>darBaixa(r)}>Dar baixa</button>
                       <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormRecorr({tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||"",valorPrevisto:r.valorPrevisto+"",recorrencia:r.recorrencia,diaVencimento:r.diaVencimento,mesInicio:r.mesInicio||mesAtual,ativo:r.ativo});setEditando(r.id);setModal("recorrente");}}><Icon name="pencil" size={13}/></button>
                       <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluirRec(r.id)}><Icon name="trash-2" size={13}/></button>
                     </div>
                   )}
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* LANÇAMENTOS DO MÊS */}
+      <div>
+        {lancMes.filter(l=>l.tipo==="receita").length>0&&(
+          <div style={{marginBottom:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{fontWeight:700,color:"#059669",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-up" size={16}/> Receitas</div>
+              <div style={{fontWeight:700,color:"#059669"}}>{fmt(recMes)}</div>
+            </div>
+            <div className="card" style={{padding:0}}>
+              {lancMes.filter(l=>l.tipo==="receita").map(l=>(
+                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
+                  <div style={{width:36,height:36,borderRadius:8,background:"#d1fae5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-down-left" size={16}/></div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}</div>
+                  </div>
+                  <div style={{fontWeight:700,color:"#059669"}}>{fmt(parseFloat(l.valor)||0)}</div>
+                  <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>✓ Recebido</span>
+                  {!somenteLeitura&&(
+                    <div style={{display:"flex",gap:4}}>
+                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
+                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {lancMes.filter(l=>l.tipo==="despesa").length>0&&(
+          <div style={{marginBottom:20}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{fontWeight:700,color:"#dc2626",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-down" size={16}/> Despesas</div>
+              <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(despMes)}</div>
+            </div>
+            <div className="card" style={{padding:0}}>
+              {lancMes.filter(l=>l.tipo==="despesa").map(l=>(
+                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
+                  <div style={{width:36,height:36,borderRadius:8,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-up-right" size={16}/></div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}</div>
+                  </div>
+                  <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(parseFloat(l.valor)||0)}</div>
+                  <span style={{background:l.status==="pago"?"#d1fae5":"#fef3c7",color:l.status==="pago"?"#065f46":"#92400e",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{l.status==="pago"?"✓ Pago":"Pendente"}</span>
+                  {!somenteLeitura&&(
+                    <div style={{display:"flex",gap:4}}>
+                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
+                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {lancMes.length===0&&recorrAtivos.length===0&&(
+          <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
+            <Icon name="wallet" size={40}/>
+            <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)}</div>
+            {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Use "+ Lançamento" ou "+ Recorrente" acima.</div>}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL BAIXA RECORRENTE */}
+      {modalBaixa&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalBaixa(null)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:460}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>Dar baixa — {modalBaixa.descricao||modalBaixa.categoria}</div>
+            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Previsto: {fmt(parseFloat(modalBaixa.valorPrevisto)||0)}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div className="form-group">
+                <label className="form-label">Valor Real (R$)</label>
+                <input className="form-input" type="number" value={formBaixa.valor} onChange={e=>setFormBaixa({...formBaixa,valor:e.target.value})} autoFocus/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Forma de Pagamento</label>
+                <select className="form-input" value={formBaixa.formaPag} onChange={e=>setFormBaixa({...formBaixa,formaPag:e.target.value})}>
+                  {FORMAS.map(f=><option key={f}>{f}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Aplicar para</label>
+              <div style={{display:"flex",gap:8}}>
+                {[["este","Só este mês","#7B00C4"],["proximos","Este e os próximos (até dez.)","#0891b2"]].map(([v,l,c])=>(
+                  <button key={v} type="button" onClick={()=>setFormBaixa({...formBaixa,modo:v})}
+                    style={{flex:1,padding:"10px 8px",borderRadius:10,border:"1.5px solid",borderColor:formBaixa.modo===v?c:"#e5e7eb",background:formBaixa.modo===v?c+"15":"white",color:formBaixa.modo===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",textAlign:"center"}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModalBaixa(null)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={confirmarBaixa} disabled={salvando}>{salvando?"Salvando...":"Confirmar Baixa"}</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -2307,7 +2352,6 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
               <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {/* Tipo */}
               <div className="form-group" style={{gridColumn:"1/-1"}}>
                 <label className="form-label">Tipo</label>
                 <div style={{display:"flex",gap:8}}>
@@ -2362,7 +2406,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
               <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvarAvulso} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":editando?"Salvar":"Lançar"}</button>
+              <button className="btn btn-purple" onClick={salvarAvulso} disabled={salvando}>{salvando?"Salvando...":editando?"Salvar":"Lançar"}</button>
             </div>
           </div>
         </div>
@@ -2397,7 +2441,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
               </div>
               <div className="form-group">
                 <label className="form-label">Descrição</label>
-                <input className="form-input" value={formRecorr.descricao||""} onChange={e=>setFormRecorr({...formRecorr,descricao:e.target.value})} placeholder="Ex: Aluguel apt"/>
+                <input className="form-input" value={formRecorr.descricao||""} onChange={e=>setFormRecorr({...formRecorr,descricao:e.target.value})} placeholder="Ex: Aluguel ap. 302"/>
               </div>
               <div className="form-group">
                 <label className="form-label">Valor Previsto (R$)</label>
@@ -2427,7 +2471,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
               <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvarRecorrente} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":editando?"Salvar":"Cadastrar"}</button>
+              <button className="btn btn-purple" onClick={salvarRecorrente} disabled={salvando}>{salvando?"Salvando...":editando?"Salvar":"Cadastrar"}</button>
             </div>
           </div>
         </div>
@@ -2446,11 +2490,11 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
                 <option value="receita">Receita</option>
                 <option value="despesa">Despesa</option>
               </select>
-              <input className="form-input" style={{flex:1}} value={novaCategoria.nome} onChange={e=>setNovaCategoria({...novaCategoria,nome:e.target.value})} placeholder="Nome da categoria..." onKeyDown={e=>e.key==="Enter"&&salvarCategoria()}/>
+              <input className="form-input" style={{flex:1}} value={novaCategoria.nome} onChange={e=>setNovaCategoria({...novaCategoria,nome:e.target.value})} placeholder="Nova categoria..." onKeyDown={e=>e.key==="Enter"&&salvarCategoria()}/>
               <button className="btn btn-purple" onClick={salvarCategoria}><Icon name="plus" size={16}/></button>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {categorias.length===0&&<div style={{fontSize:13,color:"var(--text-muted)",textAlign:"center",padding:20}}>Nenhuma categoria personalizada.</div>}
+              {categorias.length===0&&<div style={{fontSize:13,color:"var(--text-muted)",textAlign:"center",padding:20}}>Nenhuma categoria personalizada ainda.</div>}
               {categorias.map(c=>(
                 <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:c.tipo==="receita"?"#f0fdf4":"#fef2f2",border:"1px solid",borderColor:c.tipo==="receita"?"#86efac":"#fca5a5"}}>
                   <span style={{fontSize:11,fontWeight:600,color:c.tipo==="receita"?"#059669":"#dc2626",background:"white",padding:"2px 8px",borderRadius:10}}>{c.tipo}</span>
@@ -2460,7 +2504,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
               ))}
             </div>
             <div style={{marginTop:16,padding:12,background:"var(--gray-50)",borderRadius:10,fontSize:12,color:"var(--text-muted)"}}>
-              As categorias padrão (aluguel, alimentação, etc.) não aparecem aqui — só as que você adicionar.
+              As categorias padrão já estão inclusas (Aluguel, Contador, Impostos, etc.). Aqui você adiciona categorias extras.
             </div>
           </div>
         </div>
