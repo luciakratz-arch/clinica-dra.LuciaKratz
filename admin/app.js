@@ -28,12 +28,13 @@ const PERFIS = [
 ];
 
 const MODULOS = [
-  { id:"tcc",    nome:"TCC — Pensamentos Automaticos", desc:"tcc" },
-  { id:"humor",  nome:"Registro de Humor",             desc:"humor" },
-  { id:"diario", nome:"Diario Terapeutico",            desc:"diario" },
-  { id:"metas",  nome:"Metas Terapeuticas",            desc:"metas" },
-  { id:"reflexoes", nome:"Reflexoes Cognitivas",       desc:"reflexoes" },
-  { id:"musico", nome:"Musicoterapia",                 desc:"musicoterapia" },
+  { id:"tcc",      nome:"TCC — Pensamentos Automaticos", desc:"tcc" },
+  { id:"humor",    nome:"Registro de Humor",             desc:"humor" },
+  { id:"diario",   nome:"Diario Terapeutico",            desc:"diario" },
+  { id:"metas",    nome:"Metas Terapeuticas",            desc:"metas" },
+  { id:"reflexoes",nome:"Reflexoes Cognitivas",          desc:"reflexoes" },
+  { id:"fabulas",  nome:"Fabulas Terapeuticas",          desc:"fabulas" },
+  { id:"musico",   nome:"Musicoterapia",                 desc:"musicoterapia" },
 ];
 
 const FERRAMENTAS = [
