@@ -4514,20 +4514,36 @@ function Agenda() {
   }).slice(0,5);
 
   const [modalSala, setModalSala] = useState(false);
-  const [formSala, setFormSala]   = useState({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:""});
+  const [formSala, setFormSala]   = useState({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});
   const [salvandoSala, setSalvandoSala] = useState(false);
 
   async function salvarBloqueioSala(){
     if(!formSala.data||!formSala.horaInicio||!formSala.horaFim){alert("Preencha data, início e fim.");return;}
     if(formSala.horaInicio>=formSala.horaFim){alert("Início deve ser antes do fim.");return;}
     setSalvandoSala(true);
-    await db.collection("sala_reservas").add({
-      data:formSala.data, horaInicio:formSala.horaInicio, horaFim:formSala.horaFim,
+    const base = {
+      horaInicio:formSala.horaInicio, horaFim:formSala.horaFim,
       titulo:formSala.titulo||"", usuarioId:"lucia", usuarioNome:"Lucia Kratz",
       cor:"#7B00C4", createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+    if(formSala.recorrencia==="recorrente"){
+      // Gera para as próximas 12 semanas no mesmo dia da semana
+      const dataInicio = new Date(formSala.data+"T00:00:00");
+      const diaSemana = dataInicio.getDay();
+      const batch = db.batch();
+      for(let w=0; w<12; w++){
+        const d = new Date(dataInicio);
+        d.setDate(dataInicio.getDate()+(w*7));
+        const dataStr = d.toISOString().split("T")[0];
+        const ref = db.collection("sala_reservas").doc();
+        batch.set(ref, {...base, data:dataStr, recorrenteRef:formSala.data});
+      }
+      await batch.commit();
+    } else {
+      await db.collection("sala_reservas").add({...base, data:formSala.data});
+    }
     setModalSala(false);
-    setFormSala({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:""});
+    setFormSala({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});
     setSalvandoSala(false);
   }
 
@@ -4547,7 +4563,7 @@ function Agenda() {
             <Icon name="external-link" size={13}/> Doctoralia
           </a>
           <button className="btn btn-ghost" style={{borderColor:"#ea580c",color:"#ea580c"}}
-            onClick={()=>{setFormSala({data:formatData(hoje),horaInicio:"09:00",horaFim:"10:00",titulo:""});setModalSala(true);}}>
+            onClick={()=>{setFormSala({data:formatData(hoje),horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});setModalSala(true);}}>
             <Icon name="lock" size={15}/> Bloquear Sala
           </button>
           <button className="btn btn-purple" onClick={()=>{setForm({pacienteId:"",data:formatData(hoje),hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}>
@@ -4576,38 +4592,70 @@ function Agenda() {
         <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(s=>s+1)}><Icon name="chevron-right" size={18}/></button>
       </div>
 
-      {/* Grade semanal */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6,marginBottom:24}}>
-        {dias.map((dia,i)=>{
-          const isHoje = formatData(dia)===formatData(hoje);
-          const sessDia = sessoesNoDia(dia);
-          const isPassado = dia < hoje;
+      {/* Grade semanal — separada por período */}
+      <div style={{marginBottom:24}}>
+        {/* Cabeçalho dos dias */}
+        <div style={{display:"grid",gridTemplateColumns:"80px repeat(7,1fr)",gap:4,marginBottom:4}}>
+          <div/>
+          {dias.map((dia,i)=>{
+            const isHoje = formatData(dia)===formatData(hoje);
+            const isPassado = dia < hoje;
+            return (
+              <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:10,background:isHoje?"var(--purple)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)"}}>
+                <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:isHoje?"rgba(255,255,255,.8)":isPassado?"#9ca3af":"var(--gray-500)"}}>{DIAS_SEMANA[i]}</div>
+                <div style={{fontSize:20,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)",lineHeight:1.2}}>{dia.getDate()}</div>
+                <div style={{fontSize:9,color:isHoje?"rgba(255,255,255,.7)":"var(--gray-400)"}}>
+                  {dia.toLocaleDateString("pt-BR",{month:"short"})}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Períodos */}
+        {[
+          {label:"☀️ Manhã",   range:["06:00","12:00"], bg:"#fffbeb"},
+          {label:"🌤️ Tarde",   range:["12:00","18:00"], bg:"#f0f9ff"},
+          {label:"🌙 Noite",   range:["18:00","23:59"], bg:"#f5f3ff"},
+        ].map(periodo=>{
+          const sessoesNoPeriodo = dias.some(dia=>
+            sessoesNoDia(dia).some(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1])
+          );
           return (
-            <div key={i} style={{minHeight:120,background:isHoje?"var(--purple-soft)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
-              {/* Cabeçalho do dia */}
-              <div style={{padding:"8px 8px 6px",borderBottom:"1px solid",borderColor:isHoje?"var(--purple)20":"var(--gray-100)",background:isHoje?"var(--purple)":"transparent",textAlign:"center"}}>
-                <div style={{fontSize:11,fontWeight:600,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-600)",textTransform:"uppercase"}}>{DIAS_SEMANA[i]}</div>
-                <div style={{fontSize:18,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)"}}>{dia.getDate()}</div>
+            <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"80px repeat(7,1fr)",gap:4,marginBottom:4}}>
+              {/* Label período */}
+              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
+                <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)",writingMode:"horizontal-tb",whiteSpace:"nowrap"}}>{periodo.label}</span>
               </div>
-              {/* Sessões do dia */}
-              <div style={{padding:4,display:"flex",flexDirection:"column",gap:3}}>
-                {sessDia.map(s=>{
-                  const st = STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
-                  return (
-                    <div key={s.id} onClick={()=>abrirEditar(s)}
-                      style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:4,padding:"3px 5px",cursor:"pointer",fontSize:10,lineHeight:1.3}}>
-                      <div style={{fontWeight:700,color:st.cor}}>{s.hora}</div>
-                      <div style={{color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.pacienteNome?.split(" ")[0]||"—"}</div>
-                      <div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>
-                    </div>
-                  );
-                })}
-                {/* Adicionar */}
-                <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
-                  style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"4px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:2}}>
-                  + 
-                </button>
-              </div>
+              {/* Dias */}
+              {dias.map((dia,i)=>{
+                const isHoje = formatData(dia)===formatData(hoje);
+                const sessDia = sessoesNoDia(dia).filter(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1]);
+                return (
+                  <div key={i} style={{minHeight:70,background:isHoje?periodo.bg+"cc":periodo.bg,border:"1px solid",borderColor:isHoje?"var(--purple)30":"var(--gray-200)",borderRadius:8,padding:4,display:"flex",flexDirection:"column",gap:3}}>
+                    {sessDia.map(s=>{
+                      const st = s._sala
+                        ? {bg:"#fff7ed",cor:"#ea580c",label:"Sala"}
+                        : STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+                      return (
+                        <div key={s.id}
+                          onClick={()=>!s._sala&&abrirEditar(s)}
+                          style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:5,padding:"4px 6px",cursor:s._sala?"default":"pointer",fontSize:11,lineHeight:1.4}}>
+                          <div style={{fontWeight:700,color:st.cor,fontSize:12}}>{s.hora}</div>
+                          <div style={{color:"#111",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>
+                            {s._sala ? (s.pacienteNome||"Sala") : (s.pacienteNome?.split(" ")[0]||"—")}
+                          </div>
+                          {!s._sala&&<div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>}
+                        </div>
+                      );
+                    })}
+                    <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:periodo.range[0]==="06:00"?"08:00":periodo.range[0]==="12:00"?"14:00":"19:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+                      style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"3px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:"auto"}}>
+                      +
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
@@ -4716,6 +4764,23 @@ function Agenda() {
             </div>
             <div style={{background:"#fff7ed",border:"1px solid #fed7aa",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#92400e"}}>
               Este bloqueio aparece para a Thais como horário ocupado na agenda compartilhada.
+            </div>
+            {/* Recorrência */}
+            <div className="form-group" style={{marginBottom:16}}>
+              <label className="form-label">Tipo de bloqueio</label>
+              <div style={{display:"flex",gap:8}}>
+                {[["unico","Só este dia","#7B00C4"],["recorrente","Toda semana (12 semanas)","#059669"]].map(([v,l,c])=>(
+                  <button key={v} type="button" onClick={()=>setFormSala({...formSala,recorrencia:v})}
+                    style={{flex:1,padding:"10px 8px",borderRadius:10,border:"1.5px solid",borderColor:formSala.recorrencia===v?c:"#e5e7eb",background:formSala.recorrencia===v?c+"15":"white",color:formSala.recorrencia===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",textAlign:"center"}}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {formSala.recorrencia==="recorrente"&&(
+                <div style={{marginTop:8,fontSize:12,color:"#059669",background:"#f0fdf4",borderRadius:8,padding:"8px 12px"}}>
+                  ✓ Vai bloquear o mesmo dia da semana por 12 semanas consecutivas
+                </div>
+              )}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               <div className="form-group" style={{gridColumn:"1/-1"}}>
