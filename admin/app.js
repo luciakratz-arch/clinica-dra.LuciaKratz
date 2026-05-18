@@ -18,7 +18,7 @@ const db = firebase.firestore();
 
 const LOGO_URL = "../logo-transparente.png";
 const SENHA_ADMIN = "1234";
-const SENHA_PAULO = "paulo123";
+const SENHA_PAULO = "1234";
 const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
 
 const PERFIS = [
