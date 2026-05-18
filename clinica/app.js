@@ -860,7 +860,7 @@ function SeletorModo({ user, onEscolha }) {
 
           <button onClick={()=>onEscolha("casal")}
             style={{display:"flex",alignItems:"center",gap:20,padding:"24px 28px",borderRadius:16,border:"2px solid var(--gray-200)",background:"white",cursor:"pointer",textAlign:"left",transition:"all .2s",width:"100%"}}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="#e879f9";e.currentTarget.style.background:"#fdf4ff";}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor="#e879f9";e.currentTarget.style.background="#fdf4ff";}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--gray-200)";e.currentTarget.style.background="white";}}>
             <div style={{width:56,height:56,borderRadius:16,background:"#fce7f3",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <Icon name="heart" size={28}/>
