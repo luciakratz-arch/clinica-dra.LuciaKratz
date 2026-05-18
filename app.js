@@ -212,7 +212,37 @@ function App() {
     setSalvando(false);
   }
 
-  async function excluir(id){ if(!confirm("Excluir reserva?"))return; await db.collection("sala_reservas").doc(id).delete(); }
+  const [modalCancelar, setModalCancelar] = useState(null); // reserva a cancelar
+
+  async function excluir(id){
+    const r = reservas.find(x=>x.id===id);
+    // Se é recorrente, pergunta o modo
+    if(r?.recorrenteRef){
+      setModalCancelar(r);
+      return;
+    }
+    if(!confirm("Cancelar esta reserva?")) return;
+    await db.collection("sala_reservas").doc(id).delete();
+  }
+
+  async function confirmarCancelar(modo){
+    if(!modalCancelar) return;
+    const r = modalCancelar;
+    if(modo==="todas"){
+      // Exclui esta e todas as futuras com mesmo recorrenteRef
+      const snap = await db.collection("sala_reservas")
+        .where("recorrenteRef","==",r.recorrenteRef)
+        .where("usuarioId","==",r.usuarioId)
+        .get();
+      const batch = db.batch();
+      snap.docs.forEach(d=>{ if(d.data().data>=r.data) batch.delete(d.ref); });
+      batch.delete(db.collection("sala_reservas").doc(r.id));
+      await batch.commit();
+    } else {
+      await db.collection("sala_reservas").doc(r.id).delete();
+    }
+    setModalCancelar(null);
+  }
 
   // Pedido de liberação de horário
   async function pedirLiberacao(reserva){
@@ -479,6 +509,40 @@ function App() {
           }
         </div>
       </div>
+
+      {/* MODAL CANCELAR RECORRENTE */}
+      {modalCancelar&&(
+        <div className="modal-bg" onClick={()=>setModalCancelar(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-title">
+              Cancelar Reserva
+              <button onClick={()=>setModalCancelar(null)} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+            </div>
+            <p style={{fontSize:14,color:"var(--text-muted)",marginBottom:20,lineHeight:1.6}}>
+              Esta é uma reserva recorrente. O que deseja cancelar?
+            </p>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+              <button onClick={()=>confirmarCancelar("esta")}
+                style={{padding:"14px 16px",borderRadius:12,border:"1.5px solid #e5e7eb",background:"white",cursor:"pointer",textAlign:"left",fontFamily:"var(--font-body)"}}>
+                <div style={{fontWeight:600,fontSize:14,marginBottom:2}}>Só esta reserva</div>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>
+                  Cancela apenas {new Date(modalCancelar.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+                </div>
+              </button>
+              <button onClick={()=>confirmarCancelar("todas")}
+                style={{padding:"14px 16px",borderRadius:12,border:"1.5px solid #fca5a5",background:"#fef2f2",cursor:"pointer",textAlign:"left",fontFamily:"var(--font-body)"}}>
+                <div style={{fontWeight:600,fontSize:14,marginBottom:2,color:"#dc2626"}}>Esta e as próximas</div>
+                <div style={{fontSize:12,color:"#dc2626",opacity:.8}}>
+                  Cancela a partir de {new Date(modalCancelar.data+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"long"})} em diante
+                </div>
+              </button>
+            </div>
+            <div style={{display:"flex",justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModalCancelar(null)}>Voltar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL NOVA/EDITAR RESERVA */}
       {modal&&(
