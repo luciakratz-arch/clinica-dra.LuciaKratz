@@ -1716,60 +1716,102 @@ function FinanceiroClinica() {
               <div style={{marginTop:12,fontWeight:500}}>Nenhum pacote criado ainda</div>
               <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal("pacote")}>+ Criar Pacote</button>
             </div>
-          ):(
-            <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              {pacotes.map(p=>{
-                const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
-                const realizadas=sessPac.filter(s=>s.status==="realizado").length;
-                const pagas=sessPac.filter(s=>s.pagamento==="pago").length;
-                const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
-                const lancPac=lancamentos.find(l=>l.pacoteId===p.id);
-                return(
-                  <div key={p.id} className="card" style={{padding:"16px 20px"}}>
-                    <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-                      <div style={{width:44,height:44,borderRadius:12,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>📦</div>
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
-                          <span style={{fontWeight:700,fontSize:15}}>{p.pacienteNome}</span>
-                          <span style={{background:lancPac?.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac?.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{lancPac?.status==="recebido"?"✓ Pago":"Pagamento Pendente"}</span>
+          ):(()=>{
+            // Agrupar pacotes por paciente
+            const pacientesComPacote = [...new Set(pacotes.map(p=>p.pacienteId))];
+            return (
+              <div style={{display:"flex",flexDirection:"column",gap:28}}>
+                {pacientesComPacote.map(pacId=>{
+                  const pac = pacientes.find(p=>p.id===pacId);
+                  const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
+                    const ta = a.createdAt?.seconds||0;
+                    const tb = b.createdAt?.seconds||0;
+                    return tb-ta;
+                  });
+                  return (
+                    <div key={pacId}>
+                      {/* Cabeçalho do paciente */}
+                      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,paddingBottom:10,borderBottom:"2px solid var(--purple-soft)"}}>
+                        <div style={{width:40,height:40,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,flexShrink:0}}>
+                          {(pac?.nome||"?")[0].toUpperCase()}
                         </div>
-                        <div style={{fontSize:12,color:"var(--text-muted)",display:"flex",gap:12,flexWrap:"wrap",marginBottom:8}}>
-                          <span>📅 {p.recorrencia}</span>
-                          <span>🕐 {p.horario}</span>
-                          <span>📋 {realizadas}/{p.totalSessoes} sessões</span>
-                          <span style={{color:"#059669",fontWeight:600}}>{(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
+                        <div>
+                          <div style={{fontWeight:700,fontSize:16}}>{pac?.nome||pacotesDoPac[0]?.pacienteNome||"—"}</div>
+                          <div style={{fontSize:12,color:"var(--text-muted)"}}>{pacotesDoPac.length} pacote(s)</div>
                         </div>
-                        <div style={{background:"#e5e7eb",borderRadius:20,height:5}}>
-                          <div style={{background:"var(--purple)",height:5,borderRadius:20,width:pct+"%",transition:"width .3s"}}/>
-                        </div>
-                        <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>{pct}% concluído</div>
+                        <button className="btn btn-outline" style={{marginLeft:"auto",fontSize:12}} onClick={()=>setPacoteSelecionado(pacId)}>
+                          <Icon name="bar-chart-2" size={13}/> Acompanhamento
+                        </button>
+                      </div>
+                      {/* Pacotes do paciente */}
+                      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                        {pacotesDoPac.map(p=>{
+                          const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
+                          const realizadas=sessPac.filter(s=>s.status==="realizado").length;
+                          const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
+                          const lancPac=lancamentos.find(l=>l.pacoteId===p.id);
+                          const dataInclusao = p.createdAt?.seconds
+                            ? new Date(p.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
+                            : p.dataInicio
+                              ? new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
+                              : "—";
+                          return(
+                            <div key={p.id} className="card" style={{padding:"16px 20px",borderLeft:"4px solid var(--purple)"}}>
+                              <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                                <div style={{flex:1}}>
+                                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+                                    <span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
+                                      📅 Criado em {dataInclusao}
+                                    </span>
+                                    <span style={{background:lancPac?.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac?.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
+                                      {lancPac?.status==="recebido"?"✓ Pago":"Pagamento Pendente"}
+                                    </span>
+                                    <span style={{marginLeft:"auto",fontWeight:700,color:"#059669",fontSize:14}}>
+                                      {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                                    </span>
+                                  </div>
+                                  <div style={{fontSize:12,color:"var(--text-muted)",display:"flex",gap:12,flexWrap:"wrap",marginBottom:10}}>
+                                    <span>🔄 {p.recorrencia}</span>
+                                    <span>🕐 {p.horario}</span>
+                                    <span>📋 {realizadas}/{p.totalSessoes} sessões</span>
+                                    <span>📆 Início: {p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span>
+                                  </div>
+                                  <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginBottom:4}}>
+                                    <div style={{background:"var(--purple)",height:6,borderRadius:20,width:pct+"%",transition:"width .3s"}}/>
+                                  </div>
+                                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{pct}% concluído</div>
+                                </div>
+                              </div>
+                              <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
+                                <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                                  <Icon name="edit-3" size={13}/> Editar pacote
+                                </button>
+                                <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                                  <Icon name="clipboard-list" size={13}/> Ver Sessões
+                                </button>
+                                <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
+                                  if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
+                                  const todas=sessoes.filter(s=>s.pacoteId===p.id);
+                                  const b=db.batch();
+                                  todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+                                  b.delete(db.collection("clinica_pacotes").doc(p.id));
+                                  const lp=lancamentos.find(l=>l.pacoteId===p.id);
+                                  if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
+                                  await b.commit();
+                                }}>
+                                  <Icon name="trash-2" size={13}/>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12,alignItems:"center"}}>
-                      <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                        <Icon name="edit-3" size={13}/> Editar este pacote
-                      </button>
-                      <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                        <Icon name="clipboard-list" size={13}/> Ver Sessões deste Pacote
-                      </button>
-                      <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
-                        if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
-                        const todas=sessoes.filter(s=>s.pacoteId===p.id);
-                        const b=db.batch();
-                        todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-                        b.delete(db.collection("clinica_pacotes").doc(p.id));
-                        const lp=lancamentos.find(l=>l.pacoteId===p.id);
-                        if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
-                        await b.commit();
-                      }}>
-                        <Icon name="trash-2" size={13}/>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1864,14 +1906,22 @@ function FinanceiroClinica() {
               <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
-              <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Paciente</label>
-                <select className="form-input" value={formAvulso.pacienteId} onChange={e=>setFormAvulso({...formAvulso,pacienteId:e.target.value})}>
+              <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Paciente / Cliente</label>
+                <select className="form-input" value={formAvulso.pacienteId} onChange={e=>{
+                  const pac=pacientes.find(p=>p.id===e.target.value);
+                  setFormAvulso({...formAvulso,pacienteId:e.target.value,pacienteNome:pac?.nome||"",
+                    obs:pac?`${formAvulso.tipo} — ${pac.nome}`:formAvulso.obs});
+                }}>
                   <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </div>
-              <div className="form-group"><label className="form-label">Tipo</label>
-                <select className="form-input" value={formAvulso.tipo} onChange={e=>setFormAvulso({...formAvulso,tipo:e.target.value})}>
-                  {["Consulta","Avaliação","Musicoterapia","Neuromodulação","Orientação","Outro"].map(t=><option key={t}>{t}</option>)}
+              <div className="form-group"><label className="form-label">Tipo / Categoria</label>
+                <select className="form-input" value={formAvulso.tipo} onChange={e=>{
+                  const pac=pacientes.find(p=>p.id===formAvulso.pacienteId);
+                  setFormAvulso({...formAvulso,tipo:e.target.value,
+                    obs:pac?`${e.target.value} — ${pac.nome}`:formAvulso.obs});
+                }}>
+                  {["Consulta","Sessão","Avaliação","Musicoterapia","Neuromodulação","Orientação","Laudo","Outro"].map(t=><option key={t}>{t}</option>)}
                 </select>
               </div>
               <div className="form-group"><label className="form-label">Valor R$</label>
