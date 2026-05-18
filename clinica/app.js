@@ -56,9 +56,11 @@ const NAV_INDIVIDUAL = [
   { id:"pensamentos", label:"Pensamentos",          icon:"brain" },
   { id:"diario",      label:"Diário Terapêutico",  icon:"book-open" },
   { id:"metas",       label:"Minhas Metas",         icon:"target" },
+  { id:"ansiedade",   label:"Gestão da Ansiedade",  icon:"activity" },
   { id:"ferramentas", label:"Ferramentas",          icon:"wrench" },
   { id:"fabulas",     label:"Fábulas Terapêuticas", icon:"book-heart" },
   { id:"reflexoes",   label:"Reflexões Cognitivas", icon:"lightbulb" },
+  { id:"musicoterapia",label:"Musicoterapia",       icon:"music" },
   { id:"meus-laudos", label:"Meus Laudos",          icon:"file-text" },
   { id:"minha-conta", label:"Minha Conta",          icon:"user-circle" },
 ];
@@ -80,13 +82,21 @@ const NAV_ALUNO = [
 ];
 
 // mapa tab → id do módulo no Firebase
-const MAPA_MODULOS = { humor:"humor", pensamentos:"tcc", diario:"diario", metas:"metas", ferramentas:"ferramentas", fabulas:"fabulas", reflexoes:"reflexoes" };
+const MAPA_MODULOS = {
+  humor:"humor", pensamentos:"tcc", diario:"diario", metas:"metas",
+  ferramentas:"ferramentas", fabulas:"fabulas", reflexoes:"reflexoes",
+  ansiedade:"ansiedade", musicoterapia:"musicoterapia",
+  "arvore-decisao":"arvore_decisao", "entrevista":"entrevista_inicial",
+  "anamnese":"anamnese", "rastreamento":"rastreamento_alimentar"
+};
 
 function navFiltradoPaciente(nav, user) {
   return nav.filter(item => {
     if (["painel","minha-conta","meus-laudos"].includes(item.id)) return true;
     const modulos = user.modulosAtivos || [];
-    return modulos.includes(MAPA_MODULOS[item.id] || item.id);
+    const chave = MAPA_MODULOS[item.id] || item.id;
+    // aceita tanto a chave mapeada quanto o id direto
+    return modulos.includes(chave) || modulos.includes(item.id);
   });
 }
 
@@ -357,24 +367,23 @@ function PainelIndividual({ user, setTab }) {
         </div>
       </div>
 
-      {/* Ferramentas habilitadas */}
+      {/* Ferramentas — acesso rápido só se houver módulos */}
       {ferramentasVisiveis.length > 0 && (
         <div className="card" style={{marginBottom:24}}>
-          <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>Suas ferramentas</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-            {ferramentasVisiveis.map(f=>(
+          <div style={{fontWeight:600,fontSize:15,marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>Acesso Rápido</span>
+            <span style={{fontSize:12,color:"var(--text-muted)"}}>{ferramentasVisiveis.length} módulo(s) ativo(s)</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+            {ferramentasVisiveis.slice(0,4).map(f=>(
               <button key={f.id} onClick={()=>setTab(f.tab)}
-                style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",textAlign:"left",transition:"all 0.2s"}}
+                style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",textAlign:"left",transition:"all 0.2s"}}
                 onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--purple)";e.currentTarget.style.background="var(--purple-bg)";}}
                 onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--gray-200)";e.currentTarget.style.background="white";}}>
-                <div style={{width:44,height:44,borderRadius:12,background:f.cor,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <Icon name={f.icon} size={20}/>
+                <div style={{width:36,height:36,borderRadius:10,background:f.cor,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Icon name={f.icon} size={18}/>
                 </div>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:600,fontSize:14}}>{f.label}</div>
-                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{f.sub}</div>
-                </div>
-                <Icon name="chevron-right" size={16}/>
+                <div style={{fontSize:13,fontWeight:600}}>{f.label.split(" ")[0]}</div>
               </button>
             ))}
           </div>
@@ -963,6 +972,8 @@ function App() {
         {!eCasal&&tab==="ferramentas"   &&<EmBreve titulo="Ferramentas Clínicas" sub="Recursos terapêuticos."/>}
         {!eCasal&&tab==="fabulas"       &&<EmBreve titulo="Fábulas Terapêuticas" sub="Histórias reflexivas."/>}
         {!eCasal&&tab==="reflexoes"     &&<EmBreve titulo="Reflexões Cognitivas" sub="Exercícios de insight."/>}
+        {!eCasal&&tab==="ansiedade"     &&<EmBreve titulo="Gestão da Ansiedade" sub="Tracking de estresse, pensamentos e roda da vida."/>}
+        {!eCasal&&tab==="musicoterapia" &&<EmBreve titulo="Musicoterapia" sub="Recursos de musicoterapia clínica."/>}
         {!eCasal&&tab==="meus-laudos"   &&<EmBreve titulo="Meus Laudos"/>}
         {!eCasal&&tab==="minha-conta"   &&<EmBreve titulo="Minha Conta"/>}
 
