@@ -1127,6 +1127,7 @@ function FinanceiroClinica() {
   const [salvando, setSalvando] = useState(false);
   const [pacoteSelecionado, setPacoteSelecionado] = useState(null);
   const [modalExcluir, setModalExcluir] = useState(null);
+  const [modalExcluirLanc, setModalExcluirLanc] = useState(null);
   const [aba, setAba] = useState("lancamentos");
 
   const FORMAS = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Outro"];
@@ -1413,7 +1414,7 @@ function FinanceiroClinica() {
       {/* ABA LANÇAMENTOS */}
       {aba==="lancamentos"&&(
         <div>
-          {/* Filtro mês com ano já selecionado acima */}
+          {/* Filtro mês */}
           <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
             <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês ({anoFiltro}):</span>
             {mesesDisp.slice(0,12).map(m=>(
@@ -1423,63 +1424,159 @@ function FinanceiroClinica() {
               </button>
             ))}
           </div>
+
           {lancMes.length===0?(
             <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
               <Icon name="dollar-sign" size={40}/>
               <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
             </div>
-          ):(
-            <div className="card" style={{padding:0}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-                <thead><tr style={{background:"var(--gray-50)"}}>
-                  {["Data","Paciente","Tipo","Forma Pag.","Valor","Status","Ações"].map(h=>(
-                    <th key={h} style={{padding:"10px 16px",textAlign:"left",fontSize:12,fontWeight:600,color:"var(--text-muted)",borderBottom:"1px solid var(--gray-200)",whiteSpace:"nowrap"}}>{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>
-                  {lancMes.map(l=>(
-                    <tr key={l.id} style={{borderBottom:"1px solid var(--gray-100)"}}>
-                      <td style={{padding:"10px 16px",whiteSpace:"nowrap"}}>{l.data?new Date(l.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</td>
-                      <td style={{padding:"10px 16px"}}>{l.pacienteNome||getPacNome(l.pacienteId)}</td>
-                      <td style={{padding:"10px 16px"}}>
-                        {l.tipo}
-                        {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:600}}>Pacote</span>}
-                      </td>
-                      <td style={{padding:"10px 16px"}}><span style={{background:"#f3f4f6",borderRadius:6,padding:"2px 8px",fontSize:11}}>{l.formaPag||"—"}</span></td>
-                      <td style={{padding:"10px 16px",fontWeight:700,color:l.status==="recebido"?"#059669":l.status==="pendente"?"#d97706":"#9ca3af"}}>
-                        {(parseFloat(l.valor)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-                      </td>
-                      <td style={{padding:"10px 16px"}}>
-                        <span style={{background:l.status==="recebido"?"#d1fae5":"#fef3c7",color:l.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                          {l.status==="recebido"?"✓ Recebido":"Pendente"}
-                        </span>
-                      </td>
-                      <td style={{padding:"10px 16px"}}>
-                        <div style={{display:"flex",gap:4}}>
-                          {l.tipo_lancamento==="pacote"?(
-                            <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:11,color:"var(--purple)"}}
-                              onClick={()=>{setPacoteSelecionado(l.pacoteId);setAba("pacotes");}}>
-                              <Icon name="clipboard-list" size={13}/>
-                            </button>
-                          ):(
-                            <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:11,color:"var(--purple)"}} onClick={()=>abrirEditar(l)}>
-                              <Icon name="pencil" size={13}/>
-                            </button>
-                          )}
-                          <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:11,color:"#dc2626"}} onClick={()=>excluirLanc(l.id)}>
-                            <Icon name="trash-2" size={13}/>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot><tr style={{background:"var(--gray-50)"}}>
-                  <td colSpan={4} style={{padding:"10px 16px",fontWeight:700}}>Saldo do mês</td>
-                  <td style={{padding:"10px 16px",fontWeight:800,fontSize:15,color:totalRecebidoMes>=0?"#059669":"#dc2626"}}>{totalRecebidoMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
-                  <td colSpan={2}/>
-                </tr></tfoot>
-              </table>
+          ):(()=>{
+            const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa");
+            const despesas = lancMes.filter(l=>l.tipo_lancamento==="despesa");
+            const totalRec = calcReceitas(lancMes);
+            const totalDesp = calcDespesas(lancMes);
+            const saldo = totalRec - totalDesp;
+
+            function TabelaLanc({itens, titulo, corHeader, corValor, bgHeader}){
+              if(!itens.length) return null;
+              return(
+                <div className="card" style={{padding:0,marginBottom:16}}>
+                  <div style={{padding:"10px 16px",background:bgHeader,borderBottom:"2px solid "+corHeader,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontWeight:700,fontSize:14,color:corHeader}}>{titulo}</span>
+                    <span style={{fontWeight:800,fontSize:14,color:corHeader}}>
+                      {itens.reduce((a,l)=>a+(parseFloat(l.valor)||0),0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                    </span>
+                  </div>
+                  <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                    <thead><tr style={{background:"var(--gray-50)"}}>
+                      {["Data","Descrição","Categoria","Forma Pag.","Valor","Status","Ações"].map(h=>(
+                        <th key={h} style={{padding:"8px 14px",textAlign:"left",fontSize:11,fontWeight:600,color:"var(--text-muted)",borderBottom:"1px solid var(--gray-200)",whiteSpace:"nowrap"}}>{h}</th>
+                      ))}
+                    </tr></thead>
+                    <tbody>
+                      {itens.map(l=>{
+                        const isFut = l.data>new Date().toISOString().slice(0,10);
+                        const statusColor = l.status==="recebido"||l.status==="pago"?"#059669":l.status==="planejado"?"#0891b2":"#d97706";
+                        const statusBg = l.status==="recebido"||l.status==="pago"?"#d1fae5":l.status==="planejado"?"#e0f2fe":"#fef3c7";
+                        const statusLabel = l.status==="recebido"?"✓ Recebido":l.status==="pago"?"✓ Pago":l.status==="planejado"?"📅 Planejado":"Pendente";
+                        return(
+                          <tr key={l.id} style={{borderBottom:"1px solid var(--gray-100)",background:isFut?"#fafafa":"white",opacity:isFut?0.85:1}}>
+                            <td style={{padding:"8px 14px",whiteSpace:"nowrap",fontSize:12}}>
+                              {l.data?new Date(l.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
+                              {isFut&&<span style={{marginLeft:4,fontSize:9,color:"#0891b2",fontWeight:600}}>futuro</span>}
+                            </td>
+                            <td style={{padding:"8px 14px"}}>
+                              {l.tipo||l.pacienteNome||"—"}
+                              {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
+                              {l.tipo_lancamento==="sessao"&&<span style={{marginLeft:6,background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
+                            </td>
+                            <td style={{padding:"8px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.categoria||"—"}</td>
+                            <td style={{padding:"8px 14px"}}><span style={{background:"#f3f4f6",borderRadius:6,padding:"2px 6px",fontSize:11}}>{l.formaPag||"—"}</span></td>
+                            <td style={{padding:"8px 14px",fontWeight:700,color:corValor,whiteSpace:"nowrap"}}>
+                              {(parseFloat(l.valor)||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                            </td>
+                            <td style={{padding:"8px 14px"}}>
+                              <span style={{background:statusBg,color:statusColor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{statusLabel}</span>
+                            </td>
+                            <td style={{padding:"8px 14px"}}>
+                              <div style={{display:"flex",gap:4}}>
+                                {l.tipo_lancamento==="pacote"?(
+                                  <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11,color:"var(--purple)"}} onClick={()=>{setPacoteSelecionado(l.pacoteId);setAba("pacotes");}}>
+                                    <Icon name="clipboard-list" size={12}/>
+                                  </button>
+                                ):(
+                                  <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11,color:"var(--purple)"}} onClick={()=>abrirEditar(l)}>
+                                    <Icon name="pencil" size={12}/>
+                                  </button>
+                                )}
+                                <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11,color:"#dc2626"}} onClick={()=>setModalExcluirLanc(l)}>
+                                  <Icon name="trash-2" size={12}/>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            }
+
+            return(
+              <div>
+                <TabelaLanc itens={receitas} titulo="💰 Receitas" corHeader="#059669" corValor="#059669" bgHeader="#f0fdf4"/>
+                <TabelaLanc itens={despesas} titulo="💸 Despesas" corHeader="#dc2626" corValor="#dc2626" bgHeader="#fff1f2"/>
+                {/* Resumo do mês */}
+                <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",padding:"14px 20px",display:"flex",gap:24,flexWrap:"wrap",alignItems:"center"}}>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:2}}>Receitas</div>
+                    <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>{totalRec.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                  </div>
+                  <div style={{fontSize:20,color:"var(--text-muted)"}}>−</div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:2}}>Despesas</div>
+                    <div style={{fontSize:18,fontWeight:800,color:"#dc2626"}}>{totalDesp.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                  </div>
+                  <div style={{fontSize:20,color:"var(--text-muted)"}}>=</div>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:2}}>Saldo do Mês</div>
+                    <div style={{fontSize:22,fontWeight:900,color:saldo>=0?"#059669":"#dc2626"}}>{saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Modal excluir lançamento — um ou todos os futuros */}
+          {modalExcluirLanc&&(
+            <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}}>
+              <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:420,textAlign:"center"}}>
+                <div style={{fontSize:32,marginBottom:12}}>🗑️</div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:600,marginBottom:6}}>{modalExcluirLanc.tipo}</div>
+                <p style={{fontSize:13,color:"#6b7280",marginBottom:20}}>{modalExcluirLanc.data?new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR"):""}</p>
+                <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                  <button className="btn btn-ghost" style={{border:"1.5px solid #e5e7eb",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
+                    await db.collection("clinica_lancamentos").doc(modalExcluirLanc.id).delete();
+                    setModalExcluirLanc(null);
+                  }}>
+                    <div style={{fontWeight:600,fontSize:13}}>Só este lançamento</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove apenas {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
+                  </button>
+                  {modalExcluirLanc.descricaoRecorrente&&(
+                    <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
+                      // Exclui este e todos os futuros com mesma descrição
+                      const snap = await db.collection("clinica_lancamentos")
+                        .where("descricaoRecorrente","==",modalExcluirLanc.descricaoRecorrente)
+                        .get();
+                      const futuros = snap.docs.filter(d=>d.data().data>=modalExcluirLanc.data);
+                      const b=db.batch();
+                      futuros.forEach(d=>b.delete(d.ref));
+                      await b.commit();
+                      setModalExcluirLanc(null);
+                    }}>
+                      <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Este e todos os futuros</div>
+                      <div style={{fontSize:11,color:"#6b7280"}}>Remove {modalExcluirLanc.descricaoRecorrente} a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
+                    </button>
+                  )}
+                  {modalExcluirLanc.descricaoRecorrente&&(
+                    <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
+                      // Exclui todos com mesma descrição
+                      const snap = await db.collection("clinica_lancamentos")
+                        .where("descricaoRecorrente","==",modalExcluirLanc.descricaoRecorrente)
+                        .get();
+                      const b=db.batch();
+                      snap.docs.forEach(d=>b.delete(d.ref));
+                      await b.commit();
+                      setModalExcluirLanc(null);
+                    }}>
+                      <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Todos os lançamentos desta categoria</div>
+                      <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os meses de {modalExcluirLanc.descricaoRecorrente}</div>
+                    </button>
+                  )}
+                </div>
+                <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>setModalExcluirLanc(null)}>Cancelar</button>
+              </div>
             </div>
           )}
         </div>
