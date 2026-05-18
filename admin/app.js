@@ -162,7 +162,15 @@ function Login({ onLogin }) {
                 </button>
               ))}
             </div>
-            <div className="login-footer"><a href="../" style={{color:"var(--gray-400)",fontSize:12}}>Voltar ao site</a></div>
+            <div className="login-footer">
+            <a href="../sala/" target="_blank" style={{color:"#ea580c",fontSize:13,display:"flex",alignItems:"center",gap:6,textDecoration:"none",marginBottom:8}}>
+              <span style={{width:28,height:28,borderRadius:8,background:"#fff7ed",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>
+                <Icon name="door-open" size={15}/>
+              </span>
+              Agenda da Sala
+            </a>
+            <a href="../" style={{color:"var(--gray-400)",fontSize:12}}>Voltar ao site</a>
+          </div>
           </>
         )}
         {etapa === "senha" && perfil && (
