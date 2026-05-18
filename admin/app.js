@@ -1185,7 +1185,7 @@ function FinanceiroClinica() {
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
-    const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pacEfetivo?.nome||""};
+    const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pac?.nome||""};
     if(editando){
       await db.collection("clinica_lancamentos").doc(editando).update(dados);
     } else {
@@ -1259,7 +1259,7 @@ function FinanceiroClinica() {
 
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
-      pacienteId,pacienteNome:pacEfetivo?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
+      pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
       status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1267,7 +1267,7 @@ function FinanceiroClinica() {
     // Cria lançamento financeiro do pacote
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
-      pacienteId,pacienteNome:pacEfetivo?.nome||"",
+      pacienteId,pacienteNome:pac?.nome||"",
       tipo:"Pacote "+recorrencia,
       valor:vTotal,data:dataInicio,
       formaPag:"",status:"pendente",obs,
@@ -1282,7 +1282,7 @@ function FinanceiroClinica() {
       const dia=new Date(data+"T00:00:00").getDay().toString();
       const horaDia=(horariosPorDia||{})[dia]||horario;
       batch.set(ref,{
-        pacienteId,pacienteNome:pacEfetivo?.nome||"",data,hora:horaDia,
+        pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
         pagamento:"pendente",formaPagamento:"",dataPagamento:"",obs:"",
@@ -3461,7 +3461,7 @@ function Laudos() {
     if(m) link = `https://drive.google.com/file/d/${m[1]}/view`;
     await db.collection("clinica_laudos").add({
       tipo:form.tipo, titulo:form.tipo+" — "+(pacEfetivo?.nome||""),
-      pacienteId:form.pacienteId, pacienteNome:pacEfetivo?.nome||"",
+      pacienteId:form.pacienteId, pacienteNome:pac?.nome||"",
       linkDrive:link, observacoes:form.observacoes,
       status:"rascunho", enviadoEm:null,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -3805,7 +3805,7 @@ function Agenda() {
     if(!form.pacienteId||!form.data||!form.hora){alert("Preencha paciente, data e hora.");return;}
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===form.pacienteId);
-    const dados = {...form, pacienteNome:pacEfetivo?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+    const dados = {...form, pacienteNome:pac?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
     if(editando){
       await db.collection("clinica_sessoes").doc(editando).update(dados);
     } else {
