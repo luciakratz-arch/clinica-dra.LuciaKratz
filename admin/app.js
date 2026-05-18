@@ -1373,7 +1373,7 @@ function FinanceiroClinica() {
         {(()=>{
           const anoAtualNum = new Date().getFullYear();
           const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
-          const anosSet = new Set([...anosExist, anoAtualNum-1, anoAtualNum, anoAtualNum+1]);
+          const anosSet = new Set([...anosExist, anoAtualNum]);
           const anos = [...anosSet].sort().map(String);
           return anos.map(a=>(
             <button key={a} onClick={()=>{
