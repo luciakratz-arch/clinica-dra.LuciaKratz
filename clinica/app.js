@@ -19,6 +19,7 @@ const db = firebase.firestore();
 
 // ─── CONSTANTES ──────────────────────────────────────────
 const LOGO_URL = "../logo-transparente.png";
+// Fallback: se a logo não carregar, onerror esconde a imagem (sem quebrar)
 const SITE_URL  = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
 
 // ─── HOOK COLLECTION ─────────────────────────────────────
