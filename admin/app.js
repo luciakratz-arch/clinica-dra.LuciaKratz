@@ -1430,25 +1430,27 @@ function FinanceiroClinica() {
       {aba==="lancamentos"&&(
         <div>
           {/* Filtro mês — jan→dez com setas */}
-          <div style={{display:"flex",gap:6,marginBottom:16,alignItems:"center"}}>
+          <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center"}}>
             <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Mês:</span>
             <button onClick={()=>{
               const idx=mesesDisp.indexOf(mesFiltroEfetivo);
               if(idx>0) setMesFiltro(mesesDisp[idx-1]);
-            }} style={{background:"none",border:"1.5px solid #e5e7eb",borderRadius:"50%",width:28,height:28,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#6b7280"}}>‹</button>
-            <div style={{display:"flex",gap:6,overflowX:"auto",flex:1,paddingBottom:2}}>
+            }} style={{background:"var(--purple)",border:"none",borderRadius:"50%",width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"white",fontSize:16,fontWeight:700}}>‹</button>
+            <div style={{display:"flex",gap:6,overflowX:"hidden",flex:1}}>
               {mesesDisp.map(m=>{
                 const isAtual=m===mesAtual;
                 const isSel=m===mesFiltroEfetivo;
                 return(
                   <button key={m} onClick={()=>setMesFiltro(m)}
-                    style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",flexShrink:0,
+                    style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",flexShrink:0,
                       borderColor:isSel?"var(--purple)":isAtual?"var(--purple)":"#e5e7eb",
                       background:isSel?"var(--purple)":"white",
                       color:isSel?"white":isAtual?"var(--purple)":"#6b7280",
-                      fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer"}}>
-                    {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short"}).replace(".","")}
-                    {isAtual&&!isSel&&<span style={{marginLeft:2,fontSize:9}}>●</span>}
+                      fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer",
+                      display:Math.abs(mesesDisp.indexOf(m)-mesesDisp.indexOf(mesFiltroEfetivo))<=2?"flex":"none",
+                      alignItems:"center",gap:4}}>
+                    {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"long"})}
+                    {isAtual&&!isSel&&<span style={{fontSize:9}}>●</span>}
                   </button>
                 );
               })}
@@ -1456,7 +1458,7 @@ function FinanceiroClinica() {
             <button onClick={()=>{
               const idx=mesesDisp.indexOf(mesFiltroEfetivo);
               if(idx<mesesDisp.length-1) setMesFiltro(mesesDisp[idx+1]);
-            }} style={{background:"none",border:"1.5px solid #e5e7eb",borderRadius:"50%",width:28,height:28,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#6b7280"}}>›</button>
+            }} style={{background:"var(--purple)",border:"none",borderRadius:"50%",width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"white",fontSize:16,fontWeight:700}}>›</button>
           </div>
 
           {lancMes.length===0?(
