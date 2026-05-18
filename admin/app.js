@@ -1365,19 +1365,23 @@ function FinanceiroClinica() {
       </div>
 
       {/* Seletor de Ano */}
-      <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
-        <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)"}}>Ano:</span>
+      <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center"}}>
+        <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Ano:</span>
         {(()=>{
           const anoAtualNum = new Date().getFullYear();
           const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
-          const anosSet = new Set([...anosExist, anoAtualNum]);
+          const anosSet = new Set([...anosExist, anoAtualNum-1, anoAtualNum, anoAtualNum+1]);
           const anos = [...anosSet].sort().map(String);
           return anos.map(a=>(
             <button key={a} onClick={()=>{
               setAnoFiltro(a);
               setMesFiltro(a===String(anoAtualNum)?mesAtual:a+"-01");
             }}
-              style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              style={{padding:"5px 16px",borderRadius:20,border:"1.5px solid",
+                borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",
+                background:anoFiltro===a?"var(--purple)":"white",
+                color:anoFiltro===a?"white":"#6b7280",
+                fontSize:13,fontWeight:600,cursor:"pointer"}}>
               {a}{a===String(anoAtualNum)&&<span style={{marginLeft:3,fontSize:9}}>●</span>}
             </button>
           ));
