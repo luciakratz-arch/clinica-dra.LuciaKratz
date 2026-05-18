@@ -4426,11 +4426,26 @@ function Agenda() {
   const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
   useEffect(()=>{
-    const unsub = db.collection("clinica_sessoes").orderBy("data").onSnapshot(snap=>{
+    const u1 = db.collection("clinica_sessoes").orderBy("data").onSnapshot(snap=>{
       setSessoes(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
-    return unsub;
+    // Reservas da sala (Thais) — aparecem como bloqueios laranjas
+    const u2 = db.collection("sala_reservas").orderBy("data").onSnapshot(snap=>{
+      const reservasSala = snap.docs.map(d=>({
+        id:"sala_"+d.id, ...d.data(),
+        pacienteNome: d.data().usuarioId==="thais"
+          ? `🟠 Thais — ${d.data().titulo||"Sala reservada"}`
+          : `🟣 ${d.data().titulo||"Sala — Lucia"}`,
+        tipo:"sala", hora:d.data().horaInicio,
+        status:"agendado", _sala:true
+      }));
+      setSessoes(prev=>{
+        const semSala = prev.filter(s=>!s._sala);
+        return [...semSala, ...reservasSala];
+      });
+    },()=>{});
+    return()=>{u1();u2();};
   },[]);
 
   // Calcular semana atual
