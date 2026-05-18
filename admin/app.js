@@ -2714,17 +2714,27 @@ function TerapiaCasais() {
     setSalvando(true);
     const p1 = pacientes.find(p=>p.id===form.p1);
     const p2 = pacientes.find(p=>p.id===form.p2);
+    // Grava na coleção de casais
     await db.collection("clinica_casais").add({
       nomeCasal:form.nomeCasal||null,
       p1Id:form.p1, p1Nome:p1?.nome||"",
       p2Id:form.p2, p2Nome:p2?.nome||"",
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Grava casalId nos dois pacientes para o portal clínico detectar
+    await db.collection("clinica_pacientes").doc(form.p1).update({casalId:form.p2});
+    await db.collection("clinica_pacientes").doc(form.p2).update({casalId:form.p1});
     setModal(false);setForm({nomeCasal:"",p1:"",p2:""});setSalvando(false);
   }
 
   async function excluir(id){
     if(!confirm("Remover vinculo?"))return;
+    // Busca o casal para limpar casalId dos pacientes
+    const casal = casais.find(c=>c.id===id);
+    if(casal){
+      await db.collection("clinica_pacientes").doc(casal.p1Id).update({casalId:""}).catch(()=>{});
+      await db.collection("clinica_pacientes").doc(casal.p2Id).update({casalId:""}).catch(()=>{});
+    }
     await db.collection("clinica_casais").doc(id).delete();
   }
 
