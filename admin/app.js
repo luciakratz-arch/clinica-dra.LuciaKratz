@@ -1121,7 +1121,7 @@ function FinanceiroClinica() {
   const [sessoes, setSessoes] = useState([]);
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
-  const [periodoCard, setPeriodoCard] = useState("mes"); // "mes" | "ano"
+  const [periodoCard, setPeriodoCard] = useState("mes");
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
@@ -1151,10 +1151,15 @@ function FinanceiroClinica() {
   if(!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
 
   // Lançamentos filtrados por mês
-  // Meses do ano selecionado, do mais recente para o mais antigo
-  const mesesBase = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`).reverse();
-  const mesesComDados = new Set(lancamentos.filter(l=>l.data?.startsWith(anoFiltro)).map(l=>l.data?.slice(0,7)).filter(Boolean));
-  const mesesDisp = mesesBase; // mostra todos os 12 meses do ano, independente de ter dados
+  // Meses do ano selecionado — jan → dez, todos os 12
+  const mesAtual = new Date().toISOString().slice(0,7);
+  const mesesBase = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
+  const mesesDisp = mesesBase;
+
+  // Cards do topo sempre mostram o MÊS ATUAL do ano selecionado — não mudam com filtro
+  const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
+  const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
+  const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
 
@@ -1173,6 +1178,7 @@ function FinanceiroClinica() {
   const totalRecebidoPeriodo = calcSaldo(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalRecebidoMes = calcSaldo(lancMes.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
+  const mesAtualLabel = new Date(mesCards+"-01").toLocaleDateString("pt-BR",{month:"short"});
 
   // Salvar lançamento avulso
   async function salvarAvulso(){
@@ -1361,12 +1367,17 @@ function FinanceiroClinica() {
       {/* Seletor de Ano */}
       <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
         <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)"}}>Ano:</span>
-        {anosDisp.map(a=>(
-          <button key={a} onClick={()=>{setAnoFiltro(a);setMesFiltro(a+"-"+new Date().toISOString().slice(5,7));}}
-            style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-            {a}
-          </button>
-        ))}
+        {(()=>{
+          const anoAtualNum = new Date().getFullYear();
+          const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))];
+          const anos = [...new Set([...anosExist, String(anoAtualNum), String(anoAtualNum+1)])].sort();
+          return anos.map(a=>(
+            <button key={a} onClick={()=>{setAnoFiltro(a);setMesFiltro(a===String(anoAtualNum)?new Date().toISOString().slice(0,7):a+"-01");}}
+              style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              {a}
+            </button>
+          ));
+        })()}
       </div>
 
       {/* Métricas clicáveis */}
@@ -1379,7 +1390,7 @@ function FinanceiroClinica() {
           </div>
           <div style={{fontSize:20,fontWeight:800,color:totalRecebidoPeriodo>=0?"#059669":"#dc2626"}}>{totalRecebidoPeriodo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
           <div style={{fontSize:12,color:totalRecebidoPeriodo>=0?"#059669":"#dc2626",fontWeight:500,marginTop:2}}>
-            Saldo ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})
+            Saldo ({periodoCard==="mes"?mesAtualLabel:anoFiltro})
           </div>
           <div style={{fontSize:10,color:"#6b7280",marginTop:4}}>
             +{calcReceitas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
@@ -1414,15 +1425,24 @@ function FinanceiroClinica() {
       {/* ABA LANÇAMENTOS */}
       {aba==="lancamentos"&&(
         <div>
-          {/* Filtro mês */}
+          {/* Filtro mês — jan→dez, mês atual destacado */}
           <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês ({anoFiltro}):</span>
-            {mesesDisp.slice(0,12).map(m=>(
-              <button key={m} onClick={()=>setMesFiltro(m)}
-                style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro===m?"var(--purple)":"#e5e7eb",background:mesFiltro===m?"var(--purple)":"white",color:mesFiltro===m?"white":"#6b7280",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
-              </button>
-            ))}
+            <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>Mês:</span>
+            {mesesDisp.map(m=>{
+              const isAtual=m===mesAtual;
+              const isSel=m===mesFiltro;
+              return(
+                <button key={m} onClick={()=>setMesFiltro(m)}
+                  style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",
+                    borderColor:isSel?"var(--purple)":isAtual?"var(--purple)":"#e5e7eb",
+                    background:isSel?"var(--purple)":"white",
+                    color:isSel?"white":isAtual?"var(--purple)":"#6b7280",
+                    fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer"}}>
+                  {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short"})}
+                  {isAtual&&!isSel&&<span style={{marginLeft:3,fontSize:9}}>●</span>}
+                </button>
+              );
+            })}
           </div>
 
           {lancMes.length===0?(
