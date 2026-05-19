@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Deixe seu Depoimento — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f5f0ff 0%,#faf5ff 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:white;border-radius:24px;padding:40px;width:100%;max-width:520px;box-shadow:0 8px 40px rgba(123,0,196,.12)}
+.logo{text-align:center;margin-bottom:32px}
+.logo img{width:80px;height:80px;object-fit:contain;margin:0 auto 12px}
+.logo h1{font-family:'Playfair Display',serif;font-size:22px;color:#7B00C4;margin-bottom:4px}
+.logo p{font-size:13px;color:#6b7280}
+.label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;display:block;margin-bottom:6px;margin-top:16px}
+.input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.input:focus{border-color:#7B00C4}
+textarea.input{resize:vertical;min-height:120px}
+.stars{display:flex;gap:8px;margin-top:6px}
+.star{font-size:32px;cursor:pointer;color:#d1d5db;transition:color .15s;user-select:none}
+.star.on{color:#7B00C4}
+.btn{width:100%;padding:13px;border-radius:12px;background:#7B00C4;color:white;border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:24px;transition:background .2s}
+.btn:hover{background:#5a0090}
+.btn:disabled{opacity:.6;cursor:default}
+.sucesso{text-align:center;padding:40px 20px}
+.sucesso h2{font-family:'Playfair Display',serif;font-size:24px;color:#7B00C4;margin-bottom:12px}
+.sucesso p{font-size:15px;color:#6b7280;line-height:1.7}
+.erro{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="card" id="form-card">
+  <div class="logo">
+    <img src="../logo-transparente.png" onerror="this.style.display='none'"/>
+    <h1>Dra. Lucia Kratz</h1>
+    <p>Compartilhe sua experiência 💜</p>
+  </div>
+
+  <label class="label">Sua avaliação</label>
+  <div class="stars" id="stars">
+    <span class="star" data-v="1" onclick="setStar(1)">★</span>
+    <span class="star" data-v="2" onclick="setStar(2)">★</span>
+    <span class="star" data-v="3" onclick="setStar(3)">★</span>
+    <span class="star" data-v="4" onclick="setStar(4)">★</span>
+    <span class="star" data-v="5" onclick="setStar(5)">★</span>
+  </div>
+
+  <label class="label">Seu nome *</label>
+  <input class="input" id="nome" placeholder="Como prefere ser identificado(a)"/>
+
+  <label class="label">Cargo / Profissão (opcional)</label>
+  <input class="input" id="cargo" placeholder="Ex: Empresária, Designer, Engenheiro..."/>
+
+  <label class="label">Seu depoimento *</label>
+  <textarea class="input" id="texto" placeholder="Conte um pouco sobre sua experiência com a Dra. Lucia Kratz..."></textarea>
+
+  <div id="erro" style="display:none" class="erro"></div>
+
+  <button class="btn" id="btn-enviar" onclick="enviar()">Enviar depoimento</button>
+
+  <p style="font-size:12px;color:#9ca3af;text-align:center;margin-top:16px">
+    Seu depoimento será analisado antes de ser publicado.
+  </p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script defer>
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+const db = firebase.firestore();
+
+let estrelas = 5;
+setStar(5);
+
+function setStar(n){
+  estrelas = n;
+  document.querySelectorAll('.star').forEach(s=>{
+    s.classList.toggle('on', parseInt(s.dataset.v) <= n);
+  });
+}
+
+async function enviar(){
+  const nome  = document.getElementById('nome').value.trim();
+  const cargo = document.getElementById('cargo').value.trim();
+  const texto = document.getElementById('texto').value.trim();
+  const erroEl = document.getElementById('erro');
+
+  if(!nome || !texto){
+    erroEl.textContent = 'Por favor preencha seu nome e o depoimento.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  erroEl.style.display = 'none';
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    await db.collection('site_depoimentos').add({
+      nome, cargo, texto,
+      estrelas,
+      status: 'pendente',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById('form-card').innerHTML = `
+      <div class="sucesso">
+        <div style="font-size:48px;margin-bottom:16px">💜</div>
+        <h2>Obrigada, ${nome}!</h2>
+        <p>Seu depoimento foi recebido com muito carinho.<br/>Vou analisar e publicar em breve.</p>
+        <p style="margin-top:20px;font-size:13px">Dra. Lucia Kratz · CRP 09/20590</p>
+      </div>
+    `;
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Enviar depoimento';
+    erroEl.textContent = 'Erro ao enviar. Tente novamente.';
+    erroEl.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
