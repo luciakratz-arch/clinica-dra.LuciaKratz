@@ -32,7 +32,7 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 
 /* APP */
 .app{display:flex;min-height:100vh}
-.sidebar{width:240px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:10}
+.sidebar{width:240px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:10;transition:transform .3s}
 .s-header{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
 .s-header img{width:36px;height:36px;object-fit:contain}
 .s-title{font-size:13px;font-weight:600;color:white}
@@ -121,6 +121,34 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 .cancel-option{padding:16px;border-radius:12px;cursor:pointer;text-align:left;font-family:'Inter',sans-serif;width:100%;margin-bottom:10px}
 .cancel-option h4{font-size:14px;font-weight:700;margin-bottom:3px}
 .cancel-option p{font-size:12px}
+
+/* MOBILE */
+.mob-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,#7B00C4,#4a007a);z-index:20;align-items:center;justify-content:space-between;padding:0 16px}
+.mob-title{color:white;font-weight:700;font-size:15px}
+.mob-menu-btn{background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e5e7eb;z-index:20;padding:8px 0 12px}
+.mob-nav-items{display:flex;justify-content:space-around}
+.mob-nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-size:10px;color:#6b7280;font-family:'Inter',sans-serif;padding:4px 12px}
+.mob-nav-btn.active{color:#7B00C4}
+
+@media(max-width:767px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .mob-overlay.open{display:block}
+  .mob-header{display:flex !important}
+  .mob-nav{display:block !important}
+  .main{margin-left:0 !important;padding:72px 16px 80px !important}
+  .grade-wrap{overflow-x:auto}
+  .grade{min-width:500px}
+  .proximas-title{font-size:14px}
+  .page-header{flex-direction:column;align-items:flex-start}
+}
+@media(min-width:768px){
+  .main{margin-left:240px}
+  .mob-header{display:none !important}
+  .mob-nav{display:none !important}
+}
 </style>
 </head>
 <body>
@@ -165,7 +193,11 @@ function getDias(offset){
   return Array.from({length:7},(_,i)=>{ const d=new Date(ini); d.setDate(ini.getDate()+i); return d; });
 }
 function mesLabel(d){ return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}); }
-function setState(patch){ state={...state,...patch}; render(); }
+function setState(patch){ state={...state,...patch}; function toggleSidebar(){
+  document.getElementById('sidebar-sala')?.classList.toggle('open');
+  document.getElementById('mob-overlay')?.classList.toggle('open');
+}
+render(); }
 
 // Firebase listeners
 let unsubReservas=null, unsubPedidos=null;
@@ -316,7 +348,16 @@ function render(){
 
   app.innerHTML = `
   <div class="app">
-    <div class="sidebar">
+    <!-- Header Mobile -->
+    <div class="mob-header">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="mob-title">Agenda da Sala</div>
+      <div style="width:32px"></div>
+    </div>
+    <!-- Overlay -->
+    <div class="mob-overlay" id="mob-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar" id="sidebar-sala">
       <div class="s-header">
         <img src="../logo-transparente.png" style="width:36px;height:36px;object-fit:contain" onerror="this.style.display='none'"/>
         <div><div class="s-title">Agenda da Sala</div><div class="s-sub">Espaço compartilhado</div></div>
@@ -446,6 +487,15 @@ function render(){
           </div>
         `).join("")}</div>`;
       })()}
+    </div>
+  </div>
+
+  <!-- Nav Mobile -->
+  <div class="mob-nav">
+    <div class="mob-nav-items">
+      <button class="mob-nav-btn" onclick="setState({semanaOffset:0})">📅<span>Hoje</span></button>
+      <button class="mob-nav-btn" onclick="abrirNova(new Date())">＋<span>Reservar</span></button>
+      <button class="mob-nav-btn" onclick="setState({user:null})">→<span>Sair</span></button>
     </div>
   </div>
 
