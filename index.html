@@ -537,6 +537,60 @@
   </div>
 </section>
 
+<!-- DEPOIMENTOS -->
+<section id="depoimentos" style="background:var(--gray-50)">
+  <div class="section-inner">
+    <div class="section-label">Depoimentos</div>
+    <h2 class="section-title">O que dizem os pacientes</h2>
+    <p class="section-sub" style="margin-bottom:40px">Histórias reais de transformação e cuidado.</p>
+
+    <!-- Carrossel -->
+    <div style="position:relative">
+      <div id="carrossel" style="display:flex;gap:20px;overflow:hidden;scroll-behavior:smooth">
+        <img src="depoimento1.jpeg" alt="Depoimento 1"
+          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
+          onclick="abrirDepoimento(this.src)"/>
+        <img src="depoimento2.jpeg" alt="Depoimento 2"
+          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
+          onclick="abrirDepoimento(this.src)"/>
+        <img src="depoimento3.jpeg" alt="Depoimento 3"
+          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
+          onclick="abrirDepoimento(this.src)"/>
+        <img src="depoimento4.jpeg" alt="Depoimento 4"
+          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
+          onclick="abrirDepoimento(this.src)"/>
+        <img src="depoimento5.jpeg" alt="Depoimento 5"
+          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
+          onclick="abrirDepoimento(this.src)"/>
+      </div>
+
+      <!-- Botões navegação -->
+      <button onclick="scrollCarrossel(-1)"
+        style="position:absolute;left:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--purple)">‹</button>
+      <button onclick="scrollCarrossel(1)"
+        style="position:absolute;right:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--purple)">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- Lightbox depoimento -->
+<div id="lightbox" onclick="this.style.display='none'"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;cursor:pointer">
+  <img id="lightbox-img" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain"/>
+</div>
+
+<script>
+function scrollCarrossel(dir){
+  const c=document.getElementById('carrossel');
+  c.scrollLeft+=dir*360;
+}
+function abrirDepoimento(src){
+  const lb=document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src=src;
+  lb.style.display='flex';
+}
+</script>
+
 <!-- CONTATO -->
 <section id="contato">
   <div class="section-inner">
