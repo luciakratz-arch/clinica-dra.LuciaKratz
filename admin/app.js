@@ -4837,9 +4837,10 @@ function TabDepoimentos() {
     setLoading(true);
     const unsub = db.collection("site_depoimentos")
       .where("status", "==", filtro)
-      .orderBy("createdAt", "desc")
       .onSnapshot(snap => {
-        setLista(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setLista(docs);
         setLoading(false);
       }, () => setLoading(false));
     return unsub;
