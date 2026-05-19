@@ -563,8 +563,9 @@ function renderModalConflito(){
 function fecharModal(e){ if(e.target===e.currentTarget) setState({modal:null,editandoId:null,modalData:null}); }
 function escolher(id){ setState({etapaLogin:"senha",userIdLogin:id,erroLogin:"",senhaLogin:""}); }
 function fazerLogin(){
+  const senhaDigitada = document.getElementById("senha-input")?.value || state.senhaLogin;
   const u = USUARIOS[state.userIdLogin];
-  if(!u||state.senhaLogin!==u.senha){ setState({erroLogin:"Senha incorreta."}); return; }
+  if(!u||senhaDigitada!==u.senha){ setState({erroLogin:"Senha incorreta."}); return; }
   const user = {id:state.userIdLogin,...u};
   startListeners(user.id);
   setState({user,etapaLogin:"perfil",senhaLogin:"",erroLogin:""});
