@@ -4855,6 +4855,14 @@ function TabDepoimentos() {
     await db.collection("site_depoimentos").doc(id).update({ status: "aprovado", resposta });
     setRespostas(prev => { const n = Object.assign({}, prev); delete n[id]; return n; });
   }
+  async function salvarResposta(id) {
+    const resposta = respostas[id] || "";
+    await db.collection("site_depoimentos").doc(id).update({ resposta });
+    setRespostas(prev => { const n = Object.assign({}, prev); delete n[id]; return n; });
+    alert("Resposta salva!");
+  }
+
+  const [editando, setEditando] = useState({});
 
   function renderEstrelas(n) {
     return Array.from({ length: 5 }, (_, i) => (
@@ -4952,6 +4960,32 @@ function TabDepoimentos() {
                       onChange: e => setRespostas(prev => Object.assign({}, prev, { [dep.id]: e.target.value })),
                       style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 13, fontFamily: "inherit", resize: "vertical", minHeight: 80, outline: "none" }
                     })
+                  ),
+                  // Campo editar resposta (aprovados)
+                  filtro === "aprovado" && React.createElement("div", { style: { marginBottom: 12 } },
+                    !editando[dep.id]
+                      ? React.createElement("button", {
+                          onClick: () => setEditando(prev => Object.assign({}, prev, { [dep.id]: true })),
+                          style: { padding: "6px 14px", borderRadius: 8, background: "#f5f0ff", color: "#7B00C4", border: "1.5px solid #7B00C4", fontSize: 12, fontWeight: 600, cursor: "pointer", marginBottom: 8 }
+                        }, dep.resposta ? "✏️ Editar resposta" : "💬 Adicionar resposta")
+                      : React.createElement("div", null,
+                          React.createElement("textarea", {
+                            placeholder: "Escreva sua resposta...",
+                            value: respostas[dep.id] !== undefined ? respostas[dep.id] : (dep.resposta || ""),
+                            onChange: e => setRespostas(prev => Object.assign({}, prev, { [dep.id]: e.target.value })),
+                            style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #7B00C4", fontSize: 13, fontFamily: "inherit", resize: "vertical", minHeight: 80, outline: "none", marginBottom: 8 }
+                          }),
+                          React.createElement("div", { style: { display: "flex", gap: 8 } },
+                            React.createElement("button", {
+                              onClick: () => salvarResposta(dep.id).then(() => setEditando(prev => { const n = Object.assign({}, prev); delete n[dep.id]; return n; })),
+                              style: { padding: "6px 14px", borderRadius: 8, background: "#7B00C4", color: "white", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer" }
+                            }, "💾 Salvar"),
+                            React.createElement("button", {
+                              onClick: () => setEditando(prev => { const n = Object.assign({}, prev); delete n[dep.id]; return n; }),
+                              style: { padding: "6px 14px", borderRadius: 8, background: "#f3f4f6", color: "#374151", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer" }
+                            }, "Cancelar")
+                          )
+                        )
                   ),
                   // Botões de ação
                   React.createElement("div", { style: { display: "flex", gap: 8 } },
