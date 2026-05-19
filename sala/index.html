@@ -372,40 +372,58 @@ function render(){
 
       <div class="grade-wrap">
         <table class="grade">
-          <thead><tr>${dias.map((dia,i)=>{
-            const isHj = fmt(dia)===fmt(hj);
-            const isPass = dia<hj;
-            return `<th class="dia-th${isHj?" hoje":""}">
-              <div class="dia-weekday" ${!isHj&&isPass?'style="color:#9ca3af"':""}>${dia.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","").toUpperCase()}</div>
-              <div class="dia-num" ${!isHj&&isPass?'style="color:#9ca3af"':""}>${dia.getDate()}</div>
-              <div class="dia-mes">${dia.toLocaleDateString("pt-BR",{month:"short"})}</div>
-            </th>`;
-          }).join("")}</tr></thead>
-          <tbody><tr>${dias.map(dia=>{
-            const isHj = fmt(dia)===fmt(hj);
-            const lista = s.reservas.filter(r=>r.data===fmt(dia)).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
-            const diaFmt = fmt(dia);
-            return `<td class="dia-td${isHj?" hoje":""}">
-              <div class="dia-body">
-                ${lista.map(r=>{
-                  const eMinha = r.usuarioId===u.id;
-                  const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
-                  const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
-                  return `<div class="reserva-chip" style="background:${bg};border-color:${cor}">
-                    <div class="chip-title" style="color:${cor}">${r.horaInicio}–${r.horaFim}</div>
-                    <div class="chip-sub">${eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0]}</div>
-                    ${r.recorrenteRef?`<div class="chip-tag" style="color:${cor}">↻ recorrente</div>`:""}
-                    ${eMinha?`
-                      <button class="chip-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
-                    `:`
-                      <button class="chip-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>
-                    `}
-                  </div>`;
+          <thead>
+            <tr>
+              <th style="width:60px;border:none;background:none"></th>
+              ${dias.map((dia,i)=>{
+                const isHj = fmt(dia)===fmt(hj);
+                const isPass = dia<hj;
+                return `<th class="dia-th${isHj?" hoje":""}">
+                  <div class="dia-weekday" ${!isHj&&isPass?'style="color:#9ca3af"':""}>${dia.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","").toUpperCase()}</div>
+                  <div class="dia-num" ${!isHj&&isPass?'style="color:#9ca3af"':""}>${dia.getDate()}</div>
+                  <div class="dia-mes">${dia.toLocaleDateString("pt-BR",{month:"short"})}</div>
+                </th>`;
+              }).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${[
+              {label:"☀️ Manhã",   ini:"06:00", fim:"12:00", bg:"#fffbeb"},
+              {label:"🌤️ Tarde",   ini:"12:00", fim:"18:00", bg:"#f0f9ff"},
+              {label:"🌙 Noite",   ini:"18:00", fim:"23:59", bg:"#f5f3ff"}
+            ].map(periodo=>`
+              <tr>
+                <td style="vertical-align:middle;padding:4px 6px 4px 0;text-align:right;white-space:nowrap;font-size:11px;font-weight:600;color:#6b7280;border:none;background:none">${periodo.label}</td>
+                ${dias.map(dia=>{
+                  const isHj = fmt(dia)===fmt(hj);
+                  const diaFmt = fmt(dia);
+                  const lista = s.reservas
+                    .filter(r=>r.data===diaFmt && r.horaInicio>=periodo.ini && r.horaInicio<periodo.fim)
+                    .sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
+                  return `<td class="dia-td${isHj?" hoje":""}" style="background:${isHj?periodo.bg+"cc":periodo.bg}">
+                    <div class="dia-body">
+                      ${lista.map(r=>{
+                        const eMinha = r.usuarioId===u.id;
+                        const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
+                        const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
+                        return `<div class="reserva-chip" style="background:${bg};border-color:${cor}">
+                          <div class="chip-title" style="color:${cor}">${r.horaInicio}–${r.horaFim}</div>
+                          <div class="chip-sub">${eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0]}</div>
+                          ${r.recorrenteRef?`<div class="chip-tag" style="color:${cor}">↻ recorrente</div>`:""}
+                          ${eMinha?`
+                            <button class="chip-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
+                          `:`
+                            <button class="chip-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>
+                          `}
+                        </div>`;
+                      }).join("")}
+                      <button class="add-btn" onclick="abrirNovaDia('${diaFmt}')">+</button>
+                    </div>
+                  </td>`;
                 }).join("")}
-                <button class="add-btn" onclick="abrirNovaDia('${diaFmt}')">+</button>
-              </div>
-            </td>`;
-          }).join("")}</tr></tbody>
+              </tr>
+            `).join("")}
+          </tbody>
         </table>
       </div>
 
