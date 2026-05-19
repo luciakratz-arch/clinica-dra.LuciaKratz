@@ -32,7 +32,7 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 
 /* APP */
 .app{display:flex;min-height:100vh}
-.sidebar{width:240px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sidebar{width:240px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:10}
 .s-header{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.1)}
 .s-header img{width:36px;height:36px;object-fit:contain}
 .s-title{font-size:13px;font-weight:600;color:white}
@@ -47,7 +47,7 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 .s-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .s-legend-name{font-size:12px;color:rgba(255,255,255,.8)}
 .s-legend-you{font-size:10px;font-weight:700;margin-left:auto}
-.s-footer{padding:10px 8px;margin-top:auto;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:4px}
+.s-footer{padding:10px 8px;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:4px;margin-top:auto}
 .nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:none;background:none;color:rgba(255,255,255,.75);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;text-align:left;width:100%;text-decoration:none;transition:all .15s}
 .nav-btn:hover{background:rgba(255,255,255,.12);color:white}
 .nav-btn-danger:hover{background:rgba(220,38,38,.25);color:#fca5a5}
@@ -351,7 +351,7 @@ function render(){
       `:""}
       <div class="s-footer">
         <button class="nav-btn" onclick="abrirNova(new Date())">＋ Nova Reserva</button>
-        <a href="${SITE_URL}" class="nav-btn">← Site</a>
+        <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz" class="nav-btn">← Site</a>
         <button class="nav-btn nav-btn-danger" onclick="setState({user:null})">→ Sair</button>
       </div>
     </div>
