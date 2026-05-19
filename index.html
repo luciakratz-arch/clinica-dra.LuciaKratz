@@ -327,11 +327,15 @@
       .galeria-grid { grid-template-columns: repeat(2, 1fr); }
       .navbar { padding: 0 20px; }
       .sobre-stats { grid-template-columns: repeat(2, 1fr); }
+      /* Depoimentos mobile */
+      #carrossel img { width: 280px !important; height: 320px !important; }
     }
     @media (max-width: 500px) {
       .hero-title { font-size: 30px; }
       .section-title { font-size: 26px; }
       .processo-grid { grid-template-columns: 1fr; }
+      /* Depoimentos tela pequena */
+      #carrossel img { width: calc(100vw - 60px) !important; height: 280px !important; }
     }
   </style>
 </head>
