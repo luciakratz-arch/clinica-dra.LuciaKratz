@@ -545,53 +545,101 @@
 <section id="depoimentos" style="background:var(--gray-50)">
   <div class="section-inner">
     <div class="section-label">Depoimentos</div>
-    <h2 class="section-title">O que dizem os pacientes</h2>
+    <h2 class="section-title">O que dizem sobre o atendimento</h2>
     <p class="section-sub" style="margin-bottom:40px">Histórias reais de transformação e cuidado.</p>
 
-    <!-- Carrossel -->
     <div style="position:relative">
-      <div id="carrossel" style="display:flex;gap:20px;overflow:hidden;scroll-behavior:smooth">
-        <img src="depoimento1.jpeg" alt="Depoimento 1"
-          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
-          onclick="abrirDepoimento(this.src)"/>
-        <img src="depoimento2.jpeg" alt="Depoimento 2"
-          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
-          onclick="abrirDepoimento(this.src)"/>
-        <img src="depoimento3.jpeg" alt="Depoimento 3"
-          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
-          onclick="abrirDepoimento(this.src)"/>
-        <img src="depoimento4.jpeg" alt="Depoimento 4"
-          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
-          onclick="abrirDepoimento(this.src)"/>
-        <img src="depoimento5.jpeg" alt="Depoimento 5"
-          style="width:340px;flex-shrink:0;border-radius:16px;object-fit:cover;height:400px;cursor:pointer"
-          onclick="abrirDepoimento(this.src)"/>
+      <div id="carrossel-dep" style="display:flex;gap:20px;overflow:hidden;scroll-behavior:smooth;padding:4px 2px">
+
+        <!-- D.P.G.D. -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">D.P.G.D.</div><div style="font-size:12px;color:#9ca3af">23/04/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"De longe a melhor profissional do ramo. Humana, atenciosa e muito experiente. Uma grande referência no que faz. Mudou minha vida, me resgatou e salvou."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Muito obrigada pelas suas palavras tão generosas e emocionantes. Fico profundamente tocada em saber que meu trabalho pôde contribuir de forma tão significativa para sua vida. É uma honra acompanhar sua trajetória.
+          </div>
+        </div>
+
+        <!-- Vanessa -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Vanessa</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"A Dra. Lúcia é de uma maestria enorme! Com uma frase ela conseguiu virar a chave da minha mente cheia de medo, restrita e limitada. Ela traz luz onde havia escuridão."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Fico feliz em poder te ajudar e contribuir com sua jornada pessoal e profissional!
+          </div>
+        </div>
+
+        <!-- AMR -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">AMR</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Tive uma excelente experiência, ótimo atendimento."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Agradeço muito seu feedback!
+          </div>
+        </div>
+
+        <!-- E.M. -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">E.M.</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"É uma pessoa muito empática e atenciosa, uma boa profissional."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Agradeço muito seu feedback!
+          </div>
+        </div>
+
+        <!-- Marilha Cumha -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Marilha Cumha</div><div style="font-size:12px;color:#9ca3af">Empresária Bobys</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Esse processo trouxe para mim uma confiança muito grande e também despertou-me um mundo novo, de oportunidades e que está na minha mão. Basta acreditar e agir com inteligência e serenidade."</p>
+        </div>
+
+        <!-- Flávio Sabugo -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Flávio Sabugo</div><div style="font-size:12px;color:#9ca3af">Profissional Certificado Google Adwords</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Seja através de suas aulas, processos de coaching ou consultorias empresariais, se engaja e entrega sempre mais do que o esperado! Indico a Lúcia Kratz para executivos e empresas que buscam a excelência!"</p>
+        </div>
+
+        <!-- Lidiana Nascimento -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Lidiana Nascimento</div><div style="font-size:12px;color:#9ca3af">Designer de Unhas / Empresária</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Meu relacionamento com meu marido melhorou muito. Obrigada!"</p>
+        </div>
+
       </div>
 
-      <!-- Botões navegação -->
-      <button onclick="scrollCarrossel(-1)"
-        style="position:absolute;left:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--purple)">‹</button>
-      <button onclick="scrollCarrossel(1)"
-        style="position:absolute;right:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--purple)">›</button>
+      <button onclick="scrollDep(-1)" style="position:absolute;left:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:22px;color:var(--purple);display:flex;align-items:center;justify-content:center">‹</button>
+      <button onclick="scrollDep(1)"  style="position:absolute;right:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:22px;color:var(--purple);display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+
+    <div style="text-align:center;margin-top:32px">
+      <button onclick="copiarLinkDep()" id="btn-dep"
+        style="background:var(--purple);color:white;border:none;border-radius:20px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body)">
+        🔗 Compartilhar depoimentos
+      </button>
     </div>
   </div>
 </section>
 
-<!-- Lightbox depoimento -->
-<div id="lightbox" onclick="this.style.display='none'"
-  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;cursor:pointer">
-  <img id="lightbox-img" style="max-width:90vw;max-height:90vh;border-radius:12px;object-fit:contain"/>
-</div>
-
 <script>
-function scrollCarrossel(dir){
-  const c=document.getElementById('carrossel');
-  c.scrollLeft+=dir*360;
+function scrollDep(dir){
+  document.getElementById('carrossel-dep').scrollLeft += dir*340;
 }
-function abrirDepoimento(src){
-  const lb=document.getElementById('lightbox');
-  document.getElementById('lightbox-img').src=src;
-  lb.style.display='flex';
+function copiarLinkDep(){
+  navigator.clipboard.writeText('https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/#depoimentos');
+  const btn = document.getElementById('btn-dep');
+  btn.textContent = '✓ Link copiado!';
+  setTimeout(()=>btn.textContent='🔗 Compartilhar depoimentos', 2500);
 }
 </script>
 
