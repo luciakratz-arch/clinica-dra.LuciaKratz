@@ -213,8 +213,9 @@ const NAV_PSICOLOGA = [
   {id:"laudos",      label:"Laudos",             icon:"file-text"},
   {id:"agenda",      label:"Agenda",             icon:"calendar"},
   {id:"fin-clinica", label:"Fin. Clinica",       icon:"dollar-sign"},
-  {id:"fin-pessoal", label:"Fin. Pessoal",       icon:"home"},
-  {id:"config",      label:"Configuracoes",      icon:"settings"},
+  {id:"fin-pessoal",  label:"Fin. Pessoal",       icon:"home"},
+  {id:"depoimentos",  label:"Depoimentos",        icon:"star"},
+  {id:"config",       label:"Configuracoes",      icon:"settings"},
 ];
 const NAV_SECRETARIA = [
   {id:"pacientes",   label:"Pacientes",  icon:"users"},
@@ -4826,6 +4827,150 @@ function Agenda() {
   );
 }
 
+// ─── DEPOIMENTOS ─────────────────────────────────────────
+function TabDepoimentos() {
+  const [filtro, setFiltro] = useState("pendente");
+  const [lista, setLista] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const unsub = db.collection("site_depoimentos")
+      .where("status", "==", filtro)
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snap => {
+        setLista(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLoading(false);
+      }, () => setLoading(false));
+    return unsub;
+  }, [filtro]);
+
+  async function mudarStatus(id, novoStatus) {
+    await db.collection("site_depoimentos").doc(id).update({ status: novoStatus });
+  }
+
+  function renderEstrelas(n) {
+    return Array.from({ length: 5 }, (_, i) => (
+      React.createElement("span", { key: i, style: { color: i < n ? "#7B00C4" : "#d1d5db", fontSize: 16 } }, "★")
+    ));
+  }
+
+  const abas = [
+    { id: "pendente",  label: "Pendentes",  cor: "#f59e0b" },
+    { id: "aprovado",  label: "Aprovados",  cor: "#16a34a" },
+    { id: "rejeitado", label: "Rejeitados", cor: "#dc2626" },
+  ];
+
+  return (
+    React.createElement("div", { className: "tab-content" },
+      React.createElement("h2", { className: "section-title" }, "Depoimentos"),
+      React.createElement("p", { style: { color: "#6b7280", fontSize: 14, marginBottom: 24 } },
+        "Modere os depoimentos enviados pelo formulário público. Aprovados aparecem automaticamente no site."
+      ),
+
+      // Filtros
+      React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" } },
+        abas.map(a =>
+          React.createElement("button", {
+            key: a.id,
+            onClick: () => setFiltro(a.id),
+            style: {
+              padding: "8px 20px",
+              borderRadius: 20,
+              border: "2px solid " + (filtro === a.id ? a.cor : "#e5e7eb"),
+              background: filtro === a.id ? a.cor : "white",
+              color: filtro === a.id ? "white" : "#374151",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+              transition: "all .2s"
+            }
+          }, a.label)
+        )
+      ),
+
+      // Lista
+      loading
+        ? React.createElement("p", { style: { color: "#9ca3af" } }, "Carregando...")
+        : lista.length === 0
+          ? React.createElement("div", {
+              style: {
+                textAlign: "center", padding: "60px 20px",
+                background: "white", borderRadius: 16,
+                border: "1.5px dashed #e5e7eb", color: "#9ca3af"
+              }
+            },
+              React.createElement("div", { style: { fontSize: 40, marginBottom: 12 } }, "💬"),
+              React.createElement("p", null, "Nenhum depoimento " + (filtro === "pendente" ? "pendente" : filtro === "aprovado" ? "aprovado" : "rejeitado") + " no momento.")
+            )
+          : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
+              lista.map(dep =>
+                React.createElement("div", {
+                  key: dep.id,
+                  style: {
+                    background: "white", borderRadius: 16,
+                    padding: "20px 24px",
+                    border: "1.5px solid #f3e8ff",
+                    boxShadow: "0 2px 8px rgba(123,0,196,.06)"
+                  }
+                },
+                  // Cabeçalho
+                  React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 } },
+                    React.createElement("div", null,
+                      React.createElement("div", { style: { fontWeight: 700, fontSize: 15, color: "#111" } }, dep.nome || "—"),
+                      dep.cargo && React.createElement("div", { style: { fontSize: 12, color: "#9ca3af", marginTop: 2 } }, dep.cargo)
+                    ),
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
+                      React.createElement("div", null, renderEstrelas(dep.estrelas || 5)),
+                      dep.createdAt && React.createElement("span", { style: { fontSize: 11, color: "#9ca3af" } },
+                        new Date(dep.createdAt.seconds * 1000).toLocaleDateString("pt-BR")
+                      )
+                    )
+                  ),
+
+                  // Texto
+                  React.createElement("p", {
+                    style: {
+                      fontSize: 14, color: "#374151", lineHeight: 1.7,
+                      background: "#faf5ff", borderRadius: 10, padding: "12px 16px",
+                      borderLeft: "3px solid #7B00C4", marginBottom: 14
+                    }
+                  }, dep.texto),
+
+                  // Botões de ação
+                  React.createElement("div", { style: { display: "flex", gap: 8 } },
+                    filtro !== "aprovado" && React.createElement("button", {
+                      onClick: () => mudarStatus(dep.id, "aprovado"),
+                      style: {
+                        padding: "7px 18px", borderRadius: 8,
+                        background: "#16a34a", color: "white",
+                        border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer"
+                      }
+                    }, "✓ Aprovar"),
+                    filtro !== "rejeitado" && React.createElement("button", {
+                      onClick: () => mudarStatus(dep.id, "rejeitado"),
+                      style: {
+                        padding: "7px 18px", borderRadius: 8,
+                        background: "#dc2626", color: "white",
+                        border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer"
+                      }
+                    }, "✕ Rejeitar"),
+                    filtro !== "pendente" && React.createElement("button", {
+                      onClick: () => mudarStatus(dep.id, "pendente"),
+                      style: {
+                        padding: "7px 18px", borderRadius: 8,
+                        background: "#f59e0b", color: "white",
+                        border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer"
+                      }
+                    }, "↩ Pendente")
+                  )
+                )
+              )
+            )
+    )
+  );
+}
+
 // APP
 function App() {
   const [user, setUser] = useState(null);
@@ -4847,6 +4992,7 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {user.tipo==="psicologa"  &&tab==="depoimentos" &&<TabDepoimentos/>}
         {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="secretaria" &&tab==="agenda"      &&<Agenda/>}
