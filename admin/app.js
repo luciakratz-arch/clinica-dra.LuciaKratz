@@ -4845,9 +4845,15 @@ function TabDepoimentos() {
       }, () => setLoading(false));
     return unsub;
   }, [filtro]);
+  const [respostas, setRespostas] = useState({});
 
   async function mudarStatus(id, novoStatus) {
     await db.collection("site_depoimentos").doc(id).update({ status: novoStatus });
+  }
+  async function aprovarComResposta(id) {
+    const resposta = respostas[id] || "";
+    await db.collection("site_depoimentos").doc(id).update({ status: "aprovado", resposta });
+    setRespostas(prev => { const n = Object.assign({}, prev); delete n[id]; return n; });
   }
 
   function renderEstrelas(n) {
@@ -4938,10 +4944,19 @@ function TabDepoimentos() {
                     }
                   }, dep.texto),
 
+                  // Campo resposta (só para pendentes)
+                  filtro === "pendente" && React.createElement("div", { style: { marginBottom: 12 } },
+                    React.createElement("textarea", {
+                      placeholder: "Escreva sua resposta (opcional)...",
+                      value: respostas[dep.id] || "",
+                      onChange: e => setRespostas(prev => Object.assign({}, prev, { [dep.id]: e.target.value })),
+                      style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 13, fontFamily: "inherit", resize: "vertical", minHeight: 80, outline: "none" }
+                    })
+                  ),
                   // Botões de ação
                   React.createElement("div", { style: { display: "flex", gap: 8 } },
                     filtro !== "aprovado" && React.createElement("button", {
-                      onClick: () => mudarStatus(dep.id, "aprovado"),
+                      onClick: () => filtro === "pendente" ? aprovarComResposta(dep.id) : mudarStatus(dep.id, "aprovado"),
                       style: {
                         padding: "7px 18px", borderRadius: 8,
                         background: "#16a34a", color: "white",
