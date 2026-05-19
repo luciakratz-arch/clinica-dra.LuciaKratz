@@ -140,7 +140,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/";
 const WA = { lucia:"5562991546757", thais:"5562995370858" };
 const USUARIOS = {
   lucia:{ nome:"Lucia Kratz",    senha:"1234", cor:"#7B00C4", bg:"#f5f0ff" },
@@ -290,7 +290,7 @@ function render(){
               <span style="margin-left:auto;color:#9ca3af">›</span>
             </button>
           `).join("")}
-          <a href="${SITE_URL}" style="font-size:12px;color:var(--purple)">← Voltar ao site</a>
+          <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/" style="font-size:12px;color:var(--purple)">← Voltar ao site</a>
         ` : `
           <button class="back-btn" onclick="setState({etapaLogin:'perfil',erroLogin:''})">← Voltar</button>
           ${s.erroLogin?`<div class="error">${s.erroLogin}</div>`:""}
@@ -352,6 +352,7 @@ function render(){
       <div class="s-footer">
         <button class="nav-btn" onclick="abrirNova(new Date())">＋ Nova Reserva</button>
 
+        <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/" class="nav-btn" style="color:rgba(255,255,255,.7);text-decoration:none">← Voltar ao site</a>
         <button class="nav-btn nav-btn-danger" onclick="setState({user:null})">→ Sair</button>
       </div>
     </div>
