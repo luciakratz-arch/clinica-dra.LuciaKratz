@@ -1388,7 +1388,11 @@ function FinanceiroClinica() {
         pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
-        pagamento:"pendente",formaPagamento:"",dataPagamento:"",obs:"",
+        pagamento:statusPag==="recebido"?"pago":"pendente",
+        formaPagamento:statusPag==="recebido"?(formaPag||""):"",
+        dataPagamento:statusPag==="recebido"?(dataPagamento||""):"",
+        valorPago:statusPag==="recebido"?vSessao:0,
+        obs:"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     });
@@ -1611,7 +1615,7 @@ function FinanceiroClinica() {
                               {isFut&&<span style={{marginLeft:4,fontSize:9,color:"#0891b2",fontWeight:600}}>futuro</span>}
                             </td>
                             <td style={{padding:"8px 14px"}}>
-                              {l.tipo||l.pacienteNome||"—"}
+                              <div>{l.tipo||"—"}{l.pacienteNome&&<span style={{display:"block",fontSize:11,color:"var(--text-muted)",fontWeight:400}}>{l.pacienteNome}</span>}</div>
                               {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
                               {l.tipo_lancamento==="sessao"&&<span style={{marginLeft:6,background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
                             </td>
