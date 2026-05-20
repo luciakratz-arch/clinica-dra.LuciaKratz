@@ -1369,7 +1369,7 @@ function FinanceiroClinica() {
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
       pacienteId,pacienteNome:pac?.nome||"",
       tipo:"Pacote "+recorrencia,
-      valor:vTotal,data:dataInicio,
+      valor:vTotal,data:(formPacote.statusPag==="pago"&&formPacote.dataPagamento)?formPacote.dataPagamento:dataInicio,
       formaPag:formPacote.formaPag||"",
       status:formPacote.statusPag||"pendente",
       dataPagamento:formPacote.dataPagamento||"",
