@@ -1450,7 +1450,11 @@ function FinanceiroClinica() {
 
   const totalRecebidoPeriodo = calcSaldo(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalRecebidoMes = calcSaldo(lancMes.filter(l=>l.status==="recebido"||l.status==="pago"));
-  const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
+  const hoje2 = new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0");
+  const totalPendenteMes = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(mesFiltroEfetivo)));
+  const totalPendenteAno = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
+  const totalPendenteTotal = calcReceitas(lancamentos.filter(l=>l.status==="pendente"));
+  const totalPendenteAcum = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&(l.data||"")<=(hoje2)));
   const mesAtualLabel = new Date(mesCards+"-02").toLocaleDateString("pt-BR",{month:"short"});
 
   // Salvar lançamento avulso
@@ -1699,10 +1703,15 @@ function FinanceiroClinica() {
             +{calcReceitas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
           </div>
         </div>
-        {/* Card Pendente */}
+        {/* Card Pendente mês */}
         <div style={{background:"#fef3c7",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
-          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{totalPendente.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
-          <div style={{fontSize:12,color:"#d97706",fontWeight:500,marginTop:2}}>Pendente ({anoFiltro})</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{totalPendenteMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+          <div style={{fontSize:12,color:"#d97706",fontWeight:500,marginTop:2}}>Pendente ({mesAtualLabel})</div>
+        </div>
+        {/* Card Pendente acumulado */}
+        <div style={{background:"#fff7ed",borderRadius:12,padding:"14px 16px",textAlign:"center",border:"1px solid #fed7aa"}}>
+          <div style={{fontSize:20,fontWeight:800,color:"#ea580c"}}>{totalPendenteTotal.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+          <div style={{fontSize:12,color:"#ea580c",fontWeight:500,marginTop:2}}>Pendente acumulado</div>
         </div>
         {/* Card Pacotes */}
         <div style={{background:"var(--purple-soft)",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
@@ -1711,8 +1720,8 @@ function FinanceiroClinica() {
         </div>
         {/* Card Lançamentos */}
         <div style={{background:"#e0f2fe",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
-          <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancPeriodo.length}</div>
-          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-02").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancMes.length}</div>
+          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({mesAtualLabel})</div>
         </div>
       </div>
 
