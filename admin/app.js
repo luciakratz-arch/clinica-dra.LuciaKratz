@@ -1094,7 +1094,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
         <button onClick={()=>setMesFiltro("todos")} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro==="todos"?"var(--purple)":"#e5e7eb",background:mesFiltro==="todos"?"var(--purple)":"white",color:mesFiltro==="todos"?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>Todos</button>
         {meses.map(m=>(
           <button key={m} onClick={()=>setMesFiltro(m)} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro===m?"var(--purple)":"#e5e7eb",background:mesFiltro===m?"var(--purple)":"white",color:mesFiltro===m?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
+            {new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
           </button>
         ))}
       </div>
@@ -1102,7 +1102,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
       {/* Accordion por mês */}
       {mesesFiltrados.map(mes=>{
         const sessMes = porMes[mes]||[];
-        const mesLabel = new Date(mes+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+        const mesLabel = new Date(mes+"-02").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
         const recMes = sessMes.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
         const aberto = accordionAberto[mes]!==false;
         return(
@@ -1293,7 +1293,7 @@ function FinanceiroClinica() {
   const totalRecebidoPeriodo = calcSaldo(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalRecebidoMes = calcSaldo(lancMes.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
-  const mesAtualLabel = new Date(mesCards+"-01").toLocaleDateString("pt-BR",{month:"short"});
+  const mesAtualLabel = new Date(mesCards+"-02").toLocaleDateString("pt-BR",{month:"short"});
 
   // Salvar lançamento avulso
   async function salvarAvulso(){
@@ -1335,13 +1335,14 @@ function FinanceiroClinica() {
   }
 
   // Geração de datas recorrentes
+  function fmtData(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function gerarDatas(dataInicio, recorrencia, total, diasSemana){
     if(recorrencia==="Sessão única") return [dataInicio];
     const datas=[];
     if(["Semanal (1x/semana)","Quinzenal","Mensal"].includes(recorrencia)){
-      let atual=new Date(dataInicio+"T00:00:00");
+      let atual=new Date(dataInicio+"T12:00:00");
       while(datas.length<total){
-        datas.push(atual.toISOString().split("T")[0]);
+        datas.push(fmtData(atual));
         if(recorrencia==="Semanal (1x/semana)") atual.setDate(atual.getDate()+7);
         else if(recorrencia==="Quinzenal") atual.setDate(atual.getDate()+14);
         else atual.setMonth(atual.getMonth()+1);
@@ -1351,10 +1352,10 @@ function FinanceiroClinica() {
     // 2x ou 3x por semana
     const dias=(diasSemana||[]).map(Number).sort();
     if(!dias.length) return [];
-    let atual=new Date(dataInicio+"T00:00:00");
+    let atual=new Date(dataInicio+"T12:00:00");
     const fim=new Date(atual);fim.setFullYear(fim.getFullYear()+2);
     while(datas.length<total&&atual<fim){
-      if(dias.includes(atual.getDay())) datas.push(atual.toISOString().split("T")[0]);
+      if(dias.includes(atual.getDay())) datas.push(fmtData(atual));
       atual.setDate(atual.getDate()+1);
     }
     return datas.slice(0,total);
@@ -1415,10 +1416,10 @@ function FinanceiroClinica() {
         pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
-        pagamento:statusPag==="recebido"?"pago":"pendente",
-        formaPagamento:statusPag==="recebido"?(formaPag||""):"",
-        dataPagamento:statusPag==="recebido"?(dataPagamento||""):"",
-        valorPago:statusPag==="recebido"?vSessao:0,
+        pagamento:"pendente",
+        formaPagamento:"",
+        dataPagamento:"",
+        valorPago:0,
         obs:"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1553,7 +1554,7 @@ function FinanceiroClinica() {
         {/* Card Lançamentos */}
         <div style={{background:"#e0f2fe",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancPeriodo.length}</div>
-          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-02").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
         </div>
       </div>
 
@@ -1589,7 +1590,7 @@ function FinanceiroClinica() {
                       fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer",
                       display:Math.abs(mesesDisp.indexOf(m)-mesesDisp.indexOf(mesFiltroEfetivo))<=2?"flex":"none",
                       alignItems:"center",gap:4}}>
-                    {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"long"})}
+                    {new Date(m+"-02").toLocaleDateString("pt-BR",{month:"long"})}
                     {isAtual&&!isSel&&<span style={{fontSize:9}}>●</span>}
                   </button>
                 );
@@ -1604,7 +1605,7 @@ function FinanceiroClinica() {
           {lancMes.length===0?(
             <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
               <Icon name="dollar-sign" size={40}/>
-              <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
+              <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-02").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
             </div>
           ):(()=>{
             const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa");
