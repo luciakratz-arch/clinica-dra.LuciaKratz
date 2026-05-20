@@ -948,6 +948,9 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
+  const [modalRenegociar, setModalRenegociar] = useState(false);
+  const [remarcarId, setRemarcarId] = useState(null);
+  const [remarcarData, setRemarcarData] = useState("");
 
   const STATUS_S={
     agendado:  {l:"Agendado",   c:"#7B00C4"},
@@ -971,9 +974,14 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
 
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
   async function remarcarSessao(s){
-    const nd=prompt("Nova data (AAAA-MM-DD):",s.data);
-    if(!nd)return;
-    await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
+    setRemarcarId(s.id);
+    setRemarcarData(s.data||"");
+  }
+  async function confirmarRemarcar(){
+    if(!remarcarId||!remarcarData)return;
+    const s=sessPac.find(x=>x.id===remarcarId);
+    await db.collection("clinica_sessoes").doc(remarcarId).update({data:remarcarData,status:"remarcado",remarcada:true,dataOriginal:s?.dataOriginal||s?.data||""});
+    setRemarcarId(null);setRemarcarData("");
   }
 
   async function atualizarPagamento(s, formaPag, valorPago, novaData){
@@ -1063,21 +1071,21 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
             <div key={l}><div style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>{l}</div><div style={{fontWeight:600,fontSize:13}}>{v}</div></div>
           ))}
         </div>
-        {/* Resumo proporcional ao filtro */}
+        {/* Resumo financeiro — lê dos lançamentos do pacote */}
         <div style={{padding:"12px 20px",display:"flex",gap:20,flexWrap:"wrap",background:"var(--purple-soft)"}}>
           {(()=>{
             const sessFiltro = mesFiltro==="todos"?sessPac:sessPac.filter(s=>s.data?.startsWith(mesFiltro));
-            const recFiltro = sessFiltro.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
-            const pendFiltro = sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+            const lancsP = pacotesPac.flatMap(p=>lancamentos.filter(l=>l.pacoteId===p.id));
+            const recebido = lancsP.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+            const aReceber = lancsP.filter(l=>l.status!=="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+            const totalPacote = lancsP.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
             return [
               ["Sessões",sessFiltro.length,"#7B00C4"],
               ["Realizadas",sessFiltro.filter(s=>s.status==="realizado").length,"#059669"],
-              ["Pagas",sessFiltro.filter(s=>s.pagamento==="pago").length,"#059669"],
-              ["Pendentes",sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length,"#d97706"],
               ["Faltas",sessFiltro.filter(s=>s.status==="falta").length,"#dc2626"],
-              ["Recebido",recFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#059669"],
-              ["A Receber",pendFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#d97706"],
-              ["Ano "+anoAtual,totalAno.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#0891b2"],
+              ["Recebido",recebido.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#059669"],
+              ["A Receber",aReceber.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#d97706"],
+              ["Total",totalPacote.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#0891b2"],
             ].map(([l,v,c])=>(
               <div key={l} style={{textAlign:"center"}}>
                 <div style={{fontSize:16,fontWeight:800,color:c}}>{v}</div>
@@ -1202,6 +1210,136 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           </div>
         );
       })}
+
+      {/* Seção Negociação/Pagamento */}
+      {pacotesPac.length>0&&(
+        <div style={{background:"white",borderRadius:16,border:"1px solid var(--gray-200)",marginTop:16,overflow:"hidden"}}>
+          <div style={{background:"var(--purple)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{color:"white",fontWeight:700,fontSize:14}}>💰 Negociação e Pagamento</div>
+            <button onClick={()=>setModalRenegociar(true)}
+              style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,padding:"5px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              🔄 Renegociar
+            </button>
+          </div>
+          <div style={{padding:"16px 20px"}}>
+            {pacotesPac.map(p=>{
+              const lancsP = lancamentos.filter(l=>l.pacoteId===p.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1));
+              if(lancsP.length===0) return(
+                <div key={p.id} style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento registrado para este pacote.</div>
+              );
+              return(
+                <div key={p.id}>
+                  {lancsP.map((lp,idx)=>(
+                    <div key={lp.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid var(--gray-100)",flexWrap:"wrap"}}>
+                      <div style={{minWidth:80,fontWeight:700,fontSize:14,color:"#059669"}}>
+                        {(lp.valor||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                      </div>
+                      <div style={{fontSize:12,color:"var(--text-muted)",flex:1}}>
+                        <span style={{fontWeight:600,color:"var(--text)"}}>{lp.formaPag||"—"}</span>
+                        {lp.data&&<span style={{marginLeft:8}}>📅 {new Date(lp.data+"T12:00:00").toLocaleDateString("pt-BR")}</span>}
+                        {lancsP.length>1&&<span style={{marginLeft:8,fontSize:11,color:"var(--purple)"}}>Parcela {idx+1}/{lancsP.length}</span>}
+                      </div>
+                      <button
+                        onClick={async(e)=>{e.stopPropagation();const ns=lp.status==="recebido"?"pendente":"recebido";await db.collection("clinica_lancamentos").doc(lp.id).update({status:ns});}}
+                        style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:lp.status==="recebido"?"#059669":"#d97706",background:lp.status==="recebido"?"#f0fdf4":"#fffbeb",color:lp.status==="recebido"?"#059669":"#d97706",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                        {lp.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Modal remarcar */}
+      {remarcarId&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:380}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:16}}>📅 Remarcar Sessão</div>
+            <label style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",display:"block",marginBottom:6}}>NOVA DATA</label>
+            <input type="date" value={remarcarData} onChange={e=>setRemarcarData(e.target.value)}
+              style={{width:"100%",padding:"10px 14px",border:"1.5px solid var(--purple)",borderRadius:10,fontSize:14,fontFamily:"inherit",marginBottom:20}}/>
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn btn-purple" style={{flex:1}} onClick={confirmarRemarcar}>Confirmar</button>
+              <button className="btn btn-ghost" style={{flex:1}} onClick={()=>{setRemarcarId(null);setRemarcarData("");}}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal renegociar */}
+      {modalRenegociar&&(()=>{
+        const pacAtual = pacotesPac[0];
+        const lancsAtual = pacAtual ? lancamentos.filter(l=>l.pacoteId===pacAtual.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1)) : [];
+        const [parcReneg, setParcReneg] = React.useState(lancsAtual.map(l=>({id:l.id,valor:String(l.valor||""),formaPag:l.formaPag||"",data:l.data||"",status:l.status||"pendente"})));
+        return(
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={()=>setModalRenegociar(false)}>
+            <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>🔄 Renegociação</div>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Edite as parcelas existentes ou adicione novas.</div>
+              {parcReneg.map((p,i)=>(
+                <div key={i} style={{background:"#fafafa",borderRadius:10,padding:"12px",border:"1px solid #e5e7eb",marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                    <span style={{fontSize:11,fontWeight:700,color:"var(--purple)"}}>PARCELA {i+1}</span>
+                    {parcReneg.length>1&&<button onClick={()=>setParcReneg(parcReneg.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:14}}>✕</button>}
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div>
+                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>VALOR (R$)</div>
+                      <input type="number" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.valor}
+                        onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],valor:e.target.value};setParcReneg(arr);}}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>FORMA</div>
+                      <select className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.formaPag}
+                        onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],formaPag:e.target.value};setParcReneg(arr);}}>
+                        <option value="">Selecionar...</option>
+                        {["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Transferência","Boleto"].map(f=><option key={f}>{f}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>DATA</div>
+                      <input type="date" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.data}
+                        onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],data:e.target.value};setParcReneg(arr);}}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>STATUS</div>
+                      <button type="button" onClick={()=>{const arr=[...parcReneg];arr[i]={...arr[i],status:arr[i].status==="recebido"?"pendente":"recebido"};setParcReneg(arr);}}
+                        style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1.5px solid",borderColor:p.status==="recebido"?"#059669":"#d97706",background:p.status==="recebido"?"#f0fdf4":"#fffbeb",color:p.status==="recebido"?"#059669":"#d97706",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+                        {p.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button onClick={()=>setParcReneg([...parcReneg,{valor:"",formaPag:"",data:"",status:"pendente"}])}
+                style={{width:"100%",padding:"8px",borderRadius:8,border:"1px dashed var(--purple)",background:"none",color:"var(--purple)",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:16}}>
+                + Adicionar parcela
+              </button>
+              <div style={{display:"flex",gap:8}}>
+                <button className="btn btn-purple" style={{flex:1}} onClick={async()=>{
+                  if(!pacAtual)return;
+                  const b=db.batch();
+                  // Atualiza/cria parcelas
+                  parcReneg.forEach((p,i)=>{
+                    if(p.id){
+                      b.update(db.collection("clinica_lancamentos").doc(p.id),{valor:parseFloat(p.valor)||0,formaPag:p.formaPag,data:p.data,status:p.status});
+                    } else {
+                      const ref=db.collection("clinica_lancamentos").doc();
+                      b.set(ref,{tipo_lancamento:"pacote",pacoteId:pacAtual.id,pacienteId:pacAtual.pacienteId,pacienteNome:pacAtual.pacienteNome||"",tipo:`Pacote ${pacAtual.recorrencia} (${i+1}/${parcReneg.length})`,descricao:`${pacAtual.pacienteNome||""} — ${pacAtual.recorrencia} — ${pacAtual.totalSessoes} sessão(ões)`,valor:parseFloat(p.valor)||0,data:p.data,formaPag:p.formaPag,status:p.status,dataPagamento:p.status==="recebido"?p.data:"",parcelaNum:i+1,totalParcelas:parcReneg.length,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+                    }
+                  });
+                  await b.commit();
+                  setModalRenegociar(false);
+                }}>💾 Salvar renegociação</button>
+                <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setModalRenegociar(false)}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal exclusão */}
       {modalExcluir&&(
