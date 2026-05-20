@@ -68,6 +68,12 @@
     }
     .btn-area-clinica:hover { background: var(--purple-dark) !important; }
     .nav-mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 4px; color: var(--text); }
+    .navbar-mobile { display:none; flex-direction:column; position:absolute; top:64px; left:0; right:0; background:white; border-bottom:1px solid #e4e4e7; padding:12px 20px 20px; gap:4px; z-index:199; box-shadow:0 8px 24px rgba(0,0,0,.08); }
+    .navbar-mobile.aberto { display:flex; }
+    .navbar-mobile a { font-size:15px; color:#52525b; padding:10px 0; border-bottom:1px solid #f4f4f5; display:block; text-decoration:none; }
+    .navbar-mobile a:last-child { border-bottom:none; }
+    .navbar-mobile .btn-mob-clinica { background:#7B00C4; color:white !important; padding:11px 20px; border-radius:8px; font-weight:600; text-align:center; margin-top:6px; }
+    .navbar-mobile .btn-mob-adm { background:white; color:#7B00C4 !important; border:1.5px solid #7B00C4; padding:11px 20px; border-radius:8px; font-weight:600; text-align:center; margin-top:4px; }
 
     /* HERO */
     .hero {
@@ -314,7 +320,7 @@
     .whatsapp-float:hover { transform: scale(1.1); }
 
     /* RESPONSIVO */
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
       .navbar-links { display: none; }
       .nav-mobile-toggle { display: block; }
       .hero { grid-template-columns: 1fr; padding: 100px 20px 60px; }
@@ -346,7 +352,7 @@
   <div class="navbar-brand">
     <div class="navbar-logo">
       <img src="logo.png" alt="Lucia Kratz"
-        onerror="this.style.display='none';this.nextSibling.style.display='block'" />
+        onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='block'" />
       <span class="navbar-logo-txt" style="display:none">LK</span>
     </div>
     <div class="navbar-info">
@@ -363,9 +369,18 @@
     <a href="clinica/" class="btn-area-clinica">Área Clínica</a>
     <a href="admin/" style="background:white;color:var(--purple);border:1.5px solid var(--purple);padding:9px 20px;border-radius:20px;font-size:13px;font-weight:500;transition:background .2s;">Área Adm.</a>
   </div>
-  <button class="nav-mobile-toggle" onclick="document.querySelector('.navbar-links').style.display = document.querySelector('.navbar-links').style.display === 'flex' ? 'none' : 'flex'">
+  <button class="nav-mobile-toggle" onclick="toggleMenuMobile()">
     <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
   </button>
+  <div class="navbar-mobile" id="menu-mob">
+    <a href="#curriculo" onclick="fecharMenuMob()">Currículo</a>
+    <a href="#servicos" onclick="fecharMenuMob()">Serviços</a>
+    <a href="#neuromodulacao" onclick="fecharMenuMob()">Neuromodulação</a>
+    <a href="#contato" onclick="fecharMenuMob()">Contato</a>
+    <a href="#midia" onclick="fecharMenuMob()">Na Mídia</a>
+    <a href="clinica/" class="btn-mob-clinica">🔬 Área Clínica</a>
+    <a href="admin/" class="btn-mob-adm">⚙️ Área Administrativa</a>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -799,6 +814,16 @@ function copiarLinkDep(){
 <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="whatsapp-float" title="Falar no WhatsApp">
   💬
 </a>
+
+<script>
+function toggleMenuMobile(){
+  var m=document.getElementById("menu-mob");
+  m.classList.toggle("aberto");
+}
+function fecharMenuMob(){
+  document.getElementById("menu-mob").classList.remove("aberto");
+}
+</script>
 <script src="depoimentos.js"></script>
 </body>
 </html>
