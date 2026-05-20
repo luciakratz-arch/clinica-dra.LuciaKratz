@@ -1795,7 +1795,7 @@ function FinanceiroClinica() {
                           const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
                           const realizadas=sessPac.filter(s=>s.status==="realizado").length;
                           const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
-                          const lancPac=lancamentos.find(l=>l.pacoteId===p.id);
+                          const lancsPac=lancamentos.filter(l=>l.pacoteId===p.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1));
                           const dataInclusao = p.createdAt?.seconds
                             ? new Date(p.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
                             : p.dataInicio
@@ -1809,8 +1809,8 @@ function FinanceiroClinica() {
                                     <span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
                                       📅 Criado em {dataInclusao}
                                     </span>
-                                    <span style={{background:lancPac?.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac?.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                                      {lancPac?.status==="recebido"?"✓ Pago":"Pagamento Pendente"}
+                                    <span style={{background:lancsPac.every(l=>l.status==="recebido")?"#d1fae5":lancsPac.some(l=>l.status==="recebido")?"#e0f2fe":"#fef3c7",color:lancsPac.every(l=>l.status==="recebido")?"#065f46":lancsPac.some(l=>l.status==="recebido")?"#0891b2":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
+                                      {lancsPac.every(l=>l.status==="recebido")?"✓ Pago":lancsPac.some(l=>l.status==="recebido")?"⏳ Parcial":"Pagamento Pendente"}
                                     </span>
                                     <span style={{marginLeft:"auto",fontWeight:700,color:"#059669",fontSize:14}}>
                                       {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
@@ -1828,21 +1828,47 @@ function FinanceiroClinica() {
                                   <div style={{fontSize:11,color:"var(--text-muted)"}}>{pct}% concluído</div>
                                 </div>
                               </div>
+                              {/* Parcelas */}
+                              {lancsPac.length>0&&(
+                                <div style={{marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
+                                  <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>
+                                    Pagamento {lancsPac.length>1?`(${lancsPac.length} parcelas)`:""}
+                                  </div>
+                                  {lancsPac.map((lp,idx)=>(
+                                    <div key={lp.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+                                      <span style={{fontSize:12,fontWeight:600,minWidth:60}}>{(lp.valor||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
+                                      <span style={{fontSize:11,color:"var(--text-muted)"}}>{lp.formaPag||"—"}</span>
+                                      <span style={{fontSize:11,color:"var(--text-muted)"}}>{lp.data?new Date(lp.data+"T00:00:00").toLocaleDateString("pt-BR"):"sem data"}</span>
+                                      <button type="button"
+                                        onClick={async(e)=>{e.stopPropagation();const novoStatus=lp.status==="recebido"?"pendente":"recebido";await db.collection("clinica_lancamentos").doc(lp.id).update({status:novoStatus,dataPagamento:novoStatus==="recebido"?lp.data||new Date().toISOString().slice(0,10):""});}}
+                                        style={{padding:"2px 10px",borderRadius:20,border:"1.5px solid",borderColor:lp.status==="recebido"?"#059669":"#d97706",background:lp.status==="recebido"?"#f0fdf4":"#fffbeb",color:lp.status==="recebido"?"#059669":"#d97706",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                                        {lp.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
+                                      </button>
+                                    </div>
+                                  ))}
+                                  <button type="button"
+                                    onClick={async(e)=>{e.stopPropagation();const v=prompt("Valor da nova parcela (R$):");if(!v)return;const f=prompt("Forma de pagamento (PIX, Cartão, etc):");const d=prompt("Data prevista (AAAA-MM-DD):");await db.collection("clinica_lancamentos").add({tipo_lancamento:"pacote",pacoteId:p.id,pacienteId:p.pacienteId,pacienteNome:p.pacienteNome||"",tipo:`Pacote ${p.recorrencia} (${lancsPac.length+1}/${lancsPac.length+1})`,descricao:`${p.pacienteNome||""} — ${p.recorrencia} — ${p.totalSessoes} sessão(ões)`,valor:parseFloat(v)||0,data:d||new Date().toISOString().slice(0,10),formaPag:f||"",status:"pendente",dataPagamento:"",parcelaNum:lancsPac.length+1,totalParcelas:lancsPac.length+1,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}}
+                                    style={{fontSize:11,color:"var(--purple)",background:"none",border:"1px dashed var(--purple)",borderRadius:6,padding:"3px 10px",cursor:"pointer",marginTop:4}}>
+                                    + Nova parcela
+                                  </button>
+                                </div>
+                              )}
                               <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
-                                <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="edit-3" size={13}/> Editar pacote
-                                </button>
-                                <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="clipboard-list" size={13}/> Ver Sessões
+                                <button className="btn btn-purple" style={{fontSize:12,flex:1}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                                  <Icon name="clipboard-list" size={13}/> Ver / Editar Sessões
                                 </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
                                   if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
                                   const todas=sessoes.filter(s=>s.pacoteId===p.id);
                                   const b=db.batch();
-                                  todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+                                  todas.forEach(s=>{
+                                    b.delete(db.collection("clinica_sessoes").doc(s.id));
+                                    const lSess=lancamentos.find(l=>l.sessaoId===s.id);
+                                    if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
+                                  });
                                   b.delete(db.collection("clinica_pacotes").doc(p.id));
-                                  const lp=lancamentos.find(l=>l.pacoteId===p.id);
-                                  if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
+                                  // Remove TODOS os lançamentos do pacote (integral + parcelas)
+                                  lancamentos.filter(l=>l.pacoteId===p.id).forEach(lp=>b.delete(db.collection("clinica_lancamentos").doc(lp.id)));
                                   await b.commit();
                                 }}>
                                   <Icon name="trash-2" size={13}/>
