@@ -1250,7 +1250,7 @@ function FinanceiroClinica() {
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:""});
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:"",tipoPag:"integral",parcelas:[{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]});
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -1361,7 +1361,7 @@ function FinanceiroClinica() {
   }
 
   async function salvarPacote(){
-    const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs,statusPag,formaPag,dataPagamento}=formPacote;
+    const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs,tipoPag,parcelas}=formPacote;
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, nº de sessões e data de início obrigatórios.");return;}
     const needDias=["2x por semana","3x por semana"].includes(recorrencia);
     if(needDias&&(!diasSemana||diasSemana.length===0)){alert("Selecione os dias da semana.");return;}
@@ -1371,27 +1371,39 @@ function FinanceiroClinica() {
     const vSessao=parseFloat(valorSessao)||0;
     const vTotal=vSessao*total;
     const datas=gerarDatas(dataInicio,recorrencia,total,diasSemana);
+    const descricao=`${pac?.nome||""} — ${recorrencia} — ${total} sessão(ões)`;
 
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
+      tipoPag:tipoPag||"integral",
       status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Cria lançamento financeiro do pacote
-    await db.collection("clinica_lancamentos").add({
-      tipo_lancamento:"pacote",pacoteId:pacRef.id,
-      pacienteId,pacienteNome:pac?.nome||"",
-      tipo:"Pacote "+recorrencia,
-      valor:vTotal,data:(statusPag==="recebido"&&dataPagamento)?dataPagamento:dataInicio,
-      formaPag:formaPag||"",
-      status:statusPag||"pendente",
-      dataPagamento:dataPagamento||"",
-      obs,
-      totalSessoes:total,valorSessao:vSessao,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    // Cria lançamentos por parcela
+    const parcelasArr = parcelas||[{formaPag:"",dataPagamento:"",valor:vTotal+"",status:"pendente"}];
+    const batch2 = db.batch();
+    parcelasArr.forEach((p,i)=>{
+      const ref = db.collection("clinica_lancamentos").doc();
+      const vParcela = parseFloat(p.valor)||vTotal;
+      const dataLanc = p.dataPagamento||dataInicio;
+      batch2.set(ref,{
+        tipo_lancamento:"pacote",pacoteId:pacRef.id,
+        pacienteId,pacienteNome:pac?.nome||"",
+        tipo:parcelasArr.length>1?`Pacote ${recorrencia} (${i+1}/${parcelasArr.length})`:`Pacote ${recorrencia}`,
+        descricao,
+        valor:vParcela,
+        data:dataLanc,
+        formaPag:p.formaPag||"",
+        status:p.status||"pendente",
+        dataPagamento:p.status==="recebido"?(p.dataPagamento||""):"",
+        obs,totalSessoes:total,valorSessao:vSessao,
+        parcelaNum:i+1,totalParcelas:parcelasArr.length,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
     });
+    await batch2.commit();
 
     // Cria sessões na agenda
     const batch=db.batch();
@@ -1412,7 +1424,7 @@ function FinanceiroClinica() {
       });
     });
     await batch.commit();
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",obs:""});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:"",tipoPag:"integral",parcelas:[{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
@@ -1630,7 +1642,7 @@ function FinanceiroClinica() {
                               {isFut&&<span style={{marginLeft:4,fontSize:9,color:"#0891b2",fontWeight:600}}>futuro</span>}
                             </td>
                             <td style={{padding:"8px 14px"}}>
-                              <div>{l.tipo||"—"}{l.pacienteNome&&<span style={{display:"block",fontSize:11,color:"var(--text-muted)",fontWeight:400}}>{l.pacienteNome}</span>}</div>
+                              <div>{l.tipo||"—"}{l.descricao&&<span style={{display:"block",fontSize:11,color:"var(--text-muted)",fontWeight:400}}>{l.descricao}</span>}{!l.descricao&&l.pacienteNome&&<span style={{display:"block",fontSize:11,color:"var(--text-muted)",fontWeight:400}}>{l.pacienteNome}</span>}</div>
                               {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
                               {l.tipo_lancamento==="sessao"&&<span style={{marginLeft:6,background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
                             </td>
@@ -2053,24 +2065,74 @@ function FinanceiroClinica() {
                 </div>
                 {/* Pagamento */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
-                  <label className="form-label">Status do Pagamento</label>
+                  <label className="form-label">Forma de Cobrança</label>
                   <div style={{display:"flex",gap:8}}>
-                    {[["pendente","Pendente","#d97706"],["recebido","✓ Recebido","#059669"]].map(([v,l,c])=>(
-                      <button key={v} type="button" onClick={()=>setFormPacote({...formPacote,statusPag:v})}
-                        style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:(formPacote.statusPag||"pendente")===v?c:"#e5e7eb",background:(formPacote.statusPag||"pendente")===v?c+"15":"white",color:(formPacote.statusPag||"pendente")===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                    {[["integral","💳 Integral","#7B00C4"],["parcelado","📆 Parcelado","#0891b2"]].map(([v,l,c])=>(
+                      <button key={v} type="button"
+                        onClick={()=>{
+                          const vTotal2=(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||1);
+                          const novasParcelas = v==="parcelado"
+                            ? [{formaPag:"",dataPagamento:"",valor:String(vTotal2),status:"pendente"},{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]
+                            : [{formaPag:"",dataPagamento:"",valor:String(vTotal2),status:"pendente"}];
+                          setFormPacote({...formPacote,tipoPag:v,parcelas:novasParcelas});
+                        }}
+                        style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:(formPacote.tipoPag||"integral")===v?c:"#e5e7eb",background:(formPacote.tipoPag||"integral")===v?c+"15":"white",color:(formPacote.tipoPag||"integral")===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
                         {l}
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="form-group"><label className="form-label">Forma de Pagamento</label>
-                  <select className="form-input" value={formPacote.formaPag||""} onChange={e=>setFormPacote({...formPacote,formaPag:e.target.value})}>
-                    <option value="">Selecionar...</option>
-                    {FORMAS.map(f=><option key={f}>{f}</option>)}
-                  </select>
-                </div>
-                <div className="form-group"><label className="form-label">Data do Pagamento</label>
-                  <input className="form-input" type="date" value={formPacote.dataPagamento||""} onChange={e=>setFormPacote({...formPacote,dataPagamento:e.target.value})}/>
+
+                {/* Parcelas */}
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                    <label className="form-label" style={{margin:0}}>
+                      {(formPacote.tipoPag||"integral")==="parcelado"?"Parcelas":"Pagamento"}
+                    </label>
+                    {(formPacote.tipoPag||"integral")==="parcelado"&&(
+                      <button type="button"
+                        onClick={()=>setFormPacote({...formPacote,parcelas:[...(formPacote.parcelas||[]),{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]})}
+                        style={{background:"none",border:"1px solid #7B00C4",color:"#7B00C4",borderRadius:6,padding:"3px 10px",fontSize:12,cursor:"pointer"}}>
+                        + Parcela
+                      </button>
+                    )}
+                  </div>
+                  {(formPacote.parcelas||[{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]).map((p,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:8,marginBottom:8,background:"#fafafa",borderRadius:10,padding:"10px 12px",border:"1px solid #e5e7eb"}}>
+                      <div>
+                        <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>VALOR (R$)</div>
+                        <input type="number" className="form-input" style={{padding:"7px 10px",fontSize:13}}
+                          value={p.valor||""} placeholder={(((parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||1))/((formPacote.parcelas||[]).length||1)).toFixed(0)}
+                          onChange={e=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],valor:e.target.value};setFormPacote({...formPacote,parcelas:arr});}}/>
+                      </div>
+                      <div>
+                        <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>FORMA</div>
+                        <select className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.formaPag||""}
+                          onChange={e=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],formaPag:e.target.value};setFormPacote({...formPacote,parcelas:arr});}}>
+                          <option value="">Selecionar...</option>
+                          {FORMAS.map(f=><option key={f}>{f}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>DATA / STATUS</div>
+                        <div style={{display:"flex",gap:4}}>
+                          <input type="date" className="form-input" style={{padding:"7px 6px",fontSize:12,flex:1}}
+                            value={p.dataPagamento||""}
+                            onChange={e=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],dataPagamento:e.target.value};setFormPacote({...formPacote,parcelas:arr});}}/>
+                          <button type="button"
+                            onClick={()=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],status:arr[i].status==="recebido"?"pendente":"recebido"};setFormPacote({...formPacote,parcelas:arr});}}
+                            style={{padding:"4px 8px",borderRadius:6,border:"1.5px solid",borderColor:p.status==="recebido"?"#059669":"#d97706",background:p.status==="recebido"?"#f0fdf4":"#fffbeb",color:p.status==="recebido"?"#059669":"#d97706",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                            {p.status==="recebido"?"✓":"⏳"}
+                          </button>
+                        </div>
+                      </div>
+                      {(formPacote.parcelas||[]).length>1&&(
+                        <button type="button"
+                          onClick={()=>{const arr=(formPacote.parcelas||[]).filter((_,j)=>j!==i);setFormPacote({...formPacote,parcelas:arr});}}
+                          style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:16,alignSelf:"flex-end",paddingBottom:4}}>✕</button>
+                      )}
+                    </div>
+                  ))}
                 </div>
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                   <textarea className="form-input" rows={2} value={formPacote.obs} onChange={e=>setFormPacote({...formPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
