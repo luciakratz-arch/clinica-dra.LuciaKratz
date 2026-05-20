@@ -1169,19 +1169,6 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
                               placeholder="—" style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 5px",width:70}}/>
                           </td>
-                          <td style={{padding:"4px 8px",whiteSpace:"nowrap"}}>
-                              {s.nfEmitida
-                                ? <span style={{background:"#d1fae5",color:"#065f46",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:600,cursor:"pointer"}}
-                                    title={"NF: "+(s.nfNumero||"—")}
-                                    onClick={()=>atualizarSessao(s.id,{nfEmitida:false,nfNumero:""})}>
-                                    ✓ NF {s.nfNumero||""}
-                                  </span>
-                                : <button style={{background:"none",border:"1px solid #d1d5db",borderRadius:4,padding:"2px 6px",fontSize:10,cursor:"pointer",color:"#6b7280"}}
-                                    onClick={()=>{const n=prompt("Número da NF (opcional):");if(n!==null)atualizarSessao(s.id,{nfEmitida:true,nfNumero:n||""});}}>
-                                    + NF
-                                  </button>
-                              }
-                            </td>
                         </tr>
                       );
                     })}
@@ -1382,7 +1369,7 @@ function FinanceiroClinica() {
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
       pacienteId,pacienteNome:pac?.nome||"",
       tipo:"Pacote "+recorrencia,
-      valor:vTotal,data:(formPacote.statusPag==="pago"&&formPacote.dataPagamento)?formPacote.dataPagamento:dataInicio,
+      valor:vTotal,data:dataInicio,
       formaPag:formPacote.formaPag||"",
       status:formPacote.statusPag||"pendente",
       dataPagamento:formPacote.dataPagamento||"",
@@ -1612,14 +1599,7 @@ function FinanceiroClinica() {
                       ))}
                     </tr></thead>
                     <tbody>
-                      {(()=>{
-                        const porDia = {};
-                        itens.forEach(l=>{ const d=l.data||"sem-data"; if(!porDia[d]) porDia[d]=[]; porDia[d].push(l); });
-                        const dias = Object.keys(porDia).sort().reverse();
-                        return dias.map(dia=>{
-                          const grupo = porDia[dia];
-                          const collapsed = grupo.length>1;
-                          return grupo.map((l, idx)=>{
+                      {itens.map(l=>{
                         const isFut = l.data>new Date().toISOString().slice(0,10);
                         const statusColor = l.status==="recebido"||l.status==="pago"?"#059669":l.status==="planejado"?"#0891b2":"#d97706";
                         const statusBg = l.status==="recebido"||l.status==="pago"?"#d1fae5":l.status==="planejado"?"#e0f2fe":"#fef3c7";
@@ -1661,9 +1641,7 @@ function FinanceiroClinica() {
                             </td>
                           </tr>
                         );
-                          });
-                        });
-                      })()}
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1858,33 +1836,18 @@ function FinanceiroClinica() {
           <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
             Clique em um paciente para abrir o Controle de Sessões e Frequência completo.
           </div>
-          {(()=>{
-            const pacsFiltrados = pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).filter(p=>pacotes.some(pk=>pk.pacienteId===p.id));
-            const letras = [...new Set(pacsFiltrados.map(p=>(p.nome||"?")[0].toUpperCase()))].sort();
-            return(
-              <div>
-                {letras.length>1&&(
-                  <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:16}}>
-                    {letras.map(l=>(
-                      <a key={l} href={"#letra-"+l} style={{width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:6,background:"var(--purple-soft)",color:"var(--purple)",fontWeight:700,fontSize:12,textDecoration:"none"}}>{l}</a>
-                    ))}
-                  </div>
-                )}
-                {letras.map(letra=>(
-                  <div key={letra} id={"letra-"+letra}>
-                    <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",letterSpacing:1,textTransform:"uppercase",padding:"8px 0 4px",borderBottom:"1px solid var(--purple-soft)",marginBottom:8}}>{letra}</div>
-                    {pacsFiltrados.filter(p=>(p.nome||"?")[0].toUpperCase()===letra).map(pac=>{
+          {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(pac=>{
             const sessPac = sessoes.filter(s=>s.pacienteId===pac.id);
             const pacotesPac = pacotes.filter(p=>p.pacienteId===pac.id);
             if(pacotesPac.length===0) return null;
             const totalSessoes = sessPac.length;
             const realizadas = sessPac.filter(s=>s.status==="realizado").length;
+            const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
             const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length;
             const recebido = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
             const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
-            const ultimoPacote = pacotesPac.sort((a,b)=>(b.dataInicio||"").localeCompare(a.dataInicio||""))[0];
             return(
-              <div key={pac.id} className="card" style={{padding:"14px 20px",cursor:"pointer",marginBottom:8,transition:"box-shadow .15s"}}
+              <div key={pac.id} className="card" style={{padding:"14px 20px",cursor:"pointer",marginBottom:10,transition:"box-shadow .15s"}}
                 onClick={()=>setPacoteSelecionado(pac.id)}
                 onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px rgba(123,0,196,0.12)"}
                 onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
@@ -1895,7 +1858,7 @@ function FinanceiroClinica() {
                   <div style={{flex:1}}>
                     <div style={{fontWeight:700,fontSize:14}}>{pac.nome}</div>
                     <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
-                      {ultimoPacote?.recorrencia} · {ultimoPacote?.horario} · <span style={{fontSize:11,color:"#9ca3af"}}>início {ultimoPacote?.dataInicio?new Date(ultimoPacote.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"-"}</span>
+                      {pacotesPac[0]?.recorrencia} · {pacotesPac[0]?.horario}
                     </div>
                   </div>
                   <div style={{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}}>
@@ -1921,12 +1884,6 @@ function FinanceiroClinica() {
               </div>
             );
           })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
         </div>
       )}
 
