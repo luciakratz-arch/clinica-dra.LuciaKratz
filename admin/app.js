@@ -1824,7 +1824,7 @@ function FinanceiroClinica() {
                                     <Icon name="pencil" size={12}/>
                                   </button>
                                 )}
-                                <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11,color:"#dc2626"}} onClick={()=>setModalExcluirLanc(l)}>
+                                <button style={{padding:"4px 8px",fontSize:11,color:"#dc2626",background:"#fff1f2",border:"1px solid #fca5a5",borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center"}} onClick={()=>setModalExcluirLanc(l)}>
                                   <Icon name="trash-2" size={12}/>
                                 </button>
                               </div>
@@ -1856,7 +1856,7 @@ function FinanceiroClinica() {
                   <div style={{fontSize:20,color:"var(--text-muted)"}}>=</div>
                   <div style={{textAlign:"center"}}>
                     <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:2}}>Saldo do Mês</div>
-                    <div style={{fontSize:22,fontWeight:900,color:saldo>=0?"#059669":"#dc2626"}}>{saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                    <div style={{fontSize:22,fontWeight:900,color:saldo>0?"#0891b2":saldo<0?"#dc2626":"#6b7280"}}>{saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
                   </div>
                 </div>
               </div>
