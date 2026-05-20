@@ -1431,7 +1431,7 @@ function FinanceiroClinica() {
   const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro) ? mesFiltro : mesAtual.startsWith(anoFiltro) ? mesAtual : anoFiltro+"-01";
 
   // Cards do topo — mês atual do ano selecionado, fixo
-  const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
+  const _agora2 = new Date(); const mesCards = anoFiltro+"-"+String(_agora2.getMonth()+1).padStart(2,"0");
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
@@ -1688,7 +1688,7 @@ function FinanceiroClinica() {
       </div>
 
       {/* Métricas clicáveis */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1fr 1fr",gap:12,marginBottom:20}}>
         {/* Card Recebido — clicável mês/ano */}
         <div onClick={()=>setPeriodoCard(p=>p==="mes"?"ano":"mes")}
           style={{background:totalRecebidoPeriodo>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:totalRecebidoPeriodo>=0?"#6ee7b7":"#fca5a5",transition:"all .2s",position:"relative"}}>
@@ -1711,18 +1711,14 @@ function FinanceiroClinica() {
         {/* Card Pendente acumulado */}
         <div style={{background:"#fff7ed",borderRadius:12,padding:"14px 16px",textAlign:"center",border:"1px solid #fed7aa"}}>
           <div style={{fontSize:20,fontWeight:800,color:"#ea580c"}}>{totalPendenteTotal.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
-          <div style={{fontSize:12,color:"#ea580c",fontWeight:500,marginTop:2}}>Pendente acumulado</div>
+          <div style={{fontSize:12,color:"#ea580c",fontWeight:500,marginTop:2}}>Atrasados/Previstos</div>
         </div>
         {/* Card Pacotes */}
         <div style={{background:"var(--purple-soft)",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:800,color:"var(--purple)"}}>{pacotes.filter(p=>p.status==="ativo").length}</div>
           <div style={{fontSize:12,color:"var(--purple)",fontWeight:500,marginTop:2}}>Pacotes ativos</div>
         </div>
-        {/* Card Lançamentos */}
-        <div style={{background:"#e0f2fe",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
-          <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancMes.length}</div>
-          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({mesAtualLabel})</div>
-        </div>
+
       </div>
 
       {/* Abas */}
