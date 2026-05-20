@@ -930,6 +930,96 @@ function Pacientes({ user }) {
   );
 }
 
+// Modal de Renegociação (componente separado para respeitar regras do React Hooks)
+function ModalRenegociar({pacAtual, lancamentos, onClose}){
+  const lancsAtual = pacAtual
+    ? lancamentos.filter(l=>l.pacoteId===pacAtual.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1))
+    : [];
+  const [parcReneg, setParcReneg] = useState(
+    lancsAtual.length>0
+      ? lancsAtual.map(l=>({id:l.id,valor:String(l.valor||""),formaPag:l.formaPag||"",data:l.data||"",status:l.status||"pendente"}))
+      : [{valor:"",formaPag:"",data:"",status:"pendente"}]
+  );
+  const FORMAS_R = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Transferência","Boleto"];
+  async function salvar(){
+    if(!pacAtual)return;
+    const b=db.batch();
+    parcReneg.forEach((p,i)=>{
+      if(p.id){
+        b.update(db.collection("clinica_lancamentos").doc(p.id),{
+          valor:parseFloat(p.valor)||0,formaPag:p.formaPag,data:p.data,status:p.status,
+          dataPagamento:p.status==="recebido"?p.data:""
+        });
+      } else {
+        const ref=db.collection("clinica_lancamentos").doc();
+        b.set(ref,{
+          tipo_lancamento:"pacote",pacoteId:pacAtual.id,
+          pacienteId:pacAtual.pacienteId,pacienteNome:pacAtual.pacienteNome||"",
+          tipo:`Pacote ${pacAtual.recorrencia} (${i+1}/${parcReneg.length})`,
+          descricao:`${pacAtual.pacienteNome||""} — ${pacAtual.recorrencia} — ${pacAtual.totalSessoes} sessão(ões)`,
+          valor:parseFloat(p.valor)||0,data:p.data,formaPag:p.formaPag,
+          status:p.status,dataPagamento:p.status==="recebido"?p.data:"",
+          parcelaNum:i+1,totalParcelas:parcReneg.length,
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+    await b.commit();
+    onClose();
+  }
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={onClose}>
+      <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>🔄 Renegociação</div>
+        <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Edite as parcelas ou adicione novas.</div>
+        {parcReneg.map((p,i)=>(
+          <div key={i} style={{background:"#fafafa",borderRadius:10,padding:"12px",border:"1px solid #e5e7eb",marginBottom:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+              <span style={{fontSize:11,fontWeight:700,color:"var(--purple)"}}>PARCELA {i+1}</span>
+              {parcReneg.length>1&&<button onClick={()=>setParcReneg(parcReneg.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:14}}>✕</button>}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div>
+                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>VALOR (R$)</div>
+                <input type="number" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.valor}
+                  onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],valor:e.target.value};setParcReneg(arr);}}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>FORMA</div>
+                <select className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.formaPag}
+                  onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],formaPag:e.target.value};setParcReneg(arr);}}>
+                  <option value="">Selecionar...</option>
+                  {FORMAS_R.map(f=><option key={f}>{f}</option>)}
+                </select>
+              </div>
+              <div>
+                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>DATA</div>
+                <input type="date" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.data}
+                  onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],data:e.target.value};setParcReneg(arr);}}/>
+              </div>
+              <div>
+                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>STATUS</div>
+                <button type="button" onClick={()=>{const arr=[...parcReneg];arr[i]={...arr[i],status:arr[i].status==="recebido"?"pendente":"recebido"};setParcReneg(arr);}}
+                  style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1.5px solid",borderColor:p.status==="recebido"?"#059669":"#d97706",background:p.status==="recebido"?"#f0fdf4":"#fffbeb",color:p.status==="recebido"?"#059669":"#d97706",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+                  {p.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        <button onClick={()=>setParcReneg([...parcReneg,{valor:"",formaPag:"",data:"",status:"pendente"}])}
+          style={{width:"100%",padding:"8px",borderRadius:8,border:"1px dashed var(--purple)",background:"none",color:"var(--purple)",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:16}}>
+          + Adicionar parcela
+        </button>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn btn-purple" style={{flex:1}} onClick={salvar}>💾 Salvar renegociação</button>
+          <button className="btn btn-ghost" style={{flex:1}} onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
 function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
@@ -1129,7 +1219,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                   <thead>
                     <tr style={{background:"var(--purple)",color:"white"}}>
-                      {["","Nº","Data","Presença","Modalidade","V. Sessão","V. Pago","Saldo","Forma Pagto","Data Pagto","Obs"].map(h=>(
+                      {["","Nº","Data","Presença","Modalidade","V. Sessão","Remarcar","Obs"].map(h=>(
                         <th key={h} style={{padding:"8px 10px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap",fontSize:11}}>{h}</th>
                       ))}
                     </tr>
@@ -1170,23 +1260,19 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                           <td style={{padding:"6px 10px",fontWeight:600,color:"#374151",whiteSpace:"nowrap"}}>
                             {vSessao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
                           </td>
-                          <td style={{padding:"6px 10px"}}>
-                            <input type="number" defaultValue={isPago?vPago:""} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
-                              placeholder="0,00" style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 5px",width:65,color:isPago?"#059669":"#374151",fontWeight:isPago?600:400}}/>
-                          </td>
-                          <td style={{padding:"6px 10px",fontWeight:600,whiteSpace:"nowrap",color:saldo<0?"#dc2626":saldo>0?"#059669":"#9ca3af",fontSize:11}}>
-                            {isPago?(saldo===0?"—":saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})):"—"}
-                          </td>
-                          <td style={{padding:"6px 10px"}}>
-                            <select value={s.formaPagamento||""} onChange={e=>atualizarPagamento(s,e.target.value,s.valorPago||s.valorSessao)}
-                              style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 4px",color:isPago?"#059669":"#6b7280",fontWeight:isPago?600:400,cursor:"pointer",background:isPago?"#f0fdf4":"white",minWidth:72}}>
-                              <option value="">Pendente</option>
-                              {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
-                            </select>
-                          </td>
-                          <td style={{padding:"6px 10px"}}>
-                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>{atualizarSessao(s.id,{dataPagamento:e.target.value});if(s.pagamento==="pago")atualizarPagamento(s,s.formaPagamento||"",s.valorPago||s.valorSessao,e.target.value);}}
-                              style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:105}}/>
+                          <td style={{padding:"6px 6px"}}>
+                            {remarcarId===s.id
+                              ? <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                                  <input type="date" value={remarcarData} onChange={e=>setRemarcarData(e.target.value)}
+                                    style={{fontSize:10,border:"1.5px solid var(--purple)",borderRadius:5,padding:"2px 4px",width:110}}/>
+                                  <button onClick={confirmarRemarcar} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:4,padding:"2px 6px",fontSize:10,cursor:"pointer"}}>✓</button>
+                                  <button onClick={()=>{setRemarcarId(null);setRemarcarData("");}} style={{background:"none",border:"1px solid #e5e7eb",borderRadius:4,padding:"2px 6px",fontSize:10,cursor:"pointer"}}>✕</button>
+                                </div>
+                              : <button onClick={()=>remarcarSessao(s)}
+                                  style={{background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:4,padding:"2px 8px",fontSize:10,cursor:"pointer"}}>
+                                  📅 Remarcar
+                                </button>
+                            }
                           </td>
                           <td style={{padding:"6px 10px"}}>
                             <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
@@ -1200,8 +1286,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                     <tr style={{background:"var(--purple-soft)"}}>
                       <td colSpan={5} style={{padding:"8px 10px",fontWeight:700,fontSize:11}}>Total {mesLabel}</td>
                       <td style={{padding:"8px 10px",fontWeight:700,fontSize:11}}>{sessMes.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
-                      <td style={{padding:"8px 10px",fontWeight:700,fontSize:11,color:"#059669"}}>{recMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
-                      <td colSpan={4}/>
+                      <td colSpan={2}/>
                     </tr>
                   </tfoot>
                 </table>
@@ -1270,76 +1355,11 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
       )}
 
       {/* Modal renegociar */}
-      {modalRenegociar&&(()=>{
-        const pacAtual = pacotesPac[0];
-        const lancsAtual = pacAtual ? lancamentos.filter(l=>l.pacoteId===pacAtual.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1)) : [];
-        const [parcReneg, setParcReneg] = React.useState(lancsAtual.map(l=>({id:l.id,valor:String(l.valor||""),formaPag:l.formaPag||"",data:l.data||"",status:l.status||"pendente"})));
-        return(
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={()=>setModalRenegociar(false)}>
-            <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>🔄 Renegociação</div>
-              <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Edite as parcelas existentes ou adicione novas.</div>
-              {parcReneg.map((p,i)=>(
-                <div key={i} style={{background:"#fafafa",borderRadius:10,padding:"12px",border:"1px solid #e5e7eb",marginBottom:10}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                    <span style={{fontSize:11,fontWeight:700,color:"var(--purple)"}}>PARCELA {i+1}</span>
-                    {parcReneg.length>1&&<button onClick={()=>setParcReneg(parcReneg.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:14}}>✕</button>}
-                  </div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                    <div>
-                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>VALOR (R$)</div>
-                      <input type="number" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.valor}
-                        onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],valor:e.target.value};setParcReneg(arr);}}/>
-                    </div>
-                    <div>
-                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>FORMA</div>
-                      <select className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.formaPag}
-                        onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],formaPag:e.target.value};setParcReneg(arr);}}>
-                        <option value="">Selecionar...</option>
-                        {["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Transferência","Boleto"].map(f=><option key={f}>{f}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>DATA</div>
-                      <input type="date" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.data}
-                        onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],data:e.target.value};setParcReneg(arr);}}/>
-                    </div>
-                    <div>
-                      <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>STATUS</div>
-                      <button type="button" onClick={()=>{const arr=[...parcReneg];arr[i]={...arr[i],status:arr[i].status==="recebido"?"pendente":"recebido"};setParcReneg(arr);}}
-                        style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1.5px solid",borderColor:p.status==="recebido"?"#059669":"#d97706",background:p.status==="recebido"?"#f0fdf4":"#fffbeb",color:p.status==="recebido"?"#059669":"#d97706",fontWeight:700,fontSize:13,cursor:"pointer"}}>
-                        {p.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <button onClick={()=>setParcReneg([...parcReneg,{valor:"",formaPag:"",data:"",status:"pendente"}])}
-                style={{width:"100%",padding:"8px",borderRadius:8,border:"1px dashed var(--purple)",background:"none",color:"var(--purple)",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:16}}>
-                + Adicionar parcela
-              </button>
-              <div style={{display:"flex",gap:8}}>
-                <button className="btn btn-purple" style={{flex:1}} onClick={async()=>{
-                  if(!pacAtual)return;
-                  const b=db.batch();
-                  // Atualiza/cria parcelas
-                  parcReneg.forEach((p,i)=>{
-                    if(p.id){
-                      b.update(db.collection("clinica_lancamentos").doc(p.id),{valor:parseFloat(p.valor)||0,formaPag:p.formaPag,data:p.data,status:p.status});
-                    } else {
-                      const ref=db.collection("clinica_lancamentos").doc();
-                      b.set(ref,{tipo_lancamento:"pacote",pacoteId:pacAtual.id,pacienteId:pacAtual.pacienteId,pacienteNome:pacAtual.pacienteNome||"",tipo:`Pacote ${pacAtual.recorrencia} (${i+1}/${parcReneg.length})`,descricao:`${pacAtual.pacienteNome||""} — ${pacAtual.recorrencia} — ${pacAtual.totalSessoes} sessão(ões)`,valor:parseFloat(p.valor)||0,data:p.data,formaPag:p.formaPag,status:p.status,dataPagamento:p.status==="recebido"?p.data:"",parcelaNum:i+1,totalParcelas:parcReneg.length,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-                    }
-                  });
-                  await b.commit();
-                  setModalRenegociar(false);
-                }}>💾 Salvar renegociação</button>
-                <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setModalRenegociar(false)}>Cancelar</button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {modalRenegociar&&React.createElement(ModalRenegociar,{
+        pacAtual:pacotesPac[0],
+        lancamentos,
+        onClose:()=>setModalRenegociar(false)
+      })}
 
       {/* Modal exclusão */}
       {modalExcluir&&(
