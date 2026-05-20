@@ -1346,7 +1346,7 @@ function FinanceiroClinica() {
   }
 
   async function salvarPacote(){
-    const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs}=formPacote;
+    const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs,statusPag,formaPag,dataPagamento}=formPacote;
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, nº de sessões e data de início obrigatórios.");return;}
     const needDias=["2x por semana","3x por semana"].includes(recorrencia);
     if(needDias&&(!diasSemana||diasSemana.length===0)){alert("Selecione os dias da semana.");return;}
@@ -1369,10 +1369,10 @@ function FinanceiroClinica() {
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
       pacienteId,pacienteNome:pac?.nome||"",
       tipo:"Pacote "+recorrencia,
-      valor:vTotal,data:(formPacote.statusPag==="pago"&&formPacote.dataPagamento)?formPacote.dataPagamento:dataInicio,
-      formaPag:formPacote.formaPag||"",
-      status:formPacote.statusPag||"pendente",
-      dataPagamento:formPacote.dataPagamento||"",
+      valor:vTotal,data:(statusPag==="pago"&&dataPagamento)?dataPagamento:dataInicio,
+      formaPag:formaPag||"",
+      status:statusPag||"pendente",
+      dataPagamento:dataPagamento||"",
       obs,
       totalSessoes:total,valorSessao:vSessao,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
