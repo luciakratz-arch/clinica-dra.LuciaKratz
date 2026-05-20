@@ -1435,7 +1435,7 @@ function FinanceiroClinica() {
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
-  const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
+  const lancPeriodo = periodoCard==="mes"?lancMes:lancAno;
 
   // Métricas por período selecionado nos cards
   // Receitas somam, despesas deduzem
