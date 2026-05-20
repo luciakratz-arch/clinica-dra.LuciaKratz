@@ -976,14 +976,15 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
     await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
   }
 
-  async function atualizarPagamento(s, formaPag, valorPago){
+  async function atualizarPagamento(s, formaPag, valorPago, novaData){
     const pago = formaPag!==""&&formaPag!=="pendente";
     const vPago = parseFloat(valorPago)||(parseFloat(s.valorSessao)||0);
+    const dataFinal = novaData || s.dataPagamento || new Date().toISOString().slice(0,10);
     await atualizarSessao(s.id,{
       formaPagamento:formaPag,
       pagamento:pago?"pago":"pendente",
       valorPago:pago?vPago:0,
-      dataPagamento:pago&&!s.dataPagamento?new Date().toISOString().slice(0,10):s.dataPagamento
+      dataPagamento:pago?dataFinal:""
     });
     if(pago){
       const lancExist = lancamentos.find(l=>l.sessaoId===s.id);
@@ -992,12 +993,12 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           tipo_lancamento:"sessao",sessaoId:s.id,
           pacienteId:s.pacienteId,pacienteNome:s.pacienteNome||"",
           tipo:"Sessão #"+(s.numSessao||""),
-          valor:vPago,data:s.dataPagamento||new Date().toISOString().slice(0,10),
+          valor:vPago,data:dataFinal,
           formaPag,status:"recebido",
           createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
       } else {
-        await db.collection("clinica_lancamentos").doc(lancExist.id).update({valor:vPago,formaPag,status:"recebido"});
+        await db.collection("clinica_lancamentos").doc(lancExist.id).update({valor:vPago,formaPag,status:"recebido",data:dataFinal});
       }
     }
   }
@@ -1005,17 +1006,31 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   async function confirmarExclusao(tipo){
     if(!modalExcluir)return;
     const {id,pacoteId,numSessao}=modalExcluir;
+    const b=db.batch();
     if(tipo==="este"){
-      await db.collection("clinica_sessoes").doc(id).delete();
+      b.delete(db.collection("clinica_sessoes").doc(id));
+      // Remove lançamento da sessão se existir
+      const lSess=lancamentos.find(l=>l.sessaoId===id);
+      if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
+      await b.commit();
     } else if(tipo==="daqui"){
       const fut=sessoes.filter(s=>s.pacoteId===pacoteId&&(s.numSessao||0)>=(numSessao||0));
-      const b=db.batch();fut.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));await b.commit();
+      fut.forEach(s=>{
+        b.delete(db.collection("clinica_sessoes").doc(s.id));
+        const lSess=lancamentos.find(l=>l.sessaoId===s.id);
+        if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
+      });
+      await b.commit();
     } else {
       const todas=sessoes.filter(s=>s.pacoteId===pacoteId);
-      const b=db.batch();todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+      todas.forEach(s=>{
+        b.delete(db.collection("clinica_sessoes").doc(s.id));
+        const lSess=lancamentos.find(l=>l.sessaoId===s.id);
+        if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
+      });
       b.delete(db.collection("clinica_pacotes").doc(pacoteId));
-      const lp=lancamentos.find(l=>l.pacoteId===pacoteId);
-      if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
+      const lPac=lancamentos.find(l=>l.pacoteId===pacoteId);
+      if(lPac) b.delete(db.collection("clinica_lancamentos").doc(lPac.id));
       await b.commit();
     }
     setModalExcluir(null);
@@ -1162,7 +1177,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             </select>
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>{atualizarSessao(s.id,{dataPagamento:e.target.value});if(s.pagamento==="pago")atualizarPagamento(s,s.formaPagamento||"",s.valorPago||s.valorSessao,e.target.value);}}
                               style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:105}}/>
                           </td>
                           <td style={{padding:"6px 10px"}}>
