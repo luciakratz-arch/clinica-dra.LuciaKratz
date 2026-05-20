@@ -286,7 +286,7 @@ function DashboardAdmin({ user }) {
     return()=>{u1();u2();u3();};
   },[]);
 
-  const mesAtual = new Date().toISOString().slice(0,7);
+  const mesAtual = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`;
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const ativos = pacientes.filter(p=>p.status==="ativo").length;
   const sessoesHoje = sessoes.filter(s=>s.data===new Date().toISOString().slice(0,10)).length;
@@ -1234,7 +1234,7 @@ function FinanceiroClinica() {
   const [lancamentos, setLancamentos] = useState([]);
   const [pacotes, setPacotes] = useState([]);
   const [sessoes, setSessoes] = useState([]);
-  const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
+  const [mesFiltro, setMesFiltro] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`);
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
   const [periodoCard, setPeriodoCard] = useState("mes");
   const [modal, setModal] = useState(false);
@@ -1266,7 +1266,7 @@ function FinanceiroClinica() {
   if(!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
 
   // Meses do ano selecionado — sempre Jan (01) → Dez (12)
-  const mesAtual = new Date().toISOString().slice(0,7);
+  const _agora = new Date(); const mesAtual = `${_agora.getFullYear()}-${String(_agora.getMonth()+1).padStart(2,"0")}`;
   const mesesDisp = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
 
   // Se mesFiltro não pertence ao anoFiltro, corrige para mês atual
@@ -2099,14 +2099,14 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const [recorrentes, setRecorrentes] = useState([]);
   const [categorias, setCategorias]   = useState([]);
   const [anoFiltro, setAnoFiltro]     = useState(new Date().getFullYear()+"");
-  const [mesFiltro, setMesFiltro]     = useState(new Date().toISOString().slice(0,7));
+  const [mesFiltro, setMesFiltro]     = useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`);
   const [modal, setModal]             = useState(false);
   const [editando, setEditando]       = useState(null);
   const [salvando, setSalvando]       = useState(false);
   const [novaCategoria, setNovaCategoria] = useState({nome:"",tipo:"despesa"});
   const [modalBaixa, setModalBaixa]   = useState(null); // recorrente para dar baixa
   const [formBaixa, setFormBaixa]     = useState({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
-  const mesAtual = new Date().toISOString().slice(0,7);
+  const mesAtual = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`;
 
   const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Investimentos","Dividendos","Freelance","Outros"];
   const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Outros"];
@@ -2117,7 +2117,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const catsDespesa = [...CATS_DESPESA_DEFAULT,...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
 
   const [formAvulso, setFormAvulso] = useState({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:""});
-  const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
+  const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`,ativo:true});
 
   useEffect(()=>{
     const u1=db.collection("clinica_financeiro_pessoal").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -2171,7 +2171,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     if(editando){ await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados); }
     else { await db.collection("clinica_fin_pessoal_recorrentes").add(dados); }
     setModal(false);setEditando(null);
-    setFormRecorr({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
+    setFormRecorr({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`,ativo:true});
     setSalvando(false);
   }
 
@@ -4607,7 +4607,7 @@ function Agenda() {
 
       {/* Métricas rápidas */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
-        {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(new Date().toISOString().slice(0,7))).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
+        {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`)).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
           <div key={l} style={{background:bg,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
             <div style={{fontSize:24,fontWeight:800,color:cor}}>{n}</div>
             <div style={{fontSize:12,color:cor,fontWeight:500}}>{l}</div>
