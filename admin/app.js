@@ -1700,7 +1700,7 @@ function FinanceiroClinica() {
             Saldo ({periodoCard==="mes"?mesAtualLabel:anoFiltro})
           </div>
           <div style={{fontSize:10,color:"#6b7280",marginTop:4}}>
-            +{calcReceitas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+            +{calcReceitas(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago")).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
           </div>
         </div>
         {/* Card Pendente mês */}
