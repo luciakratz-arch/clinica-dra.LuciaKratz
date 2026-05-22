@@ -205,17 +205,17 @@ function Login({ onLogin }) {
 
 // NAV
 const NAV_PSICOLOGA = [
-  {id:"dashboard",   label:"Dashboard",         icon:"layout-dashboard"},
-  {id:"pacientes",   label:"Pacientes",          icon:"users"},
-  {id:"alunos",      label:"Alunos",             icon:"graduation-cap"},
-  {id:"casais",      label:"Terapia de Casais",  icon:"heart"},
-  {id:"recursos",    label:"Recursos Terapeuticos", icon:"wrench"},
-  {id:"laudos",      label:"Laudos",             icon:"file-text"},
-  {id:"agenda",      label:"Agenda",             icon:"calendar"},
-  {id:"fin-clinica", label:"Fin. Clinica",       icon:"dollar-sign"},
-  {id:"fin-pessoal",  label:"Fin. Pessoal",       icon:"home"},
-  {id:"depoimentos",  label:"Depoimentos",        icon:"star"},
-  {id:"config",       label:"Configuracoes",      icon:"settings"},
+  {id:"dashboard",    label:"Dashboard",          icon:"layout-dashboard"},
+  {id:"pacientes",    label:"Pacientes",           icon:"users"},
+  {id:"alunos",       label:"Alunos",              icon:"graduation-cap"},
+  {id:"casais",       label:"Terapia de Casais",   icon:"heart"},
+  {id:"recursos",     label:"Recursos Terapeuticos",icon:"wrench"},
+  {id:"laudos",       label:"Laudos",              icon:"file-text"},
+  {id:"agenda",       label:"Agenda",              icon:"calendar"},
+  {id:"fin-clinica",  label:"Fin. Clinica",        icon:"dollar-sign"},
+  {id:"fin-pessoal",  label:"Fin. Pessoal",        icon:"home"},
+  {id:"depoimentos",  label:"Depoimentos",         icon:"star"},
+  {id:"config",       label:"Configuracoes",       icon:"settings"},
 ];
 const NAV_SECRETARIA = [
   {id:"pacientes",   label:"Pacientes",  icon:"users"},
@@ -286,7 +286,7 @@ function DashboardAdmin({ user }) {
     return()=>{u1();u2();u3();};
   },[]);
 
-  const mesAtual = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`;
+  const mesAtual = new Date().toISOString().slice(0,7);
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const ativos = pacientes.filter(p=>p.status==="ativo").length;
   const sessoesHoje = sessoes.filter(s=>s.data===new Date().toISOString().slice(0,10)).length;
@@ -930,96 +930,6 @@ function Pacientes({ user }) {
   );
 }
 
-// Modal de Renegociação (componente separado para respeitar regras do React Hooks)
-function ModalRenegociar({pacAtual, lancamentos, onClose}){
-  const lancsAtual = pacAtual
-    ? lancamentos.filter(l=>l.pacoteId===pacAtual.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1))
-    : [];
-  const [parcReneg, setParcReneg] = useState(
-    lancsAtual.length>0
-      ? lancsAtual.map(l=>({id:l.id,valor:String(l.valor||""),formaPag:l.formaPag||"",data:l.data||"",status:l.status||"pendente"}))
-      : [{valor:"",formaPag:"",data:"",status:"pendente"}]
-  );
-  const FORMAS_R = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Transferência","Boleto"];
-  async function salvar(){
-    if(!pacAtual)return;
-    const b=db.batch();
-    parcReneg.forEach((p,i)=>{
-      if(p.id){
-        b.update(db.collection("clinica_lancamentos").doc(p.id),{
-          valor:parseFloat(p.valor)||0,formaPag:p.formaPag,data:p.data,status:p.status,
-          dataPagamento:p.status==="recebido"?p.data:""
-        });
-      } else {
-        const ref=db.collection("clinica_lancamentos").doc();
-        b.set(ref,{
-          tipo_lancamento:"pacote",pacoteId:pacAtual.id,
-          pacienteId:pacAtual.pacienteId,pacienteNome:pacAtual.pacienteNome||"",
-          tipo:`Pacote ${pacAtual.recorrencia} (${i+1}/${parcReneg.length})`,
-          descricao:`${pacAtual.pacienteNome||""} — ${pacAtual.recorrencia} — ${pacAtual.totalSessoes} sessão(ões)`,
-          valor:parseFloat(p.valor)||0,data:p.data,formaPag:p.formaPag,
-          status:p.status,dataPagamento:p.status==="recebido"?p.data:"",
-          parcelaNum:i+1,totalParcelas:parcReneg.length,
-          createdAt:firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    });
-    await b.commit();
-    onClose();
-  }
-  return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={onClose}>
-      <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>🔄 Renegociação</div>
-        <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Edite as parcelas ou adicione novas.</div>
-        {parcReneg.map((p,i)=>(
-          <div key={i} style={{background:"#fafafa",borderRadius:10,padding:"12px",border:"1px solid #e5e7eb",marginBottom:10}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-              <span style={{fontSize:11,fontWeight:700,color:"var(--purple)"}}>PARCELA {i+1}</span>
-              {parcReneg.length>1&&<button onClick={()=>setParcReneg(parcReneg.filter((_,j)=>j!==i))} style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:14}}>✕</button>}
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-              <div>
-                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>VALOR (R$)</div>
-                <input type="number" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.valor}
-                  onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],valor:e.target.value};setParcReneg(arr);}}/>
-              </div>
-              <div>
-                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>FORMA</div>
-                <select className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.formaPag}
-                  onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],formaPag:e.target.value};setParcReneg(arr);}}>
-                  <option value="">Selecionar...</option>
-                  {FORMAS_R.map(f=><option key={f}>{f}</option>)}
-                </select>
-              </div>
-              <div>
-                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>DATA</div>
-                <input type="date" className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.data}
-                  onChange={e=>{const arr=[...parcReneg];arr[i]={...arr[i],data:e.target.value};setParcReneg(arr);}}/>
-              </div>
-              <div>
-                <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>STATUS</div>
-                <button type="button" onClick={()=>{const arr=[...parcReneg];arr[i]={...arr[i],status:arr[i].status==="recebido"?"pendente":"recebido"};setParcReneg(arr);}}
-                  style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1.5px solid",borderColor:p.status==="recebido"?"#059669":"#d97706",background:p.status==="recebido"?"#f0fdf4":"#fffbeb",color:p.status==="recebido"?"#059669":"#d97706",fontWeight:700,fontSize:13,cursor:"pointer"}}>
-                  {p.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-        <button onClick={()=>setParcReneg([...parcReneg,{valor:"",formaPag:"",data:"",status:"pendente"}])}
-          style={{width:"100%",padding:"8px",borderRadius:8,border:"1px dashed var(--purple)",background:"none",color:"var(--purple)",fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:16}}>
-          + Adicionar parcela
-        </button>
-        <div style={{display:"flex",gap:8}}>
-          <button className="btn btn-purple" style={{flex:1}} onClick={salvar}>💾 Salvar renegociação</button>
-          <button className="btn btn-ghost" style={{flex:1}} onClick={onClose}>Cancelar</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
 function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
@@ -1038,9 +948,6 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
-  const [modalRenegociar, setModalRenegociar] = useState(false);
-  const [remarcarId, setRemarcarId] = useState(null);
-  const [remarcarData, setRemarcarData] = useState("");
 
   const STATUS_S={
     agendado:  {l:"Agendado",   c:"#7B00C4"},
@@ -1064,25 +971,19 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
 
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
   async function remarcarSessao(s){
-    setRemarcarId(s.id);
-    setRemarcarData(s.data||"");
-  }
-  async function confirmarRemarcar(){
-    if(!remarcarId||!remarcarData)return;
-    const s=sessPac.find(x=>x.id===remarcarId);
-    await db.collection("clinica_sessoes").doc(remarcarId).update({data:remarcarData,status:"remarcado",remarcada:true,dataOriginal:s?.dataOriginal||s?.data||""});
-    setRemarcarId(null);setRemarcarData("");
+    const nd=prompt("Nova data (AAAA-MM-DD):",s.data);
+    if(!nd)return;
+    await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
   }
 
-  async function atualizarPagamento(s, formaPag, valorPago, novaData){
+  async function atualizarPagamento(s, formaPag, valorPago){
     const pago = formaPag!==""&&formaPag!=="pendente";
     const vPago = parseFloat(valorPago)||(parseFloat(s.valorSessao)||0);
-    const dataFinal = novaData || s.dataPagamento || new Date().toISOString().slice(0,10);
     await atualizarSessao(s.id,{
       formaPagamento:formaPag,
       pagamento:pago?"pago":"pendente",
       valorPago:pago?vPago:0,
-      dataPagamento:pago?dataFinal:""
+      dataPagamento:pago&&!s.dataPagamento?new Date().toISOString().slice(0,10):s.dataPagamento
     });
     if(pago){
       const lancExist = lancamentos.find(l=>l.sessaoId===s.id);
@@ -1091,12 +992,12 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           tipo_lancamento:"sessao",sessaoId:s.id,
           pacienteId:s.pacienteId,pacienteNome:s.pacienteNome||"",
           tipo:"Sessão #"+(s.numSessao||""),
-          valor:vPago,data:dataFinal,
+          valor:vPago,data:s.dataPagamento||new Date().toISOString().slice(0,10),
           formaPag,status:"recebido",
           createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
       } else {
-        await db.collection("clinica_lancamentos").doc(lancExist.id).update({valor:vPago,formaPag,status:"recebido",data:dataFinal});
+        await db.collection("clinica_lancamentos").doc(lancExist.id).update({valor:vPago,formaPag,status:"recebido"});
       }
     }
   }
@@ -1104,31 +1005,17 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   async function confirmarExclusao(tipo){
     if(!modalExcluir)return;
     const {id,pacoteId,numSessao}=modalExcluir;
-    const b=db.batch();
     if(tipo==="este"){
-      b.delete(db.collection("clinica_sessoes").doc(id));
-      // Remove lançamento da sessão se existir
-      const lSess=lancamentos.find(l=>l.sessaoId===id);
-      if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
-      await b.commit();
+      await db.collection("clinica_sessoes").doc(id).delete();
     } else if(tipo==="daqui"){
       const fut=sessoes.filter(s=>s.pacoteId===pacoteId&&(s.numSessao||0)>=(numSessao||0));
-      fut.forEach(s=>{
-        b.delete(db.collection("clinica_sessoes").doc(s.id));
-        const lSess=lancamentos.find(l=>l.sessaoId===s.id);
-        if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
-      });
-      await b.commit();
+      const b=db.batch();fut.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));await b.commit();
     } else {
       const todas=sessoes.filter(s=>s.pacoteId===pacoteId);
-      todas.forEach(s=>{
-        b.delete(db.collection("clinica_sessoes").doc(s.id));
-        const lSess=lancamentos.find(l=>l.sessaoId===s.id);
-        if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
-      });
+      const b=db.batch();todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
       b.delete(db.collection("clinica_pacotes").doc(pacoteId));
-      const lPac=lancamentos.find(l=>l.pacoteId===pacoteId);
-      if(lPac) b.delete(db.collection("clinica_lancamentos").doc(lPac.id));
+      const lp=lancamentos.find(l=>l.pacoteId===pacoteId);
+      if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
       await b.commit();
     }
     setModalExcluir(null);
@@ -1161,21 +1048,21 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
             <div key={l}><div style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>{l}</div><div style={{fontWeight:600,fontSize:13}}>{v}</div></div>
           ))}
         </div>
-        {/* Resumo financeiro — lê dos lançamentos do pacote */}
+        {/* Resumo proporcional ao filtro */}
         <div style={{padding:"12px 20px",display:"flex",gap:20,flexWrap:"wrap",background:"var(--purple-soft)"}}>
           {(()=>{
             const sessFiltro = mesFiltro==="todos"?sessPac:sessPac.filter(s=>s.data?.startsWith(mesFiltro));
-            const lancsP = pacotesPac.flatMap(p=>lancamentos.filter(l=>l.pacoteId===p.id));
-            const recebido = lancsP.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-            const aReceber = lancsP.filter(l=>l.status!=="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-            const totalPacote = lancsP.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+            const recFiltro = sessFiltro.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
+            const pendFiltro = sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
             return [
               ["Sessões",sessFiltro.length,"#7B00C4"],
               ["Realizadas",sessFiltro.filter(s=>s.status==="realizado").length,"#059669"],
+              ["Pagas",sessFiltro.filter(s=>s.pagamento==="pago").length,"#059669"],
+              ["Pendentes",sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length,"#d97706"],
               ["Faltas",sessFiltro.filter(s=>s.status==="falta").length,"#dc2626"],
-              ["Recebido",recebido.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#059669"],
-              ["A Receber",aReceber.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#d97706"],
-              ["Total",totalPacote.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#0891b2"],
+              ["Recebido",recFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#059669"],
+              ["A Receber",pendFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#d97706"],
+              ["Ano "+anoAtual,totalAno.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}),"#0891b2"],
             ].map(([l,v,c])=>(
               <div key={l} style={{textAlign:"center"}}>
                 <div style={{fontSize:16,fontWeight:800,color:c}}>{v}</div>
@@ -1192,7 +1079,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
         <button onClick={()=>setMesFiltro("todos")} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro==="todos"?"var(--purple)":"#e5e7eb",background:mesFiltro==="todos"?"var(--purple)":"white",color:mesFiltro==="todos"?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>Todos</button>
         {meses.map(m=>(
           <button key={m} onClick={()=>setMesFiltro(m)} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro===m?"var(--purple)":"#e5e7eb",background:mesFiltro===m?"var(--purple)":"white",color:mesFiltro===m?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            {new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
+            {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
           </button>
         ))}
       </div>
@@ -1200,7 +1087,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
       {/* Accordion por mês */}
       {mesesFiltrados.map(mes=>{
         const sessMes = porMes[mes]||[];
-        const mesLabel = new Date(mes+"-02").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+        const mesLabel = new Date(mes+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
         const recMes = sessMes.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
         const aberto = accordionAberto[mes]!==false;
         return(
@@ -1219,7 +1106,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                 <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
                   <thead>
                     <tr style={{background:"var(--purple)",color:"white"}}>
-                      {["","Nº","Data","Presença","Modalidade","V. Sessão","Remarcar","Obs"].map(h=>(
+                      {["","Nº","Data","Presença","Modalidade","V. Sessão","V. Pago","Saldo","Forma Pagto","Data Pagto","Obs"].map(h=>(
                         <th key={h} style={{padding:"8px 10px",textAlign:"left",fontWeight:600,whiteSpace:"nowrap",fontSize:11}}>{h}</th>
                       ))}
                     </tr>
@@ -1260,19 +1147,23 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                           <td style={{padding:"6px 10px",fontWeight:600,color:"#374151",whiteSpace:"nowrap"}}>
                             {vSessao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
                           </td>
-                          <td style={{padding:"6px 6px"}}>
-                            {remarcarId===s.id
-                              ? <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                                  <input type="date" value={remarcarData} onChange={e=>setRemarcarData(e.target.value)}
-                                    style={{fontSize:10,border:"1.5px solid var(--purple)",borderRadius:5,padding:"2px 4px",width:110}}/>
-                                  <button onClick={confirmarRemarcar} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:4,padding:"2px 6px",fontSize:10,cursor:"pointer"}}>✓</button>
-                                  <button onClick={()=>{setRemarcarId(null);setRemarcarData("");}} style={{background:"none",border:"1px solid #e5e7eb",borderRadius:4,padding:"2px 6px",fontSize:10,cursor:"pointer"}}>✕</button>
-                                </div>
-                              : <button onClick={()=>remarcarSessao(s)}
-                                  style={{background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:4,padding:"2px 8px",fontSize:10,cursor:"pointer"}}>
-                                  📅 Remarcar
-                                </button>
-                            }
+                          <td style={{padding:"6px 10px"}}>
+                            <input type="number" defaultValue={isPago?vPago:""} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
+                              placeholder="0,00" style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 5px",width:65,color:isPago?"#059669":"#374151",fontWeight:isPago?600:400}}/>
+                          </td>
+                          <td style={{padding:"6px 10px",fontWeight:600,whiteSpace:"nowrap",color:saldo<0?"#dc2626":saldo>0?"#059669":"#9ca3af",fontSize:11}}>
+                            {isPago?(saldo===0?"—":saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})):"—"}
+                          </td>
+                          <td style={{padding:"6px 10px"}}>
+                            <select value={s.formaPagamento||""} onChange={e=>atualizarPagamento(s,e.target.value,s.valorPago||s.valorSessao)}
+                              style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 4px",color:isPago?"#059669":"#6b7280",fontWeight:isPago?600:400,cursor:"pointer",background:isPago?"#f0fdf4":"white",minWidth:72}}>
+                              <option value="">Pendente</option>
+                              {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
+                            </select>
+                          </td>
+                          <td style={{padding:"6px 10px"}}>
+                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                              style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:105}}/>
                           </td>
                           <td style={{padding:"6px 10px"}}>
                             <input defaultValue={s.obs||""} onBlur={e=>atualizarSessao(s.id,{obs:e.target.value})}
@@ -1286,7 +1177,8 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                     <tr style={{background:"var(--purple-soft)"}}>
                       <td colSpan={5} style={{padding:"8px 10px",fontWeight:700,fontSize:11}}>Total {mesLabel}</td>
                       <td style={{padding:"8px 10px",fontWeight:700,fontSize:11}}>{sessMes.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
-                      <td colSpan={2}/>
+                      <td style={{padding:"8px 10px",fontWeight:700,fontSize:11,color:"#059669"}}>{recMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</td>
+                      <td colSpan={4}/>
                     </tr>
                   </tfoot>
                 </table>
@@ -1294,71 +1186,6 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
             )}
           </div>
         );
-      })}
-
-      {/* Seção Negociação/Pagamento */}
-      {pacotesPac.length>0&&(
-        <div style={{background:"white",borderRadius:16,border:"1px solid var(--gray-200)",marginTop:16,overflow:"hidden"}}>
-          <div style={{background:"var(--purple)",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{color:"white",fontWeight:700,fontSize:14}}>💰 Negociação e Pagamento</div>
-            <button onClick={()=>setModalRenegociar(true)}
-              style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,padding:"5px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-              🔄 Renegociar
-            </button>
-          </div>
-          <div style={{padding:"16px 20px"}}>
-            {pacotesPac.map(p=>{
-              const lancsP = lancamentos.filter(l=>l.pacoteId===p.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1));
-              if(lancsP.length===0) return(
-                <div key={p.id} style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento registrado para este pacote.</div>
-              );
-              return(
-                <div key={p.id}>
-                  {lancsP.map((lp,idx)=>(
-                    <div key={lp.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"1px solid var(--gray-100)",flexWrap:"wrap"}}>
-                      <div style={{minWidth:80,fontWeight:700,fontSize:14,color:"#059669"}}>
-                        {(lp.valor||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-                      </div>
-                      <div style={{fontSize:12,color:"var(--text-muted)",flex:1}}>
-                        <span style={{fontWeight:600,color:"var(--text)"}}>{lp.formaPag||"—"}</span>
-                        {lp.data&&<span style={{marginLeft:8}}>📅 {new Date(lp.data+"T12:00:00").toLocaleDateString("pt-BR")}</span>}
-                        {lancsP.length>1&&<span style={{marginLeft:8,fontSize:11,color:"var(--purple)"}}>Parcela {idx+1}/{lancsP.length}</span>}
-                      </div>
-                      <button
-                        onClick={async(e)=>{e.stopPropagation();const ns=lp.status==="recebido"?"pendente":"recebido";await db.collection("clinica_lancamentos").doc(lp.id).update({status:ns});}}
-                        style={{padding:"4px 14px",borderRadius:20,border:"1.5px solid",borderColor:lp.status==="recebido"?"#059669":"#d97706",background:lp.status==="recebido"?"#f0fdf4":"#fffbeb",color:lp.status==="recebido"?"#059669":"#d97706",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
-                        {lp.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Modal remarcar */}
-      {remarcarId&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:380}}>
-            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:16}}>📅 Remarcar Sessão</div>
-            <label style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",display:"block",marginBottom:6}}>NOVA DATA</label>
-            <input type="date" value={remarcarData} onChange={e=>setRemarcarData(e.target.value)}
-              style={{width:"100%",padding:"10px 14px",border:"1.5px solid var(--purple)",borderRadius:10,fontSize:14,fontFamily:"inherit",marginBottom:20}}/>
-            <div style={{display:"flex",gap:8}}>
-              <button className="btn btn-purple" style={{flex:1}} onClick={confirmarRemarcar}>Confirmar</button>
-              <button className="btn btn-ghost" style={{flex:1}} onClick={()=>{setRemarcarId(null);setRemarcarData("");}}>Cancelar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal renegociar */}
-      {modalRenegociar&&React.createElement(ModalRenegociar,{
-        pacAtual:pacotesPac[0],
-        lancamentos,
-        onClose:()=>setModalRenegociar(false)
       })}
 
       {/* Modal exclusão */}
@@ -1392,7 +1219,7 @@ function FinanceiroClinica() {
   const [lancamentos, setLancamentos] = useState([]);
   const [pacotes, setPacotes] = useState([]);
   const [sessoes, setSessoes] = useState([]);
-  const [mesFiltro, setMesFiltro] = useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`);
+  const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
   const [periodoCard, setPeriodoCard] = useState("mes");
   const [modal, setModal] = useState(false);
@@ -1408,7 +1235,7 @@ function FinanceiroClinica() {
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:"",tipoPag:"integral",parcelas:[{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]});
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:""});
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -1424,18 +1251,18 @@ function FinanceiroClinica() {
   if(!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
 
   // Meses do ano selecionado — sempre Jan (01) → Dez (12)
-  const _agora = new Date(); const mesAtual = `${_agora.getFullYear()}-${String(_agora.getMonth()+1).padStart(2,"0")}`;
+  const mesAtual = new Date().toISOString().slice(0,7);
   const mesesDisp = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
 
   // Se mesFiltro não pertence ao anoFiltro, corrige para mês atual
   const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro) ? mesFiltro : mesAtual.startsWith(anoFiltro) ? mesAtual : anoFiltro+"-01";
 
   // Cards do topo — mês atual do ano selecionado, fixo
-  const _agora2 = new Date(); const mesCards = anoFiltro+"-"+String(_agora2.getMonth()+1).padStart(2,"0");
+  const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
-  const lancPeriodo = periodoCard==="mes"?lancMes:lancAno;
+  const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
 
   // Métricas por período selecionado nos cards
   // Receitas somam, despesas deduzem
@@ -1450,12 +1277,8 @@ function FinanceiroClinica() {
 
   const totalRecebidoPeriodo = calcSaldo(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalRecebidoMes = calcSaldo(lancMes.filter(l=>l.status==="recebido"||l.status==="pago"));
-  const hoje2 = new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0");
-  const totalPendenteMes = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(mesFiltroEfetivo)));
-  const totalPendenteAno = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
-  const totalPendenteTotal = calcReceitas(lancamentos.filter(l=>l.status==="pendente"));
-  const totalPendenteAcum = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&(l.data||"")<=(hoje2)));
-  const mesAtualLabel = new Date(mesCards+"-02").toLocaleDateString("pt-BR",{month:"short"});
+  const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
+  const mesAtualLabel = new Date(mesCards+"-01").toLocaleDateString("pt-BR",{month:"short"});
 
   // Salvar lançamento avulso
   async function salvarAvulso(){
@@ -1497,14 +1320,13 @@ function FinanceiroClinica() {
   }
 
   // Geração de datas recorrentes
-  function fmtData(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
   function gerarDatas(dataInicio, recorrencia, total, diasSemana){
     if(recorrencia==="Sessão única") return [dataInicio];
     const datas=[];
     if(["Semanal (1x/semana)","Quinzenal","Mensal"].includes(recorrencia)){
-      let atual=new Date(dataInicio+"T12:00:00");
+      let atual=new Date(dataInicio+"T00:00:00");
       while(datas.length<total){
-        datas.push(fmtData(atual));
+        datas.push(atual.toISOString().split("T")[0]);
         if(recorrencia==="Semanal (1x/semana)") atual.setDate(atual.getDate()+7);
         else if(recorrencia==="Quinzenal") atual.setDate(atual.getDate()+14);
         else atual.setMonth(atual.getMonth()+1);
@@ -1514,17 +1336,17 @@ function FinanceiroClinica() {
     // 2x ou 3x por semana
     const dias=(diasSemana||[]).map(Number).sort();
     if(!dias.length) return [];
-    let atual=new Date(dataInicio+"T12:00:00");
+    let atual=new Date(dataInicio+"T00:00:00");
     const fim=new Date(atual);fim.setFullYear(fim.getFullYear()+2);
     while(datas.length<total&&atual<fim){
-      if(dias.includes(atual.getDay())) datas.push(fmtData(atual));
+      if(dias.includes(atual.getDay())) datas.push(atual.toISOString().split("T")[0]);
       atual.setDate(atual.getDate()+1);
     }
     return datas.slice(0,total);
   }
 
   async function salvarPacote(){
-    const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs,tipoPag,parcelas}=formPacote;
+    const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs}=formPacote;
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, nº de sessões e data de início obrigatórios.");return;}
     const needDias=["2x por semana","3x por semana"].includes(recorrencia);
     if(needDias&&(!diasSemana||diasSemana.length===0)){alert("Selecione os dias da semana.");return;}
@@ -1534,39 +1356,27 @@ function FinanceiroClinica() {
     const vSessao=parseFloat(valorSessao)||0;
     const vTotal=vSessao*total;
     const datas=gerarDatas(dataInicio,recorrencia,total,diasSemana);
-    const descricao=`${pac?.nome||""} — ${recorrencia} — ${total} sessão(ões)`;
 
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
-      tipoPag:tipoPag||"integral",
       status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Cria lançamentos por parcela
-    const parcelasArr = parcelas||[{formaPag:"",dataPagamento:"",valor:vTotal+"",status:"pendente"}];
-    const batch2 = db.batch();
-    parcelasArr.forEach((p,i)=>{
-      const ref = db.collection("clinica_lancamentos").doc();
-      const vParcela = parseFloat(p.valor)||vTotal;
-      const dataLanc = p.dataPagamento||dataInicio;
-      batch2.set(ref,{
-        tipo_lancamento:"pacote",pacoteId:pacRef.id,
-        pacienteId,pacienteNome:pac?.nome||"",
-        tipo:parcelasArr.length>1?`Pacote ${recorrencia} (${i+1}/${parcelasArr.length})`:`Pacote ${recorrencia}`,
-        descricao,
-        valor:vParcela,
-        data:dataLanc,
-        formaPag:p.formaPag||"",
-        status:p.status||"pendente",
-        dataPagamento:p.status==="recebido"?(p.dataPagamento||""):"",
-        obs,totalSessoes:total,valorSessao:vSessao,
-        parcelaNum:i+1,totalParcelas:parcelasArr.length,
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
+    // Cria lançamento financeiro do pacote
+    await db.collection("clinica_lancamentos").add({
+      tipo_lancamento:"pacote",pacoteId:pacRef.id,
+      pacienteId,pacienteNome:pac?.nome||"",
+      tipo:"Pacote "+recorrencia,
+      valor:vTotal,data:dataInicio,
+      formaPag:formPacote.formaPag||"",
+      status:formPacote.statusPag||"pendente",
+      dataPagamento:formPacote.dataPagamento||"",
+      obs,
+      totalSessoes:total,valorSessao:vSessao,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    await batch2.commit();
 
     // Cria sessões na agenda
     const batch=db.batch();
@@ -1578,16 +1388,12 @@ function FinanceiroClinica() {
         pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
-        pagamento:"pendente",
-        formaPagamento:"",
-        dataPagamento:"",
-        valorPago:0,
-        obs:"",
+        pagamento:"pendente",formaPagamento:"",dataPagamento:"",obs:"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     });
     await batch.commit();
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:"",tipoPag:"integral",parcelas:[{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",obs:""});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
@@ -1688,7 +1494,7 @@ function FinanceiroClinica() {
       </div>
 
       {/* Métricas clicáveis */}
-      <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1fr 1fr",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
         {/* Card Recebido — clicável mês/ano */}
         <div onClick={()=>setPeriodoCard(p=>p==="mes"?"ano":"mes")}
           style={{background:totalRecebidoPeriodo>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:totalRecebidoPeriodo>=0?"#6ee7b7":"#fca5a5",transition:"all .2s",position:"relative"}}>
@@ -1700,25 +1506,24 @@ function FinanceiroClinica() {
             Saldo ({periodoCard==="mes"?mesAtualLabel:anoFiltro})
           </div>
           <div style={{fontSize:10,color:"#6b7280",marginTop:4}}>
-            +{calcReceitas(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago")).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+            +{calcReceitas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})} / -{calcDespesas(lancPeriodo).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
           </div>
         </div>
-        {/* Card Pendente mês */}
+        {/* Card Pendente */}
         <div style={{background:"#fef3c7",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
-          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{totalPendenteMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
-          <div style={{fontSize:12,color:"#d97706",fontWeight:500,marginTop:2}}>Pendente ({mesAtualLabel})</div>
-        </div>
-        {/* Card Pendente acumulado */}
-        <div style={{background:"#fff7ed",borderRadius:12,padding:"14px 16px",textAlign:"center",border:"1px solid #fed7aa"}}>
-          <div style={{fontSize:20,fontWeight:800,color:"#ea580c"}}>{totalPendenteTotal.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
-          <div style={{fontSize:12,color:"#ea580c",fontWeight:500,marginTop:2}}>Atrasados/Previstos</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{totalPendente.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+          <div style={{fontSize:12,color:"#d97706",fontWeight:500,marginTop:2}}>Pendente ({anoFiltro})</div>
         </div>
         {/* Card Pacotes */}
         <div style={{background:"var(--purple-soft)",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:800,color:"var(--purple)"}}>{pacotes.filter(p=>p.status==="ativo").length}</div>
           <div style={{fontSize:12,color:"var(--purple)",fontWeight:500,marginTop:2}}>Pacotes ativos</div>
         </div>
-
+        {/* Card Lançamentos */}
+        <div style={{background:"#e0f2fe",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
+          <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancPeriodo.length}</div>
+          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+        </div>
       </div>
 
       {/* Abas */}
@@ -1753,7 +1558,7 @@ function FinanceiroClinica() {
                       fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer",
                       display:Math.abs(mesesDisp.indexOf(m)-mesesDisp.indexOf(mesFiltroEfetivo))<=2?"flex":"none",
                       alignItems:"center",gap:4}}>
-                    {new Date(m+"-02").toLocaleDateString("pt-BR",{month:"long"})}
+                    {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"long"})}
                     {isAtual&&!isSel&&<span style={{fontSize:9}}>●</span>}
                   </button>
                 );
@@ -1768,7 +1573,7 @@ function FinanceiroClinica() {
           {lancMes.length===0?(
             <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
               <Icon name="dollar-sign" size={40}/>
-              <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-02").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
+              <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
             </div>
           ):(()=>{
             const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa");
@@ -1806,7 +1611,7 @@ function FinanceiroClinica() {
                               {isFut&&<span style={{marginLeft:4,fontSize:9,color:"#0891b2",fontWeight:600}}>futuro</span>}
                             </td>
                             <td style={{padding:"8px 14px"}}>
-                              <div>{l.tipo||"—"}{l.descricao&&<span style={{display:"block",fontSize:11,color:"var(--text-muted)",fontWeight:400}}>{l.descricao}</span>}{!l.descricao&&l.pacienteNome&&<span style={{display:"block",fontSize:11,color:"var(--text-muted)",fontWeight:400}}>{l.pacienteNome}</span>}</div>
+                              {l.tipo||l.pacienteNome||"—"}
                               {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
                               {l.tipo_lancamento==="sessao"&&<span style={{marginLeft:6,background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
                             </td>
@@ -1829,7 +1634,7 @@ function FinanceiroClinica() {
                                     <Icon name="pencil" size={12}/>
                                   </button>
                                 )}
-                                <button style={{padding:"4px 8px",fontSize:11,color:"#dc2626",background:"#fff1f2",border:"1px solid #fca5a5",borderRadius:6,cursor:"pointer",display:"flex",alignItems:"center"}} onClick={()=>setModalExcluirLanc(l)}>
+                                <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11,color:"#dc2626"}} onClick={()=>setModalExcluirLanc(l)}>
                                   <Icon name="trash-2" size={12}/>
                                 </button>
                               </div>
@@ -1861,7 +1666,7 @@ function FinanceiroClinica() {
                   <div style={{fontSize:20,color:"var(--text-muted)"}}>=</div>
                   <div style={{textAlign:"center"}}>
                     <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:2}}>Saldo do Mês</div>
-                    <div style={{fontSize:22,fontWeight:900,color:saldo>0?"#0891b2":saldo<0?"#dc2626":"#6b7280"}}>{saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                    <div style={{fontSize:22,fontWeight:900,color:saldo>=0?"#059669":"#dc2626"}}>{saldo.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
                   </div>
                 </div>
               </div>
@@ -1959,7 +1764,7 @@ function FinanceiroClinica() {
                           const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
                           const realizadas=sessPac.filter(s=>s.status==="realizado").length;
                           const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
-                          const lancsPac=lancamentos.filter(l=>l.pacoteId===p.id).sort((a,b)=>(a.parcelaNum||1)-(b.parcelaNum||1));
+                          const lancPac=lancamentos.find(l=>l.pacoteId===p.id);
                           const dataInclusao = p.createdAt?.seconds
                             ? new Date(p.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
                             : p.dataInicio
@@ -1973,8 +1778,8 @@ function FinanceiroClinica() {
                                     <span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
                                       📅 Criado em {dataInclusao}
                                     </span>
-                                    <span style={{background:lancsPac.every(l=>l.status==="recebido")?"#d1fae5":lancsPac.some(l=>l.status==="recebido")?"#e0f2fe":"#fef3c7",color:lancsPac.every(l=>l.status==="recebido")?"#065f46":lancsPac.some(l=>l.status==="recebido")?"#0891b2":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                                      {lancsPac.every(l=>l.status==="recebido")?"✓ Pago":lancsPac.some(l=>l.status==="recebido")?"⏳ Parcial":"Pagamento Pendente"}
+                                    <span style={{background:lancPac?.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac?.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
+                                      {lancPac?.status==="recebido"?"✓ Pago":"Pagamento Pendente"}
                                     </span>
                                     <span style={{marginLeft:"auto",fontWeight:700,color:"#059669",fontSize:14}}>
                                       {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
@@ -1992,47 +1797,21 @@ function FinanceiroClinica() {
                                   <div style={{fontSize:11,color:"var(--text-muted)"}}>{pct}% concluído</div>
                                 </div>
                               </div>
-                              {/* Parcelas */}
-                              {lancsPac.length>0&&(
-                                <div style={{marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
-                                  <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>
-                                    Pagamento {lancsPac.length>1?`(${lancsPac.length} parcelas)`:""}
-                                  </div>
-                                  {lancsPac.map((lp,idx)=>(
-                                    <div key={lp.id} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-                                      <span style={{fontSize:12,fontWeight:600,minWidth:60}}>{(lp.valor||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
-                                      <span style={{fontSize:11,color:"var(--text-muted)"}}>{lp.formaPag||"—"}</span>
-                                      <span style={{fontSize:11,color:"var(--text-muted)"}}>{lp.data?new Date(lp.data+"T00:00:00").toLocaleDateString("pt-BR"):"sem data"}</span>
-                                      <button type="button"
-                                        onClick={async(e)=>{e.stopPropagation();const novoStatus=lp.status==="recebido"?"pendente":"recebido";await db.collection("clinica_lancamentos").doc(lp.id).update({status:novoStatus,dataPagamento:novoStatus==="recebido"?lp.data||new Date().toISOString().slice(0,10):""});}}
-                                        style={{padding:"2px 10px",borderRadius:20,border:"1.5px solid",borderColor:lp.status==="recebido"?"#059669":"#d97706",background:lp.status==="recebido"?"#f0fdf4":"#fffbeb",color:lp.status==="recebido"?"#059669":"#d97706",fontSize:10,fontWeight:700,cursor:"pointer"}}>
-                                        {lp.status==="recebido"?"✓ Recebido":"⏳ Pendente"}
-                                      </button>
-                                    </div>
-                                  ))}
-                                  <button type="button"
-                                    onClick={async(e)=>{e.stopPropagation();const v=prompt("Valor da nova parcela (R$):");if(!v)return;const f=prompt("Forma de pagamento (PIX, Cartão, etc):");const d=prompt("Data prevista (AAAA-MM-DD):");await db.collection("clinica_lancamentos").add({tipo_lancamento:"pacote",pacoteId:p.id,pacienteId:p.pacienteId,pacienteNome:p.pacienteNome||"",tipo:`Pacote ${p.recorrencia} (${lancsPac.length+1}/${lancsPac.length+1})`,descricao:`${p.pacienteNome||""} — ${p.recorrencia} — ${p.totalSessoes} sessão(ões)`,valor:parseFloat(v)||0,data:d||new Date().toISOString().slice(0,10),formaPag:f||"",status:"pendente",dataPagamento:"",parcelaNum:lancsPac.length+1,totalParcelas:lancsPac.length+1,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}}
-                                    style={{fontSize:11,color:"var(--purple)",background:"none",border:"1px dashed var(--purple)",borderRadius:6,padding:"3px 10px",cursor:"pointer",marginTop:4}}>
-                                    + Nova parcela
-                                  </button>
-                                </div>
-                              )}
                               <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
-                                <button className="btn btn-purple" style={{fontSize:12,flex:1}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="clipboard-list" size={13}/> Ver / Editar Sessões
+                                <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                                  <Icon name="edit-3" size={13}/> Editar pacote
+                                </button>
+                                <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
+                                  <Icon name="clipboard-list" size={13}/> Ver Sessões
                                 </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
                                   if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
                                   const todas=sessoes.filter(s=>s.pacoteId===p.id);
                                   const b=db.batch();
-                                  todas.forEach(s=>{
-                                    b.delete(db.collection("clinica_sessoes").doc(s.id));
-                                    const lSess=lancamentos.find(l=>l.sessaoId===s.id);
-                                    if(lSess) b.delete(db.collection("clinica_lancamentos").doc(lSess.id));
-                                  });
+                                  todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
                                   b.delete(db.collection("clinica_pacotes").doc(p.id));
-                                  // Remove TODOS os lançamentos do pacote (integral + parcelas)
-                                  lancamentos.filter(l=>l.pacoteId===p.id).forEach(lp=>b.delete(db.collection("clinica_lancamentos").doc(lp.id)));
+                                  const lp=lancamentos.find(l=>l.pacoteId===p.id);
+                                  if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
                                   await b.commit();
                                 }}>
                                   <Icon name="trash-2" size={13}/>
@@ -2255,74 +2034,24 @@ function FinanceiroClinica() {
                 </div>
                 {/* Pagamento */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
-                  <label className="form-label">Forma de Cobrança</label>
+                  <label className="form-label">Status do Pagamento</label>
                   <div style={{display:"flex",gap:8}}>
-                    {[["integral","💳 Integral","#7B00C4"],["parcelado","📆 Parcelado","#0891b2"]].map(([v,l,c])=>(
-                      <button key={v} type="button"
-                        onClick={()=>{
-                          const vTotal2=(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||1);
-                          const novasParcelas = v==="parcelado"
-                            ? [{formaPag:"",dataPagamento:"",valor:String(vTotal2),status:"pendente"},{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]
-                            : [{formaPag:"",dataPagamento:"",valor:String(vTotal2),status:"pendente"}];
-                          setFormPacote({...formPacote,tipoPag:v,parcelas:novasParcelas});
-                        }}
-                        style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:(formPacote.tipoPag||"integral")===v?c:"#e5e7eb",background:(formPacote.tipoPag||"integral")===v?c+"15":"white",color:(formPacote.tipoPag||"integral")===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                    {[["pendente","Pendente","#d97706"],["recebido","✓ Recebido","#059669"]].map(([v,l,c])=>(
+                      <button key={v} type="button" onClick={()=>setFormPacote({...formPacote,statusPag:v})}
+                        style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:(formPacote.statusPag||"pendente")===v?c:"#e5e7eb",background:(formPacote.statusPag||"pendente")===v?c+"15":"white",color:(formPacote.statusPag||"pendente")===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
                         {l}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {/* Parcelas */}
-                <div className="form-group" style={{gridColumn:"1/-1"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                    <label className="form-label" style={{margin:0}}>
-                      {(formPacote.tipoPag||"integral")==="parcelado"?"Parcelas":"Pagamento"}
-                    </label>
-                    {(formPacote.tipoPag||"integral")==="parcelado"&&(
-                      <button type="button"
-                        onClick={()=>setFormPacote({...formPacote,parcelas:[...(formPacote.parcelas||[]),{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]})}
-                        style={{background:"none",border:"1px solid #7B00C4",color:"#7B00C4",borderRadius:6,padding:"3px 10px",fontSize:12,cursor:"pointer"}}>
-                        + Parcela
-                      </button>
-                    )}
-                  </div>
-                  {(formPacote.parcelas||[{formaPag:"",dataPagamento:"",valor:"",status:"pendente"}]).map((p,i)=>(
-                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:8,marginBottom:8,background:"#fafafa",borderRadius:10,padding:"10px 12px",border:"1px solid #e5e7eb"}}>
-                      <div>
-                        <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>VALOR (R$)</div>
-                        <input type="number" className="form-input" style={{padding:"7px 10px",fontSize:13}}
-                          value={p.valor||""} placeholder={(((parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||1))/((formPacote.parcelas||[]).length||1)).toFixed(0)}
-                          onChange={e=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],valor:e.target.value};setFormPacote({...formPacote,parcelas:arr});}}/>
-                      </div>
-                      <div>
-                        <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>FORMA</div>
-                        <select className="form-input" style={{padding:"7px 10px",fontSize:13}} value={p.formaPag||""}
-                          onChange={e=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],formaPag:e.target.value};setFormPacote({...formPacote,parcelas:arr});}}>
-                          <option value="">Selecionar...</option>
-                          {FORMAS.map(f=><option key={f}>{f}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <div style={{fontSize:10,color:"#9ca3af",marginBottom:3}}>DATA / STATUS</div>
-                        <div style={{display:"flex",gap:4}}>
-                          <input type="date" className="form-input" style={{padding:"7px 6px",fontSize:12,flex:1}}
-                            value={p.dataPagamento||""}
-                            onChange={e=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],dataPagamento:e.target.value};setFormPacote({...formPacote,parcelas:arr});}}/>
-                          <button type="button"
-                            onClick={()=>{const arr=[...(formPacote.parcelas||[])];arr[i]={...arr[i],status:arr[i].status==="recebido"?"pendente":"recebido"};setFormPacote({...formPacote,parcelas:arr});}}
-                            style={{padding:"4px 8px",borderRadius:6,border:"1.5px solid",borderColor:p.status==="recebido"?"#059669":"#d97706",background:p.status==="recebido"?"#f0fdf4":"#fffbeb",color:p.status==="recebido"?"#059669":"#d97706",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
-                            {p.status==="recebido"?"✓":"⏳"}
-                          </button>
-                        </div>
-                      </div>
-                      {(formPacote.parcelas||[]).length>1&&(
-                        <button type="button"
-                          onClick={()=>{const arr=(formPacote.parcelas||[]).filter((_,j)=>j!==i);setFormPacote({...formPacote,parcelas:arr});}}
-                          style={{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:16,alignSelf:"flex-end",paddingBottom:4}}>✕</button>
-                      )}
-                    </div>
-                  ))}
+                <div className="form-group"><label className="form-label">Forma de Pagamento</label>
+                  <select className="form-input" value={formPacote.formaPag||""} onChange={e=>setFormPacote({...formPacote,formaPag:e.target.value})}>
+                    <option value="">Selecionar...</option>
+                    {FORMAS.map(f=><option key={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div className="form-group"><label className="form-label">Data do Pagamento</label>
+                  <input className="form-input" type="date" value={formPacote.dataPagamento||""} onChange={e=>setFormPacote({...formPacote,dataPagamento:e.target.value})}/>
                 </div>
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                   <textarea className="form-input" rows={2} value={formPacote.obs} onChange={e=>setFormPacote({...formPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
@@ -2351,14 +2080,14 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const [recorrentes, setRecorrentes] = useState([]);
   const [categorias, setCategorias]   = useState([]);
   const [anoFiltro, setAnoFiltro]     = useState(new Date().getFullYear()+"");
-  const [mesFiltro, setMesFiltro]     = useState(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`);
+  const [mesFiltro, setMesFiltro]     = useState(new Date().toISOString().slice(0,7));
   const [modal, setModal]             = useState(false);
   const [editando, setEditando]       = useState(null);
   const [salvando, setSalvando]       = useState(false);
   const [novaCategoria, setNovaCategoria] = useState({nome:"",tipo:"despesa"});
   const [modalBaixa, setModalBaixa]   = useState(null); // recorrente para dar baixa
   const [formBaixa, setFormBaixa]     = useState({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
-  const mesAtual = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`;
+  const mesAtual = new Date().toISOString().slice(0,7);
 
   const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Investimentos","Dividendos","Freelance","Outros"];
   const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Outros"];
@@ -2369,7 +2098,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const catsDespesa = [...CATS_DESPESA_DEFAULT,...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
 
   const [formAvulso, setFormAvulso] = useState({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:""});
-  const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`,ativo:true});
+  const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
 
   useEffect(()=>{
     const u1=db.collection("clinica_financeiro_pessoal").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -2423,7 +2152,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     if(editando){ await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados); }
     else { await db.collection("clinica_fin_pessoal_recorrentes").add(dados); }
     setModal(false);setEditando(null);
-    setFormRecorr({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`,ativo:true});
+    setFormRecorr({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
     setSalvando(false);
   }
 
@@ -4556,7 +4285,144 @@ function Laudos() {
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
-function Configuracoes() {
+function Depoimentos() {
+  const [lista, setLista] = useState([]);
+  const [aba, setAba] = useState("pendente");
+  const [salvando, setSalvando] = useState(null);
+
+  useEffect(()=>{
+    const unsub = db.collection("site_depoimentos")
+      .orderBy("createdAt","desc")
+      .onSnapshot(s=>setLista(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return unsub;
+  },[]);
+
+  const filtrado = lista.filter(d=>d.status===aba);
+  const pendentes = lista.filter(d=>d.status==="pendente").length;
+
+  async function aprovar(id){
+    setSalvando(id);
+    await db.collection("site_depoimentos").doc(id).update({status:"aprovado"});
+    setSalvando(null);
+  }
+  async function rejeitar(id){
+    if(!confirm("Rejeitar este depoimento?")) return;
+    await db.collection("site_depoimentos").doc(id).update({status:"rejeitado"});
+  }
+  async function excluir(id){
+    if(!confirm("Excluir permanentemente?")) return;
+    await db.collection("site_depoimentos").doc(id).delete();
+  }
+
+  function Estrelas({n}){
+    return <span style={{color:"#7B00C4",fontSize:16,letterSpacing:2}}>{"★".repeat(n||5)}{"☆".repeat(5-(n||5))}</span>;
+  }
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20,flexWrap:"wrap",gap:12}}>
+        <div>
+          <div className="page-title">Depoimentos</div>
+          <div className="page-subtitle">Gerencie os depoimentos do site</div>
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <a href="../feedback/" target="_blank"
+            style={{display:"inline-flex",alignItems:"center",gap:6,padding:"9px 16px",borderRadius:10,background:"var(--purple-soft)",color:"var(--purple)",fontSize:13,fontWeight:600,textDecoration:"none"}}>
+            <Icon name="external-link" size={14}/> Ver formulário
+          </a>
+          <button className="btn btn-ghost" style={{fontSize:13}}
+            onClick={()=>{ navigator.clipboard.writeText("https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/feedback/"); alert("Link copiado!"); }}>
+            <Icon name="copy" size={14}/> Copiar link
+          </button>
+        </div>
+      </div>
+
+      {/* Abas */}
+      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"2px solid var(--gray-200)"}}>
+        {[
+          ["pendente","⏳ Pendentes",pendentes],
+          ["aprovado","✓ Aprovados",lista.filter(d=>d.status==="aprovado").length],
+          ["rejeitado","✗ Rejeitados",lista.filter(d=>d.status==="rejeitado").length],
+        ].map(([id,label,count])=>(
+          <button key={id} onClick={()=>setAba(id)}
+            style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",
+              fontWeight:aba===id?600:400,color:aba===id?"var(--purple)":"#6b7280",
+              borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",
+              marginBottom:-2,fontSize:14,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:6}}>
+            {label}
+            {count>0&&<span style={{background:id==="pendente"?"#dc2626":"var(--purple-soft)",color:id==="pendente"?"white":"var(--purple)",borderRadius:20,padding:"1px 7px",fontSize:11,fontWeight:700}}>{count}</span>}
+          </button>
+        ))}
+      </div>
+
+      {filtrado.length===0?(
+        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="star" size={40}/>
+          <div style={{marginTop:12,fontWeight:500}}>
+            {aba==="pendente"?"Nenhum depoimento aguardando aprovação":
+             aba==="aprovado"?"Nenhum depoimento aprovado ainda":
+             "Nenhum depoimento rejeitado"}
+          </div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {filtrado.map(d=>(
+            <div key={d.id} className="card" style={{padding:"20px 24px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,flexWrap:"wrap"}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                    <div style={{width:38,height:38,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"var(--purple)",flexShrink:0}}>
+                      {(d.nome||"?")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:15}}>{d.nome}</div>
+                      {d.cargo&&<div style={{fontSize:12,color:"var(--text-muted)"}}>{d.cargo}</div>}
+                    </div>
+                    <Estrelas n={d.estrelas}/>
+                  </div>
+                  <p style={{fontSize:14,color:"#374151",lineHeight:1.7,fontStyle:"italic"}}>"{d.texto}"</p>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8}}>
+                    {d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"}) : ""}
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8,flexShrink:0}}>
+                  {aba==="pendente"&&(
+                    <>
+                      <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}}
+                        onClick={()=>aprovar(d.id)} disabled={salvando===d.id}>
+                        <Icon name="check" size={13}/> {salvando===d.id?"...":"Aprovar"}
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px",color:"#dc2626",borderColor:"#fca5a5"}}
+                        onClick={()=>rejeitar(d.id)}>
+                        <Icon name="x" size={13}/> Rejeitar
+                      </button>
+                    </>
+                  )}
+                  {aba==="rejeitado"&&(
+                    <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}}
+                      onClick={()=>aprovar(d.id)}>
+                      <Icon name="check" size={13}/> Aprovar mesmo assim
+                    </button>
+                  )}
+                  {aba==="aprovado"&&(
+                    <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px",color:"#dc2626",borderColor:"#fca5a5"}}
+                      onClick={()=>rejeitar(d.id)}>
+                      <Icon name="x" size={13}/> Remover do site
+                    </button>
+                  )}
+                  <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 10px",color:"#dc2626"}}
+                    onClick={()=>excluir(d.id)}>
+                    <Icon name="trash-2" size={13}/>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
   const [tiposLaudo, setTiposLaudo] = useState([
     "Avaliacao Neuropsicologica","Avaliacao Psicologica","Avaliacao Infantil",
     "Avaliacao de TDAH","Avaliacao de Altas Habilidades","Pericia Psicologica",
@@ -4859,7 +4725,7 @@ function Agenda() {
 
       {/* Métricas rápidas */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
-        {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,"0")}`)).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
+        {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(new Date().toISOString().slice(0,7))).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
           <div key={l} style={{background:bg,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
             <div style={{fontSize:24,fontWeight:800,color:cor}}>{n}</div>
             <div style={{fontSize:12,color:cor,fontWeight:500}}>{l}</div>
@@ -5098,200 +4964,6 @@ function Agenda() {
   );
 }
 
-// ─── DEPOIMENTOS ─────────────────────────────────────────
-function TabDepoimentos() {
-  const [filtro, setFiltro] = useState("pendente");
-  const [lista, setLista] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(true);
-    const unsub = db.collection("site_depoimentos")
-      .where("status", "==", filtro)
-      .onSnapshot(snap => {
-        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-        setLista(docs);
-        setLoading(false);
-      }, () => setLoading(false));
-    return unsub;
-  }, [filtro]);
-  const [respostas, setRespostas] = useState({});
-
-  async function mudarStatus(id, novoStatus) {
-    await db.collection("site_depoimentos").doc(id).update({ status: novoStatus });
-  }
-  async function aprovarComResposta(id) {
-    const resposta = respostas[id] || "";
-    await db.collection("site_depoimentos").doc(id).update({ status: "aprovado", resposta });
-    setRespostas(prev => { const n = Object.assign({}, prev); delete n[id]; return n; });
-  }
-  async function salvarResposta(id) {
-    const resposta = respostas[id] || "";
-    await db.collection("site_depoimentos").doc(id).update({ resposta });
-    setRespostas(prev => { const n = Object.assign({}, prev); delete n[id]; return n; });
-    alert("Resposta salva!");
-  }
-
-  const [editando, setEditando] = useState({});
-
-  function renderEstrelas(n) {
-    return Array.from({ length: 5 }, (_, i) => (
-      React.createElement("span", { key: i, style: { color: i < n ? "#7B00C4" : "#d1d5db", fontSize: 16 } }, "★")
-    ));
-  }
-
-  const abas = [
-    { id: "pendente",  label: "Pendentes",  cor: "#f59e0b" },
-    { id: "aprovado",  label: "Aprovados",  cor: "#16a34a" },
-    { id: "rejeitado", label: "Rejeitados", cor: "#dc2626" },
-  ];
-
-  return (
-    React.createElement("div", { className: "tab-content" },
-      React.createElement("h2", { className: "section-title" }, "Depoimentos"),
-      React.createElement("p", { style: { color: "#6b7280", fontSize: 14, marginBottom: 24 } },
-        "Modere os depoimentos enviados pelo formulário público. Aprovados aparecem automaticamente no site."
-      ),
-
-      // Filtros
-      React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" } },
-        abas.map(a =>
-          React.createElement("button", {
-            key: a.id,
-            onClick: () => setFiltro(a.id),
-            style: {
-              padding: "8px 20px",
-              borderRadius: 20,
-              border: "2px solid " + (filtro === a.id ? a.cor : "#e5e7eb"),
-              background: filtro === a.id ? a.cor : "white",
-              color: filtro === a.id ? "white" : "#374151",
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: "pointer",
-              transition: "all .2s"
-            }
-          }, a.label)
-        )
-      ),
-
-      // Lista
-      loading
-        ? React.createElement("p", { style: { color: "#9ca3af" } }, "Carregando...")
-        : lista.length === 0
-          ? React.createElement("div", {
-              style: {
-                textAlign: "center", padding: "60px 20px",
-                background: "white", borderRadius: 16,
-                border: "1.5px dashed #e5e7eb", color: "#9ca3af"
-              }
-            },
-              React.createElement("div", { style: { fontSize: 40, marginBottom: 12 } }, "💬"),
-              React.createElement("p", null, "Nenhum depoimento " + (filtro === "pendente" ? "pendente" : filtro === "aprovado" ? "aprovado" : "rejeitado") + " no momento.")
-            )
-          : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
-              lista.map(dep =>
-                React.createElement("div", {
-                  key: dep.id,
-                  style: {
-                    background: "white", borderRadius: 16,
-                    padding: "20px 24px",
-                    border: "1.5px solid #f3e8ff",
-                    boxShadow: "0 2px 8px rgba(123,0,196,.06)"
-                  }
-                },
-                  // Cabeçalho
-                  React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 } },
-                    React.createElement("div", null,
-                      React.createElement("div", { style: { fontWeight: 700, fontSize: 15, color: "#111" } }, dep.nome || "—"),
-                      dep.cargo && React.createElement("div", { style: { fontSize: 12, color: "#9ca3af", marginTop: 2 } }, dep.cargo)
-                    ),
-                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
-                      React.createElement("div", null, renderEstrelas(dep.estrelas || 5)),
-                      dep.createdAt && React.createElement("span", { style: { fontSize: 11, color: "#9ca3af" } },
-                        new Date(dep.createdAt.seconds * 1000).toLocaleDateString("pt-BR")
-                      )
-                    )
-                  ),
-
-                  // Texto
-                  React.createElement("p", {
-                    style: {
-                      fontSize: 14, color: "#374151", lineHeight: 1.7,
-                      background: "#faf5ff", borderRadius: 10, padding: "12px 16px",
-                      borderLeft: "3px solid #7B00C4", marginBottom: 14
-                    }
-                  }, dep.texto),
-
-                  // Campo resposta (só para pendentes)
-                  filtro === "pendente" && React.createElement("div", { style: { marginBottom: 12 } },
-                    React.createElement("textarea", {
-                      placeholder: "Escreva sua resposta (opcional)...",
-                      value: respostas[dep.id] || "",
-                      onChange: e => setRespostas(prev => Object.assign({}, prev, { [dep.id]: e.target.value })),
-                      style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 13, fontFamily: "inherit", resize: "vertical", minHeight: 80, outline: "none" }
-                    })
-                  ),
-                  // Campo editar resposta (aprovados)
-                  filtro === "aprovado" && React.createElement("div", { style: { marginBottom: 12 } },
-                    !editando[dep.id]
-                      ? React.createElement("button", {
-                          onClick: () => setEditando(prev => Object.assign({}, prev, { [dep.id]: true })),
-                          style: { padding: "6px 14px", borderRadius: 8, background: "#f5f0ff", color: "#7B00C4", border: "1.5px solid #7B00C4", fontSize: 12, fontWeight: 600, cursor: "pointer", marginBottom: 8 }
-                        }, dep.resposta ? "✏️ Editar resposta" : "💬 Adicionar resposta")
-                      : React.createElement("div", null,
-                          React.createElement("textarea", {
-                            placeholder: "Escreva sua resposta...",
-                            value: respostas[dep.id] !== undefined ? respostas[dep.id] : (dep.resposta || ""),
-                            onChange: e => setRespostas(prev => Object.assign({}, prev, { [dep.id]: e.target.value })),
-                            style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #7B00C4", fontSize: 13, fontFamily: "inherit", resize: "vertical", minHeight: 80, outline: "none", marginBottom: 8 }
-                          }),
-                          React.createElement("div", { style: { display: "flex", gap: 8 } },
-                            React.createElement("button", {
-                              onClick: () => salvarResposta(dep.id).then(() => setEditando(prev => { const n = Object.assign({}, prev); delete n[dep.id]; return n; })),
-                              style: { padding: "6px 14px", borderRadius: 8, background: "#7B00C4", color: "white", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer" }
-                            }, "💾 Salvar"),
-                            React.createElement("button", {
-                              onClick: () => setEditando(prev => { const n = Object.assign({}, prev); delete n[dep.id]; return n; }),
-                              style: { padding: "6px 14px", borderRadius: 8, background: "#f3f4f6", color: "#374151", border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer" }
-                            }, "Cancelar")
-                          )
-                        )
-                  ),
-                  // Botões de ação
-                  React.createElement("div", { style: { display: "flex", gap: 8 } },
-                    filtro !== "aprovado" && React.createElement("button", {
-                      onClick: () => filtro === "pendente" ? aprovarComResposta(dep.id) : mudarStatus(dep.id, "aprovado"),
-                      style: {
-                        padding: "7px 18px", borderRadius: 8,
-                        background: "#16a34a", color: "white",
-                        border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer"
-                      }
-                    }, "✓ Aprovar"),
-                    filtro !== "rejeitado" && React.createElement("button", {
-                      onClick: () => mudarStatus(dep.id, "rejeitado"),
-                      style: {
-                        padding: "7px 18px", borderRadius: 8,
-                        background: "#dc2626", color: "white",
-                        border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer"
-                      }
-                    }, "✕ Rejeitar"),
-                    filtro !== "pendente" && React.createElement("button", {
-                      onClick: () => mudarStatus(dep.id, "pendente"),
-                      style: {
-                        padding: "7px 18px", borderRadius: 8,
-                        background: "#f59e0b", color: "white",
-                        border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer"
-                      }
-                    }, "↩ Pendente")
-                  )
-                )
-              )
-            )
-    )
-  );
-}
-
 // APP
 function App() {
   const [user, setUser] = useState(null);
@@ -5313,7 +4985,21 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
-        {user.tipo==="psicologa"  &&tab==="depoimentos" &&<TabDepoimentos/>}
+        {tab==="__menu__"&&(
+          <div style={{padding:20}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>Menu</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              {NAV_PSICOLOGA.filter(i=>!["dashboard","pacientes","agenda","fin-clinica"].includes(i.id)).map(item=>(
+                <button key={item.id} onClick={()=>setTab(item.id)}
+                  style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"20px 12px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:500,color:"var(--text)"}}>
+                  <Icon name={item.icon} size={24}/>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {user.tipo==="psicologa"  &&tab==="depoimentos" &&<Depoimentos/>}
         {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="secretaria" &&tab==="agenda"      &&<Agenda/>}
@@ -5321,9 +5007,32 @@ function App() {
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
       </div>
       <div className="nav-mobile">
-        {(user.tipo==="psicologa"?NAV_PSICOLOGA.slice(0,5):user.tipo==="secretaria"?NAV_SECRETARIA:NAV_PAULO).map(item=>(
-          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}><Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span></button>
+        {user.tipo==="psicologa"&&[
+          {id:"dashboard",  label:"Início",    icon:"layout-dashboard"},
+          {id:"pacientes",  label:"Pacientes", icon:"users"},
+          {id:"agenda",     label:"Agenda",    icon:"calendar"},
+          {id:"fin-clinica",label:"Financeiro",icon:"dollar-sign"},
+        ].map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label}</span>
+          </button>
         ))}
+        {user.tipo==="psicologa"&&(
+          <button className="nav-mobile-item" onClick={()=>setTab("__menu__")}>
+            <Icon name="menu" size={20}/><span>Mais</span>
+          </button>
+        )}
+        {user.tipo==="secretaria"&&NAV_SECRETARIA.slice(0,5).map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
+          </button>
+        ))}
+        {user.tipo==="paulo"&&NAV_PAULO.map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
+          </button>
+        ))}
+      </div>
       </div>
     </div>
   );
