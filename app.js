@@ -343,6 +343,7 @@ const NAV_PSICOLOGA = [
   {id:"laudos",       label:"Laudos",              icon:"file-text"},
   {id:"agenda",       label:"Agenda",              icon:"calendar"},
   {id:"fin-clinica",  label:"Fin. Clinica",        icon:"dollar-sign"},
+  {id:"comissoes",    label:"Comissoes",           icon:"percent"},
   {id:"fin-pessoal",  label:"Fin. Pessoal",        icon:"home"},
   {id:"depoimentos",  label:"Depoimentos",         icon:"star"},
   {id:"config",       label:"Configuracoes",       icon:"settings"},
@@ -351,6 +352,7 @@ const NAV_SECRETARIA = [
   {id:"pacientes",   label:"Pacientes",  icon:"users"},
   {id:"agenda",      label:"Agenda",     icon:"calendar"},
   {id:"fin-clinica", label:"Financeiro", icon:"dollar-sign"},
+  {id:"comissoes",   label:"Comissoes",  icon:"percent"},
 ];
 const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}];
 
@@ -389,10 +391,10 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
           {notifProps && (
             <div style={{position:"relative",flexShrink:0}}>
               <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
-                style={{background:"none",border:"none",cursor:"pointer",padding:6,borderRadius:8,display:"flex",alignItems:"center",color:"rgba(255,255,255,0.85)",position:"relative"}}>
-                <Icon name="bell" size={20}/>
+                style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 14px",fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
+                🔔
                 {notifProps.naoLidas>0&&(
-                  <span style={{position:"absolute",top:-1,right:-1,width:16,height:16,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
+                  <span style={{background:"#ef4444",color:"white",fontSize:10,fontWeight:700,borderRadius:20,padding:"1px 6px"}}>
                     {notifProps.naoLidas>9?"9+":notifProps.naoLidas}
                   </span>
                 )}
@@ -1426,7 +1428,7 @@ function FinanceiroClinica() {
   const mesAtualLabel = new Date(mesCards+"-01").toLocaleDateString("pt-BR",{month:"short"});
 
   // Salvar lançamento avulso
-  async function salvarAvulso(){
+  async function salvarAvulso(tipoVenda){
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
     const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
@@ -1443,6 +1445,8 @@ function FinanceiroClinica() {
           pacienteId: formAvulso.pacienteId
         });
       }
+      // Registra comissão da secretária
+      if(tipoVenda) await registrarComissao({ tipo:"Sessão Avulsa", valor:parseFloat(formAvulso.valor), pacienteNome:pac?.nome||"", tipoVenda });
     }
     setModal(false);setEditando(null);setFormAvulso({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});setSalvando(false);
   }
@@ -1498,7 +1502,21 @@ function FinanceiroClinica() {
     return datas.slice(0,total);
   }
 
-  async function salvarPacote(){
+  async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda }) {
+    const perc = tipoVenda === "primeira" ? 0.10 : 0.05;
+    const valorComissao = parseFloat((valor * perc).toFixed(2));
+    const hoje = new Date();
+    const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,"0")}`;
+    await db.collection("clinica_comissoes").add({
+      tipo, tipoVenda, perc: perc*100,
+      valorBase: valor, valorComissao,
+      pacienteNome, mesRef,
+      status: "pendente",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+
+  async function salvarPacote(tipoVenda){
     const {pacienteId,totalSessoes,valorSessao,recorrencia,dataInicio,horario,diasSemana,horariosPorDia,obs}=formPacote;
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, nº de sessões e data de início obrigatórios.");return;}
     const needDias=["2x por semana","3x por semana"].includes(recorrencia);
@@ -1530,6 +1548,9 @@ function FinanceiroClinica() {
       totalSessoes:total,valorSessao:vSessao,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Registra comissão da secretária
+    if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda });
 
     // Cria sessões na agenda
     const batch=db.batch();
@@ -2119,7 +2140,20 @@ function FinanceiroClinica() {
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvarAvulso} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":editando?"Salvar Alterações":"Lançar"}</button>
+              {editando ? (
+                <button className="btn btn-purple" onClick={()=>salvarAvulso(null)} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alterações"}</button>
+              ) : (
+                <>
+                  <button className="btn btn-purple" onClick={()=>salvarAvulso("primeira")} disabled={salvando}
+                    style={{background:"#7B00C4"}} title="10% de comissão">
+                    🌟 Primeira Venda
+                  </button>
+                  <button className="btn btn-purple" onClick={()=>salvarAvulso("recorrente")} disabled={salvando}
+                    style={{background:"#0891b2"}} title="5% de comissão">
+                    🔁 Venda Recorrente
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -2216,9 +2250,16 @@ function FinanceiroClinica() {
                   {needDias&&diasSel.length>0&&<span> · dias: <strong>{diasSel.map(d=>DIAS_LABEL[d]).join(", ")}</strong></span>}
                 </div>
               )}
-              <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <div style={{display:"flex",gap:10,justifyContent:"flex-end",flexWrap:"wrap"}}>
                 <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-                <button className="btn btn-purple" onClick={salvarPacote} disabled={salvando}><Icon name="package" size={15}/> {salvando?"Criando...":"Criar Pacote"}</button>
+                <button className="btn btn-purple" onClick={()=>salvarPacote("primeira")} disabled={salvando}
+                  style={{background:"#7B00C4"}} title="10% de comissão">
+                  🌟 Primeira Venda
+                </button>
+                <button className="btn btn-purple" onClick={()=>salvarPacote("recorrente")} disabled={salvando}
+                  style={{background:"#0891b2"}} title="5% de comissão">
+                  🔁 Venda Recorrente
+                </button>
               </div>
             </div>
           </div>
@@ -4438,6 +4479,158 @@ function Laudos() {
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
+// ─── COMISSÕES ────────────────────────────────────────────
+function Comissoes({ user }) {
+  const [comissoes, setComissoes] = useState([]);
+  const [lancamentos, setLancamentos] = useState([]);
+  const [mesSel, setMesSel] = useState(() => {
+    const h = new Date();
+    return `${h.getFullYear()}-${String(h.getMonth()+1).padStart(2,"0")}`;
+  });
+  const [pagando, setPagando] = useState(false);
+
+  const SALARIO_FIXO = 600;
+
+  useEffect(() => {
+    const u1 = db.collection("clinica_comissoes").orderBy("createdAt","desc")
+      .onSnapshot(s => setComissoes(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    const u2 = db.collection("clinica_lancamentos").orderBy("createdAt","desc")
+      .onSnapshot(s => setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    return () => { u1(); u2(); };
+  }, []);
+
+  const meses = [...new Set(comissoes.map(c=>c.mesRef))].sort().reverse();
+  if (!meses.includes(mesSel) && meses.length > 0) {
+    // mantém o mês selecionado mesmo sem comissões
+  }
+
+  const comissoesMes = comissoes.filter(c => c.mesRef === mesSel);
+  const totalComissoes = comissoesMes.reduce((a,c) => a + (c.valorComissao||0), 0);
+  const totalAPagar = SALARIO_FIXO + totalComissoes;
+
+  // Verifica se já foi pago neste mês
+  const pagamentoMes = lancamentos.find(l =>
+    l.tipo_lancamento === "salario_secretaria" && l.mesRef === mesSel
+  );
+
+  const [mesLabel] = useState(() => {
+    const [ano, mes] = mesSel.split("-");
+    return new Date(parseInt(ano), parseInt(mes)-1, 1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  });
+
+  function getMesLabel(mesRef) {
+    const [ano, mes] = mesRef.split("-");
+    return new Date(parseInt(ano), parseInt(mes)-1, 1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  }
+
+  async function pagarSalario() {
+    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para Jéssica em ${getMesLabel(mesSel)}?`)) return;
+    setPagando(true);
+    const hoje = new Date().toISOString().slice(0,10);
+    // Lança como despesa da clínica
+    await db.collection("clinica_lancamentos").add({
+      tipo_lancamento: "salario_secretaria",
+      tipo: "Salário Secretária",
+      mesRef: mesSel,
+      valor: totalAPagar,
+      valorSalarioFixo: SALARIO_FIXO,
+      valorComissoes: totalComissoes,
+      data: hoje,
+      status: "pago",
+      obs: `Salário ${getMesLabel(mesSel)} — Jéssica Marjane`,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Marca comissões do mês como pagas
+    const batch = db.batch();
+    comissoesMes.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    await batch.commit();
+    setPagando(false);
+    alert("✅ Pagamento registrado como despesa da clínica!");
+  }
+
+  const corTipoVenda = t => t==="primeira" ? "#7B00C4" : "#0891b2";
+  const labelTipoVenda = t => t==="primeira" ? "🌟 Primeira Venda (10%)" : "🔁 Recorrente (5%)";
+
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <div className="page-title">Comissões — Jéssica</div>
+          <div className="page-subtitle">Salário fixo R$ 600 + comissões por vendas</div>
+        </div>
+      </div>
+
+      {/* Seletor de mês */}
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {(meses.length > 0 ? meses : [mesSel]).map(m => (
+          <button key={m} onClick={()=>setMesSel(m)}
+            style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,
+              background:m===mesSel?"var(--purple)":"var(--gray-100)",
+              color:m===mesSel?"white":"var(--text)"}}>
+            {getMesLabel(m)}
+          </button>
+        ))}
+      </div>
+
+      {/* Cards resumo */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,marginBottom:24}}>
+        <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Salário Fixo</div>
+          <div style={{fontSize:22,fontWeight:700,color:"var(--text)"}}>R$ 600,00</div>
+        </div>
+        <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Comissões {getMesLabel(mesSel)}</div>
+          <div style={{fontSize:22,fontWeight:700,color:"#7B00C4"}}>R$ {totalComissoes.toFixed(2).replace(".",",")}</div>
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesMes.length} venda(s)</div>
+        </div>
+        <div style={{background:pagamentoMes?"#f0fdf4":"#faf5ff",borderRadius:14,padding:"18px 20px",border:`2px solid ${pagamentoMes?"#16a34a":"#7B00C4"}`}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Total a Pagar</div>
+          <div style={{fontSize:26,fontWeight:800,color:pagamentoMes?"#16a34a":"#7B00C4"}}>
+            R$ {totalAPagar.toFixed(2).replace(".",",")}
+          </div>
+          {pagamentoMes && <div style={{fontSize:11,color:"#16a34a",marginTop:4,fontWeight:600}}>✓ Pago em {pagamentoMes.data?.split("-").reverse().join("/")}</div>}
+        </div>
+      </div>
+
+      {/* Botão pagar — só psicóloga vê */}
+      {user.tipo==="psicologa" && !pagamentoMes && comissoesMes.length > 0 && (
+        <button onClick={pagarSalario} disabled={pagando}
+          style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:24,fontFamily:"var(--font-body)"}}>
+          {pagando ? "Registrando..." : `💰 Registrar Pagamento — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+        </button>
+      )}
+
+      {/* Lista de comissões */}
+      <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
+          Detalhamento — {getMesLabel(mesSel)}
+        </div>
+        {comissoesMes.length === 0 ? (
+          <div style={{padding:"40px 20px",textAlign:"center",color:"var(--text-muted)"}}>
+            <Icon name="percent" size={32}/>
+            <div style={{marginTop:8}}>Nenhuma comissão registrada neste mês</div>
+          </div>
+        ) : comissoesMes.map(c => (
+          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)"}}>
+            <div>
+              <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome}</div>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo}</div>
+              <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20}}>
+                {labelTipoVenda(c.tipoVenda)}
+              </span>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
+              <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+              {c.status==="pago" && <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Depoimentos() {
   const [lista, setLista] = useState([]);
   const [aba, setAba] = useState("pendente");
@@ -5162,6 +5355,7 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
+        {user.tipo==="psicologa"  &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
         {tab==="__menu__"&&(
           <div style={{padding:20}}>
@@ -5182,6 +5376,7 @@ function App() {
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="secretaria" &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
+        {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
       </div>
       <div className="nav-mobile">
