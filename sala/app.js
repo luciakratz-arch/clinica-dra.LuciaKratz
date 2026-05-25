@@ -225,19 +225,29 @@ function App() {
     setModalConflito(null);
   }
 
-  async function responderPedido(pedidoId, aceitar){
+  async function responderPedido(pedidoId, aceitar, liberarTodas=false){
     const pedido = pedidos.find(p=>p.id===pedidoId);
     if(!pedido) return;
     if(aceitar){
-      // Libera a reserva existente
-      await db.collection("sala_reservas").doc(pedido.reservaId).delete();
-      const msg = `${pedido.deNome}, liberei o horário das ${pedido.horaInicio} às ${pedido.horaFim}! Sala disponível para você. 🟣`;
-      const waNum = pedido.de==="lucia" ? WA_LUCIA : WA_THAIS;
-      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, "_blank");
+      const reserva = reservas.find(r=>r.id===pedido.reservaId);
+      const eRecorrente = reserva?.recorrenteRef || reserva?.recorrencia==="recorrente";
+      if(eRecorrente && liberarTodas){
+        // Cancela todas as ocorrências futuras com mesmo recorrenteRef ou mesma hora/dia semana
+        const ref = reserva.recorrenteRef || reserva.data;
+        const todasRec = reservas.filter(r=>r.usuarioId===reserva.usuarioId&&(r.recorrenteRef===ref||r.recorrenteRef===reserva.data)&&r.data>=pedido.data);
+        const batch = db.batch();
+        todasRec.forEach(r=>batch.delete(db.collection("sala_reservas").doc(r.id)));
+        await batch.commit();
+        const msg = `${pedido.deNome}, liberei o horário das ${pedido.horaInicio}–${pedido.horaFim} de todas as semanas a partir de ${new Date(pedido.data+"T00:00:00").toLocaleDateString("pt-BR")}! 🟣`;
+        window.open(`https://wa.me/${pedido.de==="lucia"?WA_LUCIA:WA_THAIS}?text=${encodeURIComponent(msg)}`,"_blank");
+      } else {
+        await db.collection("sala_reservas").doc(pedido.reservaId).delete();
+        const msg = `${pedido.deNome}, liberei o horário das ${pedido.horaInicio}–${pedido.horaFim} do dia ${new Date(pedido.data+"T00:00:00").toLocaleDateString("pt-BR")}! Sala disponível para você. 🟣`;
+        window.open(`https://wa.me/${pedido.de==="lucia"?WA_LUCIA:WA_THAIS}?text=${encodeURIComponent(msg)}`,"_blank");
+      }
     } else {
-      const msg = `${pedido.deNome}, não consigo liberar o horário das ${pedido.horaInicio} às ${pedido.horaFim}. Podemos tentar outro horário? 😊`;
-      const waNum = pedido.de==="lucia" ? WA_LUCIA : WA_THAIS;
-      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, "_blank");
+      const msg = `${pedido.deNome}, não consigo liberar o horário das ${pedido.horaInicio}–${pedido.horaFim}. Podemos tentar outro horário? 😊`;
+      window.open(`https://wa.me/${pedido.de==="lucia"?WA_LUCIA:WA_THAIS}?text=${encodeURIComponent(msg)}`,"_blank");
     }
     await db.collection("sala_pedidos").doc(pedidoId).update({ status: aceitar?"aceito":"recusado" });
     setModalPedido(null);
@@ -301,6 +311,7 @@ function App() {
               const reservaRef = reservas.find(r=>r.id===p.reservaId);
               const dataStr = p.data || reservaRef?.data || "";
               const dataFormatada = dataStr ? new Date(dataStr+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"}) : "data não encontrada";
+              const eRecorrente = reservaRef?.recorrenteRef || reservaRef?.recorrencia==="recorrente";
               return (
                 <div key={p.id} style={{background:"rgba(255,255,255,.1)",borderRadius:10,padding:"10px",marginBottom:8}}>
                   <div style={{fontSize:12,fontWeight:700,color:"white",marginBottom:3}}>
@@ -309,18 +320,42 @@ function App() {
                   <div style={{fontSize:13,fontWeight:700,color:"#fde68a",marginBottom:2}}>
                     📅 {dataFormatada}
                   </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,.85)",marginBottom:10}}>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,.85)",marginBottom:4}}>
                     🕐 {p.horaInicio} – {p.horaFim}
                   </div>
-                  <div style={{display:"flex",gap:8}}>
-                    <button onClick={()=>responderPedido(p.id,true)}
-                      style={{flex:1,padding:"8px 6px",borderRadius:8,background:"#059669",color:"white",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                      ✓ Liberar
-                    </button>
-                    <button onClick={()=>responderPedido(p.id,false)}
-                      style={{flex:1,padding:"8px 6px",borderRadius:8,background:"#dc2626",color:"white",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                      ✕ Manter
-                    </button>
+                  {eRecorrente && (
+                    <div style={{fontSize:11,color:"#fdba74",marginBottom:8,display:"flex",alignItems:"center",gap:4}}>
+                      🔁 Reserva recorrente
+                    </div>
+                  )}
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {eRecorrente ? (
+                      <>
+                        <button onClick={()=>responderPedido(p.id,true,false)}
+                          style={{width:"100%",padding:"7px 6px",borderRadius:8,background:"#059669",color:"white",border:"none",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          ✓ Liberar só este dia
+                        </button>
+                        <button onClick={()=>responderPedido(p.id,true,true)}
+                          style={{width:"100%",padding:"7px 6px",borderRadius:8,background:"#0369a1",color:"white",border:"none",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          ✓✓ Liberar todas as semanas
+                        </button>
+                        <button onClick={()=>responderPedido(p.id,false)}
+                          style={{width:"100%",padding:"7px 6px",borderRadius:8,background:"#dc2626",color:"white",border:"none",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                          ✕ Manter reserva
+                        </button>
+                      </>
+                    ):(
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>responderPedido(p.id,true,false)}
+                          style={{flex:1,padding:"8px 6px",borderRadius:8,background:"#059669",color:"white",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                          ✓ Liberar
+                        </button>
+                        <button onClick={()=>responderPedido(p.id,false)}
+                          style={{flex:1,padding:"8px 6px",borderRadius:8,background:"#dc2626",color:"white",border:"none",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                          ✕ Manter
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
