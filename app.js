@@ -139,7 +139,7 @@ function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida,
   if (!abertas) return null;
 
   return (
-    <div ref={ref} style={{position:"absolute",left:0,top:"calc(100% + 8px)",width:320,maxHeight:460,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
+    <div ref={ref} style={{position:"absolute",left:0,bottom:"calc(100% + 8px)",width:320,maxHeight:420,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 -4px 32px rgba(0,0,0,0.18)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
         <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
         {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
@@ -247,7 +247,8 @@ function Login({ onLogin }) {
         if (snap.empty) { setErro("Usuario nao encontrado."); setLoading(false); return; }
         const sec = { id:snap.docs[0].id, ...snap.docs[0].data() };
         if (sec.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
-        onLogin({ tipo:"secretaria", nome: sec.nome || sec.email || "Secretaria", ...sec });
+        const nomeReal = sec.nome && !sec.nome.includes("@") ? sec.nome : "Secretaria";
+        onLogin({ ...sec, tipo:"secretaria", nome: nomeReal });
       }
     } catch(e) { setErro("Erro ao conectar."); }
     setLoading(false);
@@ -357,35 +358,19 @@ const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}]
 function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
   const nav = user.tipo==="secretaria"?NAV_SECRETARIA:user.tipo==="paulo"?NAV_PAULO:NAV_PSICOLOGA;
   const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":"Area Administrativa";
-  const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || user.email || "Usuário");
+  const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || "Usuário");
   const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
   return (
     <div className="sidebar-desktop">
-      <div className="sidebar-header" style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div className="sidebar-logo">
-            <img src={LOGO_URL} alt="LK" style={{width:44,height:44,objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
-            <span className="sidebar-logo-placeholder" style={{display:"none"}}>LK</span>
-          </div>
-          <div>
-            <div className="sidebar-title">Dra. Lucia Kratz</div>
-            <div className="sidebar-role">{titulo}</div>
-          </div>
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <img src={LOGO_URL} alt="LK" style={{width:44,height:44,objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
+          <span className="sidebar-logo-placeholder" style={{display:"none"}}>LK</span>
         </div>
-        {notifProps && (
-          <div style={{position:"relative",flexShrink:0}}>
-            <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
-              style={{background:"rgba(255,255,255,0.12)",border:"none",cursor:"pointer",padding:7,borderRadius:9,display:"flex",alignItems:"center",color:"white",position:"relative"}}>
-              <Icon name="bell" size={19}/>
-              {notifProps.naoLidas>0&&(
-                <span style={{position:"absolute",top:-2,right:-2,width:17,height:17,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
-                  {notifProps.naoLidas>9?"9+":notifProps.naoLidas}
-                </span>
-              )}
-            </button>
-            {notifProps.abertas&&<PainelNotificacoes {...notifProps}/>}
-          </div>
-        )}
+        <div>
+          <div className="sidebar-title">Dra. Lucia Kratz</div>
+          <div className="sidebar-role">{titulo}</div>
+        </div>
       </div>
       <nav className="sidebar-nav">
         {nav.map(item=>(
@@ -395,12 +380,26 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
         ))}
       </nav>
       <div className="sidebar-footer">
-        <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(255,255,255,0.08)",borderRadius:10,marginBottom:8,cursor:"default"}}>
+        <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(255,255,255,0.08)",borderRadius:10,marginBottom:8}}>
           <div className="sidebar-avatar" style={{flexShrink:0}}>{initials}</div>
           <div style={{flex:1,minWidth:0}}>
             <div className="sidebar-user-name" style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExibir}</div>
             {user.crp && <div className="sidebar-user-crp">{user.crp}</div>}
           </div>
+          {notifProps && (
+            <div style={{position:"relative",flexShrink:0}}>
+              <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
+                style={{background:"none",border:"none",cursor:"pointer",padding:6,borderRadius:8,display:"flex",alignItems:"center",color:"rgba(255,255,255,0.85)",position:"relative"}}>
+                <Icon name="bell" size={20}/>
+                {notifProps.naoLidas>0&&(
+                  <span style={{position:"absolute",top:-1,right:-1,width:16,height:16,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
+                    {notifProps.naoLidas>9?"9+":notifProps.naoLidas}
+                  </span>
+                )}
+              </button>
+              {notifProps.abertas&&<PainelNotificacoes {...notifProps}/>}
+            </div>
+          )}
         </div>
         {user.tipo==="psicologa"&&(
           <a href="../sala/" target="_blank" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(234,88,12,0.2)",borderRadius:8,marginBottom:2}}>
