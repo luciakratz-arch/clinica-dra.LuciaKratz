@@ -101,7 +101,68 @@ function navFiltradoPaciente(nav, user) {
 }
 
 // ─── SIDEBAR ─────────────────────────────────────────────
-function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo }) {
+function useNotifClinica(user) {
+  const [notifs, setNotifs] = useState([]);
+  const [abertas, setAbertas] = useState(false);
+  const vistos = useRef(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = db.collection("clinica_notificacoes")
+      .orderBy("createdAt","desc").limit(30)
+      .onSnapshot(snap => {
+        const todas = snap.docs.map(d=>({id:d.id,...d.data()}));
+        const visiveis = todas.filter(n => {
+          if (user.tipo === "paciente") return (n.tipo==="sessao"||n.tipo==="pagamento_pendente") && n.pacienteId===user.id;
+          if (user.tipo === "aluno")    return n.tipo==="supervisao" && n.alunoId===user.id;
+          return false;
+        });
+        const novas = visiveis.filter(n=>!vistos.current.has(n.id)&&!n.lida);
+        novas.forEach(n=>vistos.current.add(n.id));
+        setNotifs(visiveis);
+      }, ()=>{});
+    return unsub;
+  }, [user]);
+
+  const naoLidas = notifs.filter(n=>!n.lida).length;
+  async function marcarLida(id) { await db.collection("clinica_notificacoes").doc(id).update({lida:true}); }
+  async function marcarTodasLidas() {
+    const batch = db.batch();
+    notifs.filter(n=>!n.lida).forEach(n=>batch.update(db.collection("clinica_notificacoes").doc(n.id),{lida:true}));
+    await batch.commit();
+  }
+  return { notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas };
+}
+
+function PainelNotifClinica({ notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!abertas) return;
+    function fora(e) { if (ref.current&&!ref.current.contains(e.target)) setAbertas(false); }
+    document.addEventListener("mousedown",fora);
+    return ()=>document.removeEventListener("mousedown",fora);
+  }, [abertas]);
+  if (!abertas) return null;
+  return (
+    <div ref={ref} style={{position:"fixed",left:16,bottom:90,width:300,maxHeight:380,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 -4px 32px rgba(0,0,0,0.22)",zIndex:9999,border:"1px solid #e5e7eb"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px 8px",borderBottom:"1px solid #f3f4f6"}}>
+        <div style={{fontWeight:700,fontSize:14,color:"#111"}}>Notificações</div>
+        {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"#7B00C4",background:"none",border:"none",cursor:"pointer"}}>Marcar lidas</button>}
+      </div>
+      {notifs.length===0?(
+        <div style={{padding:"28px 16px",textAlign:"center",color:"#9ca3af",fontSize:13}}>Sem notificações</div>
+      ):notifs.map(n=>(
+        <div key={n.id} onClick={()=>marcarLida(n.id)}
+          style={{padding:"12px 16px",borderBottom:"1px solid #f9fafb",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}>
+          <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"#111"}}>{n.titulo}</div>
+          {n.corpo&&<div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{n.corpo}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps }) {
   const eCasal = modo === "casal";
   const navBase = user.tipo === "aluno" ? NAV_ALUNO : eCasal ? NAV_CASAL : NAV_INDIVIDUAL;
   const nav = (user.tipo === "paciente" && !eCasal) ? navFiltradoPaciente(navBase, user) : navBase;
@@ -119,12 +180,21 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo }) {
       </div>
 
       <div className="sidebar-footer" style={{borderTop:"none",paddingTop:12}}>
-        <div className="sidebar-user">
+        <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:8}}>
           <div className="sidebar-avatar">{(user.nome||"P")[0].toUpperCase()}</div>
-          <div>
+          <div style={{flex:1}}>
             <div className="sidebar-user-name">{user.nome}</div>
             <div className="sidebar-user-crp">{user.tipo==="aluno"?"Aluno/Estagiário":eCasal?"Terapia de Casal":"Paciente"}</div>
           </div>
+          {notifProps && (
+            <div style={{position:"relative",flexShrink:0}}>
+              <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
+                style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"4px 10px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                🔔{notifProps.naoLidas>0&&<span style={{background:"#ef4444",color:"white",fontSize:10,fontWeight:700,borderRadius:20,padding:"1px 5px"}}>{notifProps.naoLidas}</span>}
+              </button>
+              {notifProps.abertas&&<PainelNotifClinica {...notifProps}/>}
+            </div>
+          )}
         </div>
       </div>
 
@@ -899,13 +969,13 @@ function SeletorModo({ user, onEscolha }) {
 // ═══════════════════════════════════════════════════════
 function App() {
   const [user, setUser]   = useState(null);
-  const [modo, setModo]   = useState(null); // null | "individual" | "casal"
+  const [modo, setModo]   = useState(null);
   const [tab, setTab]     = useState(null);
+  const notifProps = useNotifClinica(user);
 
   function handleLogin(u) {
     setUser(u);
     if (u.tipo==="aluno") setTab("painel-aluno");
-    // paciente vai para SeletorModo primeiro
   }
 
   function handleEscolha(m) {
@@ -917,11 +987,10 @@ function App() {
 
   if (!user) return <Login onLogin={handleLogin}/>;
 
-  // Aluno vai direto
   if (user.tipo === "aluno") {
     return (
       <div>
-        <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} modo="aluno"/>
+        <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} modo="aluno" notifProps={notifProps}/>
         <div className="header-mobile">
           <div className="header-mobile-logo">Meu Espaço</div>
           <button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button>
@@ -955,6 +1024,7 @@ function App() {
   return (
     <div>
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} modo={modo}
+        notifProps={notifProps}
         onTrocarModo={user.casalId && (user.modulosAtivos||[]).length>0 ? ()=>{setModo(null);setTab(null);} : null}/>
 
       <div className="header-mobile">
