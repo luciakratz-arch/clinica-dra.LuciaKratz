@@ -45,6 +45,135 @@ const FERRAMENTAS = [
   { id:"alimentacao", nome:"Rastreamento Emocional da Alimentacao", desc:"Consciencia sobre relacao entre emocoes e alimentacao." },
 ];
 
+// ─── NOTIFICAÇÕES ─────────────────────────────────────────
+async function dispararNotificacao({ tipo, titulo, corpo="", pacienteId="" }) {
+  try {
+    await db.collection("clinica_notificacoes").add({
+      tipo, titulo, corpo, pacienteId,
+      lida: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {}
+}
+
+function tocarSomNotificacao() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.35);
+  } catch(e) {}
+}
+
+function notificacaoVisivel(notif, user) {
+  const t = notif.tipo;
+  if (user.tipo === "psicologa")  return ["sessao","pagamento","bloqueio_sala"].includes(t);
+  if (user.tipo === "secretaria") return ["sessao","pagamento_pendente"].includes(t);
+  if (user.tipo === "paulo")      return t === "pagamento";
+  return false;
+}
+
+function useNotificacoes(user) {
+  const [notifs, setNotifs] = useState([]);
+  const [abertas, setAbertas] = useState(false);
+  const vistos = useRef(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = db.collection("clinica_notificacoes")
+      .orderBy("createdAt","desc").limit(50)
+      .onSnapshot(snap => {
+        const todas = snap.docs.map(d=>({id:d.id,...d.data()}));
+        const visiveis = todas.filter(n=>notificacaoVisivel(n,user));
+        const novas = visiveis.filter(n=>!vistos.current.has(n.id)&&!n.lida);
+        if (novas.length > 0 && vistos.current.size > 0) tocarSomNotificacao();
+        novas.forEach(n=>vistos.current.add(n.id));
+        setNotifs(visiveis);
+      }, ()=>{});
+    return unsub;
+  }, [user]);
+
+  const naoLidas = notifs.filter(n=>!n.lida).length;
+
+  async function marcarLida(id) {
+    await db.collection("clinica_notificacoes").doc(id).update({lida:true});
+  }
+  async function marcarTodasLidas() {
+    const batch = db.batch();
+    notifs.filter(n=>!n.lida).forEach(n=>batch.update(db.collection("clinica_notificacoes").doc(n.id),{lida:true}));
+    await batch.commit();
+  }
+  return { notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas };
+}
+
+const LABEL_TIPO = {
+  sessao:"Sessão",
+  pagamento:"Pagamento",
+  pagamento_pendente:"Pagamento Pendente",
+  bloqueio_sala:"Bloqueio de Sala",
+  supervisao:"Supervisão"
+};
+const COR_TIPO = {
+  sessao:"#7B00C4",
+  pagamento:"#16a34a",
+  pagamento_pendente:"#d97706",
+  bloqueio_sala:"#ea580c",
+  supervisao:"#0891b2"
+};
+
+function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!abertas) return;
+    function fora(e) { if (ref.current&&!ref.current.contains(e.target)) setAbertas(false); }
+    document.addEventListener("mousedown",fora);
+    return ()=>document.removeEventListener("mousedown",fora);
+  }, [abertas]);
+
+  if (!abertas) return null;
+
+  return (
+    <div ref={ref} style={{position:"absolute",left:0,top:"calc(100% + 8px)",width:320,maxHeight:460,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
+        <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
+        {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
+      </div>
+      {notifs.length===0?(
+        <div style={{padding:"32px 16px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+          <Icon name="bell-off" size={32}/>
+          <div style={{marginTop:8}}>Sem notificações</div>
+        </div>
+      ):notifs.map(n=>{
+        const cor = COR_TIPO[n.tipo]||"#6b7280";
+        return (
+          <div key={n.id} onClick={()=>marcarLida(n.id)}
+            style={{display:"flex",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}
+            onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+            onMouseLeave={e=>e.currentTarget.style.background=n.lida?"white":"#faf5ff"}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:n.lida?"transparent":cor,marginTop:6,flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                <span style={{fontSize:11,fontWeight:700,color:cor,background:cor+"18",padding:"2px 7px",borderRadius:20}}>{LABEL_TIPO[n.tipo]||n.tipo}</span>
+                <span style={{fontSize:11,color:"var(--text-muted)"}}>
+                  {n.createdAt?.seconds?new Date(n.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
+                </span>
+              </div>
+              <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"var(--text)",lineHeight:1.4}}>{n.titulo}</div>
+              {n.corpo&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{n.corpo}</div>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function useCollection(col, orderField="createdAt") {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +247,7 @@ function Login({ onLogin }) {
         if (snap.empty) { setErro("Usuario nao encontrado."); setLoading(false); return; }
         const sec = { id:snap.docs[0].id, ...snap.docs[0].data() };
         if (sec.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
-        onLogin({ tipo:"secretaria", ...sec });
+        onLogin({ tipo:"secretaria", nome: sec.nome || sec.email || "Secretaria", ...sec });
       }
     } catch(e) { setErro("Erro ao conectar."); }
     setLoading(false);
@@ -225,21 +354,38 @@ const NAV_SECRETARIA = [
 const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}];
 
 // SIDEBAR
-function Sidebar({ user, tab, setTab, onLogout }) {
+function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
   const nav = user.tipo==="secretaria"?NAV_SECRETARIA:user.tipo==="paulo"?NAV_PAULO:NAV_PSICOLOGA;
   const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":"Area Administrativa";
-  const initials = (user.nome||"U").split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || user.email || "Usuário");
+  const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
   return (
     <div className="sidebar-desktop">
-      <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <img src={LOGO_URL} alt="LK" style={{width:44,height:44,objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
-          <span className="sidebar-logo-placeholder" style={{display:"none"}}>LK</span>
+      <div className="sidebar-header" style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div className="sidebar-logo">
+            <img src={LOGO_URL} alt="LK" style={{width:44,height:44,objectFit:"contain"}} onError={e=>{e.target.style.display="none";e.target.nextSibling.style.display="block";}}/>
+            <span className="sidebar-logo-placeholder" style={{display:"none"}}>LK</span>
+          </div>
+          <div>
+            <div className="sidebar-title">Dra. Lucia Kratz</div>
+            <div className="sidebar-role">{titulo}</div>
+          </div>
         </div>
-        <div>
-          <div className="sidebar-title">Dra. Lucia Kratz</div>
-          <div className="sidebar-role">{titulo}</div>
-        </div>
+        {notifProps && (
+          <div style={{position:"relative",flexShrink:0}}>
+            <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
+              style={{background:"rgba(255,255,255,0.12)",border:"none",cursor:"pointer",padding:7,borderRadius:9,display:"flex",alignItems:"center",color:"white",position:"relative"}}>
+              <Icon name="bell" size={19}/>
+              {notifProps.naoLidas>0&&(
+                <span style={{position:"absolute",top:-2,right:-2,width:17,height:17,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
+                  {notifProps.naoLidas>9?"9+":notifProps.naoLidas}
+                </span>
+              )}
+            </button>
+            {notifProps.abertas&&<PainelNotificacoes {...notifProps}/>}
+          </div>
+        )}
       </div>
       <nav className="sidebar-nav">
         {nav.map(item=>(
@@ -249,10 +395,10 @@ function Sidebar({ user, tab, setTab, onLogout }) {
         ))}
       </nav>
       <div className="sidebar-footer">
-        <div className="sidebar-user">
-          <div className="sidebar-avatar">{initials}</div>
-          <div>
-            <div className="sidebar-user-name">{user.nome}</div>
+        <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(255,255,255,0.08)",borderRadius:10,marginBottom:8,cursor:"default"}}>
+          <div className="sidebar-avatar" style={{flexShrink:0}}>{initials}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="sidebar-user-name" style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExibir}</div>
             {user.crp && <div className="sidebar-user-crp">{user.crp}</div>}
           </div>
         </div>
@@ -1290,6 +1436,14 @@ function FinanceiroClinica() {
       await db.collection("clinica_lancamentos").doc(editando).update(dados);
     } else {
       await db.collection("clinica_lancamentos").add({...dados,tipo_lancamento:"avulso",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      if(formAvulso.status==="pendente"){
+        await dispararNotificacao({
+          tipo:"pagamento_pendente",
+          titulo:`Pagamento pendente — ${pac?.nome||"Paciente"}`,
+          corpo:`R$ ${parseFloat(formAvulso.valor).toFixed(2).replace(".",",")} · ${formAvulso.tipo} · ${formAvulso.data?.split("-").reverse().join("/")||""}`,
+          pacienteId: formAvulso.pacienteId
+        });
+      }
     }
     setModal(false);setEditando(null);setFormAvulso({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});setSalvando(false);
   }
@@ -4423,6 +4577,8 @@ function Depoimentos() {
     </div>
   );
 }
+
+function Configuracoes() {
   const [tiposLaudo, setTiposLaudo] = useState([
     "Avaliacao Neuropsicologica","Avaliacao Psicologica","Avaliacao Infantil",
     "Avaliacao de TDAH","Avaliacao de Altas Habilidades","Pericia Psicologica",
@@ -4637,8 +4793,20 @@ function Agenda() {
     const dados = {...form, pacienteNome:pac?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
     if(editando){
       await db.collection("clinica_sessoes").doc(editando).update(dados);
+      await dispararNotificacao({
+        tipo:"sessao",
+        titulo:`Sessão atualizada — ${pac?.nome||"Paciente"}`,
+        corpo:`${form.data?.split("-").reverse().join("/") || ""} às ${form.hora} · ${form.tipo}`,
+        pacienteId: form.pacienteId
+      });
     } else {
       await db.collection("clinica_sessoes").add({...dados, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      await dispararNotificacao({
+        tipo:"sessao",
+        titulo:`Nova sessão agendada — ${pac?.nome||"Paciente"}`,
+        corpo:`${form.data?.split("-").reverse().join("/") || ""} às ${form.hora} · ${form.tipo}`,
+        pacienteId: form.pacienteId
+      });
     }
     setModal(false);setEditando(null);setForm({pacienteId:"",data:"",hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setSalvando(false);
   }
@@ -4690,8 +4858,18 @@ function Agenda() {
         batch.set(ref, {...base, data:dataStr, recorrenteRef:formSala.data});
       }
       await batch.commit();
+      await dispararNotificacao({
+        tipo:"bloqueio_sala",
+        titulo:`Sala bloqueada — recorrente (12 semanas)`,
+        corpo:`${formSala.data?.split("-").reverse().join("/") || ""} · ${formSala.horaInicio}–${formSala.horaFim}${formSala.titulo?" · "+formSala.titulo:""}`
+      });
     } else {
       await db.collection("sala_reservas").add({...base, data:formSala.data});
+      await dispararNotificacao({
+        tipo:"bloqueio_sala",
+        titulo:`Sala bloqueada — ${formSala.data?.split("-").reverse().join("/") || ""}`,
+        corpo:`${formSala.horaInicio}–${formSala.horaFim}${formSala.titulo?" · "+formSala.titulo:""}`
+      });
     }
     setModalSala(false);
     setFormSala({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});
@@ -4968,12 +5146,13 @@ function Agenda() {
 function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
+  const notifProps = useNotificacoes(user);
   function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");}
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
     <div>
-      <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout}/>
+      <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} notifProps={notifProps}/>
       <div className="header-mobile"><div className="header-mobile-logo">Administracao</div><button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button></div>
       <div className="main-content">
         {user.tipo==="psicologa"  &&tab==="dashboard"   &&<DashboardAdmin user={user}/>}
@@ -4985,6 +5164,20 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {tab==="__menu__"&&(
+          <div style={{padding:20}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>Menu</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              {NAV_PSICOLOGA.filter(i=>!["dashboard","pacientes","agenda","fin-clinica"].includes(i.id)).map(item=>(
+                <button key={item.id} onClick={()=>setTab(item.id)}
+                  style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"20px 12px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:500,color:"var(--text)"}}>
+                  <Icon name={item.icon} size={24}/>
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {user.tipo==="psicologa"  &&tab==="depoimentos" &&<Depoimentos/>}
         {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
@@ -4993,8 +5186,30 @@ function App() {
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
       </div>
       <div className="nav-mobile">
-        {(user.tipo==="psicologa"?NAV_PSICOLOGA.slice(0,5):user.tipo==="secretaria"?NAV_SECRETARIA:NAV_PAULO).map(item=>(
-          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}><Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span></button>
+        {user.tipo==="psicologa"&&[
+          {id:"dashboard",  label:"Início",    icon:"layout-dashboard"},
+          {id:"pacientes",  label:"Pacientes", icon:"users"},
+          {id:"agenda",     label:"Agenda",    icon:"calendar"},
+          {id:"fin-clinica",label:"Financeiro",icon:"dollar-sign"},
+        ].map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label}</span>
+          </button>
+        ))}
+        {user.tipo==="psicologa"&&(
+          <button className="nav-mobile-item" onClick={()=>setTab("__menu__")}>
+            <Icon name="menu" size={20}/><span>Mais</span>
+          </button>
+        )}
+        {user.tipo==="secretaria"&&NAV_SECRETARIA.slice(0,5).map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
+          </button>
+        ))}
+        {user.tipo==="paulo"&&NAV_PAULO.map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
+          </button>
         ))}
       </div>
     </div>
