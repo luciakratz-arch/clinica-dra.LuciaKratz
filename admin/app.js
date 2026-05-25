@@ -631,7 +631,10 @@ function AbaModulos({ paciente }) {
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    const u1 = db.collection("clinica_recursos").onSnapshot(s => setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    const u1 = db.collection("clinica_recursos").onSnapshot(s => {
+      const todos = s.docs.map(d=>({id:d.id,...d.data()}));
+      setRecursos(todos);
+    }, ()=>{});
     const u2 = db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
     return () => { u1(); u2(); };
   }, []);
