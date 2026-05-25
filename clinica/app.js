@@ -101,64 +101,94 @@ function navFiltradoPaciente(nav, user) {
 }
 
 // ─── SIDEBAR ─────────────────────────────────────────────
-function useNotifClinica(user) {
-  const [notifs, setNotifs] = useState([]);
-  const [abertas, setAbertas] = useState(false);
-  const vistos = useRef(new Set());
-
-  useEffect(() => {
-    if (!user) return;
-    const unsub = db.collection("clinica_notificacoes")
-      .orderBy("createdAt","desc").limit(30)
-      .onSnapshot(snap => {
-        const todas = snap.docs.map(d=>({id:d.id,...d.data()}));
-        const visiveis = todas.filter(n => {
-          if (user.tipo === "paciente") return (n.tipo==="sessao"||n.tipo==="pagamento_pendente") && n.pacienteId===user.id;
-          if (user.tipo === "aluno")    return n.tipo==="supervisao" && n.alunoId===user.id;
-          return false;
-        });
-        const novas = visiveis.filter(n=>!vistos.current.has(n.id)&&!n.lida);
-        novas.forEach(n=>vistos.current.add(n.id));
-        setNotifs(visiveis);
-      }, ()=>{});
-    return unsub;
-  }, [user]);
-
-  const naoLidas = notifs.filter(n=>!n.lida).length;
-  async function marcarLida(id) { await db.collection("clinica_notificacoes").doc(id).update({lida:true}); }
-  async function marcarTodasLidas() {
-    const batch = db.batch();
-    notifs.filter(n=>!n.lida).forEach(n=>batch.update(db.collection("clinica_notificacoes").doc(n.id),{lida:true}));
-    await batch.commit();
-  }
-  return { notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas };
+function fmtDataNotif(dataStr) {
+  if (!dataStr) return "";
+  const d = new Date(dataStr + "T00:00:00");
+  return d.toLocaleDateString("pt-BR", {weekday:"long", day:"2-digit", month:"2-digit"});
 }
 
-function PainelNotifClinica({ notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas }) {
-  const ref = useRef(null);
+function enviarPushLocal(titulo, corpo) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(titulo, { body: corpo, icon: "../logo-transparente.png" });
+  }
+}
+
+async function verificarLembretesClinica(user) {
+  if (!user) return;
+  const hoje = new Date();
+  const amanha = new Date(hoje); amanha.setDate(hoje.getDate() + 1);
+  const fmtDate = d => d.toISOString().split("T")[0];
+  try {
+    if (user.tipo === "paciente") {
+      const snap = await db.collection("clinica_sessoes")
+        .where("pacienteId","==",user.id)
+        .where("data","in",[fmtDate(hoje), fmtDate(amanha)])
+        .where("status","==","agendado").get();
+      snap.docs.forEach(d => {
+        const s = d.data();
+        const dia = s.data === fmtDate(hoje) ? "Hoje" : "Amanhã";
+        enviarPushLocal(`${dia} — Sessão às ${s.hora}`, fmtDataNotif(s.data));
+      });
+      const snapPag = await db.collection("clinica_lancamentos")
+        .where("pacienteId","==",user.id)
+        .where("status","==","pendente").get();
+      snapPag.docs.slice(0,2).forEach(d => {
+        const l = d.data();
+        enviarPushLocal(
+          `Pagamento previsto — ${fmtDataNotif(l.data)}`,
+          `R$ ${parseFloat(l.valor||0).toFixed(2).replace(".",",")}`
+        );
+      });
+    }
+    if (user.tipo === "aluno") {
+      const snap = await db.collection("clinica_sessoes")
+        .where("alunoId","==",user.id)
+        .where("data","in",[fmtDate(hoje), fmtDate(amanha)]).get();
+      snap.docs.forEach(d => {
+        const s = d.data();
+        const dia = s.data === fmtDate(hoje) ? "Hoje" : "Amanhã";
+        enviarPushLocal(`${dia} — Supervisão às ${s.hora}`, fmtDataNotif(s.data));
+      });
+    }
+  } catch(e) {}
+}
+
+function useBotaoNotificacao(user) {
+  const [permissao, setPermissao] = useState(
+    "Notification" in window ? Notification.permission : "denied"
+  );
   useEffect(() => {
-    if (!abertas) return;
-    function fora(e) { if (ref.current&&!ref.current.contains(e.target)) setAbertas(false); }
-    document.addEventListener("mousedown",fora);
-    return ()=>document.removeEventListener("mousedown",fora);
-  }, [abertas]);
-  if (!abertas) return null;
+    if (!user || permissao !== "granted") return;
+    const t = setTimeout(() => verificarLembretesClinica(user), 2000);
+    return () => clearTimeout(t);
+  }, [user, permissao]);
+  async function ativar() {
+    if (!("Notification" in window)) { alert("Seu navegador não suporta notificações."); return; }
+    const p = await Notification.requestPermission();
+    setPermissao(p);
+    if (p === "granted") verificarLembretesClinica(user);
+  }
+  return { permissao, ativar };
+}
+
+function BotaoNotificacao({ permissao, ativar }) {
+  if (!("Notification" in window)) return null;
+  if (permissao === "granted") return (
+    <span style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 12px",fontSize:12,fontFamily:"inherit"}}>
+      🔔 Ativo
+    </span>
+  );
+  if (permissao === "denied") return (
+    <span style={{background:"rgba(255,0,0,0.15)",border:"1px solid rgba(255,0,0,0.3)",color:"#fca5a5",borderRadius:20,padding:"5px 12px",fontSize:12}}>
+      🔕 Bloqueado
+    </span>
+  );
   return (
-    <div ref={ref} style={{position:"fixed",left:16,bottom:90,width:300,maxHeight:380,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 -4px 32px rgba(0,0,0,0.22)",zIndex:9999,border:"1px solid #e5e7eb"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px 8px",borderBottom:"1px solid #f3f4f6"}}>
-        <div style={{fontWeight:700,fontSize:14,color:"#111"}}>Notificações</div>
-        {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"#7B00C4",background:"none",border:"none",cursor:"pointer"}}>Marcar lidas</button>}
-      </div>
-      {notifs.length===0?(
-        <div style={{padding:"28px 16px",textAlign:"center",color:"#9ca3af",fontSize:13}}>Sem notificações</div>
-      ):notifs.map(n=>(
-        <div key={n.id} onClick={()=>marcarLida(n.id)}
-          style={{padding:"12px 16px",borderBottom:"1px solid #f9fafb",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}>
-          <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"#111"}}>{n.titulo}</div>
-          {n.corpo&&<div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{n.corpo}</div>}
-        </div>
-      ))}
-    </div>
+    <button onClick={ativar}
+      style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+      🔔 Ativar
+    </button>
   );
 }
 
@@ -186,15 +216,7 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps }
             <div className="sidebar-user-name">{user.nome}</div>
             <div className="sidebar-user-crp">{user.tipo==="aluno"?"Aluno/Estagiário":eCasal?"Terapia de Casal":"Paciente"}</div>
           </div>
-          {notifProps && (
-            <div style={{position:"relative",flexShrink:0}}>
-              <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
-                style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"4px 10px",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
-                🔔{notifProps.naoLidas>0&&<span style={{background:"#ef4444",color:"white",fontSize:10,fontWeight:700,borderRadius:20,padding:"1px 5px"}}>{notifProps.naoLidas}</span>}
-              </button>
-              {notifProps.abertas&&<PainelNotifClinica {...notifProps}/>}
-            </div>
-          )}
+          {notifProps && <BotaoNotificacao {...notifProps}/>}
         </div>
       </div>
 
@@ -971,7 +993,7 @@ function App() {
   const [user, setUser]   = useState(null);
   const [modo, setModo]   = useState(null);
   const [tab, setTab]     = useState(null);
-  const notifProps = useNotifClinica(user);
+  const notifProps = useBotaoNotificacao(user);
 
   function handleLogin(u) {
     setUser(u);
