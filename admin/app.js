@@ -136,51 +136,40 @@ function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida,
     return ()=>document.removeEventListener("mousedown",fora);
   }, [abertas]);
 
+  if (!abertas) return null;
+
   return (
-    <div ref={ref} style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
-      <button onClick={()=>setAbertas(!abertas)}
-        style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:"6px 8px",borderRadius:8,display:"flex",alignItems:"center",color:"rgba(255,255,255,0.85)"}}>
-        <Icon name="bell" size={20}/>
-        {naoLidas>0&&(
-          <span style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
-            {naoLidas>9?"9+":naoLidas}
-          </span>
-        )}
-      </button>
-      {abertas&&(
-        <div style={{position:"absolute",right:0,bottom:"calc(100% + 8px)",width:340,maxHeight:460,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
-            <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
-            {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
-          </div>
-          {notifs.length===0?(
-            <div style={{padding:"32px 16px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
-              <Icon name="bell-off" size={32}/>
-              <div style={{marginTop:8}}>Sem notificações</div>
-            </div>
-          ):notifs.map(n=>{
-            const cor = COR_TIPO[n.tipo]||"#6b7280";
-            return (
-              <div key={n.id} onClick={()=>marcarLida(n.id)}
-                style={{display:"flex",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
-                onMouseLeave={e=>e.currentTarget.style.background=n.lida?"white":"#faf5ff"}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:n.lida?"transparent":cor,marginTop:6,flexShrink:0}}/>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                    <span style={{fontSize:11,fontWeight:700,color:cor,background:cor+"18",padding:"2px 7px",borderRadius:20}}>{LABEL_TIPO[n.tipo]||n.tipo}</span>
-                    <span style={{fontSize:11,color:"var(--text-muted)"}}>
-                      {n.createdAt?.seconds?new Date(n.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
-                    </span>
-                  </div>
-                  <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"var(--text)",lineHeight:1.4}}>{n.titulo}</div>
-                  {n.corpo&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{n.corpo}</div>}
-                </div>
-              </div>
-            );
-          })}
+    <div ref={ref} style={{position:"absolute",left:0,bottom:"calc(100% + 8px)",width:340,maxHeight:460,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.22)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
+        <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
+        {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
+      </div>
+      {notifs.length===0?(
+        <div style={{padding:"32px 16px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+          <Icon name="bell-off" size={32}/>
+          <div style={{marginTop:8}}>Sem notificações</div>
         </div>
-      )}
+      ):notifs.map(n=>{
+        const cor = COR_TIPO[n.tipo]||"#6b7280";
+        return (
+          <div key={n.id} onClick={()=>marcarLida(n.id)}
+            style={{display:"flex",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}
+            onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+            onMouseLeave={e=>e.currentTarget.style.background=n.lida?"white":"#faf5ff"}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:n.lida?"transparent":cor,marginTop:6,flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                <span style={{fontSize:11,fontWeight:700,color:cor,background:cor+"18",padding:"2px 7px",borderRadius:20}}>{LABEL_TIPO[n.tipo]||n.tipo}</span>
+                <span style={{fontSize:11,color:"var(--text-muted)"}}>
+                  {n.createdAt?.seconds?new Date(n.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
+                </span>
+              </div>
+              <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"var(--text)",lineHeight:1.4}}>{n.titulo}</div>
+              {n.corpo&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{n.corpo}</div>}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -258,7 +247,7 @@ function Login({ onLogin }) {
         if (snap.empty) { setErro("Usuario nao encontrado."); setLoading(false); return; }
         const sec = { id:snap.docs[0].id, ...snap.docs[0].data() };
         if (sec.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
-        onLogin({ tipo:"secretaria", ...sec });
+        onLogin({ tipo:"secretaria", nome: sec.nome || sec.email || "Secretaria", ...sec });
       }
     } catch(e) { setErro("Erro ao conectar."); }
     setLoading(false);
@@ -405,13 +394,26 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
         ))}
       </nav>
       <div className="sidebar-footer">
-        <div className="sidebar-user">
-          <div className="sidebar-avatar">{initials}</div>
-          <div style={{flex:1}}>
-            <div className="sidebar-user-name">{user.nome}</div>
+        <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(255,255,255,0.08)",borderRadius:10,marginBottom:8,cursor:"default"}}>
+          <div className="sidebar-avatar" style={{flexShrink:0}}>{initials}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="sidebar-user-name" style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.nome||"Usuário"}</div>
             {user.crp && <div className="sidebar-user-crp">{user.crp}</div>}
           </div>
-          {notifProps && <PainelNotificacoes {...notifProps}/>}
+          {notifProps && (
+            <div style={{position:"relative",flexShrink:0}}>
+              <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
+                style={{background:"none",border:"none",cursor:"pointer",padding:6,borderRadius:8,display:"flex",alignItems:"center",color:"rgba(255,255,255,0.85)",position:"relative"}}>
+                <Icon name="bell" size={20}/>
+                {notifProps.naoLidas>0&&(
+                  <span style={{position:"absolute",top:0,right:0,width:16,height:16,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
+                    {notifProps.naoLidas>9?"9+":notifProps.naoLidas}
+                  </span>
+                )}
+              </button>
+              {notifProps.abertas&&<PainelNotificacoes {...notifProps}/>}
+            </div>
+          )}
         </div>
         {user.tipo==="psicologa"&&(
           <a href="../sala/" target="_blank" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(234,88,12,0.2)",borderRadius:8,marginBottom:2}}>
