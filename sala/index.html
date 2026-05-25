@@ -474,19 +474,37 @@ function render(){
         const minhas = s.reservas.filter(r=>r.usuarioId===u.id&&r.data>=fmt(hj))
           .sort((a,b)=>a.data.localeCompare(b.data)||a.horaInicio.localeCompare(b.horaInicio));
         if(!minhas.length) return `<div class="card"><div class="empty">Nenhuma reserva futura. Clique em "+ Nova Reserva".</div></div>`;
-        return `<div class="card">${minhas.map(r=>`
-          <div class="reserva-row">
-            <div class="reserva-icon" style="background:${u.bg}">📅</div>
-            <div>
-              <div class="reserva-data">${new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
-              <div class="reserva-hora">${r.horaInicio} – ${r.horaFim}${r.titulo?" · "+r.titulo:""}${r.recorrenteRef?` <span style="font-size:10px;color:${u.cor}">↻ recorrente</span>`:""}</div>
-            </div>
-            <div class="reserva-actions">
-              <button class="btn btn-ghost" style="padding:6px 10px" onclick="editarReserva('${r.id}')">✎</button>
-              <button class="btn btn-ghost" style="padding:6px 10px;color:#dc2626" onclick="cancelarReservaById('${r.id}')">🗑</button>
-            </div>
+        // Agrupa por semana
+        const semanaAtual = s.semanaOffset;
+        const diasSemana = getDias(semanaAtual);
+        const inicioSemana = fmt(diasSemana[0]);
+        const fimSemana = fmt(diasSemana[6]);
+        const daSemana = minhas.filter(r=>r.data>=inicioSemana&&r.data<=fimSemana);
+        const temAnterior = minhas.some(r=>r.data<inicioSemana);
+        const temProxima = minhas.some(r=>r.data>fimSemana);
+        const labelSemana = `${diasSemana[0].toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})} — ${diasSemana[6].toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})}`;
+        return `
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <button class="btn btn-ghost" style="padding:6px 12px" onclick="setState({semanaOffset:${semanaAtual-1}})" ${!temAnterior?"disabled style='opacity:.4;cursor:not-allowed;padding:6px 12px'":""}>‹</button>
+            <span style="flex:1;text-align:center;font-size:13px;font-weight:600;color:#6b7280">${labelSemana}</span>
+            <button class="btn btn-ghost" style="padding:6px 12px" onclick="setState({semanaOffset:${semanaAtual+1}})" ${!temProxima?"disabled style='opacity:.4;cursor:not-allowed;padding:6px 12px'":""}>›</button>
           </div>
-        `).join("")}</div>`;
+          <div class="card">${daSemana.length===0
+            ? `<div class="empty">Nenhuma reserva nesta semana.</div>`
+            : daSemana.map(r=>`
+              <div class="reserva-row">
+                <div class="reserva-icon" style="background:${u.bg}">📅</div>
+                <div>
+                  <div class="reserva-data">${new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
+                  <div class="reserva-hora">${r.horaInicio} – ${r.horaFim}${r.titulo?" · "+r.titulo:""}${r.recorrenteRef?` <span style="font-size:10px;color:${u.cor}">↻ recorrente</span>`:""}</div>
+                </div>
+                <div class="reserva-actions">
+                  <button class="btn btn-ghost" style="padding:6px 10px" onclick="editarReserva('${r.id}')">✎</button>
+                  <button class="btn btn-ghost" style="padding:6px 10px;color:#dc2626" onclick="cancelarReservaById('${r.id}')">🗑</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>`;
       })()}
     </div>
   </div>
