@@ -364,7 +364,8 @@ function render(){
       </div>
       <div class="s-user">
         <div class="s-avatar" style="background:${u.cor}">${u.nome[0]}</div>
-        <div><div class="s-name">${u.nome}</div><div class="s-role">Psicóloga</div></div>
+        <div style="flex:1"><div class="s-name">${u.nome}</div><div class="s-role">Psicóloga</div></div>
+        ${renderBotaoNotif()}
       </div>
       <div class="s-legend">
         <div class="s-legend-title">Legenda</div>
@@ -639,6 +640,47 @@ function pedirLiberacaoById(id, fromConflito){
 }
 function updateForm(key,val){ setState({form:{...state.form,[key]:val}}); }
 function setRecorrencia(val){ setState({form:{...state.form,recorrencia:val}}); }
+
+// ─── NOTIFICAÇÕES PUSH ───────────────────────────────────
+function renderBotaoNotif() {
+  if (!("Notification" in window)) return "";
+  const p = Notification.permission;
+  if (p === "granted") return `<span style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 12px;font-size:12px;white-space:nowrap">🔔 Ativo</span>`;
+  if (p === "denied")  return `<span style="background:rgba(255,0,0,0.15);border:1px solid rgba(255,0,0,0.3);color:#fca5a5;border-radius:20px;padding:5px 12px;font-size:12px">🔕 Bloqueado</span>`;
+  return `<button onclick="ativarNotif()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap">🔔 Ativar</button>`;
+}
+
+function fmtDataNotifSala(dataStr) {
+  if (!dataStr) return "";
+  return new Date(dataStr+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"});
+}
+
+function enviarPush(titulo, corpo) {
+  if (Notification.permission === "granted") {
+    new Notification(titulo, { body: corpo, icon: "../logo-transparente.png" });
+  }
+}
+
+function verificarLembretes() {
+  const u = state.user;
+  if (!u) return;
+  const hj = fmt(new Date());
+  const amanha = fmt(new Date(Date.now() + 86400000));
+  state.reservas.filter(r => r.usuarioId===u.id && (r.data===hj||r.data===amanha)).forEach(r => {
+    const dia = r.data===hj ? "Hoje" : "Amanhã";
+    enviarPush(`${dia} — Sala ${r.horaInicio}–${r.horaFim}`, fmtDataNotifSala(r.data));
+  });
+  state.pedidos.filter(p => p.para===u.id).forEach(p => {
+    enviarPush(`${p.deNome} quer a sala`, `${fmtDataNotifSala(p.data)} · ${p.horaInicio}–${p.horaFim}`);
+  });
+}
+
+async function ativarNotif() {
+  if (!("Notification" in window)) { alert("Seu navegador não suporta notificações."); return; }
+  const p = await Notification.requestPermission();
+  if (p === "granted") verificarLembretes();
+  render();
+}
 
 render();
 </script>
