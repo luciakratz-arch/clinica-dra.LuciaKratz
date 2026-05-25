@@ -279,14 +279,19 @@ function App() {
             <div className="sidebar-sub">Espaço compartilhado</div>
           </div>
         </div>
-        <div className="sidebar-user">
+        <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:8}}>
           <div className="sidebar-avatar" style={{background:user.cor}}>
             {user.nome[0]}
           </div>
-          <div>
+          <div style={{flex:1}}>
             <div className="sidebar-user-name">{user.nome}</div>
             <div className="sidebar-user-role">Psicóloga</div>
           </div>
+          {pedidosParaMim.length>0&&(
+            <div style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"4px 10px",fontSize:12,display:"flex",alignItems:"center",gap:4}}>
+              🔔<span style={{background:"#ef4444",color:"white",fontSize:10,fontWeight:700,borderRadius:20,padding:"1px 5px"}}>{pedidosParaMim.length}</span>
+            </div>
+          )}
         </div>
 
         {/* Legenda */}
