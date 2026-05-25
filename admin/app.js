@@ -673,7 +673,7 @@ function AbaModulos({ paciente }) {
     { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.tipo!=="musicoterapia"&&r.tipo!=="casal").map(f=>({id:f.id, nome:f.nome||f.titulo, desc:f.categoria||f.tipo||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.tipo==="musicoterapia"||r.categoria==="Musicoterapia").map(f=>({id:f.id, nome:f.nome||f.titulo, desc:f.descricao||""})) },
-    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Ativado automaticamente ao vincular casal", icone:"💑", ferramentas: [], automatico: true },
+    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Ativado automaticamente ao vincular casal", icone:"💑", ferramentas: recursos.filter(r=>r.tipo==="casal"||r.categoria==="Terapia de Casais"||r.tipo==="terapia-casal").map(f=>({id:f.id, nome:f.nome||f.titulo, desc:f.descricao||f.subtitulo||""})), automatico: false },
   ];
 
   return (
