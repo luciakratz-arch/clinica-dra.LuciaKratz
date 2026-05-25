@@ -293,21 +293,36 @@ function App() {
 
         {/* Pedidos pendentes */}
         {pedidosParaMim.length>0&&(
-          <div style={{padding:"12px 16px",background:"rgba(239,68,68,.15)",margin:"8px",borderRadius:10}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
-              <Icon name="bell" size={13}/> {pedidosParaMim.length} pedido(s)
+          <div style={{padding:"12px",background:"rgba(239,68,68,.15)",margin:"8px",borderRadius:12,border:"1px solid rgba(239,68,68,.3)"}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#fca5a5",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+              <Icon name="bell" size={13}/> {pedidosParaMim.length} pedido(s) pendente(s)
             </div>
-            {pedidosParaMim.map(p=>(
-              <div key={p.id} style={{fontSize:11,color:"rgba(255,255,255,.8)",marginBottom:8}}>
-                <div>{p.deNome} quer {p.horaInicio}–{p.horaFim}</div>
-                <div style={{display:"flex",gap:6,marginTop:6}}>
-                  <button onClick={()=>responderPedido(p.id,true)}
-                    style={{flex:1,padding:"4px",borderRadius:6,background:"#059669",color:"white",border:"none",fontSize:11,fontWeight:600,cursor:"pointer"}}>Liberar</button>
-                  <button onClick={()=>responderPedido(p.id,false)}
-                    style={{flex:1,padding:"4px",borderRadius:6,background:"#dc2626",color:"white",border:"none",fontSize:11,fontWeight:600,cursor:"pointer"}}>Manter</button>
+            {pedidosParaMim.map(p=>{
+              const dataFormatada = p.data ? new Date(p.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"}) : "";
+              return (
+                <div key={p.id} style={{background:"rgba(255,255,255,.1)",borderRadius:10,padding:"10px",marginBottom:8}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"white",marginBottom:3}}>
+                    {p.deNome} quer a sala
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fde68a",marginBottom:2}}>
+                    📅 {dataFormatada}
+                  </div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,.85)",marginBottom:10}}>
+                    🕐 {p.horaInicio} – {p.horaFim}
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>responderPedido(p.id,true)}
+                      style={{flex:1,padding:"8px 6px",borderRadius:8,background:"#059669",color:"white",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                      ✓ Liberar
+                    </button>
+                    <button onClick={()=>responderPedido(p.id,false)}
+                      style={{flex:1,padding:"8px 6px",borderRadius:8,background:"#dc2626",color:"white",border:"none",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                      ✕ Manter
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
