@@ -607,25 +607,134 @@ function AbaPerfil({ paciente, pacientes }) {
 }
 
 // ABA MODULOS
-function AbaModulos({ paciente }) {
-  const [modulos, setModulos] = useState(paciente.modulosAtivos||[]);
-  async function toggle(id) {
-    const novos = modulos.includes(id)?modulos.filter(m=>m!==id):[...modulos,id];
-    setModulos(novos);
-    await db.collection("clinica_pacientes").doc(paciente.id).update({modulosAtivos:novos});
-  }
+// FERRAMENTAS FIXAS DO MÓDULO I
+const FERRAMENTAS_MOD1 = [
+  { id:"humor",    nome:"Registro de Humor",        desc:"Escala de humor diária" },
+  { id:"diario",   nome:"Diário Terapêutico",        desc:"Escrita reflexiva livre" },
+  { id:"metas",    nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
+  { id:"reflexoes",nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
+  { id:"tcc",      nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
+];
+
+function Toggle({ ativo, onClick }) {
   return (
-    <div className="card">
-      <div style={{fontWeight:600,marginBottom:4}}>Modulos Ativos</div>
-      <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Ative ou desative modulos para personalizar a experiencia terapeutica deste paciente.</p>
-      {MODULOS.map(m=>(
-        <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 0",borderBottom:"1px solid var(--gray-100)"}}>
-          <div><div style={{fontWeight:500,fontSize:14}}>{m.nome}</div><div style={{fontSize:12,color:"var(--text-muted)"}}>{m.desc}</div></div>
-          <button onClick={()=>toggle(m.id)} style={{width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:modulos.includes(m.id)?"var(--purple)":"var(--gray-200)",position:"relative",transition:"background .2s",flexShrink:0}}>
-            <span style={{position:"absolute",top:2,left:modulos.includes(m.id)?"22px":"2px",width:20,height:20,borderRadius:"50%",background:"white",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
-          </button>
-        </div>
-      ))}
+    <button onClick={onClick} style={{width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:ativo?"var(--purple)":"var(--gray-200)",position:"relative",transition:"background .2s",flexShrink:0}}>
+      <span style={{position:"absolute",top:2,left:ativo?"22px":"2px",width:20,height:20,borderRadius:"50%",background:"white",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
+    </button>
+  );
+}
+
+function AbaModulos({ paciente }) {
+  const [config, setConfig] = useState(paciente.modulosConfig || {});
+  const [recursos, setRecursos] = useState([]);
+  const [fabulas, setFabulas] = useState([]);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    const u1 = db.collection("clinica_recursos").onSnapshot(s => setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    const u2 = db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    return () => { u1(); u2(); };
+  }, []);
+
+  async function salvarConfig(novaConfig) {
+    setConfig(novaConfig);
+    // Atualiza também modulosAtivos para compatibilidade
+    const ativos = Object.keys(novaConfig).filter(k => novaConfig[k]?.ativo);
+    await db.collection("clinica_pacientes").doc(paciente.id).update({
+      modulosConfig: novaConfig,
+      modulosAtivos: ativos
+    });
+  }
+
+  function toggleModulo(modId) {
+    const atual = config[modId] || {};
+    const novaConfig = { ...config, [modId]: { ...atual, ativo: !atual.ativo, ferramentas: atual.ferramentas || {} } };
+    salvarConfig(novaConfig);
+  }
+
+  function toggleFerramenta(modId, ferrId) {
+    const modAtual = config[modId] || { ativo: true, ferramentas: {} };
+    const ferrAtual = modAtual.ferramentas || {};
+    const ferrNova = ferrAtual[ferrId] ? null : { ativo: true, dataInicio: "" };
+    const novaFerr = { ...ferrAtual };
+    if (ferrNova) novaFerr[ferrId] = ferrNova;
+    else delete novaFerr[ferrId];
+    salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: novaFerr } });
+  }
+
+  function setDataInicio(modId, ferrId, data) {
+    const modAtual = config[modId] || { ativo: true, ferramentas: {} };
+    const ferrAtual = modAtual.ferramentas || {};
+    salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: { ...ferrAtual, [ferrId]: { ...(ferrAtual[ferrId]||{}), dataInicio: data } } } });
+  }
+
+  const MODULOS_DEF = [
+    { id:"mod1", nome:"Módulo I — Dashboard", desc:"Ferramentas do dia a dia", icone:"🧠", ferramentas: FERRAMENTAS_MOD1 },
+    { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
+    { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.tipo!=="musicoterapia"&&r.tipo!=="casal").map(f=>({id:f.id, nome:f.nome||f.titulo, desc:f.categoria||f.tipo||""})) },
+    { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.tipo==="musicoterapia"||r.categoria==="Musicoterapia").map(f=>({id:f.id, nome:f.nome||f.titulo, desc:f.descricao||""})) },
+    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Ativado automaticamente ao vincular casal", icone:"💑", ferramentas: [], automatico: true },
+  ];
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      {MODULOS_DEF.map(mod => {
+        const modConfig = config[mod.id] || {};
+        const ativo = !!modConfig.ativo;
+        const ferramentas = modConfig.ferramentas || {};
+        return (
+          <div key={mod.id} style={{background:"white",borderRadius:14,border:`2px solid ${ativo?"var(--purple)":"var(--gray-200)"}`,overflow:"hidden",transition:"border-color .2s"}}>
+            {/* Cabeçalho do módulo */}
+            <div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",background:ativo?"var(--purple-bg)":"white"}}>
+              <div style={{fontSize:24}}>{mod.icone}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:15,color:"var(--text)"}}>{mod.nome}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}</div>
+              </div>
+              {mod.automatico ? (
+                <span style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>automático</span>
+              ) : (
+                <Toggle ativo={ativo} onClick={()=>toggleModulo(mod.id)}/>
+              )}
+            </div>
+
+            {/* Ferramentas do módulo */}
+            {ativo && !mod.automatico && (
+              <div style={{borderTop:"1px solid var(--gray-100)",padding:"12px 20px",background:"#fafafa"}}>
+                {mod.ferramentas.length === 0 ? (
+                  <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>
+                    Nenhuma ferramenta cadastrada neste módulo ainda.
+                  </div>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:4}}>FERRAMENTAS DISPONÍVEIS</div>
+                    {mod.ferramentas.map(ferr => {
+                      const ferrConfig = ferramentas[ferr.id];
+                      const ferrAtiva = !!ferrConfig;
+                      return (
+                        <div key={ferr.id} style={{background:"white",borderRadius:10,border:`1.5px solid ${ferrAtiva?"var(--purple)":"var(--gray-200)"}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,transition:"border-color .2s"}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontWeight:500,fontSize:13}}>{ferr.nome}</div>
+                            {ferr.desc && <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{ferr.desc}</div>}
+                          </div>
+                          {ferrAtiva && (
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <label style={{fontSize:11,color:"var(--text-muted)"}}>Início:</label>
+                              <input type="date" value={ferrConfig.dataInicio||""} onChange={e=>setDataInicio(mod.id,ferr.id,e.target.value)}
+                                style={{fontSize:12,border:"1px solid var(--gray-200)",borderRadius:6,padding:"3px 6px",fontFamily:"var(--font-body)"}}/>
+                            </div>
+                          )}
+                          <Toggle ativo={ferrAtiva} onClick={()=>toggleFerramenta(mod.id,ferr.id)}/>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
