@@ -139,7 +139,7 @@ function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida,
   if (!abertas) return null;
 
   return (
-    <div ref={ref} style={{position:"absolute",left:0,bottom:"calc(100% + 8px)",width:320,maxHeight:420,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 -4px 32px rgba(0,0,0,0.18)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
+    <div ref={ref} style={{position:"fixed",left:16,bottom:90,width:320,maxHeight:420,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 -4px 32px rgba(0,0,0,0.25)",zIndex:9999,border:"1px solid var(--gray-200)"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
         <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
         {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
