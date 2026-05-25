@@ -298,7 +298,9 @@ function App() {
               <Icon name="bell" size={13}/> {pedidosParaMim.length} pedido(s) pendente(s)
             </div>
             {pedidosParaMim.map(p=>{
-              const dataFormatada = p.data ? new Date(p.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"}) : "";
+              const reservaRef = reservas.find(r=>r.id===p.reservaId);
+              const dataStr = p.data || reservaRef?.data || "";
+              const dataFormatada = dataStr ? new Date(dataStr+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"}) : "data não encontrada";
               return (
                 <div key={p.id} style={{background:"rgba(255,255,255,.1)",borderRadius:10,padding:"10px",marginBottom:8}}>
                   <div style={{fontSize:12,fontWeight:700,color:"white",marginBottom:3}}>
