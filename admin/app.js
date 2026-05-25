@@ -628,6 +628,7 @@ function AbaModulos({ paciente }) {
   const [config, setConfig] = useState(paciente.modulosConfig || {});
   const [recursos, setRecursos] = useState([]);
   const [fabulas, setFabulas] = useState([]);
+  const [casalEtapas, setCasalEtapas] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
@@ -636,7 +637,11 @@ function AbaModulos({ paciente }) {
       setRecursos(todos);
     }, ()=>{});
     const u2 = db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    return () => { u1(); u2(); };
+    // Busca explícita das etapas de casal
+    const u3 = db.collection("clinica_recursos").where("categoria","==","casal").onSnapshot(s => {
+      setCasalEtapas(s.docs.map(d=>({id:d.id,...d.data()})));
+    }, ()=>{});
+    return () => { u1(); u2(); u3(); };
   }, []);
 
   async function salvarConfig(novaConfig) {
@@ -677,13 +682,10 @@ function AbaModulos({ paciente }) {
     { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
     { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑", 
-      ferramentas: recursos
-        .filter(r => (r.categoria||"").trim().toLowerCase() === "casal")
+      ferramentas: casalEtapas
         .sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99))
         .map(f=>({id:f.id, nome:f.titulo||f.nome||f.id, desc:f.descricao||f["descrição"]||""})), 
-      automatico: false,
-      debug: recursos.filter(r=>(r.categoria||"").trim().toLowerCase()==="casal").length
-    },
+      automatico: false },
   ];
 
   return (
@@ -699,7 +701,7 @@ function AbaModulos({ paciente }) {
               <div style={{fontSize:24}}>{mod.icone}</div>
               <div style={{flex:1}}>
                 <div style={{fontWeight:700,fontSize:15,color:"var(--text)"}}>{mod.nome}</div>
-                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}{mod.debug!==undefined ? ` · ${mod.debug} encontrado(s)` : ""}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}</div>
               </div>
               {mod.automatico ? (
                 <span style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>automático</span>
