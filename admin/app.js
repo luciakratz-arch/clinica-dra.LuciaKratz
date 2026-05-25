@@ -45,6 +45,146 @@ const FERRAMENTAS = [
   { id:"alimentacao", nome:"Rastreamento Emocional da Alimentacao", desc:"Consciencia sobre relacao entre emocoes e alimentacao." },
 ];
 
+// ─── NOTIFICAÇÕES ─────────────────────────────────────────
+async function dispararNotificacao({ tipo, titulo, corpo="", pacienteId="" }) {
+  try {
+    await db.collection("clinica_notificacoes").add({
+      tipo, titulo, corpo, pacienteId,
+      lida: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {}
+}
+
+function tocarSomNotificacao() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.35);
+  } catch(e) {}
+}
+
+function notificacaoVisivel(notif, user) {
+  const t = notif.tipo;
+  if (user.tipo === "psicologa")  return ["sessao","pagamento","bloqueio_sala"].includes(t);
+  if (user.tipo === "secretaria") return ["sessao","pagamento_pendente"].includes(t);
+  if (user.tipo === "paulo")      return t === "pagamento";
+  return false;
+}
+
+function useNotificacoes(user) {
+  const [notifs, setNotifs] = useState([]);
+  const [abertas, setAbertas] = useState(false);
+  const vistos = useRef(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = db.collection("clinica_notificacoes")
+      .orderBy("createdAt","desc").limit(50)
+      .onSnapshot(snap => {
+        const todas = snap.docs.map(d=>({id:d.id,...d.data()}));
+        const visiveis = todas.filter(n=>notificacaoVisivel(n,user));
+        const novas = visiveis.filter(n=>!vistos.current.has(n.id)&&!n.lida);
+        if (novas.length > 0 && vistos.current.size > 0) tocarSomNotificacao();
+        novas.forEach(n=>vistos.current.add(n.id));
+        setNotifs(visiveis);
+      }, ()=>{});
+    return unsub;
+  }, [user]);
+
+  const naoLidas = notifs.filter(n=>!n.lida).length;
+
+  async function marcarLida(id) {
+    await db.collection("clinica_notificacoes").doc(id).update({lida:true});
+  }
+  async function marcarTodasLidas() {
+    const batch = db.batch();
+    notifs.filter(n=>!n.lida).forEach(n=>batch.update(db.collection("clinica_notificacoes").doc(n.id),{lida:true}));
+    await batch.commit();
+  }
+  return { notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas };
+}
+
+const LABEL_TIPO = {
+  sessao:"Sessão",
+  pagamento:"Pagamento",
+  pagamento_pendente:"Pagamento Pendente",
+  bloqueio_sala:"Bloqueio de Sala",
+  supervisao:"Supervisão"
+};
+const COR_TIPO = {
+  sessao:"#7B00C4",
+  pagamento:"#16a34a",
+  pagamento_pendente:"#d97706",
+  bloqueio_sala:"#ea580c",
+  supervisao:"#0891b2"
+};
+
+function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!abertas) return;
+    function fora(e) { if (ref.current&&!ref.current.contains(e.target)) setAbertas(false); }
+    document.addEventListener("mousedown",fora);
+    return ()=>document.removeEventListener("mousedown",fora);
+  }, [abertas]);
+
+  return (
+    <div ref={ref} style={{position:"relative",display:"inline-flex",alignItems:"center"}}>
+      <button onClick={()=>setAbertas(!abertas)}
+        style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:"6px 8px",borderRadius:8,display:"flex",alignItems:"center",color:"rgba(255,255,255,0.85)"}}>
+        <Icon name="bell" size={20}/>
+        {naoLidas>0&&(
+          <span style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
+            {naoLidas>9?"9+":naoLidas}
+          </span>
+        )}
+      </button>
+      {abertas&&(
+        <div style={{position:"absolute",right:0,bottom:"calc(100% + 8px)",width:340,maxHeight:460,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
+            <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
+            {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
+          </div>
+          {notifs.length===0?(
+            <div style={{padding:"32px 16px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+              <Icon name="bell-off" size={32}/>
+              <div style={{marginTop:8}}>Sem notificações</div>
+            </div>
+          ):notifs.map(n=>{
+            const cor = COR_TIPO[n.tipo]||"#6b7280";
+            return (
+              <div key={n.id} onClick={()=>marcarLida(n.id)}
+                style={{display:"flex",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}
+                onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+                onMouseLeave={e=>e.currentTarget.style.background=n.lida?"white":"#faf5ff"}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:n.lida?"transparent":cor,marginTop:6,flexShrink:0}}/>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                    <span style={{fontSize:11,fontWeight:700,color:cor,background:cor+"18",padding:"2px 7px",borderRadius:20}}>{LABEL_TIPO[n.tipo]||n.tipo}</span>
+                    <span style={{fontSize:11,color:"var(--text-muted)"}}>
+                      {n.createdAt?.seconds?new Date(n.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
+                    </span>
+                  </div>
+                  <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"var(--text)",lineHeight:1.4}}>{n.titulo}</div>
+                  {n.corpo&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{n.corpo}</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function useCollection(col, orderField="createdAt") {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -238,108 +378,6 @@ function tocarSomNotificacao() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.35);
   } catch(e) {}
-}
-
-function notificacaoVisivel(notif, user) {
-  const t = notif.tipo;
-  if (user.tipo === "psicologa")  return ["sessao","pagamento","bloqueio_sala"].includes(t);
-  if (user.tipo === "secretaria") return t === "sessao";
-  if (user.tipo === "paulo")      return t === "pagamento";
-  return false;
-}
-
-function useNotificacoes(user) {
-  const [notifs, setNotifs] = useState([]);
-  const [abertas, setAbertas] = useState(false);
-  const vistos = useRef(new Set());
-
-  useEffect(() => {
-    if (!user) return;
-    const unsub = db.collection("clinica_notificacoes")
-      .orderBy("createdAt","desc").limit(50)
-      .onSnapshot(snap => {
-        const todas = snap.docs.map(d=>({id:d.id,...d.data()}));
-        const visiveis = todas.filter(n=>notificacaoVisivel(n,user));
-        const novas = visiveis.filter(n=>!vistos.current.has(n.id)&&!n.lida);
-        if (novas.length > 0 && vistos.current.size > 0) tocarSomNotificacao();
-        novas.forEach(n=>vistos.current.add(n.id));
-        setNotifs(visiveis);
-      }, ()=>{});
-    return unsub;
-  }, [user]);
-
-  const naoLidas = notifs.filter(n=>!n.lida).length;
-
-  async function marcarLida(id) {
-    await db.collection("clinica_notificacoes").doc(id).update({lida:true});
-  }
-  async function marcarTodasLidas() {
-    const batch = db.batch();
-    notifs.filter(n=>!n.lida).forEach(n=>batch.update(db.collection("clinica_notificacoes").doc(n.id),{lida:true}));
-    await batch.commit();
-  }
-  return { notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas };
-}
-
-const LABEL_TIPO = { sessao:"Sessão", pagamento:"Pagamento", bloqueio_sala:"Bloqueio de Sala", sessao_thais:"Sessão — Thais", supervisao:"Supervisão" };
-const COR_TIPO   = { sessao:"#7B00C4", pagamento:"#16a34a", bloqueio_sala:"#ea580c", sessao_thais:"#ea580c", supervisao:"#0891b2" };
-
-function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!abertas) return;
-    function fora(e) { if (ref.current&&!ref.current.contains(e.target)) setAbertas(false); }
-    document.addEventListener("mousedown",fora);
-    return ()=>document.removeEventListener("mousedown",fora);
-  }, [abertas]);
-
-  return (
-    <div ref={ref} style={{position:"relative",display:"inline-block"}}>
-      <button onClick={()=>setAbertas(!abertas)}
-        style={{position:"relative",background:"none",border:"none",cursor:"pointer",padding:"6px 8px",borderRadius:8,display:"flex",alignItems:"center",color:"rgba(255,255,255,0.85)"}}>
-        <Icon name="bell" size={20}/>
-        {naoLidas>0&&(
-          <span style={{position:"absolute",top:2,right:2,width:16,height:16,borderRadius:"50%",background:"#ef4444",color:"white",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-body)"}}>
-            {naoLidas>9?"9+":naoLidas}
-          </span>
-        )}
-      </button>
-      {abertas&&(
-        <div style={{position:"absolute",right:0,top:"calc(100% + 8px)",width:340,maxHeight:460,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
-            <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15}}>Notificações</div>
-            {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
-          </div>
-          {notifs.length===0?(
-            <div style={{padding:"32px 16px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
-              <Icon name="bell-off" size={32}/>
-              <div style={{marginTop:8}}>Sem notificações</div>
-            </div>
-          ):notifs.map(n=>{
-            const cor = COR_TIPO[n.tipo]||"#6b7280";
-            return (
-              <div key={n.id} onClick={()=>marcarLida(n.id)}
-                style={{display:"flex",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}
-                onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
-                onMouseLeave={e=>e.currentTarget.style.background=n.lida?"white":"#faf5ff"}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:n.lida?"transparent":cor,marginTop:5,flexShrink:0}}/>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                    <span style={{fontSize:11,fontWeight:700,color:cor,background:cor+"18",padding:"2px 7px",borderRadius:20}}>{LABEL_TIPO[n.tipo]||n.tipo}</span>
-                    <span style={{fontSize:11,color:"var(--text-muted)"}}>
-                      {n.createdAt?.seconds?new Date(n.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
-                    </span>
-                  </div>
-                  <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"var(--text)",lineHeight:1.4}}>{n.titulo}</div>
-                  {n.corpo&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{n.corpo}</div>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
 }
 
 // SIDEBAR
@@ -1409,6 +1447,14 @@ function FinanceiroClinica() {
       await db.collection("clinica_lancamentos").doc(editando).update(dados);
     } else {
       await db.collection("clinica_lancamentos").add({...dados,tipo_lancamento:"avulso",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      if(formAvulso.status==="pendente"){
+        await dispararNotificacao({
+          tipo:"pagamento_pendente",
+          titulo:`Pagamento pendente — ${pac?.nome||"Paciente"}`,
+          corpo:`R$ ${parseFloat(formAvulso.valor).toFixed(2).replace(".",",")} · ${formAvulso.tipo} · ${formAvulso.data?.split("-").reverse().join("/")||""}`,
+          pacienteId: formAvulso.pacienteId
+        });
+      }
     }
     setModal(false);setEditando(null);setFormAvulso({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});setSalvando(false);
   }
@@ -4758,8 +4804,20 @@ function Agenda() {
     const dados = {...form, pacienteNome:pac?.nome||"", updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
     if(editando){
       await db.collection("clinica_sessoes").doc(editando).update(dados);
+      await dispararNotificacao({
+        tipo:"sessao",
+        titulo:`Sessão atualizada — ${pac?.nome||"Paciente"}`,
+        corpo:`${form.data?.split("-").reverse().join("/") || ""} às ${form.hora} · ${form.tipo}`,
+        pacienteId: form.pacienteId
+      });
     } else {
       await db.collection("clinica_sessoes").add({...dados, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      await dispararNotificacao({
+        tipo:"sessao",
+        titulo:`Nova sessão agendada — ${pac?.nome||"Paciente"}`,
+        corpo:`${form.data?.split("-").reverse().join("/") || ""} às ${form.hora} · ${form.tipo}`,
+        pacienteId: form.pacienteId
+      });
     }
     setModal(false);setEditando(null);setForm({pacienteId:"",data:"",hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setSalvando(false);
   }
@@ -4811,8 +4869,18 @@ function Agenda() {
         batch.set(ref, {...base, data:dataStr, recorrenteRef:formSala.data});
       }
       await batch.commit();
+      await dispararNotificacao({
+        tipo:"bloqueio_sala",
+        titulo:`Sala bloqueada — recorrente (12 semanas)`,
+        corpo:`${formSala.data?.split("-").reverse().join("/") || ""} · ${formSala.horaInicio}–${formSala.horaFim}${formSala.titulo?" · "+formSala.titulo:""}`
+      });
     } else {
       await db.collection("sala_reservas").add({...base, data:formSala.data});
+      await dispararNotificacao({
+        tipo:"bloqueio_sala",
+        titulo:`Sala bloqueada — ${formSala.data?.split("-").reverse().join("/") || ""}`,
+        corpo:`${formSala.horaInicio}–${formSala.horaFim}${formSala.titulo?" · "+formSala.titulo:""}`
+      });
     }
     setModalSala(false);
     setFormSala({data:"",horaInicio:"09:00",horaFim:"10:00",titulo:"",recorrencia:"unico"});
