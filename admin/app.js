@@ -673,7 +673,14 @@ function AbaModulos({ paciente }) {
     { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
-    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑", ferramentas: recursos.filter(r=>r.categoria==="casal").sort((a,b)=>(a.ordem||0)-(b.ordem||0)).map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})), automatico: false },
+    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑", 
+      ferramentas: recursos
+        .filter(r => (r.categoria||"").trim().toLowerCase() === "casal")
+        .sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99))
+        .map(f=>({id:f.id, nome:f.titulo||f.nome||f.id, desc:f.descricao||f["descrição"]||""})), 
+      automatico: false,
+      debug: recursos.filter(r=>(r.categoria||"").trim().toLowerCase()==="casal").length
+    },
   ];
 
   return (
@@ -689,7 +696,7 @@ function AbaModulos({ paciente }) {
               <div style={{fontSize:24}}>{mod.icone}</div>
               <div style={{flex:1}}>
                 <div style={{fontWeight:700,fontSize:15,color:"var(--text)"}}>{mod.nome}</div>
-                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}{mod.debug!==undefined ? ` · ${mod.debug} encontrado(s)` : ""}</div>
               </div>
               {mod.automatico ? (
                 <span style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>automático</span>
