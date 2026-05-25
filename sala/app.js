@@ -26,6 +26,66 @@ const USUARIOS = {
 };
 
 // ─── ICON ───────────────────────────────────────────────
+function fmtDataNotif(dataStr) {
+  if (!dataStr) return "";
+  return new Date(dataStr+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"2-digit"});
+}
+
+function enviarPushLocal(titulo, corpo) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(titulo, { body: corpo, icon: "../logo-transparente.png" });
+  }
+}
+
+function useBotaoNotificacaoSala(user, pedidosParaMim) {
+  const [permissao, setPermissao] = useState(
+    "Notification" in window ? Notification.permission : "denied"
+  );
+  const jaAvisouRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!user || permissao !== "granted") return;
+    // Avisa pedidos pendentes ao abrir
+    pedidosParaMim.forEach(p => {
+      if (jaAvisouRef.current.has(p.id)) return;
+      jaAvisouRef.current.add(p.id);
+      const dataFmt = p.data ? fmtDataNotif(p.data) : "";
+      enviarPushLocal(
+        `${p.deNome} quer a sala`,
+        `${dataFmt} · ${p.horaInicio}–${p.horaFim}`
+      );
+    });
+  }, [pedidosParaMim, permissao]);
+
+  async function ativar() {
+    if (!("Notification" in window)) { alert("Navegador não suporta notificações."); return; }
+    const p = await Notification.requestPermission();
+    setPermissao(p);
+  }
+  return { permissao, ativar };
+}
+
+function BotaoNotificacaoSala({ permissao, ativar, pedidos }) {
+  if (!("Notification" in window)) return null;
+  if (permissao === "granted") return (
+    <span style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 12px",fontSize:12}}>
+      🔔 Ativo{pedidos>0?` (${pedidos})`:""}
+    </span>
+  );
+  if (permissao === "denied") return (
+    <span style={{background:"rgba(255,0,0,0.15)",border:"1px solid rgba(255,0,0,0.3)",color:"#fca5a5",borderRadius:20,padding:"5px 12px",fontSize:12}}>
+      🔕 Bloqueado
+    </span>
+  );
+  return (
+    <button onClick={ativar}
+      style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 12px",fontSize:12,cursor:"pointer"}}>
+      🔔 Ativar
+    </button>
+  );
+}
+
 function Icon({ name, size=18 }) {
   const ref = useRef(null);
   useEffect(()=>{
@@ -265,6 +325,7 @@ function App() {
   }
 
   const pedidosParaMim = pedidos.filter(p=>p.para===user?.id);
+  const notifSala = useBotaoNotificacaoSala(user, pedidosParaMim);
 
   if(!user) return <Login onLogin={setUser}/>;
 
@@ -287,11 +348,7 @@ function App() {
             <div className="sidebar-user-name">{user.nome}</div>
             <div className="sidebar-user-role">Psicóloga</div>
           </div>
-          {pedidosParaMim.length>0&&(
-            <div style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"4px 10px",fontSize:12,display:"flex",alignItems:"center",gap:4}}>
-              🔔<span style={{background:"#ef4444",color:"white",fontSize:10,fontWeight:700,borderRadius:20,padding:"1px 5px"}}>{pedidosParaMim.length}</span>
-            </div>
-          )}
+          <BotaoNotificacaoSala {...notifSala} pedidos={pedidosParaMim.length}/>
         </div>
 
         {/* Legenda */}
