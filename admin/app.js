@@ -6394,7 +6394,9 @@ function DashboardMarketing({ user }) {
       {user?.tipo==="psicologa" && <CentralLancamentosMarketing/>}
     </div>
   );
-} = [
+}
+
+const NAV_MARKETING = [
   { id:"marketing-dashboard", label:"Dashboard", icon:"trending-up" },
 ];
 
