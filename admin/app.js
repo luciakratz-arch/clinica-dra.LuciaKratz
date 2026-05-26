@@ -628,20 +628,14 @@ function AbaModulos({ paciente }) {
   const [config, setConfig] = useState(paciente.modulosConfig || {});
   const [recursos, setRecursos] = useState([]);
   const [fabulas, setFabulas] = useState([]);
-  const [casalEtapas, setCasalEtapas] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
-    const u1 = db.collection("clinica_recursos").onSnapshot(s => {
-      const todos = s.docs.map(d=>({id:d.id,...d.data()}));
-      setRecursos(todos);
-    }, ()=>{});
+    const u1 = db.collection("clinica_recursos").get().then(s => {
+      setRecursos(s.docs.map(d=>({id:d.id,...d.data()})));
+    });
     const u2 = db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    // Busca explícita das etapas de casal
-    const u3 = db.collection("clinica_recursos").where("categoria","==","casal").onSnapshot(s => {
-      setCasalEtapas(s.docs.map(d=>({id:d.id,...d.data()})));
-    }, ()=>{});
-    return () => { u1(); u2(); u3(); };
+    return () => { u2(); };
   }, []);
 
   async function salvarConfig(novaConfig) {
@@ -681,10 +675,8 @@ function AbaModulos({ paciente }) {
     { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
-    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑", 
-      ferramentas: casalEtapas
-        .sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99))
-        .map(f=>({id:f.id, nome:f.titulo||f.nome||f.id, desc:f.descricao||f["descrição"]||""})), 
+    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑",
+      ferramentas: recursos.filter(r=>r.categoria==="casal").sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99)).map(f=>({id:f.id, nome:f.titulo||f.nome||f.id, desc:f.descricao||f["descrição"]||""})),
       automatico: false },
   ];
 
