@@ -5901,8 +5901,9 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
 
   // Verifica se está em alerta
   const regra = REGRAS_INATIVIDADE.find(r=>r.status===(lead.status||"novo"));
-  const ref = lead.updatedAt?.toDate?.() || lead.createdAt?.toDate?.();
-  const emAlerta = regra && ref && (Date.now()-ref.getTime()) >= regra.limiteMs;
+  const rawRef = lead.updatedAt || lead.createdAt;
+  const refMs = rawRef ? (typeof rawRef.toDate==="function" ? rawRef.toDate().getTime() : rawRef.seconds ? rawRef.seconds*1000 : null) : null;
+  const emAlerta = regra && refMs && (Date.now()-refMs) >= regra.limiteMs;
   const whats = fmtWhats(lead.telefone);
 
   return (
@@ -6089,15 +6090,22 @@ function AlertasInatividade({ leads, onAbrirLead }) {
   const [descartados, setDescartados] = useState(new Set());
   const agora = Date.now();
 
+  function getMs(val) {
+    if (!val) return null;
+    if (typeof val.toDate === "function") return val.toDate().getTime();
+    if (val.seconds) return val.seconds * 1000;
+    if (val instanceof Date) return val.getTime();
+    return null;
+  }
+
   const alertas = leads
     .filter(l => !l.arquivado && !descartados.has(l.id))
     .flatMap(lead => {
       const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status||"novo"));
       if (!regra) return [];
-      // Usa updatedAt se existir, senão createdAt
-      const ref = lead.updatedAt?.toDate?.() || lead.createdAt?.toDate?.();
-      if (!ref) return [];
-      const inativo = agora - ref.getTime();
+      const ms = getMs(lead.updatedAt) || getMs(lead.createdAt);
+      if (!ms) return [];
+      const inativo = agora - ms;
       if (inativo < regra.limiteMs) return [];
       return [{ lead, regra, inativo }];
     })
