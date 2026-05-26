@@ -631,22 +631,10 @@ function AbaModulos({ paciente }) {
   const [casalEtapas, setCasalEtapas] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
-  const CASAL_IDS = [
-    "lCcpdNQTGFlMTxR8XFis",
-    "msYFKZZQmziUz7dxkl4",
-    "b9Xx6Z2iP1OvfJCrzxzg",
-    "ylRV9EAspxOCfeQ6JuRO"
-  ];
-
   useEffect(() => {
-    const u1 = db.collection("clinica_recursos").get().then(s => {
-      setRecursos(s.docs.map(d=>({id:d.id,...d.data()})));
-    });
-    const u2 = db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    // Busca etapas de casal pelos IDs exatos
-    Promise.all(CASAL_IDS.map(id => db.collection("clinica_recursos").doc(id).get()))
-      .then(docs => setCasalEtapas(docs.filter(d=>d.exists).map(d=>({id:d.id,...d.data()}))));
-    return () => { u2(); };
+    db.collection("clinica_recursos").get().then(s => setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))));
+    db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    db.collection("clinica_casais_etapas").onSnapshot(s => setCasalEtapas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
   }, []);
 
   async function salvarConfig(novaConfig) {
