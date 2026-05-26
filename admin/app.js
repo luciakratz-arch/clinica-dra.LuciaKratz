@@ -628,13 +628,24 @@ function AbaModulos({ paciente }) {
   const [config, setConfig] = useState(paciente.modulosConfig || {});
   const [recursos, setRecursos] = useState([]);
   const [fabulas, setFabulas] = useState([]);
+  const [casalEtapas, setCasalEtapas] = useState([]);
   const [salvando, setSalvando] = useState(false);
+
+  const CASAL_IDS = [
+    "lCcpdNQTGFlMTxR8XFis",
+    "msYFKZZQmziUz7dxkl4",
+    "b9Xx6Z2iP1OvfJCrzxzg",
+    "ylRV9EAspxOCfeQ6JuRO"
+  ];
 
   useEffect(() => {
     const u1 = db.collection("clinica_recursos").get().then(s => {
       setRecursos(s.docs.map(d=>({id:d.id,...d.data()})));
     });
     const u2 = db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    // Busca etapas de casal pelos IDs exatos
+    Promise.all(CASAL_IDS.map(id => db.collection("clinica_recursos").doc(id).get()))
+      .then(docs => setCasalEtapas(docs.filter(d=>d.exists).map(d=>({id:d.id,...d.data()}))));
     return () => { u2(); };
   }, []);
 
@@ -676,7 +687,9 @@ function AbaModulos({ paciente }) {
     { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
     { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑",
-      ferramentas: recursos.filter(r=>r.categoria==="casal").sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99)).map(f=>({id:f.id, nome:f.titulo||f.nome||f.id, desc:f.descricao||f["descrição"]||""})),
+      ferramentas: casalEtapas
+        .sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99))
+        .map(f=>({id:f.id, nome:f.titulo||f["título"]||f.nome||f.id, desc:f.descricao||f["descrição"]||""})),
       automatico: false },
   ];
 
