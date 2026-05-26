@@ -679,12 +679,14 @@ function AbaModulos({ paciente }) {
   const [recursos, setRecursos] = useState([]);
   const [fabulas, setFabulas] = useState([]);
   const [casalEtapas, setCasalEtapas] = useState([]);
+  const [psicoeducacao, setPsicoeducacao] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     db.collection("clinica_recursos").get().then(s => setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))));
     db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
     db.collection("clinica_casais_etapas").onSnapshot(s => setCasalEtapas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    db.collection("clinica_psicoeducacao").onSnapshot(s => setPsicoeducacao(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
   }, []);
 
   async function salvarConfig(novaConfig) {
@@ -730,6 +732,8 @@ function AbaModulos({ paciente }) {
         .sort((a,b)=>(parseInt(a.ordem)||99)-(parseInt(b.ordem)||99))
         .map(f=>({id:f.id, nome:f.titulo||f["título"]||f.nome||f.id, desc:f.descricao||f["descrição"]||""})),
       automatico: false },
+    { id:"mod6", nome:"Módulo VI — Psicoeducação", desc:"Materiais psicoeducativos cadastrados em Recursos", icone:"🎓",
+      ferramentas: psicoeducacao.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
   ];
 
   return (
@@ -4237,6 +4241,179 @@ function AbaFabulas() {
   );
 }
 
+// ── Aba Psicoeducação ─────────────────────────────────────────────────────────
+const CATS_PSICOEDUCACAO = {
+  ansiedade:      {label:"Ansiedade",           cor:"#6366f1", bg:"#eef2ff"},
+  depressao:      {label:"Depressão",           cor:"#0891b2", bg:"#e0f2fe"},
+  tcc:            {label:"TCC",                 cor:"#84cc16", bg:"#f7fee7"},
+  autocuidado:    {label:"Autocuidado",         cor:"#16a34a", bg:"#dcfce7"},
+  relacionamentos:{label:"Relacionamentos",     cor:"#d97706", bg:"#fef3c7"},
+  trauma:         {label:"Trauma",              cor:"#7c3aed", bg:"#ede9fe"},
+  autoestima:     {label:"Autoestima",          cor:"#ec4899", bg:"#fdf2f8"},
+  mindfulness:    {label:"Mindfulness",         cor:"#059669", bg:"#d1fae5"},
+  outros:         {label:"Outros",              cor:"#6b7280", bg:"#f3f4f6"},
+};
+
+function AbaPsicoeducacao() {
+  const [itens, setItens]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [modal, setModal]         = useState(false);
+  const [editando, setEditando]   = useState(null);
+  const [salvando, setSalvando]   = useState(false);
+  const [filtro, setFiltro]       = useState("todos");
+  const [aberto, setAberto]       = useState(null);
+  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_psicoeducacao").onSnapshot(s=>{
+      setItens(s.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  async function salvar(){
+    if(!form.titulo){alert("Título obrigatório.");return;}
+    setSalvando(true);
+    if(editando){
+      await db.collection("clinica_psicoeducacao").doc(editando).update(form);
+    } else {
+      await db.collection("clinica_psicoeducacao").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModal(false);setEditando(null);setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setSalvando(false);
+  }
+
+  async function excluir(id){if(!confirm("Excluir este material?"))return;await db.collection("clinica_psicoeducacao").doc(id).delete();}
+
+  const cats = ["todos",...Object.keys(CATS_PSICOEDUCACAO)];
+  const filtrados = filtro==="todos" ? itens : itens.filter(i=>i.categoria===filtro);
+
+  if(loading) return <Spinner/>;
+
+  if(aberto){
+    const cat = CATS_PSICOEDUCACAO[aberto.categoria]||CATS_PSICOEDUCACAO.outros;
+    return (
+      <div>
+        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
+          <Icon name="arrow-left" size={16}/> Todos os materiais
+        </button>
+        <div className="card" style={{marginBottom:16,background:cat.cor,color:"white"}}>
+          <div style={{textAlign:"center",padding:"8px 0 16px"}}>
+            <div style={{fontSize:52,marginBottom:12}}>{aberto.emoji||"📚"}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>{aberto.titulo}</div>
+            <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"4px 14px",fontSize:12}}>{cat.label}</span>
+          </div>
+        </div>
+        {aberto.descricao&&<div className="card" style={{marginBottom:12}}><p style={{fontSize:14,color:"var(--text-muted)",fontStyle:"italic"}}>{aberto.descricao}</p></div>}
+        {aberto.conteudo&&<div className="card"><div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div></div>}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
+        <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
+          <Icon name="plus" size={16}/> Novo Material
+        </button>
+      </div>
+
+      {/* Filtro por categoria */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
+        {cats.map(cat=>{
+          const info = CATS_PSICOEDUCACAO[cat];
+          const count = cat==="todos"?itens.length:itens.filter(i=>i.categoria===cat).length;
+          if(count===0&&cat!=="todos") return null;
+          return (
+            <button key={cat} onClick={()=>setFiltro(cat)}
+              style={{padding:"5px 12px",borderRadius:20,border:"1.5px solid",borderColor:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-200)",background:filtro===cat?(info?.bg||"var(--purple-bg)"):"white",color:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:filtro===cat?600:400}}>
+              {cat==="todos"?"Todos":info?.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {filtrados.length===0
+        ? <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",fontSize:14}}>
+            Nenhum material cadastrado ainda.<br/>
+            <button className="btn btn-purple" style={{marginTop:12}} onClick={()=>setModal(true)}>Adicionar primeiro material</button>
+          </div>
+        : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
+            {filtrados.map(item=>{
+              const cat = CATS_PSICOEDUCACAO[item.categoria]||CATS_PSICOEDUCACAO.outros;
+              return (
+                <div key={item.id} style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+                  <div style={{background:cat.bg,padding:"20px 16px",textAlign:"center",borderBottom:"1px solid "+cat.cor+"20"}}>
+                    <div style={{fontSize:36,marginBottom:8}}>{item.emoji||"📚"}</div>
+                    <div style={{fontWeight:700,fontSize:14,color:cat.cor}}>{item.titulo}</div>
+                    <span style={{background:cat.cor+"20",color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,marginTop:6,display:"inline-block"}}>{cat.label}</span>
+                  </div>
+                  <div style={{padding:"12px 16px"}}>
+                    {item.descricao&&<p style={{fontSize:12,color:"var(--text-muted)",marginBottom:10,lineHeight:1.5}}>{item.descricao.slice(0,80)}{item.descricao.length>80?"...":""}</p>}
+                    <div style={{display:"flex",gap:6}}>
+                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"6px 0"}} onClick={()=>setAberto(item)}>
+                        <Icon name="eye" size={13}/> Ver
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px"}} onClick={()=>{setForm({titulo:item.titulo||"",descricao:item.descricao||"",categoria:item.categoria||"ansiedade",conteudo:item.conteudo||"",emoji:item.emoji||"📚",tipo:item.tipo||"texto"});setEditando(item.id);setModal(true);}}>
+                        <Icon name="edit-2" size={13}/>
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(item.id)}>
+                        <Icon name="trash-2" size={13}/>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+      }
+
+      {/* Modal cadastro */}
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontWeight:700,fontSize:16}}>{editando?"Editar Material":"Novo Material de Psicoeducação"}</div>
+              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--text-muted)"}}>×</button>
+            </div>
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:10}}>
+                <div>
+                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Emoji</label>
+                  <input className="form-input" value={form.emoji} onChange={e=>setForm(f=>({...f,emoji:e.target.value}))} style={{textAlign:"center",fontSize:20}}/>
+                </div>
+                <div>
+                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Título *</label>
+                  <input className="form-input" value={form.titulo} onChange={e=>setForm(f=>({...f,titulo:e.target.value}))} placeholder="Ex: O que é ansiedade?"/>
+                </div>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Categoria</label>
+                <select className="form-input" value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))}>
+                  {Object.entries(CATS_PSICOEDUCACAO).map(([id,{label}])=><option key={id} value={id}>{label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Descrição breve</label>
+                <input className="form-input" value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Resumo do material..."/>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Conteúdo completo</label>
+                <textarea className="form-input" rows={6} value={form.conteudo} onChange={e=>setForm(f=>({...f,conteudo:e.target.value}))} placeholder="Texto educativo completo..." style={{resize:"vertical"}}/>
+              </div>
+            </div>
+            <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setModal(false)} className="btn btn-ghost">Cancelar</button>
+              <button onClick={salvar} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RecursosTerapeuticos() {
   const [recursos, setRecursos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -4309,7 +4486,7 @@ function RecursosTerapeuticos() {
 
       {/* Abas — 3 abas */}
       <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
-        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas Terapêuticas","book-open"],["casais","Terapia de Casais","heart"]].map(([id,label,ic])=>(
+        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas Terapêuticas","book-open"],["psicoeducacao","Psicoeducação","brain"],["casais","Terapia de Casais","heart"]].map(([id,label,ic])=>(
           <button key={id} onClick={()=>setAbaView(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:abaView===id?"var(--purple)":"var(--gray-600)",borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:abaView===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
             <Icon name={ic} size={15}/>{label}
           </button>
@@ -4318,6 +4495,9 @@ function RecursosTerapeuticos() {
 
       {/* Aba Fábulas */}
       {abaView==="fabulas"&&<AbaFabulas/>}
+
+      {/* Aba Psicoeducação */}
+      {abaView==="psicoeducacao"&&<AbaPsicoeducacao/>}
 
       {/* Aba Terapia de Casais */}
       {abaView==="casais"&&<AbaProtocoloCasais/>}
