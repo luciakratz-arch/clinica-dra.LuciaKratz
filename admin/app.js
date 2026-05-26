@@ -6163,6 +6163,199 @@ function badgeCPL(cpl, abrangencia) {
   return { cor:"#dc2626", bg:"#fef2f2", label:"🚨 Acima do limite", aviso };
 }
 
+// ═══════════════════════════════════════════════════════
+//  ANÁLISE COLABORATIVA POR CAMPANHA
+// ═══════════════════════════════════════════════════════
+function AnaliseCampanha({ campanha, user }) {
+  const [comentarios, setComentarios] = useState([]);
+  const [texto, setTexto]             = useState("");
+  const [enviando, setEnviando]       = useState(false);
+  const [pdfs, setPdfs]               = useState([]);
+  const [uploadando, setUploadando]   = useState(false);
+  const [aberto, setAberto]           = useState(false);
+
+  useEffect(()=>{
+    if (!aberto) return;
+    const unsub = db.collection("clinica_campanhas").doc(campanha.id)
+      .collection("analises").orderBy("createdAt","asc")
+      .onSnapshot(s=>setComentarios(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    const unsubPdf = db.collection("clinica_campanhas").doc(campanha.id)
+      .collection("relatorios").orderBy("createdAt","desc")
+      .onSnapshot(s=>setPdfs(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return ()=>{ unsub(); unsubPdf(); };
+  },[campanha.id, aberto]);
+
+  async function enviar() {
+    if (!texto.trim()) return;
+    setEnviando(true);
+    try {
+      await db.collection("clinica_campanhas").doc(campanha.id).collection("analises").add({
+        texto: texto.trim(),
+        autor: user?.nome || "Usuário",
+        tipo:  user?.tipo || "psicologa",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setTexto("");
+    } catch(e) { alert("Erro ao enviar."); }
+    setEnviando(false);
+  }
+
+  async function uploadPdf(e) {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") { alert("Selecione um arquivo PDF."); return; }
+    if (file.size > 5*1024*1024) { alert("Arquivo muito grande. Máximo 5MB."); return; }
+    setUploadando(true);
+    const reader = new FileReader();
+    reader.onload = async(ev)=>{
+      try {
+        await db.collection("clinica_campanhas").doc(campanha.id).collection("relatorios").add({
+          nome:      file.name,
+          tamanho:   (file.size/1024).toFixed(0)+"KB",
+          base64:    ev.target.result,
+          autor:     user?.nome || "Usuário",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch(e) { alert("Erro ao fazer upload."); }
+      setUploadando(false);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  async function excluirPdf(id) {
+    if (!window.confirm("Excluir este relatório?")) return;
+    await db.collection("clinica_campanhas").doc(campanha.id).collection("relatorios").doc(id).delete();
+  }
+
+  async function excluirComentario(id) {
+    await db.collection("clinica_campanhas").doc(campanha.id).collection("analises").doc(id).delete();
+  }
+
+  function fmtDH(ts) {
+    if (!ts?.toDate) return "";
+    const d = ts.toDate();
+    return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  const corTipo = { psicologa:"#7B00C4", marketing:"#ea580c", secretaria:"#0891b2" };
+
+  return (
+    <div style={{border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden",marginBottom:12,background:"white"}}>
+      <button onClick={()=>setAberto(x=>!x)}
+        style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",background:"white",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{campanha.nome}</span>
+          <span style={{fontSize:11,color:"var(--text-muted)"}}>{campanha.abrangencia==="internacional"?"🌍 Internacional":"🇧🇷 Nacional"}</span>
+          {comentarios.length>0&&<span style={{background:"#7B00C418",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>💬 {comentarios.length}</span>}
+          {pdfs.length>0&&<span style={{background:"#dc262618",color:"#dc2626",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>📄 {pdfs.length}</span>}
+        </div>
+        <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
+      </button>
+
+      {aberto&&(
+        <div style={{borderTop:"1px solid var(--gray-100)",background:"#fafafa"}}>
+
+          {/* PDFs */}
+          <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontWeight:600,fontSize:13}}>📄 Relatórios em PDF</div>
+              <label style={{display:"flex",alignItems:"center",gap:6,background:"#7B00C4",color:"white",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                <Icon name="upload" size={13}/> {uploadando?"Enviando...":"Upload PDF"}
+                <input type="file" accept=".pdf" onChange={uploadPdf} style={{display:"none"}} disabled={uploadando}/>
+              </label>
+            </div>
+            {pdfs.length===0
+              ? <div style={{fontSize:12,color:"var(--text-muted)"}}>Nenhum relatório ainda.</div>
+              : pdfs.map(pdf=>(
+                  <div key={pdf.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"white",borderRadius:8,padding:"10px 14px",border:"1px solid var(--gray-100)",marginBottom:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:20}}>📄</span>
+                      <div>
+                        <div style={{fontWeight:600,fontSize:13}}>{pdf.nome}</div>
+                        <div style={{fontSize:11,color:"var(--text-muted)"}}>{pdf.tamanho} · {pdf.autor} · {fmtDH(pdf.createdAt)}</div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <a href={pdf.base64} download={pdf.nome}
+                        style={{background:"#f0fdf4",color:"#16a34a",borderRadius:6,padding:"5px 10px",fontSize:11,fontWeight:600,textDecoration:"none"}}>
+                        ⬇ Baixar
+                      </a>
+                      {(user?.tipo==="psicologa"||pdf.autor===user?.nome)&&(
+                        <button onClick={()=>excluirPdf(pdf.id)}
+                          style={{background:"#fef2f2",color:"#dc2626",border:"none",borderRadius:6,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+                          🗑
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+            }
+          </div>
+
+          {/* Chat */}
+          <div style={{padding:"14px 18px"}}>
+            <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>💬 Análise e Ações de Ajuste</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14,maxHeight:300,overflowY:"auto",padding:"4px 0"}}>
+              {comentarios.length===0
+                ? <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",padding:16}}>Nenhuma análise ainda.</div>
+                : comentarios.map(c=>{
+                    const isMe = c.autor===user?.nome;
+                    return (
+                      <div key={c.id} style={{display:"flex",flexDirection:isMe?"row-reverse":"row",gap:8,alignItems:"flex-start"}}>
+                        <div style={{width:30,height:30,borderRadius:"50%",background:corTipo[c.tipo]||"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:12,flexShrink:0}}>
+                          {(c.autor||"?")[0].toUpperCase()}
+                        </div>
+                        <div style={{maxWidth:"75%"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}>
+                            <span style={{fontSize:11,fontWeight:600,color:corTipo[c.tipo]||"#7B00C4"}}>{c.autor}</span>
+                            <span style={{fontSize:10,color:"var(--gray-400)"}}>{fmtDH(c.createdAt)}</span>
+                          </div>
+                          <div style={{background:isMe?"#7B00C4":"white",color:isMe?"white":"var(--text)",borderRadius:isMe?"12px 4px 12px 12px":"4px 12px 12px 12px",padding:"10px 14px",fontSize:13,lineHeight:1.6,boxShadow:"0 1px 3px rgba(0,0,0,0.06)",border:isMe?"none":"1px solid var(--gray-100)"}}>
+                            {c.texto}
+                          </div>
+                          {(user?.tipo==="psicologa"||isMe)&&(
+                            <button onClick={()=>excluirComentario(c.id)}
+                              style={{background:"none",border:"none",cursor:"pointer",fontSize:10,color:"var(--gray-400)",marginTop:2,padding:"0 4px",fontFamily:"inherit",float:isMe?"right":"left"}}
+                              onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
+                              onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
+                              excluir
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+              }
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+              <textarea value={texto} onChange={e=>setTexto(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviar();} }}
+                rows={2} placeholder="Escreva sua análise ou ação de ajuste... (Enter para enviar)"
+                className="form-input" style={{flex:1,resize:"none",fontSize:13}}/>
+              <button onClick={enviar} disabled={enviando||!texto.trim()}
+                style={{background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"10px 14px",cursor:"pointer",opacity:(!texto.trim()||enviando)?0.5:1,flexShrink:0}}>
+                <Icon name="send" size={16}/>
+              </button>
+            </div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>Enter para enviar · Shift+Enter para nova linha</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnaliseCampanhas({ campanhas, user }) {
+  if (campanhas.length===0) return null;
+  return (
+    <div style={{marginTop:24}}>
+      <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:700,marginBottom:4}}>📊 Análise por Campanha</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Relatórios em PDF e chat de estratégia entre Psicóloga e Marketing.</div>
+      {campanhas.map(c=><AnaliseCampanha key={c.id} campanha={c} user={user}/>)}
+    </div>
+  );
+}
+
 function DashboardPerformance({ user }) {
   const [leads, setLeads]           = useState([]);
   const [pacientes, setPacientes]   = useState([]);
@@ -6341,6 +6534,9 @@ function DashboardPerformance({ user }) {
           Nenhuma campanha com dados no período selecionado. Crie campanhas no Funil de Leads e lance gastos em Marketing para ver as métricas.
         </div>
       )}
+
+      {/* Área colaborativa por campanha */}
+      <AnaliseCampanhas campanhas={campanhas} user={user}/>
     </div>
   );
 }
