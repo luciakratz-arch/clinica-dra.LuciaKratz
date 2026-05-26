@@ -5865,7 +5865,7 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
 const REGRAS_INATIVIDADE = [
   {
     status: "novo",
-    limiteMs: 2 * 60 * 60 * 1000, // 2 horas
+    limiteMs: 1 * 60 * 1000, // ⚠️ TESTE: 1 minuto (produção: 2 * 60 * 60 * 1000)
     emoji: "⚠️",
     titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
     corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
@@ -5873,7 +5873,7 @@ const REGRAS_INATIVIDADE = [
   },
   {
     status: "agendamento",
-    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
+    limiteMs: 1 * 60 * 1000, // ⚠️ TESTE: 1 minuto (produção: 24 * 60 * 60 * 1000)
     emoji: "⏰",
     titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
     corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
@@ -6088,27 +6088,38 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
 // ═══════════════════════════════════════════════════════
 function AlertasInatividade({ leads, onAbrirLead }) {
   const [descartados, setDescartados] = useState(new Set());
-  const agora = Date.now();
+  const [agora, setAgora] = useState(Date.now());
 
-  function getMs(val) {
-    if (!val) return null;
-    if (typeof val.toDate === "function") return val.toDate().getTime();
-    if (val.seconds) return val.seconds * 1000;
-    if (val instanceof Date) return val.getTime();
+  // Atualiza a cada minuto para manter alertas frescos
+  useEffect(()=>{
+    const t = setInterval(()=>setAgora(Date.now()), 60000);
+    return ()=>clearInterval(t);
+  },[]);
+
+  function extrairMs(campo) {
+    if (!campo) return null;
+    // Objeto Firestore Timestamp
+    if (campo.seconds) return campo.seconds * 1000;
+    // Já é Date
+    if (campo instanceof Date) return campo.getTime();
+    // String ISO
+    if (typeof campo === "string") return new Date(campo).getTime();
+    // Tenta toDate()
+    try { return campo.toDate().getTime(); } catch(e) {}
     return null;
   }
 
   const alertas = leads
     .filter(l => !l.arquivado && !descartados.has(l.id))
-    .flatMap(lead => {
-      const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status||"novo"));
-      if (!regra) return [];
-      const ms = getMs(lead.updatedAt) || getMs(lead.createdAt);
-      if (!ms) return [];
+    .reduce((acc, lead) => {
+      const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status || "novo"));
+      if (!regra) return acc;
+      const ms = extrairMs(lead.updatedAt) || extrairMs(lead.createdAt);
+      if (!ms || isNaN(ms)) return acc;
       const inativo = agora - ms;
-      if (inativo < regra.limiteMs) return [];
-      return [{ lead, regra, inativo }];
-    })
+      if (inativo >= regra.limiteMs) acc.push({ lead, regra, inativo });
+      return acc;
+    }, [])
     .sort((a,b) => b.inativo - a.inativo);
 
   if (alertas.length === 0) return null;
