@@ -339,6 +339,7 @@ const NAV_PSICOLOGA = [
   {id:"alunos",       label:"Alunos",              icon:"graduation-cap"},
   {id:"casais",       label:"Terapia de Casais",   icon:"heart"},
   {id:"funil-leads",  label:"Funil de Leads",      icon:"filter"},
+  {id:"marketing-dashboard", label:"Marketing",    icon:"trending-up"},
   {id:"recursos",     label:"Recursos Terapeuticos",icon:"wrench"},
   {id:"laudos",       label:"Laudos",              icon:"file-text"},
   {id:"agenda",       label:"Agenda",              icon:"calendar"},
@@ -5482,7 +5483,8 @@ function App() {
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
         {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads user={user}/>}
-        {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing/>}
+        {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
+        {user.tipo==="psicologa"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
       </div>
       <div className="nav-mobile">
         {user.tipo==="psicologa"&&[
@@ -6092,9 +6094,181 @@ function FunilLeads({ user }) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  DASHBOARD MARKETING
+//  CENTRAL DE LANÇAMENTOS DE MARKETING (só psicóloga)
 // ═══════════════════════════════════════════════════════
-function DashboardMarketing() {
+function CentralLancamentosMarketing() {
+  const [campanhas, setCampanhas]     = useState([]);
+  const [lancamentos, setLancamentos] = useState([]);
+  const [salvando, setSalvando]       = useState(false);
+  const [msg, setMsg]                 = useState(null); // {tipo:"ok"|"erro", texto}
+  const [form, setForm] = useState({
+    tipoDespesa: "trafego",
+    valor: "",
+    data: new Date().toISOString().slice(0,10),
+    campanhaId: "",
+  });
+
+  useEffect(()=>{
+    db.collection("clinica_campanhas").orderBy("nome")
+      .onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_lancamentos")
+      .where("tipo_lancamento","==","despesa")
+      .where("categoria","==","Marketing")
+      .orderBy("createdAt","desc").limit(20)
+      .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  const TIPOS = [
+    {id:"trafego",  label:"Impulsionamento / Tráfego Pago"},
+    {id:"agencia",  label:"Honorários da Equipe / Agência"},
+  ];
+
+  const f = (k,v) => setForm(x=>({...x,[k]:v}));
+
+  async function salvar() {
+    if (!form.valor || !form.data) { setMsg({tipo:"erro",texto:"Valor e data são obrigatórios."}); return; }
+    if (parseFloat(form.valor)<=0) { setMsg({tipo:"erro",texto:"Valor deve ser maior que zero."}); return; }
+    setSalvando(true);
+    try {
+      const tipoLabel = TIPOS.find(t=>t.id===form.tipoDespesa)?.label || "Marketing";
+      const campanha  = campanhas.find(c=>c.id===form.campanhaId);
+      const descricao = campanha ? `${tipoLabel} — ${campanha.nome}` : tipoLabel;
+
+      await db.collection("clinica_lancamentos").add({
+        tipo_lancamento: "despesa",
+        categoria:       "Marketing",
+        descricao,
+        tipoDespesaMkt:  form.tipoDespesa,
+        campanhaId:      form.campanhaId || null,
+        campanhaNome:    campanha?.nome || null,
+        valor:           parseFloat(form.valor),
+        data:            form.data,
+        formaPag:        "PIX",
+        status:          "pago",
+        origem:          "crm-marketing",
+        createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      setMsg({tipo:"ok", texto:`✓ Lançado R$ ${parseFloat(form.valor).toFixed(2).replace(".",",")} em ${tipoLabel}`});
+      setForm({tipoDespesa:"trafego", valor:"", data:new Date().toISOString().slice(0,10), campanhaId:""});
+      setTimeout(()=>setMsg(null), 4000);
+    } catch(e) { setMsg({tipo:"erro",texto:"Erro ao salvar. Tente novamente."}); }
+    setSalvando(false);
+  }
+
+  async function excluir(id) {
+    if (!window.confirm("Excluir este lançamento de marketing?")) return;
+    await db.collection("clinica_lancamentos").doc(id).delete().catch(()=>{});
+  }
+
+  const totalMes = lancamentos
+    .filter(l=>l.data?.startsWith(new Date().toISOString().slice(0,7)))
+    .reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+
+  function fmtData(d) { return d ? d.split("-").reverse().join("/") : "—"; }
+  function fmtVal(v)  { return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
+
+  return (
+    <div style={{marginTop:28}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <div style={{fontWeight:700,fontSize:15}}>💸 Central de Lançamentos</div>
+        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"6px 14px",fontSize:12,color:"#dc2626",fontWeight:600}}>
+          🔒 Visível apenas para Administradora
+        </div>
+      </div>
+
+      {/* Formulário */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:20,marginBottom:20}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:16,color:"var(--text-muted)"}}>LANÇAR NOVO GASTO DE MARKETING</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+          <div style={{gridColumn:"1/-1"}}>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Tipo de Despesa</label>
+            <select value={form.tipoDespesa} onChange={e=>f("tipoDespesa",e.target.value)} className="form-input">
+              {TIPOS.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Valor (R$)</label>
+            <input type="number" min="0" step="0.01" value={form.valor}
+              onChange={e=>f("valor",e.target.value)} className="form-input" placeholder="0,00"/>
+          </div>
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Data de Competência</label>
+            <input type="date" value={form.data} onChange={e=>f("data",e.target.value)} className="form-input"/>
+          </div>
+          <div style={{gridColumn:"1/-1"}}>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha Vinculada <span style={{fontWeight:400,color:"var(--text-muted)"}}>(opcional)</span></label>
+            <select value={form.campanhaId} onChange={e=>f("campanhaId",e.target.value)} className="form-input">
+              <option value="">— Selecionar campanha —</option>
+              {campanhas.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {msg&&(
+          <div style={{background:msg.tipo==="ok"?"#f0fdf4":"#fef2f2",border:"1px solid",borderColor:msg.tipo==="ok"?"#bbf7d0":"#fecaca",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.tipo==="ok"?"#15803d":"#dc2626",fontWeight:500}}>
+            {msg.texto}
+          </div>
+        )}
+
+        <button onClick={salvar} disabled={salvando} className="btn-primary" style={{width:"100%"}}>
+          {salvando?"Salvando...":"💾 Salvar e Lançar no Financeiro"}
+        </button>
+        <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8,textAlign:"center"}}>
+          O lançamento será registrado automaticamente como despesa paga em "Financeiro Clínica"
+        </div>
+      </div>
+
+      {/* Histórico do mês */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:600,fontSize:13}}>Lançamentos de Marketing</div>
+          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>
+            Este mês: {fmtVal(totalMes)}
+          </div>
+        </div>
+        {lancamentos.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento ainda.</div>
+          : <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <thead>
+                <tr style={{background:"var(--gray-50)"}}>
+                  {["Data","Descrição","Campanha","Valor",""].map(h=>(
+                    <th key={h} style={{padding:"9px 14px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:12}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lancamentos.map(l=>(
+                  <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
+                    <td style={{padding:"10px 14px",color:"var(--text-muted)"}}>{fmtData(l.data)}</td>
+                    <td style={{padding:"10px 14px",fontWeight:500}}>{l.descricao}</td>
+                    <td style={{padding:"10px 14px"}}>
+                      {l.campanhaNome
+                        ? <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{l.campanhaNome}</span>
+                        : <span style={{color:"var(--gray-400)",fontSize:12}}>—</span>
+                      }
+                    </td>
+                    <td style={{padding:"10px 14px",fontWeight:700,color:"#dc2626"}}>{fmtVal(l.valor)}</td>
+                    <td style={{padding:"10px 14px"}}>
+                      <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4}}
+                        onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
+                        onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
+                        <Icon name="trash-2" size={14}/>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        }
+      </div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════
+function DashboardMarketing({ user }) {
   const [leads, setLeads] = useState([]);
   useEffect(()=>{
     db.collection("clinica_leads").orderBy("createdAt","desc").limit(100)
@@ -6216,11 +6390,11 @@ function DashboardMarketing() {
             </div>
         }
       </div>
+      {/* Central de Lançamentos — só psicóloga */}
+      {user?.tipo==="psicologa" && <CentralLancamentosMarketing/>}
     </div>
   );
-}
-
-const NAV_MARKETING = [
+} = [
   { id:"marketing-dashboard", label:"Dashboard", icon:"trending-up" },
 ];
 
