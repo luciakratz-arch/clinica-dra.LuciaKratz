@@ -5865,15 +5865,23 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
 const REGRAS_INATIVIDADE = [
   {
     status: "novo",
-    limiteMs: 1 * 60 * 1000, // ⚠️ TESTE: 1 minuto (produção: 2 * 60 * 60 * 1000)
+    limiteMs: 30 * 60 * 1000, // 30 minutos
     emoji: "⚠️",
     titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
     corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
     cor: "#d97706", bg: "#fef3c7", borda: "#fde68a",
   },
   {
+    status: "contato",
+    limiteMs: 4 * 60 * 60 * 1000, // 4 horas
+    emoji: "📞",
+    titulo: (nome) => `📞 Primeiro contato sem avanço`,
+    corpo:  (nome, tempo) => `${nome} está em "Primeiro Contato" há ${tempo}. Tentar avançar para agendamento.`,
+    cor: "#0891b2", bg: "#e0f2fe", borda: "#bae6fd",
+  },
+  {
     status: "agendamento",
-    limiteMs: 1 * 60 * 1000, // ⚠️ TESTE: 1 minuto (produção: 24 * 60 * 60 * 1000)
+    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
     emoji: "⏰",
     titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
     corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
