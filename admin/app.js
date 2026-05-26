@@ -6115,10 +6115,14 @@ function CentralLancamentosMarketing() {
     db.collection("clinica_campanhas").orderBy("nome")
       .onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     db.collection("clinica_lancamentos")
-      .where("tipo_lancamento","==","despesa")
-      .where("categoria","==","Marketing")
+      .where("origem","==","crm-marketing")
       .orderBy("createdAt","desc").limit(20)
-      .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+      .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),
+        err=>{ // fallback sem orderBy se não tiver índice
+          db.collection("clinica_lancamentos")
+            .where("origem","==","crm-marketing")
+            .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),()=>{});
+        });
   },[]);
 
   const TIPOS = [
