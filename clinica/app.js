@@ -91,12 +91,44 @@ const MAPA_MODULOS = {
 };
 
 function navFiltradoPaciente(nav, user) {
+  // Suporta formato novo (modulosConfig) e antigo (modulosAtivos)
+  const config = user.modulosConfig || {};
+  const ativos = user.modulosAtivos || [];
+
+  // Mapa de item.id para módulo
+  const ITEM_PARA_MODULO = {
+    "humor":"mod1", "diario":"mod1", "metas":"mod1", "reflexoes":"mod1", "pensamentos":"mod1", "tcc":"mod1",
+    "fabulas":"mod2",
+    "ferramentas":"mod3", "ansiedade":"mod3", "arvore":"mod3",
+    "musicoterapia":"mod4",
+    "casais":"mod5",
+  };
+
   return nav.filter(item => {
     if (["painel","minha-conta","meus-laudos"].includes(item.id)) return true;
-    const modulos = user.modulosAtivos || [];
+
+    // Verifica no formato novo
+    const modId = ITEM_PARA_MODULO[item.id];
+    if (modId && config[modId]?.ativo) {
+      // Verifica se a ferramenta específica está ativa dentro do módulo
+      const ferramentas = config[modId].ferramentas || {};
+      const ferrAtiva = ferramentas[item.id];
+      if (ferrAtiva) {
+        // Verifica data de início
+        if (ferrAtiva.dataInicio) {
+          const hoje = new Date().toISOString().split("T")[0];
+          return ferrAtiva.dataInicio <= hoje;
+        }
+        return true;
+      }
+      // Se o módulo está ativo mas sem ferramentas específicas, mostra
+      if (Object.keys(ferramentas).length === 0) return true;
+      return false;
+    }
+
+    // Fallback formato antigo
     const chave = MAPA_MODULOS[item.id] || item.id;
-    // aceita tanto a chave mapeada quanto o id direto
-    return modulos.includes(chave) || modulos.includes(item.id);
+    return ativos.includes(chave) || ativos.includes(item.id);
   });
 }
 
