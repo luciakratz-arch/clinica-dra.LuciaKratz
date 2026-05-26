@@ -249,6 +249,7 @@ function Login({ onLogin }) {
         if (senha === "1234") onLogin({ tipo:"marketing", nome:"Marketing" });
         else setErro("Senha incorreta.");
       }
+    } catch(e) { setErro("Erro ao conectar."); }
     setLoading(false);
   }
 
