@@ -5481,7 +5481,7 @@ function App() {
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
-        {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads/>}
+        {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads user={user}/>}
         {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing/>}
       </div>
       <div className="nav-mobile">
@@ -5619,11 +5619,22 @@ function TagInputCampanha({ value=[], onChange }) {
   );
 }
 
-function ModalLead({ lead, onSalvar, onFechar }) {
+function ModalLead({ lead, onSalvar, onFechar, user }) {
   const novo = !lead?.id;
-  const [form, setForm] = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
+  const [form, setForm]         = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
   const [textoIA, setTextoIA]   = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [aba, setAba]           = useState("dados"); // "dados" | "timeline"
+  const [interacoes, setInteracoes] = useState([]);
+  const [novaAnotacao, setNovaAnotacao] = useState("");
+  const [registrando, setRegistrando]   = useState(false);
+
+  useEffect(()=>{
+    if (!lead?.id) return;
+    db.collection("clinica_leads").doc(lead.id).collection("interacoes")
+      .orderBy("createdAt","desc")
+      .onSnapshot(s=>setInteracoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[lead?.id]);
 
   function aplicarIA() {
     const parsed = parsearLeadIA(textoIA);
@@ -5649,68 +5660,165 @@ function ModalLead({ lead, onSalvar, onFechar }) {
     setSalvando(false);
   }
 
+  async function registrarContato() {
+    if (!novaAnotacao.trim()) return;
+    if (!lead?.id) { alert("Salve o lead primeiro antes de registrar interações."); return; }
+    setRegistrando(true);
+    try {
+      await db.collection("clinica_leads").doc(lead.id).collection("interacoes").add({
+        texto: novaAnotacao.trim(),
+        autor: user?.nome || "Usuário",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setNovaAnotacao("");
+    } catch(e) { alert("Erro ao registrar."); }
+    setRegistrando(false);
+  }
+
   const f = (campo, val) => setForm(x=>({...x,[campo]:val}));
+
+  function fmtDataHora(ts) {
+    if (!ts?.toDate) return "—";
+    const d = ts.toDate();
+    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
-        <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontWeight:700,fontSize:16}}>{novo?"Novo Lead":"Editar Lead"}</div>
-          <button onClick={onFechar} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:20}}>×</button>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+
+        {/* Header */}
+        <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+          <div style={{fontWeight:700,fontSize:16}}>{novo?"Novo Lead": form.nome||"Lead"}</div>
+          <button onClick={onFechar} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:22,lineHeight:1}}>×</button>
         </div>
 
-        <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
-          {/* Parser IA */}
-          {novo && (
-            <div style={{background:"#f5f3ff",border:"1px solid #7B00C420",borderRadius:10,padding:14}}>
-              <div style={{fontWeight:600,fontSize:13,color:"#7B00C4",marginBottom:8}}>✨ Inserir Lead via IA</div>
-              <textarea value={textoIA} onChange={e=>setTextoIA(e.target.value)} rows={5}
-                placeholder={"Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ..."}
-                style={{width:"100%",border:"1px solid #7B00C430",borderRadius:8,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box",background:"white"}}/>
-              <button onClick={aplicarIA} style={{marginTop:8,background:"#7B00C4",color:"white",border:"none",borderRadius:20,padding:"7px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-                ⚡ Preencher campos automaticamente
+        {/* Abas — só para lead existente */}
+        {!novo && (
+          <div style={{display:"flex",borderBottom:"1px solid var(--gray-100)",flexShrink:0}}>
+            {[{id:"dados",label:"📋 Dados"},{id:"timeline",label:`💬 Follow-up (${interacoes.length})`}].map(a=>(
+              <button key={a.id} onClick={()=>setAba(a.id)}
+                style={{flex:1,padding:"12px 0",background:"none",border:"none",cursor:"pointer",fontWeight:aba===a.id?700:400,fontSize:13,fontFamily:"inherit",borderBottom:aba===a.id?"2px solid #7B00C4":"2px solid transparent",color:aba===a.id?"#7B00C4":"var(--text-muted)",transition:"all .15s"}}>
+                {a.label}
               </button>
+            ))}
+          </div>
+        )}
+
+        {/* Corpo scrollável */}
+        <div style={{overflowY:"auto",flex:1}}>
+
+          {/* ABA DADOS */}
+          {(novo || aba==="dados") && (
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
+              {novo && (
+                <div style={{background:"#f5f3ff",border:"1px solid #7B00C420",borderRadius:10,padding:14}}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#7B00C4",marginBottom:8}}>✨ Inserir Lead via IA</div>
+                  <textarea value={textoIA} onChange={e=>setTextoIA(e.target.value)} rows={5}
+                    placeholder={"Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ..."}
+                    style={{width:"100%",border:"1px solid #7B00C430",borderRadius:8,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box",background:"white"}}/>
+                  <button onClick={aplicarIA} style={{marginTop:8,background:"#7B00C4",color:"white",border:"none",borderRadius:20,padding:"7px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                    ⚡ Preencher campos automaticamente
+                  </button>
+                </div>
+              )}
+
+              {[
+                {label:"Nome do Lead *",          campo:"nome",     placeholder:"Nome completo"},
+                {label:"WhatsApp / Contato",       campo:"telefone", placeholder:"(62) 99999-9999"},
+                {label:"Principal Queixa/Objetivo",campo:"queixa",   placeholder:"Ex: Ansiedade, insônia..."},
+                {label:"Serviço de Interesse",     campo:"servico",  placeholder:"Ex: Psicoterapia individual"},
+              ].map(({label,campo,placeholder})=>(
+                <div key={campo}>
+                  <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>{label}</label>
+                  <input type="text" value={form[campo]||""} onChange={e=>f(campo,e.target.value)}
+                    placeholder={placeholder} className="form-input"/>
+                </div>
+              ))}
+
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha / Origem</label>
+                <TagInputCampanha value={form.campanhas||[]} onChange={v=>f("campanhas",v)}/>
+                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Digite e pressione Enter. Campanhas novas são salvas automaticamente.</div>
+              </div>
+
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Status</label>
+                <select value={form.status||"novo"} onChange={e=>f("status",e.target.value)} className="form-input">
+                  {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Observações</label>
+                <textarea value={form.obs||""} onChange={e=>f("obs",e.target.value)} rows={3}
+                  className="form-input" placeholder="Anotações internas..." style={{resize:"vertical"}}/>
+              </div>
             </div>
           )}
 
-          {[
-            {label:"Nome do Lead *",          campo:"nome",     tipo:"text", placeholder:"Nome completo"},
-            {label:"WhatsApp / Contato",       campo:"telefone", tipo:"text", placeholder:"(62) 99999-9999"},
-            {label:"Principal Queixa/Objetivo",campo:"queixa",   tipo:"text", placeholder:"Ex: Ansiedade, insônia..."},
-            {label:"Serviço de Interesse",     campo:"servico",  tipo:"text", placeholder:"Ex: Psicoterapia individual"},
-          ].map(({label,campo,tipo,placeholder})=>(
-            <div key={campo}>
-              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>{label}</label>
-              <input type={tipo} value={form[campo]||""} onChange={e=>f(campo,e.target.value)}
-                placeholder={placeholder} className="form-input"/>
+          {/* ABA TIMELINE */}
+          {!novo && aba==="timeline" && (
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
+
+              {/* Campo nova anotação */}
+              <div style={{background:"#f9fafb",border:"1px solid var(--gray-200)",borderRadius:12,padding:16}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>📝 Nova anotação de follow-up</div>
+                <textarea value={novaAnotacao} onChange={e=>setNovaAnotacao(e.target.value)} rows={3}
+                  className="form-input"
+                  placeholder='Ex: "Cliente disse que vai falar com o marido e pediu para retornar na quinta-feira."'
+                  style={{resize:"vertical",marginBottom:10}}/>
+                <button onClick={registrarContato} disabled={registrando||!novaAnotacao.trim()}
+                  style={{background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"9px 20px",fontSize:13,fontWeight:600,cursor:"pointer",opacity:(!novaAnotacao.trim()||registrando)?0.5:1}}>
+                  {registrando?"Registrando...":"✅ Registrar Contato"}
+                </button>
+              </div>
+
+              {/* Timeline */}
+              <div>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:12,color:"var(--text-muted)"}}>HISTÓRICO DE INTERAÇÕES</div>
+                {interacoes.length===0
+                  ? <div style={{textAlign:"center",padding:"32px 0",color:"var(--gray-400)",fontSize:13}}>Nenhuma interação registrada ainda.</div>
+                  : (
+                    <div style={{position:"relative"}}>
+                      {/* Linha vertical */}
+                      <div style={{position:"absolute",left:15,top:0,bottom:0,width:2,background:"var(--gray-100)"}}/>
+                      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+                        {interacoes.map((it,idx)=>(
+                          <div key={it.id} style={{display:"flex",gap:16,paddingBottom:20,position:"relative"}}>
+                            {/* Bolinha */}
+                            <div style={{width:32,height:32,borderRadius:"50%",background:"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,zIndex:1,fontSize:13}}>
+                              💬
+                            </div>
+                            {/* Conteúdo */}
+                            <div style={{flex:1,background:"white",border:"1px solid var(--gray-100)",borderRadius:10,padding:"12px 14px",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:4}}>
+                                <span style={{fontWeight:600,fontSize:12,color:"#7B00C4"}}>{it.autor}</span>
+                                <span style={{fontSize:11,color:"var(--gray-400)"}}>{fmtDataHora(it.createdAt)}</span>
+                              </div>
+                              <div style={{fontSize:13,lineHeight:1.6,color:"var(--text)"}}>{it.texto}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                }
+              </div>
             </div>
-          ))}
-
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha / Origem *</label>
-            <TagInputCampanha value={form.campanhas||[]} onChange={v=>f("campanhas",v)}/>
-            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Digite e pressione Enter para adicionar. Campanhas novas são salvas automaticamente.</div>
-          </div>
-
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Status</label>
-            <select value={form.status||"novo"} onChange={e=>f("status",e.target.value)} className="form-input">
-              {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Observações</label>
-            <textarea value={form.obs||""} onChange={e=>f("obs",e.target.value)} rows={3}
-              className="form-input" placeholder="Anotações internas..." style={{resize:"vertical"}}/>
-          </div>
+          )}
         </div>
 
-        <div style={{padding:"16px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
-          <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Cancelar</button>
-          <button onClick={salvar} disabled={salvando} className="btn-primary">
-            {salvando?"Salvando...":"Salvar Lead"}
+        {/* Footer */}
+        <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end",flexShrink:0}}>
+          <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+            {aba==="timeline"?"Fechar":"Cancelar"}
           </button>
+          {(novo||aba==="dados") && (
+            <button onClick={salvar} disabled={salvando} className="btn-primary">
+              {salvando?"Salvando...":"Salvar Lead"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -5749,7 +5857,7 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
   );
 }
 
-function FunilLeads() {
+function FunilLeads({ user }) {
   const [leads, setLeads]       = useState([]);
   const [modalLead, setModalLead] = useState(null); // null=fechado, {}=novo, {id,...}=editar
   const [dragOver, setDragOver]  = useState(null);
@@ -5835,6 +5943,7 @@ function FunilLeads() {
       {modalLead!==null&&(
         <ModalLead
           lead={modalLead?.id ? modalLead : null}
+          user={user}
           onSalvar={()=>setModalLead(null)}
           onFechar={()=>setModalLead(null)}/>
       )}
