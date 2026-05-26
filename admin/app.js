@@ -5532,19 +5532,22 @@ const COLUNAS_FUNIL = [
 ];
 
 function parsearLeadIA(texto) {
-  const extrair = (chaves) => {
-    for (const chave of chaves) {
-      const regex = new RegExp(`\\*{0,2}\\s*${chave}\\s*\\*{0,2}\\s*:?\\s*([^\\n*\\[\\]]+)`, "i");
-      const m = texto.match(regex);
-      if (m) return m[1].replace(/\[|\]/g,"").trim();
+  const linhas = texto.split("\n");
+  function extrairLinha(chaves) {
+    for (const linha of linhas) {
+      const limpa = linha.replace(/\*/g,"").replace(/\[|\]/g,"").trim();
+      for (const chave of chaves) {
+        const idx = limpa.toLowerCase().indexOf(chave.toLowerCase() + ":");
+        if (idx !== -1) return limpa.substring(idx + chave.length + 1).trim();
+      }
     }
     return "";
-  };
+  }
   return {
-    nome:     extrair(["Nome do Lead","Nome"]),
-    telefone: extrair(["WhatsApp\\/Contato","WhatsApp","Contato","Telefone"]),
-    queixa:   extrair(["Principal Queixa\\/Objetivo","Queixa\\/Objetivo","Principal Queixa","Queixa","Objetivo"]),
-    servico:  extrair(["Servi[çc]o de Interesse","Servico de Interesse","Serviço"]),
+    nome:     extrairLinha(["Nome do Lead","Nome"]),
+    telefone: extrairLinha(["WhatsApp/Contato","WhatsApp","Contato","Telefone"]),
+    queixa:   extrairLinha(["Principal Queixa/Objetivo","Queixa/Objetivo","Principal Queixa","Queixa","Objetivo"]),
+    servico:  extrairLinha(["Serviço de Interesse","Servico de Interesse","Serviço","Servico"]),
   };
 }
 
