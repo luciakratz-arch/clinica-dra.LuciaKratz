@@ -6097,12 +6097,15 @@ function FunilLeads({ user }) {
 //  CENTRAL DE LANÇAMENTOS DE MARKETING (só psicóloga)
 // ═══════════════════════════════════════════════════════
 function CentralLancamentosMarketing() {
-  const [campanhas, setCampanhas]     = useState([]);
-  const [lancamentos, setLancamentos] = useState([]);
-  const [salvando, setSalvando]       = useState(false);
-  const [msg, setMsg]                 = useState(null); // {tipo:"ok"|"erro", texto}
+  const [campanhas, setCampanhas]         = useState([]);
+  const [lancamentos, setLancamentos]     = useState([]);
+  const [salvando, setSalvando]           = useState(false);
+  const [msg, setMsg]                     = useState(null);
+  const [novaCampanha, setNovaCampanha]   = useState("");
+  const [criandoCamp, setCriandoCamp]     = useState(false);
   const [form, setForm] = useState({
     tipoDespesa: "trafego",
+    descricao: "",
     valor: "",
     data: new Date().toISOString().slice(0,10),
     campanhaId: "",
@@ -6119,25 +6122,39 @@ function CentralLancamentosMarketing() {
   },[]);
 
   const TIPOS = [
-    {id:"trafego",  label:"Impulsionamento / Tráfego Pago"},
-    {id:"agencia",  label:"Honorários da Equipe / Agência"},
+    {id:"trafego", label:"Impulsionamento / Tráfego Pago"},
+    {id:"agencia", label:"Honorários da Equipe / Agência"},
   ];
 
   const f = (k,v) => setForm(x=>({...x,[k]:v}));
 
+  async function criarCampanha() {
+    if (!novaCampanha.trim()) return;
+    if (campanhas.find(c=>c.nome.toLowerCase()===novaCampanha.trim().toLowerCase())) {
+      setMsg({tipo:"erro",texto:"Campanha já existe."}); return;
+    }
+    try {
+      const ref = await db.collection("clinica_campanhas").add({
+        nome: novaCampanha.trim(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      f("campanhaId", ref.id);
+      setNovaCampanha("");
+      setCriandoCamp(false);
+    } catch(e) { setMsg({tipo:"erro",texto:"Erro ao criar campanha."}); }
+  }
+
   async function salvar() {
+    if (!form.descricao?.trim()) { setMsg({tipo:"erro",texto:"Descrição é obrigatória."}); return; }
     if (!form.valor || !form.data) { setMsg({tipo:"erro",texto:"Valor e data são obrigatórios."}); return; }
     if (parseFloat(form.valor)<=0) { setMsg({tipo:"erro",texto:"Valor deve ser maior que zero."}); return; }
     setSalvando(true);
     try {
-      const tipoLabel = TIPOS.find(t=>t.id===form.tipoDespesa)?.label || "Marketing";
-      const campanha  = campanhas.find(c=>c.id===form.campanhaId);
-      const descricao = campanha ? `${tipoLabel} — ${campanha.nome}` : tipoLabel;
-
+      const campanha = campanhas.find(c=>c.id===form.campanhaId);
       await db.collection("clinica_lancamentos").add({
         tipo_lancamento: "despesa",
         categoria:       "Marketing",
-        descricao,
+        descricao:       form.descricao.trim(),
         tipoDespesaMkt:  form.tipoDespesa,
         campanhaId:      form.campanhaId || null,
         campanhaNome:    campanha?.nome || null,
@@ -6148,17 +6165,16 @@ function CentralLancamentosMarketing() {
         origem:          "crm-marketing",
         createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
       });
-
-      setMsg({tipo:"ok", texto:`✓ Lançado R$ ${parseFloat(form.valor).toFixed(2).replace(".",",")} em ${tipoLabel}`});
-      setForm({tipoDespesa:"trafego", valor:"", data:new Date().toISOString().slice(0,10), campanhaId:""});
+      setMsg({tipo:"ok", texto:`✓ Lançado R$ ${parseFloat(form.valor).toFixed(2).replace(".",",")} — ${form.descricao.trim()}`});
+      setForm({tipoDespesa:"trafego", descricao:"", valor:"", data:new Date().toISOString().slice(0,10), campanhaId:""});
       setTimeout(()=>setMsg(null), 4000);
     } catch(e) { setMsg({tipo:"erro",texto:"Erro ao salvar. Tente novamente."}); }
     setSalvando(false);
   }
 
-  async function excluir(id) {
-    if (!window.confirm("Excluir este lançamento de marketing?")) return;
-    await db.collection("clinica_lancamentos").doc(id).delete().catch(()=>{});
+  async function excluir(lanc) {
+    if (!window.confirm(`Excluir o lançamento "${lanc.descricao}" de ${fmtVal(lanc.valor)}? Esta ação não pode ser desfeita.`)) return;
+    await db.collection("clinica_lancamentos").doc(lanc.id).delete().catch(()=>{});
   }
 
   const totalMes = lancamentos
@@ -6180,28 +6196,60 @@ function CentralLancamentosMarketing() {
       {/* Formulário */}
       <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:20,marginBottom:20}}>
         <div style={{fontWeight:600,fontSize:13,marginBottom:16,color:"var(--text-muted)"}}>LANÇAR NOVO GASTO DE MARKETING</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-          <div style={{gridColumn:"1/-1"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:14}}>
+
+          <div>
             <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Tipo de Despesa</label>
             <select value={form.tipoDespesa} onChange={e=>f("tipoDespesa",e.target.value)} className="form-input">
               {TIPOS.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
           </div>
+
           <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Valor (R$)</label>
-            <input type="number" min="0" step="0.01" value={form.valor}
-              onChange={e=>f("valor",e.target.value)} className="form-input" placeholder="0,00"/>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Descrição / Observação <span style={{color:"#dc2626"}}>*</span></label>
+            <input type="text" value={form.descricao} onChange={e=>f("descricao",e.target.value)}
+              className="form-input" placeholder='Ex: "Pagamento mensal Agência Scale Views" ou "Créditos Meta Ads maio"'/>
           </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Valor (R$)</label>
+              <input type="number" min="0" step="0.01" value={form.valor}
+                onChange={e=>f("valor",e.target.value)} className="form-input" placeholder="0,00"/>
+            </div>
+            <div>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Data de Competência</label>
+              <input type="date" value={form.data} onChange={e=>f("data",e.target.value)} className="form-input"/>
+            </div>
+          </div>
+
+          {/* Campanha + botão criar nova */}
           <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Data de Competência</label>
-            <input type="date" value={form.data} onChange={e=>f("data",e.target.value)} className="form-input"/>
-          </div>
-          <div style={{gridColumn:"1/-1"}}>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha Vinculada <span style={{fontWeight:400,color:"var(--text-muted)"}}>(opcional)</span></label>
-            <select value={form.campanhaId} onChange={e=>f("campanhaId",e.target.value)} className="form-input">
-              <option value="">— Selecionar campanha —</option>
-              {campanhas.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
-            </select>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+              Campanha Vinculada <span style={{fontWeight:400,color:"var(--text-muted)"}}>(opcional)</span>
+            </label>
+            <div style={{display:"flex",gap:8}}>
+              <select value={form.campanhaId} onChange={e=>f("campanhaId",e.target.value)} className="form-input" style={{flex:1}}>
+                <option value="">— Selecionar campanha —</option>
+                {campanhas.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+              <button onClick={()=>setCriandoCamp(x=>!x)}
+                style={{background: criandoCamp?"#ea580c":"#ea580c18",color: criandoCamp?"white":"#ea580c",border:"1px solid #ea580c40",borderRadius:8,padding:"0 14px",fontWeight:700,fontSize:18,cursor:"pointer",flexShrink:0}}>
+                {criandoCamp?"×":"+"}
+              </button>
+            </div>
+            {criandoCamp && (
+              <div style={{display:"flex",gap:8,marginTop:8}}>
+                <input type="text" value={novaCampanha} onChange={e=>setNovaCampanha(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&criarCampanha()}
+                  className="form-input" placeholder="Nome da nova campanha..." style={{flex:1}}
+                  autoFocus/>
+                <button onClick={criarCampanha}
+                  style={{background:"#ea580c",color:"white",border:"none",borderRadius:8,padding:"0 16px",fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,fontFamily:"inherit"}}>
+                  Criar
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -6219,13 +6267,11 @@ function CentralLancamentosMarketing() {
         </div>
       </div>
 
-      {/* Histórico do mês */}
+      {/* Histórico */}
       <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
         <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontWeight:600,fontSize:13}}>Lançamentos de Marketing</div>
-          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>
-            Este mês: {fmtVal(totalMes)}
-          </div>
+          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>Este mês: {fmtVal(totalMes)}</div>
         </div>
         {lancamentos.length===0
           ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento ainda.</div>
@@ -6241,19 +6287,19 @@ function CentralLancamentosMarketing() {
                 {lancamentos.map(l=>(
                   <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
                     <td style={{padding:"10px 14px",color:"var(--text-muted)"}}>{fmtData(l.data)}</td>
-                    <td style={{padding:"10px 14px",fontWeight:500}}>{l.descricao}</td>
+                    <td style={{padding:"10px 14px",fontWeight:500}}>{l.descricao||"—"}</td>
                     <td style={{padding:"10px 14px"}}>
                       {l.campanhaNome
                         ? <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{l.campanhaNome}</span>
-                        : <span style={{color:"var(--gray-400)",fontSize:12}}>—</span>
-                      }
+                        : <span style={{color:"var(--gray-400)",fontSize:12}}>—</span>}
                     </td>
                     <td style={{padding:"10px 14px",fontWeight:700,color:"#dc2626"}}>{fmtVal(l.valor)}</td>
                     <td style={{padding:"10px 14px"}}>
-                      <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4}}
+                      <button onClick={()=>excluir(l)}
+                        style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
                         onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
                         onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
-                        <Icon name="trash-2" size={14}/>
+                        <Icon name="trash-2" size={13}/> Excluir
                       </button>
                     </td>
                   </tr>
@@ -6276,16 +6322,14 @@ function CentralLancamentosMarketing() {
                 <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 18px",borderBottom:"1px solid var(--gray-50)"}}>
                   <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{c.nome}</span>
                   <button onClick={async()=>{
-                    if (!window.confirm(`Excluir a campanha "${c.nome}" e todos os lançamentos financeiros vinculados a ela? Esta ação não pode ser desfeita.`)) return;
+                    if (!window.confirm(`Excluir a campanha "${c.nome}" e todos os lançamentos financeiros vinculados? Esta ação não pode ser desfeita.`)) return;
                     try {
-                      // Apaga lançamentos vinculados
                       const snap = await db.collection("clinica_lancamentos").where("campanhaId","==",c.id).get();
                       const batch = db.batch();
                       snap.docs.forEach(d=>batch.delete(d.ref));
                       await batch.commit();
-                      // Apaga a campanha
                       await db.collection("clinica_campanhas").doc(c.id).delete();
-                    } catch(e) { alert("Erro ao excluir. Tente novamente."); }
+                    } catch(e) { alert("Erro ao excluir."); }
                   }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
                     onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
                     onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
@@ -6299,6 +6343,7 @@ function CentralLancamentosMarketing() {
     </div>
   );
 }
+
 
 
 // ═══════════════════════════════════════════════════════
