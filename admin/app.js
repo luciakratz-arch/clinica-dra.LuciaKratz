@@ -334,22 +334,34 @@ function Login({ onLogin }) {
 
 // NAV
 const NAV_PSICOLOGA = [
-  {id:"dashboard",    label:"Dashboard",          icon:"layout-dashboard"},
-  {id:"pacientes",    label:"Pacientes",           icon:"users"},
-  {id:"alunos",       label:"Alunos",              icon:"graduation-cap"},
-  {id:"casais",       label:"Terapia de Casais",   icon:"heart"},
-  {id:"funil-leads",  label:"Funil de Leads",      icon:"filter"},
-  {id:"marketing-dashboard", label:"Marketing",    icon:"trending-up"},
-  {id:"dashboard-performance", label:"Performance", icon:"bar-chart-2"},
-  {id:"recursos",     label:"Recursos Terapeuticos",icon:"wrench"},
-  {id:"laudos",       label:"Laudos",              icon:"file-text"},
-  {id:"agenda",       label:"Agenda",              icon:"calendar"},
-  {id:"fin-clinica",  label:"Fin. Clinica",        icon:"dollar-sign"},
-  {id:"comissoes",    label:"Comissoes",           icon:"percent"},
-  {id:"fin-pessoal",  label:"Fin. Pessoal",        icon:"home"},
-  {id:"depoimentos",  label:"Depoimentos",         icon:"star"},
-  {id:"config",       label:"Configuracoes",       icon:"settings"},
+  { grupo:"🏥 Clínica", itens:[
+    {id:"dashboard",    label:"Dashboard",             icon:"layout-dashboard"},
+    {id:"pacientes",    label:"Pacientes",             icon:"users"},
+    {id:"alunos",       label:"Alunos",                icon:"graduation-cap"},
+    {id:"casais",       label:"Terapia de Casais",     icon:"heart"},
+    {id:"agenda",       label:"Agenda",                icon:"calendar"},
+    {id:"laudos",       label:"Laudos",                icon:"file-text"},
+    {id:"recursos",     label:"Recursos Terapêuticos", icon:"wrench"},
+  ]},
+  { grupo:"📊 Comercial & Marketing", itens:[
+    {id:"funil-leads",           label:"Funil de Leads", icon:"filter"},
+    {id:"marketing-dashboard",   label:"Marketing",      icon:"trending-up"},
+    {id:"dashboard-performance", label:"Performance",    icon:"bar-chart-2"},
+  ]},
+  { grupo:"💰 Financeiro", itens:[
+    {id:"fin-clinica", label:"Fin. Clínica",   icon:"dollar-sign"},
+    {id:"comissoes",   label:"Comissões",      icon:"percent"},
+    {id:"fin-pessoal", label:"Fin. Pessoal",   icon:"home"},
+  ]},
+  { grupo:"⚙️ Configurações", itens:[
+    {id:"depoimentos", label:"Depoimentos",    icon:"star"},
+    {id:"config",      label:"Configurações",  icon:"settings"},
+  ]},
 ];
+
+// Lista plana para compatibilidade com código existente
+const NAV_PSICOLOGA_FLAT = NAV_PSICOLOGA.flatMap(g=>g.itens);
+
 const NAV_SECRETARIA = [
   {id:"pacientes",   label:"Pacientes",    icon:"users"},
   {id:"agenda",      label:"Agenda",       icon:"calendar"},
@@ -361,10 +373,17 @@ const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}]
 
 // SIDEBAR
 function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
-  const nav = user.tipo==="secretaria"?NAV_SECRETARIA:user.tipo==="paulo"?NAV_PAULO:user.tipo==="marketing"?NAV_MARKETING:NAV_PSICOLOGA;
+  const isPsicologa = user.tipo==="psicologa";
   const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":user.tipo==="marketing"?"Marketing":"Area Administrativa";
   const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || "Usuário");
   const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
+
+  // Nav plana para perfis simples
+  const navFlat = user.tipo==="secretaria" ? NAV_SECRETARIA
+    : user.tipo==="paulo" ? NAV_PAULO
+    : user.tipo==="marketing" ? NAV_MARKETING
+    : null; // psicologa usa grupos
+
   return (
     <div className="sidebar-desktop">
       <div className="sidebar-header">
@@ -377,13 +396,36 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
           <div className="sidebar-role">{titulo}</div>
         </div>
       </div>
+
       <nav className="sidebar-nav">
-        {nav.map(item=>(
-          <button key={item.id} className={"nav-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
-            <Icon name={item.icon} size={18}/>{item.label}
-          </button>
-        ))}
+        {isPsicologa ? (
+          // Menu com grupos para psicóloga
+          NAV_PSICOLOGA.map(grupo=>(
+            <div key={grupo.grupo} style={{marginBottom:4}}>
+              <div style={{
+                fontSize:10, fontWeight:700, letterSpacing:"0.08em",
+                color:"rgba(255,255,255,0.45)", padding:"10px 14px 4px",
+                textTransform:"uppercase"
+              }}>
+                {grupo.grupo}
+              </div>
+              {grupo.itens.map(item=>(
+                <button key={item.id} className={"nav-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+                  <Icon name={item.icon} size={18}/>{item.label}
+                </button>
+              ))}
+            </div>
+          ))
+        ) : (
+          // Menu plano para outros perfis
+          navFlat.map(item=>(
+            <button key={item.id} className={"nav-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+              <Icon name={item.icon} size={18}/>{item.label}
+            </button>
+          ))
+        )}
       </nav>
+
       <div className="sidebar-footer">
         <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(255,255,255,0.08)",borderRadius:10,marginBottom:8}}>
           <div className="sidebar-avatar" style={{flexShrink:0}}>{initials}</div>
@@ -5466,7 +5508,7 @@ function App() {
           <div style={{padding:20}}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>Menu</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {NAV_PSICOLOGA.filter(i=>!["dashboard","pacientes","agenda","fin-clinica"].includes(i.id)).map(item=>(
+              {NAV_PSICOLOGA_FLAT.filter(i=>!["dashboard","pacientes","agenda","fin-clinica"].includes(i.id)).map(item=>(
                 <button key={item.id} onClick={()=>setTab(item.id)}
                   style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"20px 12px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:500,color:"var(--text)"}}>
                   <Icon name={item.icon} size={24}/>
