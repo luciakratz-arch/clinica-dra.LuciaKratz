@@ -5862,6 +5862,40 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
   );
 }
 
+const REGRAS_INATIVIDADE = [
+  {
+    status: "novo",
+    limiteMs: 2 * 60 * 60 * 1000, // 2 horas
+    emoji: "⚠️",
+    titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
+    corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
+    cor: "#d97706", bg: "#fef3c7", borda: "#fde68a",
+  },
+  {
+    status: "agendamento",
+    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
+    emoji: "⏰",
+    titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
+    corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
+    cor: "#dc2626", bg: "#fef2f2", borda: "#fecaca",
+  },
+];
+
+function formatarTempo(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
+  if (h > 0) return `${h}h ${m}min`;
+  return `${m}min`;
+}
+
+function fmtWhats(tel) {
+  if (!tel) return null;
+  const num = tel.replace(/\D/g,"");
+  if (!num) return null;
+  return num.startsWith("55") ? num : "55"+num;
+}
+
 function CardLead({ lead, onEditar, onMover, colunas }) {
   const [dragging, setDragging] = useState(false);
 
@@ -6051,40 +6085,6 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
 // ═══════════════════════════════════════════════════════
 //  ALERTAS DE INATIVIDADE — ETAPA 6
 // ═══════════════════════════════════════════════════════
-const REGRAS_INATIVIDADE = [
-  {
-    status: "novo",
-    limiteMs: 2 * 60 * 60 * 1000, // 2 horas
-    emoji: "⚠️",
-    titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
-    corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
-    cor: "#d97706", bg: "#fef3c7", borda: "#fde68a",
-  },
-  {
-    status: "agendamento",
-    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
-    emoji: "⏰",
-    titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
-    corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
-    cor: "#dc2626", bg: "#fef2f2", borda: "#fecaca",
-  },
-];
-
-function formatarTempo(ms) {
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
-  if (h > 0) return `${h}h ${m}min`;
-  return `${m}min`;
-}
-
-function fmtWhats(tel) {
-  if (!tel) return null;
-  const num = tel.replace(/\D/g,"");
-  if (!num) return null;
-  return num.startsWith("55") ? num : "55"+num;
-}
-
 function AlertasInatividade({ leads, onAbrirLead }) {
   const [descartados, setDescartados] = useState(new Set());
   const agora = Date.now();
