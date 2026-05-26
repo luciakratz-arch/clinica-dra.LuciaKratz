@@ -6262,6 +6262,40 @@ function CentralLancamentosMarketing() {
             </table>
         }
       </div>
+
+      {/* Gerenciamento de Campanhas */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden",marginTop:20}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:600,fontSize:13}}>🏷️ Gerenciar Campanhas</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>{campanhas.length} campanha{campanhas.length!==1?"s":""} cadastrada{campanhas.length!==1?"s":""}</div>
+        </div>
+        {campanhas.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhuma campanha cadastrada ainda.</div>
+          : <div style={{padding:"8px 0"}}>
+              {campanhas.map(c=>(
+                <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 18px",borderBottom:"1px solid var(--gray-50)"}}>
+                  <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{c.nome}</span>
+                  <button onClick={async()=>{
+                    if (!window.confirm(`Excluir a campanha "${c.nome}" e todos os lançamentos financeiros vinculados a ela? Esta ação não pode ser desfeita.`)) return;
+                    try {
+                      // Apaga lançamentos vinculados
+                      const snap = await db.collection("clinica_lancamentos").where("campanhaId","==",c.id).get();
+                      const batch = db.batch();
+                      snap.docs.forEach(d=>batch.delete(d.ref));
+                      await batch.commit();
+                      // Apaga a campanha
+                      await db.collection("clinica_campanhas").doc(c.id).delete();
+                    } catch(e) { alert("Erro ao excluir. Tente novamente."); }
+                  }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
+                    onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
+                    onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
+                    <Icon name="trash-2" size={13}/> Excluir
+                  </button>
+                </div>
+              ))}
+            </div>
+        }
+      </div>
     </div>
   );
 }
