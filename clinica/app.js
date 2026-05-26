@@ -81,6 +81,65 @@ const NAV_ALUNO = [
   { id:"relatorios-aluno",  label:"Relatórios",   icon:"file-bar-chart" },
 ];
 
+// ─── PROTOCOLO CASAIS (espelhado do admin) ───────────────
+const PROTOCOLO_CASAIS = [
+  {
+    stage:0, tabId:"diagnostico-casal", titulo:"Diagnóstico Inicial de Casal",
+    subtitulo:"Avaliação inicial do bem-estar conjugal antes da jornada",
+    emoji:"🔍", cor:"#7c3aed", bg:"#f5f3ff",
+    atividades:[
+      {id:"inventario-bem-estar", titulo:"Inventário de Bem-Estar de Casais", desc:"42 questões sobre comunicação, resolução de conflitos, intimidade emocional, satisfação sexual e cooperação"},
+      {id:"roda-vida-relacionamento", titulo:"Roda da Vida do Relacionamento", desc:"Avalie 8 dimensões do relacionamento em formato visual"},
+      {id:"3-metas", titulo:"Nossas 3 Metas do Relacionamento", desc:"Definam juntos as 3 principais metas terapêuticas"},
+      {id:"quem-sou", titulo:"Quem Eu Sou no Relacionamento", desc:"Reflexão individual sobre identidade no relacionamento"},
+      {id:"o-que-quero", titulo:"O Que Eu Quero e Não Quero Mais", desc:"Mapeamento de expectativas e limites"}
+    ]
+  },
+  {
+    stage:1, tabId:"etapa1-casal", titulo:"Reconexão e Segurança Emocional",
+    subtitulo:"Reduzir defensividade e aumentar conexão emocional",
+    emoji:"💚", cor:"#059669", bg:"#d1fae5",
+    atividades:[
+      {id:"detalhes-dia", titulo:"Detalhes do Dia a Dia", desc:"Compartilhem os pequenos detalhes que fazem diferença na conexão diária"},
+      {id:"plano-casal-ocupado", titulo:"Plano de Ação para um Casal Ocupado Demais", desc:"Estratégias práticas para manter conexão na correria"}
+    ]
+  },
+  {
+    stage:2, tabId:"etapa2-casal", titulo:"Identidade e Vínculo do Casal",
+    subtitulo:"Resgatar identidade afetiva e visão compartilhada",
+    emoji:"💜", cor:"#7c3aed", bg:"#ede9fe",
+    atividades:[
+      {id:"renovando-votos", titulo:"Renovando os Votos", desc:"Recontem a história do casal e renovem seus compromissos através de 5 narrativas guiadas"}
+    ]
+  },
+  {
+    stage:3, tabId:"etapa3-casal", titulo:"Conceitualização Cognitiva",
+    subtitulo:"Identificar padrões cognitivos e crenças relacionais",
+    emoji:"🧠", cor:"#0891b2", bg:"#e0f2fe",
+    atividades:[
+      {id:"mapa-cognitivo", titulo:"Mapa Cognitivo do Relacionamento", desc:"Identificar pensamentos automáticos, crenças e padrões que afetam o relacionamento"}
+    ]
+  },
+  {
+    stage:4, tabId:"etapa4-casal", titulo:"Reestruturação Relacional",
+    subtitulo:"Criar novos padrões emocionais e comportamentais",
+    emoji:"🌱", cor:"#16a34a", bg:"#dcfce7",
+    atividades:[
+      {id:"novos-padroes", titulo:"Novos Padrões Relacionais", desc:"Desenvolver e praticar novos comportamentos e respostas emocionais"}
+    ]
+  }
+];
+
+const CHECKIN_SEMANAL_PERGUNTAS = [
+  "Hoje eu me sinto conectado(a) com meu parceiro(a)",
+  "Sinto que fui ouvido(a) esta semana",
+  "Expressamos afeto um pelo outro",
+  "Resolvemos conflitos de forma saudável",
+  "Dedicamos tempo de qualidade juntos",
+  "Sinto que somos uma equipe",
+  "Me sinto seguro(a) emocionalmente com meu parceiro(a)"
+];
+
 // mapa tab → id do módulo no Firebase
 const MAPA_MODULOS = {
   humor:"humor", pensamentos:"tcc", diario:"diario", metas:"metas",
@@ -636,6 +695,85 @@ function RegistroHumor({ user }) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  CHECK-IN SEMANAL — FORMULÁRIO
+// ═══════════════════════════════════════════════════════
+function FormCheckinSemanal({ user, semana, onSalvo, onCancelar }) {
+  const [respostas, setRespostas] = useState({});
+  const [salvando, setSalvando]   = useState(false);
+  const [msg, setMsg]             = useState("");
+
+  const escala = [1,2,3,4,5];
+  const escalaLabel = {1:"Discordo totalmente",3:"Neutro",5:"Concordo totalmente"};
+
+  async function salvar() {
+    if (Object.keys(respostas).length < CHECKIN_SEMANAL_PERGUNTAS.length) {
+      setMsg("Responda todas as perguntas antes de salvar.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_checkin_casal").add({
+        pacienteId: user.id,
+        casalId: user.casalId || user.id,
+        semana,
+        respostas,
+        media: (Object.values(respostas).reduce((a,b)=>a+b,0) / CHECKIN_SEMANAL_PERGUNTAS.length).toFixed(1),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      onSalvo();
+    } catch(e) { setMsg("Erro ao salvar. Tente novamente."); }
+    setSalvando(false);
+  }
+
+  return (
+    <div className="card">
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20}}>
+        <button onClick={onCancelar} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",display:"flex",alignItems:"center",gap:4,fontSize:13}}>
+          <Icon name="arrow-left" size={15}/> Voltar
+        </button>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:700,fontSize:16}}>Check-in Semanal</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>Semana {semana} — responda com honestidade</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        {CHECKIN_SEMANAL_PERGUNTAS.map((pergunta, idx) => (
+          <div key={idx} style={{borderBottom:"1px solid var(--gray-100)",paddingBottom:16}}>
+            <div style={{fontSize:14,fontWeight:500,marginBottom:12,lineHeight:1.5}}>
+              {idx+1}. {pergunta}
+            </div>
+            <div style={{display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+              {escala.map(v => (
+                <button key={v} onClick={()=>setRespostas(r=>({...r,[idx]:v}))}
+                  style={{
+                    width:44,height:44,borderRadius:"50%",border:"2px solid",
+                    borderColor: respostas[idx]===v ? "var(--purple)" : "var(--gray-200)",
+                    background: respostas[idx]===v ? "var(--purple)" : "white",
+                    color: respostas[idx]===v ? "white" : "var(--text-muted)",
+                    fontWeight:700,fontSize:15,cursor:"pointer",transition:"all .15s",flexShrink:0
+                  }}>
+                  {v}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",marginTop:6}}>
+              <span>Discordo totalmente</span><span>Concordo totalmente</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {msg && <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:8,padding:"10px 14px",marginTop:12,fontSize:13,color:"#92400e"}}>{msg}</div>}
+
+      <button onClick={salvar} disabled={salvando} className="btn-primary" style={{width:"100%",marginTop:20}}>
+        {salvando ? "Salvando..." : "Enviar Check-in 💜"}
+      </button>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
 //  PAINEL CASAL
 // ═══════════════════════════════════════════════════════
 function PainelCasal({ user }) {
@@ -643,6 +781,7 @@ function PainelCasal({ user }) {
   const [checkin, setCheckin]             = useState(null);
   const [metas, setMetas]                 = useState([]);
   const [metasParceiro, setMetasParceiro] = useState([]);
+  const [mostrarForm, setMostrarForm]     = useState(false);
 
   function getSemana() {
     const d=new Date(), jan=new Date(d.getFullYear(),0,1);
@@ -668,6 +807,13 @@ function PainelCasal({ user }) {
   const hoje     = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
   const hora     = new Date().getHours();
   const saudacao = hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
+  const semana   = getSemana();
+
+  if (mostrarForm) {
+    return <FormCheckinSemanal user={user} semana={semana}
+      onSalvo={()=>setMostrarForm(false)}
+      onCancelar={()=>setMostrarForm(false)}/>;
+  }
 
   return (
     <div>
@@ -702,16 +848,17 @@ function PainelCasal({ user }) {
       <div style={{background:"linear-gradient(135deg,#7B00C4,#b040e0)",borderRadius:16,padding:24,marginBottom:16,color:"white"}}>
         <div style={{fontSize:11,fontWeight:600,letterSpacing:1,opacity:0.8,marginBottom:8}}>CHECK-IN SEMANAL</div>
         <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:4}}>Como foi a semana de vocês?</div>
-        <div style={{fontSize:13,opacity:0.75,marginBottom:16}}>Semana {getSemana()}</div>
+        <div style={{fontSize:13,opacity:0.75,marginBottom:16}}>Semana {semana}</div>
         <div style={{background:"rgba(255,255,255,0.15)",borderRadius:8,height:6,marginBottom:8}}>
-          <div style={{width:checkin?"100%":"0%",height:"100%",background:"white",borderRadius:8}}/>
+          <div style={{width:checkin?"100%":"0%",height:"100%",background:"white",borderRadius:8,transition:"width .5s"}}/>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:checkin?0:12}}>
           <span style={{fontSize:13,opacity:0.8}}>{checkin?"Respondido ✓":"Ainda não respondido"}</span>
           <span style={{fontSize:13,fontWeight:600}}>{checkin?"100%":"0%"}</span>
         </div>
         {!checkin && (
-          <button style={{marginTop:8,background:"white",color:"var(--purple)",border:"none",borderRadius:20,padding:"8px 20px",fontWeight:600,fontSize:13,cursor:"pointer"}}>
+          <button onClick={()=>setMostrarForm(true)}
+            style={{marginTop:8,background:"white",color:"var(--purple)",border:"none",borderRadius:20,padding:"8px 20px",fontWeight:600,fontSize:13,cursor:"pointer"}}>
             Responder agora
           </button>
         )}
@@ -739,6 +886,118 @@ function PainelCasal({ user }) {
             }
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  ETAPA CASAL — componente reutilizável
+// ═══════════════════════════════════════════════════════
+function EtapaCasal({ user, etapaData }) {
+  const [atividadeAberta, setAtividadeAberta] = useState(null);
+  const [respostas, setRespostas]             = useState({});
+  const [salvando, setSalvando]               = useState(false);
+  const [msg, setMsg]                         = useState("");
+
+  async function salvarRespostas() {
+    if (!atividadeAberta) return;
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId: user.id,
+        casalId: user.casalId || user.id,
+        etapaId: etapaData.tabId,
+        atividadeId: atividadeAberta.id,
+        atividadeTitulo: atividadeAberta.titulo,
+        respostas,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setMsg("✓ Respostas salvas! 💜");
+      setTimeout(()=>setMsg(""), 3000);
+    } catch(e) { setMsg("Erro ao salvar. Tente novamente."); }
+    setSalvando(false);
+  }
+
+  if (atividadeAberta) {
+    return (
+      <div>
+        <button onClick={()=>{ setAtividadeAberta(null); setRespostas({}); setMsg(""); }}
+          style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16,padding:"6px 0"}}>
+          <Icon name="arrow-left" size={15}/> Voltar para {etapaData.stage===0?"Diagnóstico":"Etapa "+etapaData.stage}
+        </button>
+
+        <div style={{background:etapaData.bg,border:"1.5px solid "+etapaData.cor+"40",borderRadius:14,padding:20,marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:28}}>{etapaData.emoji}</span>
+            <div>
+              <div style={{fontWeight:700,fontSize:14,color:etapaData.cor}}>
+                {etapaData.stage===0?"Diagnóstico":"Etapa "+etapaData.stage} — {etapaData.titulo}
+              </div>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{atividadeAberta.titulo}</div>
+            </div>
+          </div>
+          <p style={{fontSize:13,color:"var(--gray-700)",marginTop:10,lineHeight:1.6}}>{atividadeAberta.desc}</p>
+        </div>
+
+        <div className="card">
+          <div style={{fontWeight:600,fontSize:15,marginBottom:8}}>{atividadeAberta.titulo}</div>
+          <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:20,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
+            Responda com honestidade. Esta atividade faz parte do protocolo de Terapia de Casais TCC da Dra. Lucia Kratz.
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:16}}>
+            {[1,2,3].map(n=>(
+              <div key={n}>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão {n}</label>
+                <textarea className="form-input" rows={3}
+                  value={respostas[atividadeAberta.id+"_"+n]||""}
+                  onChange={e=>setRespostas(r=>({...r,[atividadeAberta.id+"_"+n]:e.target.value}))}
+                  placeholder="Escreva sua resposta..." style={{resize:"vertical"}}/>
+              </div>
+            ))}
+          </div>
+
+          {msg && <div style={{background: msg.startsWith("✓")?"#d1fae5":"#fef3c7", border:"1px solid", borderColor:msg.startsWith("✓")?"#6ee7b7":"#f59e0b", borderRadius:8, padding:"10px 14px", marginTop:16, fontSize:13, color:msg.startsWith("✓")?"#065f46":"#92400e"}}>{msg}</div>}
+
+          <button onClick={salvarRespostas} disabled={salvando} className="btn-primary" style={{width:"100%",marginTop:20}}>
+            {salvando?"Salvando...": <><Icon name="save" size={15}/> Salvar respostas</>}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{background:etapaData.bg, border:"1.5px solid "+etapaData.cor+"40", borderRadius:14, padding:24, marginBottom:24}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+          <span style={{fontSize:36}}>{etapaData.emoji}</span>
+          <div>
+            <div style={{fontWeight:700,fontSize:18,color:etapaData.cor}}>
+              {etapaData.stage===0?"Diagnóstico Inicial":"Etapa "+etapaData.stage} — {etapaData.titulo}
+            </div>
+            <div style={{fontSize:13,color:"var(--gray-700)",marginTop:2}}>{etapaData.subtitulo}</div>
+          </div>
+        </div>
+        <div style={{fontSize:13,color:"var(--gray-600)",marginTop:8,lineHeight:1.6}}>
+          {etapaData.atividades.length} atividade{etapaData.atividades.length!==1?"s":""} disponível{etapaData.atividades.length!==1?"is":""} nesta etapa. Clique para acessar.
+        </div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {etapaData.atividades.map(at=>(
+          <button key={at.id} onClick={()=>setAtividadeAberta(at)}
+            style={{display:"flex",alignItems:"flex-start",gap:14,padding:18,borderRadius:12,border:"1.5px solid var(--gray-200)",background:"white",cursor:"pointer",textAlign:"left",transition:"all .2s",width:"100%"}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor=etapaData.cor;e.currentTarget.style.background=etapaData.bg;}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--gray-200)";e.currentTarget.style.background="white";}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:etapaData.cor,marginTop:5,flexShrink:0}}/>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>{at.titulo}</div>
+              <div style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5}}>{at.desc}</div>
+            </div>
+            <span style={{fontSize:12,color:etapaData.cor,fontWeight:600,flexShrink:0,marginTop:2}}>Acessar →</span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -1072,7 +1331,23 @@ function App() {
 
   const eCasal = modo === "casal";
   const navBase = eCasal ? NAV_CASAL : NAV_INDIVIDUAL;
-  const navFinal = !eCasal ? navFiltradoPaciente(navBase, user) : navBase;
+
+  function navFiltradoCasal(nav, user) {
+    const mod5 = user.modulosConfig?.mod5;
+    // Se mod5 não existe ou não está ativo, mostra só Início e Minha Conta
+    if (!mod5?.ativo) return nav.filter(i => ["inicio-casal","minha-conta"].includes(i.id));
+    const ferrAtivas = mod5.ferramentas || {};
+    // etapas habilitadas = ferramentas do mod5 que têm ativo:true
+    // O id da ferramenta é o id do doc em clinica_casais_etapas (ex: "etapa1-casal")
+    return nav.filter(item => {
+      if (["inicio-casal","minha-conta"].includes(item.id)) return true;
+      // diagnostico-casal não está em clinica_casais_etapas, sempre visível se mod5 ativo
+      if (item.id === "diagnostico-casal") return true;
+      return !!ferrAtivas[item.id];
+    });
+  }
+
+  const navFinal = eCasal ? navFiltradoCasal(navBase, user) : navFiltradoPaciente(navBase, user);
   const navMobile = navFinal.slice(0,5);
 
   return (
@@ -1103,11 +1378,11 @@ function App() {
 
         {/* CASAL */}
         {eCasal&&tab==="inicio-casal"      &&<PainelCasal user={user}/>}
-        {eCasal&&tab==="diagnostico-casal" &&<EmBreve titulo="Diagnóstico Inicial"/>}
-        {eCasal&&tab==="etapa1-casal"      &&<EmBreve titulo="Etapa 1 — Reconexão"/>}
-        {eCasal&&tab==="etapa2-casal"      &&<EmBreve titulo="Etapa 2 — Identidade"/>}
-        {eCasal&&tab==="etapa3-casal"      &&<EmBreve titulo="Etapa 3 — Cognição"/>}
-        {eCasal&&tab==="etapa4-casal"      &&<EmBreve titulo="Etapa 4 — Reestruturação"/>}
+        {eCasal&&tab==="diagnostico-casal" &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[0]}/>}
+        {eCasal&&tab==="etapa1-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[1]}/>}
+        {eCasal&&tab==="etapa2-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[2]}/>}
+        {eCasal&&tab==="etapa3-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[3]}/>}
+        {eCasal&&tab==="etapa4-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[4]}/>}
         {eCasal&&tab==="minha-conta"       &&<EmBreve titulo="Minha Conta"/>}
       </div>
 
