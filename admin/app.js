@@ -6103,6 +6103,7 @@ function CentralLancamentosMarketing() {
   const [msg, setMsg]                     = useState(null);
   const [novaCampanha, setNovaCampanha]   = useState("");
   const [criandoCamp, setCriandoCamp]     = useState(false);
+  const [mesFiltro, setMesFiltro]         = useState(new Date().toISOString().slice(0,7));
   const [form, setForm] = useState({
     tipoDespesa: "trafego",
     descricao: "",
@@ -6157,6 +6158,7 @@ function CentralLancamentosMarketing() {
       const campanha = campanhas.find(c=>c.id===form.campanhaId);
       await db.collection("clinica_lancamentos").add({
         tipo_lancamento: "despesa",
+        tipo:            form.descricao.trim(),
         categoria:       "Marketing",
         descricao:       form.descricao.trim(),
         tipoDespesaMkt:  form.tipoDespesa,
@@ -6181,9 +6183,9 @@ function CentralLancamentosMarketing() {
     await db.collection("clinica_lancamentos").doc(lanc.id).delete().catch(()=>{});
   }
 
-  const totalMes = lancamentos
-    .filter(l=>l.data?.startsWith(new Date().toISOString().slice(0,7)))
-    .reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+  const lancamentosFiltrados = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
+
+  const totalMes = lancamentosFiltrados.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
 
   function fmtData(d) { return d ? d.split("-").reverse().join("/") : "—"; }
   function fmtVal(v)  { return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
@@ -6273,12 +6275,16 @@ function CentralLancamentosMarketing() {
 
       {/* Histórico */}
       <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
-        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontWeight:600,fontSize:13}}>Lançamentos de Marketing</div>
-          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>Este mês: {fmtVal(totalMes)}</div>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{fontWeight:600,fontSize:13}}>Lançamentos de Marketing</div>
+            <input type="month" value={mesFiltro} onChange={e=>setMesFiltro(e.target.value)}
+              style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"4px 8px",fontSize:12,fontFamily:"inherit",outline:"none"}}/>
+          </div>
+          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>{mesFiltro.split("-").reverse().join("/")} : {fmtVal(totalMes)}</div>
         </div>
-        {lancamentos.length===0
-          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento ainda.</div>
+        {lancamentosFiltrados.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento em {mesFiltro.split("-").reverse().join("/")}.</div>
           : <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
               <thead>
                 <tr style={{background:"var(--gray-50)"}}>
@@ -6288,7 +6294,7 @@ function CentralLancamentosMarketing() {
                 </tr>
               </thead>
               <tbody>
-                {lancamentos.map(l=>(
+                {lancamentosFiltrados.map(l=>(
                   <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
                     <td style={{padding:"10px 14px",color:"var(--text-muted)"}}>{fmtData(l.data)}</td>
                     <td style={{padding:"10px 14px",fontWeight:500}}>{l.descricao||"—"}</td>
