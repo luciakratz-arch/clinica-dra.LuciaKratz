@@ -5532,16 +5532,19 @@ const COLUNAS_FUNIL = [
 ];
 
 function parsearLeadIA(texto) {
-  const extrair = (chave) => {
-    const regex = new RegExp(`\\*\\*${chave}\\*\\*[:\\s]+([^\\n*]+)`, "i");
-    const m = texto.match(regex);
-    return m ? m[1].replace(/\[|\]/g,"").trim() : "";
+  const extrair = (chaves) => {
+    for (const chave of chaves) {
+      const regex = new RegExp(`\\*{0,2}\\s*${chave}\\s*\\*{0,2}\\s*:?\\s*([^\\n*\\[\\]]+)`, "i");
+      const m = texto.match(regex);
+      if (m) return m[1].replace(/\[|\]/g,"").trim();
+    }
+    return "";
   };
   return {
-    nome:     extrair("Nome do Lead"),
-    telefone: extrair("WhatsApp\\/Contato"),
-    queixa:   extrair("Principal Queixa\\/Objetivo"),
-    servico:  extrair("Serviço de Interesse"),
+    nome:     extrair(["Nome do Lead","Nome"]),
+    telefone: extrair(["WhatsApp\\/Contato","WhatsApp","Contato","Telefone"]),
+    queixa:   extrair(["Principal Queixa\\/Objetivo","Queixa\\/Objetivo","Principal Queixa","Queixa","Objetivo"]),
+    servico:  extrair(["Servi[çc]o de Interesse","Servico de Interesse","Serviço"]),
   };
 }
 
