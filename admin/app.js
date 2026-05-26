@@ -346,7 +346,7 @@ const NAV_PSICOLOGA = [
   { grupo:"📊 Comercial & Marketing", itens:[
     {id:"funil-leads",           label:"Funil de Leads", icon:"filter"},
     {id:"marketing-dashboard",   label:"Marketing",      icon:"trending-up"},
-    {id:"dashboard-performance", label:"Performance",    icon:"bar-chart-2"},
+    {id:"dashboard-performance", label:"Performance",    icon:"activity"},
   ]},
   { grupo:"💰 Financeiro", itens:[
     {id:"fin-clinica", label:"Fin. Clínica",   icon:"dollar-sign"},
