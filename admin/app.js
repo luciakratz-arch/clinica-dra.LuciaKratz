@@ -5865,6 +5865,12 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
 function CardLead({ lead, onEditar, onMover, colunas }) {
   const [dragging, setDragging] = useState(false);
 
+  // Verifica se está em alerta
+  const regra = REGRAS_INATIVIDADE.find(r=>r.status===(lead.status||"novo"));
+  const ref = lead.updatedAt?.toDate?.() || lead.createdAt?.toDate?.();
+  const emAlerta = regra && ref && (Date.now()-ref.getTime()) >= regra.limiteMs;
+  const whats = fmtWhats(lead.telefone);
+
   return (
     <div draggable
       onDragStart={e=>{ setDragging(true); e.dataTransfer.setData("leadId", lead.id); }}
@@ -5874,7 +5880,8 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
         background:"white", borderRadius:10, padding:"12px 14px",
         boxShadow:"0 1px 4px rgba(0,0,0,0.08)", cursor:"grab",
         opacity: dragging?0.5:1, transition:"opacity .15s",
-        border:"1px solid var(--gray-100)", marginBottom:8,
+        border: emAlerta ? `1.5px solid ${regra.borda}` : "1px solid var(--gray-100)",
+        marginBottom:8,
       }}>
       <div style={{fontWeight:600,fontSize:13,marginBottom:4}}>{lead.nome}</div>
       {lead.servico&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>🎯 {lead.servico}</div>}
@@ -5890,6 +5897,13 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
       <div style={{fontSize:10,color:"var(--gray-400)",marginTop:8}}>
         {lead.createdAt?.toDate ? lead.createdAt.toDate().toLocaleDateString("pt-BR") : ""}
       </div>
+      {emAlerta && whats && (
+        <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
+          onClick={e=>e.stopPropagation()}
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:8,background:"#16a34a",color:"white",borderRadius:6,padding:"5px 0",fontSize:11,fontWeight:600,textDecoration:"none"}}>
+          <Icon name="message-circle" size={11}/> Acessar WhatsApp
+        </a>
+      )}
     </div>
   );
 }
@@ -6034,6 +6048,115 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
   }
 
 
+// ═══════════════════════════════════════════════════════
+//  ALERTAS DE INATIVIDADE — ETAPA 6
+// ═══════════════════════════════════════════════════════
+const REGRAS_INATIVIDADE = [
+  {
+    status: "novo",
+    limiteMs: 2 * 60 * 60 * 1000, // 2 horas
+    emoji: "⚠️",
+    titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
+    corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
+    cor: "#d97706", bg: "#fef3c7", borda: "#fde68a",
+  },
+  {
+    status: "agendamento",
+    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
+    emoji: "⏰",
+    titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
+    corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
+    cor: "#dc2626", bg: "#fef2f2", borda: "#fecaca",
+  },
+];
+
+function formatarTempo(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
+  if (h > 0) return `${h}h ${m}min`;
+  return `${m}min`;
+}
+
+function fmtWhats(tel) {
+  if (!tel) return null;
+  const num = tel.replace(/\D/g,"");
+  if (!num) return null;
+  return num.startsWith("55") ? num : "55"+num;
+}
+
+function AlertasInatividade({ leads, onAbrirLead }) {
+  const [descartados, setDescartados] = useState(new Set());
+  const agora = Date.now();
+
+  const alertas = leads
+    .filter(l => !l.arquivado && !descartados.has(l.id))
+    .flatMap(lead => {
+      const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status||"novo"));
+      if (!regra) return [];
+      // Usa updatedAt se existir, senão createdAt
+      const ref = lead.updatedAt?.toDate?.() || lead.createdAt?.toDate?.();
+      if (!ref) return [];
+      const inativo = agora - ref.getTime();
+      if (inativo < regra.limiteMs) return [];
+      return [{ lead, regra, inativo }];
+    })
+    .sort((a,b) => b.inativo - a.inativo);
+
+  if (alertas.length === 0) return null;
+
+  return (
+    <div style={{marginBottom:20}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <div style={{width:8,height:8,borderRadius:"50%",background:"#dc2626",animation:"pulse 1.5s infinite"}}/>
+        <span style={{fontWeight:700,fontSize:13,color:"#dc2626"}}>
+          {alertas.length} alerta{alertas.length!==1?"s":""} de inatividade
+        </span>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {alertas.map(({lead, regra, inativo})=>{
+          const whats = fmtWhats(lead.telefone);
+          return (
+            <div key={lead.id} style={{
+              background:regra.bg, border:`1.5px solid ${regra.borda}`,
+              borderRadius:12, padding:"12px 16px",
+              display:"flex", alignItems:"center", justifyContent:"space-between",
+              gap:12, flexWrap:"wrap"
+            }}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:13,color:regra.cor,marginBottom:2}}>
+                  {regra.titulo(lead.nome)}
+                </div>
+                <div style={{fontSize:12,color:regra.cor,opacity:0.85}}>
+                  {regra.corpo(lead.nome, formatarTempo(inativo))}
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,flexShrink:0}}>
+                {whats && (
+                  <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
+                    style={{display:"flex",alignItems:"center",gap:5,background:"#16a34a",color:"white",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,textDecoration:"none"}}>
+                    <Icon name="message-circle" size={13}/> WhatsApp
+                  </a>
+                )}
+                <button onClick={()=>onAbrirLead(lead)}
+                  style={{background:"white",border:`1px solid ${regra.borda}`,color:regra.cor,borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                  Ver card
+                </button>
+                <button onClick={()=>setDescartados(s=>new Set([...s,lead.id]))}
+                  style={{background:"none",border:"none",cursor:"pointer",color:regra.cor,opacity:0.5,padding:"4px",fontSize:16,lineHeight:1}}
+                  title="Dispensar alerta">
+                  ×
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function FunilLeads({ user }) {
   const [leads, setLeads]                   = useState([]);
   const [modalLead, setModalLead]           = useState(null);
@@ -6076,12 +6199,15 @@ function FunilLeads({ user }) {
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
         <div>
           <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600}}>Funil de Leads</div>
-          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{leads.length} lead{leads.length!==1?"s":""} no funil</div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{leads.filter(l=>!l.arquivado).length} lead{leads.filter(l=>!l.arquivado).length!==1?"s":""} no funil</div>
         </div>
         <button onClick={()=>setModalLead({})} className="btn-primary" style={{display:"flex",alignItems:"center",gap:6}}>
           <Icon name="plus" size={15}/> Novo Lead
         </button>
       </div>
+
+      {/* Alertas de inatividade */}
+      <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
 
       {/* Kanban */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12,overflowX:"auto",minWidth:0}}>
