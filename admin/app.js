@@ -340,6 +340,7 @@ const NAV_PSICOLOGA = [
   {id:"casais",       label:"Terapia de Casais",   icon:"heart"},
   {id:"funil-leads",  label:"Funil de Leads",      icon:"filter"},
   {id:"marketing-dashboard", label:"Marketing",    icon:"trending-up"},
+  {id:"dashboard-performance", label:"Performance", icon:"bar-chart-2"},
   {id:"recursos",     label:"Recursos Terapeuticos",icon:"wrench"},
   {id:"laudos",       label:"Laudos",              icon:"file-text"},
   {id:"agenda",       label:"Agenda",              icon:"calendar"},
@@ -5485,6 +5486,7 @@ function App() {
         {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads user={user}/>}
         {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
         {user.tipo==="psicologa"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
+        {(user.tipo==="psicologa"||user.tipo==="marketing")&&tab==="dashboard-performance"&&<DashboardPerformance user={user}/>}
       </div>
       <div className="nav-mobile">
         {user.tipo==="psicologa"&&[
@@ -5896,9 +5898,109 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
 //  MODAL CONVERSÃO — Lead → Paciente
 // ═══════════════════════════════════════════════════════
 function ModalConversao({ lead, onConfirmar, onCancelar }) {
-  const [email, setEmail]       = useState("");
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro]         = useState("");
+  const [email, setEmail]                   = useState("");
+  const [tipoContratacao, setTipoContratacao] = useState("individual");
+  const [salvando, setSalvando]             = useState(false);
+  const [erro, setErro]                     = useState("");
+
+  const valorEstimado = tipoContratacao === "pacote" ? 250 : 300;
+
+  async function confirmar() {
+    if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_pacientes").add({
+        nome:                  lead.nome || "",
+        email:                 email.trim().toLowerCase(),
+        telefone:              lead.telefone || "",
+        cpf:                   "",
+        dataNascimento:        "",
+        genero:                "Não informar",
+        status:                "ativo",
+        senha:                 "1234",
+        objetivosTerapeuticos: lead.queixa || "",
+        observacoesClinicas:   "",
+        origem:                "crm-lead",
+        leadId:                lead.id,
+        tipoContratacao,
+        valorEstimado,
+        campanhas:             lead.campanhas || [],
+        createdAt:             firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await db.collection("clinica_leads").doc(lead.id).update({
+        status:        "convertido",
+        arquivado:     true,
+        convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      onConfirmar();
+    } catch(e) { setErro("Erro ao cadastrar. Tente novamente."); }
+    setSalvando(false);
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:460,boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
+        <div style={{background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
+          <div style={{fontSize:40,marginBottom:8}}>🎉</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>Lead Convertido!</div>
+          <div style={{fontSize:13,opacity:0.85,marginTop:4}}>Deseja cadastrar como Paciente na Clínica?</div>
+        </div>
+
+        <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)"}}>
+          <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#16a34a",marginBottom:8}}>DADOS QUE SERÃO MIGRADOS</div>
+            <div style={{fontSize:13,display:"flex",flexDirection:"column",gap:4}}>
+              <div><strong>Nome:</strong> {lead.nome}</div>
+              {lead.telefone&&<div><strong>WhatsApp:</strong> {lead.telefone}</div>}
+              {lead.queixa&&<div><strong>Queixa:</strong> {lead.queixa}</div>}
+            </div>
+          </div>
+
+          <div style={{marginBottom:14}}>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Tipo de Contratação</label>
+            <div style={{display:"flex",gap:8}}>
+              {[{id:"individual",label:"Consulta Individual",valor:300},{id:"pacote",label:"Pacote",valor:250}].map(op=>(
+                <button key={op.id} onClick={()=>setTipoContratacao(op.id)}
+                  style={{flex:1,padding:"10px 8px",borderRadius:8,border:"2px solid",
+                    borderColor:tipoContratacao===op.id?"#16a34a":"var(--gray-200)",
+                    background:tipoContratacao===op.id?"#f0fdf4":"white",
+                    cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
+                    color:tipoContratacao===op.id?"#16a34a":"var(--text-muted)"}}>
+                  {op.label}<br/>
+                  <span style={{fontSize:11,fontWeight:400}}>Est. R$ {op.valor}/sessão</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+              E-mail do paciente <span style={{color:"#dc2626"}}>*</span>
+            </label>
+            <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setErro("");}}
+              className="form-input" placeholder="email@exemplo.com" autoFocus/>
+            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>
+              Necessário para acesso ao portal. Senha inicial: <strong>1234</strong>
+            </div>
+          </div>
+
+          {erro&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginTop:12,fontSize:13,color:"#dc2626"}}>{erro}</div>}
+        </div>
+
+        <div style={{padding:"16px 24px",display:"flex",gap:10}}>
+          <button onClick={onCancelar}
+            style={{flex:1,padding:"11px 0",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
+            Apenas mover o card
+          </button>
+          <button onClick={confirmar} disabled={salvando}
+            style={{flex:1,padding:"11px 0",borderRadius:8,border:"none",background:"#16a34a",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,opacity:salvando?0.7:1}}>
+            {salvando?"Cadastrando...":"✓ Sim, cadastrar paciente"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
   async function confirmar() {
     if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
@@ -6094,7 +6196,206 @@ function FunilLeads({ user }) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  CENTRAL DE LANÇAMENTOS DE MARKETING (só psicóloga)
+//  DASHBOARD DE PERFORMANCE — ETAPA 5
+// ═══════════════════════════════════════════════════════
+const CPL_LIMITES = {
+  nacional:      { verde:10,  amarelo:15 },
+  internacional: { verde:50,  amarelo:999 },
+};
+
+function badgeCPL(cpl, abrangencia) {
+  const lim = CPL_LIMITES[abrangencia||"nacional"];
+  if (cpl <= lim.verde)   return { cor:"#16a34a", bg:"#f0fdf4", label:"✅ Saudável" };
+  if (cpl <= lim.amarelo) return { cor:"#d97706", bg:"#fef3c7", label:"⚠️ Atenção" };
+  const aviso = abrangencia==="internacional"
+    ? "🚨 Alerta de teto atingido. Custo de captação internacional inviabilizando o retorno do consultório."
+    : "🚨 Custo acima do limite realista para o mercado nacional. Avaliar pausa imediata do anúncio.";
+  return { cor:"#dc2626", bg:"#fef2f2", label:"🚨 Acima do limite", aviso };
+}
+
+function DashboardPerformance({ user }) {
+  const [leads, setLeads]           = useState([]);
+  const [pacientes, setPacientes]   = useState([]);
+  const [campanhas, setCampanhas]   = useState([]);
+  const [lancamentos, setLancamentos] = useState([]);
+  const [lancClinica, setLancClinica] = useState([]);
+  const [periodo, setPeriodo]       = useState({ de: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10), ate: new Date().toISOString().slice(0,10) });
+
+  useEffect(()=>{
+    db.collection("clinica_leads").onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_pacientes").where("origem","==","crm-lead").onSnapshot(s=>setPacientes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_campanhas").onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_lancamentos").where("origem","==","crm-marketing").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_lancamentos").where("tipo_lancamento","!=","despesa").onSnapshot(s=>setLancClinica(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  // Filtro por período
+  function noPeriodo(data) { return data >= periodo.de && data <= periodo.ate; }
+
+  const leadsFiltrados      = leads.filter(l=>{ const d=l.createdAt?.toDate?.()?.toISOString().slice(0,10)||""; return d>=periodo.de&&d<=periodo.ate; });
+  const convertidosFiltrados = pacientes.filter(p=>{ const d=p.createdAt?.toDate?.()?.toISOString().slice(0,10)||""; return d>=periodo.de&&d<=periodo.ate; });
+  const lancFiltrados       = lancamentos.filter(l=>l.data&&noPeriodo(l.data));
+
+  const totalLeads      = leadsFiltrados.length;
+  const totalConvertidos = convertidosFiltrados.length;
+  const taxaConversao   = totalLeads>0 ? ((totalConvertidos/totalLeads)*100).toFixed(1) : 0;
+  const totalInvestido  = lancFiltrados.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+
+  // CAC
+  const cac = totalConvertidos>0 ? totalInvestido/totalConvertidos : 0;
+
+  // Faturamento real (lançamentos do financeiro vinculados a pacientes do CRM)
+  const idsConversos = new Set(convertidosFiltrados.map(p=>p.id));
+  const receitaReal  = lancClinica.filter(l=>l.pacienteId&&idsConversos.has(l.pacienteId)&&(l.status==="recebido"||l.status==="pago")).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+  // Faturamento estimado para pacientes sem lançamentos
+  const pacientesComReceita = new Set(lancClinica.filter(l=>l.pacienteId&&idsConversos.has(l.pacienteId)).map(l=>l.pacienteId));
+  const pacientesSemReceita = convertidosFiltrados.filter(p=>!pacientesComReceita.has(p.id));
+  const receitaEstimada     = pacientesSemReceita.reduce((a,p)=>a+(p.valorEstimado||300),0);
+  const receitaTotal        = receitaReal + receitaEstimada;
+  const roi                 = totalInvestido>0 ? (((receitaTotal-totalInvestido)/totalInvestido)*100).toFixed(1) : 0;
+
+  // Por campanha
+  const porCampanha = campanhas.map(camp=>{
+    const leadsC      = leadsFiltrados.filter(l=>(l.campanhas||[]).includes(camp.nome));
+    const convertC    = convertidosFiltrados.filter(p=>(p.campanhas||[]).includes(camp.nome));
+    const investidoC  = lancFiltrados.filter(l=>l.campanhaNome===camp.nome).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+    const cpl         = leadsC.length>0&&investidoC>0 ? investidoC/leadsC.length : 0;
+    const receitaC    = convertC.reduce((a,p)=>{
+      const real = lancClinica.filter(l=>l.pacienteId===p.id&&(l.status==="recebido"||l.status==="pago")).reduce((x,l)=>x+(parseFloat(l.valor)||0),0);
+      return a + (real > 0 ? real : (p.valorEstimado||300));
+    },0);
+    const roiC = investidoC>0 ? (((receitaC-investidoC)/investidoC)*100).toFixed(1) : "—";
+    const badge = cpl>0 ? badgeCPL(cpl, camp.abrangencia) : null;
+    return { ...camp, leadsC:leadsC.length, convertC:convertC.length, investidoC, cpl, receitaC, roiC, badge };
+  }).filter(c=>c.leadsC>0||c.investidoC>0);
+
+  function fmtR(v){ return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
+  function fmtPct(v){ return v+"%"; }
+
+  return (
+    <div style={{padding:"20px 28px",maxWidth:1000}}>
+      <div style={{marginBottom:20}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700}}>Dashboard de Performance</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>Métricas de captação, custo e retorno</div>
+      </div>
+
+      {/* Filtro período */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:10,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+        <span style={{fontSize:13,fontWeight:600}}>📅 Período:</span>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <input type="date" value={periodo.de} onChange={e=>setPeriodo(p=>({...p,de:e.target.value}))}
+            style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit"}}/>
+          <span style={{fontSize:12,color:"var(--text-muted)"}}>até</span>
+          <input type="date" value={periodo.ate} onChange={e=>setPeriodo(p=>({...p,ate:e.target.value}))}
+            style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit"}}/>
+        </div>
+        <button onClick={()=>setPeriodo({de:new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().slice(0,10),ate:new Date().toISOString().slice(0,10)})}
+          style={{background:"var(--gray-100)",border:"none",borderRadius:6,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+          Este mês
+        </button>
+      </div>
+
+      {/* Cards de resumo */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
+        {[
+          {label:"Leads Recebidos",    valor:totalLeads,           icon:"users",         cor:"#7B00C4"},
+          {label:"Convertidos",        valor:totalConvertidos,     icon:"check-circle",  cor:"#16a34a"},
+          {label:"Taxa de Conversão",  valor:fmtPct(taxaConversao),icon:"trending-up",   cor:"#0891b2"},
+          {label:"Total Investido",    valor:fmtR(totalInvestido), icon:"dollar-sign",   cor:"#ea580c"},
+        ].map((c,i)=>(
+          <div key={i} style={{background:"white",borderRadius:12,padding:"16px 18px",border:"1px solid var(--gray-200)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+              <div style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{c.label}</div>
+              <div style={{width:30,height:30,borderRadius:8,background:c.cor+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <Icon name={c.icon} size={15} style={{color:c.cor}}/>
+              </div>
+            </div>
+            <div style={{fontSize:24,fontWeight:700,color:c.cor}}>{c.valor}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* CAC e ROI */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:24}}>
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8}}>💰 CAC — CUSTO DE AQUISIÇÃO POR CLIENTE</div>
+          <div style={{fontSize:32,fontWeight:700,color:cac>300?"#dc2626":"#16a34a",marginBottom:4}}>{fmtR(cac)}</div>
+          {cac>300&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#dc2626"}}>
+            ⚠️ CAC acima de R$ 300,00 — avaliar eficiência das campanhas
+          </div>}
+          {cac>0&&cac<=300&&<div style={{fontSize:12,color:"#16a34a"}}>✅ Dentro do limite saudável (até R$ 300,00)</div>}
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8}}>Total investido ÷ pacientes convertidos no período</div>
+        </div>
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8}}>📈 ROI — RETORNO SOBRE INVESTIMENTO</div>
+          <div style={{fontSize:32,fontWeight:700,color:parseFloat(roi)>=0?"#16a34a":"#dc2626",marginBottom:4}}>{roi}%</div>
+          <div style={{display:"flex",flexDirection:"column",gap:4,fontSize:12,color:"var(--text-muted)"}}>
+            <div>Receita real: <strong style={{color:"#16a34a"}}>{fmtR(receitaReal)}</strong></div>
+            <div>Receita estimada: <strong style={{color:"#0891b2"}}>{fmtR(receitaEstimada)}</strong> ({pacientesSemReceita.length} pac. sem lançamentos)</div>
+            <div>Total investido: <strong style={{color:"#ea580c"}}>{fmtR(totalInvestido)}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabela por campanha */}
+      {porCampanha.length>0&&(
+        <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",marginBottom:24}}>
+          <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",fontWeight:600,fontSize:14}}>
+            🎯 Performance por Campanha
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <thead>
+                <tr style={{background:"var(--gray-50)"}}>
+                  {["Campanha","Tipo","Leads","Convertidos","Investido","CPL","Receita","ROI","Status CPL"].map(h=>(
+                    <th key={h} style={{padding:"10px 14px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {porCampanha.map(c=>{
+                  const b = c.badge;
+                  return (
+                    <tr key={c.id} style={{borderTop:"1px solid var(--gray-100)"}}>
+                      <td style={{padding:"12px 14px",fontWeight:600}}>{c.nome}</td>
+                      <td style={{padding:"12px 14px"}}>
+                        <span style={{fontSize:11,fontWeight:600,color:c.abrangencia==="internacional"?"#7B00C4":"#0891b2"}}>
+                          {c.abrangencia==="internacional"?"🌍 Intl":"🇧🇷 Nac"}
+                        </span>
+                      </td>
+                      <td style={{padding:"12px 14px",textAlign:"center"}}>{c.leadsC}</td>
+                      <td style={{padding:"12px 14px",textAlign:"center",color:"#16a34a",fontWeight:600}}>{c.convertC}</td>
+                      <td style={{padding:"12px 14px",color:"#ea580c",fontWeight:500}}>{fmtR(c.investidoC)}</td>
+                      <td style={{padding:"12px 14px",fontWeight:700,color:b?.cor||"var(--text-muted)"}}>{c.cpl>0?fmtR(c.cpl):"—"}</td>
+                      <td style={{padding:"12px 14px",color:"#16a34a",fontWeight:500}}>{fmtR(c.receitaC)}</td>
+                      <td style={{padding:"12px 14px",fontWeight:700,color:parseFloat(c.roiC)>=0?"#16a34a":"#dc2626"}}>{c.roiC!=="—"?c.roiC+"%":"—"}</td>
+                      <td style={{padding:"12px 14px"}}>
+                        {b?(
+                          <div>
+                            <span style={{background:b.bg,color:b.cor,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}}>{b.label}</span>
+                            {b.aviso&&<div style={{fontSize:10,color:b.cor,marginTop:4,maxWidth:200,lineHeight:1.4}}>{b.aviso}</div>}
+                          </div>
+                        ):"—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {porCampanha.length===0&&(
+        <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",padding:32,textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma campanha com dados no período selecionado. Crie campanhas no Funil de Leads e lance gastos em Marketing para ver as métricas.
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ═══════════════════════════════════════════════════════
 function CentralLancamentosMarketing() {
   const [campanhas, setCampanhas]         = useState([]);
@@ -6102,6 +6403,7 @@ function CentralLancamentosMarketing() {
   const [salvando, setSalvando]           = useState(false);
   const [msg, setMsg]                     = useState(null);
   const [novaCampanha, setNovaCampanha]   = useState("");
+  const [novaAbrangencia, setNovaAbrangencia] = useState("nacional");
   const [criandoCamp, setCriandoCamp]     = useState(false);
   const [mesFiltro, setMesFiltro]         = useState(new Date().toISOString().slice(0,7));
   const [form, setForm] = useState({
@@ -6141,10 +6443,11 @@ function CentralLancamentosMarketing() {
     try {
       const ref = await db.collection("clinica_campanhas").add({
         nome: novaCampanha.trim(),
+        abrangencia: novaAbrangencia,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       f("campanhaId", ref.id);
-      setNovaCampanha("");
+      setNovaCampanha(""); setNovaAbrangencia("nacional");
       setCriandoCamp(false);
     } catch(e) { setMsg({tipo:"erro",texto:"Erro ao criar campanha."}); }
   }
@@ -6245,15 +6548,29 @@ function CentralLancamentosMarketing() {
               </button>
             </div>
             {criandoCamp && (
-              <div style={{display:"flex",gap:8,marginTop:8}}>
-                <input type="text" value={novaCampanha} onChange={e=>setNovaCampanha(e.target.value)}
-                  onKeyDown={e=>e.key==="Enter"&&criarCampanha()}
-                  className="form-input" placeholder="Nome da nova campanha..." style={{flex:1}}
-                  autoFocus/>
-                <button onClick={criarCampanha}
-                  style={{background:"#ea580c",color:"white",border:"none",borderRadius:8,padding:"0 16px",fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,fontFamily:"inherit"}}>
-                  Criar
-                </button>
+              <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{display:"flex",gap:8}}>
+                  <input type="text" value={novaCampanha} onChange={e=>setNovaCampanha(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&criarCampanha()}
+                    className="form-input" placeholder="Nome da nova campanha..." style={{flex:1}}
+                    autoFocus/>
+                  <button onClick={criarCampanha}
+                    style={{background:"#ea580c",color:"white",border:"none",borderRadius:8,padding:"0 16px",fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,fontFamily:"inherit"}}>
+                    Criar
+                  </button>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {["nacional","internacional"].map(op=>(
+                    <button key={op} onClick={()=>setNovaAbrangencia(op)}
+                      style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid",
+                        borderColor:novaAbrangencia===op?"#ea580c":"var(--gray-200)",
+                        background:novaAbrangencia===op?"#fff7ed":"white",
+                        cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
+                        color:novaAbrangencia===op?"#ea580c":"var(--text-muted)",textTransform:"capitalize"}}>
+                      {op==="nacional"?"🇧🇷 Nacional":"🌍 Internacional"}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -6486,7 +6803,8 @@ function DashboardMarketing({ user }) {
 }
 
 const NAV_MARKETING = [
-  { id:"marketing-dashboard", label:"Dashboard", icon:"trending-up" },
+  { id:"marketing-dashboard",    label:"Dashboard",   icon:"trending-up" },
+  { id:"dashboard-performance",  label:"Performance", icon:"bar-chart-2" },
 ];
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
