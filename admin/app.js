@@ -5625,7 +5625,7 @@ function TagInputCampanha({ value=[], onChange }) {
   );
 }
 
-function ModalLead({ lead, onSalvar, onFechar, user }) {
+function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
   const novo = !lead?.id;
   const [form, setForm]         = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
   const [textoIA, setTextoIA]   = useState("");
@@ -5634,6 +5634,7 @@ function ModalLead({ lead, onSalvar, onFechar, user }) {
   const [interacoes, setInteracoes] = useState([]);
   const [novaAnotacao, setNovaAnotacao] = useState("");
   const [registrando, setRegistrando]   = useState(false);
+  const [excluindo, setExcluindo]        = useState(false);
 
   useEffect(()=>{
     if (!lead?.id) return;
@@ -5679,6 +5680,17 @@ function ModalLead({ lead, onSalvar, onFechar, user }) {
       setNovaAnotacao("");
     } catch(e) { alert("Erro ao registrar."); }
     setRegistrando(false);
+  }
+
+  async function excluirLead() {
+    if (!lead?.id) return;
+    if (!window.confirm("Tem certeza que deseja excluir permanentemente este lead? Esta ação não poderá ser desfeita.")) return;
+    setExcluindo(true);
+    try {
+      await db.collection("clinica_leads").doc(lead.id).delete();
+      onFechar();
+    } catch(e) { alert("Erro ao excluir."); }
+    setExcluindo(false);
   }
 
   const f = (campo, val) => setForm(x=>({...x,[campo]:val}));
@@ -5750,7 +5762,13 @@ function ModalLead({ lead, onSalvar, onFechar, user }) {
 
               <div>
                 <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Status</label>
-                <select value={form.status||"novo"} onChange={e=>f("status",e.target.value)} className="form-input">
+                <select value={form.status||"novo"} onChange={e=>{
+                  const novoStatus = e.target.value;
+                  f("status", novoStatus);
+                  if (novoStatus==="convertido" && !novo && onConverter) {
+                    onConverter({...form, id:lead.id});
+                  }
+                }} className="form-input">
                   {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
                 </select>
               </div>
@@ -5816,15 +5834,24 @@ function ModalLead({ lead, onSalvar, onFechar, user }) {
         </div>
 
         {/* Footer */}
-        <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end",flexShrink:0}}>
-          <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
-            {aba==="timeline"?"Fechar":"Cancelar"}
-          </button>
-          {(novo||aba==="dados") && (
-            <button onClick={salvar} disabled={salvando} className="btn-primary">
-              {salvando?"Salvando...":"Salvar Lead"}
+        <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+          {/* Lixeira — só para lead existente */}
+          {!novo ? (
+            <button onClick={excluirLead} disabled={excluindo}
+              style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",borderRadius:8,border:"1px solid #fecaca",background:"#fef2f2",color:"#dc2626",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
+              <Icon name="trash-2" size={14}/> {excluindo?"Excluindo...":"Excluir lead"}
             </button>
-          )}
+          ) : <div/>}
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+              {aba==="timeline"?"Fechar":"Cancelar"}
+            </button>
+            {(novo||aba==="dados") && (
+              <button onClick={salvar} disabled={salvando} className="btn-primary">
+                {salvando?"Salvando...":"Salvar Lead"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -6050,6 +6077,7 @@ function FunilLeads({ user }) {
         <ModalLead
           lead={modalLead?.id ? modalLead : null}
           user={user}
+          onConverter={l=>{ setModalLead(null); setModalConversao(l); }}
           onSalvar={()=>setModalLead(null)}
           onFechar={()=>setModalLead(null)}/>
       )}
