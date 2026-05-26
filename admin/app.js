@@ -5650,5 +5650,5 @@ const NAV_MARKETING = [
   { id:"marketing-dashboard", label:"Dashboard", icon:"trending-up" },
 ];
 
-
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App/>);
