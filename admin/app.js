@@ -25,6 +25,7 @@ const PERFIS = [
   { id:"psicologa",  nome:"Sou Psicologa",  desc:"Acesso ao painel clinico completo", icon:"stethoscope", cor:"#7B00C4" },
   { id:"secretaria", nome:"Sou Secretaria",  desc:"Cadastro de pacientes e financeiro da clinica", icon:"clipboard-list", cor:"#0891b2" },
   { id:"paulo",      nome:"Paulo Sergio",    desc:"Visualizacao do financeiro familiar", icon:"wallet", cor:"#16a34a" },
+  { id:"marketing",  nome:"Marketing",       desc:"Captacao de leads e metricas de trafego", icon:"trending-up", cor:"#ea580c" },
 ];
 
 const MODULOS = [
@@ -244,8 +245,10 @@ function Login({ onLogin }) {
         if (sec.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
         const nomeReal = sec.nome && !sec.nome.includes("@") ? sec.nome : "Secretaria";
         onLogin({ ...sec, tipo:"secretaria", nome: nomeReal });
+      } else if (perfilSel === "marketing") {
+        if (senha === "1234") onLogin({ tipo:"marketing", nome:"Marketing" });
+        else setErro("Senha incorreta.");
       }
-    } catch(e) { setErro("Erro ao conectar."); }
     setLoading(false);
   }
 
@@ -353,8 +356,8 @@ const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}]
 
 // SIDEBAR
 function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
-  const nav = user.tipo==="secretaria"?NAV_SECRETARIA:user.tipo==="paulo"?NAV_PAULO:NAV_PSICOLOGA;
-  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":"Area Administrativa";
+  const nav = user.tipo==="secretaria"?NAV_SECRETARIA:user.tipo==="paulo"?NAV_PAULO:user.tipo==="marketing"?NAV_MARKETING:NAV_PSICOLOGA;
+  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":user.tipo==="marketing"?"Marketing":"Area Administrativa";
   const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || "Usuário");
   const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
   return (
@@ -5436,7 +5439,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
   const notifProps = useBotaoNotificacao(user);
-  function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");}
+  function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");if(u.tipo==="marketing")setTab("marketing-dashboard");}
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
@@ -5475,6 +5478,7 @@ function App() {
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing/>}
       </div>
       <div className="nav-mobile">
         {user.tipo==="psicologa"&&[
@@ -5502,10 +5506,148 @@ function App() {
             <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
           </button>
         ))}
+        {user.tipo==="marketing"&&NAV_MARKETING.map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
 }
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD MARKETING
+// ═══════════════════════════════════════════════════════
+function DashboardMarketing() {
+  const [leads, setLeads] = useState([]);
+  useEffect(()=>{
+    db.collection("clinica_leads").orderBy("createdAt","desc").limit(100)
+      .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  const total     = leads.length;
+  const converted = leads.filter(l=>l.status==="convertido").length;
+  const inProgress= leads.filter(l=>["contato","proposta","agendado"].includes(l.status)).length;
+  const taxa      = total>0 ? Math.round((converted/total)*100) : 0;
+
+  const porOrigem = leads.reduce((acc,l)=>{ const o=l.origem||"Não informado"; acc[o]=(acc[o]||0)+1; return acc; },{});
+  const porStatus = leads.reduce((acc,l)=>{ const s=l.status||"novo"; acc[s]=(acc[s]||0)+1; return acc; },{});
+
+  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", perdido:"Perdido" };
+  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", perdido:"#dc2626" };
+
+  return (
+    <div style={{padding:"24px 28px",maxWidth:900}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:600}}>Dashboard de Marketing</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Captação de leads — somente leitura</div>
+      </div>
+
+      {/* Cards resumo */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:28}}>
+        {[
+          {label:"Total de Leads",   valor:total,      icon:"users",        cor:"#7B00C4"},
+          {label:"Em andamento",     valor:inProgress,  icon:"clock",        cor:"#0891b2"},
+          {label:"Convertidos",      valor:converted,   icon:"check-circle", cor:"#16a34a"},
+          {label:"Taxa de conversão",valor:taxa+"%",    icon:"trending-up",  cor:"#ea580c"},
+        ].map((c,i)=>(
+          <div key={i} style={{background:"white",borderRadius:12,padding:"18px 20px",border:"1px solid var(--gray-200)",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+              <div style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{c.label}</div>
+              <div style={{width:32,height:32,borderRadius:8,background:c.cor+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <Icon name={c.icon} size={16} style={{color:c.cor}}/>
+              </div>
+            </div>
+            <div style={{fontSize:28,fontWeight:700,color:c.cor}}>{c.valor}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:28}}>
+        {/* Por origem */}
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>📊 Leads por Origem</div>
+          {Object.keys(porOrigem).length===0
+            ? <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum dado ainda.</div>
+            : Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]).map(([origem,qty])=>{
+                const pct = total>0?Math.round((qty/total)*100):0;
+                return (
+                  <div key={origem} style={{marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4}}>
+                      <span>{origem}</span><span style={{fontWeight:600}}>{qty} ({pct}%)</span>
+                    </div>
+                    <div style={{background:"var(--gray-100)",borderRadius:4,height:6}}>
+                      <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:4}}/>
+                    </div>
+                  </div>
+                );
+              })
+          }
+        </div>
+
+        {/* Por status */}
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>🎯 Leads por Status</div>
+          {Object.keys(porStatus).length===0
+            ? <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum dado ainda.</div>
+            : Object.entries(porStatus).sort((a,b)=>b[1]-a[1]).map(([status,qty])=>(
+                <div key={status} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,marginBottom:6,background:((STATUS_COR[status]||"#6b7280")+"15")}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:STATUS_COR[status]||"#6b7280"}}/>
+                    <span style={{fontSize:13}}>{STATUS_LABEL[status]||status}</span>
+                  </div>
+                  <span style={{fontWeight:700,fontSize:14,color:STATUS_COR[status]||"#6b7280"}}>{qty}</span>
+                </div>
+              ))
+          }
+        </div>
+      </div>
+
+      {/* Lista de leads recentes */}
+      <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
+        <div style={{padding:"16px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:600,fontSize:14}}>
+          📋 Leads Recentes
+        </div>
+        {leads.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lead cadastrado ainda.</div>
+          : <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                <thead>
+                  <tr style={{background:"var(--gray-50)"}}>
+                    {["Nome","Origem","Status","Contato","Data"].map(h=>(
+                      <th key={h} style={{padding:"10px 16px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:12}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.slice(0,20).map(l=>(
+                    <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
+                      <td style={{padding:"10px 16px",fontWeight:500}}>{l.nome||"—"}</td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.origem||"—"}</td>
+                      <td style={{padding:"10px 16px"}}>
+                        <span style={{background:(STATUS_COR[l.status]||"#6b7280")+"20",color:STATUS_COR[l.status]||"#6b7280",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>
+                          {STATUS_LABEL[l.status]||l.status||"novo"}
+                        </span>
+                      </td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.telefone||l.email||"—"}</td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>
+                        {l.createdAt?.toDate ? l.createdAt.toDate().toLocaleDateString("pt-BR") : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+        }
+      </div>
+    </div>
+  );
+}
+
+const NAV_MARKETING = [
+  { id:"marketing-dashboard", label:"Dashboard", icon:"trending-up" },
+];
+
+
 root.render(<App/>);
