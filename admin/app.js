@@ -5863,10 +5863,101 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════
+//  MODAL CONVERSÃO — Lead → Paciente
+// ═══════════════════════════════════════════════════════
+function ModalConversao({ lead, onConfirmar, onCancelar }) {
+  const [email, setEmail]       = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro]         = useState("");
+
+  async function confirmar() {
+    if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
+    setSalvando(true);
+    try {
+      // 1. Criar paciente em clinica_pacientes
+      await db.collection("clinica_pacientes").add({
+        nome:                 lead.nome || "",
+        email:                email.trim().toLowerCase(),
+        telefone:             lead.telefone || "",
+        cpf:                  "",
+        dataNascimento:       "",
+        genero:               "Não informar",
+        status:               "ativo",
+        senha:                "1234",
+        objetivosTerapeuticos: lead.queixa || "",
+        observacoesClinicas:  "",
+        origem:               "crm-lead",
+        leadId:               lead.id,
+        createdAt:            firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      // 2. Arquivar lead como "ganho"
+      await db.collection("clinica_leads").doc(lead.id).update({
+        status:      "convertido",
+        arquivado:   true,
+        convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      onConfirmar();
+    } catch(e) { setErro("Erro ao cadastrar. Tente novamente."); }
+    setSalvando(false);
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:460,boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
+        {/* Header */}
+        <div style={{background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
+          <div style={{fontSize:40,marginBottom:8}}>🎉</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>Lead Convertido!</div>
+          <div style={{fontSize:13,opacity:0.85,marginTop:4}}>Deseja cadastrar como Paciente na Clínica?</div>
+        </div>
+
+        {/* Dados do lead */}
+        <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)"}}>
+          <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#16a34a",marginBottom:8}}>DADOS QUE SERÃO MIGRADOS</div>
+            <div style={{fontSize:13,display:"flex",flexDirection:"column",gap:4}}>
+              <div><strong>Nome:</strong> {lead.nome}</div>
+              {lead.telefone&&<div><strong>WhatsApp:</strong> {lead.telefone}</div>}
+              {lead.queixa&&<div><strong>Queixa:</strong> {lead.queixa}</div>}
+            </div>
+          </div>
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+              E-mail do paciente <span style={{color:"#dc2626"}}>*</span>
+            </label>
+            <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setErro("");}}
+              className="form-input" placeholder="email@exemplo.com" autoFocus/>
+            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>
+              Necessário para o acesso ao portal do paciente. Senha inicial: <strong>1234</strong>
+            </div>
+          </div>
+
+          {erro&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginTop:12,fontSize:13,color:"#dc2626"}}>{erro}</div>}
+        </div>
+
+        {/* Botões */}
+        <div style={{padding:"16px 24px",display:"flex",gap:10}}>
+          <button onClick={onCancelar}
+            style={{flex:1,padding:"11px 0",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
+            Apenas mover o card
+          </button>
+          <button onClick={confirmar} disabled={salvando}
+            style={{flex:1,padding:"11px 0",borderRadius:8,border:"none",background:"#16a34a",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,opacity:salvando?0.7:1}}>
+            {salvando?"Cadastrando...":"✓ Sim, cadastrar paciente"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FunilLeads({ user }) {
-  const [leads, setLeads]       = useState([]);
-  const [modalLead, setModalLead] = useState(null); // null=fechado, {}=novo, {id,...}=editar
-  const [dragOver, setDragOver]  = useState(null);
+  const [leads, setLeads]                   = useState([]);
+  const [modalLead, setModalLead]           = useState(null);
+  const [dragOver, setDragOver]             = useState(null);
+  const [modalConversao, setModalConversao] = useState(null);
 
   useEffect(()=>{
     db.collection("clinica_leads").orderBy("createdAt","desc")
@@ -5883,11 +5974,20 @@ function FunilLeads({ user }) {
   function onDrop(e, colId) {
     e.preventDefault();
     const leadId = e.dataTransfer.getData("leadId");
-    if (leadId) moverLead(leadId, colId);
+    if (!leadId) { setDragOver(null); return; }
+    if (colId === "convertido") {
+      const lead = leads.find(l=>l.id===leadId);
+      if (lead) {
+        moverLead(leadId, "convertido");
+        setModalConversao(lead);
+      }
+    } else {
+      moverLead(leadId, colId);
+    }
     setDragOver(null);
   }
 
-  const leadsColuna = (colId) => leads.filter(l=>(l.status||"novo")===colId);
+  const leadsColuna = (colId) => leads.filter(l=>(l.status||"novo")===colId && !l.arquivado);
 
   return (
     <div style={{padding:"20px 24px"}}>
@@ -5952,6 +6052,12 @@ function FunilLeads({ user }) {
           user={user}
           onSalvar={()=>setModalLead(null)}
           onFechar={()=>setModalLead(null)}/>
+      )}
+      {modalConversao&&(
+        <ModalConversao
+          lead={modalConversao}
+          onConfirmar={()=>setModalConversao(null)}
+          onCancelar={()=>setModalConversao(null)}/>
       )}
     </div>
   );
