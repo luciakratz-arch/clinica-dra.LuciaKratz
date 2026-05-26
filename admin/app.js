@@ -338,6 +338,7 @@ const NAV_PSICOLOGA = [
   {id:"pacientes",    label:"Pacientes",           icon:"users"},
   {id:"alunos",       label:"Alunos",              icon:"graduation-cap"},
   {id:"casais",       label:"Terapia de Casais",   icon:"heart"},
+  {id:"funil-leads",  label:"Funil de Leads",      icon:"filter"},
   {id:"recursos",     label:"Recursos Terapeuticos",icon:"wrench"},
   {id:"laudos",       label:"Laudos",              icon:"file-text"},
   {id:"agenda",       label:"Agenda",              icon:"calendar"},
@@ -348,10 +349,11 @@ const NAV_PSICOLOGA = [
   {id:"config",       label:"Configuracoes",       icon:"settings"},
 ];
 const NAV_SECRETARIA = [
-  {id:"pacientes",   label:"Pacientes",  icon:"users"},
-  {id:"agenda",      label:"Agenda",     icon:"calendar"},
-  {id:"fin-clinica", label:"Financeiro", icon:"dollar-sign"},
-  {id:"comissoes",   label:"Comissoes",  icon:"percent"},
+  {id:"pacientes",   label:"Pacientes",    icon:"users"},
+  {id:"agenda",      label:"Agenda",       icon:"calendar"},
+  {id:"funil-leads", label:"Funil Leads",  icon:"filter"},
+  {id:"fin-clinica", label:"Financeiro",   icon:"dollar-sign"},
+  {id:"comissoes",   label:"Comissoes",    icon:"percent"},
 ];
 const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}];
 
@@ -5479,6 +5481,7 @@ function App() {
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads/>}
         {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing/>}
       </div>
       <div className="nav-mobile">
@@ -5513,6 +5516,328 @@ function App() {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  FUNIL DE LEADS — KANBAN
+// ═══════════════════════════════════════════════════════
+const COLUNAS_FUNIL = [
+  { id:"novo",        label:"Lead Novo",             cor:"#6b7280", bg:"#f3f4f6" },
+  { id:"contato",     label:"Primeiro Contato",      cor:"#0891b2", bg:"#e0f2fe" },
+  { id:"agendamento", label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
+  { id:"agendado",    label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
+  { id:"convertido",  label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
+];
+
+function parsearLeadIA(texto) {
+  const extrair = (chave) => {
+    const regex = new RegExp(`\\*\\*${chave}\\*\\*[:\\s]+([^\\n*]+)`, "i");
+    const m = texto.match(regex);
+    return m ? m[1].replace(/\[|\]/g,"").trim() : "";
+  };
+  return {
+    nome:     extrair("Nome do Lead"),
+    telefone: extrair("WhatsApp\\/Contato"),
+    queixa:   extrair("Principal Queixa\\/Objetivo"),
+    servico:  extrair("Serviço de Interesse"),
+  };
+}
+
+function TagInputCampanha({ value=[], onChange }) {
+  const [input, setInput]           = useState("");
+  const [sugestoes, setSugestoes]   = useState([]);
+  const [todasTags, setTodasTags]   = useState([]);
+
+  useEffect(()=>{
+    db.collection("clinica_campanhas").orderBy("nome").onSnapshot(
+      s => setTodasTags(s.docs.map(d=>d.data().nome)),
+      ()=>{}
+    );
+  },[]);
+
+  const filtradas = input.length>0
+    ? todasTags.filter(t=>t.toLowerCase().includes(input.toLowerCase()) && !value.includes(t))
+    : [];
+
+  async function adicionarTag(tag) {
+    const t = tag.trim();
+    if (!t || value.includes(t)) return;
+    // salvar no Firebase se nova
+    if (!todasTags.includes(t)) {
+      await db.collection("clinica_campanhas").add({ nome:t, createdAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+    }
+    onChange([...value, t]);
+    setInput(""); setSugestoes([]);
+  }
+
+  function removerTag(t) { onChange(value.filter(x=>x!==t)); }
+
+  function onKeyDown(e) {
+    if ((e.key==="Enter"||e.key===",") && input.trim()) { e.preventDefault(); adicionarTag(input); }
+    if (e.key==="Backspace" && !input && value.length>0) removerTag(value[value.length-1]);
+  }
+
+  return (
+    <div style={{border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 8px",background:"white",minHeight:38,cursor:"text"}}
+      onClick={()=>document.getElementById("tag-input-camp")?.focus()}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
+        {value.map(t=>(
+          <span key={t} style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
+            {t}
+            <button onClick={()=>removerTag(t)} style={{background:"none",border:"none",cursor:"pointer",color:"#ea580c",padding:0,fontSize:14,lineHeight:1}}>×</button>
+          </span>
+        ))}
+        <div style={{position:"relative",flex:1,minWidth:120}}>
+          <input id="tag-input-camp" value={input} onChange={e=>{setInput(e.target.value);}}
+            onKeyDown={onKeyDown} placeholder={value.length===0?"Campanha/Origem...":""}
+            style={{border:"none",outline:"none",fontSize:13,width:"100%",padding:"2px 0",background:"transparent"}}/>
+          {filtradas.length>0&&(
+            <div style={{position:"absolute",top:"100%",left:0,background:"white",border:"1px solid var(--gray-200)",borderRadius:8,boxShadow:"0 4px 12px rgba(0,0,0,0.1)",zIndex:100,minWidth:200}}>
+              {filtradas.slice(0,6).map(t=>(
+                <button key={t} onMouseDown={e=>{e.preventDefault();adicionarTag(t);}}
+                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+                  onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                  {t}
+                </button>
+              ))}
+              {input&&!todasTags.includes(input.trim())&&(
+                <button onMouseDown={e=>{e.preventDefault();adicionarTag(input);}}
+                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#7B00C4",fontWeight:600}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+                  onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                  + Criar "{input.trim()}"
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalLead({ lead, onSalvar, onFechar }) {
+  const novo = !lead?.id;
+  const [form, setForm] = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
+  const [textoIA, setTextoIA]   = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  function aplicarIA() {
+    const parsed = parsearLeadIA(textoIA);
+    if (!parsed.nome && !parsed.telefone) { alert("Não foi possível identificar os campos. Verifique o formato do texto."); return; }
+    setForm(f=>({...f, ...parsed}));
+    setTextoIA("");
+  }
+
+  async function salvar() {
+    if (!form.nome?.trim()) { alert("Nome é obrigatório."); return; }
+    setSalvando(true);
+    try {
+      const dados = { ...form, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (novo) {
+        dados.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        dados.status = dados.status || "novo";
+        await db.collection("clinica_leads").add(dados);
+      } else {
+        await db.collection("clinica_leads").doc(lead.id).update(dados);
+      }
+      onSalvar();
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  const f = (campo, val) => setForm(x=>({...x,[campo]:val}));
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+        <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:700,fontSize:16}}>{novo?"Novo Lead":"Editar Lead"}</div>
+          <button onClick={onFechar} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:20}}>×</button>
+        </div>
+
+        <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
+          {/* Parser IA */}
+          {novo && (
+            <div style={{background:"#f5f3ff",border:"1px solid #7B00C420",borderRadius:10,padding:14}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#7B00C4",marginBottom:8}}>✨ Inserir Lead via IA</div>
+              <textarea value={textoIA} onChange={e=>setTextoIA(e.target.value)} rows={5}
+                placeholder={"Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ..."}
+                style={{width:"100%",border:"1px solid #7B00C430",borderRadius:8,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box",background:"white"}}/>
+              <button onClick={aplicarIA} style={{marginTop:8,background:"#7B00C4",color:"white",border:"none",borderRadius:20,padding:"7px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                ⚡ Preencher campos automaticamente
+              </button>
+            </div>
+          )}
+
+          {[
+            {label:"Nome do Lead *",          campo:"nome",     tipo:"text", placeholder:"Nome completo"},
+            {label:"WhatsApp / Contato",       campo:"telefone", tipo:"text", placeholder:"(62) 99999-9999"},
+            {label:"Principal Queixa/Objetivo",campo:"queixa",   tipo:"text", placeholder:"Ex: Ansiedade, insônia..."},
+            {label:"Serviço de Interesse",     campo:"servico",  tipo:"text", placeholder:"Ex: Psicoterapia individual"},
+          ].map(({label,campo,tipo,placeholder})=>(
+            <div key={campo}>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>{label}</label>
+              <input type={tipo} value={form[campo]||""} onChange={e=>f(campo,e.target.value)}
+                placeholder={placeholder} className="form-input"/>
+            </div>
+          ))}
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha / Origem *</label>
+            <TagInputCampanha value={form.campanhas||[]} onChange={v=>f("campanhas",v)}/>
+            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Digite e pressione Enter para adicionar. Campanhas novas são salvas automaticamente.</div>
+          </div>
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Status</label>
+            <select value={form.status||"novo"} onChange={e=>f("status",e.target.value)} className="form-input">
+              {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Observações</label>
+            <textarea value={form.obs||""} onChange={e=>f("obs",e.target.value)} rows={3}
+              className="form-input" placeholder="Anotações internas..." style={{resize:"vertical"}}/>
+          </div>
+        </div>
+
+        <div style={{padding:"16px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
+          <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>Cancelar</button>
+          <button onClick={salvar} disabled={salvando} className="btn-primary">
+            {salvando?"Salvando...":"Salvar Lead"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CardLead({ lead, onEditar, onMover, colunas }) {
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div draggable
+      onDragStart={e=>{ setDragging(true); e.dataTransfer.setData("leadId", lead.id); }}
+      onDragEnd={()=>setDragging(false)}
+      onClick={()=>onEditar(lead)}
+      style={{
+        background:"white", borderRadius:10, padding:"12px 14px",
+        boxShadow:"0 1px 4px rgba(0,0,0,0.08)", cursor:"grab",
+        opacity: dragging?0.5:1, transition:"opacity .15s",
+        border:"1px solid var(--gray-100)", marginBottom:8,
+      }}>
+      <div style={{fontWeight:600,fontSize:13,marginBottom:4}}>{lead.nome}</div>
+      {lead.servico&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>🎯 {lead.servico}</div>}
+      {lead.queixa&&<div style={{fontSize:11,color:"var(--gray-500)",marginBottom:6,lineHeight:1.4}}>{lead.queixa.slice(0,60)}{lead.queixa.length>60?"...":""}</div>}
+      {lead.telefone&&<div style={{fontSize:12,color:"var(--text-muted)"}}>📱 {lead.telefone}</div>}
+      {(lead.campanhas||[]).length>0&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>
+          {lead.campanhas.map(c=>(
+            <span key={c} style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>{c}</span>
+          ))}
+        </div>
+      )}
+      <div style={{fontSize:10,color:"var(--gray-400)",marginTop:8}}>
+        {lead.createdAt?.toDate ? lead.createdAt.toDate().toLocaleDateString("pt-BR") : ""}
+      </div>
+    </div>
+  );
+}
+
+function FunilLeads() {
+  const [leads, setLeads]       = useState([]);
+  const [modalLead, setModalLead] = useState(null); // null=fechado, {}=novo, {id,...}=editar
+  const [dragOver, setDragOver]  = useState(null);
+
+  useEffect(()=>{
+    db.collection("clinica_leads").orderBy("createdAt","desc")
+      .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  async function moverLead(leadId, novoStatus) {
+    await db.collection("clinica_leads").doc(leadId).update({
+      status: novoStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+  }
+
+  function onDrop(e, colId) {
+    e.preventDefault();
+    const leadId = e.dataTransfer.getData("leadId");
+    if (leadId) moverLead(leadId, colId);
+    setDragOver(null);
+  }
+
+  const leadsColuna = (colId) => leads.filter(l=>(l.status||"novo")===colId);
+
+  return (
+    <div style={{padding:"20px 24px"}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+        <div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600}}>Funil de Leads</div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{leads.length} lead{leads.length!==1?"s":""} no funil</div>
+        </div>
+        <button onClick={()=>setModalLead({})} className="btn-primary" style={{display:"flex",alignItems:"center",gap:6}}>
+          <Icon name="plus" size={15}/> Novo Lead
+        </button>
+      </div>
+
+      {/* Kanban */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12,overflowX:"auto",minWidth:0}}>
+        {COLUNAS_FUNIL.map(col=>{
+          const cards = leadsColuna(col.id);
+          const isOver = dragOver===col.id;
+          return (
+            <div key={col.id}
+              onDragOver={e=>{e.preventDefault();setDragOver(col.id);}}
+              onDragLeave={()=>setDragOver(null)}
+              onDrop={e=>onDrop(e,col.id)}
+              style={{
+                background: isOver ? col.bg : "#f9fafb",
+                borderRadius:12, padding:"12px 10px",
+                border: isOver ? `2px solid ${col.cor}` : "2px solid transparent",
+                transition:"all .15s", minHeight:400,
+              }}>
+              {/* Cabeçalho coluna */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:col.cor}}/>
+                  <span style={{fontWeight:700,fontSize:12,color:col.cor}}>{col.label.toUpperCase()}</span>
+                </div>
+                <span style={{background:col.cor+"20",color:col.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>{cards.length}</span>
+              </div>
+
+              {/* Cards */}
+              {cards.map(lead=>(
+                <CardLead key={lead.id} lead={lead}
+                  onEditar={l=>setModalLead(l)}
+                  onMover={moverLead}
+                  colunas={COLUNAS_FUNIL}/>
+              ))}
+
+              {cards.length===0&&(
+                <div style={{textAlign:"center",padding:"20px 0",color:"var(--gray-400)",fontSize:12}}>
+                  {isOver?"Solte aqui":"Nenhum lead"}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal */}
+      {modalLead!==null&&(
+        <ModalLead
+          lead={modalLead?.id ? modalLead : null}
+          onSalvar={()=>setModalLead(null)}
+          onFechar={()=>setModalLead(null)}/>
+      )}
     </div>
   );
 }
