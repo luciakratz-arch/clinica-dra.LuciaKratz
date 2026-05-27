@@ -3257,7 +3257,8 @@ function TerapiaCasais() {
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {casais.map(c=>(
-            <div key={c.id} className="card" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 24px"}}>
+            <React.Fragment key={c.id}>
+            <div className="card" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 24px"}}>
               <div style={{width:44,height:44,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <Icon name="heart" size={20}/>
               </div>
@@ -3283,6 +3284,7 @@ function TerapiaCasais() {
             {expandido===c.id && (
               <BotaoEmergenciaAdmin casalId={c.id} nomeCasal={getNomeExibicao(c)}/>
             )}
+            </React.Fragment>
           ))}
         </div>
       )}
