@@ -678,16 +678,18 @@ function AbaModulos({ paciente }) {
   const [config, setConfig] = useState(paciente.modulosConfig || {});
   const [recursos, setRecursos] = useState([]);
   const [fabulas, setFabulas] = useState([]);
-  const [casalEtapas, setCasalEtapas] = useState([]);
   const [psicoeducacao, setPsicoeducacao] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
+    // Busca config atualizado do Firebase (ignora cache da prop)
+    db.collection("clinica_pacientes").doc(paciente.id).get().then(d => {
+      if (d.exists && d.data().modulosConfig) setConfig(d.data().modulosConfig);
+    });
     db.collection("clinica_recursos").get().then(s => setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))));
     db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    db.collection("clinica_casais_etapas").onSnapshot(s => setCasalEtapas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
     db.collection("clinica_psicoeducacao").onSnapshot(s => setPsicoeducacao(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-  }, []);
+  }, [paciente.id]);
 
   async function salvarConfig(novaConfig) {
     setConfig(novaConfig);
