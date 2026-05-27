@@ -1309,10 +1309,12 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const totalAno = sessPac.filter(s=>s.data?.startsWith(anoAtual+"")&&s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
 
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
-  async function remarcarSessao(s){
-    const nd=prompt("Nova data (AAAA-MM-DD):",s.data);
-    if(!nd)return;
-    await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
+  async function remarcarSessao(s, novaData){
+    if(!novaData)return;
+    await db.collection("clinica_sessoes").doc(s.id).update({
+      data:novaData, status:"agendado", remarcada:true,
+      dataRemarcada:novaData, dataOriginal:s.dataOriginal||s.data
+    });
   }
 
   async function atualizarPagamento(s, formaPag, valorPago){
@@ -1475,8 +1477,12 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                               style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",color:st.c,fontWeight:600,background:"white",cursor:"pointer",minWidth:88}}>
                               {Object.entries(STATUS_S).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
                             </select>
-                            {s.status==="cancelado"&&(
-                              <button onClick={()=>remarcarSessao(s)} style={{marginTop:2,display:"block",fontSize:9,background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:3,padding:"1px 4px",cursor:"pointer"}}>Remarcar</button>
+                            {(s.status==="cancelado"||s.status==="remarcado")&&(
+                              <div style={{marginTop:3}}>
+                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data:</div>
+                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value);}}
+                                  style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:105}}/>
+                              </div>
                             )}
                           </td>
                           <td style={{padding:"6px 10px"}}>
@@ -1754,7 +1760,7 @@ function FinanceiroClinica() {
         pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
-        pagamento:"pendente",formaPagamento:"",dataPagamento:"",obs:"",
+        pagamento:"pendente",formaPagamento:formPacote.formaPag||"",dataPagamento:"",obs:"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     });
@@ -1765,10 +1771,12 @@ function FinanceiroClinica() {
 
   async function atualizarSessao(id,campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
 
-  async function remarcarSessao(s){
-    const nd=prompt("Nova data (AAAA-MM-DD):",s.data);
-    if(!nd)return;
-    await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
+  async function remarcarSessao(s, novaData){
+    if(!novaData)return;
+    await db.collection("clinica_sessoes").doc(s.id).update({
+      data:novaData, status:"agendado", remarcada:true,
+      dataRemarcada:novaData, dataOriginal:s.dataOriginal||s.data
+    });
   }
 
   async function confirmarExclusao(tipo){
