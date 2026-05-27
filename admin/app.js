@@ -4069,6 +4069,220 @@ const CHECKIN_SEMANAL = [
   "Me sinto seguro(a) emocionalmente com meu parceiro(a)"
 ];
 
+// ── Inventário de Bem-Estar de Casais (42 questões) ──
+const INVENTARIO_QUESTOES = [
+  {n:1,  texto:"Com que frequência você e seu parceiro(a) trabalham juntos para alcançar objetivos comuns?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:2,  texto:"Como você descreveria a frequência com que você e seu parceiro(a) têm conversas abertas e honestas sobre suas preocupações e problemas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:3,  texto:"Como você avalia sua satisfação geral com a vida sexual em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:4,  texto:"Quando você e seu parceiro(a) enfrentam um desentendimento, com que frequência vocês conseguem encontrar uma solução que seja satisfatória para ambos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:5,  texto:"Em geral, como você avalia a qualidade das discussões que você e seu parceiro(a) têm sobre assuntos importantes?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:6,  texto:"Com que frequência você e seu parceiro(a) se comunicam sobre suas necessidades e desejos sexuais?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:7,  texto:"Com que frequência você e seu parceiro(a) compartilham seus sentimentos mais profundos um com o outro?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:8,  texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma efetiva?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:9,  texto:"Como você descreveria a qualidade de suas relações sexuais em seu relacionamento?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:10, texto:"Como você descreveria a capacidade de seu relacionamento em criar um ambiente emocionalmente seguro e acolhedor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:11, texto:"Quando você e seu parceiro(a) discordam sobre algo, com que frequência vocês conseguem resolver o conflito de maneira efetiva?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:12, texto:"Como você se sente em relação à habilidade de seu parceiro(a) de expressar seus sentimentos de forma clara e compreensível durante uma conversa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:13, texto:"Com que frequência você e seu parceiro(a) encontram soluções diferentes para resolver problemas ou desafios em seu relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:14, texto:"Com que frequência você e seu parceiro(a) conseguem discutir um problema sem que isso afete negativamente o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:15, texto:"Com que frequência você e seu parceiro(a) experimentam momentos íntimos e prazerosos juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:16, texto:"Como você avalia a disposição de seu parceiro(a) para ajudá-lo(a) nas tarefas domésticas e responsabilidades compartilhadas?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:17, texto:"Quando você está passando por momentos difíceis, com quem você costuma compartilhar seus sentimentos primeiro?", opcoes:["Com ninguém","Com um membro da família","Com um amigo(a)","Com meu parceiro(a)","Com um profissional especializado(a)"]},
+  {n:18, texto:"Quando ocorre um desacordo entre vocês, como vocês costumam resolver a situação?", opcoes:["Ignorando o problema","Gritando ou discutindo","Evitando o assunto","Argumentando meu ponto de vista","Conversando e buscando uma solução"]},
+  {n:19, texto:"Quando você compartilha suas opiniões com seu parceiro(a), com que frequência você se sente ouvido(a) e compreendido(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:20, texto:"Com que frequência você e seu parceiro(a) reservam um tempo específico para conversar sobre questões importantes ou preocupações relacionadas ao relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:21, texto:"Você se sente à vontade para expressar suas preferências sexuais e fantasias com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:22, texto:"Como você se sente em relação à capacidade de seu parceiro(a) de compreender suas emoções e oferecer apoio quando você precisa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:23, texto:"Vocês conseguem chegar a um consenso sobre questões importantes, mesmo quando têm opiniões diferentes?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:24, texto:"Com que frequência você e seu parceiro(a) dedicam tempo para se conectar emocionalmente, sem distrações externas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:25, texto:"Como você avalia a capacidade de seu relacionamento em superar desafios ou dificuldades na vida sexual?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:26, texto:"Você e seu parceiro(a) costumam discutir e tomar decisões importantes juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:27, texto:"Você e seu parceiro(a) estão satisfeitos com a frequência das relações sexuais em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:28, texto:"Com que frequência vocês conseguem manter o respeito mútuo mesmo durante uma discussão acalorada?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:29, texto:"Você se sente à vontade para expressar suas emoções, mesmo as mais vulneráveis, com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:30, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de diversão e risadas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:31, texto:"Quando um conflito é resolvido, como vocês se sentem em relação ao processo de resolução?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:32, texto:"Como você avalia a capacidade de seu parceiro(a) de fazer você rir e levantar seu ânimo quando necessário?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:33, texto:"Você e seu parceiro(a) têm interesses em comum que os levam a participar de atividades recreativas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:34, texto:"Como você descreveria a importância do humor em seu relacionamento?", opcoes:["Muito pouco importante","Pouco importante","Neutro(a)","Importante","Muito importante"]},
+  {n:35, texto:"Como você descreveria a profundidade do vínculo emocional entre você e seu parceiro(a)?", opcoes:["Muito superficial","Superficial","Moderado","Profundo","Muito profundo"]},
+  {n:36, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de descontração e relaxamento juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:37, texto:"Com que frequência você e seu parceiro(a) se apoiam mutuamente para lidar com o estresse e os desafios da vida?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:38, texto:"Você se sente valorizado(a) e reconhecido(a) pelo seu parceiro(a) em suas contribuições para o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:39, texto:"Como você descreveria a igualdade de contribuição entre você e seu parceiro(a) nos compromissos financeiros e nas despesas domésticas?", opcoes:["Muito desigual","Desigual","Neutra","Igual","Muito igual"]},
+  {n:40, texto:"Você se sente confortável para expressar seu senso de humor com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:41, texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma colaborativa, buscando soluções que beneficiem ambos os parceiros?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:42, texto:"Como você avalia a capacidade de seu relacionamento em lidar com situações difíceis com leveza e humor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+];
+
+const INVENTARIO_CATEGORIAS = [
+  {label:"Comunicação Eficaz",          cor:"#6366f1", questoes:[2,5,11,12,13,19,20]},
+  {label:"Resolução de Conflitos",       cor:"#f59e0b", questoes:[4,8,14,18,23,28,31]},
+  {label:"Intimidade Emocional",         cor:"#ec4899", questoes:[7,10,17,22,24,29,35]},
+  {label:"Satisfação Sexual",            cor:"#dc2626", questoes:[3,6,9,15,21,25,27]},
+  {label:"Cooperação e Colaboração",     cor:"#16a34a", questoes:[1,16,26,37,38,39,41]},
+  {label:"Senso de Humor e Lazer",       cor:"#0891b2", questoes:[30,32,33,34,36,40,42]},
+];
+
+function InventarioBemEstarCasal({ onVoltar }) {
+  const [respostas, setRespostas] = useState({});
+  const [pagina, setPagina]       = useState(0); // 0=instrucoes, 1-7=grupos de 6q, 8=resultado
+  const [salvando, setSalvando]   = useState(false);
+
+  const POR_PAG = 6;
+  const totalPaginas = Math.ceil(INVENTARIO_QUESTOES.length / POR_PAG);
+
+  function responder(n, val) { setRespostas(r=>({...r,[n]:val})); }
+
+  function calcular() {
+    return INVENTARIO_CATEGORIAS.map(cat => {
+      const soma = cat.questoes.reduce((acc, q) => acc + (respostas[q] || 0), 0);
+      const pct  = Math.round(((soma - 7) / 28) * 100);
+      return { ...cat, soma, pct: Math.max(0, pct) };
+    });
+  }
+
+  const questoesPagina = INVENTARIO_QUESTOES.slice((pagina-1)*POR_PAG, pagina*POR_PAG);
+  const totalRespondidas = Object.keys(respostas).length;
+  const completo = totalRespondidas === 42;
+
+  // Tela de instruções
+  if (pagina === 0) return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💑</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Inventário de Bem-Estar de Casais</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.7,maxWidth:480,margin:"0 auto 16px"}}>
+        Este questionário avalia 6 dimensões importantes do relacionamento: Comunicação, Resolução de Conflitos, Intimidade Emocional, Satisfação Sexual, Cooperação e Senso de Humor.<br/><br/>
+        <strong>42 questões</strong> · Responda com honestidade · Não há respostas certas ou erradas<br/>
+        <em>Seja rápido, não pondere!</em>
+      </div>
+      <button className="btn btn-purple" style={{fontSize:15,padding:"12px 32px"}} onClick={()=>setPagina(1)}>
+        <Icon name="play" size={16}/> Iniciar Inventário
+      </button>
+    </div>
+  );
+
+  // Tela de resultado
+  if (pagina === totalPaginas + 1) {
+    const resultados = calcular();
+    const totalGeral = resultados.reduce((a,r)=>a+r.soma,0);
+    return (
+      <div>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:40,marginBottom:8}}>📊</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Resultado do Inventário</div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Pontuação total: {totalGeral} / 252</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:24}}>
+          {resultados.map(cat=>(
+            <div key={cat.label}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:6}}>
+                <span style={{color:cat.cor}}>{cat.label}</span>
+                <span>{cat.soma} / 35</span>
+              </div>
+              <div style={{background:"#f3f4f6",borderRadius:20,height:12,overflow:"hidden"}}>
+                <div style={{
+                  width:cat.pct+"%", height:"100%",
+                  background:cat.cor,
+                  borderRadius:20,
+                  transition:"width 1s ease"
+                }}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
+                <span>Baixo (7)</span>
+                <span style={{fontWeight:600,color:cat.cor}}>{cat.pct}%</span>
+                <span>Alto (35)</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:12,color:"var(--gray-600)",lineHeight:1.7}}>
+          <strong>Como interpretar:</strong> Pontuações mais altas (próximas de 35) indicam maior satisfação naquela dimensão. Pontuações baixas (próximas de 7) indicam áreas que merecem atenção terapêutica.
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn btn-ghost" style={{flex:1}} onClick={()=>{setRespostas({});setPagina(0);}}>
+            <Icon name="rotate-ccw" size={15}/> Refazer
+          </button>
+          <button className="btn btn-purple" style={{flex:1}} onClick={onVoltar}>
+            <Icon name="check" size={15}/> Concluir
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Páginas de questões
+  const progresso = Math.round((totalRespondidas / 42) * 100);
+  return (
+    <div>
+      {/* Barra de progresso */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:6}}>
+          <span>Questões {(pagina-1)*POR_PAG+1}–{Math.min(pagina*POR_PAG,42)} de 42</span>
+          <span>{totalRespondidas} respondidas · {progresso}%</span>
+        </div>
+        <div style={{background:"#f3f4f6",borderRadius:20,height:6}}>
+          <div style={{width:progresso+"%",height:"100%",background:"var(--purple)",borderRadius:20,transition:"width .3s"}}/>
+        </div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        {questoesPagina.map(q=>(
+          <div key={q.n} style={{background:"#fafafa",borderRadius:10,padding:16,border:"1px solid var(--gray-100)"}}>
+            <div style={{fontWeight:600,fontSize:13,marginBottom:12,lineHeight:1.5}}>
+              <span style={{color:"var(--purple)",marginRight:6}}>{q.n}.</span>{q.texto}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {q.opcoes.map((op,i)=>(
+                <button key={i} onClick={()=>responder(q.n, i+1)}
+                  style={{
+                    display:"flex",alignItems:"center",gap:10,
+                    padding:"8px 12px",borderRadius:8,
+                    border:`1.5px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-200)"}`,
+                    background:respostas[q.n]===i+1?"var(--purple-bg)":"white",
+                    cursor:"pointer",textAlign:"left",fontFamily:"inherit",fontSize:13,
+                    color:respostas[q.n]===i+1?"var(--purple)":"var(--gray-700)",
+                    fontWeight:respostas[q.n]===i+1?600:400,
+                    transition:"all .15s"
+                  }}>
+                  <div style={{
+                    width:18,height:18,borderRadius:"50%",flexShrink:0,
+                    border:`2px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-300)"}`,
+                    background:respostas[q.n]===i+1?"var(--purple)":"white",
+                    display:"flex",alignItems:"center",justifyContent:"center"
+                  }}>
+                    {respostas[q.n]===i+1&&<div style={{width:6,height:6,borderRadius:"50%",background:"white"}}/>}
+                  </div>
+                  <span style={{fontWeight:500,fontSize:11,color:"var(--gray-400)",minWidth:16}}>{String.fromCharCode(97+i)})</span>
+                  {op}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Navegação */}
+      <div style={{display:"flex",gap:10,marginTop:24}}>
+        <button className="btn btn-ghost" onClick={()=>setPagina(p=>p-1)} disabled={pagina===1}>
+          <Icon name="arrow-left" size={15}/> Anterior
+        </button>
+        <div style={{flex:1}}/>
+        {pagina < totalPaginas ? (
+          <button className="btn btn-purple" onClick={()=>setPagina(p=>p+1)}>
+            Próximo <Icon name="arrow-right" size={15}/>
+          </button>
+        ) : (
+          <button className="btn btn-purple" onClick={()=>setPagina(totalPaginas+1)}
+            disabled={!completo} style={{opacity:completo?1:0.5}}>
+            {completo ? "Ver Resultado" : `Faltam ${42-totalRespondidas}`} <Icon name="bar-chart-2" size={15}/>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AbaProtocoloCasais() {
   const [expandido, setExpandido] = useState(null);
   const [atividadeAberta, setAtividadeAberta] = useState(null);
@@ -4095,6 +4309,9 @@ function AbaProtocoloCasais() {
         </div>
         <div className="card">
           <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>{at.titulo}</div>
+          {at.id === "inventario-bem-estar"
+            ? <InventarioBemEstarCasal onVoltar={()=>setAtividadeAberta(null)}/>
+            : (<>
           <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
             Responda com honestidade e na presença da psicóloga. Esta atividade faz parte do protocolo de Terapia de Casais TCC.
           </div>
@@ -4112,6 +4329,7 @@ function AbaProtocoloCasais() {
           <button className="btn btn-purple" style={{width:"100%",marginTop:16}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>
             {msg||<><Icon name="save" size={15}/> Salvar respostas</>}
           </button>
+          </>)}
         </div>
       </div>
     );
