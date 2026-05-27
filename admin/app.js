@@ -952,9 +952,24 @@ function AbaCasal({ paciente, pacientes }) {
 
   async function vincular() {
     if(!casalId){alert("Selecione o parceiro(a).");return;}
+    if(casalId===paciente.id){alert("Selecione um paciente diferente.");return;}
     setSalvando(true);
     try {
-      // Atualiza casalId + adiciona mod5 nos dois pacientes
+      const p2 = pacientes.find(p=>p.id===casalId);
+      // 1. Remove vínculo antigo de clinica_casais se existir (evita duplicatas)
+      const snapAntigo1 = await db.collection("clinica_casais").where("p1Id","==",paciente.id).get();
+      const snapAntigo2 = await db.collection("clinica_casais").where("p2Id","==",paciente.id).get();
+      const batch = db.batch();
+      [...snapAntigo1.docs, ...snapAntigo2.docs].forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+      // 2. Cria novo documento em clinica_casais
+      await db.collection("clinica_casais").add({
+        p1Id: paciente.id, p1Nome: paciente.nome||"",
+        p2Id: casalId,     p2Nome: p2?.nome||"",
+        nomeCasal: `${paciente.nome?.split(" ")[0]||""} e ${p2?.nome?.split(" ")[0]||""}`,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // 3. Grava casalId + mod5 nos dois pacientes
       await db.collection("clinica_pacientes").doc(paciente.id).update({
         casalId,
         modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
@@ -963,17 +978,6 @@ function AbaCasal({ paciente, pacientes }) {
         casalId: paciente.id,
         modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
       });
-      // Cria documento na clinica_casais se não existir
-      const snap = await db.collection("clinica_casais").where("p1Id","==",paciente.id).limit(1).get();
-      if (snap.empty) {
-        const p2 = pacientes.find(p=>p.id===casalId);
-        await db.collection("clinica_casais").add({
-          p1Id: paciente.id, p1Nome: paciente.nome||"",
-          p2Id: casalId,     p2Nome: p2?.nome||"",
-          nomeCasal: `${paciente.nome?.split(" ")[0]||""} e ${p2?.nome?.split(" ")[0]||""}`,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
       alert("✓ Casal vinculado! Ambos terão acesso à Terapia de Casal no portal.");
     } catch(e) { alert("Erro ao vincular: "+e.message); }
     setSalvando(false);
@@ -981,9 +985,20 @@ function AbaCasal({ paciente, pacientes }) {
   async function desvincular() {
     if(!confirm("Desvincular casal?"))return;
     setSalvando(true);
-    if(paciente.casalId) await db.collection("clinica_pacientes").doc(paciente.casalId).update({casalId:""});
-    await db.collection("clinica_pacientes").doc(paciente.id).update({casalId:""});
-    setCasalId(""); setSalvando(false);
+    try {
+      const parcId = paciente.casalId;
+      // 1. Limpa casalId nos dois pacientes
+      await db.collection("clinica_pacientes").doc(paciente.id).update({casalId:""});
+      if(parcId) await db.collection("clinica_pacientes").doc(parcId).update({casalId:""});
+      // 2. Remove documento de clinica_casais
+      const snap1 = await db.collection("clinica_casais").where("p1Id","==",paciente.id).get();
+      const snap2 = await db.collection("clinica_casais").where("p2Id","==",paciente.id).get();
+      const batch = db.batch();
+      [...snap1.docs, ...snap2.docs].forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+      setCasalId("");
+    } catch(e) { alert("Erro ao desvincular: "+e.message); }
+    setSalvando(false);
   }
 
   return (
@@ -3251,9 +3266,15 @@ function TerapiaCasais() {
       p2Id:form.p2, p2Nome:p2?.nome||"",
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Grava casalId nos dois pacientes para o portal clínico detectar
-    await db.collection("clinica_pacientes").doc(form.p1).update({casalId:form.p2});
-    await db.collection("clinica_pacientes").doc(form.p2).update({casalId:form.p1});
+    // Grava casalId + mod5 nos dois pacientes para o portal clínico detectar
+    await db.collection("clinica_pacientes").doc(form.p1).update({
+      casalId:form.p2,
+      modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+    });
+    await db.collection("clinica_pacientes").doc(form.p2).update({
+      casalId:form.p1,
+      modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+    });
     setModal(false);setForm({nomeCasal:"",p1:"",p2:""});setSalvando(false);
   }
 
