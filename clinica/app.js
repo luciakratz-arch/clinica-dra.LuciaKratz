@@ -888,8 +888,6 @@ function PainelCasal({ user }) {
           </div>
         </div>
       </div>
-
-      </div>
     </div>
   );
 }
