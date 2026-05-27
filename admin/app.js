@@ -3436,167 +3436,109 @@ function falarTexto(txt){
   window.speechSynthesis.speak(u);
 }
 
-// ── Técnica de Respiração 4-7-8 (áudio MP4 + balão animado) ──
+// ── Técnica de Respiração 4-7-8 (áudio MP4 guiado) ──
 function FerramentaRespiracao(){
   const AUDIO_SRC = "../media/atividade2respiracao.mp4";
-  const CICLOS_OPCOES = [3, 5, 10];
-
-  const [iniciado,    setIniciado]    = useState(false);
-  const [ciclosMax,   setCiclosMax]   = useState(5);
-  const [ciclosFeitos,setCiclosFeitos]= useState(0);
-  const [concluido,   setConcluido]   = useState(false);
-  const [fase,        setFase]        = useState("inspire"); // inspire | segure | expire
-  const [expandido,   setExpandido]   = useState(false);
+  const [iniciado,  setIniciado]  = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [tempo,     setTempo]     = useState(0);
+  const [pausado,   setPausado]   = useState(false);
   const audioRef = useRef(null);
-  const faseTimer = useRef(null);
+  const timerRef = useRef(null);
 
-  // Fases visuais sincronizadas com a respiração natural (4-4-6s)
-  const FASES = [
-    {id:"inspire", label:"Inspire...",  dur:4000, cor:"#6366f1", escala:1.4},
-    {id:"segure",  label:"Segure...",   dur:4000, cor:"#f59e0b", escala:1.4},
-    {id:"expire",  label:"Expire...",   dur:6000, cor:"#10b981", escala:0.7},
-  ];
-
-  function proximaFase(faseAtual) {
-    const idx = FASES.findIndex(f=>f.id===faseAtual);
-    return FASES[(idx+1) % FASES.length].id;
+  function iniciar() {
+    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
+    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
   }
 
-  function rodarFases(faseInicial) {
-    let faseCorrente = faseInicial;
-    const avancar = () => {
-      const info = FASES.find(f=>f.id===faseCorrente);
-      setFase(faseCorrente);
-      setExpandido(faseCorrente==="inspire"||faseCorrente==="segure");
-      faseCorrente = proximaFase(faseCorrente);
-      faseTimer.current = setTimeout(avancar, info.dur);
-    };
-    avancar();
+  function togglePausa() {
+    if (!audioRef.current) return;
+    if (pausado) { audioRef.current.play().catch(()=>{}); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
+    else { audioRef.current.pause(); clearInterval(timerRef.current); }
+    setPausado(p=>!p);
   }
 
   function parar() {
-    clearTimeout(faseTimer.current);
+    clearInterval(timerRef.current);
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
-    setIniciado(false); setFase("inspire"); setExpandido(false);
+    setIniciado(false); setTempo(0); setPausado(false);
   }
 
-  function iniciar() {
-    setCiclosFeitos(0); setConcluido(false); setIniciado(true);
-    rodarFases("inspire");
-    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+  function onEnded() {
+    clearInterval(timerRef.current);
+    setIniciado(false); setConcluido(true);
   }
 
-  function onAudioEnded() {
-    const novo = ciclosFeitos + 1;
-    setCiclosFeitos(novo);
-    if (novo >= ciclosMax) {
-      clearTimeout(faseTimer.current);
-      setConcluido(true); setIniciado(false); setExpandido(false);
-    } else {
-      // Reinicia áudio para próximo ciclo
-      if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
-    }
-  }
+  useEffect(()=>()=>clearInterval(timerRef.current),[]);
 
-  useEffect(()=>()=>{ clearTimeout(faseTimer.current); },[]);
-
-  const faseInfo = FASES.find(f=>f.id===fase) || FASES[0];
+  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
+  const ss = String(tempo%60).padStart(2,"0");
 
   if (concluido) return (
     <div style={{textAlign:"center",padding:"40px 20px"}}>
       <div style={{fontSize:56,marginBottom:12}}>🌿</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Sessão concluída!</div>
-      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>{ciclosMax} ciclos de respiração completados.</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Respiração Concluída!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
       <button className="btn btn-purple" onClick={iniciar}>
-        <Icon name="rotate-ccw" size={16}/> Repetir o ciclo
+        <Icon name="rotate-ccw" size={16}/> Repetir
       </button>
     </div>
   );
 
   if (!iniciado) return (
     <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
       <div style={{fontSize:56,marginBottom:16}}>🫁</div>
       <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Técnica de Respiração 4-7-8</div>
       <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
         Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
-        Inspire, segure e expire no ritmo da animação e do áudio.
+        Siga as instruções do áudio e respire no seu próprio ritmo.
       </div>
-      <div style={{marginBottom:24}}>
-        <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>Quantos ciclos?</div>
-        <div style={{display:"flex",gap:8,justifyContent:"center"}}>
-          {CICLOS_OPCOES.map(n=>(
-            <button key={n} onClick={()=>setCiclosMax(n)}
-              style={{padding:"8px 20px",borderRadius:20,border:"2px solid",
-                borderColor:ciclosMax===n?"var(--purple)":"var(--gray-200)",
-                background:ciclosMax===n?"var(--purple-bg)":"white",
-                color:ciclosMax===n?"var(--purple)":"var(--gray-600)",
-                fontWeight:600,cursor:"pointer",fontFamily:"inherit",fontSize:13}}>
-              {n}x
-            </button>
-          ))}
-        </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
+        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
+          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
+            <span style={{fontSize:22}}>{i.e}</span>
+            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
+          </div>
+        ))}
       </div>
       <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
         <Icon name="play" size={18}/> Iniciar
       </button>
-      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onAudioEnded} preload="auto"/>
     </div>
   );
 
   return (
-    <div style={{textAlign:"center",padding:"24px 20px"}}>
-      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onAudioEnded} preload="auto"/>
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
 
-      {/* Balão animado */}
-      <div style={{position:"relative",width:220,height:220,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-        {/* Círculo externo pulsante */}
-        <div style={{
-          position:"absolute",
-          width: expandido ? 200 : 120,
-          height: expandido ? 200 : 120,
-          borderRadius:"50%",
-          background: faseInfo.cor+"18",
-          border:`3px solid ${faseInfo.cor}40`,
-          transition:`all ${faseInfo.dur}ms ease-in-out`,
-        }}/>
-        {/* Círculo principal */}
-        <div style={{
-          position:"absolute",
-          width: expandido ? 160 : 100,
-          height: expandido ? 160 : 100,
-          borderRadius:"50%",
-          background:`radial-gradient(circle at 35% 35%, ${faseInfo.cor}cc, ${faseInfo.cor})`,
-          boxShadow:`0 0 40px ${faseInfo.cor}60`,
-          transition:`all ${faseInfo.dur}ms ease-in-out`,
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-          color:"white",
-        }}>
-          <div style={{fontSize:13,fontWeight:700,opacity:0.9}}>{faseInfo.label}</div>
+      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
+        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
+          <div style={{fontSize:28}}>🫁</div>
         </div>
       </div>
 
-      {/* Indicadores de fase */}
-      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:20}}>
-        {FASES.map(f=>(
-          <span key={f.id} style={{
-            background:f.id===fase?f.cor+"20":"#f3f4f6",
-            color:f.id===fase?f.cor:"#9ca3af",
-            borderRadius:20,padding:"5px 14px",fontSize:12,fontWeight:600,
-            border:`1.5px solid ${f.id===fase?f.cor+"60":"#e5e7eb"}`,
-            transition:"all .3s"
-          }}>
-            {f.label}
-          </span>
-        ))}
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
+        {pausado ? "Pausado" : "Siga o áudio..."}
+      </div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Respire no ritmo da voz guiada</div>
+
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
+        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
+        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
       </div>
 
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>
-        Ciclo {ciclosFeitos+1} de {ciclosMax}
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <button className="btn btn-purple" onClick={togglePausa}>
+          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
+        </button>
+        <button className="btn btn-ghost" onClick={parar}>
+          <Icon name="square" size={15}/> Parar
+        </button>
       </div>
-
-      <button className="btn btn-ghost" onClick={parar}>
-        <Icon name="square" size={15}/> Parar
-      </button>
     </div>
   );
 }
