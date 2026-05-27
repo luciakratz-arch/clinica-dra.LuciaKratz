@@ -2050,15 +2050,9 @@ function App() {
     const mod5 = user.modulosConfig?.mod5;
     if (!mod5?.ativo) return nav.filter(i => ["inicio-casal","minha-conta"].includes(i.id));
     const ferrAtivas = mod5.ferramentas || {};
-    // Uma ferramenta está ativa se existe uma chave em ferrAtivas cujo valor tem ativo:true
-    // e cujo id (chave) ou tabId corresponde ao item.id do menu
-    const idsAtivos = Object.entries(ferrAtivas)
-      .filter(([k,v]) => v?.ativo)
-      .map(([k]) => k);
     return nav.filter(item => {
       if (["inicio-casal","minha-conta","diagnostico-casal"].includes(item.id)) return true;
-      // Verifica se o id do item corresponde a alguma chave ativa
-      return idsAtivos.some(k => k === item.id || k.includes(item.id) || item.id.includes(k));
+      return !!ferrAtivas[item.id]?.ativo;
     });
   }
 
