@@ -2048,13 +2048,31 @@ function App() {
 
   function navFiltradoCasal(nav, user) {
     const mod5 = user.modulosConfig?.mod5;
-    console.log("MOD5:", JSON.stringify(mod5));
     if (!mod5?.ativo) return nav.filter(i => ["inicio-casal","minha-conta"].includes(i.id));
     const ferrAtivas = mod5.ferramentas || {};
-    console.log("FERR ATIVAS:", JSON.stringify(ferrAtivas));
+
+    // Monta lista de etapas ativas — aceita tanto ID exato quanto ID do Firestore
+    // O admin salva dataInicio junto quando ativa, então verifica se tem valor
+    const etapasAtivas = new Set();
+    Object.entries(ferrAtivas).forEach(([k,v]) => {
+      if (!v || v === null) return;
+      // Se a chave é exatamente etapa1-casal, etapa2-casal, etc.
+      if (k.startsWith("etapa") && k.includes("casal")) {
+        if (v?.ativo) etapasAtivas.add(k);
+      } else {
+        // ID aleatório do Firestore — usa o nome ou ordem para mapear
+        // Verifica pelo índice: primeira ferramenta = etapa1, segunda = etapa2, etc.
+        if (v?.ativo || v?.dataInicio) {
+          const chaves = Object.keys(ferrAtivas);
+          const idx = chaves.indexOf(k);
+          if (idx >= 0) etapasAtivas.add(`etapa${idx+1}-casal`);
+        }
+      }
+    });
+
     return nav.filter(item => {
       if (["inicio-casal","minha-conta","diagnostico-casal"].includes(item.id)) return true;
-      return !!ferrAtivas[item.id]?.ativo;
+      return etapasAtivas.has(item.id);
     });
   }
 
