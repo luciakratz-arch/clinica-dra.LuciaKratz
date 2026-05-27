@@ -3103,6 +3103,91 @@ function Alunos() {
 // ═══════════════════════════════════════════════════════
 // TERAPIA DE CASAIS
 // ═══════════════════════════════════════════════════════
+// ── Botão de Emergência ──
+function BotaoEmergenciaAdmin({ casalId, nomeCasal }) {
+  const [palavra,    setPalavra]    = useState("");
+  const [palavraSalva, setPalavraSalva] = useState("");
+  const [acionamentos, setAcionamentos] = useState([]);
+  const [salvando,   setSalvando]   = useState(false);
+  const [salvo,      setSalvo]      = useState(false);
+
+  useEffect(()=>{
+    if (!casalId) return;
+    db.collection("clinica_casais").doc(casalId).get().then(d=>{
+      if (d.exists && d.data().palavraEmergencia) {
+        setPalavraSalva(d.data().palavraEmergencia);
+        setPalavra(d.data().palavraEmergencia);
+      }
+    });
+    db.collection("clinica_emergencia")
+      .where("casalId","==",casalId)
+      .orderBy("createdAt","desc").limit(5)
+      .onSnapshot(s=>setAcionamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[casalId]);
+
+  async function salvar() {
+    if (!palavra.trim()) { alert("Digite a palavra de emergência."); return; }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais").doc(casalId).update({
+        palavraEmergencia: palavra.trim().toUpperCase()
+      });
+      setPalavraSalva(palavra.trim().toUpperCase());
+      setSalvo(true);
+      setTimeout(()=>setSalvo(false), 3000);
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  function fmtDH(ts) {
+    if (!ts?.toDate) return "—";
+    const d = ts.toDate();
+    return d.toLocaleDateString("pt-BR")+" às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  return (
+    <div style={{background:"#fff5f5",border:"2px solid #fecaca",borderRadius:12,padding:16,marginTop:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+        <span style={{fontSize:20}}>🔴</span>
+        <div style={{fontWeight:700,fontSize:14,color:"#dc2626"}}>Botão de Emergência</div>
+      </div>
+
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:12,lineHeight:1.6}}>
+        Defina a palavra-código que o casal usará para acionar o tempo de pausa durante conflitos.
+      </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:palavraSalva?12:0}}>
+        <input className="form-input" value={palavra}
+          onChange={e=>setPalavra(e.target.value.toUpperCase())}
+          placeholder="Ex: PAUSA, RESPIRA, CAFÉ..."
+          style={{flex:1,fontWeight:700,letterSpacing:2,fontSize:14,textTransform:"uppercase"}}/>
+        <button className="btn btn-purple" onClick={salvar} disabled={salvando} style={{whiteSpace:"nowrap"}}>
+          {salvando?"...":salvo?"✓ Salvo!":"Salvar"}
+        </button>
+      </div>
+
+      {palavraSalva && (
+        <div style={{background:"#7B00C4",borderRadius:10,padding:"10px 16px",textAlign:"center",marginBottom:12}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginBottom:4}}>Palavra ativa para {nomeCasal}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:"white",letterSpacing:4}}>{palavraSalva}</div>
+        </div>
+      )}
+
+      {acionamentos.length>0 && (
+        <div>
+          <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:6}}>ÚLTIMOS ACIONAMENTOS</div>
+          {acionamentos.map(a=>(
+            <div key={a.id} style={{display:"flex",justifyContent:"space-between",fontSize:12,padding:"5px 0",borderBottom:"1px solid #fecaca"}}>
+              <span style={{color:"#6b7280"}}>{fmtDH(a.createdAt)}</span>
+              <span style={{color:"#dc2626",fontWeight:600}}>⏱ {a.horas}h de pausa · por {a.acionadoPor||"—"}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TerapiaCasais() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [casais, setCasais] = useState([]);
@@ -3110,6 +3195,7 @@ function TerapiaCasais() {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({nomeCasal:"",p1:"",p2:""});
   const [salvando, setSalvando] = useState(false);
+  const [expandido, setExpandido] = useState(null);
 
   useEffect(()=>{
     const unsub = db.collection("clinica_casais").onSnapshot(snap=>{
@@ -3189,9 +3275,14 @@ function TerapiaCasais() {
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(c.id)}><Icon name="trash-2" size={14}/></button>
-                <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>alert("Detalhe do casal — em breve")}>Ver detalhes <Icon name="chevron-right" size={14}/></button>
+                <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>setExpandido(expandido===c.id?null:c.id)}>
+                  🔴 Emergência <Icon name={expandido===c.id?"chevron-up":"chevron-down"} size={14}/>
+                </button>
               </div>
             </div>
+            {expandido===c.id && (
+              <BotaoEmergenciaAdmin casalId={c.id} nomeCasal={getNomeExibicao(c)}/>
+            )}
           ))}
         </div>
       )}
