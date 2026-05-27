@@ -2048,8 +2048,10 @@ function App() {
 
   function navFiltradoCasal(nav, user) {
     const mod5 = user.modulosConfig?.mod5;
+    console.log("MOD5:", JSON.stringify(mod5));
     if (!mod5?.ativo) return nav.filter(i => ["inicio-casal","minha-conta"].includes(i.id));
     const ferrAtivas = mod5.ferramentas || {};
+    console.log("FERR ATIVAS:", JSON.stringify(ferrAtivas));
     return nav.filter(item => {
       if (["inicio-casal","minha-conta","diagnostico-casal"].includes(item.id)) return true;
       return !!ferrAtivas[item.id]?.ativo;
