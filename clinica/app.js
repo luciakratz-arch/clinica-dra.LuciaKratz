@@ -2096,6 +2096,14 @@ function App() {
   const [tab, setTab]     = useState(null);
   const notifProps = useBotaoNotificacao(user);
 
+  // Mantém user sincronizado com Firebase em tempo real
+  useEffect(()=>{
+    if (!user?.id) return;
+    const unsub = db.collection("clinica_pacientes").doc(user.id)
+      .onSnapshot(d=>{ if(d.exists) setUser(u=>({...u,...d.data(),id:d.id})); },()=>{});
+    return unsub;
+  },[user?.id]);
+
   function handleLogin(u) {
     setUser(u);
     if (u.tipo==="aluno") setTab("painel-aluno");
