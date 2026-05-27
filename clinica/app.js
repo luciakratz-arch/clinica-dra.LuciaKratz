@@ -312,12 +312,20 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, 
       </div>
 
       <nav className="sidebar-nav">
-        {nav.map(item => (
-          <button key={item.id} className={`nav-item ${tab===item.id?"active":""}`} onClick={()=>setTab(item.id)}>
-            <Icon name={item.icon} size={18}/>
-            <span>{item.label}</span>
-          </button>
-        ))}
+        {nav.map(item => {
+          // Para itens de etapa do casal, verifica se está habilitado
+          const ehEtapa = item.id.startsWith("etapa") && item.id.includes("casal");
+          if (ehEtapa && navProp) {
+            const visivel = navProp.some(n => n.id === item.id);
+            if (!visivel) return null;
+          }
+          return (
+            <button key={item.id} className={`nav-item ${tab===item.id?"active":""}`} onClick={()=>setTab(item.id)}>
+              <Icon name={item.icon} size={18}/>
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
 
       <div className="sidebar-footer">
