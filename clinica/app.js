@@ -887,6 +887,128 @@ function PainelCasal({ user }) {
           </div>
         </div>
       </div>
+
+      {/* Botão de Emergência */}
+      <BotaoEmergenciaPortal user={user} casalId={user.casalId||user.id}/>
+    </div>
+  );
+}
+
+// ── Botão de Emergência — Portal do Paciente ──
+function BotaoEmergenciaPortal({ user, casalId }) {
+  const [palavra,   setPalavra]   = useState("");
+  const [horas,     setHoras]     = useState(null);
+  const [ativo,     setAtivo]     = useState(null); // {fim, horas, acionadoPor}
+  const [escolhendo,setEscolhendo]= useState(false);
+  const [salvando,  setSalvando]  = useState(false);
+  const [agora,     setAgora]     = useState(Date.now());
+
+  const OPCOES_HORAS = [1,2,6,12,24];
+
+  useEffect(()=>{
+    if (!casalId) return;
+    // Buscar palavra do casal
+    db.collection("clinica_casais").where("p1Id","==",user.id).limit(1)
+      .get().then(s=>{
+        if(s.docs.length>0) setPalavra(s.docs[0].data().palavraEmergencia||"");
+        else db.collection("clinica_casais").where("p2Id","==",user.id).limit(1)
+          .get().then(s2=>{ if(s2.docs.length>0) setPalavra(s2.docs[0].data().palavraEmergencia||""); });
+      });
+    // Verificar se há emergência ativa
+    db.collection("clinica_emergencia")
+      .where("casalId","==",casalId)
+      .where("fim",">=",new Date().toISOString())
+      .orderBy("fim","desc").limit(1)
+      .onSnapshot(s=>{
+        if(s.docs.length>0) setAtivo(s.docs[0].data());
+        else setAtivo(null);
+      },()=>{});
+    // Atualizar contador a cada minuto
+    const t = setInterval(()=>setAgora(Date.now()),60000);
+    return ()=>clearInterval(t);
+  },[casalId,user.id]);
+
+  async function acionar(h) {
+    setSalvando(true);
+    try {
+      const fim = new Date(Date.now() + h*3600000).toISOString();
+      await db.collection("clinica_emergencia").add({
+        casalId, horas:h, fim,
+        acionadoPor: user.nome.split(" ")[0],
+        acionadoPorId: user.id,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setEscolhendo(false);
+    } catch(e) { alert("Erro ao acionar."); }
+    setSalvando(false);
+  }
+
+  // Calcula tempo restante
+  function tempoRestante() {
+    if (!ativo?.fim) return null;
+    const restMs = new Date(ativo.fim).getTime() - agora;
+    if (restMs <= 0) return null;
+    const h = Math.floor(restMs/3600000);
+    const m = Math.floor((restMs%3600000)/60000);
+    return h>0 ? `${h}h ${m}min` : `${m}min`;
+  }
+
+  const restante = tempoRestante();
+
+  // Sem palavra definida ainda
+  if (!palavra) return null;
+
+  // Emergência ativa — tela de pausa
+  if (ativo && restante) return (
+    <div style={{background:"linear-gradient(135deg,#dc2626,#b91c1c)",borderRadius:16,padding:24,textAlign:"center",color:"white",marginTop:16}}>
+      <div style={{fontSize:40,marginBottom:8}}>🔴</div>
+      <div style={{fontSize:11,opacity:0.8,letterSpacing:2,marginBottom:4}}>BOTÃO ACIONADO</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:36,fontWeight:700,letterSpacing:6,marginBottom:8}}>{palavra}</div>
+      <div style={{fontSize:13,opacity:0.85,marginBottom:16,lineHeight:1.6}}>
+        Pausa acionada por <strong>{ativo.acionadoPor}</strong>.<br/>
+        Retomem a conversa quando estiverem calmos.
+      </div>
+      <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"12px 24px",display:"inline-block",marginBottom:16}}>
+        <div style={{fontSize:11,opacity:0.8,marginBottom:2}}>TEMPO RESTANTE</div>
+        <div style={{fontFamily:"monospace",fontSize:28,fontWeight:700}}>{restante}</div>
+      </div>
+      <div style={{fontSize:12,opacity:0.7}}>Respire fundo. Este tempo é um presente para o relacionamento. 💜</div>
+    </div>
+  );
+
+  // Escolhendo tempo
+  if (escolhendo) return (
+    <div style={{background:"#fff5f5",border:"2px solid #fecaca",borderRadius:16,padding:20,marginTop:16,textAlign:"center"}}>
+      <div style={{fontSize:32,marginBottom:8}}>🔴</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,color:"#dc2626",marginBottom:4}}>Acionar Botão</div>
+      <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>Por quanto tempo vocês precisam de pausa?</div>
+      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:16}}>
+        {OPCOES_HORAS.map(h=>(
+          <button key={h} onClick={()=>acionar(h)} disabled={salvando}
+            style={{background:"#dc2626",color:"white",border:"none",borderRadius:20,padding:"8px 16px",fontSize:13,fontWeight:600,cursor:"pointer",minWidth:60}}>
+            {h}h
+          </button>
+        ))}
+      </div>
+      <button onClick={()=>setEscolhendo(false)}
+        style={{background:"none",border:"none",color:"#6b7280",fontSize:13,cursor:"pointer"}}>
+        Cancelar
+      </button>
+    </div>
+  );
+
+  // Botão normal
+  return (
+    <div style={{marginTop:16,textAlign:"center"}}>
+      <button onClick={()=>setEscolhendo(true)}
+        style={{background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:16,padding:"20px 32px",cursor:"pointer",width:"100%",boxShadow:"0 4px 20px rgba(220,38,38,0.3)",transition:"transform .1s,box-shadow .1s"}}
+        onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
+        onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+        <div style={{fontSize:36,marginBottom:6}}>🔴</div>
+        <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",letterSpacing:2,marginBottom:4}}>ACIONE A</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:28,fontWeight:700,color:"white",letterSpacing:4}}>{palavra}</div>
+        <div style={{fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:6}}>Botão de Emergência</div>
+      </button>
     </div>
   );
 }
@@ -894,19 +1016,637 @@ function PainelCasal({ user }) {
 // ═══════════════════════════════════════════════════════
 //  ETAPA CASAL — componente reutilizável
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  ATIVIDADES ESPECÍFICAS DO DIAGNÓSTICO DE CASAL
+// ═══════════════════════════════════════════════════════
+
+// ── Inventário Bem-Estar (42 questões) ──
+const INVENTARIO_QUESTOES_C = [
+  {n:1,  texto:"Com que frequência você e seu parceiro(a) trabalham juntos para alcançar objetivos comuns?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:2,  texto:"Como você descreveria a frequência com que você e seu parceiro(a) têm conversas abertas e honestas sobre suas preocupações e problemas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:3,  texto:"Como você avalia sua satisfação geral com a vida sexual em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:4,  texto:"Quando você e seu parceiro(a) enfrentam um desentendimento, com que frequência vocês conseguem encontrar uma solução que seja satisfatória para ambos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:5,  texto:"Em geral, como você avalia a qualidade das discussões que você e seu parceiro(a) têm sobre assuntos importantes?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:6,  texto:"Com que frequência você e seu parceiro(a) se comunicam sobre suas necessidades e desejos sexuais?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:7,  texto:"Com que frequência você e seu parceiro(a) compartilham seus sentimentos mais profundos um com o outro?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:8,  texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma efetiva?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:9,  texto:"Como você descreveria a qualidade de suas relações sexuais em seu relacionamento?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:10, texto:"Como você descreveria a capacidade de seu relacionamento em criar um ambiente emocionalmente seguro e acolhedor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:11, texto:"Quando você e seu parceiro(a) discordam sobre algo, com que frequência vocês conseguem resolver o conflito de maneira efetiva?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:12, texto:"Como você se sente em relação à habilidade de seu parceiro(a) de expressar seus sentimentos de forma clara e compreensível durante uma conversa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:13, texto:"Com que frequência você e seu parceiro(a) encontram soluções diferentes para resolver problemas ou desafios em seu relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:14, texto:"Com que frequência você e seu parceiro(a) conseguem discutir um problema sem que isso afete negativamente o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:15, texto:"Com que frequência você e seu parceiro(a) experimentam momentos íntimos e prazerosos juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:16, texto:"Como você avalia a disposição de seu parceiro(a) para ajudá-lo(a) nas tarefas domésticas e responsabilidades compartilhadas?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:17, texto:"Quando você está passando por momentos difíceis, com quem você costuma compartilhar seus sentimentos primeiro?", opcoes:["Com ninguém","Com um membro da família","Com um amigo(a)","Com meu parceiro(a)","Com um profissional especializado(a)"]},
+  {n:18, texto:"Quando ocorre um desacordo entre vocês, como vocês costumam resolver a situação?", opcoes:["Ignorando o problema","Gritando ou discutindo","Evitando o assunto","Argumentando meu ponto de vista","Conversando e buscando uma solução"]},
+  {n:19, texto:"Quando você compartilha suas opiniões com seu parceiro(a), com que frequência você se sente ouvido(a) e compreendido(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:20, texto:"Com que frequência você e seu parceiro(a) reservam um tempo específico para conversar sobre questões importantes ou preocupações relacionadas ao relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:21, texto:"Você se sente à vontade para expressar suas preferências sexuais e fantasias com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:22, texto:"Como você se sente em relação à capacidade de seu parceiro(a) de compreender suas emoções e oferecer apoio quando você precisa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:23, texto:"Vocês conseguem chegar a um consenso sobre questões importantes, mesmo quando têm opiniões diferentes?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:24, texto:"Com que frequência você e seu parceiro(a) dedicam tempo para se conectar emocionalmente, sem distrações externas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:25, texto:"Como você avalia a capacidade de seu relacionamento em superar desafios ou dificuldades na vida sexual?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:26, texto:"Você e seu parceiro(a) costumam discutir e tomar decisões importantes juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:27, texto:"Você e seu parceiro(a) estão satisfeitos com a frequência das relações sexuais em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:28, texto:"Com que frequência vocês conseguem manter o respeito mútuo mesmo durante uma discussão acalorada?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:29, texto:"Você se sente à vontade para expressar suas emoções, mesmo as mais vulneráveis, com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:30, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de diversão e risadas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:31, texto:"Quando um conflito é resolvido, como vocês se sentem em relação ao processo de resolução?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:32, texto:"Como você avalia a capacidade de seu parceiro(a) de fazer você rir e levantar seu ânimo quando necessário?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:33, texto:"Você e seu parceiro(a) têm interesses em comum que os levam a participar de atividades recreativas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:34, texto:"Como você descreveria a importância do humor em seu relacionamento?", opcoes:["Muito pouco importante","Pouco importante","Neutro(a)","Importante","Muito importante"]},
+  {n:35, texto:"Como você descreveria a profundidade do vínculo emocional entre você e seu parceiro(a)?", opcoes:["Muito superficial","Superficial","Moderado","Profundo","Muito profundo"]},
+  {n:36, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de descontração e relaxamento juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:37, texto:"Com que frequência você e seu parceiro(a) se apoiam mutuamente para lidar com o estresse e os desafios da vida?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:38, texto:"Você se sente valorizado(a) e reconhecido(a) pelo seu parceiro(a) em suas contribuições para o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:39, texto:"Como você descreveria a igualdade de contribuição entre você e seu parceiro(a) nos compromissos financeiros e nas despesas domésticas?", opcoes:["Muito desigual","Desigual","Neutra","Igual","Muito igual"]},
+  {n:40, texto:"Você se sente confortável para expressar seu senso de humor com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:41, texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma colaborativa, buscando soluções que beneficiem ambos os parceiros?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:42, texto:"Como você avalia a capacidade de seu relacionamento em lidar com situações difíceis com leveza e humor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+];
+
+const INVENTARIO_CATS_C = [
+  {label:"Comunicação Eficaz",      cor:"#6366f1", questoes:[2,5,11,12,13,19,20]},
+  {label:"Resolução de Conflitos",   cor:"#f59e0b", questoes:[4,8,14,18,23,28,31]},
+  {label:"Intimidade Emocional",     cor:"#ec4899", questoes:[7,10,17,22,24,29,35]},
+  {label:"Satisfação Sexual",        cor:"#dc2626", questoes:[3,6,9,15,21,25,27]},
+  {label:"Cooperação e Colaboração", cor:"#16a34a", questoes:[1,16,26,37,38,39,41]},
+  {label:"Senso de Humor e Lazer",   cor:"#0891b2", questoes:[30,32,33,34,36,40,42]},
+];
+
+const RODA_DIMENSOES = [
+  "Comunicação","Família","Sexualidade","Estresse e Pressão",
+  "Divisão","Ciúmes","Espiritualidade","Diferenças e Conflitos",
+  "Estabilidade Financeira","Rel. de Poder","Mudanças","Expectativas e Equilíbrio"
+];
+
+function AtivInventario({ user, casalId, onVoltar }) {
+  const [respostas, setRespostas] = useState({});
+  const [parceiro,  setParceiro]  = useState(null);
+  const [respParceiro, setRespParceiro] = useState(null);
+  const [pagina, setPagina]       = useState(0);
+  const [salvando, setSalvando]   = useState(false);
+  const [salvo, setSalvo]         = useState(false);
+  const [verComparativo, setVerComparativo] = useState(false);
+  const POR_PAG = 6;
+  const total   = INVENTARIO_QUESTOES_C.length;
+  const totalPag = Math.ceil(total / POR_PAG);
+
+  useEffect(()=>{
+    if (!casalId) return;
+    // Buscar parceiro
+    db.collection("clinica_pacientes").doc(casalId).get().then(d=>{
+      if(d.exists) setParceiro({id:d.id,...d.data()});
+    });
+    // Buscar resposta já salva do próprio usuário
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId)
+      .where("pacienteId","==",user.id)
+      .where("atividadeId","==","inventario-bem-estar")
+      .orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{
+        if(s.docs.length>0) { setRespostas(s.docs[0].data().respostas||{}); setSalvo(true); }
+      },()=>{});
+    // Buscar resposta do parceiro
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId)
+      .where("pacienteId","==",casalId)
+      .where("atividadeId","==","inventario-bem-estar")
+      .orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{
+        if(s.docs.length>0) setRespParceiro(s.docs[0].data().respostas||{});
+      },()=>{});
+  },[casalId, user.id]);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId: user.id, casalId,
+        atividadeId: "inventario-bem-estar",
+        respostas,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  function calcular(resp) {
+    return INVENTARIO_CATS_C.map(cat=>{
+      const soma = cat.questoes.reduce((a,q)=>a+(resp[q]||0),0);
+      return {...cat, soma, pct: Math.max(0,Math.round(((soma-7)/28)*100))};
+    });
+  }
+
+  // Comparativo visual
+  if (verComparativo) {
+    const meu = calcular(respostas);
+    const del = respParceiro ? calcular(respParceiro) : null;
+    const isEla = user.genero==="Feminino";
+    const corEu = isEla ? "#ec4899" : "#2563eb";
+    const corParceiro = isEla ? "#2563eb" : "#ec4899";
+    return (
+      <div>
+        <button onClick={()=>setVerComparativo(false)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16}}>
+          <Icon name="arrow-left" size={15}/> Voltar
+        </button>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Comparativo do Inventário</div>
+        <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>
+          <span style={{color:corEu,fontWeight:600}}>● {user.nome.split(" ")[0]}</span>
+          {parceiro && <span style={{color:corParceiro,fontWeight:600,marginLeft:12}}>● {parceiro.nome.split(" ")[0]}</span>}
+        </div>
+        {meu.map((cat,i)=>(
+          <div key={cat.label} style={{marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:6}}>
+              <span>{cat.label}</span>
+              <span style={{display:"flex",gap:12}}>
+                <span style={{color:corEu}}>{cat.soma}/35</span>
+                {del && <span style={{color:corParceiro}}>{del[i].soma}/35</span>}
+              </span>
+            </div>
+            <div style={{position:"relative",height:10,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
+              <div style={{position:"absolute",left:0,top:0,height:"100%",width:cat.pct+"%",background:corEu,borderRadius:20,opacity:0.85}}/>
+              {del && <div style={{position:"absolute",left:0,top:0,height:"100%",width:del[i].pct+"%",background:corParceiro,borderRadius:20,opacity:0.5}}/>}
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
+              <span>Baixo (7)</span><span>Alto (35)</span>
+            </div>
+          </div>
+        ))}
+        {!del && <div style={{textAlign:"center",padding:16,fontSize:13,color:"var(--text-muted)",background:"#f9fafb",borderRadius:10}}>{parceiro?`${parceiro.nome.split(" ")[0]} ainda não respondeu o inventário.`:"Parceiro(a) não vinculado."}</div>}
+      </div>
+    );
+  }
+
+  // Instruções
+  if (pagina===0) return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💑</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Inventário de Bem-Estar de Casais</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,lineHeight:1.7}}>
+        42 questões sobre 6 dimensões do relacionamento.<br/>
+        <em>Seja rápido, não pondere!</em>
+      </div>
+      {salvo && <div style={{background:"#d1fae5",borderRadius:10,padding:12,marginBottom:16,fontSize:13,color:"#065f46"}}>✓ Você já respondeu. Pode refazer ou ver o comparativo.</div>}
+      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+        <button className="btn-primary" onClick={()=>setPagina(1)}>
+          {salvo?"Refazer inventário":"Iniciar"}
+        </button>
+        {salvo && <button className="btn-secondary" onClick={()=>setVerComparativo(true)}>Ver comparativo 📊</button>}
+      </div>
+    </div>
+  );
+
+  // Resultado
+  if (pagina===totalPag+1) {
+    return (
+      <div>
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:40,marginBottom:8}}>✅</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600}}>Inventário concluído!</div>
+        </div>
+        {calcular(respostas).map(cat=>(
+          <div key={cat.label} style={{marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:4}}>
+              <span style={{color:cat.cor}}>{cat.label}</span><span>{cat.soma}/35</span>
+            </div>
+            <div style={{background:"#f3f4f6",borderRadius:20,height:8}}>
+              <div style={{width:cat.pct+"%",height:"100%",background:cat.cor,borderRadius:20}}/>
+            </div>
+          </div>
+        ))}
+        <div style={{display:"flex",gap:10,marginTop:20}}>
+          <button className="btn-secondary" style={{flex:1}} onClick={salvar} disabled={salvando}>
+            {salvando?"Salvando...":"💾 Salvar respostas"}
+          </button>
+          <button className="btn-primary" style={{flex:1}} onClick={()=>setVerComparativo(true)}>
+            Ver comparativo 📊
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const questoesPag = INVENTARIO_QUESTOES_C.slice((pagina-1)*POR_PAG, pagina*POR_PAG);
+  const respondidas = Object.keys(respostas).length;
+  return (
+    <div>
+      <div style={{marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:4}}>
+          <span>Questões {(pagina-1)*POR_PAG+1}–{Math.min(pagina*POR_PAG,42)} de 42</span>
+          <span>{respondidas} respondidas</span>
+        </div>
+        <div style={{background:"#f3f4f6",borderRadius:20,height:5}}>
+          <div style={{width:Math.round((respondidas/42)*100)+"%",height:"100%",background:"var(--purple)",borderRadius:20}}/>
+        </div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {questoesPag.map(q=>(
+          <div key={q.n} style={{background:"#fafafa",borderRadius:10,padding:14,border:"1px solid var(--gray-100)"}}>
+            <div style={{fontWeight:600,fontSize:13,marginBottom:10,lineHeight:1.5}}>
+              <span style={{color:"var(--purple)",marginRight:6}}>{q.n}.</span>{q.texto}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {q.opcoes.map((op,i)=>(
+                <button key={i} onClick={()=>setRespostas(r=>({...r,[q.n]:i+1}))}
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:8,
+                    border:`1.5px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-200)"}`,
+                    background:respostas[q.n]===i+1?"#f5f3ff":"white",
+                    cursor:"pointer",fontFamily:"inherit",fontSize:12,textAlign:"left",
+                    color:respostas[q.n]===i+1?"var(--purple)":"var(--gray-700)",
+                    fontWeight:respostas[q.n]===i+1?600:400}}>
+                  <span style={{fontSize:10,color:"var(--gray-400)",minWidth:14}}>{String.fromCharCode(97+i)})</span>{op}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:10,marginTop:20}}>
+        <button className="btn-secondary" onClick={()=>setPagina(p=>p-1)} disabled={pagina===1}>← Anterior</button>
+        <div style={{flex:1}}/>
+        {pagina<totalPag
+          ? <button className="btn-primary" onClick={()=>setPagina(p=>p+1)}>Próximo →</button>
+          : <button className="btn-primary" onClick={()=>setPagina(totalPag+1)} disabled={respondidas<42} style={{opacity:respondidas<42?0.5:1}}>
+              {respondidas<42?`Faltam ${42-respondidas}`:"Ver Resultado →"}
+            </button>
+        }
+      </div>
+    </div>
+  );
+}
+
+// ── Roda da Vida do Relacionamento ──
+function AtivRodaVida({ user, casalId, onVoltar }) {
+  const [valores,    setValores]    = useState({});
+  const [parceiro,   setParceiro]   = useState(null);
+  const [valParceiro,setValParceiro]= useState(null);
+  const [salvando,   setSalvando]   = useState(false);
+  const [salvo,      setSalvo]      = useState(false);
+
+  useEffect(()=>{
+    if (!casalId) return;
+    db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId).where("pacienteId","==",user.id)
+      .where("atividadeId","==","roda-vida-relacionamento").orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{ if(s.docs.length>0){setValores(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("atividadeId","==","roda-vida-relacionamento").orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{ if(s.docs.length>0) setValParceiro(s.docs[0].data().respostas||{}); },()=>{});
+  },[casalId,user.id]);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:user.id, casalId, atividadeId:"roda-vida-relacionamento",
+        respostas:valores, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  const isEla = user.genero==="Feminino";
+  const corEu = isEla?"#ec4899":"#2563eb";
+  const corParceiro = isEla?"#2563eb":"#ec4899";
+
+  // SVG Radar
+  function Radar({vals, cor, opacity=1}) {
+    const n = RODA_DIMENSOES.length;
+    const cx=150,cy=150,r=110;
+    const pontos = RODA_DIMENSOES.map((_,i)=>{
+      const ang = (i/n)*2*Math.PI - Math.PI/2;
+      const v = (vals[RODA_DIMENSOES[i]]||0)/10;
+      return [cx+r*v*Math.cos(ang), cy+r*v*Math.sin(ang)];
+    });
+    const pts = pontos.map(p=>p.join(",")).join(" ");
+    const grades = [2,4,6,8,10].map(g=>{
+      const gpts = RODA_DIMENSOES.map((_,i)=>{
+        const ang=(i/n)*2*Math.PI-Math.PI/2;
+        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
+      }).join(" ");
+      return <polygon key={g} points={gpts} fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const eixos = RODA_DIMENSOES.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const labels = RODA_DIMENSOES.map((d,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const lx=cx+(r+18)*Math.cos(ang), ly=cy+(r+18)*Math.sin(ang);
+      return <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="7" fill="#6b7280">{d}</text>;
+    });
+    return (
+      <g opacity={opacity}>
+        {grades}{eixos}
+        <polygon points={pts} fill={cor} fillOpacity="0.2" stroke={cor} strokeWidth="2"/>
+        {labels}
+      </g>
+    );
+  }
+
+  return (
+    <div>
+      <button onClick={onVoltar} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16}}>
+        <Icon name="arrow-left" size={15}/> Voltar
+      </button>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>Roda da Vida do Relacionamento</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:16}}>Avalie de 0 a 10 cada dimensão. 0 = nenhum estresse · 10 = estresse máximo</div>
+
+      {salvo && (
+        <div style={{marginBottom:20,textAlign:"center"}}>
+          <svg width="300" height="300" viewBox="0 0 300 300">
+            <Radar vals={valores} cor={corEu}/>
+            {valParceiro && <Radar vals={valParceiro} cor={corParceiro} opacity={0.7}/>}
+          </svg>
+          <div style={{display:"flex",gap:16,justifyContent:"center",fontSize:12,marginTop:8}}>
+            <span style={{color:corEu,fontWeight:600}}>● {user.nome.split(" ")[0]}</span>
+            {parceiro&&valParceiro&&<span style={{color:corParceiro,fontWeight:600}}>● {parceiro.nome.split(" ")[0]}</span>}
+          </div>
+        </div>
+      )}
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
+        {RODA_DIMENSOES.map(dim=>(
+          <div key={dim}>
+            <div style={{fontSize:12,fontWeight:600,marginBottom:4}}>{dim}</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <input type="range" min="0" max="10" step="1"
+                value={valores[dim]||0}
+                onChange={e=>setValores(v=>({...v,[dim]:parseInt(e.target.value)}))}
+                style={{flex:1,accentColor:"var(--purple)"}}/>
+              <span style={{width:20,textAlign:"center",fontWeight:700,fontSize:13,color:"var(--purple)"}}>{valores[dim]||0}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button className="btn-primary" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar Roda da Vida"}
+      </button>
+      {salvo&&!valParceiro&&parceiro&&<div style={{marginTop:12,fontSize:12,color:"var(--text-muted)",textAlign:"center"}}>{parceiro.nome.split(" ")[0]} ainda não respondeu — o comparativo aparecerá quando ambos responderem.</div>}
+    </div>
+  );
+}
+
+// ── Nossas 3 Metas ──
+function AtivMetas({ user, casalId, onVoltar }) {
+  const [metas, setMetas]     = useState(["","",""]);
+  const [salvas, setSalvas]   = useState([]);
+  const [parceiroMetas, setParceiroMetas] = useState([]);
+  const [parceiro, setParceiro] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(()=>{
+    if(!casalId) return;
+    db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
+    db.collection("clinica_metas").where("pacienteId","==",user.id).where("status","==","ativa")
+      .onSnapshot(s=>setSalvas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_metas").where("pacienteId","==",casalId).where("status","==","ativa")
+      .onSnapshot(s=>setParceiroMetas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[casalId,user.id]);
+
+  async function salvar() {
+    const validas = metas.filter(m=>m.trim());
+    if(validas.length===0){alert("Digite pelo menos 1 meta.");return;}
+    setSalvando(true);
+    try {
+      // Remove metas antigas
+      const antigas = await db.collection("clinica_metas").where("pacienteId","==",user.id).where("status","==","ativa").get();
+      const batch = db.batch();
+      antigas.docs.forEach(d=>batch.update(d.ref,{status:"arquivada"}));
+      // Adiciona novas
+      for(const titulo of validas){
+        const ref = db.collection("clinica_metas").doc();
+        batch.set(ref,{titulo,pacienteId:user.id,casalId,status:"ativa",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      await batch.commit();
+      setMetas(["","",""]);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <button onClick={onVoltar} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16}}>
+        <Icon name="arrow-left" size={15}/> Voltar
+      </button>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>Nossas 3 Metas do Relacionamento</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Defina suas 3 principais metas terapêuticas. Elas aparecem no dashboard do casal.</div>
+
+      {/* Metas atuais */}
+      {salvas.length>0&&(
+        <div style={{background:"#f5f3ff",borderRadius:10,padding:14,marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:8}}>Suas metas atuais:</div>
+          {salvas.map(m=><div key={m.id} style={{fontSize:13,marginBottom:4}}>🥈 {m.titulo}</div>)}
+        </div>
+      )}
+
+      {/* Comparativo com parceiro */}
+      {parceiroMetas.length>0&&parceiro&&(
+        <div style={{background:"#eff6ff",borderRadius:10,padding:14,marginBottom:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#2563eb",marginBottom:8}}>Metas de {parceiro.nome.split(" ")[0]}:</div>
+          {parceiroMetas.map(m=><div key={m.id} style={{fontSize:13,marginBottom:4}}>🥈 {m.titulo}</div>)}
+        </div>
+      )}
+
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+        {[0,1,2].map(i=>(
+          <div key={i}>
+            <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:4}}>Meta {i+1}</label>
+            <input className="form-input" value={metas[i]}
+              onChange={e=>{const n=[...metas];n[i]=e.target.value;setMetas(n);}}
+              placeholder={`Ex: ${["Melhorar a comunicação diária","Reservar tempo de qualidade juntos","Resolver conflitos com mais calma"][i]}`}/>
+          </div>
+        ))}
+      </div>
+      <button className="btn-primary" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar metas"}
+      </button>
+    </div>
+  );
+}
+
+// ── Quem Eu Sou no Relacionamento ──
+function AtivQuemSou({ user, casalId, onVoltar }) {
+  const QUADRANTES = [
+    {id:"sou",    label:"SOU",                  desc:"Características que possuo e não me incomodam.",              cor:"#7B00C4",bg:"#f5f3ff"},
+    {id:"nao_mas",label:"NÃO SOU, MAS GOSTARIA", desc:"Características que não possuo e me fazem falta.",            cor:"#0891b2",bg:"#e0f2fe"},
+    {id:"sou_nao",label:"SOU, MAS NÃO GOSTARIA", desc:"Características que possuo mas me incomodam.",                cor:"#d97706",bg:"#fef3c7"},
+    {id:"nao_sou",label:"NÃO SOU",               desc:"Características que não possuo e não me incomodam.",          cor:"#6b7280",bg:"#f3f4f6"},
+  ];
+  const [campos,  setCampos]  = useState({sou:"",nao_mas:"",sou_nao:"",nao_sou:""});
+  const [parceiro,setParceiro]= useState(null);
+  const [respP,   setRespP]   = useState(null);
+  const [salvo,   setSalvo]   = useState(false);
+  const [salvando,setSalvando]= useState(false);
+
+  useEffect(()=>{
+    if(!casalId) return;
+    db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId).where("pacienteId","==",user.id)
+      .where("atividadeId","==","quem-sou").orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{ if(s.docs.length>0){setCampos(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("atividadeId","==","quem-sou").orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{ if(s.docs.length>0) setRespP(s.docs[0].data().respostas||{}); },()=>{});
+  },[casalId,user.id]);
+
+  async function salvar(){
+    setSalvando(true);
+    try{
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:user.id,casalId,atividadeId:"quem-sou",
+        respostas:campos,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    }catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <button onClick={onVoltar} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16}}>
+        <Icon name="arrow-left" size={15}/> Voltar
+      </button>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>Quem Eu Sou no Relacionamento</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:16}}>Reflexão individual sobre sua identidade no relacionamento.</div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        {QUADRANTES.map(q=>(
+          <div key={q.id} style={{background:q.bg,borderRadius:10,padding:12,border:`1px solid ${q.cor}30`}}>
+            <div style={{fontWeight:700,fontSize:11,color:q.cor,marginBottom:4}}>{q.label}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{q.desc}</div>
+            <textarea className="form-input" rows={4} value={campos[q.id]||""}
+              onChange={e=>setCampos(c=>({...c,[q.id]:e.target.value}))}
+              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
+          </div>
+        ))}
+      </div>
+
+      <button className="btn-primary" style={{width:"100%",marginBottom:16}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar"}
+      </button>
+
+      {/* Comparativo com parceiro */}
+      {respP&&parceiro&&(
+        <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:16}}>
+          <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>💬 Respostas de {parceiro.nome.split(" ")[0]}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            {QUADRANTES.map(q=>(
+              <div key={q.id} style={{background:q.bg,borderRadius:10,padding:12,border:`1px solid ${q.cor}30`}}>
+                <div style={{fontWeight:700,fontSize:11,color:q.cor,marginBottom:6}}>{q.label}</div>
+                <div style={{fontSize:12,color:"var(--gray-700)",whiteSpace:"pre-wrap",lineHeight:1.5}}>{respP[q.id]||<span style={{color:"var(--gray-400)"}}>Não preenchido</span>}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── O Que Eu Quero e Não Quero Mais ──
+function AtivOQueQuero({ user, casalId, onVoltar }) {
+  const CAMPOS = [
+    {id:"quero_sit",  label:"QUERO +  Situações",  desc:"Situações que você gosta e deseja que continuem.",      cor:"#16a34a",bg:"#f0fdf4"},
+    {id:"quero_val",  label:"QUERO +  Valores",     desc:"Situações MUITO IMPORTANTES que deseja manter.",        cor:"#16a34a",bg:"#dcfce7"},
+    {id:"nquero_sit", label:"QUERO −  Situações",   desc:"Situações que você NÃO gosta e quer que parem.",        cor:"#dc2626",bg:"#fef2f2"},
+    {id:"nquero_val", label:"QUERO −  Valores",     desc:"Situações MUITO IMPORTANTES que deseja mudar.",         cor:"#dc2626",bg:"#fee2e2"},
+  ];
+  const [campos,  setCampos]  = useState({});
+  const [parceiro,setParceiro]= useState(null);
+  const [respP,   setRespP]   = useState(null);
+  const [salvando,setSalvando]= useState(false);
+  const [salvo,   setSalvo]   = useState(false);
+
+  useEffect(()=>{
+    if(!casalId) return;
+    db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId).where("pacienteId","==",user.id)
+      .where("atividadeId","==","o-que-quero").orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{ if(s.docs.length>0){setCampos(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
+    db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("atividadeId","==","o-que-quero").orderBy("createdAt","desc").limit(1)
+      .onSnapshot(s=>{ if(s.docs.length>0) setRespP(s.docs[0].data().respostas||{}); },()=>{});
+  },[casalId,user.id]);
+
+  async function salvar(){
+    setSalvando(true);
+    try{
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:user.id,casalId,atividadeId:"o-que-quero",
+        respostas:campos,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    }catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <button onClick={onVoltar} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16}}>
+        <Icon name="arrow-left" size={15}/> Voltar
+      </button>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>O Que Eu Quero e Não Quero Mais</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:16}}>Mapeamento de expectativas e limites no relacionamento.</div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        {CAMPOS.map(c=>(
+          <div key={c.id} style={{background:c.bg,borderRadius:10,padding:12,border:`1px solid ${c.cor}30`}}>
+            <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:4}}>{c.label}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{c.desc}</div>
+            <textarea className="form-input" rows={4} value={campos[c.id]||""}
+              onChange={e=>setCampos(v=>({...v,[c.id]:e.target.value}))}
+              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
+          </div>
+        ))}
+      </div>
+
+      <button className="btn-primary" style={{width:"100%",marginBottom:16}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar"}
+      </button>
+
+      {respP&&parceiro&&(
+        <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:16}}>
+          <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>💬 Respostas de {parceiro.nome.split(" ")[0]}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            {CAMPOS.map(c=>(
+              <div key={c.id} style={{background:c.bg,borderRadius:10,padding:12,border:`1px solid ${c.cor}30`}}>
+                <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:6}}>{c.label}</div>
+                <div style={{fontSize:12,color:"var(--gray-700)",whiteSpace:"pre-wrap",lineHeight:1.5}}>{respP[c.id]||<span style={{color:"var(--gray-400)"}}>Não preenchido</span>}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
 function EtapaCasal({ user, etapaData }) {
   const [atividadeAberta, setAtividadeAberta] = useState(null);
   const [respostas, setRespostas]             = useState({});
   const [salvando, setSalvando]               = useState(false);
   const [msg, setMsg]                         = useState("");
+  const casalId = user.casalId || user.id;
 
   async function salvarRespostas() {
     if (!atividadeAberta) return;
     setSalvando(true);
     try {
       await db.collection("clinica_casais_respostas").add({
-        pacienteId: user.id,
-        casalId: user.casalId || user.id,
+        pacienteId: user.id, casalId,
         etapaId: etapaData.tabId,
         atividadeId: atividadeAberta.id,
         atividadeTitulo: atividadeAberta.titulo,
@@ -920,26 +1660,35 @@ function EtapaCasal({ user, etapaData }) {
   }
 
   if (atividadeAberta) {
+    // Atividades específicas do Diagnóstico
+    if (atividadeAberta.id==="inventario-bem-estar")
+      return <AtivInventario user={user} casalId={casalId} onVoltar={()=>setAtividadeAberta(null)}/>;
+    if (atividadeAberta.id==="roda-vida-relacionamento")
+      return <AtivRodaVida user={user} casalId={casalId} onVoltar={()=>setAtividadeAberta(null)}/>;
+    if (atividadeAberta.id==="3-metas")
+      return <AtivMetas user={user} casalId={casalId} onVoltar={()=>setAtividadeAberta(null)}/>;
+    if (atividadeAberta.id==="quem-sou")
+      return <AtivQuemSou user={user} casalId={casalId} onVoltar={()=>setAtividadeAberta(null)}/>;
+    if (atividadeAberta.id==="o-que-quero")
+      return <AtivOQueQuero user={user} casalId={casalId} onVoltar={()=>setAtividadeAberta(null)}/>;
+
+    // Template genérico para etapas 1-4
     return (
       <div>
         <button onClick={()=>{ setAtividadeAberta(null); setRespostas({}); setMsg(""); }}
           style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:13,marginBottom:16,padding:"6px 0"}}>
           <Icon name="arrow-left" size={15}/> Voltar para {etapaData.stage===0?"Diagnóstico":"Etapa "+etapaData.stage}
         </button>
-
         <div style={{background:etapaData.bg,border:"1.5px solid "+etapaData.cor+"40",borderRadius:14,padding:20,marginBottom:20}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <span style={{fontSize:28}}>{etapaData.emoji}</span>
             <div>
-              <div style={{fontWeight:700,fontSize:14,color:etapaData.cor}}>
-                {etapaData.stage===0?"Diagnóstico":"Etapa "+etapaData.stage} — {etapaData.titulo}
-              </div>
+              <div style={{fontWeight:700,fontSize:14,color:etapaData.cor}}>{etapaData.stage===0?"Diagnóstico":"Etapa "+etapaData.stage} — {etapaData.titulo}</div>
               <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{atividadeAberta.titulo}</div>
             </div>
           </div>
           <p style={{fontSize:13,color:"var(--gray-700)",marginTop:10,lineHeight:1.6}}>{atividadeAberta.desc}</p>
         </div>
-
         <div className="card">
           <div style={{fontWeight:600,fontSize:15,marginBottom:8}}>{atividadeAberta.titulo}</div>
           <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:20,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
@@ -956,11 +1705,9 @@ function EtapaCasal({ user, etapaData }) {
               </div>
             ))}
           </div>
-
-          {msg && <div style={{background: msg.startsWith("✓")?"#d1fae5":"#fef3c7", border:"1px solid", borderColor:msg.startsWith("✓")?"#6ee7b7":"#f59e0b", borderRadius:8, padding:"10px 14px", marginTop:16, fontSize:13, color:msg.startsWith("✓")?"#065f46":"#92400e"}}>{msg}</div>}
-
+          {msg && <div style={{background:msg.startsWith("✓")?"#d1fae5":"#fef3c7",border:"1px solid",borderColor:msg.startsWith("✓")?"#6ee7b7":"#f59e0b",borderRadius:8,padding:"10px 14px",marginTop:16,fontSize:13,color:msg.startsWith("✓")?"#065f46":"#92400e"}}>{msg}</div>}
           <button onClick={salvarRespostas} disabled={salvando} className="btn-primary" style={{width:"100%",marginTop:20}}>
-            {salvando?"Salvando...": <><Icon name="save" size={15}/> Salvar respostas</>}
+            {salvando?"Salvando...":<><Icon name="save" size={15}/> Salvar respostas</>}
           </button>
         </div>
       </div>
