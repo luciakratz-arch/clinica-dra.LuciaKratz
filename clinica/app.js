@@ -283,10 +283,10 @@ function BotaoNotificacao({ permissao, ativar }) {
   );
 }
 
-function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps }) {
+function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, nav:navProp }) {
   const eCasal = modo === "casal";
   const navBase = user.tipo === "aluno" ? NAV_ALUNO : eCasal ? NAV_CASAL : NAV_INDIVIDUAL;
-  const nav = (user.tipo === "paciente" && !eCasal) ? navFiltradoPaciente(navBase, user) : navBase;
+  const nav = navProp || ((user.tipo === "paciente" && !eCasal) ? navFiltradoPaciente(navBase, user) : navBase);
 
   return (
     <div className="sidebar-desktop">
@@ -2082,6 +2082,7 @@ function App() {
   return (
     <div>
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} modo={modo}
+        nav={navFinal}
         notifProps={notifProps}
         onTrocarModo={user.casalId && (user.modulosAtivos||[]).length>0 ? ()=>{setModo(null);setTab(null);} : null}/>
 
