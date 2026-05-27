@@ -39,6 +39,94 @@ function Icon({ name, size = 18 }) {
 }
 
 function Spinner() { return <div className="spinner-wrap"><div className="spinner"/></div>; }
+function MinhaConta({ user }) {
+  const [form, setForm]       = useState({
+    nome:     user.nome||"",
+    email:    user.email||"",
+    telefone: user.telefone||"",
+    genero:   user.genero||"",
+  });
+  const [senha,    setSenha]    = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [msg,      setMsg]      = useState("");
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      const dados = { nome:form.nome, telefone:form.telefone, genero:form.genero };
+      await db.collection("clinica_pacientes").doc(user.id).update(dados);
+      if (senha.trim()) {
+        await firebase.auth().currentUser?.updatePassword(senha).catch(()=>{});
+      }
+      setMsg("✓ Dados atualizados com sucesso!");
+      setTimeout(()=>setMsg(""),3000);
+    } catch(e) { setMsg("Erro ao salvar. Tente novamente."); }
+    setSalvando(false);
+  }
+
+  return (
+    <div style={{maxWidth:480,margin:"0 auto",padding:"24px 16px"}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:4}}>Minha Conta</div>
+        <div style={{fontSize:13,color:"var(--text-muted)"}}>Atualize seus dados pessoais</div>
+      </div>
+
+      {/* Avatar */}
+      <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:24,padding:16,background:"#f5f3ff",borderRadius:12}}>
+        <div style={{width:56,height:56,borderRadius:"50%",background:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"white",fontWeight:700,flexShrink:0}}>
+          {(form.nome||"P")[0].toUpperCase()}
+        </div>
+        <div>
+          <div style={{fontWeight:600,fontSize:15}}>{form.nome||"—"}</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>{user.email}</div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+        <div>
+          <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>Nome completo</label>
+          <input className="form-input" value={form.nome}
+            onChange={e=>setForm(f=>({...f,nome:e.target.value}))}
+            placeholder="Seu nome completo"/>
+        </div>
+        <div>
+          <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>Telefone / WhatsApp</label>
+          <input className="form-input" value={form.telefone}
+            onChange={e=>setForm(f=>({...f,telefone:e.target.value}))}
+            placeholder="(00) 00000-0000"/>
+        </div>
+        <div>
+          <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>Gênero</label>
+          <select className="form-input" value={form.genero}
+            onChange={e=>setForm(f=>({...f,genero:e.target.value}))}>
+            <option value="">Selecionar...</option>
+            <option value="Feminino">Feminino</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Não-binário">Não-binário</option>
+            <option value="Prefiro não informar">Prefiro não informar</option>
+          </select>
+        </div>
+        <div>
+          <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:5}}>Nova senha <span style={{color:"var(--text-muted)",fontWeight:400}}>(deixe em branco para não alterar)</span></label>
+          <input className="form-input" type="password" value={senha}
+            onChange={e=>setSenha(e.target.value)}
+            placeholder="Digite nova senha..."/>
+        </div>
+      </div>
+
+      {msg && (
+        <div style={{background:msg.startsWith("✓")?"#d1fae5":"#fef3c7",border:"1px solid",borderColor:msg.startsWith("✓")?"#6ee7b7":"#f59e0b",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.startsWith("✓")?"#065f46":"#92400e"}}>
+          {msg}
+        </div>
+      )}
+
+      <button className="btn-primary" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar alterações"}
+      </button>
+    </div>
+  );
+}
+
 function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve." }) {
   return (
     <div className="em-breve">
@@ -2112,7 +2200,7 @@ function App() {
         {!eCasal&&tab==="ansiedade"     &&<EmBreve titulo="Gestão da Ansiedade" sub="Tracking de estresse, pensamentos e roda da vida."/>}
         {!eCasal&&tab==="musicoterapia" &&<EmBreve titulo="Musicoterapia" sub="Recursos de musicoterapia clínica."/>}
         {!eCasal&&tab==="meus-laudos"   &&<EmBreve titulo="Meus Laudos"/>}
-        {!eCasal&&tab==="minha-conta"   &&<EmBreve titulo="Minha Conta"/>}
+        {!eCasal&&tab==="minha-conta"   &&<MinhaConta user={user}/>}
 
         {/* CASAL */}
         {eCasal&&tab==="inicio-casal"      &&<PainelCasal user={user}/>}
@@ -2121,7 +2209,7 @@ function App() {
         {eCasal&&tab==="etapa2-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[2]}/>}
         {eCasal&&tab==="etapa3-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[3]}/>}
         {eCasal&&tab==="etapa4-casal"      &&<EtapaCasal user={user} etapaData={PROTOCOLO_CASAIS[4]}/>}
-        {eCasal&&tab==="minha-conta"       &&<EmBreve titulo="Minha Conta"/>}
+        {eCasal&&tab==="minha-conta"       &&<MinhaConta user={user}/>}
       </div>
 
       <div className="nav-mobile">
