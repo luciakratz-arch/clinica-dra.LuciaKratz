@@ -951,9 +951,30 @@ function AbaCasal({ paciente, pacientes }) {
   async function vincular() {
     if(!casalId){alert("Selecione o parceiro(a).");return;}
     setSalvando(true);
-    await db.collection("clinica_pacientes").doc(paciente.id).update({casalId});
-    await db.collection("clinica_pacientes").doc(casalId).update({casalId:paciente.id});
-    setSalvando(false); alert("Casal vinculado!");
+    try {
+      // Atualiza casalId + adiciona mod5 nos dois pacientes
+      await db.collection("clinica_pacientes").doc(paciente.id).update({
+        casalId,
+        modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+      });
+      await db.collection("clinica_pacientes").doc(casalId).update({
+        casalId: paciente.id,
+        modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+      });
+      // Cria documento na clinica_casais se não existir
+      const snap = await db.collection("clinica_casais").where("p1Id","==",paciente.id).limit(1).get();
+      if (snap.empty) {
+        const p2 = pacientes.find(p=>p.id===casalId);
+        await db.collection("clinica_casais").add({
+          p1Id: paciente.id, p1Nome: paciente.nome||"",
+          p2Id: casalId,     p2Nome: p2?.nome||"",
+          nomeCasal: `${paciente.nome?.split(" ")[0]||""} e ${p2?.nome?.split(" ")[0]||""}`,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      alert("✓ Casal vinculado! Ambos terão acesso à Terapia de Casal no portal.");
+    } catch(e) { alert("Erro ao vincular: "+e.message); }
+    setSalvando(false);
   }
   async function desvincular() {
     if(!confirm("Desvincular casal?"))return;
@@ -2298,6 +2319,10 @@ function FinanceiroClinica() {
                 <button className="btn btn-purple" onClick={()=>salvarAvulso(null)} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alterações"}</button>
               ) : (
                 <>
+                  <button className="btn btn-ghost" onClick={()=>salvarAvulso(null)} disabled={salvando}
+                    style={{border:"1px solid #e5e7eb",color:"#6b7280",fontSize:12}} title="Sem comissão — para lançamentos passados">
+                    📋 Sem comissão
+                  </button>
                   <button className="btn btn-purple" onClick={()=>salvarAvulso("primeira")} disabled={salvando}
                     style={{background:"#7B00C4"}} title="10% de comissão">
                     🌟 Primeira Venda
@@ -2406,6 +2431,10 @@ function FinanceiroClinica() {
               )}
               <div style={{display:"flex",gap:10,justifyContent:"flex-end",flexWrap:"wrap"}}>
                 <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+                <button className="btn btn-ghost" onClick={()=>salvarPacote(null)} disabled={salvando}
+                  style={{border:"1px solid #e5e7eb",color:"#6b7280",fontSize:12}} title="Sem comissão — para lançamentos passados">
+                  📋 Sem comissão
+                </button>
                 <button className="btn btn-purple" onClick={()=>salvarPacote("primeira")} disabled={salvando}
                   style={{background:"#7B00C4"}} title="10% de comissão">
                   🌟 Primeira Venda
@@ -6731,6 +6760,7 @@ const COLUNAS_FUNIL = [
   { id:"agendamento", label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
   { id:"agendado",    label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
   { id:"convertido",  label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
+  { id:"perdido",     label:"Perdido",               cor:"#dc2626", bg:"#fef2f2" },
 ];
 
 function parsearLeadIA(texto) {
@@ -7316,7 +7346,7 @@ function AlertasInatividade({ leads, onAbrirLead }) {
   }
 
   const alertas = leads
-    .filter(l => !l.arquivado && !descartados.has(l.id))
+    .filter(l => !l.arquivado && !descartados.has(l.id) && l.status !== "perdido")
     .reduce((acc, lead) => {
       const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status || "novo"));
       if (!regra) return acc;
