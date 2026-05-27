@@ -4283,6 +4283,233 @@ function InventarioBemEstarCasal({ onVoltar }) {
   );
 }
 
+// ── Admin: Roda da Vida ──
+const RODA_DIMS_ADM = [
+  "Comunicação","Família","Sexualidade","Estresse e Pressão",
+  "Divisão","Ciúmes","Espiritualidade","Diferenças e Conflitos",
+  "Estabilidade Financeira","Rel. de Poder","Mudanças","Expectativas e Equilíbrio"
+];
+
+function AdminRodaVida({ onVoltar }) {
+  const [valores, setValores] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin",
+        atividadeId:"roda-vida-relacionamento",
+        respostas:valores,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  function RodaSVG() {
+    const n=RODA_DIMS_ADM.length, cx=120,cy=120,r=90;
+    const pontos = RODA_DIMS_ADM.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[RODA_DIMS_ADM[i]]||0)/10;
+      return [cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)];
+    });
+    const pts=pontos.map(p=>p.join(",")).join(" ");
+    const grades=[2,4,6,8,10].map(g=>{
+      const gpts=RODA_DIMS_ADM.map((_,i)=>{
+        const ang=(i/n)*2*Math.PI-Math.PI/2;
+        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
+      }).join(" ");
+      return <polygon key={g} points={gpts} fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const eixos=RODA_DIMS_ADM.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const labels=RODA_DIMS_ADM.map((d,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <text key={i} x={cx+(r+14)*Math.cos(ang)} y={cy+(r+14)*Math.sin(ang)} textAnchor="middle" dominantBaseline="middle" fontSize="5.5" fill="#6b7280">{d}</text>;
+    });
+    return (
+      <svg width="240" height="240" viewBox="0 0 240 240" style={{display:"block",margin:"0 auto 16px"}}>
+        {grades}{eixos}
+        <polygon points={pts} fill="#7B00C440" stroke="#7B00C4" strokeWidth="1.5"/>
+        {labels}
+      </svg>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.6}}>
+        Avalie cada dimensão de 0 a 10. <strong>0</strong> = nenhuma tensão · <strong>10</strong> = tensão máxima.
+      </div>
+      {Object.keys(valores).length>0 && <RodaSVG/>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {RODA_DIMS_ADM.map(dim=>(
+          <div key={dim}>
+            <div style={{fontSize:12,fontWeight:600,marginBottom:3}}>{dim}</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <input type="range" min="0" max="10" step="1"
+                value={valores[dim]||0}
+                onChange={e=>setValores(v=>({...v,[dim]:parseInt(e.target.value)}))}
+                style={{flex:1,accentColor:"var(--purple)"}}/>
+              <span style={{width:18,textAlign:"center",fontWeight:700,fontSize:12,color:"var(--purple)"}}>{valores[dim]||0}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo com sucesso!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar Roda da Vida"}
+      </button>
+    </div>
+  );
+}
+
+// ── Admin: Nossas 3 Metas ──
+function AdminMetas({ onVoltar }) {
+  const [metas, setMetas] = useState(["",""," "]);
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  async function salvar() {
+    const validas = metas.filter(m=>m.trim());
+    if(!validas.length){alert("Digite pelo menos 1 meta.");return;}
+    setSalvando(true);
+    try {
+      for(const titulo of validas){
+        await db.collection("clinica_metas").add({
+          titulo, pacienteId:"casal-admin", casalId:"admin",
+          status:"ativa", createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.6}}>
+        Defina as 3 principais metas terapêuticas do casal. Elas aparecem no dashboard do portal do paciente.
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+        {[0,1,2].map(i=>(
+          <div key={i}>
+            <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:4}}>Meta {i+1}</label>
+            <input className="form-input" value={metas[i]}
+              onChange={e=>{const n=[...metas];n[i]=e.target.value;setMetas(n);}}
+              placeholder={`Ex: ${["Melhorar a comunicação diária","Reservar tempo de qualidade juntos","Resolver conflitos com mais calma"][i]}`}/>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Metas salvas! Aparecem no dashboard do casal.</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar metas"}
+      </button>
+    </div>
+  );
+}
+
+// ── Admin: Quem Eu Sou ──
+function AdminQuemSou({ onVoltar }) {
+  const QUADRANTES = [
+    {id:"sou",    label:"SOU",                   desc:"Características que possuo e não me incomodam.",    cor:"#7B00C4",bg:"#f5f3ff"},
+    {id:"nao_mas",label:"NÃO SOU, MAS GOSTARIA",  desc:"Características que não possuo e me fazem falta.",  cor:"#0891b2",bg:"#e0f2fe"},
+    {id:"sou_nao",label:"SOU, MAS NÃO GOSTARIA",  desc:"Características que possuo mas me incomodam.",      cor:"#d97706",bg:"#fef3c7"},
+    {id:"nao_sou",label:"NÃO SOU",                desc:"Características que não possuo e não me incomodam.",cor:"#6b7280",bg:"#f3f4f6"},
+  ];
+  const [campos, setCampos]   = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo]     = useState(false);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin", atividadeId:"quem-sou",
+        respostas:campos, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+        Reflexão individual sobre identidade no relacionamento. Cada cônjuge preenche pelo próprio login no portal.
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {QUADRANTES.map(q=>(
+          <div key={q.id} style={{background:q.bg,borderRadius:10,padding:12,border:`1px solid ${q.cor}30`}}>
+            <div style={{fontWeight:700,fontSize:11,color:q.cor,marginBottom:3}}>{q.label}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{q.desc}</div>
+            <textarea className="form-input" rows={4} value={campos[q.id]||""}
+              onChange={e=>setCampos(c=>({...c,[q.id]:e.target.value}))}
+              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar"}
+      </button>
+    </div>
+  );
+}
+
+// ── Admin: O Que Eu Quero e Não Quero Mais ──
+function AdminOQueQuero({ onVoltar }) {
+  const CAMPOS = [
+    {id:"quero_sit",  label:"QUERO +  Situações",  desc:"Situações que gosta e quer que continuem.", cor:"#16a34a",bg:"#f0fdf4"},
+    {id:"quero_val",  label:"QUERO +  Valores",     desc:"Situações MUITO IMPORTANTES a manter.",    cor:"#16a34a",bg:"#dcfce7"},
+    {id:"nquero_sit", label:"QUERO −  Situações",   desc:"Situações que NÃO gosta e quer que parem.",cor:"#dc2626",bg:"#fef2f2"},
+    {id:"nquero_val", label:"QUERO −  Valores",     desc:"Situações MUITO IMPORTANTES a mudar.",     cor:"#dc2626",bg:"#fee2e2"},
+  ];
+  const [campos, setCampos]     = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo]       = useState(false);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin", atividadeId:"o-que-quero",
+        respostas:campos, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+        Mapeamento de expectativas e limites no relacionamento.
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {CAMPOS.map(c=>(
+          <div key={c.id} style={{background:c.bg,borderRadius:10,padding:12,border:`1px solid ${c.cor}30`}}>
+            <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:3}}>{c.label}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{c.desc}</div>
+            <textarea className="form-input" rows={4} value={campos[c.id]||""}
+              onChange={e=>setCampos(v=>({...v,[c.id]:e.target.value}))}
+              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar"}
+      </button>
+    </div>
+  );
+}
+
 function AbaProtocoloCasais() {
   const [expandido, setExpandido] = useState(null);
   const [atividadeAberta, setAtividadeAberta] = useState(null);
@@ -4309,8 +4536,16 @@ function AbaProtocoloCasais() {
         </div>
         <div className="card">
           <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>{at.titulo}</div>
-          {at.id === "inventario-bem-estar"
+          {at.id==="inventario-bem-estar"
             ? <InventarioBemEstarCasal onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="roda-vida-relacionamento"
+            ? <AdminRodaVida onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="3-metas"
+            ? <AdminMetas onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="quem-sou"
+            ? <AdminQuemSou onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="o-que-quero"
+            ? <AdminOQueQuero onVoltar={()=>setAtividadeAberta(null)}/>
             : (<>
           <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
             Responda com honestidade e na presença da psicóloga. Esta atividade faz parte do protocolo de Terapia de Casais TCC.
