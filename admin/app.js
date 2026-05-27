@@ -948,7 +948,7 @@ function AbaCasal({ paciente, pacientes }) {
   const [casalId, setCasalId] = useState(paciente.casalId||"");
   const [salvando, setSalvando] = useState(false);
   const parceiro = pacientes.find(p=>p.id===paciente.casalId);
-  const outros = pacientes.filter(p=>p.id!==paciente.id&&p.status==="ativo");
+  const outros = pacientes.filter(p=>p.id!==paciente.id&&p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
 
   async function vincular() {
     if(!casalId){alert("Selecione o parceiro(a).");return;}
@@ -2293,7 +2293,7 @@ function FinanceiroClinica() {
                   setFormAvulso({...formAvulso,pacienteId:e.target.value,pacienteNome:pac?.nome||"",
                     obs:pac?`${formAvulso.tipo} — ${pac.nome}`:formAvulso.obs});
                 }}>
-                  <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                  <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </div>
               <div className="form-group"><label className="form-label">Tipo / Categoria</label>
@@ -2372,7 +2372,7 @@ function FinanceiroClinica() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Paciente *</label>
                   <select className="form-input" value={formPacote.pacienteId} onChange={e=>setFormPacote({...formPacote,pacienteId:e.target.value})}>
-                    <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                    <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
                   </select>
                 </div>
                 <div className="form-group"><label className="form-label">Nº de Sessões *</label>
@@ -3360,14 +3360,14 @@ function TerapiaCasais() {
               <label className="form-label">Parceiro(a) 1 *</label>
               <select className="form-input" value={form.p1} onChange={e=>setForm({...form,p1:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div className="form-group" style={{marginBottom:20}}>
               <label className="form-label">Parceiro(a) 2 *</label>
               <select className="form-input" value={form.p2} onChange={e=>setForm({...form,p2:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo"&&p.id!==form.p1).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo"&&p.id!==form.p1).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
@@ -5807,7 +5807,7 @@ function Laudos() {
               <label className="form-label">Paciente *</label>
               <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div className="form-group" style={{marginBottom:14}}>
@@ -6582,7 +6582,7 @@ function Agenda() {
               <label className="form-label">Paciente *</label>
               <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:14}}>
