@@ -1,3 +1,4 @@
+
 // ═══════════════════════════════════════════════════════
 //  PORTAL CLÍNICO — DRA. LUCIA KRATZ
 //  clinica/app.js — Paciente (individual + casal) + Aluno
@@ -888,7 +889,7 @@ function PainelCasal({ user }) {
         </div>
       </div>
 
-      {/* Botão de Emergência */}
+      {/* Botão de Emergência — compacto */}
       <BotaoEmergenciaPortal user={user} casalId={user.casalId||user.id}/>
     </div>
   );
@@ -896,34 +897,28 @@ function PainelCasal({ user }) {
 
 // ── Botão de Emergência — Portal do Paciente ──
 function BotaoEmergenciaPortal({ user, casalId }) {
-  const [palavra,   setPalavra]   = useState("");
-  const [horas,     setHoras]     = useState(null);
-  const [ativo,     setAtivo]     = useState(null); // {fim, horas, acionadoPor}
-  const [escolhendo,setEscolhendo]= useState(false);
-  const [salvando,  setSalvando]  = useState(false);
-  const [agora,     setAgora]     = useState(Date.now());
+  const [palavra,    setPalavra]   = useState("");
+  const [horas,      setHoras]     = useState(null);
+  const [ativo,      setAtivo]     = useState(null);
+  const [escolhendo, setEscolhendo]= useState(false);
+  const [salvando,   setSalvando]  = useState(false);
+  const [agora,      setAgora]     = useState(Date.now());
 
   const OPCOES_HORAS = [1,2,6,12,24];
 
   useEffect(()=>{
     if (!casalId) return;
-    // Buscar palavra do casal
     db.collection("clinica_casais").where("p1Id","==",user.id).limit(1)
       .get().then(s=>{
         if(s.docs.length>0) setPalavra(s.docs[0].data().palavraEmergencia||"");
         else db.collection("clinica_casais").where("p2Id","==",user.id).limit(1)
           .get().then(s2=>{ if(s2.docs.length>0) setPalavra(s2.docs[0].data().palavraEmergencia||""); });
       });
-    // Verificar se há emergência ativa
     db.collection("clinica_emergencia")
       .where("casalId","==",casalId)
       .where("fim",">=",new Date().toISOString())
       .orderBy("fim","desc").limit(1)
-      .onSnapshot(s=>{
-        if(s.docs.length>0) setAtivo(s.docs[0].data());
-        else setAtivo(null);
-      },()=>{});
-    // Atualizar contador a cada minuto
+      .onSnapshot(s=>{ if(s.docs.length>0) setAtivo(s.docs[0].data()); else setAtivo(null); },()=>{});
     const t = setInterval(()=>setAgora(Date.now()),60000);
     return ()=>clearInterval(t);
   },[casalId,user.id]);
@@ -931,7 +926,7 @@ function BotaoEmergenciaPortal({ user, casalId }) {
   async function acionar(h) {
     setSalvando(true);
     try {
-      const fim = new Date(Date.now() + h*3600000).toISOString();
+      const fim = new Date(Date.now()+h*3600000).toISOString();
       await db.collection("clinica_emergencia").add({
         casalId, horas:h, fim,
         acionadoPor: user.nome.split(" ")[0],
@@ -939,87 +934,69 @@ function BotaoEmergenciaPortal({ user, casalId }) {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       setEscolhendo(false);
-    } catch(e) { alert("Erro ao acionar."); }
+    } catch(e){ alert("Erro ao acionar."); }
     setSalvando(false);
   }
 
-  // Calcula tempo restante
   function tempoRestante() {
     if (!ativo?.fim) return null;
-    const restMs = new Date(ativo.fim).getTime() - agora;
-    if (restMs <= 0) return null;
-    const h = Math.floor(restMs/3600000);
-    const m = Math.floor((restMs%3600000)/60000);
-    return h>0 ? `${h}h ${m}min` : `${m}min`;
+    const ms = new Date(ativo.fim).getTime()-agora;
+    if (ms<=0) return null;
+    const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+    return h>0?`${h}h ${m}min`:`${m}min`;
   }
 
+  if (!palavra) return null;
   const restante = tempoRestante();
 
-  // Sem palavra definida ainda
-  if (!palavra) return null;
-
-  // Emergência ativa — tela de pausa
+  // Ativo — mostra alerta compacto
   if (ativo && restante) return (
-    <div style={{background:"linear-gradient(135deg,#dc2626,#b91c1c)",borderRadius:16,padding:24,textAlign:"center",color:"white",marginTop:16}}>
-      <div style={{fontSize:40,marginBottom:8}}>🔴</div>
-      <div style={{fontSize:11,opacity:0.8,letterSpacing:2,marginBottom:4}}>BOTÃO ACIONADO</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:36,fontWeight:700,letterSpacing:6,marginBottom:8}}>{palavra}</div>
-      <div style={{fontSize:13,opacity:0.85,marginBottom:16,lineHeight:1.6}}>
-        Pausa acionada por <strong>{ativo.acionadoPor}</strong>.<br/>
-        Retomem a conversa quando estiverem calmos.
+    <div style={{background:"#fef2f2",border:"2px solid #fecaca",borderRadius:12,padding:"14px 18px",marginTop:12,display:"flex",alignItems:"center",gap:14}}>
+      <div style={{fontSize:28,flexShrink:0}}>🔴</div>
+      <div style={{flex:1}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:"#dc2626",letterSpacing:3}}>{palavra}</div>
+        <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>Pausa acionada por {ativo.acionadoPor} · {restante} restantes</div>
+        <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>Respire. Retomem quando estiverem calmos. 💜</div>
       </div>
-      <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"12px 24px",display:"inline-block",marginBottom:16}}>
-        <div style={{fontSize:11,opacity:0.8,marginBottom:2}}>TEMPO RESTANTE</div>
-        <div style={{fontFamily:"monospace",fontSize:28,fontWeight:700}}>{restante}</div>
-      </div>
-      <div style={{fontSize:12,opacity:0.7}}>Respire fundo. Este tempo é um presente para o relacionamento. 💜</div>
     </div>
   );
 
   // Escolhendo tempo
   if (escolhendo) return (
-    <div style={{background:"#fff5f5",border:"2px solid #fecaca",borderRadius:16,padding:20,marginTop:16,textAlign:"center"}}>
-      <div style={{fontSize:32,marginBottom:8}}>🔴</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,color:"#dc2626",marginBottom:4}}>Acionar Botão</div>
-      <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>Por quanto tempo vocês precisam de pausa?</div>
-      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:16}}>
+    <div style={{background:"#fff5f5",border:"2px solid #fecaca",borderRadius:12,padding:"14px 18px",marginTop:12}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+        <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>🔴 Tempo de pausa?</div>
+        <button onClick={()=>setEscolhendo(false)} style={{background:"none",border:"none",cursor:"pointer",color:"#9ca3af",fontSize:18,lineHeight:1}}>×</button>
+      </div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         {OPCOES_HORAS.map(h=>(
           <button key={h} onClick={()=>acionar(h)} disabled={salvando}
-            style={{background:"#dc2626",color:"white",border:"none",borderRadius:20,padding:"8px 16px",fontSize:13,fontWeight:600,cursor:"pointer",minWidth:60}}>
+            style={{background:"#dc2626",color:"white",border:"none",borderRadius:20,padding:"7px 16px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
             {h}h
           </button>
         ))}
       </div>
-      <button onClick={()=>setEscolhendo(false)}
-        style={{background:"none",border:"none",color:"#6b7280",fontSize:13,cursor:"pointer"}}>
-        Cancelar
-      </button>
     </div>
   );
 
-  // Botão normal
+  // Botão compacto normal
   return (
-    <div style={{marginTop:16,textAlign:"center"}}>
+    <div style={{marginTop:12}}>
       <button onClick={()=>setEscolhendo(true)}
-        style={{background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",borderRadius:16,padding:"20px 32px",cursor:"pointer",width:"100%",boxShadow:"0 4px 20px rgba(220,38,38,0.3)",transition:"transform .1s,box-shadow .1s"}}
-        onMouseDown={e=>e.currentTarget.style.transform="scale(0.97)"}
-        onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
-        <div style={{fontSize:36,marginBottom:6}}>🔴</div>
-        <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",letterSpacing:2,marginBottom:4}}>ACIONE A</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:28,fontWeight:700,color:"white",letterSpacing:4}}>{palavra}</div>
-        <div style={{fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:6}}>Botão de Emergência</div>
+        style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 16px",
+          background:"#fef2f2",border:"2px solid #fecaca",borderRadius:12,cursor:"pointer",
+          fontFamily:"inherit",transition:"all .15s"}}
+        onMouseEnter={e=>{e.currentTarget.style.background="#fee2e2";e.currentTarget.style.borderColor="#fca5a5";}}
+        onMouseLeave={e=>{e.currentTarget.style.background="#fef2f2";e.currentTarget.style.borderColor="#fecaca";}}>
+        <span style={{fontSize:22,flexShrink:0}}>🔴</span>
+        <div style={{textAlign:"left"}}>
+          <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:700,color:"#dc2626",letterSpacing:2}}>{palavra}</div>
+          <div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>Botão de Emergência — toque para acionar</div>
+        </div>
       </button>
     </div>
   );
 }
-
-// ═══════════════════════════════════════════════════════
-//  ETAPA CASAL — componente reutilizável
-// ═══════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════
-//  ATIVIDADES ESPECÍFICAS DO DIAGNÓSTICO DE CASAL
-// ═══════════════════════════════════════════════════════
-
 // ── Inventário Bem-Estar (42 questões) ──
 const INVENTARIO_QUESTOES_C = [
   {n:1,  texto:"Com que frequência você e seu parceiro(a) trabalham juntos para alcançar objetivos comuns?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
