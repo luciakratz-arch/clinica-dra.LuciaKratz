@@ -3562,44 +3562,6 @@ function FerramentaRelaxamento(){
     </div>
   );
 }
-  const ETAPAS = [
-    {
-      id: 1,
-      audio: "../media/relaxamento_etapa1.mp3",
-      titulo: "Etapa 1 — Preparação",
-      descricao: "Encontre uma posição confortável, feche os olhos e prepare seu corpo para o relaxamento.",
-      emoji: "🧘",
-      cor: "#6366f1", bg: "#eef2ff",
-    },
-    {
-      id: 2,
-      audio: "../media/relaxamento_etapa2.mp3",
-      titulo: "Etapa 2 — Tensão e Relaxamento",
-      descricao: "Contraia e relaxe cada grupo muscular seguindo as instruções da Dra. Lucia.",
-      emoji: "💪",
-      cor: "#f59e0b", bg: "#fef3c7",
-    },
-    {
-      id: 3,
-      audio: "../media/relaxamento_etapa3.mp3",
-      titulo: "Etapa 3 — Integração",
-      descricao: "Permita que o relaxamento se aprofunde por todo o corpo.",
-      emoji: "🌿",
-      cor: "#10b981", bg: "#d1fae5",
-    },
-  ];
-
-  const [etapaIdx, setEtapaIdx] = useState(0);
-  const [rodando, setRodando]   = useState(false);
-  const [concluido, setConcluido] = useState(false);
-  const [tempo, setTempo]       = useState(0);
-  const audioRef  = useRef(null);
-  const timerRef  = useRef(null);
-
-  function iniciar() {
-    setEtapaIdx(0); setConcluido(false); setTempo(0);
-    setRodando(true);
-  }
 // ── Árvore da Decisão ──
 function FerramentaArvore(){
   const [step,setStep]=useState("home");
