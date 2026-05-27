@@ -966,20 +966,23 @@ function BotaoEmergenciaCard({ user, casalId }) {
 
   // Card ativo
   if(ativo&&rest) return (
-    <div className="metric-card" style={{background:"#fef2f2",border:"2px solid #fca5a5",cursor:"default"}}>
-      <div style={{fontSize:20}}>🔴</div>
-      <div style={{fontSize:10,fontWeight:600,color:"#dc2626",letterSpacing:1}}>{palavra}</div>
-      <div style={{fontSize:11,fontWeight:700,color:"#dc2626"}}>{rest}</div>
+    <div className="metric-card" style={{background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",cursor:"default"}}>
+      <div style={{fontSize:22}}>🔴</div>
+      <div style={{fontSize:10,fontWeight:700,color:"white",letterSpacing:1}}>{palavra}</div>
+      <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.9)"}}>{rest}</div>
     </div>
   );
 
   // Card normal
   return (
-    <div className="metric-card" style={{cursor:"pointer",border:"1.5px solid #fecaca"}}
-      onClick={()=>setEscolhendo(true)}>
-      <div style={{fontSize:20}}>🔴</div>
-      <div style={{fontSize:10,fontWeight:700,color:"#dc2626",letterSpacing:1,marginTop:2}}>{palavra}</div>
-      <div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>Emergência</div>
+    <div className="metric-card"
+      style={{background:"linear-gradient(135deg,#dc2626,#b91c1c)",border:"none",cursor:"pointer",boxShadow:"0 4px 12px rgba(220,38,38,0.35)"}}
+      onClick={()=>setEscolhendo(true)}
+      onMouseEnter={e=>e.currentTarget.style.transform="scale(1.03)"}
+      onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+      <div style={{fontSize:22}}>🔴</div>
+      <div style={{fontSize:11,fontWeight:700,color:"white",letterSpacing:2,marginTop:2}}>{palavra}</div>
+      <div style={{fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:1}}>Emergência</div>
     </div>
   );
 }
@@ -2045,16 +2048,17 @@ function App() {
 
   function navFiltradoCasal(nav, user) {
     const mod5 = user.modulosConfig?.mod5;
-    // Se mod5 não existe ou não está ativo, mostra só Início e Minha Conta
     if (!mod5?.ativo) return nav.filter(i => ["inicio-casal","minha-conta"].includes(i.id));
     const ferrAtivas = mod5.ferramentas || {};
-    // etapas habilitadas = ferramentas do mod5 que têm ativo:true
-    // O id da ferramenta é o id do doc em clinica_casais_etapas (ex: "etapa1-casal")
+    // Uma ferramenta está ativa se existe uma chave em ferrAtivas cujo valor tem ativo:true
+    // e cujo id (chave) ou tabId corresponde ao item.id do menu
+    const idsAtivos = Object.entries(ferrAtivas)
+      .filter(([k,v]) => v?.ativo)
+      .map(([k]) => k);
     return nav.filter(item => {
-      if (["inicio-casal","minha-conta"].includes(item.id)) return true;
-      // diagnostico-casal não está em clinica_casais_etapas, sempre visível se mod5 ativo
-      if (item.id === "diagnostico-casal") return true;
-      return !!ferrAtivas[item.id];
+      if (["inicio-casal","minha-conta","diagnostico-casal"].includes(item.id)) return true;
+      // Verifica se o id do item corresponde a alguma chave ativa
+      return idsAtivos.some(k => k === item.id || k.includes(item.id) || item.id.includes(k));
     });
   }
 
