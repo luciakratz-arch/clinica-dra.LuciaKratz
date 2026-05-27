@@ -4664,6 +4664,120 @@ function AdminOQueQuero({ onVoltar }) {
   );
 }
 
+// ── Formulário genérico para atividades das etapas ──
+const ATIVIDADES_FORMULARIOS = {
+  "detalhes-dia": {
+    titulo: "Detalhes do Dia a Dia",
+    instrucao: "Pequenos gestos que reconstroem a conexão",
+    perguntas: [
+      "Que pequeno gesto positivo você fez hoje pelo(a) seu/sua parceiro(a)?",
+      "Como foi a resposta do(a) seu/sua parceiro(a)?",
+      "Como esse gesto te fez sentir?",
+      "O que você gostaria de receber do(a) seu/sua parceiro(a) amanhã?",
+      "Impacto emocional desse momento (0 = nenhum, 10 = muito intenso)",
+    ]
+  },
+  "plano-casal-ocupado": {
+    titulo: "Plano de Ação para um Casal Ocupado Demais",
+    instrucao: "Reorganizando a conexão na rotina",
+    perguntas: [
+      "Quais são os maiores obstáculos para a conexão no dia a dia de vocês?",
+      "Que rituais gostaríamos de criar juntos?",
+      "Qual o momento do dia que podemos reservar só para nós?",
+      "O que admiro no(a) meu/minha parceiro(a) que nunca digo?",
+      "Meu compromisso desta semana com o nosso relacionamento:",
+    ]
+  },
+  "renovando-votos": {
+    titulo: "Renovando os Votos",
+    instrucao: "Uma jornada de reflexão profunda sobre o relacionamento",
+    perguntas: [
+      "Quem éramos no início — Como vocês se conheceram? O que te atraiu nessa pessoa? Que memória do início do relacionamento você ainda guarda com carinho?",
+      "O que construímos juntos — Quais conquistas, momentos e experiências construímos como casal? O que só existiu porque estávamos juntos?",
+      "Sobre meu parceiro(a) — O que você admira profundamente no(a) seu/sua parceiro(a)? Que qualidades fazem você se sentir grato(a) por tê-lo(a) ao seu lado?",
+      "Nosso futuro — Que tipo de casal queremos ser daqui a 5 anos? Como imaginamos nossa vida juntos? O que queremos preservar e o que queremos construir?",
+      "Meus votos renovados — Escreva seus votos renovados. O que você se compromete a oferecer neste relacionamento? O que promete cuidar e honrar?",
+    ]
+  },
+  "mapa-cognitivo": {
+    titulo: "Mapa Cognitivo do Relacionamento",
+    instrucao: "Identificando crenças e padrões que moldam a relação",
+    perguntas: [
+      "Uma memória da sua história de vida que influencia como você se relaciona hoje:",
+      "Quais crenças você carrega sobre relacionamentos? (Ex: 'Amor exige sacrifício', 'Parceiro(a) deve me adivinhar'...)",
+      "Que situações no relacionamento disparam emoções intensas em você?",
+      "Quando há conflito, qual é a sua estratégia habitual de enfrentamento?",
+      "Que padrão repetitivo você observa em vocês como casal?",
+      "O que você mais deseja que mude na dinâmica do relacionamento?",
+    ]
+  },
+  "novos-padroes": {
+    titulo: "Novos Padrões Relacionais",
+    instrucao: "Construindo acordos e comunicação saudável",
+    perguntas: [
+      "Descreva uma situação onde você reconheceu e validou o sentimento do(a) seu/sua parceiro(a) esta semana:",
+      "Em vez de 'Você sempre...', use: 'Eu me sinto ___ quando ___. Preciso de ___.' Escreva uma situação real usando essa fórmula:",
+      "Que acordo relacional vocês podem fazer para melhorar a convivência? (Ex: sem celular durante as refeições, check-in diário de 10 min...)",
+      "Descreva um conflito passado e como poderiam tê-lo reparado de forma mais gentil:",
+      "Que melhoria concreta você observou no relacionamento desde o início desta jornada?",
+    ]
+  },
+};
+
+function FormularioCasal({ atividadeId, onVoltar }) {
+  const config = ATIVIDADES_FORMULARIOS[atividadeId];
+  const [respostas, setRespostas] = useState({});
+  const [salvando,  setSalvando]  = useState(false);
+  const [salvo,     setSalvo]     = useState(false);
+
+  if (!config) return (
+    <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>
+      Formulário não configurado para esta atividade.
+    </div>
+  );
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin",
+        atividadeId,
+        respostas,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,fontStyle:"italic"}}>
+        {config.instrucao}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+        {config.perguntas.map((p,i)=>(
+          <div key={i} style={{background:"#fafafa",borderRadius:10,padding:14,border:"1px solid var(--gray-100)"}}>
+            <div style={{display:"flex",gap:10,marginBottom:8}}>
+              <span style={{background:"var(--purple)",color:"white",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</span>
+              <span style={{fontSize:13,fontWeight:500,lineHeight:1.5}}>{p}</span>
+            </div>
+            <textarea className="form-input" rows={3}
+              value={respostas[i]||""}
+              onChange={e=>setRespostas(r=>({...r,[i]:e.target.value}))}
+              placeholder="Escreva sua resposta..."
+              style={{resize:"vertical"}}/>
+          </div>
+        ))}
+      </div>
+      {salvo && <div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Respostas salvas!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar respostas"}
+      </button>
+    </div>
+  );
+}
+
 function AbaProtocoloCasais() {
   const [expandido, setExpandido] = useState(null);
   const [atividadeAberta, setAtividadeAberta] = useState(null);
@@ -4700,6 +4814,8 @@ function AbaProtocoloCasais() {
             ? <AdminQuemSou onVoltar={()=>setAtividadeAberta(null)}/>
             : at.id==="o-que-quero"
             ? <AdminOQueQuero onVoltar={()=>setAtividadeAberta(null)}/>
+            : ATIVIDADES_FORMULARIOS[at.id]
+            ? <FormularioCasal atividadeId={at.id} onVoltar={()=>setAtividadeAberta(null)}/>
             : (<>
           <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
             Responda com honestidade e na presença da psicóloga. Esta atividade faz parte do protocolo de Terapia de Casais TCC.
