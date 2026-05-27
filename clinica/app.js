@@ -2008,7 +2008,7 @@ function HistoricoAluno({ user }) {
 // ═══════════════════════════════════════════════════════
 function SeletorModo({ user, onEscolha }) {
   const [parceiro, setParceiro] = useState(null);
-  const temIndividual = (user.modulosAtivos||[]).length > 0;
+  const temIndividual = (user.modulosAtivos||[]).filter(m=>m!=="mod5").length > 0;
   const temCasal = !!user.casalId;
 
   useEffect(()=>{
@@ -2022,7 +2022,7 @@ function SeletorModo({ user, onEscolha }) {
   useEffect(()=>{
     if(temCasal && !temIndividual) onEscolha("casal");
     else if(!temCasal && temIndividual) onEscolha("individual");
-    else if(!temCasal && !temIndividual) onEscolha("individual"); // painel aguardando ativação
+    else if(!temCasal && !temIndividual) onEscolha("individual");
   },[temCasal, temIndividual]);
 
   // Se tem os dois, mostra seletor
