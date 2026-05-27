@@ -3428,9 +3428,9 @@ function falarTexto(txt){
   window.speechSynthesis.speak(u);
 }
 
-// ── Respiração Guiada (áudio MP4 + balão animado) ──
+// ── Técnica de Respiração 4-7-8 (áudio MP4 + balão animado) ──
 function FerramentaRespiracao(){
-  const AUDIO_SRC = "../media/atividade1meditacao.mp4";
+  const AUDIO_SRC = "../media/atividade2respiracao.mp4";
   const CICLOS_OPCOES = [3, 5, 10];
 
   const [iniciado,    setIniciado]    = useState(false);
@@ -3508,10 +3508,10 @@ function FerramentaRespiracao(){
   if (!iniciado) return (
     <div style={{textAlign:"center",padding:"32px 20px"}}>
       <div style={{fontSize:56,marginBottom:16}}>🫁</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Respiração Guiada</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Técnica de Respiração 4-7-8</div>
       <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
-        Um exercício de respiração com áudio guiado pela voz da Dra. Lucia.<br/>
-        Inspire, segure e expire no ritmo da animação.
+        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
+        Inspire, segure e expire no ritmo da animação e do áudio.
       </div>
       <div style={{marginBottom:24}}>
         <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>Quantos ciclos?</div>
