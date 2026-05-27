@@ -4371,45 +4371,199 @@ function AdminRodaVida({ onVoltar }) {
 
 // ── Admin: Nossas 3 Metas ──
 function AdminMetas({ onVoltar }) {
-  const [metas, setMetas] = useState(["",""," "]);
-  const [salvando, setSalvando] = useState(false);
-  const [salvo, setSalvo] = useState(false);
+  const [metas, setMetas] = useState([
+    {titulo:"",indicador:"",dataInicio:""},
+    {titulo:"",indicador:"",dataInicio:""},
+    {titulo:"",indicador:"",dataInicio:""},
+  ]);
+  const [metasSalvas, setMetasSalvas] = useState([]);
+  const [evolucoes,   setEvolucoes]   = useState({});
+  const [novaEv,      setNovaEv]      = useState({});
+  const [salvando,    setSalvando]    = useState(false);
+  const [salvo,       setSalvo]       = useState(false);
+  const [aba,         setAba]         = useState("definir"); // definir | evolucao
 
-  async function salvar() {
-    const validas = metas.filter(m=>m.trim());
+  useEffect(()=>{
+    db.collection("clinica_metas_casal")
+      .where("tipo","==","admin")
+      .orderBy("createdAt","desc").limit(3)
+      .onSnapshot(s=>setMetasSalvas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  useEffect(()=>{
+    metasSalvas.forEach(m=>{
+      db.collection("clinica_metas_casal").doc(m.id).collection("evolucoes")
+        .orderBy("data","asc")
+        .onSnapshot(s=>setEvolucoes(ev=>({...ev,[m.id]:s.docs.map(d=>({id:d.id,...d.data()}))})),()=>{});
+    });
+  },[metasSalvas]);
+
+  async function salvarMetas() {
+    const validas = metas.filter(m=>m.titulo.trim());
     if(!validas.length){alert("Digite pelo menos 1 meta.");return;}
     setSalvando(true);
     try {
-      for(const titulo of validas){
-        await db.collection("clinica_metas").add({
-          titulo, pacienteId:"casal-admin", casalId:"admin",
-          status:"ativa", createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      // Arquiva metas antigas
+      const antigas = await db.collection("clinica_metas_casal").where("tipo","==","admin").where("status","==","ativa").get();
+      const batch = db.batch();
+      antigas.docs.forEach(d=>batch.update(d.ref,{status:"arquivada"}));
+      await batch.commit();
+      // Cria novas
+      for(const m of validas){
+        await db.collection("clinica_metas_casal").add({
+          ...m, tipo:"admin", status:"ativa",
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
       }
-      setSalvo(true);
+      setSalvo(true); setAba("evolucao");
     } catch(e){alert("Erro ao salvar.");}
     setSalvando(false);
   }
 
+  async function registrarEvolucao(metaId) {
+    const ev = novaEv[metaId];
+    if(!ev?.nota||!ev?.data){alert("Preencha nota e data.");return;}
+    await db.collection("clinica_metas_casal").doc(metaId).collection("evolucoes").add({
+      nota: parseFloat(ev.nota), data:ev.data,
+      obs: ev.obs||"",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setNovaEv(n=>({...n,[metaId]:{nota:"",data:new Date().toISOString().slice(0,10),obs:""}}));
+  }
+
+  function GraficoLinha({evs}) {
+    if(!evs||evs.length<2) return <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",padding:8}}>Registre pelo menos 2 evoluções para ver o gráfico</div>;
+    const w=260,h=80,pad=20;
+    const notas=evs.map(e=>e.nota);
+    const min=0,max=10;
+    const pts=evs.map((e,i)=>{
+      const x=pad+(i/(evs.length-1))*(w-2*pad);
+      const y=h-pad-((e.nota-min)/(max-min))*(h-2*pad);
+      return [x,y];
+    });
+    const path="M"+pts.map(p=>p.join(",")).join(" L");
+    return (
+      <svg width={w} height={h} style={{display:"block",margin:"8px auto"}}>
+        {[0,2,4,6,8,10].map(v=>{
+          const y=h-pad-((v-min)/(max-min))*(h-2*pad);
+          return <g key={v}><line x1={pad} y1={y} x2={w-pad} y2={y} stroke="#f3f4f6" strokeWidth="1"/><text x={pad-4} y={y} textAnchor="end" fontSize="7" fill="#9ca3af" dominantBaseline="middle">{v}</text></g>;
+        })}
+        <path d={path} fill="none" stroke="#7B00C4" strokeWidth="2"/>
+        {pts.map((p,i)=>(
+          <g key={i}>
+            <circle cx={p[0]} cy={p[1]} r="3" fill="#7B00C4"/>
+            <text x={p[0]} y={p[1]-6} textAnchor="middle" fontSize="7" fill="#7B00C4" fontWeight="bold">{evs[i].nota}</text>
+          </g>
+        ))}
+      </svg>
+    );
+  }
+
   return (
     <div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.6}}>
-        Defina as 3 principais metas terapêuticas do casal. Elas aparecem no dashboard do portal do paciente.
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
-        {[0,1,2].map(i=>(
-          <div key={i}>
-            <label style={{fontSize:12,fontWeight:600,display:"block",marginBottom:4}}>Meta {i+1}</label>
-            <input className="form-input" value={metas[i]}
-              onChange={e=>{const n=[...metas];n[i]=e.target.value;setMetas(n);}}
-              placeholder={`Ex: ${["Melhorar a comunicação diária","Reservar tempo de qualidade juntos","Resolver conflitos com mais calma"][i]}`}/>
-          </div>
+      {/* Abas */}
+      <div style={{display:"flex",borderBottom:"1px solid var(--gray-200)",marginBottom:16}}>
+        {[{id:"definir",label:"📋 Definir Metas"},{id:"evolucao",label:"📈 Registrar Evolução"}].map(a=>(
+          <button key={a.id} onClick={()=>setAba(a.id)}
+            style={{padding:"10px 16px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit",
+              fontWeight:aba===a.id?700:400,
+              borderBottom:aba===a.id?"2px solid var(--purple)":"2px solid transparent",
+              color:aba===a.id?"var(--purple)":"var(--text-muted)"}}>
+            {a.label}
+          </button>
         ))}
       </div>
-      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Metas salvas! Aparecem no dashboard do casal.</div>}
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
-        {salvando?"Salvando...":"💾 Salvar metas"}
-      </button>
+
+      {aba==="definir"&&(
+        <div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+            Defina metas quantificáveis com indicador de progresso. Cada cônjuge define as suas pelo portal.
+          </div>
+          {[0,1,2].map(i=>(
+            <div key={i} style={{background:"#fafafa",borderRadius:10,padding:14,marginBottom:12,border:"1px solid var(--gray-100)"}}>
+              <div style={{fontWeight:600,fontSize:13,color:"var(--purple)",marginBottom:10}}>Meta {i+1}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <input className="form-input" value={metas[i].titulo}
+                  onChange={e=>{const n=[...metas];n[i]={...n[i],titulo:e.target.value};setMetas(n);}}
+                  placeholder="Ex: Melhorar a comunicação diária"/>
+                <input className="form-input" value={metas[i].indicador}
+                  onChange={e=>{const n=[...metas];n[i]={...n[i],indicador:e.target.value};setMetas(n);}}
+                  placeholder="Indicador quantificável: Ex: De 3 para 8 na escala de comunicação"/>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <label style={{fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>Data de início:</label>
+                  <input type="date" className="form-input" value={metas[i].dataInicio}
+                    onChange={e=>{const n=[...metas];n[i]={...n[i],dataInicio:e.target.value};setMetas(n);}}
+                    style={{flex:1}}/>
+                </div>
+              </div>
+            </div>
+          ))}
+          {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Metas salvas! Aparecem no dashboard do casal.</div>}
+          <button className="btn btn-purple" style={{width:"100%"}} onClick={salvarMetas} disabled={salvando}>
+            {salvando?"Salvando...":"💾 Salvar metas"}
+          </button>
+        </div>
+      )}
+
+      {aba==="evolucao"&&(
+        <div>
+          {metasSalvas.length===0
+            ? <div style={{textAlign:"center",padding:24,fontSize:13,color:"var(--text-muted)"}}>Defina as metas primeiro na aba "Definir Metas".</div>
+            : metasSalvas.map(m=>{
+                const evs = evolucoes[m.id]||[];
+                const ev  = novaEv[m.id]||{nota:"",data:new Date().toISOString().slice(0,10),obs:""};
+                return (
+                  <div key={m.id} style={{background:"#fafafa",borderRadius:12,padding:16,marginBottom:16,border:"1px solid var(--gray-100)"}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"var(--purple)",marginBottom:2}}>{m.titulo}</div>
+                    {m.indicador&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:10}}>🎯 {m.indicador}</div>}
+
+                    <GraficoLinha evs={evs}/>
+
+                    {/* Histórico */}
+                    {evs.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:11,fontWeight:600,color:"var(--text-muted)",marginBottom:6}}>HISTÓRICO</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                          {[...evs].reverse().slice(0,5).map(e=>(
+                            <div key={e.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"5px 10px",borderRadius:6,background:"white",border:"1px solid var(--gray-100)"}}>
+                              <span style={{color:"var(--text-muted)"}}>{e.data?.split("-").reverse().join("/")}</span>
+                              <span style={{fontWeight:700,color:"var(--purple)",fontSize:14}}>{e.nota}/10</span>
+                              {e.obs&&<span style={{color:"var(--text-muted)",fontSize:11,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.obs}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Novo registro */}
+                    <div style={{background:"white",borderRadius:8,padding:12,border:"1px solid var(--gray-200)"}}>
+                      <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>Registrar nova nota</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                        <div>
+                          <label style={{fontSize:11,fontWeight:600,display:"block",marginBottom:4}}>Nota (0-10)</label>
+                          <input type="number" min="0" max="10" step="0.5" className="form-input"
+                            value={ev.nota} onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,nota:e.target.value}}))}
+                            placeholder="0-10"/>
+                        </div>
+                        <div>
+                          <label style={{fontSize:11,fontWeight:600,display:"block",marginBottom:4}}>Data</label>
+                          <input type="date" className="form-input" value={ev.data}
+                            onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,data:e.target.value}}))}/>
+                        </div>
+                      </div>
+                      <input className="form-input" value={ev.obs||""}
+                        onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,obs:e.target.value}}))}
+                        placeholder="Observação (opcional)" style={{marginBottom:8}}/>
+                      <button className="btn btn-purple" style={{width:"100%",fontSize:12}} onClick={()=>registrarEvolucao(m.id)}>
+                        + Registrar nota
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+          }
+        </div>
+      )}
     </div>
   );
 }
