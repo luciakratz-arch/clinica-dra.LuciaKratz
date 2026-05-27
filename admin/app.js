@@ -3280,188 +3280,442 @@ function falarTexto(txt){
   window.speechSynthesis.speak(u);
 }
 
-// ── Respiração 4-7-8 ──
-function FerramentaRespiracao({musicUrl}){
-  const FASES=[{fase:"inhale",label:"Inspire",seg:4,cor:"#6366f1",speech:"Inspire pelo nariz"},
-               {fase:"hold",  label:"Segure", seg:7,cor:"#f59e0b",speech:"Segure o ar"},
-               {fase:"exhale",label:"Expire", seg:8,cor:"#10b981",speech:"Expire pela boca"}];
-  const TOTAL=19;
-  const [running,setRunning]=useState(false);
-  const [elapsed,setElapsed]=useState(0);
-  const [ciclos,setCiclos]=useState(0);
-  const [voz,setVoz]=useState(true);
-  const [showMusic,setShowMusic]=useState(false);
-  const ref=useRef(0); const iv=useRef(null); const faseAnterior=useRef(null);
-  const embedUrl=getYouTubeEmbed(musicUrl||"");
+// ── Respiração Guiada (áudio MP4 + balão animado) ──
+function FerramentaRespiracao(){
+  const AUDIO_SRC = "../media/atividade1meditacao.mp4";
+  const CICLOS_OPCOES = [3, 5, 10];
 
-  function getFase(e){
-    let acc=0;
-    for(let i=0;i<FASES.length;i++){acc+=FASES[i].seg;if(e<acc)return{...FASES[i],restante:acc-e};}
-    return{...FASES[0],restante:FASES[0].seg};
+  const [iniciado,    setIniciado]    = useState(false);
+  const [ciclosMax,   setCiclosMax]   = useState(5);
+  const [ciclosFeitos,setCiclosFeitos]= useState(0);
+  const [concluido,   setConcluido]   = useState(false);
+  const [fase,        setFase]        = useState("inspire"); // inspire | segure | expire
+  const [expandido,   setExpandido]   = useState(false);
+  const audioRef = useRef(null);
+  const faseTimer = useRef(null);
+
+  // Fases visuais sincronizadas com a respiração natural (4-4-6s)
+  const FASES = [
+    {id:"inspire", label:"Inspire...",  dur:4000, cor:"#6366f1", escala:1.4},
+    {id:"segure",  label:"Segure...",   dur:4000, cor:"#f59e0b", escala:1.4},
+    {id:"expire",  label:"Expire...",   dur:6000, cor:"#10b981", escala:0.7},
+  ];
+
+  function proximaFase(faseAtual) {
+    const idx = FASES.findIndex(f=>f.id===faseAtual);
+    return FASES[(idx+1) % FASES.length].id;
   }
 
-  useEffect(()=>{
-    if(!running){if(iv.current)clearInterval(iv.current);return;}
-    iv.current=setInterval(()=>{
-      ref.current+=1;
-      if(ref.current>=TOTAL){ref.current=0;setCiclos(c=>c+1);}
-      setElapsed(ref.current);
-    },1000);
-    return()=>clearInterval(iv.current);
-  },[running]);
+  function rodarFases(faseInicial) {
+    let faseCorrente = faseInicial;
+    const avancar = () => {
+      const info = FASES.find(f=>f.id===faseCorrente);
+      setFase(faseCorrente);
+      setExpandido(faseCorrente==="inspire"||faseCorrente==="segure");
+      faseCorrente = proximaFase(faseCorrente);
+      faseTimer.current = setTimeout(avancar, info.dur);
+    };
+    avancar();
+  }
 
-  const fase=getFase(elapsed);
-  useEffect(()=>{
-    if(running&&voz&&fase.fase!==faseAnterior.current){falarTexto(fase.speech);faseAnterior.current=fase.fase;}
-  },[fase.fase,running,voz]);
+  function parar() {
+    clearTimeout(faseTimer.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
+    setIniciado(false); setFase("inspire"); setExpandido(false);
+  }
 
-  const pct=(elapsed/TOTAL)*100;
-  const raio=80; const circ=2*Math.PI*raio;
-  const phaseColors={"inhale":"#6366f1","hold":"#f59e0b","exhale":"#10b981"};
-  const cor=phaseColors[fase.fase];
+  function iniciar() {
+    setCiclosFeitos(0); setConcluido(false); setIniciado(true);
+    rodarFases("inspire");
+    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+  }
 
-  return(
-    <div style={{textAlign:"center",padding:"20px 0"}}>
-      {embedUrl&&showMusic&&<iframe src={embedUrl} style={{width:"100%",height:60,border:"none",borderRadius:8,marginBottom:16}} allow="autoplay"/>}
-      <div style={{position:"relative",width:200,height:200,margin:"0 auto 20px"}}>
-        <svg width={200} height={200} style={{transform:"rotate(-90deg)"}}>
-          <circle cx={100} cy={100} r={raio} fill="none" stroke="#e5e7eb" strokeWidth={8}/>
-          <circle cx={100} cy={100} r={raio} fill="none" stroke={cor} strokeWidth={8}
-            strokeDasharray={circ} strokeDashoffset={circ*(1-pct/100)} strokeLinecap="round"
-            style={{transition:"stroke-dashoffset 0.9s linear,stroke 0.3s"}}/>
-        </svg>
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-          <div style={{fontSize:28,fontWeight:700,color:cor}}>{fase.restante}</div>
-          <div style={{fontSize:14,fontWeight:600,color:cor}}>{fase.label}</div>
-          <div style={{fontSize:11,color:"#9ca3af",marginTop:2}}>ciclo {ciclos+1}</div>
+  function onAudioEnded() {
+    const novo = ciclosFeitos + 1;
+    setCiclosFeitos(novo);
+    if (novo >= ciclosMax) {
+      clearTimeout(faseTimer.current);
+      setConcluido(true); setIniciado(false); setExpandido(false);
+    } else {
+      // Reinicia áudio para próximo ciclo
+      if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+    }
+  }
+
+  useEffect(()=>()=>{ clearTimeout(faseTimer.current); },[]);
+
+  const faseInfo = FASES.find(f=>f.id===fase) || FASES[0];
+
+  if (concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🌿</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Sessão concluída!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>{ciclosMax} ciclos de respiração completados.</div>
+      <button className="btn btn-purple" onClick={iniciar}>
+        <Icon name="rotate-ccw" size={16}/> Repetir o ciclo
+      </button>
+    </div>
+  );
+
+  if (!iniciado) return (
+    <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <div style={{fontSize:56,marginBottom:16}}>🫁</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Respiração Guiada</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        Um exercício de respiração com áudio guiado pela voz da Dra. Lucia.<br/>
+        Inspire, segure e expire no ritmo da animação.
+      </div>
+      <div style={{marginBottom:24}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:10}}>Quantos ciclos?</div>
+        <div style={{display:"flex",gap:8,justifyContent:"center"}}>
+          {CICLOS_OPCOES.map(n=>(
+            <button key={n} onClick={()=>setCiclosMax(n)}
+              style={{padding:"8px 20px",borderRadius:20,border:"2px solid",
+                borderColor:ciclosMax===n?"var(--purple)":"var(--gray-200)",
+                background:ciclosMax===n?"var(--purple-bg)":"white",
+                color:ciclosMax===n?"var(--purple)":"var(--gray-600)",
+                fontWeight:600,cursor:"pointer",fontFamily:"inherit",fontSize:13}}>
+              {n}x
+            </button>
+          ))}
         </div>
       </div>
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",marginBottom:16}}>
-        {FASES.map(f=><span key={f.fase} style={{background:f.fase===fase.fase?f.cor+"20":"#f3f4f6",color:f.fase===fase.fase?f.cor:"#6b7280",borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:600,border:"1px solid "+(f.fase===fase.fase?f.cor+"40":"#e5e7eb")}}>{f.label} {f.seg}s</span>)}
+      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
+        <Icon name="play" size={18}/> Iniciar
+      </button>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onAudioEnded} preload="auto"/>
+    </div>
+  );
+
+  return (
+    <div style={{textAlign:"center",padding:"24px 20px"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onAudioEnded} preload="auto"/>
+
+      {/* Balão animado */}
+      <div style={{position:"relative",width:220,height:220,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {/* Círculo externo pulsante */}
+        <div style={{
+          position:"absolute",
+          width: expandido ? 200 : 120,
+          height: expandido ? 200 : 120,
+          borderRadius:"50%",
+          background: faseInfo.cor+"18",
+          border:`3px solid ${faseInfo.cor}40`,
+          transition:`all ${faseInfo.dur}ms ease-in-out`,
+        }}/>
+        {/* Círculo principal */}
+        <div style={{
+          position:"absolute",
+          width: expandido ? 160 : 100,
+          height: expandido ? 160 : 100,
+          borderRadius:"50%",
+          background:`radial-gradient(circle at 35% 35%, ${faseInfo.cor}cc, ${faseInfo.cor})`,
+          boxShadow:`0 0 40px ${faseInfo.cor}60`,
+          transition:`all ${faseInfo.dur}ms ease-in-out`,
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+          color:"white",
+        }}>
+          <div style={{fontSize:13,fontWeight:700,opacity:0.9}}>{faseInfo.label}</div>
+        </div>
       </div>
-      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-        <button className="btn btn-purple" style={{minWidth:120}} onClick={()=>{setRunning(!running);if(!running){ref.current=elapsed;}}}>
-          <Icon name={running?"pause":"play"} size={16}/> {running?"Pausar":"Iniciar"}
-        </button>
-        <button className="btn btn-ghost" onClick={()=>{setRunning(false);setElapsed(0);ref.current=0;setCiclos(0);faseAnterior.current=null;}}>
-          <Icon name="rotate-ccw" size={16}/> Reiniciar
-        </button>
-        <button className="btn btn-ghost" onClick={()=>setVoz(!voz)} title={voz?"Desativar voz":"Ativar voz"}>
-          <Icon name={voz?"volume-2":"volume-x"} size={16}/>
-        </button>
-        {embedUrl&&<button className="btn btn-ghost" onClick={()=>setShowMusic(!showMusic)}><Icon name="music" size={16}/></button>}
+
+      {/* Indicadores de fase */}
+      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:20}}>
+        {FASES.map(f=>(
+          <span key={f.id} style={{
+            background:f.id===fase?f.cor+"20":"#f3f4f6",
+            color:f.id===fase?f.cor:"#9ca3af",
+            borderRadius:20,padding:"5px 14px",fontSize:12,fontWeight:600,
+            border:`1.5px solid ${f.id===fase?f.cor+"60":"#e5e7eb"}`,
+            transition:"all .3s"
+          }}>
+            {f.label}
+          </span>
+        ))}
       </div>
-      <div style={{marginTop:16,fontSize:13,color:"#6b7280"}}>Inspire 4s → Segure 7s → Expire 8s · {ciclos} ciclo(s) completo(s)</div>
+
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>
+        Ciclo {ciclosFeitos+1} de {ciclosMax}
+      </div>
+
+      <button className="btn btn-ghost" onClick={parar}>
+        <Icon name="square" size={15}/> Parar
+      </button>
     </div>
   );
 }
 
 // ── Relaxamento Muscular Progressivo ──
-function FerramentaRelaxamento({musicUrl}){
-  const GRUPOS=[
-    {nome:"Pés",         instrucao:"Curve os dedos dos pés para baixo, fortemente.",  tensao:5, relax:15},
-    {nome:"Panturrilhas",instrucao:"Puxe os pés em direção a você, estique.",         tensao:5, relax:15},
-    {nome:"Coxas",       instrucao:"Aperte as coxas juntas, pressione a cadeira.",    tensao:5, relax:15},
-    {nome:"Abdômen",     instrucao:"Contraia o estômago fortemente.",                  tensao:5, relax:15},
-    {nome:"Mãos",        instrucao:"Feche os punhos com toda a sua força.",            tensao:5, relax:15},
-    {nome:"Braços",      instrucao:"Dobre os cotovelos e contraia os bíceps.",         tensao:5, relax:15},
-    {nome:"Ombros",      instrucao:"Levante-os até as orelhas, segure.",               tensao:5, relax:15},
-    {nome:"Rosto",       instrucao:"Feche os olhos com força, aperte os lábios.",      tensao:5, relax:15},
-  ];
-  const [running,setRunning]=useState(false);
-  const [done,setDone]=useState(false);
-  const [concluidos,setConcluidos]=useState([]);
-  const [grupoIdx,setGrupoIdx]=useState(0);
-  const [fase,setFase]=useState("tensao"); // tensao | relax
-  const [elapsed,setElapsed]=useState(0);
-  const [voz,setVoz]=useState(true);
-  const [showMusic,setShowMusic]=useState(false);
-  const stRef=useRef({grupoIdx:0,fase:"tensao",elapsed:0});
-  const concRef=useRef([]);
-  const iv=useRef(null);
-  const embedUrl=getYouTubeEmbed(musicUrl||"");
+// ── Relaxamento Muscular (arquivo único de vídeo) ──
+function FerramentaRelaxamento(){
+  const AUDIO_SRC = "../media/atividade1meditacao.mp4";
+  const [iniciado,  setIniciado]  = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [tempo,     setTempo]     = useState(0);
+  const [pausado,   setPausado]   = useState(false);
+  const audioRef = useRef(null);
+  const timerRef = useRef(null);
 
-  function tick(){
-    const s=stRef.current;
-    const g=GRUPOS[s.grupoIdx];
-    const lim=s.fase==="tensao"?g.tensao:g.relax;
-    const ne=s.elapsed+1;
-    if(ne>=lim){
-      if(s.fase==="tensao"){
-        const ns={...s,fase:"relax",elapsed:0};stRef.current=ns;setFase("relax");setElapsed(0);
-        if(voz)falarTexto("Relaxe.");
-      } else {
-        concRef.current=[...concRef.current,s.grupoIdx];setConcluidos([...concRef.current]);
-        const ng=s.grupoIdx+1;
-        if(ng>=GRUPOS.length){clearInterval(iv.current);setRunning(false);setDone(true);if(voz)falarTexto("Parabéns! Você completou o relaxamento muscular.");}
-        else{const ns={grupoIdx:ng,fase:"tensao",elapsed:0};stRef.current=ns;setGrupoIdx(ng);setFase("tensao");setElapsed(0);if(voz)falarTexto(GRUPOS[ng].nome+". Contraia.");}
-      }
-    } else {
-      stRef.current={...s,elapsed:ne};setElapsed(ne);
-    }
+  function iniciar() {
+    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
+    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
   }
 
-  function iniciar(){
-    if(running){clearInterval(iv.current);setRunning(false);return;}
-    if(voz)falarTexto(GRUPOS[stRef.current.grupoIdx].nome+". Contraia.");
-    iv.current=setInterval(tick,1000);setRunning(true);
+  function togglePausa() {
+    if (!audioRef.current) return;
+    if (pausado) { audioRef.current.play().catch(()=>{}); clearInterval(timerRef.current); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
+    else { audioRef.current.pause(); clearInterval(timerRef.current); }
+    setPausado(p=>!p);
   }
-  function reiniciar(){clearInterval(iv.current);setRunning(false);setDone(false);setConcluidos([]);concRef.current=[];stRef.current={grupoIdx:0,fase:"tensao",elapsed:0};setGrupoIdx(0);setFase("tensao");setElapsed(0);}
 
-  const g=GRUPOS[grupoIdx];
-  const lim=fase==="tensao"?g.tensao:g.relax;
-  const pct=Math.min((elapsed/lim)*100,100);
+  function parar() {
+    clearInterval(timerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
+    setIniciado(false); setTempo(0); setPausado(false);
+  }
 
-  if(done) return(
-    <div style={{textAlign:"center",padding:40}}>
-      <div style={{fontSize:48,marginBottom:12}}>✅</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
-      <div style={{fontSize:13,color:"#6b7280",marginBottom:20}}>Você completou todos os 8 grupos musculares.</div>
-      <button className="btn btn-purple" onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Reiniciar</button>
+  function onEnded() {
+    clearInterval(timerRef.current);
+    setIniciado(false); setConcluido(true);
+  }
+
+  useEffect(()=>()=>clearInterval(timerRef.current),[]);
+
+  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
+  const ss = String(tempo%60).padStart(2,"0");
+
+  if (concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
+      <button className="btn btn-purple" onClick={iniciar}>
+        <Icon name="rotate-ccw" size={16}/> Repetir
+      </button>
     </div>
   );
 
-  return(
-    <div>
-      {embedUrl&&showMusic&&<iframe src={embedUrl} style={{width:"100%",height:60,border:"none",borderRadius:8,marginBottom:16}} allow="autoplay"/>}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div style={{fontSize:12,color:"#6b7280"}}>Progresso geral</div>
-        <div style={{fontSize:12,color:"#6b7280"}}>{concluidos.length}/{GRUPOS.length} grupos</div>
+  if (!iniciado) return (
+    <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+      <div style={{fontSize:56,marginBottom:16}}>💆</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Muscular Progressivo</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
+        Siga as instruções do áudio e relaxe cada grupo muscular.
       </div>
-      <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginBottom:20}}>
-        <div style={{background:"var(--purple)",height:6,borderRadius:20,transition:"width .3s",width:(concluidos.length/GRUPOS.length*100)+"%"}}/>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
-        {GRUPOS.map((g2,i)=>(
-          <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:8,background:concluidos.includes(i)?"#d1fae5":i===grupoIdx?"var(--purple-soft)":"#f9fafb",border:"1px solid",borderColor:concluidos.includes(i)?"#6ee7b7":i===grupoIdx?"var(--purple)":"#e5e7eb"}}>
-            <div style={{fontSize:10,fontWeight:600,color:concluidos.includes(i)?"#059669":i===grupoIdx?"var(--purple)":"#9ca3af"}}>{g2.nome}</div>
-            {concluidos.includes(i)&&<div style={{fontSize:12}}>✓</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
+        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
+          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
+            <span style={{fontSize:22}}>{i.e}</span>
+            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
           </div>
         ))}
       </div>
-      <div style={{background:fase==="tensao"?"#fef3c7":"#d1fae5",borderRadius:12,padding:24,textAlign:"center",marginBottom:20}}>
-        <div style={{fontSize:14,fontWeight:700,color:fase==="tensao"?"#d97706":"#059669",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.8px"}}>
-          {fase==="tensao"?"🔥 CONTRAIA":"✨ RELAXE"}
-        </div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>{g.nome}</div>
-        <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>{g.instrucao}</div>
-        <div style={{fontSize:48,fontWeight:700,color:fase==="tensao"?"#d97706":"#059669"}}>{lim-elapsed}</div>
-        <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginTop:12}}>
-          <div style={{background:fase==="tensao"?"#f59e0b":"#10b981",height:6,borderRadius:20,transition:"width .9s",width:pct+"%"}}/>
+      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
+        <Icon name="play" size={18}/> Iniciar
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+
+      {/* Animação pulsante */}
+      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
+        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
+          <div style={{fontSize:28}}>💆</div>
         </div>
       </div>
-      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-        <button className="btn btn-purple" style={{minWidth:120}} onClick={iniciar}>
-          <Icon name={running?"pause":"play"} size={16}/> {running?"Pausar":"Iniciar"}
+
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
+        {pausado ? "Pausado" : "Em relaxamento..."}
+      </div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Siga as instruções do áudio</div>
+
+      {/* Cronômetro */}
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
+        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
+        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
+      </div>
+
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <button className="btn btn-purple" onClick={togglePausa}>
+          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
         </button>
-        <button className="btn btn-ghost" onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Reiniciar</button>
-        <button className="btn btn-ghost" onClick={()=>setVoz(!voz)}><Icon name={voz?"volume-2":"volume-x"} size={16}/></button>
-        {embedUrl&&<button className="btn btn-ghost" onClick={()=>setShowMusic(!showMusic)}><Icon name="music" size={16}/></button>}
+        <button className="btn btn-ghost" onClick={parar}>
+          <Icon name="square" size={15}/> Parar
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes pulse-slow {
+          0%,100%{transform:scale(1);opacity:0.6}
+          50%{transform:scale(1.08);opacity:1}
+        }
+        .pulse-slow{animation:pulse-slow 3s ease-in-out infinite}
+      `}</style>
+    </div>
+  );
+}
+  const ETAPAS = [
+    {
+      id: 1,
+      audio: "../media/relaxamento_etapa1.mp3",
+      titulo: "Etapa 1 — Preparação",
+      descricao: "Encontre uma posição confortável, feche os olhos e prepare seu corpo para o relaxamento.",
+      emoji: "🧘",
+      cor: "#6366f1", bg: "#eef2ff",
+    },
+    {
+      id: 2,
+      audio: "../media/relaxamento_etapa2.mp3",
+      titulo: "Etapa 2 — Tensão e Relaxamento",
+      descricao: "Contraia e relaxe cada grupo muscular seguindo as instruções da Dra. Lucia.",
+      emoji: "💪",
+      cor: "#f59e0b", bg: "#fef3c7",
+    },
+    {
+      id: 3,
+      audio: "../media/relaxamento_etapa3.mp3",
+      titulo: "Etapa 3 — Integração",
+      descricao: "Permita que o relaxamento se aprofunde por todo o corpo.",
+      emoji: "🌿",
+      cor: "#10b981", bg: "#d1fae5",
+    },
+  ];
+
+  const [etapaIdx, setEtapaIdx] = useState(0);
+  const [rodando, setRodando]   = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [tempo, setTempo]       = useState(0);
+  const audioRef  = useRef(null);
+  const timerRef  = useRef(null);
+
+  function iniciar() {
+    setEtapaIdx(0); setConcluido(false); setTempo(0);
+    setRodando(true);
+  }
+
+  function parar() {
+    clearInterval(timerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
+    setRodando(false); setTempo(0); setEtapaIdx(0);
+  }
+
+  // Quando etapa muda e está rodando, toca o áudio da nova etapa
+  useEffect(()=>{
+    if (!rodando) return;
+    clearInterval(timerRef.current);
+    setTempo(0);
+    if (audioRef.current) {
+      audioRef.current.load();
+      audioRef.current.play().catch(()=>{});
+    }
+    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
+    return ()=>clearInterval(timerRef.current);
+  },[etapaIdx, rodando]);
+
+  function onAudioEnded() {
+    clearInterval(timerRef.current);
+    const prox = etapaIdx + 1;
+    if (prox >= ETAPAS.length) {
+      setRodando(false); setConcluido(true);
+    } else {
+      setEtapaIdx(prox);
+    }
+  }
+
+  useEffect(()=>()=>clearInterval(timerRef.current),[]);
+
+  const etapa = ETAPAS[etapaIdx];
+  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
+  const ss = String(tempo%60).padStart(2,"0");
+
+  if (concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Você completou as 3 etapas do relaxamento muscular progressivo.</div>
+      <button className="btn btn-purple" onClick={iniciar}>
+        <Icon name="rotate-ccw" size={16}/> Repetir exercício
+      </button>
+    </div>
+  );
+
+  if (!rodando) return (
+    <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <div style={{fontSize:56,marginBottom:16}}>💆</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Muscular Progressivo</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        Exercício em 3 etapas com áudio guiado pela voz da Dra. Lucia.<br/>
+        Cada etapa avança automaticamente quando o áudio terminar.
+      </div>
+      {/* Preview das etapas */}
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24,textAlign:"left"}}>
+        {ETAPAS.map((e,i)=>(
+          <div key={e.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:10,background:e.bg,border:`1px solid ${e.cor}30`}}>
+            <span style={{fontSize:24}}>{e.emoji}</span>
+            <div>
+              <div style={{fontWeight:600,fontSize:13,color:e.cor}}>{e.titulo}</div>
+              <div style={{fontSize:11,color:"var(--text-muted)"}}>{e.descricao}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
+        <Icon name="play" size={18}/> Iniciar
+      </button>
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Áudio oculto */}
+      <audio ref={audioRef} src={etapa.audio} onEnded={onAudioEnded} preload="auto"/>
+
+      {/* Progress das etapas */}
+      <div style={{display:"flex",gap:6,marginBottom:20}}>
+        {ETAPAS.map((e,i)=>(
+          <div key={e.id} style={{flex:1,borderRadius:8,padding:"8px 10px",textAlign:"center",
+            background: i<etapaIdx?"#d1fae5":i===etapaIdx?e.bg:"#f3f4f6",
+            border:`1.5px solid ${i===etapaIdx?e.cor:i<etapaIdx?"#6ee7b7":"#e5e7eb"}`,
+            transition:"all .5s"}}>
+            <div style={{fontSize:16,marginBottom:2}}>{i<etapaIdx?"✅":e.emoji}</div>
+            <div style={{fontSize:10,fontWeight:600,color:i===etapaIdx?e.cor:i<etapaIdx?"#059669":"#9ca3af"}}>
+              Etapa {e.id}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Etapa atual */}
+      <div style={{background:etapa.bg,border:`2px solid ${etapa.cor}40`,borderRadius:16,padding:28,textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:48,marginBottom:12}}>{etapa.emoji}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,color:etapa.cor,marginBottom:8}}>{etapa.titulo}</div>
+        <div style={{fontSize:13,color:"var(--gray-600)",lineHeight:1.6,marginBottom:16}}>{etapa.descricao}</div>
+        {/* Cronômetro */}
+        <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"white",borderRadius:20,padding:"8px 20px",border:`1px solid ${etapa.cor}30`}}>
+          <Icon name="clock" size={14} style={{color:etapa.cor}}/>
+          <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:etapa.cor}}>{mm}:{ss}</span>
+        </div>
+        <div style={{marginTop:12,fontSize:12,color:"var(--text-muted)"}}>
+          🎵 Áudio em reprodução — avança automaticamente para a próxima etapa
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <button className="btn btn-ghost" onClick={parar}>
+          <Icon name="square" size={15}/> Parar
+        </button>
       </div>
     </div>
   );
 }
-
 // ── Árvore da Decisão ──
 function FerramentaArvore(){
   const [step,setStep]=useState("home");
@@ -3872,8 +4126,8 @@ function FerramentaAnamnese(){
 function ModalVisualizarFerramenta({recurso,onClose}){
   function renderFerramenta(){
     const k=recurso.formularioKey;
-    if(k==="breathing-478")      return <FerramentaRespiracao musicUrl={recurso.musicUrl}/>;
-    if(k==="muscle-relaxation")  return <FerramentaRelaxamento musicUrl={recurso.musicUrl}/>;
+    if(k==="breathing-478")      return <FerramentaRespiracao/>;
+    if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
     if(k==="decision-tree")      return <FerramentaArvore/>;
     if(k==="abc-record")         return <FerramentaABC/>;
     if(k==="anxiety-management") return <FerramentaGestaoAnsiedade/>;
