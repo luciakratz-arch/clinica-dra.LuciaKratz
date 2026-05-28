@@ -151,9 +151,10 @@ function FerramentaDiario({ user }){
     if(!user?.id){setLoading(false);return;}
     const unsub = db.collection("clinica_diario")
       .where("pacienteId","==",user.id)
-      .orderBy("createdAt","desc")
       .onSnapshot(snap=>{
-        setEntradas(snap.docs.map(d=>({id:d.id,...d.data()})));
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setEntradas(docs);
         setLoading(false);
       }, ()=>setLoading(false));
     return ()=>unsub();
@@ -765,8 +766,11 @@ function PainelIndividual({ user, setTab }) {
 
   useEffect(() => {
     const u1 = db.collection("clinica_humor").where("pacienteId","==",user.id)
-      .orderBy("createdAt","desc").limit(30)
-      .onSnapshot(s=>setHumores(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setHumores(docs.slice(0,30));
+      },()=>{});
     const u2 = db.collection("clinica_metas").where("pacienteId","==",user.id).where("status","==","ativa")
       .onSnapshot(s=>setMetas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     return ()=>{ u1(); u2(); };
@@ -911,8 +915,11 @@ function RegistroHumor({ user }) {
 
   useEffect(() => {
     const unsub = db.collection("clinica_humor").where("pacienteId","==",user.id)
-      .orderBy("createdAt","desc").limit(20)
-      .onSnapshot(s=>setHistorico(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setHistorico(docs.slice(0,20));
+      },()=>{});
     return unsub;
   }, [user.id]);
 
@@ -1366,17 +1373,16 @@ function AtivInventario({ user, casalId, onVoltar }) {
       .where("casalId","==",casalId)
       .where("pacienteId","==",user.id)
       .where("atividadeId","==","inventario-bem-estar")
-      .orderBy("createdAt","desc").limit(1)
+      
       .onSnapshot(s=>{
         if(s.docs.length>0) { setRespostas(s.docs[0].data().respostas||{}); setSalvo(true); }
       },()=>{});
     // Buscar resposta do parceiro
-    // O parceiro salva com: pacienteId=casalId (id do parceiro) e casalId=user.id (meu id)
     db.collection("clinica_casais_respostas")
+      .where("casalId","==",casalId)
       .where("pacienteId","==",casalId)
-      .where("casalId","==",user.id)
       .where("atividadeId","==","inventario-bem-estar")
-      .orderBy("createdAt","desc").limit(1)
+      
       .onSnapshot(s=>{
         if(s.docs.length>0) setRespParceiro(s.docs[0].data().respostas||{});
       },()=>{});
@@ -1554,12 +1560,11 @@ function AtivRodaVida({ user, casalId, onVoltar }) {
     db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
     db.collection("clinica_casais_respostas")
       .where("casalId","==",casalId).where("pacienteId","==",user.id)
-      .where("atividadeId","==","roda-vida-relacionamento").orderBy("createdAt","desc").limit(1)
+      .where("atividadeId","==","roda-vida-relacionamento")
       .onSnapshot(s=>{ if(s.docs.length>0){setValores(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
-    // O parceiro salva com pacienteId=casalId e casalId=user.id
     db.collection("clinica_casais_respostas")
-      .where("pacienteId","==",casalId).where("casalId","==",user.id)
-      .where("atividadeId","==","roda-vida-relacionamento").orderBy("createdAt","desc").limit(1)
+      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("atividadeId","==","roda-vida-relacionamento")
       .onSnapshot(s=>{ if(s.docs.length>0) setValParceiro(s.docs[0].data().respostas||{}); },()=>{});
   },[casalId,user.id]);
 
@@ -1755,12 +1760,11 @@ function AtivQuemSou({ user, casalId, onVoltar }) {
     db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
     db.collection("clinica_casais_respostas")
       .where("casalId","==",casalId).where("pacienteId","==",user.id)
-      .where("atividadeId","==","quem-sou").orderBy("createdAt","desc").limit(1)
+      .where("atividadeId","==","quem-sou")
       .onSnapshot(s=>{ if(s.docs.length>0){setCampos(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
-    // O parceiro salva com pacienteId=casalId e casalId=user.id
     db.collection("clinica_casais_respostas")
-      .where("pacienteId","==",casalId).where("casalId","==",user.id)
-      .where("atividadeId","==","quem-sou").orderBy("createdAt","desc").limit(1)
+      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("atividadeId","==","quem-sou")
       .onSnapshot(s=>{ if(s.docs.length>0) setRespP(s.docs[0].data().respostas||{}); },()=>{});
   },[casalId,user.id]);
 
@@ -1837,12 +1841,11 @@ function AtivOQueQuero({ user, casalId, onVoltar }) {
     db.collection("clinica_pacientes").doc(casalId).get().then(d=>{ if(d.exists) setParceiro({id:d.id,...d.data()}); });
     db.collection("clinica_casais_respostas")
       .where("casalId","==",casalId).where("pacienteId","==",user.id)
-      .where("atividadeId","==","o-que-quero").orderBy("createdAt","desc").limit(1)
+      .where("atividadeId","==","o-que-quero")
       .onSnapshot(s=>{ if(s.docs.length>0){setCampos(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
-    // O parceiro salva com pacienteId=casalId e casalId=user.id
     db.collection("clinica_casais_respostas")
-      .where("pacienteId","==",casalId).where("casalId","==",user.id)
-      .where("atividadeId","==","o-que-quero").orderBy("createdAt","desc").limit(1)
+      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("atividadeId","==","o-que-quero")
       .onSnapshot(s=>{ if(s.docs.length>0) setRespP(s.docs[0].data().respostas||{}); },()=>{});
   },[casalId,user.id]);
 
@@ -2090,8 +2093,11 @@ function LinkCompartilhavel({ user }) {
   useEffect(()=>{
     const unsub = db.collection("clinica_aluno_links")
       .where("alunoId","==",user.id)
-      .orderBy("createdAt","desc")
-      .onSnapshot(s=>setLinks(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setLinks(docs);
+      },()=>{});
     return unsub;
   },[user.id]);
 
@@ -2181,7 +2187,7 @@ function HistoricoAluno({ user }) {
   useEffect(()=>{
     const unsub = db.collection("clinica_aluno_registros")
       .where("alunoId","==",user.id)
-      .orderBy("createdAt","desc").limit(20)
+      
       .onSnapshot(s=>setRegistros(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     return unsub;
   },[user.id]);
