@@ -516,7 +516,7 @@ function DashboardAdmin({ user }) {
         <div style={{fontWeight:700,fontSize:16,marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
           <Icon name="bar-chart-2" size={18}/> Resumo Financeiro — {new Date().toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:20}}>
           <div style={{background:saldoMes>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"16px 20px",border:"1.5px solid",borderColor:saldoMes>=0?"#6ee7b7":"#fca5a5"}}>
             <div style={{fontSize:12,fontWeight:600,color:saldoMes>=0?"#059669":"#dc2626",marginBottom:6}}>Saldo do Mês (Geral)</div>
             <div style={{fontSize:24,fontWeight:800,color:saldoMes>=0?"#059669":"#dc2626"}}>{fmt(saldoMes)}</div>
@@ -6601,7 +6601,7 @@ function Agenda() {
       {/* Grade semanal — separada por período */}
       <div style={{marginBottom:24}}>
         {/* Cabeçalho dos dias */}
-        <div style={{display:"grid",gridTemplateColumns:"80px repeat(7,1fr)",gap:4,marginBottom:4}}>
+        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
           <div/>
           {dias.map((dia,i)=>{
             const isHoje = formatData(dia)===formatData(hoje);
@@ -6618,7 +6618,8 @@ function Agenda() {
           })}
         </div>
 
-        {/* Períodos */}
+        </div></div>{/* Períodos */}
+        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
         {[
           {label:"☀️ Manhã",   range:["06:00","12:00"], bg:"#fffbeb"},
           {label:"🌤️ Tarde",   range:["12:00","18:00"], bg:"#f0f9ff"},
@@ -6628,7 +6629,7 @@ function Agenda() {
             sessoesNoDia(dia).some(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1])
           );
           return (
-            <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"80px repeat(7,1fr)",gap:4,marginBottom:4}}>
+            <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
               {/* Label período */}
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
                 <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)",writingMode:"horizontal-tb",whiteSpace:"nowrap"}}>{periodo.label}</span>
@@ -6665,6 +6666,7 @@ function Agenda() {
             </div>
           );
         })}
+        </div>{/* fecha overflow wrapper períodos */}
       </div>
 
       {/* Lista próximas sessões */}
