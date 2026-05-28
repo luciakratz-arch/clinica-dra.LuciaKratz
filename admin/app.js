@@ -973,8 +973,13 @@ function AbaMetas({ paciente }) {
 function AbaEvolucao({ paciente }) {
   const [humor, setHumor] = useState([]);
   useEffect(()=>{
-    const unsub = db.collection("clinica_pacientes").doc(paciente.id).collection("humor")
-      .orderBy("data","desc").limit(30).onSnapshot(snap=>{setHumor(snap.docs.map(d=>({id:d.id,...d.data()})));},()=>{});
+    const unsub = db.collection("clinica_humor")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>{ const da=a.data||""; const db2=b.data||""; return da<db2?1:da>db2?-1:0; });
+        setHumor(docs.slice(0,30));
+      },()=>{});
     return unsub;
   },[paciente.id]);
   const media = humor.length?(humor.reduce((a,h)=>a+(h.valor||0),0)/humor.length).toFixed(1):"—";
