@@ -1873,6 +1873,20 @@ function FinanceiroClinica() {
 
 
   if(pacoteSelecionado){
+    // Modo ver sessões (id__sessoes)
+    if(pacoteSelecionado.endsWith("__sessoes")){
+      const pacoteId = pacoteSelecionado.replace("__sessoes","");
+      return <RelatorioFrequencia
+        pacienteId={null}
+        pacoteId={pacoteId}
+        pacientes={pacientes}
+        sessoes={sessoes}
+        pacotes={pacotes}
+        lancamentos={lancamentos}
+        FORMAS={FORMAS}
+        onVoltar={()=>setPacoteSelecionado(null)}
+      />;
+    }
     // Modo editar pacote individual (id__pacote)
     if(pacoteSelecionado.endsWith("__pacote")){
       const pacoteId = pacoteSelecionado.replace("__pacote","");
@@ -2241,60 +2255,72 @@ function FinanceiroClinica() {
                         {pacotesDoPac.map(p=>{
                           const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
                           const realizadas=sessPac.filter(s=>s.status==="realizado").length;
+                          const pagas=sessPac.filter(s=>s.pagamento==="pago").length;
                           const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
-                          const lancPac=lancamentos.find(l=>l.pacoteId===p.id);
-                          const dataInclusao = p.createdAt?.seconds
-                            ? new Date(p.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
-                            : p.dataInicio
-                              ? new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
-                              : "—";
+                          const lancsPac=lancamentos.filter(l=>l.pacoteId===p.id);
+                          const totalPago=lancsPac.filter(l=>l.status==="recebido").reduce((a,l)=>a+(l.valor||0),0);
+                          const isPago=totalPago>=(p.valorTotal||0);
+                          const temPendente=lancsPac.some(l=>l.status!=="recebido");
+                          const dataStr=p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}):"—";
                           return(
-                            <div key={p.id} className="card" style={{padding:"16px 20px",borderLeft:"4px solid var(--purple)"}}>
-                              <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-                                <div style={{flex:1}}>
-                                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-                                    <span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                                      📅 Criado em {dataInclusao}
-                                    </span>
-                                    <span style={{background:lancPac?.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac?.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                                      {lancPac?.status==="recebido"?"✓ Pago":"Pagamento Pendente"}
-                                    </span>
-                                    <span style={{marginLeft:"auto",fontWeight:700,color:"#059669",fontSize:14}}>
-                                      {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-                                    </span>
-                                  </div>
-                                  <div style={{fontSize:12,color:"var(--text-muted)",display:"flex",gap:12,flexWrap:"wrap",marginBottom:10}}>
-                                    <span>🔄 {p.recorrencia}</span>
-                                    <span>🕐 {p.horario}</span>
-                                    <span>📋 {realizadas}/{p.totalSessoes} sessões</span>
-                                    <span>📆 Início: {p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span>
-                                  </div>
-                                  <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginBottom:4}}>
-                                    <div style={{background:"var(--purple)",height:6,borderRadius:20,width:pct+"%",transition:"width .3s"}}/>
-                                  </div>
-                                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{pct}% concluído</div>
+                            <div key={p.id} style={{borderRadius:8,border:"1px solid #e8c8ff",overflow:"hidden",marginBottom:6}}>
+                              {/* Linha compacta — clicável */}
+                              <div onClick={()=>setPacoteSelecionado(pacoteSelecionado===p.id?"":p.id)}
+                                style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",cursor:"pointer",background:pacoteSelecionado===p.id?"#f3e6ff":"white",transition:"background .15s"}}>
+                                {/* Status dot */}
+                                <div style={{width:8,height:8,borderRadius:"50%",flexShrink:0,background:isPago?"#22c55e":temPendente?"#f59e0b":"#e5e7eb"}}/>
+                                {/* Obs / tipo */}
+                                <div style={{flex:1,fontSize:13,fontWeight:500,color:"#3d006a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                                  {p.obs||p.recorrencia||"Pacote"}
                                 </div>
+                                {/* Sessões */}
+                                <span style={{fontSize:11,color:"#7B00C4",flexShrink:0}}>{realizadas}/{p.totalSessoes}</span>
+                                {/* Barra mini */}
+                                <div style={{width:40,height:4,background:"#e8c8ff",borderRadius:4,flexShrink:0}}>
+                                  <div style={{width:pct+"%",height:4,background:"#7B00C4",borderRadius:4}}/>
+                                </div>
+                                {/* Valor */}
+                                <span style={{fontSize:12,fontWeight:700,color:isPago?"#22c55e":"#f59e0b",flexShrink:0}}>
+                                  {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                                </span>
+                                {/* Data */}
+                                <span style={{fontSize:11,color:"#9ca3af",flexShrink:0}}>{dataStr}</span>
+                                <Icon name={pacoteSelecionado===p.id?"chevron-up":"chevron-down"} size={14} style={{color:"#9ca3af",flexShrink:0}}/>
                               </div>
-                              <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
-                                <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="edit-3" size={13}/> Editar pacote
-                                </button>
-                                <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="clipboard-list" size={13}/> Ver Sessões
-                                </button>
-                                <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
-                                  if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
-                                  const todas=sessoes.filter(s=>s.pacoteId===p.id);
-                                  const b=db.batch();
-                                  todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-                                  b.delete(db.collection("clinica_pacotes").doc(p.id));
-                                  const lp=lancamentos.find(l=>l.pacoteId===p.id);
-                                  if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
-                                  await b.commit();
-                                }}>
-                                  <Icon name="trash-2" size={13}/>
-                                </button>
-                              </div>
+                              {/* Detalhe expandido */}
+                              {pacoteSelecionado===p.id&&(
+                                <div style={{borderTop:"1px solid #e8c8ff",padding:"10px 12px",background:"#faf5ff"}}>
+                                  <div style={{fontSize:11,color:"#7B00C4",marginBottom:8,display:"flex",gap:12,flexWrap:"wrap"}}>
+                                    <span>🔄 {p.recorrencia}</span>
+                                    {p.horario&&<span>🕐 {p.horario}</span>}
+                                    <span>📋 {realizadas} realizadas · {pagas} pagas</span>
+                                    <span>📆 {p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span>
+                                    {p.obs&&<span>📝 {p.obs}</span>}
+                                  </div>
+                                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                                    <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"var(--purple)",border:"1px solid #d9b3f5"}}
+                                      onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__pacote");}}>
+                                      <Icon name="edit-3" size={12}/> Editar
+                                    </button>
+                                    <button className="btn btn-purple" style={{fontSize:11,padding:"5px 10px"}}
+                                      onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
+                                      <Icon name="clipboard-list" size={12}/> Sessões
+                                    </button>
+                                    <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"#dc2626",marginLeft:"auto"}}
+                                      onClick={async e=>{e.stopPropagation();
+                                        if(!confirm("Excluir pacote?"))return;
+                                        const todas=sessoes.filter(s=>s.pacoteId===p.id);
+                                        const b=db.batch();
+                                        todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+                                        b.delete(db.collection("clinica_pacotes").doc(p.id));
+                                        lancsPac.forEach(l=>b.delete(db.collection("clinica_lancamentos").doc(l.id)));
+                                        await b.commit();
+                                      }}>
+                                      <Icon name="trash-2" size={12}/>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
