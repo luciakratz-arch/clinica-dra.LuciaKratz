@@ -1554,7 +1554,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             {vSessao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="number" defaultValue={isPago?vPago:""} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
+                            <input type="number" value={s.valorPago||""} onChange={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
                               placeholder="0,00" style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 5px",width:65,color:isPago?"#059669":"#374151",fontWeight:isPago?600:400}}/>
                           </td>
                           <td style={{padding:"6px 10px",fontWeight:600,whiteSpace:"nowrap",color:saldo<0?"#dc2626":saldo>0?"#059669":"#9ca3af",fontSize:11}}>
@@ -1568,7 +1568,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             </select>
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                            <input type="date" value={s.dataPagamento||""} onChange={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
                               style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:105}}/>
                           </td>
                           <td style={{padding:"6px 10px"}}>
