@@ -3391,13 +3391,16 @@ function TerapiaCasais() {
 // RECURSOS TERAPÊUTICOS
 // ═══════════════════════════════════════════════════════
 const CATEGORIAS_RECURSOS = [
-  {id:"relaxamento",  label:"Relaxamento e Bem-estar",         cor:"#0284c7", bg:"#e0f2fe"},
-  {id:"tcc",          label:"Terapia Cognitivo-Comportamental", cor:"#7c3aed", bg:"#ede9fe"},
-  {id:"avaliacao",    label:"Avaliacao e Anamnese",             cor:"#6d28d9", bg:"#f5f3ff"},
-  {id:"psicoeducacao",label:"Psicoeducacao",                    cor:"#b45309", bg:"#fef3c7"},
-  {id:"mindfulness",  label:"Mindfulness",                      cor:"#059669", bg:"#d1fae5"},
-  {id:"musicoterapia",label:"Musicoterapia",                    cor:"#be185d", bg:"#fce7f3"},
-  {id:"outro",        label:"Outros Recursos",                  cor:"#6b7280", bg:"#f3f4f6"},
+  {id:"tcc",          label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
+  {id:"ansiedade",    label:"Ansiedade",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
+  {id:"emocoes",      label:"Emocoes",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
+  {id:"autocuidado",  label:"Autocuidado",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
+  {id:"relacionamentos",label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
+  {id:"corpo",        label:"Corpo & Alimentacao",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
+  {id:"esquema",      label:"Terapia do Esquema",    cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
+  {id:"musicoterapia",label:"Musicoterapia",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
+  {id:"avaliacao",    label:"Avaliacao e Anamnese",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#6366F1"},
+  {id:"outro",        label:"Outros",                cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
 ];
 
 const FERRAMENTAS_INTERATIVAS = [
@@ -6304,7 +6307,7 @@ function RecursosTerapeuticos({ user }) {
 
   const getCatInfo = (id) => CATEGORIAS_RECURSOS.find(c=>c.id===id)||CATEGORIAS_RECURSOS[6];
   const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
-  const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="relaxamento"?"💨":r.categoria==="tcc"?"🧠":r.categoria==="avaliacao"?"📋":r.categoria==="musicoterapia"?"🎵":"🔧");
+  const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="tcc"?"🧠":r.categoria==="ansiedade"?"😮":r.categoria==="emocoes"?"💜":r.categoria==="autocuidado"?"🌱":r.categoria==="relacionamentos"?"❤️":r.categoria==="corpo"?"🥗":r.categoria==="esquema"?"🔑":r.categoria==="musicoterapia"?"🎵":r.categoria==="avaliacao"?"📋":"🔧");
   const [visualizando, setVisualizando] = useState(null);
 
   if(loading) return <Spinner/>;
@@ -6373,7 +6376,7 @@ function RecursosTerapeuticos({ user }) {
                     <div style={{flex:1}}>
                       <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
                         <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30"}}>{r.tipo==="interativa"?"INTERATIVA":"CONTEÚDO"}</span>
-                        {r.categoria==="musicoterapia"&&<span style={{background:"#fce7f3",color:"#be185d",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Música</span>}
+                        {r.categoria==="musicoterapia"&&<span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Música</span>}
                       </div>
                       <div style={{fontWeight:600,fontSize:14}}>{r.titulo}</div>
                     </div>
