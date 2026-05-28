@@ -1372,9 +1372,11 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
   async function remarcarSessao(s, novaData){
     if(!novaData)return;
+    // Manter pagamento/forma/data ao remarcar — só muda data e status
     await db.collection("clinica_sessoes").doc(s.id).update({
       data:novaData, status:"agendado", remarcada:true,
       dataRemarcada:novaData, dataOriginal:s.dataOriginal||s.data
+      // pagamento, formaPagamento e dataPagamento NÃO são alterados
     });
   }
 
@@ -1516,7 +1518,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                   <tbody>
                     {sessMes.map((s,i)=>{
                       const st=STATUS_S[s.status]||STATUS_S.agendado;
-                      const isPago=s.pagamento==="pago";
+                      const isPago=s.pagamento==="pago"; // remarcado mantém pagamento original
                       const vSessao=parseFloat(s.valorSessao)||0;
                       const vPago=parseFloat(s.valorPago)||(isPago?vSessao:0);
                       const saldo=isPago?(vPago-vSessao):0;
@@ -1554,7 +1556,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             {vSessao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="number" value={s.valorPago||""} onChange={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
+                            <input type="number" defaultValue={s.valorPago||""} key={s.id+"_vpago"} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
                               placeholder="0,00" style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 5px",width:65,color:isPago?"#059669":"#374151",fontWeight:isPago?600:400}}/>
                           </td>
                           <td style={{padding:"6px 10px",fontWeight:600,whiteSpace:"nowrap",color:saldo<0?"#dc2626":saldo>0?"#059669":"#9ca3af",fontSize:11}}>
@@ -1568,7 +1570,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             </select>
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="date" value={s.dataPagamento||""} onChange={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                            <input type="date" defaultValue={s.dataPagamento||""} key={s.id+"_dtpag"} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
                               style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:105}}/>
                           </td>
                           <td style={{padding:"6px 10px"}}>
@@ -1803,6 +1805,7 @@ function FinanceiroClinica() {
       formaPag:formPacote.formaPag||"",
       status:formPacote.statusPag||"pendente",
       dataPagamento:formPacote.dataPagamento||"",
+      pagamentosExtras:formPacote.pagamentosExtras||[],
       obs,
       totalSessoes:total,valorSessao:vSessao,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -1812,6 +1815,7 @@ function FinanceiroClinica() {
     if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda });
 
     // Cria sessões na agenda
+    const jaPago = (formPacote.statusPag||"pendente")==="recebido";
     const batch=db.batch();
     datas.forEach((data,i)=>{
       const ref=db.collection("clinica_sessoes").doc();
@@ -1821,12 +1825,16 @@ function FinanceiroClinica() {
         pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
-        pagamento:"pendente",formaPagamento:formPacote.formaPag||"",dataPagamento:"",obs:"",
+        pagamento:jaPago?"pago":"pendente",
+        valorPago:jaPago?vSessao:0,
+        formaPagamento:formPacote.formaPag||"",
+        dataPagamento:jaPago?(formPacote.dataPagamento||new Date().toISOString().slice(0,10)):"",
+        obs:"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     });
     await batch.commit();
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",obs:""});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
@@ -1834,9 +1842,11 @@ function FinanceiroClinica() {
 
   async function remarcarSessao(s, novaData){
     if(!novaData)return;
+    // Manter pagamento/forma/data ao remarcar — só muda data e status
     await db.collection("clinica_sessoes").doc(s.id).update({
       data:novaData, status:"agendado", remarcada:true,
       dataRemarcada:novaData, dataOriginal:s.dataOriginal||s.data
+      // pagamento, formaPagamento e dataPagamento NÃO são alterados
     });
   }
 
@@ -2505,6 +2515,27 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Data do Pagamento</label>
                   <input className="form-input" type="date" value={formPacote.dataPagamento||""} onChange={e=>setFormPacote({...formPacote,dataPagamento:e.target.value})}/>
                 </div>
+                {(formPacote.statusPag||"pendente")==="recebido"&&(
+                  <div className="form-group" style={{gridColumn:"1/-1"}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                      <label className="form-label" style={{margin:0}}>Pagamentos parciais (opcional)</label>
+                      <button type="button" style={{fontSize:12,color:"#7B00C4",background:"#f3e6ff",border:"1px solid #d9b3f5",borderRadius:6,padding:"3px 10px",cursor:"pointer"}}
+                        onClick={()=>setFormPacote({...formPacote,pagamentosExtras:[...(formPacote.pagamentosExtras||[]),{forma:"",valor:"",data:""}]})}>
+                        + Adicionar forma
+                      </button>
+                    </div>
+                    {(formPacote.pagamentosExtras||[]).map((pg,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:6,marginBottom:6,alignItems:"center"}}>
+                        <select className="form-input" style={{fontSize:12}} value={pg.forma} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],forma:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}>
+                          <option value="">Forma...</option>{FORMAS.map(f=><option key={f}>{f}</option>)}
+                        </select>
+                        <input className="form-input" style={{fontSize:12}} type="number" placeholder="Valor R$" value={pg.valor} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],valor:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}/>
+                        <input className="form-input" style={{fontSize:12}} type="date" value={pg.data} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],data:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}/>
+                        <button type="button" style={{color:"#dc2626",background:"none",border:"none",cursor:"pointer",fontSize:16,padding:"0 4px"}} onClick={()=>{const p=[...(formPacote.pagamentosExtras||[])];p.splice(i,1);setFormPacote({...formPacote,pagamentosExtras:p});}}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                   <TextAreaVoz className="form-input" rows={2} value={formPacote.obs} onChange={e=>setFormPacote({...formPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
                 </div>
