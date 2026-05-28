@@ -5304,6 +5304,36 @@ function AbaFabulas() {
   const [loading, setLoading] = useState(true);
   const [fabulaAberta, setFabulaAberta] = useState(null);
   const [filtro, setFiltro] = useState("todos");
+  const [migrando, setMigrando] = useState(false);
+
+  const MIGRACAO_CATS = {
+    "resiliência":"crescimento","resiliencia":"crescimento",
+    "esperança":"crescimento","esperanca":"crescimento",
+    "autoconfiança":"autoconhecimento","autoconfianca":"autoconhecimento",
+    "autoestima":"autoconhecimento",
+    "mindfulness":"emocoes",
+    "tcc":"autoconhecimento",
+    "expressão emocional":"emocoes","expressao emocional":"emocoes",
+    "regulação emocional":"emocoes","regulacao emocional":"emocoes",
+    "perspectiva":"autoconhecimento",
+    "perdão":"perdao",
+  };
+
+  async function migrarCategorias(){
+    if(!confirm("Migrar categorias antigas para as novas? Isso atualiza os documentos no Firebase.")) return;
+    setMigrando(true);
+    try{
+      const snap = await db.collection("clinica_fabulas").get();
+      let count = 0;
+      for(const doc of snap.docs){
+        const cat = doc.data().categoria;
+        const nova = MIGRACAO_CATS[cat];
+        if(nova){ await db.collection("clinica_fabulas").doc(doc.id).update({categoria:nova}); count++; }
+      }
+      alert("✓ "+count+" fábulas migradas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setMigrando(false);
+  }
 
   useEffect(()=>{
     const unsub = db.collection("clinica_fabulas").onSnapshot(snap=>{
@@ -6059,6 +6089,27 @@ function AbaPsicoeducacao() {
   const [salvando, setSalvando]   = useState(false);
   const [filtro, setFiltro]       = useState("todos");
   const [aberto, setAberto]       = useState(null);
+
+  const MIGRACAO_PSICO = {
+    "autoestima":"emocoes","mindfulness":"emocoes","trauma":"esquema",
+    "depressao":"emocoes","habitos":"autocuidado",
+  };
+
+  async function migrarCatPsico(){
+    if(!confirm("Migrar categorias antigas de psicoeducação?")) return;
+    setSalvando(true);
+    try{
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      let count = 0;
+      for(const doc of snap.docs){
+        const cat = doc.data().categoria;
+        const nova = MIGRACAO_PSICO[cat];
+        if(nova){ await db.collection("clinica_psicoeducacao").doc(doc.id).update({categoria:nova}); count++; }
+      }
+      alert("✓ "+count+" psicoeducações migradas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
   const [form, setForm] = useState({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});
 
   useEffect(()=>{
@@ -6152,6 +6203,11 @@ function AbaPsicoeducacao() {
           {itens.length>0&&(
             <button className="btn btn-outline" style={{fontSize:12}} onClick={sincronizarNovas} disabled={salvando}>
               <Icon name="refresh-cw" size={14}/> {salvando?"Sincronizando...":"Sincronizar novas"}
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
+              <Icon name="layers" size={14}/> Migrar categorias
             </button>
           )}
           <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
