@@ -2179,9 +2179,29 @@ function FinanceiroClinica() {
           ):(()=>{
             // Agrupar pacotes por paciente
             const pacientesComPacote = [...new Set(pacotes.map(p=>p.pacienteId))];
+            const [buscaPac, setBuscaPac] = React.useState("");
+            const pacientesVisiveis = buscaPac.trim()
+              ? pacientesComPacote.filter(id=>{
+                  const pac = pacientes.find(p=>p.id===id);
+                  const nome = (pac?.nome||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+                  return nome.includes(buscaPac.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""));
+                })
+              : pacientesComPacote;
             return (
               <div style={{display:"flex",flexDirection:"column",gap:28}}>
-                {pacientesComPacote.map(pacId=>{
+                {/* Filtro de busca */}
+                <div style={{position:"relative",marginBottom:4}}>
+                  <input
+                    value={buscaPac}
+                    onChange={e=>setBuscaPac(e.target.value)}
+                    placeholder="🔍 Buscar paciente..."
+                    style={{width:"100%",padding:"10px 16px 10px 40px",borderRadius:10,border:"1.5px solid #e8c8ff",fontSize:14,outline:"none",boxSizing:"border-box",background:"#faf5ff"}}
+                  />
+                  <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#b040e0",pointerEvents:"none"}}>🔍</span>
+                  {buscaPac&&<button onClick={()=>setBuscaPac("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#9a00e0"}}>✕</button>}
+                  {buscaPac&&<div style={{fontSize:12,color:"#7B00C4",marginTop:4}}>{pacientesVisiveis.length} paciente(s) encontrado(s)</div>}
+                </div>
+                {pacientesVisiveis.map(pacId=>{
                   const pac = pacientes.find(p=>p.id===pacId);
                   const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
                     const ta = a.createdAt?.seconds||0;
