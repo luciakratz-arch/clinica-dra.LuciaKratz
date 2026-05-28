@@ -3410,6 +3410,7 @@ const FERRAMENTAS_INTERATIVAS = [
   {key:"treino-neuro-auditivo",label:"Treino Neuro-Auditivo"},
   {key:"decision-tree",       label:"Arvore da Decisao"},
   {key:"anamnese",            label:"Anamnese — Marcos do Desenvolvimento"},
+  {key:"diario-terapeutico",  label:"Diário Terapêutico"},
 ];
 
 
@@ -4064,8 +4065,188 @@ function FerramentaAnamnese(){
   </div>);
 }
 
+// ── Diário Terapêutico ──────────────────────────────────────────────────────
+function FerramentaDiario({ user }){
+  const [entradas, setEntradas] = useState([]);
+  const [texto,    setTexto]    = useState("");
+  const [tag,      setTag]      = useState("geral");
+  const [salvando, setSalvando] = useState(false);
+  const [msg,      setMsg]      = useState("");
+  const [verEntrada, setVerEntrada] = useState(null);
+  const [gravando,   setGravando]   = useState(false);
+  const [loading,    setLoading]    = useState(true);
+  const recRef = useRef(null);
+
+  const TAGS = [
+    {v:"geral",     l:"Geral",     e:"📝"},
+    {v:"gratidao",  l:"Gratidão",  e:"🙏"},
+    {v:"desafio",   l:"Desafio",   e:"⚡"},
+    {v:"conquista", l:"Conquista", e:"🏆"},
+    {v:"emocao",    l:"Emoção",    e:"💜"},
+  ];
+
+  useEffect(()=>{
+    if(!user?.id){setLoading(false);return;}
+    const unsub = db.collection("clinica_diario")
+      .where("pacienteId","==",user.id)
+      .orderBy("createdAt","desc")
+      .onSnapshot(snap=>{
+        setEntradas(snap.docs.map(d=>({id:d.id,...d.data()})));
+        setLoading(false);
+      }, ()=>setLoading(false));
+    return ()=>unsub();
+  },[user?.id]);
+
+  function toggleGravacao(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){alert("Seu navegador não suporta reconhecimento de voz. Tente o Chrome.");return;}
+    if(gravando){
+      recRef.current?.stop();
+      setGravando(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "pt-BR";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = e=>{
+      const transcript = Array.from(e.results).map(r=>r[0].transcript).join(" ");
+      setTexto(t => {
+        const base = t.replace(/\s*\[gravando\.\.\.\]$/,"").trimEnd();
+        return base ? base+" "+transcript : transcript;
+      });
+    };
+    rec.onerror = ()=>setGravando(false);
+    rec.onend   = ()=>setGravando(false);
+    recRef.current = rec;
+    rec.start();
+    setGravando(true);
+  }
+
+  async function salvar(){
+    if(!texto.trim()){setMsg("Escreva ou grave algo antes de salvar.");setTimeout(()=>setMsg(""),2500);return;}
+    setSalvando(true);
+    try {
+      await db.collection("clinica_diario").add({
+        pacienteId: user?.id || "",
+        pacienteNome: user?.nome || "",
+        texto: texto.trim(),
+        tag,
+        data: new Date().toLocaleDateString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setTexto(""); setTag("geral");
+      setMsg("✓ Entrada salva! 💜");
+      setTimeout(()=>setMsg(""),2500);
+    } catch(e){ setMsg("Erro ao salvar: "+e.message); }
+    setSalvando(false);
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir esta entrada?"))return;
+    await db.collection("clinica_diario").doc(id).delete();
+    setVerEntrada(null);
+  }
+
+  if(verEntrada) return(
+    <div style={{padding:"0 4px"}}>
+      <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setVerEntrada(null)}>
+        <Icon name="arrow-left" size={16}/> Voltar
+      </button>
+      <div style={{background:"#f9f5ff",borderRadius:14,padding:20,marginBottom:12,border:"1px solid #ede9fe"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <span style={{fontSize:13,color:"var(--text-muted)"}}>{verEntrada.data} às {verEntrada.hora}</span>
+          <span style={{fontSize:11,color:"var(--purple)",background:"#ede9fe",borderRadius:20,padding:"2px 10px"}}>
+            {TAGS.find(t=>t.v===verEntrada.tag)?.e} {TAGS.find(t=>t.v===verEntrada.tag)?.l}
+          </span>
+        </div>
+        <div style={{fontSize:14,lineHeight:1.8,color:"var(--gray-800)",whiteSpace:"pre-wrap"}}>{verEntrada.texto}</div>
+      </div>
+      <button className="btn btn-ghost" style={{color:"#dc2626",borderColor:"#fca5a5",fontSize:13}} onClick={()=>excluir(verEntrada.id)}>
+        <Icon name="trash-2" size={14}/> Excluir entrada
+      </button>
+    </div>
+  );
+
+  return(
+    <div style={{padding:"0 4px"}}>
+      {/* Nova entrada */}
+      <div style={{background:"#faf5ff",borderRadius:14,padding:16,marginBottom:20,border:"1px solid #ede9fe"}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:600,marginBottom:12,color:"var(--purple)"}}>
+          📓 Nova entrada
+        </div>
+
+        {/* Tag */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Categoria</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {TAGS.map(t=>(
+              <button key={t.v} onClick={()=>setTag(t.v)}
+                style={{fontSize:12,padding:"4px 10px",borderRadius:20,border:tag===t.v?"2px solid var(--purple)":"1px solid #e5e7eb",background:tag===t.v?"#ede9fe":"white",color:tag===t.v?"var(--purple)":"var(--gray-600)",cursor:"pointer"}}>
+                {t.e} {t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Texto + microfone */}
+        <div style={{position:"relative"}}>
+          <textarea value={texto} onChange={e=>setTexto(e.target.value)}
+            placeholder="Escreva ou use o microfone para falar sobre o seu dia..."
+            style={{width:"100%",minHeight:120,borderRadius:10,border:gravando?"2px solid var(--purple)":"1px solid #e5e7eb",padding:"10px 44px 10px 14px",fontSize:14,fontFamily:"var(--font-body)",resize:"vertical",outline:"none",lineHeight:1.7,boxSizing:"border-box",transition:"border .2s"}}/>
+          <button onClick={toggleGravacao} title={gravando?"Parar gravação":"Falar"}
+            style={{position:"absolute",right:8,bottom:10,background:gravando?"#7B00C4":"#f3f0ff",border:"none",borderRadius:8,padding:"6px 8px",cursor:"pointer",color:gravando?"white":"var(--purple)",fontSize:18,lineHeight:1,boxShadow:gravando?"0 0 0 3px #7B00C430":"none",transition:"all .2s"}}>
+            🎙️
+          </button>
+        </div>
+        {gravando && <div style={{fontSize:12,color:"var(--purple)",marginTop:4,display:"flex",alignItems:"center",gap:6}}>
+          <span style={{width:8,height:8,borderRadius:"50%",background:"#7B00C4",display:"inline-block",animation:"pulse-slow 1s infinite"}}/>
+          Gravando... fale normalmente. Clique 🎙️ para parar.
+        </div>}
+
+        {msg && <div style={{fontSize:13,color:"var(--purple)",marginTop:6,fontWeight:500}}>{msg}</div>}
+
+        <button className="btn btn-purple" style={{width:"100%",marginTop:10}} onClick={salvar} disabled={salvando}>
+          <Icon name="save" size={16}/> {salvando?"Salvando...":"Salvar entrada"}
+        </button>
+      </div>
+
+      {/* Entradas anteriores */}
+      {loading && <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:13,padding:16}}>Carregando...</div>}
+      {!loading && entradas.length>0 && (
+        <div>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:"var(--gray-700)"}}>
+            Entradas anteriores ({entradas.length})
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {entradas.map(en=>(
+              <div key={en.id} onClick={()=>setVerEntrada(en)}
+                style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #e5e7eb",cursor:"pointer"}}
+                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 2px 8px #7B00C420"}
+                onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <span style={{fontSize:12,color:"var(--text-muted)"}}>{en.data} · {en.hora}</span>
+                  <span style={{fontSize:11,color:"var(--purple)"}}>{TAGS.find(t=>t.v===en.tag)?.e}</span>
+                </div>
+                <div style={{fontSize:13,color:"var(--gray-700)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{en.texto}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!loading && entradas.length===0 && (
+        <div style={{textAlign:"center",padding:"24px 0",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma entrada ainda. Comece escrevendo hoje! 💜
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ── Modal Visualizar Ferramenta ─────────────────────────────────────────────
-function ModalVisualizarFerramenta({recurso,onClose}){
+function ModalVisualizarFerramenta({recurso,onClose,user}){
   function renderFerramenta(){
     const k=recurso.formularioKey;
     if(k==="breathing-478")      return <FerramentaRespiracao/>;
@@ -4084,10 +4265,11 @@ function ModalVisualizarFerramenta({recurso,onClose}){
       </div>
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
+    if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
     return <div style={{textAlign:"center",padding:40,color:"#6b7280"}}>Ferramenta não configurada.</div>;
   }
   const EMOJIS={relaxamento:"💨",tcc:"🧠",avaliacao:"📋",musicoterapia:"🎵",outro:"🔧"};
-  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵"};
+  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
   const iconeRecurso = ICONES_FERRAMENTA?.[recurso.formularioKey] || EMOJIS[recurso.categoria] || "🔧";
   return(
     <div>
@@ -5390,7 +5572,7 @@ function AbaPsicoeducacao() {
   );
 }
 
-function RecursosTerapeuticos() {
+function RecursosTerapeuticos({ user }) {
   const [recursos, setRecursos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
@@ -5441,13 +5623,13 @@ function RecursosTerapeuticos() {
   }
 
   const getCatInfo = (id) => CATEGORIAS_RECURSOS.find(c=>c.id===id)||CATEGORIAS_RECURSOS[6];
-  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵"};
+  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
   const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="relaxamento"?"💨":r.categoria==="tcc"?"🧠":r.categoria==="avaliacao"?"📋":r.categoria==="musicoterapia"?"🎵":"🔧");
   const [visualizando, setVisualizando] = useState(null);
 
   if(loading) return <Spinner/>;
 
-  if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)}/>;
+  if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)} user={user}/>;
   return (
     <div>
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
@@ -6654,7 +6836,7 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="alunos"      &&<Alunos/>}
         {user.tipo==="psicologa"  &&tab==="casais"      &&<TerapiaCasais/>}
-        {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos/>}
+        {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos user={user}/>}
         {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
