@@ -597,6 +597,24 @@ function PainelIndividual({ user, setTab }) {
   const humorHoje = humores.find(h=>h.data===new Date().toLocaleDateString("pt-BR"));
   const media30   = humores.length>0 ? (humores.reduce((a,h)=>a+(h.valor||0),0)/humores.length).toFixed(1) : null;
 
+  // Suporta formato antigo (modulosAtivos=["humor","diario"]) e novo (modulosConfig={mod1:{ativo:true,ferramentas:[...]}})
+  const config = user.modulosConfig || {};
+  const modulosAtivosLegacy = user.modulosAtivos || [];
+  const FERRAMENTA_PARA_MOD = {
+    "humor":"mod1","diario":"mod1","metas":"mod1","reflexoes":"mod1","pensamentos":"mod1","tcc":"mod1",
+    "fabulas":"mod2","ferramentas":"mod3","ansiedade":"mod3","arvore":"mod3","musicoterapia":"mod4"
+  };
+  function ferramentaAtiva(id) {
+    // Formato novo: verifica modulosConfig
+    const modId = FERRAMENTA_PARA_MOD[id];
+    if (modId && config[modId]?.ativo) {
+      const fts = config[modId]?.ferramentas;
+      if (!fts || fts.length===0) return true; // módulo ativo sem restrição de ferramenta
+      return fts.includes(id);
+    }
+    // Formato antigo: verifica modulosAtivos
+    return modulosAtivosLegacy.includes(id);
+  }
   const modulos = user.modulosAtivos || [];
   const todasFerramentas = [
     { id:"humor",       label:"Registrar Humor",         sub:"Como você está se sentindo hoje?",  icon:"heart",      cor:"#fde8f0", tab:"humor" },
@@ -607,7 +625,7 @@ function PainelIndividual({ user, setTab }) {
     { id:"reflexoes",   label:"Reflexões Cognitivas",    sub:"Exercícios de insight",             icon:"lightbulb",  cor:"#fefce0", tab:"reflexoes" },
     { id:"ferramentas", label:"Ferramentas Clínicas",    sub:"Recursos disponíveis",              icon:"wrench",     cor:"#f0f0f0", tab:"ferramentas" },
   ];
-  const ferramentasVisiveis = todasFerramentas.filter(f=>modulos.includes(f.id));
+  const ferramentasVisiveis = todasFerramentas.filter(f=>ferramentaAtiva(f.id));
   const chartData = [...humores].reverse().slice(-14);
 
   return (
@@ -2008,7 +2026,8 @@ function HistoricoAluno({ user }) {
 // ═══════════════════════════════════════════════════════
 function SeletorModo({ user, onEscolha }) {
   const [parceiro, setParceiro] = useState(null);
-  const temIndividual = (user.modulosAtivos||[]).filter(m=>m!=="mod5").length > 0;
+  const temIndividual = (user.modulosAtivos||[]).filter(m=>m!=="mod5").length > 0 ||
+    Object.entries(user.modulosConfig||{}).some(([k,v])=>k!=="mod5"&&v?.ativo);
   const temCasal = !!user.casalId;
 
   useEffect(()=>{
