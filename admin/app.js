@@ -5056,6 +5056,89 @@ function FormularioCasal({ atividadeId, onVoltar }) {
   );
 }
 
+
+// ── Psicoeducações e Fábulas para Casais ────────────────────────────────────
+function PsicoFabCasais(){
+  const [psicos, setPsicos]     = useState([]);
+  const [fabulas, setFabulas]   = useState([]);
+  const [abaAtiva, setAbaAtiva] = useState("psico");
+  const [aberto, setAberto]     = useState(null);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(()=>{
+    let loaded = 0;
+    const check = ()=>{ loaded++; if(loaded===2) setLoading(false); };
+    const u1 = db.collection("clinica_psicoeducacao")
+      .where("categoria","==","casais")
+      .onSnapshot(s=>{ setPsicos(s.docs.map(d=>({id:d.id,...d.data()}))); check(); }, check);
+    const u2 = db.collection("clinica_fabulas")
+      .where("categoria","==","casais")
+      .onSnapshot(s=>{ setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))); check(); }, check);
+    return ()=>{ u1(); u2(); };
+  },[]);
+
+  if(loading) return null;
+  if(psicos.length===0 && fabulas.length===0) return null;
+
+  if(aberto){
+    const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
+    return(
+      <div style={{marginBottom:12}}>
+        <button className="btn btn-ghost" style={{marginBottom:12,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
+          <Icon name="arrow-left" size={16}/> Voltar
+        </button>
+        {VisualComp ? <VisualComp cat={{cor:"#7B00C4",bg:"#f3e6ff",accent:"#EC4899"}}/> : (
+          <div className="card">
+            <div style={{textAlign:"center",padding:"8px 0 16px"}}>
+              <div style={{fontSize:40,marginBottom:8}}>{aberto.emoji||"💜"}</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:6}}>{aberto.titulo}</div>
+            </div>
+            {aberto.descricao&&<p style={{fontSize:13,color:"var(--text-muted)",fontStyle:"italic",marginBottom:12}}>{aberto.descricao}</p>}
+            {aberto.conteudo&&<div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return(
+    <div style={{borderRadius:12,border:"1.5px solid #f0b8ff",overflow:"hidden",marginBottom:12}}>
+      <div style={{background:"linear-gradient(to right,#f9f0ff,#f3e6ff)",padding:"12px 18px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e8c8ff"}}>
+        <span style={{fontSize:20}}>💜</span>
+        <div style={{fontWeight:700,fontSize:14,color:"#7B00C4"}}>Recursos para o Casal</div>
+      </div>
+      <div style={{background:"white",padding:"10px 18px",borderBottom:"1px solid #e8c8ff",display:"flex",gap:8}}>
+        {[["psico","Psicoeducação",psicos.length],["fabula","Fábulas",fabulas.length]].map(([k,l,c])=>(
+          <button key={k} onClick={()=>setAbaAtiva(k)}
+            style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",borderColor:abaAtiva===k?"#7B00C4":"#e5e7eb",background:abaAtiva===k?"#f3e6ff":"white",color:abaAtiva===k?"#7B00C4":"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:abaAtiva===k?600:400}}>
+            {l} ({c})
+          </button>
+        ))}
+      </div>
+      <div style={{background:"white",padding:"12px 18px",display:"flex",flexDirection:"column",gap:8}}>
+        {(abaAtiva==="psico"?psicos:fabulas).map(item=>(
+          <div key={item.id} onClick={()=>setAberto(item)}
+            style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#faf5ff",borderRadius:10,border:"1px solid #e8c8ff",cursor:"pointer"}}
+            onMouseEnter={e=>e.currentTarget.style.background="#f3e6ff"}
+            onMouseLeave={e=>e.currentTarget.style.background="#faf5ff"}>
+            <div style={{fontSize:26,flexShrink:0}}>{item.emoji||"💜"}</div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#3d006a"}}>{item.titulo}</div>
+              {item.descricao&&<div style={{fontSize:11,color:"#7B00C4",marginTop:2,lineHeight:1.4}}>{item.descricao}</div>}
+            </div>
+            <span style={{fontSize:12,color:"#7B00C4",fontWeight:600,flexShrink:0}}>Ver →</span>
+          </div>
+        ))}
+        {(abaAtiva==="psico"?psicos:fabulas).length===0&&(
+          <div style={{textAlign:"center",padding:"16px 0",color:"var(--text-muted)",fontSize:13}}>
+            Nenhum item cadastrado para casais ainda.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AbaProtocoloCasais() {
   const [expandido, setExpandido] = useState(null);
   const [atividadeAberta, setAtividadeAberta] = useState(null);
@@ -5159,6 +5242,9 @@ function AbaProtocoloCasais() {
         )}
       </div>
 
+      {/* Psicoeducações para Casais */}
+      <PsicoFabCasais/>
+
       {PROTOCOLO_CASAIS.map(etapa=>(
         <div key={etapa.stage} style={{borderRadius:12,border:"1.5px solid",borderColor:etapa.cor+"40",overflow:"hidden",marginBottom:12}}>
           <button onClick={()=>setExpandido(expandido===etapa.stage?null:etapa.stage)}
@@ -5200,20 +5286,14 @@ function AbaProtocoloCasais() {
 
 // ── Aba Fábulas ──────────────────────────────────────────────────────────────
 const CATS_FABULAS = {
-  ansiedade:   {label:"Ansiedade",          cor:"#6366f1", bg:"#eef2ff"},
-  resiliência: {label:"Resiliência",        cor:"#0ea5e9", bg:"#e0f2fe"},
-  crescimento: {label:"Crescimento",        cor:"#16a34a", bg:"#dcfce7"},
-  esperança:   {label:"Esperança",          cor:"#f59e0b", bg:"#fef3c7"},
-  autoconfiança:{label:"Autoconfiança",     cor:"#7c3aed", bg:"#ede9fe"},
-  tcc:         {label:"TCC",               cor:"#84cc16", bg:"#f7fee7"},
-  perdão:      {label:"Perdão",             cor:"#8b5cf6", bg:"#f5f3ff"},
-  autoestima:  {label:"Autoestima",         cor:"#ec4899", bg:"#fdf2f8"},
-  autoconhecimento:{label:"Autoconhecimento",cor:"#374151",bg:"#f9fafb"},
-  mindfulness: {label:"Mindfulness",       cor:"#059669", bg:"#d1fae5"},
-  relacionamentos:{label:"Relacionamentos",cor:"#d97706", bg:"#fef3c7"},
-  perspectiva: {label:"Perspectiva",       cor:"#1e3a5f", bg:"#e0f2fe"},
-  "expressão emocional":{label:"Expressão Emocional",cor:"#0891b2",bg:"#cffafe"},
-  "regulação emocional":{label:"Regulação Emocional",cor:"#2563eb",bg:"#dbeafe"},
+  ansiedade:      {label:"Ansiedade",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
+  emocoes:        {label:"Emoções",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
+  autoconhecimento:{label:"Autoconhecimento",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
+  crescimento:    {label:"Crescimento",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
+  relacionamentos:{label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
+  casais:         {label:"Casais",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
+  perdao:         {label:"Perdão",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
+  outros:         {label:"Outros",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
 };
 
 function AbaFabulas() {
@@ -5957,17 +6037,15 @@ const PSICO_VISUAIS = {
 };
 
 const CATS_PSICOEDUCACAO = {
-  ansiedade:      {label:"Ansiedade",      cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
-  tcc:            {label:"TCC",            cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
-  autocuidado:    {label:"Autocuidado",    cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
-  autoestima:     {label:"Autoestima",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
-  mindfulness:    {label:"Mindfulness",    cor:"#7B00C4", bg:"#f3e6ff", accent:"#14B8A6"},
-  relacionamentos:{label:"Relacionamentos",cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
-  trauma:         {label:"Trauma",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
-  depressao:      {label:"Depressão",      cor:"#7B00C4", bg:"#f3e6ff", accent:"#6366F1"},
-  habitos:        {label:"Hábitos",        cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
-  emocoes:        {label:"Emoções",        cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
-  outros:         {label:"Outros",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
+  tcc:              {label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
+  ansiedade:        {label:"Ansiedade",            cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
+  emocoes:          {label:"Emoções",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
+  autocuidado:      {label:"Autocuidado",          cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
+  relacionamentos:  {label:"Relacionamentos",      cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
+  casais:           {label:"Casais",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
+  corpo:            {label:"Corpo & Alimentação",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
+  esquema:          {label:"Terapia do Esquema",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
+  outros:           {label:"Outros",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
 };
 
 function AbaPsicoeducacao() {
