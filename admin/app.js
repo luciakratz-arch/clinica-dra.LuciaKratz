@@ -1007,110 +1007,277 @@ function AbaEvolucao({ paciente }) {
 }
 
 // ABA CASAL
-// ── Respostas do diagnóstico — lidas pelo admin ──────────────────────────────
-function RespostasCasal({ pacienteId, parceiroId, parceiro }) {
+// ── Categorias do Inventário (espelhadas do clinica/app.js) ─────────────────
+const INVENTARIO_CATS_C = [
+  {label:"Comunicação Eficaz",      cor:"#6366f1", questoes:[2,5,11,12,13,19,20]},
+  {label:"Resolução de Conflitos",   cor:"#f59e0b", questoes:[4,8,14,18,23,28,31]},
+  {label:"Intimidade Emocional",     cor:"#ec4899", questoes:[7,10,17,22,24,29,35]},
+  {label:"Satisfação Sexual",        cor:"#dc2626", questoes:[3,6,9,15,21,25,27]},
+  {label:"Cooperação e Colaboração", cor:"#16a34a", questoes:[1,16,26,37,38,39,41]},
+  {label:"Senso de Humor e Lazer",   cor:"#0891b2", questoes:[30,32,33,34,36,40,42]},
+];
+const RODA_DIMENSOES_C = [
+  "Comunicação","Família","Sexualidade","Estresse e Pressão",
+  "Divisão","Ciúmes","Espiritualidade","Diferenças e Conflitos",
+  "Estabilidade Financeira","Rel. de Poder","Mudanças","Expectativas e Equilíbrio"
+];
+
+function calcularInventario(resp) {
+  return INVENTARIO_CATS_C.map(cat=>{
+    const soma = cat.questoes.reduce((a,q)=>a+(resp[q]||0),0);
+    return {...cat, soma, pct:Math.max(0,Math.round(((soma-7)/28)*100))};
+  });
+}
+
+// ── Bloco visual: Inventário de Bem-Estar (comparativo) ─────────────────────
+function BlocoInventario({ docPaciente, docParceiro, nomePac, nomePar }) {
+  const [verBrutos, setVerBrutos] = useState(false);
+  if(!docPaciente&&!docParceiro) return <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum preencheu ainda.</div>;
+
+  const resPac = docPaciente?.respostas||{};
+  const resPar = docParceiro?.respostas||{};
+  const catsPac = docPaciente ? calcularInventario(resPac) : null;
+  const catsPar = docParceiro ? calcularInventario(resPar) : null;
+
+  // Pontos fortes e fracos (baseado em quem respondeu)
+  const base = catsPac||catsPar;
+  const fortes  = [...base].sort((a,b)=>b.soma-a.soma).slice(0,2);
+  const fracos   = [...base].sort((a,b)=>a.soma-b.soma).slice(0,2);
+
+  const ESCALA = ["","Nunca/Raramente","Às vezes","Frequentemente","Sempre/Quase sempre"];
+
+  return (
+    <div>
+      {/* Gráfico comparativo */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",gap:16,fontSize:12,marginBottom:10,flexWrap:"wrap"}}>
+          {docPaciente && <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#7B00C4",marginRight:4}}/>
+            {nomePac} ({docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})</span>}
+          {docParceiro && <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#ec4899",marginRight:4}}/>
+            {nomePar} ({docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})</span>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {INVENTARIO_CATS_C.map((cat,i)=>{
+            const vPac = catsPac?.[i];
+            const vPar = catsPar?.[i];
+            return (
+              <div key={cat.label}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:5}}>
+                  <span style={{color:cat.cor}}>{cat.label}</span>
+                  <span style={{display:"flex",gap:12,fontSize:12}}>
+                    {vPac&&<span style={{color:"#7B00C4"}}>{vPac.soma}/35</span>}
+                    {vPar&&<span style={{color:"#ec4899"}}>{vPar.soma}/35</span>}
+                  </span>
+                </div>
+                <div style={{position:"relative",height:12,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
+                  {vPac&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:vPac.pct+"%",background:"#7B00C4",borderRadius:20,opacity:0.85,transition:"width .5s"}}/>}
+                  {vPar&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:vPar.pct+"%",background:"#ec4899",borderRadius:20,opacity:0.5,transition:"width .5s"}}/>}
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
+                  <span>Baixo (7)</span><span>Alto (35)</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pontos fortes e atenção */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        <div style={{background:"#f0fdf4",borderRadius:10,padding:12,border:"1px solid #86efac"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#16a34a",marginBottom:8}}>💪 Pontos Fortes</div>
+          {fortes.map(c=>(
+            <div key={c.label} style={{fontSize:12,color:"#15803d",marginBottom:4}}>
+              ● {c.label} <span style={{fontWeight:700}}>{c.soma}/35</span>
+            </div>
+          ))}
+        </div>
+        <div style={{background:"#fef2f2",borderRadius:10,padding:12,border:"1px solid #fca5a5"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#dc2626",marginBottom:8}}>⚠️ Pontos de Atenção</div>
+          {fracos.map(c=>(
+            <div key={c.label} style={{fontSize:12,color:"#b91c1c",marginBottom:4}}>
+              ● {c.label} <span style={{fontWeight:700}}>{c.soma}/35</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dados brutos colapsáveis */}
+      <button onClick={()=>setVerBrutos(v=>!v)}
+        style={{background:"none",border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer",color:"var(--text-muted)",width:"100%"}}>
+        {verBrutos?"▲ Ocultar respostas brutas":"▼ Ver respostas brutas"}
+      </button>
+      {verBrutos&&(
+        <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:4}}>
+          {Array.from({length:42},(_,i)=>i+1).map(n=>(
+            <div key={n} style={{display:"flex",gap:8,fontSize:12,padding:"4px 8px",background:n%2===0?"#fafafa":"white",borderRadius:6}}>
+              <span style={{color:"var(--purple)",fontWeight:600,minWidth:22}}>{n}.</span>
+              {docPaciente&&<span style={{color:"#7B00C4",flex:1}}>{nomePac.split(" ")[0]}: {ESCALA[resPac[n]]||"—"}</span>}
+              {docParceiro&&<span style={{color:"#ec4899",flex:1}}>{nomePar.split(" ")[0]}: {ESCALA[resPar[n]]||"—"}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Bloco visual: Roda da Vida do Relacionamento ─────────────────────────────
+function BlocoRodaVida({ docPaciente, docParceiro, nomePac, nomePar }) {
+  const [verBrutos, setVerBrutos] = useState(false);
+  if(!docPaciente&&!docParceiro) return <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum preencheu ainda.</div>;
+  const vPac = docPaciente?.respostas||{};
+  const vPar = docParceiro?.respostas||{};
+  return (
+    <div>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+        {RODA_DIMENSOES_C.map((dim,i)=>{
+          const kPac = vPac[dim]; const kPar = vPar[dim];
+          return (
+            <div key={dim}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:600,marginBottom:3}}>
+                <span>{dim}</span>
+                <span style={{display:"flex",gap:10}}>
+                  {docPaciente&&<span style={{color:"#7B00C4"}}>{kPac||0}/10</span>}
+                  {docParceiro&&<span style={{color:"#ec4899"}}>{kPar||0}/10</span>}
+                </span>
+              </div>
+              <div style={{position:"relative",height:8,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
+                {docPaciente&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:((kPac||0)*10)+"%",background:"#7B00C4",borderRadius:20,opacity:0.85}}/>}
+                {docParceiro&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:((kPar||0)*10)+"%",background:"#ec4899",borderRadius:20,opacity:0.5}}/>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={()=>setVerBrutos(v=>!v)}
+        style={{background:"none",border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer",color:"var(--text-muted)",width:"100%"}}>
+        {verBrutos?"▲ Ocultar detalhes":"▼ Ver detalhes completos"}
+      </button>
+    </div>
+  );
+}
+
+// ── Bloco visual genérico (Metas, Quem Sou, O Que Quero) ────────────────────
+function BlocoTexto({ docPaciente, docParceiro, nomePac, nomePar }) {
+  if(!docPaciente&&!docParceiro) return <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum preencheu ainda.</div>;
+  const ESCALA = ["","Nunca/Raramente","Às vezes","Frequentemente","Sempre/Quase sempre"];
+  function renderResp(resp) {
+    if(!resp||typeof resp!=="object") return null;
+    return Object.entries(resp).map(([k,v])=>(
+      <div key={k} style={{padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f3f4f6",fontSize:13,marginBottom:4}}>
+        <span style={{fontWeight:600,color:"var(--purple)",marginRight:6}}>{k}:</span>
+        <span style={{color:"var(--gray-700)"}}>{typeof v==="number"?(ESCALA[v]||v):String(v)}</span>
+      </div>
+    ));
+  }
+  return (
+    <div style={{display:"grid",gridTemplateColumns:docPaciente&&docParceiro?"1fr 1fr":"1fr",gap:16}}>
+      {docPaciente&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:8}}>
+            🟣 {nomePac} ({docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})
+          </div>
+          {renderResp(docPaciente.respostas)}
+        </div>
+      )}
+      {docParceiro&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:12,color:"#ec4899",marginBottom:8}}>
+            🩷 {nomePar} ({docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})
+          </div>
+          {renderResp(docParceiro.respostas)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Respostas do diagnóstico — componente principal do admin ─────────────────
+function RespostasCasal({ pacienteId, parceiroId, parceiro, nomePaciente }) {
   const [respostas, setRespostas] = useState([]);
   const [loading,   setLoading]   = useState(true);
-  const [expandido, setExpandido] = useState(null);
+  const [expandido, setExpandido] = useState("inventario-bem-estar"); // abre o primeiro por padrão
 
-  const ATIVIDADES = {
-    "inventario-bem-estar":       "Inventário de Bem-Estar",
-    "roda-vida-relacionamento":   "Roda da Vida do Relacionamento",
-    "3-metas":                    "3 Metas do Relacionamento",
-    "quem-sou":                   "Quem Eu Sou no Relacionamento",
-    "o-que-quero":                "O Que Eu Quero e Não Quero Mais",
-  };
+  const ATIVIDADES = [
+    {id:"inventario-bem-estar",     titulo:"Inventário de Bem-Estar de Casais", emoji:"📊"},
+    {id:"roda-vida-relacionamento", titulo:"Roda da Vida do Relacionamento",    emoji:"🎯"},
+    {id:"3-metas",                  titulo:"Nossas 3 Metas",                    emoji:"🏆"},
+    {id:"quem-sou",                 titulo:"Quem Eu Sou no Relacionamento",     emoji:"🪞"},
+    {id:"o-que-quero",              titulo:"O Que Eu Quero e Não Quero Mais",   emoji:"✍️"},
+  ];
+
+  const nomePac = nomePaciente?.split(" ")[0]||"Paciente";
+  const nomePar = parceiro?.nome?.split(" ")[0]||"Parceiro(a)";
 
   useEffect(()=>{
     if(!pacienteId||!parceiroId){ setLoading(false); return; }
-    // Busca respostas do paciente atual: pacienteId==pacienteId, casalId==parceiroId
-    // Sem orderBy para evitar exigência de índice composto — ordenamos em JS
-    const p1 = db.collection("clinica_casais_respostas")
-      .where("pacienteId","==",pacienteId)
-      .where("casalId","==",parceiroId);
-    // Busca respostas do parceiro: pacienteId==parceiroId, casalId==pacienteId
-    const p2 = db.collection("clinica_casais_respostas")
-      .where("pacienteId","==",parceiroId)
-      .where("casalId","==",pacienteId);
-
-    let r1=[], r2=[], carregados=0;
-    const montar = ()=>{
-      carregados++;
-      if(carregados<2) return;
-      const todos = [...r1,...r2].sort((a,b)=>{
-        const ta = a.createdAt?.toDate?.()||new Date(0);
-        const tb = b.createdAt?.toDate?.()||new Date(0);
-        return tb-ta;
-      });
-      setRespostas(todos);
+    let r1=[], r2=[], n=0;
+    const done = ()=>{ n++; if(n<2) return;
+      setRespostas([...r1,...r2].sort((a,b)=>(b.createdAt?.toDate?.()||new Date(0))-(a.createdAt?.toDate?.()||new Date(0))));
       setLoading(false);
     };
-    const u1 = p1.onSnapshot(s=>{ r1=s.docs.map(d=>({id:d.id,...d.data()})); montar(); },()=>{ carregados++; setLoading(false); });
-    const u2 = p2.onSnapshot(s=>{ r2=s.docs.map(d=>({id:d.id,...d.data()})); montar(); },()=>{ carregados++; setLoading(false); });
+    const u1 = db.collection("clinica_casais_respostas")
+      .where("pacienteId","==",pacienteId).where("casalId","==",parceiroId)
+      .onSnapshot(s=>{ r1=s.docs.map(d=>({id:d.id,...d.data()})); done(); },()=>{ n++; setLoading(false); });
+    const u2 = db.collection("clinica_casais_respostas")
+      .where("pacienteId","==",parceiroId).where("casalId","==",pacienteId)
+      .onSnapshot(s=>{ r2=s.docs.map(d=>({id:d.id,...d.data()})); done(); },()=>{ n++; setLoading(false); });
     return ()=>{ u1(); u2(); };
-  },[pacienteId, parceiroId]);
+  },[pacienteId,parceiroId]);
 
-  if(loading) return <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>Carregando respostas...</div>;
+  if(loading) return <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>Carregando...</div>;
   if(respostas.length===0) return (
-    <div style={{background:"#f9fafb",borderRadius:10,padding:16,fontSize:13,color:"var(--text-muted)",textAlign:"center",marginTop:12}}>
+    <div style={{background:"#f9fafb",borderRadius:10,padding:20,fontSize:13,color:"var(--text-muted)",textAlign:"center"}}>
       Nenhuma resposta registrada ainda.
     </div>
   );
 
-  // Agrupa por atividade + autor
-  const grupos = {};
-  respostas.forEach(r=>{
-    const chave = r.atividadeId+"|"+r.pacienteId;
-    if(!grupos[chave]) grupos[chave] = [];
-    grupos[chave].push(r);
-  });
+  // Para cada atividade, pega o doc mais recente de cada pessoa
+  function getDoc(atividadeId, autorId) {
+    return respostas.find(r=>r.atividadeId===atividadeId&&r.pacienteId===autorId)||null;
+  }
 
   return (
-    <div style={{marginTop:16}}>
-      <div style={{fontWeight:600,fontSize:14,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
-        <Icon name="clipboard-list" size={16}/> Respostas do Diagnóstico ({respostas.length})
+    <div>
+      <div style={{display:"flex",gap:8,fontSize:12,marginBottom:16,flexWrap:"wrap"}}>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#7B00C4",marginRight:4}}/>
+          {nomePac}</span>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#ec4899",marginRight:4}}/>
+          {nomePar}</span>
       </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        {Object.entries(grupos).map(([chave, docs])=>{
-          const r = docs[0];
-          const ehPaciente = r.pacienteId===pacienteId;
-          const nomeAutor = ehPaciente ? "Paciente" : (parceiro?.nome?.split(" ")[0]||"Parceiro(a)");
-          const titulo = ATIVIDADES[r.atividadeId] || r.atividadeTitulo || r.atividadeId;
-          const data = r.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—";
-          const aberto = expandido===chave;
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {ATIVIDADES.map(atv=>{
+          const docPac = getDoc(atv.id, pacienteId);
+          const docPar = getDoc(atv.id, parceiroId);
+          const total  = (docPac?1:0)+(docPar?1:0);
+          if(total===0) return null;
+          const aberto = expandido===atv.id;
           return (
-            <div key={chave} style={{border:"1px solid var(--gray-200)",borderRadius:10,overflow:"hidden"}}>
-              <button onClick={()=>setExpandido(aberto?null:chave)}
-                style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:aberto?"#f5f3ff":"white",border:"none",cursor:"pointer",textAlign:"left"}}>
-                <span style={{width:28,height:28,borderRadius:"50%",background:ehPaciente?"#ede9fe":"#fce7f3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:ehPaciente?"var(--purple)":"#db2777",flexShrink:0}}>
-                  {nomeAutor[0]}
-                </span>
+            <div key={atv.id} style={{border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
+              <button onClick={()=>setExpandido(aberto?null:atv.id)}
+                style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+                  background:aberto?"#f5f3ff":"white",border:"none",cursor:"pointer",textAlign:"left"}}>
+                <span style={{fontSize:20}}>{atv.emoji}</span>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:600,fontSize:13}}>{titulo}</div>
-                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{nomeAutor} · {data} · {docs.length} resposta(s)</div>
+                  <div style={{fontWeight:600,fontSize:14}}>{atv.titulo}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                    {docPac&&<span style={{color:"#7B00C4",marginRight:10}}>✓ {nomePac}</span>}
+                    {docPar&&<span style={{color:"#ec4899"}}>✓ {nomePar}</span>}
+                    {!docPac&&<span style={{color:"var(--gray-400)",marginRight:10}}>○ {nomePac}</span>}
+                    {!docPar&&<span style={{color:"var(--gray-400)"}}>○ {nomePar}</span>}
+                  </div>
                 </div>
                 <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
               </button>
-              {aberto && (
-                <div style={{padding:"12px 14px",background:"#fafafa",borderTop:"1px solid var(--gray-100)"}}>
-                  {docs.map((doc,i)=>(
-                    <div key={doc.id} style={{marginBottom: i<docs.length-1?16:0}}>
-                      {i>0 && <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:8,paddingTop:8,borderTop:"1px dashed var(--gray-200)"}}>Resposta anterior</div>}
-                      {doc.respostas && typeof doc.respostas==="object" && (
-                        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                          {Object.entries(doc.respostas).map(([k,v])=>(
-                            <div key={k} style={{background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid var(--gray-100)"}}>
-                              <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,marginRight:8}}>{k}.</span>
-                              <span style={{fontSize:13,color:"var(--gray-700)"}}>{typeof v==="number"?["","Nunca/Raramente","Às vezes","Frequentemente","Sempre/Quase sempre"][v]||v:String(v)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {(!doc.respostas||typeof doc.respostas!=="object") && (
-                        <div style={{fontSize:13,color:"var(--text-muted)"}}>Sem conteúdo registrado.</div>
-                      )}
-                    </div>
-                  ))}
+              {aberto&&(
+                <div style={{padding:"16px",background:"#fafafa",borderTop:"1px solid var(--gray-100)"}}>
+                  {atv.id==="inventario-bem-estar"&&
+                    <BlocoInventario docPaciente={docPac} docParceiro={docPar} nomePac={nomePac} nomePar={nomePar}/>}
+                  {atv.id==="roda-vida-relacionamento"&&
+                    <BlocoRodaVida docPaciente={docPac} docParceiro={docPar} nomePac={nomePac} nomePar={nomePar}/>}
+                  {(atv.id==="3-metas"||atv.id==="quem-sou"||atv.id==="o-que-quero")&&
+                    <BlocoTexto docPaciente={docPac} docParceiro={docPar} nomePac={nomePac} nomePar={nomePar}/>}
                 </div>
               )}
             </div>
@@ -1220,6 +1387,7 @@ function AbaCasal({ paciente, pacientes }) {
             pacienteId={paciente.id}
             parceiroId={paciente.casalId}
             parceiro={parceiro}
+            nomePaciente={paciente.nome}
           />
         </div>
       )}
