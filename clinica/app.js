@@ -1371,9 +1371,10 @@ function AtivInventario({ user, casalId, onVoltar }) {
         if(s.docs.length>0) { setRespostas(s.docs[0].data().respostas||{}); setSalvo(true); }
       },()=>{});
     // Buscar resposta do parceiro
+    // O parceiro salva com: pacienteId=casalId (id do parceiro) e casalId=user.id (meu id)
     db.collection("clinica_casais_respostas")
-      .where("casalId","==",casalId)
       .where("pacienteId","==",casalId)
+      .where("casalId","==",user.id)
       .where("atividadeId","==","inventario-bem-estar")
       .orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{
@@ -1555,8 +1556,9 @@ function AtivRodaVida({ user, casalId, onVoltar }) {
       .where("casalId","==",casalId).where("pacienteId","==",user.id)
       .where("atividadeId","==","roda-vida-relacionamento").orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{ if(s.docs.length>0){setValores(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
+    // O parceiro salva com pacienteId=casalId e casalId=user.id
     db.collection("clinica_casais_respostas")
-      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("pacienteId","==",casalId).where("casalId","==",user.id)
       .where("atividadeId","==","roda-vida-relacionamento").orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{ if(s.docs.length>0) setValParceiro(s.docs[0].data().respostas||{}); },()=>{});
   },[casalId,user.id]);
@@ -1755,8 +1757,9 @@ function AtivQuemSou({ user, casalId, onVoltar }) {
       .where("casalId","==",casalId).where("pacienteId","==",user.id)
       .where("atividadeId","==","quem-sou").orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{ if(s.docs.length>0){setCampos(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
+    // O parceiro salva com pacienteId=casalId e casalId=user.id
     db.collection("clinica_casais_respostas")
-      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("pacienteId","==",casalId).where("casalId","==",user.id)
       .where("atividadeId","==","quem-sou").orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{ if(s.docs.length>0) setRespP(s.docs[0].data().respostas||{}); },()=>{});
   },[casalId,user.id]);
@@ -1836,8 +1839,9 @@ function AtivOQueQuero({ user, casalId, onVoltar }) {
       .where("casalId","==",casalId).where("pacienteId","==",user.id)
       .where("atividadeId","==","o-que-quero").orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{ if(s.docs.length>0){setCampos(s.docs[0].data().respostas||{});setSalvo(true);} },()=>{});
+    // O parceiro salva com pacienteId=casalId e casalId=user.id
     db.collection("clinica_casais_respostas")
-      .where("casalId","==",casalId).where("pacienteId","==",casalId)
+      .where("pacienteId","==",casalId).where("casalId","==",user.id)
       .where("atividadeId","==","o-que-quero").orderBy("createdAt","desc").limit(1)
       .onSnapshot(s=>{ if(s.docs.length>0) setRespP(s.docs[0].data().respostas||{}); },()=>{});
   },[casalId,user.id]);
