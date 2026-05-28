@@ -1067,18 +1067,34 @@ function BlocoInventario({ docPaciente, docParceiro, nomePac, nomePar }) {
             const vPar = catsPar?.[i];
             return (
               <div key={cat.label}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:5}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:6}}>
                   <span style={{color:cat.cor}}>{cat.label}</span>
-                  <span style={{display:"flex",gap:12,fontSize:12}}>
-                    {vPac&&<span style={{color:"#7B00C4"}}>{vPac.soma}/35</span>}
-                    {vPar&&<span style={{color:"#ec4899"}}>{vPar.soma}/35</span>}
-                  </span>
                 </div>
-                <div style={{position:"relative",height:12,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
-                  {vPac&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:vPac.pct+"%",background:"#7B00C4",borderRadius:20,opacity:0.85,transition:"width .5s"}}/>}
-                  {vPar&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:vPar.pct+"%",background:"#ec4899",borderRadius:20,opacity:0.5,transition:"width .5s"}}/>}
-                </div>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
+                {/* Barra paciente */}
+                {vPac&&(
+                  <div style={{marginBottom:4}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:11,color:"#7B00C4",minWidth:14,fontWeight:600}}>🟣</span>
+                      <div style={{flex:1,background:"#f3f4f6",borderRadius:20,height:10,overflow:"hidden"}}>
+                        <div style={{width:vPac.pct+"%",height:"100%",background:"#7B00C4",borderRadius:20,transition:"width .5s"}}/>
+                      </div>
+                      <span style={{fontSize:12,color:"#7B00C4",fontWeight:700,minWidth:36,textAlign:"right"}}>{vPac.soma}/35</span>
+                    </div>
+                  </div>
+                )}
+                {/* Barra parceiro */}
+                {vPar&&(
+                  <div style={{marginBottom:4}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:11,color:"#ec4899",minWidth:14,fontWeight:600}}>🩷</span>
+                      <div style={{flex:1,background:"#f3f4f6",borderRadius:20,height:10,overflow:"hidden"}}>
+                        <div style={{width:vPar.pct+"%",height:"100%",background:"#ec4899",borderRadius:20,transition:"width .5s"}}/>
+                      </div>
+                      <span style={{fontSize:12,color:"#ec4899",fontWeight:700,minWidth:36,textAlign:"right"}}>{vPar.soma}/35</span>
+                    </div>
+                  </div>
+                )}
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2,paddingLeft:22}}>
                   <span>Baixo (7)</span><span>Alto (35)</span>
                 </div>
               </div>
