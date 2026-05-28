@@ -5375,6 +5375,7 @@ const PILULAS_TCC = [
    conteudo:"Procrastinamos porque o cérebro antecipa a tarefa como enorme e desagradável.\n\nMas a aversão quase sempre é maior na antecipação do que na execução. A regra é: comprometa-se com apenas 5 minutos. Só. Após esses 5 minutos, você pode parar — com honra. Na maioria das vezes, você continua.\n\n🎯 Na prática:\nEscolha a tarefa mais temida da sua lista hoje. Configure um timer para 5 minutos. Comece agora. Só 5 minutos."},
   {emoji:"🌊",titulo:"Surfando a onda da emoção",descricao:"Como sentir uma emoção intensa sem agir por impulso",categoria:"mindfulness",tipo:"texto",
    conteudo:"Emoções intensas parecem eternas, mas têm um pico e depois diminuem — como uma onda do mar.\n\nO problema é que quando agimos por impulso no pico da onda, quase sempre nos arrependemos. A técnica de \"surfar a onda\" é: observe a emoção sem agir nela, sabendo que ela vai passar.\n\n🎯 Na prática:\nNa próxima emoção intensa, observe como uma onda: onde ela começa no corpo? Ela sobe? Quando chega ao pico? Você verá que em 10 a 20 minutos ela diminui naturalmente."},
+  {emoji:"🧩",titulo:"7 Distorções de Pensamento",descricao:"Os padrões de pensamento que distorcem sua realidade",categoria:"tcc",tipo:"visual",conteudo:""},
   {emoji:"🧠",titulo:"Desmontar o Circuito Cerebral da Ansiedade",descricao:"4 passos para retomar o comando da sua própria vida",categoria:"ansiedade",tipo:"visual",conteudo:""},
   {emoji:"🎛️",titulo:"Preocupação produtiva vs. improdutiva",descricao:"Como separar o que posso resolver do que está fora do controle",categoria:"ansiedade",tipo:"texto",
    conteudo:"Preocupação produtiva: tenho uma ação concreta que posso fazer agora para resolver isso.\n\nPreocupação improdutiva: o problema está fora do meu controle ou no futuro, e ficar ruminando só gasta energia. A pergunta-chave é: existe algo que eu possa FAZER agora?\n\n🎯 Na prática:\nListe suas 3 preocupações do momento. Para cada uma: existe uma ação concreta que você pode fazer hoje? Se sim, faça. Se não, escreva: \"Isso está fora do meu controle agora\" e pratique soltar."},
@@ -5619,6 +5620,327 @@ function PsicoDesmontarAnsiedade({cat}){
   );
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════
+// PSICOEDUCAÇÕES VISUAIS — TCC
+// ═══════════════════════════════════════════════════════════════════════
+
+function PsicoModeloABC({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔺</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>O que realmente gera suas emoções?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Não é o evento — é o que você acredita sobre ele.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:12}}>O Modelo ABC da TCC</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {l:"A","t":"Adversidade","e":"📌","d":"O evento que aconteceu — o fato puro, sem julgamento","c":"#7B00C4"},
+            {l:"B","t":"Belief (Crença)","e":"🧠","d":"O que você acredita, pensa ou interpreta sobre o evento","c":"#9a00e0"},
+            {l:"C","t":"Consequência","e":"💭","d":"A emoção e o comportamento que surgem da crença","c":"#b040e0"},
+          ].map(({l,t,e,d,c})=>(
+            <div key={l} style={{display:"flex",gap:12,alignItems:"flex-start",background:"white",borderRadius:10,padding:"10px 14px",border:"1px solid #e8c8ff"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,flexShrink:0}}>{l}</div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                  <span style={{fontSize:16}}>{e}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:"#3d006a"}}>{t}</span>
+                </div>
+                <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Exemplo prático</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px"}}>
+            <div style={{color:"#d9b3f5",fontSize:11,fontWeight:500,marginBottom:4}}>Situação A (mesmo evento)</div>
+            <div style={{color:"#f3e6ff",fontSize:11,lineHeight:1.4}}>Chefe critica seu trabalho</div>
+          </div>
+          <div style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px"}}>
+            <div style={{color:"#d9b3f5",fontSize:11,fontWeight:500,marginBottom:4}}>Situação A (mesmo evento)</div>
+            <div style={{color:"#f3e6ff",fontSize:11,lineHeight:1.4}}>Chefe critica seu trabalho</div>
+          </div>
+          <div style={{background:"rgba(249,115,22,0.2)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(249,115,22,0.3)"}}>
+            <div style={{color:"#fed7aa",fontSize:11,fontWeight:500,marginBottom:4}}>B: "Sou um fracasso"</div>
+            <div style={{color:"#fde68a",fontSize:11}}>C: Tristeza, desmotivação</div>
+          </div>
+          <div style={{background:"rgba(34,197,94,0.2)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(34,197,94,0.3)"}}>
+            <div style={{color:"#86efac",fontSize:11,fontWeight:500,marginBottom:4}}>B: "Posso melhorar"</div>
+            <div style={{color:"#86efac",fontSize:11}}>C: Motivação, foco</div>
+          </div>
+        </div>
+        <div style={{color:"#d9b3f5",fontSize:12,marginTop:10,textAlign:"center",fontStyle:"italic"}}>Mesmo A — B diferente — C completamente diferente</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense em uma situação que te deixou mal. Escreva o A (fato), o B (o que você acreditou) e o C (emoção). Agora invente um B diferente — o que mudaria?</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você não pode controlar tudo que acontece (A), mas pode trabalhar suas crenças (B) — e isso muda tudo no que você sente (C). 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoPensamentos({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>💭</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Seus pensamentos criam sua realidade emocional</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Não são as coisas em si — é o que você acredita sobre elas.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Como funciona o ciclo</div>
+        <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          {[["💭","Pensamento"],["💓","Emoção"],["🏃","Comportamento"],["🌍","Resultado"]].map(([e,t],i,arr)=>(
+            <React.Fragment key={t}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:28,marginBottom:4}}>{e}</div>
+                <div style={{fontSize:11,color:"#5a0090",fontWeight:500}}>{t}</div>
+              </div>
+              {i<arr.length-1&&<div style={{color:"#b040e0",fontSize:18,fontWeight:700}}>→</div>}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>O mesmo evento — perspectivas diferentes</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {p:""Fui ignorado — ninguém gosta de mim"",e:"Tristeza, isolamento",cor:"rgba(249,115,22,0.2)",bc:"rgba(249,115,22,0.4)"},
+            {p:""Fui ignorado — ela deve estar ocupada"",e:"Neutralidade, tranquilidade",cor:"rgba(34,197,94,0.2)",bc:"rgba(34,197,94,0.4)"},
+          ].map(({p,e,cor,bc})=>(
+            <div key={p} style={{background:cor,borderRadius:8,padding:"10px 12px",border:"1px solid "+bc}}>
+              <div style={{color:"#f3e6ff",fontSize:12,fontStyle:"italic",marginBottom:4}}>{p}</div>
+              <div style={{color:"#d9b3f5",fontSize:11}}>→ {e}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Hoje, quando notar uma emoção forte, pergunte: "Que pensamento veio antes disso?" Escreva num papel. Só observar já começa a mudar tudo.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Que história sua mente conta sobre você quando as coisas dão errado? Essa história é um fato — ou uma interpretação? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoPizzaResponsabilidade({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🍕</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você carrega mais culpa do que te pertence?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Dividir a responsabilidade libera peso — sem isentar ninguém.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Os dois extremos que nos prendem</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
+            <div style={{fontSize:22,marginBottom:6}}>😔</div>
+            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Autoculpa tóxica</div>
+            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"Tudo foi culpa minha." Você assume 100% de uma situação que tinha múltiplos fatores.</div>
+          </div>
+          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
+            <div style={{fontSize:22,marginBottom:6}}>😤</div>
+            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Vitimização</div>
+            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"A culpa é sempre do outro." Você se isenta completamente e perde o poder de mudar.</div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>A pizza da responsabilidade</div>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="70" fill="#9a00e0"/>
+            <path d="M80 80 L80 10 A70 70 0 0 1 140.6 45 Z" fill="#F97316"/>
+            <path d="M80 80 L140.6 45 A70 70 0 0 1 140.6 115 Z" fill="#0EA5E9"/>
+            <path d="M80 80 L140.6 115 A70 70 0 0 1 19.4 115 Z" fill="#22C55E"/>
+            <path d="M80 80 L19.4 115 A70 70 0 0 1 19.4 45 Z" fill="#EAB308"/>
+            <path d="M80 80 L19.4 45 A70 70 0 0 1 80 10 Z" fill="#EC4899"/>
+            <circle cx="80" cy="80" r="20" fill="#7B00C4"/>
+            <text x="80" y="84" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">VOCÊ</text>
+          </svg>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
+          {[["#F97316","Suas escolhas"],["#0EA5E9","O outro envolvido"],["#22C55E","As circunstâncias"],["#EAB308","O contexto"],["#EC4899","O acaso"]].map(([c,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:c,flexShrink:0}}/>
+              <span style={{fontSize:11,color:"#f3e6ff"}}>{l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense num problema recente. Divida: qual parte foi sua? Qual foi do outro? Qual foi das circunstâncias? Você ficará surpreso com o quanto não precisa carregar.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você costuma assumir mais ou menos responsabilidade do que te pertence? Qual dos dois extremos é mais comum em você? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoFatosInterpretacoes({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔍</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você acredita em tudo que sua mente diz?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Separar fatos de interpretações é uma das habilidades mais poderosas da TCC.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Qual é a diferença?</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"2px solid #7B00C4"}}>
+            <div style={{color:"#3d006a",fontSize:12,fontWeight:600,marginBottom:6}}>📌 Fato</div>
+            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>O que aconteceu objetivamente. Pode ser verificado. Qualquer pessoa que estivesse lá veria a mesma coisa.</div>
+          </div>
+          <div style={{background:"#fff7ed",borderRadius:10,padding:"12px 14px",border:"2px solid #F97316"}}>
+            <div style={{color:"#9a3412",fontSize:12,fontWeight:600,marginBottom:6}}>🧠 Interpretação</div>
+            <div style={{color:"#7c2d12",fontSize:11,lineHeight:1.5}}>O significado que sua mente atribui ao fato. Depende da sua história, crenças e estado emocional.</div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Exemplos do dia a dia</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {f:"Ela não respondeu minha mensagem",i:"Deve estar com raiva de mim"},
+            {f:"Meu chefe não sorriu para mim",i:"Devo ter feito algo errado"},
+            {f:"Fui reprovado na prova",i:"Não sou inteligente o suficiente"},
+          ].map(({f,i})=>(
+            <div key={f} style={{background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px"}}>
+              <div style={{color:"#f3e6ff",fontSize:11,marginBottom:3}}><span style={{color:"#d9b3f5",fontWeight:500}}>Fato:</span> {f}</div>
+              <div style={{color:"#fde68a",fontSize:11}}><span style={{color:"#fde68a",fontWeight:500}}>Interpretação:</span> {i}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pegue uma situação que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOCÊ acrescentou com sua interpretação? Escreva os dois lados.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Quantas vezes sua mente criou uma história sobre alguém — e você sofreu por algo que nunca aconteceu de verdade? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoSempreNunca({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>∞</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>"Eu SEMPRE faço isso errado" — isso é verdade?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>A supergeneralização transforma eventos pontuais em verdades permanentes.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>O que é supergeneralização?</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:12}}>É quando transformamos um evento específico em uma regra geral sobre nós, os outros ou o mundo. Uma experiência ruim vira uma "verdade eterna".</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {a:"Errei uma vez",b:"SEMPRE erro tudo"},
+            {a:"Ela não me ouviu hoje",b:"NUNCA me ouve"},
+            {a:"Não consegui dormir ontem",b:"NUNCA durmo bem"},
+          ].map(({a,b})=>(
+            <div key={a} style={{display:"flex",alignItems:"center",gap:8,background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid #e8c8ff"}}>
+              <span style={{fontSize:11,color:"#5a0090",flex:1}}>{a}</span>
+              <span style={{color:"#F97316",fontWeight:700,fontSize:14}}>→</span>
+              <span style={{fontSize:11,color:"#F97316",fontWeight:500,flex:1}}>{b}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Como quebrar a generalização</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {de:"SEMPRE / NUNCA",para:"Desta vez / Às vezes / Com frequência"},
+            {de:"TODO MUNDO",para:"Algumas pessoas / Nesse contexto"},
+            {de:"SOU assim",para:"Agi assim nessa situação"},
+          ].map(({de,para})=>(
+            <div key={de} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px"}}>
+              <span style={{fontSize:11,color:"#fde68a",fontWeight:500,flex:1}}>{de}</span>
+              <span style={{color:"#86efac",fontWeight:700}}>→</span>
+              <span style={{fontSize:11,color:"#86efac",flex:1}}>{para}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Quando notar um "sempre" ou "nunca" no seu pensamento, troque por: "desta vez", "às vezes", "com frequência". Observe como a frase — e a emoção — mudam completamente.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Que "verdades permanentes" você carrega sobre si mesmo que na verdade foram apenas momentos passageiros? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function Psico7Distorcoes({cat}){
+  const distorcoes = [
+    {e:"📢",t:"Generalização Excessiva",d:"Tirar conclusões amplas com base em uma única experiência negativa.",ex:""Eu sempre falho.""},
+    {e:"🎭",t:"Pensamento Dicotômico",d:"Ver as coisas como preto ou branco, sem considerar outras opções — o famoso 8 ou 80.",ex:""Ou faço perfeito ou não faço.""},
+    {e:"👥",t:"Leitura da Mente",d:"Presumir que sabe o que os outros estão pensando ou sentindo, sem evidências.",ex:""Ele está com raiva de mim.""},
+    {e:"👤",t:"Culpa Pessoal",d:"Atribuir a si mesmo a culpa por tudo que acontece de ruim.",ex:""Estraguei tudo mesmo.""},
+    {e:"💔",t:"Raciocínio Emocional",d:"Tomar decisões com base em emoções em vez de fatos ou lógica.",ex:""Sinto que vai dar errado, então vai.""},
+    {e:"🏆",t:"Desqualificação do Positivo",d:"Nomear eventos positivos como sorte ou coincidência, nunca como conquista.",ex:""Foi pura sorte.""},
+    {e:"🌪️",t:"Catastrofização",d:"Supor que as coisas sempre serão as piores possíveis, sem considerar outras saídas.",ex:""Não vai dar certo de jeito nenhum.""},
+  ];
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧩</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Sua mente te engana — e você nem percebe</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>As 7 distorções de pensamento mais comuns que afetam como você sente e age.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Distorções cognitivas são padrões de pensamento que levam a conclusões imprecisas e negativas. Eles se repetem na nossa mente, afetando nossa interpretação da realidade, nossos sentimentos e nossas reações.</div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+        {distorcoes.map(({e,t,d,ex},i)=>(
+          <div key={t} style={{padding:"12px 20px",borderBottom:"1px solid #e8c8ff",background:i%2===0?"#f9f0ff":"white",display:"flex",gap:12,alignItems:"flex-start"}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{e}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#3d006a",marginBottom:3}}>{t}</div>
+              <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5,marginBottom:4}}>{d}</div>
+              <div style={{fontSize:11,color:"#9a00e0",fontStyle:"italic",background:"#f3e6ff",borderRadius:6,padding:"3px 8px",display:"inline-block"}}>{ex}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Qual dessas distorções aparece mais nos seus pensamentos? Reconhecer o padrão é o primeiro passo para mudar a narrativa interna. 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
 // Mapa de visualizações
 const PSICO_VISUAIS = {
   "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
@@ -5626,6 +5948,12 @@ const PSICO_VISUAIS = {
   "Eustresse vs. distresse": PsicoEustresse,
   "O ciclo da ansiedade": PsicoCicloAnsiedade,
   "Desmontar o Circuito Cerebral da Ansiedade": PsicoDesmontarAnsiedade,
+  "O modelo ABC na prática": PsicoModeloABC,
+  "O poder dos pensamentos": PsicoPensamentos,
+  "A pizza da responsabilidade": PsicoPizzaResponsabilidade,
+  "Fatos vs. interpretações": PsicoFatosInterpretacoes,
+  "O perigo do sempre e nunca": PsicoSempreNunca,
+  "7 Distorções de Pensamento": Psico7Distorcoes,
 };
 
 const CATS_PSICOEDUCACAO = {
@@ -5672,7 +6000,7 @@ function AbaPsicoeducacao() {
   }
 
   async function popularPilulas() {
-    if (!confirm(`Isso vai adicionar as 17 pílulas TCC ao banco. Continuar?`)) return;
+    if (!confirm(`Isso vai adicionar as pílulas TCC ao banco. Continuar?`)) return;
     setSalvando(true);
     try {
       for (const p of PILULAS_TCC) {
@@ -5680,8 +6008,23 @@ function AbaPsicoeducacao() {
           ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
-      alert("✓ 17 pílulas TCC adicionadas com sucesso!");
+      alert("✓ Pílulas TCC adicionadas com sucesso!");
     } catch(e) { alert("Erro ao popular: " + e.message); }
+    setSalvando(false);
+  }
+
+  async function sincronizarNovas() {
+    setSalvando(true);
+    try {
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const titulosExistentes = snap.docs.map(d=>d.data().titulo);
+      const novas = PILULAS_TCC.filter(p=>!titulosExistentes.includes(p.titulo));
+      if(novas.length===0){alert("Todas as psicoeducações já estão no banco!");setSalvando(false);return;}
+      for(const p of novas){
+        await db.collection("clinica_psicoeducacao").add({...p,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      alert("✓ "+novas.length+" nova(s) psicoeducação(ões) adicionada(s): "+novas.map(p=>p.titulo).join(", "));
+    } catch(e){alert("Erro: "+e.message);}
     setSalvando(false);
   }
 
@@ -5722,7 +6065,12 @@ function AbaPsicoeducacao() {
         <div style={{display:"flex",gap:8}}>
           {itens.length===0&&(
             <button className="btn btn-outline" style={{fontSize:12}} onClick={popularPilulas} disabled={salvando}>
-              <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular 17 pílulas TCC"}
+              <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={sincronizarNovas} disabled={salvando}>
+              <Icon name="refresh-cw" size={14}/> {salvando?"Sincronizando...":"Sincronizar novas"}
             </button>
           )}
           <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
