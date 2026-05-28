@@ -1036,7 +1036,6 @@ function PerfilPaciente({ paciente, onVoltar, pacientes }) {
   const ABAS = [
     {id:"perfil",label:"Perfil",icon:"user"},
     {id:"modulos",label:"Modulos",icon:"toggle-right"},
-    {id:"ferramentas",label:"Ferramentas",icon:"wrench"},
     {id:"metas",label:"Metas",icon:"target"},
     {id:"laudos",label:"Laudos",icon:"file-text"},
     {id:"evolucao",label:"Evolucao",icon:"trending-up"},
@@ -1054,7 +1053,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes }) {
           <Icon name="trash-2" size={15}/> Excluir paciente
         </button>
       </div>
-      <div style={{display:"flex",gap:4,marginBottom:24,flexWrap:"wrap",borderBottom:"1px solid var(--gray-200)"}}>
+      <div style={{display:"flex",gap:4,marginBottom:24,overflowX:"auto",borderBottom:"1px solid var(--gray-200)",flexShrink:0,WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
         {ABAS.map(a=>(
           <button key={a.id} onClick={()=>setAba(a.id)} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 16px",border:"none",background:"none",fontSize:14,cursor:"pointer",fontFamily:"var(--font-body)",color:aba===a.id?"var(--purple)":"var(--gray-600)",borderBottom:aba===a.id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===a.id?500:400,transition:"all .2s",marginBottom:-1}}>
             <Icon name={a.icon} size={15}/>{a.label}
@@ -1063,7 +1062,6 @@ function PerfilPaciente({ paciente, onVoltar, pacientes }) {
       </div>
       {aba==="perfil"     &&<AbaPerfil      paciente={paciente} pacientes={pacientes}/>}
       {aba==="modulos"    &&<AbaModulos     paciente={paciente}/>}
-      {aba==="ferramentas"&&<AbaFerramentas paciente={paciente}/>}
       {aba==="metas"      &&<AbaMetas       paciente={paciente}/>}
       {aba==="laudos"     &&<EmBreve titulo="Laudos" subtitulo="Etapa 10"/>}
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
@@ -1384,7 +1382,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           <div style={{fontFamily:"Dancing Script, cursive",fontSize:22,color:"white",fontWeight:600}}>Controle de Atendimento Terapêutico</div>
           <img src="../logo-transparente.png" style={{height:36,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
         </div>
-        <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,borderBottom:"1px solid var(--gray-100)"}}>
+        <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,borderBottom:"1px solid var(--gray-100)"}}>
           {[["Nome",pacEfetivo?.nome||"—"],["Início",pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"],["Horário",pacotesPac[0]?.horario||"—"],["Recorrência",pacotesPac[0]?.recorrencia||"—"]].map(([l,v])=>(
             <div key={l}><div style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>{l}</div><div style={{fontWeight:600,fontSize:13}}>{v}</div></div>
           ))}
@@ -1868,7 +1866,7 @@ function FinanceiroClinica() {
       </div>
 
       {/* Métricas clicáveis */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
         {/* Card Recebido — clicável mês/ano */}
         <div onClick={()=>setPeriodoCard(p=>p==="mes"?"ano":"mes")}
           style={{background:totalRecebidoPeriodo>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:totalRecebidoPeriodo>=0?"#6ee7b7":"#fca5a5",transition:"all .2s",position:"relative"}}>
@@ -2640,7 +2638,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
       </div>
 
       {/* Cards métricas */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
         <div style={{background:saldoMes>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",border:"1.5px solid",borderColor:saldoMes>=0?"#6ee7b7":"#fca5a5"}}>
           <div style={{fontSize:11,fontWeight:600,color:saldoMes>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo ({mesLabel(mesFiltroEfetivo)})</div>
           <div style={{fontSize:20,fontWeight:800,color:saldoMes>=0?"#059669":"#dc2626"}}>{fmt(saldoMes)}</div>
@@ -5670,7 +5668,7 @@ function Laudos() {
         <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Novo Laudo</button>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:24}}>
         {[["Rascunho",totalRascunho,"#b45309","#fef3c7"],["Enviado ao Paciente",totalEnviado,"#065f46","#d1fae5"],["Total",laudos.length,"#7B00C4","var(--purple-soft)"]].map(([l,n,cor,bg])=>(
           <div key={l} className="metric-card" style={{textAlign:"center",background:bg}}>
             <div className="metric-value" style={{fontSize:28,color:cor}}>{n}</div>
@@ -6399,7 +6397,7 @@ function Agenda() {
       </div>
 
       {/* Métricas rápidas */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:20}}>
         {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(new Date().toISOString().slice(0,7))).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
           <div key={l} style={{background:bg,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
             <div style={{fontSize:24,fontWeight:800,color:cor}}>{n}</div>
@@ -6648,7 +6646,7 @@ function App() {
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
-    <div>
+    <div style={{maxWidth:"100vw",overflowX:"hidden"}}>
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} notifProps={notifProps}/>
       <div className="header-mobile"><div className="header-mobile-logo">Administracao</div><button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button></div>
       <div className="main-content">
@@ -7438,7 +7436,7 @@ function FunilLeads({ user }) {
       <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
 
       {/* Kanban */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:12,overflowX:"auto",minWidth:0}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12,minWidth:0}}>
         {COLUNAS_FUNIL.map(col=>{
           const cards = leadsColuna(col.id);
           const isOver = dragOver===col.id;
@@ -7793,7 +7791,7 @@ function DashboardPerformance({ user }) {
       </div>
 
       {/* Cards de resumo */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:24}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}>
         {[
           {label:"Leads Recebidos",    valor:totalLeads,           icon:"users",         cor:"#7B00C4"},
           {label:"Convertidos",        valor:totalConvertidos,     icon:"check-circle",  cor:"#16a34a"},
@@ -8200,7 +8198,7 @@ function DashboardMarketing({ user }) {
       </div>
 
       {/* Cards resumo */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16,marginBottom:28}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:16,marginBottom:28}}>
         {[
           {label:"Total de Leads",   valor:total,      icon:"users",        cor:"#7B00C4"},
           {label:"Em andamento",     valor:inProgress,  icon:"clock",        cor:"#0891b2"},
