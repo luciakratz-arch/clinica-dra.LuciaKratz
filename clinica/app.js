@@ -609,11 +609,11 @@ function PainelIndividual({ user, setTab }) {
     const modId = FERRAMENTA_PARA_MOD[id];
     if (modId && config[modId]?.ativo) {
       const fts = config[modId]?.ferramentas;
-      if (!fts || fts.length===0) return true; // módulo ativo sem restrição de ferramenta
+      if (!fts || !Array.isArray(fts) || fts.length===0) return true;
       return fts.includes(id);
     }
     // Formato antigo: verifica modulosAtivos
-    return modulosAtivosLegacy.includes(id);
+    return Array.isArray(modulosAtivosLegacy) && modulosAtivosLegacy.includes(id);
   }
   const modulos = user.modulosAtivos || [];
   const todasFerramentas = [
