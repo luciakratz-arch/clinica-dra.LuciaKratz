@@ -1637,13 +1637,14 @@ function FinanceiroClinica() {
   const [modalExcluir, setModalExcluir] = useState(null);
   const [modalExcluirLanc, setModalExcluirLanc] = useState(null);
   const [aba, setAba] = useState("lancamentos");
+  const [buscaPac, setBuscaPac] = useState("");
 
   const FORMAS = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Outro"];
   const RECORRENCIAS = ["Semanal (1x/semana)","2x por semana","3x por semana","Quinzenal","Mensal","Sessão única"];
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:""});
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -2179,7 +2180,6 @@ function FinanceiroClinica() {
           ):(()=>{
             // Agrupar pacotes por paciente
             const pacientesComPacote = [...new Set(pacotes.map(p=>p.pacienteId))];
-            const [buscaPac, setBuscaPac] = React.useState("");
             const pacientesVisiveis = buscaPac.trim()
               ? pacientesComPacote.filter(id=>{
                   const pac = pacientes.find(p=>p.id===id);
