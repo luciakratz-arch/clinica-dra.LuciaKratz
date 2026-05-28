@@ -6616,10 +6616,10 @@ function Agenda() {
               </div>
             );
           })}
-        </div>
+        </div></div>
 
-        </div></div>{/* Períodos */}
-        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+        {/* Períodos */}
+        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:4}}>
         {[
           {label:"☀️ Manhã",   range:["06:00","12:00"], bg:"#fffbeb"},
           {label:"🌤️ Tarde",   range:["12:00","18:00"], bg:"#f0f9ff"},
