@@ -537,7 +537,7 @@ function DashboardAdmin({ user }) {
         {/* Acumulado ano */}
         <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:16}}>
           <div style={{fontWeight:600,marginBottom:12,fontSize:14,color:"var(--text-muted)"}}>Acumulado {anoAtual}</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8}}>
             <div style={{padding:"12px 16px",borderRadius:10,background:"var(--gray-50)",border:"1px solid var(--gray-200)"}}>
               <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>Receitas {anoAtual}</div>
               <div style={{fontWeight:700,fontSize:18,color:"#059669"}}>{fmt(recAno)}</div>
@@ -1899,7 +1899,7 @@ function FinanceiroClinica() {
       </div>
 
       {/* Abas */}
-      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
+      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none",flexShrink:0}}>
         {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"]].map(([id,lbl,ic])=>(
           <button key={id} onClick={()=>setAba(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:aba===id?"var(--purple)":"var(--gray-600)",borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
             <Icon name={ic} size={15}/>{lbl}
@@ -5450,8 +5450,8 @@ function RecursosTerapeuticos() {
   if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)}/>;
   return (
     <div>
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+        <div style={{minWidth:0,flex:1}}>
           <div className="page-title">Recursos Terapeuticos</div>
           <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
         </div>
@@ -6376,12 +6376,12 @@ function Agenda() {
   return (
     <div>
       {/* Header */}
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+        <div style={{minWidth:0}}>
           <div className="page-title">Agenda</div>
           <div className="page-subtitle">{sessoes.filter(s=>s.status==="agendado"||s.status==="confirmado").length} sessões agendadas</div>
         </div>
-        <div style={{display:"flex",gap:8}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
           <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
             className="btn btn-ghost" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
             <Icon name="external-link" size={13}/> Doctoralia
