@@ -1024,15 +1024,14 @@ function RespostasCasal({ pacienteId, parceiroId, parceiro }) {
   useEffect(()=>{
     if(!pacienteId||!parceiroId){ setLoading(false); return; }
     // Busca respostas do paciente atual: pacienteId==pacienteId, casalId==parceiroId
+    // Sem orderBy para evitar exigência de índice composto — ordenamos em JS
     const p1 = db.collection("clinica_casais_respostas")
       .where("pacienteId","==",pacienteId)
-      .where("casalId","==",parceiroId)
-      .orderBy("createdAt","desc");
+      .where("casalId","==",parceiroId);
     // Busca respostas do parceiro: pacienteId==parceiroId, casalId==pacienteId
     const p2 = db.collection("clinica_casais_respostas")
       .where("pacienteId","==",parceiroId)
-      .where("casalId","==",pacienteId)
-      .orderBy("createdAt","desc");
+      .where("casalId","==",pacienteId);
 
     let r1=[], r2=[], carregados=0;
     const montar = ()=>{
