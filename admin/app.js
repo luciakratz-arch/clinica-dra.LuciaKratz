@@ -2183,24 +2183,37 @@ function FinanceiroClinica() {
             const pacientesVisiveis = buscaPac.trim()
               ? pacientesComPacote.filter(id=>{
                   const pac = pacientes.find(p=>p.id===id);
-                  const nome = (pac?.nome||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-                  return nome.includes(buscaPac.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""));
+                  const inicial = (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+                  return inicial === buscaPac;
                 })
               : pacientesComPacote;
             return (
               <div style={{display:"flex",flexDirection:"column",gap:28}}>
-                {/* Filtro de busca */}
-                <div style={{position:"relative",marginBottom:4}}>
-                  <input
-                    value={buscaPac}
-                    onChange={e=>setBuscaPac(e.target.value)}
-                    placeholder="🔍 Buscar paciente..."
-                    style={{width:"100%",padding:"10px 16px 10px 40px",borderRadius:10,border:"1.5px solid #e8c8ff",fontSize:14,outline:"none",boxSizing:"border-box",background:"#faf5ff"}}
-                  />
-                  <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#b040e0",pointerEvents:"none"}}>🔍</span>
-                  {buscaPac&&<button onClick={()=>setBuscaPac("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"#9a00e0"}}>✕</button>}
-                  {buscaPac&&<div style={{fontSize:12,color:"#7B00C4",marginTop:4}}>{pacientesVisiveis.length} paciente(s) encontrado(s)</div>}
-                </div>
+                {/* Índice A-Z */}
+                {(()=>{
+                  const letrasComPac = [...new Set(pacientesComPacote.map(id=>{
+                    const pac = pacientes.find(p=>p.id===id);
+                    return (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+                  }))].sort();
+                  return (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:12}}>
+                      {buscaPac&&<button onClick={()=>setBuscaPac("")}
+                        style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid #7B00C4",background:"#7B00C4",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        Todos
+                      </button>}
+                      {letrasComPac.map(letra=>(
+                        <button key={letra} onClick={()=>setBuscaPac(buscaPac===letra?"":letra)}
+                          style={{width:32,height:32,borderRadius:"50%",border:"1.5px solid",
+                            borderColor:buscaPac===letra?"#7B00C4":"#e8c8ff",
+                            background:buscaPac===letra?"#7B00C4":"white",
+                            color:buscaPac===letra?"white":"#7B00C4",
+                            fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                          {letra}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
                 {pacientesVisiveis.map(pacId=>{
                   const pac = pacientes.find(p=>p.id===pacId);
                   const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
