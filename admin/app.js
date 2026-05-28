@@ -1007,6 +1007,121 @@ function AbaEvolucao({ paciente }) {
 }
 
 // ABA CASAL
+// ── Respostas do diagnóstico — lidas pelo admin ──────────────────────────────
+function RespostasCasal({ pacienteId, parceiroId, parceiro }) {
+  const [respostas, setRespostas] = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [expandido, setExpandido] = useState(null);
+
+  const ATIVIDADES = {
+    "inventario-bem-estar":       "Inventário de Bem-Estar",
+    "roda-vida-relacionamento":   "Roda da Vida do Relacionamento",
+    "3-metas":                    "3 Metas do Relacionamento",
+    "quem-sou":                   "Quem Eu Sou no Relacionamento",
+    "o-que-quero":                "O Que Eu Quero e Não Quero Mais",
+  };
+
+  useEffect(()=>{
+    if(!pacienteId||!parceiroId){ setLoading(false); return; }
+    // Busca respostas do paciente atual: pacienteId==pacienteId, casalId==parceiroId
+    const p1 = db.collection("clinica_casais_respostas")
+      .where("pacienteId","==",pacienteId)
+      .where("casalId","==",parceiroId)
+      .orderBy("createdAt","desc");
+    // Busca respostas do parceiro: pacienteId==parceiroId, casalId==pacienteId
+    const p2 = db.collection("clinica_casais_respostas")
+      .where("pacienteId","==",parceiroId)
+      .where("casalId","==",pacienteId)
+      .orderBy("createdAt","desc");
+
+    let r1=[], r2=[], carregados=0;
+    const montar = ()=>{
+      carregados++;
+      if(carregados<2) return;
+      const todos = [...r1,...r2].sort((a,b)=>{
+        const ta = a.createdAt?.toDate?.()||new Date(0);
+        const tb = b.createdAt?.toDate?.()||new Date(0);
+        return tb-ta;
+      });
+      setRespostas(todos);
+      setLoading(false);
+    };
+    const u1 = p1.onSnapshot(s=>{ r1=s.docs.map(d=>({id:d.id,...d.data()})); montar(); },()=>{ carregados++; setLoading(false); });
+    const u2 = p2.onSnapshot(s=>{ r2=s.docs.map(d=>({id:d.id,...d.data()})); montar(); },()=>{ carregados++; setLoading(false); });
+    return ()=>{ u1(); u2(); };
+  },[pacienteId, parceiroId]);
+
+  if(loading) return <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>Carregando respostas...</div>;
+  if(respostas.length===0) return (
+    <div style={{background:"#f9fafb",borderRadius:10,padding:16,fontSize:13,color:"var(--text-muted)",textAlign:"center",marginTop:12}}>
+      Nenhuma resposta registrada ainda.
+    </div>
+  );
+
+  // Agrupa por atividade + autor
+  const grupos = {};
+  respostas.forEach(r=>{
+    const chave = r.atividadeId+"|"+r.pacienteId;
+    if(!grupos[chave]) grupos[chave] = [];
+    grupos[chave].push(r);
+  });
+
+  return (
+    <div style={{marginTop:16}}>
+      <div style={{fontWeight:600,fontSize:14,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+        <Icon name="clipboard-list" size={16}/> Respostas do Diagnóstico ({respostas.length})
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {Object.entries(grupos).map(([chave, docs])=>{
+          const r = docs[0];
+          const ehPaciente = r.pacienteId===pacienteId;
+          const nomeAutor = ehPaciente ? "Paciente" : (parceiro?.nome?.split(" ")[0]||"Parceiro(a)");
+          const titulo = ATIVIDADES[r.atividadeId] || r.atividadeTitulo || r.atividadeId;
+          const data = r.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—";
+          const aberto = expandido===chave;
+          return (
+            <div key={chave} style={{border:"1px solid var(--gray-200)",borderRadius:10,overflow:"hidden"}}>
+              <button onClick={()=>setExpandido(aberto?null:chave)}
+                style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:aberto?"#f5f3ff":"white",border:"none",cursor:"pointer",textAlign:"left"}}>
+                <span style={{width:28,height:28,borderRadius:"50%",background:ehPaciente?"#ede9fe":"#fce7f3",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:ehPaciente?"var(--purple)":"#db2777",flexShrink:0}}>
+                  {nomeAutor[0]}
+                </span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:13}}>{titulo}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{nomeAutor} · {data} · {docs.length} resposta(s)</div>
+                </div>
+                <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
+              </button>
+              {aberto && (
+                <div style={{padding:"12px 14px",background:"#fafafa",borderTop:"1px solid var(--gray-100)"}}>
+                  {docs.map((doc,i)=>(
+                    <div key={doc.id} style={{marginBottom: i<docs.length-1?16:0}}>
+                      {i>0 && <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:8,paddingTop:8,borderTop:"1px dashed var(--gray-200)"}}>Resposta anterior</div>}
+                      {doc.respostas && typeof doc.respostas==="object" && (
+                        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                          {Object.entries(doc.respostas).map(([k,v])=>(
+                            <div key={k} style={{background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid var(--gray-100)"}}>
+                              <span style={{fontSize:11,color:"var(--purple)",fontWeight:600,marginRight:8}}>{k}.</span>
+                              <span style={{fontSize:13,color:"var(--gray-700)"}}>{typeof v==="number"?["","Nunca/Raramente","Às vezes","Frequentemente","Sempre/Quase sempre"][v]||v:String(v)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {(!doc.respostas||typeof doc.respostas!=="object") && (
+                        <div style={{fontSize:13,color:"var(--text-muted)"}}>Sem conteúdo registrado.</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AbaCasal({ paciente, pacientes }) {
   const [casalId, setCasalId] = useState(paciente.casalId||"");
   const [salvando, setSalvando] = useState(false);
@@ -1065,28 +1180,48 @@ function AbaCasal({ paciente, pacientes }) {
   }
 
   return (
-    <div className="card">
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><Icon name="heart" size={18}/><div style={{fontWeight:600}}>Vinculo de Casal</div></div>
-      {paciente.casalId&&parceiro?(
-        <div>
-          <div style={{background:"var(--purple-bg)",borderRadius:10,padding:16,marginBottom:16}}>
-            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:4}}>Parceiro(a) vinculado(a):</div>
-            <div style={{fontWeight:600,fontSize:16}}>{parceiro.nome}</div>
-            <div style={{fontSize:13,color:"var(--text-muted)"}}>{parceiro.email}</div>
+    <div>
+      <div className="card" style={{marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><Icon name="heart" size={18}/><div style={{fontWeight:600}}>Vínculo de Casal</div></div>
+        {paciente.casalId&&parceiro?(
+          <div>
+            <div style={{background:"var(--purple-bg)",borderRadius:10,padding:16,marginBottom:16}}>
+              <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:4}}>Parceiro(a) vinculado(a):</div>
+              <div style={{fontWeight:600,fontSize:16}}>{parceiro.nome}</div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>{parceiro.email}</div>
+            </div>
+            <button className="btn btn-danger" onClick={desvincular} disabled={salvando}><Icon name="x" size={15}/> Desvincular casal</button>
           </div>
-          <button className="btn btn-danger" onClick={desvincular} disabled={salvando}><Icon name="x" size={15}/> Desvincular casal</button>
-        </div>
-      ):(
-        <div>
-          <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Este paciente nao esta vinculado a um casal em terapia.</p>
-          <div className="form-group" style={{marginBottom:16}}>
-            <label className="form-label">Selecionar Parceiro(a)</label>
-            <select className="form-input" value={casalId} onChange={e=>setCasalId(e.target.value)}>
-              <option value="">Selecione um paciente...</option>
-              {outros.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
+        ):(
+          <div>
+            <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Este paciente nao esta vinculado a um casal em terapia.</p>
+            <div className="form-group" style={{marginBottom:16}}>
+              <label className="form-label">Selecionar Parceiro(a)</label>
+              <select className="form-input" value={casalId} onChange={e=>setCasalId(e.target.value)}>
+                <option value="">Selecione um paciente...</option>
+                {outros.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <button className="btn btn-purple" onClick={vincular} disabled={salvando}><Icon name="heart" size={15}/> Associar como Casal</button>
           </div>
-          <button className="btn btn-purple" onClick={vincular} disabled={salvando}><Icon name="heart" size={15}/> Associar como Casal</button>
+        )}
+      </div>
+
+      {/* Respostas do diagnóstico — só aparece se o casal está vinculado */}
+      {paciente.casalId && parceiro && (
+        <div className="card">
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+            <Icon name="clipboard-list" size={18}/>
+            <div style={{fontWeight:600}}>Diagnóstico e Atividades do Casal</div>
+          </div>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>
+            Respostas preenchidas por {paciente.nome.split(" ")[0]} e {parceiro.nome.split(" ")[0]} no portal
+          </div>
+          <RespostasCasal
+            pacienteId={paciente.id}
+            parceiroId={paciente.casalId}
+            parceiro={parceiro}
+          />
         </div>
       )}
     </div>
