@@ -972,15 +972,23 @@ function AbaMetas({ paciente }) {
 // ABA EVOLUCAO
 function AbaEvolucao({ paciente }) {
   const [humor, setHumor] = useState([]);
+  const [atividades, setAtividades] = useState([]);
   useEffect(()=>{
-    const unsub = db.collection("clinica_humor")
+    const u1 = db.collection("clinica_humor")
       .where("pacienteId","==",paciente.id)
       .onSnapshot(snap=>{
         const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
         docs.sort((a,b)=>{ const da=a.data||""; const db2=b.data||""; return da<db2?1:da>db2?-1:0; });
         setHumor(docs.slice(0,30));
       },()=>{});
-    return unsub;
+    const u2 = db.collection("clinica_atividades")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setAtividades(docs);
+      },()=>{});
+    return ()=>{ u1(); u2(); };
   },[paciente.id]);
   const media = humor.length?(humor.reduce((a,h)=>a+(h.valor||0),0)/humor.length).toFixed(1):"—";
   return (
@@ -1007,6 +1015,31 @@ function AbaEvolucao({ paciente }) {
           ))
         )}
       </div>
+
+      {/* Atividades de relaxamento */}
+      {atividades.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>🧘 Atividades de Relaxamento</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{atividades.length} registro(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {atividades.slice(0,10).map(a=>(
+              <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:10,border:"1px solid var(--gray-100)",background:"#fafafa"}}>
+                <span style={{fontSize:24}}>{a.ferramenta==="respiracao"?"🫁":"💆"}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:13,textTransform:"capitalize"}}>{a.ferramenta==="respiracao"?"Respiração 4-7-8":"Relaxamento Muscular"}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{a.data} às {a.hora}</div>
+                </div>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontWeight:700,fontSize:18,color:a.nota>=7?"#16a34a":a.nota>=4?"#d97706":"#dc2626"}}>{a.nota}/10</div>
+                  <div style={{fontSize:10,color:"var(--text-muted)"}}>relaxamento</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3914,8 +3947,67 @@ function falarTexto(txt){
   window.speechSynthesis.speak(u);
 }
 
+// ── Nota de Relaxamento — salva no Firebase após conclusão ──────────────────
+function NotaRelaxamento({ user, ferramenta, emoji, onRepetir }) {
+  const [nota, setNota] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  async function salvarNota(n) {
+    setNota(n);
+    if (!user?.id) { setSalvo(true); return; }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_atividades").add({
+        pacienteId: user.id,
+        pacienteNome: user.nome || "",
+        ferramenta,
+        nota: n,
+        data: new Date().toLocaleDateString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) {}
+    setSalvando(false);
+    setSalvo(true);
+  }
+
+  if (salvo) return (
+    <div style={{marginTop:8}}>
+      <div style={{background:"#d1fae5",borderRadius:12,padding:"14px 20px",fontSize:14,color:"#065f46",marginBottom:20}}>
+        ✓ Nota {nota}/10 registrada! Seu progresso foi salvo. 💜
+      </div>
+      <button className="btn btn-purple" onClick={onRepetir}>
+        <Icon name="rotate-ccw" size={16}/> Repetir
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{marginTop:8}}>
+      <div style={{fontWeight:600,fontSize:15,marginBottom:6}}>Como você está se sentindo agora?</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Dê uma nota de 0 a 10 para o seu nível de relaxamento</div>
+      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:20}}>
+        {[0,1,2,3,4,5,6,7,8,9,10].map(n=>(
+          <button key={n} onClick={()=>salvarNota(n)} disabled={salvando}
+            style={{width:44,height:44,borderRadius:10,border:"1.5px solid",
+              borderColor: n<=3?"#fca5a5":n<=6?"#fbbf24":"#6ee7b7",
+              background: n<=3?"#fef2f2":n<=6?"#fef3c7":"#f0fdf4",
+              color: n<=3?"#dc2626":n<=6?"#d97706":"#16a34a",
+              fontWeight:700,fontSize:15,cursor:"pointer"}}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",paddingLeft:4,paddingRight:4}}>
+        <span>😰 Muito tenso</span><span>😐 Regular</span><span>😌 Muito relaxado</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Técnica de Respiração 4-7-8 (áudio MP4 guiado) ──
-function FerramentaRespiracao(){
+function FerramentaRespiracao({ user }){
   const AUDIO_SRC = "../media/atividade2respiracao.mp4";
   const [iniciado,  setIniciado]  = useState(false);
   const [concluido, setConcluido] = useState(false);
@@ -3958,9 +4050,7 @@ function FerramentaRespiracao(){
       <div style={{fontSize:56,marginBottom:12}}>🌿</div>
       <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Respiração Concluída!</div>
       <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
-      <button className="btn btn-purple" onClick={iniciar}>
-        <Icon name="rotate-ccw" size={16}/> Repetir
-      </button>
+      <NotaRelaxamento user={user} ferramenta="respiracao" emoji="🫁" onRepetir={iniciar}/>
     </div>
   );
 
@@ -4023,7 +4113,7 @@ function FerramentaRespiracao(){
 
 // ── Relaxamento Muscular Progressivo ──
 // ── Relaxamento Muscular (arquivo único de vídeo) ──
-function FerramentaRelaxamento(){
+function FerramentaRelaxamento({ user }){
   const AUDIO_SRC = "../media/atividade1meditacao.mp4";
   const [iniciado,  setIniciado]  = useState(false);
   const [concluido, setConcluido] = useState(false);
@@ -4066,9 +4156,7 @@ function FerramentaRelaxamento(){
       <div style={{fontSize:56,marginBottom:12}}>✅</div>
       <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
       <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
-      <button className="btn btn-purple" onClick={iniciar}>
-        <Icon name="rotate-ccw" size={16}/> Repetir
-      </button>
+      <NotaRelaxamento user={user} ferramenta="relaxamento" emoji="💆" onRepetir={iniciar}/>
     </div>
   );
 
