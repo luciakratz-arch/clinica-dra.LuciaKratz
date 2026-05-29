@@ -2313,23 +2313,30 @@ function FinanceiroClinica() {
         obs: f.obs||"",
       });
       // Propaga alterações para todas as sessões do pacote
-      const sessDoPacote = sessoes.filter(s=>s.pacoteId===modalEditarPacote.id);
+      const sessDoPacote = sessoes.filter(s=>s.pacoteId===modalEditarPacote.id)
+        .sort((a,b)=>(a.numSessao||0)-(b.numSessao||0));
+      const novoTotal = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
+      const novoValor = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
       if(sessDoPacote.length>0){
-        const novoValor = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
         const batch = db.batch();
-        sessDoPacote.forEach(s=>{
-          const campos = {
-            valorSessao: novoValor,
-            horario: f.horario||s.horario||"",
-            recorrencia: f.recorrencia||s.recorrencia||"",
-          };
-          if(jaPago){
-            campos.pagamento = "pago";
-            campos.formaPagamento = f.formaPag||s.formaPagamento||"";
-            campos.dataPagamento = f.dataPagamento||s.dataPagamento||new Date().toISOString().slice(0,10);
-            campos.valorPago = s.valorPago>0 ? s.valorPago : novoValor;
+        sessDoPacote.forEach((s,idx)=>{
+          if(idx >= novoTotal){
+            // Sessão excedente — excluir
+            batch.delete(db.collection("clinica_sessoes").doc(s.id));
+          } else {
+            const campos = {
+              valorSessao: novoValor,
+              horario: f.horario||s.horario||"",
+              recorrencia: f.recorrencia||s.recorrencia||"",
+            };
+            if(jaPago){
+              campos.pagamento = "pago";
+              campos.formaPagamento = f.formaPag||s.formaPagamento||"";
+              campos.dataPagamento = f.dataPagamento||s.dataPagamento||new Date().toISOString().slice(0,10);
+              campos.valorPago = s.valorPago>0 ? s.valorPago : novoValor;
+            }
+            batch.update(db.collection("clinica_sessoes").doc(s.id), campos);
           }
-          batch.update(db.collection("clinica_sessoes").doc(s.id), campos);
         });
         await batch.commit();
       }
