@@ -312,6 +312,7 @@ function FerramentaDiario({ user }){
 // ─── RECURSOS TERAPÊUTICOS DO PACIENTE ──────────────────
 function RecursosPaciente({ user }) {
   const [recursos, setRecursos] = useState([]);
+  const [aba, setAba]           = useState("ferramentas");
   const [abrindo, setAbrindo]   = useState(null);
   const [loading, setLoading]   = useState(true);
 
@@ -321,15 +322,14 @@ function RecursosPaciente({ user }) {
       .catch(()=>setLoading(false));
   },[]);
 
-  // Coleta IDs habilitados a partir de modulosConfig
-  function coletarIdsHabilitados() {
+  // Coleta IDs habilitados do modulosConfig
+  function idsAtivos() {
     const ids = new Set();
     const config = user.modulosConfig || {};
     const hoje = new Date().toISOString().split("T")[0];
     Object.values(config).forEach(mod => {
       if (!mod?.ativo) return;
-      const ferramentas = mod.ferramentas || {};
-      Object.entries(ferramentas).forEach(([fid, fd]) => {
+      Object.entries(mod.ferramentas || {}).forEach(([fid, fd]) => {
         if (!fd?.ativo) return;
         if (fd.dataInicio && fd.dataInicio > hoje) return;
         ids.add(fid);
@@ -338,86 +338,120 @@ function RecursosPaciente({ user }) {
     return ids;
   }
 
-  const idsHabilitados = coletarIdsHabilitados();
-  const habilitados = recursos.filter(r => idsHabilitados.has(r.id));
+  const habilitados = recursos.filter(r => idsAtivos().has(r.id));
 
-  const EMOJIS = {
-    tcc:"🧠", ansiedade:"🎯", emocoes:"💜", autocuidado:"🌱",
-    relacionamentos:"❤️", corpo:"🥗", esquema:"🔑",
-    musicoterapia:"🎵", avaliacao:"📋", outro:"🔧"
+  // Filtra por aba
+  const ABA_CATEGORIA = {
+    ferramentas:  r => r.categoria !== "fabulas" && r.categoria !== "psicoeducacao",
+    fabulas:      r => r.categoria === "fabulas",
+    psicoeducacao:r => r.categoria === "psicoeducacao",
   };
-  const ICONES_KEY = {
+  const visiveis = habilitados.filter(ABA_CATEGORIA[aba] || (()=>true));
+
+  const ICONES = {
     "breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳",
     "abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃",
-    "entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵"
+    "entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵",
   };
-  const getIcone = r => ICONES_KEY[r.formularioKey] || EMOJIS[r.categoria] || "🔧";
+  const EMOJI_CAT = {
+    tcc:"🧠", ansiedade:"🎯", emocoes:"💜", autocuidado:"🌱",
+    relacionamentos:"❤️", corpo:"🥗", esquema:"🔑", musicoterapia:"🎵",
+    avaliacao:"📋", fabulas:"📖", psicoeducacao:"🎓", outro:"🔧",
+  };
+  const icone = r => ICONES[r.formularioKey] || EMOJI_CAT[r.categoria] || "🔧";
 
   if (abrindo) return (
     <div>
       <button onClick={()=>setAbrindo(null)}
         style={{marginBottom:16,display:"flex",alignItems:"center",gap:6,
-          background:"none",border:"none",cursor:"pointer",color:"var(--purple)",
-          fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
-        ← Voltar
+          background:"none",border:"none",cursor:"pointer",
+          color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+        ← Voltar para Recursos
       </button>
       <FerramentaInterativa recurso={abrindo} user={user}/>
     </div>
   );
 
   return (
-    <div style={{padding:"4px 0"}}>
-      <div style={{marginBottom:24}}>
+    <div>
+      {/* Título */}
+      <div style={{marginBottom:20}}>
         <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:"var(--purple)"}}>
-          Seus Recursos
+          Recursos Terapêuticos
         </div>
         <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>
-          Ferramentas liberadas pela sua psicóloga
+          Conteúdos liberados pela sua psicóloga
         </div>
       </div>
 
+      {/* Abas superiores */}
+      <div style={{display:"flex",gap:0,borderBottom:"2px solid var(--gray-100)",marginBottom:24,overflowX:"auto",scrollbarWidth:"none"}}>
+        {[
+          ["ferramentas",  "🔧 Ferramentas"],
+          ["fabulas",      "📖 Fábulas Terapêuticas"],
+          ["psicoeducacao","🎓 Psicoeducação"],
+        ].map(([id,label])=>(
+          <button key={id} onClick={()=>setAba(id)}
+            style={{padding:"10px 18px",border:"none",background:"none",cursor:"pointer",
+              fontFamily:"inherit",fontSize:13,whiteSpace:"nowrap",
+              fontWeight: aba===id ? 700 : 400,
+              color:       aba===id ? "var(--purple)" : "var(--text-muted)",
+              borderBottom: aba===id ? "2px solid var(--purple)" : "2px solid transparent",
+              marginBottom: -2, transition:"all .15s"}}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Loading */}
       {loading && (
         <div style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
           Carregando...
         </div>
       )}
 
-      {!loading && habilitados.length === 0 && (
+      {/* Vazio */}
+      {!loading && visiveis.length === 0 && (
         <div style={{textAlign:"center",padding:48,color:"var(--text-muted)",
           background:"white",borderRadius:16,border:"1px solid var(--gray-100)"}}>
-          <div style={{fontSize:40,marginBottom:12}}>🌱</div>
-          <div style={{fontWeight:600,fontSize:15,marginBottom:6}}>Nenhuma ferramenta disponível ainda</div>
-          <div style={{fontSize:13}}>Sua psicóloga irá liberar os recursos conforme o seu progresso.</div>
+          <div style={{fontSize:36,marginBottom:12}}>🌱</div>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>
+            Nenhum conteúdo liberado nesta categoria ainda.
+          </div>
+          <div style={{fontSize:12}}>
+            Sua psicóloga irá liberar os recursos conforme o seu progresso.
+          </div>
         </div>
       )}
 
-      {!loading && habilitados.length > 0 && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
-          {habilitados.map(r => (
+      {/* Grid de cards */}
+      {!loading && visiveis.length > 0 && (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
+          {visiveis.map(r=>(
             <div key={r.id} style={{background:"white",borderRadius:16,padding:20,
               border:"1px solid var(--gray-100)",
               boxShadow:"0 2px 8px rgba(123,0,196,0.06)",
               display:"flex",flexDirection:"column",gap:12}}>
 
-              {/* Ícone + Título */}
+              {/* Ícone + nome */}
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:48,height:48,borderRadius:12,
-                  background:"var(--purple-soft)",
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:24,flexShrink:0}}>
-                  {getIcone(r)}
+                  background:"var(--purple-soft)",flexShrink:0,
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>
+                  {icone(r)}
                 </div>
                 <div>
                   <div style={{fontWeight:700,fontSize:14,lineHeight:1.3}}>{r.titulo}</div>
-                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2,textTransform:"uppercase",letterSpacing:"0.5px"}}>
-                    {r.tipo==="interativa"?"Exercício interativo":"Conteúdo"}
+                  <div style={{fontSize:10,color:"var(--text-muted)",marginTop:2,
+                    textTransform:"uppercase",letterSpacing:"0.5px"}}>
+                    {r.tipo==="interativa" ? "Exercício interativo" : "Conteúdo"}
                   </div>
                 </div>
               </div>
 
               {/* Descrição */}
               {r.descricao && (
-                <p style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,margin:0}}>
+                <p style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,margin:0,flex:1}}>
                   {r.descricao}
                 </p>
               )}
@@ -426,9 +460,9 @@ function RecursosPaciente({ user }) {
               <button onClick={()=>setAbrindo(r)}
                 style={{width:"100%",padding:"10px",borderRadius:10,border:"none",
                   background:"var(--purple)",color:"white",cursor:"pointer",
-                  fontSize:13,fontWeight:600,fontFamily:"inherit",marginTop:"auto",
+                  fontSize:13,fontWeight:600,fontFamily:"inherit",
                   display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                {r.tipo==="interativa"?"▶ Iniciar Exercício":"📖 Abrir Conteúdo"}
+                {r.tipo==="interativa" ? "▶ Iniciar Exercício" : "📖 Abrir Conteúdo"}
               </button>
             </div>
           ))}
@@ -451,18 +485,15 @@ function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve."
 
 // ─── NAVEGAÇÃO ────────────────────────────────────────────
 const NAV_INDIVIDUAL = [
-  { id:"painel",        label:"Meu Painel",           icon:"layout-dashboard" },
-  { id:"humor",         label:"Registro de Humor",    icon:"heart" },
-  { id:"tcc",           label:"Pensamentos",           icon:"brain" },
-  { id:"diario",        label:"Diário Terapêutico",   icon:"book-open" },
-  { id:"metas",         label:"Minhas Metas",          icon:"target" },
-  { id:"reflexoes",     label:"Reflexões Cognitivas",  icon:"lightbulb" },
-  { id:"fabulas",       label:"Fábulas Terapêuticas",  icon:"book-heart" },
-  { id:"ferramentas",   label:"Recursos Terapêuticos",  icon:"wrench" },
-  { id:"ansiedade",     label:"Gestão da Ansiedade",   icon:"activity" },
-  { id:"musicoterapia", label:"Musicoterapia",         icon:"music" },
-  { id:"meus-laudos",   label:"Meus Laudos",           icon:"file-text" },
-  { id:"minha-conta",   label:"Minha Conta",           icon:"user-circle" },
+  { id:"painel",      label:"Meu Painel",           icon:"layout-dashboard" },
+  { id:"humor",       label:"Registro de Humor",    icon:"heart" },
+  { id:"tcc",         label:"Pensamentos",           icon:"brain" },
+  { id:"diario",      label:"Diário Terapêutico",   icon:"book-open" },
+  { id:"metas",       label:"Minhas Metas",          icon:"target" },
+  { id:"ferramentas", label:"Recursos Terapêuticos", icon:"wrench" },
+  { id:"ansiedade",   label:"Gestão da Ansiedade",   icon:"activity" },
+  { id:"meus-laudos", label:"Meus Laudos",           icon:"file-text" },
+  { id:"minha-conta", label:"Minha Conta",           icon:"user-circle" },
 ];
 
 const NAV_CASAL = [
