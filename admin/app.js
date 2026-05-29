@@ -2177,10 +2177,14 @@ function FinanceiroClinica() {
     });
 
     // Cria lançamento financeiro do pacote
+    const mesInicioPacote = new Date(dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+    const nomePacote = `Pacote ${total} Sessões`;
+    const descricaoLanc = `${pac?.nome||"Paciente"} — ${nomePacote} — ${mesInicioPacote.charAt(0).toUpperCase()+mesInicioPacote.slice(1)}`;
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
       pacienteId,pacienteNome:pac?.nome||"",
-      tipo:"Pacote "+recorrencia,
+      tipo: descricaoLanc,
+      descricao: descricaoLanc,
       valor:vTotal,data:dataInicio,
       formaPag:formPacote.formaPag||"",
       status:formPacote.statusPag||"pendente",
@@ -2358,6 +2362,14 @@ function FinanceiroClinica() {
         const snapLanc = await db.collection("clinica_lancamentos")
           .where("pacoteId","==",modalEditarPacote.id).get();
         if(!snapLanc.empty){
+          const pacEd = pacientes.find(p=>p.id===(modalEditarPacote.pacienteId||""));
+          const mesEd = f.dataInicio
+            ? new Date(f.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})
+            : "";
+          const nomePacEd = `Pacote ${novoTotalSessoes} Sessões`;
+          const descEd = pacEd
+            ? `${pacEd.nome} — ${nomePacEd} — ${mesEd.charAt(0).toUpperCase()+mesEd.slice(1)}`
+            : snapLanc.docs[0].data().tipo||snapLanc.docs[0].data().descricao||nomePacEd;
           await snapLanc.docs[0].ref.update({
             valor: novoValorTotal,
             totalSessoes: novoTotalSessoes,
@@ -2367,6 +2379,8 @@ function FinanceiroClinica() {
             dataPagamento: dataPagFinal,
             pagamentosExtras: extras,
             obs: f.obs||"",
+            tipo: descEd,
+            descricao: descEd,
           });
         }
       } catch(eLanc){ console.warn("Aviso: lançamento não atualizado →", eLanc.message); }
@@ -2659,10 +2673,19 @@ function FinanceiroClinica() {
                               {l.data?new Date(l.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
                               {isFut&&<span style={{marginLeft:4,fontSize:9,color:"#0891b2",fontWeight:600}}>futuro</span>}
                             </td>
-                            <td style={{padding:"8px 14px"}}>
-                              {l.tipo||l.pacienteNome||"—"}
-                              {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
-                              {l.tipo_lancamento==="sessao"&&<span style={{marginLeft:6,background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
+                            <td style={{padding:"8px 14px",maxWidth:320}}>
+                              <div style={{fontWeight:500,fontSize:13,lineHeight:1.4}}>
+                                {l.descricao||l.tipo||l.pacienteNome||"—"}
+                              </div>
+                              <div style={{display:"flex",gap:4,marginTop:3,flexWrap:"wrap"}}>
+                                {l.tipo_lancamento==="pacote"&&<span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
+                                {l.tipo_lancamento==="sessao"&&<span style={{background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
+                                {(l.pagamentosExtras||[]).length>0&&(
+                                  <span style={{background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>
+                                    💳 {(l.pagamentosExtras||[]).length}x forma{(l.pagamentosExtras||[]).length>1?"s":""}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td style={{padding:"8px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.categoria||"—"}</td>
                             <td style={{padding:"8px 14px"}}><span style={{background:"#f3f4f6",borderRadius:6,padding:"2px 6px",fontSize:11}}>{l.formaPag||"—"}</span></td>
@@ -3001,19 +3024,23 @@ function FinanceiroClinica() {
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
           <div style={{background:"white",borderRadius:16,padding:32,width:"100%",maxWidth:420,textAlign:"center"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Novo Lançamento</div>
-            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>O que deseja lançar?</p>
-            <div style={{display:"flex",gap:12}}>
-              <button className="btn btn-outline" style={{flex:1,padding:"20px 12px",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}
+            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Escolha o tipo de lançamento:</p>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
                 onClick={()=>setModal("pacote")}>
-                <span style={{fontSize:32}}>📦</span>
-                <strong>Pacote de Sessões</strong>
-                <span style={{fontSize:11,color:"#6b7280",lineHeight:1.4}}>Gera sessões recorrentes na agenda com ficha de frequência</span>
+                <span style={{fontSize:32,flexShrink:0}}>📦</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:"var(--purple)"}}>Pacote de Sessões</div>
+                  <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas</div>
+                </div>
               </button>
-              <button className="btn btn-outline" style={{flex:1,padding:"20px 12px",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}
+              <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
                 onClick={()=>setModal("avulso")}>
-                <span style={{fontSize:32}}>💲</span>
-                <strong>Lançamento Avulso</strong>
-                <span style={{fontSize:11,color:"#6b7280",lineHeight:1.4}}>Sessão única, avaliação, outro serviço isolado</span>
+                <span style={{fontSize:32,flexShrink:0}}>💲</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:"#059669"}}>Lançamento Avulso</div>
+                  <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Sessão única, avaliação, neuromodulação ou outro serviço isolado</div>
+                </div>
               </button>
             </div>
             <button className="btn btn-ghost" style={{width:"100%",marginTop:12}} onClick={()=>setModal(false)}>Cancelar</button>
