@@ -2312,16 +2312,16 @@ function FinanceiroClinica() {
         pagamentosExtras: f.pagamentosExtras||[],
         obs: f.obs||"",
       });
-      // Propaga alterações para todas as sessões do pacote
-      const sessDoPacote = sessoes.filter(s=>s.pacoteId===modalEditarPacote.id)
-        .sort((a,b)=>(a.numSessao||0)-(b.numSessao||0));
+      // Busca sessões direto do Firebase para garantir dados atualizados
+      const snapSess = await db.collection("clinica_sessoes").where("pacoteId","==",modalEditarPacote.id).get();
+      const sessDoPacote = snapSess.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.data||"").localeCompare(b.data||""));
       const novoTotal = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
       const novoValor = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
       if(sessDoPacote.length>0){
         const batch = db.batch();
         sessDoPacote.forEach((s,idx)=>{
           if(idx >= novoTotal){
-            // Sessão excedente — excluir
             batch.delete(db.collection("clinica_sessoes").doc(s.id));
           } else {
             const campos = {
