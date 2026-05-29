@@ -2160,6 +2160,10 @@ function FinanceiroClinica() {
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
+      statusPag:formPacote.statusPag||"pendente",
+      formaPag:formPacote.formaPag||"",
+      dataPagamento:formPacote.dataPagamento||"",
+      pagamentosExtras:formPacote.pagamentosExtras||[],
       status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
