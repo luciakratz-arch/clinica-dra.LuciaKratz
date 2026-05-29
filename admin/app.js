@@ -1048,14 +1048,11 @@ function AbaModulo1({ paciente }) {
               <div style={{padding:24}}>
                 {fKey ? (
                   // Renderiza a ferramenta interativa real
-                  {(()=>{
-                    const k = fKey;
-                    if(k==="breathing-478")     return <FerramentaRespiracao user={paciente}/>;
-                    if(k==="muscle-relaxation") return <FerramentaRelaxamento user={paciente}/>;
-                    if(k==="abc-record")        return <FerramentaABC user={paciente}/>;
-                    if(k==="anxiety-management")return <FerramentaGestaoAnsiedade user={paciente}/>;
-                    return <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Prévia não disponível para esta ferramenta.</div>;
-                  })()}
+                  fKey==="breathing-478"     ? <FerramentaRespiracao user={paciente}/> :
+                  fKey==="muscle-relaxation" ? <FerramentaRelaxamento user={paciente}/> :
+                  fKey==="abc-record"        ? <FerramentaABC user={paciente}/> :
+                  fKey==="anxiety-management"? <FerramentaGestaoAnsiedade user={paciente}/> :
+                  <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Prévia não disponível para esta ferramenta.</div>
                 ) : (
                   // Ferramentas sem formulário interativo — mostra info + dados
                   <>
