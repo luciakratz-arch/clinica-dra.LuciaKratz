@@ -311,15 +311,25 @@ function FerramentaDiario({ user }){
 
 // ─── RECURSOS TERAPÊUTICOS DO PACIENTE ──────────────────
 function RecursosPaciente({ user }) {
-  const [recursos, setRecursos] = useState([]);
-  const [aba, setAba]           = useState("ferramentas");
-  const [abrindo, setAbrindo]   = useState(null);
-  const [loading, setLoading]   = useState(true);
+  const [ferramentas,   setFerramentas]   = useState([]);
+  const [fabulas,       setFabulas]       = useState([]);
+  const [psicoeducacao, setPsicoeducacao] = useState([]);
+  const [aba,           setAba]           = useState("ferramentas");
+  const [abrindo,       setAbrindo]       = useState(null);
+  const [loading,       setLoading]       = useState(true);
 
   useEffect(()=>{
-    db.collection("clinica_recursos").get()
-      .then(s=>{ setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); })
-      .catch(()=>setLoading(false));
+    // Busca as três coleções em paralelo
+    Promise.all([
+      db.collection("clinica_recursos").get(),
+      db.collection("clinica_fabulas").get(),
+      db.collection("clinica_psicoeducacao").get(),
+    ]).then(([sF, sFab, sPsi])=>{
+      setFerramentas(sF.docs.map(d=>({id:d.id,...d.data(),_colecao:"recursos"})));
+      setFabulas(sFab.docs.map(d=>({id:d.id,...d.data(),_colecao:"fabulas"})));
+      setPsicoeducacao(sPsi.docs.map(d=>({id:d.id,...d.data(),_colecao:"psicoeducacao"})));
+      setLoading(false);
+    }).catch(()=>setLoading(false));
   },[]);
 
   // Coleta IDs habilitados do modulosConfig
@@ -338,17 +348,18 @@ function RecursosPaciente({ user }) {
     return ids;
   }
 
-  const habilitados = recursos.filter(r => idsAtivos().has(r.id));
+  const ids = idsAtivos();
 
-  // Filtra por aba
-  const ABA_CATEGORIA = {
-    ferramentas:  r => r.categoria !== "fabulas" && r.categoria !== "psicoeducacao",
-    fabulas:      r => r.categoria === "fabulas",
-    psicoeducacao:r => r.categoria === "psicoeducacao",
-  };
-  const visiveis = habilitados.filter(ABA_CATEGORIA[aba] || (()=>true));
+  // Filtra cada coleção pelos IDs habilitados
+  const ferramentasVisiveis   = ferramentas.filter(r => ids.has(r.id));
+  const fabulasVisiveis       = fabulas.filter(r => ids.has(r.id));
+  const psicoeducacaoVisiveis = psicoeducacao.filter(r => ids.has(r.id));
 
-  const ICONES = {
+  const visiveis = aba==="ferramentas" ? ferramentasVisiveis
+                 : aba==="fabulas"     ? fabulasVisiveis
+                 : psicoeducacaoVisiveis;
+
+  const ICONES_KEY = {
     "breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳",
     "abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃",
     "entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵",
@@ -356,9 +367,12 @@ function RecursosPaciente({ user }) {
   const EMOJI_CAT = {
     tcc:"🧠", ansiedade:"🎯", emocoes:"💜", autocuidado:"🌱",
     relacionamentos:"❤️", corpo:"🥗", esquema:"🔑", musicoterapia:"🎵",
-    avaliacao:"📋", fabulas:"📖", psicoeducacao:"🎓", outro:"🔧",
+    avaliacao:"📋", resiliencia:"🌊", esperanca:"🌟", autoconfianca:"🦅",
+    autoconhecimento:"🔍", perspectiva:"🔭", outro:"🔧",
   };
-  const icone = r => ICONES[r.formularioKey] || EMOJI_CAT[r.categoria] || "🔧";
+  const icone = r => ICONES_KEY[r.formularioKey] || EMOJI_CAT[r.categoria] || "📄";
+  const titulo = r => r.titulo || r.nome || "—";
+  const descricao = r => r.descricao || r.resumo || r.texto?.slice(0,120) || "";
 
   if (abrindo) return (
     <div>
@@ -385,20 +399,23 @@ function RecursosPaciente({ user }) {
       </div>
 
       {/* Abas superiores */}
-      <div style={{display:"flex",gap:0,borderBottom:"2px solid var(--gray-100)",marginBottom:24,overflowX:"auto",scrollbarWidth:"none"}}>
+      <div style={{display:"flex",gap:0,borderBottom:"2px solid var(--gray-100)",
+        marginBottom:24,overflowX:"auto",scrollbarWidth:"none"}}>
         {[
-          ["ferramentas",  "🔧 Ferramentas"],
-          ["fabulas",      "📖 Fábulas Terapêuticas"],
-          ["psicoeducacao","🎓 Psicoeducação"],
-        ].map(([id,label])=>(
+          ["ferramentas",   "🔧 Ferramentas",          ferramentasVisiveis.length],
+          ["fabulas",       "📖 Fábulas Terapêuticas",  fabulasVisiveis.length],
+          ["psicoeducacao", "🎓 Psicoeducação",         psicoeducacaoVisiveis.length],
+        ].map(([id,label,count])=>(
           <button key={id} onClick={()=>setAba(id)}
             style={{padding:"10px 18px",border:"none",background:"none",cursor:"pointer",
               fontFamily:"inherit",fontSize:13,whiteSpace:"nowrap",
               fontWeight: aba===id ? 700 : 400,
-              color:       aba===id ? "var(--purple)" : "var(--text-muted)",
+              color: aba===id ? "var(--purple)" : "var(--text-muted)",
               borderBottom: aba===id ? "2px solid var(--purple)" : "2px solid transparent",
-              marginBottom: -2, transition:"all .15s"}}>
+              marginBottom:-2,transition:"all .15s",display:"flex",alignItems:"center",gap:6}}>
             {label}
+            {count>0 && <span style={{background:"var(--purple-soft)",color:"var(--purple)",
+              borderRadius:20,padding:"1px 7px",fontSize:11,fontWeight:700}}>{count}</span>}
           </button>
         ))}
       </div>
@@ -426,7 +443,8 @@ function RecursosPaciente({ user }) {
 
       {/* Grid de cards */}
       {!loading && visiveis.length > 0 && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
+        <div style={{display:"grid",
+          gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}}>
           {visiveis.map(r=>(
             <div key={r.id} style={{background:"white",borderRadius:16,padding:20,
               border:"1px solid var(--gray-100)",
@@ -441,18 +459,21 @@ function RecursosPaciente({ user }) {
                   {icone(r)}
                 </div>
                 <div>
-                  <div style={{fontWeight:700,fontSize:14,lineHeight:1.3}}>{r.titulo}</div>
+                  <div style={{fontWeight:700,fontSize:14,lineHeight:1.3}}>{titulo(r)}</div>
                   <div style={{fontSize:10,color:"var(--text-muted)",marginTop:2,
                     textTransform:"uppercase",letterSpacing:"0.5px"}}>
-                    {r.tipo==="interativa" ? "Exercício interativo" : "Conteúdo"}
+                    {r._colecao==="recursos"
+                      ? (r.tipo==="interativa" ? "Exercício interativo" : "Conteúdo")
+                      : r._colecao==="fabulas" ? "Fábula Terapêutica" : "Psicoeducação"}
                   </div>
                 </div>
               </div>
 
               {/* Descrição */}
-              {r.descricao && (
-                <p style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,margin:0,flex:1}}>
-                  {r.descricao}
+              {descricao(r) && (
+                <p style={{fontSize:12,color:"var(--text-muted)",
+                  lineHeight:1.5,margin:0,flex:1}}>
+                  {descricao(r)}
                 </p>
               )}
 
@@ -462,7 +483,8 @@ function RecursosPaciente({ user }) {
                   background:"var(--purple)",color:"white",cursor:"pointer",
                   fontSize:13,fontWeight:600,fontFamily:"inherit",
                   display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                {r.tipo==="interativa" ? "▶ Iniciar Exercício" : "📖 Abrir Conteúdo"}
+                {r._colecao==="recursos" && r.tipo==="interativa"
+                  ? "▶ Iniciar Exercício" : "📖 Abrir Conteúdo"}
               </button>
             </div>
           ))}
