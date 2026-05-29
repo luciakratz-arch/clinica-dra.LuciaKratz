@@ -2298,7 +2298,7 @@ function FinanceiroClinica() {
         statusPag: f.statusPag,
         formaPag: f.formaPag||"",
         dataPagamento: jaPago?(f.dataPagamento||new Date().toISOString().slice(0,10)):"",
-        pagamentosExtras: jaPago?(f.pagamentosExtras||[]):[],
+        pagamentosExtras: f.pagamentosExtras||[],
         obs: f.obs||"",
       });
       // Se marcado como recebido, herda pagamento nas sessões
@@ -2368,7 +2368,7 @@ function FinanceiroClinica() {
                   ))}
                 </div>
               </div>
-              {(formEdicaoPacote.statusPag||"pendente")==="recebido"&&(<>
+              {(true&&(
                 <div className="form-group"><label className="form-label">Forma de Pagamento Principal</label>
                   <select className="form-input" value={formEdicaoPacote.formaPag||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,formaPag:e.target.value})}>
                     <option value="">Selecionar...</option>
@@ -2792,6 +2792,18 @@ function FinanceiroClinica() {
                                     <span>📋 {realizadas} realizadas · {pagas} pagas</span>
                                     <span>📆 {p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span>
                                     {p.obs&&<span>📝 {p.obs}</span>}
+                                    {/* Status pagamento */}
+                                    <span style={{color:p.statusPag==="recebido"?"#059669":"#d97706",fontWeight:600}}>
+                                      {p.statusPag==="recebido"?"✓ Recebido":"⏳ Pendente"}
+                                      {p.formaPag&&<span style={{fontWeight:400}}> · {p.formaPag}</span>}
+                                      {p.dataPagamento&&<span style={{fontWeight:400}}> · {new Date(p.dataPagamento+"T00:00:00").toLocaleDateString("pt-BR")}</span>}
+                                    </span>
+                                    {/* Pagamentos extras */}
+                                    {(p.pagamentosExtras||[]).map((pg,i)=>(
+                                      <span key={i} style={{color:"#6b7280",fontSize:11}}>
+                                        💳 {pg.forma||"?"} · R$ {parseFloat(pg.valor||0).toFixed(2).replace(".",",")} · {pg.data?new Date(pg.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
+                                      </span>
+                                    ))}
                                   </div>
                                   <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                                     <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"var(--purple)",border:"1px solid #d9b3f5"}}
@@ -2982,8 +2994,8 @@ function FinanceiroClinica() {
                     style={{background:"#0891b2"}} title="5% de comissão">
                     🔁 Venda Recorrente
                   </button>
-                </>
-              )}
+                )
+              }
             </div>
           </div>
         </div>
@@ -3070,15 +3082,17 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Data do Pagamento</label>
                   <input className="form-input" type="date" value={formPacote.dataPagamento||""} onChange={e=>setFormPacote({...formPacote,dataPagamento:e.target.value})}/>
                 </div>
-                {(formPacote.statusPag||"pendente")==="recebido"&&(
-                  <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                      <label className="form-label" style={{margin:0}}>Pagamentos parciais (opcional)</label>
+                      <label className="form-label" style={{margin:0}}>Formas de pagamento</label>
                       <button type="button" style={{fontSize:12,color:"#7B00C4",background:"#f3e6ff",border:"1px solid #d9b3f5",borderRadius:6,padding:"3px 10px",cursor:"pointer"}}
-                        onClick={()=>setFormPacote({...formPacote,pagamentosExtras:[...(formPacote.pagamentosExtras||[]),{forma:"",valor:"",data:""}]})}>
+                        onClick={()=>setFormPacote({...formPacote,pagamentosExtras:[...(formPacote.pagamentosExtras||[]),{forma:"",valor:"",data:new Date().toISOString().slice(0,10)}]})}>
                         + Adicionar forma
                       </button>
                     </div>
+                    {(formPacote.pagamentosExtras||[]).length===0&&(
+                      <div style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",padding:"6px 0"}}>Clique em "+ Adicionar forma" para registrar PIX, cartão, dinheiro em datas diferentes.</div>
+                    )}
                     {(formPacote.pagamentosExtras||[]).map((pg,i)=>(
                       <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:6,marginBottom:6,alignItems:"center"}}>
                         <select className="form-input" style={{fontSize:12}} value={pg.forma} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],forma:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}>
@@ -3090,7 +3104,6 @@ function FinanceiroClinica() {
                       </div>
                     ))}
                   </div>
-                )}
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                   <TextAreaVoz className="form-input" rows={2} value={formPacote.obs} onChange={e=>setFormPacote({...formPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
                 </div>
