@@ -2368,7 +2368,7 @@ function FinanceiroClinica() {
                   ))}
                 </div>
               </div>
-              {(true&&(
+              <>
                 <div className="form-group"><label className="form-label">Forma de Pagamento Principal</label>
                   <select className="form-input" value={formEdicaoPacote.formaPag||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,formaPag:e.target.value})}>
                     <option value="">Selecionar...</option>
@@ -2380,14 +2380,14 @@ function FinanceiroClinica() {
                 </div>
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                    <label className="form-label" style={{margin:0}}>Pagamentos parciais / múltiplas formas</label>
+                    <label className="form-label" style={{margin:0}}>Formas de pagamento (PIX, cartão, dinheiro em datas diferentes)</label>
                     <button type="button" style={{fontSize:12,color:"#7B00C4",background:"#f3e6ff",border:"1px solid #d9b3f5",borderRadius:6,padding:"4px 12px",cursor:"pointer"}}
                       onClick={()=>setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:[...(formEdicaoPacote.pagamentosExtras||[]),{forma:"",valor:"",data:new Date().toISOString().slice(0,10)}]})}>
                       + Adicionar forma
                     </button>
                   </div>
                   {(formEdicaoPacote.pagamentosExtras||[]).length===0&&(
-                    <div style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>Nenhum pagamento parcial. Clique em "+ Adicionar forma" para incluir.</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",padding:"6px 0"}}>Clique em "+ Adicionar forma" para registrar pagamentos parciais ou múltiplas formas.</div>
                   )}
                   {(formEdicaoPacote.pagamentosExtras||[]).map((pg,i)=>(
                     <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:6,marginBottom:6,alignItems:"center"}}>
@@ -2400,7 +2400,7 @@ function FinanceiroClinica() {
                     </div>
                   ))}
                 </div>
-              </>)}
+              </>
               <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                 <textarea className="form-input" rows={2} value={formEdicaoPacote.obs||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
               </div>
