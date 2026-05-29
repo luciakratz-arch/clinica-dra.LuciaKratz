@@ -603,54 +603,48 @@ const MAPA_MODULOS = {
 };
 
 function navFiltradoPaciente(nav, user) {
-  // Suporta 3 formatos:
-  // 1. ferramentasAtivas (novo admin — AbaFerramentas)
-  // 2. modulosConfig (formato módulos)
-  // 3. modulosAtivos (legado)
-  const ferramentasAtivasAdmin = user.ferramentasAtivas || [];
   const config = user.modulosConfig || {};
-  const ativos = user.modulosAtivos || [];
+  const hoje = new Date().toISOString().split("T")[0];
 
-  // Mapa de item.id para módulo
-  const ITEM_PARA_MODULO = {
-    "humor":"mod1", "diario":"mod1", "metas":"mod1", "reflexoes":"mod1", "tcc":"mod1",
-    "fabulas":"mod2",
-    "ferramentas":"mod3", "ansiedade":"mod3", "arvore":"mod3",
-    "musicoterapia":"mod4",
-    "casais":"mod5",
+  // Mapa: id do item de nav → chave exata dentro de mod.ferramentas
+  const ITEM_CHAVE = {
+    "humor":    { mod:"mod1", chave:"humor"    },
+    "diario":   { mod:"mod1", chave:"diario"   },
+    "metas":    { mod:"mod1", chave:"metas"    },
+    "reflexoes":{ mod:"mod1", chave:"reflexoes"},
+    "tcc":      { mod:"mod1", chave:"tcc"      },
+    "fabulas":  { mod:"mod2", chave:null        },
   };
 
   return nav.filter(item => {
+    // Sempre visíveis
     if (["painel","minha-conta","meus-laudos"].includes(item.id)) return true;
 
-    // Formato 1: ferramentasAtivas — tem prioridade quando preenchido
-    if (ferramentasAtivasAdmin.length > 0) {
-      return ferramentasAtivasAdmin.includes(item.id);
+    // Recursos Terapêuticos — aparece se qualquer módulo de conteúdo estiver ativo
+    if (item.id === "ferramentas") {
+      return ["mod2","mod3","mod4","mod6"].some(m => config[m]?.ativo);
     }
 
-    // Formato 2: modulosConfig — se o módulo está ativo, mostra todos os itens dele
-    const modId = ITEM_PARA_MODULO[item.id];
-    if (modId && config[modId]?.ativo) {
-      const ferramentas = config[modId].ferramentas || {};
-      const ferrKeys = Object.keys(ferramentas);
-      // Se não há ferramentas específicas configuradas, mostra o item
-      if (ferrKeys.length === 0) return true;
-      // Se há ferramentas configuradas, verifica se este item específico está ativo
-      const ferrAtiva = ferramentas[item.id];
-      if (!ferrAtiva) return true; // item não configurado individualmente = mostrar
-      if (typeof ferrAtiva === "object" && ferrAtiva.dataInicio) {
-        const hoje = new Date().toISOString().split("T")[0];
-        return ferrAtiva.dataInicio <= hoje;
-      }
-      return ferrAtiva === true || (typeof ferrAtiva === "object");
-    }
+    // Gestão da Ansiedade — é recurso interno, NÃO fica na sidebar
+    if (item.id === "ansiedade") return false;
 
-    // Formato 3: modulosAtivos (legado array) — ex: ["mod1","mod2"]
-    if (ativos.includes(modId)) return true;
-    const chave = MAPA_MODULOS[item.id] || item.id;
-    return ativos.includes(chave) || ativos.includes(item.id);
+    const mapa = ITEM_CHAVE[item.id];
+    if (!mapa) return false;
+
+    const mod = config[mapa.mod];
+    if (!mod?.ativo) return false;
+
+    // Módulo inteiro sem chave específica (ex: fábulas = mod2)
+    if (!mapa.chave) return true;
+
+    // Verifica a ferramenta específica
+    const ft = (mod.ferramentas || {})[mapa.chave];
+    if (!ft?.ativo) return false;
+    if (ft.dataInicio && ft.dataInicio > hoje) return false;
+    return true;
   });
 }
+
 
 // ─── SIDEBAR ─────────────────────────────────────────────
 function fmtDataNotif(dataStr) {
