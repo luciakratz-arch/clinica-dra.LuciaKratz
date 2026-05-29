@@ -1737,13 +1737,19 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
 
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
   async function remarcarSessao(s, novaData){
-    if(!novaData)return;
-    // Manter pagamento/forma/data ao remarcar — só muda data e status
-    await db.collection("clinica_sessoes").doc(s.id).update({
-      data:novaData, status:"agendado", remarcada:true,
-      dataRemarcada:novaData, dataOriginal:s.dataOriginal||s.data
-      // pagamento, formaPagamento e dataPagamento NÃO são alterados
-    });
+    if(!novaData) return;
+    try {
+      await db.collection("clinica_sessoes").doc(s.id).update({
+        data: novaData,
+        status: "remarcado",
+        remarcada: true,
+        dataRemarcada: novaData,
+        dataOriginal: s.dataOriginal||s.data,
+      });
+    } catch(e){
+      console.error("Erro ao remarcar sessão:", e);
+      alert("Erro ao remarcar: "+e.message);
+    }
   }
 
   async function atualizarPagamento(s, formaPag, valorPago){
@@ -2215,31 +2221,48 @@ function FinanceiroClinica() {
   async function atualizarSessao(id,campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
 
   async function remarcarSessao(s, novaData){
-    if(!novaData)return;
-    // Manter pagamento/forma/data ao remarcar — só muda data e status
-    await db.collection("clinica_sessoes").doc(s.id).update({
-      data:novaData, status:"agendado", remarcada:true,
-      dataRemarcada:novaData, dataOriginal:s.dataOriginal||s.data
-      // pagamento, formaPagamento e dataPagamento NÃO são alterados
-    });
+    if(!novaData) return;
+    try {
+      await db.collection("clinica_sessoes").doc(s.id).update({
+        data: novaData,
+        status: "remarcado",
+        remarcada: true,
+        dataRemarcada: novaData,
+        dataOriginal: s.dataOriginal||s.data,
+      });
+    } catch(e){
+      console.error("Erro ao remarcar sessão:", e);
+      alert("Erro ao remarcar: "+e.message);
+    }
   }
 
   async function confirmarExclusao(tipo){
-    if(!modalExcluir)return;
-    const {id,pacoteId,numSessao}=modalExcluir;
-    if(tipo==="este"){
-      await db.collection("clinica_sessoes").doc(id).delete();
-    } else if(tipo==="daqui"){
-      const fut=sessoes.filter(s=>s.pacoteId===pacoteId&&(s.numSessao||0)>=(numSessao||0));
-      const b=db.batch();fut.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));await b.commit();
-    } else {
-      const todas=sessoes.filter(s=>s.pacoteId===pacoteId);
-      const b=db.batch();todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-      b.delete(db.collection("clinica_pacotes").doc(pacoteId));
-      // Exclui lançamento do pacote também
-      const lp=lancamentos.find(l=>l.pacoteId===pacoteId);
-      if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
-      await b.commit();setPacoteSelecionado(null);
+    if(!modalExcluir) return;
+    const {id, pacoteId, numSessao} = modalExcluir;
+    try {
+      if(tipo==="este"){
+        await db.collection("clinica_sessoes").doc(id).delete();
+      } else if(tipo==="daqui"){
+        const fut = sessoes.filter(s=>s.pacoteId===pacoteId&&(s.numSessao||0)>=(numSessao||0));
+        const b = db.batch();
+        fut.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+        await b.commit();
+      } else {
+        // Cancelar todo o pacote — exclusão em cascata via query direta (evita dados órfãos)
+        const [snapSess, snapLanc] = await Promise.all([
+          db.collection("clinica_sessoes").where("pacoteId","==",pacoteId).get(),
+          db.collection("clinica_lancamentos").where("pacoteId","==",pacoteId).get(),
+        ]);
+        const b = db.batch();
+        snapSess.docs.forEach(d=>b.delete(d.ref));
+        snapLanc.docs.forEach(d=>b.delete(d.ref));
+        b.delete(db.collection("clinica_pacotes").doc(pacoteId));
+        await b.commit();
+        if(typeof setPacoteSelecionado==="function") setPacoteSelecionado(null);
+      }
+    } catch(e){
+      console.error("Erro ao excluir sessão/pacote:", e);
+      alert("Erro ao excluir: " + e.message);
     }
     setModalExcluir(null);
   }
@@ -2295,17 +2318,27 @@ function FinanceiroClinica() {
     />;
   }
 
-  // Função salvar edição do pacote
+  // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
   async function salvarEdicaoPacote() {
     if(!modalEditarPacote) return;
     setSalvandoEdicao(true);
     try {
       const f = formEdicaoPacote;
       const jaPago = (f.statusPag||"pendente")==="recebido";
-      // Atualiza o pacote
       const novoTotalSessoes = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
       const novoValorSessao = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
       const novoValorTotal = novoTotalSessoes * novoValorSessao;
+      const dataPagFinal = jaPago ? (f.dataPagamento||new Date().toISOString().slice(0,10)) : "";
+
+      // Calcula valorPago por sessão distribuindo pagamentosExtras proporcionalmente
+      const extras = f.pagamentosExtras||[];
+      const totalExtras = extras.reduce((a,pg)=>a+(parseFloat(pg.valor)||0),0);
+      const totalPagoRef = jaPago ? (totalExtras > 0 ? totalExtras : novoValorTotal) : 0;
+      const valorPagoPorSessao = novoTotalSessoes > 0
+        ? parseFloat((totalPagoRef / novoTotalSessoes).toFixed(2))
+        : novoValorSessao;
+
+      // 1. Atualiza o documento do pacote
       await db.collection("clinica_pacotes").doc(modalEditarPacote.id).update({
         totalSessoes: novoTotalSessoes,
         valorSessao: novoValorSessao,
@@ -2315,41 +2348,70 @@ function FinanceiroClinica() {
         horario: f.horario,
         statusPag: f.statusPag,
         formaPag: f.formaPag||"",
-        dataPagamento: jaPago?(f.dataPagamento||new Date().toISOString().slice(0,10)):"",
-        pagamentosExtras: f.pagamentosExtras||[],
+        dataPagamento: dataPagFinal,
+        pagamentosExtras: extras,
         obs: f.obs||"",
       });
-      // Busca sessões direto do Firebase para garantir dados atualizados
-      const snapSess = await db.collection("clinica_sessoes").where("pacoteId","==",modalEditarPacote.id).get();
-      const sessDoPacote = snapSess.docs.map(d=>({id:d.id,...d.data()}))
+
+      // 2. Atualiza lançamento financeiro vinculado via query direta
+      try {
+        const snapLanc = await db.collection("clinica_lancamentos")
+          .where("pacoteId","==",modalEditarPacote.id).get();
+        if(!snapLanc.empty){
+          await snapLanc.docs[0].ref.update({
+            valor: novoValorTotal,
+            totalSessoes: novoTotalSessoes,
+            valorSessao: novoValorSessao,
+            status: f.statusPag||"pendente",
+            formaPag: f.formaPag||"",
+            dataPagamento: dataPagFinal,
+            pagamentosExtras: extras,
+            obs: f.obs||"",
+          });
+        }
+      } catch(eLanc){ console.warn("Aviso: lançamento não atualizado →", eLanc.message); }
+
+      // 3. Atualiza sessões filhas em batch
+      const snapSess = await db.collection("clinica_sessoes")
+        .where("pacoteId","==",modalEditarPacote.id).get();
+      const sessDoPacote = snapSess.docs
+        .map(d=>({id:d.id,...d.data()}))
         .sort((a,b)=>(a.data||"").localeCompare(b.data||""));
-      const novoTotal = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
-      const novoValor = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
-      if(sessDoPacote.length>0){
+
+      if(sessDoPacote.length > 0){
         const batch = db.batch();
         sessDoPacote.forEach((s,idx)=>{
-          if(idx >= novoTotal){
+          if(idx >= novoTotalSessoes){
             batch.delete(db.collection("clinica_sessoes").doc(s.id));
           } else {
             const campos = {
-              valorSessao: novoValor,
-              horario: f.horario||s.horario||"",
+              valorSessao: novoValorSessao,
+              hora: f.horario||s.hora||"",
               recorrencia: f.recorrencia||s.recorrencia||"",
             };
             if(jaPago){
+              const vPagoAtual = parseFloat(s.valorPago)||0;
               campos.pagamento = "pago";
               campos.formaPagamento = f.formaPag||s.formaPagamento||"";
-              campos.dataPagamento = f.dataPagamento||s.dataPagamento||new Date().toISOString().slice(0,10);
-              campos.valorPago = s.valorPago>0 ? s.valorPago : novoValor;
+              campos.dataPagamento = dataPagFinal||s.dataPagamento||"";
+              campos.valorPago = vPagoAtual > 0 ? vPagoAtual : valorPagoPorSessao;
+            } else if(f.statusPag === "pendente" && s.pagamento === "pago"){
+              campos.pagamento = "pendente";
+              campos.valorPago = 0;
+              campos.dataPagamento = "";
             }
             batch.update(db.collection("clinica_sessoes").doc(s.id), campos);
           }
         });
         await batch.commit();
       }
-      alert("✓ Pacote atualizado com sucesso!");
+
+      alert("✓ Pacote atualizado! Sessões e financeiro sincronizados.");
       setModalEditarPacote(null);
-    } catch(e){ alert("Erro: "+e.message); }
+    } catch(e){
+      console.error("Erro salvarEdicaoPacote:", e);
+      alert("Erro ao salvar pacote: " + e.message);
+    }
     setSalvandoEdicao(false);
   }
 
@@ -2843,13 +2905,20 @@ function FinanceiroClinica() {
                                 </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#dc2626",marginLeft:"auto"}}
                                   onClick={async e=>{e.stopPropagation();
-                                    if(!confirm("Excluir pacote e todas as sessões?"))return;
-                                    const todas=sessoes.filter(s=>s.pacoteId===p.id);
-                                    const b=db.batch();
-                                    todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-                                    b.delete(db.collection("clinica_pacotes").doc(p.id));
-                                    lancsPac.forEach(l=>b.delete(db.collection("clinica_lancamentos").doc(l.id)));
-                                    await b.commit();
+                                    if(!confirm("Excluir pacote e TODAS as sessões e lançamentos vinculados? Esta ação não pode ser desfeita."))return;
+                                    try {
+                                      const [snapSess, snapLanc] = await Promise.all([
+                                        db.collection("clinica_sessoes").where("pacoteId","==",p.id).get(),
+                                        db.collection("clinica_lancamentos").where("pacoteId","==",p.id).get(),
+                                      ]);
+                                      const b = db.batch();
+                                      snapSess.docs.forEach(d=>b.delete(d.ref));
+                                      snapLanc.docs.forEach(d=>b.delete(d.ref));
+                                      b.delete(db.collection("clinica_pacotes").doc(p.id));
+                                      await b.commit();
+                                    } catch(e){
+                                      alert("Erro ao excluir pacote: "+e.message);
+                                    }
                                   }}>
                                   <Icon name="trash-2" size={13}/> Excluir
                                 </button>
@@ -2878,11 +2947,14 @@ function FinanceiroClinica() {
             const pacotesPac = pacotes.filter(p=>p.pacienteId===pac.id);
             if(pacotesPac.length===0) return null;
             const totalSessoes = sessPac.length;
-            const realizadas = sessPac.filter(s=>s.status==="realizado").length;
+            // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
+            const realizadas = sessPac.filter(s=>s.status==="realizado"||s.status==="remarcado").length;
             const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
-            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length;
+            // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
+            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado"&&s.status!=="remarcado").length;
             const recebido = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
-            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+            // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
+            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado"&&s.status!=="remarcado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
             return(
               <div key={pac.id} className="card" style={{padding:"14px 20px",cursor:"pointer",marginBottom:10,transition:"box-shadow .15s"}}
                 onClick={()=>setPacoteSelecionado(pac.id)}
