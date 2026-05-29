@@ -896,9 +896,21 @@ function AbaFerramentas({ paciente }) {
 }
 
 // ABA METAS
+// URLs do portal do paciente para visualização de cada ferramenta
+const PORTAL_URLS = {
+  humor:      "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#humor",
+  diario:     "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#diario",
+  metas:      "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#metas",
+  reflexoes:  "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#reflexoes",
+  tcc:        "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#tcc",
+  respiracao: "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#respiracao",
+  relaxamento:"https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#relaxamento",
+};
+
 function AbaModulo1({ paciente }) {
   const [dados, setDados] = useState({humor:[],diario:[],metas:[],reflexoes:[],tcc:[],respiracao:[],relaxamento:[]});
   const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState(null); // id da ferramenta em preview
 
   useEffect(()=>{
     const id = paciente.id;
@@ -912,12 +924,12 @@ function AbaModulo1({ paciente }) {
       db.collection("clinica_atividades").where("pacienteId","==",id).where("tipo","==","relaxamento").get(),
     ]).then(([h,d,m,r,t,resp,relax])=>{
       setDados({
-        humor:   h.docs.map(x=>({id:x.id,...x.data()})),
-        diario:  d.docs.map(x=>({id:x.id,...x.data()})),
-        metas:   m.docs.map(x=>({id:x.id,...x.data()})),
+        humor:    h.docs.map(x=>({id:x.id,...x.data()})),
+        diario:   d.docs.map(x=>({id:x.id,...x.data()})),
+        metas:    m.docs.map(x=>({id:x.id,...x.data()})),
         reflexoes:r.docs.map(x=>({id:x.id,...x.data()})),
-        tcc:     t.docs.map(x=>({id:x.id,...x.data()})),
-        respiracao:resp.docs.map(x=>({id:x.id,...x.data()})),
+        tcc:      t.docs.map(x=>({id:x.id,...x.data()})),
+        respiracao: resp.docs.map(x=>({id:x.id,...x.data()})),
         relaxamento:relax.docs.map(x=>({id:x.id,...x.data()})),
       });
       setLoading(false);
@@ -925,43 +937,140 @@ function AbaModulo1({ paciente }) {
   },[paciente.id]);
 
   const ITENS = [
-    { id:"humor",      icone:"❤️",  nome:"Registro de Humor",      qtd: dados.humor.length,      ultima: dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
-    { id:"diario",     icone:"📔",  nome:"Diário Terapêutico",      qtd: dados.diario.length,     ultima: dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
-    { id:"metas",      icone:"🎯",  nome:"Metas Terapêuticas",      qtd: dados.metas.length,      ultima: null },
-    { id:"reflexoes",  icone:"💡",  nome:"Reflexões Cognitivas",     qtd: dados.reflexoes.length,  ultima: null },
-    { id:"tcc",        icone:"🧠",  nome:"Pensamentos Automáticos",  qtd: dados.tcc.length,        ultima: null },
-    { id:"respiracao", icone:"💨",  nome:"Técnica de Respiração",    qtd: dados.respiracao.length, ultima: null },
-    { id:"relaxamento",icone:"💪",  nome:"Relaxamento Muscular",     qtd: dados.relaxamento.length,ultima: null },
+    { id:"humor",       icone:"❤️", nome:"Registro de Humor",      qtd:dados.humor.length,       ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
+    { id:"diario",      icone:"📔", nome:"Diário Terapêutico",      qtd:dados.diario.length,      ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
+    { id:"metas",       icone:"🎯", nome:"Metas Terapêuticas",      qtd:dados.metas.length,       ultima:null },
+    { id:"reflexoes",   icone:"💡", nome:"Reflexões Cognitivas",    qtd:dados.reflexoes.length,   ultima:null },
+    { id:"tcc",         icone:"🧠", nome:"Pensamentos Automáticos", qtd:dados.tcc.length,         ultima:null },
+    { id:"respiracao",  icone:"💨", nome:"Técnica de Respiração",   qtd:dados.respiracao.length,  ultima:null },
+    { id:"relaxamento", icone:"💪", nome:"Relaxamento Muscular",    qtd:dados.relaxamento.length, ultima:null },
   ];
+
+  // Descrições resumidas para o modal de preview
+  const DESC = {
+    humor:      "Registro diário da escala de humor do paciente.",
+    diario:     "Espaço de escrita reflexiva livre, como um diário terapêutico.",
+    metas:      "Metas terapêuticas com acompanhamento de progresso.",
+    reflexoes:  "Exercícios de reestruturação cognitiva e insight.",
+    tcc:        "Registro ABC de pensamentos automáticos — Modelo TCC.",
+    respiracao: "Exercício de respiração diafragmática 4-7-8 para regulação emocional.",
+    relaxamento:"Técnica de relaxamento muscular progressivo de Jacobson.",
+  };
 
   return (
     <div>
       <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Módulo 1 — Dashboard</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Ferramentas básicas do dia a dia de {paciente.nome.split(" ")[0]}</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>
+        Ferramentas básicas do dia a dia de {paciente.nome.split(" ")[0]}
+      </div>
 
-      {loading ? <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Carregando...</div> : (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
-          {ITENS.map(item=>(
-            <div key={item.id} style={{background:"white",border:"1px solid var(--gray-100)",borderRadius:14,padding:18,
-              boxShadow:"0 2px 8px rgba(123,0,196,0.05)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"var(--purple-soft)",
-                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
-                  {item.icone}
+      {loading
+        ? <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Carregando...</div>
+        : (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
+            {ITENS.map(item=>(
+              <div key={item.id} style={{background:"white",border:"1px solid var(--gray-100)",
+                borderRadius:14,padding:18,boxShadow:"0 2px 8px rgba(123,0,196,0.05)",
+                display:"flex",flexDirection:"column",gap:10}}>
+
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:40,height:40,borderRadius:10,background:"var(--purple-soft)",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                    {item.icone}
+                  </div>
+                  <div style={{fontWeight:600,fontSize:13,lineHeight:1.3}}>{item.nome}</div>
                 </div>
-                <div style={{fontWeight:600,fontSize:13,lineHeight:1.3}}>{item.nome}</div>
+
+                {/* Contagem */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{fontSize:24,fontWeight:700,color:"var(--purple)"}}>{item.qtd}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"right"}}>
+                    {item.qtd===0 ? "Sem registros" : `registro${item.qtd!==1?"s":""}`}
+                    {item.ultima&&<div style={{marginTop:2}}>Último: {new Date(item.ultima+"T00:00:00").toLocaleDateString("pt-BR")}</div>}
+                  </div>
+                </div>
+
+                {/* Botão visualizar */}
+                <button onClick={()=>setPreview(item.id)}
+                  style={{width:"100%",padding:"7px",borderRadius:8,border:"1px solid var(--purple)",
+                    background:"white",color:"var(--purple)",cursor:"pointer",
+                    fontSize:12,fontWeight:600,fontFamily:"inherit",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                  <Icon name="eye" size={13}/> Visualizar
+                </button>
               </div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div style={{fontSize:24,fontWeight:700,color:"var(--purple)"}}>{item.qtd}</div>
-                <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"right"}}>
-                  {item.qtd===0 ? "Sem registros" : `registro${item.qtd!==1?"s":""}`}
-                  {item.ultima && <div style={{marginTop:2}}>Último: {new Date(item.ultima+"T00:00:00").toLocaleDateString("pt-BR")}</div>}
+            ))}
+          </div>
+        )
+      }
+
+      {/* Modal de preview */}
+      {preview&&(()=>{
+        const item = ITENS.find(i=>i.id===preview);
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,
+            display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+            onClick={()=>setPreview(null)}>
+            <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:520,
+              boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}
+              onClick={e=>e.stopPropagation()}>
+
+              {/* Header */}
+              <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
+                borderRadius:"16px 16px 0 0",padding:"20px 24px",color:"white",
+                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:28}}>{item?.icone}</span>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16}}>{item?.nome}</div>
+                    <div style={{fontSize:12,opacity:0.8,marginTop:2}}>Visualização do paciente</div>
+                  </div>
+                </div>
+                <button onClick={()=>setPreview(null)}
+                  style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,
+                    padding:"6px 10px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                  ✕ Fechar
+                </button>
+              </div>
+
+              {/* Corpo */}
+              <div style={{padding:24}}>
+                <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",
+                  marginBottom:20,fontSize:13,color:"var(--purple)",lineHeight:1.6}}>
+                  <strong>ℹ️ Como o paciente vê:</strong><br/>
+                  {DESC[preview]}
+                </div>
+
+                <div style={{background:"#f9fafb",borderRadius:10,padding:16,marginBottom:16,
+                  border:"1px solid var(--gray-100)"}}>
+                  <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8,
+                    textTransform:"uppercase",letterSpacing:"0.5px"}}>Dados atuais de {paciente.nome.split(" ")[0]}</div>
+                  <div style={{fontSize:22,fontWeight:700,color:"var(--purple)"}}>{item?.qtd}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>
+                    {item?.qtd===0 ? "Sem registros ainda" : `registro${item?.qtd!==1?"s":""}  realizados`}
+                  </div>
+                </div>
+
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>setPreview(null)}
+                    style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--gray-200)",
+                      background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                    Fechar
+                  </button>
+                  <button onClick={()=>{ window.open(PORTAL_URLS[preview],"_blank"); }}
+                    style={{flex:1,padding:"10px",borderRadius:8,border:"none",
+                      background:"var(--purple)",color:"white",cursor:"pointer",
+                      fontSize:13,fontWeight:600,fontFamily:"inherit",
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    <Icon name="external-link" size={13}/> Abrir no Portal
+                  </button>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -6328,6 +6437,15 @@ function AbaFabulas() {
 
   async function migrarCategorias(){
     if(!confirm("Migrar categorias antigas para as novas? Isso atualiza os documentos no Firebase.")) return;
+    // Garante que breathing-478 e muscle-relaxation ficam visíveis com categoria ansiedade
+    const snapAnsi = await db.collection("clinica_recursos")
+      .where("formularioKey","in",["breathing-478","muscle-relaxation"]).get();
+    for(const doc of snapAnsi.docs){
+      const cat = doc.data().categoria;
+      if(!["tcc","ansiedade","emocoes","autocuidado","relacionamentos","corpo","esquema","musicoterapia","avaliacao","outro"].includes(cat)){
+        await doc.ref.update({categoria:"ansiedade"});
+      }
+    }
     setMigrando(true);
     try{
       const snap = await db.collection("clinica_fabulas").get();
@@ -7344,11 +7462,17 @@ function RecursosTerapeuticos({ user }) {
     return cOk && bOk;
   });
 
+  const idsCategoriasConhecidas = new Set(CATEGORIAS_RECURSOS.map(c=>c.id));
   const porCategoria = CATEGORIAS_RECURSOS.reduce((acc,cat)=>{
     const itens = filtrados.filter(r=>r.categoria===cat.id);
     if(itens.length>0) acc.push({...cat, itens});
     return acc;
   },[]);
+  // Recursos com categoria desconhecida ou vazia — não ficam perdidos
+  const orfaos = filtrados.filter(r=>!idsCategoriasConhecidas.has(r.categoria));
+  if(orfaos.length>0) porCategoria.push({
+    id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
+  });
 
   async function salvar(){
     if(!form.titulo){alert("Titulo obrigatorio.");return;}
@@ -7383,9 +7507,35 @@ function RecursosTerapeuticos({ user }) {
           <div className="page-title">Recursos Terapeuticos</div>
           <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
-          <Icon name="plus" size={16}/> Nova Ferramenta
-        </button>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn btn-ghost" style={{fontSize:12}} title="Corrige categorias antigas no Firebase"
+            onClick={async()=>{
+              if(!confirm("Corrigir categorias de Respiração e Relaxamento no Firebase?")) return;
+              const snap = await db.collection("clinica_recursos").get();
+              const validas = new Set(["tcc","ansiedade","emocoes","autocuidado","relacionamentos","corpo","esquema","musicoterapia","avaliacao","outro","casal"]);
+              const batch = db.batch();
+              let n = 0;
+              snap.docs.forEach(doc=>{
+                const d = doc.data();
+                // Respiração e Relaxamento → ansiedade
+                if(["breathing-478","muscle-relaxation"].includes(d.formularioKey) && !validas.has(d.categoria)){
+                  batch.update(doc.ref,{categoria:"ansiedade"}); n++;
+                }
+                // Qualquer outra categoria inválida → outro
+                else if(d.categoria && !validas.has(d.categoria)){
+                  batch.update(doc.ref,{categoria:"outro"}); n++;
+                }
+              });
+              if(n===0){alert("✅ Nenhuma correção necessária — todas as categorias já estão corretas!");return;}
+              await batch.commit();
+              alert(`✅ ${n} ferramenta(s) corrigida(s)! Respiração e Relaxamento agora aparecem em Ansiedade.`);
+            }}>
+            🔧 Corrigir Categorias
+          </button>
+          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
+            <Icon name="plus" size={16}/> Nova Ferramenta
+          </button>
+        </div>
       </div>
 
       {/* Abas — 3 abas */}
