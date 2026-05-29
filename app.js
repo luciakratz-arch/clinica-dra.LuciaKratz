@@ -25,6 +25,7 @@ const PERFIS = [
   { id:"psicologa",  nome:"Sou Psicologa",  desc:"Acesso ao painel clinico completo", icon:"stethoscope", cor:"#7B00C4" },
   { id:"secretaria", nome:"Sou Secretaria",  desc:"Cadastro de pacientes e financeiro da clinica", icon:"clipboard-list", cor:"#0891b2" },
   { id:"paulo",      nome:"Paulo Sergio",    desc:"Visualizacao do financeiro familiar", icon:"wallet", cor:"#16a34a" },
+  { id:"marketing",  nome:"Marketing",       desc:"Captacao de leads e metricas de trafego", icon:"trending-up", cor:"#ea580c" },
 ];
 
 const MODULOS = [
@@ -46,6 +47,14 @@ const FERRAMENTAS = [
 ];
 
 // ─── NOTIFICAÇÕES ─────────────────────────────────────────
+// ─── NOTIFICAÇÕES PUSH (modelo Família Kratz) ─────────────
+
+function fmtDataNotif(dataStr) {
+  if (!dataStr) return "";
+  const d = new Date(dataStr + "T00:00:00");
+  return d.toLocaleDateString("pt-BR", {weekday:"long", day:"2-digit", month:"2-digit"});
+}
+
 async function dispararNotificacao({ tipo, titulo, corpo="", pacienteId="" }) {
   try {
     await db.collection("clinica_notificacoes").add({
@@ -56,121 +65,108 @@ async function dispararNotificacao({ tipo, titulo, corpo="", pacienteId="" }) {
   } catch(e) {}
 }
 
-function tocarSomNotificacao() {
+function enviarPushLocal(titulo, corpo) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(titulo, { body: corpo, icon: "../logo-transparente.png" });
+  }
+}
+
+async function verificarLembretesHoje(user) {
+  if (!user) return;
+  const hoje = new Date();
+  const amanha = new Date(hoje); amanha.setDate(hoje.getDate() + 1);
+  const fmtDate = d => d.toISOString().split("T")[0];
+
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.18, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.35);
+    // Sessões de hoje e amanhã
+    if (["psicologa","secretaria"].includes(user.tipo)) {
+      const snap = await db.collection("clinica_sessoes")
+        .where("data","in",[fmtDate(hoje), fmtDate(amanha)])
+        .where("status","==","agendado").get();
+      snap.docs.forEach(d => {
+        const s = d.data();
+        const dia = s.data === fmtDate(hoje) ? "Hoje" : "Amanhã";
+        const diaSemana = fmtDataNotif(s.data);
+        enviarPushLocal(
+          `${dia} — Sessão às ${s.hora}`,
+          `${diaSemana} · ${s.pacienteNome}`
+        );
+      });
+    }
+
+    // Pagamentos previstos (psicóloga e Paulo)
+    if (["psicologa","paulo"].includes(user.tipo)) {
+      const snap = await db.collection("clinica_lancamentos")
+        .where("status","==","pendente")
+        .where("data","<=", fmtDate(amanha)).get();
+      snap.docs.forEach(d => {
+        const l = d.data();
+        const diaSemana = fmtDataNotif(l.data);
+        enviarPushLocal(
+          `Pagamento previsto — ${diaSemana}`,
+          `R$ ${parseFloat(l.valor||0).toFixed(2).replace(".",",")} · ${l.pacienteNome||l.descricao||""}`
+        );
+      });
+    }
+
+    // Pagamentos pendentes (secretária)
+    if (user.tipo === "secretaria") {
+      const snap = await db.collection("clinica_lancamentos")
+        .where("status","==","pendente").get();
+      snap.docs.slice(0,3).forEach(d => {
+        const l = d.data();
+        const diaSemana = fmtDataNotif(l.data);
+        enviarPushLocal(
+          `Pagamento pendente — ${l.pacienteNome||""}`,
+          `R$ ${parseFloat(l.valor||0).toFixed(2).replace(".",",")} · previsto ${diaSemana}`
+        );
+      });
+    }
   } catch(e) {}
 }
 
-function notificacaoVisivel(notif, user) {
-  const t = notif.tipo;
-  if (user.tipo === "psicologa")  return ["sessao","pagamento","bloqueio_sala"].includes(t);
-  if (user.tipo === "secretaria") return ["sessao","pagamento_pendente"].includes(t);
-  if (user.tipo === "paulo")      return t === "pagamento";
-  return false;
-}
-
-function useNotificacoes(user) {
-  const [notifs, setNotifs] = useState([]);
-  const [abertas, setAbertas] = useState(false);
-  const vistos = useRef(new Set());
+function useBotaoNotificacao(user) {
+  const [permissao, setPermissao] = useState(
+    "Notification" in window ? Notification.permission : "denied"
+  );
 
   useEffect(() => {
-    if (!user) return;
-    const unsub = db.collection("clinica_notificacoes")
-      .orderBy("createdAt","desc").limit(50)
-      .onSnapshot(snap => {
-        const todas = snap.docs.map(d=>({id:d.id,...d.data()}));
-        const visiveis = todas.filter(n=>notificacaoVisivel(n,user));
-        const novas = visiveis.filter(n=>!vistos.current.has(n.id)&&!n.lida);
-        if (novas.length > 0 && vistos.current.size > 0) tocarSomNotificacao();
-        novas.forEach(n=>vistos.current.add(n.id));
-        setNotifs(visiveis);
-      }, ()=>{});
-    return unsub;
-  }, [user]);
+    if (!user || permissao !== "granted") return;
+    // Verifica lembretes 2 segundos após login
+    const t = setTimeout(() => verificarLembretesHoje(user), 2000);
+    return () => clearTimeout(t);
+  }, [user, permissao]);
 
-  const naoLidas = notifs.filter(n=>!n.lida).length;
+  async function ativar() {
+    if (!("Notification" in window)) { alert("Seu navegador não suporta notificações."); return; }
+    const p = await Notification.requestPermission();
+    setPermissao(p);
+    if (p === "granted") {
+      verificarLembretesHoje(user);
+    }
+  }
 
-  async function marcarLida(id) {
-    await db.collection("clinica_notificacoes").doc(id).update({lida:true});
-  }
-  async function marcarTodasLidas() {
-    const batch = db.batch();
-    notifs.filter(n=>!n.lida).forEach(n=>batch.update(db.collection("clinica_notificacoes").doc(n.id),{lida:true}));
-    await batch.commit();
-  }
-  return { notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas };
+  return { permissao, ativar };
 }
 
-const LABEL_TIPO = {
-  sessao:"Sessão",
-  pagamento:"Pagamento",
-  pagamento_pendente:"Pagamento Pendente",
-  bloqueio_sala:"Bloqueio de Sala",
-  supervisao:"Supervisão"
-};
-const COR_TIPO = {
-  sessao:"#7B00C4",
-  pagamento:"#16a34a",
-  pagamento_pendente:"#d97706",
-  bloqueio_sala:"#ea580c",
-  supervisao:"#0891b2"
-};
-
-function PainelNotificacoes({ notifs, naoLidas, abertas, setAbertas, marcarLida, marcarTodasLidas }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!abertas) return;
-    function fora(e) { if (ref.current&&!ref.current.contains(e.target)) setAbertas(false); }
-    document.addEventListener("mousedown",fora);
-    return ()=>document.removeEventListener("mousedown",fora);
-  }, [abertas]);
-
-  if (!abertas) return null;
-
+function BotaoNotificacao({ permissao, ativar }) {
+  if (!("Notification" in window)) return null;
+  if (permissao === "granted") return (
+    <span style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 14px",fontSize:12,fontFamily:"var(--font-body)"}}>
+      🔔 Ativo
+    </span>
+  );
+  if (permissao === "denied") return (
+    <span style={{background:"rgba(255,0,0,0.15)",border:"1px solid rgba(255,0,0,0.3)",color:"#fca5a5",borderRadius:20,padding:"5px 14px",fontSize:12,fontFamily:"var(--font-body)"}}>
+      🔕 Bloqueado
+    </span>
+  );
   return (
-    <div ref={ref} style={{position:"absolute",left:0,bottom:"calc(100% + 8px)",width:320,maxHeight:420,overflowY:"auto",background:"white",borderRadius:14,boxShadow:"0 -4px 32px rgba(0,0,0,0.18)",zIndex:1000,border:"1px solid var(--gray-200)"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px 10px",borderBottom:"1px solid var(--gray-200)"}}>
-        <div style={{fontFamily:"var(--font-display)",fontWeight:700,fontSize:15,color:"var(--text)"}}>Notificações</div>
-        {naoLidas>0&&<button onClick={marcarTodasLidas} style={{fontSize:12,color:"var(--purple)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-body)"}}>Marcar todas lidas</button>}
-      </div>
-      {notifs.length===0?(
-        <div style={{padding:"32px 16px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
-          <Icon name="bell-off" size={32}/>
-          <div style={{marginTop:8}}>Sem notificações</div>
-        </div>
-      ):notifs.map(n=>{
-        const cor = COR_TIPO[n.tipo]||"#6b7280";
-        return (
-          <div key={n.id} onClick={()=>marcarLida(n.id)}
-            style={{display:"flex",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)",cursor:"pointer",background:n.lida?"white":"#faf5ff"}}
-            onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
-            onMouseLeave={e=>e.currentTarget.style.background=n.lida?"white":"#faf5ff"}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:n.lida?"transparent":cor,marginTop:6,flexShrink:0}}/>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
-                <span style={{fontSize:11,fontWeight:700,color:cor,background:cor+"18",padding:"2px 7px",borderRadius:20}}>{LABEL_TIPO[n.tipo]||n.tipo}</span>
-                <span style={{fontSize:11,color:"var(--text-muted)"}}>
-                  {n.createdAt?.seconds?new Date(n.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
-                </span>
-              </div>
-              <div style={{fontSize:13,fontWeight:n.lida?400:600,color:"var(--text)",lineHeight:1.4}}>{n.titulo}</div>
-              {n.corpo&&<div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{n.corpo}</div>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+    <button onClick={ativar}
+      style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 14px",fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+      🔔 Ativar lembretes
+    </button>
   );
 }
 
@@ -213,6 +209,69 @@ function Icon({ name, size=18 }) {
   return <span ref={ref} style={{display:"inline-flex",alignItems:"center"}} />;
 }
 
+// ── TextArea com botão de voz reutilizável ──────────────────────────────────
+function TextAreaVoz({value, onChange, placeholder, rows=3, className="form-input", style={}}){
+  const [gravando, setGravando] = React.useState(false);
+  const recRef = React.useRef(null);
+
+  function toggleVoz(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return;
+    if(gravando){ recRef.current?.stop(); setGravando(false); return; }
+    const rec = new SR();
+    rec.lang="pt-BR"; rec.continuous=true; rec.interimResults=true;
+    rec.onresult = e=>{
+      const t = Array.from(e.results).map(r=>r[0].transcript).join(" ");
+      const base = (value||"").replace(/\s*\[\.\.\.]$/,"").trimEnd();
+      onChange({target:{value: base ? base+" "+t : t}});
+    };
+    rec.onerror = ()=>setGravando(false);
+    rec.onend   = ()=>setGravando(false);
+    recRef.current = rec;
+    rec.start();
+    setGravando(true);
+  }
+
+  const SR_SUPPORT = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  return (
+    <div style={{position:"relative"}}>
+      <textarea
+        className={className}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows={rows}
+        style={{...style, paddingRight: SR_SUPPORT ? 36 : undefined, resize:"vertical"}}
+      />
+      {SR_SUPPORT && (
+        <button
+          type="button"
+          onClick={toggleVoz}
+          title={gravando?"Parar gravação":"Falar para digitar"}
+          style={{
+            position:"absolute", right:6, bottom:8,
+            background: gravando?"#7B00C4":"#f3e6ff",
+            border:"none", borderRadius:6, padding:"4px 6px",
+            cursor:"pointer", color: gravando?"white":"#7B00C4",
+            fontSize:14, lineHeight:1,
+            boxShadow: gravando?"0 0 0 3px #7B00C430":"none",
+            transition:"all .2s"
+          }}>
+          🎙️
+        </button>
+      )}
+      {gravando && (
+        <div style={{fontSize:11,color:"#7B00C4",marginTop:3,display:"flex",alignItems:"center",gap:4}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"#7B00C4",display:"inline-block",animation:"pulse-slow 1s infinite"}}/>
+          Gravando... clique 🎙️ para parar
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function Spinner() { return <div className="spinner-wrap"><div className="spinner"/></div>; }
 function EmBreve({ titulo, subtitulo }) {
   return (
@@ -249,6 +308,9 @@ function Login({ onLogin }) {
         if (sec.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
         const nomeReal = sec.nome && !sec.nome.includes("@") ? sec.nome : "Secretaria";
         onLogin({ ...sec, tipo:"secretaria", nome: nomeReal });
+      } else if (perfilSel === "marketing") {
+        if (senha === "1234") onLogin({ tipo:"marketing", nome:"Marketing" });
+        else setErro("Senha incorreta.");
       }
     } catch(e) { setErro("Erro ao conectar."); }
     setLoading(false);
@@ -335,33 +397,56 @@ function Login({ onLogin }) {
 
 // NAV
 const NAV_PSICOLOGA = [
-  {id:"dashboard",    label:"Dashboard",          icon:"layout-dashboard"},
-  {id:"pacientes",    label:"Pacientes",           icon:"users"},
-  {id:"alunos",       label:"Alunos",              icon:"graduation-cap"},
-  {id:"casais",       label:"Terapia de Casais",   icon:"heart"},
-  {id:"recursos",     label:"Recursos Terapeuticos",icon:"wrench"},
-  {id:"laudos",       label:"Laudos",              icon:"file-text"},
-  {id:"agenda",       label:"Agenda",              icon:"calendar"},
-  {id:"fin-clinica",  label:"Fin. Clinica",        icon:"dollar-sign"},
-  {id:"comissoes",    label:"Comissoes",           icon:"percent"},
-  {id:"fin-pessoal",  label:"Fin. Pessoal",        icon:"home"},
-  {id:"depoimentos",  label:"Depoimentos",         icon:"star"},
-  {id:"config",       label:"Configuracoes",       icon:"settings"},
+  { grupo:"🏥 Clínica", itens:[
+    {id:"dashboard",    label:"Dashboard",             icon:"layout-dashboard"},
+    {id:"pacientes",    label:"Pacientes",             icon:"users"},
+    {id:"alunos",       label:"Alunos",                icon:"graduation-cap"},
+    {id:"casais",       label:"Terapia de Casais",     icon:"heart"},
+    {id:"agenda",       label:"Agenda",                icon:"calendar"},
+    {id:"laudos",       label:"Laudos",                icon:"file-text"},
+    {id:"recursos",     label:"Recursos Terapêuticos", icon:"wrench"},
+  ]},
+  { grupo:"📊 Comercial & Marketing", itens:[
+    {id:"funil-leads",           label:"Funil de Leads", icon:"filter"},
+    {id:"marketing-dashboard",   label:"Marketing",      icon:"trending-up"},
+    {id:"dashboard-performance", label:"Performance",    icon:"activity"},
+  ]},
+  { grupo:"💰 Financeiro", itens:[
+    {id:"fin-clinica", label:"Fin. Clínica",   icon:"dollar-sign"},
+    {id:"comissoes",   label:"Comissões",      icon:"percent"},
+    {id:"fin-pessoal", label:"Fin. Pessoal",   icon:"home"},
+  ]},
+  { grupo:"⚙️ Configurações", itens:[
+    {id:"depoimentos", label:"Depoimentos",    icon:"star"},
+    {id:"config",      label:"Configurações",  icon:"settings"},
+  ]},
 ];
+
+// Lista plana para compatibilidade com código existente
+const NAV_PSICOLOGA_FLAT = NAV_PSICOLOGA.flatMap(g=>g.itens);
+
 const NAV_SECRETARIA = [
-  {id:"pacientes",   label:"Pacientes",  icon:"users"},
-  {id:"agenda",      label:"Agenda",     icon:"calendar"},
-  {id:"fin-clinica", label:"Financeiro", icon:"dollar-sign"},
-  {id:"comissoes",   label:"Comissoes",  icon:"percent"},
+  {id:"pacientes",   label:"Pacientes",    icon:"users"},
+  {id:"agenda",      label:"Agenda",       icon:"calendar"},
+  {id:"funil-leads", label:"Funil Leads",  icon:"filter"},
+  {id:"fin-clinica", label:"Financeiro",   icon:"dollar-sign"},
+  {id:"comissoes",   label:"Comissoes",    icon:"percent"},
 ];
 const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}];
 
 // SIDEBAR
 function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
-  const nav = user.tipo==="secretaria"?NAV_SECRETARIA:user.tipo==="paulo"?NAV_PAULO:NAV_PSICOLOGA;
-  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":"Area Administrativa";
+  const isPsicologa = user.tipo==="psicologa";
+  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":user.tipo==="marketing"?"Marketing":"Area Administrativa";
   const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || "Usuário");
   const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
+
+  // Nav plana para perfis simples
+  const navFlat = user.tipo==="secretaria" ? NAV_SECRETARIA
+    : user.tipo==="paulo" ? NAV_PAULO
+    : user.tipo==="marketing" ? NAV_MARKETING
+    : null; // psicologa usa grupos
+
   return (
     <div className="sidebar-desktop">
       <div className="sidebar-header">
@@ -374,13 +459,36 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
           <div className="sidebar-role">{titulo}</div>
         </div>
       </div>
+
       <nav className="sidebar-nav">
-        {nav.map(item=>(
-          <button key={item.id} className={"nav-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
-            <Icon name={item.icon} size={18}/>{item.label}
-          </button>
-        ))}
+        {isPsicologa ? (
+          // Menu com grupos para psicóloga
+          NAV_PSICOLOGA.map(grupo=>(
+            <div key={grupo.grupo} style={{marginBottom:4}}>
+              <div style={{
+                fontSize:10, fontWeight:700, letterSpacing:"0.08em",
+                color:"rgba(255,255,255,0.45)", padding:"10px 14px 4px",
+                textTransform:"uppercase"
+              }}>
+                {grupo.grupo}
+              </div>
+              {grupo.itens.map(item=>(
+                <button key={item.id} className={"nav-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+                  <Icon name={item.icon} size={18}/>{item.label}
+                </button>
+              ))}
+            </div>
+          ))
+        ) : (
+          // Menu plano para outros perfis
+          navFlat.map(item=>(
+            <button key={item.id} className={"nav-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+              <Icon name={item.icon} size={18}/>{item.label}
+            </button>
+          ))
+        )}
       </nav>
+
       <div className="sidebar-footer">
         <div className="sidebar-user" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"rgba(255,255,255,0.08)",borderRadius:10,marginBottom:8}}>
           <div className="sidebar-avatar" style={{flexShrink:0}}>{initials}</div>
@@ -388,20 +496,7 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
             <div className="sidebar-user-name" style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nomeExibir}</div>
             {user.crp && <div className="sidebar-user-crp">{user.crp}</div>}
           </div>
-          {notifProps && (
-            <div style={{position:"relative",flexShrink:0}}>
-              <button onClick={()=>notifProps.setAbertas(!notifProps.abertas)}
-                style={{background:"rgba(255,255,255,0.15)",border:"1px solid rgba(255,255,255,0.3)",color:"#fff",borderRadius:20,padding:"5px 14px",fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
-                🔔
-                {notifProps.naoLidas>0&&(
-                  <span style={{background:"#ef4444",color:"white",fontSize:10,fontWeight:700,borderRadius:20,padding:"1px 6px"}}>
-                    {notifProps.naoLidas>9?"9+":notifProps.naoLidas}
-                  </span>
-                )}
-              </button>
-              {notifProps.abertas&&<PainelNotificacoes {...notifProps}/>}
-            </div>
-          )}
+          {notifProps && <BotaoNotificacao {...notifProps}/>}
         </div>
         {user.tipo==="psicologa"&&(
           <a href="../sala/" target="_blank" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(234,88,12,0.2)",borderRadius:8,marginBottom:2}}>
@@ -484,7 +579,7 @@ function DashboardAdmin({ user }) {
         <div style={{fontWeight:700,fontSize:16,marginBottom:16,display:"flex",alignItems:"center",gap:8}}>
           <Icon name="bar-chart-2" size={18}/> Resumo Financeiro — {new Date().toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:20}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:20}}>
           <div style={{background:saldoMes>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"16px 20px",border:"1.5px solid",borderColor:saldoMes>=0?"#6ee7b7":"#fca5a5"}}>
             <div style={{fontSize:12,fontWeight:600,color:saldoMes>=0?"#059669":"#dc2626",marginBottom:6}}>Saldo do Mês (Geral)</div>
             <div style={{fontSize:24,fontWeight:800,color:saldoMes>=0?"#059669":"#dc2626"}}>{fmt(saldoMes)}</div>
@@ -505,7 +600,7 @@ function DashboardAdmin({ user }) {
         {/* Acumulado ano */}
         <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:16}}>
           <div style={{fontWeight:600,marginBottom:12,fontSize:14,color:"var(--text-muted)"}}>Acumulado {anoAtual}</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:8}}>
             <div style={{padding:"12px 16px",borderRadius:10,background:"var(--gray-50)",border:"1px solid var(--gray-200)"}}>
               <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>Receitas {anoAtual}</div>
               <div style={{fontWeight:700,fontSize:18,color:"#059669"}}>{fmt(recAno)}</div>
@@ -602,7 +697,7 @@ function AbaPerfil({ paciente, pacientes }) {
           </div>
           <div className="form-group" style={{gridColumn:"span 2"}}>
             <label className="form-label">Objetivos Terapeuticos</label>
-            <textarea className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos da terapia..."/>
+            <TextAreaVoz className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos da terapia..."/>
           </div>
         </div>
         <div style={{display:"flex",gap:10,marginTop:16}}>
@@ -625,25 +720,151 @@ function AbaPerfil({ paciente, pacientes }) {
 }
 
 // ABA MODULOS
-function AbaModulos({ paciente }) {
-  const [modulos, setModulos] = useState(paciente.modulosAtivos||[]);
-  async function toggle(id) {
-    const novos = modulos.includes(id)?modulos.filter(m=>m!==id):[...modulos,id];
-    setModulos(novos);
-    await db.collection("clinica_pacientes").doc(paciente.id).update({modulosAtivos:novos});
-  }
+// FERRAMENTAS FIXAS DO MÓDULO I
+const FERRAMENTAS_MOD1 = [
+  { id:"humor",     nome:"Registro de Humor",        desc:"Escala de humor diária" },
+  { id:"diario",    nome:"Diário Terapêutico",        desc:"Escrita reflexiva livre" },
+  { id:"metas",     nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
+  { id:"reflexoes", nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
+  { id:"tcc",       nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
+  { id:"respiracao",nome:"Técnica de Respiração",     desc:"Exercício de respiração diafragmática" },
+  { id:"relaxamento",nome:"Relaxamento Muscular",     desc:"Técnica de Jacobson" },
+];
+
+function Toggle({ ativo, onClick }) {
   return (
-    <div className="card">
-      <div style={{fontWeight:600,marginBottom:4}}>Modulos Ativos</div>
-      <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Ative ou desative modulos para personalizar a experiencia terapeutica deste paciente.</p>
-      {MODULOS.map(m=>(
-        <div key={m.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 0",borderBottom:"1px solid var(--gray-100)"}}>
-          <div><div style={{fontWeight:500,fontSize:14}}>{m.nome}</div><div style={{fontSize:12,color:"var(--text-muted)"}}>{m.desc}</div></div>
-          <button onClick={()=>toggle(m.id)} style={{width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:modulos.includes(m.id)?"var(--purple)":"var(--gray-200)",position:"relative",transition:"background .2s",flexShrink:0}}>
-            <span style={{position:"absolute",top:2,left:modulos.includes(m.id)?"22px":"2px",width:20,height:20,borderRadius:"50%",background:"white",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
-          </button>
-        </div>
-      ))}
+    <button onClick={onClick} style={{width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:ativo?"var(--purple)":"var(--gray-200)",position:"relative",transition:"background .2s",flexShrink:0}}>
+      <span style={{position:"absolute",top:2,left:ativo?"22px":"2px",width:20,height:20,borderRadius:"50%",background:"white",transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,0.2)"}}/>
+    </button>
+  );
+}
+
+function AbaModulos({ paciente }) {
+  const [config, setConfig] = useState(paciente.modulosConfig || {});
+  const [recursos, setRecursos] = useState([]);
+  const [fabulas, setFabulas] = useState([]);
+  const [psicoeducacao, setPsicoeducacao] = useState([]);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    // Busca config atualizado do Firebase (ignora cache da prop)
+    db.collection("clinica_pacientes").doc(paciente.id).get().then(d => {
+      if (d.exists && d.data().modulosConfig) setConfig(d.data().modulosConfig);
+    });
+    db.collection("clinica_recursos").get().then(s => setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))));
+    db.collection("clinica_fabulas").onSnapshot(s => setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    db.collection("clinica_psicoeducacao").onSnapshot(s => setPsicoeducacao(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+  }, [paciente.id]);
+
+  async function salvarConfig(novaConfig) {
+    setConfig(novaConfig);
+    // Atualiza também modulosAtivos para compatibilidade
+    const ativos = Object.keys(novaConfig).filter(k => novaConfig[k]?.ativo);
+    await db.collection("clinica_pacientes").doc(paciente.id).update({
+      modulosConfig: novaConfig,
+      modulosAtivos: ativos
+    });
+  }
+
+  function toggleModulo(modId) {
+    const atual = config[modId] || {};
+    const novaConfig = { ...config, [modId]: { ...atual, ativo: !atual.ativo, ferramentas: atual.ferramentas || {} } };
+    salvarConfig(novaConfig);
+  }
+
+  function toggleFerramenta(modId, ferrId) {
+    const modAtual = config[modId] || { ativo: true, ferramentas: {} };
+    const ferrAtual = modAtual.ferramentas || {};
+    const hoje = new Date().toISOString().split("T")[0];
+    const ferrNova = ferrAtual[ferrId] ? null : { ativo: true, dataInicio: hoje };
+    const novaFerr = { ...ferrAtual };
+    if (ferrNova) novaFerr[ferrId] = ferrNova;
+    else delete novaFerr[ferrId];
+    salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: novaFerr } });
+  }
+
+  function setDataInicio(modId, ferrId, data) {
+    const modAtual = config[modId] || { ativo: true, ferramentas: {} };
+    const ferrAtual = modAtual.ferramentas || {};
+    salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: { ...ferrAtual, [ferrId]: { ...(ferrAtual[ferrId]||{}), dataInicio: data } } } });
+  }
+
+  const MODULOS_DEF = [
+    { id:"mod1", nome:"Módulo I — Dashboard", desc:"Ferramentas do dia a dia", icone:"🧠", ferramentas: FERRAMENTAS_MOD1 },
+    { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
+    { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
+    { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
+    { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑",
+      ferramentas: [
+        {id:"etapa1-casal", nome:"Etapa 1 — Reconexão e Segurança Emocional",    desc:"Reduzir defensividade e aumentar conexão emocional"},
+        {id:"etapa2-casal", nome:"Etapa 2 — Identidade e Vínculo do Casal",       desc:"Resgatar identidade afetiva e visão compartilhada"},
+        {id:"etapa3-casal", nome:"Etapa 3 — Conceitualização Cognitiva",          desc:"Identificar padrões cognitivos e crenças relacionais"},
+        {id:"etapa4-casal", nome:"Etapa 4 — Reestruturação Relacional",           desc:"Criar novos padrões emocionais e comportamentais"},
+      ],
+      automatico: false },
+    { id:"mod6", nome:"Módulo VI — Psicoeducação", desc:"Materiais psicoeducativos cadastrados em Recursos", icone:"🎓",
+      ferramentas: psicoeducacao.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
+  ];
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      {MODULOS_DEF.map(mod => {
+        const modConfig = config[mod.id] || {};
+        const ativo = !!modConfig.ativo;
+        const ferramentas = modConfig.ferramentas || {};
+        return (
+          <div key={mod.id} style={{background:"white",borderRadius:14,border:`2px solid ${ativo?"var(--purple)":"var(--gray-200)"}`,overflow:"hidden",transition:"border-color .2s"}}>
+            {/* Cabeçalho do módulo */}
+            <div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",background:ativo?"var(--purple-bg)":"white"}}>
+              <div style={{fontSize:24}}>{mod.icone}</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:15,color:"var(--text)"}}>{mod.nome}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}</div>
+              </div>
+              {mod.automatico ? (
+                <span style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>automático</span>
+              ) : (
+                <Toggle ativo={ativo} onClick={()=>toggleModulo(mod.id)}/>
+              )}
+            </div>
+
+            {/* Ferramentas do módulo */}
+            {ativo && !mod.automatico && (
+              <div style={{borderTop:"1px solid var(--gray-100)",padding:"12px 20px",background:"#fafafa"}}>
+                {mod.ferramentas.length === 0 ? (
+                  <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>
+                    Nenhuma ferramenta cadastrada neste módulo ainda.
+                  </div>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:4}}>FERRAMENTAS DISPONÍVEIS</div>
+                    {mod.ferramentas.map(ferr => {
+                      const ferrConfig = ferramentas[ferr.id];
+                      const ferrAtiva = !!ferrConfig;
+                      return (
+                        <div key={ferr.id} style={{background:"white",borderRadius:10,border:`1.5px solid ${ferrAtiva?"var(--purple)":"var(--gray-200)"}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,transition:"border-color .2s"}}>
+                          <div style={{flex:1}}>
+                            <div style={{fontWeight:500,fontSize:13}}>{ferr.nome}</div>
+                            {ferr.desc && <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{ferr.desc}</div>}
+                          </div>
+                          {ferrAtiva && (
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <label style={{fontSize:11,color:"var(--text-muted)"}}>Início:</label>
+                              <input type="date" value={ferrConfig.dataInicio||""} onChange={e=>setDataInicio(mod.id,ferr.id,e.target.value)}
+                                style={{fontSize:12,border:"1px solid var(--gray-200)",borderRadius:6,padding:"3px 6px",fontFamily:"var(--font-body)"}}/>
+                            </div>
+                          )}
+                          <Toggle ativo={ferrAtiva} onClick={()=>toggleFerramenta(mod.id,ferr.id)}/>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -675,25 +896,217 @@ function AbaFerramentas({ paciente }) {
 }
 
 // ABA METAS
+// URLs do portal do paciente para visualização de cada ferramenta
+const PORTAL_URLS = {
+  humor:      "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#humor",
+  diario:     "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#diario",
+  metas:      "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#metas",
+  reflexoes:  "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#reflexoes",
+  tcc:        "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#tcc",
+  respiracao: "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#respiracao",
+  relaxamento:"https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#relaxamento",
+};
+
+function AbaModulo1({ paciente }) {
+  const [dados, setDados] = useState({humor:[],diario:[],metas:[],reflexoes:[],tcc:[],respiracao:[],relaxamento:[]});
+  const [loading, setLoading] = useState(true);
+  const [preview, setPreview] = useState(null); // id da ferramenta em preview
+
+  useEffect(()=>{
+    const id = paciente.id;
+    Promise.all([
+      db.collection("clinica_humor").where("pacienteId","==",id).get(),
+      db.collection("clinica_diario").where("pacienteId","==",id).get(),
+      db.collection("clinica_metas").where("pacienteId","==",id).where("status","==","ativa").get(),
+      db.collection("clinica_reflexoes").where("pacienteId","==",id).get(),
+      db.collection("clinica_tcc").where("pacienteId","==",id).get(),
+      db.collection("clinica_atividades").where("pacienteId","==",id).where("tipo","==","respiracao").get(),
+      db.collection("clinica_atividades").where("pacienteId","==",id).where("tipo","==","relaxamento").get(),
+    ]).then(([h,d,m,r,t,resp,relax])=>{
+      setDados({
+        humor:    h.docs.map(x=>({id:x.id,...x.data()})),
+        diario:   d.docs.map(x=>({id:x.id,...x.data()})),
+        metas:    m.docs.map(x=>({id:x.id,...x.data()})),
+        reflexoes:r.docs.map(x=>({id:x.id,...x.data()})),
+        tcc:      t.docs.map(x=>({id:x.id,...x.data()})),
+        respiracao: resp.docs.map(x=>({id:x.id,...x.data()})),
+        relaxamento:relax.docs.map(x=>({id:x.id,...x.data()})),
+      });
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[paciente.id]);
+
+  const ITENS = [
+    { id:"humor",       icone:"❤️", nome:"Registro de Humor",      qtd:dados.humor.length,       ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
+    { id:"diario",      icone:"📔", nome:"Diário Terapêutico",      qtd:dados.diario.length,      ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
+    { id:"metas",       icone:"🎯", nome:"Metas Terapêuticas",      qtd:dados.metas.length,       ultima:null },
+    { id:"reflexoes",   icone:"💡", nome:"Reflexões Cognitivas",    qtd:dados.reflexoes.length,   ultima:null },
+    { id:"tcc",         icone:"🧠", nome:"Pensamentos Automáticos", qtd:dados.tcc.length,         ultima:null },
+    { id:"respiracao",  icone:"💨", nome:"Técnica de Respiração",   qtd:dados.respiracao.length,  ultima:null },
+    { id:"relaxamento", icone:"💪", nome:"Relaxamento Muscular",    qtd:dados.relaxamento.length, ultima:null },
+  ];
+
+  // Descrições resumidas para o modal de preview
+  const DESC = {
+    humor:      "Registro diário da escala de humor do paciente.",
+    diario:     "Espaço de escrita reflexiva livre, como um diário terapêutico.",
+    metas:      "Metas terapêuticas com acompanhamento de progresso.",
+    reflexoes:  "Exercícios de reestruturação cognitiva e insight.",
+    tcc:        "Registro ABC de pensamentos automáticos — Modelo TCC.",
+    respiracao: "Exercício de respiração diafragmática 4-7-8 para regulação emocional.",
+    relaxamento:"Técnica de relaxamento muscular progressivo de Jacobson.",
+  };
+
+  return (
+    <div>
+      <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Módulo 1 — Dashboard</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>
+        Ferramentas básicas do dia a dia de {paciente.nome.split(" ")[0]}
+      </div>
+
+      {loading
+        ? <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Carregando...</div>
+        : (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
+            {ITENS.map(item=>(
+              <div key={item.id} style={{background:"white",border:"1px solid var(--gray-100)",
+                borderRadius:14,padding:18,boxShadow:"0 2px 8px rgba(123,0,196,0.05)",
+                display:"flex",flexDirection:"column",gap:10}}>
+
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:40,height:40,borderRadius:10,background:"var(--purple-soft)",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                    {item.icone}
+                  </div>
+                  <div style={{fontWeight:600,fontSize:13,lineHeight:1.3}}>{item.nome}</div>
+                </div>
+
+                {/* Contagem */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{fontSize:24,fontWeight:700,color:"var(--purple)"}}>{item.qtd}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"right"}}>
+                    {item.qtd===0 ? "Sem registros" : `registro${item.qtd!==1?"s":""}`}
+                    {item.ultima&&<div style={{marginTop:2}}>Último: {new Date(item.ultima+"T00:00:00").toLocaleDateString("pt-BR")}</div>}
+                  </div>
+                </div>
+
+                {/* Botão visualizar */}
+                <button onClick={()=>setPreview(item.id)}
+                  style={{width:"100%",padding:"7px",borderRadius:8,border:"1px solid var(--purple)",
+                    background:"white",color:"var(--purple)",cursor:"pointer",
+                    fontSize:12,fontWeight:600,fontFamily:"inherit",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                  <Icon name="eye" size={13}/> Visualizar
+                </button>
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      {/* Modal de preview */}
+      {preview&&(()=>{
+        const item = ITENS.find(i=>i.id===preview);
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,
+            display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+            onClick={()=>setPreview(null)}>
+            <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:520,
+              boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}
+              onClick={e=>e.stopPropagation()}>
+
+              {/* Header */}
+              <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
+                borderRadius:"16px 16px 0 0",padding:"20px 24px",color:"white",
+                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:28}}>{item?.icone}</span>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16}}>{item?.nome}</div>
+                    <div style={{fontSize:12,opacity:0.8,marginTop:2}}>Visualização do paciente</div>
+                  </div>
+                </div>
+                <button onClick={()=>setPreview(null)}
+                  style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,
+                    padding:"6px 10px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                  ✕ Fechar
+                </button>
+              </div>
+
+              {/* Corpo */}
+              <div style={{padding:24}}>
+                <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",
+                  marginBottom:20,fontSize:13,color:"var(--purple)",lineHeight:1.6}}>
+                  <strong>ℹ️ Como o paciente vê:</strong><br/>
+                  {DESC[preview]}
+                </div>
+
+                <div style={{background:"#f9fafb",borderRadius:10,padding:16,marginBottom:16,
+                  border:"1px solid var(--gray-100)"}}>
+                  <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8,
+                    textTransform:"uppercase",letterSpacing:"0.5px"}}>Dados atuais de {paciente.nome.split(" ")[0]}</div>
+                  <div style={{fontSize:22,fontWeight:700,color:"var(--purple)"}}>{item?.qtd}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>
+                    {item?.qtd===0 ? "Sem registros ainda" : `registro${item?.qtd!==1?"s":""}  realizados`}
+                  </div>
+                </div>
+
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>setPreview(null)}
+                    style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--gray-200)",
+                      background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                    Fechar
+                  </button>
+                  <button onClick={()=>{ window.open(PORTAL_URLS[preview],"_blank"); }}
+                    style={{flex:1,padding:"10px",borderRadius:8,border:"none",
+                      background:"var(--purple)",color:"white",cursor:"pointer",
+                      fontSize:13,fontWeight:600,fontFamily:"inherit",
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    <Icon name="external-link" size={13}/> Abrir no Portal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
 function AbaMetas({ paciente }) {
   const [metas, setMetas] = useState([]);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({titulo:"",categoria:"Emocional",progresso:0});
 
   useEffect(()=>{
-    const unsub = db.collection("clinica_pacientes").doc(paciente.id).collection("metas").onSnapshot(snap=>{
-      setMetas(snap.docs.map(d=>({id:d.id,...d.data()})));
-    },()=>{});
+    // Usa clinica_metas (coleção raiz) com pacienteId — mesma que o portal do paciente lê
+    const unsub = db.collection("clinica_metas")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        setMetas(snap.docs.map(d=>({id:d.id,...d.data()})));
+      },()=>{});
     return unsub;
   },[paciente.id]);
 
   async function salvar() {
     if(!form.titulo){alert("Titulo obrigatorio.");return;}
-    await db.collection("clinica_pacientes").doc(paciente.id).collection("metas").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection("clinica_metas").add({
+      ...form,
+      pacienteId: paciente.id,
+      status: "ativa",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     setModal(false); setForm({titulo:"",categoria:"Emocional",progresso:0});
   }
-  async function excluir(id){if(!confirm("Excluir meta?"))return;await db.collection("clinica_pacientes").doc(paciente.id).collection("metas").doc(id).delete();}
-  async function atualizarProgresso(id,val){await db.collection("clinica_pacientes").doc(paciente.id).collection("metas").doc(id).update({progresso:val});}
+  async function excluir(id){
+    if(!confirm("Excluir meta?"))return;
+    await db.collection("clinica_metas").doc(id).delete();
+  }
+  async function atualizarProgresso(id,val){
+    await db.collection("clinica_metas").doc(id).update({progresso:val});
+  }
 
   return (
     <div>
@@ -753,16 +1166,35 @@ function AbaMetas({ paciente }) {
 // ABA EVOLUCAO
 function AbaEvolucao({ paciente }) {
   const [humor, setHumor] = useState([]);
+  const [atividades, setAtividades] = useState([]);
+  const [metas, setMetas] = useState([]);
   useEffect(()=>{
-    const unsub = db.collection("clinica_pacientes").doc(paciente.id).collection("humor")
-      .orderBy("data","desc").limit(30).onSnapshot(snap=>{setHumor(snap.docs.map(d=>({id:d.id,...d.data()})));},()=>{});
-    return unsub;
+    const u1 = db.collection("clinica_humor")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>{ const da=a.data||""; const db2=b.data||""; return da<db2?1:da>db2?-1:0; });
+        setHumor(docs.slice(0,30));
+      },()=>{});
+    const u2 = db.collection("clinica_atividades")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setAtividades(docs);
+      },()=>{});
+    // Busca metas ativas em clinica_metas (coleção raiz — mesma do portal do paciente)
+    const u3 = db.collection("clinica_metas")
+      .where("pacienteId","==",paciente.id)
+      .where("status","==","ativa")
+      .onSnapshot(snap=>setMetas(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return ()=>{ u1(); u2(); u3(); };
   },[paciente.id]);
   const media = humor.length?(humor.reduce((a,h)=>a+(h.valor||0),0)/humor.length).toFixed(1):"—";
   return (
     <div>
       <div className="metrics-grid" style={{marginBottom:20}}>
-        {[{label:"Sessoes recentes",value:0,icon:"calendar"},{label:"Registros TCC",value:0,icon:"brain"},{label:"Entradas no diario",value:0,icon:"book-open"},{label:"Metas ativas",value:0,icon:"target"}].map(m=>(
+        {[{label:"Sessoes recentes",value:0,icon:"calendar"},{label:"Registros TCC",value:0,icon:"brain"},{label:"Entradas no diario",value:atividades.length,icon:"book-open"},{label:"Metas ativas",value:metas.length,icon:"target"}].map(m=>(
           <div key={m.label} className="metric-card"><div className="metric-icon"><Icon name={m.icon} size={20}/></div><div className="metric-label">{m.label}</div><div className="metric-value">{m.value}</div></div>
         ))}
       </div>
@@ -783,55 +1215,434 @@ function AbaEvolucao({ paciente }) {
           ))
         )}
       </div>
+
+      {/* Atividades de relaxamento */}
+      {atividades.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>🧘 Atividades de Relaxamento</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{atividades.length} registro(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {atividades.slice(0,10).map(a=>(
+              <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:10,border:"1px solid var(--gray-100)",background:"#fafafa"}}>
+                <span style={{fontSize:24}}>{a.ferramenta==="respiracao"?"🫁":"💆"}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:13,textTransform:"capitalize"}}>{a.ferramenta==="respiracao"?"Respiração 4-7-8":"Relaxamento Muscular"}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{a.data} às {a.hora}</div>
+                </div>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontWeight:700,fontSize:18,color:a.nota>=7?"#16a34a":a.nota>=4?"#d97706":"#dc2626"}}>{a.nota}/10</div>
+                  <div style={{fontSize:10,color:"var(--text-muted)"}}>relaxamento</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ABA CASAL
+// ── Categorias do Inventário (espelhadas do clinica/app.js) ─────────────────
+const INVENTARIO_CATS_C = [
+  {label:"Comunicação Eficaz",      cor:"#6366f1", questoes:[2,5,11,12,13,19,20]},
+  {label:"Resolução de Conflitos",   cor:"#f59e0b", questoes:[4,8,14,18,23,28,31]},
+  {label:"Intimidade Emocional",     cor:"#ec4899", questoes:[7,10,17,22,24,29,35]},
+  {label:"Satisfação Sexual",        cor:"#dc2626", questoes:[3,6,9,15,21,25,27]},
+  {label:"Cooperação e Colaboração", cor:"#16a34a", questoes:[1,16,26,37,38,39,41]},
+  {label:"Senso de Humor e Lazer",   cor:"#0891b2", questoes:[30,32,33,34,36,40,42]},
+];
+const RODA_DIMENSOES_C = [
+  "Comunicação","Família","Sexualidade","Estresse e Pressão",
+  "Divisão","Ciúmes","Espiritualidade","Diferenças e Conflitos",
+  "Estabilidade Financeira","Rel. de Poder","Mudanças","Expectativas e Equilíbrio"
+];
+
+function calcularInventario(resp) {
+  return INVENTARIO_CATS_C.map(cat=>{
+    const soma = cat.questoes.reduce((a,q)=>a+(resp[q]||0),0);
+    return {...cat, soma, pct:Math.max(0,Math.round(((soma-7)/28)*100))};
+  });
+}
+
+// ── Bloco visual: Inventário de Bem-Estar (comparativo) ─────────────────────
+function BlocoInventario({ docPaciente, docParceiro, nomePac, nomePar }) {
+  const [verBrutos, setVerBrutos] = useState(false);
+  if(!docPaciente&&!docParceiro) return <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum preencheu ainda.</div>;
+
+  const resPac = docPaciente?.respostas||{};
+  const resPar = docParceiro?.respostas||{};
+  const catsPac = docPaciente ? calcularInventario(resPac) : null;
+  const catsPar = docParceiro ? calcularInventario(resPar) : null;
+
+  // Pontos fortes e fracos (baseado em quem respondeu)
+  const base = catsPac||catsPar;
+  const fortes  = [...base].sort((a,b)=>b.soma-a.soma).slice(0,2);
+  const fracos   = [...base].sort((a,b)=>a.soma-b.soma).slice(0,2);
+
+  const ESCALA = ["","Nunca/Raramente","Às vezes","Frequentemente","Sempre/Quase sempre"];
+
+  return (
+    <div>
+      {/* Gráfico comparativo */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",gap:16,fontSize:12,marginBottom:10,flexWrap:"wrap"}}>
+          {docPaciente && <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#7B00C4",marginRight:4}}/>
+            {nomePac} ({docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})</span>}
+          {docParceiro && <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#ec4899",marginRight:4}}/>
+            {nomePar} ({docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})</span>}
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {INVENTARIO_CATS_C.map((cat,i)=>{
+            const vPac = catsPac?.[i];
+            const vPar = catsPar?.[i];
+            return (
+              <div key={cat.label}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:6}}>
+                  <span style={{color:cat.cor}}>{cat.label}</span>
+                </div>
+                {/* Barra paciente */}
+                {vPac&&(
+                  <div style={{marginBottom:4}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:11,color:"#7B00C4",minWidth:14,fontWeight:600}}>🟣</span>
+                      <div style={{flex:1,background:"#f3f4f6",borderRadius:20,height:10,overflow:"hidden"}}>
+                        <div style={{width:vPac.pct+"%",height:"100%",background:"#7B00C4",borderRadius:20,transition:"width .5s"}}/>
+                      </div>
+                      <span style={{fontSize:12,color:"#7B00C4",fontWeight:700,minWidth:36,textAlign:"right"}}>{vPac.soma}/35</span>
+                    </div>
+                  </div>
+                )}
+                {/* Barra parceiro */}
+                {vPar&&(
+                  <div style={{marginBottom:4}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:11,color:"#ec4899",minWidth:14,fontWeight:600}}>🩷</span>
+                      <div style={{flex:1,background:"#f3f4f6",borderRadius:20,height:10,overflow:"hidden"}}>
+                        <div style={{width:vPar.pct+"%",height:"100%",background:"#ec4899",borderRadius:20,transition:"width .5s"}}/>
+                      </div>
+                      <span style={{fontSize:12,color:"#ec4899",fontWeight:700,minWidth:36,textAlign:"right"}}>{vPar.soma}/35</span>
+                    </div>
+                  </div>
+                )}
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2,paddingLeft:22}}>
+                  <span>Baixo (7)</span><span>Alto (35)</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pontos fortes e atenção */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+        <div style={{background:"#f0fdf4",borderRadius:10,padding:12,border:"1px solid #86efac"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#16a34a",marginBottom:8}}>💪 Pontos Fortes</div>
+          {fortes.map(c=>(
+            <div key={c.label} style={{fontSize:12,color:"#15803d",marginBottom:4}}>
+              ● {c.label} <span style={{fontWeight:700}}>{c.soma}/35</span>
+            </div>
+          ))}
+        </div>
+        <div style={{background:"#fef2f2",borderRadius:10,padding:12,border:"1px solid #fca5a5"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#dc2626",marginBottom:8}}>⚠️ Pontos de Atenção</div>
+          {fracos.map(c=>(
+            <div key={c.label} style={{fontSize:12,color:"#b91c1c",marginBottom:4}}>
+              ● {c.label} <span style={{fontWeight:700}}>{c.soma}/35</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dados brutos colapsáveis */}
+      <button onClick={()=>setVerBrutos(v=>!v)}
+        style={{background:"none",border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer",color:"var(--text-muted)",width:"100%"}}>
+        {verBrutos?"▲ Ocultar respostas brutas":"▼ Ver respostas brutas"}
+      </button>
+      {verBrutos&&(
+        <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:4}}>
+          {Array.from({length:42},(_,i)=>i+1).map(n=>(
+            <div key={n} style={{display:"flex",gap:8,fontSize:12,padding:"4px 8px",background:n%2===0?"#fafafa":"white",borderRadius:6}}>
+              <span style={{color:"var(--purple)",fontWeight:600,minWidth:22}}>{n}.</span>
+              {docPaciente&&<span style={{color:"#7B00C4",flex:1}}>{nomePac.split(" ")[0]}: {ESCALA[resPac[n]]||"—"}</span>}
+              {docParceiro&&<span style={{color:"#ec4899",flex:1}}>{nomePar.split(" ")[0]}: {ESCALA[resPar[n]]||"—"}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Bloco visual: Roda da Vida do Relacionamento ─────────────────────────────
+function BlocoRodaVida({ docPaciente, docParceiro, nomePac, nomePar }) {
+  const [verBrutos, setVerBrutos] = useState(false);
+  if(!docPaciente&&!docParceiro) return <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum preencheu ainda.</div>;
+  const vPac = docPaciente?.respostas||{};
+  const vPar = docParceiro?.respostas||{};
+  return (
+    <div>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:12}}>
+        {RODA_DIMENSOES_C.map((dim,i)=>{
+          const kPac = vPac[dim]; const kPar = vPar[dim];
+          return (
+            <div key={dim}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,fontWeight:600,marginBottom:3}}>
+                <span>{dim}</span>
+                <span style={{display:"flex",gap:10}}>
+                  {docPaciente&&<span style={{color:"#7B00C4"}}>{kPac||0}/10</span>}
+                  {docParceiro&&<span style={{color:"#ec4899"}}>{kPar||0}/10</span>}
+                </span>
+              </div>
+              <div style={{position:"relative",height:8,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
+                {docPaciente&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:((kPac||0)*10)+"%",background:"#7B00C4",borderRadius:20,opacity:0.85}}/>}
+                {docParceiro&&<div style={{position:"absolute",left:0,top:0,height:"100%",width:((kPar||0)*10)+"%",background:"#ec4899",borderRadius:20,opacity:0.5}}/>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={()=>setVerBrutos(v=>!v)}
+        style={{background:"none",border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer",color:"var(--text-muted)",width:"100%"}}>
+        {verBrutos?"▲ Ocultar detalhes":"▼ Ver detalhes completos"}
+      </button>
+    </div>
+  );
+}
+
+// ── Bloco visual genérico (Metas, Quem Sou, O Que Quero) ────────────────────
+function BlocoTexto({ docPaciente, docParceiro, nomePac, nomePar }) {
+  if(!docPaciente&&!docParceiro) return <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum preencheu ainda.</div>;
+  const ESCALA = ["","Nunca/Raramente","Às vezes","Frequentemente","Sempre/Quase sempre"];
+  function renderResp(resp) {
+    if(!resp||typeof resp!=="object") return null;
+    return Object.entries(resp).map(([k,v])=>(
+      <div key={k} style={{padding:"6px 10px",background:"white",borderRadius:7,border:"1px solid #f3f4f6",fontSize:13,marginBottom:4}}>
+        <span style={{fontWeight:600,color:"var(--purple)",marginRight:6}}>{k}:</span>
+        <span style={{color:"var(--gray-700)"}}>{typeof v==="number"?(ESCALA[v]||v):String(v)}</span>
+      </div>
+    ));
+  }
+  return (
+    <div style={{display:"grid",gridTemplateColumns:docPaciente&&docParceiro?"1fr 1fr":"1fr",gap:16}}>
+      {docPaciente&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:8}}>
+            🟣 {nomePac} ({docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})
+          </div>
+          {renderResp(docPaciente.respostas)}
+        </div>
+      )}
+      {docParceiro&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:12,color:"#ec4899",marginBottom:8}}>
+            🩷 {nomePar} ({docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"—"})
+          </div>
+          {renderResp(docParceiro.respostas)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Respostas do diagnóstico — componente principal do admin ─────────────────
+function RespostasCasal({ pacienteId, parceiroId, parceiro, nomePaciente }) {
+  const [respostas, setRespostas] = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [expandido, setExpandido] = useState("inventario-bem-estar"); // abre o primeiro por padrão
+
+  const ATIVIDADES = [
+    {id:"inventario-bem-estar",     titulo:"Inventário de Bem-Estar de Casais", emoji:"📊"},
+    {id:"roda-vida-relacionamento", titulo:"Roda da Vida do Relacionamento",    emoji:"🎯"},
+    {id:"3-metas",                  titulo:"Nossas 3 Metas",                    emoji:"🏆"},
+    {id:"quem-sou",                 titulo:"Quem Eu Sou no Relacionamento",     emoji:"🪞"},
+    {id:"o-que-quero",              titulo:"O Que Eu Quero e Não Quero Mais",   emoji:"✍️"},
+  ];
+
+  const nomePac = nomePaciente?.split(" ")[0]||"Paciente";
+  const nomePar = parceiro?.nome?.split(" ")[0]||"Parceiro(a)";
+
+  useEffect(()=>{
+    if(!pacienteId||!parceiroId){ setLoading(false); return; }
+    let r1=[], r2=[], n=0;
+    const done = ()=>{ n++; if(n<2) return;
+      setRespostas([...r1,...r2].sort((a,b)=>(b.createdAt?.toDate?.()||new Date(0))-(a.createdAt?.toDate?.()||new Date(0))));
+      setLoading(false);
+    };
+    const u1 = db.collection("clinica_casais_respostas")
+      .where("pacienteId","==",pacienteId).where("casalId","==",parceiroId)
+      .onSnapshot(s=>{ r1=s.docs.map(d=>({id:d.id,...d.data()})); done(); },()=>{ n++; setLoading(false); });
+    const u2 = db.collection("clinica_casais_respostas")
+      .where("pacienteId","==",parceiroId).where("casalId","==",pacienteId)
+      .onSnapshot(s=>{ r2=s.docs.map(d=>({id:d.id,...d.data()})); done(); },()=>{ n++; setLoading(false); });
+    return ()=>{ u1(); u2(); };
+  },[pacienteId,parceiroId]);
+
+  if(loading) return <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>Carregando...</div>;
+  if(respostas.length===0) return (
+    <div style={{background:"#f9fafb",borderRadius:10,padding:20,fontSize:13,color:"var(--text-muted)",textAlign:"center"}}>
+      Nenhuma resposta registrada ainda.
+    </div>
+  );
+
+  // Para cada atividade, pega o doc mais recente de cada pessoa
+  function getDoc(atividadeId, autorId) {
+    return respostas.find(r=>r.atividadeId===atividadeId&&r.pacienteId===autorId)||null;
+  }
+
+  return (
+    <div>
+      <div style={{display:"flex",gap:8,fontSize:12,marginBottom:16,flexWrap:"wrap"}}>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#7B00C4",marginRight:4}}/>
+          {nomePac}</span>
+        <span><span style={{display:"inline-block",width:10,height:10,borderRadius:"50%",background:"#ec4899",marginRight:4}}/>
+          {nomePar}</span>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {ATIVIDADES.map(atv=>{
+          const docPac = getDoc(atv.id, pacienteId);
+          const docPar = getDoc(atv.id, parceiroId);
+          const total  = (docPac?1:0)+(docPar?1:0);
+          if(total===0) return null;
+          const aberto = expandido===atv.id;
+          return (
+            <div key={atv.id} style={{border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
+              <button onClick={()=>setExpandido(aberto?null:atv.id)}
+                style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"14px 16px",
+                  background:aberto?"#f5f3ff":"white",border:"none",cursor:"pointer",textAlign:"left"}}>
+                <span style={{fontSize:20}}>{atv.emoji}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:14}}>{atv.titulo}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                    {docPac&&<span style={{color:"#7B00C4",marginRight:10}}>✓ {nomePac}</span>}
+                    {docPar&&<span style={{color:"#ec4899"}}>✓ {nomePar}</span>}
+                    {!docPac&&<span style={{color:"var(--gray-400)",marginRight:10}}>○ {nomePac}</span>}
+                    {!docPar&&<span style={{color:"var(--gray-400)"}}>○ {nomePar}</span>}
+                  </div>
+                </div>
+                <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
+              </button>
+              {aberto&&(
+                <div style={{padding:"16px",background:"#fafafa",borderTop:"1px solid var(--gray-100)"}}>
+                  {atv.id==="inventario-bem-estar"&&
+                    <BlocoInventario docPaciente={docPac} docParceiro={docPar} nomePac={nomePac} nomePar={nomePar}/>}
+                  {atv.id==="roda-vida-relacionamento"&&
+                    <BlocoRodaVida docPaciente={docPac} docParceiro={docPar} nomePac={nomePac} nomePar={nomePar}/>}
+                  {(atv.id==="3-metas"||atv.id==="quem-sou"||atv.id==="o-que-quero")&&
+                    <BlocoTexto docPaciente={docPac} docParceiro={docPar} nomePac={nomePac} nomePar={nomePar}/>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AbaCasal({ paciente, pacientes }) {
   const [casalId, setCasalId] = useState(paciente.casalId||"");
   const [salvando, setSalvando] = useState(false);
   const parceiro = pacientes.find(p=>p.id===paciente.casalId);
-  const outros = pacientes.filter(p=>p.id!==paciente.id&&p.status==="ativo");
+  const outros = pacientes.filter(p=>p.id!==paciente.id&&p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
 
   async function vincular() {
     if(!casalId){alert("Selecione o parceiro(a).");return;}
+    if(casalId===paciente.id){alert("Selecione um paciente diferente.");return;}
     setSalvando(true);
-    await db.collection("clinica_pacientes").doc(paciente.id).update({casalId});
-    await db.collection("clinica_pacientes").doc(casalId).update({casalId:paciente.id});
-    setSalvando(false); alert("Casal vinculado!");
+    try {
+      const p2 = pacientes.find(p=>p.id===casalId);
+      // 1. Remove vínculo antigo de clinica_casais se existir (evita duplicatas)
+      const snapAntigo1 = await db.collection("clinica_casais").where("p1Id","==",paciente.id).get();
+      const snapAntigo2 = await db.collection("clinica_casais").where("p2Id","==",paciente.id).get();
+      const batch = db.batch();
+      [...snapAntigo1.docs, ...snapAntigo2.docs].forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+      // 2. Cria novo documento em clinica_casais
+      await db.collection("clinica_casais").add({
+        p1Id: paciente.id, p1Nome: paciente.nome||"",
+        p2Id: casalId,     p2Nome: p2?.nome||"",
+        nomeCasal: `${paciente.nome?.split(" ")[0]||""} e ${p2?.nome?.split(" ")[0]||""}`,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // 3. Grava casalId + mod5 nos dois pacientes
+      await db.collection("clinica_pacientes").doc(paciente.id).update({
+        casalId,
+        modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+      });
+      await db.collection("clinica_pacientes").doc(casalId).update({
+        casalId: paciente.id,
+        modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+      });
+      alert("✓ Casal vinculado! Ambos terão acesso à Terapia de Casal no portal.");
+    } catch(e) { alert("Erro ao vincular: "+e.message); }
+    setSalvando(false);
   }
   async function desvincular() {
     if(!confirm("Desvincular casal?"))return;
     setSalvando(true);
-    if(paciente.casalId) await db.collection("clinica_pacientes").doc(paciente.casalId).update({casalId:""});
-    await db.collection("clinica_pacientes").doc(paciente.id).update({casalId:""});
-    setCasalId(""); setSalvando(false);
+    try {
+      const parcId = paciente.casalId;
+      // 1. Limpa casalId nos dois pacientes
+      await db.collection("clinica_pacientes").doc(paciente.id).update({casalId:""});
+      if(parcId) await db.collection("clinica_pacientes").doc(parcId).update({casalId:""});
+      // 2. Remove documento de clinica_casais
+      const snap1 = await db.collection("clinica_casais").where("p1Id","==",paciente.id).get();
+      const snap2 = await db.collection("clinica_casais").where("p2Id","==",paciente.id).get();
+      const batch = db.batch();
+      [...snap1.docs, ...snap2.docs].forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+      setCasalId("");
+    } catch(e) { alert("Erro ao desvincular: "+e.message); }
+    setSalvando(false);
   }
 
   return (
-    <div className="card">
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><Icon name="heart" size={18}/><div style={{fontWeight:600}}>Vinculo de Casal</div></div>
-      {paciente.casalId&&parceiro?(
-        <div>
-          <div style={{background:"var(--purple-bg)",borderRadius:10,padding:16,marginBottom:16}}>
-            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:4}}>Parceiro(a) vinculado(a):</div>
-            <div style={{fontWeight:600,fontSize:16}}>{parceiro.nome}</div>
-            <div style={{fontSize:13,color:"var(--text-muted)"}}>{parceiro.email}</div>
+    <div>
+      <div className="card" style={{marginBottom:16}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}><Icon name="heart" size={18}/><div style={{fontWeight:600}}>Vínculo de Casal</div></div>
+        {paciente.casalId&&parceiro?(
+          <div>
+            <div style={{background:"var(--purple-bg)",borderRadius:10,padding:16,marginBottom:16}}>
+              <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:4}}>Parceiro(a) vinculado(a):</div>
+              <div style={{fontWeight:600,fontSize:16}}>{parceiro.nome}</div>
+              <div style={{fontSize:13,color:"var(--text-muted)"}}>{parceiro.email}</div>
+            </div>
+            <button className="btn btn-danger" onClick={desvincular} disabled={salvando}><Icon name="x" size={15}/> Desvincular casal</button>
           </div>
-          <button className="btn btn-danger" onClick={desvincular} disabled={salvando}><Icon name="x" size={15}/> Desvincular casal</button>
-        </div>
-      ):(
-        <div>
-          <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Este paciente nao esta vinculado a um casal em terapia.</p>
-          <div className="form-group" style={{marginBottom:16}}>
-            <label className="form-label">Selecionar Parceiro(a)</label>
-            <select className="form-input" value={casalId} onChange={e=>setCasalId(e.target.value)}>
-              <option value="">Selecione um paciente...</option>
-              {outros.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
-            </select>
+        ):(
+          <div>
+            <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Este paciente nao esta vinculado a um casal em terapia.</p>
+            <div className="form-group" style={{marginBottom:16}}>
+              <label className="form-label">Selecionar Parceiro(a)</label>
+              <select className="form-input" value={casalId} onChange={e=>setCasalId(e.target.value)}>
+                <option value="">Selecione um paciente...</option>
+                {outros.map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            <button className="btn btn-purple" onClick={vincular} disabled={salvando}><Icon name="heart" size={15}/> Associar como Casal</button>
           </div>
-          <button className="btn btn-purple" onClick={vincular} disabled={salvando}><Icon name="heart" size={15}/> Associar como Casal</button>
+        )}
+      </div>
+
+      {/* Respostas do diagnóstico — só aparece se o casal está vinculado */}
+      {paciente.casalId && parceiro && (
+        <div className="card">
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+            <Icon name="clipboard-list" size={18}/>
+            <div style={{fontWeight:600}}>Diagnóstico e Atividades do Casal</div>
+          </div>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>
+            Respostas preenchidas por {paciente.nome.split(" ")[0]} e {parceiro.nome.split(" ")[0]} no portal
+          </div>
+          <RespostasCasal
+            pacienteId={paciente.id}
+            parceiroId={paciente.casalId}
+            parceiro={parceiro}
+            nomePaciente={paciente.nome}
+          />
         </div>
       )}
     </div>
@@ -839,16 +1650,19 @@ function AbaCasal({ paciente, pacientes }) {
 }
 
 // PERFIL COMPLETO
-function PerfilPaciente({ paciente, onVoltar, pacientes }) {
+function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
   const [aba, setAba] = useState("perfil");
+  const isSecretaria = user?.tipo==="secretaria";
   const ABAS = [
-    {id:"perfil",label:"Perfil",icon:"user"},
-    {id:"modulos",label:"Modulos",icon:"toggle-right"},
-    {id:"ferramentas",label:"Ferramentas",icon:"wrench"},
-    {id:"metas",label:"Metas",icon:"target"},
-    {id:"laudos",label:"Laudos",icon:"file-text"},
-    {id:"evolucao",label:"Evolucao",icon:"trending-up"},
-    {id:"casal",label:"Terapia de Casal",icon:"heart"},
+    {id:"perfil",   label:"Perfil",          icon:"user"},
+    ...(!isSecretaria?[
+      {id:"modulos",  label:"Modulos",         icon:"toggle-right"},
+      {id:"modulo1",  label:"Módulo 1",        icon:"layout-grid"},
+      {id:"metas",    label:"Metas",           icon:"target"},
+      {id:"laudos",   label:"Laudos",          icon:"file-text"},
+      {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
+      {id:"casal",    label:"Terapia de Casal",icon:"heart"},
+    ]:[]),
   ];
   return (
     <div>
@@ -862,7 +1676,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes }) {
           <Icon name="trash-2" size={15}/> Excluir paciente
         </button>
       </div>
-      <div style={{display:"flex",gap:4,marginBottom:24,flexWrap:"wrap",borderBottom:"1px solid var(--gray-200)"}}>
+      <div style={{display:"flex",gap:4,marginBottom:24,overflowX:"auto",borderBottom:"1px solid var(--gray-200)",flexShrink:0,WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
         {ABAS.map(a=>(
           <button key={a.id} onClick={()=>setAba(a.id)} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 16px",border:"none",background:"none",fontSize:14,cursor:"pointer",fontFamily:"var(--font-body)",color:aba===a.id?"var(--purple)":"var(--gray-600)",borderBottom:aba===a.id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===a.id?500:400,transition:"all .2s",marginBottom:-1}}>
             <Icon name={a.icon} size={15}/>{a.label}
@@ -871,7 +1685,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes }) {
       </div>
       {aba==="perfil"     &&<AbaPerfil      paciente={paciente} pacientes={pacientes}/>}
       {aba==="modulos"    &&<AbaModulos     paciente={paciente}/>}
-      {aba==="ferramentas"&&<AbaFerramentas paciente={paciente}/>}
+      {aba==="modulo1"    &&<AbaModulo1     paciente={paciente}/>}
       {aba==="metas"      &&<AbaMetas       paciente={paciente}/>}
       {aba==="laudos"     &&<EmBreve titulo="Laudos" subtitulo="Etapa 10"/>}
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
@@ -978,8 +1792,8 @@ function Pacientes({ user }) {
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>setModalImport(true)}><Icon name="upload" size={15}/> Importar Excel</button>
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>{
-            const url=window.location.origin+window.location.pathname.replace("admin/index.html","").replace("admin/","")+"clinica/cadastro.html";
-            navigator.clipboard.writeText(url).then(()=>alert("Link copiado!\n\n"+url)).catch(()=>prompt("Copie o link:",url));
+            const url="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
+            navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! Cole no WhatsApp ou e-mail:\n\n"+url)).catch(()=>prompt("Copie o link:",url));
           }}><Icon name="link" size={15}/> Link de Cadastro</button>
           <button className="btn btn-purple" onClick={abrirNovo}><Icon name="user-plus" size={16}/> Novo Paciente</button>
         </div>
@@ -990,15 +1804,15 @@ function Pacientes({ user }) {
           <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>{l}</button>
         ))}
       </div>
-      {["ativo","alta","inativo"].map(st=>{
+      {["pendente","ativo","alta","inativo"].map(st=>{
         const grupo=filtrados.filter(p=>p.status===st);
         if(grupo.length===0)return null;
         return(
           <div key={st} style={{marginBottom:24}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-              <div style={{width:8,height:8,borderRadius:"50%",background:st==="ativo"?"var(--success)":st==="alta"?"var(--gray-400)":"var(--danger)"}}/>
+              <div style={{width:8,height:8,borderRadius:"50%",background:st==="ativo"?"var(--success)":st==="alta"?"var(--gray-400)":st==="pendente"?"#f59e0b":"var(--danger)"}}/>
               <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.8px"}}>
-                {st==="ativo"?"Em Atendimento":st==="alta"?"Alta":"Inativos"} ({grupo.length})
+                {st==="ativo"?"Em Atendimento":st==="alta"?"Alta":st==="pendente"?"⏳ Pendentes (Autocadastro)":"Inativos"} ({grupo.length})
               </div>
             </div>
             <div className="card" style={{padding:0}}>
@@ -1030,7 +1844,7 @@ function Pacientes({ user }) {
               <div className="form-group"><label className="form-label">Telefone</label><input className="form-input" value={form.telefone||""} onChange={e=>setForm({...form,telefone:e.target.value})}/></div>
               <div className="form-group"><label className="form-label">Genero</label><select className="form-input" value={form.genero||""} onChange={e=>setForm({...form,genero:e.target.value})}><option value="">Selecione</option><option>Feminino</option><option>Masculino</option><option>Nao-binario</option><option>Nao informar</option></select></div>
               <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status||"ativo"} onChange={e=>setForm({...form,status:e.target.value})}><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="alta">Alta</option></select></div>
-              <div className="form-group" style={{gridColumn:"span 2"}}><label className="form-label">Objetivos Terapeuticos</label><textarea className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos..."/></div>
+              <div className="form-group" style={{gridColumn:"span 2"}}><label className="form-label">Objetivos Terapeuticos</label><TextAreaVoz className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos..."/></div>
             </div>
             <div style={{display:"flex",gap:10,marginTop:20,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
@@ -1080,18 +1894,25 @@ function Pacientes({ user }) {
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
 function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
-  const pac = pacientes.find(p=>p.id===pacienteId);
+  // Normaliza IDs removendo espaços e garantindo string limpa
+  const pidNorm = (pacienteId||"").trim();
+  const pac = pacientes.find(p=>p.id===pidNorm);
   const pacote = pacoteId ? pacotes.find(p=>p.id===pacoteId) : null;
   const pacEfetivo = pac || pacientes.find(p=>p.id===pacote?.pacienteId);
 
-  // Se pacoteId → só sessões deste pacote; se pacienteId → todas do paciente
-  const sessPac = pacoteId
-    ? sessoes.filter(s=>s.pacoteId===pacoteId).sort((a,b)=>a.data?.localeCompare(b.data))
-    : sessoes.filter(s=>s.pacienteId===pacienteId).sort((a,b)=>a.data?.localeCompare(b.data));
-
+  // Busca pacotes do paciente — também tenta pelo nome caso ID não bata
+  const pacotesPorId = pacotes.filter(p=>p.pacienteId===pidNorm);
+  // Fallback extra: busca por pacienteNome se nenhum pacote encontrado
   const pacotesPac = pacoteId
     ? [pacote].filter(Boolean)
-    : pacotes.filter(p=>p.pacienteId===pacienteId);
+    : pacotesPorId.length > 0
+      ? pacotesPorId
+      : pacotes.filter(p=>p.pacienteNome && pacEfetivo && p.pacienteNome===pacEfetivo.nome);
+
+  const pacoteIdsDosPac = pacotesPac.map(p=>p.id);
+  const sessPac = pacoteId
+    ? sessoes.filter(s=>s.pacoteId===pacoteId).sort((a,b)=>a.data?.localeCompare(b.data))
+    : sessoes.filter(s=>s.pacienteId===pidNorm||pacoteIdsDosPac.includes(s.pacoteId)).sort((a,b)=>a.data?.localeCompare(b.data));
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
@@ -1117,10 +1938,20 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const totalAno = sessPac.filter(s=>s.data?.startsWith(anoAtual+"")&&s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
 
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
-  async function remarcarSessao(s){
-    const nd=prompt("Nova data (AAAA-MM-DD):",s.data);
-    if(!nd)return;
-    await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
+  async function remarcarSessao(s, novaData){
+    if(!novaData) return;
+    try {
+      await db.collection("clinica_sessoes").doc(s.id).update({
+        data: novaData,
+        status: "remarcado",
+        remarcada: true,
+        dataRemarcada: novaData,
+        dataOriginal: s.dataOriginal||s.data,
+      });
+    } catch(e){
+      console.error("Erro ao remarcar sessão:", e);
+      alert("Erro ao remarcar: "+e.message);
+    }
   }
 
   async function atualizarPagamento(s, formaPag, valorPago){
@@ -1190,7 +2021,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           <div style={{fontFamily:"Dancing Script, cursive",fontSize:22,color:"white",fontWeight:600}}>Controle de Atendimento Terapêutico</div>
           <img src="../logo-transparente.png" style={{height:36,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
         </div>
-        <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,borderBottom:"1px solid var(--gray-100)"}}>
+        <div style={{padding:"14px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,borderBottom:"1px solid var(--gray-100)"}}>
           {[["Nome",pacEfetivo?.nome||"—"],["Início",pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"],["Horário",pacotesPac[0]?.horario||"—"],["Recorrência",pacotesPac[0]?.recorrencia||"—"]].map(([l,v])=>(
             <div key={l}><div style={{fontSize:10,color:"var(--text-muted)",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>{l}</div><div style={{fontWeight:600,fontSize:13}}>{v}</div></div>
           ))}
@@ -1261,7 +2092,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                   <tbody>
                     {sessMes.map((s,i)=>{
                       const st=STATUS_S[s.status]||STATUS_S.agendado;
-                      const isPago=s.pagamento==="pago";
+                      const isPago=s.pagamento==="pago"; // remarcado mantém pagamento original
                       const vSessao=parseFloat(s.valorSessao)||0;
                       const vPago=parseFloat(s.valorPago)||(isPago?vSessao:0);
                       const saldo=isPago?(vPago-vSessao):0;
@@ -1283,8 +2114,12 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                               style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",color:st.c,fontWeight:600,background:"white",cursor:"pointer",minWidth:88}}>
                               {Object.entries(STATUS_S).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
                             </select>
-                            {s.status==="cancelado"&&(
-                              <button onClick={()=>remarcarSessao(s)} style={{marginTop:2,display:"block",fontSize:9,background:"none",border:"1px solid #0891b2",color:"#0891b2",borderRadius:3,padding:"1px 4px",cursor:"pointer"}}>Remarcar</button>
+                            {(s.status==="cancelado"||s.status==="remarcado")&&(
+                              <div style={{marginTop:3}}>
+                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data:</div>
+                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value);}}
+                                  style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:105}}/>
+                              </div>
                             )}
                           </td>
                           <td style={{padding:"6px 10px"}}>
@@ -1295,7 +2130,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             {vSessao.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="number" defaultValue={isPago?vPago:""} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
+                            <input type="number" defaultValue={s.valorPago||""} key={s.id+"_vpago"} onBlur={e=>atualizarPagamento(s,s.formaPagamento||"",e.target.value)}
                               placeholder="0,00" style={{fontSize:10,border:"1px solid",borderColor:isPago?"#6ee7b7":"#e5e7eb",borderRadius:5,padding:"2px 5px",width:65,color:isPago?"#059669":"#374151",fontWeight:isPago?600:400}}/>
                           </td>
                           <td style={{padding:"6px 10px",fontWeight:600,whiteSpace:"nowrap",color:saldo<0?"#dc2626":saldo>0?"#059669":"#9ca3af",fontSize:11}}>
@@ -1309,7 +2144,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             </select>
                           </td>
                           <td style={{padding:"6px 10px"}}>
-                            <input type="date" defaultValue={s.dataPagamento||""} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
+                            <input type="date" defaultValue={s.dataPagamento||""} key={s.id+"_dtpag"} onBlur={e=>atualizarSessao(s.id,{dataPagamento:e.target.value})}
                               style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:5,padding:"2px 4px",width:105}}/>
                           </td>
                           <td style={{padding:"6px 10px"}}>
@@ -1376,18 +2211,22 @@ function FinanceiroClinica() {
   const [modalExcluir, setModalExcluir] = useState(null);
   const [modalExcluirLanc, setModalExcluirLanc] = useState(null);
   const [aba, setAba] = useState("lancamentos");
+  const [buscaPac, setBuscaPac] = useState("");
 
   const FORMAS = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Outro"];
   const RECORRENCIAS = ["Semanal (1x/semana)","2x por semana","3x por semana","Quinzenal","Mensal","Sessão única"];
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},obs:""});
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
+  const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
+  const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
   useEffect(()=>{
-    const u1=db.collection("clinica_lancamentos").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u2=db.collection("clinica_pacotes").orderBy("createdAt","desc").onSnapshot(s=>setPacotes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u3=db.collection("clinica_sessoes").orderBy("data").onSnapshot(s=>setSessoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    const u1=db.collection("clinica_lancamentos").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
+    const u2=db.collection("clinica_pacotes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setPacotes(docs);},()=>{});
+    const u3=db.collection("clinica_sessoes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(a.data||"").localeCompare(b.data||""));setSessoes(docs);},()=>{});
     return()=>{u1();u2();u3();};
   },[]);
 
@@ -1532,18 +2371,27 @@ function FinanceiroClinica() {
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
+      statusPag:formPacote.statusPag||"pendente",
+      formaPag:formPacote.formaPag||"",
+      dataPagamento:formPacote.dataPagamento||"",
+      pagamentosExtras:formPacote.pagamentosExtras||[],
       status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
     // Cria lançamento financeiro do pacote
+    const mesInicioPacote = new Date(dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+    const nomePacote = `Pacote ${total} Sessões`;
+    const descricaoLanc = `${pac?.nome||"Paciente"} — ${nomePacote} — ${mesInicioPacote.charAt(0).toUpperCase()+mesInicioPacote.slice(1)}`;
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento:"pacote",pacoteId:pacRef.id,
       pacienteId,pacienteNome:pac?.nome||"",
-      tipo:"Pacote "+recorrencia,
+      tipo: descricaoLanc,
+      descricao: descricaoLanc,
       valor:vTotal,data:dataInicio,
       formaPag:formPacote.formaPag||"",
       status:formPacote.statusPag||"pendente",
       dataPagamento:formPacote.dataPagamento||"",
+      pagamentosExtras:formPacote.pagamentosExtras||[],
       obs,
       totalSessoes:total,valorSessao:vSessao,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -1553,6 +2401,7 @@ function FinanceiroClinica() {
     if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda });
 
     // Cria sessões na agenda
+    const jaPago = (formPacote.statusPag||"pendente")==="recebido";
     const batch=db.batch();
     datas.forEach((data,i)=>{
       const ref=db.collection("clinica_sessoes").doc();
@@ -1562,48 +2411,105 @@ function FinanceiroClinica() {
         pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,
         duracao:"50",tipo:"Psicoterapia",status:"agendado",
         numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,
-        pagamento:"pendente",formaPagamento:"",dataPagamento:"",obs:"",
+        pagamento:jaPago?"pago":"pendente",
+        valorPago:jaPago?vSessao:0,
+        formaPagamento:formPacote.formaPag||"",
+        dataPagamento:jaPago?(formPacote.dataPagamento||new Date().toISOString().slice(0,10)):"",
+        obs:"",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     });
     await batch.commit();
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",obs:""});setSalvando(false);
+    // Social: lança comissão estagiária automaticamente
+    if((formPacote.tipoAtendimento||"particular")==="social"){
+      const hoje = new Date().toISOString().slice(0,10);
+      const mesRef = hoje.slice(0,7);
+      const vSupervisao = parseFloat(formPacote.valorSupervisaoSocial||40);
+      const vEstagiaria = parseFloat(formPacote.valorEstagiariaSocial||20);
+      const snapEst = await db.collection("clinica_parceiras").where("tipo","==","estagiaria").limit(1).get();
+      const nomeEst = !snapEst.empty ? snapEst.docs[0].data().nome : "Estagiária";
+      const batchSoc = db.batch();
+      batchSoc.set(db.collection("clinica_lancamentos").doc(),{
+        tipo_lancamento:"social",
+        tipo:`${pac?.nome||""} — Projeto Social`,
+        descricao:`${pac?.nome||""} — Projeto Social`,
+        pacienteNome:pac?.nome||"",
+        valor:vSupervisao, data:dataInicio, mesRef,
+        formaPag:formPacote.formaPag||"PIX",
+        status:formPacote.statusPag||"pendente",
+        origem:"pacote-social",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      batchSoc.set(db.collection("clinica_comissoes").doc(),{
+        tipo:"Social — Estagiária",
+        tipoVenda:"primeira", perc:0,
+        valorBase:vSupervisao, valorComissao:vEstagiaria,
+        pacienteNome:pac?.nome||"",
+        responsavel:nomeEst,
+        mesRef, status:"pendente",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await batchSoc.commit();
+    }
+
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20"});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
   async function atualizarSessao(id,campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
 
-  async function remarcarSessao(s){
-    const nd=prompt("Nova data (AAAA-MM-DD):",s.data);
-    if(!nd)return;
-    await db.collection("clinica_sessoes").doc(s.id).update({data:nd,status:"agendado",remarcada:true,dataOriginal:s.dataOriginal||s.data});
+  async function remarcarSessao(s, novaData){
+    if(!novaData) return;
+    try {
+      await db.collection("clinica_sessoes").doc(s.id).update({
+        data: novaData,
+        status: "remarcado",
+        remarcada: true,
+        dataRemarcada: novaData,
+        dataOriginal: s.dataOriginal||s.data,
+      });
+    } catch(e){
+      console.error("Erro ao remarcar sessão:", e);
+      alert("Erro ao remarcar: "+e.message);
+    }
   }
 
   async function confirmarExclusao(tipo){
-    if(!modalExcluir)return;
-    const {id,pacoteId,numSessao}=modalExcluir;
-    if(tipo==="este"){
-      await db.collection("clinica_sessoes").doc(id).delete();
-    } else if(tipo==="daqui"){
-      const fut=sessoes.filter(s=>s.pacoteId===pacoteId&&(s.numSessao||0)>=(numSessao||0));
-      const b=db.batch();fut.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));await b.commit();
-    } else {
-      const todas=sessoes.filter(s=>s.pacoteId===pacoteId);
-      const b=db.batch();todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-      b.delete(db.collection("clinica_pacotes").doc(pacoteId));
-      // Exclui lançamento do pacote também
-      const lp=lancamentos.find(l=>l.pacoteId===pacoteId);
-      if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
-      await b.commit();setPacoteSelecionado(null);
+    if(!modalExcluir) return;
+    const {id, pacoteId, numSessao} = modalExcluir;
+    try {
+      if(tipo==="este"){
+        await db.collection("clinica_sessoes").doc(id).delete();
+      } else if(tipo==="daqui"){
+        const fut = sessoes.filter(s=>s.pacoteId===pacoteId&&(s.numSessao||0)>=(numSessao||0));
+        const b = db.batch();
+        fut.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+        await b.commit();
+      } else {
+        // Cancelar todo o pacote — exclusão em cascata via query direta (evita dados órfãos)
+        const [snapSess, snapLanc] = await Promise.all([
+          db.collection("clinica_sessoes").where("pacoteId","==",pacoteId).get(),
+          db.collection("clinica_lancamentos").where("pacoteId","==",pacoteId).get(),
+        ]);
+        const b = db.batch();
+        snapSess.docs.forEach(d=>b.delete(d.ref));
+        snapLanc.docs.forEach(d=>b.delete(d.ref));
+        b.delete(db.collection("clinica_pacotes").doc(pacoteId));
+        await b.commit();
+        if(typeof setPacoteSelecionado==="function") setPacoteSelecionado(null);
+      }
+    } catch(e){
+      console.error("Erro ao excluir sessão/pacote:", e);
+      alert("Erro ao excluir: " + e.message);
     }
     setModalExcluir(null);
   }
 
 
   if(pacoteSelecionado){
-    // Modo editar pacote individual (id__pacote)
-    if(pacoteSelecionado.endsWith("__pacote")){
-      const pacoteId = pacoteSelecionado.replace("__pacote","");
+    // Modo ver sessões (id__sessoes)
+    if(pacoteSelecionado.endsWith("__sessoes")){
+      const pacoteId = pacoteSelecionado.replace("__sessoes","");
       return <RelatorioFrequencia
         pacienteId={null}
         pacoteId={pacoteId}
@@ -1614,6 +2520,28 @@ function FinanceiroClinica() {
         FORMAS={FORMAS}
         onVoltar={()=>setPacoteSelecionado(null)}
       />;
+    }
+    // Modo editar pacote individual (id__pacote) — abre modal de edição
+    if(pacoteSelecionado.endsWith("__pacote")){
+      const pacoteId = pacoteSelecionado.replace("__pacote","");
+      const pacoteAlvo = pacotes.find(p=>p.id===pacoteId);
+      if(pacoteAlvo && !modalEditarPacote){
+        setModalEditarPacote(pacoteAlvo);
+        setFormEdicaoPacote({
+          pacienteId: pacoteAlvo.pacienteId||"",
+          totalSessoes: pacoteAlvo.totalSessoes||"",
+          valorSessao: pacoteAlvo.valorSessao||"",
+          recorrencia: pacoteAlvo.recorrencia||"Semanal (1x/semana)",
+          dataInicio: pacoteAlvo.dataInicio||"",
+          horario: pacoteAlvo.horario||"09:00",
+          statusPag: pacoteAlvo.statusPag||"pendente",
+          formaPag: pacoteAlvo.formaPag||"",
+          dataPagamento: pacoteAlvo.dataPagamento||"",
+          pagamentosExtras: pacoteAlvo.pagamentosExtras||[],
+          obs: pacoteAlvo.obs||"",
+        });
+        setPacoteSelecionado(null);
+      }
     }
     // Modo controle geral do paciente (pacienteId)
     return <RelatorioFrequencia
@@ -1628,11 +2556,206 @@ function FinanceiroClinica() {
     />;
   }
 
+  // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
+  async function salvarEdicaoPacote() {
+    if(!modalEditarPacote) return;
+    setSalvandoEdicao(true);
+    try {
+      const f = formEdicaoPacote;
+      const jaPago = (f.statusPag||"pendente")==="recebido";
+      const novoTotalSessoes = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
+      const novoValorSessao = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
+      const novoValorTotal = novoTotalSessoes * novoValorSessao;
+      const dataPagFinal = jaPago ? (f.dataPagamento||new Date().toISOString().slice(0,10)) : "";
+
+      // Calcula valorPago por sessão distribuindo pagamentosExtras proporcionalmente
+      const extras = f.pagamentosExtras||[];
+      const totalExtras = extras.reduce((a,pg)=>a+(parseFloat(pg.valor)||0),0);
+      const totalPagoRef = jaPago ? (totalExtras > 0 ? totalExtras : novoValorTotal) : 0;
+      const valorPagoPorSessao = novoTotalSessoes > 0
+        ? parseFloat((totalPagoRef / novoTotalSessoes).toFixed(2))
+        : novoValorSessao;
+
+      // 1. Atualiza o documento do pacote
+      await db.collection("clinica_pacotes").doc(modalEditarPacote.id).update({
+        totalSessoes: novoTotalSessoes,
+        valorSessao: novoValorSessao,
+        valorTotal: novoValorTotal,
+        recorrencia: f.recorrencia,
+        dataInicio: f.dataInicio,
+        horario: f.horario,
+        statusPag: f.statusPag,
+        formaPag: f.formaPag||"",
+        dataPagamento: dataPagFinal,
+        pagamentosExtras: extras,
+        obs: f.obs||"",
+      });
+
+      // 2. Atualiza lançamento financeiro vinculado via query direta
+      try {
+        const snapLanc = await db.collection("clinica_lancamentos")
+          .where("pacoteId","==",modalEditarPacote.id).get();
+        if(!snapLanc.empty){
+          const pacEd = pacientes.find(p=>p.id===(modalEditarPacote.pacienteId||""));
+          const mesEd = f.dataInicio
+            ? new Date(f.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})
+            : "";
+          const nomePacEd = `Pacote ${novoTotalSessoes} Sessões`;
+          const descEd = pacEd
+            ? `${pacEd.nome} — ${nomePacEd} — ${mesEd.charAt(0).toUpperCase()+mesEd.slice(1)}`
+            : snapLanc.docs[0].data().tipo||snapLanc.docs[0].data().descricao||nomePacEd;
+          await snapLanc.docs[0].ref.update({
+            valor: novoValorTotal,
+            totalSessoes: novoTotalSessoes,
+            valorSessao: novoValorSessao,
+            status: f.statusPag||"pendente",
+            formaPag: f.formaPag||"",
+            dataPagamento: dataPagFinal,
+            pagamentosExtras: extras,
+            obs: f.obs||"",
+            tipo: descEd,
+            descricao: descEd,
+          });
+        }
+      } catch(eLanc){ console.warn("Aviso: lançamento não atualizado →", eLanc.message); }
+
+      // 3. Atualiza sessões filhas em batch
+      const snapSess = await db.collection("clinica_sessoes")
+        .where("pacoteId","==",modalEditarPacote.id).get();
+      const sessDoPacote = snapSess.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+
+      if(sessDoPacote.length > 0){
+        const batch = db.batch();
+        sessDoPacote.forEach((s,idx)=>{
+          if(idx >= novoTotalSessoes){
+            batch.delete(db.collection("clinica_sessoes").doc(s.id));
+          } else {
+            const campos = {
+              valorSessao: novoValorSessao,
+              hora: f.horario||s.hora||"",
+              recorrencia: f.recorrencia||s.recorrencia||"",
+            };
+            if(jaPago){
+              const vPagoAtual = parseFloat(s.valorPago)||0;
+              campos.pagamento = "pago";
+              campos.formaPagamento = f.formaPag||s.formaPagamento||"";
+              campos.dataPagamento = dataPagFinal||s.dataPagamento||"";
+              campos.valorPago = vPagoAtual > 0 ? vPagoAtual : valorPagoPorSessao;
+            } else if(f.statusPag === "pendente" && s.pagamento === "pago"){
+              campos.pagamento = "pendente";
+              campos.valorPago = 0;
+              campos.dataPagamento = "";
+            }
+            batch.update(db.collection("clinica_sessoes").doc(s.id), campos);
+          }
+        });
+        await batch.commit();
+      }
+
+      alert("✓ Pacote atualizado! Sessões e financeiro sincronizados.");
+      setModalEditarPacote(null);
+    } catch(e){
+      console.error("Erro salvarEdicaoPacote:", e);
+      alert("Erro ao salvar pacote: " + e.message);
+    }
+    setSalvandoEdicao(false);
+  }
+
   // Métricas
   const totalRecebido=lancamentos.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
 
   return(
     <div>
+      {/* ── Modal Editar Pacote ── */}
+      {modalEditarPacote&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={e=>{if(e.target===e.currentTarget)setModalEditarPacote(null);}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h3 style={{margin:0,color:"var(--purple)"}}>✏️ Editar Pacote</h3>
+              <button onClick={()=>setModalEditarPacote(null)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"var(--gray-400)"}}>✕</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              <div className="form-group"><label className="form-label">Nº de Sessões</label>
+                <input className="form-input" type="number" value={formEdicaoPacote.totalSessoes||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,totalSessoes:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Valor por Sessão (R$)</label>
+                <input className="form-input" type="number" value={formEdicaoPacote.valorSessao||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,valorSessao:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Data de Início</label>
+                <input className="form-input" type="date" value={formEdicaoPacote.dataInicio||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,dataInicio:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Horário</label>
+                <input className="form-input" type="time" value={formEdicaoPacote.horario||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,horario:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Recorrência</label>
+                <select className="form-input" value={formEdicaoPacote.recorrencia||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,recorrencia:e.target.value})}>
+                  {RECORRENCIAS.map(r=><option key={r}>{r}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Total do Pacote</label>
+                <input className="form-input" readOnly value={"R$ "+((parseFloat(formEdicaoPacote.valorSessao||0)*parseInt(formEdicaoPacote.totalSessoes||0))||0).toFixed(2).replace(".",",")} style={{background:"#f9fafb",color:"var(--text-muted)"}}/>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Status do Pagamento</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[["pendente","Pendente","#d97706"],["recebido","✓ Recebido","#059669"]].map(([v,l,cor])=>(
+                    <button key={v} type="button" onClick={()=>setFormEdicaoPacote({...formEdicaoPacote,statusPag:v})}
+                      style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",cursor:"pointer",fontWeight:600,fontSize:13,fontFamily:"var(--font-body)",
+                        borderColor:(formEdicaoPacote.statusPag||"pendente")===v?cor:"#e5e7eb",
+                        background:(formEdicaoPacote.statusPag||"pendente")===v?cor+"15":"white",
+                        color:(formEdicaoPacote.statusPag||"pendente")===v?cor:"#6b7280"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group"><label className="form-label">Forma de Pagamento Principal</label>
+                  <select className="form-input" value={formEdicaoPacote.formaPag||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,formaPag:e.target.value})}>
+                    <option value="">Selecionar...</option>
+                    {FORMAS.map(f=><option key={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div className="form-group"><label className="form-label">Data do Pagamento</label>
+                  <input className="form-input" type="date" value={formEdicaoPacote.dataPagamento||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,dataPagamento:e.target.value})}/>
+                </div>
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <label className="form-label" style={{margin:0}}>Formas de pagamento (PIX, cartão, dinheiro em datas diferentes)</label>
+                    <button type="button" style={{fontSize:12,color:"#7B00C4",background:"#f3e6ff",border:"1px solid #d9b3f5",borderRadius:6,padding:"4px 12px",cursor:"pointer"}}
+                      onClick={()=>setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:[...(formEdicaoPacote.pagamentosExtras||[]),{forma:"",valor:"",data:new Date().toISOString().slice(0,10)}]})}>
+                      + Adicionar forma
+                    </button>
+                  </div>
+                  {(formEdicaoPacote.pagamentosExtras||[]).length===0&&(
+                    <div style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",padding:"6px 0"}}>Clique em "+ Adicionar forma" para registrar pagamentos parciais ou múltiplas formas.</div>
+                  )}
+                  {(formEdicaoPacote.pagamentosExtras||[]).map((pg,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:6,marginBottom:6,alignItems:"center"}}>
+                      <select className="form-input" style={{fontSize:12}} value={pg.forma} onChange={e=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p[i]={...p[i],forma:e.target.value};setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}>
+                        <option value="">Forma...</option>{FORMAS.map(f=><option key={f}>{f}</option>)}
+                      </select>
+                      <input className="form-input" style={{fontSize:12}} type="number" placeholder="Valor R$" value={pg.valor} onChange={e=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p[i]={...p[i],valor:e.target.value};setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}/>
+                      <input className="form-input" style={{fontSize:12}} type="date" value={pg.data} onChange={e=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p[i]={...p[i],data:e.target.value};setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}/>
+                      <button type="button" style={{color:"#dc2626",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:"0 4px"}} onClick={()=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p.splice(i,1);setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
+                <textarea className="form-input" rows={2} value={formEdicaoPacote.obs||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
+              <button className="btn btn-ghost" onClick={()=>setModalEditarPacote(null)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvarEdicaoPacote} disabled={salvandoEdicao}>
+                {salvandoEdicao?"Salvando...":"💾 Salvar alterações"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
           <div className="page-title">Financeiro da Clínica</div>
@@ -1668,7 +2791,7 @@ function FinanceiroClinica() {
       </div>
 
       {/* Métricas clicáveis */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
         {/* Card Recebido — clicável mês/ano */}
         <div onClick={()=>setPeriodoCard(p=>p==="mes"?"ano":"mes")}
           style={{background:totalRecebidoPeriodo>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",textAlign:"center",cursor:"pointer",border:"1.5px solid",borderColor:totalRecebidoPeriodo>=0?"#6ee7b7":"#fca5a5",transition:"all .2s",position:"relative"}}>
@@ -1701,7 +2824,7 @@ function FinanceiroClinica() {
       </div>
 
       {/* Abas */}
-      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
+      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none",flexShrink:0}}>
         {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"]].map(([id,lbl,ic])=>(
           <button key={id} onClick={()=>setAba(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:aba===id?"var(--purple)":"var(--gray-600)",borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
             <Icon name={ic} size={15}/>{lbl}
@@ -1784,10 +2907,19 @@ function FinanceiroClinica() {
                               {l.data?new Date(l.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
                               {isFut&&<span style={{marginLeft:4,fontSize:9,color:"#0891b2",fontWeight:600}}>futuro</span>}
                             </td>
-                            <td style={{padding:"8px 14px"}}>
-                              {l.tipo||l.pacienteNome||"—"}
-                              {l.tipo_lancamento==="pacote"&&<span style={{marginLeft:6,background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
-                              {l.tipo_lancamento==="sessao"&&<span style={{marginLeft:6,background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
+                            <td style={{padding:"8px 14px",maxWidth:320}}>
+                              <div style={{fontWeight:500,fontSize:13,lineHeight:1.4}}>
+                                {l.descricao||l.tipo||l.pacienteNome||"—"}
+                              </div>
+                              <div style={{display:"flex",gap:4,marginTop:3,flexWrap:"wrap"}}>
+                                {l.tipo_lancamento==="pacote"&&<span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Pacote</span>}
+                                {l.tipo_lancamento==="sessao"&&<span style={{background:"#e0f2fe",color:"#0891b2",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>Sessão</span>}
+                                {(l.pagamentosExtras||[]).length>0&&(
+                                  <span style={{background:"#fef3c7",color:"#92400e",borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>
+                                    💳 {(l.pagamentosExtras||[]).length}x forma{(l.pagamentosExtras||[]).length>1?"s":""}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td style={{padding:"8px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.categoria||"—"}</td>
                             <td style={{padding:"8px 14px"}}><span style={{background:"#f3f4f6",borderRadius:6,padding:"2px 6px",fontSize:11}}>{l.formaPag||"—"}</span></td>
@@ -1908,9 +3040,41 @@ function FinanceiroClinica() {
           ):(()=>{
             // Agrupar pacotes por paciente
             const pacientesComPacote = [...new Set(pacotes.map(p=>p.pacienteId))];
+            const pacientesVisiveis = buscaPac.trim()
+              ? pacientesComPacote.filter(id=>{
+                  const pac = pacientes.find(p=>p.id===id);
+                  const inicial = (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+                  return inicial === buscaPac;
+                })
+              : pacientesComPacote;
             return (
               <div style={{display:"flex",flexDirection:"column",gap:28}}>
-                {pacientesComPacote.map(pacId=>{
+                {/* Índice A-Z */}
+                {(()=>{
+                  const letrasComPac = [...new Set(pacientesComPacote.map(id=>{
+                    const pac = pacientes.find(p=>p.id===id);
+                    return (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+                  }))].sort();
+                  return (
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:12}}>
+                      {buscaPac&&<button onClick={()=>setBuscaPac("")}
+                        style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid #7B00C4",background:"#7B00C4",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        Todos
+                      </button>}
+                      {letrasComPac.map(letra=>(
+                        <button key={letra} onClick={()=>setBuscaPac(buscaPac===letra?"":letra)}
+                          style={{width:32,height:32,borderRadius:"50%",border:"1.5px solid",
+                            borderColor:buscaPac===letra?"#7B00C4":"#e8c8ff",
+                            background:buscaPac===letra?"#7B00C4":"white",
+                            color:buscaPac===letra?"white":"#7B00C4",
+                            fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                          {letra}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+                {pacientesVisiveis.map(pacId=>{
                   const pac = pacientes.find(p=>p.id===pacId);
                   const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
                     const ta = a.createdAt?.seconds||0;
@@ -1937,58 +3101,83 @@ function FinanceiroClinica() {
                         {pacotesDoPac.map(p=>{
                           const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
                           const realizadas=sessPac.filter(s=>s.status==="realizado").length;
+                          const pagas=sessPac.filter(s=>s.pagamento==="pago").length;
                           const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
-                          const lancPac=lancamentos.find(l=>l.pacoteId===p.id);
-                          const dataInclusao = p.createdAt?.seconds
-                            ? new Date(p.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
-                            : p.dataInicio
-                              ? new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})
-                              : "—";
+                          const lancsPac=lancamentos.filter(l=>l.pacoteId===p.id);
+                          const totalPago=lancsPac.filter(l=>l.status==="recebido").reduce((a,l)=>a+(l.valor||0),0);
+                          const isPago=p.statusPag==="recebido";
+                          const dataStr=p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}):"—";
                           return(
-                            <div key={p.id} className="card" style={{padding:"16px 20px",borderLeft:"4px solid var(--purple)"}}>
-                              <div style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-                                <div style={{flex:1}}>
-                                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-                                    <span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                                      📅 Criado em {dataInclusao}
-                                    </span>
-                                    <span style={{background:lancPac?.status==="recebido"?"#d1fae5":"#fef3c7",color:lancPac?.status==="recebido"?"#065f46":"#b45309",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                                      {lancPac?.status==="recebido"?"✓ Pago":"Pagamento Pendente"}
-                                    </span>
-                                    <span style={{marginLeft:"auto",fontWeight:700,color:"#059669",fontSize:14}}>
-                                      {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-                                    </span>
+                            <div key={p.id} style={{borderRadius:12,border:"1px solid #e8c8ff",background:"white",padding:"14px 16px",marginBottom:10,boxShadow:"0 1px 3px #0001"}}>
+                              {/* Cabeçalho do card */}
+                              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
+                                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                  <div style={{width:10,height:10,borderRadius:"50%",background:isPago?"#22c55e":"#f59e0b",flexShrink:0,marginTop:2}}/>
+                                  <div>
+                                    <div style={{fontWeight:700,fontSize:14,color:"#3d006a"}}>{p.obs||p.recorrencia||"Pacote"}</div>
+                                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:1}}>
+                                      {p.recorrencia}{p.horario&&<span> · 🕐 {p.horario}</span>} · {dataStr}
+                                    </div>
                                   </div>
-                                  <div style={{fontSize:12,color:"var(--text-muted)",display:"flex",gap:12,flexWrap:"wrap",marginBottom:10}}>
-                                    <span>🔄 {p.recorrencia}</span>
-                                    <span>🕐 {p.horario}</span>
-                                    <span>📋 {realizadas}/{p.totalSessoes} sessões</span>
-                                    <span>📆 Início: {p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span>
+                                </div>
+                                <div style={{textAlign:"right"}}>
+                                  <div style={{fontWeight:800,fontSize:16,color:isPago?"#22c55e":"#f59e0b"}}>
+                                    {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
                                   </div>
-                                  <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginBottom:4}}>
-                                    <div style={{background:"var(--purple)",height:6,borderRadius:20,width:pct+"%",transition:"width .3s"}}/>
+                                  <div style={{fontSize:11,color:isPago?"#22c55e":"#f59e0b",fontWeight:600}}>
+                                    {isPago?"✓ Recebido":"⏳ Pendente"}
+                                    {p.formaPag&&<span style={{fontWeight:400,color:"var(--text-muted)"}}> · {p.formaPag}</span>}
                                   </div>
-                                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{pct}% concluído</div>
                                 </div>
                               </div>
-                              <div style={{display:"flex",gap:8,marginTop:12,borderTop:"1px solid var(--gray-100)",paddingTop:12}}>
-                                <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1.5px solid var(--purple)"}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="edit-3" size={13}/> Editar pacote
+                              {/* Barra de progresso */}
+                              <div style={{marginBottom:10}}>
+                                <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",marginBottom:4}}>
+                                  <span>{realizadas} realizadas de {p.totalSessoes} · {pagas} pagas</span>
+                                  <span style={{fontWeight:600,color:"var(--purple)"}}>{pct}%</span>
+                                </div>
+                                <div style={{height:6,background:"#e8c8ff",borderRadius:10,overflow:"hidden"}}>
+                                  <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:10,transition:"width .4s"}}/>
+                                </div>
+                              </div>
+                              {/* Pagamentos extras */}
+                              {(p.pagamentosExtras||[]).length>0&&(
+                                <div style={{marginBottom:10,display:"flex",gap:6,flexWrap:"wrap"}}>
+                                  {(p.pagamentosExtras||[]).map((pg,i)=>(
+                                    <span key={i} style={{background:"#f3e6ff",borderRadius:6,padding:"2px 8px",fontSize:11,color:"#6b7280"}}>
+                                      💳 {pg.forma||"?"} R${parseFloat(pg.valor||0).toFixed(2).replace(".",",")} · {pg.data?new Date(pg.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {/* Botões */}
+                              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"var(--purple)",border:"1px solid #d9b3f5"}}
+                                  onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__pacote");}}>
+                                  <Icon name="edit-3" size={13}/> Editar
                                 </button>
-                                <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>setPacoteSelecionado(p.id+"__pacote")}>
-                                  <Icon name="clipboard-list" size={13}/> Ver Sessões
+                                <button className="btn btn-purple" style={{fontSize:12,padding:"6px 12px"}}
+                                  onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
+                                  <Icon name="clipboard-list" size={13}/> Sessões
                                 </button>
-                                <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={async()=>{
-                                  if(!confirm(`Excluir pacote de ${p.pacienteNome}?`))return;
-                                  const todas=sessoes.filter(s=>s.pacoteId===p.id);
-                                  const b=db.batch();
-                                  todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-                                  b.delete(db.collection("clinica_pacotes").doc(p.id));
-                                  const lp=lancamentos.find(l=>l.pacoteId===p.id);
-                                  if(lp) b.delete(db.collection("clinica_lancamentos").doc(lp.id));
-                                  await b.commit();
-                                }}>
-                                  <Icon name="trash-2" size={13}/>
+                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#dc2626",marginLeft:"auto"}}
+                                  onClick={async e=>{e.stopPropagation();
+                                    if(!confirm("Excluir pacote e TODAS as sessões e lançamentos vinculados? Esta ação não pode ser desfeita."))return;
+                                    try {
+                                      const [snapSess, snapLanc] = await Promise.all([
+                                        db.collection("clinica_sessoes").where("pacoteId","==",p.id).get(),
+                                        db.collection("clinica_lancamentos").where("pacoteId","==",p.id).get(),
+                                      ]);
+                                      const b = db.batch();
+                                      snapSess.docs.forEach(d=>b.delete(d.ref));
+                                      snapLanc.docs.forEach(d=>b.delete(d.ref));
+                                      b.delete(db.collection("clinica_pacotes").doc(p.id));
+                                      await b.commit();
+                                    } catch(e){
+                                      alert("Erro ao excluir pacote: "+e.message);
+                                    }
+                                  }}>
+                                  <Icon name="trash-2" size={13}/> Excluir
                                 </button>
                               </div>
                             </div>
@@ -2015,11 +3204,14 @@ function FinanceiroClinica() {
             const pacotesPac = pacotes.filter(p=>p.pacienteId===pac.id);
             if(pacotesPac.length===0) return null;
             const totalSessoes = sessPac.length;
-            const realizadas = sessPac.filter(s=>s.status==="realizado").length;
+            // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
+            const realizadas = sessPac.filter(s=>s.status==="realizado"||s.status==="remarcado").length;
             const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
-            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length;
+            // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
+            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado"&&s.status!=="remarcado").length;
             const recebido = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
-            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+            // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
+            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado"&&s.status!=="remarcado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
             return(
               <div key={pac.id} className="card" style={{padding:"14px 20px",cursor:"pointer",marginBottom:10,transition:"box-shadow .15s"}}
                 onClick={()=>setPacoteSelecionado(pac.id)}
@@ -2066,19 +3258,23 @@ function FinanceiroClinica() {
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
           <div style={{background:"white",borderRadius:16,padding:32,width:"100%",maxWidth:420,textAlign:"center"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Novo Lançamento</div>
-            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>O que deseja lançar?</p>
-            <div style={{display:"flex",gap:12}}>
-              <button className="btn btn-outline" style={{flex:1,padding:"20px 12px",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}
+            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Escolha o tipo de lançamento:</p>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
                 onClick={()=>setModal("pacote")}>
-                <span style={{fontSize:32}}>📦</span>
-                <strong>Pacote de Sessões</strong>
-                <span style={{fontSize:11,color:"#6b7280",lineHeight:1.4}}>Gera sessões recorrentes na agenda com ficha de frequência</span>
+                <span style={{fontSize:32,flexShrink:0}}>📦</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:"var(--purple)"}}>Pacote de Sessões</div>
+                  <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas</div>
+                </div>
               </button>
-              <button className="btn btn-outline" style={{flex:1,padding:"20px 12px",fontSize:13,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}
+              <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
                 onClick={()=>setModal("avulso")}>
-                <span style={{fontSize:32}}>💲</span>
-                <strong>Lançamento Avulso</strong>
-                <span style={{fontSize:11,color:"#6b7280",lineHeight:1.4}}>Sessão única, avaliação, outro serviço isolado</span>
+                <span style={{fontSize:32,flexShrink:0}}>💲</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:"#059669"}}>Lançamento Avulso</div>
+                  <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Sessão única, avaliação, neuromodulação ou outro serviço isolado</div>
+                </div>
               </button>
             </div>
             <button className="btn btn-ghost" style={{width:"100%",marginTop:12}} onClick={()=>setModal(false)}>Cancelar</button>
@@ -2101,7 +3297,7 @@ function FinanceiroClinica() {
                   setFormAvulso({...formAvulso,pacienteId:e.target.value,pacienteNome:pac?.nome||"",
                     obs:pac?`${formAvulso.tipo} — ${pac.nome}`:formAvulso.obs});
                 }}>
-                  <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                  <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
               </div>
               <div className="form-group"><label className="form-label">Tipo / Categoria</label>
@@ -2144,6 +3340,10 @@ function FinanceiroClinica() {
                 <button className="btn btn-purple" onClick={()=>salvarAvulso(null)} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alterações"}</button>
               ) : (
                 <>
+                  <button className="btn btn-ghost" onClick={()=>salvarAvulso(null)} disabled={salvando}
+                    style={{border:"1px solid #e5e7eb",color:"#6b7280",fontSize:12}} title="Sem comissão — para lançamentos passados">
+                    📋 Sem comissão
+                  </button>
                   <button className="btn btn-purple" onClick={()=>salvarAvulso("primeira")} disabled={salvando}
                     style={{background:"#7B00C4"}} title="10% de comissão">
                     🌟 Primeira Venda
@@ -2153,7 +3353,8 @@ function FinanceiroClinica() {
                     🔁 Venda Recorrente
                   </button>
                 </>
-              )}
+                )
+              }
             </div>
           </div>
         </div>
@@ -2176,7 +3377,7 @@ function FinanceiroClinica() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Paciente *</label>
                   <select className="form-input" value={formPacote.pacienteId} onChange={e=>setFormPacote({...formPacote,pacienteId:e.target.value})}>
-                    <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                    <option value="">Selecionar...</option>{pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
                   </select>
                 </div>
                 <div className="form-group"><label className="form-label">Nº de Sessões *</label>
@@ -2213,12 +3414,52 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Horário {needDias?"(padrão)":""}</label>
                   <input className="form-input" type="time" value={formPacote.horario} onChange={e=>setFormPacote({...formPacote,horario:e.target.value})}/>
                 </div>
-                <div className="form-group"><label className="form-label">Valor por Sessão (R$)</label>
-                  <input className="form-input" type="number" placeholder="Ex: 250" value={formPacote.valorSessao} onChange={e=>setFormPacote({...formPacote,valorSessao:e.target.value})}/>
+                {/* Toggle Particular / Social */}
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
+                  <label className="form-label">Tipo de Atendimento</label>
+                  <div style={{display:"flex",gap:8}}>
+                    {[["particular","🏥 Particular"],["social","🌱 Social"]].map(([v,l])=>(
+                      <button key={v} type="button" onClick={()=>setFormPacote({...formPacote,tipoAtendimento:v,
+                        valorSessao:v==="social"?"":formPacote.valorSessao,
+                        valorSupervisaoSocial:v==="social"?"40":formPacote.valorSupervisaoSocial,
+                        valorEstagiariaSocial:v==="social"?"20":formPacote.valorEstagiariaSocial})}
+                        style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
+                          borderColor:(formPacote.tipoAtendimento||"particular")===v?
+                            (v==="social"?"#0d9488":"#7B00C4"):"#e5e7eb",
+                          background:(formPacote.tipoAtendimento||"particular")===v?
+                            (v==="social"?"#ccfbf1":"#f5f3ff"):"white",
+                          color:(formPacote.tipoAtendimento||"particular")===v?
+                            (v==="social"?"#0d9488":"#7B00C4"):"#6b7280"}}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="form-group"><label className="form-label">Total do Pacote (R$)</label>
-                  <input className="form-input" type="number" placeholder="Automático" value={formPacote.valorSessao&&formPacote.totalSessoes?(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0):""} readOnly style={{background:"#f9fafb"}}/>
-                </div>
+                {(formPacote.tipoAtendimento||"particular")==="social"?(
+                  <>
+                    <div className="form-group">
+                      <label className="form-label">Valor Supervisão (R$)</label>
+                      <input className="form-input" type="number" value={formPacote.valorSupervisaoSocial||"40"}
+                        onChange={e=>setFormPacote({...formPacote,valorSupervisaoSocial:e.target.value})}/>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Receita da clínica</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Valor Estagiária (R$)</label>
+                      <input className="form-input" type="number" value={formPacote.valorEstagiariaSocial||"20"}
+                        onChange={e=>setFormPacote({...formPacote,valorEstagiariaSocial:e.target.value})}/>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Comissão estagiária</div>
+                    </div>
+                  </>
+                ):(
+                  <>
+                    <div className="form-group"><label className="form-label">Valor por Sessão (R$)</label>
+                      <input className="form-input" type="number" placeholder="Ex: 250" value={formPacote.valorSessao} onChange={e=>setFormPacote({...formPacote,valorSessao:e.target.value})}/>
+                    </div>
+                    <div className="form-group"><label className="form-label">Total do Pacote (R$)</label>
+                      <input className="form-input" type="number" placeholder="Automático" value={formPacote.valorSessao&&formPacote.totalSessoes?(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0):""} readOnly style={{background:"#f9fafb"}}/>
+                    </div>
+                  </>
+                )}
                 {/* Pagamento */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
                   <label className="form-label">Status do Pagamento</label>
@@ -2240,8 +3481,30 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Data do Pagamento</label>
                   <input className="form-input" type="date" value={formPacote.dataPagamento||""} onChange={e=>setFormPacote({...formPacote,dataPagamento:e.target.value})}/>
                 </div>
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                      <label className="form-label" style={{margin:0}}>Formas de pagamento</label>
+                      <button type="button" style={{fontSize:12,color:"#7B00C4",background:"#f3e6ff",border:"1px solid #d9b3f5",borderRadius:6,padding:"3px 10px",cursor:"pointer"}}
+                        onClick={()=>setFormPacote({...formPacote,pagamentosExtras:[...(formPacote.pagamentosExtras||[]),{forma:"",valor:"",data:new Date().toISOString().slice(0,10)}]})}>
+                        + Adicionar forma
+                      </button>
+                    </div>
+                    {(formPacote.pagamentosExtras||[]).length===0&&(
+                      <div style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",padding:"6px 0"}}>Clique em "+ Adicionar forma" para registrar PIX, cartão, dinheiro em datas diferentes.</div>
+                    )}
+                    {(formPacote.pagamentosExtras||[]).map((pg,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:6,marginBottom:6,alignItems:"center"}}>
+                        <select className="form-input" style={{fontSize:12}} value={pg.forma} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],forma:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}>
+                          <option value="">Forma...</option>{FORMAS.map(f=><option key={f}>{f}</option>)}
+                        </select>
+                        <input className="form-input" style={{fontSize:12}} type="number" placeholder="Valor R$" value={pg.valor} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],valor:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}/>
+                        <input className="form-input" style={{fontSize:12}} type="date" value={pg.data} onChange={e=>{const p=[...(formPacote.pagamentosExtras||[])];p[i]={...p[i],data:e.target.value};setFormPacote({...formPacote,pagamentosExtras:p});}}/>
+                        <button type="button" style={{color:"#dc2626",background:"none",border:"none",cursor:"pointer",fontSize:16,padding:"0 4px"}} onClick={()=>{const p=[...(formPacote.pagamentosExtras||[])];p.splice(i,1);setFormPacote({...formPacote,pagamentosExtras:p});}}>✕</button>
+                      </div>
+                    ))}
+                  </div>
                 <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
-                  <textarea className="form-input" rows={2} value={formPacote.obs} onChange={e=>setFormPacote({...formPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
+                  <TextAreaVoz className="form-input" rows={2} value={formPacote.obs} onChange={e=>setFormPacote({...formPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
                 </div>
               </div>
               {formPacote.totalSessoes&&formPacote.dataInicio&&(
@@ -2252,6 +3515,10 @@ function FinanceiroClinica() {
               )}
               <div style={{display:"flex",gap:10,justifyContent:"flex-end",flexWrap:"wrap"}}>
                 <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+                <button className="btn btn-ghost" onClick={()=>salvarPacote(null)} disabled={salvando}
+                  style={{border:"1px solid #e5e7eb",color:"#6b7280",fontSize:12}} title="Sem comissão — para lançamentos passados">
+                  📋 Sem comissão
+                </button>
                 <button className="btn btn-purple" onClick={()=>salvarPacote("primeira")} disabled={salvando}
                   style={{background:"#7B00C4"}} title="10% de comissão">
                   🌟 Primeira Venda
@@ -2295,8 +3562,8 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
 
   useEffect(()=>{
-    const u1=db.collection("clinica_financeiro_pessoal").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u2=db.collection("clinica_fin_pessoal_recorrentes").orderBy("createdAt","desc").onSnapshot(s=>setRecorrentes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    const u1=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
+    const u2=db.collection("clinica_fin_pessoal_recorrentes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setRecorrentes(docs);},()=>{});
     const u3=db.collection("clinica_fin_pessoal_categorias").onSnapshot(s=>setCategorias(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     return()=>{u1();u2();u3();};
   },[]);
@@ -2432,7 +3699,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
       </div>
 
       {/* Cards métricas */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
         <div style={{background:saldoMes>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",border:"1.5px solid",borderColor:saldoMes>=0?"#6ee7b7":"#fca5a5"}}>
           <div style={{fontSize:11,fontWeight:600,color:saldoMes>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo ({mesLabel(mesFiltroEfetivo)})</div>
           <div style={{fontSize:20,fontWeight:800,color:saldoMes>=0?"#059669":"#dc2626"}}>{fmt(saldoMes)}</div>
@@ -2912,7 +4179,7 @@ function Alunos() {
             )}
             <div className="form-group" style={{marginBottom:20}}>
               <label className="form-label">OBSERVAÇÕES</label>
-              <textarea className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre o aluno..."/>
+              <TextAreaVoz className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre o aluno..."/>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
@@ -2952,6 +4219,91 @@ function Alunos() {
 // ═══════════════════════════════════════════════════════
 // TERAPIA DE CASAIS
 // ═══════════════════════════════════════════════════════
+// ── Botão de Emergência ──
+function BotaoEmergenciaAdmin({ casalId, nomeCasal }) {
+  const [palavra,    setPalavra]    = useState("");
+  const [palavraSalva, setPalavraSalva] = useState("");
+  const [acionamentos, setAcionamentos] = useState([]);
+  const [salvando,   setSalvando]   = useState(false);
+  const [salvo,      setSalvo]      = useState(false);
+
+  useEffect(()=>{
+    if (!casalId) return;
+    db.collection("clinica_casais").doc(casalId).get().then(d=>{
+      if (d.exists && d.data().palavraEmergencia) {
+        setPalavraSalva(d.data().palavraEmergencia);
+        setPalavra(d.data().palavraEmergencia);
+      }
+    });
+    db.collection("clinica_emergencia")
+      .where("casalId","==",casalId)
+      .orderBy("createdAt","desc").limit(5)
+      .onSnapshot(s=>setAcionamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[casalId]);
+
+  async function salvar() {
+    if (!palavra.trim()) { alert("Digite a palavra de emergência."); return; }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais").doc(casalId).update({
+        palavraEmergencia: palavra.trim().toUpperCase()
+      });
+      setPalavraSalva(palavra.trim().toUpperCase());
+      setSalvo(true);
+      setTimeout(()=>setSalvo(false), 3000);
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  function fmtDH(ts) {
+    if (!ts?.toDate) return "—";
+    const d = ts.toDate();
+    return d.toLocaleDateString("pt-BR")+" às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  return (
+    <div style={{background:"#fff5f5",border:"2px solid #fecaca",borderRadius:12,padding:16,marginTop:12}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+        <span style={{fontSize:20}}>🔴</span>
+        <div style={{fontWeight:700,fontSize:14,color:"#dc2626"}}>Botão de Emergência</div>
+      </div>
+
+      <div style={{fontSize:12,color:"#6b7280",marginBottom:12,lineHeight:1.6}}>
+        Defina a palavra-código que o casal usará para acionar o tempo de pausa durante conflitos.
+      </div>
+
+      <div style={{display:"flex",gap:8,marginBottom:palavraSalva?12:0}}>
+        <input className="form-input" value={palavra}
+          onChange={e=>setPalavra(e.target.value.toUpperCase())}
+          placeholder="Ex: PAUSA, RESPIRA, CAFÉ..."
+          style={{flex:1,fontWeight:700,letterSpacing:2,fontSize:14,textTransform:"uppercase"}}/>
+        <button className="btn btn-purple" onClick={salvar} disabled={salvando} style={{whiteSpace:"nowrap"}}>
+          {salvando?"...":salvo?"✓ Salvo!":"Salvar"}
+        </button>
+      </div>
+
+      {palavraSalva && (
+        <div style={{background:"#7B00C4",borderRadius:10,padding:"10px 16px",textAlign:"center",marginBottom:12}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",marginBottom:4}}>Palavra ativa para {nomeCasal}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:"white",letterSpacing:4}}>{palavraSalva}</div>
+        </div>
+      )}
+
+      {acionamentos.length>0 && (
+        <div>
+          <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:6}}>ÚLTIMOS ACIONAMENTOS</div>
+          {acionamentos.map(a=>(
+            <div key={a.id} style={{display:"flex",justifyContent:"space-between",fontSize:12,padding:"5px 0",borderBottom:"1px solid #fecaca"}}>
+              <span style={{color:"#6b7280"}}>{fmtDH(a.createdAt)}</span>
+              <span style={{color:"#dc2626",fontWeight:600}}>⏱ {a.horas}h de pausa · por {a.acionadoPor||"—"}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TerapiaCasais() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [casais, setCasais] = useState([]);
@@ -2959,6 +4311,7 @@ function TerapiaCasais() {
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({nomeCasal:"",p1:"",p2:""});
   const [salvando, setSalvando] = useState(false);
+  const [expandido, setExpandido] = useState(null);
 
   useEffect(()=>{
     const unsub = db.collection("clinica_casais").onSnapshot(snap=>{
@@ -2980,9 +4333,15 @@ function TerapiaCasais() {
       p2Id:form.p2, p2Nome:p2?.nome||"",
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Grava casalId nos dois pacientes para o portal clínico detectar
-    await db.collection("clinica_pacientes").doc(form.p1).update({casalId:form.p2});
-    await db.collection("clinica_pacientes").doc(form.p2).update({casalId:form.p1});
+    // Grava casalId + mod5 nos dois pacientes para o portal clínico detectar
+    await db.collection("clinica_pacientes").doc(form.p1).update({
+      casalId:form.p2,
+      modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+    });
+    await db.collection("clinica_pacientes").doc(form.p2).update({
+      casalId:form.p1,
+      modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
+    });
     setModal(false);setForm({nomeCasal:"",p1:"",p2:""});setSalvando(false);
   }
 
@@ -3020,7 +4379,8 @@ function TerapiaCasais() {
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {casais.map(c=>(
-            <div key={c.id} className="card" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 24px"}}>
+            <React.Fragment key={c.id}>
+            <div className="card" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 24px"}}>
               <div style={{width:44,height:44,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                 <Icon name="heart" size={20}/>
               </div>
@@ -3038,9 +4398,15 @@ function TerapiaCasais() {
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(c.id)}><Icon name="trash-2" size={14}/></button>
-                <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>alert("Detalhe do casal — em breve")}>Ver detalhes <Icon name="chevron-right" size={14}/></button>
+                <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>setExpandido(expandido===c.id?null:c.id)}>
+                  🔴 Emergência <Icon name={expandido===c.id?"chevron-up":"chevron-down"} size={14}/>
+                </button>
               </div>
             </div>
+            {expandido===c.id && (
+              <BotaoEmergenciaAdmin casalId={c.id} nomeCasal={getNomeExibicao(c)}/>
+            )}
+            </React.Fragment>
           ))}
         </div>
       )}
@@ -3061,14 +4427,14 @@ function TerapiaCasais() {
               <label className="form-label">Parceiro(a) 1 *</label>
               <select className="form-input" value={form.p1} onChange={e=>setForm({...form,p1:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div className="form-group" style={{marginBottom:20}}>
               <label className="form-label">Parceiro(a) 2 *</label>
               <select className="form-input" value={form.p2} onChange={e=>setForm({...form,p2:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo"&&p.id!==form.p1).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo"&&p.id!==form.p1).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
@@ -3086,13 +4452,16 @@ function TerapiaCasais() {
 // RECURSOS TERAPÊUTICOS
 // ═══════════════════════════════════════════════════════
 const CATEGORIAS_RECURSOS = [
-  {id:"relaxamento",  label:"Relaxamento e Bem-estar",         cor:"#0284c7", bg:"#e0f2fe"},
-  {id:"tcc",          label:"Terapia Cognitivo-Comportamental", cor:"#7c3aed", bg:"#ede9fe"},
-  {id:"avaliacao",    label:"Avaliacao e Anamnese",             cor:"#6d28d9", bg:"#f5f3ff"},
-  {id:"psicoeducacao",label:"Psicoeducacao",                    cor:"#b45309", bg:"#fef3c7"},
-  {id:"mindfulness",  label:"Mindfulness",                      cor:"#059669", bg:"#d1fae5"},
-  {id:"musicoterapia",label:"Musicoterapia",                    cor:"#be185d", bg:"#fce7f3"},
-  {id:"outro",        label:"Outros Recursos",                  cor:"#6b7280", bg:"#f3f4f6"},
+  {id:"tcc",          label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
+  {id:"ansiedade",    label:"Ansiedade",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
+  {id:"emocoes",      label:"Emocoes",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
+  {id:"autocuidado",  label:"Autocuidado",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
+  {id:"relacionamentos",label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
+  {id:"corpo",        label:"Corpo & Alimentacao",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
+  {id:"esquema",      label:"Terapia do Esquema",    cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
+  {id:"musicoterapia",label:"Musicoterapia",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
+  {id:"avaliacao",    label:"Avaliacao e Anamnese",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#6366F1"},
+  {id:"outro",        label:"Outros",                cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
 ];
 
 const FERRAMENTAS_INTERATIVAS = [
@@ -3105,6 +4474,7 @@ const FERRAMENTAS_INTERATIVAS = [
   {key:"treino-neuro-auditivo",label:"Treino Neuro-Auditivo"},
   {key:"decision-tree",       label:"Arvore da Decisao"},
   {key:"anamnese",            label:"Anamnese — Marcos do Desenvolvimento"},
+  {key:"diario-terapeutico",  label:"Diário Terapêutico"},
 ];
 
 
@@ -3129,188 +4499,285 @@ function falarTexto(txt){
   window.speechSynthesis.speak(u);
 }
 
-// ── Respiração 4-7-8 ──
-function FerramentaRespiracao({musicUrl}){
-  const FASES=[{fase:"inhale",label:"Inspire",seg:4,cor:"#6366f1",speech:"Inspire pelo nariz"},
-               {fase:"hold",  label:"Segure", seg:7,cor:"#f59e0b",speech:"Segure o ar"},
-               {fase:"exhale",label:"Expire", seg:8,cor:"#10b981",speech:"Expire pela boca"}];
-  const TOTAL=19;
-  const [running,setRunning]=useState(false);
-  const [elapsed,setElapsed]=useState(0);
-  const [ciclos,setCiclos]=useState(0);
-  const [voz,setVoz]=useState(true);
-  const [showMusic,setShowMusic]=useState(false);
-  const ref=useRef(0); const iv=useRef(null); const faseAnterior=useRef(null);
-  const embedUrl=getYouTubeEmbed(musicUrl||"");
+// ── Nota de Relaxamento — salva no Firebase após conclusão ──────────────────
+function NotaRelaxamento({ user, ferramenta, emoji, onRepetir }) {
+  const [nota, setNota] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
 
-  function getFase(e){
-    let acc=0;
-    for(let i=0;i<FASES.length;i++){acc+=FASES[i].seg;if(e<acc)return{...FASES[i],restante:acc-e};}
-    return{...FASES[0],restante:FASES[0].seg};
+  async function salvarNota(n) {
+    setNota(n);
+    if (!user?.id) { setSalvo(true); return; }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_atividades").add({
+        pacienteId: user.id,
+        pacienteNome: user.nome || "",
+        ferramenta,
+        nota: n,
+        data: new Date().toLocaleDateString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) {}
+    setSalvando(false);
+    setSalvo(true);
   }
 
-  useEffect(()=>{
-    if(!running){if(iv.current)clearInterval(iv.current);return;}
-    iv.current=setInterval(()=>{
-      ref.current+=1;
-      if(ref.current>=TOTAL){ref.current=0;setCiclos(c=>c+1);}
-      setElapsed(ref.current);
-    },1000);
-    return()=>clearInterval(iv.current);
-  },[running]);
+  if (salvo) return (
+    <div style={{marginTop:8}}>
+      <div style={{background:"#d1fae5",borderRadius:12,padding:"14px 20px",fontSize:14,color:"#065f46",marginBottom:20}}>
+        ✓ Nota {nota}/10 registrada! Seu progresso foi salvo. 💜
+      </div>
+      <button className="btn btn-purple" onClick={onRepetir}>
+        <Icon name="rotate-ccw" size={16}/> Repetir
+      </button>
+    </div>
+  );
 
-  const fase=getFase(elapsed);
-  useEffect(()=>{
-    if(running&&voz&&fase.fase!==faseAnterior.current){falarTexto(fase.speech);faseAnterior.current=fase.fase;}
-  },[fase.fase,running,voz]);
+  return (
+    <div style={{marginTop:8}}>
+      <div style={{fontWeight:600,fontSize:15,marginBottom:6}}>Como você está se sentindo agora?</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Dê uma nota de 0 a 10 para o seu nível de relaxamento</div>
+      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:20}}>
+        {[0,1,2,3,4,5,6,7,8,9,10].map(n=>(
+          <button key={n} onClick={()=>salvarNota(n)} disabled={salvando}
+            style={{width:44,height:44,borderRadius:10,border:"1.5px solid",
+              borderColor: n<=3?"#fca5a5":n<=6?"#fbbf24":"#6ee7b7",
+              background: n<=3?"#fef2f2":n<=6?"#fef3c7":"#f0fdf4",
+              color: n<=3?"#dc2626":n<=6?"#d97706":"#16a34a",
+              fontWeight:700,fontSize:15,cursor:"pointer"}}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",paddingLeft:4,paddingRight:4}}>
+        <span>😰 Muito tenso</span><span>😐 Regular</span><span>😌 Muito relaxado</span>
+      </div>
+    </div>
+  );
+}
 
-  const pct=(elapsed/TOTAL)*100;
-  const raio=80; const circ=2*Math.PI*raio;
-  const phaseColors={"inhale":"#6366f1","hold":"#f59e0b","exhale":"#10b981"};
-  const cor=phaseColors[fase.fase];
+// ── Técnica de Respiração 4-7-8 (áudio MP4 guiado) ──
+function FerramentaRespiracao({ user }){
+  const AUDIO_SRC = "../media/atividade2respiracao.mp4";
+  const [iniciado,  setIniciado]  = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [tempo,     setTempo]     = useState(0);
+  const [pausado,   setPausado]   = useState(false);
+  const audioRef = useRef(null);
+  const timerRef = useRef(null);
 
-  return(
+  function iniciar() {
+    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
+    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
+  }
+
+  function togglePausa() {
+    if (!audioRef.current) return;
+    if (pausado) { audioRef.current.play().catch(()=>{}); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
+    else { audioRef.current.pause(); clearInterval(timerRef.current); }
+    setPausado(p=>!p);
+  }
+
+  function parar() {
+    clearInterval(timerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
+    setIniciado(false); setTempo(0); setPausado(false);
+  }
+
+  function onEnded() {
+    clearInterval(timerRef.current);
+    setIniciado(false); setConcluido(true);
+  }
+
+  useEffect(()=>()=>clearInterval(timerRef.current),[]);
+
+  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
+  const ss = String(tempo%60).padStart(2,"0");
+
+  if (concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🌿</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Respiração Concluída!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
+      <NotaRelaxamento user={user} ferramenta="respiracao" emoji="🫁" onRepetir={iniciar}/>
+    </div>
+  );
+
+  if (!iniciado) return (
+    <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+      <div style={{fontSize:56,marginBottom:16}}>🫁</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Técnica de Respiração 4-7-8</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
+        Siga as instruções do áudio e respire no seu próprio ritmo.
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
+        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
+          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
+            <span style={{fontSize:22}}>{i.e}</span>
+            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
+        <Icon name="play" size={18}/> Iniciar
+      </button>
+    </div>
+  );
+
+  return (
     <div style={{textAlign:"center",padding:"20px 0"}}>
-      {embedUrl&&showMusic&&<iframe src={embedUrl} style={{width:"100%",height:60,border:"none",borderRadius:8,marginBottom:16}} allow="autoplay"/>}
-      <div style={{position:"relative",width:200,height:200,margin:"0 auto 20px"}}>
-        <svg width={200} height={200} style={{transform:"rotate(-90deg)"}}>
-          <circle cx={100} cy={100} r={raio} fill="none" stroke="#e5e7eb" strokeWidth={8}/>
-          <circle cx={100} cy={100} r={raio} fill="none" stroke={cor} strokeWidth={8}
-            strokeDasharray={circ} strokeDashoffset={circ*(1-pct/100)} strokeLinecap="round"
-            style={{transition:"stroke-dashoffset 0.9s linear,stroke 0.3s"}}/>
-        </svg>
-        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-          <div style={{fontSize:28,fontWeight:700,color:cor}}>{fase.restante}</div>
-          <div style={{fontSize:14,fontWeight:600,color:cor}}>{fase.label}</div>
-          <div style={{fontSize:11,color:"#9ca3af",marginTop:2}}>ciclo {ciclos+1}</div>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+
+      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
+        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
+          <div style={{fontSize:28}}>🫁</div>
         </div>
       </div>
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",marginBottom:16}}>
-        {FASES.map(f=><span key={f.fase} style={{background:f.fase===fase.fase?f.cor+"20":"#f3f4f6",color:f.fase===fase.fase?f.cor:"#6b7280",borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:600,border:"1px solid "+(f.fase===fase.fase?f.cor+"40":"#e5e7eb")}}>{f.label} {f.seg}s</span>)}
+
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
+        {pausado ? "Pausado" : "Siga o áudio..."}
       </div>
-      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-        <button className="btn btn-purple" style={{minWidth:120}} onClick={()=>{setRunning(!running);if(!running){ref.current=elapsed;}}}>
-          <Icon name={running?"pause":"play"} size={16}/> {running?"Pausar":"Iniciar"}
-        </button>
-        <button className="btn btn-ghost" onClick={()=>{setRunning(false);setElapsed(0);ref.current=0;setCiclos(0);faseAnterior.current=null;}}>
-          <Icon name="rotate-ccw" size={16}/> Reiniciar
-        </button>
-        <button className="btn btn-ghost" onClick={()=>setVoz(!voz)} title={voz?"Desativar voz":"Ativar voz"}>
-          <Icon name={voz?"volume-2":"volume-x"} size={16}/>
-        </button>
-        {embedUrl&&<button className="btn btn-ghost" onClick={()=>setShowMusic(!showMusic)}><Icon name="music" size={16}/></button>}
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Respire no ritmo da voz guiada</div>
+
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
+        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
+        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
       </div>
-      <div style={{marginTop:16,fontSize:13,color:"#6b7280"}}>Inspire 4s → Segure 7s → Expire 8s · {ciclos} ciclo(s) completo(s)</div>
+
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <button className="btn btn-purple" onClick={togglePausa}>
+          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
+        </button>
+        <button className="btn btn-ghost" onClick={parar}>
+          <Icon name="square" size={15}/> Parar
+        </button>
+      </div>
     </div>
   );
 }
 
 // ── Relaxamento Muscular Progressivo ──
-function FerramentaRelaxamento({musicUrl}){
-  const GRUPOS=[
-    {nome:"Pés",         instrucao:"Curve os dedos dos pés para baixo, fortemente.",  tensao:5, relax:15},
-    {nome:"Panturrilhas",instrucao:"Puxe os pés em direção a você, estique.",         tensao:5, relax:15},
-    {nome:"Coxas",       instrucao:"Aperte as coxas juntas, pressione a cadeira.",    tensao:5, relax:15},
-    {nome:"Abdômen",     instrucao:"Contraia o estômago fortemente.",                  tensao:5, relax:15},
-    {nome:"Mãos",        instrucao:"Feche os punhos com toda a sua força.",            tensao:5, relax:15},
-    {nome:"Braços",      instrucao:"Dobre os cotovelos e contraia os bíceps.",         tensao:5, relax:15},
-    {nome:"Ombros",      instrucao:"Levante-os até as orelhas, segure.",               tensao:5, relax:15},
-    {nome:"Rosto",       instrucao:"Feche os olhos com força, aperte os lábios.",      tensao:5, relax:15},
-  ];
-  const [running,setRunning]=useState(false);
-  const [done,setDone]=useState(false);
-  const [concluidos,setConcluidos]=useState([]);
-  const [grupoIdx,setGrupoIdx]=useState(0);
-  const [fase,setFase]=useState("tensao"); // tensao | relax
-  const [elapsed,setElapsed]=useState(0);
-  const [voz,setVoz]=useState(true);
-  const [showMusic,setShowMusic]=useState(false);
-  const stRef=useRef({grupoIdx:0,fase:"tensao",elapsed:0});
-  const concRef=useRef([]);
-  const iv=useRef(null);
-  const embedUrl=getYouTubeEmbed(musicUrl||"");
+// ── Relaxamento Muscular (arquivo único de vídeo) ──
+function FerramentaRelaxamento({ user }){
+  const AUDIO_SRC = "../media/atividade1meditacao.mp4";
+  const [iniciado,  setIniciado]  = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [tempo,     setTempo]     = useState(0);
+  const [pausado,   setPausado]   = useState(false);
+  const audioRef = useRef(null);
+  const timerRef = useRef(null);
 
-  function tick(){
-    const s=stRef.current;
-    const g=GRUPOS[s.grupoIdx];
-    const lim=s.fase==="tensao"?g.tensao:g.relax;
-    const ne=s.elapsed+1;
-    if(ne>=lim){
-      if(s.fase==="tensao"){
-        const ns={...s,fase:"relax",elapsed:0};stRef.current=ns;setFase("relax");setElapsed(0);
-        if(voz)falarTexto("Relaxe.");
-      } else {
-        concRef.current=[...concRef.current,s.grupoIdx];setConcluidos([...concRef.current]);
-        const ng=s.grupoIdx+1;
-        if(ng>=GRUPOS.length){clearInterval(iv.current);setRunning(false);setDone(true);if(voz)falarTexto("Parabéns! Você completou o relaxamento muscular.");}
-        else{const ns={grupoIdx:ng,fase:"tensao",elapsed:0};stRef.current=ns;setGrupoIdx(ng);setFase("tensao");setElapsed(0);if(voz)falarTexto(GRUPOS[ng].nome+". Contraia.");}
-      }
-    } else {
-      stRef.current={...s,elapsed:ne};setElapsed(ne);
-    }
+  function iniciar() {
+    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
+    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
   }
 
-  function iniciar(){
-    if(running){clearInterval(iv.current);setRunning(false);return;}
-    if(voz)falarTexto(GRUPOS[stRef.current.grupoIdx].nome+". Contraia.");
-    iv.current=setInterval(tick,1000);setRunning(true);
+  function togglePausa() {
+    if (!audioRef.current) return;
+    if (pausado) { audioRef.current.play().catch(()=>{}); clearInterval(timerRef.current); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
+    else { audioRef.current.pause(); clearInterval(timerRef.current); }
+    setPausado(p=>!p);
   }
-  function reiniciar(){clearInterval(iv.current);setRunning(false);setDone(false);setConcluidos([]);concRef.current=[];stRef.current={grupoIdx:0,fase:"tensao",elapsed:0};setGrupoIdx(0);setFase("tensao");setElapsed(0);}
 
-  const g=GRUPOS[grupoIdx];
-  const lim=fase==="tensao"?g.tensao:g.relax;
-  const pct=Math.min((elapsed/lim)*100,100);
+  function parar() {
+    clearInterval(timerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
+    setIniciado(false); setTempo(0); setPausado(false);
+  }
 
-  if(done) return(
-    <div style={{textAlign:"center",padding:40}}>
-      <div style={{fontSize:48,marginBottom:12}}>✅</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
-      <div style={{fontSize:13,color:"#6b7280",marginBottom:20}}>Você completou todos os 8 grupos musculares.</div>
-      <button className="btn btn-purple" onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Reiniciar</button>
+  function onEnded() {
+    clearInterval(timerRef.current);
+    setIniciado(false); setConcluido(true);
+  }
+
+  useEffect(()=>()=>clearInterval(timerRef.current),[]);
+
+  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
+  const ss = String(tempo%60).padStart(2,"0");
+
+  if (concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
+      <NotaRelaxamento user={user} ferramenta="relaxamento" emoji="💆" onRepetir={iniciar}/>
     </div>
   );
 
-  return(
-    <div>
-      {embedUrl&&showMusic&&<iframe src={embedUrl} style={{width:"100%",height:60,border:"none",borderRadius:8,marginBottom:16}} allow="autoplay"/>}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-        <div style={{fontSize:12,color:"#6b7280"}}>Progresso geral</div>
-        <div style={{fontSize:12,color:"#6b7280"}}>{concluidos.length}/{GRUPOS.length} grupos</div>
+  if (!iniciado) return (
+    <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+      <div style={{fontSize:56,marginBottom:16}}>💆</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Muscular Progressivo</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
+        Siga as instruções do áudio e relaxe cada grupo muscular.
       </div>
-      <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginBottom:20}}>
-        <div style={{background:"var(--purple)",height:6,borderRadius:20,transition:"width .3s",width:(concluidos.length/GRUPOS.length*100)+"%"}}/>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:20}}>
-        {GRUPOS.map((g2,i)=>(
-          <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:8,background:concluidos.includes(i)?"#d1fae5":i===grupoIdx?"var(--purple-soft)":"#f9fafb",border:"1px solid",borderColor:concluidos.includes(i)?"#6ee7b7":i===grupoIdx?"var(--purple)":"#e5e7eb"}}>
-            <div style={{fontSize:10,fontWeight:600,color:concluidos.includes(i)?"#059669":i===grupoIdx?"var(--purple)":"#9ca3af"}}>{g2.nome}</div>
-            {concluidos.includes(i)&&<div style={{fontSize:12}}>✓</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
+        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
+          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
+            <span style={{fontSize:22}}>{i.e}</span>
+            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
           </div>
         ))}
       </div>
-      <div style={{background:fase==="tensao"?"#fef3c7":"#d1fae5",borderRadius:12,padding:24,textAlign:"center",marginBottom:20}}>
-        <div style={{fontSize:14,fontWeight:700,color:fase==="tensao"?"#d97706":"#059669",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.8px"}}>
-          {fase==="tensao"?"🔥 CONTRAIA":"✨ RELAXE"}
-        </div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:4}}>{g.nome}</div>
-        <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>{g.instrucao}</div>
-        <div style={{fontSize:48,fontWeight:700,color:fase==="tensao"?"#d97706":"#059669"}}>{lim-elapsed}</div>
-        <div style={{background:"#e5e7eb",borderRadius:20,height:6,marginTop:12}}>
-          <div style={{background:fase==="tensao"?"#f59e0b":"#10b981",height:6,borderRadius:20,transition:"width .9s",width:pct+"%"}}/>
+      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
+        <Icon name="play" size={18}/> Iniciar
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+
+      {/* Animação pulsante */}
+      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
+        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
+          <div style={{fontSize:28}}>💆</div>
         </div>
       </div>
-      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-        <button className="btn btn-purple" style={{minWidth:120}} onClick={iniciar}>
-          <Icon name={running?"pause":"play"} size={16}/> {running?"Pausar":"Iniciar"}
+
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
+        {pausado ? "Pausado" : "Em relaxamento..."}
+      </div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Siga as instruções do áudio</div>
+
+      {/* Cronômetro */}
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
+        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
+        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
+      </div>
+
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <button className="btn btn-purple" onClick={togglePausa}>
+          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
         </button>
-        <button className="btn btn-ghost" onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Reiniciar</button>
-        <button className="btn btn-ghost" onClick={()=>setVoz(!voz)}><Icon name={voz?"volume-2":"volume-x"} size={16}/></button>
-        {embedUrl&&<button className="btn btn-ghost" onClick={()=>setShowMusic(!showMusic)}><Icon name="music" size={16}/></button>}
+        <button className="btn btn-ghost" onClick={parar}>
+          <Icon name="square" size={15}/> Parar
+        </button>
       </div>
+
+      <style>{`
+        @keyframes pulse-slow {
+          0%,100%{transform:scale(1);opacity:0.6}
+          50%{transform:scale(1.08);opacity:1}
+        }
+        .pulse-slow{animation:pulse-slow 3s ease-in-out infinite}
+      `}</style>
     </div>
   );
 }
-
 // ── Árvore da Decisão ──
 function FerramentaArvore(){
   const [step,setStep]=useState("home");
@@ -3352,7 +4819,7 @@ function FerramentaArvore(){
   if(step==="worry") return(
     <div>
       <div style={{fontWeight:600,marginBottom:8}}>Qual é a sua preocupação agora?</div>
-      <textarea className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
+      <TextAreaVoz className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
       <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
         <button className="btn btn-ghost" onClick={()=>setStep("home")}>Voltar</button>
         <button className="btn btn-purple" onClick={()=>setStep("can-intervene")} disabled={!preocupacao.trim()}>Próximo →</button>
@@ -3372,7 +4839,7 @@ function FerramentaArvore(){
   if(step==="actions") return(
     <div>
       <div style={{fontWeight:600,marginBottom:8}}>Quais ações você pode tomar?</div>
-      <textarea className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
+      <TextAreaVoz className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
       <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
         <button className="btn btn-ghost" onClick={()=>setStep("can-intervene")}>Voltar</button>
         <button className="btn btn-purple" onClick={()=>setStep("can-act-now")} disabled={!acoes.trim()}>Próximo →</button>
@@ -3391,7 +4858,7 @@ function FerramentaArvore(){
   if(step==="plan") return(
     <div>
       <div style={{fontWeight:600,marginBottom:8}}>Crie um plano de ação:</div>
-      <textarea className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
+      <TextAreaVoz className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
       <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
         <button className="btn btn-ghost" onClick={()=>setStep("can-act-now")}>Voltar</button>
         <button className="btn btn-purple" onClick={()=>salvarHistorico("plan")} disabled={!plano.trim()}>Finalizar →</button>
@@ -3470,7 +4937,7 @@ function FerramentaABC(){
             <div style={{fontWeight:600,fontSize:13}}>{titulo}</div>
           </div>
           <div style={{fontSize:11,color:"#9ca3af",marginBottom:6,paddingLeft:32}}>{dica}</div>
-          <textarea className="form-input" rows={2} value={draft[campo]} onChange={e=>setDraft({...draft,[campo]:e.target.value})} placeholder={ph}/>
+          <TextAreaVoz className="form-input" rows={2} value={draft[campo]} onChange={e=>setDraft({...draft,[campo]:e.target.value})} placeholder={ph}/>
         </div>
       ))}
       <div style={{marginBottom:14}}>
@@ -3490,7 +4957,7 @@ function FerramentaABC(){
         <button onClick={()=>setDraft({...draft,showAlt:!draft.showAlt})} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#6b7280",padding:0}}>
           💡 Pensamento alternativo (opcional) {draft.showAlt?"▲":"▼"}
         </button>
-        {draft.showAlt&&<textarea className="form-input" style={{marginTop:8}} rows={2} value={draft.alternativo} onChange={e=>setDraft({...draft,alternativo:e.target.value})} placeholder="Existe outra forma de ver essa situação?"/>}
+        {draft.showAlt&&<TextAreaVoz className="form-input" style={{marginTop:8}} rows={2} value={draft.alternativo} onChange={e=>setDraft({...draft,alternativo:e.target.value})} placeholder="Existe outra forma de ver essa situação?"/>}
       </div>
       <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>{msg||"Salvar registro"}</button>
       {entries.length>0&&<div style={{marginTop:16}}>
@@ -3531,7 +4998,7 @@ function FerramentaGestaoAnsiedade(){
       {aba===0&&<div>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:64,fontWeight:900,color:sc,lineHeight:1}}>{stress}</div><div style={{fontSize:12,color:"#9ca3af"}}>/10</div><div style={{fontSize:13,fontWeight:600,color:sc}}>{DESC[stress]}</div></div>
         <input type="range" min={1} max={10} value={stress} onChange={e=>setStress(+e.target.value)} style={{width:"100%",accentColor:sc,marginBottom:12}}/>
-        <textarea className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
+        <TextAreaVoz className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
         <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setLog(l=>[{nivel:stress,nota,data:new Date().toLocaleDateString("pt-BR")},...l].slice(0,20));setMsg("✓ Registrado!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Registrar"}</button>
         {log.length>0&&<div style={{marginTop:12}}>{log.slice(0,5).map((s,i)=><div key={i} style={{display:"flex",gap:8,padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4,fontSize:12}}><span style={{fontWeight:700,color:sc}}>{s.nivel}/10</span><span style={{flex:1,color:"#6b7280"}}>{s.nota||"—"}</span><span style={{color:"#9ca3af"}}>{s.data}</span></div>)}</div>}
       </div>}
@@ -3549,7 +5016,7 @@ function FerramentaGestaoAnsiedade(){
         <div style={{fontSize:13,color:"#6b7280",marginBottom:14,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>Responda cada pergunta com honestidade para questionar pensamentos ansiosos.</div>
         {PERGUNTAS.map((p,i)=><div key={i} style={{marginBottom:14}}>
           <div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"var(--purple-soft)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><label style={{fontSize:13,fontWeight:600,lineHeight:1.4}}>{p}</label></div>
-          <textarea className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
+          <TextAreaVoz className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
         </div>)}
         <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar respostas"}</button>
       </div>}
@@ -3605,10 +5072,10 @@ function FerramentaRastreamento(){
         <input type="range" min={0} max={10} value={val} onChange={e=>set(+e.target.value)} style={{width:"100%",accentColor:"var(--purple)"}}/>
       </div>)}
       <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Emoções presentes</label><Chips opts={EMOCOES} sel={emocoes} toggle={o=>setEmocoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Pensamento permissivo</label><textarea className="form-input" rows={2} value={pensamento} onChange={e=>setPensamento(e.target.value)} placeholder="'Só desta vez...' 'Mereço isso...'"/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>O que você comeu?</label><textarea className="form-input" rows={2} value={comeu} onChange={e=>setComeu(e.target.value)} placeholder="Descreva os alimentos..."/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Pensamento permissivo</label><TextAreaVoz className="form-input" rows={2} value={pensamento} onChange={e=>setPensamento(e.target.value)} placeholder="'Só desta vez...' 'Mereço isso...'"/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>O que você comeu?</label><TextAreaVoz className="form-input" rows={2} value={comeu} onChange={e=>setComeu(e.target.value)} placeholder="Descreva os alimentos..."/></div>
       <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Como você se sentiu depois?</label><Chips opts={SENSACOES} sel={sensacoes} toggle={o=>setSensacoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
-      <div style={{marginBottom:16}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão</label><textarea className="form-input" rows={2} value={reflexao} onChange={e=>setReflexao(e.target.value)} placeholder="O que esse episódio revela sobre suas necessidades emocionais?"/></div>
+      <div style={{marginBottom:16}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão</label><TextAreaVoz className="form-input" rows={2} value={reflexao} onChange={e=>setReflexao(e.target.value)} placeholder="O que esse episódio revela sobre suas necessidades emocionais?"/></div>
       <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>{msg||"Salvar registro"}</button>
       {entries.length>0&&<div style={{marginTop:14}}>
         <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>{entries.length} registro(s)</div>
@@ -3709,7 +5176,7 @@ function FerramentaAnamnese(){
     <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6b7280",marginBottom:8}}><span style={{color:"var(--purple)",fontWeight:600}}>{perfil}</span><span>Seção {secao+1}/{secs.length}</span></div>
     <div style={{background:"#e5e7eb",borderRadius:20,height:5,marginBottom:16}}><div style={{background:"var(--purple)",height:5,borderRadius:20,width:(secao/secs.length*100)+"%",transition:"width .3s"}}/></div>
     <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:600,marginBottom:12}}>{secs[secao]}</div>
-    <textarea className="form-input" rows={5} value={respostas[secs[secao]]||""} onChange={e=>setRespostas(r=>({...r,[secs[secao]]:e.target.value}))} placeholder={"Registre as informações sobre "+secs[secao].toLowerCase()+"..."}/>
+    <TextAreaVoz className="form-input" rows={5} value={respostas[secs[secao]]||""} onChange={e=>setRespostas(r=>({...r,[secs[secao]]:e.target.value}))} placeholder={"Registre as informações sobre "+secs[secao].toLowerCase()+"..."}/>
     <div style={{display:"flex",gap:10,marginTop:14,justifyContent:"space-between"}}>
       <button className="btn btn-ghost" onClick={()=>setSecao(s=>Math.max(0,s-1))} disabled={secao===0}>← Anterior</button>
       {secao<secs.length-1?<button className="btn btn-purple" onClick={()=>setSecao(s=>s+1)}>Próxima →</button>:<button className="btn btn-purple" onClick={()=>setConcluido(true)}>✓ Concluir</button>}
@@ -3717,12 +5184,192 @@ function FerramentaAnamnese(){
   </div>);
 }
 
+// ── Diário Terapêutico ──────────────────────────────────────────────────────
+function FerramentaDiario({ user }){
+  const [entradas, setEntradas] = useState([]);
+  const [texto,    setTexto]    = useState("");
+  const [tag,      setTag]      = useState("geral");
+  const [salvando, setSalvando] = useState(false);
+  const [msg,      setMsg]      = useState("");
+  const [verEntrada, setVerEntrada] = useState(null);
+  const [gravando,   setGravando]   = useState(false);
+  const [loading,    setLoading]    = useState(true);
+  const recRef = useRef(null);
+
+  const TAGS = [
+    {v:"geral",     l:"Geral",     e:"📝"},
+    {v:"gratidao",  l:"Gratidão",  e:"🙏"},
+    {v:"desafio",   l:"Desafio",   e:"⚡"},
+    {v:"conquista", l:"Conquista", e:"🏆"},
+    {v:"emocao",    l:"Emoção",    e:"💜"},
+  ];
+
+  useEffect(()=>{
+    if(!user?.id){setLoading(false);return;}
+    const unsub = db.collection("clinica_diario")
+      .where("pacienteId","==",user.id)
+      .orderBy("createdAt","desc")
+      .onSnapshot(snap=>{
+        setEntradas(snap.docs.map(d=>({id:d.id,...d.data()})));
+        setLoading(false);
+      }, ()=>setLoading(false));
+    return ()=>unsub();
+  },[user?.id]);
+
+  function toggleGravacao(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){alert("Seu navegador não suporta reconhecimento de voz. Tente o Chrome.");return;}
+    if(gravando){
+      recRef.current?.stop();
+      setGravando(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "pt-BR";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = e=>{
+      const transcript = Array.from(e.results).map(r=>r[0].transcript).join(" ");
+      setTexto(t => {
+        const base = t.replace(/\s*\[gravando\.\.\.\]$/,"").trimEnd();
+        return base ? base+" "+transcript : transcript;
+      });
+    };
+    rec.onerror = ()=>setGravando(false);
+    rec.onend   = ()=>setGravando(false);
+    recRef.current = rec;
+    rec.start();
+    setGravando(true);
+  }
+
+  async function salvar(){
+    if(!texto.trim()){setMsg("Escreva ou grave algo antes de salvar.");setTimeout(()=>setMsg(""),2500);return;}
+    setSalvando(true);
+    try {
+      await db.collection("clinica_diario").add({
+        pacienteId: user?.id || "",
+        pacienteNome: user?.nome || "",
+        texto: texto.trim(),
+        tag,
+        data: new Date().toLocaleDateString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setTexto(""); setTag("geral");
+      setMsg("✓ Entrada salva! 💜");
+      setTimeout(()=>setMsg(""),2500);
+    } catch(e){ setMsg("Erro ao salvar: "+e.message); }
+    setSalvando(false);
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir esta entrada?"))return;
+    await db.collection("clinica_diario").doc(id).delete();
+    setVerEntrada(null);
+  }
+
+  if(verEntrada) return(
+    <div style={{padding:"0 4px"}}>
+      <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setVerEntrada(null)}>
+        <Icon name="arrow-left" size={16}/> Voltar
+      </button>
+      <div style={{background:"#f9f5ff",borderRadius:14,padding:20,marginBottom:12,border:"1px solid #ede9fe"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <span style={{fontSize:13,color:"var(--text-muted)"}}>{verEntrada.data} às {verEntrada.hora}</span>
+          <span style={{fontSize:11,color:"var(--purple)",background:"#ede9fe",borderRadius:20,padding:"2px 10px"}}>
+            {TAGS.find(t=>t.v===verEntrada.tag)?.e} {TAGS.find(t=>t.v===verEntrada.tag)?.l}
+          </span>
+        </div>
+        <div style={{fontSize:14,lineHeight:1.8,color:"var(--gray-800)",whiteSpace:"pre-wrap"}}>{verEntrada.texto}</div>
+      </div>
+      <button className="btn btn-ghost" style={{color:"#dc2626",borderColor:"#fca5a5",fontSize:13}} onClick={()=>excluir(verEntrada.id)}>
+        <Icon name="trash-2" size={14}/> Excluir entrada
+      </button>
+    </div>
+  );
+
+  return(
+    <div style={{padding:"0 4px"}}>
+      {/* Nova entrada */}
+      <div style={{background:"#faf5ff",borderRadius:14,padding:16,marginBottom:20,border:"1px solid #ede9fe"}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:600,marginBottom:12,color:"var(--purple)"}}>
+          📓 Nova entrada
+        </div>
+
+        {/* Tag */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Categoria</div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+            {TAGS.map(t=>(
+              <button key={t.v} onClick={()=>setTag(t.v)}
+                style={{fontSize:12,padding:"4px 10px",borderRadius:20,border:tag===t.v?"2px solid var(--purple)":"1px solid #e5e7eb",background:tag===t.v?"#ede9fe":"white",color:tag===t.v?"var(--purple)":"var(--gray-600)",cursor:"pointer"}}>
+                {t.e} {t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Texto + microfone */}
+        <div style={{position:"relative"}}>
+          <textarea value={texto} onChange={e=>setTexto(e.target.value)}
+            placeholder="Escreva ou use o microfone para falar sobre o seu dia..."
+            style={{width:"100%",minHeight:120,borderRadius:10,border:gravando?"2px solid var(--purple)":"1px solid #e5e7eb",padding:"10px 44px 10px 14px",fontSize:14,fontFamily:"var(--font-body)",resize:"vertical",outline:"none",lineHeight:1.7,boxSizing:"border-box",transition:"border .2s"}}/>
+          <button onClick={toggleGravacao} title={gravando?"Parar gravação":"Falar"}
+            style={{position:"absolute",right:8,bottom:10,background:gravando?"#7B00C4":"#f3f0ff",border:"none",borderRadius:8,padding:"6px 8px",cursor:"pointer",color:gravando?"white":"var(--purple)",fontSize:18,lineHeight:1,boxShadow:gravando?"0 0 0 3px #7B00C430":"none",transition:"all .2s"}}>
+            🎙️
+          </button>
+        </div>
+        {gravando && <div style={{fontSize:12,color:"var(--purple)",marginTop:4,display:"flex",alignItems:"center",gap:6}}>
+          <span style={{width:8,height:8,borderRadius:"50%",background:"#7B00C4",display:"inline-block",animation:"pulse-slow 1s infinite"}}/>
+          Gravando... fale normalmente. Clique 🎙️ para parar.
+        </div>}
+
+        {msg && <div style={{fontSize:13,color:"var(--purple)",marginTop:6,fontWeight:500}}>{msg}</div>}
+
+        <button className="btn btn-purple" style={{width:"100%",marginTop:10}} onClick={salvar} disabled={salvando}>
+          <Icon name="save" size={16}/> {salvando?"Salvando...":"Salvar entrada"}
+        </button>
+      </div>
+
+      {/* Entradas anteriores */}
+      {loading && <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:13,padding:16}}>Carregando...</div>}
+      {!loading && entradas.length>0 && (
+        <div>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:"var(--gray-700)"}}>
+            Entradas anteriores ({entradas.length})
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {entradas.map(en=>(
+              <div key={en.id} onClick={()=>setVerEntrada(en)}
+                style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #e5e7eb",cursor:"pointer"}}
+                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 2px 8px #7B00C420"}
+                onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <span style={{fontSize:12,color:"var(--text-muted)"}}>{en.data} · {en.hora}</span>
+                  <span style={{fontSize:11,color:"var(--purple)"}}>{TAGS.find(t=>t.v===en.tag)?.e}</span>
+                </div>
+                <div style={{fontSize:13,color:"var(--gray-700)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{en.texto}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!loading && entradas.length===0 && (
+        <div style={{textAlign:"center",padding:"24px 0",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma entrada ainda. Comece escrevendo hoje! 💜
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ── Modal Visualizar Ferramenta ─────────────────────────────────────────────
-function ModalVisualizarFerramenta({recurso,onClose}){
+function ModalVisualizarFerramenta({recurso,onClose,user}){
   function renderFerramenta(){
     const k=recurso.formularioKey;
-    if(k==="breathing-478")      return <FerramentaRespiracao musicUrl={recurso.musicUrl}/>;
-    if(k==="muscle-relaxation")  return <FerramentaRelaxamento musicUrl={recurso.musicUrl}/>;
+    if(k==="breathing-478")      return <FerramentaRespiracao/>;
+    if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
     if(k==="decision-tree")      return <FerramentaArvore/>;
     if(k==="abc-record")         return <FerramentaABC/>;
     if(k==="anxiety-management") return <FerramentaGestaoAnsiedade/>;
@@ -3737,9 +5384,11 @@ function ModalVisualizarFerramenta({recurso,onClose}){
       </div>
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
+    if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
     return <div style={{textAlign:"center",padding:40,color:"#6b7280"}}>Ferramenta não configurada.</div>;
   }
   const EMOJIS={relaxamento:"💨",tcc:"🧠",avaliacao:"📋",musicoterapia:"🎵",outro:"🔧"};
+  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
   const iconeRecurso = ICONES_FERRAMENTA?.[recurso.formularioKey] || EMOJIS[recurso.categoria] || "🔧";
   return(
     <div>
@@ -3817,6 +5466,798 @@ const CHECKIN_SEMANAL = [
   "Me sinto seguro(a) emocionalmente com meu parceiro(a)"
 ];
 
+// ── Inventário de Bem-Estar de Casais (42 questões) ──
+const INVENTARIO_QUESTOES = [
+  {n:1,  texto:"Com que frequência você e seu parceiro(a) trabalham juntos para alcançar objetivos comuns?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:2,  texto:"Como você descreveria a frequência com que você e seu parceiro(a) têm conversas abertas e honestas sobre suas preocupações e problemas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:3,  texto:"Como você avalia sua satisfação geral com a vida sexual em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:4,  texto:"Quando você e seu parceiro(a) enfrentam um desentendimento, com que frequência vocês conseguem encontrar uma solução que seja satisfatória para ambos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:5,  texto:"Em geral, como você avalia a qualidade das discussões que você e seu parceiro(a) têm sobre assuntos importantes?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:6,  texto:"Com que frequência você e seu parceiro(a) se comunicam sobre suas necessidades e desejos sexuais?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:7,  texto:"Com que frequência você e seu parceiro(a) compartilham seus sentimentos mais profundos um com o outro?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:8,  texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma efetiva?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:9,  texto:"Como você descreveria a qualidade de suas relações sexuais em seu relacionamento?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:10, texto:"Como você descreveria a capacidade de seu relacionamento em criar um ambiente emocionalmente seguro e acolhedor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:11, texto:"Quando você e seu parceiro(a) discordam sobre algo, com que frequência vocês conseguem resolver o conflito de maneira efetiva?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:12, texto:"Como você se sente em relação à habilidade de seu parceiro(a) de expressar seus sentimentos de forma clara e compreensível durante uma conversa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:13, texto:"Com que frequência você e seu parceiro(a) encontram soluções diferentes para resolver problemas ou desafios em seu relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:14, texto:"Com que frequência você e seu parceiro(a) conseguem discutir um problema sem que isso afete negativamente o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:15, texto:"Com que frequência você e seu parceiro(a) experimentam momentos íntimos e prazerosos juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:16, texto:"Como você avalia a disposição de seu parceiro(a) para ajudá-lo(a) nas tarefas domésticas e responsabilidades compartilhadas?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:17, texto:"Quando você está passando por momentos difíceis, com quem você costuma compartilhar seus sentimentos primeiro?", opcoes:["Com ninguém","Com um membro da família","Com um amigo(a)","Com meu parceiro(a)","Com um profissional especializado(a)"]},
+  {n:18, texto:"Quando ocorre um desacordo entre vocês, como vocês costumam resolver a situação?", opcoes:["Ignorando o problema","Gritando ou discutindo","Evitando o assunto","Argumentando meu ponto de vista","Conversando e buscando uma solução"]},
+  {n:19, texto:"Quando você compartilha suas opiniões com seu parceiro(a), com que frequência você se sente ouvido(a) e compreendido(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:20, texto:"Com que frequência você e seu parceiro(a) reservam um tempo específico para conversar sobre questões importantes ou preocupações relacionadas ao relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:21, texto:"Você se sente à vontade para expressar suas preferências sexuais e fantasias com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:22, texto:"Como você se sente em relação à capacidade de seu parceiro(a) de compreender suas emoções e oferecer apoio quando você precisa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:23, texto:"Vocês conseguem chegar a um consenso sobre questões importantes, mesmo quando têm opiniões diferentes?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:24, texto:"Com que frequência você e seu parceiro(a) dedicam tempo para se conectar emocionalmente, sem distrações externas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:25, texto:"Como você avalia a capacidade de seu relacionamento em superar desafios ou dificuldades na vida sexual?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:26, texto:"Você e seu parceiro(a) costumam discutir e tomar decisões importantes juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:27, texto:"Você e seu parceiro(a) estão satisfeitos com a frequência das relações sexuais em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:28, texto:"Com que frequência vocês conseguem manter o respeito mútuo mesmo durante uma discussão acalorada?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:29, texto:"Você se sente à vontade para expressar suas emoções, mesmo as mais vulneráveis, com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:30, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de diversão e risadas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:31, texto:"Quando um conflito é resolvido, como vocês se sentem em relação ao processo de resolução?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
+  {n:32, texto:"Como você avalia a capacidade de seu parceiro(a) de fazer você rir e levantar seu ânimo quando necessário?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:33, texto:"Você e seu parceiro(a) têm interesses em comum que os levam a participar de atividades recreativas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:34, texto:"Como você descreveria a importância do humor em seu relacionamento?", opcoes:["Muito pouco importante","Pouco importante","Neutro(a)","Importante","Muito importante"]},
+  {n:35, texto:"Como você descreveria a profundidade do vínculo emocional entre você e seu parceiro(a)?", opcoes:["Muito superficial","Superficial","Moderado","Profundo","Muito profundo"]},
+  {n:36, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de descontração e relaxamento juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:37, texto:"Com que frequência você e seu parceiro(a) se apoiam mutuamente para lidar com o estresse e os desafios da vida?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:38, texto:"Você se sente valorizado(a) e reconhecido(a) pelo seu parceiro(a) em suas contribuições para o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:39, texto:"Como você descreveria a igualdade de contribuição entre você e seu parceiro(a) nos compromissos financeiros e nas despesas domésticas?", opcoes:["Muito desigual","Desigual","Neutra","Igual","Muito igual"]},
+  {n:40, texto:"Você se sente confortável para expressar seu senso de humor com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
+  {n:41, texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma colaborativa, buscando soluções que beneficiem ambos os parceiros?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+  {n:42, texto:"Como você avalia a capacidade de seu relacionamento em lidar com situações difíceis com leveza e humor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
+];
+
+const INVENTARIO_CATEGORIAS = [
+  {label:"Comunicação Eficaz",          cor:"#6366f1", questoes:[2,5,11,12,13,19,20]},
+  {label:"Resolução de Conflitos",       cor:"#f59e0b", questoes:[4,8,14,18,23,28,31]},
+  {label:"Intimidade Emocional",         cor:"#ec4899", questoes:[7,10,17,22,24,29,35]},
+  {label:"Satisfação Sexual",            cor:"#dc2626", questoes:[3,6,9,15,21,25,27]},
+  {label:"Cooperação e Colaboração",     cor:"#16a34a", questoes:[1,16,26,37,38,39,41]},
+  {label:"Senso de Humor e Lazer",       cor:"#0891b2", questoes:[30,32,33,34,36,40,42]},
+];
+
+function InventarioBemEstarCasal({ onVoltar }) {
+  const [respostas, setRespostas] = useState({});
+  const [pagina, setPagina]       = useState(0); // 0=instrucoes, 1-7=grupos de 6q, 8=resultado
+  const [salvando, setSalvando]   = useState(false);
+
+  const POR_PAG = 6;
+  const totalPaginas = Math.ceil(INVENTARIO_QUESTOES.length / POR_PAG);
+
+  function responder(n, val) { setRespostas(r=>({...r,[n]:val})); }
+
+  function calcular() {
+    return INVENTARIO_CATEGORIAS.map(cat => {
+      const soma = cat.questoes.reduce((acc, q) => acc + (respostas[q] || 0), 0);
+      const pct  = Math.round(((soma - 7) / 28) * 100);
+      return { ...cat, soma, pct: Math.max(0, pct) };
+    });
+  }
+
+  const questoesPagina = INVENTARIO_QUESTOES.slice((pagina-1)*POR_PAG, pagina*POR_PAG);
+  const totalRespondidas = Object.keys(respostas).length;
+  const completo = totalRespondidas === 42;
+
+  // Tela de instruções
+  if (pagina === 0) return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <div style={{fontSize:48,marginBottom:12}}>💑</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Inventário de Bem-Estar de Casais</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.7,maxWidth:480,margin:"0 auto 16px"}}>
+        Este questionário avalia 6 dimensões importantes do relacionamento: Comunicação, Resolução de Conflitos, Intimidade Emocional, Satisfação Sexual, Cooperação e Senso de Humor.<br/><br/>
+        <strong>42 questões</strong> · Responda com honestidade · Não há respostas certas ou erradas<br/>
+        <em>Seja rápido, não pondere!</em>
+      </div>
+      <button className="btn btn-purple" style={{fontSize:15,padding:"12px 32px"}} onClick={()=>setPagina(1)}>
+        <Icon name="play" size={16}/> Iniciar Inventário
+      </button>
+    </div>
+  );
+
+  // Tela de resultado
+  if (pagina === totalPaginas + 1) {
+    const resultados = calcular();
+    const totalGeral = resultados.reduce((a,r)=>a+r.soma,0);
+    return (
+      <div>
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{fontSize:40,marginBottom:8}}>📊</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Resultado do Inventário</div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Pontuação total: {totalGeral} / 252</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:24}}>
+          {resultados.map(cat=>(
+            <div key={cat.label}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:6}}>
+                <span style={{color:cat.cor}}>{cat.label}</span>
+                <span>{cat.soma} / 35</span>
+              </div>
+              <div style={{background:"#f3f4f6",borderRadius:20,height:12,overflow:"hidden"}}>
+                <div style={{
+                  width:cat.pct+"%", height:"100%",
+                  background:cat.cor,
+                  borderRadius:20,
+                  transition:"width 1s ease"
+                }}/>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
+                <span>Baixo (7)</span>
+                <span style={{fontWeight:600,color:cat.cor}}>{cat.pct}%</span>
+                <span>Alto (35)</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:12,color:"var(--gray-600)",lineHeight:1.7}}>
+          <strong>Como interpretar:</strong> Pontuações mais altas (próximas de 35) indicam maior satisfação naquela dimensão. Pontuações baixas (próximas de 7) indicam áreas que merecem atenção terapêutica.
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn btn-ghost" style={{flex:1}} onClick={()=>{setRespostas({});setPagina(0);}}>
+            <Icon name="rotate-ccw" size={15}/> Refazer
+          </button>
+          <button className="btn btn-purple" style={{flex:1}} onClick={onVoltar}>
+            <Icon name="check" size={15}/> Concluir
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Páginas de questões
+  const progresso = Math.round((totalRespondidas / 42) * 100);
+  return (
+    <div>
+      {/* Barra de progresso */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:6}}>
+          <span>Questões {(pagina-1)*POR_PAG+1}–{Math.min(pagina*POR_PAG,42)} de 42</span>
+          <span>{totalRespondidas} respondidas · {progresso}%</span>
+        </div>
+        <div style={{background:"#f3f4f6",borderRadius:20,height:6}}>
+          <div style={{width:progresso+"%",height:"100%",background:"var(--purple)",borderRadius:20,transition:"width .3s"}}/>
+        </div>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:20}}>
+        {questoesPagina.map(q=>(
+          <div key={q.n} style={{background:"#fafafa",borderRadius:10,padding:16,border:"1px solid var(--gray-100)"}}>
+            <div style={{fontWeight:600,fontSize:13,marginBottom:12,lineHeight:1.5}}>
+              <span style={{color:"var(--purple)",marginRight:6}}>{q.n}.</span>{q.texto}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {q.opcoes.map((op,i)=>(
+                <button key={i} onClick={()=>responder(q.n, i+1)}
+                  style={{
+                    display:"flex",alignItems:"center",gap:10,
+                    padding:"8px 12px",borderRadius:8,
+                    border:`1.5px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-200)"}`,
+                    background:respostas[q.n]===i+1?"var(--purple-bg)":"white",
+                    cursor:"pointer",textAlign:"left",fontFamily:"inherit",fontSize:13,
+                    color:respostas[q.n]===i+1?"var(--purple)":"var(--gray-700)",
+                    fontWeight:respostas[q.n]===i+1?600:400,
+                    transition:"all .15s"
+                  }}>
+                  <div style={{
+                    width:18,height:18,borderRadius:"50%",flexShrink:0,
+                    border:`2px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-300)"}`,
+                    background:respostas[q.n]===i+1?"var(--purple)":"white",
+                    display:"flex",alignItems:"center",justifyContent:"center"
+                  }}>
+                    {respostas[q.n]===i+1&&<div style={{width:6,height:6,borderRadius:"50%",background:"white"}}/>}
+                  </div>
+                  <span style={{fontWeight:500,fontSize:11,color:"var(--gray-400)",minWidth:16}}>{String.fromCharCode(97+i)})</span>
+                  {op}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Navegação */}
+      <div style={{display:"flex",gap:10,marginTop:24}}>
+        <button className="btn btn-ghost" onClick={()=>setPagina(p=>p-1)} disabled={pagina===1}>
+          <Icon name="arrow-left" size={15}/> Anterior
+        </button>
+        <div style={{flex:1}}/>
+        {pagina < totalPaginas ? (
+          <button className="btn btn-purple" onClick={()=>setPagina(p=>p+1)}>
+            Próximo <Icon name="arrow-right" size={15}/>
+          </button>
+        ) : (
+          <button className="btn btn-purple" onClick={()=>setPagina(totalPaginas+1)}
+            disabled={!completo} style={{opacity:completo?1:0.5}}>
+            {completo ? "Ver Resultado" : `Faltam ${42-totalRespondidas}`} <Icon name="bar-chart-2" size={15}/>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Admin: Roda da Vida ──
+const RODA_DIMS_ADM = [
+  "Comunicação","Família","Sexualidade","Estresse e Pressão",
+  "Divisão","Ciúmes","Espiritualidade","Diferenças e Conflitos",
+  "Estabilidade Financeira","Rel. de Poder","Mudanças","Expectativas e Equilíbrio"
+];
+
+function AdminRodaVida({ onVoltar }) {
+  const [valores, setValores] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin",
+        atividadeId:"roda-vida-relacionamento",
+        respostas:valores,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  function RodaSVG() {
+    const n=RODA_DIMS_ADM.length, cx=120,cy=120,r=90;
+    const pontos = RODA_DIMS_ADM.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[RODA_DIMS_ADM[i]]||0)/10;
+      return [cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)];
+    });
+    const pts=pontos.map(p=>p.join(",")).join(" ");
+    const grades=[2,4,6,8,10].map(g=>{
+      const gpts=RODA_DIMS_ADM.map((_,i)=>{
+        const ang=(i/n)*2*Math.PI-Math.PI/2;
+        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
+      }).join(" ");
+      return <polygon key={g} points={gpts} fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const eixos=RODA_DIMS_ADM.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const labels=RODA_DIMS_ADM.map((d,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <text key={i} x={cx+(r+14)*Math.cos(ang)} y={cy+(r+14)*Math.sin(ang)} textAnchor="middle" dominantBaseline="middle" fontSize="5.5" fill="#6b7280">{d}</text>;
+    });
+    return (
+      <svg width="240" height="240" viewBox="0 0 240 240" style={{display:"block",margin:"0 auto 16px"}}>
+        {grades}{eixos}
+        <polygon points={pts} fill="#7B00C440" stroke="#7B00C4" strokeWidth="1.5"/>
+        {labels}
+      </svg>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.6}}>
+        Avalie cada dimensão de 0 a 10. <strong>0</strong> = nenhuma tensão · <strong>10</strong> = tensão máxima.
+      </div>
+      {Object.keys(valores).length>0 && <RodaSVG/>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {RODA_DIMS_ADM.map(dim=>(
+          <div key={dim}>
+            <div style={{fontSize:12,fontWeight:600,marginBottom:3}}>{dim}</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <input type="range" min="0" max="10" step="1"
+                value={valores[dim]||0}
+                onChange={e=>setValores(v=>({...v,[dim]:parseInt(e.target.value)}))}
+                style={{flex:1,accentColor:"var(--purple)"}}/>
+              <span style={{width:18,textAlign:"center",fontWeight:700,fontSize:12,color:"var(--purple)"}}>{valores[dim]||0}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo com sucesso!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar Roda da Vida"}
+      </button>
+    </div>
+  );
+}
+
+// ── Admin: Nossas 3 Metas ──
+function AdminMetas({ onVoltar }) {
+  const [metas, setMetas] = useState([
+    {titulo:"",indicador:"",dataInicio:""},
+    {titulo:"",indicador:"",dataInicio:""},
+    {titulo:"",indicador:"",dataInicio:""},
+  ]);
+  const [metasSalvas, setMetasSalvas] = useState([]);
+  const [evolucoes,   setEvolucoes]   = useState({});
+  const [novaEv,      setNovaEv]      = useState({});
+  const [salvando,    setSalvando]    = useState(false);
+  const [salvo,       setSalvo]       = useState(false);
+  const [aba,         setAba]         = useState("definir"); // definir | evolucao
+
+  useEffect(()=>{
+    db.collection("clinica_metas_casal")
+      .where("tipo","==","admin")
+      .orderBy("createdAt","desc").limit(3)
+      .onSnapshot(s=>setMetasSalvas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  useEffect(()=>{
+    metasSalvas.forEach(m=>{
+      db.collection("clinica_metas_casal").doc(m.id).collection("evolucoes")
+        .orderBy("data","asc")
+        .onSnapshot(s=>setEvolucoes(ev=>({...ev,[m.id]:s.docs.map(d=>({id:d.id,...d.data()}))})),()=>{});
+    });
+  },[metasSalvas]);
+
+  async function salvarMetas() {
+    const validas = metas.filter(m=>m.titulo.trim());
+    if(!validas.length){alert("Digite pelo menos 1 meta.");return;}
+    setSalvando(true);
+    try {
+      // Arquiva metas antigas
+      const antigas = await db.collection("clinica_metas_casal").where("tipo","==","admin").where("status","==","ativa").get();
+      const batch = db.batch();
+      antigas.docs.forEach(d=>batch.update(d.ref,{status:"arquivada"}));
+      await batch.commit();
+      // Cria novas
+      for(const m of validas){
+        await db.collection("clinica_metas_casal").add({
+          ...m, tipo:"admin", status:"ativa",
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      setSalvo(true); setAba("evolucao");
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  async function registrarEvolucao(metaId) {
+    const ev = novaEv[metaId];
+    if(!ev?.nota||!ev?.data){alert("Preencha nota e data.");return;}
+    await db.collection("clinica_metas_casal").doc(metaId).collection("evolucoes").add({
+      nota: parseFloat(ev.nota), data:ev.data,
+      obs: ev.obs||"",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setNovaEv(n=>({...n,[metaId]:{nota:"",data:new Date().toISOString().slice(0,10),obs:""}}));
+  }
+
+  function GraficoLinha({evs}) {
+    if(!evs||evs.length<2) return <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",padding:8}}>Registre pelo menos 2 evoluções para ver o gráfico</div>;
+    const w=260,h=80,pad=20;
+    const notas=evs.map(e=>e.nota);
+    const min=0,max=10;
+    const pts=evs.map((e,i)=>{
+      const x=pad+(i/(evs.length-1))*(w-2*pad);
+      const y=h-pad-((e.nota-min)/(max-min))*(h-2*pad);
+      return [x,y];
+    });
+    const path="M"+pts.map(p=>p.join(",")).join(" L");
+    return (
+      <svg width={w} height={h} style={{display:"block",margin:"8px auto"}}>
+        {[0,2,4,6,8,10].map(v=>{
+          const y=h-pad-((v-min)/(max-min))*(h-2*pad);
+          return <g key={v}><line x1={pad} y1={y} x2={w-pad} y2={y} stroke="#f3f4f6" strokeWidth="1"/><text x={pad-4} y={y} textAnchor="end" fontSize="7" fill="#9ca3af" dominantBaseline="middle">{v}</text></g>;
+        })}
+        <path d={path} fill="none" stroke="#7B00C4" strokeWidth="2"/>
+        {pts.map((p,i)=>(
+          <g key={i}>
+            <circle cx={p[0]} cy={p[1]} r="3" fill="#7B00C4"/>
+            <text x={p[0]} y={p[1]-6} textAnchor="middle" fontSize="7" fill="#7B00C4" fontWeight="bold">{evs[i].nota}</text>
+          </g>
+        ))}
+      </svg>
+    );
+  }
+
+  return (
+    <div>
+      {/* Abas */}
+      <div style={{display:"flex",borderBottom:"1px solid var(--gray-200)",marginBottom:16}}>
+        {[{id:"definir",label:"📋 Definir Metas"},{id:"evolucao",label:"📈 Registrar Evolução"}].map(a=>(
+          <button key={a.id} onClick={()=>setAba(a.id)}
+            style={{padding:"10px 16px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit",
+              fontWeight:aba===a.id?700:400,
+              borderBottom:aba===a.id?"2px solid var(--purple)":"2px solid transparent",
+              color:aba===a.id?"var(--purple)":"var(--text-muted)"}}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      {aba==="definir"&&(
+        <div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+            Defina metas quantificáveis com indicador de progresso. Cada cônjuge define as suas pelo portal.
+          </div>
+          {[0,1,2].map(i=>(
+            <div key={i} style={{background:"#fafafa",borderRadius:10,padding:14,marginBottom:12,border:"1px solid var(--gray-100)"}}>
+              <div style={{fontWeight:600,fontSize:13,color:"var(--purple)",marginBottom:10}}>Meta {i+1}</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <input className="form-input" value={metas[i].titulo}
+                  onChange={e=>{const n=[...metas];n[i]={...n[i],titulo:e.target.value};setMetas(n);}}
+                  placeholder="Ex: Melhorar a comunicação diária"/>
+                <input className="form-input" value={metas[i].indicador}
+                  onChange={e=>{const n=[...metas];n[i]={...n[i],indicador:e.target.value};setMetas(n);}}
+                  placeholder="Indicador quantificável: Ex: De 3 para 8 na escala de comunicação"/>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <label style={{fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>Data de início:</label>
+                  <input type="date" className="form-input" value={metas[i].dataInicio}
+                    onChange={e=>{const n=[...metas];n[i]={...n[i],dataInicio:e.target.value};setMetas(n);}}
+                    style={{flex:1}}/>
+                </div>
+              </div>
+            </div>
+          ))}
+          {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Metas salvas! Aparecem no dashboard do casal.</div>}
+          <button className="btn btn-purple" style={{width:"100%"}} onClick={salvarMetas} disabled={salvando}>
+            {salvando?"Salvando...":"💾 Salvar metas"}
+          </button>
+        </div>
+      )}
+
+      {aba==="evolucao"&&(
+        <div>
+          {metasSalvas.length===0
+            ? <div style={{textAlign:"center",padding:24,fontSize:13,color:"var(--text-muted)"}}>Defina as metas primeiro na aba "Definir Metas".</div>
+            : metasSalvas.map(m=>{
+                const evs = evolucoes[m.id]||[];
+                const ev  = novaEv[m.id]||{nota:"",data:new Date().toISOString().slice(0,10),obs:""};
+                return (
+                  <div key={m.id} style={{background:"#fafafa",borderRadius:12,padding:16,marginBottom:16,border:"1px solid var(--gray-100)"}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"var(--purple)",marginBottom:2}}>{m.titulo}</div>
+                    {m.indicador&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:10}}>🎯 {m.indicador}</div>}
+
+                    <GraficoLinha evs={evs}/>
+
+                    {/* Histórico */}
+                    {evs.length>0&&(
+                      <div style={{marginBottom:12}}>
+                        <div style={{fontSize:11,fontWeight:600,color:"var(--text-muted)",marginBottom:6}}>HISTÓRICO</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                          {[...evs].reverse().slice(0,5).map(e=>(
+                            <div key={e.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"5px 10px",borderRadius:6,background:"white",border:"1px solid var(--gray-100)"}}>
+                              <span style={{color:"var(--text-muted)"}}>{e.data?.split("-").reverse().join("/")}</span>
+                              <span style={{fontWeight:700,color:"var(--purple)",fontSize:14}}>{e.nota}/10</span>
+                              {e.obs&&<span style={{color:"var(--text-muted)",fontSize:11,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.obs}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Novo registro */}
+                    <div style={{background:"white",borderRadius:8,padding:12,border:"1px solid var(--gray-200)"}}>
+                      <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>Registrar nova nota</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                        <div>
+                          <label style={{fontSize:11,fontWeight:600,display:"block",marginBottom:4}}>Nota (0-10)</label>
+                          <input type="number" min="0" max="10" step="0.5" className="form-input"
+                            value={ev.nota} onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,nota:e.target.value}}))}
+                            placeholder="0-10"/>
+                        </div>
+                        <div>
+                          <label style={{fontSize:11,fontWeight:600,display:"block",marginBottom:4}}>Data</label>
+                          <input type="date" className="form-input" value={ev.data}
+                            onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,data:e.target.value}}))}/>
+                        </div>
+                      </div>
+                      <input className="form-input" value={ev.obs||""}
+                        onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,obs:e.target.value}}))}
+                        placeholder="Observação (opcional)" style={{marginBottom:8}}/>
+                      <button className="btn btn-purple" style={{width:"100%",fontSize:12}} onClick={()=>registrarEvolucao(m.id)}>
+                        + Registrar nota
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+          }
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Admin: Quem Eu Sou ──
+function AdminQuemSou({ onVoltar }) {
+  const QUADRANTES = [
+    {id:"sou",    label:"SOU",                   desc:"Características que possuo e não me incomodam.",    cor:"#7B00C4",bg:"#f5f3ff"},
+    {id:"nao_mas",label:"NÃO SOU, MAS GOSTARIA",  desc:"Características que não possuo e me fazem falta.",  cor:"#0891b2",bg:"#e0f2fe"},
+    {id:"sou_nao",label:"SOU, MAS NÃO GOSTARIA",  desc:"Características que possuo mas me incomodam.",      cor:"#d97706",bg:"#fef3c7"},
+    {id:"nao_sou",label:"NÃO SOU",                desc:"Características que não possuo e não me incomodam.",cor:"#6b7280",bg:"#f3f4f6"},
+  ];
+  const [campos, setCampos]   = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo]     = useState(false);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin", atividadeId:"quem-sou",
+        respostas:campos, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+        Reflexão individual sobre identidade no relacionamento. Cada cônjuge preenche pelo próprio login no portal.
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {QUADRANTES.map(q=>(
+          <div key={q.id} style={{background:q.bg,borderRadius:10,padding:12,border:`1px solid ${q.cor}30`}}>
+            <div style={{fontWeight:700,fontSize:11,color:q.cor,marginBottom:3}}>{q.label}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{q.desc}</div>
+            <TextAreaVoz className="form-input" rows={4} value={campos[q.id]||""}
+              onChange={e=>setCampos(c=>({...c,[q.id]:e.target.value}))}
+              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar"}
+      </button>
+    </div>
+  );
+}
+
+// ── Admin: O Que Eu Quero e Não Quero Mais ──
+function AdminOQueQuero({ onVoltar }) {
+  const CAMPOS = [
+    {id:"quero_sit",  label:"QUERO +  Situações",  desc:"Situações que gosta e quer que continuem.", cor:"#16a34a",bg:"#f0fdf4"},
+    {id:"quero_val",  label:"QUERO +  Valores",     desc:"Situações MUITO IMPORTANTES a manter.",    cor:"#16a34a",bg:"#dcfce7"},
+    {id:"nquero_sit", label:"QUERO −  Situações",   desc:"Situações que NÃO gosta e quer que parem.",cor:"#dc2626",bg:"#fef2f2"},
+    {id:"nquero_val", label:"QUERO −  Valores",     desc:"Situações MUITO IMPORTANTES a mudar.",     cor:"#dc2626",bg:"#fee2e2"},
+  ];
+  const [campos, setCampos]     = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo]       = useState(false);
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin", atividadeId:"o-que-quero",
+        respostas:campos, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e){alert("Erro ao salvar.");}
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+        Mapeamento de expectativas e limites no relacionamento.
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+        {CAMPOS.map(c=>(
+          <div key={c.id} style={{background:c.bg,borderRadius:10,padding:12,border:`1px solid ${c.cor}30`}}>
+            <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:3}}>{c.label}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{c.desc}</div>
+            <TextAreaVoz className="form-input" rows={4} value={campos[c.id]||""}
+              onChange={e=>setCampos(v=>({...v,[c.id]:e.target.value}))}
+              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
+          </div>
+        ))}
+      </div>
+      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar"}
+      </button>
+    </div>
+  );
+}
+
+// ── Formulário genérico para atividades das etapas ──
+const ATIVIDADES_FORMULARIOS = {
+  "detalhes-dia": {
+    titulo: "Detalhes do Dia a Dia",
+    instrucao: "Pequenos gestos que reconstroem a conexão",
+    perguntas: [
+      "Que pequeno gesto positivo você fez hoje pelo(a) seu/sua parceiro(a)?",
+      "Como foi a resposta do(a) seu/sua parceiro(a)?",
+      "Como esse gesto te fez sentir?",
+      "O que você gostaria de receber do(a) seu/sua parceiro(a) amanhã?",
+      "Impacto emocional desse momento (0 = nenhum, 10 = muito intenso)",
+    ]
+  },
+  "plano-casal-ocupado": {
+    titulo: "Plano de Ação para um Casal Ocupado Demais",
+    instrucao: "Reorganizando a conexão na rotina",
+    perguntas: [
+      "Quais são os maiores obstáculos para a conexão no dia a dia de vocês?",
+      "Que rituais gostaríamos de criar juntos?",
+      "Qual o momento do dia que podemos reservar só para nós?",
+      "O que admiro no(a) meu/minha parceiro(a) que nunca digo?",
+      "Meu compromisso desta semana com o nosso relacionamento:",
+    ]
+  },
+  "renovando-votos": {
+    titulo: "Renovando os Votos",
+    instrucao: "Uma jornada de reflexão profunda sobre o relacionamento",
+    perguntas: [
+      "Quem éramos no início — Como vocês se conheceram? O que te atraiu nessa pessoa? Que memória do início do relacionamento você ainda guarda com carinho?",
+      "O que construímos juntos — Quais conquistas, momentos e experiências construímos como casal? O que só existiu porque estávamos juntos?",
+      "Sobre meu parceiro(a) — O que você admira profundamente no(a) seu/sua parceiro(a)? Que qualidades fazem você se sentir grato(a) por tê-lo(a) ao seu lado?",
+      "Nosso futuro — Que tipo de casal queremos ser daqui a 5 anos? Como imaginamos nossa vida juntos? O que queremos preservar e o que queremos construir?",
+      "Meus votos renovados — Escreva seus votos renovados. O que você se compromete a oferecer neste relacionamento? O que promete cuidar e honrar?",
+    ]
+  },
+  "mapa-cognitivo": {
+    titulo: "Mapa Cognitivo do Relacionamento",
+    instrucao: "Identificando crenças e padrões que moldam a relação",
+    perguntas: [
+      "Uma memória da sua história de vida que influencia como você se relaciona hoje:",
+      "Quais crenças você carrega sobre relacionamentos? (Ex: 'Amor exige sacrifício', 'Parceiro(a) deve me adivinhar'...)",
+      "Que situações no relacionamento disparam emoções intensas em você?",
+      "Quando há conflito, qual é a sua estratégia habitual de enfrentamento?",
+      "Que padrão repetitivo você observa em vocês como casal?",
+      "O que você mais deseja que mude na dinâmica do relacionamento?",
+    ]
+  },
+  "novos-padroes": {
+    titulo: "Novos Padrões Relacionais",
+    instrucao: "Construindo acordos e comunicação saudável",
+    perguntas: [
+      "Descreva uma situação onde você reconheceu e validou o sentimento do(a) seu/sua parceiro(a) esta semana:",
+      "Em vez de 'Você sempre...', use: 'Eu me sinto ___ quando ___. Preciso de ___.' Escreva uma situação real usando essa fórmula:",
+      "Que acordo relacional vocês podem fazer para melhorar a convivência? (Ex: sem celular durante as refeições, check-in diário de 10 min...)",
+      "Descreva um conflito passado e como poderiam tê-lo reparado de forma mais gentil:",
+      "Que melhoria concreta você observou no relacionamento desde o início desta jornada?",
+    ]
+  },
+};
+
+function FormularioCasal({ atividadeId, onVoltar }) {
+  const config = ATIVIDADES_FORMULARIOS[atividadeId];
+  const [respostas, setRespostas] = useState({});
+  const [salvando,  setSalvando]  = useState(false);
+  const [salvo,     setSalvo]     = useState(false);
+
+  if (!config) return (
+    <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>
+      Formulário não configurado para esta atividade.
+    </div>
+  );
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await db.collection("clinica_casais_respostas").add({
+        pacienteId:"admin", casalId:"admin",
+        atividadeId,
+        respostas,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSalvo(true);
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  return (
+    <div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,fontStyle:"italic"}}>
+        {config.instrucao}
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+        {config.perguntas.map((p,i)=>(
+          <div key={i} style={{background:"#fafafa",borderRadius:10,padding:14,border:"1px solid var(--gray-100)"}}>
+            <div style={{display:"flex",gap:10,marginBottom:8}}>
+              <span style={{background:"var(--purple)",color:"white",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</span>
+              <span style={{fontSize:13,fontWeight:500,lineHeight:1.5}}>{p}</span>
+            </div>
+            <TextAreaVoz className="form-input" rows={3}
+              value={respostas[i]||""}
+              onChange={e=>setRespostas(r=>({...r,[i]:e.target.value}))}
+              placeholder="Escreva sua resposta..."
+              style={{resize:"vertical"}}/>
+          </div>
+        ))}
+      </div>
+      {salvo && <div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Respostas salvas!</div>}
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
+        {salvando?"Salvando...":"💾 Salvar respostas"}
+      </button>
+    </div>
+  );
+}
+
+
+// ── Psicoeducações e Fábulas para Casais ────────────────────────────────────
+function PsicoFabCasais(){
+  const [psicos, setPsicos]     = useState([]);
+  const [fabulas, setFabulas]   = useState([]);
+  const [abaAtiva, setAbaAtiva] = useState("psico");
+  const [aberto, setAberto]     = useState(null);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(()=>{
+    let loaded = 0;
+    const check = ()=>{ loaded++; if(loaded===2) setLoading(false); };
+    const u1 = db.collection("clinica_psicoeducacao")
+      .where("categoria","==","casais")
+      .onSnapshot(s=>{ setPsicos(s.docs.map(d=>({id:d.id,...d.data()}))); check(); }, check);
+    const u2 = db.collection("clinica_fabulas")
+      .where("categoria","==","casais")
+      .onSnapshot(s=>{ setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))); check(); }, check);
+    return ()=>{ u1(); u2(); };
+  },[]);
+
+  if(loading) return null;
+  if(psicos.length===0 && fabulas.length===0) return null;
+
+  if(aberto){
+    const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
+    return(
+      <div style={{marginBottom:12}}>
+        <button className="btn btn-ghost" style={{marginBottom:12,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
+          <Icon name="arrow-left" size={16}/> Voltar
+        </button>
+        {VisualComp ? <VisualComp cat={{cor:"#7B00C4",bg:"#f3e6ff",accent:"#EC4899"}}/> : (
+          <div className="card">
+            <div style={{textAlign:"center",padding:"8px 0 16px"}}>
+              <div style={{fontSize:40,marginBottom:8}}>{aberto.emoji||"💜"}</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:6}}>{aberto.titulo}</div>
+            </div>
+            {aberto.descricao&&<p style={{fontSize:13,color:"var(--text-muted)",fontStyle:"italic",marginBottom:12}}>{aberto.descricao}</p>}
+            {aberto.conteudo&&<div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return(
+    <div style={{borderRadius:12,border:"1.5px solid #f0b8ff",overflow:"hidden",marginBottom:12}}>
+      <div style={{background:"linear-gradient(to right,#f9f0ff,#f3e6ff)",padding:"12px 18px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e8c8ff"}}>
+        <span style={{fontSize:20}}>💜</span>
+        <div style={{fontWeight:700,fontSize:14,color:"#7B00C4"}}>Recursos para o Casal</div>
+      </div>
+      <div style={{background:"white",padding:"10px 18px",borderBottom:"1px solid #e8c8ff",display:"flex",gap:8}}>
+        {[["psico","Psicoeducação",psicos.length],["fabula","Fábulas",fabulas.length]].map(([k,l,c])=>(
+          <button key={k} onClick={()=>setAbaAtiva(k)}
+            style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",borderColor:abaAtiva===k?"#7B00C4":"#e5e7eb",background:abaAtiva===k?"#f3e6ff":"white",color:abaAtiva===k?"#7B00C4":"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:abaAtiva===k?600:400}}>
+            {l} ({c})
+          </button>
+        ))}
+      </div>
+      <div style={{background:"white",padding:"12px 18px",display:"flex",flexDirection:"column",gap:8}}>
+        {(abaAtiva==="psico"?psicos:fabulas).map(item=>(
+          <div key={item.id} onClick={()=>setAberto(item)}
+            style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#faf5ff",borderRadius:10,border:"1px solid #e8c8ff",cursor:"pointer"}}
+            onMouseEnter={e=>e.currentTarget.style.background="#f3e6ff"}
+            onMouseLeave={e=>e.currentTarget.style.background="#faf5ff"}>
+            <div style={{fontSize:26,flexShrink:0}}>{item.emoji||"💜"}</div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#3d006a"}}>{item.titulo}</div>
+              {item.descricao&&<div style={{fontSize:11,color:"#7B00C4",marginTop:2,lineHeight:1.4}}>{item.descricao}</div>}
+            </div>
+            <span style={{fontSize:12,color:"#7B00C4",fontWeight:600,flexShrink:0}}>Ver →</span>
+          </div>
+        ))}
+        {(abaAtiva==="psico"?psicos:fabulas).length===0&&(
+          <div style={{textAlign:"center",padding:"16px 0",color:"var(--text-muted)",fontSize:13}}>
+            Nenhum item cadastrado para casais ainda.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AbaProtocoloCasais() {
   const [expandido, setExpandido] = useState(null);
   const [atividadeAberta, setAtividadeAberta] = useState(null);
@@ -3843,6 +6284,19 @@ function AbaProtocoloCasais() {
         </div>
         <div className="card">
           <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>{at.titulo}</div>
+          {at.id==="inventario-bem-estar"
+            ? <InventarioBemEstarCasal onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="roda-vida-relacionamento"
+            ? <AdminRodaVida onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="3-metas"
+            ? <AdminMetas onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="quem-sou"
+            ? <AdminQuemSou onVoltar={()=>setAtividadeAberta(null)}/>
+            : at.id==="o-que-quero"
+            ? <AdminOQueQuero onVoltar={()=>setAtividadeAberta(null)}/>
+            : ATIVIDADES_FORMULARIOS[at.id]
+            ? <FormularioCasal atividadeId={at.id} onVoltar={()=>setAtividadeAberta(null)}/>
+            : (<>
           <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
             Responda com honestidade e na presença da psicóloga. Esta atividade faz parte do protocolo de Terapia de Casais TCC.
           </div>
@@ -3850,7 +6304,7 @@ function AbaProtocoloCasais() {
             {[1,2,3].map(n=>(
               <div key={n}>
                 <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão {n}</label>
-                <textarea className="form-input" rows={3}
+                <TextAreaVoz className="form-input" rows={3}
                   value={respostas[at.id+"_"+n]||""}
                   onChange={e=>setRespostas(r=>({...r,[at.id+"_"+n]:e.target.value}))}
                   placeholder="Escreva sua resposta..."/>
@@ -3860,6 +6314,7 @@ function AbaProtocoloCasais() {
           <button className="btn btn-purple" style={{width:"100%",marginTop:16}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>
             {msg||<><Icon name="save" size={15}/> Salvar respostas</>}
           </button>
+          </>)}
         </div>
       </div>
     );
@@ -3906,6 +6361,9 @@ function AbaProtocoloCasais() {
         )}
       </div>
 
+      {/* Psicoeducações para Casais */}
+      <PsicoFabCasais/>
+
       {PROTOCOLO_CASAIS.map(etapa=>(
         <div key={etapa.stage} style={{borderRadius:12,border:"1.5px solid",borderColor:etapa.cor+"40",overflow:"hidden",marginBottom:12}}>
           <button onClick={()=>setExpandido(expandido===etapa.stage?null:etapa.stage)}
@@ -3947,20 +6405,14 @@ function AbaProtocoloCasais() {
 
 // ── Aba Fábulas ──────────────────────────────────────────────────────────────
 const CATS_FABULAS = {
-  ansiedade:   {label:"Ansiedade",          cor:"#6366f1", bg:"#eef2ff"},
-  resiliência: {label:"Resiliência",        cor:"#0ea5e9", bg:"#e0f2fe"},
-  crescimento: {label:"Crescimento",        cor:"#16a34a", bg:"#dcfce7"},
-  esperança:   {label:"Esperança",          cor:"#f59e0b", bg:"#fef3c7"},
-  autoconfiança:{label:"Autoconfiança",     cor:"#7c3aed", bg:"#ede9fe"},
-  tcc:         {label:"TCC",               cor:"#84cc16", bg:"#f7fee7"},
-  perdão:      {label:"Perdão",             cor:"#8b5cf6", bg:"#f5f3ff"},
-  autoestima:  {label:"Autoestima",         cor:"#ec4899", bg:"#fdf2f8"},
-  autoconhecimento:{label:"Autoconhecimento",cor:"#374151",bg:"#f9fafb"},
-  mindfulness: {label:"Mindfulness",       cor:"#059669", bg:"#d1fae5"},
-  relacionamentos:{label:"Relacionamentos",cor:"#d97706", bg:"#fef3c7"},
-  perspectiva: {label:"Perspectiva",       cor:"#1e3a5f", bg:"#e0f2fe"},
-  "expressão emocional":{label:"Expressão Emocional",cor:"#0891b2",bg:"#cffafe"},
-  "regulação emocional":{label:"Regulação Emocional",cor:"#2563eb",bg:"#dbeafe"},
+  ansiedade:      {label:"Ansiedade",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
+  emocoes:        {label:"Emoções",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
+  autoconhecimento:{label:"Autoconhecimento",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
+  crescimento:    {label:"Crescimento",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
+  relacionamentos:{label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
+  casais:         {label:"Casais",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
+  perdao:         {label:"Perdão",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
+  outros:         {label:"Outros",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
 };
 
 function AbaFabulas() {
@@ -3968,6 +6420,36 @@ function AbaFabulas() {
   const [loading, setLoading] = useState(true);
   const [fabulaAberta, setFabulaAberta] = useState(null);
   const [filtro, setFiltro] = useState("todos");
+  const [migrando, setMigrando] = useState(false);
+
+  const MIGRACAO_CATS = {
+    "resiliência":"crescimento","resiliencia":"crescimento",
+    "esperança":"crescimento","esperanca":"crescimento",
+    "autoconfiança":"autoconhecimento","autoconfianca":"autoconhecimento",
+    "autoestima":"autoconhecimento",
+    "mindfulness":"emocoes",
+    "tcc":"autoconhecimento",
+    "expressão emocional":"emocoes","expressao emocional":"emocoes",
+    "regulação emocional":"emocoes","regulacao emocional":"emocoes",
+    "perspectiva":"autoconhecimento",
+    "perdão":"perdao",
+  };
+
+  async function migrarCategorias(){
+    if(!confirm("Migrar categorias antigas para as novas? Isso atualiza os documentos no Firebase.")) return;
+    setMigrando(true);
+    try{
+      const snap = await db.collection("clinica_fabulas").get();
+      let count = 0;
+      for(const doc of snap.docs){
+        const cat = doc.data().categoria;
+        const nova = MIGRACAO_CATS[cat];
+        if(nova){ await db.collection("clinica_fabulas").doc(doc.id).update({categoria:nova}); count++; }
+      }
+      alert("✓ "+count+" fábulas migradas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setMigrando(false);
+  }
 
   useEffect(()=>{
     const unsub = db.collection("clinica_fabulas").onSnapshot(snap=>{
@@ -4090,7 +6572,862 @@ function AbaFabulas() {
   );
 }
 
-function RecursosTerapeuticos() {
+// ── Aba Psicoeducação ─────────────────────────────────────────────────────────
+const PILULAS_TCC = [
+  {emoji:"💭",titulo:"O poder dos pensamentos",descricao:"Como o que pensamos afeta o que sentimos",categoria:"tcc",tipo:"texto",
+   conteudo:"Você já reparou como uma ideia pode mudar completamente o seu humor?\n\nA mente funciona como um filtro: o que pensamos molda o que sentimos e o que fazemos. Um mesmo evento pode gerar tristeza ou tranquilidade — depende do que sua cabeça conta sobre ele. Não são as coisas em si que nos perturbam, mas o que acreditamos sobre elas.\n\n🎯 Na prática:\nHoje, quando notar uma emoção forte, pergunte: \"Que pensamento veio antes disso?\" Escreva num papel. Só observar já muda tudo."},
+  {emoji:"🔍",titulo:"Fatos vs. interpretações",descricao:"Como não acreditar em tudo o que nossa mente diz",categoria:"tcc",tipo:"texto",
+   conteudo:"A mente preenche lacunas automaticamente — e nem sempre acerta.\n\n\"Ela não me respondeu, deve estar com raiva de mim\" é uma interpretação, não um fato. O fato é apenas: \"Ela não respondeu\". Todo o resto é história que criamos. E histórias podem ser reescritas.\n\n🎯 Na prática:\nPegue uma situação que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOCÊ acrescentou? Escreva os dois lados."},
+  {emoji:"⛈️",titulo:"A armadilha do pior cenário",descricao:"O hábito de catastrofizar o futuro e como parar",categoria:"ansiedade",tipo:"texto",
+   conteudo:"Catastrofizar é o hábito de imaginar sempre o pior desfecho possível — e tratá-lo como certeza.\n\n\"E se eu reprovar? E se perder o emprego? E se ninguém me amar?\" O problema é que o cérebro não distingue ameaça real de imaginada, então você sofre antecipado por algo que talvez nunca aconteça.\n\n🎯 Na prática:\nQuando catastrofizar aparecer, faça 3 perguntas:\n1. Isso é provável?\n2. Já aconteceu antes?\n3. Se acontecer, eu consigo lidar?\nQuase sempre a resposta ao item 3 é sim."},
+  {emoji:"🌀",titulo:"O ciclo da ansiedade",descricao:"Como evitar o que tememos só faz o medo crescer",categoria:"ansiedade",tipo:"texto",
+   conteudo:"Quanto mais evitamos o que tememos, mais o medo cresce.\n\nParece contraditório, mas é assim: ao fugir da situação, o alívio imediato ensina ao cérebro que \"fugir = segurança\". Com o tempo, o gatilho fica cada vez menor e a evitação, cada vez maior. A única saída é, aos poucos, enfrentar.\n\n🎯 Na prática:\nEscolha uma coisa pequena que você evita há tempo. Faça por 5 minutos hoje — só 5. Observe que o pior quase nunca acontece."},
+  {emoji:"🚀",titulo:"Agir antes de ter vontade",descricao:"O princípio prático: fazer algo para gerar motivação",categoria:"autocuidado",tipo:"texto",
+   conteudo:"Esperamos a motivação aparecer para agir — mas funciona ao contrário.\n\nA ação cria a motivação, não o contrário. Você não precisa estar animado para começar; precisa começar para ficar animado. É como empurrar um carro parado: o começo exige mais força, depois o movimento sustenta.\n\n🎯 Na prática:\nEscolha uma tarefa que você está adiando. Faça os primeiros 2 minutos agora — sem julgamento. Só isso. Veja o que acontece depois."},
+  {emoji:"🤗",titulo:"Autocompaixão",descricao:"Como ser menos crítico consigo mesmo",categoria:"autoestima",tipo:"texto",
+   conteudo:"Nós seríamos horrorosos como amigos de nós mesmos.\n\nCom uma pessoa que amamos, somos gentis e pacientes. Com nós, somos críticos e impacientes. Autocompaixão não é preguiça nem fraqueza — é tratar a si mesmo com a mesma ternura que você ofereceria a quem você ama.\n\n🎯 Na prática:\nHoje, quando errar algo, diga internamente: \"Tudo bem, isso é humano. Qualquer pessoa teria dificuldade aqui. Eu faço o que posso.\" Apenas isso."},
+  {emoji:"🎨",titulo:"A roda das emoções",descricao:"A importância de saber nomear exatamente o que sente",categoria:"mindfulness",tipo:"texto",
+   conteudo:"\"Estou mal\" é vago demais para o cérebro agir.\n\nQuando nomeamos com precisão o que sentimos — \"estou ansioso\", \"estou frustrado\", \"estou envergonhado\" — ativamos o córtex pré-frontal, que acalma a amígdala. Nomear emoções é uma forma de regulação emocional.\n\nEmoções primárias: Alegria, Tristeza, Raiva, Medo, Surpresa, Nojo.\nCada uma tem dezenas de nuances — quanto mais preciso o nome, mais controle você tem.\n\n🎯 Na prática:\nAntes de dormir, escreva: \"Hoje me senti ___\" — use o nome mais preciso possível. Evite \"bem\" ou \"mal\"."},
+  {emoji:"🔺",titulo:"O modelo ABC na prática",descricao:"Como nossa crença sobre um evento muda nossa reação",categoria:"tcc",tipo:"texto",
+   conteudo:"A — Adversidade (o que aconteceu)\nB — Belief, ou seja, a crença sobre o que aconteceu\nC — Consequência emocional\n\nA mesma situação pode gerar emoções completamente diferentes dependendo do B. Dois colegas recebem críticas do chefe: um pensa \"Sou um fracasso\" e fica triste; o outro pensa \"Posso melhorar\" e fica motivado. Mesmo A, B diferente, C diferente.\n\n🎯 Na prática:\nPense em uma situação que te deixou mal. Escreva o A (fato), o B (o que você acreditou) e o C (emoção). Agora invente um B diferente — o que mudaria?"},
+  {emoji:"⚡",titulo:"Eustresse vs. distresse",descricao:"Como diferenciar o estresse que impulsiona do que adoece",categoria:"ansiedade",tipo:"texto",
+   conteudo:"Nem todo estresse é ruim.\n\nEustresse é o estresse que nos impulsiona — aquela energia antes de uma apresentação importante, a adrenalina de um desafio. Distresse é quando a pressão ultrapassa nossa capacidade e começa a nos adoecer. A diferença está na duração e na percepção de controle.\n\n🎯 Na prática:\nHoje, pergunte sobre um estressor: \"Isso me desafia ou me paralisa?\" Se desafia, use a energia. Se paralisa, é sinal de que precisa de pausa ou ajuda."},
+  {emoji:"🪫",titulo:"Sinais de desgaste emocional",descricao:"Como identificar a sobrecarga e estratégias de pausa",categoria:"autocuidado",tipo:"texto",
+   conteudo:"O corpo e a mente avisam antes de entrar em colapso — mas aprendemos a ignorar esses sinais.\n\nIrritabilidade sem causa, dificuldade de concentração, sono perturbado, sensação de vazio ou indiferença são sinais de que o sistema está sobrecarregado. Pausar não é fraqueza; é manutenção obrigatória.\n\n🎯 Na prática:\nHoje, reserve 15 minutos para fazer absolutamente nada útil: sentar ao sol, ouvir música, tomar um chá. Sem culpa. É recuperação."},
+  {emoji:"∞",titulo:"O perigo do sempre e nunca",descricao:"Como a supergeneralização afeta nosso humor",categoria:"tcc",tipo:"texto",
+   conteudo:"\"Eu SEMPRE faço isso errado.\" \"Ele NUNCA me ouve.\"\n\nEssas palavras parecem verdade, mas são armadilhas. Uma generalização transforma um evento pontual em característica permanente. E o que parece permanente gera desânimo. Quase nada na vida humana é realmente \"sempre\" ou \"nunca\".\n\n🎯 Na prática:\nQuando notar um \"sempre\" ou \"nunca\" no seu pensamento ou fala, troque por: \"desta vez\", \"às vezes\", \"com frequência\". Observe como a frase — e a emoção — mudam."},
+  {emoji:"🍕",titulo:"A pizza da responsabilidade",descricao:"Como dividir a culpa evitando autoculpa ou vitimização",categoria:"tcc",tipo:"texto",
+   conteudo:"Quando algo dá errado, tendemos aos extremos: ou colocamos toda a culpa em nós mesmos (autoculpa tóxica) ou em outro alguém (vitimização).\n\nA verdade é que a maioria dos problemas tem múltiplos autores: você, o outro e as circunstâncias. Dividir a culpa em fatias mais justas libera peso.\n\nFórmula: 33% Eu + 33% O Outro + 33% As Circunstâncias\n\n🎯 Na prática:\nPense num problema recente. Divida: qual parte foi sua? Qual foi do outro? Qual foi das circunstâncias? Você ficará surpreso com o quanto não precisa carregar."},
+  {emoji:"🔦",titulo:"O filtro negativo da mente",descricao:"Por que ignoramos 10 elogios e focamos em 1 crítica",categoria:"autoestima",tipo:"texto",
+   conteudo:"O cérebro tem um viés de negatividade — herança evolutiva para detectar perigos.\n\nIsso nos faz ignorar 10 elogios e ruminar 1 crítica por dias. É automático, não é fraqueza. Mas podemos treinar ativamente a atenção para o que funcionou.\n\n🎯 Na prática:\nAntes de dormir, anote 3 coisas que deram certo hoje — podem ser minúsculas. Fazer isso por 21 dias literalmente reconfigura os circuitos atencionais do cérebro."},
+  {emoji:"⏱️",titulo:"A regra dos 5 minutos",descricao:"Uma técnica infalível para vencer a procrastinação",categoria:"autocuidado",tipo:"texto",
+   conteudo:"Procrastinamos porque o cérebro antecipa a tarefa como enorme e desagradável.\n\nMas a aversão quase sempre é maior na antecipação do que na execução. A regra é: comprometa-se com apenas 5 minutos. Só. Após esses 5 minutos, você pode parar — com honra. Na maioria das vezes, você continua.\n\n🎯 Na prática:\nEscolha a tarefa mais temida da sua lista hoje. Configure um timer para 5 minutos. Comece agora. Só 5 minutos."},
+  {emoji:"🌊",titulo:"Surfando a onda da emoção",descricao:"Como sentir uma emoção intensa sem agir por impulso",categoria:"mindfulness",tipo:"texto",
+   conteudo:"Emoções intensas parecem eternas, mas têm um pico e depois diminuem — como uma onda do mar.\n\nO problema é que quando agimos por impulso no pico da onda, quase sempre nos arrependemos. A técnica de \"surfar a onda\" é: observe a emoção sem agir nela, sabendo que ela vai passar.\n\n🎯 Na prática:\nNa próxima emoção intensa, observe como uma onda: onde ela começa no corpo? Ela sobe? Quando chega ao pico? Você verá que em 10 a 20 minutos ela diminui naturalmente."},
+  {emoji:"🧩",titulo:"7 Distorções de Pensamento",descricao:"Os padrões de pensamento que distorcem sua realidade",categoria:"tcc",tipo:"visual",conteudo:""},
+  {emoji:"🧠",titulo:"Desmontar o Circuito Cerebral da Ansiedade",descricao:"4 passos para retomar o comando da sua própria vida",categoria:"ansiedade",tipo:"visual",conteudo:""},
+  {emoji:"🎛️",titulo:"Preocupação produtiva vs. improdutiva",descricao:"Como separar o que posso resolver do que está fora do controle",categoria:"ansiedade",tipo:"texto",
+   conteudo:"Preocupação produtiva: tenho uma ação concreta que posso fazer agora para resolver isso.\n\nPreocupação improdutiva: o problema está fora do meu controle ou no futuro, e ficar ruminando só gasta energia. A pergunta-chave é: existe algo que eu possa FAZER agora?\n\n🎯 Na prática:\nListe suas 3 preocupações do momento. Para cada uma: existe uma ação concreta que você pode fazer hoje? Se sim, faça. Se não, escreva: \"Isso está fora do meu controle agora\" e pratique soltar."},
+  {emoji:"🏆",titulo:"O diário de pequenas vitórias",descricao:"Como treinar o cérebro para notar o que deu certo",categoria:"autocuidado",tipo:"texto",
+   conteudo:"Positividade tóxica é fingir que tudo está bem quando não está.\n\nO diário de pequenas vitórias é diferente: é treinar o cérebro para notar o que realmente funcionou — por menor que seja. \"Tomei água hoje.\" \"Respondi um email difícil.\" \"Saí da cama quando não queria.\" Essas coisas contam.\n\n🎯 Na prática:\nHoje à noite, escreva 3 pequenas vitórias do dia. Podem ser minúsculas. Não vale inventar — vale notar o que realmente aconteceu e que você normalmente ignoraria."},
+];
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// PSICOEDUCAÇÕES VISUAIS — ANSIEDADE
+// ═══════════════════════════════════════════════════════════════════════
+
+function PsicoPreocupacao({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧩</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você preocupa com o que pode — ou com o que não pode controlar?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Aprender a separar as preocupações muda sua relação com a ansiedade.</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
+        <div style={{background:"#f9f0ff",padding:"16px 18px",borderRight:"2px solid #e8c8ff",borderBottom:"1px solid #e8c8ff"}}>
+          <div style={{color:"#22C55E",fontWeight:600,fontSize:13,marginBottom:6}}>✅ Produtiva</div>
+          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Existe uma ação concreta que posso fazer agora para resolver. A energia vai para a solução.</div>
+        </div>
+        <div style={{background:"#f3e6ff",padding:"16px 18px",borderBottom:"1px solid #e8c8ff"}}>
+          <div style={{color:"#F97316",fontWeight:600,fontSize:13,marginBottom:6}}>⚠️ Improdutiva</div>
+          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>O problema está fora do meu controle ou no futuro. Ruminar só gasta energia sem resolver nada.</div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"14px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:8}}>Pergunta-chave:</div>
+        <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"10px 14px",color:"#f3e6ff",fontSize:13,fontStyle:"italic"}}>
+          "Existe algo que eu possa FAZER agora para resolver isso?"
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:10}}>
+          <div style={{flex:1,background:"rgba(34,197,94,0.2)",borderRadius:8,padding:"8px 10px",border:"1px solid rgba(34,197,94,0.4)"}}>
+            <div style={{color:"#86efac",fontSize:12,fontWeight:500}}>SIM → Aja agora</div>
+            <div style={{color:"#d9b3f5",fontSize:11,marginTop:2}}>Transforme em tarefa concreta</div>
+          </div>
+          <div style={{flex:1,background:"rgba(249,115,22,0.2)",borderRadius:8,padding:"8px 10px",border:"1px solid rgba(249,115,22,0.4)"}}>
+            <div style={{color:"#fed7aa",fontSize:12,fontWeight:500}}>NÃO → Solte conscientemente</div>
+            <div style={{color:"#d9b3f5",fontSize:11,marginTop:2}}>Escreva: "Isso está fora do meu controle"</div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Liste suas 3 preocupações do momento. Para cada uma: existe uma ação concreta que você pode fazer hoje? Se sim, faça. Se não, pratique soltar conscientemente.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>De cada 10 preocupações, 8 estão fora do nosso controle. Quanto de energia você investe nessas 8? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoPiorCenario({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>⛈️</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você vive imaginando o pior?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Catastrofizar é um hábito mental — e hábitos podem ser mudados.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:8}}>O que é catastrofizar?</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>É o hábito de imaginar o pior resultado possível como o mais provável. A mente entra em modo de ameaça — mesmo quando não há perigo real — e a ansiedade dispara.</div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>O triângulo da catastrofização</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          {[["🔮","Superestimar o perigo","Trata incerteza como certeza negativa"],["🙈","Subestimar a capacidade","Esquece que já superou coisas difíceis"],["🚫","Descartar o positivo","Ignora evidências de que pode dar certo"]].map(([e,t,d],i)=>(
+            <div key={i} style={{flex:1,minWidth:140,background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(255,255,255,0.2)"}}>
+              <div style={{fontSize:22,marginBottom:4}}>{e}</div>
+              <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:3}}>{t}</div>
+              <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>{d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:8}}>3 perguntas para quebrar o ciclo</div>
+        {[["1","Qual é a evidência real de que isso vai acontecer?"],["2","Qual é o resultado mais provável — não o mais temido?"],["3","Se acontecer, conseguirei lidar? O que faria?"]].map(([n,q])=>(
+          <div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8}}>
+            <div style={{width:22,height:22,borderRadius:"50%",background:"#7B00C4",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,flexShrink:0}}>{n}</div>
+            <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5}}>{q}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Da última vez que você imaginou o pior — o que realmente aconteceu? Sua mente provavelmente superestimou o perigo. 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoEustresse({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>⚡</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Nem todo estresse é seu inimigo</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Aprender a diferenciá-los muda como você responde às pressões da vida.</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
+        <div style={{background:"#f9f0ff",padding:"16px 18px",borderRight:"2px solid #e8c8ff",borderBottom:"1px solid #e8c8ff"}}>
+          <div style={{color:"#22C55E",fontWeight:600,fontSize:14,marginBottom:8}}>Eustresse ✅</div>
+          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:10}}>O estresse que impulsiona. Gera energia, foco e motivação para superar desafios.</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {["Antes de apresentações","Novos desafios","Metas importantes","Adrenalina saudável"].map(t=>(
+              <span key={t} style={{background:"#dcfce7",color:"#16a34a",borderRadius:20,padding:"2px 8px",fontSize:10}}>{t}</span>
+            ))}
+          </div>
+        </div>
+        <div style={{background:"#f3e6ff",padding:"16px 18px",borderBottom:"1px solid #e8c8ff"}}>
+          <div style={{color:"#F97316",fontWeight:600,fontSize:14,marginBottom:8}}>Distresse ⚠️</div>
+          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:10}}>O estresse que adoece. Quando a pressão ultrapassa a capacidade e se torna crônica.</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+            {["Pressão constante","Sem descanso","Sensação de descontrole","Esgotamento"].map(t=>(
+              <span key={t} style={{background:"#fff7ed",color:"#ea580c",borderRadius:20,padding:"2px 8px",fontSize:10}}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"14px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:8}}>A diferença está em 2 fatores:</div>
+        <div style={{display:"flex",gap:10}}>
+          <div style={{flex:1,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:3}}>⏱️ Duração</div>
+            <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>Temporário = eustresse. Crônico = distresse.</div>
+          </div>
+          <div style={{flex:1,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:3}}>🎮 Percepção de controle</div>
+            <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>Sinto que posso lidar = eustresse. Paralisado = distresse.</div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Hoje, identifique um estressor e pergunte: <em>"Isso me desafia ou me paralisa?"</em> Se desafia, use a energia. Se paralisa, é sinal de que precisa de pausa ou ajuda.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>O estresse que você sente agora — está te impulsionando ou te adoecendo? Essa resposta é o primeiro passo para cuidar de você. 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoCicloAnsiedade({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🌀</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Evitar o que teme só faz o medo crescer</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Entender o ciclo da ansiedade é o primeiro passo para quebrá-lo.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>O ciclo que alimenta a ansiedade</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {n:"1",e:"😰",t:"Situação temida",d:"Algo aciona a ameaça percebida",c:"#7B00C4"},
+            {n:"2",e:"💓",t:"Reação física",d:"Coração acelera, tensão, sudorese",c:"#9a00e0"},
+            {n:"3",e:"🧠",t:"Pensamento catastrófico",d:"'Não vou conseguir', 'Algo vai dar errado'",c:"#b040e0"},
+            {n:"4",e:"🚪",t:"Evitação",d:"Foge ou evita a situação temida",c:"#c870f0"},
+            {n:"5",e:"😮",t:"Alívio temporário",d:"A ansiedade cai — mas o medo cresce",c:"#d9b3f5"},
+          ].map(({n,e,t,d,c})=>(
+            <div key={n} style={{display:"flex",gap:10,alignItems:"center",background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid #e8c8ff"}}>
+              <div style={{width:24,height:24,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,flexShrink:0}}>{n}</div>
+              <div style={{fontSize:18,flexShrink:0}}>{e}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:500,color:"#3d006a"}}>{t}</div>
+                <div style={{fontSize:11,color:"#7B00C4",lineHeight:1.4}}>{d}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{textAlign:"center",fontSize:12,color:"#F97316",fontWeight:500,padding:"4px 0"}}>↩️ Volta para o passo 1 — o ciclo se repete e se fortalece</div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"14px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:8}}>Como quebrar o ciclo?</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[["🎯","Exposição gradual","Enfrente a situação temida em pequenos passos — o medo diminui com a prática"],["💨","Técnicas de regulação","Respiração, mindfulness e relaxamento interrompem a resposta física"],["🧩","Reestruturação cognitiva","Questione os pensamentos catastróficos — são fatos ou suposições?"]].map(([e,t,d])=>(
+            <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <div style={{fontSize:18,flexShrink:0}}>{e}</div>
+              <div>
+                <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:2}}>{t}</div>
+                <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>O que você tem evitado por ansiedade? Cada vez que evita, o medo ganha poder. Cada vez que enfrenta — mesmo com medo — você retoma o controle. 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoDesmontarAnsiedade({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧠</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você pode desmontar o circuito cerebral da ansiedade</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>4 passos para retomar o comando da sua própria vida.</div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+        {[
+          {n:"1",e:"🔍",t:"SEPARAR",c:"#7B00C4",bg:"#f9f0ff",tc:"#3d006a",dc:"#5a0090",d:"Quando separamos a ansiedade de quem você é, podemos colocá-la no banco do carona. Assim você que estará no comando — não importa o quanto a ansiedade grite."},
+          {n:"2",e:"🎯",t:"CONHECER",c:"#9a00e0",bg:"#f3e6ff",tc:"#3d006a",dc:"#5a0090",d:"A ansiedade é composta por sensações físicas, pensamentos automáticos negativos e ações comportamentais. Quando conhecemos esses três aspectos em nós mesmos, podemos desarmar o ciclo ansioso."},
+          {n:"3",e:"🛡️",t:"NEUTRALIZAR",c:"#b040e0",bg:"#f9f0ff",tc:"#3d006a",dc:"#5a0090",d:"É importante reunir ferramentas estratégicas de força mental antes que a crise de ansiedade comece — e treinar o sistema natural de relaxamento e confiança do corpo."},
+          {n:"4",e:"🗺️",t:"PLANEJAR",c:"#c870f0",bg:"#f3e6ff",tc:"#3d006a",dc:"#5a0090",d:"Para vencer a ansiedade precisamos mapear como e quando ela tende a atacar. Assim criamos um roteiro de como agir — com ações práticas e declarações de coragem."},
+        ].map(({n,e,t,c,bg,tc,dc,d})=>(
+          <div key={n} style={{background:bg,padding:"14px 20px",borderBottom:"1px solid #e8c8ff",display:"flex",gap:12,alignItems:"flex-start"}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{n}</div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                <span style={{fontSize:18}}>{e}</span>
+                <span style={{fontSize:13,fontWeight:600,color:tc,letterSpacing:1}}>{t}</span>
+              </div>
+              <div style={{fontSize:12,color:dc,lineHeight:1.6}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Em qual dos 4 passos você sente que precisa trabalhar mais? A consciência sobre o próprio processo ansioso já é, em si, um ato de cura. 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// PSICOEDUCAÇÕES VISUAIS — TCC
+// ═══════════════════════════════════════════════════════════════════════
+
+function PsicoModeloABC({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔺</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>O que realmente gera suas emoções?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Não é o evento — é o que você acredita sobre ele.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:12}}>O Modelo ABC da TCC</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {l:"A","t":"Adversidade","e":"📌","d":"O evento que aconteceu — o fato puro, sem julgamento","c":"#7B00C4"},
+            {l:"B","t":"Belief (Crença)","e":"🧠","d":"O que você acredita, pensa ou interpreta sobre o evento","c":"#9a00e0"},
+            {l:"C","t":"Consequência","e":"💭","d":"A emoção e o comportamento que surgem da crença","c":"#b040e0"},
+          ].map(({l,t,e,d,c})=>(
+            <div key={l} style={{display:"flex",gap:12,alignItems:"flex-start",background:"white",borderRadius:10,padding:"10px 14px",border:"1px solid #e8c8ff"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,flexShrink:0}}>{l}</div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                  <span style={{fontSize:16}}>{e}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:"#3d006a"}}>{t}</span>
+                </div>
+                <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Exemplo prático</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px"}}>
+            <div style={{color:"#d9b3f5",fontSize:11,fontWeight:500,marginBottom:4}}>Situação A (mesmo evento)</div>
+            <div style={{color:"#f3e6ff",fontSize:11,lineHeight:1.4}}>Chefe critica seu trabalho</div>
+          </div>
+          <div style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px"}}>
+            <div style={{color:"#d9b3f5",fontSize:11,fontWeight:500,marginBottom:4}}>Situação A (mesmo evento)</div>
+            <div style={{color:"#f3e6ff",fontSize:11,lineHeight:1.4}}>Chefe critica seu trabalho</div>
+          </div>
+          <div style={{background:"rgba(249,115,22,0.2)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(249,115,22,0.3)"}}>
+            <div style={{color:"#fed7aa",fontSize:11,fontWeight:500,marginBottom:4}}>B: "Sou um fracasso"</div>
+            <div style={{color:"#fde68a",fontSize:11}}>C: Tristeza, desmotivação</div>
+          </div>
+          <div style={{background:"rgba(34,197,94,0.2)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(34,197,94,0.3)"}}>
+            <div style={{color:"#86efac",fontSize:11,fontWeight:500,marginBottom:4}}>B: "Posso melhorar"</div>
+            <div style={{color:"#86efac",fontSize:11}}>C: Motivação, foco</div>
+          </div>
+        </div>
+        <div style={{color:"#d9b3f5",fontSize:12,marginTop:10,textAlign:"center",fontStyle:"italic"}}>Mesmo A — B diferente — C completamente diferente</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense em uma situação que te deixou mal. Escreva o A (fato), o B (o que você acreditou) e o C (emoção). Agora invente um B diferente — o que mudaria?</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você não pode controlar tudo que acontece (A), mas pode trabalhar suas crenças (B) — e isso muda tudo no que você sente (C). 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoPensamentos({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>💭</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Seus pensamentos criam sua realidade emocional</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Não são as coisas em si — é o que você acredita sobre elas.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Como funciona o ciclo</div>
+        <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          {[["💭","Pensamento"],["💓","Emoção"],["🏃","Comportamento"],["🌍","Resultado"]].map(([e,t],i,arr)=>(
+            <React.Fragment key={t}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:28,marginBottom:4}}>{e}</div>
+                <div style={{fontSize:11,color:"#5a0090",fontWeight:500}}>{t}</div>
+              </div>
+              {i<arr.length-1&&<div style={{color:"#b040e0",fontSize:18,fontWeight:700}}>→</div>}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>O mesmo evento — perspectivas diferentes</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {p:"'Fui ignorado — ninguém gosta de mim'",e:"Tristeza, isolamento",cor:"rgba(249,115,22,0.2)",bc:"rgba(249,115,22,0.4)"},
+            {p:"'Fui ignorado — ela deve estar ocupada'",e:"Neutralidade, tranquilidade",cor:"rgba(34,197,94,0.2)",bc:"rgba(34,197,94,0.4)"},
+          ].map(({p,e,cor,bc})=>(
+            <div key={p} style={{background:cor,borderRadius:8,padding:"10px 12px",border:"1px solid "+bc}}>
+              <div style={{color:"#f3e6ff",fontSize:12,fontStyle:"italic",marginBottom:4}}>{p}</div>
+              <div style={{color:"#d9b3f5",fontSize:11}}>→ {e}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Hoje, quando notar uma emoção forte, pergunte: "Que pensamento veio antes disso?" Escreva num papel. Só observar já começa a mudar tudo.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Que história sua mente conta sobre você quando as coisas dão errado? Essa história é um fato — ou uma interpretação? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoPizzaResponsabilidade({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🍕</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você carrega mais culpa do que te pertence?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Dividir a responsabilidade libera peso — sem isentar ninguém.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Os dois extremos que nos prendem</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
+            <div style={{fontSize:22,marginBottom:6}}>😔</div>
+            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Autoculpa tóxica</div>
+            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"Tudo foi culpa minha." Você assume 100% de uma situação que tinha múltiplos fatores.</div>
+          </div>
+          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
+            <div style={{fontSize:22,marginBottom:6}}>😤</div>
+            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Vitimização</div>
+            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"A culpa é sempre do outro." Você se isenta completamente e perde o poder de mudar.</div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>A pizza da responsabilidade</div>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="70" fill="#9a00e0"/>
+            <path d="M80 80 L80 10 A70 70 0 0 1 140.6 45 Z" fill="#F97316"/>
+            <path d="M80 80 L140.6 45 A70 70 0 0 1 140.6 115 Z" fill="#0EA5E9"/>
+            <path d="M80 80 L140.6 115 A70 70 0 0 1 19.4 115 Z" fill="#22C55E"/>
+            <path d="M80 80 L19.4 115 A70 70 0 0 1 19.4 45 Z" fill="#EAB308"/>
+            <path d="M80 80 L19.4 45 A70 70 0 0 1 80 10 Z" fill="#EC4899"/>
+            <circle cx="80" cy="80" r="20" fill="#7B00C4"/>
+            <text x="80" y="84" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">VOCÊ</text>
+          </svg>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
+          {[["#F97316","Suas escolhas"],["#0EA5E9","O outro envolvido"],["#22C55E","As circunstâncias"],["#EAB308","O contexto"],["#EC4899","O acaso"]].map(([c,l])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:c,flexShrink:0}}/>
+              <span style={{fontSize:11,color:"#f3e6ff"}}>{l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense num problema recente. Divida: qual parte foi sua? Qual foi do outro? Qual foi das circunstâncias? Você ficará surpreso com o quanto não precisa carregar.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você costuma assumir mais ou menos responsabilidade do que te pertence? Qual dos dois extremos é mais comum em você? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoFatosInterpretacoes({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔍</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você acredita em tudo que sua mente diz?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Separar fatos de interpretações é uma das habilidades mais poderosas da TCC.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Qual é a diferença?</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"2px solid #7B00C4"}}>
+            <div style={{color:"#3d006a",fontSize:12,fontWeight:600,marginBottom:6}}>📌 Fato</div>
+            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>O que aconteceu objetivamente. Pode ser verificado. Qualquer pessoa que estivesse lá veria a mesma coisa.</div>
+          </div>
+          <div style={{background:"#fff7ed",borderRadius:10,padding:"12px 14px",border:"2px solid #F97316"}}>
+            <div style={{color:"#9a3412",fontSize:12,fontWeight:600,marginBottom:6}}>🧠 Interpretação</div>
+            <div style={{color:"#7c2d12",fontSize:11,lineHeight:1.5}}>O significado que sua mente atribui ao fato. Depende da sua história, crenças e estado emocional.</div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Exemplos do dia a dia</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {f:"Ela não respondeu minha mensagem",i:"Deve estar com raiva de mim"},
+            {f:"Meu chefe não sorriu para mim",i:"Devo ter feito algo errado"},
+            {f:"Fui reprovado na prova",i:"Não sou inteligente o suficiente"},
+          ].map(({f,i})=>(
+            <div key={f} style={{background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px"}}>
+              <div style={{color:"#f3e6ff",fontSize:11,marginBottom:3}}><span style={{color:"#d9b3f5",fontWeight:500}}>Fato:</span> {f}</div>
+              <div style={{color:"#fde68a",fontSize:11}}><span style={{color:"#fde68a",fontWeight:500}}>Interpretação:</span> {i}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pegue uma situação que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOCÊ acrescentou com sua interpretação? Escreva os dois lados.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Quantas vezes sua mente criou uma história sobre alguém — e você sofreu por algo que nunca aconteceu de verdade? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoSempreNunca({cat}){
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>∞</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>"Eu SEMPRE faço isso errado" — isso é verdade?</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>A supergeneralização transforma eventos pontuais em verdades permanentes.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>O que é supergeneralização?</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:12}}>É quando transformamos um evento específico em uma regra geral sobre nós, os outros ou o mundo. Uma experiência ruim vira uma "verdade eterna".</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {a:"Errei uma vez",b:"SEMPRE erro tudo"},
+            {a:"Ela não me ouviu hoje",b:"NUNCA me ouve"},
+            {a:"Não consegui dormir ontem",b:"NUNCA durmo bem"},
+          ].map(({a,b})=>(
+            <div key={a} style={{display:"flex",alignItems:"center",gap:8,background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid #e8c8ff"}}>
+              <span style={{fontSize:11,color:"#5a0090",flex:1}}>{a}</span>
+              <span style={{color:"#F97316",fontWeight:700,fontSize:14}}>→</span>
+              <span style={{fontSize:11,color:"#F97316",fontWeight:500,flex:1}}>{b}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Como quebrar a generalização</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {de:"SEMPRE / NUNCA",para:"Desta vez / Às vezes / Com frequência"},
+            {de:"TODO MUNDO",para:"Algumas pessoas / Nesse contexto"},
+            {de:"SOU assim",para:"Agi assim nessa situação"},
+          ].map(({de,para})=>(
+            <div key={de} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px"}}>
+              <span style={{fontSize:11,color:"#fde68a",fontWeight:500,flex:1}}>{de}</span>
+              <span style={{color:"#86efac",fontWeight:700}}>→</span>
+              <span style={{fontSize:11,color:"#86efac",flex:1}}>{para}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Quando notar um "sempre" ou "nunca" no seu pensamento, troque por: "desta vez", "às vezes", "com frequência". Observe como a frase — e a emoção — mudam completamente.</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Que "verdades permanentes" você carrega sobre si mesmo que na verdade foram apenas momentos passageiros? 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function Psico7Distorcoes({cat}){
+  const distorcoes = [
+    {e:"📢",t:"Generalização Excessiva",d:"Tirar conclusões amplas com base em uma única experiência negativa.",ex:"'Eu sempre falho.'"},
+    {e:"🎭",t:"Pensamento Dicotômico",d:"Ver as coisas como preto ou branco, sem considerar outras opções — o famoso 8 ou 80.",ex:"'Ou faço perfeito ou não faço.'"},
+    {e:"👥",t:"Leitura da Mente",d:"Presumir que sabe o que os outros estão pensando ou sentindo, sem evidências.",ex:"'Ele está com raiva de mim.'"},
+    {e:"👤",t:"Culpa Pessoal",d:"Atribuir a si mesmo a culpa por tudo que acontece de ruim.",ex:"'Estraguei tudo mesmo.'"},
+    {e:"💔",t:"Raciocínio Emocional",d:"Tomar decisões com base em emoções em vez de fatos ou lógica.",ex:"'Sinto que vai dar errado, então vai.'"},
+    {e:"🏆",t:"Desqualificação do Positivo",d:"Nomear eventos positivos como sorte ou coincidência, nunca como conquista.",ex:"'Foi pura sorte.'"},
+    {e:"🌪️",t:"Catastrofização",d:"Supor que as coisas sempre serão as piores possíveis, sem considerar outras saídas.",ex:"'Não vai dar certo de jeito nenhum.'"},
+  ];
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧩</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Sua mente te engana — e você nem percebe</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>As 7 distorções de pensamento mais comuns que afetam como você sente e age.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Distorções cognitivas são padrões de pensamento que levam a conclusões imprecisas e negativas. Eles se repetem na nossa mente, afetando nossa interpretação da realidade, nossos sentimentos e nossas reações.</div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+        {distorcoes.map(({e,t,d,ex},i)=>(
+          <div key={t} style={{padding:"12px 20px",borderBottom:"1px solid #e8c8ff",background:i%2===0?"#f9f0ff":"white",display:"flex",gap:12,alignItems:"flex-start"}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{e}</div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#3d006a",marginBottom:3}}>{t}</div>
+              <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5,marginBottom:4}}>{d}</div>
+              <div style={{fontSize:11,color:"#9a00e0",fontStyle:"italic",background:"#f3e6ff",borderRadius:6,padding:"3px 8px",display:"inline-block"}}>{ex}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
+        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Qual dessas distorções aparece mais nos seus pensamentos? Reconhecer o padrão é o primeiro passo para mudar a narrativa interna. 💜</div>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
+// Mapa de visualizações
+const PSICO_VISUAIS = {
+  "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
+  "A armadilha do pior cenário": PsicoPiorCenario,
+  "Eustresse vs. distresse": PsicoEustresse,
+  "O ciclo da ansiedade": PsicoCicloAnsiedade,
+  "Desmontar o Circuito Cerebral da Ansiedade": PsicoDesmontarAnsiedade,
+  "O modelo ABC na prática": PsicoModeloABC,
+  "O poder dos pensamentos": PsicoPensamentos,
+  "A pizza da responsabilidade": PsicoPizzaResponsabilidade,
+  "Fatos vs. interpretações": PsicoFatosInterpretacoes,
+  "O perigo do sempre e nunca": PsicoSempreNunca,
+  "7 Distorções de Pensamento": Psico7Distorcoes,
+};
+
+const CATS_PSICOEDUCACAO = {
+  tcc:              {label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
+  ansiedade:        {label:"Ansiedade",            cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
+  emocoes:          {label:"Emoções",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
+  autocuidado:      {label:"Autocuidado",          cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
+  relacionamentos:  {label:"Relacionamentos",      cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
+  casais:           {label:"Casais",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
+  corpo:            {label:"Corpo & Alimentação",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
+  esquema:          {label:"Terapia do Esquema",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
+  outros:           {label:"Outros",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
+};
+
+function AbaPsicoeducacao() {
+  const [itens, setItens]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [modal, setModal]         = useState(false);
+  const [editando, setEditando]   = useState(null);
+  const [salvando, setSalvando]   = useState(false);
+  const [filtro, setFiltro]       = useState("todos");
+  const [aberto, setAberto]       = useState(null);
+
+  const MIGRACAO_PSICO = {
+    "autoestima":"emocoes","mindfulness":"emocoes","trauma":"esquema",
+    "depressao":"emocoes","habitos":"autocuidado",
+  };
+
+  async function migrarCatPsico(){
+    if(!confirm("Migrar categorias antigas de psicoeducação?")) return;
+    setSalvando(true);
+    try{
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      let count = 0;
+      for(const doc of snap.docs){
+        const cat = doc.data().categoria;
+        const nova = MIGRACAO_PSICO[cat];
+        if(nova){ await db.collection("clinica_psicoeducacao").doc(doc.id).update({categoria:nova}); count++; }
+      }
+      alert("✓ "+count+" psicoeducações migradas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
+  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_psicoeducacao").onSnapshot(s=>{
+      setItens(s.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  async function salvar(){
+    if(!form.titulo){alert("Título obrigatório.");return;}
+    setSalvando(true);
+    if(editando){
+      await db.collection("clinica_psicoeducacao").doc(editando).update(form);
+    } else {
+      await db.collection("clinica_psicoeducacao").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModal(false);setEditando(null);setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setSalvando(false);
+  }
+
+  async function popularPilulas() {
+    if (!confirm(`Isso vai adicionar as pílulas TCC ao banco. Continuar?`)) return;
+    setSalvando(true);
+    try {
+      for (const p of PILULAS_TCC) {
+        await db.collection("clinica_psicoeducacao").add({
+          ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      alert("✓ Pílulas TCC adicionadas com sucesso!");
+    } catch(e) { alert("Erro ao popular: " + e.message); }
+    setSalvando(false);
+  }
+
+  async function sincronizarNovas() {
+    setSalvando(true);
+    try {
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const titulosExistentes = snap.docs.map(d=>d.data().titulo);
+      const novas = PILULAS_TCC.filter(p=>!titulosExistentes.includes(p.titulo));
+      if(novas.length===0){alert("Todas as psicoeducações já estão no banco!");setSalvando(false);return;}
+      for(const p of novas){
+        await db.collection("clinica_psicoeducacao").add({...p,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      alert("✓ "+novas.length+" nova(s) psicoeducação(ões) adicionada(s): "+novas.map(p=>p.titulo).join(", "));
+    } catch(e){alert("Erro: "+e.message);}
+    setSalvando(false);
+  }
+
+  const cats = ["todos",...Object.keys(CATS_PSICOEDUCACAO)];
+  const filtrados = filtro==="todos" ? itens : itens.filter(i=>i.categoria===filtro);
+
+  if(loading) return <Spinner/>;
+
+  if(aberto){
+    const cat = CATS_PSICOEDUCACAO[aberto.categoria]||CATS_PSICOEDUCACAO.outros;
+    const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
+    return (
+      <div>
+        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
+          <Icon name="arrow-left" size={16}/> Todos os materiais
+        </button>
+        {VisualComp ? <VisualComp cat={cat}/> : (
+          <>
+            <div className="card" style={{marginBottom:16,background:cat.cor,color:"white"}}>
+              <div style={{textAlign:"center",padding:"8px 0 16px"}}>
+                <div style={{fontSize:52,marginBottom:12}}>{aberto.emoji||"📚"}</div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>{aberto.titulo}</div>
+                <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"4px 14px",fontSize:12}}>{cat.label}</span>
+              </div>
+            </div>
+            {aberto.descricao&&<div className="card" style={{marginBottom:12}}><p style={{fontSize:14,color:"var(--text-muted)",fontStyle:"italic"}}>{aberto.descricao}</p></div>}
+            {aberto.conteudo&&<div className="card"><div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div></div>}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
+        <div style={{display:"flex",gap:8}}>
+          {itens.length===0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={popularPilulas} disabled={salvando}>
+              <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={sincronizarNovas} disabled={salvando}>
+              <Icon name="refresh-cw" size={14}/> {salvando?"Sincronizando...":"Sincronizar novas"}
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
+              <Icon name="layers" size={14}/> Migrar categorias
+            </button>
+          )}
+          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
+            <Icon name="plus" size={16}/> Novo Material
+          </button>
+        </div>
+      </div>
+
+      {/* Filtro por categoria */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
+        {cats.map(cat=>{
+          const info = CATS_PSICOEDUCACAO[cat];
+          const count = cat==="todos"?itens.length:itens.filter(i=>i.categoria===cat).length;
+          if(count===0&&cat!=="todos") return null;
+          return (
+            <button key={cat} onClick={()=>setFiltro(cat)}
+              style={{padding:"5px 12px",borderRadius:20,border:"1.5px solid",borderColor:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-200)",background:filtro===cat?(info?.bg||"var(--purple-bg)"):"white",color:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:filtro===cat?600:400}}>
+              {cat==="todos"?"Todos":info?.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {filtrados.length===0
+        ? <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",fontSize:14}}>
+            Nenhum material cadastrado ainda.<br/>
+            <button className="btn btn-purple" style={{marginTop:12}} onClick={()=>setModal(true)}>Adicionar primeiro material</button>
+          </div>
+        : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
+            {filtrados.map(item=>{
+              const cat = CATS_PSICOEDUCACAO[item.categoria]||CATS_PSICOEDUCACAO.outros;
+              return (
+                <div key={item.id} style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+                  <div style={{background:cat.bg,padding:"20px 16px",textAlign:"center",borderBottom:"1px solid "+cat.cor+"20"}}>
+                    <div style={{fontSize:36,marginBottom:8}}>{item.emoji||"📚"}</div>
+                    <div style={{fontWeight:700,fontSize:14,color:cat.cor}}>{item.titulo}</div>
+                    <span style={{background:cat.cor+"20",color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,marginTop:6,display:"inline-block"}}>{cat.label}</span>
+                  </div>
+                  <div style={{padding:"12px 16px"}}>
+                    {item.descricao&&<p style={{fontSize:12,color:"var(--text-muted)",marginBottom:10,lineHeight:1.5}}>{item.descricao.slice(0,80)}{item.descricao.length>80?"...":""}</p>}
+                    <div style={{display:"flex",gap:6}}>
+                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"6px 0"}} onClick={()=>setAberto(item)}>
+                        <Icon name="eye" size={13}/> Ver
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px"}} onClick={()=>{setForm({titulo:item.titulo||"",descricao:item.descricao||"",categoria:item.categoria||"ansiedade",conteudo:item.conteudo||"",emoji:item.emoji||"📚",tipo:item.tipo||"texto"});setEditando(item.id);setModal(true);}}>
+                        <Icon name="edit-2" size={13}/>
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(item.id)}>
+                        <Icon name="trash-2" size={13}/>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+      }
+
+      {/* Modal cadastro */}
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontWeight:700,fontSize:16}}>{editando?"Editar Material":"Novo Material de Psicoeducação"}</div>
+              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--text-muted)"}}>×</button>
+            </div>
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:10}}>
+                <div>
+                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Emoji</label>
+                  <input className="form-input" value={form.emoji} onChange={e=>setForm(f=>({...f,emoji:e.target.value}))} style={{textAlign:"center",fontSize:20}}/>
+                </div>
+                <div>
+                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Título *</label>
+                  <input className="form-input" value={form.titulo} onChange={e=>setForm(f=>({...f,titulo:e.target.value}))} placeholder="Ex: O que é ansiedade?"/>
+                </div>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Categoria</label>
+                <select className="form-input" value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))}>
+                  {Object.entries(CATS_PSICOEDUCACAO).map(([id,{label}])=><option key={id} value={id}>{label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Descrição breve</label>
+                <input className="form-input" value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Resumo do material..."/>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Conteúdo completo</label>
+                <TextAreaVoz className="form-input" rows={6} value={form.conteudo} onChange={e=>setForm(f=>({...f,conteudo:e.target.value}))} placeholder="Texto educativo completo..." style={{resize:"vertical"}}/>
+              </div>
+            </div>
+            <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setModal(false)} className="btn btn-ghost">Cancelar</button>
+              <button onClick={salvar} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RecursosTerapeuticos({ user }) {
   const [recursos, setRecursos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
@@ -4141,17 +7478,17 @@ function RecursosTerapeuticos() {
   }
 
   const getCatInfo = (id) => CATEGORIAS_RECURSOS.find(c=>c.id===id)||CATEGORIAS_RECURSOS[6];
-  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵"};
-  const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="relaxamento"?"💨":r.categoria==="tcc"?"🧠":r.categoria==="avaliacao"?"📋":r.categoria==="musicoterapia"?"🎵":"🔧");
+  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
+  const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="tcc"?"🧠":r.categoria==="ansiedade"?"😮":r.categoria==="emocoes"?"💜":r.categoria==="autocuidado"?"🌱":r.categoria==="relacionamentos"?"❤️":r.categoria==="corpo"?"🥗":r.categoria==="esquema"?"🔑":r.categoria==="musicoterapia"?"🎵":r.categoria==="avaliacao"?"📋":"🔧");
   const [visualizando, setVisualizando] = useState(null);
 
   if(loading) return <Spinner/>;
 
-  if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)}/>;
+  if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)} user={user}/>;
   return (
     <div>
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+        <div style={{minWidth:0,flex:1}}>
           <div className="page-title">Recursos Terapeuticos</div>
           <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
         </div>
@@ -4161,9 +7498,9 @@ function RecursosTerapeuticos() {
       </div>
 
       {/* Abas — 3 abas */}
-      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)"}}>
-        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas Terapêuticas","book-open"],["casais","Terapia de Casais","heart"]].map(([id,label,ic])=>(
-          <button key={id} onClick={()=>setAbaView(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:abaView===id?"var(--purple)":"var(--gray-600)",borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:abaView===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
+      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
+        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas Terapêuticas","book-open"],["psicoeducacao","Psicoeducação","brain"],["casais","Terapia de Casais","heart"]].map(([id,label,ic])=>(
+          <button key={id} onClick={()=>setAbaView(id)} style={{padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:abaView===id?"var(--purple)":"var(--gray-600)",borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:abaView===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}}>
             <Icon name={ic} size={15}/>{label}
           </button>
         ))}
@@ -4171,6 +7508,9 @@ function RecursosTerapeuticos() {
 
       {/* Aba Fábulas */}
       {abaView==="fabulas"&&<AbaFabulas/>}
+
+      {/* Aba Psicoeducação */}
+      {abaView==="psicoeducacao"&&<AbaPsicoeducacao/>}
 
       {/* Aba Terapia de Casais */}
       {abaView==="casais"&&<AbaProtocoloCasais/>}
@@ -4208,7 +7548,7 @@ function RecursosTerapeuticos() {
                     <div style={{flex:1}}>
                       <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
                         <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30"}}>{r.tipo==="interativa"?"INTERATIVA":"CONTEÚDO"}</span>
-                        {r.categoria==="musicoterapia"&&<span style={{background:"#fce7f3",color:"#be185d",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Música</span>}
+                        {r.categoria==="musicoterapia"&&<span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Música</span>}
                       </div>
                       <div style={{fontWeight:600,fontSize:14}}>{r.titulo}</div>
                     </div>
@@ -4242,7 +7582,7 @@ function RecursosTerapeuticos() {
             </div>
             <div className="form-group" style={{marginBottom:14}}>
               <label className="form-label">Descricao curta</label>
-              <textarea className="form-input" rows={2} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/>
+              <TextAreaVoz className="form-input" rows={2} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/>
             </div>
             <div className="form-group" style={{marginBottom:14}}>
               <label className="form-label">Categoria</label>
@@ -4316,7 +7656,7 @@ function Laudos() {
   };
 
   useEffect(()=>{
-    const unsub = db.collection("clinica_laudos").orderBy("createdAt","desc").onSnapshot(snap=>{
+    const unsub = db.collection("clinica_laudos").onSnapshot(snap=>{
       setLaudos(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
@@ -4365,7 +7705,7 @@ function Laudos() {
         <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Novo Laudo</button>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:24}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:24}}>
         {[["Rascunho",totalRascunho,"#b45309","#fef3c7"],["Enviado ao Paciente",totalEnviado,"#065f46","#d1fae5"],["Total",laudos.length,"#7B00C4","var(--purple-soft)"]].map(([l,n,cor,bg])=>(
           <div key={l} className="metric-card" style={{textAlign:"center",background:bg}}>
             <div className="metric-value" style={{fontSize:28,color:cor}}>{n}</div>
@@ -4452,7 +7792,7 @@ function Laudos() {
               <label className="form-label">Paciente *</label>
               <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div className="form-group" style={{marginBottom:14}}>
@@ -4462,7 +7802,7 @@ function Laudos() {
             </div>
             <div className="form-group" style={{marginBottom:20}}>
               <label className="form-label">Observações internas (opcional)</label>
-              <textarea className="form-input" rows={2} value={form.observacoes} onChange={e=>setForm({...form,observacoes:e.target.value})} placeholder="Notas internas sobre este laudo..."/>
+              <TextAreaVoz className="form-input" rows={2} value={form.observacoes} onChange={e=>setForm({...form,observacoes:e.target.value})} placeholder="Notas internas sobre este laudo..."/>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
@@ -4925,12 +8265,12 @@ function Agenda() {
   const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
   useEffect(()=>{
-    const u1 = db.collection("clinica_sessoes").orderBy("data").onSnapshot(snap=>{
+    const u1 = db.collection("clinica_sessoes").onSnapshot(snap=>{
       setSessoes(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
     // Reservas da sala (Thais) — aparecem como bloqueios laranjas
-    const u2 = db.collection("sala_reservas").orderBy("data").onSnapshot(snap=>{
+    const u2 = db.collection("sala_reservas").onSnapshot(snap=>{
       const reservasSala = snap.docs.map(d=>({
         id:"sala_"+d.id, ...d.data(),
         pacienteNome: d.data().usuarioId==="thais"
@@ -5073,12 +8413,12 @@ function Agenda() {
   return (
     <div>
       {/* Header */}
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
+      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+        <div style={{minWidth:0}}>
           <div className="page-title">Agenda</div>
           <div className="page-subtitle">{sessoes.filter(s=>s.status==="agendado"||s.status==="confirmado").length} sessões agendadas</div>
         </div>
-        <div style={{display:"flex",gap:8}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
           <a href="https://docplanner.doctoralia.com.br/#/calendar/week" target="_blank" rel="noreferrer"
             className="btn btn-ghost" style={{fontSize:13,textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
             <Icon name="external-link" size={13}/> Doctoralia
@@ -5094,7 +8434,7 @@ function Agenda() {
       </div>
 
       {/* Métricas rápidas */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:20}}>
         {[["Hoje",sessoesHoje.length,"#7B00C4","var(--purple-soft)"],["Agendadas",sessoes.filter(s=>s.status==="agendado").length,"#0891b2","#e0f2fe"],["Confirmadas",sessoes.filter(s=>s.status==="confirmado").length,"#059669","#d1fae5"],["Este mês",sessoes.filter(s=>s.data?.startsWith(new Date().toISOString().slice(0,7))).length,"#d97706","#fef3c7"]].map(([l,n,cor,bg])=>(
           <div key={l} style={{background:bg,borderRadius:12,padding:"12px 16px",textAlign:"center"}}>
             <div style={{fontSize:24,fontWeight:800,color:cor}}>{n}</div>
@@ -5116,7 +8456,7 @@ function Agenda() {
       {/* Grade semanal — separada por período */}
       <div style={{marginBottom:24}}>
         {/* Cabeçalho dos dias */}
-        <div style={{display:"grid",gridTemplateColumns:"80px repeat(7,1fr)",gap:4,marginBottom:4}}>
+        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
           <div/>
           {dias.map((dia,i)=>{
             const isHoje = formatData(dia)===formatData(hoje);
@@ -5131,9 +8471,10 @@ function Agenda() {
               </div>
             );
           })}
-        </div>
+        </div></div>
 
         {/* Períodos */}
+        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:4}}>
         {[
           {label:"☀️ Manhã",   range:["06:00","12:00"], bg:"#fffbeb"},
           {label:"🌤️ Tarde",   range:["12:00","18:00"], bg:"#f0f9ff"},
@@ -5143,7 +8484,7 @@ function Agenda() {
             sessoesNoDia(dia).some(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1])
           );
           return (
-            <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"80px repeat(7,1fr)",gap:4,marginBottom:4}}>
+            <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
               {/* Label período */}
               <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
                 <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)",writingMode:"horizontal-tb",whiteSpace:"nowrap"}}>{periodo.label}</span>
@@ -5180,6 +8521,7 @@ function Agenda() {
             </div>
           );
         })}
+        </div>{/* fecha overflow wrapper períodos */}
       </div>
 
       {/* Lista próximas sessões */}
@@ -5227,7 +8569,7 @@ function Agenda() {
               <label className="form-label">Paciente *</label>
               <select className="form-input" value={form.pacienteId} onChange={e=>setForm({...form,pacienteId:e.target.value})}>
                 <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:14}}>
@@ -5262,7 +8604,7 @@ function Agenda() {
             </div>
             <div className="form-group" style={{marginBottom:20}}>
               <label className="form-label">Observações</label>
-              <textarea className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre a sessão..."/>
+              <TextAreaVoz className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre a sessão..."/>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
@@ -5338,12 +8680,12 @@ function Agenda() {
 function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
-  const notifProps = useNotificacoes(user);
-  function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");}
+  const notifProps = useBotaoNotificacao(user);
+  function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");if(u.tipo==="marketing")setTab("marketing-dashboard");}
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
-    <div>
+    <div style={{maxWidth:"100vw",overflowX:"hidden"}}>
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} notifProps={notifProps}/>
       <div className="header-mobile"><div className="header-mobile-logo">Administracao</div><button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button></div>
       <div className="main-content">
@@ -5351,7 +8693,7 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="alunos"      &&<Alunos/>}
         {user.tipo==="psicologa"  &&tab==="casais"      &&<TerapiaCasais/>}
-        {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos/>}
+        {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos user={user}/>}
         {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
         {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
@@ -5361,7 +8703,7 @@ function App() {
           <div style={{padding:20}}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>Menu</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              {NAV_PSICOLOGA.filter(i=>!["dashboard","pacientes","agenda","fin-clinica"].includes(i.id)).map(item=>(
+              {NAV_PSICOLOGA_FLAT.filter(i=>!["dashboard","pacientes","agenda","fin-clinica"].includes(i.id)).map(item=>(
                 <button key={item.id} onClick={()=>setTab(item.id)}
                   style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"20px 12px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:500,color:"var(--text)"}}>
                   <Icon name={item.icon} size={24}/>
@@ -5378,6 +8720,10 @@ function App() {
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads user={user}/>}
+        {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
+        {user.tipo==="psicologa"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
+        {(user.tipo==="psicologa"||user.tipo==="marketing")&&tab==="dashboard-performance"&&<DashboardPerformance user={user}/>}
       </div>
       <div className="nav-mobile">
         {user.tipo==="psicologa"&&[
@@ -5405,10 +8751,1973 @@ function App() {
             <Icon name={item.icon} size={20}/><span>{item.label.split(" ")[0]}</span>
           </button>
         ))}
+        {user.tipo==="marketing"&&NAV_MARKETING.map(item=>(
+          <button key={item.id} className={"nav-mobile-item "+(tab===item.id?"active":"")} onClick={()=>setTab(item.id)}>
+            <Icon name={item.icon} size={20}/><span>{item.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
 }
+
+// ═══════════════════════════════════════════════════════
+//  FUNIL DE LEADS — KANBAN
+// ═══════════════════════════════════════════════════════
+const COLUNAS_FUNIL = [
+  { id:"novo",              label:"Lead Novo",             cor:"#6b7280", bg:"#f3f4f6" },
+  { id:"contato",           label:"Primeiro Contato",      cor:"#0891b2", bg:"#e0f2fe" },
+  { id:"agendamento",       label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
+  { id:"agendado",          label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
+  { id:"convertido",        label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
+  { id:"convertido_social",   label:"Convertido Social",       cor:"#0d9488", bg:"#ccfbf1" },
+  { id:"convertido_parceria", label:"Convertido — Parceria",   cor:"#7B00C4", bg:"#f5f3ff" },
+  { id:"perdido",             label:"Perdido",                 cor:"#dc2626", bg:"#fef2f2" },
+];
+
+function parsearLeadIA(texto) {
+  const linhas = texto.split("\n");
+  function extrairLinha(chaves) {
+    for (const linha of linhas) {
+      const limpa = linha.replace(/\*/g,"").replace(/\[|\]/g,"").trim();
+      for (const chave of chaves) {
+        const idx = limpa.toLowerCase().indexOf(chave.toLowerCase() + ":");
+        if (idx !== -1) return limpa.substring(idx + chave.length + 1).trim();
+      }
+    }
+    return "";
+  }
+  return {
+    nome:     extrairLinha(["Nome do Lead","Nome"]),
+    telefone: extrairLinha(["WhatsApp/Contato","WhatsApp","Contato","Telefone"]),
+    queixa:   extrairLinha(["Principal Queixa/Objetivo","Queixa/Objetivo","Principal Queixa","Queixa","Objetivo"]),
+    servico:  extrairLinha(["Serviço de Interesse","Servico de Interesse","Serviço","Servico"]),
+  };
+}
+
+function TagInputCampanha({ value=[], onChange }) {
+  const [input, setInput]           = useState("");
+  const [sugestoes, setSugestoes]   = useState([]);
+  const [todasTags, setTodasTags]   = useState([]);
+
+  useEffect(()=>{
+    db.collection("clinica_campanhas").orderBy("nome").onSnapshot(
+      s => setTodasTags(s.docs.map(d=>d.data().nome)),
+      ()=>{}
+    );
+  },[]);
+
+  const filtradas = input.length>0
+    ? todasTags.filter(t=>t.toLowerCase().includes(input.toLowerCase()) && !value.includes(t))
+    : [];
+
+  async function adicionarTag(tag) {
+    const t = tag.trim();
+    if (!t || value.includes(t)) return;
+    // salvar no Firebase se nova
+    if (!todasTags.includes(t)) {
+      await db.collection("clinica_campanhas").add({ nome:t, createdAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
+    }
+    onChange([...value, t]);
+    setInput(""); setSugestoes([]);
+  }
+
+  function removerTag(t) { onChange(value.filter(x=>x!==t)); }
+
+  function onKeyDown(e) {
+    if ((e.key==="Enter"||e.key===",") && input.trim()) { e.preventDefault(); adicionarTag(input); }
+    if (e.key==="Backspace" && !input && value.length>0) removerTag(value[value.length-1]);
+  }
+
+  return (
+    <div style={{border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 8px",background:"white",minHeight:38,cursor:"text"}}
+      onClick={()=>document.getElementById("tag-input-camp")?.focus()}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
+        {value.map(t=>(
+          <span key={t} style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
+            {t}
+            <button onClick={()=>removerTag(t)} style={{background:"none",border:"none",cursor:"pointer",color:"#ea580c",padding:0,fontSize:14,lineHeight:1}}>×</button>
+          </span>
+        ))}
+        <div style={{position:"relative",flex:1,minWidth:120}}>
+          <input id="tag-input-camp" value={input} onChange={e=>{setInput(e.target.value);}}
+            onKeyDown={onKeyDown} placeholder={value.length===0?"Campanha/Origem...":""}
+            style={{border:"none",outline:"none",fontSize:13,width:"100%",padding:"2px 0",background:"transparent"}}/>
+          {filtradas.length>0&&(
+            <div style={{position:"absolute",top:"100%",left:0,background:"white",border:"1px solid var(--gray-200)",borderRadius:8,boxShadow:"0 4px 12px rgba(0,0,0,0.1)",zIndex:100,minWidth:200}}>
+              {filtradas.slice(0,6).map(t=>(
+                <button key={t} onMouseDown={e=>{e.preventDefault();adicionarTag(t);}}
+                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+                  onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                  {t}
+                </button>
+              ))}
+              {input&&!todasTags.includes(input.trim())&&(
+                <button onMouseDown={e=>{e.preventDefault();adicionarTag(input);}}
+                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#7B00C4",fontWeight:600}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
+                  onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                  + Criar "{input.trim()}"
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
+  const novo = !lead?.id;
+  const [form, setForm]         = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
+  const [textoIA, setTextoIA]   = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [aba, setAba]           = useState("dados"); // "dados" | "timeline"
+  const [interacoes, setInteracoes] = useState([]);
+  const [novaAnotacao, setNovaAnotacao] = useState("");
+  const [registrando, setRegistrando]   = useState(false);
+  const [excluindo, setExcluindo]        = useState(false);
+
+  useEffect(()=>{
+    if (!lead?.id) return;
+    db.collection("clinica_leads").doc(lead.id).collection("interacoes")
+      .orderBy("createdAt","desc")
+      .onSnapshot(s=>setInteracoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[lead?.id]);
+
+  function aplicarIA() {
+    const parsed = parsearLeadIA(textoIA);
+    if (!parsed.nome && !parsed.telefone) { alert("Não foi possível identificar os campos. Verifique o formato do texto."); return; }
+    setForm(f=>({...f, ...parsed}));
+    setTextoIA("");
+  }
+
+  async function salvar() {
+    if (!form.nome?.trim()) { alert("Nome é obrigatório."); return; }
+    setSalvando(true);
+    try {
+      const dados = { ...form, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+      if (novo) {
+        dados.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        dados.status = dados.status || "novo";
+        await db.collection("clinica_leads").add(dados);
+      } else {
+        await db.collection("clinica_leads").doc(lead.id).update(dados);
+      }
+      onSalvar();
+    } catch(e) { alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  async function registrarContato() {
+    if (!novaAnotacao.trim()) return;
+    if (!lead?.id) { alert("Salve o lead primeiro antes de registrar interações."); return; }
+    setRegistrando(true);
+    try {
+      await db.collection("clinica_leads").doc(lead.id).collection("interacoes").add({
+        texto: novaAnotacao.trim(),
+        autor: user?.nome || "Usuário",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setNovaAnotacao("");
+    } catch(e) { alert("Erro ao registrar."); }
+    setRegistrando(false);
+  }
+
+  async function excluirLead() {
+    if (!lead?.id) return;
+    if (!window.confirm("Tem certeza que deseja excluir permanentemente este lead? Esta ação não poderá ser desfeita.")) return;
+    setExcluindo(true);
+    try {
+      await db.collection("clinica_leads").doc(lead.id).delete();
+      onFechar();
+    } catch(e) { alert("Erro ao excluir."); }
+    setExcluindo(false);
+  }
+
+  const f = (campo, val) => setForm(x=>({...x,[campo]:val}));
+
+  function fmtDataHora(ts) {
+    if (!ts?.toDate) return "—";
+    const d = ts.toDate();
+    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+
+        {/* Header */}
+        <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+          <div style={{fontWeight:700,fontSize:16}}>{novo?"Novo Lead": form.nome||"Lead"}</div>
+          <button onClick={onFechar} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:22,lineHeight:1}}>×</button>
+        </div>
+
+        {/* Abas — só para lead existente */}
+        {!novo && (
+          <div style={{display:"flex",borderBottom:"1px solid var(--gray-100)",flexShrink:0}}>
+            {[{id:"dados",label:"📋 Dados"},{id:"timeline",label:`💬 Follow-up (${interacoes.length})`}].map(a=>(
+              <button key={a.id} onClick={()=>setAba(a.id)}
+                style={{flex:1,padding:"12px 0",background:"none",border:"none",cursor:"pointer",fontWeight:aba===a.id?700:400,fontSize:13,fontFamily:"inherit",borderBottom:aba===a.id?"2px solid #7B00C4":"2px solid transparent",color:aba===a.id?"#7B00C4":"var(--text-muted)",transition:"all .15s"}}>
+                {a.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Corpo scrollável */}
+        <div style={{overflowY:"auto",flex:1}}>
+
+          {/* ABA DADOS */}
+          {(novo || aba==="dados") && (
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
+              {novo && (
+                <div style={{background:"#f5f3ff",border:"1px solid #7B00C420",borderRadius:10,padding:14}}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#7B00C4",marginBottom:8}}>✨ Inserir Lead via IA</div>
+                  <TextAreaVoz value={textoIA} onChange={e=>setTextoIA(e.target.value)} rows={5}
+                    placeholder={"Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ..."}
+                    style={{width:"100%",border:"1px solid #7B00C430",borderRadius:8,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box",background:"white"}}/>
+                  <button onClick={aplicarIA} style={{marginTop:8,background:"#7B00C4",color:"white",border:"none",borderRadius:20,padding:"7px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+                    ⚡ Preencher campos automaticamente
+                  </button>
+                </div>
+              )}
+
+              {[
+                {label:"Nome do Lead *",          campo:"nome",     placeholder:"Nome completo"},
+                {label:"WhatsApp / Contato",       campo:"telefone", placeholder:"(62) 99999-9999"},
+                {label:"Principal Queixa/Objetivo",campo:"queixa",   placeholder:"Ex: Ansiedade, insônia..."},
+                {label:"Serviço de Interesse",     campo:"servico",  placeholder:"Ex: Psicoterapia individual"},
+              ].map(({label,campo,placeholder})=>(
+                <div key={campo}>
+                  <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>{label}</label>
+                  <input type="text" value={form[campo]||""} onChange={e=>f(campo,e.target.value)}
+                    placeholder={placeholder} className="form-input"/>
+                </div>
+              ))}
+
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha / Origem</label>
+                <TagInputCampanha value={form.campanhas||[]} onChange={v=>f("campanhas",v)}/>
+                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Digite e pressione Enter. Campanhas novas são salvas automaticamente.</div>
+              </div>
+
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Status</label>
+                <select value={form.status||"novo"} onChange={e=>{
+                  const novoStatus = e.target.value;
+                  f("status", novoStatus);
+                  if ((novoStatus==="convertido" || novoStatus==="convertido_social" || novoStatus==="convertido_parceria") && !novo && onConverter) {
+                    onConverter({...form, id:lead.id, _tipoConversao: novoStatus});
+                  }
+                }} className="form-input">
+                  {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Observações</label>
+                <TextAreaVoz value={form.obs||""} onChange={e=>f("obs",e.target.value)} rows={3}
+                  className="form-input" placeholder="Anotações internas..." style={{resize:"vertical"}}/>
+              </div>
+            </div>
+          )}
+
+          {/* ABA TIMELINE */}
+          {!novo && aba==="timeline" && (
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
+
+              {/* Campo nova anotação */}
+              <div style={{background:"#f9fafb",border:"1px solid var(--gray-200)",borderRadius:12,padding:16}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>📝 Nova anotação de follow-up</div>
+                <TextAreaVoz value={novaAnotacao} onChange={e=>setNovaAnotacao(e.target.value)} rows={3}
+                  className="form-input"
+                  placeholder='Ex: "Cliente disse que vai falar com o marido e pediu para retornar na quinta-feira."'
+                  style={{resize:"vertical",marginBottom:10}}/>
+                <button onClick={registrarContato} disabled={registrando||!novaAnotacao.trim()}
+                  style={{background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"9px 20px",fontSize:13,fontWeight:600,cursor:"pointer",opacity:(!novaAnotacao.trim()||registrando)?0.5:1}}>
+                  {registrando?"Registrando...":"✅ Registrar Contato"}
+                </button>
+              </div>
+
+              {/* Timeline */}
+              <div>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:12,color:"var(--text-muted)"}}>HISTÓRICO DE INTERAÇÕES</div>
+                {interacoes.length===0
+                  ? <div style={{textAlign:"center",padding:"32px 0",color:"var(--gray-400)",fontSize:13}}>Nenhuma interação registrada ainda.</div>
+                  : (
+                    <div style={{position:"relative"}}>
+                      {/* Linha vertical */}
+                      <div style={{position:"absolute",left:15,top:0,bottom:0,width:2,background:"var(--gray-100)"}}/>
+                      <div style={{display:"flex",flexDirection:"column",gap:0}}>
+                        {interacoes.map((it,idx)=>(
+                          <div key={it.id} style={{display:"flex",gap:16,paddingBottom:20,position:"relative"}}>
+                            {/* Bolinha */}
+                            <div style={{width:32,height:32,borderRadius:"50%",background:"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,zIndex:1,fontSize:13}}>
+                              💬
+                            </div>
+                            {/* Conteúdo */}
+                            <div style={{flex:1,background:"white",border:"1px solid var(--gray-100)",borderRadius:10,padding:"12px 14px",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
+                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:4}}>
+                                <span style={{fontWeight:600,fontSize:12,color:"#7B00C4"}}>{it.autor}</span>
+                                <span style={{fontSize:11,color:"var(--gray-400)"}}>{fmtDataHora(it.createdAt)}</span>
+                              </div>
+                              <div style={{fontSize:13,lineHeight:1.6,color:"var(--text)"}}>{it.texto}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                }
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+          {/* Lixeira — só para lead existente */}
+          {!novo ? (
+            <button onClick={excluirLead} disabled={excluindo}
+              style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",borderRadius:8,border:"1px solid #fecaca",background:"#fef2f2",color:"#dc2626",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
+              <Icon name="trash-2" size={14}/> {excluindo?"Excluindo...":"Excluir lead"}
+            </button>
+          ) : <div/>}
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+              {aba==="timeline"?"Fechar":"Cancelar"}
+            </button>
+            {(novo||aba==="dados") && (
+              <button onClick={salvar} disabled={salvando} className="btn-primary">
+                {salvando?"Salvando...":"Salvar Lead"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REGRAS_INATIVIDADE = [
+  {
+    status: "novo",
+    limiteMs: 30 * 60 * 1000, // 30 minutos
+    emoji: "⚠️",
+    titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
+    corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
+    cor: "#d97706", bg: "#fef3c7", borda: "#fde68a",
+  },
+  {
+    status: "contato",
+    limiteMs: 4 * 60 * 60 * 1000, // 4 horas
+    emoji: "📞",
+    titulo: (nome) => `📞 Primeiro contato sem avanço`,
+    corpo:  (nome, tempo) => `${nome} está em "Primeiro Contato" há ${tempo}. Tentar avançar para agendamento.`,
+    cor: "#0891b2", bg: "#e0f2fe", borda: "#bae6fd",
+  },
+  {
+    status: "agendamento",
+    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
+    emoji: "⏰",
+    titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
+    corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
+    cor: "#dc2626", bg: "#fef2f2", borda: "#fecaca",
+  },
+];
+
+function formatarTempo(ms) {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
+  if (h > 0) return `${h}h ${m}min`;
+  return `${m}min`;
+}
+
+function fmtWhats(tel) {
+  if (!tel) return null;
+  const num = tel.replace(/\D/g,"");
+  if (!num) return null;
+  return num.startsWith("55") ? num : "55"+num;
+}
+
+function CardLead({ lead, onEditar, onMover, colunas }) {
+  const [dragging, setDragging] = useState(false);
+
+  // Verifica se está em alerta
+  const regra = REGRAS_INATIVIDADE.find(r=>r.status===(lead.status||"novo"));
+  const rawRef = lead.updatedAt || lead.createdAt;
+  const refMs = rawRef ? (typeof rawRef.toDate==="function" ? rawRef.toDate().getTime() : rawRef.seconds ? rawRef.seconds*1000 : null) : null;
+  const emAlerta = regra && refMs && (Date.now()-refMs) >= regra.limiteMs;
+  const whats = fmtWhats(lead.telefone);
+
+  return (
+    <div draggable
+      onDragStart={e=>{ setDragging(true); e.dataTransfer.setData("leadId", lead.id); }}
+      onDragEnd={()=>setDragging(false)}
+      onClick={()=>onEditar(lead)}
+      style={{
+        background:"white", borderRadius:10, padding:"12px 14px",
+        boxShadow:"0 1px 4px rgba(0,0,0,0.08)", cursor:"grab",
+        opacity: dragging?0.5:1, transition:"opacity .15s",
+        border: emAlerta ? `1.5px solid ${regra.borda}` : "1px solid var(--gray-100)",
+        marginBottom:8,
+      }}>
+      <div style={{fontWeight:600,fontSize:13,marginBottom:4}}>{lead.nome}</div>
+      {lead.servico&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>🎯 {lead.servico}</div>}
+      {lead.queixa&&<div style={{fontSize:11,color:"var(--gray-500)",marginBottom:6,lineHeight:1.4}}>{lead.queixa.slice(0,60)}{lead.queixa.length>60?"...":""}</div>}
+      {lead.telefone&&<div style={{fontSize:12,color:"var(--text-muted)"}}>📱 {lead.telefone}</div>}
+      {(lead.campanhas||[]).length>0&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>
+          {lead.campanhas.map(c=>(
+            <span key={c} style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>{c}</span>
+          ))}
+        </div>
+      )}
+      <div style={{fontSize:10,color:"var(--gray-400)",marginTop:8}}>
+        {lead.createdAt?.toDate ? lead.createdAt.toDate().toLocaleDateString("pt-BR") : ""}
+      </div>
+      {emAlerta && whats && (
+        <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
+          onClick={e=>e.stopPropagation()}
+          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:8,background:"#16a34a",color:"white",borderRadius:6,padding:"5px 0",fontSize:11,fontWeight:600,textDecoration:"none"}}>
+          <Icon name="message-circle" size={11}/> Acessar WhatsApp
+        </a>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  MODAL CONVERSÃO — Lead → Paciente
+// ═══════════════════════════════════════════════════════
+// ── Psicólogas parceiras do Instituto Cegatti ─────────────────────────────
+const PARCEIRAS_CEGATTI = [
+  { nome: "Psicóloga Parceira A", crp: "09/XXXXX", telefone: "5562999999999" },
+  { nome: "Psicóloga Parceira B", crp: "09/XXXXX", telefone: "5562999999999" },
+];
+
+function ModalConversao({ lead, onConfirmar, onCancelar }) {
+  const isSocial    = lead._tipoConversao === "convertido_social";
+  const isParceria  = lead._tipoConversao === "convertido_parceria";
+
+  const [email, setEmail]                     = useState("");
+  const [tipoContratacao, setTipoContratacao] = useState("individual");
+  const [salvando, setSalvando]               = useState(false);
+  const [erro, setErro]                       = useState("");
+  const [salvo, setSalvo]                     = useState(false);
+  const [parceiraSel, setParceiraSel]         = useState(null); // id no Firestore
+  const [parceiras, setParceiras]             = useState([]);
+  const [valorPacoteParceria, setValorPacoteParceria] = useState("");
+
+  const valorEstimado = tipoContratacao === "pacote" ? 250 : 300;
+
+  // Carrega parceiras do Firestore
+  useEffect(()=>{
+    db.collection("clinica_parceiras").orderBy("createdAt","asc")
+      .onSnapshot(s=>{
+        const lista = s.docs.map(d=>({id:d.id,...d.data()}));
+        setParceiras(lista);
+        if(isParceria && lista.filter(p=>p.tipo==="parceira").length>0){
+          setParceiraSel(lista.filter(p=>p.tipo==="parceira")[0].id);
+        }
+      },()=>{});
+  },[]);
+
+  const parceiraObj = parceiras.find(p=>p.id===parceiraSel)||null;
+  const estagiaria  = parceiras.find(p=>p.tipo==="estagiaria")||null;
+
+  // Cor e ícone do header conforme tipo
+  const headerGrad = isParceria
+    ? "linear-gradient(135deg,#7B00C4,#5a0090)"
+    : isSocial
+      ? "linear-gradient(135deg,#0d9488,#0f766e)"
+      : "linear-gradient(135deg,#16a34a,#15803d)";
+  const headerIcon  = isParceria ? "🤝" : isSocial ? "📱" : "🎉";
+  const headerTitulo = isParceria
+    ? "Encaminhamento — Parceria!"
+    : isSocial
+      ? "Convertido pelo Social!"
+      : "Lead Convertido!";
+
+  async function confirmar() {
+    const hoje = new Date().toISOString().slice(0,10);
+    const mesRef = hoje.slice(0,7);
+
+    if(isParceria){
+      // Parceria: não precisa de email, só valor do pacote
+      const vBase = parseFloat(valorPacoteParceria)||0;
+      if(vBase<=0){setErro("Informe o valor do pacote fechado.");return;}
+      setSalvando(true);
+      try {
+        const comissao10 = parseFloat((vBase*0.10).toFixed(2));
+        const nomePac = lead.nome||"Lead";
+        const nomeParc = parceiraObj?.nome||"Parceira";
+        const batch = db.batch();
+        // Receita clínica: 10% do pacote
+        batch.set(db.collection("clinica_lancamentos").doc(),{
+          tipo_lancamento:"parceria",
+          tipo:`${nomePac} — Parceria ${nomeParc}`,
+          descricao:`${nomePac} — Parceria ${nomeParc}`,
+          pacienteNome: nomePac,
+          valor: comissao10,
+          data: hoje, mesRef,
+          formaPag:"PIX",
+          status:"recebido",
+          origem:"convertido_parceria",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Comissão clínica
+        batch.set(db.collection("clinica_comissoes").doc(),{
+          tipo:"Parceria — Clínica",
+          tipoVenda:"primeira",
+          perc:10,
+          valorBase: vBase,
+          valorComissao: comissao10,
+          pacienteNome: nomePac,
+          mesRef, status:"pendente",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Comissão estagiária: 10%
+        if(estagiaria){
+          batch.set(db.collection("clinica_comissoes").doc(),{
+            tipo:"Parceria — Estagiária",
+            tipoVenda:"primeira",
+            perc:10,
+            valorBase: vBase,
+            valorComissao: comissao10,
+            pacienteNome: nomePac,
+            responsavel: estagiaria.nome,
+            mesRef, status:"pendente",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+        // Arquiva lead
+        await db.collection("clinica_leads").doc(lead.id).update({
+          status:"convertido_parceria", arquivado:true,
+          convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        setSalvo(true);
+      } catch(e){setErro("Erro: "+e.message);}
+      setSalvando(false);
+      return;
+    }
+
+    // Social ou Convertido normal — cadastra paciente
+    if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
+    setSalvando(true);
+    try {
+      const nomePac = lead.nome||"";
+      await db.collection("clinica_pacientes").add({
+        nome: nomePac,
+        email: email.trim().toLowerCase(),
+        telefone: lead.telefone||"",
+        cpf:"", dataNascimento:"",
+        genero:"Não informar",
+        status:"ativo", senha:"1234",
+        objetivosTerapeuticos: lead.queixa||"",
+        observacoesClinicas:"",
+        origem: isSocial ? "projeto-social" : "crm-lead",
+        leadId: lead.id,
+        tipoContratacao, valorEstimado,
+        campanhas: lead.campanhas||[],
+        isSocial: isSocial||false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+
+      if(isSocial){
+        const batch = db.batch();
+        // Receita clínica: R$40 fixo
+        batch.set(db.collection("clinica_lancamentos").doc(),{
+          tipo_lancamento:"social",
+          tipo:`${nomePac} — Projeto Social`,
+          descricao:`${nomePac} — Projeto Social`,
+          pacienteNome: nomePac,
+          valor: 40,
+          data: hoje, mesRef,
+          formaPag:"PIX",
+          status:"recebido",
+          origem:"convertido_social",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Comissão estagiária: R$20 fixo
+        if(estagiaria){
+          batch.set(db.collection("clinica_comissoes").doc(),{
+            tipo:"Social — Estagiária",
+            tipoVenda:"primeira",
+            perc:0,
+            valorBase:40,
+            valorComissao:20,
+            pacienteNome: nomePac,
+            responsavel: estagiaria.nome,
+            mesRef, status:"pendente",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      }
+
+      await db.collection("clinica_leads").doc(lead.id).update({
+        status: lead._tipoConversao||"convertido",
+        arquivado:true,
+        convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setSalvo(true);
+    } catch(e){setErro("Erro ao cadastrar. Tente novamente.");}
+    setSalvando(false);
+  }
+
+  function gerarWhatsApp() {
+    const parceira = parceiraObj;
+    if(!parceira){alert("Selecione uma parceira.");return;}
+    const telPaciente = (lead.telefone || "").replace(/[^0-9]/g,"");
+    const msg = `Olá, ${lead.nome || ""}! Tudo bem?
+Aqui é da equipe de atendimento. Passando para informar que realizamos o seu encaminhamento clínico. Você será atendido(a) pela psicóloga ${parceira.nome}, CRP: ${parceira.crp}.
+Ela faz parte dos grupos do Instituto Cegatti, que integram o projeto social e de parcerias da Doutora Lúcia Kratz.
+Você pode entrar em contato diretamente com ela através do número abaixo para alinhar o seu primeiro horário:
+👉 WhatsApp: https://wa.me/${parceira.telefone}
+Estamos à disposição!`;
+    const url = `https://wa.me/${telPaciente}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  }
+
+  function gerarWhatsAppSocial() {
+    const telPaciente = (lead.telefone || "").replace(/\D/g,"");
+    const msg = `Olá, ${lead.nome || ""}! Tudo bem?
+Aqui é da equipe da Dra. Lúcia Kratz. Que bom ter você com a gente!
+Seu cadastro foi realizado com sucesso. Entraremos em contato para alinhar os próximos passos do seu atendimento.
+Estamos à disposição! 🌷`;
+    const url = `https://wa.me/${telPaciente}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
+
+        {/* Header */}
+        <div style={{background:headerGrad,borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
+          <div style={{fontSize:40,marginBottom:8}}>{headerIcon}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>{headerTitulo}</div>
+          <div style={{fontSize:13,opacity:0.85,marginTop:4}}>Deseja cadastrar como Paciente na Clínica?</div>
+        </div>
+
+        {/* Dados migrados */}
+        <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)"}}>
+          <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#16a34a",marginBottom:8}}>DADOS QUE SERÃO MIGRADOS</div>
+            <div style={{fontSize:13,display:"flex",flexDirection:"column",gap:4}}>
+              <div><strong>Nome:</strong> {lead.nome}</div>
+              {lead.telefone&&<div><strong>WhatsApp:</strong> {lead.telefone}</div>}
+              {lead.queixa&&<div><strong>Queixa:</strong> {lead.queixa}</div>}
+            </div>
+          </div>
+
+          {/* Seleção de parceira — só para parceria */}
+          {isParceria&&(
+            <div style={{marginBottom:14}}>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Psicóloga Parceira</label>
+              {parceiras.filter(p=>p.tipo==="parceira").length===0
+                ? <div style={{fontSize:12,color:"#d97706",padding:"8px 12px",background:"#fef3c7",borderRadius:8}}>
+                    Nenhuma parceira cadastrada. Vá em Funil → aba Parceiras & Estagiárias.
+                  </div>
+                : <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {parceiras.filter(p=>p.tipo==="parceira").map(p=>(
+                      <button key={p.id} onClick={()=>setParceiraSel(p.id)}
+                        style={{padding:"10px 14px",borderRadius:8,border:"2px solid",textAlign:"left",
+                          borderColor:parceiraSel===p.id?"#7B00C4":"var(--gray-200)",
+                          background:parceiraSel===p.id?"#f5f3ff":"white",
+                          cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
+                          color:parceiraSel===p.id?"#7B00C4":"var(--text-muted)"}}>
+                        {p.nome}
+                        <span style={{display:"block",fontSize:11,fontWeight:400,marginTop:2}}>
+                          {p.crp&&<span>CRP {p.crp} · </span>}WhatsApp: {p.telefone}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+              }
+              {/* Valor do pacote fechado */}
+              <div style={{marginTop:12}}>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+                  Valor do pacote fechado (R$) <span style={{color:"#dc2626"}}>*</span>
+                </label>
+                <input type="number" value={valorPacoteParceria}
+                  onChange={e=>setValorPacoteParceria(e.target.value)}
+                  className="form-input" placeholder="Ex: 800"/>
+                {valorPacoteParceria&&parseFloat(valorPacoteParceria)>0&&(
+                  <div style={{fontSize:12,color:"#7B00C4",marginTop:6,background:"#f5f3ff",borderRadius:6,padding:"6px 10px"}}>
+                    Comissão clínica: <b>R$ {(parseFloat(valorPacoteParceria)*0.10).toFixed(2).replace(".",",")}</b>
+                    {estagiaria&&<span> · Comissão estagiária: <b>R$ {(parseFloat(valorPacoteParceria)*0.10).toFixed(2).replace(".",",")}</b></span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tipo de contratação */}
+          <div style={{marginBottom:14}}>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Tipo de Contratação</label>
+            <div style={{display:"flex",gap:8}}>
+              {[{id:"individual",label:"Consulta Individual",valor:300},{id:"pacote",label:"Pacote",valor:250}].map(op=>(
+                <button key={op.id} onClick={()=>setTipoContratacao(op.id)}
+                  style={{flex:1,padding:"10px 8px",borderRadius:8,border:"2px solid",
+                    borderColor:tipoContratacao===op.id?"#16a34a":"var(--gray-200)",
+                    background:tipoContratacao===op.id?"#f0fdf4":"white",
+                    cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
+                    color:tipoContratacao===op.id?"#16a34a":"var(--text-muted)"}}>
+                  {op.label}<br/>
+                  <span style={{fontSize:11,fontWeight:400}}>Est. R$ {op.valor}/sessão</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+              E-mail do paciente <span style={{color:"#dc2626"}}>*</span>
+            </label>
+            <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setErro("");}}
+              className="form-input" placeholder="email@exemplo.com" autoFocus/>
+            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>
+              Necessário para acesso ao portal. Senha inicial: <strong>1234</strong>
+            </div>
+          </div>
+
+          {erro&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginTop:12,fontSize:13,color:"#dc2626"}}>{erro}</div>}
+
+          {/* Feedback pós-salvamento */}
+          {salvo&&(
+            <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"14px 16px",marginTop:16}}>
+              <div style={{fontWeight:700,fontSize:13,color:"#059669",marginBottom:10}}>✅ Paciente cadastrado com sucesso!</div>
+              {isParceria&&(
+                <button onClick={gerarWhatsApp}
+                  style={{width:"100%",padding:"12px",borderRadius:8,border:"none",
+                    background:"#25D366",color:"white",cursor:"pointer",
+                    fontSize:13,fontWeight:700,fontFamily:"inherit",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  📲 Gerar Mensagem para o Paciente (WhatsApp)
+                </button>
+              )}
+              {(isSocial||(!isParceria&&!isSocial))&&lead.telefone&&(
+                <button onClick={gerarWhatsAppSocial}
+                  style={{width:"100%",padding:"12px",borderRadius:8,border:"none",
+                    background:"#25D366",color:"white",cursor:"pointer",
+                    fontSize:13,fontWeight:700,fontFamily:"inherit",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  📲 Enviar boas-vindas pelo WhatsApp
+                </button>
+              )}
+              <button onClick={onConfirmar}
+                style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,
+                  border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",
+                  fontSize:13,fontFamily:"inherit",color:"var(--text-muted)"}}>
+                Fechar
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Botões principais */}
+        {!salvo&&(
+          <div style={{padding:"16px 24px",display:"flex",gap:10}}>
+            <button onClick={onCancelar}
+              style={{flex:1,padding:"11px 0",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
+              Apenas mover o card
+            </button>
+            <button onClick={confirmar} disabled={salvando}
+              style={{flex:1,padding:"11px 0",borderRadius:8,border:"none",
+                background: isParceria?"#7B00C4":isSocial?"#0d9488":"#16a34a",
+                color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,
+                opacity:salvando?0.7:1}}>
+              {salvando?"Cadastrando...":"✓ Sim, cadastrar paciente"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+// ═══════════════════════════════════════════════════════
+//  ALERTAS DE INATIVIDADE — ETAPA 6
+// ═══════════════════════════════════════════════════════
+function AlertasInatividade({ leads, onAbrirLead }) {
+  const [descartados, setDescartados] = useState(new Set());
+  const [agora, setAgora] = useState(Date.now());
+
+  // Atualiza a cada minuto para manter alertas frescos
+  useEffect(()=>{
+    const t = setInterval(()=>setAgora(Date.now()), 60000);
+    return ()=>clearInterval(t);
+  },[]);
+
+  function extrairMs(campo) {
+    if (!campo) return null;
+    // Objeto Firestore Timestamp
+    if (campo.seconds) return campo.seconds * 1000;
+    // Já é Date
+    if (campo instanceof Date) return campo.getTime();
+    // String ISO
+    if (typeof campo === "string") return new Date(campo).getTime();
+    // Tenta toDate()
+    try { return campo.toDate().getTime(); } catch(e) {}
+    return null;
+  }
+
+  const alertas = leads
+    .filter(l => !l.arquivado && !descartados.has(l.id) && l.status !== "perdido")
+    .reduce((acc, lead) => {
+      const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status || "novo"));
+      if (!regra) return acc;
+      const ms = extrairMs(lead.updatedAt) || extrairMs(lead.createdAt);
+      if (!ms || isNaN(ms)) return acc;
+      const inativo = agora - ms;
+      if (inativo >= regra.limiteMs) acc.push({ lead, regra, inativo });
+      return acc;
+    }, [])
+    .sort((a,b) => b.inativo - a.inativo);
+
+  if (alertas.length === 0) return null;
+
+  return (
+    <div style={{marginBottom:20}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+        <div style={{width:8,height:8,borderRadius:"50%",background:"#dc2626",animation:"pulse 1.5s infinite"}}/>
+        <span style={{fontWeight:700,fontSize:13,color:"#dc2626"}}>
+          {alertas.length} alerta{alertas.length!==1?"s":""} de inatividade
+        </span>
+      </div>
+
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {alertas.map(({lead, regra, inativo})=>{
+          const whats = fmtWhats(lead.telefone);
+          return (
+            <div key={lead.id} style={{
+              background:regra.bg, border:`1.5px solid ${regra.borda}`,
+              borderRadius:12, padding:"12px 16px",
+              display:"flex", alignItems:"center", justifyContent:"space-between",
+              gap:12, flexWrap:"wrap"
+            }}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:13,color:regra.cor,marginBottom:2}}>
+                  {regra.titulo(lead.nome)}
+                </div>
+                <div style={{fontSize:12,color:regra.cor,opacity:0.85}}>
+                  {regra.corpo(lead.nome, formatarTempo(inativo))}
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,flexShrink:0}}>
+                {whats && (
+                  <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
+                    style={{display:"flex",alignItems:"center",gap:5,background:"#16a34a",color:"white",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,textDecoration:"none"}}>
+                    <Icon name="message-circle" size={13}/> WhatsApp
+                  </a>
+                )}
+                <button onClick={()=>onAbrirLead(lead)}
+                  style={{background:"white",border:`1px solid ${regra.borda}`,color:regra.cor,borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                  Ver card
+                </button>
+                <button onClick={()=>setDescartados(s=>new Set([...s,lead.id]))}
+                  style={{background:"none",border:"none",cursor:"pointer",color:regra.cor,opacity:0.5,padding:"4px",fontSize:16,lineHeight:1}}
+                  title="Dispensar alerta">
+                  ×
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function GerenciamentoParceiras() {
+  const [parceiras, setParceiras] = useState([]);
+  const [form, setForm]           = useState({nome:"",crp:"",telefone:"",tipo:"parceira"});
+  const [editandoId, setEditandoId] = useState(null);
+  const [salvando, setSalvando]   = useState(false);
+
+  useEffect(()=>{
+    db.collection("clinica_parceiras").orderBy("createdAt","asc")
+      .onSnapshot(s=>setParceiras(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  async function salvar(){
+    if(!form.nome.trim()||!form.telefone.trim()){alert("Nome e telefone obrigatórios.");return;}
+    setSalvando(true);
+    try {
+      if(editandoId){
+        await db.collection("clinica_parceiras").doc(editandoId).update({nome:form.nome,crp:form.crp,telefone:form.telefone.replace(/\D/g,""),tipo:form.tipo});
+        setEditandoId(null);
+      } else {
+        await db.collection("clinica_parceiras").add({nome:form.nome,crp:form.crp,telefone:form.telefone.replace(/\D/g,""),tipo:form.tipo,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      setForm({nome:"",crp:"",telefone:"",tipo:"parceira"});
+    } catch(e){alert("Erro: "+e.message);}
+    setSalvando(false);
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir este cadastro?"))return;
+    await db.collection("clinica_parceiras").doc(id).delete();
+  }
+
+  function editar(p){
+    setForm({nome:p.nome,crp:p.crp||"",telefone:p.telefone||"",tipo:p.tipo||"parceira"});
+    setEditandoId(p.id);
+  }
+
+  const parceirasLista   = parceiras.filter(p=>p.tipo==="parceira");
+  const estagiariasLista = parceiras.filter(p=>p.tipo==="estagiaria");
+
+  return(
+    <div style={{maxWidth:700}}>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>Parceiras & Estagiárias</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Psicólogas parceiras e estagiárias do Instituto Cegatti</div>
+
+      {/* Formulário */}
+      <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid #e8c8ff",marginBottom:24}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>{editandoId?"✏️ Editar cadastro":"➕ Novo cadastro"}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <div style={{gridColumn:"1/-1"}}>
+            <label className="form-label">Nome completo *</label>
+            <input className="form-input" value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Ex: Andréia de Fátima Mateus Silva"/>
+          </div>
+          <div>
+            <label className="form-label">CRP</label>
+            <input className="form-input" value={form.crp} onChange={e=>setForm({...form,crp:e.target.value})} placeholder="Ex: 09/14031"/>
+          </div>
+          <div>
+            <label className="form-label">Telefone (WhatsApp) *</label>
+            <input className="form-input" value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})} placeholder="Ex: 5562985666960"/>
+          </div>
+          <div style={{gridColumn:"1/-1"}}>
+            <label className="form-label">Tipo</label>
+            <div style={{display:"flex",gap:8}}>
+              {[["parceira","🤝 Parceira"],["estagiaria","🎓 Estagiária"]].map(([v,l])=>(
+                <button key={v} type="button" onClick={()=>setForm({...form,tipo:v})}
+                  style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
+                    borderColor:form.tipo===v?"#7B00C4":"#e5e7eb",
+                    background:form.tipo===v?"#f5f3ff":"white",
+                    color:form.tipo===v?"#7B00C4":"#6b7280"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          {editandoId&&<button className="btn btn-ghost" onClick={()=>{setEditandoId(null);setForm({nome:"",crp:"",telefone:"",tipo:"parceira"});}}>Cancelar</button>}
+          <button className="btn btn-purple" onClick={salvar} disabled={salvando} style={{flex:1}}>
+            {salvando?"Salvando...":(editandoId?"💾 Salvar alterações":"➕ Cadastrar")}
+          </button>
+        </div>
+      </div>
+
+      {/* Lista Parceiras */}
+      {parceirasLista.length>0&&(
+        <div style={{marginBottom:20}}>
+          <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:8}}>🤝 Parceiras</div>
+          {parceirasLista.map(p=>(
+            <div key={p.id} style={{background:"white",borderRadius:10,padding:"12px 16px",border:"1px solid #e8c8ff",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{p.nome}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
+                  {p.crp&&<span>CRP {p.crp} · </span>}
+                  <a href={`https://wa.me/${p.telefone}`} target="_blank" style={{color:"#16a34a",textDecoration:"none"}}>📱 {p.telefone}</a>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>editar(p)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12}}><Icon name="pencil" size={13}/></button>
+                <button onClick={()=>excluir(p.id)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12,color:"#dc2626"}}><Icon name="trash-2" size={13}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Lista Estagiárias */}
+      {estagiariasLista.length>0&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:13,color:"#0891b2",marginBottom:8}}>🎓 Estagiárias</div>
+          {estagiariasLista.map(p=>(
+            <div key={p.id} style={{background:"white",borderRadius:10,padding:"12px 16px",border:"1px solid #bae6fd",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{p.nome}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
+                  {p.crp&&<span>CRP {p.crp} · </span>}
+                  <a href={`https://wa.me/${p.telefone}`} target="_blank" style={{color:"#16a34a",textDecoration:"none"}}>📱 {p.telefone}</a>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>editar(p)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12}}><Icon name="pencil" size={13}/></button>
+                <button onClick={()=>excluir(p.id)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12,color:"#dc2626"}}><Icon name="trash-2" size={13}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {parceiras.length===0&&(
+        <div style={{textAlign:"center",padding:"32px 0",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma parceira ou estagiária cadastrada ainda.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FunilLeads({ user }) {
+  const [leads, setLeads]                   = useState([]);
+  const [modalLead, setModalLead]           = useState(null);
+  const [dragOver, setDragOver]             = useState(null);
+  const [modalConversao, setModalConversao] = useState(null);
+  const [abaFunil, setAbaFunil]             = useState("kanban");
+
+  useEffect(()=>{
+    db.collection("clinica_leads")
+      .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  async function moverLead(leadId, novoStatus) {
+    await db.collection("clinica_leads").doc(leadId).update({
+      status: novoStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(()=>{});
+  }
+
+  function onDrop(e, colId) {
+    e.preventDefault();
+    const leadId = e.dataTransfer.getData("leadId");
+    if (!leadId) { setDragOver(null); return; }
+    if (colId === "convertido" || colId === "convertido_social" || colId === "convertido_parceria") {
+      const lead = leads.find(l=>l.id===leadId);
+      if (lead) {
+        moverLead(leadId, colId);
+        setModalConversao({...lead, _tipoConversao: colId});
+      }
+    } else {
+      moverLead(leadId, colId);
+    }
+    setDragOver(null);
+  }
+
+  const leadsColuna = (colId) => leads.filter(l=>(l.status||"novo")===colId && !l.arquivado);
+
+  return (
+    <div style={{padding:"20px 24px"}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600}}>Funil de Leads</div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{leads.filter(l=>!l.arquivado).length} lead{leads.filter(l=>!l.arquivado).length!==1?"s":""} no funil</div>
+        </div>
+        {abaFunil==="kanban"&&(
+          <button onClick={()=>setModalLead({})} className="btn-primary" style={{display:"flex",alignItems:"center",gap:6}}>
+            <Icon name="plus" size={15}/> Novo Lead
+          </button>
+        )}
+      </div>
+
+      {/* Abas */}
+      <div style={{display:"flex",gap:4,marginBottom:20,borderBottom:"2px solid var(--gray-100)",paddingBottom:0}}>
+        {[["kanban","📋 Kanban"],["parceiras","🤝 Parceiras & Estagiárias"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setAbaFunil(id)}
+            style={{padding:"8px 16px",border:"none",background:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:abaFunil===id?700:400,
+              color:abaFunil===id?"#7B00C4":"var(--text-muted)",
+              borderBottom:abaFunil===id?"2px solid #7B00C4":"2px solid transparent",
+              marginBottom:-2,transition:"all .15s"}}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Aba Parceiras */}
+      {abaFunil==="parceiras"&&<GerenciamentoParceiras/>}
+
+      {abaFunil==="kanban"&&<>
+      {/* Alertas de inatividade */}
+      <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
+
+      {/* Kanban */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12,minWidth:0}}>
+        {COLUNAS_FUNIL.map(col=>{
+          const cards = leadsColuna(col.id);
+          const isOver = dragOver===col.id;
+          return (
+            <div key={col.id}
+              onDragOver={e=>{e.preventDefault();setDragOver(col.id);}}
+              onDragLeave={()=>setDragOver(null)}
+              onDrop={e=>onDrop(e,col.id)}
+              style={{
+                background: isOver ? col.bg : "#f9fafb",
+                borderRadius:12, padding:"12px 10px",
+                border: isOver ? `2px solid ${col.cor}` : "2px solid transparent",
+                transition:"all .15s", minHeight:400,
+              }}>
+              {/* Cabeçalho coluna */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:col.cor}}/>
+                  <span style={{fontWeight:700,fontSize:12,color:col.cor}}>{col.label.toUpperCase()}</span>
+                </div>
+                <span style={{background:col.cor+"20",color:col.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>{cards.length}</span>
+              </div>
+
+              {/* Cards */}
+              {cards.map(lead=>(
+                <CardLead key={lead.id} lead={lead}
+                  onEditar={l=>setModalLead(l)}
+                  onMover={moverLead}
+                  colunas={COLUNAS_FUNIL}/>
+              ))}
+
+              {cards.length===0&&(
+                <div style={{textAlign:"center",padding:"20px 0",color:"var(--gray-400)",fontSize:12}}>
+                  {isOver?"Solte aqui":"Nenhum lead"}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Modal */}
+      {modalLead!==null&&(
+        <ModalLead
+          lead={modalLead?.id ? modalLead : null}
+          user={user}
+          onConverter={l=>{ setModalLead(null); setModalConversao(l); }}
+          onSalvar={()=>setModalLead(null)}
+          onFechar={()=>setModalLead(null)}/>
+      )}
+      {modalConversao&&(
+        <ModalConversao
+          lead={modalConversao}
+          onConfirmar={()=>setModalConversao(null)}
+          onCancelar={()=>setModalConversao(null)}/>
+      )}
+      </>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD DE PERFORMANCE — ETAPA 5
+// ═══════════════════════════════════════════════════════
+const CPL_LIMITES = {
+  nacional:      { verde:10,  amarelo:15 },
+  internacional: { verde:50,  amarelo:999 },
+};
+
+function badgeCPL(cpl, abrangencia) {
+  const lim = CPL_LIMITES[abrangencia||"nacional"];
+  if (cpl <= lim.verde)   return { cor:"#16a34a", bg:"#f0fdf4", label:"✅ Saudável" };
+  if (cpl <= lim.amarelo) return { cor:"#d97706", bg:"#fef3c7", label:"⚠️ Atenção" };
+  const aviso = abrangencia==="internacional"
+    ? "🚨 Alerta de teto atingido. Custo de captação internacional inviabilizando o retorno do consultório."
+    : "🚨 Custo acima do limite realista para o mercado nacional. Avaliar pausa imediata do anúncio.";
+  return { cor:"#dc2626", bg:"#fef2f2", label:"🚨 Acima do limite", aviso };
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANÁLISE COLABORATIVA POR CAMPANHA
+// ═══════════════════════════════════════════════════════
+function AnaliseCampanha({ campanha, user }) {
+  const [comentarios, setComentarios] = useState([]);
+  const [texto, setTexto]             = useState("");
+  const [enviando, setEnviando]       = useState(false);
+  const [pdfs, setPdfs]               = useState([]);
+  const [uploadando, setUploadando]   = useState(false);
+  const [aberto, setAberto]           = useState(false);
+
+  useEffect(()=>{
+    if (!aberto) return;
+    const unsub = db.collection("clinica_campanhas").doc(campanha.id)
+      .collection("analises").orderBy("createdAt","asc")
+      .onSnapshot(s=>setComentarios(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    const unsubPdf = db.collection("clinica_campanhas").doc(campanha.id)
+      .collection("relatorios").orderBy("createdAt","desc")
+      .onSnapshot(s=>setPdfs(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return ()=>{ unsub(); unsubPdf(); };
+  },[campanha.id, aberto]);
+
+  async function enviar() {
+    if (!texto.trim()) return;
+    setEnviando(true);
+    try {
+      await db.collection("clinica_campanhas").doc(campanha.id).collection("analises").add({
+        texto: texto.trim(),
+        autor: user?.nome || "Usuário",
+        tipo:  user?.tipo || "psicologa",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setTexto("");
+    } catch(e) { alert("Erro ao enviar."); }
+    setEnviando(false);
+  }
+
+  async function uploadPdf(e) {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") { alert("Selecione um arquivo PDF."); return; }
+    if (file.size > 5*1024*1024) { alert("Arquivo muito grande. Máximo 5MB."); return; }
+    setUploadando(true);
+    const reader = new FileReader();
+    reader.onload = async(ev)=>{
+      try {
+        await db.collection("clinica_campanhas").doc(campanha.id).collection("relatorios").add({
+          nome:      file.name,
+          tamanho:   (file.size/1024).toFixed(0)+"KB",
+          base64:    ev.target.result,
+          autor:     user?.nome || "Usuário",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      } catch(e) { alert("Erro ao fazer upload."); }
+      setUploadando(false);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  async function excluirPdf(id) {
+    if (!window.confirm("Excluir este relatório?")) return;
+    await db.collection("clinica_campanhas").doc(campanha.id).collection("relatorios").doc(id).delete();
+  }
+
+  async function excluirComentario(id) {
+    await db.collection("clinica_campanhas").doc(campanha.id).collection("analises").doc(id).delete();
+  }
+
+  function fmtDH(ts) {
+    if (!ts?.toDate) return "";
+    const d = ts.toDate();
+    return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  const corTipo = { psicologa:"#7B00C4", marketing:"#ea580c", secretaria:"#0891b2" };
+
+  return (
+    <div style={{border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden",marginBottom:12,background:"white"}}>
+      <button onClick={()=>setAberto(x=>!x)}
+        style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",background:"white",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{campanha.nome}</span>
+          <span style={{fontSize:11,color:"var(--text-muted)"}}>{campanha.abrangencia==="internacional"?"🌍 Internacional":"🇧🇷 Nacional"}</span>
+          {comentarios.length>0&&<span style={{background:"#7B00C418",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>💬 {comentarios.length}</span>}
+          {pdfs.length>0&&<span style={{background:"#dc262618",color:"#dc2626",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>📄 {pdfs.length}</span>}
+        </div>
+        <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
+      </button>
+
+      {aberto&&(
+        <div style={{borderTop:"1px solid var(--gray-100)",background:"#fafafa"}}>
+
+          {/* PDFs */}
+          <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <div style={{fontWeight:600,fontSize:13}}>📄 Relatórios em PDF</div>
+              <label style={{display:"flex",alignItems:"center",gap:6,background:"#7B00C4",color:"white",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                <Icon name="upload" size={13}/> {uploadando?"Enviando...":"Upload PDF"}
+                <input type="file" accept=".pdf" onChange={uploadPdf} style={{display:"none"}} disabled={uploadando}/>
+              </label>
+            </div>
+            {pdfs.length===0
+              ? <div style={{fontSize:12,color:"var(--text-muted)"}}>Nenhum relatório ainda.</div>
+              : pdfs.map(pdf=>(
+                  <div key={pdf.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"white",borderRadius:8,padding:"10px 14px",border:"1px solid var(--gray-100)",marginBottom:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:20}}>📄</span>
+                      <div>
+                        <div style={{fontWeight:600,fontSize:13}}>{pdf.nome}</div>
+                        <div style={{fontSize:11,color:"var(--text-muted)"}}>{pdf.tamanho} · {pdf.autor} · {fmtDH(pdf.createdAt)}</div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <a href={pdf.base64} download={pdf.nome}
+                        style={{background:"#f0fdf4",color:"#16a34a",borderRadius:6,padding:"5px 10px",fontSize:11,fontWeight:600,textDecoration:"none"}}>
+                        ⬇ Baixar
+                      </a>
+                      {(user?.tipo==="psicologa"||pdf.autor===user?.nome)&&(
+                        <button onClick={()=>excluirPdf(pdf.id)}
+                          style={{background:"#fef2f2",color:"#dc2626",border:"none",borderRadius:6,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
+                          🗑
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+            }
+          </div>
+
+          {/* Chat */}
+          <div style={{padding:"14px 18px"}}>
+            <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>💬 Análise e Ações de Ajuste</div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14,maxHeight:300,overflowY:"auto",padding:"4px 0"}}>
+              {comentarios.length===0
+                ? <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",padding:16}}>Nenhuma análise ainda.</div>
+                : comentarios.map(c=>{
+                    const isMe = c.autor===user?.nome;
+                    return (
+                      <div key={c.id} style={{display:"flex",flexDirection:isMe?"row-reverse":"row",gap:8,alignItems:"flex-start"}}>
+                        <div style={{width:30,height:30,borderRadius:"50%",background:corTipo[c.tipo]||"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:12,flexShrink:0}}>
+                          {(c.autor||"?")[0].toUpperCase()}
+                        </div>
+                        <div style={{maxWidth:"75%"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}>
+                            <span style={{fontSize:11,fontWeight:600,color:corTipo[c.tipo]||"#7B00C4"}}>{c.autor}</span>
+                            <span style={{fontSize:10,color:"var(--gray-400)"}}>{fmtDH(c.createdAt)}</span>
+                          </div>
+                          <div style={{background:isMe?"#7B00C4":"white",color:isMe?"white":"var(--text)",borderRadius:isMe?"12px 4px 12px 12px":"4px 12px 12px 12px",padding:"10px 14px",fontSize:13,lineHeight:1.6,boxShadow:"0 1px 3px rgba(0,0,0,0.06)",border:isMe?"none":"1px solid var(--gray-100)"}}>
+                            {c.texto}
+                          </div>
+                          {(user?.tipo==="psicologa"||isMe)&&(
+                            <button onClick={()=>excluirComentario(c.id)}
+                              style={{background:"none",border:"none",cursor:"pointer",fontSize:10,color:"var(--gray-400)",marginTop:2,padding:"0 4px",fontFamily:"inherit",float:isMe?"right":"left"}}
+                              onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
+                              onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
+                              excluir
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+              }
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+              <TextAreaVoz value={texto} onChange={e=>setTexto(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviar();} }}
+                rows={2} placeholder="Escreva sua análise ou ação de ajuste... (Enter para enviar)"
+                className="form-input" style={{flex:1,resize:"none",fontSize:13}}/>
+              <button onClick={enviar} disabled={enviando||!texto.trim()}
+                style={{background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"10px 14px",cursor:"pointer",opacity:(!texto.trim()||enviando)?0.5:1,flexShrink:0}}>
+                <Icon name="send" size={16}/>
+              </button>
+            </div>
+            <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>Enter para enviar · Shift+Enter para nova linha</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnaliseCampanhas({ campanhas, user }) {
+  if (campanhas.length===0) return null;
+  return (
+    <div style={{marginTop:24}}>
+      <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:700,marginBottom:4}}>📊 Análise por Campanha</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Relatórios em PDF e chat de estratégia entre Psicóloga e Marketing.</div>
+      {campanhas.map(c=><AnaliseCampanha key={c.id} campanha={c} user={user}/>)}
+    </div>
+  );
+}
+
+function DashboardPerformance({ user }) {
+  const [leads, setLeads]           = useState([]);
+  const [pacientes, setPacientes]   = useState([]);
+  const [campanhas, setCampanhas]   = useState([]);
+  const [lancamentos, setLancamentos] = useState([]);
+  const [lancClinica, setLancClinica] = useState([]);
+  const [periodo, setPeriodo]       = useState({ de: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10), ate: new Date().toISOString().slice(0,10) });
+
+  useEffect(()=>{
+    db.collection("clinica_leads").onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_pacientes").where("origem","==","crm-lead").onSnapshot(s=>setPacientes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_campanhas").onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_lancamentos").where("origem","==","crm-marketing").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_lancamentos").where("tipo_lancamento","!=","despesa").onSnapshot(s=>setLancClinica(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  // Filtro por período
+  function noPeriodo(data) { return data >= periodo.de && data <= periodo.ate; }
+
+  const leadsFiltrados      = leads.filter(l=>{ const d=l.createdAt?.toDate?.()?.toISOString().slice(0,10)||""; return d>=periodo.de&&d<=periodo.ate; });
+  const convertidosFiltrados = pacientes.filter(p=>{ const d=p.createdAt?.toDate?.()?.toISOString().slice(0,10)||""; return d>=periodo.de&&d<=periodo.ate; });
+  const lancFiltrados       = lancamentos.filter(l=>l.data&&noPeriodo(l.data));
+
+  const totalLeads      = leadsFiltrados.length;
+  const totalConvertidos = convertidosFiltrados.length;
+  const taxaConversao   = totalLeads>0 ? ((totalConvertidos/totalLeads)*100).toFixed(1) : 0;
+  const totalInvestido  = lancFiltrados.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+
+  // CAC
+  const cac = totalConvertidos>0 ? totalInvestido/totalConvertidos : 0;
+
+  // Faturamento real (lançamentos do financeiro vinculados a pacientes do CRM)
+  const idsConversos = new Set(convertidosFiltrados.map(p=>p.id));
+  const receitaReal  = lancClinica.filter(l=>l.pacienteId&&idsConversos.has(l.pacienteId)&&(l.status==="recebido"||l.status==="pago")).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+  // Faturamento estimado para pacientes sem lançamentos
+  const pacientesComReceita = new Set(lancClinica.filter(l=>l.pacienteId&&idsConversos.has(l.pacienteId)).map(l=>l.pacienteId));
+  const pacientesSemReceita = convertidosFiltrados.filter(p=>!pacientesComReceita.has(p.id));
+  const receitaEstimada     = pacientesSemReceita.reduce((a,p)=>a+(p.valorEstimado||300),0);
+  const receitaTotal        = receitaReal + receitaEstimada;
+  const roi                 = totalInvestido>0 ? (((receitaTotal-totalInvestido)/totalInvestido)*100).toFixed(1) : 0;
+
+  // Por campanha
+  const porCampanha = campanhas.map(camp=>{
+    const leadsC      = leadsFiltrados.filter(l=>(l.campanhas||[]).includes(camp.nome));
+    const convertC    = convertidosFiltrados.filter(p=>(p.campanhas||[]).includes(camp.nome));
+    const investidoC  = lancFiltrados.filter(l=>l.campanhaNome===camp.nome).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+    const cpl         = leadsC.length>0&&investidoC>0 ? investidoC/leadsC.length : 0;
+    const receitaC    = convertC.reduce((a,p)=>{
+      const real = lancClinica.filter(l=>l.pacienteId===p.id&&(l.status==="recebido"||l.status==="pago")).reduce((x,l)=>x+(parseFloat(l.valor)||0),0);
+      return a + (real > 0 ? real : (p.valorEstimado||300));
+    },0);
+    const roiC = investidoC>0 ? (((receitaC-investidoC)/investidoC)*100).toFixed(1) : "—";
+    const badge = cpl>0 ? badgeCPL(cpl, camp.abrangencia) : null;
+    return { ...camp, leadsC:leadsC.length, convertC:convertC.length, investidoC, cpl, receitaC, roiC, badge };
+  }).filter(c=>c.leadsC>0||c.investidoC>0);
+
+  function fmtR(v){ return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
+  function fmtPct(v){ return v+"%"; }
+
+  return (
+    <div style={{padding:"20px 28px",maxWidth:1000}}>
+      <div style={{marginBottom:20}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700}}>Dashboard de Performance</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>Métricas de captação, custo e retorno</div>
+      </div>
+
+      {/* Filtro período */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:10,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+        <span style={{fontSize:13,fontWeight:600}}>📅 Período:</span>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <input type="date" value={periodo.de} onChange={e=>setPeriodo(p=>({...p,de:e.target.value}))}
+            style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit"}}/>
+          <span style={{fontSize:12,color:"var(--text-muted)"}}>até</span>
+          <input type="date" value={periodo.ate} onChange={e=>setPeriodo(p=>({...p,ate:e.target.value}))}
+            style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit"}}/>
+        </div>
+        <button onClick={()=>setPeriodo({de:new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().slice(0,10),ate:new Date().toISOString().slice(0,10)})}
+          style={{background:"var(--gray-100)",border:"none",borderRadius:6,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+          Este mês
+        </button>
+      </div>
+
+      {/* Cards de resumo */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}>
+        {[
+          {label:"Leads Recebidos",    valor:totalLeads,           icon:"users",         cor:"#7B00C4"},
+          {label:"Convertidos",        valor:totalConvertidos,     icon:"check-circle",  cor:"#16a34a"},
+          {label:"Taxa de Conversão",  valor:fmtPct(taxaConversao),icon:"trending-up",   cor:"#0891b2"},
+          {label:"Total Investido",    valor:fmtR(totalInvestido), icon:"dollar-sign",   cor:"#ea580c"},
+        ].map((c,i)=>(
+          <div key={i} style={{background:"white",borderRadius:12,padding:"16px 18px",border:"1px solid var(--gray-200)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+              <div style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{c.label}</div>
+              <div style={{width:30,height:30,borderRadius:8,background:c.cor+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <Icon name={c.icon} size={15} style={{color:c.cor}}/>
+              </div>
+            </div>
+            <div style={{fontSize:24,fontWeight:700,color:c.cor}}>{c.valor}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* CAC e ROI */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:24}}>
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8}}>💰 CAC — CUSTO DE AQUISIÇÃO POR CLIENTE</div>
+          <div style={{fontSize:32,fontWeight:700,color:cac>300?"#dc2626":"#16a34a",marginBottom:4}}>{fmtR(cac)}</div>
+          {cac>300&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#dc2626"}}>
+            ⚠️ CAC acima de R$ 300,00 — avaliar eficiência das campanhas
+          </div>}
+          {cac>0&&cac<=300&&<div style={{fontSize:12,color:"#16a34a"}}>✅ Dentro do limite saudável (até R$ 300,00)</div>}
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8}}>Total investido ÷ pacientes convertidos no período</div>
+        </div>
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8}}>📈 ROI — RETORNO SOBRE INVESTIMENTO</div>
+          <div style={{fontSize:32,fontWeight:700,color:parseFloat(roi)>=0?"#16a34a":"#dc2626",marginBottom:4}}>{roi}%</div>
+          <div style={{display:"flex",flexDirection:"column",gap:4,fontSize:12,color:"var(--text-muted)"}}>
+            <div>Receita real: <strong style={{color:"#16a34a"}}>{fmtR(receitaReal)}</strong></div>
+            <div>Receita estimada: <strong style={{color:"#0891b2"}}>{fmtR(receitaEstimada)}</strong> ({pacientesSemReceita.length} pac. sem lançamentos)</div>
+            <div>Total investido: <strong style={{color:"#ea580c"}}>{fmtR(totalInvestido)}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabela por campanha */}
+      {porCampanha.length>0&&(
+        <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",marginBottom:24}}>
+          <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",fontWeight:600,fontSize:14}}>
+            🎯 Performance por Campanha
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <thead>
+                <tr style={{background:"var(--gray-50)"}}>
+                  {["Campanha","Tipo","Leads","Convertidos","Investido","CPL","Receita","ROI","Status CPL"].map(h=>(
+                    <th key={h} style={{padding:"10px 14px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {porCampanha.map(c=>{
+                  const b = c.badge;
+                  return (
+                    <tr key={c.id} style={{borderTop:"1px solid var(--gray-100)"}}>
+                      <td style={{padding:"12px 14px",fontWeight:600}}>{c.nome}</td>
+                      <td style={{padding:"12px 14px"}}>
+                        <span style={{fontSize:11,fontWeight:600,color:c.abrangencia==="internacional"?"#7B00C4":"#0891b2"}}>
+                          {c.abrangencia==="internacional"?"🌍 Intl":"🇧🇷 Nac"}
+                        </span>
+                      </td>
+                      <td style={{padding:"12px 14px",textAlign:"center"}}>{c.leadsC}</td>
+                      <td style={{padding:"12px 14px",textAlign:"center",color:"#16a34a",fontWeight:600}}>{c.convertC}</td>
+                      <td style={{padding:"12px 14px",color:"#ea580c",fontWeight:500}}>{fmtR(c.investidoC)}</td>
+                      <td style={{padding:"12px 14px",fontWeight:700,color:b?.cor||"var(--text-muted)"}}>{c.cpl>0?fmtR(c.cpl):"—"}</td>
+                      <td style={{padding:"12px 14px",color:"#16a34a",fontWeight:500}}>{fmtR(c.receitaC)}</td>
+                      <td style={{padding:"12px 14px",fontWeight:700,color:parseFloat(c.roiC)>=0?"#16a34a":"#dc2626"}}>{c.roiC!=="—"?c.roiC+"%":"—"}</td>
+                      <td style={{padding:"12px 14px"}}>
+                        {b?(
+                          <div>
+                            <span style={{background:b.bg,color:b.cor,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}}>{b.label}</span>
+                            {b.aviso&&<div style={{fontSize:10,color:b.cor,marginTop:4,maxWidth:200,lineHeight:1.4}}>{b.aviso}</div>}
+                          </div>
+                        ):"—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {porCampanha.length===0&&(
+        <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",padding:32,textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma campanha com dados no período selecionado. Crie campanhas no Funil de Leads e lance gastos em Marketing para ver as métricas.
+        </div>
+      )}
+
+      {/* Área colaborativa por campanha */}
+      <AnaliseCampanhas campanhas={campanhas} user={user}/>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════
+function CentralLancamentosMarketing() {
+  const [campanhas, setCampanhas]         = useState([]);
+  const [lancamentos, setLancamentos]     = useState([]);
+  const [salvando, setSalvando]           = useState(false);
+  const [msg, setMsg]                     = useState(null);
+  const [novaCampanha, setNovaCampanha]   = useState("");
+  const [novaAbrangencia, setNovaAbrangencia] = useState("nacional");
+  const [criandoCamp, setCriandoCamp]     = useState(false);
+  const [mesFiltro, setMesFiltro]         = useState(new Date().toISOString().slice(0,7));
+  const [form, setForm] = useState({
+    tipoDespesa: "trafego",
+    descricao: "",
+    valor: "",
+    data: new Date().toISOString().slice(0,10),
+    campanhaId: "",
+  });
+
+  useEffect(()=>{
+    db.collection("clinica_campanhas").orderBy("nome")
+      .onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    db.collection("clinica_lancamentos")
+      .where("origem","==","crm-marketing")
+      .orderBy("createdAt","desc").limit(20)
+      .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),
+        err=>{ // fallback sem orderBy se não tiver índice
+          db.collection("clinica_lancamentos")
+            .where("origem","==","crm-marketing")
+            .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),()=>{});
+        });
+  },[]);
+
+  const TIPOS = [
+    {id:"trafego", label:"Impulsionamento / Tráfego Pago"},
+    {id:"agencia", label:"Honorários da Equipe / Agência"},
+  ];
+
+  const f = (k,v) => setForm(x=>({...x,[k]:v}));
+
+  async function criarCampanha() {
+    if (!novaCampanha.trim()) return;
+    if (campanhas.find(c=>c.nome.toLowerCase()===novaCampanha.trim().toLowerCase())) {
+      setMsg({tipo:"erro",texto:"Campanha já existe."}); return;
+    }
+    try {
+      const ref = await db.collection("clinica_campanhas").add({
+        nome: novaCampanha.trim(),
+        abrangencia: novaAbrangencia,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      f("campanhaId", ref.id);
+      setNovaCampanha(""); setNovaAbrangencia("nacional");
+      setCriandoCamp(false);
+    } catch(e) { setMsg({tipo:"erro",texto:"Erro ao criar campanha."}); }
+  }
+
+  async function salvar() {
+    if (!form.descricao?.trim()) { setMsg({tipo:"erro",texto:"Descrição é obrigatória."}); return; }
+    if (!form.valor || !form.data) { setMsg({tipo:"erro",texto:"Valor e data são obrigatórios."}); return; }
+    if (parseFloat(form.valor)<=0) { setMsg({tipo:"erro",texto:"Valor deve ser maior que zero."}); return; }
+    setSalvando(true);
+    try {
+      const campanha = campanhas.find(c=>c.id===form.campanhaId);
+      await db.collection("clinica_lancamentos").add({
+        tipo_lancamento: "despesa",
+        tipo:            form.descricao.trim(),
+        categoria:       "Marketing",
+        descricao:       form.descricao.trim(),
+        tipoDespesaMkt:  form.tipoDespesa,
+        campanhaId:      form.campanhaId || null,
+        campanhaNome:    campanha?.nome || null,
+        valor:           parseFloat(form.valor),
+        data:            form.data,
+        formaPag:        "PIX",
+        status:          "pago",
+        origem:          "crm-marketing",
+        createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setMsg({tipo:"ok", texto:`✓ Lançado R$ ${parseFloat(form.valor).toFixed(2).replace(".",",")} — ${form.descricao.trim()}`});
+      setForm({tipoDespesa:"trafego", descricao:"", valor:"", data:new Date().toISOString().slice(0,10), campanhaId:""});
+      setTimeout(()=>setMsg(null), 4000);
+    } catch(e) { setMsg({tipo:"erro",texto:"Erro ao salvar. Tente novamente."}); }
+    setSalvando(false);
+  }
+
+  async function excluir(lanc) {
+    if (!window.confirm(`Excluir o lançamento "${lanc.descricao}" de ${fmtVal(lanc.valor)}? Esta ação não pode ser desfeita.`)) return;
+    await db.collection("clinica_lancamentos").doc(lanc.id).delete().catch(()=>{});
+  }
+
+  const lancamentosFiltrados = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
+
+  const totalMes = lancamentosFiltrados.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+
+  function fmtData(d) { return d ? d.split("-").reverse().join("/") : "—"; }
+  function fmtVal(v)  { return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
+
+  return (
+    <div style={{marginTop:28}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <div style={{fontWeight:700,fontSize:15}}>💸 Central de Lançamentos</div>
+        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"6px 14px",fontSize:12,color:"#dc2626",fontWeight:600}}>
+          🔒 Visível apenas para Administradora
+        </div>
+      </div>
+
+      {/* Formulário */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:20,marginBottom:20}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:16,color:"var(--text-muted)"}}>LANÇAR NOVO GASTO DE MARKETING</div>
+        <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:14}}>
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Tipo de Despesa</label>
+            <select value={form.tipoDespesa} onChange={e=>f("tipoDespesa",e.target.value)} className="form-input">
+              {TIPOS.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Descrição / Observação <span style={{color:"#dc2626"}}>*</span></label>
+            <input type="text" value={form.descricao} onChange={e=>f("descricao",e.target.value)}
+              className="form-input" placeholder='Ex: "Pagamento mensal Agência Scale Views" ou "Créditos Meta Ads maio"'/>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+            <div>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Valor (R$)</label>
+              <input type="number" min="0" step="0.01" value={form.valor}
+                onChange={e=>f("valor",e.target.value)} className="form-input" placeholder="0,00"/>
+            </div>
+            <div>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Data de Competência</label>
+              <input type="date" value={form.data} onChange={e=>f("data",e.target.value)} className="form-input"/>
+            </div>
+          </div>
+
+          {/* Campanha + botão criar nova */}
+          <div>
+            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+              Campanha Vinculada <span style={{fontWeight:400,color:"var(--text-muted)"}}>(opcional)</span>
+            </label>
+            <div style={{display:"flex",gap:8}}>
+              <select value={form.campanhaId} onChange={e=>f("campanhaId",e.target.value)} className="form-input" style={{flex:1}}>
+                <option value="">— Selecionar campanha —</option>
+                {campanhas.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+              <button onClick={()=>setCriandoCamp(x=>!x)}
+                style={{background: criandoCamp?"#ea580c":"#ea580c18",color: criandoCamp?"white":"#ea580c",border:"1px solid #ea580c40",borderRadius:8,padding:"0 14px",fontWeight:700,fontSize:18,cursor:"pointer",flexShrink:0}}>
+                {criandoCamp?"×":"+"}
+              </button>
+            </div>
+            {criandoCamp && (
+              <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:8}}>
+                <div style={{display:"flex",gap:8}}>
+                  <input type="text" value={novaCampanha} onChange={e=>setNovaCampanha(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&criarCampanha()}
+                    className="form-input" placeholder="Nome da nova campanha..." style={{flex:1}}
+                    autoFocus/>
+                  <button onClick={criarCampanha}
+                    style={{background:"#ea580c",color:"white",border:"none",borderRadius:8,padding:"0 16px",fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,fontFamily:"inherit"}}>
+                    Criar
+                  </button>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {["nacional","internacional"].map(op=>(
+                    <button key={op} onClick={()=>setNovaAbrangencia(op)}
+                      style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid",
+                        borderColor:novaAbrangencia===op?"#ea580c":"var(--gray-200)",
+                        background:novaAbrangencia===op?"#fff7ed":"white",
+                        cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
+                        color:novaAbrangencia===op?"#ea580c":"var(--text-muted)",textTransform:"capitalize"}}>
+                      {op==="nacional"?"🇧🇷 Nacional":"🌍 Internacional"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {msg&&(
+          <div style={{background:msg.tipo==="ok"?"#f0fdf4":"#fef2f2",border:"1px solid",borderColor:msg.tipo==="ok"?"#bbf7d0":"#fecaca",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.tipo==="ok"?"#15803d":"#dc2626",fontWeight:500}}>
+            {msg.texto}
+          </div>
+        )}
+
+        <button onClick={salvar} disabled={salvando} className="btn-primary" style={{width:"100%"}}>
+          {salvando?"Salvando...":"💾 Salvar e Lançar no Financeiro"}
+        </button>
+        <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8,textAlign:"center"}}>
+          O lançamento será registrado automaticamente como despesa paga em "Financeiro Clínica"
+        </div>
+      </div>
+
+      {/* Histórico */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{fontWeight:600,fontSize:13}}>Lançamentos de Marketing</div>
+            <input type="month" value={mesFiltro} onChange={e=>setMesFiltro(e.target.value)}
+              style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"4px 8px",fontSize:12,fontFamily:"inherit",outline:"none"}}/>
+          </div>
+          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>{mesFiltro.split("-").reverse().join("/")} : {fmtVal(totalMes)}</div>
+        </div>
+        {lancamentosFiltrados.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento em {mesFiltro.split("-").reverse().join("/")}.</div>
+          : <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <thead>
+                <tr style={{background:"var(--gray-50)"}}>
+                  {["Data","Descrição","Campanha","Valor",""].map(h=>(
+                    <th key={h} style={{padding:"9px 14px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:12}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {lancamentosFiltrados.map(l=>(
+                  <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
+                    <td style={{padding:"10px 14px",color:"var(--text-muted)"}}>{fmtData(l.data)}</td>
+                    <td style={{padding:"10px 14px",fontWeight:500}}>{l.descricao||"—"}</td>
+                    <td style={{padding:"10px 14px"}}>
+                      {l.campanhaNome
+                        ? <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{l.campanhaNome}</span>
+                        : <span style={{color:"var(--gray-400)",fontSize:12}}>—</span>}
+                    </td>
+                    <td style={{padding:"10px 14px",fontWeight:700,color:"#dc2626"}}>{fmtVal(l.valor)}</td>
+                    <td style={{padding:"10px 14px"}}>
+                      <button onClick={()=>excluir(l)}
+                        style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
+                        onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
+                        onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
+                        <Icon name="trash-2" size={13}/> Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        }
+      </div>
+
+      {/* Gerenciamento de Campanhas */}
+      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden",marginTop:20}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:600,fontSize:13}}>🏷️ Gerenciar Campanhas</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>{campanhas.length} campanha{campanhas.length!==1?"s":""} cadastrada{campanhas.length!==1?"s":""}</div>
+        </div>
+        {campanhas.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhuma campanha cadastrada ainda.</div>
+          : <div style={{padding:"8px 0"}}>
+              {campanhas.map(c=>(
+                <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 18px",borderBottom:"1px solid var(--gray-50)"}}>
+                  <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{c.nome}</span>
+                  <button onClick={async()=>{
+                    if (!window.confirm(`Excluir a campanha "${c.nome}" e todos os lançamentos financeiros vinculados? Esta ação não pode ser desfeita.`)) return;
+                    try {
+                      const snap = await db.collection("clinica_lancamentos").where("campanhaId","==",c.id).get();
+                      const batch = db.batch();
+                      snap.docs.forEach(d=>batch.delete(d.ref));
+                      await batch.commit();
+                      await db.collection("clinica_campanhas").doc(c.id).delete();
+                    } catch(e) { alert("Erro ao excluir."); }
+                  }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
+                    onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
+                    onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
+                    <Icon name="trash-2" size={13}/> Excluir
+                  </button>
+                </div>
+              ))}
+            </div>
+        }
+      </div>
+    </div>
+  );
+}
+
+
+
+// ═══════════════════════════════════════════════════════
+function DashboardMarketing({ user }) {
+  const [leads, setLeads] = useState([]);
+  useEffect(()=>{
+    db.collection("clinica_leads").limit(100)
+      .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  const total     = leads.length;
+  const converted = leads.filter(l=>l.status==="convertido").length;
+  const inProgress= leads.filter(l=>["contato","proposta","agendado"].includes(l.status)).length;
+  const taxa      = total>0 ? Math.round((converted/total)*100) : 0;
+
+  const porOrigem = leads.reduce((acc,l)=>{ const o=l.origem||"Não informado"; acc[o]=(acc[o]||0)+1; return acc; },{});
+  const porStatus = leads.reduce((acc,l)=>{ const s=l.status||"novo"; acc[s]=(acc[s]||0)+1; return acc; },{});
+
+  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", convertido_social:"Convertido Social", convertido_parceria:"Convertido — Parceria", perdido:"Perdido" };
+  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", convertido_social:"#0d9488", convertido_parceria:"#7B00C4", perdido:"#dc2626" };
+
+  return (
+    <div style={{padding:"24px 28px",maxWidth:900}}>
+      <div style={{marginBottom:24}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:600}}>Dashboard de Marketing</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Captação de leads — somente leitura</div>
+      </div>
+
+      {/* Cards resumo */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:16,marginBottom:28}}>
+        {[
+          {label:"Total de Leads",   valor:total,      icon:"users",        cor:"#7B00C4"},
+          {label:"Em andamento",     valor:inProgress,  icon:"clock",        cor:"#0891b2"},
+          {label:"Convertidos",      valor:converted,   icon:"check-circle", cor:"#16a34a"},
+          {label:"Taxa de conversão",valor:taxa+"%",    icon:"trending-up",  cor:"#ea580c"},
+        ].map((c,i)=>(
+          <div key={i} style={{background:"white",borderRadius:12,padding:"18px 20px",border:"1px solid var(--gray-200)",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+              <div style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{c.label}</div>
+              <div style={{width:32,height:32,borderRadius:8,background:c.cor+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <Icon name={c.icon} size={16} style={{color:c.cor}}/>
+              </div>
+            </div>
+            <div style={{fontSize:28,fontWeight:700,color:c.cor}}>{c.valor}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:28}}>
+        {/* Por origem */}
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>📊 Leads por Origem</div>
+          {Object.keys(porOrigem).length===0
+            ? <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum dado ainda.</div>
+            : Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]).map(([origem,qty])=>{
+                const pct = total>0?Math.round((qty/total)*100):0;
+                return (
+                  <div key={origem} style={{marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4}}>
+                      <span>{origem}</span><span style={{fontWeight:600}}>{qty} ({pct}%)</span>
+                    </div>
+                    <div style={{background:"var(--gray-100)",borderRadius:4,height:6}}>
+                      <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:4}}/>
+                    </div>
+                  </div>
+                );
+              })
+          }
+        </div>
+
+        {/* Por status */}
+        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
+          <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>🎯 Leads por Status</div>
+          {Object.keys(porStatus).length===0
+            ? <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum dado ainda.</div>
+            : Object.entries(porStatus).sort((a,b)=>b[1]-a[1]).map(([status,qty])=>(
+                <div key={status} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,marginBottom:6,background:((STATUS_COR[status]||"#6b7280")+"15")}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:STATUS_COR[status]||"#6b7280"}}/>
+                    <span style={{fontSize:13}}>{STATUS_LABEL[status]||status}</span>
+                  </div>
+                  <span style={{fontWeight:700,fontSize:14,color:STATUS_COR[status]||"#6b7280"}}>{qty}</span>
+                </div>
+              ))
+          }
+        </div>
+      </div>
+
+      {/* Lista de leads recentes */}
+      <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
+        <div style={{padding:"16px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:600,fontSize:14}}>
+          📋 Leads Recentes
+        </div>
+        {leads.length===0
+          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lead cadastrado ainda.</div>
+          : <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                <thead>
+                  <tr style={{background:"var(--gray-50)"}}>
+                    {["Nome","Origem","Status","Contato","Data"].map(h=>(
+                      <th key={h} style={{padding:"10px 16px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:12}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.slice(0,20).map(l=>(
+                    <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
+                      <td style={{padding:"10px 16px",fontWeight:500}}>{l.nome||"—"}</td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.origem||"—"}</td>
+                      <td style={{padding:"10px 16px"}}>
+                        <span style={{background:(STATUS_COR[l.status]||"#6b7280")+"20",color:STATUS_COR[l.status]||"#6b7280",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>
+                          {STATUS_LABEL[l.status]||l.status||"novo"}
+                        </span>
+                      </td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.telefone||l.email||"—"}</td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>
+                        {l.createdAt?.toDate ? l.createdAt.toDate().toLocaleDateString("pt-BR") : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+        }
+      </div>
+      {/* Central de Lançamentos — só psicóloga */}
+      {user?.tipo==="psicologa" && <CentralLancamentosMarketing/>}
+    </div>
+  );
+}
+
+const NAV_MARKETING = [
+  { id:"marketing-dashboard",    label:"Dashboard",   icon:"trending-up" },
+  { id:"dashboard-performance",  label:"Performance", icon:"bar-chart-2" },
+];
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App/>);
