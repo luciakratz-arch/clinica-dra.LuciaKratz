@@ -722,11 +722,13 @@ function AbaPerfil({ paciente, pacientes }) {
 // ABA MODULOS
 // FERRAMENTAS FIXAS DO MÓDULO I
 const FERRAMENTAS_MOD1 = [
-  { id:"humor",    nome:"Registro de Humor",        desc:"Escala de humor diária" },
-  { id:"diario",   nome:"Diário Terapêutico",        desc:"Escrita reflexiva livre" },
-  { id:"metas",    nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
-  { id:"reflexoes",nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
-  { id:"tcc",      nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
+  { id:"humor",     nome:"Registro de Humor",        desc:"Escala de humor diária" },
+  { id:"diario",    nome:"Diário Terapêutico",        desc:"Escrita reflexiva livre" },
+  { id:"metas",     nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
+  { id:"reflexoes", nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
+  { id:"tcc",       nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
+  { id:"respiracao",nome:"Técnica de Respiração",     desc:"Exercício de respiração diafragmática" },
+  { id:"relaxamento",nome:"Relaxamento Muscular",     desc:"Técnica de Jacobson" },
 ];
 
 function Toggle({ ativo, onClick }) {
@@ -894,25 +896,108 @@ function AbaFerramentas({ paciente }) {
 }
 
 // ABA METAS
+function AbaModulo1({ paciente }) {
+  const [dados, setDados] = useState({humor:[],diario:[],metas:[],reflexoes:[],tcc:[],respiracao:[],relaxamento:[]});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    const id = paciente.id;
+    Promise.all([
+      db.collection("clinica_humor").where("pacienteId","==",id).get(),
+      db.collection("clinica_diario").where("pacienteId","==",id).get(),
+      db.collection("clinica_metas").where("pacienteId","==",id).where("status","==","ativa").get(),
+      db.collection("clinica_reflexoes").where("pacienteId","==",id).get(),
+      db.collection("clinica_tcc").where("pacienteId","==",id).get(),
+      db.collection("clinica_atividades").where("pacienteId","==",id).where("tipo","==","respiracao").get(),
+      db.collection("clinica_atividades").where("pacienteId","==",id).where("tipo","==","relaxamento").get(),
+    ]).then(([h,d,m,r,t,resp,relax])=>{
+      setDados({
+        humor:   h.docs.map(x=>({id:x.id,...x.data()})),
+        diario:  d.docs.map(x=>({id:x.id,...x.data()})),
+        metas:   m.docs.map(x=>({id:x.id,...x.data()})),
+        reflexoes:r.docs.map(x=>({id:x.id,...x.data()})),
+        tcc:     t.docs.map(x=>({id:x.id,...x.data()})),
+        respiracao:resp.docs.map(x=>({id:x.id,...x.data()})),
+        relaxamento:relax.docs.map(x=>({id:x.id,...x.data()})),
+      });
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  },[paciente.id]);
+
+  const ITENS = [
+    { id:"humor",      icone:"❤️",  nome:"Registro de Humor",      qtd: dados.humor.length,      ultima: dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
+    { id:"diario",     icone:"📔",  nome:"Diário Terapêutico",      qtd: dados.diario.length,     ultima: dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
+    { id:"metas",      icone:"🎯",  nome:"Metas Terapêuticas",      qtd: dados.metas.length,      ultima: null },
+    { id:"reflexoes",  icone:"💡",  nome:"Reflexões Cognitivas",     qtd: dados.reflexoes.length,  ultima: null },
+    { id:"tcc",        icone:"🧠",  nome:"Pensamentos Automáticos",  qtd: dados.tcc.length,        ultima: null },
+    { id:"respiracao", icone:"💨",  nome:"Técnica de Respiração",    qtd: dados.respiracao.length, ultima: null },
+    { id:"relaxamento",icone:"💪",  nome:"Relaxamento Muscular",     qtd: dados.relaxamento.length,ultima: null },
+  ];
+
+  return (
+    <div>
+      <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>Módulo 1 — Dashboard</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Ferramentas básicas do dia a dia de {paciente.nome.split(" ")[0]}</div>
+
+      {loading ? <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Carregando...</div> : (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:14}}>
+          {ITENS.map(item=>(
+            <div key={item.id} style={{background:"white",border:"1px solid var(--gray-100)",borderRadius:14,padding:18,
+              boxShadow:"0 2px 8px rgba(123,0,196,0.05)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                <div style={{width:40,height:40,borderRadius:10,background:"var(--purple-soft)",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+                  {item.icone}
+                </div>
+                <div style={{fontWeight:600,fontSize:13,lineHeight:1.3}}>{item.nome}</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{fontSize:24,fontWeight:700,color:"var(--purple)"}}>{item.qtd}</div>
+                <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"right"}}>
+                  {item.qtd===0 ? "Sem registros" : `registro${item.qtd!==1?"s":""}`}
+                  {item.ultima && <div style={{marginTop:2}}>Último: {new Date(item.ultima+"T00:00:00").toLocaleDateString("pt-BR")}</div>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AbaMetas({ paciente }) {
   const [metas, setMetas] = useState([]);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({titulo:"",categoria:"Emocional",progresso:0});
 
   useEffect(()=>{
-    const unsub = db.collection("clinica_pacientes").doc(paciente.id).collection("metas").onSnapshot(snap=>{
-      setMetas(snap.docs.map(d=>({id:d.id,...d.data()})));
-    },()=>{});
+    // Usa clinica_metas (coleção raiz) com pacienteId — mesma que o portal do paciente lê
+    const unsub = db.collection("clinica_metas")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        setMetas(snap.docs.map(d=>({id:d.id,...d.data()})));
+      },()=>{});
     return unsub;
   },[paciente.id]);
 
   async function salvar() {
     if(!form.titulo){alert("Titulo obrigatorio.");return;}
-    await db.collection("clinica_pacientes").doc(paciente.id).collection("metas").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection("clinica_metas").add({
+      ...form,
+      pacienteId: paciente.id,
+      status: "ativa",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     setModal(false); setForm({titulo:"",categoria:"Emocional",progresso:0});
   }
-  async function excluir(id){if(!confirm("Excluir meta?"))return;await db.collection("clinica_pacientes").doc(paciente.id).collection("metas").doc(id).delete();}
-  async function atualizarProgresso(id,val){await db.collection("clinica_pacientes").doc(paciente.id).collection("metas").doc(id).update({progresso:val});}
+  async function excluir(id){
+    if(!confirm("Excluir meta?"))return;
+    await db.collection("clinica_metas").doc(id).delete();
+  }
+  async function atualizarProgresso(id,val){
+    await db.collection("clinica_metas").doc(id).update({progresso:val});
+  }
 
   return (
     <div>
@@ -973,6 +1058,7 @@ function AbaMetas({ paciente }) {
 function AbaEvolucao({ paciente }) {
   const [humor, setHumor] = useState([]);
   const [atividades, setAtividades] = useState([]);
+  const [metas, setMetas] = useState([]);
   useEffect(()=>{
     const u1 = db.collection("clinica_humor")
       .where("pacienteId","==",paciente.id)
@@ -988,13 +1074,18 @@ function AbaEvolucao({ paciente }) {
         docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
         setAtividades(docs);
       },()=>{});
-    return ()=>{ u1(); u2(); };
+    // Busca metas ativas em clinica_metas (coleção raiz — mesma do portal do paciente)
+    const u3 = db.collection("clinica_metas")
+      .where("pacienteId","==",paciente.id)
+      .where("status","==","ativa")
+      .onSnapshot(snap=>setMetas(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    return ()=>{ u1(); u2(); u3(); };
   },[paciente.id]);
   const media = humor.length?(humor.reduce((a,h)=>a+(h.valor||0),0)/humor.length).toFixed(1):"—";
   return (
     <div>
       <div className="metrics-grid" style={{marginBottom:20}}>
-        {[{label:"Sessoes recentes",value:0,icon:"calendar"},{label:"Registros TCC",value:0,icon:"brain"},{label:"Entradas no diario",value:0,icon:"book-open"},{label:"Metas ativas",value:0,icon:"target"}].map(m=>(
+        {[{label:"Sessoes recentes",value:0,icon:"calendar"},{label:"Registros TCC",value:0,icon:"brain"},{label:"Entradas no diario",value:atividades.length,icon:"book-open"},{label:"Metas ativas",value:metas.length,icon:"target"}].map(m=>(
           <div key={m.label} className="metric-card"><div className="metric-icon"><Icon name={m.icon} size={20}/></div><div className="metric-label">{m.label}</div><div className="metric-value">{m.value}</div></div>
         ))}
       </div>
@@ -1457,6 +1548,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
     {id:"perfil",   label:"Perfil",          icon:"user"},
     ...(!isSecretaria?[
       {id:"modulos",  label:"Modulos",         icon:"toggle-right"},
+      {id:"modulo1",  label:"Módulo 1",        icon:"layout-grid"},
       {id:"metas",    label:"Metas",           icon:"target"},
       {id:"laudos",   label:"Laudos",          icon:"file-text"},
       {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
@@ -1484,6 +1576,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
       </div>
       {aba==="perfil"     &&<AbaPerfil      paciente={paciente} pacientes={pacientes}/>}
       {aba==="modulos"    &&<AbaModulos     paciente={paciente}/>}
+      {aba==="modulo1"    &&<AbaModulo1     paciente={paciente}/>}
       {aba==="metas"      &&<AbaMetas       paciente={paciente}/>}
       {aba==="laudos"     &&<EmBreve titulo="Laudos" subtitulo="Etapa 10"/>}
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
