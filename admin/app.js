@@ -1689,20 +1689,25 @@ function Pacientes({ user }) {
 // FINANCEIRO CLINICA
 // ── Relatório de Frequência (componente externo) ──────────────────────────
 function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes, lancamentos, FORMAS, onVoltar}){
-  const pac = pacientes.find(p=>p.id===pacienteId);
+  // Normaliza IDs removendo espaços e garantindo string limpa
+  const pidNorm = (pacienteId||"").trim();
+  const pac = pacientes.find(p=>p.id===pidNorm);
   const pacote = pacoteId ? pacotes.find(p=>p.id===pacoteId) : null;
   const pacEfetivo = pac || pacientes.find(p=>p.id===pacote?.pacienteId);
 
-  // Se pacoteId → só sessões deste pacote; se pacienteId → todas do paciente
-  // Fallback: sessões antigas salvas sem pacienteId são encontradas via pacoteId dos pacotes do paciente
-  const pacoteIdsDosPac = pacotes.filter(p=>p.pacienteId===pacienteId).map(p=>p.id);
-  const sessPac = pacoteId
-    ? sessoes.filter(s=>s.pacoteId===pacoteId).sort((a,b)=>a.data?.localeCompare(b.data))
-    : sessoes.filter(s=>s.pacienteId===pacienteId||pacoteIdsDosPac.includes(s.pacoteId)).sort((a,b)=>a.data?.localeCompare(b.data));
-
+  // Busca pacotes do paciente — também tenta pelo nome caso ID não bata
+  const pacotesPorId = pacotes.filter(p=>p.pacienteId===pidNorm);
+  // Fallback extra: busca por pacienteNome se nenhum pacote encontrado
   const pacotesPac = pacoteId
     ? [pacote].filter(Boolean)
-    : pacotes.filter(p=>p.pacienteId===pacienteId);
+    : pacotesPorId.length > 0
+      ? pacotesPorId
+      : pacotes.filter(p=>p.pacienteNome && pacEfetivo && p.pacienteNome===pacEfetivo.nome);
+
+  const pacoteIdsDosPac = pacotesPac.map(p=>p.id);
+  const sessPac = pacoteId
+    ? sessoes.filter(s=>s.pacoteId===pacoteId).sort((a,b)=>a.data?.localeCompare(b.data))
+    : sessoes.filter(s=>s.pacienteId===pidNorm||pacoteIdsDosPac.includes(s.pacoteId)).sort((a,b)=>a.data?.localeCompare(b.data));
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
