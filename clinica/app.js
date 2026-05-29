@@ -420,7 +420,11 @@ const MAPA_MODULOS = {
 };
 
 function navFiltradoPaciente(nav, user) {
-  // Suporta formato novo (modulosConfig) e antigo (modulosAtivos)
+  // Suporta 3 formatos:
+  // 1. ferramentasAtivas (novo admin — AbaFerramentas)
+  // 2. modulosConfig (formato módulos)
+  // 3. modulosAtivos (legado)
+  const ferramentasAtivasAdmin = user.ferramentasAtivas || [];
   const config = user.modulosConfig || {};
   const ativos = user.modulosAtivos || [];
 
@@ -436,26 +440,28 @@ function navFiltradoPaciente(nav, user) {
   return nav.filter(item => {
     if (["painel","minha-conta","meus-laudos"].includes(item.id)) return true;
 
-    // Verifica no formato novo
+    // Formato 1: ferramentasAtivas — tem prioridade quando preenchido
+    if (ferramentasAtivasAdmin.length > 0) {
+      return ferramentasAtivasAdmin.includes(item.id);
+    }
+
+    // Formato 2: modulosConfig
     const modId = ITEM_PARA_MODULO[item.id];
     if (modId && config[modId]?.ativo) {
-      // Verifica se a ferramenta específica está ativa dentro do módulo
       const ferramentas = config[modId].ferramentas || {};
       const ferrAtiva = ferramentas[item.id];
       if (ferrAtiva) {
-        // Verifica data de início
         if (ferrAtiva.dataInicio) {
           const hoje = new Date().toISOString().split("T")[0];
           return ferrAtiva.dataInicio <= hoje;
         }
         return true;
       }
-      // Se o módulo está ativo mas sem ferramentas específicas, mostra
       if (Object.keys(ferramentas).length === 0) return true;
       return false;
     }
 
-    // Fallback formato antigo
+    // Formato 3: modulosAtivos (legado)
     const chave = MAPA_MODULOS[item.id] || item.id;
     return ativos.includes(chave) || ativos.includes(item.id);
   });
@@ -782,22 +788,30 @@ function PainelIndividual({ user, setTab }) {
   const humorHoje = humores.find(h=>h.data===new Date().toLocaleDateString("pt-BR"));
   const media30   = humores.length>0 ? (humores.reduce((a,h)=>a+(h.valor||0),0)/humores.length).toFixed(1) : null;
 
-  // Suporta formato antigo (modulosAtivos=["humor","diario"]) e novo (modulosConfig={mod1:{ativo:true,ferramentas:[...]}})
+  // Suporta 3 formatos:
+  // 1. ferramentasAtivas (novo admin) — array com IDs das ferramentas habilitadas
+  // 2. modulosConfig (formato módulos) — objeto com configuração por módulo
+  // 3. modulosAtivos (legado) — array simples de IDs
   const config = user.modulosConfig || {};
   const modulosAtivosLegacy = user.modulosAtivos || [];
+  const ferramentasAtivasAdmin = user.ferramentasAtivas || [];
   const FERRAMENTA_PARA_MOD = {
     "humor":"mod1","diario":"mod1","metas":"mod1","reflexoes":"mod1","pensamentos":"mod1","tcc":"mod1",
     "fabulas":"mod2","ferramentas":"mod3","ansiedade":"mod3","arvore":"mod3","musicoterapia":"mod4"
   };
   function ferramentaAtiva(id) {
-    // Formato novo: verifica modulosConfig
+    // Formato 1: ferramentasAtivas (salvo pela AbaFerramentas do admin)
+    if (ferramentasAtivasAdmin.length > 0) {
+      return ferramentasAtivasAdmin.includes(id);
+    }
+    // Formato 2: modulosConfig
     const modId = FERRAMENTA_PARA_MOD[id];
     if (modId && config[modId]?.ativo) {
       const fts = config[modId]?.ferramentas;
       if (!fts || !Array.isArray(fts) || fts.length===0) return true;
       return fts.includes(id);
     }
-    // Formato antigo: verifica modulosAtivos
+    // Formato 3: modulosAtivos (legado)
     return Array.isArray(modulosAtivosLegacy) && modulosAtivosLegacy.includes(id);
   }
   const modulos = user.modulosAtivos || [];
