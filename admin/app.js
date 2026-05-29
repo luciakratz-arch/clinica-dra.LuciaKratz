@@ -8491,12 +8491,13 @@ function App() {
 //  FUNIL DE LEADS — KANBAN
 // ═══════════════════════════════════════════════════════
 const COLUNAS_FUNIL = [
-  { id:"novo",        label:"Lead Novo",             cor:"#6b7280", bg:"#f3f4f6" },
-  { id:"contato",     label:"Primeiro Contato",      cor:"#0891b2", bg:"#e0f2fe" },
-  { id:"agendamento", label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
-  { id:"agendado",    label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
-  { id:"convertido",  label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
-  { id:"perdido",     label:"Perdido",               cor:"#dc2626", bg:"#fef2f2" },
+  { id:"novo",              label:"Lead Novo",             cor:"#6b7280", bg:"#f3f4f6" },
+  { id:"contato",           label:"Primeiro Contato",      cor:"#0891b2", bg:"#e0f2fe" },
+  { id:"agendamento",       label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
+  { id:"agendado",          label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
+  { id:"convertido",        label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
+  { id:"convertido_social", label:"Convertido Social",     cor:"#0d9488", bg:"#ccfbf1" },
+  { id:"perdido",           label:"Perdido",               cor:"#dc2626", bg:"#fef2f2" },
 ];
 
 function parsearLeadIA(texto) {
@@ -8733,8 +8734,8 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
                 <select value={form.status||"novo"} onChange={e=>{
                   const novoStatus = e.target.value;
                   f("status", novoStatus);
-                  if (novoStatus==="convertido" && !novo && onConverter) {
-                    onConverter({...form, id:lead.id});
+                  if ((novoStatus==="convertido" || novoStatus==="convertido_social") && !novo && onConverter) {
+                    onConverter({...form, id:lead.id, _tipoConversao: novoStatus});
                   }
                 }} className="form-input">
                   {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
@@ -8949,7 +8950,7 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
         createdAt:             firebase.firestore.FieldValue.serverTimestamp(),
       });
       await db.collection("clinica_leads").doc(lead.id).update({
-        status:        "convertido",
+        status:        lead._tipoConversao || "convertido",
         arquivado:     true,
         convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
       });
@@ -8961,9 +8962,14 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
       <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:460,boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
-        <div style={{background:"linear-gradient(135deg,#16a34a,#15803d)",borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
-          <div style={{fontSize:40,marginBottom:8}}>🎉</div>
-          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>Lead Convertido!</div>
+        <div style={{background: lead._tipoConversao==="convertido_social"
+              ? "linear-gradient(135deg,#0d9488,#0f766e)"
+              : "linear-gradient(135deg,#16a34a,#15803d)",
+            borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
+          <div style={{fontSize:40,marginBottom:8}}>{lead._tipoConversao==="convertido_social"?"📱":"🎉"}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>
+            {lead._tipoConversao==="convertido_social"?"Convertido pelo Social!":"Lead Convertido!"}
+          </div>
           <div style={{fontSize:13,opacity:0.85,marginTop:4}}>Deseja cadastrar como Paciente na Clínica?</div>
         </div>
 
@@ -9170,11 +9176,11 @@ function FunilLeads({ user }) {
     e.preventDefault();
     const leadId = e.dataTransfer.getData("leadId");
     if (!leadId) { setDragOver(null); return; }
-    if (colId === "convertido") {
+    if (colId === "convertido" || colId === "convertido_social") {
       const lead = leads.find(l=>l.id===leadId);
       if (lead) {
-        moverLead(leadId, "convertido");
-        setModalConversao(lead);
+        moverLead(leadId, colId);
+        setModalConversao({...lead, _tipoConversao: colId});
       }
     } else {
       moverLead(leadId, colId);
@@ -9952,8 +9958,8 @@ function DashboardMarketing({ user }) {
   const porOrigem = leads.reduce((acc,l)=>{ const o=l.origem||"Não informado"; acc[o]=(acc[o]||0)+1; return acc; },{});
   const porStatus = leads.reduce((acc,l)=>{ const s=l.status||"novo"; acc[s]=(acc[s]||0)+1; return acc; },{});
 
-  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", perdido:"Perdido" };
-  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", perdido:"#dc2626" };
+  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", convertido_social:"Convertido Social", perdido:"Perdido" };
+  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", convertido_social:"#0d9488", perdido:"#dc2626" };
 
   return (
     <div style={{padding:"24px 28px",maxWidth:900}}>
