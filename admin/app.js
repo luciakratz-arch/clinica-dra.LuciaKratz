@@ -2218,7 +2218,39 @@ function FinanceiroClinica() {
       });
     });
     await batch.commit();
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});setSalvando(false);
+    // Social: lança comissão estagiária automaticamente
+    if((formPacote.tipoAtendimento||"particular")==="social"){
+      const hoje = new Date().toISOString().slice(0,10);
+      const mesRef = hoje.slice(0,7);
+      const vSupervisao = parseFloat(formPacote.valorSupervisaoSocial||40);
+      const vEstagiaria = parseFloat(formPacote.valorEstagiariaSocial||20);
+      const snapEst = await db.collection("clinica_parceiras").where("tipo","==","estagiaria").limit(1).get();
+      const nomeEst = !snapEst.empty ? snapEst.docs[0].data().nome : "Estagiária";
+      const batchSoc = db.batch();
+      batchSoc.set(db.collection("clinica_lancamentos").doc(),{
+        tipo_lancamento:"social",
+        tipo:`${pac?.nome||""} — Projeto Social`,
+        descricao:`${pac?.nome||""} — Projeto Social`,
+        pacienteNome:pac?.nome||"",
+        valor:vSupervisao, data:dataInicio, mesRef,
+        formaPag:formPacote.formaPag||"PIX",
+        status:formPacote.statusPag||"pendente",
+        origem:"pacote-social",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      batchSoc.set(db.collection("clinica_comissoes").doc(),{
+        tipo:"Social — Estagiária",
+        tipoVenda:"primeira", perc:0,
+        valorBase:vSupervisao, valorComissao:vEstagiaria,
+        pacienteNome:pac?.nome||"",
+        responsavel:nomeEst,
+        mesRef, status:"pendente",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      await batchSoc.commit();
+    }
+
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20"});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
@@ -3180,12 +3212,52 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Horário {needDias?"(padrão)":""}</label>
                   <input className="form-input" type="time" value={formPacote.horario} onChange={e=>setFormPacote({...formPacote,horario:e.target.value})}/>
                 </div>
-                <div className="form-group"><label className="form-label">Valor por Sessão (R$)</label>
-                  <input className="form-input" type="number" placeholder="Ex: 250" value={formPacote.valorSessao} onChange={e=>setFormPacote({...formPacote,valorSessao:e.target.value})}/>
+                {/* Toggle Particular / Social */}
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
+                  <label className="form-label">Tipo de Atendimento</label>
+                  <div style={{display:"flex",gap:8}}>
+                    {[["particular","🏥 Particular"],["social","🌱 Social"]].map(([v,l])=>(
+                      <button key={v} type="button" onClick={()=>setFormPacote({...formPacote,tipoAtendimento:v,
+                        valorSessao:v==="social"?"":formPacote.valorSessao,
+                        valorSupervisaoSocial:v==="social"?"40":formPacote.valorSupervisaoSocial,
+                        valorEstagiariaSocial:v==="social"?"20":formPacote.valorEstagiariaSocial})}
+                        style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
+                          borderColor:(formPacote.tipoAtendimento||"particular")===v?
+                            (v==="social"?"#0d9488":"#7B00C4"):"#e5e7eb",
+                          background:(formPacote.tipoAtendimento||"particular")===v?
+                            (v==="social"?"#ccfbf1":"#f5f3ff"):"white",
+                          color:(formPacote.tipoAtendimento||"particular")===v?
+                            (v==="social"?"#0d9488":"#7B00C4"):"#6b7280"}}>
+                        {l}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="form-group"><label className="form-label">Total do Pacote (R$)</label>
-                  <input className="form-input" type="number" placeholder="Automático" value={formPacote.valorSessao&&formPacote.totalSessoes?(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0):""} readOnly style={{background:"#f9fafb"}}/>
-                </div>
+                {(formPacote.tipoAtendimento||"particular")==="social"?(
+                  <>
+                    <div className="form-group">
+                      <label className="form-label">Valor Supervisão (R$)</label>
+                      <input className="form-input" type="number" value={formPacote.valorSupervisaoSocial||"40"}
+                        onChange={e=>setFormPacote({...formPacote,valorSupervisaoSocial:e.target.value})}/>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Receita da clínica</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Valor Estagiária (R$)</label>
+                      <input className="form-input" type="number" value={formPacote.valorEstagiariaSocial||"20"}
+                        onChange={e=>setFormPacote({...formPacote,valorEstagiariaSocial:e.target.value})}/>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Comissão estagiária</div>
+                    </div>
+                  </>
+                ):(
+                  <>
+                    <div className="form-group"><label className="form-label">Valor por Sessão (R$)</label>
+                      <input className="form-input" type="number" placeholder="Ex: 250" value={formPacote.valorSessao} onChange={e=>setFormPacote({...formPacote,valorSessao:e.target.value})}/>
+                    </div>
+                    <div className="form-group"><label className="form-label">Total do Pacote (R$)</label>
+                      <input className="form-input" type="number" placeholder="Automático" value={formPacote.valorSessao&&formPacote.totalSessoes?(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0):""} readOnly style={{background:"#f9fafb"}}/>
+                    </div>
+                  </>
+                )}
                 {/* Pagamento */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
                   <label className="form-label">Status do Pagamento</label>
@@ -8496,8 +8568,9 @@ const COLUNAS_FUNIL = [
   { id:"agendamento",       label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
   { id:"agendado",          label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
   { id:"convertido",        label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
-  { id:"convertido_social", label:"Convertido Social",     cor:"#0d9488", bg:"#ccfbf1" },
-  { id:"perdido",           label:"Perdido",               cor:"#dc2626", bg:"#fef2f2" },
+  { id:"convertido_social",   label:"Convertido Social",       cor:"#0d9488", bg:"#ccfbf1" },
+  { id:"convertido_parceria", label:"Convertido — Parceria",   cor:"#7B00C4", bg:"#f5f3ff" },
+  { id:"perdido",             label:"Perdido",                 cor:"#dc2626", bg:"#fef2f2" },
 ];
 
 function parsearLeadIA(texto) {
@@ -8734,7 +8807,7 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
                 <select value={form.status||"novo"} onChange={e=>{
                   const novoStatus = e.target.value;
                   f("status", novoStatus);
-                  if ((novoStatus==="convertido" || novoStatus==="convertido_social") && !novo && onConverter) {
+                  if ((novoStatus==="convertido" || novoStatus==="convertido_social" || novoStatus==="convertido_parceria") && !novo && onConverter) {
                     onConverter({...form, id:lead.id, _tipoConversao: novoStatus});
                   }
                 }} className="form-input">
@@ -8919,60 +8992,219 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
 // ═══════════════════════════════════════════════════════
 //  MODAL CONVERSÃO — Lead → Paciente
 // ═══════════════════════════════════════════════════════
+// ── Psicólogas parceiras do Instituto Cegatti ─────────────────────────────
+const PARCEIRAS_CEGATTI = [
+  { nome: "Psicóloga Parceira A", crp: "09/XXXXX", telefone: "5562999999999" },
+  { nome: "Psicóloga Parceira B", crp: "09/XXXXX", telefone: "5562999999999" },
+];
+
 function ModalConversao({ lead, onConfirmar, onCancelar }) {
-  const [email, setEmail]                   = useState("");
+  const isSocial    = lead._tipoConversao === "convertido_social";
+  const isParceria  = lead._tipoConversao === "convertido_parceria";
+
+  const [email, setEmail]                     = useState("");
   const [tipoContratacao, setTipoContratacao] = useState("individual");
-  const [salvando, setSalvando]             = useState(false);
-  const [erro, setErro]                     = useState("");
+  const [salvando, setSalvando]               = useState(false);
+  const [erro, setErro]                       = useState("");
+  const [salvo, setSalvo]                     = useState(false);
+  const [parceiraSel, setParceiraSel]         = useState(null); // id no Firestore
+  const [parceiras, setParceiras]             = useState([]);
+  const [valorPacoteParceria, setValorPacoteParceria] = useState("");
 
   const valorEstimado = tipoContratacao === "pacote" ? 250 : 300;
 
+  // Carrega parceiras do Firestore
+  useEffect(()=>{
+    db.collection("clinica_parceiras").orderBy("createdAt","asc")
+      .onSnapshot(s=>{
+        const lista = s.docs.map(d=>({id:d.id,...d.data()}));
+        setParceiras(lista);
+        if(isParceria && lista.filter(p=>p.tipo==="parceira").length>0){
+          setParceiraSel(lista.filter(p=>p.tipo==="parceira")[0].id);
+        }
+      },()=>{});
+  },[]);
+
+  const parceiraObj = parceiras.find(p=>p.id===parceiraSel)||null;
+  const estagiaria  = parceiras.find(p=>p.tipo==="estagiaria")||null;
+
+  // Cor e ícone do header conforme tipo
+  const headerGrad = isParceria
+    ? "linear-gradient(135deg,#7B00C4,#5a0090)"
+    : isSocial
+      ? "linear-gradient(135deg,#0d9488,#0f766e)"
+      : "linear-gradient(135deg,#16a34a,#15803d)";
+  const headerIcon  = isParceria ? "🤝" : isSocial ? "📱" : "🎉";
+  const headerTitulo = isParceria
+    ? "Encaminhamento — Parceria!"
+    : isSocial
+      ? "Convertido pelo Social!"
+      : "Lead Convertido!";
+
   async function confirmar() {
+    const hoje = new Date().toISOString().slice(0,10);
+    const mesRef = hoje.slice(0,7);
+
+    if(isParceria){
+      // Parceria: não precisa de email, só valor do pacote
+      const vBase = parseFloat(valorPacoteParceria)||0;
+      if(vBase<=0){setErro("Informe o valor do pacote fechado.");return;}
+      setSalvando(true);
+      try {
+        const comissao10 = parseFloat((vBase*0.10).toFixed(2));
+        const nomePac = lead.nome||"Lead";
+        const nomeParc = parceiraObj?.nome||"Parceira";
+        const batch = db.batch();
+        // Receita clínica: 10% do pacote
+        batch.set(db.collection("clinica_lancamentos").doc(),{
+          tipo_lancamento:"parceria",
+          tipo:`${nomePac} — Parceria ${nomeParc}`,
+          descricao:`${nomePac} — Parceria ${nomeParc}`,
+          pacienteNome: nomePac,
+          valor: comissao10,
+          data: hoje, mesRef,
+          formaPag:"PIX",
+          status:"recebido",
+          origem:"convertido_parceria",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Comissão clínica
+        batch.set(db.collection("clinica_comissoes").doc(),{
+          tipo:"Parceria — Clínica",
+          tipoVenda:"primeira",
+          perc:10,
+          valorBase: vBase,
+          valorComissao: comissao10,
+          pacienteNome: nomePac,
+          mesRef, status:"pendente",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Comissão estagiária: 10%
+        if(estagiaria){
+          batch.set(db.collection("clinica_comissoes").doc(),{
+            tipo:"Parceria — Estagiária",
+            tipoVenda:"primeira",
+            perc:10,
+            valorBase: vBase,
+            valorComissao: comissao10,
+            pacienteNome: nomePac,
+            responsavel: estagiaria.nome,
+            mesRef, status:"pendente",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+        // Arquiva lead
+        await db.collection("clinica_leads").doc(lead.id).update({
+          status:"convertido_parceria", arquivado:true,
+          convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        setSalvo(true);
+      } catch(e){setErro("Erro: "+e.message);}
+      setSalvando(false);
+      return;
+    }
+
+    // Social ou Convertido normal — cadastra paciente
     if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
     setSalvando(true);
     try {
+      const nomePac = lead.nome||"";
       await db.collection("clinica_pacientes").add({
-        nome:                  lead.nome || "",
-        email:                 email.trim().toLowerCase(),
-        telefone:              lead.telefone || "",
-        cpf:                   "",
-        dataNascimento:        "",
-        genero:                "Não informar",
-        status:                "ativo",
-        senha:                 "1234",
-        objetivosTerapeuticos: lead.queixa || "",
-        observacoesClinicas:   "",
-        origem:                "crm-lead",
-        leadId:                lead.id,
-        tipoContratacao,
-        valorEstimado,
-        campanhas:             lead.campanhas || [],
-        createdAt:             firebase.firestore.FieldValue.serverTimestamp(),
+        nome: nomePac,
+        email: email.trim().toLowerCase(),
+        telefone: lead.telefone||"",
+        cpf:"", dataNascimento:"",
+        genero:"Não informar",
+        status:"ativo", senha:"1234",
+        objetivosTerapeuticos: lead.queixa||"",
+        observacoesClinicas:"",
+        origem: isSocial ? "projeto-social" : "crm-lead",
+        leadId: lead.id,
+        tipoContratacao, valorEstimado,
+        campanhas: lead.campanhas||[],
+        isSocial: isSocial||false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
+
+      if(isSocial){
+        const batch = db.batch();
+        // Receita clínica: R$40 fixo
+        batch.set(db.collection("clinica_lancamentos").doc(),{
+          tipo_lancamento:"social",
+          tipo:`${nomePac} — Projeto Social`,
+          descricao:`${nomePac} — Projeto Social`,
+          pacienteNome: nomePac,
+          valor: 40,
+          data: hoje, mesRef,
+          formaPag:"PIX",
+          status:"recebido",
+          origem:"convertido_social",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+        // Comissão estagiária: R$20 fixo
+        if(estagiaria){
+          batch.set(db.collection("clinica_comissoes").doc(),{
+            tipo:"Social — Estagiária",
+            tipoVenda:"primeira",
+            perc:0,
+            valorBase:40,
+            valorComissao:20,
+            pacienteNome: nomePac,
+            responsavel: estagiaria.nome,
+            mesRef, status:"pendente",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      }
+
       await db.collection("clinica_leads").doc(lead.id).update({
-        status:        lead._tipoConversao || "convertido",
-        arquivado:     true,
+        status: lead._tipoConversao||"convertido",
+        arquivado:true,
         convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
       });
-      onConfirmar();
-    } catch(e) { setErro("Erro ao cadastrar. Tente novamente."); }
+      setSalvo(true);
+    } catch(e){setErro("Erro ao cadastrar. Tente novamente.");}
     setSalvando(false);
+  }
+
+  function gerarWhatsApp() {
+    const parceira = parceiraObj;
+    if(!parceira){alert("Selecione uma parceira.");return;}
+    const telPaciente = (lead.telefone || "").replace(/[^0-9]/g,"");
+    const msg = `Olá, ${lead.nome || ""}! Tudo bem?
+Aqui é da equipe de atendimento. Passando para informar que realizamos o seu encaminhamento clínico. Você será atendido(a) pela psicóloga ${parceira.nome}, CRP: ${parceira.crp}.
+Ela faz parte dos grupos do Instituto Cegatti, que integram o projeto social e de parcerias da Doutora Lúcia Kratz.
+Você pode entrar em contato diretamente com ela através do número abaixo para alinhar o seu primeiro horário:
+👉 WhatsApp: https://wa.me/${parceira.telefone}
+Estamos à disposição!`;
+    const url = `https://wa.me/${telPaciente}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  }
+
+  function gerarWhatsAppSocial() {
+    const telPaciente = (lead.telefone || "").replace(/\D/g,"");
+    const msg = `Olá, ${lead.nome || ""}! Tudo bem?
+Aqui é da equipe da Dra. Lúcia Kratz. Que bom ter você com a gente!
+Seu cadastro foi realizado com sucesso. Entraremos em contato para alinhar os próximos passos do seu atendimento.
+Estamos à disposição! 🌷`;
+    const url = `https://wa.me/${telPaciente}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
   }
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:460,boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
-        <div style={{background: lead._tipoConversao==="convertido_social"
-              ? "linear-gradient(135deg,#0d9488,#0f766e)"
-              : "linear-gradient(135deg,#16a34a,#15803d)",
-            borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
-          <div style={{fontSize:40,marginBottom:8}}>{lead._tipoConversao==="convertido_social"?"📱":"🎉"}</div>
-          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>
-            {lead._tipoConversao==="convertido_social"?"Convertido pelo Social!":"Lead Convertido!"}
-          </div>
+      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
+
+        {/* Header */}
+        <div style={{background:headerGrad,borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
+          <div style={{fontSize:40,marginBottom:8}}>{headerIcon}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>{headerTitulo}</div>
           <div style={{fontSize:13,opacity:0.85,marginTop:4}}>Deseja cadastrar como Paciente na Clínica?</div>
         </div>
 
+        {/* Dados migrados */}
         <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)"}}>
           <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
             <div style={{fontSize:12,fontWeight:600,color:"#16a34a",marginBottom:8}}>DADOS QUE SERÃO MIGRADOS</div>
@@ -8983,6 +9215,49 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
             </div>
           </div>
 
+          {/* Seleção de parceira — só para parceria */}
+          {isParceria&&(
+            <div style={{marginBottom:14}}>
+              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Psicóloga Parceira</label>
+              {parceiras.filter(p=>p.tipo==="parceira").length===0
+                ? <div style={{fontSize:12,color:"#d97706",padding:"8px 12px",background:"#fef3c7",borderRadius:8}}>
+                    Nenhuma parceira cadastrada. Vá em Funil → aba Parceiras & Estagiárias.
+                  </div>
+                : <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {parceiras.filter(p=>p.tipo==="parceira").map(p=>(
+                      <button key={p.id} onClick={()=>setParceiraSel(p.id)}
+                        style={{padding:"10px 14px",borderRadius:8,border:"2px solid",textAlign:"left",
+                          borderColor:parceiraSel===p.id?"#7B00C4":"var(--gray-200)",
+                          background:parceiraSel===p.id?"#f5f3ff":"white",
+                          cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
+                          color:parceiraSel===p.id?"#7B00C4":"var(--text-muted)"}}>
+                        {p.nome}
+                        <span style={{display:"block",fontSize:11,fontWeight:400,marginTop:2}}>
+                          {p.crp&&<span>CRP {p.crp} · </span>}WhatsApp: {p.telefone}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+              }
+              {/* Valor do pacote fechado */}
+              <div style={{marginTop:12}}>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
+                  Valor do pacote fechado (R$) <span style={{color:"#dc2626"}}>*</span>
+                </label>
+                <input type="number" value={valorPacoteParceria}
+                  onChange={e=>setValorPacoteParceria(e.target.value)}
+                  className="form-input" placeholder="Ex: 800"/>
+                {valorPacoteParceria&&parseFloat(valorPacoteParceria)>0&&(
+                  <div style={{fontSize:12,color:"#7B00C4",marginTop:6,background:"#f5f3ff",borderRadius:6,padding:"6px 10px"}}>
+                    Comissão clínica: <b>R$ {(parseFloat(valorPacoteParceria)*0.10).toFixed(2).replace(".",",")}</b>
+                    {estagiaria&&<span> · Comissão estagiária: <b>R$ {(parseFloat(valorPacoteParceria)*0.10).toFixed(2).replace(".",",")}</b></span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tipo de contratação */}
           <div style={{marginBottom:14}}>
             <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Tipo de Contratação</label>
             <div style={{display:"flex",gap:8}}>
@@ -9000,6 +9275,7 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
             </div>
           </div>
 
+          {/* Email */}
           <div>
             <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
               E-mail do paciente <span style={{color:"#dc2626"}}>*</span>
@@ -9012,53 +9288,61 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
           </div>
 
           {erro&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginTop:12,fontSize:13,color:"#dc2626"}}>{erro}</div>}
+
+          {/* Feedback pós-salvamento */}
+          {salvo&&(
+            <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"14px 16px",marginTop:16}}>
+              <div style={{fontWeight:700,fontSize:13,color:"#059669",marginBottom:10}}>✅ Paciente cadastrado com sucesso!</div>
+              {isParceria&&(
+                <button onClick={gerarWhatsApp}
+                  style={{width:"100%",padding:"12px",borderRadius:8,border:"none",
+                    background:"#25D366",color:"white",cursor:"pointer",
+                    fontSize:13,fontWeight:700,fontFamily:"inherit",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  📲 Gerar Mensagem para o Paciente (WhatsApp)
+                </button>
+              )}
+              {(isSocial||(!isParceria&&!isSocial))&&lead.telefone&&(
+                <button onClick={gerarWhatsAppSocial}
+                  style={{width:"100%",padding:"12px",borderRadius:8,border:"none",
+                    background:"#25D366",color:"white",cursor:"pointer",
+                    fontSize:13,fontWeight:700,fontFamily:"inherit",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  📲 Enviar boas-vindas pelo WhatsApp
+                </button>
+              )}
+              <button onClick={onConfirmar}
+                style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,
+                  border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",
+                  fontSize:13,fontFamily:"inherit",color:"var(--text-muted)"}}>
+                Fechar
+              </button>
+            </div>
+          )}
         </div>
 
-        <div style={{padding:"16px 24px",display:"flex",gap:10}}>
-          <button onClick={onCancelar}
-            style={{flex:1,padding:"11px 0",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
-            Apenas mover o card
-          </button>
-          <button onClick={confirmar} disabled={salvando}
-            style={{flex:1,padding:"11px 0",borderRadius:8,border:"none",background:"#16a34a",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,opacity:salvando?0.7:1}}>
-            {salvando?"Cadastrando...":"✓ Sim, cadastrar paciente"}
-          </button>
-        </div>
+        {/* Botões principais */}
+        {!salvo&&(
+          <div style={{padding:"16px 24px",display:"flex",gap:10}}>
+            <button onClick={onCancelar}
+              style={{flex:1,padding:"11px 0",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
+              Apenas mover o card
+            </button>
+            <button onClick={confirmar} disabled={salvando}
+              style={{flex:1,padding:"11px 0",borderRadius:8,border:"none",
+                background: isParceria?"#7B00C4":isSocial?"#0d9488":"#16a34a",
+                color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,
+                opacity:salvando?0.7:1}}>
+              {salvando?"Cadastrando...":"✓ Sim, cadastrar paciente"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-  async function confirmar() {
-    if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
-    setSalvando(true);
-    try {
-      // 1. Criar paciente em clinica_pacientes
-      await db.collection("clinica_pacientes").add({
-        nome:                 lead.nome || "",
-        email:                email.trim().toLowerCase(),
-        telefone:             lead.telefone || "",
-        cpf:                  "",
-        dataNascimento:       "",
-        genero:               "Não informar",
-        status:               "ativo",
-        senha:                "1234",
-        objetivosTerapeuticos: lead.queixa || "",
-        observacoesClinicas:  "",
-        origem:               "crm-lead",
-        leadId:               lead.id,
-        createdAt:            firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      // 2. Arquivar lead como "ganho"
-      await db.collection("clinica_leads").doc(lead.id).update({
-        status:      "convertido",
-        arquivado:   true,
-        convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      onConfirmar();
-    } catch(e) { setErro("Erro ao cadastrar. Tente novamente."); }
-    setSalvando(false);
-  }
+
 
 
 // ═══════════════════════════════════════════════════════
@@ -9154,11 +9438,148 @@ function AlertasInatividade({ leads, onAbrirLead }) {
   );
 }
 
+function GerenciamentoParceiras() {
+  const [parceiras, setParceiras] = useState([]);
+  const [form, setForm]           = useState({nome:"",crp:"",telefone:"",tipo:"parceira"});
+  const [editandoId, setEditandoId] = useState(null);
+  const [salvando, setSalvando]   = useState(false);
+
+  useEffect(()=>{
+    db.collection("clinica_parceiras").orderBy("createdAt","asc")
+      .onSnapshot(s=>setParceiras(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+  },[]);
+
+  async function salvar(){
+    if(!form.nome.trim()||!form.telefone.trim()){alert("Nome e telefone obrigatórios.");return;}
+    setSalvando(true);
+    try {
+      if(editandoId){
+        await db.collection("clinica_parceiras").doc(editandoId).update({nome:form.nome,crp:form.crp,telefone:form.telefone.replace(/\D/g,""),tipo:form.tipo});
+        setEditandoId(null);
+      } else {
+        await db.collection("clinica_parceiras").add({nome:form.nome,crp:form.crp,telefone:form.telefone.replace(/\D/g,""),tipo:form.tipo,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      setForm({nome:"",crp:"",telefone:"",tipo:"parceira"});
+    } catch(e){alert("Erro: "+e.message);}
+    setSalvando(false);
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir este cadastro?"))return;
+    await db.collection("clinica_parceiras").doc(id).delete();
+  }
+
+  function editar(p){
+    setForm({nome:p.nome,crp:p.crp||"",telefone:p.telefone||"",tipo:p.tipo||"parceira"});
+    setEditandoId(p.id);
+  }
+
+  const parceirasLista   = parceiras.filter(p=>p.tipo==="parceira");
+  const estagiariasLista = parceiras.filter(p=>p.tipo==="estagiaria");
+
+  return(
+    <div style={{maxWidth:700}}>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>Parceiras & Estagiárias</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Psicólogas parceiras e estagiárias do Instituto Cegatti</div>
+
+      {/* Formulário */}
+      <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid #e8c8ff",marginBottom:24}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>{editandoId?"✏️ Editar cadastro":"➕ Novo cadastro"}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+          <div style={{gridColumn:"1/-1"}}>
+            <label className="form-label">Nome completo *</label>
+            <input className="form-input" value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Ex: Andréia de Fátima Mateus Silva"/>
+          </div>
+          <div>
+            <label className="form-label">CRP</label>
+            <input className="form-input" value={form.crp} onChange={e=>setForm({...form,crp:e.target.value})} placeholder="Ex: 09/14031"/>
+          </div>
+          <div>
+            <label className="form-label">Telefone (WhatsApp) *</label>
+            <input className="form-input" value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})} placeholder="Ex: 5562985666960"/>
+          </div>
+          <div style={{gridColumn:"1/-1"}}>
+            <label className="form-label">Tipo</label>
+            <div style={{display:"flex",gap:8}}>
+              {[["parceira","🤝 Parceira"],["estagiaria","🎓 Estagiária"]].map(([v,l])=>(
+                <button key={v} type="button" onClick={()=>setForm({...form,tipo:v})}
+                  style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
+                    borderColor:form.tipo===v?"#7B00C4":"#e5e7eb",
+                    background:form.tipo===v?"#f5f3ff":"white",
+                    color:form.tipo===v?"#7B00C4":"#6b7280"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          {editandoId&&<button className="btn btn-ghost" onClick={()=>{setEditandoId(null);setForm({nome:"",crp:"",telefone:"",tipo:"parceira"});}}>Cancelar</button>}
+          <button className="btn btn-purple" onClick={salvar} disabled={salvando} style={{flex:1}}>
+            {salvando?"Salvando...":(editandoId?"💾 Salvar alterações":"➕ Cadastrar")}
+          </button>
+        </div>
+      </div>
+
+      {/* Lista Parceiras */}
+      {parceirasLista.length>0&&(
+        <div style={{marginBottom:20}}>
+          <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:8}}>🤝 Parceiras</div>
+          {parceirasLista.map(p=>(
+            <div key={p.id} style={{background:"white",borderRadius:10,padding:"12px 16px",border:"1px solid #e8c8ff",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{p.nome}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
+                  {p.crp&&<span>CRP {p.crp} · </span>}
+                  <a href={`https://wa.me/${p.telefone}`} target="_blank" style={{color:"#16a34a",textDecoration:"none"}}>📱 {p.telefone}</a>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>editar(p)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12}}><Icon name="pencil" size={13}/></button>
+                <button onClick={()=>excluir(p.id)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12,color:"#dc2626"}}><Icon name="trash-2" size={13}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Lista Estagiárias */}
+      {estagiariasLista.length>0&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:13,color:"#0891b2",marginBottom:8}}>🎓 Estagiárias</div>
+          {estagiariasLista.map(p=>(
+            <div key={p.id} style={{background:"white",borderRadius:10,padding:"12px 16px",border:"1px solid #bae6fd",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{p.nome}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
+                  {p.crp&&<span>CRP {p.crp} · </span>}
+                  <a href={`https://wa.me/${p.telefone}`} target="_blank" style={{color:"#16a34a",textDecoration:"none"}}>📱 {p.telefone}</a>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>editar(p)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12}}><Icon name="pencil" size={13}/></button>
+                <button onClick={()=>excluir(p.id)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12,color:"#dc2626"}}><Icon name="trash-2" size={13}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {parceiras.length===0&&(
+        <div style={{textAlign:"center",padding:"32px 0",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma parceira ou estagiária cadastrada ainda.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FunilLeads({ user }) {
   const [leads, setLeads]                   = useState([]);
   const [modalLead, setModalLead]           = useState(null);
   const [dragOver, setDragOver]             = useState(null);
   const [modalConversao, setModalConversao] = useState(null);
+  const [abaFunil, setAbaFunil]             = useState("kanban");
 
   useEffect(()=>{
     db.collection("clinica_leads")
@@ -9176,7 +9597,7 @@ function FunilLeads({ user }) {
     e.preventDefault();
     const leadId = e.dataTransfer.getData("leadId");
     if (!leadId) { setDragOver(null); return; }
-    if (colId === "convertido" || colId === "convertido_social") {
+    if (colId === "convertido" || colId === "convertido_social" || colId === "convertido_parceria") {
       const lead = leads.find(l=>l.id===leadId);
       if (lead) {
         moverLead(leadId, colId);
@@ -9193,16 +9614,35 @@ function FunilLeads({ user }) {
   return (
     <div style={{padding:"20px 24px"}}>
       {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
         <div>
           <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600}}>Funil de Leads</div>
           <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{leads.filter(l=>!l.arquivado).length} lead{leads.filter(l=>!l.arquivado).length!==1?"s":""} no funil</div>
         </div>
-        <button onClick={()=>setModalLead({})} className="btn-primary" style={{display:"flex",alignItems:"center",gap:6}}>
-          <Icon name="plus" size={15}/> Novo Lead
-        </button>
+        {abaFunil==="kanban"&&(
+          <button onClick={()=>setModalLead({})} className="btn-primary" style={{display:"flex",alignItems:"center",gap:6}}>
+            <Icon name="plus" size={15}/> Novo Lead
+          </button>
+        )}
       </div>
 
+      {/* Abas */}
+      <div style={{display:"flex",gap:4,marginBottom:20,borderBottom:"2px solid var(--gray-100)",paddingBottom:0}}>
+        {[["kanban","📋 Kanban"],["parceiras","🤝 Parceiras & Estagiárias"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setAbaFunil(id)}
+            style={{padding:"8px 16px",border:"none",background:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:abaFunil===id?700:400,
+              color:abaFunil===id?"#7B00C4":"var(--text-muted)",
+              borderBottom:abaFunil===id?"2px solid #7B00C4":"2px solid transparent",
+              marginBottom:-2,transition:"all .15s"}}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Aba Parceiras */}
+      {abaFunil==="parceiras"&&<GerenciamentoParceiras/>}
+
+      {abaFunil==="kanban"&&<>
       {/* Alertas de inatividade */}
       <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
 
@@ -9264,6 +9704,7 @@ function FunilLeads({ user }) {
           onConfirmar={()=>setModalConversao(null)}
           onCancelar={()=>setModalConversao(null)}/>
       )}
+      </>}
     </div>
   );
 }
@@ -9958,8 +10399,8 @@ function DashboardMarketing({ user }) {
   const porOrigem = leads.reduce((acc,l)=>{ const o=l.origem||"Não informado"; acc[o]=(acc[o]||0)+1; return acc; },{});
   const porStatus = leads.reduce((acc,l)=>{ const s=l.status||"novo"; acc[s]=(acc[s]||0)+1; return acc; },{});
 
-  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", convertido_social:"Convertido Social", perdido:"Perdido" };
-  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", convertido_social:"#0d9488", perdido:"#dc2626" };
+  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", convertido_social:"Convertido Social", convertido_parceria:"Convertido — Parceria", perdido:"Perdido" };
+  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", convertido_social:"#0d9488", convertido_parceria:"#7B00C4", perdido:"#dc2626" };
 
   return (
     <div style={{padding:"24px 28px",maxWidth:900}}>
