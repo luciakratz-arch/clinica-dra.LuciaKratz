@@ -2006,9 +2006,9 @@ function FinanceiroClinica() {
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
   useEffect(()=>{
-    const u1=db.collection("clinica_lancamentos").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u2=db.collection("clinica_pacotes").orderBy("createdAt","desc").onSnapshot(s=>setPacotes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u3=db.collection("clinica_sessoes").orderBy("data").onSnapshot(s=>setSessoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    const u1=db.collection("clinica_lancamentos").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
+    const u2=db.collection("clinica_pacotes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setPacotes(docs);},()=>{});
+    const u3=db.collection("clinica_sessoes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(a.data||"").localeCompare(b.data||""));setSessoes(docs);},()=>{});
     return()=>{u1();u2();u3();};
   },[]);
 
@@ -3162,8 +3162,8 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
 
   useEffect(()=>{
-    const u1=db.collection("clinica_financeiro_pessoal").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const u2=db.collection("clinica_fin_pessoal_recorrentes").orderBy("createdAt","desc").onSnapshot(s=>setRecorrentes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+    const u1=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
+    const u2=db.collection("clinica_fin_pessoal_recorrentes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setRecorrentes(docs);},()=>{});
     const u3=db.collection("clinica_fin_pessoal_categorias").onSnapshot(s=>setCategorias(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     return()=>{u1();u2();u3();};
   },[]);
@@ -7256,7 +7256,7 @@ function Laudos() {
   };
 
   useEffect(()=>{
-    const unsub = db.collection("clinica_laudos").orderBy("createdAt","desc").onSnapshot(snap=>{
+    const unsub = db.collection("clinica_laudos").onSnapshot(snap=>{
       setLaudos(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
@@ -7865,12 +7865,12 @@ function Agenda() {
   const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
   useEffect(()=>{
-    const u1 = db.collection("clinica_sessoes").orderBy("data").onSnapshot(snap=>{
+    const u1 = db.collection("clinica_sessoes").onSnapshot(snap=>{
       setSessoes(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
     // Reservas da sala (Thais) — aparecem como bloqueios laranjas
-    const u2 = db.collection("sala_reservas").orderBy("data").onSnapshot(snap=>{
+    const u2 = db.collection("sala_reservas").onSnapshot(snap=>{
       const reservasSala = snap.docs.map(d=>({
         id:"sala_"+d.id, ...d.data(),
         pacienteNome: d.data().usuarioId==="thais"
@@ -9029,7 +9029,7 @@ function FunilLeads({ user }) {
   const [modalConversao, setModalConversao] = useState(null);
 
   useEffect(()=>{
-    db.collection("clinica_leads").orderBy("createdAt","desc")
+    db.collection("clinica_leads")
       .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
   },[]);
 
@@ -9814,7 +9814,7 @@ function CentralLancamentosMarketing() {
 function DashboardMarketing({ user }) {
   const [leads, setLeads] = useState([]);
   useEffect(()=>{
-    db.collection("clinica_leads").orderBy("createdAt","desc").limit(100)
+    db.collection("clinica_leads").limit(100)
       .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
   },[]);
 
