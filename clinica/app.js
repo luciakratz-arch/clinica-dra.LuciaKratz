@@ -309,6 +309,175 @@ function FerramentaDiario({ user }){
 
 
 
+// ─── RECURSOS TERAPÊUTICOS DO PACIENTE ──────────────────
+const CATEGORIAS_RECURSOS = [
+  {id:"tcc",           label:"TCC",                 cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"ansiedade",     label:"Ansiedade",            cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"emocoes",       label:"Emoções",              cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"autocuidado",   label:"Autocuidado",          cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"relacionamentos",label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"corpo",         label:"Corpo & Alimentação",  cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"esquema",       label:"Terapia do Esquema",   cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"musicoterapia", label:"Musicoterapia",        cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"avaliacao",     label:"Avaliação e Anamnese", cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"outro",         label:"Outros",               cor:"#7B00C4", bg:"#f3e6ff"},
+];
+
+const ICONES_REC = {
+  "breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳",
+  "abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃",
+  "entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"
+};
+function getIconeRec(r){
+  return ICONES_REC[r.formularioKey]||(
+    r.categoria==="tcc"?"🧠":r.categoria==="ansiedade"?"😮":r.categoria==="emocoes"?"💜":
+    r.categoria==="autocuidado"?"🌱":r.categoria==="relacionamentos"?"❤️":
+    r.categoria==="corpo"?"🥗":r.categoria==="esquema"?"🔑":
+    r.categoria==="musicoterapia"?"🎵":r.categoria==="avaliacao"?"📋":"🔧"
+  );
+}
+
+function RecursosPaciente({ user, setTab }) {
+  const [recursos, setRecursos]     = useState([]);
+  const [busca, setBusca]           = useState("");
+  const [abaView, setAbaView]       = useState("ferramentas");
+  const [abrindo, setAbrindo]       = useState(null);
+  const [loading, setLoading]       = useState(true);
+
+  useEffect(()=>{
+    db.collection("clinica_recursos").get()
+      .then(s=>{ setRecursos(s.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false); })
+      .catch(()=>setLoading(false));
+  },[]);
+
+  // Verifica se recurso está habilitado para este paciente
+  function recursoHabilitado(r) {
+    // Se o paciente tem ferramentasAtivas (AbaFerramentas do admin)
+    const ftAtivas = user.ferramentasAtivas || [];
+    if (ftAtivas.length > 0) return ftAtivas.includes(r.id) || ftAtivas.includes(r.formularioKey);
+
+    // Se tem modulosConfig — módulo ativo = todos os recursos da categoria habilitados
+    const config = user.modulosConfig || {};
+    const CAT_PARA_MOD = {
+      tcc:"mod1", ansiedade:"mod3", emocoes:"mod1", autocuidado:"mod1",
+      relacionamentos:"mod1", corpo:"mod1", esquema:"mod1",
+      musicoterapia:"mod4", avaliacao:"mod3", outro:"mod3"
+    };
+    const modId = CAT_PARA_MOD[r.categoria];
+    if (modId && config[modId]?.ativo) return true;
+
+    // modulosAtivos legado
+    const ativos = user.modulosAtivos || [];
+    if (ativos.includes(modId)) return true;
+
+    // Se nenhum controle definido, mostra tudo
+    const temConfig = ftAtivas.length>0 || Object.keys(config).length>0 || ativos.length>0;
+    return !temConfig;
+  }
+
+  const recursosFiltrados = recursos.filter(r=>{
+    if (!recursoHabilitado(r)) return false;
+    if (abaView === "ferramentas" && ["fabulas","psicoeducacao","casal"].includes(r.categoria)) return false;
+    if (abaView === "fabulas" && r.categoria !== "fabulas") return false;
+    if (abaView === "psicoeducacao" && r.categoria !== "psicoeducacao") return false;
+    if (busca) {
+      const b = busca.toLowerCase();
+      return (r.titulo||"").toLowerCase().includes(b) || (r.descricao||"").toLowerCase().includes(b);
+    }
+    return true;
+  });
+
+  const porCategoria = CATEGORIAS_RECURSOS
+    .map(cat=>({ ...cat, itens: recursosFiltrados.filter(r=>r.categoria===cat.id) }))
+    .filter(cat=>cat.itens.length>0);
+
+  if (abrindo) {
+    return (
+      <div>
+        <button onClick={()=>setAbrindo(null)} className="btn btn-ghost" style={{marginBottom:16,display:"flex",alignItems:"center",gap:6}}>
+          <Icon name="arrow-left" size={15}/> Voltar
+        </button>
+        <FerramentaInterativa recurso={abrindo} user={user}/>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{marginBottom:20}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600}}>Recursos Terapêuticos</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>
+          {recursosFiltrados.length} ferramenta{recursosFiltrados.length!==1?"s":""} disponíve{recursosFiltrados.length!==1?"is":"l"}
+        </div>
+      </div>
+
+      {/* Abas */}
+      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",scrollbarWidth:"none"}}>
+        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas","book-open"],["psicoeducacao","Psicoeducação","brain"]].map(([id,label,ic])=>(
+          <button key={id} onClick={()=>setAbaView(id)}
+            style={{padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,
+              color:abaView===id?"var(--purple)":"var(--gray-600)",
+              borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",
+              fontWeight:abaView===id?600:400,fontFamily:"inherit",marginBottom:-1,
+              display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}}>
+            <Icon name={ic} size={15}/>{label}
+          </button>
+        ))}
+      </div>
+
+      {/* Busca */}
+      <input className="form-input" style={{marginBottom:20}} placeholder="Buscar ferramenta..."
+        value={busca} onChange={e=>setBusca(e.target.value)}/>
+
+      {loading && <div style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>Carregando...</div>}
+
+      {!loading && recursosFiltrados.length===0 && (
+        <div style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="wrench" size={40}/>
+          <div style={{marginTop:12}}>Nenhuma ferramenta disponível ainda.</div>
+          <div style={{fontSize:13,marginTop:6}}>A psicóloga irá habilitar os recursos para você.</div>
+        </div>
+      )}
+
+      {porCategoria.map(cat=>(
+        <div key={cat.id} style={{marginBottom:28}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+            <span style={{fontWeight:700,fontSize:12,color:cat.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{cat.label}</span>
+            <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}}>{cat.itens.length}</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:14}}>
+            {cat.itens.map(r=>(
+              <div key={r.id} style={{background:"white",border:"1.5px solid",borderColor:cat.cor+"40",borderRadius:14,padding:18,display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                  <div style={{width:44,height:44,borderRadius:10,background:cat.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+                    {getIconeRec(r)}
+                  </div>
+                  <div style={{flex:1}}>
+                    <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30",display:"inline-block",marginBottom:4}}>
+                      {r.tipo==="interativa"?"INTERATIVA":"CONTEÚDO"}
+                    </span>
+                    <div style={{fontWeight:600,fontSize:14}}>{r.titulo}</div>
+                  </div>
+                </div>
+                <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>{r.descricao}</p>
+                {r.formularioKey&&(
+                  <button onClick={()=>setAbrindo(r)}
+                    style={{width:"100%",padding:"10px",borderRadius:8,border:"none",
+                      background:"var(--purple)",color:"white",cursor:"pointer",
+                      fontSize:13,fontWeight:600,fontFamily:"inherit",
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    <Icon name="play" size={14}/> Abrir ferramenta
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve." }) {
   return (
     <div className="em-breve">
@@ -328,7 +497,7 @@ const NAV_INDIVIDUAL = [
   { id:"metas",         label:"Minhas Metas",          icon:"target" },
   { id:"reflexoes",     label:"Reflexões Cognitivas",  icon:"lightbulb" },
   { id:"fabulas",       label:"Fábulas Terapêuticas",  icon:"book-heart" },
-  { id:"ferramentas",   label:"Ferramentas",           icon:"wrench" },
+  { id:"ferramentas",   label:"Recursos Terapêuticos",  icon:"wrench" },
   { id:"ansiedade",     label:"Gestão da Ansiedade",   icon:"activity" },
   { id:"musicoterapia", label:"Musicoterapia",         icon:"music" },
   { id:"meus-laudos",   label:"Meus Laudos",           icon:"file-text" },
@@ -445,23 +614,25 @@ function navFiltradoPaciente(nav, user) {
       return ferramentasAtivasAdmin.includes(item.id);
     }
 
-    // Formato 2: modulosConfig
+    // Formato 2: modulosConfig — se o módulo está ativo, mostra todos os itens dele
     const modId = ITEM_PARA_MODULO[item.id];
     if (modId && config[modId]?.ativo) {
       const ferramentas = config[modId].ferramentas || {};
+      const ferrKeys = Object.keys(ferramentas);
+      // Se não há ferramentas específicas configuradas, mostra o item
+      if (ferrKeys.length === 0) return true;
+      // Se há ferramentas configuradas, verifica se este item específico está ativo
       const ferrAtiva = ferramentas[item.id];
-      if (ferrAtiva) {
-        if (ferrAtiva.dataInicio) {
-          const hoje = new Date().toISOString().split("T")[0];
-          return ferrAtiva.dataInicio <= hoje;
-        }
-        return true;
+      if (!ferrAtiva) return true; // item não configurado individualmente = mostrar
+      if (typeof ferrAtiva === "object" && ferrAtiva.dataInicio) {
+        const hoje = new Date().toISOString().split("T")[0];
+        return ferrAtiva.dataInicio <= hoje;
       }
-      if (Object.keys(ferramentas).length === 0) return true;
-      return false;
+      return ferrAtiva === true || (typeof ferrAtiva === "object");
     }
 
-    // Formato 3: modulosAtivos (legado)
+    // Formato 3: modulosAtivos (legado array) — ex: ["mod1","mod2"]
+    if (ativos.includes(modId)) return true;
     const chave = MAPA_MODULOS[item.id] || item.id;
     return ativos.includes(chave) || ativos.includes(item.id);
   });
@@ -804,14 +975,23 @@ function PainelIndividual({ user, setTab }) {
     if (ferramentasAtivasAdmin.length > 0) {
       return ferramentasAtivasAdmin.includes(id);
     }
-    // Formato 2: modulosConfig
+    // Formato 2: modulosConfig — se módulo ativo, ferramenta está disponível
     const modId = FERRAMENTA_PARA_MOD[id];
     if (modId && config[modId]?.ativo) {
       const fts = config[modId]?.ferramentas;
-      if (!fts || !Array.isArray(fts) || fts.length===0) return true;
-      return fts.includes(id);
+      // Sem ferramentas específicas = todas ativas
+      if (!fts || (typeof fts === "object" && Object.keys(fts).length === 0)) return true;
+      if (Array.isArray(fts)) return fts.includes(id);
+      // Objeto de ferramentas: verifica se este id está ativo
+      if (typeof fts === "object") {
+        const ft = fts[id];
+        if (ft === undefined) return true; // não configurado = ativo
+        return ft === true || (typeof ft === "object");
+      }
+      return true;
     }
-    // Formato 3: modulosAtivos (legado)
+    // Formato 3: modulosAtivos (legado array) — ex: ["mod1","mod2","mod3"]
+    if (Array.isArray(modulosAtivosLegacy) && modulosAtivosLegacy.includes(modId)) return true;
     return Array.isArray(modulosAtivosLegacy) && modulosAtivosLegacy.includes(id);
   }
   const modulos = user.modulosAtivos || [];
@@ -2426,7 +2606,7 @@ function App() {
         {!eCasal&&tab==="tcc"           &&<EmBreve titulo="Pensamentos Automáticos" sub="Registre e questione seus pensamentos — TCC."/>}
         {!eCasal&&tab==="diario"        &&<FerramentaDiario user={user}/>}
         {!eCasal&&tab==="metas"         &&<EmBreve titulo="Minhas Metas" sub="Defina e acompanhe seus objetivos."/>}
-        {!eCasal&&tab==="ferramentas"   &&<EmBreve titulo="Ferramentas Clínicas" sub="Recursos terapêuticos."/>}
+        {!eCasal&&tab==="ferramentas"   &&<RecursosPaciente user={user} setTab={setTab}/>}
         {!eCasal&&tab==="fabulas"       &&<EmBreve titulo="Fábulas Terapêuticas" sub="Histórias reflexivas."/>}
         {!eCasal&&tab==="reflexoes"     &&<EmBreve titulo="Reflexões Cognitivas" sub="Exercícios de insight."/>}
         {!eCasal&&tab==="ansiedade"     &&<EmBreve titulo="Gestão da Ansiedade" sub="Tracking de estresse, pensamentos e roda da vida."/>}
