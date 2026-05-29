@@ -1694,9 +1694,11 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const pacEfetivo = pac || pacientes.find(p=>p.id===pacote?.pacienteId);
 
   // Se pacoteId → só sessões deste pacote; se pacienteId → todas do paciente
+  // Fallback: sessões antigas salvas sem pacienteId são encontradas via pacoteId dos pacotes do paciente
+  const pacoteIdsDosPac = pacotes.filter(p=>p.pacienteId===pacienteId).map(p=>p.id);
   const sessPac = pacoteId
     ? sessoes.filter(s=>s.pacoteId===pacoteId).sort((a,b)=>a.data?.localeCompare(b.data))
-    : sessoes.filter(s=>s.pacienteId===pacienteId).sort((a,b)=>a.data?.localeCompare(b.data));
+    : sessoes.filter(s=>s.pacienteId===pacienteId||pacoteIdsDosPac.includes(s.pacoteId)).sort((a,b)=>a.data?.localeCompare(b.data));
 
   const pacotesPac = pacoteId
     ? [pacote].filter(Boolean)
