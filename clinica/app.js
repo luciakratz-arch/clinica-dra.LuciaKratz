@@ -352,27 +352,57 @@ function RecursosPaciente({ user, setTab }) {
 
   // Verifica se recurso está habilitado para este paciente
   function recursoHabilitado(r) {
-    // Se o paciente tem ferramentasAtivas (AbaFerramentas do admin)
-    const ftAtivas = user.ferramentasAtivas || [];
-    if (ftAtivas.length > 0) return ftAtivas.includes(r.id) || ftAtivas.includes(r.formularioKey);
-
-    // Se tem modulosConfig — módulo ativo = todos os recursos da categoria habilitados
     const config = user.modulosConfig || {};
+
+    // Coleta todos os IDs de ferramentas habilitadas em todos os módulos ativos
+    const idsHabilitados = new Set();
+    Object.entries(config).forEach(([modId, modData]) => {
+      if (!modData?.ativo) return;
+      const ferramentas = modData.ferramentas || {};
+      const ferrKeys = Object.keys(ferramentas);
+      if (ferrKeys.length === 0) {
+        // Módulo ativo sem ferramentas específicas = todas habilitadas
+        // Marca o módulo como "tudo liberado" usando flag especial
+        idsHabilitados.add("__mod_" + modId + "__tudo");
+        return;
+      }
+      ferrKeys.forEach(fid => {
+        const fd = ferramentas[fid];
+        if (!fd?.ativo) return;
+        // Verifica dataInicio
+        if (fd.dataInicio) {
+          const hoje = new Date().toISOString().split("T")[0];
+          if (fd.dataInicio > hoje) return;
+        }
+        idsHabilitados.add(fid);
+      });
+    });
+
+    // Mapa de categoria para módulo
     const CAT_PARA_MOD = {
-      tcc:"mod1", ansiedade:"mod3", emocoes:"mod1", autocuidado:"mod1",
-      relacionamentos:"mod1", corpo:"mod1", esquema:"mod1",
-      musicoterapia:"mod4", avaliacao:"mod3", outro:"mod3"
+      tcc:"mod1", emocoes:"mod1", autocuidado:"mod1", relacionamentos:"mod1",
+      corpo:"mod1", esquema:"mod1",
+      fabulas:"mod2",
+      ansiedade:"mod3", avaliacao:"mod3", outro:"mod3",
+      musicoterapia:"mod4",
     };
+
+    // Verifica se o recurso está habilitado pelo ID direto
+    if (idsHabilitados.has(r.id)) return true;
+
+    // Verifica se o módulo da categoria está com "tudo liberado"
     const modId = CAT_PARA_MOD[r.categoria];
-    if (modId && config[modId]?.ativo) return true;
+    if (modId && idsHabilitados.has("__mod_" + modId + "__tudo")) return true;
 
-    // modulosAtivos legado
+    // Fallback: modulosAtivos legado (array de strings como ["mod1","mod2"])
     const ativos = user.modulosAtivos || [];
-    if (ativos.includes(modId)) return true;
+    if (modId && ativos.includes(modId)) return true;
 
-    // Se nenhum controle definido, mostra tudo
-    const temConfig = ftAtivas.length>0 || Object.keys(config).length>0 || ativos.length>0;
-    return !temConfig;
+    // ferramentasAtivas (AbaFerramentas simples)
+    const ftAtivas = user.ferramentasAtivas || [];
+    if (ftAtivas.includes(r.id) || ftAtivas.includes(r.formularioKey)) return true;
+
+    return false;
   }
 
   const recursosFiltrados = recursos.filter(r=>{
