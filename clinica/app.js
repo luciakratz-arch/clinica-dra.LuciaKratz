@@ -321,18 +321,18 @@ function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve."
 
 // ─── NAVEGAÇÃO ────────────────────────────────────────────
 const NAV_INDIVIDUAL = [
-  { id:"painel",      label:"Meu Painel",          icon:"layout-dashboard" },
-  { id:"humor",       label:"Registro de Humor",   icon:"heart" },
-  { id:"pensamentos", label:"Pensamentos",          icon:"brain" },
-  { id:"diario",      label:"Diário Terapêutico",  icon:"book-open" },
-  { id:"metas",       label:"Minhas Metas",         icon:"target" },
-  { id:"ansiedade",   label:"Gestão da Ansiedade",  icon:"activity" },
-  { id:"ferramentas", label:"Ferramentas",          icon:"wrench" },
-  { id:"fabulas",     label:"Fábulas Terapêuticas", icon:"book-heart" },
-  { id:"reflexoes",   label:"Reflexões Cognitivas", icon:"lightbulb" },
-  { id:"musicoterapia",label:"Musicoterapia",       icon:"music" },
-  { id:"meus-laudos", label:"Meus Laudos",          icon:"file-text" },
-  { id:"minha-conta", label:"Minha Conta",          icon:"user-circle" },
+  { id:"painel",        label:"Meu Painel",           icon:"layout-dashboard" },
+  { id:"humor",         label:"Registro de Humor",    icon:"heart" },
+  { id:"tcc",           label:"Pensamentos",           icon:"brain" },
+  { id:"diario",        label:"Diário Terapêutico",   icon:"book-open" },
+  { id:"metas",         label:"Minhas Metas",          icon:"target" },
+  { id:"reflexoes",     label:"Reflexões Cognitivas",  icon:"lightbulb" },
+  { id:"fabulas",       label:"Fábulas Terapêuticas",  icon:"book-heart" },
+  { id:"ferramentas",   label:"Ferramentas",           icon:"wrench" },
+  { id:"ansiedade",     label:"Gestão da Ansiedade",   icon:"activity" },
+  { id:"musicoterapia", label:"Musicoterapia",         icon:"music" },
+  { id:"meus-laudos",   label:"Meus Laudos",           icon:"file-text" },
+  { id:"minha-conta",   label:"Minha Conta",           icon:"user-circle" },
 ];
 
 const NAV_CASAL = [
@@ -430,7 +430,7 @@ function navFiltradoPaciente(nav, user) {
 
   // Mapa de item.id para módulo
   const ITEM_PARA_MODULO = {
-    "humor":"mod1", "diario":"mod1", "metas":"mod1", "reflexoes":"mod1", "pensamentos":"mod1", "tcc":"mod1",
+    "humor":"mod1", "diario":"mod1", "metas":"mod1", "reflexoes":"mod1", "tcc":"mod1",
     "fabulas":"mod2",
     "ferramentas":"mod3", "ansiedade":"mod3", "arvore":"mod3",
     "musicoterapia":"mod4",
@@ -796,7 +796,7 @@ function PainelIndividual({ user, setTab }) {
   const modulosAtivosLegacy = user.modulosAtivos || [];
   const ferramentasAtivasAdmin = user.ferramentasAtivas || [];
   const FERRAMENTA_PARA_MOD = {
-    "humor":"mod1","diario":"mod1","metas":"mod1","reflexoes":"mod1","pensamentos":"mod1","tcc":"mod1",
+    "humor":"mod1","diario":"mod1","metas":"mod1","reflexoes":"mod1","tcc":"mod1",
     "fabulas":"mod2","ferramentas":"mod3","ansiedade":"mod3","arvore":"mod3","musicoterapia":"mod4"
   };
   function ferramentaAtiva(id) {
@@ -817,7 +817,7 @@ function PainelIndividual({ user, setTab }) {
   const modulos = user.modulosAtivos || [];
   const todasFerramentas = [
     { id:"humor",       label:"Registrar Humor",         sub:"Como você está se sentindo hoje?",  icon:"heart",      cor:"#fde8f0", tab:"humor" },
-    { id:"tcc",         label:"Pensamentos Automáticos", sub:"Registre e questione pensamentos",  icon:"brain",      cor:"#ede0fa", tab:"pensamentos" },
+    { id:"tcc",         label:"Pensamentos Automáticos", sub:"Registre e questione pensamentos",  icon:"brain",      cor:"#ede0fa", tab:"tcc" },
     { id:"diario",      label:"Diário Terapêutico",      sub:"Escreva sobre o seu dia",           icon:"book-open",  cor:"#e0f0ff", tab:"diario" },
     { id:"metas",       label:"Minhas Metas",            sub:"Acompanhe seu progresso",           icon:"target",     cor:"#e0faed", tab:"metas" },
     { id:"fabulas",     label:"Fábulas Terapêuticas",    sub:"Histórias reflexivas",              icon:"book-heart", cor:"#fff3e0", tab:"fabulas" },
@@ -2423,7 +2423,7 @@ function App() {
         {/* INDIVIDUAL */}
         {!eCasal&&tab==="painel"        &&<PainelIndividual user={user} setTab={setTab}/>}
         {!eCasal&&tab==="humor"         &&<RegistroHumor user={user}/>}
-        {!eCasal&&tab==="pensamentos"   &&<EmBreve titulo="Pensamentos Automáticos" sub="Registre e questione seus pensamentos — TCC."/>}
+        {!eCasal&&tab==="tcc"           &&<EmBreve titulo="Pensamentos Automáticos" sub="Registre e questione seus pensamentos — TCC."/>}
         {!eCasal&&tab==="diario"        &&<FerramentaDiario user={user}/>}
         {!eCasal&&tab==="metas"         &&<EmBreve titulo="Minhas Metas" sub="Defina e acompanhe seus objetivos."/>}
         {!eCasal&&tab==="ferramentas"   &&<EmBreve titulo="Ferramentas Clínicas" sub="Recursos terapêuticos."/>}
