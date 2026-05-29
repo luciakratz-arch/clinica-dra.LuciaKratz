@@ -1450,15 +1450,18 @@ function AbaCasal({ paciente, pacientes }) {
 }
 
 // PERFIL COMPLETO
-function PerfilPaciente({ paciente, onVoltar, pacientes }) {
+function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
   const [aba, setAba] = useState("perfil");
+  const isSecretaria = user?.tipo==="secretaria";
   const ABAS = [
-    {id:"perfil",label:"Perfil",icon:"user"},
-    {id:"modulos",label:"Modulos",icon:"toggle-right"},
-    {id:"metas",label:"Metas",icon:"target"},
-    {id:"laudos",label:"Laudos",icon:"file-text"},
-    {id:"evolucao",label:"Evolucao",icon:"trending-up"},
-    {id:"casal",label:"Terapia de Casal",icon:"heart"},
+    {id:"perfil",   label:"Perfil",          icon:"user"},
+    ...(!isSecretaria?[
+      {id:"modulos",  label:"Modulos",         icon:"toggle-right"},
+      {id:"metas",    label:"Metas",           icon:"target"},
+      {id:"laudos",   label:"Laudos",          icon:"file-text"},
+      {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
+      {id:"casal",    label:"Terapia de Casal",icon:"heart"},
+    ]:[]),
   ];
   return (
     <div>
@@ -1587,8 +1590,8 @@ function Pacientes({ user }) {
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>setModalImport(true)}><Icon name="upload" size={15}/> Importar Excel</button>
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>{
-            const url=window.location.origin+window.location.pathname.replace("admin/index.html","").replace("admin/","")+"clinica/cadastro.html";
-            navigator.clipboard.writeText(url).then(()=>alert("Link copiado!\n\n"+url)).catch(()=>prompt("Copie o link:",url));
+            const url="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
+            navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! Cole no WhatsApp ou e-mail:\n\n"+url)).catch(()=>prompt("Copie o link:",url));
           }}><Icon name="link" size={15}/> Link de Cadastro</button>
           <button className="btn btn-purple" onClick={abrirNovo}><Icon name="user-plus" size={16}/> Novo Paciente</button>
         </div>
@@ -1599,15 +1602,15 @@ function Pacientes({ user }) {
           <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>{l}</button>
         ))}
       </div>
-      {["ativo","alta","inativo"].map(st=>{
+      {["pendente","ativo","alta","inativo"].map(st=>{
         const grupo=filtrados.filter(p=>p.status===st);
         if(grupo.length===0)return null;
         return(
           <div key={st} style={{marginBottom:24}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-              <div style={{width:8,height:8,borderRadius:"50%",background:st==="ativo"?"var(--success)":st==="alta"?"var(--gray-400)":"var(--danger)"}}/>
+              <div style={{width:8,height:8,borderRadius:"50%",background:st==="ativo"?"var(--success)":st==="alta"?"var(--gray-400)":st==="pendente"?"#f59e0b":"var(--danger)"}}/>
               <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.8px"}}>
-                {st==="ativo"?"Em Atendimento":st==="alta"?"Alta":"Inativos"} ({grupo.length})
+                {st==="ativo"?"Em Atendimento":st==="alta"?"Alta":st==="pendente"?"⏳ Pendentes (Autocadastro)":"Inativos"} ({grupo.length})
               </div>
             </div>
             <div className="card" style={{padding:0}}>
