@@ -1005,67 +1005,83 @@ function AbaModulo1({ paciente }) {
         )
       }
 
-      {/* Modal de preview */}
+      {/* Modal de preview — renderiza a ferramenta real aqui no admin */}
       {preview&&(()=>{
         const item = ITENS.find(i=>i.id===preview);
+        // Mapeia id da ferramenta para o formularioKey usado em FerramentaInterativaAdmin
+        const KEY_MAP = {
+          respiracao:"breathing-478", relaxamento:"muscle-relaxation",
+          tcc:"abc-record", humor:null, diario:null, metas:null,
+          reflexoes:null, ansiedade:"anxiety-management"
+        };
+        const fKey = KEY_MAP[preview];
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,
             display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
             onClick={()=>setPreview(null)}>
-            <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:520,
+            <div style={{background:"white",borderRadius:16,width:"100%",
+              maxWidth: fKey ? 700 : 520,
+              maxHeight:"90vh",overflowY:"auto",
               boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}
               onClick={e=>e.stopPropagation()}>
 
               {/* Header */}
               <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
-                borderRadius:"16px 16px 0 0",padding:"20px 24px",color:"white",
-                display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                borderRadius:"16px 16px 0 0",padding:"16px 24px",color:"white",
+                display:"flex",alignItems:"center",justifyContent:"space-between",
+                position:"sticky",top:0,zIndex:1}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:28}}>{item?.icone}</span>
+                  <span style={{fontSize:24}}>{item?.icone}</span>
                   <div>
-                    <div style={{fontWeight:700,fontSize:16}}>{item?.nome}</div>
-                    <div style={{fontSize:12,opacity:0.8,marginTop:2}}>Visualização do paciente</div>
+                    <div style={{fontWeight:700,fontSize:15}}>{item?.nome}</div>
+                    <div style={{fontSize:11,opacity:0.8,marginTop:1}}>👁 Prévia — como o paciente vê</div>
                   </div>
                 </div>
                 <button onClick={()=>setPreview(null)}
                   style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,
-                    padding:"6px 10px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                    padding:"6px 12px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
                   ✕ Fechar
                 </button>
               </div>
 
-              {/* Corpo */}
+              {/* Corpo — ferramenta interativa ou mensagem */}
               <div style={{padding:24}}>
-                <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",
-                  marginBottom:20,fontSize:13,color:"var(--purple)",lineHeight:1.6}}>
-                  <strong>ℹ️ Como o paciente vê:</strong><br/>
-                  {DESC[preview]}
-                </div>
-
-                <div style={{background:"#f9fafb",borderRadius:10,padding:16,marginBottom:16,
-                  border:"1px solid var(--gray-100)"}}>
-                  <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8,
-                    textTransform:"uppercase",letterSpacing:"0.5px"}}>Dados atuais de {paciente.nome.split(" ")[0]}</div>
-                  <div style={{fontSize:22,fontWeight:700,color:"var(--purple)"}}>{item?.qtd}</div>
-                  <div style={{fontSize:12,color:"var(--text-muted)"}}>
-                    {item?.qtd===0 ? "Sem registros ainda" : `registro${item?.qtd!==1?"s":""}  realizados`}
-                  </div>
-                </div>
-
-                <div style={{display:"flex",gap:10}}>
-                  <button onClick={()=>setPreview(null)}
-                    style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--gray-200)",
-                      background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
-                    Fechar
-                  </button>
-                  <button onClick={()=>{ window.open(PORTAL_URLS[preview],"_blank"); }}
-                    style={{flex:1,padding:"10px",borderRadius:8,border:"none",
-                      background:"var(--purple)",color:"white",cursor:"pointer",
-                      fontSize:13,fontWeight:600,fontFamily:"inherit",
-                      display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                    <Icon name="external-link" size={13}/> Abrir no Portal
-                  </button>
-                </div>
+                {fKey ? (
+                  // Renderiza a ferramenta interativa real
+                  {(()=>{
+                    const k = fKey;
+                    if(k==="breathing-478")     return <FerramentaRespiracao user={paciente}/>;
+                    if(k==="muscle-relaxation") return <FerramentaRelaxamento user={paciente}/>;
+                    if(k==="abc-record")        return <FerramentaABC user={paciente}/>;
+                    if(k==="anxiety-management")return <FerramentaGestaoAnsiedade user={paciente}/>;
+                    return <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Prévia não disponível para esta ferramenta.</div>;
+                  })()}
+                ) : (
+                  // Ferramentas sem formulário interativo — mostra info + dados
+                  <>
+                    <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",
+                      marginBottom:20,fontSize:13,color:"var(--purple)",lineHeight:1.6}}>
+                      <strong>ℹ️ Como o paciente vê:</strong><br/>{DESC[preview]}
+                    </div>
+                    <div style={{background:"#f9fafb",borderRadius:10,padding:16,
+                      border:"1px solid var(--gray-100)"}}>
+                      <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8,
+                        textTransform:"uppercase",letterSpacing:"0.5px"}}>
+                        Registros de {paciente.nome.split(" ")[0]}
+                      </div>
+                      <div style={{fontSize:22,fontWeight:700,color:"var(--purple)"}}>{item?.qtd}</div>
+                      <div style={{fontSize:12,color:"var(--text-muted)"}}>
+                        {item?.qtd===0 ? "Sem registros ainda" : `registro${item?.qtd!==1?"s":""} realizados`}
+                      </div>
+                    </div>
+                  </>
+                )}
+                <button onClick={()=>setPreview(null)}
+                  style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,
+                    border:"1px solid var(--gray-200)",background:"white",
+                    cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                  Fechar prévia
+                </button>
               </div>
             </div>
           </div>
