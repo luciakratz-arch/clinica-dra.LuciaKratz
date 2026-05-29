@@ -2368,8 +2368,7 @@ function FinanceiroClinica() {
                   ))}
                 </div>
               </div>
-              <>
-                <div className="form-group"><label className="form-label">Forma de Pagamento Principal</label>
+              <div className="form-group"><label className="form-label">Forma de Pagamento Principal</label>
                   <select className="form-input" value={formEdicaoPacote.formaPag||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,formaPag:e.target.value})}>
                     <option value="">Selecionar...</option>
                     {FORMAS.map(f=><option key={f}>{f}</option>)}
@@ -2400,7 +2399,6 @@ function FinanceiroClinica() {
                     </div>
                   ))}
                 </div>
-              </>
               <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                 <textarea className="form-input" rows={2} value={formEdicaoPacote.obs||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
               </div>
@@ -2994,6 +2992,7 @@ function FinanceiroClinica() {
                     style={{background:"#0891b2"}} title="5% de comissão">
                     🔁 Venda Recorrente
                   </button>
+                </>
                 )
               }
             </div>
