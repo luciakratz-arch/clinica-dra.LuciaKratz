@@ -2001,6 +2001,9 @@ function FinanceiroClinica() {
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
   const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
+  const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
+  const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").orderBy("data","desc").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -2243,19 +2246,27 @@ function FinanceiroClinica() {
         onVoltar={()=>setPacoteSelecionado(null)}
       />;
     }
-    // Modo editar pacote individual (id__pacote)
+    // Modo editar pacote individual (id__pacote) — abre modal de edição
     if(pacoteSelecionado.endsWith("__pacote")){
       const pacoteId = pacoteSelecionado.replace("__pacote","");
-      return <RelatorioFrequencia
-        pacienteId={null}
-        pacoteId={pacoteId}
-        pacientes={pacientes}
-        sessoes={sessoes}
-        pacotes={pacotes}
-        lancamentos={lancamentos}
-        FORMAS={FORMAS}
-        onVoltar={()=>setPacoteSelecionado(null)}
-      />;
+      const pacoteAlvo = pacotes.find(p=>p.id===pacoteId);
+      if(pacoteAlvo && !modalEditarPacote){
+        setModalEditarPacote(pacoteAlvo);
+        setFormEdicaoPacote({
+          pacienteId: pacoteAlvo.pacienteId||"",
+          totalSessoes: pacoteAlvo.totalSessoes||"",
+          valorSessao: pacoteAlvo.valorSessao||"",
+          recorrencia: pacoteAlvo.recorrencia||"Semanal (1x/semana)",
+          dataInicio: pacoteAlvo.dataInicio||"",
+          horario: pacoteAlvo.horario||"09:00",
+          statusPag: pacoteAlvo.statusPag||"pendente",
+          formaPag: pacoteAlvo.formaPag||"",
+          dataPagamento: pacoteAlvo.dataPagamento||"",
+          pagamentosExtras: pacoteAlvo.pagamentosExtras||[],
+          obs: pacoteAlvo.obs||"",
+        });
+        setPacoteSelecionado(null);
+      }
     }
     // Modo controle geral do paciente (pacienteId)
     return <RelatorioFrequencia
@@ -2270,11 +2281,140 @@ function FinanceiroClinica() {
     />;
   }
 
+  // Função salvar edição do pacote
+  async function salvarEdicaoPacote() {
+    if(!modalEditarPacote) return;
+    setSalvandoEdicao(true);
+    try {
+      const f = formEdicaoPacote;
+      const jaPago = (f.statusPag||"pendente")==="recebido";
+      // Atualiza o pacote
+      await db.collection("clinica_pacotes").doc(modalEditarPacote.id).update({
+        totalSessoes: parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes,
+        valorSessao: parseFloat(f.valorSessao)||modalEditarPacote.valorSessao,
+        recorrencia: f.recorrencia,
+        dataInicio: f.dataInicio,
+        horario: f.horario,
+        statusPag: f.statusPag,
+        formaPag: f.formaPag||"",
+        dataPagamento: jaPago?(f.dataPagamento||new Date().toISOString().slice(0,10)):"",
+        pagamentosExtras: jaPago?(f.pagamentosExtras||[]):[],
+        obs: f.obs||"",
+      });
+      // Se marcado como recebido, herda pagamento nas sessões
+      if(jaPago){
+        const sessDoPacote = sessoes.filter(s=>s.pacoteId===modalEditarPacote.id);
+        const batch = db.batch();
+        sessDoPacote.forEach(s=>{
+          batch.update(db.collection("clinica_sessoes").doc(s.id),{
+            pagamento:"pago",
+            formaPagamento: f.formaPag||s.formaPagamento||"",
+            dataPagamento: f.dataPagamento||s.dataPagamento||new Date().toISOString().slice(0,10),
+          });
+        });
+        await batch.commit();
+      }
+      alert("✓ Pacote atualizado com sucesso!");
+      setModalEditarPacote(null);
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvandoEdicao(false);
+  }
+
   // Métricas
   const totalRecebido=lancamentos.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
 
   return(
     <div>
+      {/* ── Modal Editar Pacote ── */}
+      {modalEditarPacote&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={e=>{if(e.target===e.currentTarget)setModalEditarPacote(null);}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h3 style={{margin:0,color:"var(--purple)"}}>✏️ Editar Pacote</h3>
+              <button onClick={()=>setModalEditarPacote(null)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"var(--gray-400)"}}>✕</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              <div className="form-group"><label className="form-label">Nº de Sessões</label>
+                <input className="form-input" type="number" value={formEdicaoPacote.totalSessoes||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,totalSessoes:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Valor por Sessão (R$)</label>
+                <input className="form-input" type="number" value={formEdicaoPacote.valorSessao||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,valorSessao:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Data de Início</label>
+                <input className="form-input" type="date" value={formEdicaoPacote.dataInicio||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,dataInicio:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Horário</label>
+                <input className="form-input" type="time" value={formEdicaoPacote.horario||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,horario:e.target.value})}/>
+              </div>
+              <div className="form-group"><label className="form-label">Recorrência</label>
+                <select className="form-input" value={formEdicaoPacote.recorrencia||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,recorrencia:e.target.value})}>
+                  {RECORRENCIAS.map(r=><option key={r}>{r}</option>)}
+                </select>
+              </div>
+              <div className="form-group"><label className="form-label">Total do Pacote</label>
+                <input className="form-input" readOnly value={"R$ "+((parseFloat(formEdicaoPacote.valorSessao||0)*parseInt(formEdicaoPacote.totalSessoes||0))||0).toFixed(2).replace(".",",")} style={{background:"#f9fafb",color:"var(--text-muted)"}}/>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Status do Pagamento</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[["pendente","Pendente","#d97706"],["recebido","✓ Recebido","#059669"]].map(([v,l,cor])=>(
+                    <button key={v} type="button" onClick={()=>setFormEdicaoPacote({...formEdicaoPacote,statusPag:v})}
+                      style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",cursor:"pointer",fontWeight:600,fontSize:13,fontFamily:"var(--font-body)",
+                        borderColor:(formEdicaoPacote.statusPag||"pendente")===v?cor:"#e5e7eb",
+                        background:(formEdicaoPacote.statusPag||"pendente")===v?cor+"15":"white",
+                        color:(formEdicaoPacote.statusPag||"pendente")===v?cor:"#6b7280"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {(formEdicaoPacote.statusPag||"pendente")==="recebido"&&(<>
+                <div className="form-group"><label className="form-label">Forma de Pagamento Principal</label>
+                  <select className="form-input" value={formEdicaoPacote.formaPag||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,formaPag:e.target.value})}>
+                    <option value="">Selecionar...</option>
+                    {FORMAS.map(f=><option key={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div className="form-group"><label className="form-label">Data do Pagamento</label>
+                  <input className="form-input" type="date" value={formEdicaoPacote.dataPagamento||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,dataPagamento:e.target.value})}/>
+                </div>
+                <div className="form-group" style={{gridColumn:"1/-1"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <label className="form-label" style={{margin:0}}>Pagamentos parciais / múltiplas formas</label>
+                    <button type="button" style={{fontSize:12,color:"#7B00C4",background:"#f3e6ff",border:"1px solid #d9b3f5",borderRadius:6,padding:"4px 12px",cursor:"pointer"}}
+                      onClick={()=>setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:[...(formEdicaoPacote.pagamentosExtras||[]),{forma:"",valor:"",data:new Date().toISOString().slice(0,10)}]})}>
+                      + Adicionar forma
+                    </button>
+                  </div>
+                  {(formEdicaoPacote.pagamentosExtras||[]).length===0&&(
+                    <div style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>Nenhum pagamento parcial. Clique em "+ Adicionar forma" para incluir.</div>
+                  )}
+                  {(formEdicaoPacote.pagamentosExtras||[]).map((pg,i)=>(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:6,marginBottom:6,alignItems:"center"}}>
+                      <select className="form-input" style={{fontSize:12}} value={pg.forma} onChange={e=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p[i]={...p[i],forma:e.target.value};setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}>
+                        <option value="">Forma...</option>{FORMAS.map(f=><option key={f}>{f}</option>)}
+                      </select>
+                      <input className="form-input" style={{fontSize:12}} type="number" placeholder="Valor R$" value={pg.valor} onChange={e=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p[i]={...p[i],valor:e.target.value};setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}/>
+                      <input className="form-input" style={{fontSize:12}} type="date" value={pg.data} onChange={e=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p[i]={...p[i],data:e.target.value};setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}/>
+                      <button type="button" style={{color:"#dc2626",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:"0 4px"}} onClick={()=>{const p=[...(formEdicaoPacote.pagamentosExtras||[])];p.splice(i,1);setFormEdicaoPacote({...formEdicaoPacote,pagamentosExtras:p});}}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              </>)}
+              <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
+                <textarea className="form-input" rows={2} value={formEdicaoPacote.obs||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
+              <button className="btn btn-ghost" onClick={()=>setModalEditarPacote(null)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvarEdicaoPacote} disabled={salvandoEdicao}>
+                {salvandoEdicao?"Salvando...":"💾 Salvar alterações"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
           <div className="page-title">Financeiro da Clínica</div>
