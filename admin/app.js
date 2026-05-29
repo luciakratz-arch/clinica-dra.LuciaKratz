@@ -2300,9 +2300,13 @@ function FinanceiroClinica() {
       const f = formEdicaoPacote;
       const jaPago = (f.statusPag||"pendente")==="recebido";
       // Atualiza o pacote
+      const novoTotalSessoes = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
+      const novoValorSessao = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
+      const novoValorTotal = novoTotalSessoes * novoValorSessao;
       await db.collection("clinica_pacotes").doc(modalEditarPacote.id).update({
-        totalSessoes: parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes,
-        valorSessao: parseFloat(f.valorSessao)||modalEditarPacote.valorSessao,
+        totalSessoes: novoTotalSessoes,
+        valorSessao: novoValorSessao,
+        valorTotal: novoValorTotal,
         recorrencia: f.recorrencia,
         dataInicio: f.dataInicio,
         horario: f.horario,
