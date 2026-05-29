@@ -2760,80 +2760,74 @@ function FinanceiroClinica() {
                           const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
                           const lancsPac=lancamentos.filter(l=>l.pacoteId===p.id);
                           const totalPago=lancsPac.filter(l=>l.status==="recebido").reduce((a,l)=>a+(l.valor||0),0);
-                          const isPago=totalPago>=(p.valorTotal||0);
-                          const temPendente=lancsPac.some(l=>l.status!=="recebido");
+                          const isPago=p.statusPag==="recebido";
                           const dataStr=p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}):"—";
                           return(
-                            <div key={p.id} style={{borderRadius:8,border:"1px solid #e8c8ff",overflow:"hidden",marginBottom:6}}>
-                              {/* Linha compacta — clicável */}
-                              <div onClick={()=>setPacoteSelecionado(pacoteSelecionado===p.id?"":p.id)}
-                                style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",cursor:"pointer",background:pacoteSelecionado===p.id?"#f3e6ff":"white",transition:"background .15s"}}>
-                                {/* Status dot */}
-                                <div style={{width:8,height:8,borderRadius:"50%",flexShrink:0,background:isPago?"#22c55e":temPendente?"#f59e0b":"#e5e7eb"}}/>
-                                {/* Obs / tipo */}
-                                <div style={{flex:1,fontSize:13,fontWeight:500,color:"#3d006a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                                  {p.obs||p.recorrencia||"Pacote"}
+                            <div key={p.id} style={{borderRadius:12,border:"1px solid #e8c8ff",background:"white",padding:"14px 16px",marginBottom:10,boxShadow:"0 1px 3px #0001"}}>
+                              {/* Cabeçalho do card */}
+                              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
+                                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                                  <div style={{width:10,height:10,borderRadius:"50%",background:isPago?"#22c55e":"#f59e0b",flexShrink:0,marginTop:2}}/>
+                                  <div>
+                                    <div style={{fontWeight:700,fontSize:14,color:"#3d006a"}}>{p.obs||p.recorrencia||"Pacote"}</div>
+                                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:1}}>
+                                      {p.recorrencia}{p.horario&&<span> · 🕐 {p.horario}</span>} · {dataStr}
+                                    </div>
+                                  </div>
                                 </div>
-                                {/* Sessões */}
-                                <span style={{fontSize:11,color:"#7B00C4",flexShrink:0}}>{realizadas}/{p.totalSessoes}</span>
-                                {/* Barra mini */}
-                                <div style={{width:40,height:4,background:"#e8c8ff",borderRadius:4,flexShrink:0}}>
-                                  <div style={{width:pct+"%",height:4,background:"#7B00C4",borderRadius:4}}/>
+                                <div style={{textAlign:"right"}}>
+                                  <div style={{fontWeight:800,fontSize:16,color:isPago?"#22c55e":"#f59e0b"}}>
+                                    {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                                  </div>
+                                  <div style={{fontSize:11,color:isPago?"#22c55e":"#f59e0b",fontWeight:600}}>
+                                    {isPago?"✓ Recebido":"⏳ Pendente"}
+                                    {p.formaPag&&<span style={{fontWeight:400,color:"var(--text-muted)"}}> · {p.formaPag}</span>}
+                                  </div>
                                 </div>
-                                {/* Valor */}
-                                <span style={{fontSize:12,fontWeight:700,color:isPago?"#22c55e":"#f59e0b",flexShrink:0}}>
-                                  {(p.valorTotal||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
-                                </span>
-                                {/* Data */}
-                                <span style={{fontSize:11,color:"#9ca3af",flexShrink:0}}>{dataStr}</span>
-                                <Icon name={pacoteSelecionado===p.id?"chevron-up":"chevron-down"} size={14} style={{color:"#9ca3af",flexShrink:0}}/>
                               </div>
-                              {/* Detalhe expandido */}
-                              {pacoteSelecionado===p.id&&(
-                                <div style={{borderTop:"1px solid #e8c8ff",padding:"10px 12px",background:"#faf5ff"}}>
-                                  <div style={{fontSize:11,color:"#7B00C4",marginBottom:8,display:"flex",gap:12,flexWrap:"wrap"}}>
-                                    <span>🔄 {p.recorrencia}</span>
-                                    {p.horario&&<span>🕐 {p.horario}</span>}
-                                    <span>📋 {realizadas} realizadas · {pagas} pagas</span>
-                                    <span>📆 {p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span>
-                                    {p.obs&&<span>📝 {p.obs}</span>}
-                                    {/* Status pagamento */}
-                                    <span style={{color:p.statusPag==="recebido"?"#059669":"#d97706",fontWeight:600}}>
-                                      {p.statusPag==="recebido"?"✓ Recebido":"⏳ Pendente"}
-                                      {p.formaPag&&<span style={{fontWeight:400}}> · {p.formaPag}</span>}
-                                      {p.dataPagamento&&<span style={{fontWeight:400}}> · {new Date(p.dataPagamento+"T00:00:00").toLocaleDateString("pt-BR")}</span>}
+                              {/* Barra de progresso */}
+                              <div style={{marginBottom:10}}>
+                                <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",marginBottom:4}}>
+                                  <span>{realizadas} realizadas de {p.totalSessoes} · {pagas} pagas</span>
+                                  <span style={{fontWeight:600,color:"var(--purple)"}}>{pct}%</span>
+                                </div>
+                                <div style={{height:6,background:"#e8c8ff",borderRadius:10,overflow:"hidden"}}>
+                                  <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:10,transition:"width .4s"}}/>
+                                </div>
+                              </div>
+                              {/* Pagamentos extras */}
+                              {(p.pagamentosExtras||[]).length>0&&(
+                                <div style={{marginBottom:10,display:"flex",gap:6,flexWrap:"wrap"}}>
+                                  {(p.pagamentosExtras||[]).map((pg,i)=>(
+                                    <span key={i} style={{background:"#f3e6ff",borderRadius:6,padding:"2px 8px",fontSize:11,color:"#6b7280"}}>
+                                      💳 {pg.forma||"?"} R${parseFloat(pg.valor||0).toFixed(2).replace(".",",")} · {pg.data?new Date(pg.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
                                     </span>
-                                    {/* Pagamentos extras */}
-                                    {(p.pagamentosExtras||[]).map((pg,i)=>(
-                                      <span key={i} style={{color:"#6b7280",fontSize:11}}>
-                                        💳 {pg.forma||"?"} · R$ {parseFloat(pg.valor||0).toFixed(2).replace(".",",")} · {pg.data?new Date(pg.data+"T00:00:00").toLocaleDateString("pt-BR"):"—"}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                                    <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"var(--purple)",border:"1px solid #d9b3f5"}}
-                                      onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__pacote");}}>
-                                      <Icon name="edit-3" size={12}/> Editar
-                                    </button>
-                                    <button className="btn btn-purple" style={{fontSize:11,padding:"5px 10px"}}
-                                      onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
-                                      <Icon name="clipboard-list" size={12}/> Sessões
-                                    </button>
-                                    <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"#dc2626",marginLeft:"auto"}}
-                                      onClick={async e=>{e.stopPropagation();
-                                        if(!confirm("Excluir pacote?"))return;
-                                        const todas=sessoes.filter(s=>s.pacoteId===p.id);
-                                        const b=db.batch();
-                                        todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
-                                        b.delete(db.collection("clinica_pacotes").doc(p.id));
-                                        lancsPac.forEach(l=>b.delete(db.collection("clinica_lancamentos").doc(l.id)));
-                                        await b.commit();
-                                      }}>
-                                      <Icon name="trash-2" size={12}/>
-                                    </button>
-                                  </div>
+                                  ))}
                                 </div>
                               )}
+                              {/* Botões */}
+                              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"var(--purple)",border:"1px solid #d9b3f5"}}
+                                  onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__pacote");}}>
+                                  <Icon name="edit-3" size={13}/> Editar
+                                </button>
+                                <button className="btn btn-purple" style={{fontSize:12,padding:"6px 12px"}}
+                                  onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
+                                  <Icon name="clipboard-list" size={13}/> Sessões
+                                </button>
+                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#dc2626",marginLeft:"auto"}}
+                                  onClick={async e=>{e.stopPropagation();
+                                    if(!confirm("Excluir pacote e todas as sessões?"))return;
+                                    const todas=sessoes.filter(s=>s.pacoteId===p.id);
+                                    const b=db.batch();
+                                    todas.forEach(s=>b.delete(db.collection("clinica_sessoes").doc(s.id)));
+                                    b.delete(db.collection("clinica_pacotes").doc(p.id));
+                                    lancsPac.forEach(l=>b.delete(db.collection("clinica_lancamentos").doc(l.id)));
+                                    await b.commit();
+                                  }}>
+                                  <Icon name="trash-2" size={13}/> Excluir
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
