@@ -4432,17 +4432,99 @@ function TerapiaCasais() {
 // ═══════════════════════════════════════════════════════
 // RECURSOS TERAPÊUTICOS
 // ═══════════════════════════════════════════════════════
+// ── Categorias originais (mantidas para compatibilidade) ──────────────────
+const CATEGORIAS_LEGADO = [
+  {id:"tcc",           label:"TCC",                 cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"ansiedade",     label:"Ansiedade",            cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"emocoes",       label:"Emoções",              cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"autocuidado",   label:"Autocuidado",          cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"relacionamentos",label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"corpo",         label:"Corpo & Alimentação",  cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"esquema",       label:"Terapia do Esquema",   cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"musicoterapia", label:"Musicoterapia",        cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"avaliacao",     label:"Avaliação e Anamnese", cor:"#7B00C4", bg:"#f3e6ff"},
+  {id:"outro",         label:"Outros",               cor:"#7B00C4", bg:"#f3e6ff"},
+];
+
+// ── Nova taxonomia clínica por demanda ────────────────────────────────────
+const MACROCATEGORIAS = [
+  {
+    id:"macro_ansiedade", icone:"🧠", label:"Ansiedade e Controle dos Pensamentos",
+    cor:"#7B00C4", bg:"#f3e6ff",
+    subs:[
+      {id:"ansiedade_diaria",    label:"Ansiedade Diária e Crises"},
+      {id:"distorcoes",          label:"Distorções Cognitivas e Ruminação"},
+      {id:"crencas_esquemas",    label:"Crenças e Esquemas Disfuncionais"},
+      {id:"autocritica",         label:"Autocrítica e Culpa"},
+      {id:"procrastinacao",      label:"Procrastinação e Foco"},
+    ]
+  },
+  {
+    id:"macro_humor", icone:"❤️", label:"Humor e Regulação Emocional",
+    cor:"#db2777", bg:"#fce7f3",
+    subs:[
+      {id:"depressao",           label:"Depressão e Desânimo"},
+      {id:"desamor",             label:"Desamor, Desamparo e Desvalor"},
+      {id:"regulacao_emocional", label:"Inteligência e Regulação Emocional"},
+      {id:"burnout",             label:"Burnout, Estresse e Frustração"},
+      {id:"vergonha",            label:"Vergonha e Insegurança"},
+    ]
+  },
+  {
+    id:"macro_habitos", icone:"🌱", label:"Hábitos e Autocuidado",
+    cor:"#16a34a", bg:"#dcfce7",
+    subs:[
+      {id:"rotina",              label:"Rotina e Organização Diária"},
+      {id:"sono",                label:"Sono e Descanso"},
+      {id:"motivacao",           label:"Motivação e Zona de Conforto"},
+      {id:"neuroplasticidade",   label:"Neuroplasticidade e Novos Hábitos"},
+      {id:"praticas_autocuidado",label:"Práticas de Autocuidado"},
+    ]
+  },
+  {
+    id:"macro_relacionamentos", icone:"🤝", label:"Conflitos Interpessoais e Relacionamentos",
+    cor:"#0891b2", bg:"#e0f2fe",
+    subs:[
+      {id:"comunicacao",         label:"Comunicação Assertiva"},
+      {id:"dependencia",         label:"Dependência Emocional e Apego"},
+      {id:"limites",             label:"Limites e Autoestima"},
+      {id:"ciumes",              label:"Ciúmes e Insegurança na Relação"},
+      {id:"toxicos",             label:"Relacionamentos Tóxicos e Abusivos"},
+    ]
+  },
+  {
+    id:"macro_casais", icone:"💑", label:"Casais, Família e Parentalidade",
+    cor:"#d97706", bg:"#fef3c7",
+    subs:[
+      {id:"conflitos_casal",     label:"Conflitos e Alinhamento de Casal"},
+      {id:"sexualidade",         label:"Sexualidade e Intimidade"},
+      {id:"parentalidade",       label:"Parentalidade e Educação de Filhos"},
+      {id:"conflitos_familia",   label:"Conflitos Familiares e Enteados"},
+      {id:"traicao",             label:"Traição e Reconexão Conjugal"},
+    ]
+  },
+  {
+    id:"macro_corpo", icone:"🏃", label:"Corpo, Saúde e Conexão Somática",
+    cor:"#059669", bg:"#d1fae5",
+    subs:[
+      {id:"alimentacao",         label:"Alimentação Emocional e Compulsão"},
+      {id:"autoimagem",          label:"Autoimagem e Aceitação Corporal"},
+      {id:"nervovago",           label:"Regulação do Sistema Nervoso (Nervo Vago)"},
+      {id:"sintomas_fisicos",    label:"Sintomas Físicos da Ansiedade"},
+      {id:"saude_mental",        label:"Integração Saúde Física e Mental"},
+    ]
+  },
+];
+
+// Todas as subcategorias num array plano (para selects e filtros)
+const TODAS_SUBCATEGORIAS = MACROCATEGORIAS.flatMap(m=>
+  m.subs.map(s=>({...s, macroId:m.id, macroLabel:m.label, macroIcone:m.icone, cor:m.cor, bg:m.bg}))
+);
+
+// Compatibilidade: CATEGORIAS_RECURSOS = legado + novas subcategorias
 const CATEGORIAS_RECURSOS = [
-  {id:"tcc",          label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
-  {id:"ansiedade",    label:"Ansiedade",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
-  {id:"emocoes",      label:"Emocoes",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
-  {id:"autocuidado",  label:"Autocuidado",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
-  {id:"relacionamentos",label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
-  {id:"corpo",        label:"Corpo & Alimentacao",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
-  {id:"esquema",      label:"Terapia do Esquema",    cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
-  {id:"musicoterapia",label:"Musicoterapia",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
-  {id:"avaliacao",    label:"Avaliacao e Anamnese",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#6366F1"},
-  {id:"outro",        label:"Outros",                cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
+  ...CATEGORIAS_LEGADO,
+  ...TODAS_SUBCATEGORIAS,
 ];
 
 const FERRAMENTAS_INTERATIVAS = [
@@ -7443,14 +7525,27 @@ function RecursosTerapeuticos({ user }) {
     return cOk && bOk;
   });
 
-  const idsCategoriasConhecidas = new Set(CATEGORIAS_RECURSOS.map(c=>c.id));
-  const porCategoria = CATEGORIAS_RECURSOS.reduce((acc,cat)=>{
-    const itens = filtrados.filter(r=>r.categoria===cat.id);
-    if(itens.length>0) acc.push({...cat, itens});
-    return acc;
-  },[]);
-  // Recursos com categoria desconhecida ou vazia — não ficam perdidos
-  const orfaos = filtrados.filter(r=>!idsCategoriasConhecidas.has(r.categoria));
+  // Agrupa por categoria no grid
+  const todasCatsConhecidas = new Set([
+    ...CATEGORIAS_LEGADO.map(c=>c.id),
+    ...TODAS_SUBCATEGORIAS.map(s=>s.id),
+  ]);
+  const porCategoria = [];
+  // Macrocategorias (agrupa todas as subcategorias)
+  MACROCATEGORIAS.forEach(m=>{
+    const subIds = new Set(m.subs.map(s=>s.id));
+    const itens = filtrados.filter(r=>subIds.has(r.categoria));
+    if(itens.length>0) porCategoria.push({...m, itens});
+  });
+  // Musicoterapia e Avaliação separados
+  ["musicoterapia","avaliacao"].forEach(cid=>{
+    const cat = CATEGORIAS_LEGADO.find(c=>c.id===cid);
+    if(!cat) return;
+    const itens = filtrados.filter(r=>r.categoria===cid);
+    if(itens.length>0) porCategoria.push({...cat, itens});
+  });
+  // Órfãos (categorias não reconhecidas)
+  const orfaos = filtrados.filter(r=>!todasCatsConhecidas.has(r.categoria));
   if(orfaos.length>0) porCategoria.push({
     id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
   });
@@ -7496,14 +7591,25 @@ function RecursosTerapeuticos({ user }) {
               const validas = new Set(["tcc","ansiedade","emocoes","autocuidado","relacionamentos","corpo","esquema","musicoterapia","avaliacao","outro","casal"]);
               const batch = db.batch();
               let n = 0;
+              // Mapa de redistribuição clínica
+              const REMAP_KEY = {
+                "breathing-478":      {categoria:"ansiedade_diaria",    subcategoria:"Ansiedade Diária e Crises"},
+                "muscle-relaxation":  {categoria:"nervovago",           subcategoria:"Regulação do Sistema Nervoso"},
+                "anxiety-management": {categoria:"ansiedade_diaria",    subcategoria:"Ansiedade Diária e Crises"},
+                "decision-tree":      {categoria:"procrastinacao",      subcategoria:"Procrastinação e Foco"},
+                "abc-record":         {categoria:"distorcoes",          subcategoria:"Distorções Cognitivas e Ruminação"},
+                "emotional-eating":   {categoria:"alimentacao",         subcategoria:"Alimentação Emocional e Compulsão"},
+                "treino-neuro-auditivo":{categoria:"musicoterapia",     subcategoria:""},
+                "entrevista-clinica": {categoria:"avaliacao",           subcategoria:""},
+                "anamnese":           {categoria:"avaliacao",           subcategoria:""},
+              };
+              const MANTER = new Set(["musicoterapia","avaliacao"]);
               snap.docs.forEach(doc=>{
                 const d = doc.data();
-                // Respiração e Relaxamento → ansiedade
-                if(["breathing-478","muscle-relaxation"].includes(d.formularioKey) && !validas.has(d.categoria)){
-                  batch.update(doc.ref,{categoria:"ansiedade"}); n++;
-                }
-                // Qualquer outra categoria inválida → outro
-                else if(d.categoria && !validas.has(d.categoria)){
+                const remap = REMAP_KEY[d.formularioKey];
+                if(remap){
+                  batch.update(doc.ref,{categoria:remap.categoria, subcategoria:remap.subcategoria}); n++;
+                } else if(!validas.has(d.categoria) && !MANTER.has(d.categoria)){
                   batch.update(doc.ref,{categoria:"outro"}); n++;
                 }
               });
@@ -7539,16 +7645,67 @@ function RecursosTerapeuticos({ user }) {
 
       {/* Aba Ferramentas — busca + filtros + grid */}
       {abaView==="ferramentas"&&(<>
-      <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          <button className={"btn "+(filtroCateg==="todos"?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>setFiltroCateg("todos")}>Todas {recursos.length}</button>
-          {CATEGORIAS_RECURSOS.map(c=>{
-            const n = recursos.filter(r=>r.categoria===c.id).length;
-            if(!n) return null;
-            return <button key={c.id} className={"btn "+(filtroCateg===c.id?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>setFiltroCateg(c.id)}>{c.label.split(" ")[0]} {n}</button>;
+      </div>
+      {/* Filtros por macrocategoria */}
+      <div style={{marginBottom:20}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+          <button className={"btn "+(filtroCateg==="todos"?"btn-purple":"btn-ghost")}
+            style={{fontSize:12}} onClick={()=>setFiltroCateg("todos")}>
+            Todas {recursos.length}
+          </button>
+          {/* Macrocategorias clínicas */}
+          {MACROCATEGORIAS.map(m=>{
+            const ids = new Set(m.subs.map(s=>s.id));
+            const n = recursos.filter(r=>ids.has(r.categoria)).length;
+            const ativo = filtroCateg===m.id;
+            return (
+              <button key={m.id} onClick={()=>setFiltroCateg(filtroCateg===m.id?"todos":m.id)}
+                style={{fontSize:12,padding:"6px 12px",borderRadius:20,border:"2px solid",cursor:"pointer",
+                  fontFamily:"inherit",fontWeight:600,transition:"all .15s",
+                  borderColor: ativo ? m.cor : m.cor+"50",
+                  background: ativo ? m.cor : m.bg,
+                  color: ativo ? "white" : m.cor}}>
+                {m.icone} {m.label.split(" ")[0]} {n>0?`(${n})`:""}
+              </button>
+            );
+          })}
+          {/* Categorias fixas */}
+          {["musicoterapia","avaliacao"].map(cid=>{
+            const cat = CATEGORIAS_LEGADO.find(c=>c.id===cid);
+            if(!cat) return null;
+            const n = recursos.filter(r=>r.categoria===cid).length;
+            const ativo = filtroCateg===cid;
+            return (
+              <button key={cid} onClick={()=>setFiltroCateg(filtroCateg===cid?"todos":cid)}
+                style={{fontSize:12,padding:"6px 12px",borderRadius:20,border:"2px solid",cursor:"pointer",
+                  fontFamily:"inherit",fontWeight:600,
+                  borderColor:"#7B00C4",
+                  background: ativo?"#7B00C4":"#f3e6ff",
+                  color: ativo?"white":"#7B00C4"}}>
+                {cid==="musicoterapia"?"🎵":"📋"} {cat.label.split(" ")[0]} {n>0?`(${n})`:""}
+              </button>
+            );
           })}
         </div>
+        {/* Subcategorias da macro selecionada */}
+        {filtroCateg!=="todos" && MACROCATEGORIAS.find(m=>m.id===filtroCateg)&&(
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",paddingLeft:8,borderLeft:"3px solid",
+            borderColor:MACROCATEGORIAS.find(m=>m.id===filtroCateg)?.cor}}>
+            {MACROCATEGORIAS.find(m=>m.id===filtroCateg)?.subs.map(s=>{
+              const n = recursos.filter(r=>r.categoria===s.id).length;
+              return (
+                <button key={s.id} onClick={()=>setFiltroCateg(s.id)}
+                  style={{fontSize:11,padding:"4px 10px",borderRadius:16,border:"1px solid #e5e7eb",
+                    cursor:"pointer",fontFamily:"inherit",
+                    background:"white",color:"#374151"}}>
+                  {s.label} {n>0?<span style={{color:"#7B00C4",fontWeight:700}}>({n})</span>:""}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       {filtrados.length===0?(
         <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
@@ -7608,12 +7765,45 @@ function RecursosTerapeuticos({ user }) {
             </div>
             <div className="form-group" style={{marginBottom:14}}>
               <label className="form-label">Categoria</label>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8}}>
-                {CATEGORIAS_RECURSOS.map(c=>(
-                  <button key={c.id} onClick={()=>setForm({...form,categoria:c.id})} style={{padding:"10px 12px",borderRadius:8,border:"1.5px solid",borderColor:form.categoria===c.id?c.cor:"var(--gray-200)",background:form.categoria===c.id?c.bg:"white",cursor:"pointer",fontSize:13,textAlign:"left",fontFamily:"var(--font-body)",color:form.categoria===c.id?c.cor:"var(--gray-700)"}}>
-                    {c.label}
-                  </button>
-                ))}
+              {/* Macrocategorias clínicas */}
+              {MACROCATEGORIAS.map(m=>(
+                <div key={m.id} style={{marginBottom:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:m.cor,textTransform:"uppercase",
+                    letterSpacing:"0.6px",marginBottom:6}}>
+                    {m.icone} {m.label}
+                  </div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {m.subs.map(s=>(
+                      <button key={s.id} onClick={()=>setForm({...form,categoria:s.id})}
+                        style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",
+                          fontSize:12,fontFamily:"var(--font-body)",
+                          borderColor:form.categoria===s.id?m.cor:"var(--gray-200)",
+                          background:form.categoria===s.id?m.bg:"white",
+                          color:form.categoria===s.id?m.cor:"var(--gray-600)",
+                          fontWeight:form.categoria===s.id?600:400}}>
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {/* Especializadas */}
+              <div style={{marginTop:6}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#6b7280",textTransform:"uppercase",
+                  letterSpacing:"0.6px",marginBottom:6}}>Especializadas</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[{id:"musicoterapia",label:"🎵 Musicoterapia"},{id:"avaliacao",label:"📋 Avaliação e Anamnese"},{id:"outro",label:"🔧 Outros"}].map(c=>(
+                    <button key={c.id} onClick={()=>setForm({...form,categoria:c.id})}
+                      style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",
+                        fontSize:12,fontFamily:"var(--font-body)",
+                        borderColor:form.categoria===c.id?"#7B00C4":"var(--gray-200)",
+                        background:form.categoria===c.id?"#f3e6ff":"white",
+                        color:form.categoria===c.id?"#7B00C4":"var(--gray-600)",
+                        fontWeight:form.categoria===c.id?600:400}}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="form-group" style={{marginBottom:14}}>
