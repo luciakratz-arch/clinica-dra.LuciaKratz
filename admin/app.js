@@ -722,12 +722,10 @@ function AbaPerfil({ paciente, pacientes }) {
 // ABA MODULOS
 // FERRAMENTAS FIXAS DO MÓDULO I
 const FERRAMENTAS_MOD1 = [
-  { id:"humor",     nome:"Registro de Humor",        desc:"Escala de humor diária" },
-  { id:"diario",    nome:"Diário Terapêutico",        desc:"Escrita reflexiva livre" },
-  { id:"metas",     nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
-  { id:"reflexoes", nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
-  { id:"tcc",       nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
-  // Respiração e Relaxamento pertencem ao Módulo III (Recursos Terapêuticos)
+  { id:"humor",  nome:"Check-in Diário",      desc:"Registro de humor e bem-estar diário" },
+  { id:"metas",  nome:"Metas Terapêuticas",   desc:"Acompanhamento de metas" },
+  { id:"diario", nome:"Diário Terapêutico",   desc:"Escrita reflexiva livre" },
+  // Pensamentos Automáticos e Reflexões Cognitivas → Módulo III (Ansiedade e Controle dos Pensamentos)
 ];
 
 function Toggle({ ativo, onClick }) {
@@ -1038,12 +1036,10 @@ function AbaModulo1({ paciente }) {
   },[paciente.id]);
 
   const ITENS = [
-    { id:"humor",     icone:"❤️", nome:"Registro de Humor",      qtd:dados.humor.length,     ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
-    { id:"diario",    icone:"📔", nome:"Diário Terapêutico",      qtd:dados.diario.length,    ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
-    { id:"metas",     icone:"🎯", nome:"Metas Terapêuticas",      qtd:dados.metas.length,     ultima:null },
-    { id:"reflexoes", icone:"💡", nome:"Reflexões Cognitivas",    qtd:dados.reflexoes.length, ultima:null },
-    { id:"tcc",       icone:"🧠", nome:"Pensamentos Automáticos", qtd:dados.tcc.length,       ultima:null },
-    // Respiração e Relaxamento são do Módulo III (Recursos Terapêuticos) — não duplicar aqui
+    { id:"humor",  icone:"❤️", nome:"Check-in Diário",     qtd:dados.humor.length,  ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
+    { id:"metas",  icone:"🎯", nome:"Metas Terapêuticas",  qtd:dados.metas.length,  ultima:null },
+    { id:"diario", icone:"📔", nome:"Diário Terapêutico",  qtd:dados.diario.length, ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
+    // Pensamentos e Reflexões → Módulo III / Ansiedade e Controle dos Pensamentos
   ];
 
   // Descrições resumidas para o modal de preview
@@ -1776,6 +1772,17 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
 }
 
 // LISTA PACIENTES
+const MOD1_PADRAO = {
+  mod1: {
+    ativo: true,
+    ferramentas: {
+      humor:  { ativo:true, dataInicio: new Date().toISOString().slice(0,10) },
+      metas:  { ativo:true, dataInicio: new Date().toISOString().slice(0,10) },
+      diario: { ativo:true, dataInicio: new Date().toISOString().slice(0,10) },
+    }
+  }
+};
+
 function Pacientes({ user }) {
   const { data:pacientes, loading } = useCollection("clinica_pacientes","nome");
   const [busca, setBusca] = useState("");
@@ -1822,6 +1829,8 @@ function Pacientes({ user }) {
               genero:idx.genero>=0?cols[idx.genero]?.trim()||"Não informar":"Não informar",
               status:"ativo",senha:"",objetivosTerapeuticos:"",observacoesClinicas:"",
               origem:"importacao-excel",
+              modulosConfig: MOD1_PADRAO,
+              modulosAtivos: ["mod1"],
               createdAt:firebase.firestore.FieldValue.serverTimestamp()
             });
             ok++;log.push({tipo:"ok",msg:`✓ ${nome}`});
@@ -1857,7 +1866,12 @@ function Pacientes({ user }) {
   async function salvar(){
     if(!form.nome||!form.email){alert("Nome e e-mail obrigatorios.");return;}
     setSalvando(true);
-    await db.collection("clinica_pacientes").add({...form,senha:"1234",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection("clinica_pacientes").add({
+      ...form, senha:"1234",
+      modulosConfig: MOD1_PADRAO,
+      modulosAtivos: ["mod1"],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     setModal(false);setSalvando(false);
   }
 
@@ -9813,6 +9827,8 @@ function ModalConversao({ lead, onConfirmar, onCancelar }) {
         tipoContratacao, valorEstimado,
         campanhas: lead.campanhas||[],
         isSocial: isSocial||false,
+        modulosConfig: MOD1_PADRAO,
+        modulosAtivos: ["mod1"],
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
 
