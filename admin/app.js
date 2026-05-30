@@ -7726,12 +7726,24 @@ function AbaPsicoeducacao() {
             Nenhum material cadastrado ainda.<br/>
             <button className="btn btn-purple" style={{marginTop:12}} onClick={()=>setModal(true)}>Adicionar primeiro material</button>
           </div>
-        : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
-            {filtrados.map(item=>{
-              const macroItem = MACROCATEGORIAS.find(m=>m.id===item.categoria||m.subs.some(s=>s.id===item.categoria)) || MACROCATEGORIAS[0];
-              const cat = {label: macroItem.label, cor: macroItem.cor, bg: macroItem.bg};
+        : (() => {
+            // Agrupa por macrocategoria
+            const grupos = MACROCATEGORIAS.map(m=>{
+              const itensGrupo = filtrados.filter(i=>
+                i.categoria===m.id ||
+                PSICO_LEGADO_MACRO[i.categoria]===m.id ||
+                m.subs.some(s=>s.id===i.categoria)
+              );
+              return {...m, itens: itensGrupo};
+            }).filter(g=>g.itens.length>0);
+            const orfaos = filtrados.filter(i=>!MACROCATEGORIAS.some(m=>
+              i.categoria===m.id||PSICO_LEGADO_MACRO[i.categoria]===m.id||m.subs.some(s=>s.id===i.categoria)
+            ));
+            const todosGrupos = [...grupos, ...(orfaos.length>0?[{id:"_orfaos",label:"Sem Categoria",icone:"🔧",cor:"#6b7280",bg:"#f3f4f6",itens:orfaos}]:[])];
+
+            function CardPsico({item, cat}){
               return (
-                <div key={item.id} style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+                <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
                   <div style={{background:cat.bg,padding:"20px 16px",textAlign:"center",borderBottom:"1px solid "+cat.cor+"20"}}>
                     <div style={{fontSize:36,marginBottom:8}}>{item.emoji||"📚"}</div>
                     <div style={{fontWeight:700,fontSize:14,color:cat.cor}}>{item.titulo}</div>
@@ -7753,8 +7765,27 @@ function AbaPsicoeducacao() {
                   </div>
                 </div>
               );
-            })}
-          </div>
+            }
+
+            return (
+              <div>
+                {todosGrupos.map(grupo=>(
+                  <div key={grupo.id} style={{marginBottom:28}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+                      <span style={{fontSize:18}}>{grupo.icone}</span>
+                      <span style={{fontWeight:700,fontSize:12,color:grupo.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{grupo.label}</span>
+                      <span style={{background:grupo.bg,color:grupo.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{grupo.itens.length}</span>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
+                      {grupo.itens.map(item=>(
+                        <CardPsico key={item.id} item={item} cat={{label:grupo.label,cor:grupo.cor,bg:grupo.bg}}/>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()
       }
 
       {/* Modal cadastro */}
