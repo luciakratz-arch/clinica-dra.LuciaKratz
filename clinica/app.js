@@ -673,13 +673,11 @@ function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve."
 
 // ─── NAVEGAÇÃO ────────────────────────────────────────────
 const NAV_INDIVIDUAL = [
-  { id:"painel",      label:"Meu Painel",           icon:"layout-dashboard" },
-  { id:"humor",       label:"Registro de Humor",    icon:"heart" },
-  { id:"tcc",         label:"Pensamentos",           icon:"brain" },
-  { id:"diario",      label:"Diário Terapêutico",   icon:"book-open" },
-  { id:"metas",       label:"Minhas Metas",          icon:"target" },
+  { id:"painel",      label:"Meu Painel",            icon:"layout-dashboard" },
+  { id:"humor",       label:"Check-in Diário",       icon:"heart" },
+  { id:"metas",       label:"Minhas Metas",           icon:"target" },
+  { id:"diario",      label:"Diário Terapêutico",    icon:"book-open" },
   { id:"ferramentas", label:"Recursos Terapêuticos", icon:"wrench" },
-  { id:"ansiedade",   label:"Gestão da Ansiedade",   icon:"activity" },
   { id:"meus-laudos", label:"Meus Laudos",           icon:"file-text" },
   { id:"minha-conta", label:"Minha Conta",           icon:"user-circle" },
 ];
@@ -774,12 +772,10 @@ function navFiltradoPaciente(nav, user) {
 
   // Mapa: id do item de nav → chave exata dentro de mod.ferramentas
   const ITEM_CHAVE = {
-    "humor":    { mod:"mod1", chave:"humor"    },
-    "diario":   { mod:"mod1", chave:"diario"   },
-    "metas":    { mod:"mod1", chave:"metas"    },
-    "reflexoes":{ mod:"mod1", chave:"reflexoes"},
-    "tcc":      { mod:"mod1", chave:"tcc"      },
-    "fabulas":  { mod:"mod2", chave:null        },
+    "humor":  { mod:"mod1", chave:"humor"  },
+    "metas":  { mod:"mod1", chave:"metas"  },
+    "diario": { mod:"mod1", chave:"diario" },
+    // tcc e reflexoes → Recursos Terapêuticos (mod3)
   };
 
   return nav.filter(item => {
@@ -2777,7 +2773,7 @@ function App() {
         {/* INDIVIDUAL */}
         {!eCasal&&tab==="painel"        &&<PainelIndividual user={user} setTab={setTab}/>}
         {!eCasal&&tab==="humor"         &&<RegistroHumor user={user}/>}
-        {!eCasal&&tab==="tcc"           &&<EmBreve titulo="Pensamentos Automáticos" sub="Registre e questione seus pensamentos — TCC."/>}
+        {/* tcc e reflexoes agora estão em Recursos Terapêuticos */}
         {!eCasal&&tab==="diario"        &&<FerramentaDiario user={user}/>}
         {!eCasal&&tab==="metas"         &&<EmBreve titulo="Minhas Metas" sub="Defina e acompanhe seus objetivos."/>}
         {!eCasal&&tab==="ferramentas"   &&<RecursosPaciente user={user} setTab={setTab}/>}
