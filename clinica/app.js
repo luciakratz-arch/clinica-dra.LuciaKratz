@@ -310,12 +310,171 @@ function FerramentaDiario({ user }){
 
 
 // ─── RECURSOS TERAPÊUTICOS DO PACIENTE ──────────────────
+
+// Componente reutilizável: reflexão + envio WhatsApp
+function ReflexaoWhatsApp({ user, tituloRecurso }) {
+  const [reflexao, setReflexao]     = useState("");
+  const [telefone, setTelefone]     = useState(user.telefone||"");
+  const [editandoTel, setEditandoTel] = useState(!user.telefone);
+  const [salvando, setSalvando]     = useState(false);
+  const [enviado, setEnviado]       = useState(false);
+
+  async function salvarTelefone(tel) {
+    if (!tel.trim()) return;
+    setSalvando(true);
+    try {
+      const tel_limpo = tel.replace(/\D/g,"");
+      await db.collection("clinica_pacientes").doc(user.id).update({ telefone: tel_limpo });
+      setTelefone(tel_limpo);
+      setEditandoTel(false);
+    } catch(e) { alert("Erro ao salvar telefone: "+e.message); }
+    setSalvando(false);
+  }
+
+  function enviarWhatsApp() {
+    const tel = telefone.replace(/\D/g,"");
+    if (!tel) { setEditandoTel(true); return; }
+    const texto = `💜 *Minha reflexão — ${tituloRecurso}*
+
+${reflexao||"(sem texto)"}
+
+_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+    setEnviado(true);
+    setTimeout(()=>setEnviado(false), 3000);
+  }
+
+  return (
+    <div style={{background:"#f9f0ff",borderRadius:12,padding:16,marginTop:16,
+      border:"1px solid #e8c8ff"}}>
+      <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:10}}>
+        ✍️ Minha reflexão
+      </div>
+
+      {/* Campo de reflexão */}
+      <textarea
+        value={reflexao}
+        onChange={e=>setReflexao(e.target.value)}
+        placeholder="O que esse conteúdo trouxe para você? O que quer lembrar ou praticar?"
+        style={{width:"100%",minHeight:90,padding:"10px 12px",borderRadius:8,
+          border:"1px solid #d9b3f5",fontSize:13,fontFamily:"inherit",
+          resize:"vertical",lineHeight:1.6,boxSizing:"border-box",
+          background:"white"}}/>
+
+      {/* Telefone */}
+      <div style={{marginTop:10}}>
+        {editandoTel ? (
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input
+              type="tel"
+              defaultValue={telefone}
+              placeholder="Seu WhatsApp (ex: 5562991546757)"
+              id="tel_reflexao"
+              style={{flex:1,padding:"8px 10px",borderRadius:8,border:"1px solid #d9b3f5",
+                fontSize:12,fontFamily:"inherit"}}/>
+            <button onClick={()=>{
+                const v = document.getElementById("tel_reflexao").value;
+                salvarTelefone(v);
+              }}
+              disabled={salvando}
+              style={{padding:"8px 14px",borderRadius:8,border:"none",
+                background:"#7B00C4",color:"white",cursor:"pointer",
+                fontSize:12,fontWeight:600,fontFamily:"inherit"}}>
+              {salvando?"Salvando...":"Salvar"}
+            </button>
+          </div>
+        ) : (
+          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"#5a0090"}}>
+            <span>📱 {telefone}</span>
+            <button onClick={()=>setEditandoTel(true)}
+              style={{background:"none",border:"none",cursor:"pointer",
+                color:"#7B00C4",fontSize:11,textDecoration:"underline",fontFamily:"inherit"}}>
+              🔄 Trocar número
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Botão enviar */}
+      <button onClick={enviarWhatsApp} disabled={!reflexao.trim()}
+        style={{width:"100%",marginTop:12,padding:"11px",borderRadius:10,border:"none",
+          background: reflexao.trim() ? "#25D366" : "#d1fae5",
+          color: reflexao.trim() ? "white" : "#6b7280",
+          cursor: reflexao.trim() ? "pointer" : "not-allowed",
+          fontSize:13,fontWeight:700,fontFamily:"inherit",
+          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+          transition:"all .2s"}}>
+        {enviado ? "✅ Enviado!" : "📲 Salvar no meu WhatsApp"}
+      </button>
+      <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",marginTop:6}}>
+        Abre o WhatsApp com sua reflexão como lembrete pessoal
+      </div>
+    </div>
+  );
+}
+
+// Abre um item de psicoeducação com conteúdo + reflexão
+function PsicoeducacaoAberta({ item, user, onVoltar }) {
+  const EMOJI_CAT = {
+    macro_ansiedade:"🧠", ansiedade_diaria:"🧠", distorcoes:"🧠",
+    macro_humor:"❤️", depressao:"❤️", burnout:"❤️",
+    macro_habitos:"🌱", rotina:"🌱", sono:"🌱",
+    macro_relacionamentos:"🤝", comunicacao:"🤝",
+    macro_casais:"💑", macro_corpo:"🏃",
+  };
+  const emoji = item.emoji || EMOJI_CAT[item.categoria] || "📚";
+
+  return (
+    <div>
+      <button onClick={onVoltar}
+        style={{marginBottom:16,display:"flex",alignItems:"center",gap:6,
+          background:"none",border:"none",cursor:"pointer",
+          color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+        ← Voltar
+      </button>
+
+      {/* Header */}
+      <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
+        borderRadius:"14px 14px 0 0",padding:"20px 24px",textAlign:"center",color:"white"}}>
+        <div style={{fontSize:48,marginBottom:8}}>{emoji}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:6}}>
+          {item.titulo}
+        </div>
+        {item.descricao&&(
+          <div style={{fontSize:13,opacity:0.85,lineHeight:1.5}}>{item.descricao}</div>
+        )}
+      </div>
+
+      {/* Conteúdo */}
+      {item.conteudo&&(
+        <div style={{background:"white",padding:"20px 24px",
+          border:"1px solid var(--gray-100)",borderTop:"none"}}>
+          <div style={{fontSize:14,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>
+            {item.conteudo}
+          </div>
+        </div>
+      )}
+
+      {/* Reflexão + WhatsApp */}
+      <div style={{background:"white",padding:"0 24px 24px",
+        border:"1px solid var(--gray-100)",borderTop:"none",
+        borderRadius:"0 0 14px 14px"}}>
+        <ReflexaoWhatsApp user={user} tituloRecurso={item.titulo}/>
+        <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:12}}>
+          Dra. Lucia Kratz · Psicóloga · CRP 09/20590
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RecursosPaciente({ user }) {
   const [ferramentas,   setFerramentas]   = useState([]);
   const [fabulas,       setFabulas]       = useState([]);
   const [psicoeducacao, setPsicoeducacao] = useState([]);
   const [aba,           setAba]           = useState("ferramentas");
   const [abrindo,       setAbrindo]       = useState(null);
+  const [abrindoPsico,  setAbrindoPsico]  = useState(null);
   const [loading,       setLoading]       = useState(true);
 
   useEffect(()=>{
@@ -373,6 +532,10 @@ function RecursosPaciente({ user }) {
   const icone = r => ICONES_KEY[r.formularioKey] || EMOJI_CAT[r.categoria] || "📄";
   const titulo = r => r.titulo || r.nome || "—";
   const descricao = r => r.descricao || r.resumo || r.texto?.slice(0,120) || "";
+
+  if (abrindoPsico) return (
+    <PsicoeducacaoAberta item={abrindoPsico} user={user} onVoltar={()=>setAbrindoPsico(null)}/>
+  );
 
   if (abrindo) return (
     <div>
@@ -478,13 +641,16 @@ function RecursosPaciente({ user }) {
               )}
 
               {/* Botão */}
-              <button onClick={()=>setAbrindo(r)}
+              <button onClick={()=>r._colecao==="psicoeducacao" ? setAbrindoPsico(r) : setAbrindo(r)}
                 style={{width:"100%",padding:"10px",borderRadius:10,border:"none",
                   background:"var(--purple)",color:"white",cursor:"pointer",
                   fontSize:13,fontWeight:600,fontFamily:"inherit",
                   display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                 {r._colecao==="recursos" && r.tipo==="interativa"
-                  ? "▶ Iniciar Exercício" : "📖 Abrir Conteúdo"}
+                  ? "▶ Iniciar Exercício"
+                  : r._colecao==="psicoeducacao"
+                    ? "📖 Ler e Refletir"
+                    : "📖 Abrir Conteúdo"}
               </button>
             </div>
           ))}
