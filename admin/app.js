@@ -742,6 +742,8 @@ function AbaModulos({ paciente }) {
   const [fabulas, setFabulas] = useState([]);
   const [psicoeducacao, setPsicoeducacao] = useState([]);
   const [salvando, setSalvando] = useState(false);
+  const [modalSugestao, setModalSugestao] = useState(null); // {ferramenta, categoria, sugestoes}
+  const [sugestoesSel, setSugestoesSel] = useState({});
 
   useEffect(() => {
     // Busca config atualizado do Firebase (ignora cache da prop)
@@ -773,11 +775,87 @@ function AbaModulos({ paciente }) {
     const modAtual = config[modId] || { ativo: true, ferramentas: {} };
     const ferrAtual = modAtual.ferramentas || {};
     const hoje = new Date().toISOString().split("T")[0];
-    const ferrNova = ferrAtual[ferrId] ? null : { ativo: true, dataInicio: hoje };
-    const novaFerr = { ...ferrAtual };
-    if (ferrNova) novaFerr[ferrId] = ferrNova;
-    else delete novaFerr[ferrId];
+    const estaAtiva = !!ferrAtual[ferrId];
+
+    // Se está desativando, só remove — sem sugestão
+    if(estaAtiva){
+      const novaFerr = { ...ferrAtual };
+      delete novaFerr[ferrId];
+      salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: novaFerr } });
+      return;
+    }
+
+    // Ativando — primeiro salva a ferramenta
+    const novaFerr = { ...ferrAtual, [ferrId]: { ativo: true, dataInicio: hoje } };
     salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: novaFerr } });
+
+    // Busca categoria da ferramenta para sugestões
+    const rec = recursos.find(r=>r.id===ferrId);
+    const catFerr = rec?.categoria || "";
+    const macroId = FAB_LEGADO_MACRO[catFerr] || catFerr;
+    if(!macroId || !macroId.startsWith("macro_")) return; // sem sugestões para cats sem macro
+
+    // Busca fábulas e psicoeducações da mesma macrocategoria não ativadas
+    const ferrAtivadas = new Set(Object.keys(novaFerr));
+    const fabSugest = fabulas.filter(f=>
+      (FAB_LEGADO_MACRO[f.categoria||""]===macroId || f.categoria===macroId) &&
+      !ferrAtivadas.has(f.id)
+    ).slice(0,3);
+    const psicoSugest = psicoeducacao.filter(p=>
+      (PSICO_LEGADO_MACRO[p.categoria||""]===macroId || p.categoria===macroId) &&
+      !ferrAtivadas.has(p.id)
+    ).slice(0,3);
+
+    if(fabSugest.length===0 && psicoSugest.length===0) return;
+
+    const macro = MACROCATEGORIAS.find(m=>m.id===macroId);
+    setModalSugestao({
+      ferramenta: rec?.titulo || ferrId,
+      categoria: macro?.label || macroId,
+      cor: macro?.cor || "#7B00C4",
+      bg: macro?.bg || "#f3e6ff",
+      icone: macro?.icone || "🔧",
+      modId,
+      fabulas: fabSugest,
+      psicoeducacao: psicoSugest,
+    });
+    setSugestoesSel({});
+  }
+
+  async function ativarSugestoes(){
+    if(!modalSugestao) return;
+    const hoje = new Date().toISOString().split("T")[0];
+    const modAtual = config[modalSugestao.modId] || { ativo:true, ferramentas:{} };
+    const ferrAtual = { ...modAtual.ferramentas };
+    // Ativa fábulas selecionadas no mod2
+    const modFab = config["mod2"] || { ativo:true, ferramentas:{} };
+    const ferrFab = { ...modFab.ferramentas };
+    // Ativa psico selecionadas no mod6
+    const modPsico = config["mod6"] || { ativo:true, ferramentas:{} };
+    const ferrPsico = { ...modPsico.ferramentas };
+
+    Object.entries(sugestoesSel).forEach(([id, sel])=>{
+      if(!sel) return;
+      const isFab = modalSugestao.fabulas.some(f=>f.id===id);
+      const isPsico = modalSugestao.psicoeducacao.some(p=>p.id===id);
+      if(isFab) ferrFab[id] = { ativo:true, dataInicio: hoje };
+      if(isPsico) ferrPsico[id] = { ativo:true, dataInicio: hoje };
+    });
+
+    await db.collection("clinica_pacientes").doc(paciente.id).update({
+      modulosConfig: {
+        ...config,
+        mod2: { ...modFab, ativo:true, ferramentas: ferrFab },
+        mod6: { ...modPsico, ativo:true, ferramentas: ferrPsico },
+      },
+      modulosAtivos: [...new Set([...Object.keys(config).filter(k=>config[k]?.ativo), "mod2", "mod6"])],
+    });
+    setConfig(c=>({
+      ...c,
+      mod2: { ...modFab, ativo:true, ferramentas: ferrFab },
+      mod6: { ...modPsico, ativo:true, ferramentas: ferrPsico },
+    }));
+    setModalSugestao(null);
   }
 
   function setDataInicio(modId, ferrId, data) {
@@ -964,6 +1042,79 @@ function AbaModulos({ paciente }) {
           </div>
         );
       })}
+    {/* Modal de sugestões */}
+    {modalSugestao&&(
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:2000,
+        display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:520,
+          maxHeight:"85vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+          <div style={{background:`linear-gradient(135deg,${modalSugestao.cor},${modalSugestao.cor}cc)`,
+            borderRadius:"16px 16px 0 0",padding:"18px 24px",color:"white"}}>
+            <div style={{fontSize:11,opacity:0.85,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.6px"}}>
+              {modalSugestao.icone} {modalSugestao.categoria}
+            </div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,marginBottom:4}}>
+              ✨ Sugestões para complementar
+            </div>
+            <div style={{fontSize:13,opacity:0.9}}>
+              Você ativou <b>{modalSugestao.ferramenta}</b>. Selecione fábulas e psicoeducações da mesma temática.
+            </div>
+          </div>
+          <div style={{padding:"20px 24px"}}>
+            {modalSugestao.fabulas.length>0&&(
+              <div style={{marginBottom:20}}>
+                <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                  <Icon name="book-open" size={15}/> Fábulas Terapêuticas
+                </div>
+                {modalSugestao.fabulas.map(f=>(
+                  <label key={f.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:10,cursor:"pointer",marginBottom:6,
+                    background:sugestoesSel[f.id]?"var(--purple-soft)":"#fafafa",
+                    border:`1.5px solid ${sugestoesSel[f.id]?"var(--purple)":"var(--gray-200)"}`,transition:"all .15s"}}>
+                    <input type="checkbox" checked={!!sugestoesSel[f.id]}
+                      onChange={e=>setSugestoesSel(s=>({...s,[f.id]:e.target.checked}))}
+                      style={{marginTop:2,accentColor:"var(--purple)",flexShrink:0}}/>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{f.titulo||f.nome}</div>
+                      {f.moral&&<div style={{fontSize:11,color:"var(--text-muted)",marginTop:2,fontStyle:"italic"}}>"{f.moral}"</div>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            {modalSugestao.psicoeducacao.length>0&&(
+              <div style={{marginBottom:20}}>
+                <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                  <Icon name="brain" size={15}/> Psicoeducação
+                </div>
+                {modalSugestao.psicoeducacao.map(p=>(
+                  <label key={p.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:10,cursor:"pointer",marginBottom:6,
+                    background:sugestoesSel[p.id]?"var(--purple-soft)":"#fafafa",
+                    border:`1.5px solid ${sugestoesSel[p.id]?"var(--purple)":"var(--gray-200)"}`,transition:"all .15s"}}>
+                    <input type="checkbox" checked={!!sugestoesSel[p.id]}
+                      onChange={e=>setSugestoesSel(s=>({...s,[p.id]:e.target.checked}))}
+                      style={{marginTop:2,accentColor:"var(--purple)",flexShrink:0}}/>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{p.titulo||p.nome}</div>
+                      {p.descricao&&<div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{p.descricao.slice(0,80)}</div>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setModalSugestao(null)}
+                style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                Agora não
+              </button>
+              <button onClick={()=>{const algum=Object.values(sugestoesSel).some(v=>v);if(algum)ativarSugestoes();else setModalSugestao(null);}}
+                style={{flex:2,padding:"10px",borderRadius:8,border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+                {Object.values(sugestoesSel).some(v=>v)?`✓ Ativar ${Object.values(sugestoesSel).filter(v=>v).length} selecionado(s)`:"Fechar sem ativar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
