@@ -727,8 +727,7 @@ const FERRAMENTAS_MOD1 = [
   { id:"metas",     nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
   { id:"reflexoes", nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
   { id:"tcc",       nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
-  { id:"respiracao",nome:"Técnica de Respiração",     desc:"Exercício de respiração diafragmática" },
-  { id:"relaxamento",nome:"Relaxamento Muscular",     desc:"Técnica de Jacobson" },
+  // Respiração e Relaxamento pertencem ao Módulo III (Recursos Terapêuticos)
 ];
 
 function Toggle({ ativo, onClick }) {
@@ -937,13 +936,12 @@ function AbaModulo1({ paciente }) {
   },[paciente.id]);
 
   const ITENS = [
-    { id:"humor",       icone:"❤️", nome:"Registro de Humor",      qtd:dados.humor.length,       ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
-    { id:"diario",      icone:"📔", nome:"Diário Terapêutico",      qtd:dados.diario.length,      ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
-    { id:"metas",       icone:"🎯", nome:"Metas Terapêuticas",      qtd:dados.metas.length,       ultima:null },
-    { id:"reflexoes",   icone:"💡", nome:"Reflexões Cognitivas",    qtd:dados.reflexoes.length,   ultima:null },
-    { id:"tcc",         icone:"🧠", nome:"Pensamentos Automáticos", qtd:dados.tcc.length,         ultima:null },
-    { id:"respiracao",  icone:"💨", nome:"Técnica de Respiração",   qtd:dados.respiracao.length,  ultima:null },
-    { id:"relaxamento", icone:"💪", nome:"Relaxamento Muscular",    qtd:dados.relaxamento.length, ultima:null },
+    { id:"humor",     icone:"❤️", nome:"Registro de Humor",      qtd:dados.humor.length,     ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
+    { id:"diario",    icone:"📔", nome:"Diário Terapêutico",      qtd:dados.diario.length,    ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
+    { id:"metas",     icone:"🎯", nome:"Metas Terapêuticas",      qtd:dados.metas.length,     ultima:null },
+    { id:"reflexoes", icone:"💡", nome:"Reflexões Cognitivas",    qtd:dados.reflexoes.length, ultima:null },
+    { id:"tcc",       icone:"🧠", nome:"Pensamentos Automáticos", qtd:dados.tcc.length,       ultima:null },
+    // Respiração e Relaxamento são do Módulo III (Recursos Terapêuticos) — não duplicar aqui
   ];
 
   // Descrições resumidas para o modal de preview
