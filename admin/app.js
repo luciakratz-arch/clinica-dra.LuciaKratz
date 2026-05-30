@@ -8033,16 +8033,17 @@ function RecursosTerapeuticos({ user }) {
     if(filtroCateg==="todos"){
       cOk = true;
     } else if(macro){
-      // Macrocategoria — inclui subcategorias novas + categorias legado + formularioKey não migrado
+      // Macrocategoria — inclui: id direto da macro, subcategorias, legado, formularioKey
       const subIds = new Set(macro.subs.map(s=>s.id));
       const legadoIds = new Set(
         Object.entries(LEGADO_PARA_MACRO)
           .filter(([,macroId])=>macroId===filtroCateg)
           .map(([legId])=>legId)
       );
-      cOk = subIds.has(r.categoria)
-         || legadoIds.has(r.categoria)
-         || legadoIds.has(r.formularioKey);
+      cOk = r.categoria === filtroCateg        // categoria igual ao id da macro (ex: "macro_humor")
+         || subIds.has(r.categoria)            // subcategoria da macro
+         || legadoIds.has(r.categoria)         // categoria legado mapeada
+         || legadoIds.has(r.formularioKey);    // formularioKey legado mapeado
     } else {
       cOk = r.categoria===filtroCateg;
     }
@@ -8059,7 +8060,7 @@ function RecursosTerapeuticos({ user }) {
   // Macrocategorias (agrupa todas as subcategorias)
   MACROCATEGORIAS.forEach(m=>{
     const subIds = new Set(m.subs.map(s=>s.id));
-    const itens = filtrados.filter(r=>subIds.has(r.categoria));
+    const itens = filtrados.filter(r=>r.categoria===m.id||subIds.has(r.categoria));
     if(itens.length>0) porCategoria.push({...m, itens});
   });
   // Musicoterapia e Avaliação separados
@@ -8184,7 +8185,7 @@ function RecursosTerapeuticos({ user }) {
           {MACROCATEGORIAS.map(m=>{
             const subIds = new Set(m.subs.map(s=>s.id));
             const legadoIds = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([,mid])=>mid===m.id).map(([lid])=>lid));
-            const n = recursos.filter(r=>subIds.has(r.categoria)||legadoIds.has(r.categoria)).length;
+            const n = recursos.filter(r=>r.categoria===m.id||subIds.has(r.categoria)||legadoIds.has(r.categoria)).length;
             const ativo = filtroCateg===m.id;
             return (
               <button key={m.id} onClick={()=>setFiltroCateg(filtroCateg===m.id?"todos":m.id)}
