@@ -7480,6 +7480,19 @@ const CATS_PSICOEDUCACAO = {
   outros:           {label:"Outros",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
 };
 
+// Mapa legado → macro para psicoeducação (fora do componente para evitar hoisting)
+const PSICO_LEGADO_MACRO = {
+  tcc:"macro_ansiedade", ansiedade:"macro_ansiedade", esquema:"macro_ansiedade",
+  emocoes:"macro_humor", autocuidado:"macro_habitos",
+  relacionamentos:"macro_relacionamentos", casais:"macro_casais", corpo:"macro_corpo",
+  outros:"macro_ansiedade", autoestima:"macro_humor", mindfulness:"macro_habitos",
+  trauma:"macro_ansiedade", depressao:"macro_humor", habitos:"macro_habitos",
+  // novas macrocategorias já passam direto
+  macro_ansiedade:"macro_ansiedade", macro_humor:"macro_humor",
+  macro_habitos:"macro_habitos", macro_relacionamentos:"macro_relacionamentos",
+  macro_casais:"macro_casais", macro_corpo:"macro_corpo",
+};
+
 function AbaPsicoeducacao() {
   const [itens, setItens]         = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -7576,14 +7589,7 @@ function AbaPsicoeducacao() {
     setSalvando(false);
   }
 
-  // Filtro: "todos" ou macrocategoria + legado mapeado
-  const PSICO_LEGADO_MACRO = {
-    tcc:"macro_ansiedade", ansiedade:"macro_ansiedade", esquema:"macro_ansiedade",
-    emocoes:"macro_humor", autocuidado:"macro_habitos",
-    relacionamentos:"macro_relacionamentos", casais:"macro_casais", corpo:"macro_corpo",
-    outros:"macro_ansiedade", autoestima:"macro_humor", mindfulness:"macro_habitos",
-    trauma:"macro_ansiedade", depressao:"macro_humor", habitos:"macro_habitos",
-  };
+  // Filtro: "todos" ou macrocategoria + legado mapeado (PSICO_LEGADO_MACRO declarado fora)
   const filtrados = filtro==="todos" ? itens : itens.filter(i=>{
     if(i.categoria===filtro) return true;
     const macro = MACROCATEGORIAS.find(m=>m.id===filtro);
