@@ -7519,8 +7519,32 @@ function RecursosTerapeuticos({ user }) {
   },[]);
 
   const abaRecursos = recursos.filter(r=>abaView==="ferramentas"?r.categoria!=="casal":r.categoria==="casal");
+
+  // Mapa de categorias legado para macrocategoria
+  const LEGADO_PARA_MACRO = {
+    "tcc":"macro_ansiedade", "ansiedade":"macro_ansiedade",
+    "emocoes":"macro_humor", "esquema":"macro_ansiedade",
+    "autocuidado":"macro_habitos", "relacionamentos":"macro_relacionamentos",
+    "corpo":"macro_corpo",
+  };
+
   const filtrados = abaRecursos.filter(r=>{
-    const cOk = filtroCateg==="todos" || r.categoria===filtroCateg;
+    const macro = MACROCATEGORIAS.find(m=>m.id===filtroCateg);
+    let cOk;
+    if(filtroCateg==="todos"){
+      cOk = true;
+    } else if(macro){
+      // Macrocategoria selecionada — inclui subcategorias novas E categorias legado mapeadas
+      const subIds = new Set(macro.subs.map(s=>s.id));
+      const legadoIds = new Set(
+        Object.entries(LEGADO_PARA_MACRO)
+          .filter(([,macroId])=>macroId===filtroCateg)
+          .map(([legId])=>legId)
+      );
+      cOk = subIds.has(r.categoria) || legadoIds.has(r.categoria);
+    } else {
+      cOk = r.categoria===filtroCateg;
+    }
     const bOk = !busca || r.titulo?.toLowerCase().includes(busca.toLowerCase()) || r.descricao?.toLowerCase().includes(busca.toLowerCase());
     return cOk && bOk;
   });
@@ -7667,7 +7691,7 @@ function RecursosTerapeuticos({ user }) {
                   borderColor: ativo ? m.cor : m.cor+"50",
                   background: ativo ? m.cor : m.bg,
                   color: ativo ? "white" : m.cor}}>
-                {m.icone} {m.label.split(" ")[0]} {n>0?`(${n})`:""}
+                {m.icone} {m.label} {n>0?`(${n})`:""}
               </button>
             );
           })}
@@ -7689,21 +7713,12 @@ function RecursosTerapeuticos({ user }) {
             );
           })}
         </div>
-        {/* Subcategorias da macro selecionada */}
+        {/* Info da macro selecionada */}
         {filtroCateg!=="todos" && MACROCATEGORIAS.find(m=>m.id===filtroCateg)&&(
-          <div style={{display:"flex",gap:6,flexWrap:"wrap",paddingLeft:8,borderLeft:"3px solid",
-            borderColor:MACROCATEGORIAS.find(m=>m.id===filtroCateg)?.cor}}>
-            {MACROCATEGORIAS.find(m=>m.id===filtroCateg)?.subs.map(s=>{
-              const n = recursos.filter(r=>r.categoria===s.id).length;
-              return (
-                <button key={s.id} onClick={()=>setFiltroCateg(s.id)}
-                  style={{fontSize:11,padding:"4px 10px",borderRadius:16,border:"1px solid #e5e7eb",
-                    cursor:"pointer",fontFamily:"inherit",
-                    background:"white",color:"#374151"}}>
-                  {s.label} {n>0?<span style={{color:"#7B00C4",fontWeight:700}}>({n})</span>:""}
-                </button>
-              );
-            })}
+          <div style={{paddingLeft:10,borderLeft:"3px solid",
+            borderColor:MACROCATEGORIAS.find(m=>m.id===filtroCateg)?.cor,
+            fontSize:12,color:"var(--text-muted)",lineHeight:1.6}}>
+            {MACROCATEGORIAS.find(m=>m.id===filtroCateg)?.subs.map(s=>s.label).join(" · ")}
           </div>
         )}
       </div>
