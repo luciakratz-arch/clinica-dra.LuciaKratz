@@ -7522,10 +7522,20 @@ function RecursosTerapeuticos({ user }) {
 
   // Mapa de categorias legado para macrocategoria
   const LEGADO_PARA_MACRO = {
-    "tcc":"macro_ansiedade", "ansiedade":"macro_ansiedade",
-    "emocoes":"macro_humor", "esquema":"macro_ansiedade",
-    "autocuidado":"macro_habitos", "relacionamentos":"macro_relacionamentos",
-    "corpo":"macro_corpo",
+    "tcc":             "macro_ansiedade",
+    "ansiedade":       "macro_ansiedade",
+    "esquema":         "macro_ansiedade",
+    "emocoes":         "macro_humor",
+    "autocuidado":     "macro_habitos",
+    "relacionamentos": "macro_relacionamentos",
+    "corpo":           "macro_corpo",
+    // formularioKey → macro (para ferramentas ainda com categoria legado)
+    "breathing-478":      "macro_ansiedade",
+    "muscle-relaxation":  "macro_corpo",
+    "anxiety-management": "macro_ansiedade",
+    "decision-tree":      "macro_ansiedade",
+    "abc-record":         "macro_ansiedade",
+    "emotional-eating":   "macro_corpo",
   };
 
   const filtrados = abaRecursos.filter(r=>{
@@ -7534,14 +7544,16 @@ function RecursosTerapeuticos({ user }) {
     if(filtroCateg==="todos"){
       cOk = true;
     } else if(macro){
-      // Macrocategoria selecionada — inclui subcategorias novas E categorias legado mapeadas
+      // Macrocategoria — inclui subcategorias novas + categorias legado + formularioKey não migrado
       const subIds = new Set(macro.subs.map(s=>s.id));
       const legadoIds = new Set(
         Object.entries(LEGADO_PARA_MACRO)
           .filter(([,macroId])=>macroId===filtroCateg)
           .map(([legId])=>legId)
       );
-      cOk = subIds.has(r.categoria) || legadoIds.has(r.categoria);
+      cOk = subIds.has(r.categoria)
+         || legadoIds.has(r.categoria)
+         || legadoIds.has(r.formularioKey);
     } else {
       cOk = r.categoria===filtroCateg;
     }
@@ -7674,15 +7686,16 @@ function RecursosTerapeuticos({ user }) {
       </div>
       {/* Filtros por macrocategoria */}
       <div style={{marginBottom:20}}>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+        <div style={{display:"flex",gap:6,marginBottom:8,overflowX:"auto",flexWrap:"nowrap",paddingBottom:4,scrollbarWidth:"none"}}>
           <button className={"btn "+(filtroCateg==="todos"?"btn-purple":"btn-ghost")}
             style={{fontSize:12}} onClick={()=>setFiltroCateg("todos")}>
             Todas {recursos.length}
           </button>
           {/* Macrocategorias clínicas */}
           {MACROCATEGORIAS.map(m=>{
-            const ids = new Set(m.subs.map(s=>s.id));
-            const n = recursos.filter(r=>ids.has(r.categoria)).length;
+            const subIds = new Set(m.subs.map(s=>s.id));
+            const legadoIds = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([,mid])=>mid===m.id).map(([lid])=>lid));
+            const n = recursos.filter(r=>subIds.has(r.categoria)||legadoIds.has(r.categoria)).length;
             const ativo = filtroCateg===m.id;
             return (
               <button key={m.id} onClick={()=>setFiltroCateg(filtroCateg===m.id?"todos":m.id)}
@@ -7690,7 +7703,8 @@ function RecursosTerapeuticos({ user }) {
                   fontFamily:"inherit",fontWeight:600,transition:"all .15s",
                   borderColor: ativo ? m.cor : m.cor+"50",
                   background: ativo ? m.cor : m.bg,
-                  color: ativo ? "white" : m.cor}}>
+                  color: ativo ? "white" : m.cor,
+                  whiteSpace:"nowrap"}}>
                 {m.icone} {m.label} {n>0?`(${n})`:""}
               </button>
             );
@@ -7708,7 +7722,7 @@ function RecursosTerapeuticos({ user }) {
                   borderColor:"#7B00C4",
                   background: ativo?"#7B00C4":"#f3e6ff",
                   color: ativo?"white":"#7B00C4"}}>
-                {cid==="musicoterapia"?"🎵":"📋"} {cat.label.split(" ")[0]} {n>0?`(${n})`:""}
+                {cid==="musicoterapia"?"🎵":"📋"} {cat.label} {n>0?`(${n})`:""}
               </button>
             );
           })}
