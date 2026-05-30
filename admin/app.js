@@ -1005,81 +1005,49 @@ function AbaModulo1({ paciente }) {
         )
       }
 
-      {/* Modal de preview — renderiza a ferramenta real aqui no admin */}
+      {/* Modal de preview — iframe do portal */}
       {preview&&(()=>{
         const item = ITENS.find(i=>i.id===preview);
-        // Mapeia id da ferramenta para o formularioKey usado em FerramentaInterativaAdmin
-        const KEY_MAP = {
-          respiracao:"breathing-478", relaxamento:"muscle-relaxation",
-          tcc:"abc-record", humor:null, diario:null, metas:null,
-          reflexoes:null, ansiedade:"anxiety-management"
+        const TAB_MAP = {
+          humor:"humor", diario:"diario", metas:"metas",
+          reflexoes:"reflexoes", tcc:"tcc",
+          respiracao:"ferramentas", relaxamento:"ferramentas",
         };
-        const fKey = KEY_MAP[preview];
+        const tab = TAB_MAP[preview]||"painel";
+        const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/?preview=${tab}&email=${encodeURIComponent(paciente.email||"")}&senha=${encodeURIComponent(paciente.senha||"1234")}`;
         return (
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1000,
             display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
             onClick={()=>setPreview(null)}>
-            <div style={{background:"white",borderRadius:16,width:"100%",
-              maxWidth: fKey ? 700 : 520,
-              maxHeight:"90vh",overflowY:"auto",
-              boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}
+            <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:900,
+              height:"85vh",display:"flex",flexDirection:"column",
+              boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}
               onClick={e=>e.stopPropagation()}>
 
               {/* Header */}
               <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
-                borderRadius:"16px 16px 0 0",padding:"16px 24px",color:"white",
-                display:"flex",alignItems:"center",justifyContent:"space-between",
-                position:"sticky",top:0,zIndex:1}}>
+                borderRadius:"16px 16px 0 0",padding:"14px 20px",color:"white",
+                display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:24}}>{item?.icone}</span>
+                  <span style={{fontSize:22}}>{item?.icone}</span>
                   <div>
                     <div style={{fontWeight:700,fontSize:15}}>{item?.nome}</div>
-                    <div style={{fontSize:11,opacity:0.8,marginTop:1}}>👁 Prévia — como o paciente vê</div>
+                    <div style={{fontSize:11,opacity:0.8}}>👁 Prévia — visão de {paciente.nome.split(" ")[0]}</div>
                   </div>
                 </div>
                 <button onClick={()=>setPreview(null)}
                   style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,
-                    padding:"6px 12px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                    padding:"6px 14px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
                   ✕ Fechar
                 </button>
               </div>
 
-              {/* Corpo — ferramenta interativa ou mensagem */}
-              <div style={{padding:24}}>
-                {fKey ? (
-                  // Renderiza a ferramenta interativa real
-                  fKey==="breathing-478"     ? <FerramentaRespiracao user={paciente}/> :
-                  fKey==="muscle-relaxation" ? <FerramentaRelaxamento user={paciente}/> :
-                  fKey==="abc-record"        ? <FerramentaABC user={paciente}/> :
-                  fKey==="anxiety-management"? <FerramentaGestaoAnsiedade user={paciente}/> :
-                  <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Prévia não disponível para esta ferramenta.</div>
-                ) : (
-                  // Ferramentas sem formulário interativo — mostra info + dados
-                  <>
-                    <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",
-                      marginBottom:20,fontSize:13,color:"var(--purple)",lineHeight:1.6}}>
-                      <strong>ℹ️ Como o paciente vê:</strong><br/>{DESC[preview]}
-                    </div>
-                    <div style={{background:"#f9fafb",borderRadius:10,padding:16,
-                      border:"1px solid var(--gray-100)"}}>
-                      <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8,
-                        textTransform:"uppercase",letterSpacing:"0.5px"}}>
-                        Registros de {paciente.nome.split(" ")[0]}
-                      </div>
-                      <div style={{fontSize:22,fontWeight:700,color:"var(--purple)"}}>{item?.qtd}</div>
-                      <div style={{fontSize:12,color:"var(--text-muted)"}}>
-                        {item?.qtd===0 ? "Sem registros ainda" : `registro${item?.qtd!==1?"s":""} realizados`}
-                      </div>
-                    </div>
-                  </>
-                )}
-                <button onClick={()=>setPreview(null)}
-                  style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,
-                    border:"1px solid var(--gray-200)",background:"white",
-                    cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
-                  Fechar prévia
-                </button>
-              </div>
+              {/* iFrame do portal */}
+              <iframe
+                src={`https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/`}
+                style={{flex:1,border:"none",borderRadius:"0 0 16px 16px"}}
+                title="Prévia do portal do paciente"
+              />
             </div>
           </div>
         );
