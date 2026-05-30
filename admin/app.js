@@ -8055,6 +8055,7 @@ function RecursosTerapeuticos({ user }) {
   const todasCatsConhecidas = new Set([
     ...CATEGORIAS_LEGADO.map(c=>c.id),
     ...TODAS_SUBCATEGORIAS.map(s=>s.id),
+    ...MACROCATEGORIAS.map(m=>m.id), // inclui macro_humor, macro_habitos etc.
   ]);
   const porCategoria = [];
   // Macrocategorias (agrupa todas as subcategorias)
