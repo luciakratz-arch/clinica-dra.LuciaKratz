@@ -7278,23 +7278,40 @@ function AbaPsicoeducacao() {
   const [filtro, setFiltro]       = useState("todos");
   const [aberto, setAberto]       = useState(null);
 
-  const MIGRACAO_PSICO = {
-    "autoestima":"emocoes","mindfulness":"emocoes","trauma":"esquema",
-    "depressao":"emocoes","habitos":"autocuidado",
+  // Mapa de categorias legado → nova macrocategoria clínica
+  const REMAP_PSICO = {
+    "tcc":             "macro_ansiedade",
+    "ansiedade":       "macro_ansiedade",
+    "esquema":         "macro_ansiedade",
+    "emocoes":         "macro_humor",
+    "autocuidado":     "macro_habitos",
+    "relacionamentos": "macro_relacionamentos",
+    "casais":          "macro_casais",
+    "corpo":           "macro_corpo",
+    "outros":          "macro_ansiedade",
+    // legados extras
+    "autoestima":      "macro_humor",
+    "mindfulness":     "macro_habitos",
+    "trauma":          "macro_ansiedade",
+    "depressao":       "macro_humor",
+    "habitos":         "macro_habitos",
   };
 
   async function migrarCatPsico(){
-    if(!confirm("Migrar categorias antigas de psicoeducação?")) return;
+    if(!confirm("Migrar categorias de psicoeducação para a nova taxonomia clínica?")) return;
     setSalvando(true);
     try{
       const snap = await db.collection("clinica_psicoeducacao").get();
+      const batch = db.batch();
       let count = 0;
-      for(const doc of snap.docs){
+      snap.docs.forEach(doc=>{
         const cat = doc.data().categoria;
-        const nova = MIGRACAO_PSICO[cat];
-        if(nova){ await db.collection("clinica_psicoeducacao").doc(doc.id).update({categoria:nova}); count++; }
-      }
-      alert("✓ "+count+" psicoeducações migradas!");
+        const nova = REMAP_PSICO[cat];
+        if(nova && nova!==cat){ batch.update(doc.ref,{categoria:nova}); count++; }
+      });
+      if(count===0){ alert("✅ Todas já estão na nova taxonomia!"); setSalvando(false); return; }
+      await batch.commit();
+      alert(`✅ ${count} material(is) migrado(s) para a nova taxonomia clínica!`);
     } catch(e){ alert("Erro: "+e.message); }
     setSalvando(false);
   }
@@ -7348,13 +7365,29 @@ function AbaPsicoeducacao() {
     setSalvando(false);
   }
 
-  const cats = ["todos",...Object.keys(CATS_PSICOEDUCACAO)];
-  const filtrados = filtro==="todos" ? itens : itens.filter(i=>i.categoria===filtro);
+  // Filtro: "todos" ou macrocategoria + legado mapeado
+  const PSICO_LEGADO_MACRO = {
+    tcc:"macro_ansiedade", ansiedade:"macro_ansiedade", esquema:"macro_ansiedade",
+    emocoes:"macro_humor", autocuidado:"macro_habitos",
+    relacionamentos:"macro_relacionamentos", casais:"macro_casais", corpo:"macro_corpo",
+    outros:"macro_ansiedade", autoestima:"macro_humor", mindfulness:"macro_habitos",
+    trauma:"macro_ansiedade", depressao:"macro_humor", habitos:"macro_habitos",
+  };
+  const filtrados = filtro==="todos" ? itens : itens.filter(i=>{
+    if(i.categoria===filtro) return true;
+    const macro = MACROCATEGORIAS.find(m=>m.id===filtro);
+    if(macro){
+      const subIds = new Set(macro.subs.map(s=>s.id));
+      return subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria]===filtro;
+    }
+    return false;
+  });
 
   if(loading) return <Spinner/>;
 
   if(aberto){
-    const cat = CATS_PSICOEDUCACAO[aberto.categoria]||CATS_PSICOEDUCACAO.outros;
+    const macroAberto = MACROCATEGORIAS.find(m=>m.id===aberto.categoria||m.subs.some(s=>s.id===aberto.categoria))||MACROCATEGORIAS[0];
+    const cat = {label:macroAberto.label, cor:macroAberto.cor, bg:macroAberto.bg, accent:macroAberto.cor};
     const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
     return (
       <div>
@@ -7404,16 +7437,27 @@ function AbaPsicoeducacao() {
         </div>
       </div>
 
-      {/* Filtro por categoria */}
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
-        {cats.map(cat=>{
-          const info = CATS_PSICOEDUCACAO[cat];
-          const count = cat==="todos"?itens.length:itens.filter(i=>i.categoria===cat).length;
-          if(count===0&&cat!=="todos") return null;
+      {/* Filtro por macrocategoria clínica */}
+      <div style={{display:"flex",gap:6,marginBottom:20,overflowX:"auto",flexWrap:"nowrap",paddingBottom:4,scrollbarWidth:"none"}}>
+        <button onClick={()=>setFiltro("todos")}
+          style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",whiteSpace:"nowrap",flexShrink:0,
+            borderColor:filtro==="todos"?"var(--purple)":"var(--gray-200)",
+            background:filtro==="todos"?"var(--purple)":"white",
+            color:filtro==="todos"?"white":"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:filtro==="todos"?600:400}}>
+          Todos ({itens.length})
+        </button>
+        {MACROCATEGORIAS.map(m=>{
+          const subIds = new Set(m.subs.map(s=>s.id));
+          const count = itens.filter(i=>subIds.has(i.categoria)||PSICO_LEGADO_MACRO[i.categoria]===m.id).length;
+          if(count===0) return null;
           return (
-            <button key={cat} onClick={()=>setFiltro(cat)}
-              style={{padding:"5px 12px",borderRadius:20,border:"1.5px solid",borderColor:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-200)",background:filtro===cat?(info?.bg||"var(--purple-bg)"):"white",color:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:filtro===cat?600:400}}>
-              {cat==="todos"?"Todos":info?.label} ({count})
+            <button key={m.id} onClick={()=>setFiltro(m.id)}
+              style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",whiteSpace:"nowrap",flexShrink:0,
+                borderColor:filtro===m.id?m.cor:m.cor+"50",
+                background:filtro===m.id?m.cor:m.bg,
+                color:filtro===m.id?"white":m.cor,
+                fontSize:12,cursor:"pointer",fontWeight:filtro===m.id?600:400}}>
+              {m.icone} {m.label} ({count})
             </button>
           );
         })}
@@ -7426,7 +7470,8 @@ function AbaPsicoeducacao() {
           </div>
         : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
             {filtrados.map(item=>{
-              const cat = CATS_PSICOEDUCACAO[item.categoria]||CATS_PSICOEDUCACAO.outros;
+              const macroItem = MACROCATEGORIAS.find(m=>m.id===item.categoria||m.subs.some(s=>s.id===item.categoria)) || MACROCATEGORIAS[0];
+              const cat = {label: macroItem.label, cor: macroItem.cor, bg: macroItem.bg};
               return (
                 <div key={item.id} style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
                   <div style={{background:cat.bg,padding:"20px 16px",textAlign:"center",borderBottom:"1px solid "+cat.cor+"20"}}>
@@ -7476,7 +7521,11 @@ function AbaPsicoeducacao() {
               <div>
                 <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Categoria</label>
                 <select className="form-input" value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))}>
-                  {Object.entries(CATS_PSICOEDUCACAO).map(([id,{label}])=><option key={id} value={id}>{label}</option>)}
+                  {MACROCATEGORIAS.map(m=>(
+                    <optgroup key={m.id} label={`${m.icone} ${m.label}`}>
+                      {m.subs.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
               <div>
