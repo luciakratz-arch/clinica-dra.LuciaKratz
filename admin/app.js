@@ -6693,43 +6693,62 @@ function AbaFabulas() {
     </div>
   );
 
-  // Categorias únicas
-  const cats = ["todos", ...new Set(fabulas.map(f=>f.categoria||"outro"))];
-  const filtradas = filtro==="todos" ? fabulas : fabulas.filter(f=>(f.categoria||"outro")===filtro);
-  const porCat = filtradas.reduce((acc,f)=>{
-    const k = f.categoria||"outro";
-    if(!acc[k]) acc[k]=[];
-    acc[k].push(f);
-    return acc;
-  },{});
+  // Agrupa por macrocategoria
+  const filtradas = filtro==="todos"
+    ? fabulas
+    : fabulas.filter(f=>{
+        const macro = MACROCATEGORIAS.find(m=>m.id===filtro);
+        if(macro){ return FAB_LEGADO_MACRO[f.categoria||"outro"]===filtro || f.categoria===filtro; }
+        return (f.categoria||"outro")===filtro;
+      });
+
+  // Para o grid: agrupa por macro
+  const porMacro = MACROCATEGORIAS.map(m=>{
+    const itens = filtradas.filter(f=>FAB_LEGADO_MACRO[f.categoria||"outro"]===m.id || f.categoria===m.id);
+    return {...m, itens};
+  }).filter(m=>m.itens.length>0);
+  // Órfãos
+  const macroIds = new Set(Object.values(FAB_LEGADO_MACRO));
+  const orfaos = filtradas.filter(f=>!macroIds.has(f.categoria) && !FAB_LEGADO_MACRO[f.categoria||""]);
 
   return (
     <div>
-      {/* Filtros */}
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20,overflowX:"auto",paddingBottom:4}}>
-        {cats.map(cat=>{
-          const c = CATS_FABULAS[cat]||{label:cat==="todos"?"Todas":cat,cor:"#7c3aed",bg:"#ede9fe"};
-          const n = cat==="todos"?fabulas.length:fabulas.filter(f=>(f.categoria||"outro")===cat).length;
-          const ativo = filtro===cat;
+      {/* Filtros por macrocategoria */}
+      <div style={{display:"flex",gap:6,marginBottom:20,overflowX:"auto",flexWrap:"nowrap",paddingBottom:4,scrollbarWidth:"none"}}>
+        <button onClick={()=>setFiltro("todos")}
+          style={{padding:"6px 14px",borderRadius:20,border:"1.5px solid",whiteSpace:"nowrap",flexShrink:0,
+            borderColor:filtro==="todos"?"var(--purple)":"#e5e7eb",
+            background:filtro==="todos"?"var(--purple)":"white",
+            color:filtro==="todos"?"white":"var(--gray-600)",
+            fontSize:12,fontWeight:600,cursor:"pointer"}}>
+          📚 Todas ({fabulas.length})
+        </button>
+        {MACROCATEGORIAS.map(m=>{
+          const n = fabulas.filter(f=>FAB_LEGADO_MACRO[f.categoria||"outro"]===m.id||f.categoria===m.id).length;
+          if(n===0) return null;
+          const ativo = filtro===m.id;
           return(
-            <button key={cat} onClick={()=>setFiltro(cat)} style={{display:"flex",alignItems:"center",gap:5,padding:"6px 14px",borderRadius:20,border:"1.5px solid",borderColor:ativo?c.cor:"#e5e7eb",background:ativo?c.cor:"white",color:ativo?"white":c.cor,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s"}}>
-              {cat!=="todos"&&<span style={{fontSize:14}}>{fabulas.find(f=>f.categoria===cat)?.emoji||"📖"}</span>}
-              {cat==="todos"?"📚 Todas":c.label} <span style={{opacity:0.8,fontSize:11}}>{n}</span>
+            <button key={m.id} onClick={()=>setFiltro(ativo?"todos":m.id)}
+              style={{padding:"6px 14px",borderRadius:20,border:"1.5px solid",whiteSpace:"nowrap",flexShrink:0,
+                borderColor:ativo?m.cor:m.cor+"50",background:ativo?m.cor:m.bg,
+                color:ativo?"white":m.cor,fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              {m.icone} {m.label} ({n})
             </button>
           );
         })}
       </div>
 
-      {Object.entries(porCat).map(([cat,itens])=>{
-        const c = CATS_FABULAS[cat]||{label:cat,cor:"#7c3aed",bg:"#ede9fe"};
+      {[...porMacro, ...(orfaos.length>0?[{id:"_orfaos",label:"Sem Categoria",cor:"#6b7280",bg:"#f3f4f6",icone:"🔧",itens:orfaos}]:[])].map(grupo=>{
+        const c = {cor:grupo.cor, bg:grupo.bg, label:grupo.label};
         return (
-          <div key={cat} style={{marginBottom:28}}>
+          <div key={grupo.id} style={{marginBottom:28}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+              <span style={{fontSize:16}}>{grupo.icone}</span>
               <span style={{fontWeight:700,fontSize:11,color:c.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{c.label}</span>
-              <span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{itens.length}</span>
+              <span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{grupo.itens.length}</span>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
-              {itens.map(f=>(
+              {grupo.itens.map(f=>(
                 <div key={f.id} style={{background:"white",border:"1.5px solid",borderColor:c.cor+"40",borderRadius:14,overflow:"hidden",cursor:"pointer",transition:"box-shadow .15s"}}
                   onClick={()=>setFabulaAberta(f)}
                   onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px "+c.cor+"30"}
@@ -7452,6 +7471,28 @@ function Psico7Distorcoes({cat}){
     </div>
   );
 }
+
+// Mapa legado → macro para fábulas
+const FAB_LEGADO_MACRO = {
+  "resiliencia":"macro_habitos", "resiliência":"macro_habitos",
+  "crescimento":"macro_habitos", "mindfulness":"macro_habitos",
+  "perspectiva":"macro_habitos", "habitos":"macro_habitos",
+  "esperanca":"macro_humor", "esperança":"macro_humor",
+  "autoconfianca":"macro_humor", "autoconfiança":"macro_humor",
+  "autoestima":"macro_humor", "emocoes":"macro_humor",
+  "expressão emocional":"macro_humor", "expressao emocional":"macro_humor",
+  "regulação emocional":"macro_humor", "regulacao emocional":"macro_humor",
+  "coragem":"macro_humor", "perdao":"macro_humor", "perdão":"macro_humor",
+  "autoconhecimento":"macro_ansiedade", "ansiedade":"macro_ansiedade",
+  "tcc":"macro_ansiedade",
+  "relacionamentos":"macro_relacionamentos",
+  "casais":"macro_casais",
+  "corpo":"macro_corpo",
+  // já migradas
+  "macro_ansiedade":"macro_ansiedade","macro_humor":"macro_humor",
+  "macro_habitos":"macro_habitos","macro_relacionamentos":"macro_relacionamentos",
+  "macro_casais":"macro_casais","macro_corpo":"macro_corpo",
+};
 
 // Mapa de visualizações
 const PSICO_VISUAIS = {
