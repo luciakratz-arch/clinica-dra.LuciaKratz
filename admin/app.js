@@ -7040,58 +7040,155 @@ function PsicoPensamentos({cat}){
 }
 
 function PsicoPizzaResponsabilidade({cat}){
+  const [passo, setPasso] = React.useState(0);
+  const [resps, setResps] = React.useState({outro:"", ambiente:"", eu:""});
+
+  const FATIAS = [
+    {key:"outro",    cor:"#0EA5E9", label:"O Outro",     emoji:"👤", angIni:270, angFim:390},
+    {key:"ambiente", cor:"#22C55E", label:"O Ambiente",  emoji:"🌍", angIni:390, angFim:510},
+    {key:"eu",       cor:"#7B00C4", label:"Eu",          emoji:"🫵", angIni:510, angFim:630},
+  ];
+
+  function fatiaPath(cx,cy,r,angIni,angFim){
+    const a1 = (angIni-90)*Math.PI/180;
+    const a2 = (angFim-90)*Math.PI/180;
+    const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
+    const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2);
+    return `M${cx},${cy} L${x1},${y1} A${r},${r},0,0,1,${x2},${y2} Z`;
+  }
+
+  function labelPos(cx,cy,r,angIni,angFim){
+    const mid = ((angIni+angFim)/2-90)*Math.PI/180;
+    return {x:cx+(r*0.65)*Math.cos(mid), y:cy+(r*0.65)*Math.sin(mid)};
+  }
+
+  const PERGUNTAS = [
+    {key:"outro",    titulo:"1️⃣ O que o OUTRO fez ou deixou de fazer?",    sub:"Seja honesto. Qual foi a parte de responsabilidade da outra pessoa nessa situação?", placeholder:"Ex: Ele não comunicou claramente o que esperava de mim..."},
+    {key:"ambiente", titulo:"2️⃣ O que o AMBIENTE ou contexto contribuiu?", sub:"Circunstâncias, pressões externas, cultura, recursos disponíveis — o que estava fora do seu controle?", placeholder:"Ex: A situação era nova para todos, não havia um processo claro..."},
+    {key:"eu",       titulo:"3️⃣ O que EU fiz ou deixei de fazer?",         sub:"Agora, com a perspectiva dos outros dois terços avaliados, qual é a sua parte real? E mais importante: você está fazendo os seus 33,33%?", placeholder:"Ex: Eu poderia ter pedido mais clareza antes de agir..."},
+  ];
+
   return (
     <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      {/* Header */}
       <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
         <div style={{fontSize:40,marginBottom:8}}>🍕</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você carrega mais culpa do que te pertence?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Dividir a responsabilidade libera peso — sem isentar ninguém.</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:600,marginBottom:6}}>A Pizza da Responsabilidade</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Toda situação tem 3 fatias iguais de 33,33%: o outro, o ambiente e você.</div>
       </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Os dois extremos que nos prendem</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
-            <div style={{fontSize:22,marginBottom:6}}>😔</div>
-            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Autoculpa tóxica</div>
-            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"Tudo foi culpa minha." Você assume 100% de uma situação que tinha múltiplos fatores.</div>
-          </div>
-          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
-            <div style={{fontSize:22,marginBottom:6}}>😤</div>
-            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Vitimização</div>
-            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"A culpa é sempre do outro." Você se isenta completamente e perde o poder de mudar.</div>
-          </div>
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>A pizza da responsabilidade</div>
-        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="70" fill="#9a00e0"/>
-            <path d="M80 80 L80 10 A70 70 0 0 1 140.6 45 Z" fill="#F97316"/>
-            <path d="M80 80 L140.6 45 A70 70 0 0 1 140.6 115 Z" fill="#0EA5E9"/>
-            <path d="M80 80 L140.6 115 A70 70 0 0 1 19.4 115 Z" fill="#22C55E"/>
-            <path d="M80 80 L19.4 115 A70 70 0 0 1 19.4 45 Z" fill="#EAB308"/>
-            <path d="M80 80 L19.4 45 A70 70 0 0 1 80 10 Z" fill="#EC4899"/>
-            <circle cx="80" cy="80" r="20" fill="#7B00C4"/>
-            <text x="80" y="84" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">VOCÊ</text>
-          </svg>
-        </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
-          {[["#F97316","Suas escolhas"],["#0EA5E9","O outro envolvido"],["#22C55E","As circunstâncias"],["#EAB308","O contexto"],["#EC4899","O acaso"]].map(([c,l])=>(
-            <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:c,flexShrink:0}}/>
-              <span style={{fontSize:11,color:"#f3e6ff"}}>{l}</span>
+
+      {/* Pizza visual */}
+      <div style={{background:"#f9f0ff",padding:"20px",textAlign:"center",borderBottom:"1px solid #e8c8ff"}}>
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          {FATIAS.map(f=>(
+            <path key={f.key} d={fatiaPath(90,90,80,f.angIni,f.angFim)} fill={f.cor}
+              stroke="white" strokeWidth="2"/>
+          ))}
+          {FATIAS.map(f=>{
+            const pos = labelPos(90,90,80,f.angIni,f.angFim);
+            return (
+              <g key={f.key}>
+                <text x={pos.x} y={pos.y-6} textAnchor="middle" fill="white" fontSize="16">{f.emoji}</text>
+                <text x={pos.x} y={pos.y+10} textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">{f.label}</text>
+                <text x={pos.x} y={pos.y+20} textAnchor="middle" fill="rgba(255,255,255,0.85)" fontSize="8">33,33%</text>
+              </g>
+            );
+          })}
+        </svg>
+        <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8}}>
+          {FATIAS.map(f=>(
+            <div key={f.key} style={{display:"flex",alignItems:"center",gap:5}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:f.cor}}/>
+              <span style={{fontSize:11,color:"#5a0090"}}>{f.label}</span>
             </div>
           ))}
         </div>
       </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense num problema recente. Divida: qual parte foi sua? Qual foi do outro? Qual foi das circunstâncias? Você ficará surpreso com o quanto não precisa carregar.</div>
+
+      {/* Conceito */}
+      <div style={{background:"white",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:12,fontWeight:600,marginBottom:8}}>Por que isso importa?</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#fff0f0",borderRadius:8,padding:"10px 12px",border:"1px solid #fca5a5"}}>
+            <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:4}}>😔 Autoculpa tóxica</div>
+            <div style={{fontSize:11,color:"#7f1d1d",lineHeight:1.4}}>Assume 100% e carrega o peso dos outros dois terços que não são seus.</div>
+          </div>
+          <div style={{background:"#fff7ed",borderRadius:8,padding:"10px 12px",border:"1px solid #fed7aa"}}>
+            <div style={{fontSize:11,fontWeight:600,color:"#c2410c",marginBottom:4}}>😤 Vitimização</div>
+            <div style={{fontSize:11,color:"#7c2d12",lineHeight:1.4}}>Isenta-se completamente e perde o poder de mudar a sua parte real.</div>
+          </div>
+        </div>
       </div>
+
+      {/* Exercício guiado */}
+      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:"#7B00C4",fontSize:13,fontWeight:600,marginBottom:12}}>🎯 Exercício — avalie uma situação difícil</div>
+
+        {/* Progresso */}
+        <div style={{display:"flex",gap:6,marginBottom:16}}>
+          {PERGUNTAS.map((p,i)=>(
+            <div key={i} onClick={()=>setPasso(i)}
+              style={{flex:1,height:4,borderRadius:4,cursor:"pointer",
+                background:i<=passo?FATIAS[i].cor:"#e8c8ff",
+                transition:"background .3s"}}>
+            </div>
+          ))}
+        </div>
+
+        {/* Passo atual */}
+        <div style={{background:"white",borderRadius:10,padding:"14px 16px",border:`2px solid ${FATIAS[passo].cor}30`}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:FATIAS[passo].cor,
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>
+              {FATIAS[passo].emoji}
+            </div>
+            <div>
+              <div style={{fontWeight:700,fontSize:13,color:"#3d006a"}}>{PERGUNTAS[passo].titulo}</div>
+              <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{PERGUNTAS[passo].sub}</div>
+            </div>
+          </div>
+          <textarea
+            value={resps[FATIAS[passo].key]}
+            onChange={e=>setResps({...resps,[FATIAS[passo].key]:e.target.value})}
+            placeholder={PERGUNTAS[passo].placeholder}
+            style={{width:"100%",minHeight:80,padding:"8px 10px",borderRadius:8,
+              border:`1px solid ${FATIAS[passo].cor}50`,fontSize:12,fontFamily:"inherit",
+              resize:"vertical",lineHeight:1.5,boxSizing:"border-box"}}/>
+        </div>
+
+        {/* Navegação */}
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:12}}>
+          <button onClick={()=>setPasso(Math.max(0,passo-1))} disabled={passo===0}
+            style={{padding:"7px 16px",borderRadius:8,border:"1px solid #e8c8ff",
+              background:"white",color:"#7B00C4",cursor:passo===0?"not-allowed":"pointer",
+              fontSize:12,fontFamily:"inherit",opacity:passo===0?0.4:1}}>
+            ← Anterior
+          </button>
+          {passo<2
+            ? <button onClick={()=>setPasso(passo+1)}
+                style={{padding:"7px 16px",borderRadius:8,border:"none",
+                  background:FATIAS[passo].cor,color:"white",cursor:"pointer",
+                  fontSize:12,fontWeight:600,fontFamily:"inherit"}}>
+                Próximo →
+              </button>
+            : <button onClick={()=>setPasso(0)}
+                style={{padding:"7px 16px",borderRadius:8,border:"none",
+                  background:"#7B00C4",color:"white",cursor:"pointer",
+                  fontSize:12,fontWeight:600,fontFamily:"inherit"}}>
+                Recomeçar 🔄
+              </button>
+          }
+        </div>
+      </div>
+
+      {/* Reflexão final */}
       <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você costuma assumir mais ou menos responsabilidade do que te pertence? Qual dos dois extremos é mais comum em você? 💜</div>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:600,marginBottom:6}}>💜 Reflexão final</div>
+        <div style={{fontSize:12,color:"#3d006a",lineHeight:1.7}}>
+          Depois de avaliar o outro e o ambiente, olhe para a sua fatia com honestidade:<br/>
+          <strong>Você está fazendo os seus 33,33%?</strong><br/>
+          Não 100% — só a sua parte. E isso já é o suficiente para começar a mudar.
+        </div>
       </div>
       <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
     </div>
