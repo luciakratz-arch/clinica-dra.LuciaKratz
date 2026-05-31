@@ -5895,6 +5895,476 @@ function FerramentaDiario({ user }){
 
 // ── Modal Visualizar Ferramenta ─────────────────────────────────────────────
 
+
+// ═══════════════════════════════════════════════════════════════════
+// FERRAMENTAS MACRO_HABITOS — Componentes Mistos
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 1. Ritual de Descompressão Noturna ───────────────────────────
+function FerramentaSleepRitual({ user }){
+  const COR="#0891b2"; const BG="#e0f2fe";
+  const PASSOS_RITUAL = [
+    {id:"ecras",    titulo:"Ecrãs desligados",        desc:"Telefone, TV e computador off",         tipo:"check"},
+    {id:"temp",     titulo:"Temperatura do quarto",    desc:"18-20°C ou banho morno",                tipo:"check"},
+    {id:"pendentes",titulo:"Lista de pendentes",       desc:"Escreva o que precisa fazer amanhã",    tipo:"texto"},
+    {id:"transicao",titulo:"Atividade de transição",   desc:"Leitura, música suave ou alongamento",  tipo:"timer", dur:600},
+    {id:"alarme",   titulo:"Evite conteúdo ativante",  desc:"Sem notícias, conflitos ou decisões",   tipo:"check"},
+    {id:"gratidao", titulo:"3 gratidões do dia",       desc:"Escreva 3 coisas pequenas que correram bem", tipo:"texto"},
+    {id:"hora",     titulo:"Hora consistente",         desc:"Mesma hora todos os dias — incluindo fim de semana", tipo:"check"},
+  ];
+
+  const [checks,   setChecks]   = useState({});
+  const [textos,   setTextos]   = useState({});
+  const [timerRod, setTimerRod] = useState(false);
+  const [timerVal, setTimerVal] = useState(600);
+  const [concluido,setConcluido]= useState(false);
+  const timerRef = React.useRef(null);
+
+  React.useEffect(()=>{
+    if(!timerRod) return;
+    timerRef.current = setInterval(()=>{
+      setTimerVal(t=>{
+        if(t<=1){ clearInterval(timerRef.current); setTimerRod(false); return 0; }
+        return t-1;
+      });
+    },1000);
+    return ()=>clearInterval(timerRef.current);
+  },[timerRod]);
+
+  const feitos = PASSOS_RITUAL.filter(p=>{
+    if(p.tipo==="check") return checks[p.id];
+    if(p.tipo==="texto") return (textos[p.id]||"").trim().length>2;
+    if(p.tipo==="timer") return timerVal<600;
+    return false;
+  }).length;
+
+  if(concluido) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🌙</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Ritual concluído!</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        {feitos} de {PASSOS_RITUAL.length} passos completados.<br/>O seu sistema nervoso agradece. 💜
+      </div>
+      <button onClick={()=>{setChecks({});setTextos({});setTimerVal(600);setTimerRod(false);setConcluido(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo ritual
+      </button>
+    </div>
+  );
+
+  const min=Math.floor(timerVal/60), seg=timerVal%60;
+
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+        <div style={{flex:1,background:"var(--gray-100)",borderRadius:20,height:6}}>
+          <div style={{width:(feitos/PASSOS_RITUAL.length*100)+"%",height:"100%",borderRadius:20,background:COR,transition:"width .3s"}}/>
+        </div>
+        <span style={{fontSize:12,color:"var(--text-muted)",flexShrink:0}}>{feitos}/{PASSOS_RITUAL.length}</span>
+      </div>
+
+      {PASSOS_RITUAL.map(p=>{
+        const feito = p.tipo==="check"?checks[p.id]: p.tipo==="texto"?(textos[p.id]||"").trim().length>2: timerVal<600;
+        return(
+          <div key={p.id} style={{background:"white",border:"1.5px solid",borderRadius:12,
+            padding:"12px 14px",marginBottom:8,
+            borderColor:feito?COR:"var(--gray-200)"}}>
+            <div style={{display:"flex",alignItems:"flex-start",gap:10}}>
+              {p.tipo==="check"&&(
+                <div onClick={()=>setChecks(c=>({...c,[p.id]:!c[p.id]}))}
+                  style={{width:22,height:22,borderRadius:"50%",border:"2px solid",flexShrink:0,marginTop:1,cursor:"pointer",
+                    borderColor:feito?COR:"var(--gray-300)",background:feito?COR:"white",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {feito&&<span style={{color:"white",fontSize:12}}>✓</span>}
+                </div>
+              )}
+              {p.tipo!=="check"&&(
+                <div style={{width:22,height:22,borderRadius:"50%",background:feito?COR:BG,
+                  display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
+                  <span style={{fontSize:12}}>{p.tipo==="timer"?"⏱":"✏️"}</span>
+                </div>
+              )}
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:13,color:feito?COR:"var(--text)",marginBottom:2}}>{p.titulo}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>{p.desc}</div>
+                {p.tipo==="texto"&&(
+                  <textarea value={textos[p.id]||""} onChange={e=>setTextos(t=>({...t,[p.id]:e.target.value}))}
+                    placeholder={p.id==="pendentes"?"Ex: Responder email, ligar para médico...":"Ex: Aprendi algo novo, conversei bem com alguém..."}
+                    style={{width:"100%",minHeight:60,padding:"8px 10px",borderRadius:8,border:"1px solid "+COR+"40",
+                      fontSize:12,fontFamily:"inherit",resize:"none",marginTop:8,boxSizing:"border-box",outline:"none"}}/>
+                )}
+                {p.tipo==="timer"&&(
+                  <div style={{marginTop:8,display:"flex",alignItems:"center",gap:10}}>
+                    <div style={{fontWeight:700,fontSize:16,color:COR,minWidth:50}}>{min}:{seg.toString().padStart(2,"0")}</div>
+                    {!timerRod&&timerVal===600&&<button onClick={()=>setTimerRod(true)}
+                      style={{padding:"5px 12px",borderRadius:8,border:"none",background:COR,color:"white",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                      Iniciar
+                    </button>}
+                    {timerRod&&<button onClick={()=>{setTimerRod(false);clearInterval(timerRef.current);}}
+                      style={{padding:"5px 12px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+                      Pausar
+                    </button>}
+                    {!timerRod&&timerVal<600&&<span style={{fontSize:12,color:COR,fontWeight:600}}>✓ feito</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      <button onClick={()=>setConcluido(true)}
+        style={{width:"100%",padding:"12px",borderRadius:10,border:"none",marginTop:8,
+          background:feitos>=4?COR:"var(--gray-100)",
+          color:feitos>=4?"white":"var(--text-muted)",
+          cursor:feitos>=4?"pointer":"not-allowed",
+          fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        {feitos>=4?"Concluir ritual 🌙":"Complete pelo menos 4 passos"}
+      </button>
+    </div>
+  );
+}
+
+// ── 2. Regra dos 5 Minutos ────────────────────────────────────────
+function FerramentaFiveMinute({ user }){
+  const COR="#7c3aed"; const BG="#ede9fe";
+  const [p,setP]=useState(0);
+  const [tarefa,setTarefa]=useState("");
+  const [desconfortAntes,setDesconfortAntes]=useState(7);
+  const [timerRod,setTimerRod]=useState(false);
+  const [timerVal,setTimerVal]=useState(300);
+  const [desconfortDurante,setDesconfortDurante]=useState(5);
+  const [decisao,setDecisao]=useState(null);
+  const [salvo,setSalvo]=useState(false);
+  const timerRef=React.useRef(null);
+
+  React.useEffect(()=>{
+    if(!timerRod) return;
+    timerRef.current=setInterval(()=>{
+      setTimerVal(t=>{
+        if(t<=1){clearInterval(timerRef.current);setTimerRod(false);return 0;}
+        return t-1;
+      });
+    },1000);
+    return()=>clearInterval(timerRef.current);
+  },[timerRod]);
+
+  const min=Math.floor(timerVal/60), seg=timerVal%60;
+  const concluido=timerVal===0;
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>⚡</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>
+        {decisao==="continuar"?"Continuou! Momentum ativado!":"5 minutos concluídos!"}
+      </div>
+      <div style={{background:BG,borderRadius:10,padding:"12px",marginBottom:20,fontSize:13,color:"#4c1d95"}}>
+        Desconforto antecipado: <strong>{desconfortAntes}/10</strong> →
+        Desconforto real: <strong>{desconfortDurante}/10</strong>
+        {desconfortDurante<desconfortAntes&&<div style={{marginTop:4,color:"#059669",fontWeight:600}}>
+          ✓ O real foi menor que o imaginado!
+        </div>}
+      </div>
+      <button onClick={()=>{setTarefa("");setDesconfortAntes(7);setTimerVal(300);setTimerRod(false);setDesconfortDurante(5);setDecisao(null);setSalvo(false);setP(0);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Nova tarefa
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Qual tarefa está evitando?" subtitulo="Seja específico — uma tarefa só" dica="Quanto mais específico, mais fácil de começar. Não 'trabalho' — mas 'responder o email do cliente X'." cor={COR} bg={BG}/>
+        <textarea value={tarefa} onChange={e=>setTarefa(e.target.value)}
+          placeholder="Ex: Responder o email do cliente sobre o relatório..."
+          style={{width:"100%",minHeight:80,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={tarefa.trim().length>5}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Quão difícil parece agora?" subtitulo="Desconforto antecipado" dica="Avalie ANTES de começar. Vamos comparar com o real depois." cor={COR} bg={BG}/>
+        <SliderStep label="Desconforto antecipado" valor={desconfortAntes} onChange={setDesconfortAntes} cor={COR} antes="Tranquilo" depois="Muito difícil"/>
+        <div style={{background:BG,borderRadius:10,padding:"12px",marginTop:16,fontSize:13,color:"#4c1d95",lineHeight:1.5}}>
+          <strong>Micro-compromisso:</strong> Vou trabalhar nisto durante apenas <strong>5 minutos</strong>. Ao fim de 5 minutos, posso parar sem culpa.
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={true}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="Timer de 5 minutos" subtitulo="Apenas o primeiro passo físico" dica="Abra o documento, pegue o caderno, escreva a primeira frase. Só isso." cor={COR} bg={BG}/>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{width:100,height:100,borderRadius:"50%",border:"3px solid "+COR,
+            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",
+            background:concluido?BG:"white"}}>
+            <div style={{fontSize:26,fontWeight:700,color:COR}}>{min}:{seg.toString().padStart(2,"0")}</div>
+            <div style={{fontSize:10,color:"var(--text-muted)"}}>{concluido?"feito!":"min"}</div>
+          </div>
+          {!timerRod&&!concluido&&<button onClick={()=>setTimerRod(true)}
+            style={{padding:"11px 28px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:14,fontWeight:700,fontFamily:"inherit"}}>
+            Iniciar 5 min
+          </button>}
+          {timerRod&&<div>
+            <div style={{background:"var(--gray-100)",borderRadius:20,height:5,marginBottom:12,maxWidth:200,margin:"0 auto 12px"}}>
+              <div style={{width:((300-timerVal)/300*100)+"%",height:"100%",borderRadius:20,background:COR,transition:"width 1s"}}/>
+            </div>
+            <button onClick={()=>{setTimerRod(false);clearInterval(timerRef.current);}}
+              style={{padding:"8px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
+              Pausar
+            </button>
+          </div>}
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={concluido||timerVal<290}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Como foi na prática?" subtitulo="Compare o real com o antecipado" dica="Esta comparação é o aprendizado mais valioso da ferramenta." cor={COR} bg={BG}/>
+        <div style={{marginBottom:16}}>
+          <SliderStep label="Desconforto real durante" valor={desconfortDurante} onChange={setDesconfortDurante} cor={COR} antes="Tranquilo" depois="Muito difícil"/>
+        </div>
+        <div style={{fontWeight:600,fontSize:13,color:"var(--text)",marginBottom:10}}>Quer parar ou continuar?</div>
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
+          {[{v:"continuar",l:"Continuar trabalhando",e:"💪"},{v:"parar",l:"Parar — compromisso cumprido",e:"✅"}].map(op=>(
+            <button key={op.v} onClick={()=>setDecisao(op.v)}
+              style={{flex:1,padding:"12px 8px",borderRadius:10,border:"1.5px solid",cursor:"pointer",fontFamily:"inherit",
+                borderColor:decisao===op.v?COR:"var(--gray-200)",
+                background:decisao===op.v?BG:"white",
+                color:decisao===op.v?COR:"var(--text-muted)",
+                fontWeight:decisao===op.v?700:400,fontSize:13,textAlign:"center"}}>
+              <div style={{fontSize:20,marginBottom:4}}>{op.e}</div>
+              {op.l}
+            </button>
+          ))}
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={decisao!==null}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 3. Empilhamento de Hábitos ────────────────────────────────────
+function FerramentaHabitStacking({ user }){
+  const COR="#059669"; const BG="#dcfce7";
+  const ANCORA_OPCOES=[
+    {v:"cafe",l:"Café da manhã",e:"☕"},{v:"escova",l:"Escovar os dentes",e:"🪥"},
+    {v:"acordar",l:"Ao acordar",e:"🌅"},{v:"trabalho",l:"Chegada ao trabalho",e:"💼"},
+    {v:"almoco",l:"Após o almoço",e:"🍽️"},{v:"carro",l:"Entrar no carro",e:"🚗"},
+    {v:"jantar",l:"Após o jantar",e:"🌙"},{v:"dormir",l:"Antes de dormir",e:"😴"},
+  ];
+  const [p,setP]=useState(0);
+  const [ancora,setAncora]=useState("");
+  const [novoHabito,setNovoHabito]=useState("");
+  const [formula,setFormula]=useState("");
+  const [dias,setDias]=useState({});
+  const [resistencia,setResistencia]=useState(3);
+  const [salvo,setSalvo]=useState(false);
+
+  const diasSemana=["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
+  const feitos=Object.values(dias).filter(Boolean).length;
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🌱</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Hábito registrado!</div>
+      <div style={{background:BG,borderRadius:10,padding:"12px",marginBottom:20,fontSize:13,color:"#064e3b",lineHeight:1.6}}>
+        <strong>Fórmula:</strong> "{formula||`Depois de ${ancora}, vou ${novoHabito}`}"<br/>
+        <strong>Consistência:</strong> {feitos}/7 dias<br/>
+        <strong>Resistência:</strong> {resistencia}/10
+      </div>
+      <button onClick={()=>{setAncora("");setNovoHabito("");setFormula("");setDias({});setResistencia(3);setSalvo(false);setP(0);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo hábito
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Escolha o hábito âncora" subtitulo="Algo que já faz todos os dias sem falhar" dica="Este será o gatilho automático do novo hábito. Quanto mais fixo na rotina, melhor." cor={COR} bg={BG}/>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {ANCORA_OPCOES.map(op=>(
+            <button key={op.v} onClick={()=>setAncora(op.l)}
+              style={{padding:"12px 8px",borderRadius:10,border:"1.5px solid",cursor:"pointer",fontFamily:"inherit",
+                borderColor:ancora===op.l?COR:"var(--gray-200)",
+                background:ancora===op.l?BG:"white",
+                display:"flex",alignItems:"center",gap:8,fontSize:13,
+                color:ancora===op.l?COR:"var(--text-muted)",fontWeight:ancora===op.l?700:400}}>
+              <span style={{fontSize:20}}>{op.e}</span>{op.l}
+            </button>
+          ))}
+        </div>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={ancora.length>0}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Defina o novo hábito" subtitulo="Pequeno e específico" dica="Não 'meditar' — mas 'respirar profundamente por 2 minutos'. Quanto menor, maior a chance." cor={COR} bg={BG}/>
+        <textarea value={novoHabito} onChange={e=>setNovoHabito(e.target.value)}
+          placeholder="Ex: Escrever uma coisa pela qual sou grato, respirar 2 minutos, fazer 10 flexões..."
+          style={{width:"100%",minHeight:80,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        {ancora&&novoHabito&&<div style={{background:BG,borderRadius:10,padding:"12px",marginTop:12,fontSize:13,color:"#064e3b",lineHeight:1.5,fontStyle:"italic"}}>
+          "Depois de <strong>{ancora}</strong>, vou <strong>{novoHabito}</strong>."
+        </div>}
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={novoHabito.trim().length>3}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="Registro da semana" subtitulo="Marque os dias que executou" dica="Os primeiros 7 dias exigem intenção consciente. Marque honestamente." cor={COR} bg={BG}/>
+        <div style={{display:"flex",gap:6,justifyContent:"center",marginBottom:16}}>
+          {diasSemana.map(d=>(
+            <div key={d} onClick={()=>setDias(ds=>({...ds,[d]:!ds[d]}))}
+              style={{width:40,height:40,borderRadius:10,border:"1.5px solid",cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                borderColor:dias[d]?COR:"var(--gray-200)",
+                background:dias[d]?COR:"white",
+                color:dias[d]?"white":"var(--text-muted)",
+                fontWeight:600,fontSize:12}}>
+              {dias[d]?"✓":d[0]}
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:"center",fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+          {feitos} de 7 dias executados
+        </div>
+        <SliderStep label="Resistência sentida" valor={resistencia} onChange={setResistencia} cor={COR} antes="Fácil" depois="Muito difícil"/>
+        {resistencia>=7&&<div style={{background:"#fef3c7",borderRadius:10,padding:"10px 12px",marginTop:10,fontSize:12,color:"#854F0B"}}>
+          Resistência alta — considere reduzir o hábito pela metade.
+        </div>}
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={feitos>0}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Reflexão da semana" subtitulo="O que funcionou e o que ajustar?" dica="Após 21 dias de consistência, o hábito começa a ser automático." cor={COR} bg={BG}/>
+        <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:16}}>
+          <div style={{fontSize:13,color:"#064e3b",lineHeight:1.6}}>
+            <div style={{marginBottom:4}}>Âncora: <strong>{ancora}</strong></div>
+            <div style={{marginBottom:4}}>Hábito: <strong>{novoHabito}</strong></div>
+            <div style={{marginBottom:4}}>Consistência: <strong>{feitos}/7 dias</strong></div>
+            <div>Resistência: <strong>{resistencia}/10</strong> {resistencia<=3?"— ótimo!":resistencia<=6?"— ajustável":""}</div>
+          </div>
+        </div>
+        <textarea value={formula} onChange={e=>setFormula(e.target.value)}
+          placeholder="Alguma observação sobre como correu? O que pode ajustar na próxima semana?"
+          style={{width:"100%",minHeight:70,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={true}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 4. Mapa da Bateria ────────────────────────────────────────────
+function FerramentaEnergyMap({ user }){
+  const COR="#059669"; const BG="#dcfce7";
+  const DRENOS_OPCOES=[
+    {v:"reunioes",l:"Reuniões longas",e:"🗓️"},{v:"conflitos",l:"Conflitos não resolvidos",e:"⚡"},
+    {v:"redes",l:"Redes sociais",e:"📱"},{v:"sem_sentido",l:"Tarefas sem sentido",e:"😑"},
+    {v:"deslocamento",l:"Deslocamento",e:"🚗"},{v:"barulho",l:"Barulho/distração",e:"🔊"},
+    {v:"decisoes",l:"Muitas decisões",e:"🤯"},{v:"perfeccionismo",l:"Perfeccionismo",e:"🎯"},
+  ];
+  const RECARGAS_OPCOES=[
+    {v:"natureza",l:"Tempo na natureza",e:"🌿"},{v:"amigos",l:"Conversa com amigo",e:"👥"},
+    {v:"exercicio",l:"Exercício",e:"🏃"},{v:"silencio",l:"Momento de silêncio",e:"🧘"},
+    {v:"criatividade",l:"Atividade criativa",e:"🎨"},{v:"leitura",l:"Leitura",e:"📚"},
+    {v:"musica",l:"Música",e:"🎵"},{v:"sono",l:"Sono de qualidade",e:"😴"},
+  ];
+  const ALERTAS=[
+    "Cansaço que não passa com sono",
+    "Irritabilidade por pequenas coisas",
+    "Dificuldade de concentração",
+    "Prazer reduzido nas atividades",
+  ];
+  const [p,setP]=useState(0);
+  const [bateria,setBateria]=useState(60);
+  const [drenos,setDrenos]=useState([]);
+  const [recargas,setRecargas]=useState([]);
+  const [alertas,setAlertas]=useState([]);
+  const [recargaAmanha,setRecargaAmanha]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  const batCor=bateria>=60?"#059669":bateria>=30?"#d97706":"#dc2626";
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🔋</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:batCor,marginBottom:8}}>
+        Mapa registrado!
+      </div>
+      <div style={{background:BG,borderRadius:10,padding:"12px",marginBottom:12,fontSize:13,color:"#064e3b",lineHeight:1.7}}>
+        Bateria: <strong style={{color:batCor}}>{bateria}%</strong><br/>
+        Drenos: <strong>{drenos.length}</strong> · Recargas: <strong>{recargas.length}</strong><br/>
+        {alertas.length>0&&<span style={{color:"#dc2626"}}>⚠️ {alertas.length} sinal(is) de alerta</span>}
+      </div>
+      {recargaAmanha&&<div style={{background:"#dcfce7",borderRadius:10,padding:"10px",fontSize:13,color:"#064e3b",marginBottom:20}}>
+        Recarga amanhã: <strong>{recargaAmanha}</strong>
+      </div>}
+      <button onClick={()=>{setBateria(60);setDrenos([]);setRecargas([]);setAlertas([]);setRecargaAmanha("");setSalvo(false);setP(0);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo mapa
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Nível da bateria" subtitulo="Qual é sua energia agora?" dica="Não pense — responda instintivamente. De 0 (esgotado) a 100 (plena energia)." cor={COR} bg={BG}/>
+        <div style={{textAlign:"center",marginBottom:12}}>
+          <div style={{fontSize:44,fontWeight:700,color:batCor,lineHeight:1}}>{bateria}%</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginTop:4}}>
+            {bateria>=70?"Energia boa":bateria>=40?"Atenção necessária":"Zona de esgotamento"}
+          </div>
+        </div>
+        <input type="range" min={0} max={100} step={1} value={bateria}
+          onChange={e=>setBateria(Number(e.target.value))}
+          style={{width:"100%",accentColor:batCor,marginBottom:8}}/>
+        <div style={{background:"var(--gray-100)",borderRadius:20,height:8,marginBottom:16}}>
+          <div style={{width:bateria+"%",height:"100%",borderRadius:20,background:batCor,transition:"width .2s"}}/>
+        </div>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={true}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="O que está drenando?" subtitulo="Selecione o que consumiu energia esta semana" dica="Seja honesto — o mapa só é útil se for real." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={DRENOS_OPCOES} selecionadas={drenos} onChange={setDrenos} cor="#dc2626" bg="#fee2e2"/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={drenos.length>0}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="O que recarrega?" subtitulo="O que deu energia esta semana?" dica="Inclua também coisas que sabe que recarregam mas que não fez — isso é informação importante." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={RECARGAS_OPCOES} selecionadas={recargas} onChange={setRecargas} cor={COR} bg={BG}/>
+        <div style={{marginTop:16}}>
+          <div style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:8}}>Sinais de alerta presentes?</div>
+          {ALERTAS.map(a=>(
+            <div key={a} onClick={()=>setAlertas(al=>al.includes(a)?al.filter(x=>x!==a):[...al,a])}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,
+                border:"1.5px solid",marginBottom:6,cursor:"pointer",
+                borderColor:alertas.includes(a)?"#dc2626":"var(--gray-200)",
+                background:alertas.includes(a)?"#fee2e2":"white"}}>
+              <div style={{width:18,height:18,borderRadius:"50%",border:"1.5px solid",flexShrink:0,
+                borderColor:alertas.includes(a)?"#dc2626":"var(--gray-300)",
+                background:alertas.includes(a)?"#dc2626":"white",
+                display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {alertas.includes(a)&&<span style={{color:"white",fontSize:10}}>✓</span>}
+              </div>
+              <span style={{fontSize:13,color:alertas.includes(a)?"#7f1d1d":"var(--text-muted)"}}>{a}</span>
+            </div>
+          ))}
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={recargas.length>0}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Plano de recarga" subtitulo="Uma ação para amanhã" dica="Escolha uma recarga concreta e agende com hora definida." cor={COR} bg={BG}/>
+        <div style={{background:bateria<40?"#fee2e2":BG,borderRadius:10,padding:"12px",marginBottom:16,fontSize:13,
+          color:bateria<40?"#7f1d1d":"#064e3b",lineHeight:1.5}}>
+          {bateria<40?"⚠️ Bateria crítica — priorize uma recarga hoje mesmo.":
+           bateria<60?"Atenção — planeje recargas antes de chegar ao vermelho.":
+           "Bateria ok — mantenha o equilíbrio com recargas regulares."}
+        </div>
+        <textarea value={recargaAmanha} onChange={e=>setRecargaAmanha(e.target.value)}
+          placeholder="Ex: Caminhada de 20min às 18h, ligar para amiga às 19h..."
+          style={{width:"100%",minHeight:80,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={recargaAmanha.trim().length>3}/>
+      </div>}
+    </div>
+  );
+}
+
+
 // ═══════════════════════════════════════════════════════════════════
 // FERRAMENTAS MACRO_HUMOR — Componentes Mistos
 // ═══════════════════════════════════════════════════════════════════
@@ -6531,6 +7001,11 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
     if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
+    // macro_habitos
+    if(k==="sleep-ritual")       return <FerramentaSleepRitual user={user}/>;
+    if(k==="five-minute-rule")   return <FerramentaFiveMinute user={user}/>;
+    if(k==="habit-stacking")     return <FerramentaHabitStacking user={user}/>;
+    if(k==="energy-map")         return <FerramentaEnergyMap user={user}/>;
     // macro_humor
     if(k==="chain-analysis")      return <FerramentaChainAnalysis user={user}/>;
     if(k==="behavioral-activation") return <FerramentaBehavioralActivation user={user}/>;
