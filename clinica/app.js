@@ -539,6 +539,46 @@ function RegistroHumor({ user }) {
 
 
 
+function FerramentaPortal({ recurso, user }){
+  const k = recurso?.formularioKey || "";
+  if(k==="abc-record")         return <FerramentaABC/>;
+  if(k==="breathing-478")      return <FerramentaRespiracao user={user}/>;
+  if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
+  if(k==="anxiety-management") return <FerramentaAnsiedade/>;
+  if(k==="decision-tree")      return <FerramentaDecisao/>;
+  return (
+    <div>
+      {recurso.objetivo&&(
+        <div style={{background:"#f3e6ff",borderRadius:10,padding:"14px 16px",marginBottom:20,border:"1px solid #e9d5ff"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>🎯 Objetivo</div>
+          <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{recurso.objetivo}</div>
+        </div>
+      )}
+      {recurso.passos&&(
+        <div>
+          <div style={{fontWeight:700,fontSize:12,color:"#6b7280",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Passo a Passo</div>
+          {recurso.passos.split(/(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
+            const linhas = passo.trim().split("\n");
+            const titulo = linhas[0];
+            const corpo  = linhas.slice(1).join("\n").trim();
+            return (
+              <div key={i} style={{background:"white",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 16px",marginBottom:10,borderLeft:"3px solid #7B00C4"}}>
+                <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:corpo?6:0}}>{titulo}</div>
+                {corpo&&<div style={{fontSize:12,color:"#6b7280",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{corpo}</div>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {!recurso.objetivo&&!recurso.passos&&(
+        <div style={{textAlign:"center",padding:40,color:"#6b7280",fontSize:14}}>
+          Ferramenta em configuração. Em breve disponível! 💜
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RecursosPaciente({ user }) {
   const [ferramentas,   setFerramentas]   = useState([]);
   const [fabulas,       setFabulas]       = useState([]);
