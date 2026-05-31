@@ -5705,7 +5705,7 @@ function FerramentaAnamnese(){
     <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6b7280",marginBottom:8}}><span style={{color:"var(--purple)",fontWeight:600}}>{perfil}</span><span>Seção {secao+1}/{secs.length}</span></div>
     <div style={{background:"#e5e7eb",borderRadius:20,height:5,marginBottom:16}}><div style={{background:"var(--purple)",height:5,borderRadius:20,width:(secao/secs.length*100)+"%",transition:"width .3s"}}/></div>
     <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:600,marginBottom:12}}>{secs[secao]}</div>
-    <TextAreaVoz className="form-input" rows={5} value={respostas[secs[secao]]||""} onChange={e=>setRespostas(r=>({...r,[secs[secao]]:e.target.value}))} placeholder={"Registre as informações sobre "+secs[secao].toLowerCase()+"..."}/>
+    <TextAreaVoz className="form-input" rows={5} value={respostas[secs[secao]]||""} onChange={e=>setRespostas(r=>({...r,[secs[secao]]:e.target.value}))} placeholder={`Registre as informações sobre "+secs[secao].toLowerCase()+"...`}/>
     <div style={{display:"flex",gap:10,marginTop:14,justifyContent:"space-between"}}>
       <button className="btn btn-ghost" onClick={()=>setSecao(s=>Math.max(0,s-1))} disabled={secao===0}>← Anterior</button>
       {secao<secs.length-1?<button className="btn btn-purple" onClick={()=>setSecao(s=>s+1)}>Próxima →</button>:<button className="btn btn-purple" onClick={()=>setConcluido(true)}>✓ Concluir</button>}
@@ -6784,10 +6784,7 @@ function FerramentaWheelOfLife({ user }){
         <div>
           <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>3 micro-ações para esta semana</label>
           <textarea value={acoes} onChange={e=>setAcoes(e.target.value)}
-            placeholder={"Ex:
-1. Dormir às 23h esta semana
-2. Caminhar 20min na terça
-3. Desligar telemóvel 1h antes de dormir"}
+            placeholder={`Ex:\n1. Dormir às 23h esta semana\n2. Caminhar 20min na terça\n3. Desligar telemóvel 1h antes de dormir`}
             style={{width:"100%",minHeight:100,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         </div>
         <NavButtons passo={p} total={2} onBack={()=>setP(0)} onSave={()=>setSalvo(true)} podeProsseguir={foco.trim().length>3}/>
@@ -6840,10 +6837,7 @@ function FerramentaDifferentiation({ user }){
       {p===0&&<div>
         <StepHeader letra="1" titulo="Opiniões autónomas" subtitulo="O que pensa independentemente do parceiro?" dica="Escreva 3-5 opiniões ou preferências genuinamente suas — não moldadas pela relação." cor={COR} bg={BG}/>
         <textarea value={opinioes} onChange={e=>setOpinioes(e.target.value)}
-          placeholder={"Ex:
-• Prefiro filmes de ficção científica
-• Acho que devíamos mudar de cidade
-• Discordo da forma como os filhos são educados..."}
+          placeholder={`Ex:\n• Prefiro filmes de ficção científica\n• Acho que devíamos mudar de cidade\n• Discordo da forma como os filhos são educados...`}
           style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={opinioes.trim().length>10}/>
       </div>}
@@ -6865,10 +6859,7 @@ function FerramentaDifferentiation({ user }){
       {p===3&&<div>
         <StepHeader letra="4" titulo="Espaços genuinamente seus" subtitulo="3 atividades, amizades ou interesses independentes" dica="O que mantém independentemente da relação? São espaços de identidade própria." cor={COR} bg={BG}/>
         <textarea value={espacos} onChange={e=>setEspacos(e.target.value)}
-          placeholder={"Ex:
-1. Grupo de corrida às quintas
-2. Amizade com a Clara
-3. Leitura de ficção antes de dormir"}
+          placeholder={`Ex:\n1. Grupo de corrida às quintas\n2. Amizade com a Clara\n3. Leitura de ficção antes de dormir`}
           style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={espacos.trim().length>5}/>
       </div>}
@@ -7063,11 +7054,7 @@ function FerramentaFinancialMaps({ user }){
       {p===0&&<div>
         <StepHeader letra="M1" titulo="Mapa da História" subtitulo="Como era o dinheiro na sua família?" dica="O guião financeiro que aprendeu na infância opera de forma inconsciente. Torná-lo visível é o primeiro passo." cor={COR} bg={BG}/>
         <textarea value={historia} onChange={e=>setHistoria(e.target.value)}
-          placeholder={"Ex:
-• O dinheiro era tabu — nunca se falava
-• Havia sempre escassez e preocupação
-• Quem controlava era o meu pai
-• Aprendi que poupar era obrigação"}
+          placeholder={`Ex:\n• O dinheiro era tabu — nunca se falava\n• Havia sempre escassez e preocupação\n• Quem controlava era o meu pai\n• Aprendi que poupar era obrigação`}
           style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={3} onNext={()=>setP(1)} podeProsseguir={historia.trim().length>10}/>
       </div>}
@@ -7454,11 +7441,7 @@ function FerramentaConflictCycle({ user }){
       {p===2&&<div>
         <StepHeader letra="3" titulo="A sequência típica" subtitulo="O que acontece do início ao fim?" dica="Escreva em passos numerados: eu digo X → ele reage Y → eu faço Z..." cor={COR} bg={BG}/>
         <textarea value={sequencia} onChange={e=>setSequencia(e.target.value)}
-          placeholder={"1. Eu digo...
-2. Ele/ela reage...
-3. Eu então...
-4. Ele/ela...
-5. O assunto fica..."}
+          placeholder={`1. Eu digo...\n2. Ele/ela reage...\n3. Eu então...\n4. Ele/ela...\n5. O assunto fica...`}
           style={{width:"100%",minHeight:120,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.8,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={sequencia.trim().length>10}/>
       </div>}
@@ -12501,7 +12484,7 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
                 <div style={{background:"#f5f3ff",border:"1px solid #7B00C420",borderRadius:10,padding:14}}>
                   <div style={{fontWeight:600,fontSize:13,color:"#7B00C4",marginBottom:8}}>✨ Inserir Lead via IA</div>
                   <TextAreaVoz value={textoIA} onChange={e=>setTextoIA(e.target.value)} rows={5}
-                    placeholder={"Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ..."}
+                    placeholder={`Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ...`}
                     style={{width:"100%",border:"1px solid #7B00C430",borderRadius:8,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box",background:"white"}}/>
                   <button onClick={aplicarIA} style={{marginTop:8,background:"#7B00C4",color:"white",border:"none",borderRadius:20,padding:"7px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
                     ⚡ Preencher campos automaticamente
