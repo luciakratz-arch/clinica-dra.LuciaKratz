@@ -6408,10 +6408,7 @@ function FerramentaDifferentiation({ user }){
       {p===0&&<div>
         <StepHeader letra="1" titulo="Opiniões autónomas" subtitulo="O que pensa independentemente do parceiro?" dica="Escreva 3-5 opiniões ou preferências genuinamente suas — não moldadas pela relação." cor={COR} bg={BG}/>
         <textarea value={opinioes} onChange={e=>setOpinioes(e.target.value)}
-          placeholder={"Ex:
-• Prefiro filmes de ficção científica
-• Acho que devíamos mudar de cidade
-• Discordo da forma como os filhos são educados..."}
+          placeholder={`Ex:\n• Prefiro filmes de ficção científica\n• Acho que devíamos mudar de cidade\n• Discordo da forma como os filhos são educados...`}
           style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={opinioes.trim().length>10}/>
       </div>}
@@ -6433,10 +6430,7 @@ function FerramentaDifferentiation({ user }){
       {p===3&&<div>
         <StepHeader letra="4" titulo="Espaços genuinamente seus" subtitulo="3 atividades, amizades ou interesses independentes" dica="O que mantém independentemente da relação? São espaços de identidade própria." cor={COR} bg={BG}/>
         <textarea value={espacos} onChange={e=>setEspacos(e.target.value)}
-          placeholder={"Ex:
-1. Grupo de corrida às quintas
-2. Amizade com a Clara
-3. Leitura de ficção antes de dormir"}
+          placeholder={`Ex:\n1. Grupo de corrida às quintas\n2. Amizade com a Clara\n3. Leitura de ficção antes de dormir`}
           style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={espacos.trim().length>5}/>
       </div>}
@@ -6631,11 +6625,7 @@ function FerramentaFinancialMaps({ user }){
       {p===0&&<div>
         <StepHeader letra="M1" titulo="Mapa da História" subtitulo="Como era o dinheiro na sua família?" dica="O guião financeiro que aprendeu na infância opera de forma inconsciente. Torná-lo visível é o primeiro passo." cor={COR} bg={BG}/>
         <textarea value={historia} onChange={e=>setHistoria(e.target.value)}
-          placeholder={"Ex:
-• O dinheiro era tabu — nunca se falava
-• Havia sempre escassez e preocupação
-• Quem controlava era o meu pai
-• Aprendi que poupar era obrigação"}
+          placeholder={`Ex:\n• O dinheiro era tabu — nunca se falava\n• Havia sempre escassez e preocupação\n• Quem controlava era o meu pai\n• Aprendi que poupar era obrigação`}
           style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={3} onNext={()=>setP(1)} podeProsseguir={historia.trim().length>10}/>
       </div>}
@@ -7022,11 +7012,7 @@ function FerramentaConflictCycle({ user }){
       {p===2&&<div>
         <StepHeader letra="3" titulo="A sequência típica" subtitulo="O que acontece do início ao fim?" dica="Escreva em passos numerados: eu digo X → ele reage Y → eu faço Z..." cor={COR} bg={BG}/>
         <textarea value={sequencia} onChange={e=>setSequencia(e.target.value)}
-          placeholder={"1. Eu digo...
-2. Ele/ela reage...
-3. Eu então...
-4. Ele/ela...
-5. O assunto fica..."}
+          placeholder={`1. Eu digo...\n2. Ele/ela reage...\n3. Eu então...\n4. Ele/ela...\n5. O assunto fica...`}
           style={{width:"100%",minHeight:120,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.8,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={sequencia.trim().length>10}/>
       </div>}
