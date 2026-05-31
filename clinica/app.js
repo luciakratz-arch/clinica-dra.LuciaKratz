@@ -129,15 +129,13 @@ function MinhaConta({ user }) {
 
 // ── Diário Terapêutico ──────────────────────────────────────────────────────
 function FerramentaDiario({ user }){
-  const [entradas, setEntradas] = useState([]);
-  const [texto,    setTexto]    = useState("");
-  const [tag,      setTag]      = useState("geral");
-  const [salvando, setSalvando] = useState(false);
-  const [msg,      setMsg]      = useState("");
-  const [verEntrada, setVerEntrada] = useState(null);
-  const [gravando,   setGravando]   = useState(false);
-  const [loading,    setLoading]    = useState(true);
-  const recRef = useRef(null);
+  const [entradas,  setEntradas]  = useState([]);
+  const [texto,     setTexto]     = useState("");
+  const [tag,       setTag]       = useState("geral");
+  const [salvando,  setSalvando]  = useState(false);
+  const [msg,       setMsg]       = useState("");
+  const [verEntrada,setVerEntrada]= useState(null);
+  const [loading,   setLoading]   = useState(true);
 
   const TAGS = [
     {v:"geral",     l:"Geral",     e:"📝"},
@@ -146,6 +144,18 @@ function FerramentaDiario({ user }){
     {v:"conquista", l:"Conquista", e:"🏆"},
     {v:"emocao",    l:"Emoção",    e:"💜"},
   ];
+
+  // Prompts rotativos por dia da semana
+  const PROMPTS = [
+    "O que você está carregando hoje que precisa colocar para fora?",
+    "O que te surpreendeu em você esta semana?",
+    "Se você pudesse falar com alguém hoje, o que diria?",
+    "O que está difícil de aceitar neste momento da sua vida?",
+    "Que pensamento fica voltando à sua mente hoje?",
+    "O que você precisaria ouvir de alguém que ama?",
+    "Que parte de você está pedindo mais atenção agora?",
+  ];
+  const promptDia = PROMPTS[new Date().getDay()];
 
   useEffect(()=>{
     if(!user?.id){setLoading(false);return;}
@@ -160,41 +170,13 @@ function FerramentaDiario({ user }){
     return ()=>unsub();
   },[user?.id]);
 
-  function toggleGravacao(){
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){alert("Seu navegador não suporta reconhecimento de voz. Tente o Chrome.");return;}
-    if(gravando){
-      recRef.current?.stop();
-      setGravando(false);
-      return;
-    }
-    const rec = new SR();
-    rec.lang = "pt-BR";
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.onresult = e=>{
-      const transcript = Array.from(e.results).map(r=>r[0].transcript).join(" ");
-      setTexto(t => {
-        const base = t.replace(/\s*\[gravando\.\.\.\]$/,"").trimEnd();
-        return base ? base+" "+transcript : transcript;
-      });
-    };
-    rec.onerror = ()=>setGravando(false);
-    rec.onend   = ()=>setGravando(false);
-    recRef.current = rec;
-    rec.start();
-    setGravando(true);
-  }
-
   async function salvar(){
-    if(!texto.trim()){setMsg("Escreva ou grave algo antes de salvar.");setTimeout(()=>setMsg(""),2500);return;}
+    if(!texto.trim()){setMsg("Escreva algo antes de salvar.");setTimeout(()=>setMsg(""),2500);return;}
     setSalvando(true);
     try {
       await db.collection("clinica_diario").add({
-        pacienteId: user?.id || "",
-        pacienteNome: user?.nome || "",
-        texto: texto.trim(),
-        tag,
+        pacienteId: user?.id||"", pacienteNome: user?.nome||"",
+        texto: texto.trim(), tag,
         data: new Date().toLocaleDateString("pt-BR"),
         hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -202,7 +184,7 @@ function FerramentaDiario({ user }){
       setTexto(""); setTag("geral");
       setMsg("✓ Entrada salva! 💜");
       setTimeout(()=>setMsg(""),2500);
-    } catch(e){ setMsg("Erro ao salvar: "+e.message); }
+    } catch(e){ setMsg("Erro ao salvar."); }
     setSalvando(false);
   }
 
@@ -212,261 +194,350 @@ function FerramentaDiario({ user }){
     setVerEntrada(null);
   }
 
+  // ── Ver entrada ──────────────────────────────────────────────────
   if(verEntrada) return(
-    <div style={{padding:"0 4px"}}>
-      <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setVerEntrada(null)}>
-        <Icon name="arrow-left" size={16}/> Voltar
+    <div>
+      <button onClick={()=>setVerEntrada(null)}
+        style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit",marginBottom:16,display:"flex",alignItems:"center",gap:6}}>
+        ← Voltar
       </button>
-      <div style={{background:"#f9f5ff",borderRadius:14,padding:20,marginBottom:12,border:"1px solid #ede9fe"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <span style={{fontSize:13,color:"var(--text-muted)"}}>{verEntrada.data} às {verEntrada.hora}</span>
-          <span style={{fontSize:11,color:"var(--purple)",background:"#ede9fe",borderRadius:20,padding:"2px 10px"}}>
+      <div style={{background:"#fffdf5",borderRadius:14,padding:24,border:"1px solid #f3e6c0",
+        backgroundImage:"repeating-linear-gradient(transparent,transparent 27px,#f0ebe0 27px,#f0ebe0 28px)",
+        lineHeight:"28px",fontFamily:"Georgia,serif"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,fontFamily:"var(--font-body)"}}>
+          <span style={{fontSize:12,color:"var(--text-muted)"}}>{verEntrada.data} · {verEntrada.hora}</span>
+          <span style={{fontSize:11,color:"var(--purple)",background:"var(--purple-soft)",borderRadius:20,padding:"2px 10px"}}>
             {TAGS.find(t=>t.v===verEntrada.tag)?.e} {TAGS.find(t=>t.v===verEntrada.tag)?.l}
           </span>
         </div>
-        <div style={{fontSize:14,lineHeight:1.8,color:"var(--gray-800)",whiteSpace:"pre-wrap"}}>{verEntrada.texto}</div>
+        <div style={{fontSize:15,lineHeight:"28px",color:"#2d2d2d",whiteSpace:"pre-wrap",fontFamily:"Georgia,serif"}}>{verEntrada.texto}</div>
       </div>
-      <button className="btn btn-ghost" style={{color:"#dc2626",borderColor:"#fca5a5",fontSize:13}} onClick={()=>excluir(verEntrada.id)}>
-        <Icon name="trash-2" size={14}/> Excluir entrada
+      <button onClick={()=>excluir(verEntrada.id)}
+        style={{marginTop:16,padding:"8px 16px",borderRadius:8,border:"1px solid #fca5a5",background:"white",color:"#dc2626",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>
+        🗑 Excluir entrada
       </button>
     </div>
   );
-
-  return(
-    <div style={{padding:"0 4px"}}>
-      {/* Nova entrada */}
-      <div style={{background:"#faf5ff",borderRadius:14,padding:16,marginBottom:20,border:"1px solid #ede9fe"}}>
-        <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:600,marginBottom:12,color:"var(--purple)"}}>
-          📓 Nova entrada
-        </div>
-
-        {/* Tag */}
-        <div style={{marginBottom:12}}>
-          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Categoria</div>
-          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-            {TAGS.map(t=>(
-              <button key={t.v} onClick={()=>setTag(t.v)}
-                style={{fontSize:12,padding:"4px 10px",borderRadius:20,border:tag===t.v?"2px solid var(--purple)":"1px solid #e5e7eb",background:tag===t.v?"#ede9fe":"white",color:tag===t.v?"var(--purple)":"var(--gray-600)",cursor:"pointer"}}>
-                {t.e} {t.l}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Texto + microfone */}
-        <div style={{position:"relative"}}>
-          <textarea value={texto} onChange={e=>setTexto(e.target.value)}
-            placeholder="Escreva ou use o microfone para falar sobre o seu dia..."
-            style={{width:"100%",minHeight:120,borderRadius:10,border:gravando?"2px solid var(--purple)":"1px solid #e5e7eb",padding:"10px 44px 10px 14px",fontSize:14,fontFamily:"var(--font-body)",resize:"vertical",outline:"none",lineHeight:1.7,boxSizing:"border-box",transition:"border .2s"}}/>
-          <button onClick={toggleGravacao} title={gravando?"Parar gravação":"Falar"}
-            style={{position:"absolute",right:8,bottom:10,background:gravando?"#7B00C4":"#f3f0ff",border:"none",borderRadius:8,padding:"6px 8px",cursor:"pointer",color:gravando?"white":"var(--purple)",fontSize:18,lineHeight:1,boxShadow:gravando?"0 0 0 3px #7B00C430":"none",transition:"all .2s"}}>
-            🎙️
-          </button>
-        </div>
-        {gravando && <div style={{fontSize:12,color:"var(--purple)",marginTop:4,display:"flex",alignItems:"center",gap:6}}>
-          <span style={{width:8,height:8,borderRadius:"50%",background:"#7B00C4",display:"inline-block",animation:"pulse-slow 1s infinite"}}/>
-          Gravando... fale normalmente. Clique 🎙️ para parar.
-        </div>}
-
-        {msg && <div style={{fontSize:13,color:"var(--purple)",marginTop:6,fontWeight:500}}>{msg}</div>}
-
-        <button className="btn btn-purple" style={{width:"100%",marginTop:10}} onClick={salvar} disabled={salvando}>
-          <Icon name="save" size={16}/> {salvando?"Salvando...":"Salvar entrada"}
-        </button>
-      </div>
-
-      {/* Entradas anteriores */}
-      {loading && <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:13,padding:16}}>Carregando...</div>}
-      {!loading && entradas.length>0 && (
-        <div>
-          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:"var(--gray-700)"}}>
-            Entradas anteriores ({entradas.length})
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {entradas.map(en=>(
-              <div key={en.id} onClick={()=>setVerEntrada(en)}
-                style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #e5e7eb",cursor:"pointer"}}
-                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 2px 8px #7B00C420"}
-                onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                  <span style={{fontSize:12,color:"var(--text-muted)"}}>{en.data} · {en.hora}</span>
-                  <span style={{fontSize:11,color:"var(--purple)"}}>{TAGS.find(t=>t.v===en.tag)?.e}</span>
-                </div>
-                <div style={{fontSize:13,color:"var(--gray-700)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{en.texto}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {!loading && entradas.length===0 && (
-        <div style={{textAlign:"center",padding:"24px 0",color:"var(--text-muted)",fontSize:13}}>
-          Nenhuma entrada ainda. Comece escrevendo hoje! 💜
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-
-// ─── RECURSOS TERAPÊUTICOS DO PACIENTE ──────────────────
-
-// Componente reutilizável: reflexão + envio WhatsApp
-function ReflexaoWhatsApp({ user, tituloRecurso }) {
-  const [reflexao, setReflexao]     = useState("");
-  const [telefone, setTelefone]     = useState(user.telefone||"");
-  const [editandoTel, setEditandoTel] = useState(!user.telefone);
-  const [salvando, setSalvando]     = useState(false);
-  const [enviado, setEnviado]       = useState(false);
-
-  async function salvarTelefone(tel) {
-    if (!tel.trim()) return;
-    setSalvando(true);
-    try {
-      const tel_limpo = tel.replace(/\D/g,"");
-      await db.collection("clinica_pacientes").doc(user.id).update({ telefone: tel_limpo });
-      setTelefone(tel_limpo);
-      setEditandoTel(false);
-    } catch(e) { alert("Erro ao salvar telefone: "+e.message); }
-    setSalvando(false);
-  }
-
-  function enviarWhatsApp() {
-    const tel = telefone.replace(/\D/g,"");
-    if (!tel) { setEditandoTel(true); return; }
-    const texto = `💜 *Minha reflexão — ${tituloRecurso}*
-
-${reflexao||"(sem texto)"}
-
-_Dra. Lucia Kratz · CRP 09/20590_`;
-    window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`,"_blank");
-    setEnviado(true);
-    setTimeout(()=>setEnviado(false), 3000);
-  }
-
-  return (
-    <div style={{background:"#f9f0ff",borderRadius:12,padding:16,marginTop:16,
-      border:"1px solid #e8c8ff"}}>
-      <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:10}}>
-        ✍️ Minha reflexão
-      </div>
-
-      {/* Campo de reflexão */}
-      <textarea
-        value={reflexao}
-        onChange={e=>setReflexao(e.target.value)}
-        placeholder="O que esse conteúdo trouxe para você? O que quer lembrar ou praticar?"
-        style={{width:"100%",minHeight:90,padding:"10px 12px",borderRadius:8,
-          border:"1px solid #d9b3f5",fontSize:13,fontFamily:"inherit",
-          resize:"vertical",lineHeight:1.6,boxSizing:"border-box",
-          background:"white"}}/>
-
-      {/* Telefone */}
-      <div style={{marginTop:10}}>
-        {editandoTel ? (
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            <input
-              type="tel"
-              defaultValue={telefone}
-              placeholder="Seu WhatsApp (ex: 5562991546757)"
-              id="tel_reflexao"
-              style={{flex:1,padding:"8px 10px",borderRadius:8,border:"1px solid #d9b3f5",
-                fontSize:12,fontFamily:"inherit"}}/>
-            <button onClick={()=>{
-                const v = document.getElementById("tel_reflexao").value;
-                salvarTelefone(v);
-              }}
-              disabled={salvando}
-              style={{padding:"8px 14px",borderRadius:8,border:"none",
-                background:"#7B00C4",color:"white",cursor:"pointer",
-                fontSize:12,fontWeight:600,fontFamily:"inherit"}}>
-              {salvando?"Salvando...":"Salvar"}
-            </button>
-          </div>
-        ) : (
-          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"#5a0090"}}>
-            <span>📱 {telefone}</span>
-            <button onClick={()=>setEditandoTel(true)}
-              style={{background:"none",border:"none",cursor:"pointer",
-                color:"#7B00C4",fontSize:11,textDecoration:"underline",fontFamily:"inherit"}}>
-              🔄 Trocar número
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Botão enviar */}
-      <button onClick={enviarWhatsApp} disabled={!reflexao.trim()}
-        style={{width:"100%",marginTop:12,padding:"11px",borderRadius:10,border:"none",
-          background: reflexao.trim() ? "#25D366" : "#d1fae5",
-          color: reflexao.trim() ? "white" : "#6b7280",
-          cursor: reflexao.trim() ? "pointer" : "not-allowed",
-          fontSize:13,fontWeight:700,fontFamily:"inherit",
-          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-          transition:"all .2s"}}>
-        {enviado ? "✅ Enviado!" : "📲 Salvar no meu WhatsApp"}
-      </button>
-      <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",marginTop:6}}>
-        Abre o WhatsApp com sua reflexão como lembrete pessoal
-      </div>
-    </div>
-  );
-}
-
-// Abre um item de psicoeducação com conteúdo + reflexão
-function PsicoeducacaoAberta({ item, user, onVoltar }) {
-  const EMOJI_CAT = {
-    macro_ansiedade:"🧠", ansiedade_diaria:"🧠", distorcoes:"🧠",
-    macro_humor:"❤️", depressao:"❤️", burnout:"❤️",
-    macro_habitos:"🌱", rotina:"🌱", sono:"🌱",
-    macro_relacionamentos:"🤝", comunicacao:"🤝",
-    macro_casais:"💑", macro_corpo:"🏃",
-  };
-  const emoji = item.emoji || EMOJI_CAT[item.categoria] || "📚";
 
   return (
     <div>
-      <button onClick={onVoltar}
-        style={{marginBottom:16,display:"flex",alignItems:"center",gap:6,
-          background:"none",border:"none",cursor:"pointer",
-          color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
-        ← Voltar
+      <div className="page-header">
+        <div className="page-title">Diário Terapêutico</div>
+        <div className="page-subtitle">Um espaço só seu, sem julgamentos</div>
+      </div>
+
+      {/* Prompt do dia */}
+      <div style={{background:"linear-gradient(135deg,#f3e6ff,#ede9fe)",borderRadius:12,padding:"14px 16px",
+        marginBottom:16,borderLeft:"3px solid var(--purple)"}}>
+        <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.5px"}}>
+          💭 Reflexão de hoje
+        </div>
+        <div style={{fontSize:14,color:"#3d006a",fontStyle:"italic",lineHeight:1.6}}>{promptDia}</div>
+      </div>
+
+      {/* Tags */}
+      <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+        {TAGS.map(t=>(
+          <button key={t.v} onClick={()=>setTag(t.v)}
+            style={{padding:"5px 12px",borderRadius:16,border:"1.5px solid",cursor:"pointer",
+              fontFamily:"inherit",fontSize:12,
+              borderColor:tag===t.v?"var(--purple)":"var(--gray-200)",
+              background:tag===t.v?"var(--purple-soft)":"white",
+              color:tag===t.v?"var(--purple)":"var(--text-muted)",
+              fontWeight:tag===t.v?700:400}}>
+            {t.e} {t.l}
+          </button>
+        ))}
+      </div>
+
+      {/* Caderno */}
+      <div style={{position:"relative",background:"#fffdf5",borderRadius:14,
+        border:"1px solid #f3e6c0",marginBottom:12,overflow:"hidden"}}>
+        {/* Margem vermelha */}
+        <div style={{position:"absolute",left:40,top:0,bottom:0,width:1,background:"#fca5a5",opacity:0.4}}/>
+        <textarea
+          value={texto}
+          onChange={e=>setTexto(e.target.value)}
+          placeholder="Escreva livremente aqui..."
+          style={{
+            width:"100%", minHeight:220, padding:"16px 16px 16px 52px",
+            background:"transparent",border:"none",outline:"none",resize:"none",
+            fontSize:15, lineHeight:"28px", fontFamily:"Georgia,serif",
+            color:"#2d2d2d", boxSizing:"border-box",
+            backgroundImage:"repeating-linear-gradient(transparent,transparent 27px,#f0ebe0 27px,#f0ebe0 28px)",
+          }}/>
+      </div>
+
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+        <span style={{fontSize:12,color:"var(--text-muted)"}}>{texto.length} caracteres</span>
+        {msg&&<span style={{fontSize:13,color:"var(--purple)",fontWeight:600}}>{msg}</span>}
+      </div>
+
+      <button onClick={salvar} disabled={salvando||!texto.trim()}
+        style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
+          background:texto.trim()?"var(--purple)":"var(--gray-100)",
+          color:texto.trim()?"white":"var(--text-muted)",cursor:texto.trim()?"pointer":"not-allowed",
+          fontSize:14,fontWeight:700,fontFamily:"inherit",marginBottom:24}}>
+        {salvando?"Salvando...":"Salvar entrada 💜"}
       </button>
 
-      {/* Header */}
-      <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
-        borderRadius:"14px 14px 0 0",padding:"20px 24px",textAlign:"center",color:"white"}}>
-        <div style={{fontSize:48,marginBottom:8}}>{emoji}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:6}}>
-          {item.titulo}
-        </div>
-        {item.descricao&&(
-          <div style={{fontSize:13,opacity:0.85,lineHeight:1.5}}>{item.descricao}</div>
-        )}
-      </div>
-
-      {/* Conteúdo */}
-      {item.conteudo&&(
-        <div style={{background:"white",padding:"20px 24px",
-          border:"1px solid var(--gray-100)",borderTop:"none"}}>
-          <div style={{fontSize:14,lineHeight:1.9,color:"#374151",whiteSpace:"pre-wrap"}}>
-            {item.conteudo}
+      {/* Histórico */}
+      {entradas.length>0&&(
+        <div>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.5px"}}>
+            Entradas anteriores
           </div>
+          {entradas.map(e=>(
+            <button key={e.id} onClick={()=>setVerEntrada(e)}
+              style={{width:"100%",background:"white",border:"1px solid var(--gray-100)",borderRadius:12,
+                padding:"12px 16px",marginBottom:8,cursor:"pointer",textAlign:"left",fontFamily:"inherit",
+                display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:36,height:36,borderRadius:8,background:"var(--purple-soft)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>
+                {TAGS.find(t=>t.v===e.tag)?.e||"📝"}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,color:"var(--text)"}}>{e.data}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                  {e.texto.slice(0,60)}{e.texto.length>60?"...":""}
+                </div>
+              </div>
+              <Icon name="chevron-right" size={14} style={{color:"var(--text-muted)",flexShrink:0}}/>
+            </button>
+          ))}
         </div>
       )}
-
-      {/* Reflexão + WhatsApp */}
-      <div style={{background:"white",padding:"0 24px 24px",
-        border:"1px solid var(--gray-100)",borderTop:"none",
-        borderRadius:"0 0 14px 14px"}}>
-        <ReflexaoWhatsApp user={user} tituloRecurso={item.titulo}/>
-        <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:12}}>
-          Dra. Lucia Kratz · Psicóloga · CRP 09/20590
-        </div>
-      </div>
     </div>
   );
 }
+
+
+
+function RegistroHumor({ user }) {
+  const [etapa,    setEtapa]    = useState("humor");   // humor | emocoes | gatilhos | concluido
+  const [valor,    setValor]    = useState(null);
+  const [emocoes,  setEmocoes]  = useState([]);
+  const [gatilhos, setGatilhos] = useState([]);
+  const [nota,     setNota]     = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [historico,setHistorico]= useState([]);
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_humor").where("pacienteId","==",user.id)
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setHistorico(docs.slice(0,14));
+      },()=>{});
+    return unsub;
+  },[user.id]);
+
+  const NIVEIS = [
+    {v:1, emoji:"😞", label:"Muito mal",    cor:"#dc2626", bg:"#fee2e2"},
+    {v:2, emoji:"😔", label:"Mal",          cor:"#ea580c", bg:"#fed7aa"},
+    {v:3, emoji:"😕", label:"Abaixo do normal", cor:"#d97706", bg:"#fef3c7"},
+    {v:4, emoji:"😐", label:"Regular",      cor:"#ca8a04", bg:"#fef9c3"},
+    {v:5, emoji:"🙂", label:"Ok",           cor:"#65a30d", bg:"#ecfccb"},
+    {v:6, emoji:"😊", label:"Bem",          cor:"#16a34a", bg:"#dcfce7"},
+    {v:7, emoji:"😄", label:"Muito bem",    cor:"#059669", bg:"#d1fae5"},
+  ];
+
+  const EMOCOES_LISTA = [
+    {v:"ansioso",    l:"Ansioso",    e:"😰"},
+    {v:"irritado",   l:"Irritado",   e:"😤"},
+    {v:"triste",     l:"Triste",     e:"😢"},
+    {v:"cansado",    l:"Cansado",    e:"😴"},
+    {v:"angustiado", l:"Angustiado", e:"😟"},
+    {v:"alegre",     l:"Alegre",     e:"😄"},
+    {v:"calmo",      l:"Calmo",      e:"😌"},
+    {v:"motivado",   l:"Motivado",   e:"💪"},
+    {v:"grato",      l:"Grato",      e:"🙏"},
+    {v:"sobrecarregado",l:"Sobrecarregado",e:"🫠"},
+    {v:"esperancoso",l:"Esperançoso",e:"🌟"},
+    {v:"confuso",    l:"Confuso",    e:"🤔"},
+  ];
+
+  const GATILHOS_LISTA = [
+    {v:"trabalho",   l:"Trabalho",   e:"💼"},
+    {v:"familia",    l:"Família",    e:"👨‍👩‍👧"},
+    {v:"sono",       l:"Sono",       e:"😴"},
+    {v:"saude",      l:"Saúde",      e:"🏥"},
+    {v:"financas",   l:"Finanças",   e:"💰"},
+    {v:"relacao",    l:"Relação",    e:"💑"},
+    {v:"solidao",    l:"Solidão",    e:"🫂"},
+    {v:"conquista",  l:"Conquista",  e:"🏆"},
+    {v:"exercicio",  l:"Exercício",  e:"🏃"},
+    {v:"alimentacao",l:"Alimentação",e:"🥗"},
+    {v:"clima",      l:"Clima",      e:"🌤"},
+    {v:"lazer",      l:"Lazer",      e:"🎉"},
+  ];
+
+  const toggleItem = (list, setList, val) => {
+    setList(list.includes(val) ? list.filter(x=>x!==val) : [...list, val]);
+  };
+
+  async function salvar(){
+    if(!valor) return;
+    setSalvando(true);
+    const hoje = new Date().toLocaleDateString("pt-BR");
+    try {
+      await db.collection("clinica_humor").add({
+        pacienteId:user.id, nome:user.nome,
+        valor, emocoes, gatilhos, nota,
+        data: hoje,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setEtapa("concluido");
+    } catch(e){ alert("Erro ao salvar."); }
+    setSalvando(false);
+  }
+
+  function reiniciar(){
+    setValor(null); setEmocoes([]); setGatilhos([]); setNota(""); setEtapa("humor");
+  }
+
+  const nivelAtual = NIVEIS.find(n=>n.v===valor);
+
+  // ── Etapa: Humor ────────────────────────────────────────────────
+  if(etapa==="humor") return (
+    <div>
+      <div className="page-header">
+        <div className="page-title">Check-in Diário</div>
+        <div className="page-subtitle">Como está o seu humor agora?</div>
+      </div>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",margin:"32px 0"}}>
+        {NIVEIS.map(n=>(
+          <button key={n.v} onClick={()=>{setValor(n.v);setEtapa("emocoes");}}
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,
+              padding:"16px 14px",borderRadius:16,border:"2px solid",cursor:"pointer",
+              fontFamily:"inherit",minWidth:80,
+              borderColor: valor===n.v ? n.cor : "var(--gray-100)",
+              background: valor===n.v ? n.bg : "white",
+              boxShadow: valor===n.v ? `0 4px 12px ${n.cor}30` : "0 1px 4px rgba(0,0,0,0.05)",
+              transition:"all .15s"}}>
+            <span style={{fontSize:36}}>{n.emoji}</span>
+            <span style={{fontSize:11,fontWeight:600,color:valor===n.v?n.cor:"var(--text-muted)"}}>{n.label}</span>
+          </button>
+        ))}
+      </div>
+      {historico.length>0&&(
+        <div style={{marginTop:8}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.5px"}}>Últimos 14 dias</div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+            {historico.slice(0,14).reverse().map((h,i)=>{
+              const n = NIVEIS.find(x=>x.v===h.valor)||NIVEIS[3];
+              return (
+                <div key={i} title={`${h.data}: ${n.label}`}
+                  style={{width:32,height:32,borderRadius:8,background:n.bg,border:`2px solid ${n.cor}40`,
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>
+                  {n.emoji}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Etapa: Emoções ───────────────────────────────────────────────
+  if(etapa==="emocoes") return (
+    <div>
+      <button onClick={()=>setEtapa("humor")} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit",marginBottom:16,display:"flex",alignItems:"center",gap:6}}>
+        ← Voltar
+      </button>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{fontSize:48}}>{nivelAtual?.emoji}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:nivelAtual?.cor,marginTop:6}}>{nivelAtual?.label}</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Que emoções estão presentes agora? (opcional)</div>
+      </div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,justifyContent:"center",marginBottom:24}}>
+        {EMOCOES_LISTA.map(em=>{
+          const sel = emocoes.includes(em.v);
+          return (
+            <button key={em.v} onClick={()=>toggleItem(emocoes,setEmocoes,em.v)}
+              style={{padding:"8px 14px",borderRadius:20,border:"1.5px solid",cursor:"pointer",
+                fontFamily:"inherit",fontSize:13,display:"flex",alignItems:"center",gap:6,
+                borderColor:sel?"var(--purple)":"var(--gray-200)",
+                background:sel?"var(--purple-soft)":"white",
+                color:sel?"var(--purple)":"var(--text-muted)",
+                fontWeight:sel?700:400,transition:"all .12s"}}>
+              {em.e} {em.l}
+            </button>
+          );
+        })}
+      </div>
+      <button onClick={()=>setEtapa("gatilhos")}
+        style={{width:"100%",padding:"13px",borderRadius:12,border:"none",
+          background:"var(--purple)",color:"white",cursor:"pointer",
+          fontSize:14,fontWeight:700,fontFamily:"inherit"}}>
+        Continuar →
+      </button>
+    </div>
+  );
+
+  // ── Etapa: Gatilhos ──────────────────────────────────────────────
+  if(etapa==="gatilhos") return (
+    <div>
+      <button onClick={()=>setEtapa("emocoes")} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit",marginBottom:16,display:"flex",alignItems:"center",gap:6}}>
+        ← Voltar
+      </button>
+      <div style={{textAlign:"center",marginBottom:24}}>
+        <div style={{fontSize:16,fontWeight:700,color:"var(--text)"}}>O que influenciou o seu humor?</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Selecione os fatores (opcional)</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:8,marginBottom:20}}>
+        {GATILHOS_LISTA.map(g=>{
+          const sel = gatilhos.includes(g.v);
+          return (
+            <button key={g.v} onClick={()=>toggleItem(gatilhos,setGatilhos,g.v)}
+              style={{padding:"12px 8px",borderRadius:12,border:"1.5px solid",cursor:"pointer",
+                fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                borderColor:sel?"var(--purple)":"var(--gray-200)",
+                background:sel?"var(--purple-soft)":"white",
+                transition:"all .12s"}}>
+              <span style={{fontSize:22}}>{g.e}</span>
+              <span style={{fontSize:11,fontWeight:sel?700:400,color:sel?"var(--purple)":"var(--text-muted)"}}>{g.l}</span>
+            </button>
+          );
+        })}
+      </div>
+      <textarea value={nota} onChange={e=>setNota(e.target.value)}
+        placeholder="Algo mais que queira registrar? (opcional)"
+        style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--gray-200)",
+          fontSize:13,fontFamily:"inherit",resize:"none",height:72,marginBottom:16,boxSizing:"border-box"}}/>
+      <button onClick={salvar} disabled={salvando}
+        style={{width:"100%",padding:"13px",borderRadius:12,border:"none",
+          background:"var(--purple)",color:"white",cursor:"pointer",
+          fontSize:14,fontWeight:700,fontFamily:"inherit"}}>
+        {salvando?"Salvando...":"Salvar Check-in 💜"}
+      </button>
+    </div>
+  );
+
+  // ── Etapa: Concluído ─────────────────────────────────────────────
+  return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:64,marginBottom:16}}>{nivelAtual?.emoji}</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:"var(--purple)",marginBottom:8}}>
+        Check-in registrado!
+      </div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:32,lineHeight:1.6}}>
+        Obrigada por cuidar de si hoje. 💜<br/>
+        {emocoes.length>0 && `Emoções: ${emocoes.map(e=>EMOCOES_LISTA.find(x=>x.v===e)?.l).join(", ")}`}
+      </div>
+      <button onClick={reiniciar}
+        style={{padding:"11px 24px",borderRadius:10,border:"1px solid var(--purple)",
+          background:"white",color:"var(--purple)",cursor:"pointer",
+          fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+        Novo registro
+      </button>
+    </div>
+  );
+}
+
+
+
 
 function RecursosPaciente({ user }) {
   const [ferramentas,   setFerramentas]   = useState([]);
@@ -545,7 +616,7 @@ function RecursosPaciente({ user }) {
           color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
         ← Voltar para Recursos
       </button>
-      <FerramentaInterativa recurso={abrindo} user={user}/>
+      <FerramentaPortal recurso={abrindo} user={user}/>
     </div>
   );
 
@@ -1270,99 +1341,7 @@ function PainelIndividual({ user, setTab }) {
 // ═══════════════════════════════════════════════════════
 //  REGISTRO DE HUMOR
 // ═══════════════════════════════════════════════════════
-function RegistroHumor({ user }) {
-  const [valor, setValor]     = useState(5);
-  const [nota, setNota]       = useState("");
-  const [salvando, setSalvando] = useState(false);
-  const [msg, setMsg]         = useState("");
-  const [historico, setHistorico] = useState([]);
 
-  useEffect(() => {
-    const unsub = db.collection("clinica_humor").where("pacienteId","==",user.id)
-      .onSnapshot(s=>{
-        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
-        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
-        setHistorico(docs.slice(0,20));
-      },()=>{});
-    return unsub;
-  }, [user.id]);
-
-  const hoje = new Date().toLocaleDateString("pt-BR");
-  const jaRegistrou = historico.some(h=>h.data===hoje);
-  const emojis = ["😞","😔","😐","🙂","😊","😄","🤩"];
-  const emojiIdx = Math.min(Math.floor((valor-1)/1.5),6);
-
-  async function salvar(e) {
-    e.preventDefault(); setSalvando(true); setMsg("");
-    try {
-      await db.collection("clinica_humor").add({
-        pacienteId:user.id, nome:user.nome,
-        valor, nota, data:hoje,
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      setMsg("Humor registrado! 💜"); setNota(""); setValor(5);
-    } catch(err){ setMsg("Erro ao salvar."); }
-    setSalvando(false);
-  }
-
-  return (
-    <div>
-      <div className="page-header">
-        <div className="page-title">Registro de Humor</div>
-        <div className="page-subtitle">Como você está se sentindo hoje?</div>
-      </div>
-
-      {jaRegistrou && (
-        <div style={{background:"#d1fae5",border:"1px solid #6ee7b7",borderRadius:10,padding:"12px 16px",marginBottom:20,fontSize:14,color:"#065f46"}}>
-          ✓ Você já registrou seu humor hoje. Pode atualizar se quiser.
-        </div>
-      )}
-
-      <div className="card" style={{marginBottom:24}}>
-        <form onSubmit={salvar}>
-          <div style={{textAlign:"center",marginBottom:32}}>
-            <div style={{fontSize:64,marginBottom:8}}>{emojis[emojiIdx]}</div>
-            <div style={{fontFamily:"var(--font-display)",fontSize:48,fontWeight:600,color:"var(--purple)"}}>{valor}/10</div>
-          </div>
-          <input type="range" min="1" max="10" value={valor} onChange={e=>setValor(Number(e.target.value))}
-            style={{width:"100%",accentColor:"var(--purple)",height:8,cursor:"pointer",marginBottom:8}}/>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:24}}>
-            <span>1 — Muito ruim</span><span>5 — Regular</span><span>10 — Excelente</span>
-          </div>
-          <div className="form-group" style={{marginBottom:20}}>
-            <label className="form-label">Como você está se sentindo? (opcional)</label>
-            <textarea className="form-input" rows={3} value={nota} onChange={e=>setNota(e.target.value)}
-              placeholder="Descreva brevemente como está seu dia..." style={{resize:"vertical"}}/>
-          </div>
-          {msg && <div style={{background:"var(--purple-bg)",border:"1px solid var(--purple)",borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:14,color:"var(--purple)"}}>{msg}</div>}
-          <button className="btn-primary" type="submit" disabled={salvando}>{salvando?"Salvando...":"Registrar Humor"}</button>
-        </form>
-      </div>
-
-      {historico.length > 0 && (
-        <div className="card">
-          <div style={{fontWeight:600,marginBottom:16}}>Histórico recente</div>
-          {historico.map(h=>(
-            <div key={h.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--gray-100)"}}>
-              <div style={{width:44,height:44,borderRadius:10,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"var(--purple)",fontSize:16,flexShrink:0}}>{h.valor}</div>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:500,fontSize:14}}>{h.data}</div>
-                {h.nota && <div style={{fontSize:13,color:"var(--text-muted)"}}>{h.nota}</div>}
-              </div>
-              <div style={{width:80,background:"var(--gray-100)",borderRadius:20,height:6}}>
-                <div style={{width:((h.valor/10)*100)+"%",height:"100%",background:"var(--purple)",borderRadius:20}}/>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════
-//  CHECK-IN SEMANAL — FORMULÁRIO
-// ═══════════════════════════════════════════════════════
 function FormCheckinSemanal({ user, semana, onSalvo, onCancelar }) {
   const [respostas, setRespostas] = useState({});
   const [salvando, setSalvando]   = useState(false);
