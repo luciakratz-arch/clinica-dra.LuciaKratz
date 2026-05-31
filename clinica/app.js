@@ -553,7 +553,7 @@ function FerramentaPortal({ recurso, user }){
       {conteudo&&(
         <div>
           <div style={{fontWeight:700,fontSize:12,color:"#6b7280",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Passo a Passo</div>
-          {conteudo.split(/(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
+          {conteudo.split("\n\n").filter(function(p){return p.trim().length>2;}).map(function(passo,i){
             const linhas = passo.trim().split("\n");
             const titulo = linhas[0];
             const corpo  = linhas.slice(1).join("\n").trim();
