@@ -6366,6 +6366,378 @@ function FerramentaEnergyMap({ user }){
 
 
 // ═══════════════════════════════════════════════════════════════════
+// FERRAMENTAS MACRO_RELACIONAMENTOS — Componentes Mistos
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 1. Registo CNV ───────────────────────────────────────────────
+function FerramentaCNV({ user }){
+  const COR="#0891b2"; const BG="#e0f2fe";
+  const [p,setP]=useState(0);
+  const [d,setD]=useState({observacao:"",sentimento:"",necessidade:"",pedido:""});
+  const [salvo,setSalvo]=useState(false);
+
+  const PASSOS=[
+    {letra:"O",titulo:"Observação",subtitulo:"O que aconteceu — só os factos",
+     dica:"Descreva o facto concreto sem julgamento. Em vez de 'és irresponsável', diga 'reparei que X não foi feito'.",
+     campo:"observacao",placeholder:"Ex: Reparei que chegaste 30 minutos depois do combinado sem avisar..."},
+    {letra:"S",titulo:"Sentimento",subtitulo:"O que você sentiu",
+     dica:"Nomeie a emoção sem atribuir culpa. 'Sinto-me ansioso' em vez de 'fizeste-me sentir mal'.",
+     campo:"sentimento",placeholder:"Ex: Sinto-me ansioso e sozinho quando isso acontece..."},
+    {letra:"N",titulo:"Necessidade",subtitulo:"O que está por baixo do sentimento",
+     dica:"Identifique a necessidade não satisfeita. Não é sobre o outro — é sobre o que você precisa.",
+     campo:"necessidade",placeholder:"Ex: Preciso de me sentir considerado e de confiar nos nossos combinados..."},
+    {letra:"P",titulo:"Pedido",subtitulo:"O que você quer que aconteça",
+     dica:"Formule um pedido claro, positivo e realizável. Permite que o outro diga não.",
+     campo:"pedido",placeholder:"Ex: Podes avisar-me com antecedência quando vais atrasar?"},
+  ];
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>💬</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:12}}>Registo CNV salvo!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px 16px",marginBottom:20,textAlign:"left"}}>
+        {PASSOS.map(ps=>(
+          <div key={ps.letra} style={{marginBottom:10,paddingBottom:10,borderBottom:"1px solid "+COR+"20"}}>
+            <div style={{fontSize:11,fontWeight:700,color:COR,marginBottom:3}}>{ps.letra} — {ps.titulo}</div>
+            <div style={{fontSize:13,color:"var(--text)"}}>{d[ps.campo]||"—"}</div>
+          </div>
+        ))}
+      </div>
+      <button onClick={()=>{setD({observacao:"",sentimento:"",necessidade:"",pedido:""});setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo registo
+      </button>
+    </div>
+  );
+
+  const pInfo=PASSOS[p];
+  return(
+    <div>
+      <StepProgress passo={p} total={PASSOS.length} cor={COR}/>
+      <StepHeader letra={pInfo.letra} titulo={pInfo.titulo} subtitulo={pInfo.subtitulo} dica={pInfo.dica} cor={COR} bg={BG}/>
+      <textarea value={d[pInfo.campo]} onChange={e=>setD({...d,[pInfo.campo]:e.target.value})}
+        placeholder={pInfo.placeholder}
+        style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+      {p===3&&d.observacao&&d.sentimento&&d.necessidade&&(
+        <div style={{background:BG,borderRadius:10,padding:"12px 14px",marginTop:12,fontSize:13,color:"#0c4a6e",lineHeight:1.7,fontStyle:"italic"}}>
+          "Quando <strong>{d.observacao.slice(0,40)}...</strong>, sinto <strong>{d.sentimento.slice(0,30)}</strong>, porque preciso de <strong>{d.necessidade.slice(0,30)}</strong>. {d.pedido?d.pedido.slice(0,50)+"...":""}"
+        </div>
+      )}
+      <NavButtons passo={p} total={PASSOS.length} onBack={()=>setP(p-1)} onNext={()=>setP(p+1)} onSave={()=>setSalvo(true)} podeProsseguir={d[pInfo.campo].trim().length>5}/>
+    </div>
+  );
+}
+
+// ── 2. Mapa de Limites ───────────────────────────────────────────
+function FerramentaLimitsMap({ user }){
+  const COR="#7c3aed"; const BG="#ede9fe";
+  const RESPOSTAS=[
+    {v:"silencio",l:"Cedo em silêncio",e:"😶"},
+    {v:"explode",l:"Explodo depois",e:"💥"},
+    {v:"evito",l:"Evito a situação",e:"🚪"},
+    {v:"ironizo",l:"Uso ironia",e:"😏"},
+    {v:"assertivo",l:"Comunico diretamente",e:"💬"},
+  ];
+  const [p,setP]=useState(0);
+  const [situacao,setSituacao]=useState("");
+  const [quem,setQuem]=useState("");
+  const [resposta,setResposta]=useState([]);
+  const [formulacao,setFormulacao]=useState("");
+  const [resistencia,setResistencia]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🚪</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:12}}>Limite mapeado!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,textAlign:"left",fontSize:13,lineHeight:1.7}}>
+        <div><strong>Situação:</strong> {situacao}</div>
+        <div><strong>Com quem:</strong> {quem}</div>
+        <div><strong>Formulação:</strong> {formulacao}</div>
+      </div>
+      <button onClick={()=>{setSituacao("");setQuem("");setResposta([]);setFormulacao("");setResistencia("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo limite
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="A situação de desconforto" subtitulo="Onde sente que um limite está sendo violado?" dica="Pense numa situação recente em que ficou ressentido, esgotado ou com sensação de injustiça." cor={COR} bg={BG}/>
+        <textarea value={situacao} onChange={e=>setSituacao(e.target.value)}
+          placeholder="Ex: Minha chefe pede tarefas fora do horário de trabalho regularmente..."
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none",marginBottom:12}}/>
+        <label style={{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:6,display:"block"}}>Com quem acontece?</label>
+        <input value={quem} onChange={e=>setQuem(e.target.value)} placeholder="Ex: Chefe, parceiro, familiar..."
+          style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={situacao.trim().length>5&&quem.trim().length>2}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Sua resposta habitual" subtitulo="O que costuma fazer quando o limite é violado?" dica="Cada padrão tem um custo — identifique o seu sem julgamento." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={RESPOSTAS} selecionadas={resposta} onChange={setResposta} cor={COR} bg={BG}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={resposta.length>0}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="Formule o limite" subtitulo="Como comunicar de forma clara e assertiva" dica='"Quando [situação], eu preciso que [pedido]. Se isso não mudar, vou [consequência realista]."' cor={COR} bg={BG}/>
+        <textarea value={formulacao} onChange={e=>setFormulacao(e.target.value)}
+          placeholder="Ex: Quando recebo pedidos fora do horário, preciso que sejam deixados para o dia seguinte. Se isso continuar, terei de conversar formalmente..."
+          style={{width:"100%",minHeight:100,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={formulacao.trim().length>10}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Prepare-se para a resistência" subtitulo="Como vai responder se o limite for pressionado?" dica="Limites novos geram resistência. Ter uma resposta pronta reduz a ansiedade." cor={COR} bg={BG}/>
+        <textarea value={resistencia} onChange={e=>setResistencia(e.target.value)}
+          placeholder="Ex: Se insistirem, vou repetir com calma: 'Compreendo, mas preciso de manter este limite'..."
+          style={{width:"100%",minHeight:80,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={true}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 3. Inventário de Carga Mental ────────────────────────────────
+function FerramentaMentalLoad({ user }){
+  const COR="#d97706"; const BG="#fef3c7";
+  const [ver,setVer]=useState("");
+  const [planear,setPlanear]=useState("");
+  const [fazer,setFazer]=useState("");
+  const [pctVoce,setPctVoce]=useState(60);
+  const [atrito,setAtrito]=useState("");
+  const [plano,setPlano]=useState("");
+  const [p,setP]=useState(0);
+  const [salvo,setSalvo]=useState(false);
+
+  const pctOutro=100-pctVoce;
+  const corBal=pctVoce>=70?"#dc2626":pctVoce>=55?"#d97706":"#059669";
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🧩</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:12}}>Inventário registrado!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700}}>
+          <span style={{color:corBal}}>Você: {pctVoce}%</span>
+          <span style={{color:"#059669"}}>Outro: {pctOutro}%</span>
+        </div>
+      </div>
+      <button onClick={()=>{setVer("");setPlanear("");setFazer("");setPctVoce(60);setAtrito("");setPlano("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo inventário
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="VER — O que você percebe" subtitulo="Tarefas que você nota precisam ser feitas" dica="Durante 3 dias, anote tudo que 'gere' mentalmente: compras, consultas, necessidades dos filhos, gestão da casa." cor={COR} bg={BG}/>
+        <textarea value={ver} onChange={e=>setVer(e.target.value)}
+          placeholder="Ex: Leite acabou, consulta do médico para marcar, aniversário da professora, carro precisa de revisão..."
+          style={{width:"100%",minHeight:100,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={ver.trim().length>5}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="PLANEAR + FAZER" subtitulo="Quem decide e quem executa?" dica="Separar quem planeia de quem faz revela onde está o desequilíbrio real." cor={COR} bg={BG}/>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block",color:"var(--text)"}}>Quem planeia (como, quando, com quê)?</label>
+          <textarea value={planear} onChange={e=>setPlanear(e.target.value)} placeholder="Ex: Eu decido tudo sobre as refeições, escola, médico..."
+            style={{width:"100%",minHeight:70,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        </div>
+        <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block",color:"var(--text)"}}>Quem executa as tarefas?</label>
+        <textarea value={fazer} onChange={e=>setFazer(e.target.value)} placeholder="Ex: Eu faço 80%, ele faz 20%..."
+          style={{width:"100%",minHeight:70,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={planear.trim().length>3}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="Balanço da carga" subtitulo="Quanto você carrega?" dica="Seja honesto — este dado é para você, não para acusar." cor={COR} bg={BG}/>
+        <div style={{textAlign:"center",marginBottom:8}}>
+          <div style={{fontSize:36,fontWeight:700,color:corBal}}>{pctVoce}%</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>da carga mental total</div>
+        </div>
+        <input type="range" min={0} max={100} value={pctVoce} onChange={e=>setPctVoce(Number(e.target.value))} style={{width:"100%",accentColor:corBal,marginBottom:8}}/>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12}}>
+          <span style={{color:corBal,fontWeight:700}}>Você: {pctVoce}%</span>
+          <span style={{color:"#059669",fontWeight:700}}>Outro(s): {pctOutro}%</span>
+        </div>
+        {pctVoce>=70&&<div style={{background:"#fee2e2",borderRadius:10,padding:"10px 12px",marginTop:10,fontSize:12,color:"#7f1d1d"}}>
+          ⚠️ Carga assimétrica — considere a conversa de redistribuição.
+        </div>}
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={true}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Plano de redistribuição" subtitulo="O que pode ser redistribuído?" dica="Apresente como dados, não como acusação. 'Quero que vejamos juntos' em vez de 'nunca fazes nada'." cor={COR} bg={BG}/>
+        <textarea value={atrito} onChange={e=>setAtrito(e.target.value)} placeholder="Qual tarefa gera mais atrito ou é mais negligenciada?" style={{width:"100%",minHeight:60,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",marginBottom:10,boxSizing:"border-box",outline:"none"}}/>
+        <textarea value={plano} onChange={e=>setPlano(e.target.value)} placeholder="O que vai propor redistribuir e como?" style={{width:"100%",minHeight:70,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={true}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 4. Mapeamento do Ciclo de Conflito ───────────────────────────
+function FerramentaConflictCycle({ user }){
+  const COR="#dc2626"; const BG="#fee2e2";
+  const PAPEIS=[
+    {v:"inicia",l:"Quem inicia",e:"⚡"},{v:"acusa",l:"Quem acusa",e:"👆"},
+    {v:"defende",l:"Quem defende",e:"🛡️"},{v:"retira",l:"Quem se retira",e:"🚪"},
+    {v:"persegue",l:"Quem persegue",e:"🏃"},{v:"explode",l:"Quem explode",e:"💥"},
+  ];
+  const [p,setP]=useState(0);
+  const [conflito,setConflito]=useState("");
+  const [papeis,setPapeis]=useState([]);
+  const [gatilho,setGatilho]=useState("");
+  const [sequencia,setSequencia]=useState("");
+  const [sinal,setSinal]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🔄</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:12}}>Ciclo mapeado!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,textAlign:"left",fontSize:13,lineHeight:1.8}}>
+        <div><strong>Conflito:</strong> {conflito.slice(0,60)}...</div>
+        <div><strong>Gatilho:</strong> {gatilho}</div>
+        {sinal&&<div><strong>Sinal de pausa:</strong> "{sinal}"</div>}
+      </div>
+      <button onClick={()=>{setConflito("");setPapeis([]);setGatilho("");setSequencia("");setSinal("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo mapeamento
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="O conflito recorrente" subtitulo="Qual discussão se repete?" dica="Não o conteúdo específico — o padrão. 'Quando discutimos sobre X, o que acontece é sempre...'" cor={COR} bg={BG}/>
+        <textarea value={conflito} onChange={e=>setConflito(e.target.value)}
+          placeholder="Ex: Sempre que discutimos sobre organização da casa, o padrão é..."
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={conflito.trim().length>5}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Papéis no ciclo" subtitulo="Quem costuma fazer o quê?" dica="Os papéis são fluidos — podem mudar conforme o tema." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={PAPEIS} selecionadas={papeis} onChange={setPapeis} cor={COR} bg={BG}/>
+        <div style={{marginTop:14}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Qual é o gatilho principal?</label>
+          <input value={gatilho} onChange={e=>setGatilho(e.target.value)} placeholder="Ex: Tom de voz, uma frase específica, momento do dia..."
+            style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={papeis.length>0&&gatilho.trim().length>3}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="A sequência típica" subtitulo="O que acontece do início ao fim?" dica="Escreva em passos numerados: eu digo X → ele reage Y → eu faço Z..." cor={COR} bg={BG}/>
+        <textarea value={sequencia} onChange={e=>setSequencia(e.target.value)}
+          placeholder={"1. Eu digo...
+2. Ele/ela reage...
+3. Eu então...
+4. Ele/ela...
+5. O assunto fica..."}
+          style={{width:"100%",minHeight:120,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.8,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={sequencia.trim().length>10}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Sinal de interrupção" subtitulo="O que vão usar para sair do ciclo?" dica="Acordem em momento de calma — uma palavra, gesto ou frase neutra que significa 'estamos no ciclo, precisamos parar'." cor={COR} bg={BG}/>
+        <input value={sinal} onChange={e=>setSinal(e.target.value)} placeholder="Ex: 'Pausa', 'Tempo', um gesto com a mão..."
+          style={{width:"100%",padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box",marginBottom:12}}/>
+        <div style={{background:BG,borderRadius:10,padding:"10px 12px",fontSize:12,color:"#7f1d1d",lineHeight:1.6}}>
+          💡 Após o sinal: separem-se 20 minutos, evitem rever a conversa mentalmente, regressem quando conseguirem falar com calma.
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={true}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 5. Escuta Ativa ──────────────────────────────────────────────
+function FerramentaActiveListening({ user }){
+  const COR="#059669"; const BG="#dcfce7";
+  const CHECKS=[
+    {id:"postura",l:"Corpo voltado, telemóvel fora"},
+    {id:"interrupcao",l:"Ouvi sem interromper"},
+    {id:"parafrase",l:"Parafraseei o que ouvi"},
+    {id:"validei",l:"Validei a emoção sem julgamento"},
+    {id:"pergunta",l:"Fiz pelo menos uma pergunta aberta"},
+    {id:"resolucao",l:"Perguntei se queria solução ou só ser ouvido"},
+  ];
+  const [qualidade,setQualidade]=useState(5);
+  const [parafrase,setParafrase]=useState("");
+  const [checks,setChecks]=useState({});
+  const [reflexao,setReflexao]=useState("");
+  const [p,setP]=useState(0);
+  const [salvo,setSalvo]=useState(false);
+
+  const feitos=Object.values(checks).filter(Boolean).length;
+  const corQ=qualidade<=4?"#dc2626":qualidade<=6?"#d97706":"#059669";
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>👂</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Escuta registrada!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20}}>
+        <div style={{fontSize:14,fontWeight:700,color:COR}}>Qualidade: {qualidade}/10</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>{feitos}/{CHECKS.length} práticas realizadas</div>
+      </div>
+      <button onClick={()=>{setQualidade(5);setParafrase("");setChecks({});setReflexao("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Nova sessão
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={3} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Auto-avaliação da escuta" subtitulo="Como foi a sua escuta hoje?" dica="Avalie honestamente — não como gostaria de ter sido, mas como realmente foi." cor={COR} bg={BG}/>
+        <div style={{textAlign:"center",marginBottom:8}}>
+          <div style={{fontSize:36,fontWeight:700,color:corQ}}>{qualidade}/10</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>
+            {qualidade<=3?"Escuta muito comprometida":qualidade<=5?"Escuta parcial":qualidade<=7?"Escuta razoável":"Escuta ativa e presente"}
+          </div>
+        </div>
+        <input type="range" min={1} max={10} value={qualidade} onChange={e=>setQualidade(Number(e.target.value))} style={{width:"100%",accentColor:corQ,marginBottom:16}}/>
+        <StepHeader letra="2" titulo="Checklist da escuta" subtitulo="O que praticou nesta conversa?" dica="" cor={COR} bg={BG}/>
+        {CHECKS.map(c=>(
+          <div key={c.id} onClick={()=>setChecks(ch=>({...ch,[c.id]:!ch[c.id]}))}
+            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,
+              border:"1.5px solid",marginBottom:6,cursor:"pointer",
+              borderColor:checks[c.id]?COR:"var(--gray-200)",background:checks[c.id]?BG:"white"}}>
+            <div style={{width:20,height:20,borderRadius:"50%",border:"2px solid",flexShrink:0,
+              borderColor:checks[c.id]?COR:"var(--gray-300)",background:checks[c.id]?COR:"white",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {checks[c.id]&&<span style={{color:"white",fontSize:11}}>✓</span>}
+            </div>
+            <span style={{fontSize:13,color:checks[c.id]?COR:"var(--text-muted)"}}>{c.l}</span>
+          </div>
+        ))}
+        <NavButtons passo={p} total={3} onNext={()=>setP(1)} podeProsseguir={true}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="3" titulo="Paráfrase" subtitulo="O que você entendeu que o outro quis dizer?" dica="Escreva como se fosse devolver ao outro: 'Se entendi bem, o que te preocupa é...'" cor={COR} bg={BG}/>
+        <textarea value={parafrase} onChange={e=>setParafrase(e.target.value)}
+          placeholder="Ex: Se entendi bem, o que te preocupa é que te sentes sozinho quando trabalho até tarde..."
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={3} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={parafrase.trim().length>5}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="4" titulo="Reflexão final" subtitulo="O que aprendeu sobre a sua escuta?" dica="O que foi mais difícil? O que quer praticar diferente na próxima conversa?" cor={COR} bg={BG}/>
+        <textarea value={reflexao} onChange={e=>setReflexao(e.target.value)}
+          placeholder="Ex: Percebi que já estava a preparar a resposta enquanto ela falava..."
+          style={{width:"100%",minHeight:80,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={3} onBack={()=>setP(1)} onSave={()=>setSalvo(true)} podeProsseguir={true}/>
+      </div>}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
 // FERRAMENTAS MACRO_HUMOR — Componentes Mistos
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7001,6 +7373,12 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
     if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
+    // macro_relacionamentos
+    if(k==="cnv-record")            return <FerramentaCNV user={user}/>;
+    if(k==="limits-map")            return <FerramentaLimitsMap user={user}/>;
+    if(k==="mental-load-inventory") return <FerramentaMentalLoad user={user}/>;
+    if(k==="conflict-cycle-map")    return <FerramentaConflictCycle user={user}/>;
+    if(k==="active-listening")      return <FerramentaActiveListening user={user}/>;
     // macro_habitos
     if(k==="sleep-ritual")       return <FerramentaSleepRitual user={user}/>;
     if(k==="five-minute-rule")   return <FerramentaFiveMinute user={user}/>;
