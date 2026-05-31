@@ -539,7 +539,866 @@ function RegistroHumor({ user }) {
 
 
 
+function NotaRelaxamento({ user, ferramenta, emoji, onRepetir }) {
+  const [nota, setNota] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  async function salvarNota(n) {
+    setNota(n);
+    if (!user?.id) { setSalvo(true); return; }
+    setSalvando(true);
+    try {
+      await db.collection("clinica_atividades").add({
+        pacienteId: user.id,
+        pacienteNome: user.nome || "",
+        ferramenta,
+        nota: n,
+        data: new Date().toLocaleDateString("pt-BR"),
+        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } catch(e) {}
+    setSalvando(false);
+    setSalvo(true);
+  }
+
+  if (salvo) return (
+    <div style={{marginTop:8}}>
+      <div style={{background:"#d1fae5",borderRadius:12,padding:"14px 20px",fontSize:14,color:"#065f46",marginBottom:20}}>
+        ✓ Nota {nota}/10 registrada! Seu progresso foi salvo. 💜
+      </div>
+      <button className="btn btn-purple" onClick={onRepetir}>
+        <Icon name="rotate-ccw" size={16}/> Repetir
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{marginTop:8}}>
+      <div style={{fontWeight:600,fontSize:15,marginBottom:6}}>Como você está se sentindo agora?</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Dê uma nota de 0 a 10 para o seu nível de relaxamento</div>
+      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:20}}>
+        {[0,1,2,3,4,5,6,7,8,9,10].map(n=>(
+          <button key={n} onClick={()=>salvarNota(n)} disabled={salvando}
+            style={{width:44,height:44,borderRadius:10,border:"1.5px solid",
+              borderColor: n<=3?"#fca5a5":n<=6?"#fbbf24":"#6ee7b7",
+              background: n<=3?"#fef2f2":n<=6?"#fef3c7":"#f0fdf4",
+              color: n<=3?"#dc2626":n<=6?"#d97706":"#16a34a",
+              fontWeight:700,fontSize:15,cursor:"pointer"}}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",paddingLeft:4,paddingRight:4}}>
+        <span>😰 Muito tenso</span><span>😐 Regular</span><span>😌 Muito relaxado</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Técnica de Respiração 4-7-8 (áudio MP4 guiado) ──
+function FerramentaRespiracao({ user }){
+  // Ciclo 4-7-8: inspirar 4s, segurar 7s, expirar 8s = 19s total
+  const FASES = [
+    {label:"Inspire",   dur:4,  cor:"#7B00C4", instrucao:"Inspire pelo nariz lentamente..."},
+    {label:"Segure",    dur:7,  cor:"#0891b2", instrucao:"Segure o ar com calma..."},
+    {label:"Expire",    dur:8,  cor:"#059669", instrucao:"Expire completamente pela boca..."},
+  ];
+  const TOTAL_CICLOS = 4;
+
+  const [ativo,      setAtivo]     = useState(false);
+  const [concluido,  setConcluido] = useState(false);
+  const [faseIdx,    setFaseIdx]   = useState(0);
+  const [progresso,  setProgresso] = useState(0); // 0-100 dentro da fase
+  const [ciclo,      setCiclo]     = useState(1);
+  const [tempoFase,  setTempoFase] = useState(0);
+  const timerRef = useRef(null);
+
+  const fase = FASES[faseIdx];
+  const durTotal = FASES.reduce((a,f)=>a+f.dur,0); // 19s
+
+  function iniciar(){ setAtivo(true); setConcluido(false); setFaseIdx(0); setProgresso(0); setCiclo(1); setTempoFase(0); }
+  function parar(){ clearInterval(timerRef.current); setAtivo(false); setFaseIdx(0); setProgresso(0); setCiclo(1); setTempoFase(0); }
+
+  useEffect(()=>{
+    if(!ativo) return;
+    timerRef.current = setInterval(()=>{
+      setTempoFase(t=>{
+        const novot = t + 0.1;
+        const durFase = FASES[faseIdx].dur;
+        if(novot >= durFase){
+          // avança fase
+          const proxFase = faseIdx + 1;
+          if(proxFase >= FASES.length){
+            // fim do ciclo
+            setCiclo(c=>{
+              if(c >= TOTAL_CICLOS){
+                clearInterval(timerRef.current);
+                setAtivo(false); setConcluido(true);
+                return c;
+              }
+              setFaseIdx(0); setProgresso(0);
+              return c+1;
+            });
+          } else {
+            setFaseIdx(proxFase); setProgresso(0);
+          }
+          return 0;
+        }
+        setProgresso((novot/durFase)*100);
+        return novot;
+      });
+    }, 100);
+    return ()=>clearInterval(timerRef.current);
+  },[ativo, faseIdx]);
+
+  const tamanhoCirculo = ativo
+    ? fase.label==="Inspire" ? 140 + progresso*0.6
+    : fase.label==="Segure"  ? 200
+    : 200 - progresso*0.6
+    : 140;
+
+  if(concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:64,marginBottom:16}}>✨</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:"var(--purple)",marginBottom:8}}>
+        Prática concluída!
+      </div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:32,lineHeight:1.6}}>
+        {TOTAL_CICLOS} ciclos de respiração 4-7-8 concluídos.<br/>
+        O seu sistema nervoso agradece. 💜
+      </div>
+      <button onClick={iniciar}
+        style={{padding:"11px 24px",borderRadius:10,border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+        Praticar novamente
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      {!ativo ? (
+        <>
+          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:"var(--text)",marginBottom:8}}>
+            Técnica de Respiração 4-7-8
+          </div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:32,lineHeight:1.6,maxWidth:300,margin:"0 auto 32px"}}>
+            Esta técnica ativa o nervo vago e reduz a ansiedade em minutos.<br/>
+            <strong>4</strong> ciclos · <strong>4</strong> inspirar · <strong>7</strong> segurar · <strong>8</strong> expirar
+          </div>
+          {/* Círculo estático */}
+          <div style={{display:"flex",justifyContent:"center",marginBottom:32}}>
+            <div style={{width:160,height:160,borderRadius:"50%",
+              background:"var(--purple-soft)",border:"3px solid var(--purple)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:32,opacity:0.6}}>
+              💨
+            </div>
+          </div>
+          <button onClick={iniciar}
+            style={{padding:"14px 32px",borderRadius:12,border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:15,fontWeight:700,fontFamily:"inherit"}}>
+            ▶ Iniciar Prática
+          </button>
+        </>
+      ) : (
+        <>
+          {/* Contador de ciclos */}
+          <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:24}}>
+            {Array.from({length:TOTAL_CICLOS}).map((_,i)=>(
+              <div key={i} style={{width:10,height:10,borderRadius:"50%",
+                background:i<ciclo?"var(--purple)":"var(--gray-200)",transition:"background .3s"}}/>
+            ))}
+          </div>
+
+          {/* Círculo animado */}
+          <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
+            <div style={{
+              width: tamanhoCirculo, height: tamanhoCirculo,
+              borderRadius:"50%", background:`${fase.cor}18`,
+              border:`4px solid ${fase.cor}`,
+              display:"flex",flexDirection:"column",
+              alignItems:"center",justifyContent:"center",
+              transition:"all 0.1s linear",
+              boxShadow:`0 0 ${progresso*0.5}px ${fase.cor}40`}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:fase.cor}}>{fase.label}</div>
+              <div style={{fontSize:28,fontWeight:700,color:fase.cor,marginTop:4}}>{Math.ceil(fase.dur - tempoFase)}s</div>
+            </div>
+          </div>
+
+          {/* Instrução */}
+          <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24,fontStyle:"italic"}}>
+            {fase.instrucao}
+          </div>
+
+          {/* Barra de progresso da fase */}
+          <div style={{width:"100%",maxWidth:280,margin:"0 auto 24px",background:"var(--gray-100)",borderRadius:20,height:6}}>
+            <div style={{width:progresso+"%",height:"100%",borderRadius:20,background:fase.cor,transition:"width 0.1s linear"}}/>
+          </div>
+
+          <button onClick={parar}
+            style={{padding:"10px 24px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+            ✕ Parar
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+
+// ── Relaxamento Muscular Progressivo ──
+// ── Relaxamento Muscular (arquivo único de vídeo) ──
+function FerramentaRelaxamento({ user }){
+  const AUDIO_SRC = "../media/atividade1meditacao.mp4";
+  const [iniciado,  setIniciado]  = useState(false);
+  const [concluido, setConcluido] = useState(false);
+  const [tempo,     setTempo]     = useState(0);
+  const [pausado,   setPausado]   = useState(false);
+  const audioRef = useRef(null);
+  const timerRef = useRef(null);
+
+  function iniciar() {
+    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
+    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
+    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
+  }
+
+  function togglePausa() {
+    if (!audioRef.current) return;
+    if (pausado) { audioRef.current.play().catch(()=>{}); clearInterval(timerRef.current); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
+    else { audioRef.current.pause(); clearInterval(timerRef.current); }
+    setPausado(p=>!p);
+  }
+
+  function parar() {
+    clearInterval(timerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
+    setIniciado(false); setTempo(0); setPausado(false);
+  }
+
+  function onEnded() {
+    clearInterval(timerRef.current);
+    setIniciado(false); setConcluido(true);
+  }
+
+  useEffect(()=>()=>clearInterval(timerRef.current),[]);
+
+  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
+  const ss = String(tempo%60).padStart(2,"0");
+
+  if (concluido) return (
+    <div style={{textAlign:"center",padding:"40px 20px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>✅</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
+      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
+      <NotaRelaxamento user={user} ferramenta="relaxamento" emoji="💆" onRepetir={iniciar}/>
+    </div>
+  );
+
+  if (!iniciado) return (
+    <div style={{textAlign:"center",padding:"32px 20px"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+      <div style={{fontSize:56,marginBottom:16}}>💆</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Muscular Progressivo</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
+        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
+        Siga as instruções do áudio e relaxe cada grupo muscular.
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
+        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
+          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
+            <span style={{fontSize:22}}>{i.e}</span>
+            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
+        <Icon name="play" size={18}/> Iniciar
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
+
+      {/* Animação pulsante */}
+      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
+        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
+        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
+          <div style={{fontSize:28}}>💆</div>
+        </div>
+      </div>
+
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
+        {pausado ? "Pausado" : "Em relaxamento..."}
+      </div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Siga as instruções do áudio</div>
+
+      {/* Cronômetro */}
+      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
+        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
+        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
+      </div>
+
+      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+        <button className="btn btn-purple" onClick={togglePausa}>
+          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
+        </button>
+        <button className="btn btn-ghost" onClick={parar}>
+          <Icon name="square" size={15}/> Parar
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes pulse-slow {
+          0%,100%{transform:scale(1);opacity:0.6}
+          50%{transform:scale(1.08);opacity:1}
+        }
+        .pulse-slow{animation:pulse-slow 3s ease-in-out infinite}
+      `}</style>
+    </div>
+  );
+}
+// ── Árvore da Decisão ──
+function FerramentaArvore(){
+  const [step,setStep]=useState("home");
+  const [preocupacao,setPreocupacao]=useState("");
+  const [acoes,setAcoes]=useState("");
+  const [plano,setPlano]=useState("");
+  const [conclusao,setConclusao]=useState(null);
+  const [historico,setHistorico]=useState([]);
+
+  function reiniciar(){setStep("home");setPreocupacao("");setAcoes("");setPlano("");setConclusao(null);}
+
+  function salvarHistorico(c){
+    setHistorico(h=>[{data:new Date().toLocaleDateString("pt-BR"),preocupacao,conclusao:c},...h].slice(0,10));
+    setConclusao(c);setStep("conclusao");
+  }
+
+  const CONCLUSOES={
+    redirect:{emoji:"🌿",titulo:"Redirecione sua atenção",desc:"Esta situação está fora do seu controle agora. Direcione sua energia para algo que possa fazer.",cor:"#0891b2",bg:"#e0f2fe"},
+    "act-now":{emoji:"⚡",titulo:"Realize esta tarefa agora!",desc:"Você identificou uma ação que pode ser feita agora. Coloque-a em prática!",cor:"#059669",bg:"#d1fae5"},
+    plan:{emoji:"📋",titulo:"Siga o seu plano",desc:"Você tem um plano para agir no momento certo. Confie nele e direcione sua atenção.",cor:"#d97706",bg:"#fef3c7"},
+  };
+
+  if(step==="home") return(
+    <div style={{textAlign:"center",padding:"20px 0"}}>
+      <div style={{fontSize:48,marginBottom:12}}>🌳</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Árvore da Decisão</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:8}}>Uma técnica da TCC para transformar preocupações em ações concretas — distinguindo o que está ou não no seu controle.</p>
+      <p style={{fontSize:12,color:"#9ca3af",marginBottom:24}}>💡 Preocupações <strong>produtivas</strong> levam à ação. <strong>Improdutivas</strong> paralisam.</p>
+      <button className="btn btn-purple" style={{fontSize:15,padding:"12px 32px"}} onClick={()=>setStep("worry")}>Iniciar exercício →</button>
+      {historico.length>0&&<div style={{marginTop:24,textAlign:"left"}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Registros anteriores</div>
+        {historico.map((h,i)=><div key={i} style={{padding:"8px 12px",background:"#f9fafb",borderRadius:8,marginBottom:6,fontSize:12,display:"flex",justifyContent:"space-between"}}>
+          <span style={{flex:1,color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.preocupacao}</span>
+          <span style={{color:"#9ca3af",marginLeft:8,flexShrink:0}}>{h.data}</span>
+        </div>)}
+      </div>}
+    </div>
+  );
+  if(step==="worry") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Qual é a sua preocupação agora?</div>
+      <TextAreaVoz className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
+      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" onClick={()=>setStep("home")}>Voltar</button>
+        <button className="btn btn-purple" onClick={()=>setStep("can-intervene")} disabled={!preocupacao.trim()}>Próximo →</button>
+      </div>
+    </div>
+  );
+  if(step==="can-intervene") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Você pode fazer algo para resolver esta preocupação?</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:20}}>Pense se existe alguma ação concreta que você pode tomar.</p>
+      <div style={{display:"flex",gap:12}}>
+        <button className="btn btn-purple" style={{flex:1,padding:16}} onClick={()=>setStep("actions")}>✅ Sim, posso agir</button>
+        <button className="btn btn-outline" style={{flex:1,padding:16}} onClick={()=>salvarHistorico("redirect")}>❌ Não está no meu controle</button>
+      </div>
+    </div>
+  );
+  if(step==="actions") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Quais ações você pode tomar?</div>
+      <TextAreaVoz className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
+      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" onClick={()=>setStep("can-intervene")}>Voltar</button>
+        <button className="btn btn-purple" onClick={()=>setStep("can-act-now")} disabled={!acoes.trim()}>Próximo →</button>
+      </div>
+    </div>
+  );
+  if(step==="can-act-now") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Você pode realizar alguma dessas ações agora?</div>
+      <div style={{display:"flex",gap:12,marginTop:16}}>
+        <button className="btn btn-purple" style={{flex:1,padding:16}} onClick={()=>salvarHistorico("act-now")}>⚡ Sim, agora</button>
+        <button className="btn btn-outline" style={{flex:1,padding:16}} onClick={()=>setStep("plan")}>📋 Preciso planejar</button>
+      </div>
+    </div>
+  );
+  if(step==="plan") return(
+    <div>
+      <div style={{fontWeight:600,marginBottom:8}}>Crie um plano de ação:</div>
+      <TextAreaVoz className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
+      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" onClick={()=>setStep("can-act-now")}>Voltar</button>
+        <button className="btn btn-purple" onClick={()=>salvarHistorico("plan")} disabled={!plano.trim()}>Finalizar →</button>
+      </div>
+    </div>
+  );
+  if(step==="conclusao"&&conclusao){
+    const c=CONCLUSOES[conclusao];
+    return(
+      <div>
+        <div style={{background:c.bg,borderRadius:16,padding:24,textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:40,marginBottom:8}}>{c.emoji}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:c.cor,marginBottom:8}}>{c.titulo}</div>
+          <p style={{fontSize:13,color:"#6b7280"}}>{c.desc}</p>
+        </div>
+        <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13}}>
+          <div style={{fontWeight:600,marginBottom:4}}>Sua preocupação:</div>
+          <div style={{color:"#6b7280"}}>{preocupacao}</div>
+          {acoes&&<><div style={{fontWeight:600,marginBottom:4,marginTop:10}}>Ações identificadas:</div><div style={{color:"#6b7280"}}>{acoes}</div></>}
+          {plano&&<><div style={{fontWeight:600,marginBottom:4,marginTop:10}}>Seu plano:</div><div style={{color:"#6b7280"}}>{plano}</div></>}
+        </div>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Nova preocupação</button>
+      </div>
+    );
+  }
+  return null;
+}
+
+// ── Ferramenta genérica (placeholder para as demais) ──
+function FerramentaGenerica({recurso}){
+  const INFO={
+    "abc-record":     {emoji:"📋",titulo:"Registro ABC de Pensamentos",   desc:"Identifique a Situação (A), o Pensamento Automático (B) e a Emoção/Consequência (C).",cor:"#7c3aed"},
+    "anxiety-management":{emoji:"🎯",titulo:"Gestão da Ansiedade",        desc:"Monitore seu nível de estresse, atividades anti-ansiedade, pensamentos e roda da vida.",cor:"#6366f1"},
+    "emotional-eating":  {emoji:"🍃",titulo:"Rastreamento Emocional da Alimentação",desc:"Registre a emoção, o gatilho e o comportamento alimentar.",cor:"#059669"},
+    "entrevista-clinica":{emoji:"📝",titulo:"Entrevista Clínica Inicial",  desc:"Instrumento de avaliação clínica inicial com perfil etário e hipóteses DSM-5.",cor:"#0891b2"},
+    "anamnese":          {emoji:"📄",titulo:"Anamnese — Marcos do Desenvolvimento",desc:"Formulário completo de anamnese para histórico do desenvolvimento.",cor:"#7c3aed"},
+    "treino-neuro-auditivo":{emoji:"🎵",titulo:"Treino Neuro-Auditivo",   desc:"Discriminação auditiva: sons graves/agudos, vozes, intensidade, ritmo e melodia.",cor:"#be185d"},
+  };
+  const info = INFO[recurso.formularioKey]||{emoji:"🔧",titulo:recurso.titulo,desc:recurso.descricao,cor:"#7c3aed"};
+  return(
+    <div style={{textAlign:"center",padding:"30px 20px"}}>
+      <div style={{width:80,height:80,borderRadius:20,background:info.cor+"15",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",fontSize:36}}>{info.emoji}</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>{info.titulo}</div>
+      <p style={{fontSize:13,color:"#6b7280",lineHeight:1.7,marginBottom:24,maxWidth:400,margin:"0 auto 24px"}}>{info.desc}</p>
+      <div style={{background:"#f9f5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:16,fontSize:13,color:"#7c3aed"}}>
+        Esta ferramenta está disponível no portal do paciente. O paciente acessa e preenche diretamente pelo login deles.
+      </div>
+    </div>
+  );
+}
+
+// ── Modal principal ──
+// ── ABC de Pensamentos ──────────────────────────────────────────────────────
+function FerramentaABC(){
+  const EMOCOES = ["Ansiedade","Tristeza","Raiva","Medo","Vergonha","Culpa","Frustração","Insegurança","Alívio","Esperança"];
+  const [passo,    setPasso]    = useState(1); // 1=situação, 2=pensamento, 3=emoção, 4=resposta, 5=concluído
+  const [draft,    setDraft]    = useState({situacao:"",pensamento:"",emocao:"",intensidade:60,alternativo:""});
+  const [registros,setRegistros]= useState([]);
+  const [verReg,   setVerReg]   = useState(null);
+
+  function salvar(){
+    if(!draft.situacao||!draft.pensamento||!draft.emocao) return;
+    setRegistros(r=>[{...draft,id:Date.now()+"",data:new Date().toLocaleDateString("pt-BR")},...r]);
+    setPasso(5);
+  }
+
+  function reiniciar(){
+    setDraft({situacao:"",pensamento:"",emocao:"",intensidade:60,alternativo:""});
+    setPasso(1);
+  }
+
+  const PASSOS_INFO = [
+    {n:1,letra:"A",titulo:"Situação",subtitulo:"O que aconteceu?",cor:"#3b82f6",bg:"#dbeafe",icone:"🔍",
+      dica:"Descreva a situação de forma objetiva — onde estava, com quem, o que aconteceu. Sem interpretações ainda.",
+      placeholder:"Ex: Meu chefe me chamou para uma conversa inesperada..."},
+    {n:2,letra:"B",titulo:"Pensamento Automático",subtitulo:"O que passou pela sua cabeça?",cor:"#7c3aed",bg:"#ede9fe",icone:"💭",
+      dica:"Qual foi o primeiro pensamento que surgiu automaticamente? Escreva exatamente como veio, sem filtrar.",
+      placeholder:"Ex: Devo ter cometido um erro grave. Vou ser demitido..."},
+    {n:3,letra:"C",titulo:"Emoção e Intensidade",subtitulo:"O que você sentiu?",cor:"#d97706",bg:"#fef3c7",icone:"❤️",
+      dica:"Nomeie a emoção principal e avalie sua intensidade. Pode haver mais de uma — escolha a mais forte."},
+    {n:4,letra:"D",titulo:"Resposta Racional",subtitulo:"O que a razão diz?",cor:"#059669",bg:"#dcfce7",icone:"⚖️",
+      dica:"Questione o pensamento automático. Há evidências reais? Qual seria uma forma mais equilibrada de ver essa situação?",
+      placeholder:"Ex: Pode ser apenas um feedback de rotina. Não tenho evidências de que vou ser demitido..."},
+  ];
+
+  const passoInfo = PASSOS_INFO[passo-1] || PASSOS_INFO[0];
+  const intCor = draft.intensidade<34?"#059669":draft.intensidade<67?"#d97706":"#dc2626";
+
+  // ── Ver registro ─────────────────────────────────────────────────
+  if(verReg) return (
+    <div>
+      <button onClick={()=>setVerReg(null)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit",marginBottom:16,display:"flex",alignItems:"center",gap:6}}>
+        ← Voltar
+      </button>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:16}}>{verReg.data}</div>
+      {[
+        {letra:"A",cor:"#3b82f6",bg:"#dbeafe",titulo:"Situação",val:verReg.situacao},
+        {letra:"B",cor:"#7c3aed",bg:"#ede9fe",titulo:"Pensamento",val:verReg.pensamento},
+        {letra:"C",cor:"#d97706",bg:"#fef3c7",titulo:`Emoção: ${verReg.emocao} (${verReg.intensidade}%)`,val:null},
+        {letra:"D",cor:"#059669",bg:"#dcfce7",titulo:"Resposta Racional",val:verReg.alternativo||"—"},
+      ].map(c=>(
+        <div key={c.letra} style={{background:c.bg,borderRadius:12,padding:"12px 16px",marginBottom:10,borderLeft:`4px solid ${c.cor}`}}>
+          <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>{c.letra} — {c.titulo}</div>
+          {c.val&&<div style={{fontSize:13,color:"#374151",lineHeight:1.6}}>{c.val}</div>}
+        </div>
+      ))}
+    </div>
+  );
+
+  // ── Concluído ────────────────────────────────────────────────────
+  if(passo===5) return (
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>⚖️</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:"var(--purple)",marginBottom:8}}>
+        Registro salvo!
+      </div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:32,lineHeight:1.6}}>
+        Identificar e questionar pensamentos automáticos é um dos exercícios mais poderosos da TCC. 💜
+      </div>
+      <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+        <button onClick={reiniciar}
+          style={{padding:"10px 20px",borderRadius:10,border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+          Novo registro
+        </button>
+        {registros.length>0&&(
+          <button onClick={()=>setVerReg(registros[0])}
+            style={{padding:"10px 20px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+            Ver último
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── Wizard ───────────────────────────────────────────────────────
+  return (
+    <div>
+      {/* Progresso */}
+      <div style={{display:"flex",gap:6,marginBottom:24}}>
+        {PASSOS_INFO.map(p=>(
+          <div key={p.n} style={{flex:1,height:4,borderRadius:4,
+            background:p.n<=passo?p.cor:"var(--gray-100)",
+            cursor:p.n<passo?"pointer":"default",transition:"background .2s"}}
+            onClick={()=>p.n<passo&&setPasso(p.n)}/>
+        ))}
+      </div>
+
+      {/* Header do passo */}
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+        <div style={{width:48,height:48,borderRadius:12,background:passoInfo.bg,
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <span style={{fontWeight:900,fontSize:18,color:passoInfo.cor}}>{passoInfo.letra}</span>
+        </div>
+        <div>
+          <div style={{fontWeight:700,fontSize:16,color:"var(--text)"}}>{passoInfo.titulo}</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>{passoInfo.subtitulo}</div>
+        </div>
+      </div>
+
+      {/* Dica */}
+      <div style={{background:"var(--gray-50)",borderRadius:10,padding:"10px 14px",marginBottom:16,
+        fontSize:12,color:"var(--text-muted)",lineHeight:1.6,borderLeft:`3px solid ${passoInfo.cor}`}}>
+        {passoInfo.dica}
+      </div>
+
+      {/* Campo do passo */}
+      {passo<=2&&(
+        <textarea value={draft[passo===1?"situacao":"pensamento"]}
+          onChange={e=>setDraft({...draft,[passo===1?"situacao":"pensamento"]:e.target.value})}
+          placeholder={passoInfo.placeholder}
+          style={{width:"100%",minHeight:100,padding:"12px",borderRadius:10,
+            border:`1.5px solid ${passoInfo.cor}50`,fontSize:14,fontFamily:"inherit",
+            resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+      )}
+
+      {passo===3&&(
+        <div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+            {EMOCOES.map(em=>{
+              const sel = draft.emocao===em;
+              return (
+                <button key={em} onClick={()=>setDraft({...draft,emocao:em})}
+                  style={{padding:"7px 14px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,
+                    borderColor:sel?passoInfo.cor:"var(--gray-200)",
+                    background:sel?passoInfo.bg:"white",
+                    color:sel?passoInfo.cor:"var(--text-muted)",
+                    fontWeight:sel?700:400,transition:"all .12s"}}>
+                  {em}
+                </button>
+              );
+            })}
+          </div>
+          {draft.emocao&&(
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}>
+                <span style={{fontWeight:600}}>Intensidade de {draft.emocao}</span>
+                <span style={{fontWeight:700,color:intCor}}>{draft.intensidade}%</span>
+              </div>
+              <input type="range" min={0} max={100} value={draft.intensidade}
+                onChange={e=>setDraft({...draft,intensidade:+e.target.value})}
+                style={{width:"100%",accentColor:passoInfo.cor}}/>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",marginTop:4}}>
+                <span>Leve</span><span>Moderada</span><span>Intensa</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {passo===4&&(
+        <textarea value={draft.alternativo}
+          onChange={e=>setDraft({...draft,alternativo:e.target.value})}
+          placeholder={passoInfo.placeholder}
+          style={{width:"100%",minHeight:100,padding:"12px",borderRadius:10,
+            border:`1.5px solid ${passoInfo.cor}50`,fontSize:14,fontFamily:"inherit",
+            resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+      )}
+
+      {/* Navegação */}
+      <div style={{display:"flex",gap:10,marginTop:20}}>
+        {passo>1&&(
+          <button onClick={()=>setPasso(passo-1)}
+            style={{flex:1,padding:"11px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+            ← Anterior
+          </button>
+        )}
+        {passo<4&&(
+          <button onClick={()=>setPasso(passo+1)}
+            disabled={passo===1&&!draft.situacao || passo===2&&!draft.pensamento || passo===3&&!draft.emocao}
+            style={{flex:2,padding:"11px",borderRadius:10,border:"none",
+              background:(passo===1&&draft.situacao)||(passo===2&&draft.pensamento)||(passo===3&&draft.emocao)||passo>3
+                ?passoInfo.cor:"var(--gray-100)",
+              color:(passo===1&&draft.situacao)||(passo===2&&draft.pensamento)||(passo===3&&draft.emocao)||passo>3
+                ?"white":"var(--text-muted)",
+              cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+            Próximo →
+          </button>
+        )}
+        {passo===4&&(
+          <button onClick={salvar}
+            style={{flex:2,padding:"11px",borderRadius:10,border:"none",background:passoInfo.cor,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+            Salvar Registro ✓
+          </button>
+        )}
+      </div>
+
+      {/* Histórico compacto */}
+      {registros.length>0&&passo===1&&(
+        <div style={{marginTop:24}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.5px"}}>
+            Registros anteriores
+          </div>
+          {registros.slice(0,3).map(r=>(
+            <button key={r.id} onClick={()=>setVerReg(r)}
+              style={{width:"100%",background:"white",border:"1px solid var(--gray-100)",borderRadius:10,
+                padding:"10px 14px",marginBottom:6,cursor:"pointer",textAlign:"left",fontFamily:"inherit",
+                display:"flex",alignItems:"center",gap:10}}>
+              <span style={{background:"#ede9fe",color:"#7c3aed",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:700,flexShrink:0}}>{r.emocao}</span>
+              <span style={{fontSize:12,color:"var(--text-muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{r.situacao}</span>
+              <span style={{fontSize:11,color:"var(--text-muted)",flexShrink:0}}>{r.data}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ── Gestão da Ansiedade ──────────────────────────────────────────────────────
+function FerramentaGestaoAnsiedade(){
+  const TECNICAS=[{id:"resp",label:"Respiração Relaxada",desc:"Inspirar → Pausar → Expirar por 2 min"},{id:"visao",label:"Visão Periférica",desc:"Mover os olhos da direita para a esquerda"},{id:"musc",label:"Relaxamento Muscular",desc:"Contrair músculos 5s e relaxar com suspiro"}];
+  const ATIVIDADES=[{id:"caminhada",label:"🚶 Caminhada"},{id:"meditacao",label:"🧘 Meditação"},{id:"diario",label:"📓 Diário"},{id:"musica",label:"🎵 Música"},{id:"alongamento",label:"🤸 Alongamento"},{id:"agua",label:"💧 Hidratação"}];
+  const PERGUNTAS=["Qual situação está me deixando ansioso(a)?","Qual é o meu pensamento ansioso?","Tenho provas reais de que é 100% verdadeiro?","Quais evidências indicam que pode NÃO ser verdadeiro?","Qual a probabilidade real de que o pior aconteça?","O que eu diria a um amigo com esse mesmo pensamento?","Existe uma forma mais útil de ver essa situação?","Preocupar-me está me ajudando ou me machucando?"];
+  const AREAS=[{id:"interior",label:"Cuidado Interior"},{id:"familiar",label:"Vida Familiar"},{id:"carreira",label:"Carreira"},{id:"social",label:"Vida Social"},{id:"qualidade",label:"Qualidade de Vida"},{id:"saudavel",label:"Vida Saudável"},{id:"financeiro",label:"Financeiro"},{id:"espiritualidade",label:"Espiritualidade"}];
+  const DESC={1:"Em paz.",2:"Otimista.",3:"Calmo.",4:"Confortável.",5:"Neutro.",6:"Estressando.",7:"Estressado.",8:"Irritado.",9:"Tenso.",10:"Em pânico."};
+  const [aba,setAba]=useState(0);
+  const [stress,setStress]=useState(5);
+  const [nota,setNota]=useState("");
+  const [track,setTrack]=useState({});
+  const [resp,setResp]=useState(Array(8).fill(""));
+  const [roda,setRoda]=useState({});
+  const [log,setLog]=useState([]);
+  const [msg,setMsg]=useState("");
+  const sc=stress<=3?"#059669":stress<=5?"#d97706":stress<=7?"#f97316":"#dc2626";
+  return(
+    <div>
+      <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #e5e7eb",overflowX:"auto"}}>
+        {["😰 Estresse","✅ Tracking","🧠 Pensamentos","🎯 Roda da Vida"].map((n,i)=>
+          <button key={i} onClick={()=>setAba(i)} style={{padding:"8px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,fontWeight:aba===i?700:400,color:aba===i?"var(--purple)":"#6b7280",borderBottom:aba===i?"2px solid var(--purple)":"2px solid transparent",whiteSpace:"nowrap",fontFamily:"var(--font-body)"}}>{n}</button>
+        )}
+      </div>
+      {aba===0&&<div>
+        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:64,fontWeight:900,color:sc,lineHeight:1}}>{stress}</div><div style={{fontSize:12,color:"#9ca3af"}}>/10</div><div style={{fontSize:13,fontWeight:600,color:sc}}>{DESC[stress]}</div></div>
+        <input type="range" min={1} max={10} value={stress} onChange={e=>setStress(+e.target.value)} style={{width:"100%",accentColor:sc,marginBottom:12}}/>
+        <TextAreaVoz className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setLog(l=>[{nivel:stress,nota,data:new Date().toLocaleDateString("pt-BR")},...l].slice(0,20));setMsg("✓ Registrado!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Registrar"}</button>
+        {log.length>0&&<div style={{marginTop:12}}>{log.slice(0,5).map((s,i)=><div key={i} style={{display:"flex",gap:8,padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4,fontSize:12}}><span style={{fontWeight:700,color:sc}}>{s.nivel}/10</span><span style={{flex:1,color:"#6b7280"}}>{s.nota||"—"}</span><span style={{color:"#9ca3af"}}>{s.data}</span></div>)}</div>}
+      </div>}
+      {aba===1&&<div>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:10,color:"var(--purple)"}}>Técnicas Anti-Ansiedade</div>
+        {TECNICAS.map(t=><div key={t.id} onClick={()=>setTrack(tr=>({...tr,[t.id]:!tr[t.id]}))} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:10,border:"1.5px solid",borderColor:track[t.id]?"var(--purple)":"#e5e7eb",background:track[t.id]?"var(--purple-soft)":"white",cursor:"pointer",marginBottom:8}}>
+          <span style={{fontSize:16}}>{track[t.id]?"✅":"⭕"}</span><div><div style={{fontWeight:600,fontSize:13}}>{t.label}</div><div style={{fontSize:12,color:"#6b7280"}}>{t.desc}</div></div>
+        </div>)}
+        <div style={{fontWeight:600,fontSize:13,margin:"14px 0 10px",color:"var(--purple)"}}>Atividades</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {ATIVIDADES.map(a=><div key={a.id} onClick={()=>setTrack(tr=>({...tr,[a.id]:!tr[a.id]}))} style={{padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:track[a.id]?"var(--purple)":"#e5e7eb",background:track[a.id]?"var(--purple-soft)":"white",cursor:"pointer",fontSize:12,fontWeight:track[a.id]?600:400,color:track[a.id]?"var(--purple)":"#6b7280",textAlign:"center"}}>{a.label}</div>)}
+        </div>
+      </div>}
+      {aba===2&&<div>
+        <div style={{fontSize:13,color:"#6b7280",marginBottom:14,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>Responda cada pergunta com honestidade para questionar pensamentos ansiosos.</div>
+        {PERGUNTAS.map((p,i)=><div key={i} style={{marginBottom:14}}>
+          <div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"var(--purple-soft)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><label style={{fontSize:13,fontWeight:600,lineHeight:1.4}}>{p}</label></div>
+          <TextAreaVoz className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
+        </div>)}
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar respostas"}</button>
+      </div>}
+      {aba===3&&<div>
+        <div style={{fontSize:13,color:"#6b7280",marginBottom:14}}>Avalie cada área de 0 a 10. O gráfico atualiza em tempo real.</div>
+        {AREAS.map(a=><div key={a.id} style={{marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{fontWeight:600}}>{a.label}</span><span style={{fontWeight:700,color:"var(--purple)"}}>{roda[a.id]||0}/10</span></div>
+          <input type="range" min={0} max={10} value={roda[a.id]||0} onChange={e=>setRoda(r=>({...r,[a.id]:+e.target.value}))} style={{width:"100%",accentColor:"var(--purple)"}}/>
+        </div>)}
+        <div style={{display:"flex",justifyContent:"center",margin:"16px 0"}}>
+          <canvas id="rodaChart" width="260" height="260" ref={el=>{
+            if(!el||typeof Chart==="undefined")return;
+            const vals=AREAS.map(a=>roda[a.id]||0);
+            const labels=AREAS.map(a=>a.label);
+            if(el._chart)el._chart.destroy();
+            el._chart=new Chart(el,{type:"radar",data:{labels,datasets:[{data:vals,backgroundColor:"rgba(123,0,196,0.15)",borderColor:"#7B00C4",borderWidth:2,pointBackgroundColor:"#7B00C4",pointRadius:4}]},options:{scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{size:10}}}},plugins:{legend:{display:false}}}});
+          }}/>
+        </div>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar Roda da Vida"}</button>
+      </div>}
+    </div>
+  );
+}
+
+// ── Rastreamento Emocional da Alimentação ───────────────────────────────────
+function FerramentaRastreamento(){
+  const EMOCOES=["Ansiedade","Tédio","Tristeza","Raiva","Solidão","Estresse","Cansaço","Felicidade"];
+  const SENSACOES=["Culpa","Vergonha","Alívio","Indiferença","Satisfação","Arrependimento"];
+  const [fome,setFome]=useState(5);
+  const [emocoes,setEmocoes]=useState([]);
+  const [pensamento,setPensamento]=useState("");
+  const [comeu,setComeu]=useState("");
+  const [alivio,setAlivio]=useState(5);
+  const [duracao,setDuracao]=useState("");
+  const [sensacoes,setSensacoes]=useState([]);
+  const [reflexao,setReflexao]=useState("");
+  const [entries,setEntries]=useState([]);
+  const [msg,setMsg]=useState("");
+  function Chips({opts,sel,toggle}){return(<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{opts.map(o=><button key={o} onClick={()=>toggle(o)} style={{padding:"4px 12px",borderRadius:20,border:"1px solid",borderColor:sel.includes(o)?"var(--purple)":"#e5e7eb",background:sel.includes(o)?"var(--purple)":"white",color:sel.includes(o)?"white":"#6b7280",fontSize:12,cursor:"pointer"}}>{o}</button>)}</div>);}
+  function salvar(){
+    if(!comeu.trim()){alert("Descreva o que você comeu.");return;}
+    setEntries(e=>[{id:Date.now()+"",data:new Date().toLocaleDateString("pt-BR"),fome,emocoes:[...emocoes],pensamento,comeu,alivio,duracao,sensacoes:[...sensacoes],reflexao},...e]);
+    setFome(5);setEmocoes([]);setPensamento("");setComeu("");setAlivio(5);setDuracao("");setSensacoes([]);setReflexao("");
+    setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
+  }
+  const fc=fome<=3?"#059669":fome<=6?"#d97706":"#dc2626";
+  const ac=alivio<=3?"#059669":alivio<=6?"#d97706":"#dc2626";
+  return(
+    <div>
+      <div style={{background:"#fdf4ff",border:"1px solid #e9d5ff",borderRadius:10,padding:12,marginBottom:16,fontSize:12,color:"#5a007a",lineHeight:1.6}}>Use sempre que sentir urgência de comer ou após um episódio de compulsão. O objetivo é entender o "porquê" — sem julgamento.</div>
+      {[["Nível de Fome Física",fome,setFome,fc],["Nível de Alívio após comer",alivio,setAlivio,ac]].map(([lbl,val,set,col])=><div key={lbl} style={{marginBottom:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{fontWeight:600}}>{lbl}</span><span style={{fontWeight:700,color:col}}>{val}/10</span></div>
+        <input type="range" min={0} max={10} value={val} onChange={e=>set(+e.target.value)} style={{width:"100%",accentColor:"var(--purple)"}}/>
+      </div>)}
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Emoções presentes</label><Chips opts={EMOCOES} sel={emocoes} toggle={o=>setEmocoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Pensamento permissivo</label><TextAreaVoz className="form-input" rows={2} value={pensamento} onChange={e=>setPensamento(e.target.value)} placeholder="'Só desta vez...' 'Mereço isso...'"/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>O que você comeu?</label><TextAreaVoz className="form-input" rows={2} value={comeu} onChange={e=>setComeu(e.target.value)} placeholder="Descreva os alimentos..."/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Como você se sentiu depois?</label><Chips opts={SENSACOES} sel={sensacoes} toggle={o=>setSensacoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
+      <div style={{marginBottom:16}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão</label><TextAreaVoz className="form-input" rows={2} value={reflexao} onChange={e=>setReflexao(e.target.value)} placeholder="O que esse episódio revela sobre suas necessidades emocionais?"/></div>
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>{msg||"Salvar registro"}</button>
+      {entries.length>0&&<div style={{marginTop:14}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>{entries.length} registro(s)</div>
+        {entries.map(en=><div key={en.id} style={{background:"#f9fafb",borderRadius:10,padding:12,marginBottom:8,fontSize:12,border:"1px solid #e5e7eb"}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{color:"#6b7280"}}>{en.data}</span><span style={{background:"#ede9fe",color:"var(--purple)",borderRadius:20,padding:"1px 8px",fontWeight:600}}>Fome: {en.fome}/10</span></div>
+          <div><strong>Comeu:</strong> {en.comeu}</div>
+          {en.emocoes.length>0&&<div style={{color:"#6b7280"}}><strong>Emoções:</strong> {en.emocoes.join(", ")}</div>}
+        </div>)}
+      </div>}
+    </div>
+  );
+}
+
+// ── Treino Neuro-Auditivo ───────────────────────────────────────────────────
+function FerramentaTreino(){
+  const [modulo,setModulo]=useState(0);
+  const [respostas,setRespostas]=useState({});
+  const [feedbacks,setFeedbacks]=useState({});
+  const [score,setScore]=useState(0);
+  const [total,setTotal]=useState(0);
+  const [tocando,setTocando]=useState(null);
+  const ctxRef=useRef(null);
+  function getCtx(){if(!ctxRef.current)ctxRef.current=new AudioContext();if(ctxRef.current.state==="suspended")ctxRef.current.resume();return ctxRef.current;}
+  function tocarTom(freq,dur=1.5,vol=0.4,wave="sine"){const ctx=getCtx();const osc=ctx.createOscillator();const g=ctx.createGain();osc.type=wave;osc.frequency.value=freq;g.gain.setValueAtTime(vol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);osc.connect(g);g.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+dur);}
+  function falar(txt,pitch=1,rate=0.9){if(!("speechSynthesis" in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang="pt-BR";u.pitch=pitch;u.rate=rate;const v=window.speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"));if(v)u.voice=v;window.speechSynthesis.speak(u);}
+  const MODULOS=[
+    {titulo:"Grave / Agudo",emoji:"🎵",exercicios:[
+      {id:"m0e0",pergunta:"Ouça e diga: GRAVE ou AGUDO?",btn:{label:"▶ Tocar",action:()=>{const f=Math.random()>0.5?180:2200;tocarTom(f);return f>500?"agudo":"grave";}},opcoes:["grave","agudo"],resposta:"grave",dica:"Sons graves têm frequência baixa. Sons agudos têm frequência alta."},
+      {id:"m0e1",pergunta:"Qual som é mais GRAVE?",btn:{label:"▶ Som A (80Hz)",action:()=>tocarTom(80)},btn2:{label:"▶ Som B (800Hz)",action:()=>tocarTom(800)},opcoes:["Som A","Som B"],resposta:"Som A",dica:"O Som A (80Hz) é grave — similar a um contrabaixo."},
+    ]},
+    {titulo:"Vozes",emoji:"🎤",exercicios:[
+      {id:"m1e0",pergunta:"Feminina ou masculina?",btn:{label:"▶ Ouvir",action:()=>falar("Olá, como você está hoje?",1.4,0.95)},opcoes:["Feminina","Masculina"],resposta:"Feminina",dica:"Tom agudo + pitch alto = voz feminina."},
+      {id:"m1e1",pergunta:"Feminina ou masculina?",btn:{label:"▶ Ouvir",action:()=>falar("Bom dia, tudo bem com você?",0.5,0.85)},opcoes:["Feminina","Masculina"],resposta:"Masculina",dica:"Pitch baixo indica voz masculina."},
+    ]},
+    {titulo:"Intensidade",emoji:"🔊",exercicios:[
+      {id:"m2e0",pergunta:"Qual som tem mais VOLUME?",btn:{label:"▶ Som Fraco",action:()=>tocarTom(440,1,0.08)},btn2:{label:"▶ Som Forte",action:()=>tocarTom(440,1,0.7)},opcoes:["Som Fraco","Som Forte"],resposta:"Som Forte",dica:"O Som Forte foi tocado com volume muito maior."},
+    ]},
+    {titulo:"Emoções",emoji:"😊",exercicios:[
+      {id:"m3e0",pergunta:"Que emoção você identifica?",btn:{label:"▶ Ouvir",action:()=>falar("Hoje foi um dia incrível, estou muito feliz!",1.4,1.1)},opcoes:["Alegria","Tristeza","Raiva","Medo"],resposta:"Alegria",dica:"Tom agudo, rápido e animado = alegria."},
+      {id:"m3e1",pergunta:"Que emoção você identifica?",btn:{label:"▶ Ouvir",action:()=>falar("Não sei o que fazer, tudo parece muito difícil.",0.8,0.8)},opcoes:["Alegria","Tristeza","Frustração","Ansiedade"],resposta:"Tristeza",dica:"Tom baixo e pausado = tristeza."},
+    ]},
+  ];
+  function responder(exId,val,correto){
+    const c=val===correto;
+    setRespostas(r=>({...r,[exId]:val}));
+    setFeedbacks(f=>({...f,[exId]:c}));
+    if(!respostas[exId]){setTotal(t=>t+1);if(c)setScore(s=>s+1);}
+  }
+  const mod=MODULOS[modulo];
+  return(
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,padding:"8px 12px",background:"var(--purple-soft)",borderRadius:8}}>
+        <span style={{fontSize:13,fontWeight:600,color:"var(--purple)"}}>🏆 {score}/{total}</span>
+        <span style={{fontSize:12,color:"var(--purple)"}}>{Math.round(total>0?score/total*100:0)}% de acerto</span>
+      </div>
+      <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
+        {MODULOS.map((m,i)=><button key={i} onClick={()=>setModulo(i)} style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",borderColor:modulo===i?"var(--purple)":"#e5e7eb",background:modulo===i?"var(--purple)":"white",color:modulo===i?"white":"#6b7280",fontSize:12,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{m.emoji} {m.titulo}</button>)}
+      </div>
+      <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>{mod.emoji} {mod.titulo}</div>
+      {mod.exercicios.map(ex=><div key={ex.id} style={{background:"#f9fafb",borderRadius:12,padding:14,marginBottom:14,border:"1px solid #e5e7eb"}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>{ex.pergunta}</div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+          <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>{setTocando(ex.id);ex.btn.action();setTimeout(()=>setTocando(null),2000);}}>{tocando===ex.id?"🔊 Tocando...":ex.btn.label}</button>
+          {ex.btn2&&<button className="btn btn-outline" style={{fontSize:12}} onClick={()=>ex.btn2.action()}>{ex.btn2.label}</button>}
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+          {ex.opcoes.map((op,oi)=><button key={oi} onClick={()=>responder(ex.id,op,ex.resposta)} style={{padding:"8px 16px",borderRadius:10,border:"1.5px solid",fontSize:13,cursor:"pointer",fontWeight:500,borderColor:respostas[ex.id]===op?(feedbacks[ex.id]?"#059669":"#dc2626"):"#e5e7eb",background:respostas[ex.id]===op?(feedbacks[ex.id]?"#d1fae5":"#fee2e2"):"white",color:respostas[ex.id]===op?(feedbacks[ex.id]?"#059669":"#dc2626"):"#374151"}}>{op}</button>)}
+        </div>
+        {respostas[ex.id]&&<div style={{padding:"8px 12px",borderRadius:8,background:feedbacks[ex.id]?"#d1fae5":"#fee2e2",fontSize:12,color:feedbacks[ex.id]?"#059669":"#dc2626",fontWeight:600}}>{feedbacks[ex.id]?"✓ Correto! ":"✗ Incorreto. "}{ex.dica}</div>}
+      </div>)}
+    </div>
+  );
+}
+
+// ── Anamnese ────────────────────────────────────────────────────────────────
 function FerramentaPortal({ recurso, user }){
+  const k = recurso?.formularioKey || "";
+  if(k==="breathing-478")        return <FerramentaRespiracao user={user}/>;
+  if(k==="muscle-relaxation")    return <FerramentaRelaxamento user={user}/>;
+  if(k==="anxiety-management")   return <FerramentaGestaoAnsiedade user={user}/>;
+  if(k==="decision-tree")        return <FerramentaArvore/>;
+  if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
+  if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
   const conteudo  = recurso.passos || recurso.conteudo || recurso.texto || "";
   const objetivo  = recurso.objetivo || recurso.descricao || "";
   return (
