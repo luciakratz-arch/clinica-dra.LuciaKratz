@@ -567,8 +567,15 @@ function FerramentaPortal({ recurso, user }){
         </div>
       )}
       {!objetivo&&!conteudo&&(
-        <div style={{textAlign:"center",padding:40,color:"#6b7280",fontSize:14}}>
-          Ferramenta em configuração. Em breve disponível! 💜
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:48,marginBottom:12}}>🔧</div>
+          <div style={{fontFamily:"var(--font-display,Georgia)",fontSize:18,fontWeight:700,color:"#7B00C4",marginBottom:8}}>
+            Em desenvolvimento
+          </div>
+          <div style={{fontSize:13,color:"#6b7280",lineHeight:1.6,maxWidth:280,margin:"0 auto"}}>
+            Esta ferramenta está sendo preparada especialmente para você.<br/>
+            Em breve estará disponível nesta área. 💜
+          </div>
         </div>
       )}
     </div>
