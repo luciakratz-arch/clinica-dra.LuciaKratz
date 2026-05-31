@@ -5726,13 +5726,10 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
         {recurso.passos&&(
           <div>
             <div style={{fontWeight:700,fontSize:12,color:"var(--text-muted)",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Passo a Passo</div>
-            {recurso.passos.split(/
-(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
-              const linhas = passo.trim().split("
-");
+            {recurso.passos.split(/(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
+              const linhas = passo.trim().split("\n");
               const titulo = linhas[0];
-              const corpo = linhas.slice(1).join("
-").trim();
+              const corpo = linhas.slice(1).join("\n").trim();
               return (
                 <div key={i} style={{background:"white",border:"1px solid var(--gray-100)",borderRadius:10,padding:"12px 16px",marginBottom:10,borderLeft:"3px solid var(--purple)"}}>
                   <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:corpo?6:0}}>{titulo}</div>
