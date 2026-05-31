@@ -8974,6 +8974,258 @@ const FAB_LEGADO_MACRO = {
 };
 
 // Mapa de visualizações
+
+// ═══════════════════════════════════════════════════════════════════
+// PSICOEDUCAÇÕES VISUAIS — Novas (macro_ansiedade, macro_humor, etc.)
+// ═══════════════════════════════════════════════════════════════════
+
+// Componente base reutilizável para todas as psicoeducações visuais
+function PsicoVisualBase({ titulo, emoji, cor, bg, secoes, perguntas }){
+  const [secao,   setSecao]   = useState(0);
+  const [fase,    setFase]    = useState("leitura"); // leitura | reflexao | concluido
+  const [respostas, setRespostas] = useState(Array(perguntas.length).fill(""));
+  const [respIdx, setRespIdx] = useState(0);
+
+  const total = secoes.length;
+  const progresso = Math.round(((secao + (fase==="reflexao"?0.5:0)) / total) * 100);
+
+  // ── Concluído ───────────────────────────────────────────────────
+  if(fase==="concluido") return(
+    <div>
+      <div style={{background:cor,borderRadius:14,padding:"20px",marginBottom:20,color:"white",textAlign:"center"}}>
+        <div style={{fontSize:44,marginBottom:8}}>{emoji}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:4}}>{titulo}</div>
+        <div style={{fontSize:13,opacity:0.85}}>Leitura e reflexão concluídas 💜</div>
+      </div>
+      {respostas.some(r=>r.trim().length>0)&&(
+        <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:"16px",marginBottom:16}}>
+          <div style={{fontWeight:700,fontSize:13,color:cor,marginBottom:12}}>Suas reflexões</div>
+          {perguntas.map((p,i)=>respostas[i].trim()&&(
+            <div key={i} style={{marginBottom:12,paddingBottom:12,borderBottom:i<perguntas.length-1?"1px solid var(--gray-100)":"none"}}>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4,fontStyle:"italic"}}>{p}</div>
+              <div style={{fontSize:13,color:"var(--text)",lineHeight:1.6,background:bg,borderRadius:8,padding:"8px 12px"}}>{respostas[i]}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <button onClick={()=>{setSecao(0);setFase("leitura");setRespostas(Array(perguntas.length).fill(""));setRespIdx(0);}}
+        style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:cor,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Rever conteúdo
+      </button>
+    </div>
+  );
+
+  // ── Reflexão ────────────────────────────────────────────────────
+  if(fase==="reflexao") return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <div style={{flex:1,background:"var(--gray-100)",borderRadius:20,height:5}}>
+          <div style={{width:progresso+"%",height:"100%",borderRadius:20,background:cor,transition:"width .3s"}}/>
+        </div>
+        <span style={{fontSize:11,color:"var(--text-muted)",flexShrink:0}}>{secao+1}/{total}</span>
+      </div>
+
+      {/* Caderno de reflexão */}
+      <div style={{background:"#fffdf5",borderRadius:14,border:"1px solid #f3e6c0",marginBottom:16,overflow:"hidden"}}>
+        <div style={{background:cor,padding:"12px 16px"}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.8)",marginBottom:3,textTransform:"uppercase",letterSpacing:"0.5px"}}>Reflexão</div>
+          <div style={{fontSize:14,color:"white",fontWeight:600,lineHeight:1.4}}>{perguntas[respIdx]||perguntas[0]}</div>
+        </div>
+        <div style={{position:"relative"}}>
+          <div style={{position:"absolute",left:36,top:0,bottom:0,width:1,background:"#fca5a5",opacity:0.4}}/>
+          <textarea
+            value={respostas[respIdx]||""}
+            onChange={e=>{const r=[...respostas];r[respIdx]=e.target.value;setRespostas(r);}}
+            placeholder="Escreva livremente aqui..."
+            style={{width:"100%",minHeight:130,padding:"12px 12px 12px 48px",
+              background:"transparent",border:"none",outline:"none",resize:"none",
+              fontSize:14,lineHeight:"28px",fontFamily:"Georgia,serif",
+              color:"var(--text)",boxSizing:"border-box",
+              backgroundImage:"repeating-linear-gradient(transparent,transparent 27px,#f0ebe0 27px,#f0ebe0 28px)"}}/>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={()=>setFase("leitura")}
+          style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+          ← Voltar
+        </button>
+        <button onClick={()=>{
+          if(secao < total-1){ setSecao(secao+1); setRespIdx(Math.min(respIdx+1,perguntas.length-1)); setFase("leitura"); }
+          else setFase("concluido");
+        }}
+          style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:cor,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+          {secao<total-1?"Próxima seção →":"Concluir 💜"}
+        </button>
+      </div>
+    </div>
+  );
+
+  // ── Leitura ─────────────────────────────────────────────────────
+  const s = secoes[secao];
+  return(
+    <div>
+      {/* Progresso */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+        <div style={{flex:1,background:"var(--gray-100)",borderRadius:20,height:5}}>
+          <div style={{width:progresso+"%",height:"100%",borderRadius:20,background:cor,transition:"width .3s"}}/>
+        </div>
+        <span style={{fontSize:11,color:"var(--text-muted)",flexShrink:0}}>{secao+1}/{total}</span>
+      </div>
+
+      {/* Header da seção */}
+      <div style={{background:`linear-gradient(135deg,${cor},${cor}dd)`,borderRadius:12,padding:"16px",marginBottom:16,color:"white"}}>
+        <div style={{fontSize:32,marginBottom:6}}>{s.icone}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,marginBottom:4}}>{s.titulo}</div>
+        {s.subtitulo&&<div style={{fontSize:13,opacity:0.85}}>{s.subtitulo}</div>}
+      </div>
+
+      {/* Conteúdo visual da seção */}
+      {s.tipo==="intro"&&(
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:14,color:"var(--text)",lineHeight:1.8,marginBottom:16}}>{s.texto}</div>
+          {s.destaque&&<div style={{background:bg,borderRadius:12,padding:"14px 16px",borderLeft:"4px solid "+cor}}>
+            <div style={{fontSize:13,color:cor,fontWeight:700,lineHeight:1.6}}>{s.destaque}</div>
+          </div>}
+        </div>
+      )}
+
+      {s.tipo==="cards"&&(
+        <div style={{marginBottom:16}}>
+          {s.intro&&<div style={{fontSize:14,color:"var(--text)",lineHeight:1.7,marginBottom:14}}>{s.intro}</div>}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+            {s.cards.map((c,i)=>(
+              <div key={i} style={{background:c.bg||bg,borderRadius:12,padding:"14px",border:"1px solid "+c.cor+"30"}}>
+                <div style={{fontSize:24,marginBottom:6}}>{c.icone}</div>
+                <div style={{fontWeight:700,fontSize:13,color:c.cor||cor,marginBottom:4}}>{c.titulo}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5}}>{c.texto}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {s.tipo==="lista"&&(
+        <div style={{marginBottom:16}}>
+          {s.intro&&<div style={{fontSize:14,color:"var(--text)",lineHeight:1.7,marginBottom:14}}>{s.intro}</div>}
+          {s.itens.map((item,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",
+              background:i%2===0?bg:"white",borderRadius:10,marginBottom:6,
+              border:"1px solid "+cor+"20"}}>
+              <span style={{fontSize:20,flexShrink:0}}>{item.icone}</span>
+              <div>
+                <div style={{fontWeight:700,fontSize:13,color:cor,marginBottom:2}}>{item.titulo}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5}}>{item.texto}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {s.tipo==="destaque"&&(
+        <div style={{marginBottom:16}}>
+          {s.intro&&<div style={{fontSize:14,color:"var(--text)",lineHeight:1.7,marginBottom:14}}>{s.intro}</div>}
+          <div style={{background:bg,borderRadius:14,padding:"20px",textAlign:"center",border:"2px solid "+cor+"30"}}>
+            <div style={{fontSize:44,marginBottom:8}}>{s.icone}</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:cor,marginBottom:8}}>{s.frase}</div>
+            {s.subtexto&&<div style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.6}}>{s.subtexto}</div>}
+          </div>
+        </div>
+      )}
+
+      {s.tipo==="comparacao"&&(
+        <div style={{marginBottom:16}}>
+          {s.intro&&<div style={{fontSize:14,color:"var(--text)",lineHeight:1.7,marginBottom:14}}>{s.intro}</div>}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            {s.lados.map((lado,i)=>(
+              <div key={i} style={{background:lado.bg,borderRadius:12,padding:"14px",border:"1px solid "+lado.cor+"30"}}>
+                <div style={{fontWeight:700,fontSize:13,color:lado.cor,marginBottom:8}}>{lado.icone} {lado.titulo}</div>
+                {lado.itens.map((it,j)=>(
+                  <div key={j} style={{fontSize:12,color:"var(--text-muted)",padding:"4px 0",borderBottom:j<lado.itens.length-1?"1px solid "+lado.cor+"20":"none"}}>
+                    {it}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Navegação */}
+      <div style={{display:"flex",gap:8}}>
+        {secao>0&&<button onClick={()=>setSecao(secao-1)}
+          style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+          ←
+        </button>}
+        <button onClick={()=>setFase("reflexao")}
+          style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:cor,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+          Refletir sobre isso ✏️
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── PILOTO: O Alarme Falso do Cérebro ────────────────────────────
+function PsicoAlarme({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase
+    titulo="O Alarme Falso do Cérebro"
+    emoji="🧠"
+    cor={COR} bg={BG}
+    secoes={[
+      {
+        tipo:"intro",
+        icone:"🔔",
+        titulo:"O seu cérebro tem um alarme",
+        subtitulo:"E ele dispara mais do que deveria",
+        texto:"O seu cérebro tem um sistema de segurança chamado amígdala — uma estrutura antiga, rápida e poderosa. A função dela é simples: manter você vivo. Quando percebe qualquer sinal de perigo, ela dispara o alarme antes mesmo que você pense conscientemente sobre o que está acontecendo.",
+        destaque:"O problema? Ela não distingue um leão de uma apresentação no trabalho."
+      },
+      {
+        tipo:"lista",
+        icone:"⚡",
+        titulo:"O que acontece quando o alarme dispara",
+        subtitulo:"Em milissegundos, o corpo reage",
+        intro:"Quando a amígdala dispara, o seu corpo entra em modo de emergência automaticamente:",
+        itens:[
+          {icone:"❤️", titulo:"Coração acelera", texto:"Para bombear mais sangue aos músculos — prontos para correr ou lutar"},
+          {icone:"💨", titulo:"Respiração fica rápida", texto:"Para captar mais oxigênio e alimentar a ação"},
+          {icone:"💪", titulo:"Músculos tensionam", texto:"Preparando o corpo para movimento imediato"},
+          {icone:"🍃", titulo:"Digestão para", texto:"O estômago aperta — digestão não é prioridade numa emergência"},
+          {icone:"👁️", titulo:"Foco estreita", texto:"A visão periférica diminui — tudo foca na ameaça percebida"},
+        ]
+      },
+      {
+        tipo:"comparacao",
+        icone:"⚖️",
+        titulo:"Ontem vs. hoje",
+        subtitulo:"O sistema não evoluiu — o ambiente sim",
+        intro:"Este sistema foi essencial para os nossos ancestrais. O desafio é que hoje os 'predadores' são outros:",
+        lados:[
+          {titulo:"Para o que foi criado", icone:"🦁", cor:"#dc2626", bg:"#fee2e2",
+           itens:["Predadores reais","Ameaças físicas imediatas","Perigos de vida ou morte","Situações com solução física"]},
+          {titulo:"Para o que dispara hoje", icone:"📧", cor:"#d97706", bg:"#fef3c7",
+           itens:["E-mails não respondidos","Conflitos no trabalho","Incerteza sobre o futuro","Críticas e julgamentos"]},
+        ]
+      },
+      {
+        tipo:"destaque",
+        icone:"💡",
+        titulo:"O insight que muda tudo",
+        frase:"A ansiedade não é fraqueza. É um sistema de proteção a disparar fora do contexto certo.",
+        subtexto:"Quando você entende isso, muda a relação com os sintomas: em vez de lutar contra o alarme com pânico, começa a reconhecê-lo com curiosidade — 'O meu sistema de segurança está ativo. O que está a interpretar como ameaça?'"
+      },
+    ]}
+    perguntas={[
+      "Você consegue identificar situações recentes em que seu alarme disparou sem perigo real?",
+      "Que situações do dia a dia o seu cérebro trata como se fossem ameaças?",
+      "Como você costuma reagir quando o alarme dispara? Luta, foge ou congela?",
+    ]}
+  />;
+}
+
+
 const PSICO_VISUAIS = {
   "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
   "A armadilha do pior cenário": PsicoPiorCenario,
@@ -8986,6 +9238,8 @@ const PSICO_VISUAIS = {
   "Fatos vs. interpretações": PsicoFatosInterpretacoes,
   "O perigo do sempre e nunca": PsicoSempreNunca,
   "7 Distorções de Pensamento": Psico7Distorcoes,
+  // Novas psicoeducações visuais
+  "O Alarme Falso do Cérebro": PsicoAlarme,
 };
 
 const CATS_PSICOEDUCACAO = {
