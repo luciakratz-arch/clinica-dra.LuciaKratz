@@ -5713,6 +5713,38 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
     if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
+
+    // Fallback: mostra conteúdo dos campos passos e objetivo para ferramentas sem componente interativo
+    if(recurso.passos || recurso.objetivo) return (
+      <div style={{padding:"4px 0"}}>
+        {recurso.objetivo&&(
+          <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",marginBottom:20,border:"1px solid #e9d5ff"}}>
+            <div style={{fontWeight:700,fontSize:12,color:"var(--purple)",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>🎯 Objetivo Terapêutico</div>
+            <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{recurso.objetivo}</div>
+          </div>
+        )}
+        {recurso.passos&&(
+          <div>
+            <div style={{fontWeight:700,fontSize:12,color:"var(--text-muted)",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Passo a Passo</div>
+            {recurso.passos.split(/
+(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
+              const linhas = passo.trim().split("
+");
+              const titulo = linhas[0];
+              const corpo = linhas.slice(1).join("
+").trim();
+              return (
+                <div key={i} style={{background:"white",border:"1px solid var(--gray-100)",borderRadius:10,padding:"12px 16px",marginBottom:10,borderLeft:"3px solid var(--purple)"}}>
+                  <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:corpo?6:0}}>{titulo}</div>
+                  {corpo&&<div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{corpo}</div>}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+
     return <div style={{textAlign:"center",padding:40,color:"#6b7280"}}>Ferramenta não configurada.</div>;
   }
   const EMOJIS={relaxamento:"💨",tcc:"🧠",avaliacao:"📋",musicoterapia:"🎵",outro:"🔧"};
