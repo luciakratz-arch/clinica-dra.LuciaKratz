@@ -540,12 +540,6 @@ function RegistroHumor({ user }) {
 
 
 function FerramentaPortal({ recurso, user }){
-  const k = recurso?.formularioKey || "";
-  if(k==="abc-record")         return <FerramentaABC/>;
-  if(k==="breathing-478")      return <FerramentaRespiracao user={user}/>;
-  if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
-  if(k==="anxiety-management") return <FerramentaAnsiedade/>;
-  if(k==="decision-tree")      return <FerramentaDecisao/>;
   return (
     <div>
       {recurso.objetivo&&(
