@@ -6366,6 +6366,438 @@ function FerramentaEnergyMap({ user }){
 
 
 // ═══════════════════════════════════════════════════════════════════
+// FERRAMENTAS MACRO_CORPO — Componentes Mistos
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 1. Escada Polivagal ──────────────────────────────────────────
+function FerramentaPolyvagal({ user }){
+  const [estado,setEstado]=useState(null);
+  const [ancora,setAncora]=useState([]);
+  const [segAntes,setSegAntes]=useState(5);
+  const [segDepois,setSegDepois]=useState(5);
+  const [fase,setFase]=useState("avaliacao"); // avaliacao | tecnica | resultado
+  const [checks,setChecks]=useState({});
+
+  const ESTADOS={
+    verde:{label:"Verde — Segurança",emoji:"🟢",cor:"#059669",bg:"#dcfce7",
+      desc:"Calmo, presente, conectado, consegue pensar com clareza",
+      tecnicas:[
+        {id:"pes",l:"Pés no chão — sinta o contacto"},
+        {id:"olhar",l:"Nomeie 5 coisas que vê ao redor"},
+        {id:"mao",l:"Mão no peito — 'Estou seguro agora'"},
+        {id:"respirar",l:"3 respirações lentas com expiração longa"},
+      ]},
+    vermelho:{label:"Vermelho — Luta/Fuga",emoji:"🔴",cor:"#dc2626",bg:"#fee2e2",
+      desc:"Agitado, ansioso, irritado, coração acelerado, pensamentos a mil",
+      tecnicas:[
+        {id:"agua",l:"Água fria no rosto ou pulsos (15-30s)"},
+        {id:"expiracao",l:"Inspirar 4s → Expirar 8s (5 vezes)"},
+        {id:"movimento",l:"Balançar o corpo lentamente"},
+        {id:"humm",l:"Humme uma nota grave (ativa nervo vago)"},
+      ]},
+    azul:{label:"Azul — Colapso",emoji:"🔵",cor:"#1d4ed8",bg:"#dbeafe",
+      desc:"Desmotivado, entorpecido, sem energia, sensação de desligar",
+      tecnicas:[
+        {id:"saltar",l:"30s de movimento: salte no lugar"},
+        {id:"luz",l:"Vá para espaço com luz natural"},
+        {id:"contacto",l:"Chame alguém ou envie mensagem"},
+        {id:"frio",l:"Água fria nas mãos e rosto"},
+      ]},
+  };
+
+  const ANCORAS=[
+    {v:"respiracao",l:"Respiração lenta",e:"💨"},
+    {v:"pes",l:"Pés no chão",e:"🦶"},
+    {v:"musica",l:"Música calmante",e:"🎵"},
+    {v:"natureza",l:"Estar na natureza",e:"🌿"},
+    {v:"movimento",l:"Movimento suave",e:"🚶"},
+    {v:"contacto",l:"Contacto social seguro",e:"🤝"},
+    {v:"frio",l:"Água fria",e:"💧"},
+    {v:"silencio",l:"Silêncio e descanso",e:"🌙"},
+  ];
+
+  const est = estado ? ESTADOS[estado] : null;
+  const feitosChecks = Object.values(checks).filter(Boolean).length;
+
+  if(fase==="resultado") return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>{est?.emoji}</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:est?.cor,marginBottom:8}}>
+        Regulação registrada!
+      </div>
+      <div style={{background:est?.bg,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,lineHeight:1.7}}>
+        <div>Estado inicial: <strong>{est?.label}</strong></div>
+        <div>Segurança antes: <strong>{segAntes}/10</strong> → depois: <strong>{segDepois}/10</strong></div>
+        <div>Técnicas aplicadas: <strong>{feitosChecks}</strong></div>
+        {ancora.length>0&&<div>Âncoras: <strong>{ancora.join(", ")}</strong></div>}
+      </div>
+      <button onClick={()=>{setEstado(null);setAncora([]);setSegAntes(5);setSegDepois(5);setFase("avaliacao");setChecks({});}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:"#7B00C4",color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Nova prática
+      </button>
+    </div>
+  );
+
+  if(fase==="tecnica"&&est) return(
+    <div>
+      <div style={{background:est.bg,borderRadius:12,padding:"14px 16px",marginBottom:16,borderLeft:"4px solid "+est.cor}}>
+        <div style={{fontWeight:700,fontSize:14,color:est.cor,marginBottom:4}}>{est.emoji} {est.label}</div>
+        <div style={{fontSize:13,color:"var(--text)",lineHeight:1.5}}>Aplique as técnicas abaixo para subir a escada de regulação.</div>
+      </div>
+      <div style={{marginBottom:16}}>
+        <SliderStep label="Sensação de segurança agora" valor={segAntes} onChange={setSegAntes} cor={est.cor} antes="Muito inseguro" depois="Muito seguro"/>
+      </div>
+      <div style={{marginBottom:16}}>
+        {est.tecnicas.map(t=>(
+          <div key={t.id} onClick={()=>setChecks(c=>({...c,[t.id]:!c[t.id]}))}
+            style={{display:"flex",alignItems:"center",gap:10,padding:"11px 12px",borderRadius:10,
+              border:"1.5px solid",marginBottom:8,cursor:"pointer",
+              borderColor:checks[t.id]?est.cor:"var(--gray-200)",
+              background:checks[t.id]?est.bg:"white"}}>
+            <div style={{width:20,height:20,borderRadius:"50%",border:"2px solid",flexShrink:0,
+              borderColor:checks[t.id]?est.cor:"var(--gray-300)",background:checks[t.id]?est.cor:"white",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {checks[t.id]&&<span style={{color:"white",fontSize:11}}>✓</span>}
+            </div>
+            <span style={{fontSize:13,color:checks[t.id]?est.cor:"var(--text-muted)"}}>{t.l}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>As suas âncoras pessoais</div>
+        <TagsSelector opcoes={ANCORAS} selecionadas={ancora} onChange={setAncora} cor={est.cor} bg={est.bg}/>
+      </div>
+      <div style={{marginBottom:16}}>
+        <SliderStep label="Sensação de segurança após as técnicas" valor={segDepois} onChange={setSegDepois} cor={est.cor} antes="Muito inseguro" depois="Muito seguro"/>
+      </div>
+      <button onClick={()=>setFase("resultado")}
+        style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:est.cor,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Registrar prática ✓
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,marginBottom:8}}>Escada Polivagal</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,lineHeight:1.5}}>
+        Identifique o seu estado atual e aplique técnicas específicas para regulação.
+      </div>
+      {Object.entries(ESTADOS).map(([k,e])=>(
+        <div key={k} onClick={()=>{setEstado(k);setFase("tecnica");}}
+          style={{display:"flex",alignItems:"center",gap:14,padding:"16px",borderRadius:14,
+            border:"2px solid",marginBottom:10,cursor:"pointer",
+            borderColor:estado===k?e.cor:e.cor+"40",
+            background:estado===k?e.bg:"white",
+            transition:"all .15s"}}>
+          <span style={{fontSize:32,flexShrink:0}}>{e.emoji}</span>
+          <div>
+            <div style={{fontWeight:700,fontSize:14,color:e.cor,marginBottom:3}}>{e.label}</div>
+            <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.4}}>{e.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── 2. Aterramento 5 Sentidos ────────────────────────────────────
+function FerramentaGrounding({ user }){
+  const COR="#0891b2"; const BG="#e0f2fe";
+  const [p,setP]=useState(-1); // -1=intro
+  const [respostas,setRespostas]=useState({v:"",t:"",o:"",c:"",s:""});
+  const [presAntes,setPresAntes]=useState(3);
+  const [presDepois,setPresDepois]=useState(3);
+  const [concluido,setConcluido]=useState(false);
+
+  const SENTIDOS=[
+    {k:"v",n:5,titulo:"O que VÊ",instrucao:"Olhe ao redor. Nomeie 5 coisas que consegue ver agora. Seja específico — não 'uma cadeira' mas 'uma cadeira de madeira com assento desgastado'.",placeholder:"Ex: Uma planta verde no canto, a luz da janela, um copo azul..."},
+    {k:"t",n:4,titulo:"O que TOCA",instrucao:"Foque na sensação física. Nomeie 4 coisas que consegue sentir no corpo agora.",placeholder:"Ex: O tecido da roupa no braço, a temperatura do ar, o peso dos pés no chão..."},
+    {k:"o",n:3,titulo:"O que OUVE",instrucao:"Feche os olhos se quiser. Nomeie 3 sons — um próximo, um distante, um que não tinha reparado.",placeholder:"Ex: O ventilador, uma voz ao longe, o meu próprio respirar..."},
+    {k:"c",n:2,titulo:"O que CHEIRA",instrucao:"Identifique 2 cheiros presentes agora. Se não sentir nenhum, leve algo ao nariz.",placeholder:"Ex: O café da manhã, o sabão das mãos..."},
+    {k:"s",n:1,titulo:"O que SABOREIA",instrucao:"Foque na boca. Qual é o sabor presente agora?",placeholder:"Ex: Residual de café, nada em particular..."},
+  ];
+
+  if(concluido) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>⚓</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:12}}>
+        Aterramento concluído!
+      </div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,lineHeight:1.7}}>
+        <div>Presença antes: <strong>{presAntes}/10</strong></div>
+        <div>Presença depois: <strong>{presDepois}/10</strong></div>
+        {presDepois>presAntes&&<div style={{color:COR,fontWeight:600,marginTop:4}}>
+          ✓ +{presDepois-presAntes} pontos de presença 💜
+        </div>}
+      </div>
+      <button onClick={()=>{setP(-1);setRespostas({v:"",t:"",o:"",c:"",s:""});setPresAntes(3);setPresDepois(3);setConcluido(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Nova prática
+      </button>
+    </div>
+  );
+
+  if(p===-1) return(
+    <div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,marginBottom:8}}>Aterramento 5 Sentidos</div>
+      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,lineHeight:1.5}}>
+        Exercício de presença sensorial para interromper ruminação, dissociação ou ansiedade.
+      </div>
+      <div style={{marginBottom:20}}>
+        <SliderStep label="Presença no momento atual" valor={presAntes} onChange={setPresAntes} cor={COR} antes="Muito distante" depois="Totalmente presente"/>
+      </div>
+      <div style={{background:BG,borderRadius:10,padding:"12px 14px",marginBottom:20,fontSize:13,color:"#0c4a6e",lineHeight:1.5}}>
+        <strong>Como funciona:</strong> Vamos ativar os 5 sentidos um a um — do maior para o menor número de itens. Isso ancora a mente no presente.
+      </div>
+      <button onClick={()=>setP(0)}
+        style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:14,fontWeight:700,fontFamily:"inherit"}}>
+        ▶ Iniciar aterramento
+      </button>
+    </div>
+  );
+
+  const sentido=SENTIDOS[p];
+  return(
+    <div>
+      <StepProgress passo={p} total={SENTIDOS.length} cor={COR}/>
+      <div style={{background:`linear-gradient(135deg,${COR},${COR}dd)`,borderRadius:12,padding:"14px 16px",marginBottom:16,color:"white"}}>
+        <div style={{fontSize:28,marginBottom:4}}>{["👁️","🤲","👂","👃","👅"][p]}</div>
+        <div style={{fontWeight:700,fontSize:17,marginBottom:4}}>{sentido.n} — {sentido.titulo}</div>
+        <div style={{fontSize:13,opacity:0.9,lineHeight:1.5}}>{sentido.instrucao}</div>
+      </div>
+      <textarea value={respostas[sentido.k]} onChange={e=>setRespostas(r=>({...r,[sentido.k]:e.target.value}))}
+        placeholder={sentido.placeholder}
+        style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+      <div style={{display:"flex",gap:8,marginTop:16}}>
+        {p>0&&<button onClick={()=>setP(p-1)}
+          style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid var(--gray-200)",background:"white",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+          ←
+        </button>}
+        {p<SENTIDOS.length-1&&<button onClick={()=>setP(p+1)}
+          style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+          Próximo sentido →
+        </button>}
+        {p===SENTIDOS.length-1&&<button onClick={()=>{}}
+          style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:"#e5e7eb",color:"var(--text-muted)",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+          <div style={{marginBottom:8,fontSize:13,fontWeight:600,color:"var(--text)"}}>Como está a presença agora?</div>
+          <input type="range" min={1} max={10} value={presDepois} onChange={e=>{e.stopPropagation();setPresDepois(Number(e.target.value));}}
+            style={{width:"100%",accentColor:COR}} onClick={e=>e.stopPropagation()}/>
+        </button>}
+        {p===SENTIDOS.length-1&&<button onClick={()=>setConcluido(true)}
+          style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+          ✓
+        </button>}
+      </div>
+      {p===SENTIDOS.length-1&&<div style={{marginTop:12}}>
+        <SliderStep label="Presença agora" valor={presDepois} onChange={setPresDepois} cor={COR} antes="Distante" depois="Presente"/>
+        <button onClick={()=>setConcluido(true)}
+          style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",marginTop:10}}>
+          Concluir ✓
+        </button>
+      </div>}
+    </div>
+  );
+}
+
+// ── 3. Diário Corpo-Mente ────────────────────────────────────────
+function FerramentaBodyMind({ user }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  const ANTECEDENTES=[
+    {v:"sono_mau",l:"Sono fraco",e:"😴"},{v:"conflito",l:"Conflito",e:"⚡"},
+    {v:"decisao",l:"Decisão difícil",e:"🤔"},{v:"trabalho",l:"Stress trabalho",e:"💼"},
+    {v:"comida",l:"Comida irregular",e:"🍽️"},{v:"exercicio",l:"Sem exercício",e:"🏃"},
+  ];
+  const PADROES=[
+    {v:"ansiedade",l:"Ansiedade",e:"😰"},{v:"raiva",l:"Raiva suprimida",e:"😤"},
+    {v:"tristeza",l:"Tristeza",e:"😢"},{v:"sobrecarga",l:"Sobrecarga",e:"🫠"},
+    {v:"solidao",l:"Solidão",e:"🥺"},{v:"estresse",l:"Stress crónico",e:"😫"},
+  ];
+  const ALIVOS=[
+    {v:"repouso",l:"Repouso",e:"😴"},{v:"movimento",l:"Movimento",e:"🏃"},
+    {v:"calor",l:"Calor/banho",e:"🛁"},{v:"conversa",l:"Conversa",e:"💬"},
+    {v:"choro",l:"Choro",e:"😢"},{v:"medicacao",l:"Medicação",e:"💊"},
+  ];
+  const [p,setP]=useState(0);
+  const [sintoma,setSintoma]=useState("");
+  const [intensidade,setIntensidade]=useState(5);
+  const [contexto,setContexto]=useState("");
+  const [antecedentes,setAntecedentes]=useState([]);
+  const [padroes,setPadroes]=useState([]);
+  const [aliviou,setAliviou]=useState([]);
+  const [salvo,setSalvo]=useState(false);
+
+  const intCor=intensidade>=7?"#dc2626":intensidade>=4?"#d97706":"#059669";
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🫀</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Registo salvo!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,color:"#3d006a",lineHeight:1.7}}>
+        <div>Sintoma: <strong>{sintoma.slice(0,50)}</strong></div>
+        <div>Intensidade: <strong style={{color:intCor}}>{intensidade}/10</strong></div>
+        {padroes.length>0&&<div>Padrão emocional: <strong>{padroes.join(", ")}</strong></div>}
+      </div>
+      <button onClick={()=>{setSintoma("");setIntensidade(5);setContexto("");setAntecedentes([]);setPadroes([]);setAliviou([]);setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo registo
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="O sintoma" subtitulo="O que está sentindo no corpo?" dica="Localização, qualidade e duração. Ex: 'Aperto no peito desde esta manhã, intensidade 7'." cor={COR} bg={BG}/>
+        <textarea value={sintoma} onChange={e=>setSintoma(e.target.value)}
+          placeholder="Ex: Tensão nos ombros e pescoço desde ontem, piora ao fim do dia..."
+          style={{width:"100%",minHeight:80,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none",marginBottom:14}}/>
+        <SliderStep label="Intensidade do sintoma" valor={intensidade} onChange={setIntensidade} cor={intCor} antes="Leve" depois="Muito intenso"/>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={sintoma.trim().length>5}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Contexto e antecedentes" subtitulo="O que estava acontecendo?" dica="O que aconteceu nas 2-4 horas antes do sintoma surgir ou intensificar?" cor={COR} bg={BG}/>
+        <textarea value={contexto} onChange={e=>setContexto(e.target.value)} placeholder="Ex: Tive uma reunião difícil, depois recebi uma mensagem que me deixou tensa..."
+          style={{width:"100%",minHeight:70,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",marginBottom:12,boxSizing:"border-box",outline:"none"}}/>
+        <div style={{fontSize:13,fontWeight:600,marginBottom:8}}>Antecedentes presentes</div>
+        <TagsSelector opcoes={ANTECEDENTES} selecionadas={antecedentes} onChange={setAntecedentes} cor={COR} bg={BG}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={true}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="Padrão emocional" subtitulo="Que emoção pode estar associada?" dica="'Este sintoma aparece mais quando eu sinto...' — seja honesto consigo mesmo." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={PADROES} selecionadas={padroes} onChange={setPadroes} cor={COR} bg={BG}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={padroes.length>0}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="O que aliviou?" subtitulo="O que reduziu o sintoma?" dica="Pode incluir coisas que ainda não tentou mas que costumam funcionar." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={ALIVOS} selecionadas={aliviou} onChange={setAliviou} cor={COR} bg={BG}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={true}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 4. Roda da Vida ──────────────────────────────────────────────
+function FerramentaWheelOfLife({ user }){
+  const COR="#059669"; const BG="#dcfce7";
+  const DIMENSOES=[
+    {id:"saude_fisica",    label:"Saúde Física",     emoji:"🏃",desc:"Energia, sono, alimentação, exercício"},
+    {id:"saude_mental",    label:"Saúde Mental",     emoji:"🧠",desc:"Equilíbrio emocional, bem-estar"},
+    {id:"relacoes",        label:"Relações Íntimas", emoji:"💑",desc:"Qualidade das relações próximas"},
+    {id:"familia",         label:"Família e Amigos", emoji:"👨‍👩‍👧",desc:"Ligação com família e amizades"},
+    {id:"trabalho",        label:"Trabalho",         emoji:"💼",desc:"Satisfação, sentido, crescimento"},
+    {id:"financas",        label:"Finanças",         emoji:"💰",desc:"Estabilidade e segurança financeira"},
+    {id:"lazer",           label:"Lazer",            emoji:"🎉",desc:"Tempo para alegria e descanso real"},
+    {id:"espiritualidade", label:"Espiritualidade",  emoji:"🌟",desc:"Propósito, valores, sentido de vida"},
+  ];
+  const [valores,setValores]=useState(Object.fromEntries(DIMENSOES.map(d=>[d.id,5])));
+  const [foco,setFoco]=useState("");
+  const [acoes,setAcoes]=useState("");
+  const [p,setP]=useState(0);
+  const [salvo,setSalvo]=useState(false);
+
+  const media=Math.round(Object.values(valores).reduce((a,b)=>a+b,0)/DIMENSOES.length*10)/10;
+  const maisAlto=DIMENSOES.reduce((a,d)=>valores[d.id]>valores[a.id]?d:a, DIMENSOES[0]);
+  const maisBaixo=DIMENSOES.reduce((a,d)=>valores[d.id]<valores[a.id]?d:a, DIMENSOES[0]);
+
+  if(salvo) return(
+    <div style={{padding:"16px 0"}}>
+      <div style={{textAlign:"center",marginBottom:16}}>
+        <div style={{fontSize:48,marginBottom:8}}>⭕</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR}}>Roda registrada!</div>
+        <div style={{fontSize:14,color:"var(--text-muted)",marginTop:4}}>Média: <strong style={{color:COR}}>{media}/10</strong></div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        {DIMENSOES.map(d=>{
+          const v=valores[d.id];
+          const cor=v>=7?COR:v>=4?"#d97706":"#dc2626";
+          return(
+            <div key={d.id} style={{background:"white",borderRadius:10,padding:"10px 12px",border:"1px solid var(--gray-200)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:13}}>{d.emoji} {d.label}</span>
+                <span style={{fontWeight:700,color:cor}}>{v}</span>
+              </div>
+              <div style={{background:"var(--gray-100)",borderRadius:20,height:4,marginTop:4}}>
+                <div style={{width:(v/10*100)+"%",height:"100%",borderRadius:20,background:cor,transition:"width .3s"}}/>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {foco&&<div style={{background:BG,borderRadius:10,padding:"12px",marginBottom:12,fontSize:13,color:"#064e3b"}}>
+        🎯 Foco: <strong>{foco}</strong>
+      </div>}
+      {acoes&&<div style={{background:"#ede9fe",borderRadius:10,padding:"12px",marginBottom:16,fontSize:13,color:"#4c1d95"}}>
+        📋 Ações: {acoes}
+      </div>}
+      <button onClick={()=>{setValores(Object.fromEntries(DIMENSOES.map(d=>[d.id,5])));setFoco("");setAcoes("");setP(0);setSalvo(false);}}
+        style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Nova avaliação
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={2} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Avalie as 8 dimensões" subtitulo="Como está cada área da sua vida agora?" dica="Responda com honestidade — não como gostaria, mas como realmente está." cor={COR} bg={BG}/>
+        {DIMENSOES.map(d=>{
+          const v=valores[d.id];
+          const cor=v>=7?COR:v>=4?"#d97706":"#dc2626";
+          return(
+            <div key={d.id} style={{background:"white",borderRadius:12,padding:"12px 14px",marginBottom:8,border:"1px solid var(--gray-200)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <span style={{fontSize:20}}>{d.emoji}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:13}}>{d.label}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{d.desc}</div>
+                </div>
+                <span style={{fontWeight:700,fontSize:16,color:cor,minWidth:24,textAlign:"right"}}>{v}</span>
+              </div>
+              <input type="range" min={0} max={10} value={v}
+                onChange={e=>setValores(vals=>({...vals,[d.id]:Number(e.target.value)}))}
+                style={{width:"100%",accentColor:cor}}/>
+            </div>
+          );
+        })}
+        <div style={{background:BG,borderRadius:10,padding:"12px",marginTop:8,fontSize:13,color:"#064e3b"}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}>
+            <span>Média geral: <strong>{media}/10</strong></span>
+            <span>Mais alto: {maisAlto.emoji} <strong>{valores[maisAlto.id]}</strong></span>
+            <span>Mais baixo: {maisBaixo.emoji} <strong>{valores[maisBaixo.id]}</strong></span>
+          </div>
+        </div>
+        <NavButtons passo={p} total={2} onNext={()=>setP(1)} podeProsseguir={true}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Foco e ações" subtitulo="O que vai priorizar?" dica="Não tente melhorar tudo. Escolha a dimensão que mais impacto teria nas outras se melhorada." cor={COR} bg={BG}/>
+        <div style={{background:"#fee2e2",borderRadius:10,padding:"12px 14px",marginBottom:14,fontSize:13,color:"#7f1d1d"}}>
+          ⚠️ Menor pontuação: {maisBaixo.emoji} <strong>{maisBaixo.label}</strong> ({valores[maisBaixo.id]}/10)
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Dimensão de foco escolhida</label>
+          <input value={foco} onChange={e=>setFoco(e.target.value)} placeholder={`Ex: ${maisBaixo.label} — ${maisBaixo.desc}`}
+            style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>3 micro-ações para esta semana</label>
+          <textarea value={acoes} onChange={e=>setAcoes(e.target.value)}
+            placeholder={"Ex:
+1. Dormir às 23h esta semana
+2. Caminhar 20min na terça
+3. Desligar telemóvel 1h antes de dormir"}
+            style={{width:"100%",minHeight:100,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
+        </div>
+        <NavButtons passo={p} total={2} onBack={()=>setP(0)} onSave={()=>setSalvo(true)} podeProsseguir={foco.trim().length>3}/>
+      </div>}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
 // FERRAMENTAS MACRO_CASAIS — Componentes Mistos
 // ═══════════════════════════════════════════════════════════════════
 
@@ -6408,7 +6840,10 @@ function FerramentaDifferentiation({ user }){
       {p===0&&<div>
         <StepHeader letra="1" titulo="Opiniões autónomas" subtitulo="O que pensa independentemente do parceiro?" dica="Escreva 3-5 opiniões ou preferências genuinamente suas — não moldadas pela relação." cor={COR} bg={BG}/>
         <textarea value={opinioes} onChange={e=>setOpinioes(e.target.value)}
-          placeholder={`Ex:\n• Prefiro filmes de ficção científica\n• Acho que devíamos mudar de cidade\n• Discordo da forma como os filhos são educados...`}
+          placeholder={"Ex:
+• Prefiro filmes de ficção científica
+• Acho que devíamos mudar de cidade
+• Discordo da forma como os filhos são educados..."}
           style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={opinioes.trim().length>10}/>
       </div>}
@@ -6430,7 +6865,10 @@ function FerramentaDifferentiation({ user }){
       {p===3&&<div>
         <StepHeader letra="4" titulo="Espaços genuinamente seus" subtitulo="3 atividades, amizades ou interesses independentes" dica="O que mantém independentemente da relação? São espaços de identidade própria." cor={COR} bg={BG}/>
         <textarea value={espacos} onChange={e=>setEspacos(e.target.value)}
-          placeholder={`Ex:\n1. Grupo de corrida às quintas\n2. Amizade com a Clara\n3. Leitura de ficção antes de dormir`}
+          placeholder={"Ex:
+1. Grupo de corrida às quintas
+2. Amizade com a Clara
+3. Leitura de ficção antes de dormir"}
           style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={espacos.trim().length>5}/>
       </div>}
@@ -6625,7 +7063,11 @@ function FerramentaFinancialMaps({ user }){
       {p===0&&<div>
         <StepHeader letra="M1" titulo="Mapa da História" subtitulo="Como era o dinheiro na sua família?" dica="O guião financeiro que aprendeu na infância opera de forma inconsciente. Torná-lo visível é o primeiro passo." cor={COR} bg={BG}/>
         <textarea value={historia} onChange={e=>setHistoria(e.target.value)}
-          placeholder={`Ex:\n• O dinheiro era tabu — nunca se falava\n• Havia sempre escassez e preocupação\n• Quem controlava era o meu pai\n• Aprendi que poupar era obrigação`}
+          placeholder={"Ex:
+• O dinheiro era tabu — nunca se falava
+• Havia sempre escassez e preocupação
+• Quem controlava era o meu pai
+• Aprendi que poupar era obrigação"}
           style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={3} onNext={()=>setP(1)} podeProsseguir={historia.trim().length>10}/>
       </div>}
@@ -7012,7 +7454,11 @@ function FerramentaConflictCycle({ user }){
       {p===2&&<div>
         <StepHeader letra="3" titulo="A sequência típica" subtitulo="O que acontece do início ao fim?" dica="Escreva em passos numerados: eu digo X → ele reage Y → eu faço Z..." cor={COR} bg={BG}/>
         <textarea value={sequencia} onChange={e=>setSequencia(e.target.value)}
-          placeholder={`1. Eu digo...\n2. Ele/ela reage...\n3. Eu então...\n4. Ele/ela...\n5. O assunto fica...`}
+          placeholder={"1. Eu digo...
+2. Ele/ela reage...
+3. Eu então...
+4. Ele/ela...
+5. O assunto fica..."}
           style={{width:"100%",minHeight:120,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.8,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={sequencia.trim().length>10}/>
       </div>}
@@ -7748,6 +8194,11 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
     if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
+    // macro_corpo
+    if(k==="polyvagal-ladder")    return <FerramentaPolyvagal user={user}/>;
+    if(k==="grounding-5senses")   return <FerramentaGrounding user={user}/>;
+    if(k==="body-mind-journal")   return <FerramentaBodyMind user={user}/>;
+    if(k==="wheel-of-life")       return <FerramentaWheelOfLife user={user}/>;
     // macro_casais
     if(k==="differentiation-map")        return <FerramentaDifferentiation user={user}/>;
     if(k==="triangulation-map")          return <FerramentaTriangulation user={user}/>;
