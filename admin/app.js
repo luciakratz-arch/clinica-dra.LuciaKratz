@@ -6366,6 +6366,395 @@ function FerramentaEnergyMap({ user }){
 
 
 // ═══════════════════════════════════════════════════════════════════
+// FERRAMENTAS MACRO_CASAIS — Componentes Mistos
+// ═══════════════════════════════════════════════════════════════════
+
+// ── 1. Mapa de Diferenciação ─────────────────────────────────────
+function FerramentaDifferentiation({ user }){
+  const COR="#7c3aed"; const BG="#ede9fe";
+  const AREAS_FUSAO=[
+    {v:"amigos",l:"Amigos",e:"👥"},{v:"familia",l:"Família",e:"👨‍👩‍👧"},
+    {v:"trabalho",l:"Trabalho",e:"💼"},{v:"decisoes",l:"Decisões",e:"🤔"},
+    {v:"hobbies",l:"Hobbies",e:"🎨"},{v:"opiniao",l:"Opiniões",e:"💭"},
+    {v:"tempo",l:"Tempo livre",e:"⏰"},{v:"financas",l:"Finanças",e:"💰"},
+  ];
+  const [p,setP]=useState(0);
+  const [opinioes,setOpinioes]=useState("");
+  const [fusao,setFusao]=useState([]);
+  const [dependencia,setDependencia]=useState(5);
+  const [honesto,setHonesto]=useState("");
+  const [espacos,setEspacos]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🌱</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Mapa registrado!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,color:"#4c1d95",lineHeight:1.7}}>
+        <div>Dependência emocional: <strong>{dependencia}/10</strong></div>
+        <div>Áreas de fusão: <strong>{fusao.length}</strong></div>
+        {espacos&&<div>Espaços próprios: <strong>{espacos.slice(0,50)}</strong></div>}
+      </div>
+      <button onClick={()=>{setOpinioes("");setFusao([]);setDependencia(5);setHonesto("");setEspacos("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo mapa
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={4} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Opiniões autónomas" subtitulo="O que pensa independentemente do parceiro?" dica="Escreva 3-5 opiniões ou preferências genuinamente suas — não moldadas pela relação." cor={COR} bg={BG}/>
+        <textarea value={opinioes} onChange={e=>setOpinioes(e.target.value)}
+          placeholder={"Ex:
+• Prefiro filmes de ficção científica
+• Acho que devíamos mudar de cidade
+• Discordo da forma como os filhos são educados..."}
+          style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onNext={()=>setP(1)} podeProsseguir={opinioes.trim().length>10}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Áreas de fusão" subtitulo="Onde tende a ceder automaticamente?" dica="Fusão é quando deixa de processar a sua própria posição antes de responder ao outro." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={AREAS_FUSAO} selecionadas={fusao} onChange={setFusao} cor={COR} bg={BG}/>
+        <div style={{marginTop:16}}>
+          <SliderStep label="Meu estado emocional depende do dele/dela" valor={dependencia} onChange={setDependencia} cor={COR} antes="Pouco" depois="Muito"/>
+        </div>
+        <NavButtons passo={p} total={4} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={true}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="A voz honesta" subtitulo="O que diria se pudesse ser totalmente honesto?" dica="Pense numa situação recente em que cedeu quando não queria. O que teria dito?" cor={COR} bg={BG}/>
+        <textarea value={honesto} onChange={e=>setHonesto(e.target.value)}
+          placeholder="Ex: Quando ele decidiu as férias sem me perguntar, queria dizer que precisava de ser consultada..."
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={honesto.trim().length>5}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Espaços genuinamente seus" subtitulo="3 atividades, amizades ou interesses independentes" dica="O que mantém independentemente da relação? São espaços de identidade própria." cor={COR} bg={BG}/>
+        <textarea value={espacos} onChange={e=>setEspacos(e.target.value)}
+          placeholder={"Ex:
+1. Grupo de corrida às quintas
+2. Amizade com a Clara
+3. Leitura de ficção antes de dormir"}
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={4} onBack={()=>setP(2)} onSave={()=>setSalvo(true)} podeProsseguir={espacos.trim().length>5}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 2. Mapa de Triangulação ──────────────────────────────────────
+function FerramentaTriangulation({ user }){
+  const COR="#0891b2"; const BG="#e0f2fe";
+  const PAPEIS=[
+    {v:"recruta",l:"Recruto terceiros",e:"📢"},
+    {v:"recrutado",l:"Sou recrutado",e:"🎯"},
+    {v:"triangulado",l:"Sou triangulado",e:"🔺"},
+    {v:"mensageiro",l:"Sou mensageiro",e:"📩"},
+  ];
+  const [p,setP]=useState(0);
+  const [vertices,setVertices]=useState({a:"",b:"",c:""});
+  const [papel,setPapel]=useState([]);
+  const [evita,setEvita]=useState("");
+  const [direto,setDireto]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>🔺</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Triangulação mapeada!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,color:"#0c4a6e",lineHeight:1.7}}>
+        {vertices.a&&<div>Vértice A: <strong>{vertices.a}</strong></div>}
+        {vertices.b&&<div>Vértice B: <strong>{vertices.b}</strong></div>}
+        {vertices.c&&<div>Intermediário: <strong>{vertices.c}</strong></div>}
+        {direto&&<div style={{marginTop:8,fontStyle:"italic"}}>Comunicação direta: "{direto.slice(0,60)}..."</div>}
+      </div>
+      <button onClick={()=>{setVertices({a:"",b:"",c:""});setPapel([]);setEvita("");setDireto("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo mapeamento
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={3} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Os 3 vértices" subtitulo="Quem são as pessoas no triângulo?" dica="Identifique as três pessoas: quem tem tensão com quem, e quem está no meio." cor={COR} bg={BG}/>
+        {[{k:"a",l:"Pessoa A (você ou outra)"},{k:"b",l:"Pessoa B (em tensão com A)"},{k:"c",l:"Pessoa C (intermediário)"}].map(f=>(
+          <div key={f.k} style={{marginBottom:10}}>
+            <label style={{fontSize:13,fontWeight:600,marginBottom:5,display:"block",color:"var(--text)"}}>{f.l}</label>
+            <input value={vertices[f.k]} onChange={e=>setVertices(v=>({...v,[f.k]:e.target.value}))}
+              placeholder={f.k==="c"?"Ex: filho, sogra, amigo...":"Ex: eu, parceiro, chefe..."}
+              style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+          </div>
+        ))}
+        <NavButtons passo={p} total={3} onNext={()=>setP(1)} podeProsseguir={vertices.a.length>1&&vertices.b.length>1}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Seu papel" subtitulo="Como você participa deste triângulo?" dica="Identifique o seu papel mais frequente — sem julgamento." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={PAPEIS} selecionadas={papel} onChange={setPapel} cor={COR} bg={BG}/>
+        <div style={{marginTop:14}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>O que está a evitar comunicar diretamente?</label>
+          <textarea value={evita} onChange={e=>setEvita(e.target.value)} placeholder="Ex: Evito dizer diretamente ao meu pai que preciso de mais espaço..."
+            style={{width:"100%",minHeight:70,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        </div>
+        <NavButtons passo={p} total={3} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={papel.length>0}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="A comunicação direta" subtitulo="O que diria diretamente à pessoa?" dica="Sem intermediários. Escreva como se fosse dizer agora — com calma e assertividade." cor={COR} bg={BG}/>
+        <textarea value={direto} onChange={e=>setDireto(e.target.value)}
+          placeholder="Ex: 'Pai, preciso de te dizer diretamente que preciso de mais espaço nas nossas conversas...' "
+          style={{width:"100%",minHeight:100,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={3} onBack={()=>setP(1)} onSave={()=>setSalvo(true)} podeProsseguir={direto.trim().length>5}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 3. Diário de Parentalidade Compassiva ────────────────────────
+function FerramentaCompassionateParenting({ user }){
+  const COR="#d97706"; const BG="#fef3c7";
+  const GATILHOS=[
+    {v:"cansaco",l:"Cansaço",e:"😴"},{v:"pressao",l:"Pressão/pressa",e:"⏱️"},
+    {v:"barulho",l:"Barulho/caos",e:"🔊"},{v:"desobediencia",l:"Desobediência",e:"🙅"},
+    {v:"trabalho",l:"Stress do trabalho",e:"💼"},{v:"fome",l:"Fome/falta de sono",e:"😫"},
+  ];
+  const [p,setP]=useState(0);
+  const [momento,setMomento]=useState("");
+  const [gatilho,setGatilho]=useState([]);
+  const [juiz,setJuiz]=useState("");
+  const [amigo,setAmigo]=useState("");
+  const [gentil,setGentil]=useState("");
+  const [bom,setBom]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>💛</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Registo salvo!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,color:"#78350f",lineHeight:1.7}}>
+        {bom&&<div>✨ Hoje foi bem: <em>"{bom}"</em></div>}
+        {gentil&&<div style={{marginTop:8}}>💜 Para mim mesmo: <em>"{gentil.slice(0,80)}..."</em></div>}
+      </div>
+      <button onClick={()=>{setMomento("");setGatilho([]);setJuiz("");setAmigo("");setGentil("");setBom("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Nova entrada
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={5} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="O momento difícil" subtitulo="O que aconteceu?" dica="Descreva a situação brevemente. Sem julgamento — apenas os factos." cor={COR} bg={BG}/>
+        <textarea value={momento} onChange={e=>setMomento(e.target.value)}
+          placeholder="Ex: Perdi a paciência quando o meu filho recusou fazer a lição pela terceira vez..."
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <div style={{marginTop:14}}>
+          <div style={{fontSize:13,fontWeight:600,marginBottom:8,color:"var(--text)"}}>O que estava a contribuir?</div>
+          <TagsSelector opcoes={GATILHOS} selecionadas={gatilho} onChange={setGatilho} cor={COR} bg={BG}/>
+        </div>
+        <NavButtons passo={p} total={5} onNext={()=>setP(1)} podeProsseguir={momento.trim().length>5}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="O juiz interno" subtitulo="O que a voz crítica está a dizer?" dica="Escreva exatamente os pensamentos autocríticos. Sem filtrar." cor={COR} bg={BG}/>
+        <textarea value={juiz} onChange={e=>setJuiz(e.target.value)}
+          placeholder="Ex: Sou uma péssima mãe. Estou a marcar os meus filhos para sempre. Nunca consigo controlar-me..."
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={5} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={juiz.trim().length>5}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="3" titulo="O que diria ao seu melhor amigo?" subtitulo="Se ele/ela vivesse exatamente isso..." dica="Com que tom faria? Escreva como se fosse enviar uma mensagem agora." cor={COR} bg={BG}/>
+        <textarea value={amigo} onChange={e=>setAmigo(e.target.value)}
+          placeholder="Ex: 'Olha, você está cansada e sob pressão. Não és uma má mãe — és uma mãe humana que está a tentar...'"
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={5} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={amigo.trim().length>5}/>
+      </div>}
+      {p===3&&<div>
+        <StepHeader letra="4" titulo="Reescreva com gentileza" subtitulo="Agora aplique a si mesmo" dica="Mesmo tom que usou com o amigo — rigoroso mas gentil. Reconheça o erro sem atacar a identidade." cor={COR} bg={BG}/>
+        <textarea value={gentil} onChange={e=>setGentil(e.target.value)}
+          placeholder="Ex: 'Cometi um erro. Estou cansada. Isso não me define como mãe. Posso pedir desculpa e tentar diferente amanhã...'"
+          style={{width:"100%",minHeight:90,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={5} onBack={()=>setP(2)} onNext={()=>setP(4)} podeProsseguir={gentil.trim().length>5}/>
+      </div>}
+      {p===4&&<div>
+        <StepHeader letra="5" titulo="O que correu bem hoje?" subtitulo="Pelo menos uma coisa" dica="Por menor que pareça — um momento de paciência, de presença, de amor. Ele conta." cor={COR} bg={BG}/>
+        <textarea value={bom} onChange={e=>setBom(e.target.value)}
+          placeholder="Ex: Abracei o meu filho antes de dormir e disse-lhe que o amava. Isso foi real."
+          style={{width:"100%",minHeight:70,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.6,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={5} onBack={()=>setP(3)} onSave={()=>setSalvo(true)} podeProsseguir={bom.trim().length>3}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 4. Protocolo Financeiro dos 3 Mapas ─────────────────────────
+function FerramentaFinancialMaps({ user }){
+  const COR="#059669"; const BG="#dcfce7";
+  const VALORES=[
+    {v:"seguranca",l:"Segurança",e:"🛡️"},{v:"liberdade",l:"Liberdade",e:"🕊️"},
+    {v:"experiencias",l:"Experiências",e:"🌍"},{v:"estatuto",l:"Estatuto",e:"🏆"},
+    {v:"legado",l:"Legado",e:"🌳"},{v:"conforto",l:"Conforto",e:"🛋️"},
+    {v:"controlo",l:"Controlo",e:"🎯"},{v:"generosidade",l:"Generosidade",e:"🤝"},
+  ];
+  const [p,setP]=useState(0);
+  const [historia,setHistoria]=useState("");
+  const [valores,setValores]=useState([]);
+  const [segLiberdade,setSegLiberdade]=useState(50);
+  const [objetivo1,setObjetivo1]=useState("");
+  const [objetivo5,setObjetivo5]=useState("");
+  const [autonomia,setAutonomia]=useState("");
+  const [salvo,setSalvo]=useState(false);
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>💰</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Protocolo registrado!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:20,fontSize:13,color:"#064e3b",lineHeight:1.7}}>
+        <div>Valores prioritários: <strong>{valores.slice(0,3).join(", ")}</strong></div>
+        {objetivo1&&<div>Objetivo 1 ano: <strong>{objetivo1.slice(0,50)}</strong></div>}
+        {objetivo5&&<div>Objetivo 5 anos: <strong>{objetivo5.slice(0,50)}</strong></div>}
+      </div>
+      <button onClick={()=>{setHistoria("");setValores([]);setSegLiberdade(50);setObjetivo1("");setObjetivo5("");setAutonomia("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo protocolo
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={3} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="M1" titulo="Mapa da História" subtitulo="Como era o dinheiro na sua família?" dica="O guião financeiro que aprendeu na infância opera de forma inconsciente. Torná-lo visível é o primeiro passo." cor={COR} bg={BG}/>
+        <textarea value={historia} onChange={e=>setHistoria(e.target.value)}
+          placeholder={"Ex:
+• O dinheiro era tabu — nunca se falava
+• Havia sempre escassez e preocupação
+• Quem controlava era o meu pai
+• Aprendi que poupar era obrigação"}
+          style={{width:"100%",minHeight:110,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:14,fontFamily:"inherit",resize:"none",lineHeight:1.7,boxSizing:"border-box",outline:"none"}}/>
+        <NavButtons passo={p} total={3} onNext={()=>setP(1)} podeProsseguir={historia.trim().length>10}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="M2" titulo="Mapa dos Valores" subtitulo="O que o dinheiro representa para você?" dica="Escolha os 3 valores mais importantes. A divergência de valores é a raiz da maioria dos conflitos financeiros em casal." cor={COR} bg={BG}/>
+        <TagsSelector opcoes={VALORES} selecionadas={valores} onChange={v=>setValores(v.slice(0,3))} cor={COR} bg={BG}/>
+        {valores.length>0&&<div style={{margin:"12px 0",fontSize:12,color:"var(--text-muted)"}}>Selecionados: {valores.length}/3</div>}
+        <SliderStep label="Segurança vs. Liberdade" valor={segLiberdade} onChange={setSegLiberdade} min={0} max={100} cor={COR} antes="Priorizo segurança" depois="Priorizo liberdade"/>
+        <NavButtons passo={p} total={3} onBack={()=>setP(0)} onNext={()=>setP(2)} podeProsseguir={valores.length>0}/>
+      </div>}
+      {p===2&&<div>
+        <StepHeader letra="M3" titulo="Mapa do Projeto Partilhado" subtitulo="Para onde vamos juntos?" dica="Transformar o dinheiro de campo de batalha em projeto partilhado começa por ter objetivos comuns." cor={COR} bg={BG}/>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Objetivo financeiro a 1 ano</label>
+          <textarea value={objetivo1} onChange={e=>setObjetivo1(e.target.value)} placeholder="Ex: Criar uma reserva de emergência de 3 meses, quitar a dívida do cartão..."
+            style={{width:"100%",minHeight:60,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Objetivo a 5 anos</label>
+          <textarea value={objetivo5} onChange={e=>setObjetivo5(e.target.value)} placeholder="Ex: Casa própria, viagem grande, investimento para os filhos..."
+            style={{width:"100%",minHeight:60,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Valor de autonomia individual (cada um)</label>
+          <input value={autonomia} onChange={e=>setAutonomia(e.target.value)} placeholder="Ex: R$ 300 por mês cada um sem precisar justificar..."
+            style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <NavButtons passo={p} total={3} onBack={()=>setP(1)} onSave={()=>setSalvo(true)} podeProsseguir={objetivo1.trim().length>5}/>
+      </div>}
+    </div>
+  );
+}
+
+// ── 5. Mapa de Intimidade ────────────────────────────────────────
+function FerramentaIntimacyMap({ user }){
+  const COR="#db2777"; const BG="#fce7f3";
+  const NIVEIS=[
+    {id:"emocional",label:"Intimidade Emocional",desc:"Partilho vulnerabilidades sem ser julgado/a",icone:"💜"},
+    {id:"intelectual",label:"Intimidade Intelectual",desc:"Temos conversas estimulantes e partilhamos curiosidades",icone:"🧠"},
+    {id:"fisico",label:"Toque Afetivo",desc:"Há carinho físico não-sexual no quotidiano",icone:"🤝"},
+    {id:"sexual",label:"Intimidade Sexual",desc:"Há desejo, prazer e comunicação sobre necessidades",icone:"🔥"},
+  ];
+  const [valores,setValores]=useState({emocional:5,intelectual:5,fisico:5,sexual:5});
+  const [foco,setFoco]=useState("");
+  const [ritual,setRitual]=useState("");
+  const [p,setP]=useState(0);
+  const [salvo,setSalvo]=useState(false);
+
+  const nivelMaisBaixo=Object.entries(valores).sort((a,b)=>a[1]-b[1])[0];
+  const media=Math.round(Object.values(valores).reduce((a,b)=>a+b,0)/4*10)/10;
+
+  if(salvo) return(
+    <div style={{textAlign:"center",padding:"32px 16px"}}>
+      <div style={{fontSize:56,marginBottom:12}}>💑</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,color:COR,marginBottom:8}}>Mapa registrado!</div>
+      <div style={{background:BG,borderRadius:12,padding:"14px",marginBottom:16}}>
+        {NIVEIS.map(n=>(
+          <div key={n.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid "+COR+"20"}}>
+            <span style={{fontSize:13}}>{n.icone} {n.label}</span>
+            <span style={{fontWeight:700,color:valores[n.id]>=7?COR:valores[n.id]>=4?"#d97706":"#dc2626"}}>{valores[n.id]}/10</span>
+          </div>
+        ))}
+        <div style={{marginTop:8,fontSize:14,fontWeight:700,color:COR}}>Média: {media}/10</div>
+      </div>
+      {ritual&&<div style={{background:"#dcfce7",borderRadius:10,padding:"10px",fontSize:13,color:"#064e3b",marginBottom:20}}>
+        🌱 Ritual desta semana: <em>"{ritual}"</em>
+      </div>}
+      <button onClick={()=>{setValores({emocional:5,intelectual:5,fisico:5,sexual:5});setFoco("");setRitual("");setP(0);setSalvo(false);}}
+        style={{padding:"10px 24px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+        Novo mapa
+      </button>
+    </div>
+  );
+
+  return(
+    <div>
+      <StepProgress passo={p} total={2} cor={COR}/>
+      {p===0&&<div>
+        <StepHeader letra="1" titulo="Os 4 níveis de intimidade" subtitulo="Avalie a qualidade atual de cada nível" dica="Responda com honestidade — não como gostaria que fosse, mas como realmente está." cor={COR} bg={BG}/>
+        {NIVEIS.map(n=>(
+          <div key={n.id} style={{marginBottom:16,background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid "+COR+"20"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+              <span style={{fontSize:20}}>{n.icone}</span>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{n.label}</div>
+                <div style={{fontSize:11,color:"var(--text-muted)"}}>{n.desc}</div>
+              </div>
+              <span style={{marginLeft:"auto",fontWeight:700,fontSize:16,color:valores[n.id]>=7?COR:valores[n.id]>=4?"#d97706":"#dc2626"}}>{valores[n.id]}</span>
+            </div>
+            <input type="range" min={0} max={10} value={valores[n.id]}
+              onChange={e=>setValores(v=>({...v,[n.id]:Number(e.target.value)}))}
+              style={{width:"100%",accentColor:COR}}/>
+          </div>
+        ))}
+        <NavButtons passo={p} total={2} onNext={()=>setP(1)} podeProsseguir={true}/>
+      </div>}
+      {p===1&&<div>
+        <StepHeader letra="2" titulo="Foco e ritual" subtitulo="O que precisa de atenção?" dica="Escolha apenas uma área de foco. Um ritual pequeno e consistente vale mais do que grandes gestos esporádicos." cor={COR} bg={BG}/>
+        <div style={{background:BG,borderRadius:10,padding:"12px 14px",marginBottom:16,fontSize:13,color:"#831843"}}>
+          <strong>Nível mais baixo:</strong> {NIVEIS.find(n=>n.id===nivelMaisBaixo[0])?.icone} {NIVEIS.find(n=>n.id===nivelMaisBaixo[0])?.label} ({nivelMaisBaixo[1]}/10)
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Área de foco escolhida</label>
+          <input value={foco} onChange={e=>setFoco(e.target.value)} placeholder="Ex: Intimidade emocional — ter conversas mais profundas..."
+            style={{width:"100%",padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        <div>
+          <label style={{fontSize:13,fontWeight:600,marginBottom:6,display:"block"}}>Ritual de reconexão esta semana</label>
+          <textarea value={ritual} onChange={e=>setRitual(e.target.value)} placeholder="Ex: 20 minutos sem telemóvel a conversar às sextas após o jantar..."
+            style={{width:"100%",minHeight:70,padding:"10px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",boxSizing:"border-box",outline:"none"}}/>
+        </div>
+        <NavButtons passo={p} total={2} onBack={()=>setP(0)} onSave={()=>setSalvo(true)} podeProsseguir={foco.trim().length>3}/>
+      </div>}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
 // FERRAMENTAS MACRO_RELACIONAMENTOS — Componentes Mistos
 // ═══════════════════════════════════════════════════════════════════
 
@@ -6633,7 +7022,11 @@ function FerramentaConflictCycle({ user }){
       {p===2&&<div>
         <StepHeader letra="3" titulo="A sequência típica" subtitulo="O que acontece do início ao fim?" dica="Escreva em passos numerados: eu digo X → ele reage Y → eu faço Z..." cor={COR} bg={BG}/>
         <textarea value={sequencia} onChange={e=>setSequencia(e.target.value)}
-          placeholder={`1. Eu digo...\n2. Ele/ela reage...\n3. Eu então...\n4. Ele/ela...\n5. O assunto fica...`}
+          placeholder={"1. Eu digo...
+2. Ele/ela reage...
+3. Eu então...
+4. Ele/ela...
+5. O assunto fica..."}
           style={{width:"100%",minHeight:120,padding:"11px",borderRadius:10,border:"1.5px solid "+COR+"50",fontSize:13,fontFamily:"inherit",resize:"none",lineHeight:1.8,boxSizing:"border-box",outline:"none"}}/>
         <NavButtons passo={p} total={4} onBack={()=>setP(1)} onNext={()=>setP(3)} podeProsseguir={sequencia.trim().length>10}/>
       </div>}
@@ -7369,6 +7762,12 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
     );
     if(k==="anamnese") return <FerramentaAnamnese/>;
     if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
+    // macro_casais
+    if(k==="differentiation-map")        return <FerramentaDifferentiation user={user}/>;
+    if(k==="triangulation-map")          return <FerramentaTriangulation user={user}/>;
+    if(k==="compassionate-parenting-journal") return <FerramentaCompassionateParenting user={user}/>;
+    if(k==="financial-three-maps")       return <FerramentaFinancialMaps user={user}/>;
+    if(k==="intimacy-map")               return <FerramentaIntimacyMap user={user}/>;
     // macro_relacionamentos
     if(k==="cnv-record")            return <FerramentaCNV user={user}/>;
     if(k==="limits-map")            return <FerramentaLimitsMap user={user}/>;
