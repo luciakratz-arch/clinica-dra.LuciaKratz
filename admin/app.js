@@ -10999,10 +10999,10 @@ function App() {
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
-    <div style={{maxWidth:"100vw",overflowX:"hidden"}}>
+    <div style={{display:"flex",minHeight:"100vh",width:"100%",overflowX:"auto"}}>
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} notifProps={notifProps}/>
       <div className="header-mobile"><div className="header-mobile-logo">Administracao</div><button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button></div>
-      <div className="main-content">
+      <div className="main-content" style={{flex:1,minWidth:0,maxWidth:"100%",overflowX:"hidden"}}>
         {user.tipo==="psicologa"  &&tab==="dashboard"   &&<DashboardAdmin user={user}/>}
         {user.tipo==="psicologa"  &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="alunos"      &&<Alunos/>}
