@@ -540,18 +540,20 @@ function RegistroHumor({ user }) {
 
 
 function FerramentaPortal({ recurso, user }){
+  const conteudo  = recurso.passos || recurso.conteudo || recurso.texto || "";
+  const objetivo  = recurso.objetivo || recurso.descricao || "";
   return (
     <div>
-      {recurso.objetivo&&(
+      {objetivo&&(
         <div style={{background:"#f3e6ff",borderRadius:10,padding:"14px 16px",marginBottom:20,border:"1px solid #e9d5ff"}}>
           <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>🎯 Objetivo</div>
-          <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{recurso.objetivo}</div>
+          <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{objetivo}</div>
         </div>
       )}
-      {recurso.passos&&(
+      {conteudo&&(
         <div>
           <div style={{fontWeight:700,fontSize:12,color:"#6b7280",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Passo a Passo</div>
-          {recurso.passos.split(/(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
+          {conteudo.split(/(?=\d+\.)/).filter(Boolean).map((passo,i)=>{
             const linhas = passo.trim().split("\n");
             const titulo = linhas[0];
             const corpo  = linhas.slice(1).join("\n").trim();
@@ -564,7 +566,7 @@ function FerramentaPortal({ recurso, user }){
           })}
         </div>
       )}
-      {!recurso.objetivo&&!recurso.passos&&(
+      {!objetivo&&!conteudo&&(
         <div style={{textAlign:"center",padding:40,color:"#6b7280",fontSize:14}}>
           Ferramenta em configuração. Em breve disponível! 💜
         </div>
@@ -615,7 +617,8 @@ function RecursosPaciente({ user }) {
   const ids = idsAtivos();
 
   // Filtra cada coleção pelos IDs habilitados
-  const ferramentasVisiveis   = ferramentas.filter(r => ids.has(r.id));
+  // Filtra por id do documento OU por formularioKey (modulosConfig pode guardar qualquer um)
+  const ferramentasVisiveis   = ferramentas.filter(r => ids.has(r.id) || ids.has(r.formularioKey));
   const fabulasVisiveis       = fabulas.filter(r => ids.has(r.id));
   const psicoeducacaoVisiveis = psicoeducacao.filter(r => ids.has(r.id));
 
