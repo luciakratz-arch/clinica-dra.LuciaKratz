@@ -10881,6 +10881,210 @@ function Psico7DistorcoesV2({ cat }){
 }
 
 
+
+// ── macro_casais ─────────────────────────────────────────────────────────────
+
+function PsicoDiscutirDinheiro({ cat }){
+  const COR="#EC4899"; const BG="#fdf2f8";
+  return <PsicoVisualBase titulo="Por Que Discutimos Sobre Dinheiro – Quando Não é Realmente Sobre Dinheiro" emoji="💰" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"💰", titulo:"O dinheiro como campo de batalha simbólico", subtitulo:"O que está realmente em jogo",
+        texto:"Casais brigam sobre dinheiro com uma frequência e intensidade que vai muito além dos números. A conta que não foi paga, o gasto que não foi consultado, a poupança que não cresce — raramente são sobre o valor em si. São sobre controle, segurança, respeito e poder.",
+        destaque:"Quando a briga é sobre dinheiro, a pergunta real é: 'Você me respeita? Você me protege? Você me vê?'"
+      },
+      { tipo:"comparacao", icone:"⚖️", titulo:"O que parece vs. o que é", subtitulo:"A camada oculta dos conflitos financeiros",
+        intro:"",
+        lados:[
+          { titulo:"O que dizemos", icone:"💬", cor:"#0891b2", bg:"#e0f2fe", itens:["'Você gasta demais'","'Nunca decidimos juntos'","'Você é controlador(a)'","'Não sobra nada no mês'"] },
+          { titulo:"O que sentimos", icone:"❤️", cor:"#ec4899", bg:"#fdf2f8", itens:["'Não me sinto seguro(a)'","'Não tenho voz nessa relação'","'Não confio em você'","'Tenho medo do futuro'"] }
+        ]
+      },
+      { tipo:"lista", icone:"🔍", titulo:"As raízes do conflito financeiro", subtitulo:"De onde vêm as crenças sobre dinheiro",
+        intro:"Cada pessoa traz para o relacionamento uma 'herança financeira' da família de origem:",
+        itens:[
+          { icone:"👨‍👩‍👧", titulo:"Família de origem", texto:"Quem controlava o dinheiro em casa? Era tabu falar sobre ele? Havia escassez ou abundância?" },
+          { icone:"🧠", titulo:"Crenças formadas", texto:"'Dinheiro é fonte de conflito', 'Quem ganha mais manda', 'Poupar é obrigação moral'" },
+          { icone:"😰", titulo:"Gatilhos emocionais", texto:"Ver o saldo baixar pode ativar um medo primitivo de sobrevivência, não uma análise racional" },
+          { icone:"🔄", titulo:"Padrões repetidos", texto:"Casais frequentemente reencenam dinâmicas de poder financeiro que viram nos pais" }
+        ]
+      },
+      { tipo:"cards", icone:"🛠️", titulo:"Como conversar sobre dinheiro de verdade", subtitulo:"4 passos para sair do conflito",
+        intro:"",
+        cards:[
+          { icone:"🕐", titulo:"Escolha o momento", texto:"Nunca quando estão exaustos ou no calor de uma compra. Agende uma conversa financeira semanal.", cor:COR, bg:BG },
+          { icone:"🎯", titulo:"Separe fatos de sentimentos", texto:"'O saldo caiu R$800' (facto) antes de 'Estou preocupado(a) com nossa segurança' (sentimento)", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🌱", titulo:"Explore as origens", texto:"Pergunte com curiosidade: 'O que o dinheiro representa pra você? Como era na sua família?'", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🤝", titulo:"Construam um projeto comum", texto:"Objetivos compartilhados (viagem, casa, aposentadoria) transformam o dinheiro de campo de batalha em aliado", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"💡", titulo:"A virada",
+        frase:"O dinheiro não divide casais — a falta de conversa honesta sobre o que ele representa é que divide.",
+        subtexto:"Quando dois parceiros conseguem falar sobre o medo por trás das contas, a conversa financeira deixa de ser uma batalha e se torna um ato de intimidade."
+      }
+    ]}
+    perguntas={[
+      "Quando você e seu parceiro(a) discutem sobre dinheiro, o que você está sentindo por baixo — segurança, controle, respeito?",
+      "Como o dinheiro era tratado na sua família de origem? Que crença você herdou sobre ele?",
+      "Existe um objetivo financeiro comum que vocês ainda não colocaram no papel e que poderia unir em vez de dividir?"
+    ]}
+  />;
+}
+
+function PsicoFusaoCasal({ cat }){
+  const COR="#EC4899"; const BG="#fdf2f8";
+  return <PsicoVisualBase titulo="Por Que Perder-se no Outro Não É Amor – É Fusão" emoji="🔗" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔗", titulo:"Amor ou fusão?", subtitulo:"A diferença que define a saúde do relacionamento",
+        texto:"No início de um relacionamento, a fusão parece amor profundo: querer estar sempre juntos, pensar no outro o tempo todo, abrir mão das próprias preferências. Mas com o tempo, o que parecia intimidade se torna sufocamento — e o que parecia cuidado se torna dependência.",
+        destaque:"Você não pode amar bem alguém se perdeu a si mesmo. O amor saudável acontece entre dois inteiros, não entre duas metades."
+      },
+      { tipo:"comparacao", icone:"⚖️", titulo:"Fusão vs. Intimidade", subtitulo:"Duas formas de estar junto",
+        intro:"",
+        lados:[
+          { titulo:"Fusão ⚠️", icone:"🔗", cor:"#dc2626", bg:"#fee2e2", itens:["'Somos um só'","Abandona hobbies e amizades","Ansiedade quando separados","Identidade depende do parceiro","Ciúme como prova de amor"] },
+          { titulo:"Intimidade ✅", icone:"💛", cor:"#16a34a", bg:"#dcfce7", itens:["'Somos dois que escolhem estar juntos'","Mantém vida própria","Conforto na separação temporária","Identidade estável fora da relação","Confiança sem controle"] }
+        ]
+      },
+      { tipo:"lista", icone:"🌱", titulo:"Como cultivar individualidade dentro do casal", subtitulo:"O paradoxo da proximidade",
+        intro:"Paradoxalmente, manter identidade própria é o que sustenta a atração e o respeito ao longo do tempo:",
+        itens:[
+          { icone:"🎯", titulo:"Mantenha seus interesses", texto:"Hobbies, amizades e objetivos individuais não ameaçam o casal — o nutrem" },
+          { icone:"🗣️", titulo:"Expresse discordâncias", texto:"Sempre concordar não é harmonia — é apagamento. Divergir com respeito é intimidade real" },
+          { icone:"⏱️", titulo:"Valorize o tempo sozinho", texto:"Estar bem consigo mesmo é pré-requisito para estar bem com o outro" },
+          { icone:"🪞", titulo:"Pergunte-se regularmente", texto:"'O que eu penso? O que eu quero? O que eu sinto?' — independente do que o parceiro pensa, quer e sente" }
+        ]
+      },
+      { tipo:"destaque", icone:"🦋", titulo:"A metáfora dos dois rios",
+        frase:"Um relacionamento saudável é como dois rios que correm lado a lado — próximos, mas com suas próprias margens.",
+        subtexto:"Quando dois rios se fundem completamente, perdem sua identidade. Quando correm paralelos, cada um mantém sua força — e juntos, criam algo maior do que cada um sozinho."
+      }
+    ]}
+    perguntas={[
+      "Existe algum interesse, amizade ou parte de você que foi diminuindo desde que está nessa relação?",
+      "Você consegue expressar discordâncias com seu parceiro(a) sem sentir que ameaça a relação?",
+      "O que você faria diferente se soubesse que manter sua individualidade fortalece — e não ameaça — o amor?"
+    ]}
+  />;
+}
+
+function PsicoTriangulacao({ cat }){
+  const COR="#EC4899"; const BG="#fdf2f8";
+  return <PsicoVisualBase titulo="A Triangulação – Quando Usamos Terceiros para Evitar Conversas Difíceis" emoji="🔺" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔺", titulo:"O triângulo invisível", subtitulo:"Por que envolvemos terceiros em conflitos de casal",
+        texto:"Quando um conflito entre dois parceiros fica tenso demais, a mente humana busca instintivamente uma saída: envolver uma terceira pessoa. Pode ser um filho, um amigo, a sogra ou até um terapeuta — qualquer um que alivie a tensão direta. Isso se chama triangulação.",
+        destaque:"A triangulação alivia a tensão imediata mas impede que o conflito real seja resolvido. O problema fica enterrado — até explodir de outra forma."
+      },
+      { tipo:"lista", icone:"🔍", titulo:"Formas de triangulação no casal", subtitulo:"Você reconhece alguma?",
+        intro:"",
+        itens:[
+          { icone:"👶", titulo:"Usar os filhos", texto:"Passar recados pelo filho, fazer a criança 'escolher lados', desabafar com ela sobre o cônjuge" },
+          { icone:"👩‍👦", titulo:"Envolver a família", texto:"'Minha mãe também acha que você está errado(a)' — buscar aliados fora para ganhar dentro" },
+          { icone:"👫", titulo:"Desabafar em excesso com amigos", texto:"Processar o conflito com terceiros em vez de com o parceiro — o amigo vira árbitro involuntário" },
+          { icone:"📱", titulo:"Ciúme como triangulação", texto:"Introduzir uma ameaça real ou imaginada para provocar reação emocional no parceiro" }
+        ]
+      },
+      { tipo:"cards", icone:"🛠️", titulo:"Como sair do triângulo", subtitulo:"Voltando para a conversa de dois",
+        intro:"",
+        cards:[
+          { icone:"🎯", titulo:"Identifique o que evita", texto:"A triangulação serve para evitar algo: medo de rejeição, conflito direto, vulnerabilidade. Nomeie isso.", cor:COR, bg:BG },
+          { icone:"🗣️", titulo:"Volte ao par", texto:"'Preciso conversar com você sobre algo que me incomoda' — direto, sem intermediários", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🔒", titulo:"Proteja a privacidade do casal", texto:"Conflitos de casal resolvem-se dentro do casal. Compartilhar com terceiros corrói a confiança.", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🧰", titulo:"Use apoio terapêutico", texto:"Terapia de casal é o único 'terceiro' saudável — porque o objetivo é fortalecer o par, não arbitrar", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"💬", titulo:"O caminho direto",
+        frase:"Toda triangulação é um pedido de conversa que ainda não teve coragem de acontecer.",
+        subtexto:"Quando você percebe que está envolvendo uma terceira pessoa num conflito de casal, a pergunta é: 'O que eu preciso dizer diretamente ao meu parceiro(a) que ainda não disse?'"
+      }
+    ]}
+    perguntas={[
+      "Existe alguém que você tem envolvido nos conflitos do seu relacionamento? O que isso diz sobre o que você evita dizer diretamente?",
+      "Quando sente tensão no casal, qual é o seu impulso — confrontar diretamente ou buscar apoio externo?",
+      "O que tornaria mais seguro ter conversas difíceis diretamente com seu parceiro(a)?"
+    ]}
+  />;
+}
+
+function PsicoPaisPerfeitos({ cat }){
+  const COR="#EC4899"; const BG="#fdf2f8";
+  return <PsicoVisualBase titulo="O Mito do Pai/Mãe Perfeito – E o Custo Real do Perfeccionismo Parental" emoji="👨‍👩‍👧" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"👨‍👩‍👧", titulo:"Ninguém foi gerado para ser perfeito", subtitulo:"Mas a cultura exige que sejamos",
+        texto:"Nunca houve tantas informações sobre parentalidade — e nunca houve tanto sentimento de inadequação entre pais. O excesso de informação criou um ideal impossível: o pai/mãe perfeitamente presente, paciente, estimulante, gentil e realizado. E quem não alcança esse ideal sente que está falhando.",
+        destaque:"O perfeccionismo parental não protege os filhos — mas adoece os pais e, indiretamente, as crianças."
+      },
+      { tipo:"lista", icone:"⚠️", titulo:"O custo do perfeccionismo parental", subtitulo:"O que ele produz na prática",
+        intro:"",
+        itens:[
+          { icone:"😰", titulo:"Ansiedade crônica", texto:"Monitoramento constante do próprio desempenho como pai/mãe, com culpa automática a cada erro" },
+          { icone:"😤", titulo:"Irritabilidade aumentada", texto:"A pressão de ser sempre paciente e gentil cria um cansaço emocional que explode nos momentos errados" },
+          { icone:"💔", titulo:"Modelagem do perfeccionismo", texto:"Filhos aprendem com o que veem: pais que não toleram seus próprios erros ensinam o mesmo à criança" },
+          { icone:"🚪", titulo:"Distância emocional", texto:"Pais exaustos de se cobrar ficam menos presentes emocionalmente do que pais que se permitem ser humanos" }
+        ]
+      },
+      { tipo:"cards", icone:"🌱", titulo:"O que as crianças realmente precisam", subtitulo:"A pesquisa diz",
+        intro:"Donald Winnicott cunhou o termo 'mãe suficientemente boa' — e a ciência confirma:",
+        cards:[
+          { icone:"🔄", titulo:"Reparação, não perfeição", texto:"O que forma o apego seguro não é nunca errar — é reparar quando erra. 'Me desculpe, errei'", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🎭", titulo:"Emoções autênticas", texto:"Ver o pai/mãe lidar com frustração de forma humana ensina regulação emocional", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"⏱️", titulo:"Presença qualitativa", texto:"20 minutos de presença real valem mais do que 3 horas de presença física enquanto scrollando o celular", cor:COR, bg:BG },
+          { icone:"🌿", titulo:"Pais que se cuidam", texto:"Um pai/mãe descansado e emocionalmente bem é mais disponível do que um exausto e culpado", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"💛", titulo:"A permissão para ser humano",
+        frase:"Você não precisa ser perfeito(a) para ser o(a) pai/mãe que seu filho(a) precisa.",
+        subtexto:"Winnicott estava certo: 'suficientemente bom(a)' é exatamente o que uma criança precisa para crescer segura. A perfeição que você persegue pode ser justamente o que está te impedindo de ser presente."
+      }
+    ]}
+    perguntas={[
+      "Em que aspecto da parentalidade você se cobra mais? Essa cobrança está te aproximando ou te afastando dos seus filhos?",
+      "Lembra de um momento em que você 'errou' como pai/mãe e depois reparou? Como a criança respondeu?",
+      "Como seria dar a si mesmo(a) a mesma compaixão que daria a um(a) amigo(a) que estivesse passando pelo mesmo?"
+    ]}
+  />;
+}
+
+function PsicoDesejoAdormece({ cat }){
+  const COR="#EC4899"; const BG="#fdf2f8";
+  return <PsicoVisualBase titulo="O Desejo Não Desaparece – Adormece" emoji="🔥" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔥", titulo:"O que acontece com o desejo no longo prazo", subtitulo:"E por que quase todos os casais passam por isso",
+        texto:"Em quase todos os relacionamentos longos, chega um momento em que o desejo sexual diminui. Isso é tão comum que pesquisadores o consideram quase universal. Mas culturalmente, tratamos como sinal de que algo está errado — com a relação, com a pessoa, ou com os dois.",
+        destaque:"A queda do desejo raramente significa falta de amor. Quase sempre sinaliza algo que precisa de atenção — mas não necessariamente o fim."
+      },
+      { tipo:"lista", icone:"🔍", titulo:"Por que o desejo adormece", subtitulo:"As causas mais comuns",
+        intro:"",
+        itens:[
+          { icone:"🧠", titulo:"Neurobiologia do longo prazo", texto:"A dopamina da novidade diminui com a familiaridade — é fisiológico, não é falta de amor" },
+          { icone:"😤", titulo:"Conflitos não resolvidos", texto:"Ressentimentos acumulados criam uma barreira emocional que bloqueia a proximidade física" },
+          { icone:"🪫", titulo:"Exaustão e sobrecarga", texto:"Filhos, trabalho, finanças — quando a energia está no mínimo, o desejo vai junto" },
+          { icone:"🔄", titulo:"Rotina excessiva", texto:"Previsibilidade total é confortável — mas não é excitante. O desejo precisa de algum elemento de surpresa" }
+        ]
+      },
+      { tipo:"cards", icone:"🌱", titulo:"Como despertar o que adormeceu", subtitulo:"4 caminhos concretos",
+        intro:"",
+        cards:[
+          { icone:"💬", titulo:"Conversa honesta", texto:"Falar sobre o desejo (ou a falta dele) sem acusação é um dos maiores atos de intimidade possíveis", cor:COR, bg:BG },
+          { icone:"🆕", titulo:"Introduzir novidade", texto:"Experiências novas juntos — viagens, atividades diferentes, sair do script cotidiano — reativam dopamina", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🤝", titulo:"Resolver o que ficou pendente", texto:"Às vezes o bloqueio é emocional. Resolver um conflito antigo pode desbloquear o desejo físico", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🧰", titulo:"Buscar apoio especializado", texto:"Terapia de casal ou sexual não é sinal de fracasso — é investimento num aspecto vital da relação", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"💛", titulo:"O desejo como termômetro",
+        frase:"O desejo não some — ele vai para onde há espaço, cuidado e conexão emocional.",
+        subtexto:"Em casais que mantêm o desejo ao longo do tempo, o denominador comum não é frequência ou técnica — é a qualidade da conexão emocional e a disposição de continuar se escolhendo ativamente."
+      }
+    ]}
+    perguntas={[
+      "O que você sente quando pensa na diminuição do desejo na sua relação — culpa, tristeza, resignação?",
+      "Existe algum conflito emocional não resolvido que pode estar criando distância física também?",
+      "O que vocês faziam no início da relação que criava conexão e que pararam de fazer?"
+    ]}
+  />;
+}
+
+
 const PSICO_VISUAIS = {
   "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
   "A armadilha do pior cenário": PsicoPiorCenario,
@@ -10908,6 +11112,12 @@ const PSICO_VISUAIS = {
   "O perigo do sempre e nunca": PsicoSempreNuncaV2,
   "Desmontar o Circuito Cerebral da Ansiedade": PsicoDesmontarV2,
   "7 Distorções de Pensamento": Psico7DistorcoesV2,
+  // macro_casais
+  "Por Que Discutimos Sobre Dinheiro – Quando Não é Realmente Sobre Dinheiro": PsicoDiscutirDinheiro,
+  "Por Que Perder-se no Outro Não É Amor – É Fusão": PsicoFusaoCasal,
+  "A Triangulação – Quando Usamos Terceiros para Evitar Conversas Difíceis": PsicoTriangulacao,
+  "O Mito do Pai/Mãe Perfeito – E o Custo Real do Perfeccionismo Parental": PsicoPaisPerfeitos,
+  "O Desejo Não Desaparece – Adormece": PsicoDesejoAdormece,
 };
 
 const CATS_PSICOEDUCACAO = {
