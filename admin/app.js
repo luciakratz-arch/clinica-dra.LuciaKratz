@@ -2542,6 +2542,9 @@ function FinanceiroClinica() {
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
+  // Estado dedicado para edição de despesas
+  const CATS_DESPESA = ["Aluguel","Condomínio","Marketing","Salários","Investimentos","Musicoterapia","Ferramentas de IA","Telefone/Internet","Contador","Impostos","Outros"];
+  const [formDespesaEdit, setFormDespesaEdit] = useState({descricao:"",categoria:"",valor:"",data:"",formaPag:"",status:"pago",obs:""});
   const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
@@ -2632,25 +2635,65 @@ function FinanceiroClinica() {
   }
 
   function abrirEditar(l){
-    // ── ETAPA 2: captura o ID exato do registro e pré-carrega o formulário
-    setFormAvulso({
-      pacienteId:l.pacienteId||"",
-      tipo:l.tipo||"Consulta",
-      valor:l.valor||"",
-      data:l.data||"",
-      formaPag:l.formaPag||"PIX",
-      status:l.status||"pendente",
-      obs:l.obs||"",
-      categoria:l.categoria||"",
-      descricao:l.descricao||"",
-    });
-    setEditando(l.id); // ID em cache — nunca abre janela de INSERT
-    setModal("avulso");
+    // ── ETAPA 2: bifurca entre receita e despesa
+    if(l.tipo_lancamento==="despesa"){
+      setFormDespesaEdit({
+        descricao: l.descricao||l.tipo||"",
+        categoria: l.categoria||"",
+        valor:     l.valor+"",
+        data:      l.data||"",
+        formaPag:  l.formaPag||"",
+        status:    l.status||"pago",
+        obs:       l.obs||"",
+      });
+      setEditando(l.id);
+      setModal("editar-despesa");
+    } else {
+      setFormAvulso({
+        pacienteId: l.pacienteId||"",
+        tipo:       l.tipo||"Consulta",
+        valor:      l.valor+"",
+        data:       l.data||"",
+        formaPag:   l.formaPag||"PIX",
+        status:     l.status||"pendente",
+        obs:        l.obs||"",
+        categoria:  l.categoria||"",
+        descricao:  l.descricao||"",
+      });
+      setEditando(l.id);
+      setModal("avulso");
+    }
   }
 
   async function excluirLanc(id){
     if(!confirm("Excluir lançamento?"))return;
     await db.collection("clinica_lancamentos").doc(id).delete();
+  }
+
+  // ── Salvar edição de DESPESA — UPDATE obrigatório, nunca INSERT
+  async function salvarDespesaEdit(){
+    if(!formDespesaEdit.valor||!formDespesaEdit.data){alert("Valor e data obrigatórios.");return;}
+    if(!editando){alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");return;}
+    setSalvando(true);
+    try {
+      const docSnap = await db.collection("clinica_lancamentos").doc(editando).get();
+      if(!docSnap.exists){
+        alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");
+        setModal(false);setEditando(null);setSalvando(false);return;
+      }
+      await db.collection("clinica_lancamentos").doc(editando).update({
+        descricao:   formDespesaEdit.descricao,
+        categoria:   formDespesaEdit.categoria,
+        valor:       parseFloat(formDespesaEdit.valor),
+        data:        formDespesaEdit.data,
+        formaPag:    formDespesaEdit.formaPag,
+        status:      formDespesaEdit.status,
+        obs:         formDespesaEdit.obs,
+        tipo_lancamento: "despesa",
+        _editadoEm:  firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch(e){ alert("Erro ao salvar: "+e.message); }
+    setModal(false);setEditando(null);setSalvando(false);
   }
 
   // ── ETAPA 3: FONTE ÚNICA DA VERDADE ─────────────────────────────────────
@@ -3838,6 +3881,67 @@ function FinanceiroClinica() {
                 </>
                 )
               }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR DESPESA */}
+      {modal==="editar-despesa"&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>{setModal(false);setEditando(null);}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,color:"#dc2626"}}>✏️ Editar Despesa</div>
+              <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Descrição</label>
+                <input className="form-input" placeholder="Ex: Consultório locação" value={formDespesaEdit.descricao} onChange={e=>setFormDespesaEdit({...formDespesaEdit,descricao:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Categoria</label>
+                <select className="form-input" value={formDespesaEdit.categoria} onChange={e=>setFormDespesaEdit({...formDespesaEdit,categoria:e.target.value})}>
+                  <option value="">Selecionar...</option>
+                  {CATS_DESPESA.map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Valor R$</label>
+                <input className="form-input" type="number" placeholder="0,00" value={formDespesaEdit.valor} onChange={e=>setFormDespesaEdit({...formDespesaEdit,valor:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data</label>
+                <input className="form-input" type="date" value={formDespesaEdit.data} onChange={e=>setFormDespesaEdit({...formDespesaEdit,data:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Forma de Pagamento</label>
+                <select className="form-input" value={formDespesaEdit.formaPag} onChange={e=>setFormDespesaEdit({...formDespesaEdit,formaPag:e.target.value})}>
+                  <option value="">—</option>
+                  {FORMAS.map(f=><option key={f}>{f}</option>)}
+                </select>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Status</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[["pago","✓ Pago","#059669"],["pendente","Pendente","#d97706"]].map(([v,l,c])=>(
+                    <button key={v} onClick={()=>setFormDespesaEdit({...formDespesaEdit,status:v})}
+                      style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:formDespesaEdit.status===v?c:"#e5e7eb",background:formDespesaEdit.status===v?c+"15":"white",color:formDespesaEdit.status===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Observações</label>
+                <input className="form-input" placeholder="Opcional..." value={formDespesaEdit.obs} onChange={e=>setFormDespesaEdit({...formDespesaEdit,obs:e.target.value})}/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
+              <button className="btn btn-purple" style={{background:"#dc2626"}} onClick={salvarDespesaEdit} disabled={salvando}>
+                <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alterações"}
+              </button>
             </div>
           </div>
         </div>
