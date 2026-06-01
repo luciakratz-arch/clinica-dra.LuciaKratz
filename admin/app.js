@@ -3202,11 +3202,11 @@ function FinanceiroClinica() {
               <button onClick={()=>setModalAuditoria(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20}}>✕</button>
             </div>
             <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>
-            <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>
               Esta operação irá:<br/>
               • Deletar <b>lançamentos de sessão órfãos</b> — sessões de pacote que geraram lançamento próprio indevido<br/>
               • Remover duplicatas de <b>Ronei</b> e <b>Heitor</b><br/>
               • Categorizar <b>lançamentos Sem Nome</b> como "Despesas Administrativas/Clínica"
+            </div>
             {auditLog.length > 0 && (
               <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:14,marginBottom:16}}>
                 <div style={{fontWeight:700,fontSize:12,color:"#166534",marginBottom:6}}>✅ Resultado:</div>
