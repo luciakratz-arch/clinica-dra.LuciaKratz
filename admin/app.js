@@ -137,6 +137,32 @@ async function categorizarSemNome(mesRef) {
   }
 }
 
+// Deleta lançamentos tipo "sessao" que pertencem a pacotes (órfãos gerados por atualizarPagamento).
+// Regra: se tem pacoteId + tipo_lancamento==sessao → é lixo, o pacote já cobre.
+async function deletarLancamentosOrfaosDeSessao() {
+  try {
+    const snap = await db.collection("clinica_lancamentos")
+      .where("tipo_lancamento","==","sessao").get();
+    const orfaos = snap.docs.filter(d=>{
+      const dado = d.data();
+      return !!dado.pacoteId; // tem pacoteId = pertence a pacote = é duplicata
+    });
+    if(orfaos.length===0) return { ok:true, deletados:0 };
+    // Firestore batch suporta até 500 operações
+    const batches = [];
+    let b = db.batch();
+    orfaos.forEach((d,i)=>{
+      b.delete(d.ref);
+      if((i+1)%499===0){ batches.push(b); b=db.batch(); }
+    });
+    batches.push(b);
+    await Promise.all(batches.map(bt=>bt.commit()));
+    return { ok:true, deletados:orfaos.length };
+  } catch(e) {
+    return { ok:false, erro:e.message };
+  }
+}
+
 function enviarPushLocal(titulo, corpo) {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
@@ -2281,7 +2307,10 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
       valorPago:pago?vPago:0,
       dataPagamento:pago&&!s.dataPagamento?new Date().toISOString().slice(0,10):s.dataPagamento
     });
-    if(pago){
+    // ── REGRA: sessão de PACOTE nunca gera lançamento próprio.
+    // O lançamento do pacote já cobre todas as sessões filhas.
+    // Lançamento individual só existe para sessões AVULSAS (sem pacoteId).
+    if(pago && !s.pacoteId){
       const lancExist = lancamentos.find(l=>l.sessaoId===s.id);
       if(!lancExist){
         await db.collection("clinica_lancamentos").add({
@@ -3131,14 +3160,18 @@ function FinanceiroClinica() {
   const [auditando, setAuditando] = useState(false);
 
   async function executarHigienizacao() {
-    if(!confirm("⚠️ Confirmar higienização de Maio/2026?\n\n• Duplicatas de Ronei e Heitor serão deletadas\n• 'Sem Nome' serão categorizados como Despesas Administrativas\n\nEssa ação não pode ser desfeita.")) return;
+    if(!confirm("⚠️ Confirmar higienização completa?\n\n• Lançamentos de sessão órfãos (de pacotes) serão deletados\n• Duplicatas de Ronei e Heitor serão removidas\n• Lançamentos Sem Nome viram Despesas Administrativas\n\nEssa ação não pode ser desfeita.")) return;
     setAuditando(true);
     const log = [];
     const mesRef = "2026-05";
 
-    // IDs dos pacientes afetados — busca dinâmica
-    const snapRonei  = await db.collection("clinica_pacientes").where("nome",">=","Ronei").where("nome","<=","Ronei\uf8ff").limit(1).get();
-    const snapHeitor = await db.collection("clinica_pacientes").where("nome",">=","Heitor").where("nome","<=","Heitor\uf8ff").limit(1).get();
+    // ── PASSO 0: Maior fonte de duplicata — sessões de pacote gerando lançamento próprio
+    const ro = await deletarLancamentosOrfaosDeSessao();
+    log.push(`Sessões órfãs de pacote: ${ro.ok ? `${ro.deletados} lançamento(s) deletado(s)` : "Erro — "+ro.erro}`);
+
+    // ── PASSO 1: Duplicatas por paciente
+    const snapRonei  = await db.collection("clinica_pacientes").where("nome",">=","Ronei").where("nome","<=","Ronei").limit(1).get();
+    const snapHeitor = await db.collection("clinica_pacientes").where("nome",">=","Heitor").where("nome","<=","Heitor").limit(1).get();
 
     if(!snapRonei.empty){
       const r = await deletarDuplicatasPaciente(snapRonei.docs[0].id, mesRef);
@@ -3150,6 +3183,7 @@ function FinanceiroClinica() {
       log.push(`Heitor: ${r.ok ? `${r.deletados} duplicata(s) removida(s)` : "Erro — "+r.erro}`);
     } else { log.push("Heitor: paciente não encontrado"); }
 
+    // ── PASSO 2: Categorizar Sem Nome
     const rc = await categorizarSemNome(mesRef);
     log.push(`Sem Nome: ${rc.ok ? `${rc.atualizados} lançamento(s) categorizados` : "Erro — "+rc.erro}`);
 
@@ -3168,10 +3202,11 @@ function FinanceiroClinica() {
               <button onClick={()=>setModalAuditoria(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20}}>✕</button>
             </div>
             <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>
+            <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>
               Esta operação irá:<br/>
-              • Deletar duplicatas de <b>Ronei</b> e <b>Heitor</b>, preservando o vínculo com o pacote<br/>
-              • Categorizar os <b>36 lançamentos Sem Nome</b> como "Despesas Administrativas/Clínica"
-            </div>
+              • Deletar <b>lançamentos de sessão órfãos</b> — sessões de pacote que geraram lançamento próprio indevido<br/>
+              • Remover duplicatas de <b>Ronei</b> e <b>Heitor</b><br/>
+              • Categorizar <b>lançamentos Sem Nome</b> como "Despesas Administrativas/Clínica"
             {auditLog.length > 0 && (
               <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:14,marginBottom:16}}>
                 <div style={{fontWeight:700,fontSize:12,color:"#166534",marginBottom:6}}>✅ Resultado:</div>
