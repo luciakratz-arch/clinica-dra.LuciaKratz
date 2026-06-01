@@ -10419,6 +10419,468 @@ function PsicoAlarme({ cat }){
 }
 
 
+// ── macro_ansiedade: novos componentes ───────────────────────────────────────
+
+function PsicoPensamentosSaoEventos({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="Pensamentos São Eventos, Não Factos" emoji="💭" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🌊", titulo:"O que é um pensamento?", subtitulo:"Não é a realidade — é uma interpretação",
+        texto:"A nossa mente produz cerca de 60 000 pensamentos por dia. A maioria passa sem ser notada. O problema começa quando acreditamos que todo pensamento é verdade — como se pensar algo fosse prova de que é real.",
+        destaque:"Pensar 'Sou um fracasso' não me torna um fracasso. É apenas um evento mental, como uma nuvem a passar."
+      },
+      { tipo:"comparacao", icone:"⚖️", titulo:"Facto vs. interpretação", subtitulo:"A diferença que muda tudo",
+        intro:"A mente mistura os dois automaticamente. Separar é uma habilidade que se treina:",
+        lados:[
+          { titulo:"Facto", icone:"📌", cor:"#16a34a", bg:"#dcfce7", itens:["Ela não respondeu minha mensagem","A reunião foi adiada","Cometi um erro no relatório","Fiquei em silêncio na reunião"] },
+          { titulo:"Interpretação", icone:"🔮", cor:"#dc2626", bg:"#fee2e2", itens:["Ela está com raiva de mim","Não valorizam meu trabalho","Sou incompetente","As pessoas me julgaram"] }
+        ]
+      },
+      { tipo:"lista", icone:"🧘", titulo:"Defusão cognitiva", subtitulo:"Criar distância do pensamento",
+        intro:"Na TCC e no mindfulness, 'defusão' é a capacidade de observar o pensamento sem ser controlado por ele:",
+        itens:[
+          { icone:"👁️", titulo:"Nomeie o pensamento", texto:"Em vez de 'Sou um fracasso', diga: 'Estou tendo o pensamento de que sou um fracasso'" },
+          { icone:"🍃", titulo:"Deixe passar", texto:"Visualize o pensamento como uma folha num rio — observe-o fluir sem segurá-lo" },
+          { icone:"❓", titulo:"Questione a evidência", texto:"'O que prova que esse pensamento é 100% verdade? E o que contradiz?'" },
+          { icone:"🔄", titulo:"Gere alternativas", texto:"'Que outro pensamento seria igualmente plausível sobre esta situação?'" }
+        ]
+      },
+      { tipo:"destaque", icone:"💡", titulo:"A virada",
+        frase:"Você não é seus pensamentos. Você é quem os observa.",
+        subtexto:"Essa distinção simples é a base de toda mudança cognitiva. Quando você observa um pensamento em vez de ser ele, recupera o poder de escolher como reagir."
+      }
+    ]}
+    perguntas={[
+      "Que pensamento recorrente você tem e que talvez esteja a tratar como facto?",
+      "Se separasse o facto da interpretação numa situação recente, o que mudaria?",
+      "O que aconteceria se você observasse esse pensamento como uma nuvem a passar — sem lutar contra ele?"
+    ]}
+  />;
+}
+
+function PsicoEustresseV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="Eustresse vs. distresse" emoji="⚡" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"⚡", titulo:"Nem todo estresse é inimigo", subtitulo:"Existe um estresse que nos faz crescer",
+        texto:"A palavra 'estresse' virou sinônimo de algo negativo. Mas o psicólogo Hans Selye mostrou que existe uma distinção crucial: há o estresse que nos impulsiona e o que nos adoece.",
+        destaque:"A diferença não está na intensidade — está na nossa percepção de controle e no tempo de duração."
+      },
+      { tipo:"comparacao", icone:"⚖️", titulo:"Eustresse vs. Distresse", subtitulo:"Dois tipos, efeitos opostos",
+        intro:"O mesmo evento pode gerar eustresse numa pessoa e distresse em outra, dependendo de recursos e percepção:",
+        lados:[
+          { titulo:"Eustresse ✅", icone:"🚀", cor:"#16a34a", bg:"#dcfce7", itens:["Motivador e energizante","Sentido de desafio","Curto prazo, gerenciável","Aumenta foco e desempenho","Exemplo: prazo que estimula"] },
+          { titulo:"Distresse ❌", icone:"🪫", cor:"#dc2626", bg:"#fee2e2", itens:["Desgastante e paralisante","Sensação de ameaça","Prolongado ou sem saída","Prejudica saúde e memória","Exemplo: sobrecarga crônica"] }
+        ]
+      },
+      { tipo:"lista", icone:"🎯", titulo:"Como converter distresse em eustresse", subtitulo:"Estratégias concretas",
+        intro:"A percepção é modificável. Algumas formas práticas de ressignificar o estresse:",
+        itens:[
+          { icone:"🔍", titulo:"Identifique o que está no seu controle", texto:"Separe o que você pode fazer agora do que está fora do seu alcance" },
+          { icone:"🧩", titulo:"Divida o desafio", texto:"Tarefas enormes geram distresse; tarefas pequenas e claras geram eustresse" },
+          { icone:"🌱", titulo:"Reframe o significado", texto:"'Isso está me destruindo' → 'Isso está me desafiando a crescer'" },
+          { icone:"⏱️", titulo:"Estabeleça limites de tempo", texto:"Estresse sem fim é distresse; estresse com prazo definido é tolerável" }
+        ]
+      },
+      { tipo:"destaque", icone:"🧠", titulo:"O que a ciência diz",
+        frase:"Acreditar que o estresse é útil pode melhorar seu desempenho e saúde.",
+        subtexto:"Um estudo de Stanford com 30 000 pessoas mostrou que o estresse só é prejudicial quando acreditamos que ele é prejudicial. A percepção importa tanto quanto a intensidade."
+      }
+    ]}
+    perguntas={[
+      "Existe algum estressor na sua vida agora que poderia ser reinterpretado como desafio em vez de ameaça?",
+      "Quando você pensa nos seus momentos de maior crescimento, havia algum estresse presente?",
+      "O que mudaria se você tratasse o nervosismo antes de algo importante como energia, e não como sinal de perigo?"
+    ]}
+  />;
+}
+
+function PsicoCicloAnsiedadeV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="O ciclo da ansiedade" emoji="🌀" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🌀", titulo:"Como a ansiedade se alimenta de si mesma", subtitulo:"O ciclo que nunca para — até você entender",
+        texto:"A ansiedade não surge do nada. Ela segue um ciclo previsível que se repete e se intensifica cada vez que não é interrompido. Entender o ciclo é o primeiro passo para quebrá-lo.",
+        destaque:"A evitação é o combustível da ansiedade. O que evitamos hoje fica maior amanhã."
+      },
+      { tipo:"lista", icone:"🔄", titulo:"As 4 fases do ciclo", subtitulo:"Reconheça onde você está",
+        intro:"O ciclo da ansiedade passa por quatro estágios que se retroalimentam:",
+        itens:[
+          { icone:"1️⃣", titulo:"Gatilho", texto:"Situação real ou imaginada que o cérebro interpreta como ameaça — uma apresentação, um conflito, uma incerteza" },
+          { icone:"2️⃣", titulo:"Pensamentos catastróficos", texto:"A mente começa a projetar o pior: 'Vou falhar', 'Vão me julgar', 'Não vou conseguir'" },
+          { icone:"3️⃣", titulo:"Sintomas físicos", texto:"Coração acelera, músculo tensa, estômago aperta — o corpo entra em modo de alerta real" },
+          { icone:"4️⃣", titulo:"Evitação ou fuga", texto:"Você evita a situação → sente alívio imediato → o cérebro aprende que 'fugir = seguro' → o gatilho fica maior" }
+        ]
+      },
+      { tipo:"cards", icone:"🔓", titulo:"Como quebrar o ciclo", subtitulo:"Intervenção em cada fase",
+        intro:"Você pode interromper o ciclo em qualquer ponto:",
+        cards:[
+          { icone:"🎯", titulo:"No gatilho", texto:"Identifique o que realmente desencadeou a ansiedade — nem sempre é o óbvio", cor:COR, bg:BG },
+          { icone:"💭", titulo:"No pensamento", texto:"Questione: 'Qual a evidência? Qual o pior caso real? Consigo lidar?'", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🌬️", titulo:"No corpo", texto:"Respiração 4-7-8: inspire 4s, segure 7s, expire 8s — ativa o nervo vago", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🚶", titulo:"Na evitação", texto:"Exposição gradual: enfrente a situação em passos pequenos, do menos ao mais temido", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"💪", titulo:"A exposição gradual",
+        frase:"Cada vez que você enfrenta em vez de fugir, o ciclo perde força.",
+        subtexto:"A ansiedade é como uma onda: sobe, atinge o pico e desce. Se você ficar presente durante a subida, vai descobrir que o pico passa — e que sobreviveu."
+      }
+    ]}
+    perguntas={[
+      "Em qual fase do ciclo você costuma estar quando percebe a ansiedade?",
+      "Existe algo que você evita regularmente e que, no fundo, sabe que poderia enfrentar?",
+      "Que exposição pequena e segura você poderia fazer esta semana para começar a quebrar o ciclo?"
+    ]}
+  />;
+}
+
+function PsicoPreocupacaoV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="Preocupação produtiva vs. improdutiva" emoji="🎛️" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🎛️", titulo:"Nem toda preocupação é inútil", subtitulo:"Mas a maioria é",
+        texto:"Preocupar-se é natural e, em pequenas doses, útil. O problema é quando a mente fica presa em loop — ruminando o mesmo problema sem chegar a nenhuma solução. Isso se chama preocupação improdutiva.",
+        destaque:"A pergunta-chave: 'Existe alguma ação concreta que posso fazer agora?' Se sim, é produtiva. Se não, é improdutiva."
+      },
+      { tipo:"comparacao", icone:"⚖️", titulo:"Produtiva vs. Improdutiva", subtitulo:"Como diferenciar na prática",
+        intro:"",
+        lados:[
+          { titulo:"Produtiva ✅", icone:"✅", cor:"#16a34a", bg:"#dcfce7", itens:["Leva a uma ação concreta","Tem prazo e solução possível","Você pensa e depois age","Reduz a incerteza","Exemplo: planejar uma conversa difícil"] },
+          { titulo:"Improdutiva ❌", icone:"🔄", cor:"#dc2626", bg:"#fee2e2", itens:["Fica em loop sem solução","Sobre o futuro ou passado","Você pensa e continua pensando","Aumenta a incerteza","Exemplo: 'E se eu ficar doente?'"] }
+        ]
+      },
+      { tipo:"lista", icone:"🛑", titulo:"Como interromper a preocupação improdutiva", subtitulo:"4 técnicas testadas",
+        intro:"",
+        itens:[
+          { icone:"📅", titulo:"Agenda a preocupação", texto:"Reserve 20 minutos por dia para se preocupar conscientemente. Fora desse horário, adie o pensamento: 'Vou pensar nisso às 18h'" },
+          { icone:"✍️", titulo:"Escreva e solte", texto:"Coloque a preocupação no papel. O ato de escrever descarrega a memória de trabalho e reduz a ruminação" },
+          { icone:"❓", titulo:"Teste a utilidade", texto:"Pergunte: 'Pensar nisso agora vai mudar alguma coisa?' Se não, é sinal para redirecionar a atenção" },
+          { icone:"🎯", titulo:"Converta em ação", texto:"Para cada preocupação, defina UMA ação pequena possível — mesmo que não resolva tudo, cria sensação de controle" }
+        ]
+      },
+      { tipo:"destaque", icone:"🧘", titulo:"Soltar o incontrolável",
+        frase:"Se você pode fazer algo, faça. Se não pode, preocupar-se não vai ajudar.",
+        subtexto:"Esta frase, do estoicismo, resume séculos de sabedoria: energia mental é um recurso finito. Investir em preocupações fora do seu controle é um desperdício que drena exatamente o que você precisaria para agir."
+      }
+    ]}
+    perguntas={[
+      "Liste suas 3 principais preocupações agora. Para cada uma: existe uma ação concreta possível hoje?",
+      "Existe uma preocupação que você carrega há muito tempo sem conseguir resolver? O que a mantém viva?",
+      "Como seria a sua semana se você dedicasse à preocupação apenas 20 minutos por dia — e o restante, às ações?"
+    ]}
+  />;
+}
+
+function PsicoPiorCenarioV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="A armadilha do pior cenário" emoji="⛈️" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"⛈️", titulo:"Catastrofizar: o hábito de sofrer antecipado", subtitulo:"Por que a mente vai sempre para o pior",
+        texto:"Catastrofizar é imaginar o pior desfecho possível e tratá-lo como provável ou certo. 'E se eu perder o emprego?' 'E se a doença for grave?' O cérebro não distingue ameaça imaginada de real — então você sofre de verdade por algo que talvez nunca aconteça.",
+        destaque:"A catastrofização é uma distorção cognitiva, não uma previsão realista do futuro."
+      },
+      { tipo:"lista", icone:"🔍", titulo:"Como identificar que você está catastrofizando", subtitulo:"Sinais internos",
+        intro:"",
+        itens:[
+          { icone:"📢", titulo:"Linguagem absoluta", texto:"'Vai ser horrível', 'Não vou conseguir', 'Vai dar tudo errado'" },
+          { icone:"🔮", titulo:"Previsão sem evidência", texto:"Você prevê resultados negativos sem dados que os sustentem" },
+          { icone:"💥", titulo:"Magnificação", texto:"O erro vira catástrofe: um deslize no trabalho = demissão certa" },
+          { icone:"🏃", titulo:"Fuga preventiva", texto:"Você começa a evitar situações por medo do pior cenário imaginado" }
+        ]
+      },
+      { tipo:"cards", icone:"🛠️", titulo:"As 3 perguntas que destroem o catastrofismo", subtitulo:"Técnica da TCC",
+        intro:"Quando perceber que está indo para o pior cenário, faça essas três perguntas:",
+        cards:[
+          { icone:"📊", titulo:"Qual a probabilidade real?", texto:"De 0 a 100%, o quanto isso realmente vai acontecer? Seja honesto.", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"📚", titulo:"Qual o histórico?", texto:"Esse tipo de coisa já aconteceu antes? Com que frequência o pior cenário se concretizou?", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"💪", titulo:"Se acontecer, consigo lidar?", texto:"Humanos são incrivelmente resilientes. Você já superou coisas difíceis antes.", cor:COR, bg:BG }
+        ]
+      },
+      { tipo:"destaque", icone:"🌤️", titulo:"O cenário realista",
+        frase:"Entre o melhor e o pior cenário, existe um mais provável — e geralmente é suportável.",
+        subtexto:"A mente ansiosa tende a ignorar o cenário médio realista. Treine-se a perguntar: 'O que provavelmente vai acontecer?' — não o melhor, não o pior, mas o mais provável."
+      }
+    ]}
+    perguntas={[
+      "Qual é uma situação atual em que você sente que está indo para o pior cenário?",
+      "Se você desse uma probabilidade real (%) a esse pior cenário, qual seria?",
+      "Pensando em situações difíceis que já viveu — o que isso diz sobre sua capacidade de lidar com o que vier?"
+    ]}
+  />;
+}
+
+function PsicoModeloABCV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="O modelo ABC na prática" emoji="🔺" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔺", titulo:"Não são os eventos que nos perturbam", subtitulo:"São nossas crenças sobre eles",
+        texto:"Albert Ellis criou o modelo ABC para mostrar que entre um evento e nossa reação emocional existe algo crucial: o que acreditamos sobre o evento. A mesma situação pode gerar emoções completamente diferentes dependendo da crença.",
+        destaque:"A → Adversidade (o que aconteceu) · B → Belief (crença) · C → Consequência emocional"
+      },
+      { tipo:"lista", icone:"🧩", titulo:"O modelo na vida real", subtitulo:"Dois colegas, mesma crítica, emoções opostas",
+        intro:"Maria e João recebem a mesma crítica do chefe: 'Esse relatório precisa melhorar'.",
+        itens:[
+          { icone:"👩", titulo:"Maria — B: 'Sou incompetente'", texto:"C: Tristeza, vergonha, desmotivação. Pensa em pedir demissão." },
+          { icone:"👨", titulo:"João — B: 'Posso aprender com isso'", texto:"C: Curiosidade leve, motivação. Pergunta como melhorar." },
+          { icone:"📌", titulo:"O A foi idêntico", texto:"O que criou emoções opostas foi exclusivamente o B — a crença de cada um sobre o evento." },
+          { icone:"💡", titulo:"A boa notícia", texto:"Crenças são modificáveis. Diferente de eventos, que muitas vezes estão fora do nosso controle." }
+        ]
+      },
+      { tipo:"cards", icone:"🔧", titulo:"Como disputar crenças (o D do modelo)", subtitulo:"ABCDE na prática",
+        intro:"Ellis adicionou D (Dispute) e E (Efeito) ao modelo original:",
+        cards:[
+          { icone:"❓", titulo:"D — Dispute", texto:"'Que evidências tenho de que essa crença é verdade? E contra ela?'", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🔄", titulo:"Crença alternativa", texto:"'O que mais poderia significar esse evento além da minha interpretação inicial?'", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"✨", titulo:"E — Efeito", texto:"Após disputar a crença, que nova emoção emerge? Como muda seu comportamento?", cor:COR, bg:BG }
+        ]
+      },
+      { tipo:"destaque", icone:"🗝️", titulo:"O poder do B",
+        frase:"Mudar os eventos é raro. Mudar o que acreditamos sobre eles está ao nosso alcance.",
+        subtexto:"Não se trata de pensamento positivo forçado — mas de pensamento realista e flexível. A crença não precisa ser bonita; precisa ser mais precisa."
+      }
+    ]}
+    perguntas={[
+      "Pense numa situação recente que gerou emoção forte. Qual foi o A? Qual foi o B que você não percebeu de imediato?",
+      "Se você mudasse o B dessa situação para uma crença mais realista, como mudaria o C?",
+      "Existe uma crença recorrente sua que você já questiona se é verdade, mas continua acreditando?"
+    ]}
+  />;
+}
+
+function PsicoPensamentosV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="O poder dos pensamentos" emoji="💭" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"💭", titulo:"A mente como filtro da realidade", subtitulo:"O que pensamos molda o que sentimos",
+        texto:"Você já reparou como a mesma situação pode gerar emoções completamente diferentes em pessoas diferentes? Não é a situação em si que determina como nos sentimos — é o que pensamos sobre ela. A mente funciona como um filtro.",
+        destaque:"Não são as coisas em si que nos perturbam, mas o que acreditamos sobre elas. — Epicteto"
+      },
+      { tipo:"lista", icone:"🔗", titulo:"A cadeia pensamento → emoção → comportamento", subtitulo:"Como tudo se conecta",
+        intro:"Cada pensamento dispara uma emoção, que dispara um comportamento, que cria uma nova situação:",
+        itens:[
+          { icone:"💭", titulo:"Pensamento automático", texto:"'Ela não me respondeu — deve estar me ignorando de propósito'" },
+          { icone:"😠", titulo:"Emoção", texto:"Raiva, mágoa, insegurança — sentidas no corpo como tensão real" },
+          { icone:"🚪", titulo:"Comportamento", texto:"Você age de forma distante ou confrontadora — criando o problema que temia" },
+          { icone:"🔄", titulo:"Retroalimentação", texto:"O resultado confirma o pensamento original — o ciclo se fecha e se fortalece" }
+        ]
+      },
+      { tipo:"cards", icone:"🛠️", titulo:"Como trabalhar os pensamentos", subtitulo:"3 ferramentas práticas",
+        intro:"",
+        cards:[
+          { icone:"📓", titulo:"Registro de pensamentos", texto:"Anote o pensamento, a emoção, a situação. Observar já cria distância", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🔍", titulo:"Questionamento socrático", texto:"'Isso é um facto ou uma interpretação? Que evidência tenho? E contra?'", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🔄", titulo:"Pensamento alternativo", texto:"Gere pelo menos 2 explicações alternativas para a mesma situação", cor:COR, bg:BG }
+        ]
+      },
+      { tipo:"destaque", icone:"✏️", titulo:"O exercício de hoje",
+        frase:"Hoje, quando notar uma emoção forte, pergunte: 'Que pensamento veio antes disso?'",
+        subtexto:"Só essa pergunta — feita com curiosidade, sem julgamento — já começa a criar o espaço entre o estímulo e a resposta. E nesse espaço mora a liberdade."
+      }
+    ]}
+    perguntas={[
+      "Que pensamento recorrente você tem que mais afeta seu humor ao longo do dia?",
+      "Consegue identificar um momento recente em que um pensamento automático levou a uma emoção forte?",
+      "Se você gerasse um pensamento alternativo para aquela situação, como sua emoção poderia ter sido diferente?"
+    ]}
+  />;
+}
+
+function PsicoPizzaV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="A pizza da responsabilidade" emoji="🍕" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🍕", titulo:"A culpa raramente é só sua", subtitulo:"Como dividir a responsabilidade com mais justiça",
+        texto:"Quando algo dá errado, a mente ansiosa tende a um extremo: ou coloca toda a culpa em si mesma (autoculpa tóxica) ou em outra pessoa (vitimização). A realidade é mais complexa e mais justa.",
+        destaque:"Distribuir responsabilidade de forma justa não é escapar da culpa. É pensar com clareza."
+      },
+      { tipo:"lista", icone:"⚖️", titulo:"Os três fatores de todo problema", subtitulo:"A fórmula equilibrada",
+        intro:"Na maioria das situações difíceis, existe uma combinação de:",
+        itens:[
+          { icone:"🙋", titulo:"Eu (minha parte)", texto:"Minhas escolhas, meu comportamento, o que eu poderia ter feito diferente — sem exagerar nem minimizar" },
+          { icone:"🧑‍🤝‍🧑", titulo:"O outro (parte deles)", texto:"O comportamento do outro, as escolhas que fizeram, o que contribuíram para a situação" },
+          { icone:"🌍", titulo:"As circunstâncias (contexto)", texto:"Fatores externos: timing, pressão, informações que ninguém tinha, acasos que ninguém controlava" }
+        ]
+      },
+      { tipo:"cards", icone:"🎯", titulo:"Como fazer a pizza na prática", subtitulo:"Passo a passo",
+        intro:"",
+        cards:[
+          { icone:"📝", titulo:"Descreva a situação", texto:"Seja objetivo: o que aconteceu de fato, sem julgamentos ainda", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🍕", titulo:"Divida a pizza", texto:"Dê uma porcentagem a cada fator: Eu (X%) · O outro (Y%) · Circunstâncias (Z%)", cor:COR, bg:BG },
+          { icone:"🔍", titulo:"Avalie a sua fatia", texto:"O que exatamente foi sua responsabilidade? Nem mais, nem menos do que foi.", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🌱", titulo:"Defina o que você pode mudar", texto:"Só a sua fatia é modificável por você. Trabalhe o que está ao seu alcance.", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"🕊️", titulo:"O alívio da divisão justa",
+        frase:"Você não precisa carregar 100% do peso de algo que foi construído por vários.",
+        subtexto:"Assumir apenas a sua fatia real significa que você pode trabalhar nela com clareza, sem o peso paralisante de se sentir responsável por tudo."
+      }
+    ]}
+    perguntas={[
+      "Existe uma situação passada em que você assumiu 100% da culpa? Como ficaria a pizza se você dividisse honestamente?",
+      "E o oposto — existe algo em que colocou toda a culpa no outro, mas que tinha uma parte sua?",
+      "Como seria trabalhar só a sua fatia — sem se sentir responsável pela parte dos outros?"
+    ]}
+  />;
+}
+
+function PsicoFatosV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="Fatos vs. interpretações" emoji="🔍" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔍", titulo:"A mente preenche lacunas automaticamente", subtitulo:"E nem sempre acerta",
+        texto:"O cérebro recebe informação incompleta e, em frações de segundo, preenche as lacunas com base em experiências passadas, medos e crenças. O resultado? Confundimos a nossa versão da realidade com a realidade em si.",
+        destaque:"'Ela não me respondeu' é um facto. 'Ela está com raiva de mim' é uma interpretação. Toda a emoção vem da interpretação, não do facto."
+      },
+      { tipo:"lista", icone:"🧩", titulo:"Como separar facto de interpretação", subtitulo:"O teste prático",
+        intro:"Um facto: qualquer pessoa na sala teria visto a mesma coisa. Uma interpretação: é a história que você acrescenta.",
+        itens:[
+          { icone:"📹", titulo:"O teste da câmera", texto:"O que uma câmera filmaria? Só isso é facto. Tudo que a câmera não captura é interpretação." },
+          { icone:"💬", titulo:"O teste do acordo", texto:"Qualquer pessoa concordaria com essa afirmação? Se não, provavelmente é interpretação." },
+          { icone:"🔮", titulo:"Cuidado com o 'deve ser'", texto:"'Ele deve estar bravo', 'ela deve estar me ignorando' — o 'deve' quase sempre sinaliza interpretação." },
+          { icone:"❓", titulo:"A pergunta de ouro", texto:"'Isso eu sei, ou estou supondo?' — simples e transformadora." }
+        ]
+      },
+      { tipo:"comparacao", icone:"⚖️", titulo:"Exemplos do dia a dia", subtitulo:"",
+        intro:"",
+        lados:[
+          { titulo:"Facto", icone:"📌", cor:"#16a34a", bg:"#dcfce7", itens:["Ele ficou em silêncio","A reunião foi cancelada","Ela não sorriu","Não recebi resposta"] },
+          { titulo:"Interpretação comum", icone:"🔮", cor:"#dc2626", bg:"#fee2e2", itens:["Ele está me ignorando","Não confiam em mim","Ela me detesta","Fiz algo errado"] }
+        ]
+      },
+      { tipo:"destaque", icone:"🗝️", titulo:"A liberdade da distinção",
+        frase:"Quando você para de confundir interpretação com facto, perde menos energia sofrendo por histórias que inventou.",
+        subtexto:"Não é sobre não ter interpretações — é inevitável, somos humanos. É sobre perceber quando está confundindo uma com a outra, e ter a curiosidade de verificar antes de reagir."
+      }
+    ]}
+    perguntas={[
+      "Pense numa situação recente que te gerou emoção negativa. O que era facto? O que era interpretação?",
+      "Você tem o hábito de verificar suas interpretações antes de agir? O que te impede de fazer isso mais?",
+      "Existe uma interpretação sobre alguém próximo que você nunca verificou e que pode não ser verdade?"
+    ]}
+  />;
+}
+
+function PsicoSempreNuncaV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="O perigo do sempre e nunca" emoji="∞" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"∞", titulo:"A supergeneralização", subtitulo:"Quando um evento vira uma regra permanente",
+        texto:"'Eu SEMPRE faço tudo errado.' 'Ele NUNCA me ouve.' Essas palavras parecem descrever a realidade — mas na verdade a distorcem. Transformam um evento pontual em característica permanente. E o permanente gera desânimo.",
+        destaque:"Quase nada na vida humana é realmente 'sempre' ou 'nunca'. Essas palavras são sinais de alarme cognitivo."
+      },
+      { tipo:"lista", icone:"⚠️", titulo:"Por que é perigoso", subtitulo:"O impacto real da supergeneralização",
+        intro:"",
+        itens:[
+          { icone:"🧊", titulo:"Paralisa a mudança", texto:"Se 'sempre foi assim', pra que tentar? A supergeneralização cria fatalismo." },
+          { icone:"💔", titulo:"Destrói relacionamentos", texto:"'Você nunca me ouve' fecha o diálogo. A outra pessoa se defende em vez de ouvir." },
+          { icone:"🪞", titulo:"Distorce a autoimagem", texto:"'Sou sempre o problema' generaliza um erro pontual para a identidade inteira." },
+          { icone:"😔", titulo:"Alimenta depressão", texto:"A supergeneralização é um dos principais mecanismos cognitivos da depressão." }
+        ]
+      },
+      { tipo:"cards", icone:"🔧", titulo:"Como corrigir", subtitulo:"Substituições que mudam tudo",
+        intro:"Palavras pequenas, impacto enorme. Experimente trocar:",
+        cards:[
+          { icone:"🔄", titulo:"'Sempre' → 'desta vez'", texto:"'Errei desta vez' é verdade e modificável. 'Sempre erro' é uma sentença.", cor:COR, bg:BG },
+          { icone:"🔄", titulo:"'Nunca' → 'ainda não'", texto:"'Ainda não consegui' mantém a possibilidade aberta. 'Nunca vou conseguir' a fecha.", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🔄", titulo:"'É sempre assim' → 'às vezes'", texto:"Reduz a magnitude e permite ver exceções que existem mas são ignoradas.", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🔎", titulo:"Busque a exceção", texto:"Existe algum momento em que não foi assim? Uma exceção destrói o 'sempre'.", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"🌱", titulo:"A precisão como cura",
+        frase:"Quanto mais precisa a linguagem, mais preciso o pensamento — e mais realista a emoção.",
+        subtexto:"'Cometi um erro nessa situação' é um facto que pode ser trabalhado. 'Sempre cometo erros' é uma sentença que paralisa."
+      }
+    ]}
+    perguntas={[
+      "Você usa 'sempre' ou 'nunca' com frequência? Sobre quem — você mesmo ou alguém próximo?",
+      "Escolha uma frase com 'sempre/nunca' que você pensa com frequência. Existe pelo menos uma exceção?",
+      "Como mudaria a sua emoção se trocasse 'sempre' por 'desta vez' nessa frase?"
+    ]}
+  />;
+}
+
+function PsicoDesmontarV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="Desmontar o Circuito Cerebral da Ansiedade" emoji="🧠" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🧠", titulo:"Como o cérebro cria a ansiedade", subtitulo:"E como você pode interromper o circuito",
+        texto:"A ansiedade não é aleatória — é um circuito neural bem estabelecido. A amígdala detecta ameaça (real ou imaginada), dispara o alarme, e o corpo reage antes que o pensamento consciente intervenha. Mas esse circuito pode ser interrompido.",
+        destaque:"Você não pode evitar que o alarme dispare. Mas pode aprender a não deixá-lo tomar o comando."
+      },
+      { tipo:"lista", icone:"⚡", titulo:"O circuito em 4 passos", subtitulo:"O que acontece no seu cérebro",
+        intro:"",
+        itens:[
+          { icone:"1️⃣", titulo:"Detecção da ameaça (amígdala)", texto:"Em milissegundos, a amígdala escaneia o ambiente. Qualquer sinal de perigo — real ou simbólico — ativa o alarme." },
+          { icone:"2️⃣", titulo:"Resposta de estresse (hipotálamo)", texto:"Cortisol e adrenalina são liberados. Coração acelera, músculos tensionam, atenção estreita." },
+          { icone:"3️⃣", titulo:"Pensamentos catastróficos (córtex)", texto:"O córtex pré-frontal, agora sobrecarregado, gera pensamentos de ameaça em cascata." },
+          { icone:"4️⃣", titulo:"Evitação ou hipervigilância", texto:"O comportamento de fuga reforça o circuito: o cérebro aprende que a situação era mesmo perigosa." }
+        ]
+      },
+      { tipo:"cards", icone:"🔓", titulo:"4 interruptores do circuito", subtitulo:"Técnicas com base neurocientífica",
+        intro:"",
+        cards:[
+          { icone:"🌬️", titulo:"Respiração diafragmática", texto:"Ativa o nervo vago e sinaliza segurança ao sistema nervoso em 60-90 segundos", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"🖐️", titulo:"Técnica 5-4-3-2-1", texto:"5 coisas que vê, 4 que toca, 3 que ouve, 2 que cheira, 1 que saboreia — âncora no presente", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"💭", titulo:"Nomear a emoção", texto:"'Estou sentindo ansiedade' ativa o córtex pré-frontal e reduz a ativação da amígdala", cor:COR, bg:BG },
+          { icone:"🚶", titulo:"Movimento intencional", texto:"10 minutos de caminhada reduzem cortisol e produzem endorfina — quebra o ciclo fisiologicamente", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"🔄", titulo:"Neuroplasticidade",
+        frase:"Cada vez que você usa um interruptor, o circuito da ansiedade perde um pouco de força.",
+        subtexto:"O cérebro muda com o uso. Repetição constrói novos caminhos neurais. Com prática, o alarme começa a disparar com menos intensidade e você recupera o acesso ao pensamento claro mais rapidamente."
+      }
+    ]}
+    perguntas={[
+      "Qual dos 4 interruptores parece mais acessível para você experimentar esta semana?",
+      "Em que momento do seu dia o circuito da ansiedade costuma disparar com mais força?",
+      "Você já percebeu que depois de respirar fundo ou se mover, a ansiedade diminuiu? O que isso diz?"
+    ]}
+  />;
+}
+
+function Psico7DistorcoesV2({ cat }){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  return <PsicoVisualBase titulo="7 Distorções de Pensamento" emoji="🧩" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🧩", titulo:"A mente distorce — é parte do design", subtitulo:"Mas podemos aprender a perceber",
+        texto:"Distorções cognitivas são padrões de pensamento sistemáticos que nos afastam da realidade. Não são defeitos de caráter — são atalhos neurais que o cérebro desenvolveu. O problema é que muitos desses atalhos nos sabotam.",
+        destaque:"Reconhecer uma distorção não a apaga — mas cria distância suficiente para você escolher como responder."
+      },
+      { tipo:"lista", icone:"🔍", titulo:"As 7 distorções mais comuns", subtitulo:"Você se reconhece em alguma?",
+        intro:"",
+        itens:[
+          { icone:"⚫", titulo:"Pensamento tudo ou nada", texto:"'Ou é perfeito ou é um fracasso.' Sem meio-termo. Leva ao perfeccionismo e à decepção constante." },
+          { icone:"🌊", titulo:"Supergeneralização", texto:"Um evento negativo vira uma regra permanente: 'Isso sempre acontece comigo.'" },
+          { icone:"🔦", titulo:"Filtro mental", texto:"Foca exclusivamente no negativo, ignorando o positivo — como uma gota de tinta escurecendo um copo d'água." },
+          { icone:"⛔", titulo:"Desconto do positivo", texto:"Conquistas são minimizadas: 'Qualquer um teria feito isso.' O negativo conta; o positivo não." },
+          { icone:"🔮", titulo:"Leitura mental", texto:"'Sei o que ele está pensando' — sem perguntar. Quase sempre erra, e age com base no erro." },
+          { icone:"💥", titulo:"Catastrofização", texto:"Amplifica o negativo e minimiza a capacidade de lidar: 'Vai ser horrível e não vou aguentar.'" },
+          { icone:"🏷️", titulo:"Rotulação", texto:"Generaliza um comportamento para a identidade: 'Errei' vira 'Sou um fracasso.'" }
+        ]
+      },
+      { tipo:"cards", icone:"🛠️", titulo:"Como responder a cada distorção", subtitulo:"A pergunta certa para cada uma",
+        intro:"",
+        cards:[
+          { icone:"⚫", titulo:"Tudo ou nada", texto:"'Existe um meio-termo? Onde estaria numa escala de 0 a 10?'", cor:COR, bg:BG },
+          { icone:"🌊", titulo:"Supergeneralização", texto:"'Existe pelo menos uma exceção a esse sempre/nunca?'", cor:"#0891b2", bg:"#e0f2fe" },
+          { icone:"🔦", titulo:"Filtro / Desconto", texto:"'O que estou ignorando que também é verdade nessa situação?'", cor:"#16a34a", bg:"#dcfce7" },
+          { icone:"💥", titulo:"Catastrofização / Leitura mental", texto:"'Qual a probabilidade real? Já verifiquei com a pessoa?'", cor:"#d97706", bg:"#fef3c7" }
+        ]
+      },
+      { tipo:"destaque", icone:"🪞", titulo:"O treino da consciência",
+        frase:"Você não precisa eliminar distorções. Precisa apenas reconhecê-las antes de agir.",
+        subtexto:"O simples ato de dizer 'Estou catastrofizando agora' já ativa o córtex pré-frontal e cria distância da reação automática. A consciência é o início da mudança."
+      }
+    ]}
+    perguntas={[
+      "Das 7 distorções, qual você mais reconhece no seu próprio padrão de pensamento?",
+      "Consegue lembrar de uma situação recente em que essa distorção influenciou como você agiu?",
+      "O que mudaria se você fizesse a pergunta certa para essa distorção na próxima vez que ela aparecer?"
+    ]}
+  />;
+}
+
+
 const PSICO_VISUAIS = {
   "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
   "A armadilha do pior cenário": PsicoPiorCenario,
@@ -10433,6 +10895,19 @@ const PSICO_VISUAIS = {
   "7 Distorções de Pensamento": Psico7Distorcoes,
   // Novas psicoeducações visuais
   "O Alarme Falso do Cérebro": PsicoAlarme,
+  // macro_ansiedade — componentes completos
+  "Pensamentos São Eventos, Não Factos": PsicoPensamentosSaoEventos,
+  "O modelo ABC na prática": PsicoModeloABCV2,
+  "Preocupação produtiva vs. improdutiva": PsicoPreocupacaoV2,
+  "A armadilha do pior cenário": PsicoPiorCenarioV2,
+  "O ciclo da ansiedade": PsicoCicloAnsiedadeV2,
+  "Eustresse vs. distresse": PsicoEustresseV2,
+  "O poder dos pensamentos": PsicoPensamentosV2,
+  "A pizza da responsabilidade": PsicoPizzaV2,
+  "Fatos vs. interpretações": PsicoFatosV2,
+  "O perigo do sempre e nunca": PsicoSempreNuncaV2,
+  "Desmontar o Circuito Cerebral da Ansiedade": PsicoDesmontarV2,
+  "7 Distorções de Pensamento": Psico7DistorcoesV2,
 };
 
 const CATS_PSICOEDUCACAO = {
