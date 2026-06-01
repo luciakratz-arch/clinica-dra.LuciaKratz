@@ -2574,6 +2574,10 @@ function FinanceiroClinica() {
   // Estado dedicado para edição de despesas
   const CATS_DESPESA = ["Aluguel","Condomínio","Marketing","Salários","Investimentos","Musicoterapia","Ferramentas de IA","Telefone/Internet","Contador","Impostos","Outros"];
   const [formDespesaEdit, setFormDespesaEdit] = useState({descricao:"",categoria:"",valor:"",data:"",formaPag:"",status:"pago",obs:""});
+  // ── Painel de higienização ────────────
+  const [modalAuditoria, setModalAuditoria] = useState(false);
+  const [auditLog, setAuditLog] = useState([]);
+  const [auditando, setAuditando] = useState(false);
   const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
@@ -3153,11 +3157,6 @@ function FinanceiroClinica() {
 
   // Métricas
   const totalRecebido=lancamentos.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-
-  // ── ETAPA 1: Estado do painel de higienização ────────────
-  const [modalAuditoria, setModalAuditoria] = useState(false);
-  const [auditLog, setAuditLog] = useState([]);
-  const [auditando, setAuditando] = useState(false);
 
   async function executarHigienizacao() {
     if(!confirm("⚠️ Confirmar higienização completa?\n\n• Lançamentos de sessão órfãos (de pacotes) serão deletados\n• Duplicatas de Ronei e Heitor serão removidas\n• Lançamentos Sem Nome viram Despesas Administrativas\n\nEssa ação não pode ser desfeita.")) return;
