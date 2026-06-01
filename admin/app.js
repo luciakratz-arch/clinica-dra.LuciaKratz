@@ -65,6 +65,78 @@ async function dispararNotificacao({ tipo, titulo, corpo="", pacienteId="" }) {
   } catch(e) {}
 }
 
+// ─── ETAPA 1: HIGIENIZAÇÃO EM LOTE ────────────────────────
+// Detecta e deleta duplicatas de Maio/2026 para um paciente.
+// Critério: mesmo pacienteId + mesma data + mesmo valor + mesma descrição.
+// Mantém o documento que possui pacoteId preenchido (ou o mais antigo).
+async function deletarDuplicatasPaciente(pacienteId, mesRef) {
+  try {
+    const snap = await db.collection("clinica_lancamentos")
+      .where("pacienteId","==",pacienteId)
+      .get();
+    const docs = snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(d=>(d.data||"").startsWith(mesRef));
+
+    // Agrupar por chave composta
+    const grupos = {};
+    docs.forEach(d=>{
+      const chave = `${d.data}|${parseFloat(d.valor||0).toFixed(2)}|${(d.descricao||d.tipo||"").trim().toLowerCase()}`;
+      if(!grupos[chave]) grupos[chave]=[];
+      grupos[chave].push(d);
+    });
+
+    const batch = db.batch();
+    let deletados = 0;
+    Object.values(grupos).forEach(grupo=>{
+      if(grupo.length < 2) return;
+      // Prioriza manter o que tem pacoteId; senão mantém o primeiro (mais antigo por ordem de array)
+      grupo.sort((a,b)=>(b.pacoteId?1:0)-(a.pacoteId?1:0));
+      const manter = grupo[0];
+      // Garante que o mantido tem pacoteId se algum tinha
+      const comPacote = grupo.find(g=>g.pacoteId);
+      if(comPacote && !manter.pacoteId){
+        batch.update(db.collection("clinica_lancamentos").doc(manter.id),{pacoteId:comPacote.pacoteId});
+      }
+      // Deleta os redundantes
+      grupo.slice(1).forEach(dup=>{
+        batch.delete(db.collection("clinica_lancamentos").doc(dup.id));
+        deletados++;
+      });
+    });
+    await batch.commit();
+    return { ok:true, deletados };
+  } catch(e) {
+    return { ok:false, erro:e.message };
+  }
+}
+
+// Categoriza lançamentos "Sem Nome" de um mês como Despesas Administrativas.
+async function categorizarSemNome(mesRef) {
+  try {
+    const snap = await db.collection("clinica_lancamentos").get();
+    const semNome = snap.docs.filter(d=>{
+      const dado = d.data();
+      const nome = (dado.pacienteNome||dado.nomePaciente||"").trim();
+      return (!nome || nome==="") && (dado.data||"").startsWith(mesRef);
+    });
+    if(semNome.length===0) return { ok:true, atualizados:0 };
+    const batch = db.batch();
+    semNome.forEach(d=>{
+      batch.update(d.ref,{
+        pacienteNome:"— Clínica —",
+        categoria:"Despesas Administrativas/Clínica",
+        tipo_lancamento:"despesa",
+        _auditoria:"categorizado_automatico_"+mesRef,
+      });
+    });
+    await batch.commit();
+    return { ok:true, atualizados:semNome.length };
+  } catch(e) {
+    return { ok:false, erro:e.message };
+  }
+}
+
 function enviarPushLocal(titulo, corpo) {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
@@ -2362,9 +2434,15 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             </select>
                             {(s.status==="cancelado"||s.status==="remarcado")&&(
                               <div style={{marginTop:3}}>
-                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data:</div>
-                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value);}}
+                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data (sem mov. financeira):</div>
+                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value,s._motivoRemarc||"remarcacao");}}
                                   style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:105}}/>
+                                <select defaultValue={s.motivoRemarcacao||"remarcacao"} onChange={e=>atualizarSessao(s.id,{motivoRemarcacao:e.target.value})}
+                                  style={{fontSize:9,marginTop:2,border:"1px solid #cbd5e1",borderRadius:3,padding:"1px 3px",width:105,color:"#374151",cursor:"pointer"}}>
+                                  <option value="remarcacao">🔄 Remarcação</option>
+                                  <option value="falta">⚠️ Falta</option>
+                                  <option value="compensacao">✅ Compensação</option>
+                                </select>
                               </div>
                             )}
                           </td>
@@ -2512,33 +2590,62 @@ function FinanceiroClinica() {
   const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
   const mesAtualLabel = new Date(mesCards+"-01").toLocaleDateString("pt-BR",{month:"short"});
 
-  // Salvar lançamento avulso
+  // Salvar lançamento avulso — ETAPA 2: UPDATE obrigatório quando editando
   async function salvarAvulso(tipoVenda){
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
-    const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
-    const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pac?.nome||""};
-    if(editando){
-      await db.collection("clinica_lancamentos").doc(editando).update(dados);
-    } else {
-      await db.collection("clinica_lancamentos").add({...dados,tipo_lancamento:"avulso",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-      if(formAvulso.status==="pendente"){
-        await dispararNotificacao({
-          tipo:"pagamento_pendente",
-          titulo:`Pagamento pendente — ${pac?.nome||"Paciente"}`,
-          corpo:`R$ ${parseFloat(formAvulso.valor).toFixed(2).replace(".",",")} · ${formAvulso.tipo} · ${formAvulso.data?.split("-").reverse().join("/")||""}`,
-          pacienteId: formAvulso.pacienteId
+    try {
+      const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
+      const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pac?.nome||""};
+
+      if(editando){
+        // ── ETAPA 2: GUARD — verifica se o contexto ainda existe antes de salvar
+        const docSnap = await db.collection("clinica_lancamentos").doc(editando).get();
+        if(!docSnap.exists){
+          alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");
+          setModal(false);setEditando(null);setSalvando(false);return;
+        }
+        // UPDATE cirúrgico — nunca gera novo INSERT
+        await db.collection("clinica_lancamentos").doc(editando).update({
+          ...dados,
+          _editadoEm: firebase.firestore.FieldValue.serverTimestamp(),
         });
+      } else {
+        // Novo lançamento — INSERT legítimo
+        await db.collection("clinica_lancamentos").add({
+          ...dados,tipo_lancamento:"avulso",createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        if(formAvulso.status==="pendente"){
+          await dispararNotificacao({
+            tipo:"pagamento_pendente",
+            titulo:`Pagamento pendente — ${pac?.nome||"Paciente"}`,
+            corpo:`R$ ${parseFloat(formAvulso.valor).toFixed(2).replace(".",",")} · ${formAvulso.tipo} · ${formAvulso.data?.split("-").reverse().join("/")||""}`,
+            pacienteId: formAvulso.pacienteId
+          });
+        }
+        if(tipoVenda) await registrarComissao({ tipo:"Sessão Avulsa", valor:parseFloat(formAvulso.valor), pacienteNome:pac?.nome||"", tipoVenda });
       }
-      // Registra comissão da secretária
-      if(tipoVenda) await registrarComissao({ tipo:"Sessão Avulsa", valor:parseFloat(formAvulso.valor), pacienteNome:pac?.nome||"", tipoVenda });
+    } catch(e){
+      alert("Erro ao salvar: "+e.message);
     }
     setModal(false);setEditando(null);setFormAvulso({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});setSalvando(false);
   }
 
   function abrirEditar(l){
-    setFormAvulso({pacienteId:l.pacienteId||"",tipo:l.tipo||"Consulta",valor:l.valor||"",data:l.data||"",formaPag:l.formaPag||"PIX",status:l.status||"pendente",obs:l.obs||""});
-    setEditando(l.id);setModal("avulso");
+    // ── ETAPA 2: captura o ID exato do registro e pré-carrega o formulário
+    setFormAvulso({
+      pacienteId:l.pacienteId||"",
+      tipo:l.tipo||"Consulta",
+      valor:l.valor||"",
+      data:l.data||"",
+      formaPag:l.formaPag||"PIX",
+      status:l.status||"pendente",
+      obs:l.obs||"",
+      categoria:l.categoria||"",
+      descricao:l.descricao||"",
+    });
+    setEditando(l.id); // ID em cache — nunca abre janela de INSERT
+    setModal("avulso");
   }
 
   async function excluirLanc(id){
@@ -2546,18 +2653,76 @@ function FinanceiroClinica() {
     await db.collection("clinica_lancamentos").doc(id).delete();
   }
 
-  // Marcar pago — marca todas as sessões do pacote
+  // ── ETAPA 3: FONTE ÚNICA DA VERDADE ─────────────────────────────────────
+  // Dar baixa em um pacote:
+  //   1. Atualiza o documento do pacote (statusPag, valorPago, valorPendente)
+  //   2. Marca todas as sessões filhas como pagas em batch
+  //   3. Garante que existe EXATAMENTE 1 lançamento vinculado (sem criar duplicata)
   async function marcarPacotePago(pacoteId, formaPag){
     const sessPac = sessoes.filter(s=>s.pacoteId===pacoteId);
+    const pacote  = pacotes.find(p=>p.id===pacoteId);
+    if(!pacote) return;
+
+    const hoje = new Date().toISOString().slice(0,10);
+    const vTotal = parseFloat(pacote.valorTotal||0);
+    const extras = pacote.pagamentosExtras||[];
+    const totalExtras = extras.reduce((a,pg)=>a+(parseFloat(pg.valor)||0),0);
+    const valorPagoFinal = totalExtras > 0 ? totalExtras : vTotal;
+    const valorPendenteFinal = Math.max(0, vTotal - valorPagoFinal);
+
     const batch = db.batch();
-    sessPac.forEach(s=>{
-      batch.update(db.collection("clinica_sessoes").doc(s.id),{pagamento:"pago",formaPagamento:formaPag,dataPagamento:new Date().toISOString().slice(0,10)});
+
+    // 1. Atualiza o pacote — recalcula a matriz financeira
+    batch.update(db.collection("clinica_pacotes").doc(pacoteId),{
+      statusPag: "recebido",
+      formaPag,
+      dataPagamento: hoje,
+      valorPago: valorPagoFinal,
+      valorPendente: valorPendenteFinal,
+      _sincronizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    // Atualiza lançamento do pacote
-    const lancPacote = lancamentos.find(l=>l.pacoteId===pacoteId);
-    if(lancPacote){
-      batch.update(db.collection("clinica_lancamentos").doc(lancPacote.id),{status:"recebido",formaPag,dataPagamento:new Date().toISOString().slice(0,10)});
+
+    // 2. Atualiza todas as sessões filhas
+    const valorPorSessao = sessPac.length > 0
+      ? parseFloat((valorPagoFinal/sessPac.length).toFixed(2))
+      : (pacote.valorSessao||0);
+    sessPac.forEach(s=>{
+      batch.update(db.collection("clinica_sessoes").doc(s.id),{
+        pagamento:"pago",
+        formaPagamento:formaPag,
+        dataPagamento:hoje,
+        valorPago: parseFloat(s.valorPago||0) > 0 ? s.valorPago : valorPorSessao,
+        statusFinanceiro:"pago",
+      });
+    });
+
+    // 3. Atualiza lançamento existente OU cria exatamente 1 novo (evita duplicata)
+    const lancExistente = lancamentos.find(l=>l.pacoteId===pacoteId);
+    if(lancExistente){
+      batch.update(db.collection("clinica_lancamentos").doc(lancExistente.id),{
+        status:"recebido",
+        formaPag,
+        dataPagamento:hoje,
+        valor: valorPagoFinal,
+        valorPendente: valorPendenteFinal,
+      });
+    } else {
+      // Gera lançamento apenas se não existe nenhum para este pacote
+      const pac = pacientes.find(p=>p.id===pacote.pacienteId);
+      const mes = new Date(pacote.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+      const desc = `${pac?.nome||pacote.pacienteNome||"Paciente"} — Pacote ${pacote.totalSessoes||""} Sessões — ${mes.charAt(0).toUpperCase()+mes.slice(1)}`;
+      batch.set(db.collection("clinica_lancamentos").doc(),{
+        tipo_lancamento:"pacote", pacoteId,
+        pacienteId:pacote.pacienteId, pacienteNome:pac?.nome||pacote.pacienteNome||"",
+        tipo:desc, descricao:desc,
+        valor:valorPagoFinal, valorPendente:valorPendenteFinal,
+        data:hoje, formaPag, status:"recebido", dataPagamento:hoje,
+        pagamentosExtras:extras,
+        totalSessoes:pacote.totalSessoes, valorSessao:pacote.valorSessao,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      });
     }
+
     await batch.commit();
   }
 
@@ -2704,7 +2869,10 @@ function FinanceiroClinica() {
 
   async function atualizarSessao(id,campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
 
-  async function remarcarSessao(s, novaData){
+  // ── ETAPA 3: Remarcação/Compensação ─────────────────────────────────────
+  // Altera APENAS data + status. Jamais toca em valor, pagamento ou lançamentos.
+  // Motivo: remarcação por falta ou compensação não gera movimentação financeira.
+  async function remarcarSessao(s, novaData, motivo="remarcacao"){
     if(!novaData) return;
     try {
       await db.collection("clinica_sessoes").doc(s.id).update({
@@ -2713,6 +2881,8 @@ function FinanceiroClinica() {
         remarcada: true,
         dataRemarcada: novaData,
         dataOriginal: s.dataOriginal||s.data,
+        motivoRemarcacao: motivo,           // "remarcacao" | "falta" | "compensacao"
+        // NÃO altera: pagamento, valorPago, valorSessao, dataPagamento, pacoteId
       });
     } catch(e){
       console.error("Erro ao remarcar sessão:", e);
@@ -2912,9 +3082,70 @@ function FinanceiroClinica() {
   // Métricas
   const totalRecebido=lancamentos.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
 
+  // ── ETAPA 1: Estado do painel de higienização ────────────
+  const [modalAuditoria, setModalAuditoria] = useState(false);
+  const [auditLog, setAuditLog] = useState([]);
+  const [auditando, setAuditando] = useState(false);
+
+  async function executarHigienizacao() {
+    if(!confirm("⚠️ Confirmar higienização de Maio/2026?\n\n• Duplicatas de Ronei e Heitor serão deletadas\n• 'Sem Nome' serão categorizados como Despesas Administrativas\n\nEssa ação não pode ser desfeita.")) return;
+    setAuditando(true);
+    const log = [];
+    const mesRef = "2026-05";
+
+    // IDs dos pacientes afetados — busca dinâmica
+    const snapRonei  = await db.collection("clinica_pacientes").where("nome",">=","Ronei").where("nome","<=","Ronei\uf8ff").limit(1).get();
+    const snapHeitor = await db.collection("clinica_pacientes").where("nome",">=","Heitor").where("nome","<=","Heitor\uf8ff").limit(1).get();
+
+    if(!snapRonei.empty){
+      const r = await deletarDuplicatasPaciente(snapRonei.docs[0].id, mesRef);
+      log.push(`Ronei: ${r.ok ? `${r.deletados} duplicata(s) removida(s)` : "Erro — "+r.erro}`);
+    } else { log.push("Ronei: paciente não encontrado"); }
+
+    if(!snapHeitor.empty){
+      const r = await deletarDuplicatasPaciente(snapHeitor.docs[0].id, mesRef);
+      log.push(`Heitor: ${r.ok ? `${r.deletados} duplicata(s) removida(s)` : "Erro — "+r.erro}`);
+    } else { log.push("Heitor: paciente não encontrado"); }
+
+    const rc = await categorizarSemNome(mesRef);
+    log.push(`Sem Nome: ${rc.ok ? `${rc.atualizados} lançamento(s) categorizados` : "Erro — "+rc.erro}`);
+
+    setAuditLog(log);
+    setAuditando(false);
+  }
+
   return(
     <div>
-      {/* ── Modal Editar Pacote ── */}
+      {/* ── Modal Auditoria / Higienização Etapa 1 ── */}
+      {modalAuditoria&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:700,padding:20}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:480}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{margin:0,color:"#b45309"}}>🔧 Higienização — Maio/2026</h3>
+              <button onClick={()=>setModalAuditoria(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20}}>✕</button>
+            </div>
+            <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>
+              Esta operação irá:<br/>
+              • Deletar duplicatas de <b>Ronei</b> e <b>Heitor</b>, preservando o vínculo com o pacote<br/>
+              • Categorizar os <b>36 lançamentos Sem Nome</b> como "Despesas Administrativas/Clínica"
+            </div>
+            {auditLog.length > 0 && (
+              <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:14,marginBottom:16}}>
+                <div style={{fontWeight:700,fontSize:12,color:"#166534",marginBottom:6}}>✅ Resultado:</div>
+                {auditLog.map((l,i)=><div key={i} style={{fontSize:12,color:"#374151",marginBottom:2}}>• {l}</div>)}
+              </div>
+            )}
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModalAuditoria(false)}>Fechar</button>
+              {auditLog.length===0&&(
+                <button className="btn btn-purple" style={{background:"#b45309"}} onClick={executarHigienizacao} disabled={auditando}>
+                  {auditando?"Executando...":"⚡ Executar Higienização"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {modalEditarPacote&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={e=>{if(e.target===e.currentTarget)setModalEditarPacote(null);}}>
           <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto"}}>
@@ -3076,6 +3307,12 @@ function FinanceiroClinica() {
             <Icon name={ic} size={15}/>{lbl}
           </button>
         ))}
+        {/* Botão de higienização — Etapa 1 */}
+        <button onClick={()=>{setAuditLog([]);setModalAuditoria(true);}}
+          style={{marginLeft:"auto",padding:"10px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#b45309",borderBottom:"2px solid transparent",fontWeight:500,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:5,flexShrink:0}}
+          title="Higienizar duplicatas e lançamentos sem nome — Maio/2026">
+          <Icon name="tool" size={13}/>🔧 Higienizar
+        </button>
       </div>
 
       {/* ABA LANÇAMENTOS */}
