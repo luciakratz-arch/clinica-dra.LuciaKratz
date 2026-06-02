@@ -1913,7 +1913,11 @@ function DashboardMarketing({ user }) {
   const inProgress= leads.filter(l=>["contato","proposta","agendado"].includes(l.status)).length;
   const taxa      = total>0 ? Math.round((converted/total)*100) : 0;
 
-  const porOrigem = leads.reduce((acc,l)=>{ const o=l.origem||"Não informado"; acc[o]=(acc[o]||0)+1; return acc; },{});
+  const porOrigem = leads.reduce((acc,l)=>{
+    const camps = l.campanhas&&l.campanhas.length>0 ? l.campanhas : ["Não informado"];
+    camps.forEach(o=>{ acc[o]=(acc[o]||0)+1; });
+    return acc;
+  },{});
   const porStatus = leads.reduce((acc,l)=>{ const s=l.status||"novo"; acc[s]=(acc[s]||0)+1; return acc; },{});
 
   const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", convertido_social:"Convertido Social", convertido_parceria:"Convertido — Parceria", perdido:"Perdido" };
@@ -2006,7 +2010,7 @@ function DashboardMarketing({ user }) {
                   {leads.slice(0,20).map(l=>(
                     <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
                       <td style={{padding:"10px 16px",fontWeight:500}}>{l.nome||"—"}</td>
-                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.origem||"—"}</td>
+                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{(l.campanhas||[]).join(", ")||"—"}</td>
                       <td style={{padding:"10px 16px"}}>
                         <span style={{background:(STATUS_COR[l.status]||"#6b7280")+"20",color:STATUS_COR[l.status]||"#6b7280",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>
                           {STATUS_LABEL[l.status]||l.status||"novo"}
@@ -2033,4 +2037,3 @@ const NAV_MARKETING = [
   { id:"marketing-dashboard",    label:"Dashboard",   icon:"trending-up" },
   { id:"dashboard-performance",  label:"Performance", icon:"bar-chart-2" },
 ];
-
