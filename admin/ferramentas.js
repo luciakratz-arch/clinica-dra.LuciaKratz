@@ -5813,102 +5813,187 @@ function PsicoVisualBase({ titulo, emoji, cor, bg, secoes, perguntas }){
 }
 
 // ── PILOTO: O Alarme Falso do Cérebro ────────────────────────────
-function PsicoAlarme({ cat }){
+function PsicoAlarme({cat}){
   const COR="#7B00C4"; const BG="#f3e6ff";
-  return <PsicoVisualBase
-    titulo="O Alarme Falso do Cérebro"
-    emoji="🧠"
-    cor={COR} bg={BG}
-    secoes={[
-      {
-        tipo:"intro",
-        icone:"🔔",
-        titulo:"O seu cérebro tem um alarme",
-        subtitulo:"E ele dispara mais do que deveria",
-        texto:"O seu cérebro tem um sistema de segurança chamado amígdala — uma estrutura antiga, rápida e poderosa. A função dela é simples: manter você vivo. Quando percebe qualquer sinal de perigo, ela dispara o alarme antes mesmo que você pense conscientemente sobre o que está acontecendo.",
-        destaque:"O problema? Ela não distingue um leão de uma apresentação no trabalho."
-      },
-      {
-        tipo:"lista",
-        icone:"⚡",
-        titulo:"O que acontece quando o alarme dispara",
-        subtitulo:"Em milissegundos, o corpo reage",
-        intro:"Quando a amígdala dispara, o seu corpo entra em modo de emergência automaticamente:",
-        itens:[
-          {icone:"❤️", titulo:"Coração acelera", texto:"Para bombear mais sangue aos músculos — prontos para correr ou lutar"},
-          {icone:"💨", titulo:"Respiração fica rápida", texto:"Para captar mais oxigênio e alimentar a ação"},
-          {icone:"💪", titulo:"Músculos tensionam", texto:"Preparando o corpo para movimento imediato"},
-          {icone:"🍃", titulo:"Digestão para", texto:"O estômago aperta — digestão não é prioridade numa emergência"},
-          {icone:"👁️", titulo:"Foco estreita", texto:"A visão periférica diminui — tudo foca na ameaça percebida"},
-        ]
-      },
-      {
-        tipo:"comparacao",
-        icone:"⚖️",
-        titulo:"Ontem vs. hoje",
-        subtitulo:"O sistema não evoluiu — o ambiente sim",
-        intro:"Este sistema foi essencial para os nossos ancestrais. O desafio é que hoje os 'predadores' são outros:",
-        lados:[
-          {titulo:"Para o que foi criado", icone:"🦁", cor:"#dc2626", bg:"#fee2e2",
-           itens:["Predadores reais","Ameaças físicas imediatas","Perigos de vida ou morte","Situações com solução física"]},
-          {titulo:"Para o que dispara hoje", icone:"📧", cor:"#d97706", bg:"#fef3c7",
-           itens:["E-mails não respondidos","Conflitos no trabalho","Incerteza sobre o futuro","Críticas e julgamentos"]},
-        ]
-      },
-      {
-        tipo:"destaque",
-        icone:"💡",
-        titulo:"O insight que muda tudo",
-        frase:"A ansiedade não é fraqueza. É um sistema de proteção a disparar fora do contexto certo.",
-        subtexto:"Quando você entende isso, muda a relação com os sintomas: em vez de lutar contra o alarme com pânico, começa a reconhecê-lo com curiosidade — 'O meu sistema de segurança está ativo. O que está a interpretar como ameaça?'"
-      },
-    ]}
-    perguntas={[
-      "Você consegue identificar situações recentes em que seu alarme disparou sem perigo real?",
-      "Que situações do dia a dia o seu cérebro trata como se fossem ameaças?",
-      "Como você costuma reagir quando o alarme dispara? Luta, foge ou congela?",
-    ]}
-  />;
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Você consegue identificar situações recentes em que seu alarme disparou sem perigo real?",
+    "Que situações do dia a dia o seu cérebro trata como se fossem ameaças?",
+    "Como você costuma reagir quando o alarme dispara? Luta, foge ou congela?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — O Alarme Falso do Cérebro:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧠</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>O seu cérebro tem um alarme — e ele dispara mais do que deveria</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>A amígdala não distingue um leão de uma apresentação no trabalho.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>🔔 O que é a amígdala?</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.7}}>É uma estrutura cerebral antiga, rápida e poderosa cuja função é simples: manter você vivo. Quando percebe qualquer sinal de perigo, dispara o alarme antes mesmo que você pense conscientemente sobre o que está acontecendo.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#3d006a",fontStyle:"italic",fontWeight:500}}>O problema? Ela não distingue um leão de uma crítica no trabalho.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>⚡ Quando o alarme dispara, em milissegundos...</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {e:"❤️",t:"Coração acelera",d:"Para bombear sangue aos músculos — prontos para correr ou lutar"},
+            {e:"💨",t:"Respiração fica rápida",d:"Para captar mais oxigênio e alimentar a ação"},
+            {e:"💪",t:"Músculos tensionam",d:"Preparando o corpo para movimento imediato"},
+            {e:"🍃",t:"Digestão para",d:"O estômago aperta — não é prioridade numa emergência"},
+            {e:"👁️",t:"Foco estreita",d:"A visão periférica diminui — tudo foca na ameaça percebida"},
+          ].map(({e,t,d})=>(
+            <div key={t} style={{display:"flex",alignItems:"flex-start",gap:10,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+              <div>
+                <div style={{color:"#f3e6ff",fontSize:12,fontWeight:600}}>{t}</div>
+                <div style={{color:"#d9b3f5",fontSize:11,marginTop:2}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>⚖️ Para o que foi criado vs. o que dispara hoje</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#fee2e2",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#dc2626",fontWeight:700,fontSize:12,marginBottom:6}}>🦁 Para o que foi criado</div>
+            {["Predadores reais","Ameaças físicas","Perigos de vida ou morte","Soluções físicas imediatas"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#7f1d1d",marginBottom:3}}>• {i}</div>
+            ))}
+          </div>
+          <div style={{background:"#fef3c7",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#d97706",fontWeight:700,fontSize:12,marginBottom:6}}>📧 Para o que dispara hoje</div>
+            {["E-mails não respondidos","Conflitos no trabalho","Incerteza sobre o futuro","Críticas e julgamentos"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#78350f",marginBottom:3}}>• {i}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#f3e6ff",padding:"14px 20px",borderBottom:"1px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>💡 O insight que muda tudo</div>
+        <div style={{fontSize:12,color:"#3d006a",lineHeight:1.7}}>A ansiedade não é fraqueza. É um sistema de proteção disparando fora do contexto certo. Quando você entende isso, muda a relação com os sintomas — em vez de lutar contra o alarme com pânico, começa a reconhecê-lo: <em>"Meu sistema de segurança está ativo. O que está interpretando como ameaça?"</em></div>
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#3d006a",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#3d006a",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
-
 
 // ── macro_ansiedade: novos componentes ───────────────────────────────────────
 
-function PsicoPensamentosSaoEventos({ cat }){
+function PsicoPensamentosSaoEventos({cat}){
   const COR="#7B00C4"; const BG="#f3e6ff";
-  return <PsicoVisualBase titulo="Pensamentos São Eventos, Não Factos" emoji="💭" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🌊", titulo:"O que é um pensamento?", subtitulo:"Não é a realidade — é uma interpretação",
-        texto:"A nossa mente produz cerca de 60 000 pensamentos por dia. A maioria passa sem ser notada. O problema começa quando acreditamos que todo pensamento é verdade — como se pensar algo fosse prova de que é real.",
-        destaque:"Pensar 'Sou um fracasso' não me torna um fracasso. É apenas um evento mental, como uma nuvem a passar."
-      },
-      { tipo:"comparacao", icone:"⚖️", titulo:"Facto vs. interpretação", subtitulo:"A diferença que muda tudo",
-        intro:"A mente mistura os dois automaticamente. Separar é uma habilidade que se treina:",
-        lados:[
-          { titulo:"Facto", icone:"📌", cor:"#16a34a", bg:"#dcfce7", itens:["Ela não respondeu minha mensagem","A reunião foi adiada","Cometi um erro no relatório","Fiquei em silêncio na reunião"] },
-          { titulo:"Interpretação", icone:"🔮", cor:"#dc2626", bg:"#fee2e2", itens:["Ela está com raiva de mim","Não valorizam meu trabalho","Sou incompetente","As pessoas me julgaram"] }
-        ]
-      },
-      { tipo:"lista", icone:"🧘", titulo:"Defusão cognitiva", subtitulo:"Criar distância do pensamento",
-        intro:"Na TCC e no mindfulness, 'defusão' é a capacidade de observar o pensamento sem ser controlado por ele:",
-        itens:[
-          { icone:"👁️", titulo:"Nomeie o pensamento", texto:"Em vez de 'Sou um fracasso', diga: 'Estou tendo o pensamento de que sou um fracasso'" },
-          { icone:"🍃", titulo:"Deixe passar", texto:"Visualize o pensamento como uma folha num rio — observe-o fluir sem segurá-lo" },
-          { icone:"❓", titulo:"Questione a evidência", texto:"'O que prova que esse pensamento é 100% verdade? E o que contradiz?'" },
-          { icone:"🔄", titulo:"Gere alternativas", texto:"'Que outro pensamento seria igualmente plausível sobre esta situação?'" }
-        ]
-      },
-      { tipo:"destaque", icone:"💡", titulo:"A virada",
-        frase:"Você não é seus pensamentos. Você é quem os observa.",
-        subtexto:"Essa distinção simples é a base de toda mudança cognitiva. Quando você observa um pensamento em vez de ser ele, recupera o poder de escolher como reagir."
-      }
-    ]}
-    perguntas={[
-      "Que pensamento recorrente você tem e que talvez esteja a tratar como facto?",
-      "Se separasse o facto da interpretação numa situação recente, o que mudaria?",
-      "O que aconteceria se você observasse esse pensamento como uma nuvem a passar — sem lutar contra ele?"
-    ]}
-  />;
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Que pensamento recorrente você tem e que talvez esteja tratando como facto?",
+    "Se separasse o facto da interpretação numa situação recente, o que mudaria?",
+    "O que aconteceria se você observasse esse pensamento como uma nuvem passando — sem lutar contra ele?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — Pensamentos São Eventos, Não Factos:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>💭</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você não é seus pensamentos — você é quem os observa</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Pensar algo não torna aquilo verdade. Pensamentos são eventos mentais, como nuvens passando.</div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>🌊 O que é um pensamento?</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.7}}>A nossa mente produz cerca de 60.000 pensamentos por dia. A maioria passa sem ser notada. O problema começa quando acreditamos que todo pensamento é verdade — como se pensar algo fosse prova de que é real.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#3d006a",fontStyle:"italic",fontWeight:500}}>Pensar "Sou um fracasso" não me torna um fracasso. É apenas um evento mental, como uma nuvem passando.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>⚖️ Facto vs. interpretação — a diferença que muda tudo</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#86efac",fontWeight:700,fontSize:12,marginBottom:6}}>📌 Facto</div>
+            {["Ela não respondeu minha mensagem","A reunião foi adiada","Cometi um erro no relatório","Fiquei em silêncio na reunião"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#f3e6ff",marginBottom:3,padding:"2px 0",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>{i}</div>
+            ))}
+          </div>
+          <div style={{background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#fca5a5",fontWeight:700,fontSize:12,marginBottom:6}}>🔮 Interpretação</div>
+            {["Ela está com raiva de mim","Não valorizam meu trabalho","Sou incompetente","As pessoas me julgaram"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#f3e6ff",marginBottom:3,padding:"2px 0",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>{i}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>🧘 Defusão cognitiva — criar distância do pensamento</div>
+        {[
+          {e:"👁️",t:"Nomeie o pensamento",d:"Em vez de 'Sou um fracasso', diga: 'Estou tendo o pensamento de que sou um fracasso'"},
+          {e:"🍃",t:"Deixe passar",d:"Visualize o pensamento como uma folha num rio — observe-o fluir sem segurá-lo"},
+          {e:"❓",t:"Questione a evidência",d:"'O que prova que esse pensamento é 100% verdade? E o que contradiz?'"},
+          {e:"🔄",t:"Gere alternativas",d:"'Que outro pensamento seria igualmente plausível sobre esta situação?'"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #e8c8ff"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#3d006a",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#5a0090",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#f3e6ff",padding:"14px 20px",borderBottom:"1px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>💡 A virada</div>
+        <div style={{fontSize:12,color:"#3d006a",lineHeight:1.7}}>Você não é seus pensamentos. Você é quem os observa. Essa distinção simples é a base de toda mudança cognitiva. Quando você observa um pensamento em vez de ser ele, recupera o poder de escolher como reagir. 💜</div>
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#3d006a",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#3d006a",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 function PsicoEustresseV2({ cat }){
