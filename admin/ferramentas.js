@@ -6338,49 +6338,116 @@ function Psico7DistorcoesV2({ cat }){
 // ── macro_casais ─────────────────────────────────────────────────────────────
 
 function PsicoDiscutirDinheiro({ cat }){
-  const COR="#EC4899"; const BG="#fdf2f8";
-  return <PsicoVisualBase titulo="Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro" emoji="💰" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"💰", titulo:"O dinheiro como campo de batalha simbólico", subtitulo:"O que está realmente em jogo",
-        texto:"Casais brigam sobre dinheiro com uma frequência e intensidade que vai muito além dos números. A conta que não foi paga, o gasto que não foi consultado, a poupança que não cresce — raramente são sobre o valor em si. São sobre controle, segurança, respeito e poder.",
-        destaque:"Quando a briga é sobre dinheiro, a pergunta real é: 'Você me respeita? Você me protege? Você me vê?'"
-      },
-      { tipo:"comparacao", icone:"⚖️", titulo:"O que parece vs. o que é", subtitulo:"A camada oculta dos conflitos financeiros",
-        intro:"",
-        lados:[
-          { titulo:"O que dizemos", icone:"💬", cor:"#0891b2", bg:"#e0f2fe", itens:["'Você gasta demais'","'Nunca decidimos juntos'","'Você é controlador(a)'","'Não sobra nada no mês'"] },
-          { titulo:"O que sentimos", icone:"❤️", cor:"#ec4899", bg:"#fdf2f8", itens:["'Não me sinto seguro(a)'","'Não tenho voz nessa relação'","'Não confio em você'","'Tenho medo do futuro'"] }
-        ]
-      },
-      { tipo:"lista", icone:"🔍", titulo:"As raízes do conflito financeiro", subtitulo:"De onde vêm as crenças sobre dinheiro",
-        intro:"Cada pessoa traz para o relacionamento uma 'herança financeira' da família de origem:",
-        itens:[
-          { icone:"👨‍👩‍👧", titulo:"Família de origem", texto:"Quem controlava o dinheiro em casa? Era tabu falar sobre ele? Havia escassez ou abundância?" },
-          { icone:"🧠", titulo:"Crenças formadas", texto:"'Dinheiro é fonte de conflito', 'Quem ganha mais manda', 'Poupar é obrigação moral'" },
-          { icone:"😰", titulo:"Gatilhos emocionais", texto:"Ver o saldo baixar pode ativar um medo primitivo de sobrevivência, não uma análise racional" },
-          { icone:"🔄", titulo:"Padrões repetidos", texto:"Casais frequentemente reencenam dinâmicas de poder financeiro que viram nos pais" }
-        ]
-      },
-      { tipo:"cards", icone:"🛠️", titulo:"Como conversar sobre dinheiro de verdade", subtitulo:"4 passos para sair do conflito",
-        intro:"",
-        cards:[
-          { icone:"🕐", titulo:"Escolha o momento", texto:"Nunca quando estão exaustos ou no calor de uma compra. Agende uma conversa financeira semanal.", cor:COR, bg:BG },
-          { icone:"🎯", titulo:"Separe fatos de sentimentos", texto:"'O saldo caiu R$800' (facto) antes de 'Estou preocupado(a) com nossa segurança' (sentimento)", cor:"#0891b2", bg:"#e0f2fe" },
-          { icone:"🌱", titulo:"Explore as origens", texto:"Pergunte com curiosidade: 'O que o dinheiro representa pra você? Como era na sua família?'", cor:"#16a34a", bg:"#dcfce7" },
-          { icone:"🤝", titulo:"Construam um projeto comum", texto:"Objetivos compartilhados (viagem, casa, aposentadoria) transformam o dinheiro de campo de batalha em aliado", cor:"#d97706", bg:"#fef3c7" }
-        ]
-      },
-      { tipo:"destaque", icone:"💡", titulo:"A virada",
-        frase:"O dinheiro não divide casais — a falta de conversa honesta sobre o que ele representa é que divide.",
-        subtexto:"Quando dois parceiros conseguem falar sobre o medo por trás das contas, a conversa financeira deixa de ser uma batalha e se torna um ato de intimidade."
-      }
-    ]}
-    perguntas={[
-      "Quando você e seu parceiro(a) discutem sobre dinheiro, o que você está sentindo por baixo — segurança, controle, respeito?",
-      "Como o dinheiro era tratado na sua família de origem? Que crença você herdou sobre ele?",
-      "Existe um objetivo financeiro comum que vocês ainda não colocaram no papel e que poderia unir em vez de dividir?"
-    ]}
-  />;
+  const COR="#d97706"; const BG="#fef3c7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Quando você e seu parceiro(a) discutem sobre dinheiro, o que você está sentindo por baixo — segurança, controle, respeito?",
+    "Como o dinheiro era tratado na sua família de origem? Que crença você herdou sobre ele?",
+    "Existe um objetivo financeiro comum que vocês ainda não colocaram no papel e que poderia unir em vez de dividir?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões sobre Dinheiro e Relacionamento:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>💰</div>
+        <div style={{color:"#fff7ed",fontSize:16,fontWeight:500,marginBottom:6}}>Por que brigamos sobre dinheiro?</div>
+        <div style={{color:"#fed7aa",fontSize:13,lineHeight:1.5}}>Quase nunca é sobre o dinheiro em si — é sobre o que ele representa.</div>
+      </div>
+
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>O dinheiro como campo de batalha simbólico</div>
+        <div style={{fontSize:12,color:"#92400e",lineHeight:1.7}}>
+          Casais brigam sobre dinheiro com uma intensidade que vai muito além dos números. A conta que não foi paga, o gasto que não foi consultado — raramente são sobre o valor em si. São sobre <strong>controle, segurança, respeito e poder</strong>.
+        </div>
+        <div style={{background:BG,borderRadius:10,padding:"10px 14px",marginTop:10,borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#78350f",fontStyle:"italic"}}>Quando a briga é sobre dinheiro, a pergunta real é: "Você me respeita? Você me protege? Você me vê?"</div>
+        </div>
+      </div>
+
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:10}}>O que dizemos vs. o que sentimos</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {[
+            {t:"O que dizemos",itens:["'Você gasta demais'","'Nunca decidimos juntos'","'Você é controlador(a)'","'Não sobra nada'"],bg:"rgba(255,255,255,0.12)",c:"#fed7aa"},
+            {t:"O que sentimos",itens:["'Não me sinto seguro(a)'","'Não tenho voz aqui'","'Não confio em você'","'Tenho medo do futuro'"],bg:"rgba(255,255,255,0.2)",c:"#fef3c7"},
+          ].map(({t,itens,bg,c})=>(
+            <div key={t} style={{background:bg,borderRadius:10,padding:"10px 12px"}}>
+              <div style={{color:c,fontSize:11,fontWeight:600,marginBottom:6}}>{t}</div>
+              {itens.map(i=><div key={i} style={{color:"#fff7ed",fontSize:11,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>{i}</div>)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>De onde vêm as crenças sobre dinheiro?</div>
+        {[
+          {e:"👨‍👩‍👧",t:"Família de origem",d:"Quem controlava o dinheiro em casa? Era tabu? Havia escassez ou abundância?"},
+          {e:"🧠",t:"Crenças formadas",d:"'Dinheiro é fonte de conflito', 'Quem ganha mais manda', 'Poupar é obrigação'"},
+          {e:"😰",t:"Gatilhos emocionais",d:"Ver o saldo baixar pode ativar um medo primitivo de sobrevivência"},
+          {e:"🔄",t:"Padrões repetidos",d:"Casais reencenam dinâmicas financeiras que viram nos pais"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fed7aa"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#78350f",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:COR,padding:"14px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:8}}>Como conversar sobre dinheiro de verdade</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            ["🕐","Escolha o momento","Nunca quando exaustos. Agende uma conversa financeira semanal"],
+            ["🎯","Separe fato de sentimento","'O saldo caiu' (fato) → 'Estou preocupado(a) com nossa segurança' (sentimento)"],
+            ["🌱","Explore as origens","'O que o dinheiro representa pra você? Como era na sua família?'"],
+            ["🤝","Construam projeto comum","Objetivos compartilhados transformam o dinheiro de campo de batalha em aliado"],
+          ].map(([e,t,d])=>(
+            <div key={t} style={{display:"flex",gap:8,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 10px"}}>
+              <span style={{fontSize:16,flexShrink:0}}>{e}</span>
+              <div>
+                <div style={{color:"#fff7ed",fontSize:12,fontWeight:500,marginBottom:1}}>{t}</div>
+                <div style={{color:"#fed7aa",fontSize:11,lineHeight:1.4}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:"#fff7ed",padding:"14px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:6}}>💡 Para lembrar</div>
+        <div style={{fontSize:12,color:"#78350f",lineHeight:1.7}}>O dinheiro não divide casais — a falta de conversa honesta sobre o que ele <em>representa</em> é que divide. Quando dois parceiros conseguem falar sobre o medo por trás das contas, a conversa financeira deixa de ser uma batalha e se torna um ato de intimidade. 💜</div>
+      </div>
+
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#78350f",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#78350f",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 function PsicoFusaoCasal({ cat }){
