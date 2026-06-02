@@ -6679,6 +6679,44 @@ function AbaPsicoeducacao() {
     setSalvando(false);
   }
 
+
+  async function atualizarVisuaisFirebase() {
+    if(!confirm("Isso vai salvar visualKey e perguntas nos documentos mapeados. Continuar?")) return;
+    setSalvando(true);
+    const MAPA = {
+      "Pensamentos São Eventos, Não Factos": { visualKey:"Pensamentos São Eventos, Não Factos", tipo:"visual", perguntas:["Que pensamento recorrente você tem e que talvez esteja a tratar como facto?","Se separasse o facto da interpretação numa situação recente, o que mudaria?","O que aconteceria se você observasse esse pensamento como uma nuvem a passar — sem lutar contra ele?"] },
+      "O modelo ABC na prática": { visualKey:"O modelo ABC na prática", tipo:"visual", perguntas:["Pense numa situação recente que gerou emoção forte. Qual foi o A? Qual foi o B que você não percebeu de imediato?","Se você mudasse o B dessa situação para uma crença mais realista, como mudaria o C?","Existe uma crença recorrente sua que você já questiona se é verdade, mas continua acreditando?"] },
+      "Preocupação produtiva vs. improdutiva": { visualKey:"Preocupação produtiva vs. improdutiva", tipo:"visual", perguntas:["Liste suas 3 principais preocupações agora. Para cada uma: existe uma ação concreta possível hoje?","Existe uma preocupação que você carrega há muito tempo sem conseguir resolver? O que a mantém viva?","Como seria a sua semana se você dedicasse à preocupação apenas 20 minutos por dia — e o restante, às ações?"] },
+      "A armadilha do pior cenário": { visualKey:"A armadilha do pior cenário", tipo:"visual", perguntas:["Qual é uma situação atual em que você sente que está indo para o pior cenário?","Se você desse uma probabilidade real (%) a esse pior cenário, qual seria?","Pensando em situações difíceis que já viveu — o que isso diz sobre sua capacidade de lidar com o que vier?"] },
+      "O ciclo da ansiedade": { visualKey:"O ciclo da ansiedade", tipo:"visual", perguntas:["Em qual fase do ciclo você costuma estar quando percebe a ansiedade?","Existe algo que você evita regularmente e que, no fundo, sabe que poderia enfrentar?","Que exposição pequena e segura você poderia fazer esta semana para começar a quebrar o ciclo?"] },
+      "Eustresse vs. distresse": { visualKey:"Eustresse vs. distresse", tipo:"visual", perguntas:["Existe algum estressor na sua vida agora que poderia ser reinterpretado como desafio em vez de ameaça?","Quando você pensa nos seus momentos de maior crescimento, havia algum estresse presente?","O que mudaria se você tratasse o nervosismo antes de algo importante como energia, e não como sinal de perigo?"] },
+      "O poder dos pensamentos": { visualKey:"O poder dos pensamentos", tipo:"visual", perguntas:["Que pensamento recorrente você tem que mais afeta seu humor ao longo do dia?","Consegue identificar um momento recente em que um pensamento automático levou a uma emoção forte?","Se você gerasse um pensamento alternativo para aquela situação, como sua emoção poderia ter sido diferente?"] },
+      "A pizza da responsabilidade": { visualKey:"A pizza da responsabilidade", tipo:"visual", perguntas:["Existe uma situação passada em que você assumiu 100% da culpa? Como ficaria a pizza se você dividisse honestamente?","E o oposto — existe algo em que colocou toda a culpa no outro, mas que tinha uma parte sua?","Como seria trabalhar só a sua fatia — sem se sentir responsável pela parte dos outros?"] },
+      "Fatos vs. interpretações": { visualKey:"Fatos vs. interpretações", tipo:"visual", perguntas:["Pense numa situação recente que te gerou emoção negativa. O que era facto? O que era interpretação?","Você tem o hábito de verificar suas interpretações antes de agir? O que te impede de fazer isso mais?","Existe uma interpretação sobre alguém próximo que você nunca verificou e que pode não ser verdade?"] },
+      "O perigo do sempre e nunca": { visualKey:"O perigo do sempre e nunca", tipo:"visual", perguntas:["Você usa 'sempre' ou 'nunca' com frequência? Sobre quem — você mesmo ou alguém próximo?","Escolha uma frase com 'sempre/nunca' que você pensa com frequência. Existe pelo menos uma exceção?","Como mudaria a sua emoção se trocasse 'sempre' por 'desta vez' nessa frase?"] },
+      "Desmontar o Circuito Cerebral da Ansiedade": { visualKey:"Desmontar o Circuito Cerebral da Ansiedade", tipo:"visual", perguntas:["Qual dos 4 interruptores parece mais acessível para você experimentar esta semana?","Em que momento do seu dia o circuito da ansiedade costuma disparar com mais força?","Você já percebeu que depois de respirar fundo ou se mover, a ansiedade diminuiu? O que isso diz?"] },
+      "7 Distorções de Pensamento": { visualKey:"7 Distorções de Pensamento", tipo:"visual", perguntas:["Das 7 distorções, qual você mais reconhece no seu próprio padrão de pensamento?","Consegue lembrar de uma situação recente em que essa distorção influenciou como você agiu?","O que mudaria se você fizesse a pergunta certa para essa distorção na próxima vez que ela aparecer?"] },
+      "Por Que Discutimos Sobre Dinheiro – Quando Não é Realmente Sobre Dinheiro": { visualKey:"Por Que Discutimos Sobre Dinheiro – Quando Não é Realmente Sobre Dinheiro", tipo:"visual", perguntas:["Quando você e seu parceiro(a) discutem sobre dinheiro, o que você está sentindo por baixo — segurança, controle, respeito?","Como o dinheiro era tratado na sua família de origem? Que crença você herdou sobre ele?","Existe um objetivo financeiro comum que vocês ainda não colocaram no papel e que poderia unir em vez de dividir?"] },
+      "Por Que Perder-se no Outro Não É Amor – É Fusão": { visualKey:"Por Que Perder-se no Outro Não É Amor – É Fusão", tipo:"visual", perguntas:["Existe algum interesse, amizade ou parte de você que foi diminuindo desde que está nessa relação?","Você consegue expressar discordâncias com seu parceiro(a) sem sentir que ameaça a relação?","O que você faria diferente se soubesse que manter sua individualidade fortalece — e não ameaça — o amor?"] },
+      "A Triangulação – Quando Usamos Terceiros para Evitar Conversas Difíceis": { visualKey:"A Triangulação – Quando Usamos Terceiros para Evitar Conversas Difíceis", tipo:"visual", perguntas:["Existe alguém que você tem envolvido nos conflitos do seu relacionamento? O que isso diz sobre o que você evita dizer diretamente?","Quando sente tensão no casal, qual é o seu impulso — confrontar diretamente ou buscar apoio externo?","O que tornaria mais seguro ter conversas difíceis diretamente com seu parceiro(a)?"] },
+      "O Mito do Pai/Mãe Perfeito – E o Custo Real do Perfeccionismo Parental": { visualKey:"O Mito do Pai/Mãe Perfeito – E o Custo Real do Perfeccionismo Parental", tipo:"visual", perguntas:["Em que aspecto da parentalidade você se cobra mais? Essa cobrança está te aproximando ou te afastando dos seus filhos?","Lembra de um momento em que você 'errou' como pai/mãe e depois reparou? Como a criança respondeu?","Como seria dar a si mesmo(a) a mesma compaixão que daria a um(a) amigo(a) que estivesse passando pelo mesmo?"] },
+      "O Desejo Não Desaparece – Adormece": { visualKey:"O Desejo Não Desaparece – Adormece", tipo:"visual", perguntas:["O que você sente quando pensa na diminuição do desejo na sua relação — culpa, tristeza, resignação?","Existe algum conflito emocional não resolvido que pode estar criando distância física também?","O que vocês faziam no início da relação que criava conexão e que pararam de fazer?"] },
+    };
+    try {
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const batch = db.batch();
+      let count = 0;
+      snap.docs.forEach(d => {
+        const dados = MAPA[d.data().titulo];
+        if(dados) { batch.update(d.ref, dados); count++; }
+      });
+      if(count===0){ alert("Nenhum documento encontrado com os títulos mapeados. Verifique os títulos no Firebase."); setSalvando(false); return; }
+      await batch.commit();
+      alert("✅ "+count+" psicoeducações atualizadas com visualKey e perguntas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
+
   async function sincronizarNovas() {
     setSalvando(true);
     try {
@@ -6751,6 +6789,11 @@ function AbaPsicoeducacao() {
           {itens.length>0&&(
             <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
               <Icon name="layers" size={14}/> Migrar categorias
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12,background:"#f3e6ff",borderColor:"#7B00C4",color:"#7B00C4"}} onClick={atualizarVisuaisFirebase} disabled={salvando}>
+              <Icon name="zap" size={14}/> Ativar visuais
             </button>
           )}
           <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
