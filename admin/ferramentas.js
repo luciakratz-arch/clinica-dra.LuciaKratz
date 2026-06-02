@@ -6452,156 +6452,378 @@ function PsicoDiscutirDinheiro({ cat }){
 
 function PsicoFusaoCasal({ cat }){
   const COR="#EC4899"; const BG="#fdf2f8";
-  return <PsicoVisualBase titulo="Por Que Perder-se no Outro Não É Amor — É Fusão" emoji="🔗" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🔗", titulo:"Amor ou fusão?", subtitulo:"A diferença que define a saúde do relacionamento",
-        texto:"No início de um relacionamento, a fusão parece amor profundo: querer estar sempre juntos, pensar no outro o tempo todo, abrir mão das próprias preferências. Mas com o tempo, o que parecia intimidade se torna sufocamento — e o que parecia cuidado se torna dependência.",
-        destaque:"Você não pode amar bem alguém se perdeu a si mesmo. O amor saudável acontece entre dois inteiros, não entre duas metades."
-      },
-      { tipo:"comparacao", icone:"⚖️", titulo:"Fusão vs. Intimidade", subtitulo:"Duas formas de estar junto",
-        intro:"",
-        lados:[
-          { titulo:"Fusão ⚠️", icone:"🔗", cor:"#dc2626", bg:"#fee2e2", itens:["'Somos um só'","Abandona hobbies e amizades","Ansiedade quando separados","Identidade depende do parceiro","Ciúme como prova de amor"] },
-          { titulo:"Intimidade ✅", icone:"💛", cor:"#16a34a", bg:"#dcfce7", itens:["'Somos dois que escolhem estar juntos'","Mantém vida própria","Conforto na separação temporária","Identidade estável fora da relação","Confiança sem controle"] }
-        ]
-      },
-      { tipo:"lista", icone:"🌱", titulo:"Como cultivar individualidade dentro do casal", subtitulo:"O paradoxo da proximidade",
-        intro:"Paradoxalmente, manter identidade própria é o que sustenta a atração e o respeito ao longo do tempo:",
-        itens:[
-          { icone:"🎯", titulo:"Mantenha seus interesses", texto:"Hobbies, amizades e objetivos individuais não ameaçam o casal — o nutrem" },
-          { icone:"🗣️", titulo:"Expresse discordâncias", texto:"Sempre concordar não é harmonia — é apagamento. Divergir com respeito é intimidade real" },
-          { icone:"⏱️", titulo:"Valorize o tempo sozinho", texto:"Estar bem consigo mesmo é pré-requisito para estar bem com o outro" },
-          { icone:"🪞", titulo:"Pergunte-se regularmente", texto:"'O que eu penso? O que eu quero? O que eu sinto?' — independente do que o parceiro pensa, quer e sente" }
-        ]
-      },
-      { tipo:"destaque", icone:"🦋", titulo:"A metáfora dos dois rios",
-        frase:"Um relacionamento saudável é como dois rios que correm lado a lado — próximos, mas com suas próprias margens.",
-        subtexto:"Quando dois rios se fundem completamente, perdem sua identidade. Quando correm paralelos, cada um mantém sua força — e juntos, criam algo maior do que cada um sozinho."
-      }
-    ]}
-    perguntas={[
-      "Existe algum interesse, amizade ou parte de você que foi diminuindo desde que está nessa relação?",
-      "Você consegue expressar discordâncias com seu parceiro(a) sem sentir que ameaça a relação?",
-      "O que você faria diferente se soubesse que manter sua individualidade fortalece — e não ameaça — o amor?"
-    ]}
-  />;
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Existe algum interesse, amizade ou parte de você que foi diminuindo desde que está nessa relação?",
+    "Você consegue expressar discordâncias com seu parceiro(a) sem sentir que ameaça a relação?",
+    "O que você faria diferente se soubesse que manter sua individualidade fortalece — e não ameaça — o amor?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — Amor ou Fusão:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔗</div>
+        <div style={{color:"#fff0f6",fontSize:16,fontWeight:500,marginBottom:6}}>Amor ou fusão?</div>
+        <div style={{color:"#fce7f3",fontSize:13,lineHeight:1.5}}>Você não pode amar bem alguém se perdeu a si mesmo.</div>
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que é fusão?</div>
+        <div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>
+          No início, a fusão parece amor profundo: querer estar sempre juntos, pensar no outro o tempo todo, abrir mão das próprias preferências. Mas com o tempo, o que parecia intimidade se torna sufocamento — e o que parecia cuidado se torna dependência.
+        </div>
+        <div style={{background:BG,borderRadius:10,padding:"10px 14px",marginTop:10,borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#831843",fontStyle:"italic"}}>O amor saudável acontece entre dois inteiros — não entre duas metades.</div>
+        </div>
+      </div>
+
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}>
+        <div style={{color:"#fff0f6",fontSize:13,fontWeight:500,marginBottom:10}}>Fusão vs. Intimidade</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          {[
+            {t:"Fusão ⚠️",itens:["'Somos um só'","Abandona hobbies","Ansiedade ao se separar","Identidade depende do outro","Ciúme como 'prova de amor'"],bg:"rgba(220,38,38,0.2)",c:"#fce7f3"},
+            {t:"Intimidade ✅",itens:["'Somos dois que escolhem'","Mantém vida própria","Conforto na separação","Identidade estável","Confiança sem controle"],bg:"rgba(255,255,255,0.15)",c:"#fff0f6"},
+          ].map(({t,itens,bg,c})=>(
+            <div key={t} style={{background:bg,borderRadius:10,padding:"10px 12px"}}>
+              <div style={{color:c,fontSize:11,fontWeight:600,marginBottom:6}}>{t}</div>
+              {itens.map(i=><div key={i} style={{color:"#fce7f3",fontSize:11,padding:"3px 0",borderBottom:"1px solid rgba(255,255,255,0.1)"}}>{i}</div>)}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como cultivar individualidade dentro do casal</div>
+        {[
+          {e:"🎯",t:"Mantenha seus interesses",d:"Hobbies, amizades e objetivos individuais não ameaçam o casal — o nutrem"},
+          {e:"🗣️",t:"Expresse discordâncias",d:"Sempre concordar não é harmonia — é apagamento. Divergir com respeito é intimidade real"},
+          {e:"⏱️",t:"Valorize o tempo sozinho",d:"Estar bem consigo mesmo é pré-requisito para estar bem com o outro"},
+          {e:"🪞",t:"Pergunte-se regularmente",d:"'O que eu penso? O que eu quero?' — independente do que o parceiro pensa e quer"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fce7f3"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"14px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:12,lineHeight:1.7}}>🦋 <em>Um relacionamento saudável é como dois rios que correm lado a lado — próximos, mas com suas próprias margens. Quando correm paralelos, cada um mantém sua força — e juntos, criam algo maior.</em></div>
+      </div>
+
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 function PsicoTriangulacao({ cat }){
-  const COR="#EC4899"; const BG="#fdf2f8";
-  return <PsicoVisualBase titulo="A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis" emoji="🔺" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🔺", titulo:"O triângulo invisível", subtitulo:"Por que envolvemos terceiros em conflitos de casal",
-        texto:"Quando um conflito entre dois parceiros fica tenso demais, a mente humana busca instintivamente uma saída: envolver uma terceira pessoa. Pode ser um filho, um amigo, a sogra ou até um terapeuta — qualquer um que alivie a tensão direta. Isso se chama triangulação.",
-        destaque:"A triangulação alivia a tensão imediata mas impede que o conflito real seja resolvido. O problema fica enterrado — até explodir de outra forma."
-      },
-      { tipo:"lista", icone:"🔍", titulo:"Formas de triangulação no casal", subtitulo:"Você reconhece alguma?",
-        intro:"",
-        itens:[
-          { icone:"👶", titulo:"Usar os filhos", texto:"Passar recados pelo filho, fazer a criança 'escolher lados', desabafar com ela sobre o cônjuge" },
-          { icone:"👩‍👦", titulo:"Envolver a família", texto:"'Minha mãe também acha que você está errado(a)' — buscar aliados fora para ganhar dentro" },
-          { icone:"👫", titulo:"Desabafar em excesso com amigos", texto:"Processar o conflito com terceiros em vez de com o parceiro — o amigo vira árbitro involuntário" },
-          { icone:"📱", titulo:"Ciúme como triangulação", texto:"Introduzir uma ameaça real ou imaginada para provocar reação emocional no parceiro" }
-        ]
-      },
-      { tipo:"cards", icone:"🛠️", titulo:"Como sair do triângulo", subtitulo:"Voltando para a conversa de dois",
-        intro:"",
-        cards:[
-          { icone:"🎯", titulo:"Identifique o que evita", texto:"A triangulação serve para evitar algo: medo de rejeição, conflito direto, vulnerabilidade. Nomeie isso.", cor:COR, bg:BG },
-          { icone:"🗣️", titulo:"Volte ao par", texto:"'Preciso conversar com você sobre algo que me incomoda' — direto, sem intermediários", cor:"#0891b2", bg:"#e0f2fe" },
-          { icone:"🔒", titulo:"Proteja a privacidade do casal", texto:"Conflitos de casal resolvem-se dentro do casal. Compartilhar com terceiros corrói a confiança.", cor:"#16a34a", bg:"#dcfce7" },
-          { icone:"🧰", titulo:"Use apoio terapêutico", texto:"Terapia de casal é o único 'terceiro' saudável — porque o objetivo é fortalecer o par, não arbitrar", cor:"#d97706", bg:"#fef3c7" }
-        ]
-      },
-      { tipo:"destaque", icone:"💬", titulo:"O caminho direto",
-        frase:"Toda triangulação é um pedido de conversa que ainda não teve coragem de acontecer.",
-        subtexto:"Quando você percebe que está envolvendo uma terceira pessoa num conflito de casal, a pergunta é: 'O que eu preciso dizer diretamente ao meu parceiro(a) que ainda não disse?'"
-      }
-    ]}
-    perguntas={[
-      "Existe alguém que você tem envolvido nos conflitos do seu relacionamento? O que isso diz sobre o que você evita dizer diretamente?",
-      "Quando sente tensão no casal, qual é o seu impulso — confrontar diretamente ou buscar apoio externo?",
-      "O que tornaria mais seguro ter conversas difíceis diretamente com seu parceiro(a)?"
-    ]}
-  />;
+  const COR="#0891b2"; const BG="#e0f2fe";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Existe alguém que você tem envolvido nos conflitos do seu relacionamento? O que isso diz sobre o que você evita dizer diretamente?",
+    "Quando sente tensão no casal, qual é o seu impulso — confrontar diretamente ou buscar apoio externo?",
+    "O que tornaria mais seguro ter conversas difíceis diretamente com seu parceiro(a)?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — Triangulação no Casal:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔺</div>
+        <div style={{color:"#e0f2fe",fontSize:16,fontWeight:500,marginBottom:6}}>O triângulo invisível</div>
+        <div style={{color:"#bae6fd",fontSize:13,lineHeight:1.5}}>Por que envolvemos terceiros para evitar conversas difíceis.</div>
+      </div>
+
+      <div style={{background:"#f0f9ff",padding:"16px 20px",borderBottom:"1px solid #bae6fd"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que é triangulação?</div>
+        <div style={{fontSize:12,color:"#0c4a6e",lineHeight:1.7}}>
+          Quando um conflito fica tenso demais, a mente busca uma saída: envolver uma terceira pessoa — um filho, um amigo, a sogra. Qualquer um que alivie a tensão direta. Mas isso impede que o conflito real seja resolvido.
+        </div>
+        <div style={{background:BG,borderRadius:10,padding:"10px 14px",marginTop:10,borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#0c4a6e",fontStyle:"italic"}}>A triangulação alivia a tensão imediata mas enterra o problema — até ele explodir de outra forma.</div>
+        </div>
+      </div>
+
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #0369a1"}}>
+        <div style={{color:"#e0f2fe",fontSize:13,fontWeight:500,marginBottom:10}}>Formas comuns de triangulação</div>
+        {[
+          {e:"👶",t:"Usar os filhos",d:"Passar recados, fazer a criança escolher lados, desabafar sobre o cônjuge"},
+          {e:"👩‍👦",t:"Envolver a família",d:"'Minha mãe também acha que você está errado(a)' — buscar aliados fora"},
+          {e:"👫",t:"Desabafar demais com amigos",d:"O amigo vira árbitro involuntário do conflito do casal"},
+          {e:"📱",t:"Ciúme como triangulação",d:"Introduzir uma ameaça para provocar reação emocional no parceiro"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:8,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{color:"#e0f2fe",fontSize:12,fontWeight:500,marginBottom:1}}>{t}</div>
+              <div style={{color:"#bae6fd",fontSize:11,lineHeight:1.4}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#f0f9ff",padding:"16px 20px",borderBottom:"1px solid #bae6fd"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como sair do triângulo</div>
+        {[
+          {e:"🎯",t:"Identifique o que evita",d:"Medo de rejeição, conflito direto, vulnerabilidade — nomeie o que a triangulação serve para esconder"},
+          {e:"🗣️",t:"Volte ao par",d:"'Preciso conversar com você sobre algo que me incomoda' — direto, sem intermediários"},
+          {e:"🔒",t:"Proteja a privacidade do casal",d:"Conflitos de casal resolvem-se dentro do casal. Compartilhar com terceiros corrói a confiança"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #bae6fd"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#0c4a6e",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#075985",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#f0f9ff",padding:"14px 20px",borderBottom:"1px solid #bae6fd"}}>
+        <div style={{color:COR,fontSize:12,lineHeight:1.7}}>💬 <em>Toda triangulação é um pedido de conversa que ainda não teve coragem de acontecer. O que você precisa dizer diretamente ao seu parceiro(a) que ainda não disse?</em></div>
+      </div>
+
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#0c4a6e",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#0c4a6e",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 function PsicoPaisPerfeitos({ cat }){
   const COR="#EC4899"; const BG="#fdf2f8";
-  return <PsicoVisualBase titulo="O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental" emoji="👨‍👩‍👧" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"👨‍👩‍👧", titulo:"Ninguém foi gerado para ser perfeito", subtitulo:"Mas a cultura exige que sejamos",
-        texto:"Nunca houve tantas informações sobre parentalidade — e nunca houve tanto sentimento de inadequação entre pais. O excesso de informação criou um ideal impossível: o pai/mãe perfeitamente presente, paciente, estimulante, gentil e realizado. E quem não alcança esse ideal sente que está falhando.",
-        destaque:"O perfeccionismo parental não protege os filhos — mas adoece os pais e, indiretamente, as crianças."
-      },
-      { tipo:"lista", icone:"⚠️", titulo:"O custo do perfeccionismo parental", subtitulo:"O que ele produz na prática",
-        intro:"",
-        itens:[
-          { icone:"😰", titulo:"Ansiedade crônica", texto:"Monitoramento constante do próprio desempenho como pai/mãe, com culpa automática a cada erro" },
-          { icone:"😤", titulo:"Irritabilidade aumentada", texto:"A pressão de ser sempre paciente e gentil cria um cansaço emocional que explode nos momentos errados" },
-          { icone:"💔", titulo:"Modelagem do perfeccionismo", texto:"Filhos aprendem com o que veem: pais que não toleram seus próprios erros ensinam o mesmo à criança" },
-          { icone:"🚪", titulo:"Distância emocional", texto:"Pais exaustos de se cobrar ficam menos presentes emocionalmente do que pais que se permitem ser humanos" }
-        ]
-      },
-      { tipo:"cards", icone:"🌱", titulo:"O que as crianças realmente precisam", subtitulo:"A pesquisa diz",
-        intro:"Donald Winnicott cunhou o termo 'mãe suficientemente boa' — e a ciência confirma:",
-        cards:[
-          { icone:"🔄", titulo:"Reparação, não perfeição", texto:"O que forma o apego seguro não é nunca errar — é reparar quando erra. 'Me desculpe, errei'", cor:"#16a34a", bg:"#dcfce7" },
-          { icone:"🎭", titulo:"Emoções autênticas", texto:"Ver o pai/mãe lidar com frustração de forma humana ensina regulação emocional", cor:"#0891b2", bg:"#e0f2fe" },
-          { icone:"⏱️", titulo:"Presença qualitativa", texto:"20 minutos de presença real valem mais do que 3 horas de presença física enquanto scrollando o celular", cor:COR, bg:BG },
-          { icone:"🌿", titulo:"Pais que se cuidam", texto:"Um pai/mãe descansado e emocionalmente bem é mais disponível do que um exausto e culpado", cor:"#d97706", bg:"#fef3c7" }
-        ]
-      },
-      { tipo:"destaque", icone:"💛", titulo:"A permissão para ser humano",
-        frase:"Você não precisa ser perfeito(a) para ser o(a) pai/mãe que seu filho(a) precisa.",
-        subtexto:"Winnicott estava certo: 'suficientemente bom(a)' é exatamente o que uma criança precisa para crescer segura. A perfeição que você persegue pode ser justamente o que está te impedindo de ser presente."
-      }
-    ]}
-    perguntas={[
-      "Em que aspecto da parentalidade você se cobra mais? Essa cobrança está te aproximando ou te afastando dos seus filhos?",
-      "Lembra de um momento em que você 'errou' como pai/mãe e depois reparou? Como a criança respondeu?",
-      "Como seria dar a si mesmo(a) a mesma compaixão que daria a um(a) amigo(a) que estivesse passando pelo mesmo?"
-    ]}
-  />;
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Em que aspecto da parentalidade você se cobra mais? Essa cobrança está te aproximando ou te afastando dos seus filhos?",
+    "Lembra de um momento em que você 'errou' como pai/mãe e depois reparou? Como a criança respondeu?",
+    "Como seria dar a si mesmo(a) a mesma compaixão que daria a um(a) amigo(a) que estivesse passando pelo mesmo?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — O Mito do Pai/Mãe Perfeito:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>👨‍👩‍👧</div>
+        <div style={{color:"#fff0f6",fontSize:16,fontWeight:500,marginBottom:6}}>O mito do pai/mãe perfeito</div>
+        <div style={{color:"#fce7f3",fontSize:13,lineHeight:1.5}}>Nunca houve tantas informações sobre parentalidade — e tanta culpa.</div>
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O ideal impossível</div>
+        <div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>
+          O excesso de informação criou um ideal impossível: o pai/mãe perfeitamente presente, paciente, estimulante, gentil e realizado. Quem não alcança esse ideal sente que está falhando — e esse sentimento <strong>adoece</strong>.
+        </div>
+        <div style={{background:BG,borderRadius:10,padding:"10px 14px",marginTop:10,borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#831843",fontStyle:"italic"}}>O perfeccionismo parental não protege os filhos — mas adoece os pais e, indiretamente, as crianças.</div>
+        </div>
+      </div>
+
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}>
+        <div style={{color:"#fff0f6",fontSize:13,fontWeight:500,marginBottom:10}}>O custo do perfeccionismo parental</div>
+        {[
+          {e:"😰",t:"Ansiedade crônica",d:"Monitoramento constante com culpa automática a cada erro"},
+          {e:"😤",t:"Irritabilidade aumentada",d:"A pressão de ser sempre paciente cria um cansaço que explode nos momentos errados"},
+          {e:"💔",t:"Modelagem do perfeccionismo",d:"Pais que não toleram seus erros ensinam o mesmo às crianças"},
+          {e:"🚪",t:"Distância emocional",d:"Pais exaustos ficam menos presentes do que pais que se permitem ser humanos"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:8,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{color:"#fff0f6",fontSize:12,fontWeight:500,marginBottom:1}}>{t}</div>
+              <div style={{color:"#fce7f3",fontSize:11,lineHeight:1.4}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>O que as crianças realmente precisam</div>
+        {[
+          {e:"🔄",t:"Reparação, não perfeição",d:"O que forma o apego seguro não é nunca errar — é reparar quando erra. 'Me desculpe, errei'"},
+          {e:"🎭",t:"Emoções autênticas",d:"Ver o pai/mãe lidar com frustração de forma humana ensina regulação emocional"},
+          {e:"⏱️",t:"Presença qualitativa",d:"20 minutos de presença real valem mais do que 3 horas de presença física no celular"},
+          {e:"🌿",t:"Pais que se cuidam",d:"Um pai/mãe descansado é mais disponível do que um exausto e culpado"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fce7f3"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"14px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:12,lineHeight:1.7}}>💛 <em>Winnicott estava certo: 'suficientemente bom(a)' é exatamente o que uma criança precisa para crescer segura. Você não precisa ser perfeito(a) para ser o(a) pai/mãe que seu filho(a) precisa.</em></div>
+      </div>
+
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 function PsicoDesejoAdormece({ cat }){
   const COR="#EC4899"; const BG="#fdf2f8";
-  return <PsicoVisualBase titulo="O Desejo Não Desaparece – Adormece" emoji="🔥" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🔥", titulo:"O que acontece com o desejo no longo prazo", subtitulo:"E por que quase todos os casais passam por isso",
-        texto:"Em quase todos os relacionamentos longos, chega um momento em que o desejo sexual diminui. Isso é tão comum que pesquisadores o consideram quase universal. Mas culturalmente, tratamos como sinal de que algo está errado — com a relação, com a pessoa, ou com os dois.",
-        destaque:"A queda do desejo raramente significa falta de amor. Quase sempre sinaliza algo que precisa de atenção — mas não necessariamente o fim."
-      },
-      { tipo:"lista", icone:"🔍", titulo:"Por que o desejo adormece", subtitulo:"As causas mais comuns",
-        intro:"",
-        itens:[
-          { icone:"🧠", titulo:"Neurobiologia do longo prazo", texto:"A dopamina da novidade diminui com a familiaridade — é fisiológico, não é falta de amor" },
-          { icone:"😤", titulo:"Conflitos não resolvidos", texto:"Ressentimentos acumulados criam uma barreira emocional que bloqueia a proximidade física" },
-          { icone:"🪫", titulo:"Exaustão e sobrecarga", texto:"Filhos, trabalho, finanças — quando a energia está no mínimo, o desejo vai junto" },
-          { icone:"🔄", titulo:"Rotina excessiva", texto:"Previsibilidade total é confortável — mas não é excitante. O desejo precisa de algum elemento de surpresa" }
-        ]
-      },
-      { tipo:"cards", icone:"🌱", titulo:"Como despertar o que adormeceu", subtitulo:"4 caminhos concretos",
-        intro:"",
-        cards:[
-          { icone:"💬", titulo:"Conversa honesta", texto:"Falar sobre o desejo (ou a falta dele) sem acusação é um dos maiores atos de intimidade possíveis", cor:COR, bg:BG },
-          { icone:"🆕", titulo:"Introduzir novidade", texto:"Experiências novas juntos — viagens, atividades diferentes, sair do script cotidiano — reativam dopamina", cor:"#0891b2", bg:"#e0f2fe" },
-          { icone:"🤝", titulo:"Resolver o que ficou pendente", texto:"Às vezes o bloqueio é emocional. Resolver um conflito antigo pode desbloquear o desejo físico", cor:"#16a34a", bg:"#dcfce7" },
-          { icone:"🧰", titulo:"Buscar apoio especializado", texto:"Terapia de casal ou sexual não é sinal de fracasso — é investimento num aspecto vital da relação", cor:"#d97706", bg:"#fef3c7" }
-        ]
-      },
-      { tipo:"destaque", icone:"💛", titulo:"O desejo como termômetro",
-        frase:"O desejo não some — ele vai para onde há espaço, cuidado e conexão emocional.",
-        subtexto:"Em casais que mantêm o desejo ao longo do tempo, o denominador comum não é frequência ou técnica — é a qualidade da conexão emocional e a disposição de continuar se escolhendo ativamente."
-      }
-    ]}
-    perguntas={[
-      "O que você sente quando pensa na diminuição do desejo na sua relação — culpa, tristeza, resignação?",
-      "Existe algum conflito emocional não resolvido que pode estar criando distância física também?",
-      "O que vocês faziam no início da relação que criava conexão e que pararam de fazer?"
-    ]}
-  />;
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "O que você sente quando pensa na diminuição do desejo na sua relação — culpa, tristeza, resignação?",
+    "Existe algum conflito emocional não resolvido que pode estar criando distância física também?",
+    "O que vocês faziam no início da relação que criava conexão e que pararam de fazer?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — O Desejo Não Desaparece, Adormece:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔥</div>
+        <div style={{color:"#fff0f6",fontSize:16,fontWeight:500,marginBottom:6}}>O desejo não desaparece — adormece</div>
+        <div style={{color:"#fce7f3",fontSize:13,lineHeight:1.5}}>A queda do desejo raramente significa falta de amor.</div>
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que acontece com o desejo no longo prazo</div>
+        <div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>
+          Em quase todos os relacionamentos longos, chega um momento em que o desejo sexual diminui. Isso é tão comum que pesquisadores o consideram quase universal. Mas culturalmente tratamos como sinal de que algo está errado — quando quase sempre sinaliza algo que precisa de atenção, não o fim.
+        </div>
+        <div style={{background:BG,borderRadius:10,padding:"10px 14px",marginTop:10,borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#831843",fontStyle:"italic"}}>A queda do desejo raramente significa falta de amor. Quase sempre sinaliza algo que precisa de atenção.</div>
+        </div>
+      </div>
+
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}>
+        <div style={{color:"#fff0f6",fontSize:13,fontWeight:500,marginBottom:10}}>Por que o desejo adormece</div>
+        {[
+          {e:"🧠",t:"Neurobiologia",d:"A dopamina da novidade diminui com a familiaridade — é fisiológico, não é falta de amor"},
+          {e:"😤",t:"Conflitos não resolvidos",d:"Ressentimentos acumulados criam uma barreira emocional que bloqueia a proximidade física"},
+          {e:"🪫",t:"Exaustão e sobrecarga",d:"Filhos, trabalho, finanças — quando a energia está no mínimo, o desejo vai junto"},
+          {e:"🔄",t:"Rotina excessiva",d:"Previsibilidade total é confortável — mas não é excitante. O desejo precisa de alguma surpresa"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:8,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 10px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{color:"#fff0f6",fontSize:12,fontWeight:500,marginBottom:1}}>{t}</div>
+              <div style={{color:"#fce7f3",fontSize:11,lineHeight:1.4}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como despertar o que adormeceu</div>
+        {[
+          {e:"💬",t:"Conversa honesta",d:"Falar sobre o desejo (ou a falta dele) sem acusação é um dos maiores atos de intimidade possíveis"},
+          {e:"🆕",t:"Introduzir novidade",d:"Experiências novas juntos — viagens, atividades diferentes — reativam dopamina"},
+          {e:"🤝",t:"Resolver o que ficou pendente",d:"Às vezes o bloqueio é emocional. Resolver um conflito antigo pode desbloquear o desejo físico"},
+          {e:"🧰",t:"Buscar apoio especializado",d:"Terapia de casal ou sexual não é sinal de fracasso — é investimento num aspecto vital da relação"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fce7f3"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{background:"#fff0f6",padding:"14px 20px",borderBottom:"1px solid #fce7f3"}}>
+        <div style={{color:COR,fontSize:12,lineHeight:1.7}}>💛 <em>O desejo não some — ele vai para onde há espaço, cuidado e conexão emocional. Em casais que mantêm o desejo ao longo do tempo, o denominador comum é a disposição de continuar se escolhendo ativamente.</em></div>
+      </div>
+
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 
