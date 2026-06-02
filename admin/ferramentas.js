@@ -6859,7 +6859,7 @@ const PSICO_VISUAIS = {
   "Por Que Perder-se no Outro Não É Amor — É Fusão": PsicoFusaoCasal,
   "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": PsicoTriangulacao,
   "O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental": PsicoPaisPerfeitos,
-  "O Desejo Não Desaparece – Adormece": PsicoDesejoAdormece,
+  "O Desejo Não Desaparece — Adormece": PsicoDesejoAdormece,
 };
 
 const CATS_PSICOEDUCACAO = {
@@ -6968,6 +6968,32 @@ function AbaPsicoeducacao() {
     setSalvando(false);
   }
 
+
+  async function atualizarVisuaisFirebase() {
+    if(!confirm("Salvar visualKey e perguntas nos documentos mapeados. Continuar?")) return;
+    setSalvando(true);
+    const MAPA = {
+      "O Desejo Não Desaparece — Adormece": { visualKey:"O Desejo Não Desaparece — Adormece", tipo:"visual", perguntas:["O que você sente quando pensa na diminuição do desejo na sua relação — culpa, tristeza, resignação?","Existe algum conflito emocional não resolvido que pode estar criando distância física também?","O que vocês faziam no início da relação que criava conexão e que pararam de fazer?"] },
+      "Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro": { visualKey:"Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro", tipo:"visual", perguntas:["Quando você e seu parceiro(a) discutem sobre dinheiro, o que você está sentindo por baixo?","Como o dinheiro era tratado na sua família de origem? Que crença você herdou?","Existe um objetivo financeiro comum que vocês ainda não colocaram no papel?"] },
+      "Por Que Perder-se no Outro Não É Amor — É Fusão": { visualKey:"Por Que Perder-se no Outro Não É Amor — É Fusão", tipo:"visual", perguntas:["Existe algum interesse ou parte de você que foi diminuindo desde que está nessa relação?","Você consegue expressar discordâncias com seu parceiro(a) sem sentir que ameaça a relação?","O que você faria diferente se soubesse que manter sua individualidade fortalece o amor?"] },
+      "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": { visualKey:"A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis", tipo:"visual", perguntas:["Existe alguém que você tem envolvido nos conflitos do seu relacionamento?","Quando sente tensão no casal, qual é o seu impulso — confrontar diretamente ou buscar apoio externo?","O que tornaria mais seguro ter conversas difíceis diretamente com seu parceiro(a)?"] },
+      "O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental": { visualKey:"O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental", tipo:"visual", perguntas:["Em que aspecto da parentalidade você se cobra mais? Está te aproximando ou te afastando dos seus filhos?","Lembra de um momento em que você 'errou' como pai/mãe e depois reparou? Como a criança respondeu?","Como seria dar a si mesmo(a) a mesma compaixão que daria a um(a) amigo(a)?"] },
+    };
+    try {
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const batch = db.batch();
+      let count = 0;
+      snap.docs.forEach(d => {
+        const dados = MAPA[d.data().titulo];
+        if(dados) { batch.update(d.ref, dados); count++; }
+      });
+      if(count===0){ alert("Nenhum documento encontrado com os títulos mapeados."); setSalvando(false); return; }
+      await batch.commit();
+      alert("✅ "+count+" psicoeducações atualizadas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
+
   async function sincronizarNovas() {
     setSalvando(true);
     try {
@@ -7040,6 +7066,11 @@ function AbaPsicoeducacao() {
           {itens.length>0&&(
             <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
               <Icon name="layers" size={14}/> Migrar categorias
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12,background:"#f3e6ff",borderColor:"#7B00C4",color:"#7B00C4"}} onClick={atualizarVisuaisFirebase} disabled={salvando}>
+              <Icon name="zap" size={14}/> Ativar visuais
             </button>
           )}
           <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
