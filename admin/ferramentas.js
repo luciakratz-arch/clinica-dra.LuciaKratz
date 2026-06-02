@@ -6828,6 +6828,7 @@ function PsicoDesejoAdormece({ cat }){
 
 
 const PSICO_VISUAIS = {
+  // macro_ansiedade — originais (página única, sem navegação)
   "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
   "A armadilha do pior cenário": PsicoPiorCenario,
   "Eustresse vs. distresse": PsicoEustresse,
@@ -6839,22 +6840,9 @@ const PSICO_VISUAIS = {
   "Fatos vs. interpretações": PsicoFatosInterpretacoes,
   "O perigo do sempre e nunca": PsicoSempreNunca,
   "7 Distorções de Pensamento": Psico7Distorcoes,
-  // Novas psicoeducações visuais
   "O Alarme Falso do Cérebro": PsicoAlarme,
-  // macro_ansiedade — componentes completos
   "Pensamentos São Eventos, Não Factos": PsicoPensamentosSaoEventos,
-  "O modelo ABC na prática": PsicoModeloABCV2,
-  "Preocupação produtiva vs. improdutiva": PsicoPreocupacaoV2,
-  "A armadilha do pior cenário": PsicoPiorCenarioV2,
-  "O ciclo da ansiedade": PsicoCicloAnsiedadeV2,
-  "Eustresse vs. distresse": PsicoEustresseV2,
-  "O poder dos pensamentos": PsicoPensamentosV2,
-  "A pizza da responsabilidade": PsicoPizzaV2,
-  "Fatos vs. interpretações": PsicoFatosV2,
-  "O perigo do sempre e nunca": PsicoSempreNuncaV2,
-  "Desmontar o Circuito Cerebral da Ansiedade": PsicoDesmontarV2,
-  "7 Distorções de Pensamento": Psico7DistorcoesV2,
-  // macro_casais
+  // macro_casais — página única com perguntas + WhatsApp
   "Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro": PsicoDiscutirDinheiro,
   "Por Que Perder-se no Outro Não É Amor — É Fusão": PsicoFusaoCasal,
   "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": PsicoTriangulacao,
@@ -6970,14 +6958,27 @@ function AbaPsicoeducacao() {
 
 
   async function atualizarVisuaisFirebase() {
-    if(!confirm("Salvar visualKey e perguntas nos documentos mapeados. Continuar?")) return;
+    if(!confirm("Salvar visualKey nos documentos do Firebase. Continuar?")) return;
     setSalvando(true);
     const MAPA = {
-      "O Desejo Não Desaparece — Adormece": { visualKey:"O Desejo Não Desaparece — Adormece", tipo:"visual", perguntas:["O que você sente quando pensa na diminuição do desejo na sua relação — culpa, tristeza, resignação?","Existe algum conflito emocional não resolvido que pode estar criando distância física também?","O que vocês faziam no início da relação que criava conexão e que pararam de fazer?"] },
-      "Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro": { visualKey:"Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro", tipo:"visual", perguntas:["Quando você e seu parceiro(a) discutem sobre dinheiro, o que você está sentindo por baixo?","Como o dinheiro era tratado na sua família de origem? Que crença você herdou?","Existe um objetivo financeiro comum que vocês ainda não colocaram no papel?"] },
-      "Por Que Perder-se no Outro Não É Amor — É Fusão": { visualKey:"Por Que Perder-se no Outro Não É Amor — É Fusão", tipo:"visual", perguntas:["Existe algum interesse ou parte de você que foi diminuindo desde que está nessa relação?","Você consegue expressar discordâncias com seu parceiro(a) sem sentir que ameaça a relação?","O que você faria diferente se soubesse que manter sua individualidade fortalece o amor?"] },
-      "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": { visualKey:"A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis", tipo:"visual", perguntas:["Existe alguém que você tem envolvido nos conflitos do seu relacionamento?","Quando sente tensão no casal, qual é o seu impulso — confrontar diretamente ou buscar apoio externo?","O que tornaria mais seguro ter conversas difíceis diretamente com seu parceiro(a)?"] },
-      "O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental": { visualKey:"O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental", tipo:"visual", perguntas:["Em que aspecto da parentalidade você se cobra mais? Está te aproximando ou te afastando dos seus filhos?","Lembra de um momento em que você 'errou' como pai/mãe e depois reparou? Como a criança respondeu?","Como seria dar a si mesmo(a) a mesma compaixão que daria a um(a) amigo(a)?"] },
+      "Preocupação produtiva vs. improdutiva":        { visualKey:"Preocupação produtiva vs. improdutiva", tipo:"visual" },
+      "A armadilha do pior cenário":                  { visualKey:"A armadilha do pior cenário", tipo:"visual" },
+      "Eustresse vs. distresse":                      { visualKey:"Eustresse vs. distresse", tipo:"visual" },
+      "O ciclo da ansiedade":                         { visualKey:"O ciclo da ansiedade", tipo:"visual" },
+      "Desmontar o Circuito Cerebral da Ansiedade":   { visualKey:"Desmontar o Circuito Cerebral da Ansiedade", tipo:"visual" },
+      "O modelo ABC na prática":                      { visualKey:"O modelo ABC na prática", tipo:"visual" },
+      "O poder dos pensamentos":                      { visualKey:"O poder dos pensamentos", tipo:"visual" },
+      "A pizza da responsabilidade":                  { visualKey:"A pizza da responsabilidade", tipo:"visual" },
+      "Fatos vs. interpretações":                     { visualKey:"Fatos vs. interpretações", tipo:"visual" },
+      "O perigo do sempre e nunca":                   { visualKey:"O perigo do sempre e nunca", tipo:"visual" },
+      "7 Distorções de Pensamento":                   { visualKey:"7 Distorções de Pensamento", tipo:"visual" },
+      "O Alarme Falso do Cérebro":                    { visualKey:"O Alarme Falso do Cérebro", tipo:"visual" },
+      "Pensamentos São Eventos, Não Factos":          { visualKey:"Pensamentos São Eventos, Não Factos", tipo:"visual" },
+      "Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro": { visualKey:"Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro", tipo:"visual" },
+      "Por Que Perder-se no Outro Não É Amor — É Fusão": { visualKey:"Por Que Perder-se no Outro Não É Amor — É Fusão", tipo:"visual" },
+      "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": { visualKey:"A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis", tipo:"visual" },
+      "O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental": { visualKey:"O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental", tipo:"visual" },
+      "O Desejo Não Desaparece — Adormece":           { visualKey:"O Desejo Não Desaparece — Adormece", tipo:"visual" },
     };
     try {
       const snap = await db.collection("clinica_psicoeducacao").get();
