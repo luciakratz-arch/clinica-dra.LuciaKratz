@@ -13438,7 +13438,7 @@ function TagInputCampanha({ value=[], onChange }) {
 
 function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
   const novo = !lead?.id;
-  const [form, setForm]         = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
+  const [form, setForm]         = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", temperatura:"morno", obs:"" });
   const [textoIA, setTextoIA]   = useState("");
   const [salvando, setSalvando] = useState(false);
   const [aba, setAba]           = useState("dados"); // "dados" | "timeline"
@@ -13582,6 +13582,27 @@ function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
                 }} className="form-input">
                   {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
                 </select>
+              </div>
+
+              {/* ── Campo Temperatura do Lead ── */}
+              <div>
+                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>🌡️ Temperatura do Lead</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[
+                    {v:"quente", e:"🔥", l:"Quente",  cor:"#dc2626", bg:"#fef2f2"},
+                    {v:"morno",  e:"🌡️", l:"Morno",   cor:"#d97706", bg:"#fef3c7"},
+                    {v:"frio",   e:"🧊", l:"Frio",    cor:"#0891b2", bg:"#e0f2fe"},
+                  ].map(({v,e,l,cor,bg})=>(
+                    <button key={v} type="button" onClick={()=>f("temperatura",v)}
+                      style={{flex:1,padding:"10px 6px",borderRadius:10,border:"2px solid",
+                        borderColor:(form.temperatura||"morno")===v?cor:"#e5e7eb",
+                        background:(form.temperatura||"morno")===v?bg:"white",
+                        cursor:"pointer",fontFamily:"inherit",transition:"all .15s"}}>
+                      <div style={{fontSize:18,marginBottom:2}}>{e}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:(form.temperatura||"morno")===v?cor:"#6b7280"}}>{l}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -13733,7 +13754,14 @@ function CardLead({ lead, onEditar, onMover, colunas }) {
         border: emAlerta ? `1.5px solid ${regra.borda}` : "1px solid var(--gray-100)",
         marginBottom:8,
       }}>
-      <div style={{fontWeight:600,fontSize:13,marginBottom:4}}>{lead.nome}</div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+        <div style={{fontWeight:600,fontSize:13}}>{lead.nome}</div>
+        {lead.temperatura&&(()=>{
+          const t={quente:{e:"🔥",c:"#dc2626",bg:"#fef2f2"},morno:{e:"🌡️",c:"#d97706",bg:"#fef3c7"},frio:{e:"🧊",c:"#0891b2",bg:"#e0f2fe"}};
+          const cfg=t[lead.temperatura]||t.morno;
+          return <span style={{fontSize:10,fontWeight:700,color:cfg.c,background:cfg.bg,borderRadius:20,padding:"1px 7px"}}>{cfg.e} {lead.temperatura.charAt(0).toUpperCase()+lead.temperatura.slice(1)}</span>;
+        })()}
+      </div>
       {lead.servico&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>🎯 {lead.servico}</div>}
       {lead.queixa&&<div style={{fontSize:11,color:"var(--gray-500)",marginBottom:6,lineHeight:1.4}}>{lead.queixa.slice(0,60)}{lead.queixa.length>60?"...":""}</div>}
       {lead.telefone&&<div style={{fontSize:12,color:"var(--text-muted)"}}>📱 {lead.telefone}</div>}
@@ -14351,6 +14379,8 @@ function FunilLeads({ user }) {
   const [dragOver, setDragOver]             = useState(null);
   const [modalConversao, setModalConversao] = useState(null);
   const [abaFunil, setAbaFunil]             = useState("kanban");
+  const [busca, setBusca]                   = useState("");
+  const [filtroTemp, setFiltroTemp]         = useState("todos");
 
   useEffect(()=>{
     db.collection("clinica_leads")
@@ -14380,7 +14410,18 @@ function FunilLeads({ user }) {
     setDragOver(null);
   }
 
-  const leadsColuna = (colId) => leads.filter(l=>(l.status||"novo")===colId && !l.arquivado);
+  const leadsColuna = (colId) => leads.filter(l=>{
+    if((l.status||"novo")!==colId || l.arquivado) return false;
+    if(filtroTemp!=="todos" && (l.temperatura||"morno")!==filtroTemp) return false;
+    if(busca.trim()){
+      const q = busca.trim().toLowerCase();
+      const nome = (l.nome||"").toLowerCase();
+      const tel  = (l.telefone||"").replace(/\D/g,"");
+      const qTel = q.replace(/\D/g,"");
+      if(!nome.includes(q) && !tel.includes(qTel)) return false;
+    }
+    return true;
+  });
 
   return (
     <div style={{padding:"20px 24px"}}>
@@ -14414,6 +14455,40 @@ function FunilLeads({ user }) {
       {abaFunil==="parceiras"&&<GerenciamentoParceiras/>}
 
       {abaFunil==="kanban"&&<>
+      {/* Barra de busca + filtro temperatura */}
+      <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+        <div style={{position:"relative",flex:1,minWidth:200}}>
+          <Icon name="search" size={15} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"var(--text-muted)",pointerEvents:"none"}}/>
+          <input
+            value={busca} onChange={e=>setBusca(e.target.value)}
+            placeholder="Buscar por nome ou telefone..."
+            style={{width:"100%",padding:"9px 12px 9px 34px",border:"1px solid var(--gray-200)",borderRadius:8,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
+          {busca&&<button onClick={()=>setBusca("")} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"var(--gray-400)"}}>×</button>}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          {[
+            {v:"todos", l:"Todos",   e:""},
+            {v:"quente",l:"Quentes", e:"🔥"},
+            {v:"morno", l:"Mornos",  e:"🌡️"},
+            {v:"frio",  l:"Frios",   e:"🧊"},
+          ].map(({v,l,e})=>(
+            <button key={v} onClick={()=>setFiltroTemp(v)}
+              style={{padding:"7px 14px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontWeight:filtroTemp===v?700:400,fontFamily:"inherit",
+                borderColor:filtroTemp===v?"#7B00C4":"#e5e7eb",
+                background:filtroTemp===v?"#7B00C4":"white",
+                color:filtroTemp===v?"white":"var(--gray-600)",
+                transition:"all .15s"}}>
+              {e} {l}
+            </button>
+          ))}
+        </div>
+        {(busca||filtroTemp!=="todos")&&(
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>
+            {leads.filter(l=>!l.arquivado&&(filtroTemp==="todos"||(l.temperatura||"morno")===filtroTemp)&&(!busca.trim()||(l.nome||"").toLowerCase().includes(busca.toLowerCase())||(l.telefone||"").includes(busca))).length} resultado(s)
+          </div>
+        )}
+      </div>
+
       {/* Alertas de inatividade */}
       <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
 
