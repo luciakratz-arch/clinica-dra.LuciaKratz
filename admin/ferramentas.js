@@ -7009,6 +7009,1027 @@ function PsicoDesejoAdormece({ cat }){
   );
 }
 
+// ── macro_relacionamentos ─────────────────────────────────────────────────────
+
+function PsicoOuvirCompetencia({cat}){
+  const COR="#d97706"; const BG="#fef3c7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Numa conversa recente, voce estava realmente ouvindo ou ja preparando sua resposta?",
+    "O que costuma te impedir de ouvir de verdade — pressa, julgamento, necessidade de resolver?",
+    "Como seria uma conversa dificil na sua vida se voce aplicasse escuta ativa de verdade?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- Ouvir E Uma Competencia:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>👂</div>
+        <div style={{color:"#fff7ed",fontSize:16,fontWeight:500,marginBottom:6}}>Ouvir e uma competencia — e a maioria de nos nao aprendeu</div>
+        <div style={{color:"#fed7aa",fontSize:13,lineHeight:1.5}}>Escuta ativa e mais poderosa do que qualquer argumento.</div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e realmente escutar?</div>
+        <div style={{fontSize:12,color:"#92400e",lineHeight:1.7}}>A maioria das pessoas nao ouve para entender — ouve para responder. Enquanto o outro fala, ja estamos formulando nossa resposta, julgando, comparando com nossa experiencia. A escuta real exige suspender tudo isso.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#78350f",fontStyle:"italic",fontWeight:500}}>Sentir-se ouvido e uma das necessidades humanas mais profundas. E raro. E poderoso.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:10}}>Os 4 niveis de escuta</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {n:"1",t:"Fingir que ouve",d:"Balancando a cabeca mas pensando em outra coisa",c:"#fca5a5"},
+            {n:"2",t:"Ouvir seletivamente",d:"So capta o que confirma o que ja pensa",c:"#fde68a"},
+            {n:"3",t:"Ouvir atentamente",d:"Presta atencao nas palavras, mas nao no sentimento",c:"#86efac"},
+            {n:"4",t:"Escuta empatica",d:"Ouve para entender — palavras, emocao, intencao por tras",c:"#7dd3fc"},
+          ].map(({n,t,d,c})=>(
+            <div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <div style={{width:24,height:24,borderRadius:"50%",background:c,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#1a001a",flexShrink:0}}>{n}</div>
+              <div>
+                <div style={{color:"#fff7ed",fontSize:12,fontWeight:600}}>{t}</div>
+                <div style={{color:"#fed7aa",fontSize:11,marginTop:2}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como praticar escuta ativa</div>
+        {[
+          {e:"👁️",t:"Contato visual",d:"Olhe para a pessoa, nao para o celular ou ao redor"},
+          {e:"🤐",t:"Nao interrompa",d:"Deixe o silencio existir — ele nao precisa ser preenchido"},
+          {e:"🔄",t:"Parafrasear",d:"Repita o que entendeu: Se entendi bem, voce esta dizendo..."},
+          {e:"❓",t:"Perguntar antes de opinar",d:"Voce quer que eu ajude a resolver ou so quer ser ouvido?"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fed7aa"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#78350f",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#78350f",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#78350f",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoPalavrasFerem({cat}){
+  const COR="#d97706"; const BG="#fef3c7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Voce consegue identificar uma situacao em que suas palavras feriram mais do que queria — o que estava acontecendo no seu cerebro naquele momento?",
+    "Que padrao voce percebe em si mesmo quando esta sob estresse: atacar, calar, ou outro?",
+    "Como voce gostaria de reagir na proxima vez que sentir o cerebro sequestrado numa conversa dificil?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- Por Que as Nossas Palavras Ferem:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>💬</div>
+        <div style={{color:"#fff7ed",fontSize:16,fontWeight:500,marginBottom:6}}>Por que as nossas palavras ferem mais do que queremos?</div>
+        <div style={{color:"#fed7aa",fontSize:13,lineHeight:1.5}}>O cerebro sob stress abandona a linguagem empatica e recorre a acusacao automatica.</div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que acontece no cerebro em conflito</div>
+        <div style={{fontSize:12,color:"#92400e",lineHeight:1.7}}>Quando nos sentimos ameacados emocionalmente, a amigdala sequestra o cortex pre-frontal — a parte responsavel pela empatia, raciocinio e escolha das palavras. O que sai e reativo, nao refletido.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#78350f",fontStyle:"italic",fontWeight:500}}>Nao e falta de carater — e neurobiologia. Mas entender isso nao nos isenta de aprender a fazer diferente.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:10}}>O que dizemos vs. o que queremos dizer</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {a:"Voce nunca me ouve",b:"Preciso sentir que importo para voce"},
+            {a:"Voce e irresponsavel",b:"Estou com medo e preciso de seguranca"},
+            {a:"Sempre e assim com voce",b:"Esse padrao me esgota e precisa mudar"},
+            {a:"Esquece, nao adianta",b:"Estou desistindo porque me sinto invisivel"},
+          ].map(({a,b})=>(
+            <div key={a} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <div style={{flex:1,fontSize:11,color:"#fde68a"}}>{a}</div>
+              <span style={{color:"#86efac",fontWeight:700}}>→</span>
+              <div style={{flex:1,fontSize:11,color:"#bbf7d0"}}>{b}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como desacelerar antes de falar</div>
+        {[
+          {e:"⏸️",t:"Pausa de 6 segundos",d:"O cortisol demora 6s para reduzir o suficiente para voce pensar antes de falar"},
+          {e:"🌬️",t:"Uma respiracao profunda",d:"Ativa o sistema parassimpatico e reduz a reatividade da amigdala"},
+          {e:"🎯",t:"Pergunte-se",d:"O que eu quero que o outro entenda de verdade?"},
+          {e:"📝",t:"Reformule",d:"Troque acusacao por necessidade: de Voce faz X para Eu preciso de Y"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fed7aa"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#78350f",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#78350f",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#78350f",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoTangoConflito({cat}){
+  const COR="#d97706"; const BG="#fef3c7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Qual e o conflito que se repete na sua vida com mais frequencia — e qual e o padrao por tras dele?",
+    "No ciclo de acusacao e defesa, qual e geralmente o seu papel: quem ataca ou quem recua?",
+    "O que precisaria mudar na dinamica para o ciclo ser interrompido antes de escalar?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- O Tango do Conflito:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔄</div>
+        <div style={{color:"#fff7ed",fontSize:16,fontWeight:500,marginBottom:6}}>Por que discutimos sempre pela mesma razao?</div>
+        <div style={{color:"#fed7aa",fontSize:13,lineHeight:1.5}}>Os ciclos de acusacao e defesa se formam — e e possivel criar pontos de saida.</div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O tango leva dois</div>
+        <div style={{fontSize:12,color:"#92400e",lineHeight:1.7}}>Conflitos relacionais raramente sao sobre o conteudo da discussao. Sao padroes que se repetem: um ataca, o outro defende ou recua, o primeiro escala, o segundo fecha. Um tango que nenhum dos dois ensaiou conscientemente — mas que ambos sabem dancar.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#78350f",fontStyle:"italic",fontWeight:500}}>Nao e o tema que se repete. E o padrao de interacao que se repete usando temas diferentes.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:10}}>O ciclo mais comum</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {n:"1",t:"Gatilho",d:"Um evento ativa uma ferida antiga ou necessidade nao atendida"},
+            {n:"2",t:"Acusacao",d:"A dor se transforma em ataque: Voce sempre... Voce nunca..."},
+            {n:"3",t:"Defesa",d:"O outro sente ameaca e contra-ataca ou recua — nenhum dos dois ouve"},
+            {n:"4",t:"Escalada ou silencio",d:"A briga explode ou alguem fecha — o problema original fica sem solucao"},
+            {n:"5",t:"Falsa reconciliacao",d:"Fazem as pazes sem falar do real — o ciclo se prepara para recomecar"},
+          ].map(({n,t,d})=>(
+            <div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:"#fde68a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#78350f",flexShrink:0}}>{n}</div>
+              <div>
+                <div style={{color:"#fff7ed",fontSize:12,fontWeight:600}}>{t}</div>
+                <div style={{color:"#fed7aa",fontSize:11,marginTop:2}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Como criar pontos de saida</div>
+        {[
+          {e:"🛑",t:"Sinal combinado",d:"Acordem uma palavra ou gesto neutro que significa: estamos no ciclo, precisamos parar"},
+          {e:"⏰",t:"Pausa consciente",d:"20 minutos e o tempo minimo para o cortisol baixar o suficiente para conversar"},
+          {e:"🎯",t:"Nomear o padrao",d:"Acho que estamos no nosso ciclo de novo"},
+          {e:"💬",t:"Falar do sentimento",d:"Eu me sinto invisivel em vez de Voce me ignora"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fed7aa"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#78350f",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#78350f",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#78350f",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoLimitesPortas({cat}){
+  const COR="#d97706"; const BG="#fef3c7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Em qual area da sua vida voce sente mais dificuldade de estabelecer limites — trabalho, familia, amizades?",
+    "Qual e o medo por tras da dificuldade de dizer nao? Rejeicao, culpa, conflito?",
+    "Um limite que voce precisa estabelecer agora — e como voce poderia comunicar isso de forma clara e respeitosa?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- Limites Nao Sao Muros:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🚪</div>
+        <div style={{color:"#fff7ed",fontSize:16,fontWeight:500,marginBottom:6}}>Limites nao sao muros — sao portas com chave</div>
+        <div style={{color:"#fed7aa",fontSize:13,lineHeight:1.5}}>Voce decide quem entra, quando e em que condicoes.</div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e um limite saudavel?</div>
+        <div style={{fontSize:12,color:"#92400e",lineHeight:1.7}}>Um limite nao e uma parede para manter as pessoas longe. E uma porta com chave — voce decide quem entra, quando entra, e em que condicoes. Limites saudaveis protegem sua energia, sua identidade e seus valores sem isolar voce do mundo.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#78350f",fontStyle:"italic",fontWeight:500}}>Dizer nao a algo e dizer sim para voce mesmo.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:10}}>Muro vs. Porta com chave</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#fca5a5",fontWeight:700,fontSize:12,marginBottom:6}}>Muro (rigido)</div>
+            {["Nao deixa ninguem se aproximar","Vem do medo e da dor","Isola e protege em excesso","Nao tem excecoes"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#fde8d8",marginBottom:3}}>• {i}</div>
+            ))}
+          </div>
+          <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#86efac",fontWeight:700,fontSize:12,marginBottom:6}}>Porta (saudavel)</div>
+            {["Escolhe quem entra e quando","Vem dos valores e necessidades","Permite intimidade com seguranca","E flexivel e comunicado"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#bbf7d0",marginBottom:3}}>• {i}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Por que e tao dificil dizer nao?</div>
+        {[
+          {e:"😰",t:"Medo de rejeicao",d:"Fui ensinado que meu valor depende de agradar os outros"},
+          {e:"😔",t:"Culpa",d:"Sinto que sou egoista quando coloco minhas necessidades em primeiro lugar"},
+          {e:"⚡",t:"Medo do conflito",d:"Prefiro me sobrecarregar a enfrentar a tensao de discordar"},
+          {e:"🔄",t:"Padrao aprendido",d:"Em minha familia de origem, limites nao eram permitidos ou modelados"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fed7aa"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#78350f",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#78350f",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#78350f",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoCargaMental({cat}){
+  const COR="#d97706"; const BG="#fef3c7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Quais sao as tarefas invisiveis que voce gerencia sozinho(a) e que raramente sao reconhecidas?",
+    "Voce ja tentou redistribuir essa carga? O que aconteceu?",
+    "O que voce precisaria que a outra pessoa entendesse sobre o peso do que voce carrega?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- A Carga que Nao Se Ve:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧩</div>
+        <div style={{color:"#fff7ed",fontSize:16,fontWeight:500,marginBottom:6}}>A carga que nao se ve — o que e a carga mental</div>
+        <div style={{color:"#fed7aa",fontSize:13,lineHeight:1.5}}>O trabalho invisivel de gerir, planejar e coordenar que esgota sem ser reconhecido.</div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e carga mental?</div>
+        <div style={{fontSize:12,color:"#92400e",lineHeight:1.7}}>Carga mental e o trabalho cognitivo e emocional invisivel de antecipar, lembrar, planejar e coordenar tudo que precisa ser feito. Quem a carrega nao so faz as tarefas — gerencia a existencia delas. E esse gerenciamento e o que esgota.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#78350f",fontStyle:"italic",fontWeight:500}}>Nao e so fazer — e lembrar que precisa ser feito, quando, como, por quem. Isso tem peso.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #b45309"}}>
+        <div style={{color:"#fff7ed",fontSize:13,fontWeight:500,marginBottom:10}}>O que a carga mental inclui</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {e:"🧠",t:"Antecipacao",d:"Pensar no que vai acabar, o que precisa ser agendado, o que pode dar errado"},
+            {e:"📋",t:"Planejamento",d:"Organizar rotinas, compromissos, necessidades de todos"},
+            {e:"🔄",t:"Delegacao",d:"Dividir tarefas e ainda assim acompanhar se foram feitas"},
+            {e:"💭",t:"Carga emocional",d:"Monitorar o humor, as necessidades e o bem-estar das pessoas ao redor"},
+            {e:"🤫",t:"Invisibilidade",d:"Tudo isso acontece em silencio — e raramente e visto ou agradecido"},
+          ].map(({e,t,d})=>(
+            <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+              <div>
+                <div style={{color:"#fff7ed",fontSize:12,fontWeight:600}}>{t}</div>
+                <div style={{color:"#fed7aa",fontSize:11,marginTop:2}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#fff7ed",padding:"16px 20px",borderBottom:"1px solid #fed7aa"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Como redistribuir de forma saudavel</div>
+        {[
+          {e:"📊",t:"Tornar visivel",d:"Liste tudo que voce gerencia. Mostrar dados e mais eficaz do que reclamar"},
+          {e:"🤝",t:"Delegar de verdade",d:"Delegar e transferir a responsabilidade — nao so a tarefa com instrucoes detalhadas"},
+          {e:"💬",t:"Conversar sem acusar",d:"Aborde como parceiros resolvendo um problema, nao como adversarios"},
+          {e:"🔄",t:"Rever periodicamente",d:"A distribuicao precisa ser revisitada conforme a vida muda"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fed7aa"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#78350f",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#92400e",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#78350f",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#78350f",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+// ── macro_corpo ───────────────────────────────────────────────────────────────
+
+function PsicoVisaoIntegral({cat}){
+  const COR="#16a34a"; const BG="#dcfce7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Qual dimensao da sua vida esta mais negligenciada agora — fisica, emocional, social, espiritual?",
+    "Como essa negligencia esta afetando as outras areas?",
+    "Um pequeno passo que voce poderia dar essa semana para atender essa area?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- Visao Integral da Saude:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>⭕</div>
+        <div style={{color:"#f0fdf4",fontSize:16,fontWeight:500,marginBottom:6}}>Por que nao basta tratar um sintoma</div>
+        <div style={{color:"#bbf7d0",fontSize:13,lineHeight:1.5}}>As dimensoes de vida se influenciam mutuamente — o diagnostico precisa ser sistemico.</div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>A visao integral da saude</div>
+        <div style={{fontSize:12,color:"#14532d",lineHeight:1.7}}>Tratar apenas o sintoma e como apagar a luz de aviso no painel do carro sem verificar o motor. A saude integral reconhece que corpo, mente, emocoes, relacoes e proposito estao interligados — o que acontece em uma area afeta todas as outras.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#14532d",fontStyle:"italic",fontWeight:500}}>O sintoma e um mensageiro. A pergunta real e: do que ele esta tentando me avisar?</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #15803d"}}>
+        <div style={{color:"#f0fdf4",fontSize:13,fontWeight:500,marginBottom:10}}>As dimensoes que se influenciam</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+          {[
+            {e:"🏃",t:"Fisica",d:"Sono, alimentacao, movimento, dor"},
+            {e:"🧠",t:"Mental",d:"Pensamentos, crencas, cognicao"},
+            {e:"💜",t:"Emocional",d:"Sentimentos, regulacao, autoestima"},
+            {e:"👥",t:"Social",d:"Vinculos, pertencimento, limites"},
+            {e:"🌱",t:"Espiritual",d:"Proposito, valores, sentido de vida"},
+            {e:"💼",t:"Ocupacional",d:"Trabalho, criatividade, realizacao"},
+          ].map(({e,t,d})=>(
+            <div key={t} style={{background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 10px"}}>
+              <div style={{fontSize:16,marginBottom:4}}>{e}</div>
+              <div style={{color:"#f0fdf4",fontSize:11,fontWeight:600}}>{t}</div>
+              <div style={{color:"#bbf7d0",fontSize:10,marginTop:2}}>{d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Como pensar sistemicamente sobre sua saude</div>
+        {[
+          {e:"🔍",t:"Identifique o sintoma",d:"Onde voce sente o desequilibrio? Corpo, emocoes, relacoes?"},
+          {e:"🔗",t:"Busque a conexao",d:"Que outra area pode estar alimentando esse sintoma?"},
+          {e:"⚖️",t:"Avalie o conjunto",d:"Qual dimensao esta mais negligenciada na sua vida agora?"},
+          {e:"🌱",t:"Intervenha na raiz",d:"Tratar o sistema, nao so o sinal — mesmo que seja mais lento"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #bbf7d0"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#14532d",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#166534",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#14532d",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#14532d",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoEscadaSeguranca({cat}){
+  const COR="#16a34a"; const BG="#dcfce7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Em qual dos 3 estados do sistema nervoso voce passa mais tempo — seguranca, mobilizacao ou colapso?",
+    "Que situacoes ou pessoas te ajudam a voltar ao estado de seguranca?",
+    "Que sinais do seu corpo indicam que voce esta saindo do estado de seguranca?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- A Escada de Seguranca:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧬</div>
+        <div style={{color:"#f0fdf4",fontSize:16,fontWeight:500,marginBottom:6}}>Como o seu sistema nervoso decide se esta em perigo</div>
+        <div style={{color:"#bbf7d0",fontSize:13,lineHeight:1.5}}>A Teoria Polivagal — os tres estados do sistema nervoso e como regula-los.</div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e a Teoria Polivagal?</div>
+        <div style={{fontSize:12,color:"#14532d",lineHeight:1.7}}>Desenvolvida pelo Dr. Stephen Porges, a Teoria Polivagal explica que o sistema nervoso autonomo tem tres estados hierarquicos de resposta ao ambiente. O corpo avalia constantemente o nivel de seguranca — processo chamado neurocepção — e ativa o estado correspondente, sem consultar a mente consciente.</div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #15803d"}}>
+        <div style={{color:"#f0fdf4",fontSize:13,fontWeight:500,marginBottom:10}}>Os 3 estados da escada</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {n:"↑",t:"Seguranca e conexao",sub:"Nervo vago ventral",d:"Voce se sente calmo, conectado, curioso. Consegue pensar com clareza, ser empatico e colaborativo.",c:"#86efac"},
+            {n:"⚡",t:"Mobilizacao",sub:"Sistema simpatico",d:"Voce sente urgencia, ansiedade, irritacao. O corpo se prepara para lutar ou fugir.",c:"#fde68a"},
+            {n:"↓",t:"Colapso e desligamento",sub:"Nervo vago dorsal",d:"Voce se sente entorpecido, desconectado, apagado. O corpo entra em modo de conservacao de energia.",c:"#fca5a5"},
+          ].map(({n,t,sub,d,c})=>(
+            <div key={t} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"12px 14px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                <span style={{fontSize:18}}>{n}</span>
+                <div>
+                  <div style={{color:"#f0fdf4",fontSize:12,fontWeight:600}}>{t}</div>
+                  <div style={{background:c,color:"#1a001a",fontSize:10,fontWeight:600,padding:"1px 7px",borderRadius:10,display:"inline-block",marginTop:2}}>{sub}</div>
+                </div>
+              </div>
+              <div style={{color:"#bbf7d0",fontSize:11,lineHeight:1.6}}>{d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como subir a escada de volta para seguranca</div>
+        {[
+          {e:"🌬️",t:"Respiracao lenta",d:"Expiracao mais longa que a inspiracao ativa o vago ventral diretamente"},
+          {e:"👁️",t:"Movimento dos olhos",d:"Olhar lentamente ao redor sinaliza ao cerebro que o ambiente e seguro"},
+          {e:"🤝",t:"Conexao humana",d:"Uma voz calma, um toque gentil ou um rosto acolhedor regulam o sistema"},
+          {e:"🎵",t:"Musica ou voz ritmica",d:"O nervo vago responde a sons humanos suaves e ritmos regulares"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #bbf7d0"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#14532d",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#166534",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#14532d",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#14532d",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoCorpoNaoMente({cat}){
+  const COR="#16a34a"; const BG="#dcfce7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Voce consegue identificar uma emocao que costuma se manifestar como sintoma fisico no seu corpo?",
+    "Que situacoes ou emocoes precedem seus sintomas fisicos mais frequentes?",
+    "Se o seu corpo pudesse falar, o que ele estaria tentando dizer agora?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- O Corpo Nao Mente:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🫀</div>
+        <div style={{color:"#f0fdf4",fontSize:16,fontWeight:500,marginBottom:6}}>O corpo nao mente — a linguagem fisica das emocoes nao expressas</div>
+        <div style={{color:"#bbf7d0",fontSize:13,lineHeight:1.5}}>A neurobiologia da somatizacao — por que os sintomas fisicos sao frequentemente mensagens emocionais.</div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e somatizacao?</div>
+        <div style={{fontSize:12,color:"#14532d",lineHeight:1.7}}>Somatizacao e quando o corpo expressa atraves de sintomas fisicos o que a mente nao consegue ou nao permite processar emocionalmente. Nao e fingimento — e neurobiologia. O sistema nervoso registra tudo, e quando as emocoes nao encontram saida consciente, elas encontram saida pelo corpo.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#14532d",fontStyle:"italic",fontWeight:500}}>O corpo mantem o placar. O que nao e expresso, e armazenado.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #15803d"}}>
+        <div style={{color:"#f0fdf4",fontSize:13,fontWeight:500,marginBottom:10}}>Emocoes e suas manifestacoes no corpo</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {e:"😰",em:"Ansiedade",f:"Aperto no peito, nausea, tensao muscular, formigamento"},
+            {e:"😔",em:"Tristeza reprimida",f:"Cansaco cronico, dores nas costas, sensacao de peso"},
+            {e:"😤",em:"Raiva contida",f:"Dor de cabeca, tensao no pescoco, mandibula travada"},
+            {e:"😨",em:"Medo",f:"Estomago embrulhado, frio nas maos, dificuldade de respirar"},
+            {e:"😶",em:"Emocoes nao expressas",f:"Sintomas difusos que medicos nao conseguem explicar"},
+          ].map(({e,em,f})=>(
+            <div key={em} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+              <div>
+                <div style={{color:"#f0fdf4",fontSize:12,fontWeight:600}}>{em}</div>
+                <div style={{color:"#bbf7d0",fontSize:11,marginTop:2}}>{f}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como ouvir o corpo</div>
+        {[
+          {e:"🔍",t:"Escanear o corpo",d:"Feche os olhos e percorra o corpo — onde ha tensao, dor ou desconforto?"},
+          {e:"❓",t:"Pergunte ao sintoma",d:"Se essa dor pudesse falar, o que ela diria? Qual emocao ela carrega?"},
+          {e:"📓",t:"Diario corpo-emocao",d:"Registre quando o sintoma aparece e o que estava acontecendo emocionalmente"},
+          {e:"🤝",t:"Busque apoio",d:"Terapia, fisioterapia, acupuntura — tratar o sistema todo, nao so o sintoma"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #bbf7d0"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#14532d",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#166534",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#14532d",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#14532d",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+function PsicoCienciaPresenca({cat}){
+  const COR="#16a34a"; const BG="#dcfce7";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Em quais momentos do dia voce percebe que sua mente esta mais ausente do que presente?",
+    "O que voce perde quando esta fisicamente em um lugar mas mentalmente em outro?",
+    "Uma pratica pequena que voce poderia adotar para treinar mais presenca no dia a dia?",
+  ];
+  function enviarWhatsApp(){
+    const tel=(cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto="Reflexoes -- A Ciencia da Presenca:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🧘</div>
+        <div style={{color:"#f0fdf4",fontSize:16,fontWeight:500,marginBottom:6}}>Onde esta a sua mente quando seu corpo esta aqui?</div>
+        <div style={{color:"#bbf7d0",fontSize:13,lineHeight:1.5}}>A mente vagua 47% do tempo — e esse custo e fisico, emocional e relacional.</div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que a ciencia diz sobre presenca</div>
+        <div style={{fontSize:12,color:"#14532d",lineHeight:1.7}}>Uma pesquisa de Harvard com 2.250 pessoas mostrou que a mente vagueia em 47% do tempo — independente do que a pessoa esta fazendo. Os participantes eram menos felizes quando a mente estava em outro lugar, mesmo que o pensamento fosse positivo. A presenca, por si so, gera bem-estar.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#14532d",fontStyle:"italic",fontWeight:500}}>Uma mente que vagueia e uma mente infeliz. A presenca e treinavel.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #15803d"}}>
+        <div style={{color:"#f0fdf4",fontSize:13,fontWeight:500,marginBottom:10}}>Os custos da ausencia mental</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[
+            {e:"😔",t:"Infelicidade",d:"A mente no passado gera arrependimento. No futuro, gera ansiedade"},
+            {e:"💔",t:"Conexao reduzida",d:"Estar presente em corpo mas ausente em mente isola mesmo estando junto"},
+            {e:"⚡",t:"Esgotamento",d:"Multitarefa mental consome energia sem produzir"},
+            {e:"🧠",t:"Memoria prejudicada",d:"Nao formamos memorias do que nao vivenciamos conscientemente"},
+          ].map(({e,t,d})=>(
+            <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
+              <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+              <div>
+                <div style={{color:"#f0fdf4",fontSize:12,fontWeight:600}}>{t}</div>
+                <div style={{color:"#bbf7d0",fontSize:11,marginTop:2}}>{d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como treinar a presenca</div>
+        {[
+          {e:"🔁",t:"Retorne sem julgamento",d:"Quando perceber que a mente viajou, simplesmente retorne. Sem critica — isso e o treino"},
+          {e:"👁️",t:"Ancora sensorial",d:"Foque em 1 coisa que voce ve, ouve ou sente agora. Isso ancora no presente"},
+          {e:"📵",t:"Uma coisa de cada vez",d:"Multitarefa e mito — faz tudo pior. Escolha uma tarefa e fique so com ela"},
+          {e:"🌬️",t:"Respire conscientemente",d:"3 respiracoes lentas e intencionais reiniciam a presenca em qualquer momento"},
+        ].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #bbf7d0"}}>
+            <span style={{fontSize:20,flexShrink:0}}>{e}</span>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#14532d",marginBottom:2}}>{t}</div>
+              <div style={{fontSize:11,color:"#166534",lineHeight:1.5}}>{d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#14532d",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexoes</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#14532d",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexao..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexoes pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+    </div>
+  );
+}
+
+// ── macro_habitos ─────────────────────────────────────────────────────────────
+
+function PsicoCicloAlivioFalso({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Qual e o seu principal comportamento de alivio falso — procrastinacao, comida, celular, outro?","O que voce esta evitando quando recorre a esse comportamento?","Como voce se sente 30 minutos depois de ter usado esse alivio?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Ciclo do Alivio Falso:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🔁</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>O ciclo do alivio falso</div><div style={{color:"#a7f3d0",fontSize:13}}>Por que adiar nos acalma na hora — mas gera uma avalanche de ansiedade depois.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e alivio falso?</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>Alivio falso e qualquer comportamento que reduz a ansiedade no curto prazo, mas que aumenta o problema no longo prazo. A procrastinacao e o exemplo classico: adiar a tarefa alivia imediatamente — mas a tarefa continua la, e a culpa e a ansiedade crescem.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>O problema nao desaparece — ele cobra juros.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>O ciclo em 4 passos</div>{[{n:"1",t:"Gatilho",d:"Tarefa dificil, emocao desconfortavel"},{n:"2",t:"Comportamento de fuga",d:"Procrastinar, rolar o celular, maratonar serie"},{n:"3",t:"Alivio imediato",d:"A tensao cai — o cerebro aprende que funciona"},{n:"4",t:"Consequencia",d:"A tarefa acumula, a culpa e a ansiedade crescem"}].map(({n,t,d})=>(<div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"#a7f3d0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#065f46",flexShrink:0}}>{n}</div><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como quebrar o ciclo</div>{[{e:"🎯",t:"Identifique o gatilho",d:"O que especificamente aciona o comportamento?"},{e:"⏱️",t:"Regra dos 2 minutos",d:"Se leva menos de 2 minutos, faca agora"},{e:"🌊",t:"Surf na emocao",d:"Observe o desconforto sem agir — ele passa mais rapido do que parece"},{e:"✅",t:"Comece pelo menor passo",d:"Nao a tarefa inteira — apenas o primeiro minuto"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoLimpezaNoturna({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Como tem sido a qualidade do seu sono ultimamente — e o que voce acha que esta interferindo?","Qual e o seu ritual (ou falta de ritual) antes de dormir?","Uma mudanca pequena que voce poderia fazer essa semana para proteger melhor o seu sono?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- A Limpeza Noturna do Cerebro:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🌙</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>A limpeza noturna do cerebro</div><div style={{color:"#a7f3d0",fontSize:13}}>Como o sono lava as toxinas emocionais e consolida a memoria.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O sistema glinfatico</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>Durante o sono profundo, o cerebro ativa o sistema glinfatico — uma rede de canais que literalmente lava as toxinas acumuladas ao longo do dia. Privacao de sono nao e apenas cansaco: e toxinas acumuladas no cerebro.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>Dormir bem nao e preguica — e manutencao essencial do cerebro.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>O que acontece enquanto voce dorme</div>{[{e:"🧹",t:"Limpeza de toxinas",d:"O sistema glinfatico remove residuos metabolicos"},{e:"💾",t:"Consolidacao da memoria",d:"Aprendizados do dia sao transferidos para a memoria de longo prazo"},{e:"😌",t:"Regulacao emocional",d:"O sono REM processa emocoes dificeis"},{e:"🔧",t:"Reparacao celular",d:"Hormonios de crescimento sao liberados"},{e:"⚡",t:"Recarga energetica",d:"O ATP e restaurado — sem sono, cada decisao custa mais"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como proteger o sono</div>{[{e:"📵",t:"Tela fora 1h antes",d:"A luz azul suprime a melatonina e atrasa o inicio do sono"},{e:"🌡️",t:"Quarto fresco e escuro",d:"O cerebro precisa baixar 1-2 graus para o sono profundo"},{e:"⏰",t:"Horario regular",d:"Acordar sempre no mesmo horario e mais importante que a hora de dormir"},{e:"🌙",t:"Ritual de transicao",d:"20-30 min de atividade calma sinaliza ao cerebro que e hora de desligar"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoRegra5Minutos({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Qual tarefa voce vem adiando ha mais tempo — o que aconteceria se voce fizesse apenas 5 minutos dela agora?","Quando voce comeca uma tarefa, consegue parar depois de 5 minutos — ou tende a continuar?","O que o seu cerebro costuma dizer para justificar o adiamento?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- A Regra dos 5 Minutos:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>⏱️</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>A regra dos 5 minutos</div><div style={{color:"#a7f3d0",fontSize:13}}>A tecnica infalivel para vencer a procrastinacao.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Por que o inicio e o maior obstaculo</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>O cerebro percebe tarefas adiadas como ameacas. A antecipacao do esforco ativa a mesma regiao cerebral que processa dor fisica. A regra dos 5 minutos engana esse mecanismo: comprometer-se com apenas 5 minutos e suficientemente pequeno para o cerebro aceitar.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>A motivacao nao vem antes da acao — vem depois. Comece, e o humor muda.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>Como aplicar</div>{[{n:"1",t:"Escolha a tarefa",d:"Aquela que voce mais esta evitando"},{n:"2",t:"Comprometa-se com 5 minutos",d:"Nao com a tarefa inteira — apenas 5 minutos"},{n:"3",t:"Comece imediatamente",d:"Sem preparar, sem o momento perfeito. Agora"},{n:"4",t:"Avalie aos 5 minutos",d:"Quer continuar? Otimo. Quer parar? Voce quebrou o ciclo"}].map(({n,t,d})=>(<div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"#a7f3d0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#065f46",flexShrink:0}}>{n}</div><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Por que funciona</div>{[{e:"🧠",t:"Efeito Zeigarnik",d:"O cerebro tem dificuldade de esquecer tarefas incompletas — comecar cria impulso"},{e:"💉",t:"Dopamina do progresso",d:"Qualquer progresso, mesmo pequeno, libera dopamina"},{e:"🌊",t:"Quebra a inercio",d:"O maior custo de energia e o inicio — depois fica mais facil"},{e:"🎯",t:"Permite comecar imperfeito",d:"Imperfeitamente comecado e melhor que nao comecado"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoSinaisDesgaste({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Quais sinais de desgaste emocional voce esta ignorando ou minimizando agora?","O que costuma impedir voce de fazer pausa quando precisa?","Uma estrategia de recarga que funciona para voce — e por que voce nao a usa com mais frequencia?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- Sinais de Desgaste Emocional:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🔋</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>Sinais de desgaste emocional</div><div style={{color:"#a7f3d0",fontSize:13}}>Como identificar a sobrecarga e estrategias de pausa real.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Por que ignoramos os sinais</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>O desgaste emocional raramente aparece de repente. Ele se instala aos poucos, com sinais que frequentemente normalizamos. A cultura da produtividade ensinou a tratar o cansaco como fraqueza — e muitos so param quando o corpo para compulsoriamente.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>Se voce nao criar espaco para descansar, o seu corpo vai criar — geralmente na pior hora.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>Sinais de alerta por nivel</div>{[{nivel:"Amarelo",c:"#fde68a",tc:"#78350f",s:"Irritabilidade, dificuldade de concentrar, sono irregular, menos prazer nas coisas"},{nivel:"Laranja",c:"#fed7aa",tc:"#7c2d12",s:"Esquecimento frequente, choro facil, isolamento, sensacao de estar no limite"},{nivel:"Vermelho",c:"#fca5a5",tc:"#7f1d1d",s:"Esgotamento mesmo apos dormir, apatia total, sintomas fisicos, incapacidade de funcionar"}].map(({nivel,c,tc,s})=>(<div key={nivel} style={{background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 12px",marginBottom:6}}><div style={{background:c,color:tc,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:10,display:"inline-block",marginBottom:6}}>{nivel}</div><div style={{color:"#ecfdf5",fontSize:11,lineHeight:1.6}}>{s}</div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Estrategias de pausa real</div>{[{e:"🌿",t:"Pausa ativa",d:"Caminhada, alongamento — movimento leve que reseta o sistema nervoso"},{e:"📵",t:"Desconexao digital",d:"30 minutos sem tela sao mais restauradores do que 3h de rolagem passiva"},{e:"💤",t:"Sono como prioridade",d:"Nao e luxo — e a manutencao mais barata e eficaz que existe"},{e:"🤝",t:"Conexao genuina",d:"Uma conversa de verdade com alguem que voce confia recarrega de forma unica"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoAgirantesVontade({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Existe um habito que voce so age quando esta motivado — e o que acontece quando a motivacao vai embora?","Qual seria um passo tao pequeno que voce conseguiria fazer mesmo sem vontade nenhuma?","Como voce poderia estruturar seu ambiente para que a acao seja mais facil do que a inacao?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- Agir Antes de Ter Vontade:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🚀</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>Agir antes de ter vontade</div><div style={{color:"#a7f3d0",fontSize:13}}>O principio pratico: fazer algo para gerar motivacao — nao o contrario.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O mito da motivacao</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>A maioria das pessoas espera sentir vontade para agir. Mas a neurociencia mostra o oposto: a motivacao e consequencia da acao, nao sua causa. O sistema dopaminergico e ativado pelo progresso — e o progresso so existe se voce comecar, com ou sem vontade.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>Nao espere a vontade. A vontade vem depois que voce comeca.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>O ciclo correto</div>{[{n:"❌",t:"Mito",d:"Vontade → Acao → Resultado (funciona raramente)"},{n:"✅",t:"Realidade",d:"Acao → Progresso → Dopamina → Motivacao → Mais acao"}].map(({n,t,d})=>(<div key={t} style={{background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 12px",marginBottom:6}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><span style={{fontSize:18}}>{n}</span><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div></div><div style={{color:"#a7f3d0",fontSize:11}}>{d}</div></div>))}<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6}}>{[{e:"📐",t:"Design do ambiente",d:"Remova friccao: tenis ao lado da cama, livro na mesa"},{e:"⏰",t:"Horario fixo",d:"Habito atrelado a horario nao precisa de decisao"},{e:"🔗",t:"Empilhamento",d:"Depois de [habito existente], vou [novo habito]"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div></div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoMitoBateriaInfinita({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Em que nivel sua bateria emocional esta agora — e quando foi a ultima vez que voce a recarregou de verdade?","O que drena mais sua energia — situacoes, pessoas ou pensamentos?","O que voce precisaria eliminar, reduzir ou mudar para ter mais energia disponivel?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Mito da Bateria Infinita:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🔋</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>O mito da bateria infinita</div><div style={{color:"#a7f3d0",fontSize:13}}>Sinais de alerta de que o sistema nervoso esta a entrar em esgotamento.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O mito da produtividade ilimitada</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>A cultura moderna trata os seres humanos como maquinas com bateria infinita. Mas o sistema nervoso tem limites fisicos e quimicos reais. Cortisol, noradrenalina, serotonina — todos se esgotam. Quando os recursos neurobiologicos acabam, o desempenho cai e a irritabilidade aumenta.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>Voce nao e preguicoso quando esta esgotado. Voce esta sem recurso.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>Sinais de bateria baixa</div>{[{e:"😤",t:"Irritabilidade desproporcional",d:"Pequenas coisas provocam reacoes grandes"},{e:"🧠",t:"Neblina mental",d:"Dificuldade de concentrar, esquecer coisas simples"},{e:"😴",t:"Cansaco que nao passa",d:"Dormir nao resolve — esgotamento mais profundo"},{e:"😶",t:"Apatia e desconexao",d:"Coisas que antes davam prazer nao movem mais"},{e:"🤒",t:"Sintomas fisicos recorrentes",d:"Imunidade baixa, dores de cabeca, tensao cronica"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como recarregar de verdade</div>{[{e:"💤",t:"Sono de qualidade",d:"A unica recarga que o cerebro aceita — nao ha substituto"},{e:"🌿",t:"Exposicao a natureza",d:"20 minutos em ambiente natural reduz cortisol significativamente"},{e:"🤝",t:"Conexao genuina",d:"Conversas reais com pessoas que te fazem bem"},{e:"🎯",t:"Eliminar drenos",d:"Identificar e reduzir o que consome energia sem retornar"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoPoder1Porcento({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Em qual area da sua vida 1% de melhoria diaria teria mais impacto em 1 ano?","Qual habito pequeno voce poderia comecar hoje — tao pequeno que seria impossivel dizer nao?","O que tem te impedido de manter habitos — o inicio ou a consistencia?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Poder do 1% Diario:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>📈</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>O poder do 1% diario</div><div style={{color:"#a7f3d0",fontSize:13}}>Como pequenas melhorias diarias se acumulam em transformacoes extraordinarias.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>A matematica dos pequenos habitos</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>Melhorar 1% por dia durante um ano resulta em 37 vezes melhor. Piorar 1% por dia resulta em quase zero. O impacto dos habitos e invisivel no curto prazo — e inevitavel no longo prazo.</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}><div style={{background:BG,borderRadius:8,padding:"10px",textAlign:"center"}}><div style={{fontSize:24,fontWeight:700,color:COR}}>37x</div><div style={{fontSize:11,color:"#065f46"}}>+1% ao dia / 1 ano</div></div><div style={{background:"#fee2e2",borderRadius:8,padding:"10px",textAlign:"center"}}><div style={{fontSize:24,fontWeight:700,color:"#dc2626"}}>0,03</div><div style={{fontSize:11,color:"#7f1d1d"}}>-1% ao dia / 1 ano</div></div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>Por que habitos pequenos funcionam melhor</div>{[{e:"🧠",t:"Reducao da resistencia",d:"O cerebro nao resiste a algo pequeno"},{e:"🔄",t:"Automatizacao",d:"Acoes repetidas criam vias neurais — apos 60-70 dias vira piloto automatico"},{e:"💉",t:"Recompensa imediata",d:"Pequenas vitorias diarias geram dopamina"},{e:"📐",t:"Identidade",d:"Cada acao consistente confirma para voce mesmo quem voce e"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Como comecar o seu 1%</div>{[{e:"🎯",t:"Escolha uma area so",d:"Saude, relacoes, trabalho, aprendizado"},{e:"📏",t:"Seja especifico",d:"Nao meditar — mas respirar 2 minutos"},{e:"🔗",t:"Conecte a algo existente",d:"Depois de escovar os dentes, vou ler 1 pagina"},{e:"📊",t:"Registre",d:"Ver progresso visual e mais motivador do que qualquer discurso"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoDiarioPequenasVitorias({cat}){
+  const COR="#059669"; const BG="#d1fae5";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Quais foram as 3 menores vitorias dessa semana que voce deixou passar sem reconhecer?","Como voce se sente quando reconhece o proprio progresso — mesmo que pequeno?","Que formato de registro funcionaria melhor para voce: diario, app, bloco de papel?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Diario de Pequenas Vitorias:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🏆</div><div style={{color:"#ecfdf5",fontSize:16,fontWeight:500,marginBottom:6}}>O diario de pequenas vitorias</div><div style={{color:"#a7f3d0",fontSize:13}}>Como treinar o cerebro para notar o que deu certo.</div></div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Por que o cerebro ignora o progresso</div><div style={{fontSize:12,color:"#065f46",lineHeight:1.7}}>O cerebro humano tem vies de negatividade — registra ameacas e fracassos com muito mais intensidade do que sucessos. Isso foi util na savana. Na vida moderna, significa que acabamos o dia lembrando do que nao fizemos e esquecendo o que fizemos.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#065f46",fontStyle:"italic",fontWeight:500}}>O que voce registra, voce fortifica. O que voce ignora, desaparece.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}><div style={{color:"#ecfdf5",fontSize:13,fontWeight:500,marginBottom:10}}>O que conta como vitoria</div>{[{e:"✅",t:"Fez o que planejou",d:"Acordou no horario, foi a academia, entregou — isso conta"},{e:"💪",t:"Resistiu a algo dificil",d:"Nao comeu o que nao queria, esperou — isso conta"},{e:"🌱",t:"Tentou algo novo",d:"Saiu da zona de conforto, pediu ajuda — isso conta"},{e:"💜",t:"Cuidou de si",d:"Dormiu cedo, fez pausa, disse nao — isso conta"},{e:"🔄",t:"Recomeçou",d:"Caiu e retomou no mesmo dia — isso conta mais do que nunca ter caido"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#ecfdf5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #a7f3d0"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como criar o habito do registro</div>{[{e:"🌙",t:"Faca a noite",d:"2 minutos antes de dormir. Qual foi a menor vitoria de hoje?"},{e:"📏",t:"Seja especifico",d:"Nao apenas bom dia — mas acordei sem celular por 30 minutos"},{e:"🔢",t:"3 por dia",d:"Suficiente para treinar o olhar, pequeno o suficiente para manter"},{e:"🔁",t:"Revise semanalmente",d:"Ler as vitorias da semana toda de uma vez cria sensacao poderosa de progresso"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #a7f3d0"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#065f46",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#047857",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#065f46",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#065f46",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+// ── macro_humor ───────────────────────────────────────────────────────────────
+
+function PsicoParaQueServemEmocoes({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Qual emocao voce mais tende a suprimir — e o que voce acha que ela esta tentando dizer?","Quando voce sente uma emocao intensa, sua tendencia e agir, suprimir ou observar?","Como seria sua relacao com suas emocoes se voce as tratasse como mensageiras em vez de inimigos?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- Para que Servem as Emocoes:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>❤️</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>Para que servem as emocoes?</div><div style={{color:"#fbcfe8",fontSize:13}}>Nao ha emocoes erradas — todas sao mensageiras com uma funcao vital.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Emocoes como sistema de informacao</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>As emocoes nao sao defeitos do sistema nervoso — sao o sistema de navegacao mais sofisticado que existe. Cada emocao carrega uma mensagem sobre o que e importante para voce, o que esta ameacado, o que precisa de atencao. Suprimir emocoes e como desligar os indicadores do painel do carro.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>Nao existe emocao ruim. Existe emocao bem ou mal utilizada.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>O que cada emocao comunica</div>{[{e:"😨",em:"Medo",f:"Algo importante esta ameacado — avalie o perigo real"},{e:"😤",em:"Raiva",f:"Um limite foi violado ou uma injustica aconteceu"},{e:"😢",em:"Tristeza",f:"Uma perda ocorreu — voce precisa processar e integrar"},{e:"😔",em:"Culpa",f:"Voce agiu contra seus valores — ha oportunidade de reparar"},{e:"😊",em:"Alegria",f:"Voce esta alinhado com o que importa — registre e amplifique"},{e:"🤢",em:"Nojo",f:"Um limite moral ou fisico foi cruzado"}].map(({e,em,f})=>(<div key={em} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 10px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#fdf2f8",fontSize:12,fontWeight:600}}>{em}</div><div style={{color:"#fbcfe8",fontSize:11,marginTop:2}}>{f}</div></div></div>))}</div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como se relacionar melhor com as emocoes</div>{[{e:"👁️",t:"Observe antes de agir",d:"Pause entre sentir e reagir"},{e:"🏷️",t:"Nomeie com precisao",d:"Diferenciar ansiedade de medo muda a resposta"},{e:"❓",t:"Pergunte a mensagem",d:"O que essa emocao esta tentando me dizer?"},{e:"🌊",t:"Surf — nao lute",d:"Resistir amplifica. Observar deixa passar"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoAutocompaixao({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Como voce fala consigo mesmo quando comete um erro — voce trataria um amigo da mesma forma?","Que crenca esta por tras da sua autocritica — ela te protege ou te motiva de verdade?","Uma frase de autocompaixao que voce poderia usar na proxima vez que falhar consigo mesmo?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- Autocompaixao:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🤗</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>Autocompaixao</div><div style={{color:"#fbcfe8",fontSize:13}}>Como ser menos critico consigo mesmo — sem baixar o padrao.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e autocompaixao</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>Autocompaixao e a capacidade de se tratar com a mesma gentileza que voce trataria um bom amigo diante do sofrimento ou das proprias falhas. Nao e vitimismo, nao e baixar o padrao. E parar de adicionar sofrimento ao sofrimento.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>A critica severa nao motiva — paralisa. A autocompaixao libera energia para mudar.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>Os 3 componentes</div>{[{n:"1",t:"Gentileza consigo mesmo",sub:"Em vez de julgamento severo",d:"Tratar-se com cuidado quando voce falha — como faria com alguem que ama"},{n:"2",t:"Humanidade compartilhada",sub:"Em vez de isolamento",d:"Reconhecer que sofrer e falhar faz parte da experiencia humana"},{n:"3",t:"Mindfulness",sub:"Em vez de superidentificacao",d:"Observar pensamentos e emocoes dolorosas sem exagerar nem suprimir"}].map(({n,t,sub,d})=>(<div key={n} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px",marginBottom:6}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}><div style={{width:22,height:22,borderRadius:"50%",background:"#fbcfe8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#831843",flexShrink:0}}>{n}</div><div><div style={{color:"#fdf2f8",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#fbcfe8",fontSize:10,marginTop:1}}>{sub}</div></div></div><div style={{color:"#fbcfe8",fontSize:11,lineHeight:1.6}}>{d}</div></div>))}</div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Praticas</div>{[{e:"🪞",t:"Fale como falaria a um amigo",d:"Quando critico, pergunte: eu diria isso a alguem que amo?"},{e:"✋",t:"Gesto de conforto",d:"Mao no coracao ao sentir sofrimento — o toque ativa o sistema de cuidado"},{e:"📝",t:"Carta de autocompaixao",d:"Escreva para si como um amigo compassivo escreveria"},{e:"🌊",t:"Valide antes de resolver",d:"Antes de buscar solucao: isso e dificil. Faz sentido que eu esteja sofrendo"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoAcaoGeraMotivacao({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Existe algo que voce vem adiando esperando ter vontade — qual seria o menor passo possivel para comecar agora?","Como voce se sente depois de agir mesmo sem vontade — diferente de quando ficou parado esperando?","Que area da sua vida mais precisa de acao agora, independente de como voce esta se sentindo?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- Acao Gera Motivacao:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>⚡</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>Acao gera motivacao</div><div style={{color:"#fbcfe8",fontSize:13}}>Por que esperar ter vontade so agrava o desanimo — e como inverter o ciclo.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>A armadilha de esperar a motivacao</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>Quando estamos desanimados, esperamos sentir vontade para agir. Mas a neurociencia mostra que essa sequencia esta invertida: a motivacao nao precede a acao — ela e produzida por ela. A dopamina e liberada pelo progresso, nao pela antecipacao.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>Voce nao precisa estar pronto. Voce precisa comecar.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>Como o ciclo funciona</div>{[{n:"1",t:"Acao minima",d:"Qualquer acao, por menor que seja"},{n:"2",t:"Progresso percebido",d:"O cerebro registra que algo foi feito"},{n:"3",t:"Dopamina liberada",d:"O sistema de recompensa e ativado"},{n:"4",t:"Motivacao gerada",d:"A vontade aparece como consequencia da acao"},{n:"5",t:"Mais acao",d:"O ciclo se autoalimenta"}].map(({n,t,d})=>(<div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><div style={{width:22,height:22,borderRadius:"50%",background:"#fbcfe8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#831843",flexShrink:0}}>{n}</div><div><div style={{color:"#fdf2f8",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#fbcfe8",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Estrategias para comecar sem vontade</div>{[{e:"🎯",t:"O minimo absurdo",d:"O que e tao pequeno que seria ridiculo nao fazer?"},{e:"⏱️",t:"Temporizador de 10 min",d:"Comprometa-se com 10 minutos apenas"},{e:"🌍",t:"Mude o ambiente",d:"Sair do lugar onde voce esta parado quebra o estado emocional"},{e:"💬",t:"Diga em voz alta",d:"Declarar a acao antes de fazer aumenta a probabilidade de execucao"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoCerebroSequestrado({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Voce consegue identificar uma situacao recente em que seu cerebro foi sequestrado — o que disparou e como voce reagiu?","Quais sao os seus sinais pessoais de que o sequestro esta acontecendo — no corpo, no pensamento, na fala?","Que estrategia voce poderia usar nos proximos 6 segundos para nao dizer algo de que vai se arrepender?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Cerebro Sequestrado:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🧠</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>O cerebro sequestrado</div><div style={{color:"#fbcfe8",fontSize:13}}>O sequestro da amigdala — por que dizemos o que nao queremos na raiva.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O que e o sequestro da amigdala?</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>Quando a amigdala percebe uma ameaca, ela literalmente sequestra o cortex pre-frontal — responsavel pela razao, empatia e controle de impulsos. Em milissegundos, voce perde acesso ao seu melhor julgamento e age a partir do instinto de sobrevivencia.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>Nao e fraqueza de carater — e neurobiologia. Mas e possivel treinar a pausa.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>O que acontece durante o sequestro</div>{[{e:"⚡",t:"Disparo instantaneo",d:"A amigdala reage antes do cortex processar"},{e:"🔴",t:"Cortex desligado",d:"Perdemos acesso a empatia, logica e controle de impulsos"},{e:"💬",t:"Palavras que escapam",d:"O filtro social desaparece"},{e:"😔",t:"Arrependimento depois",d:"Quando o cortex volta (10-20 min), percebemos o estrago"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#fdf2f8",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#fbcfe8",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como treinar a pausa</div>{[{e:"⏱️",t:"Regra dos 6 segundos",d:"O pico de cortisol dura 6 segundos. Aguardar reduz drasticamente a reatividade"},{e:"🌬️",t:"Respiracao 4-7-8",d:"Inspirar 4s, segurar 7s, expirar 8s. Ativa o vago"},{e:"🚶",t:"Sair fisicamente",d:"Mudar o ambiente interrompe o ciclo"},{e:"🏷️",t:"Nomeie a emocao",d:"Nomear em voz alta reduz a atividade da amigdala"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoFiltroNegativo({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Voce consegue identificar uma situacao recente em que ignorou elogios e focou em uma critica?","Que evidencias positivas sobre voce mesmo voce costuma descartar ou minimizar?","Como seria sua percepcao de si mesmo se voce aplicasse o mesmo peso aos elogios que as criticas?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Filtro Negativo da Mente:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🔦</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>O filtro negativo da mente</div><div style={{color:"#fbcfe8",fontSize:13}}>Por que ignoramos 10 elogios e focamos em 1 critica.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>O vies de negatividade</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>O cerebro humano e biologicamente programado para dar mais peso a experiencias negativas — uma heranca evolutiva. Na vida moderna, esse mecanismo faz com que uma critica dure dias na memoria enquanto 10 elogios desaparecem em horas.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>Experiencias negativas grudam. Positivas escorregam. E possivel mudar isso.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>Como o filtro se manifesta</div>{[{e:"🔍",t:"Filtragem mental",d:"Captar apenas o negativo, ignorando todo o contexto positivo"},{e:"💭",t:"Desqualificacao do positivo",d:"Receber elogio e pensar: foi sorte, estao sendo gentis"},{e:"📺",t:"Ruminacao seletiva",d:"Revisitar criticas repetidamente enquanto sucessos sao esquecidos"},{e:"⚖️",t:"Assimetria de peso",d:"Erros valem muito mais do que acertos na balanca interna"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:4}}><span style={{fontSize:18,flexShrink:0}}>{e}</span><div><div style={{color:"#fdf2f8",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#fbcfe8",fontSize:11,marginTop:2}}>{d}</div></div></div>))}</div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como re-equilibrar o filtro</div>{[{e:"📓",t:"Diario de evidencias positivas",d:"Registre diariamente 3 coisas que deram certo"},{e:"⏸️",t:"Pause antes de descartar",d:"Quando receber um elogio, respire antes de minimizar"},{e:"🔄",t:"Busque evidencias contrarias",d:"Para cada critica que gruda, liste 3 evidencias que a contradizem"},{e:"🧠",t:"Saiba que e neurobiologia",d:"Nao e pessimismo — e o sistema padrao. Mudar exige esforco consciente"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoJuizInternoTreinador({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Como e a voz do seu Juiz Interno — severa, ironica, catastrofica? De onde voce acha que ela veio?","Pense em um treinador que voce admira. Como essa pessoa falaria sobre o mesmo erro?","Como seria sua vida se voce substituisse 50% das mensagens do Juiz pelo Treinador?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- O Juiz Interno vs. O Treinador:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>⚖️</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>O Juiz Interno vs. O Treinador</div><div style={{color:"#fbcfe8",fontSize:13}}>A diferenca entre a critica que paralisa e o incentivo que produz mudanca real.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Duas vozes internas</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>Todos temos duas vozes internas: o Juiz — que condena, humilha e generaliza — e o Treinador — que avalia com honestidade, aponta o que melhorar e encoraja. A diferenca nao e o nivel de exigencia. E a intencao: o Juiz quer punir; o Treinador quer crescimento.</div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>Juiz vs. Treinador — na pratica</div>{[{j:"Que idiota, voce errou de novo",t:"Esse erro mostra onde precisa praticar mais"},{j:"Voce nunca vai conseguir",t:"Ainda nao chegou la — o que pode fazer diferente?"},{j:"Todo mundo ja percebeu que voce e incompetente",t:"Essa situacao foi dificil. O que voce aprendeu?"},{j:"Nao adianta nem tentar",t:"O proximo passo e pequeno o suficiente para tentar agora"}].map(({j,t})=>(<div key={j} style={{background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:6}}><div style={{display:"flex",gap:6,marginBottom:4,alignItems:"flex-start"}}><span style={{fontSize:12,color:"#fca5a5",fontWeight:600,flexShrink:0}}>Juiz:</span><span style={{fontSize:11,color:"#fde8d8",fontStyle:"italic"}}>{j}</span></div><div style={{display:"flex",gap:6,alignItems:"flex-start"}}><span style={{fontSize:12,color:"#86efac",fontWeight:600,flexShrink:0}}>Trein.:</span><span style={{fontSize:11,color:"#bbf7d0"}}>{t}</span></div></div>))}</div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como fortalecer o Treinador</div>{[{e:"👁️",t:"Reconheca a voz do Juiz",d:"Nomeie quando ele falar — isso cria distancia"},{e:"❓",t:"Questione a sentenca",d:"O Juiz e justo? Quais evidencias contradizem o que ele diz?"},{e:"🔄",t:"Reformule com o Treinador",d:"O que um treinador que eu respeito diria sobre isso?"},{e:"📈",t:"Foque no processo",d:"Juiz foca no resultado. Treinador foca no aprendizado"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoRodaEmocoes({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Voce tem dificuldade de nomear o que sente com precisao — ou usa sempre as mesmas palavras como bem, mal, estressado?","Qual e a emocao que voce mais evita nomear — e por que acha que a evita?","Como um vocabulario emocional mais rico poderia mudar suas conversas mais importantes?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- A Roda das Emocoes:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🎨</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>A roda das emocoes</div><div style={{color:"#fbcfe8",fontSize:13}}>A importancia de saber nomear exatamente o que voce sente.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>Por que nomear importa</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>Pesquisas de neurociencia mostram que nomear uma emocao com precisao reduz sua intensidade — processo chamado affect labeling. Quanto mais preciso voce e ao nomear o que sente, mais controle tem sobre isso.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>Granularidade emocional — vocabulario emocional rico — e preditor de saude mental.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>Da emocao basica a nuance</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>{[{base:"Triste",nuances:["Melancólico","Decepcionado","Saudoso","Desolado"]},{base:"Com medo",nuances:["Ansioso","Apreensivo","Inseguro","Vulneravel"]},{base:"Raivoso",nuances:["Frustrado","Indignado","Irritado","Ressentido"]},{base:"Feliz",nuances:["Grato","Aliviado","Empolgado","Realizado"]}].map(({base,nuances})=>(<div key={base} style={{background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px"}}><div style={{color:"#fdf2f8",fontSize:12,fontWeight:600,marginBottom:6}}>{base}</div>{nuances.map(n=>(<div key={n} style={{fontSize:10,color:"#fbcfe8",marginBottom:2}}>• {n}</div>))}</div>))}</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como ampliar seu vocabulario emocional</div>{[{e:"🎨",t:"Use a Roda das Emocoes",d:"A roda de Robert Plutchik mostra camadas de nuance"},{e:"📓",t:"Diario emocional",d:"Qual foi a emocao mais intensa hoje? Consigo nomear com mais precisao?"},{e:"❓",t:"Pergunte mais fundo",d:"Quando disser estou mal, pergunte: mal como? Cansado, triste, frustrado?"},{e:"🗣️",t:"Compartilhe com precisao",d:"Em conversas importantes, ouse usar palavras mais especificas"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoSurfarOndaEmocao({cat}){
+  const COR="#db2777"; const BG="#fce7f3";
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Qual emocao intensa voce mais tende a fugir ou suprimir — e o que costuma fazer para evitar sentir?","Voce ja tentou apenas observar uma emocao sem agir ou fugir? O que aconteceu?","Como seria atravessar a proxima onda emocional intensa com curiosidade em vez de resistencia?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexoes -- Surfar a Onda da Emocao:\n\n"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"--"}`).join("\n\n");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return (<div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+    <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}><div style={{fontSize:40,marginBottom:8}}>🏄</div><div style={{color:"#fdf2f8",fontSize:16,fontWeight:500,marginBottom:6}}>Surfar a onda da emocao</div><div style={{color:"#fbcfe8",fontSize:13}}>Como a emocao intensa tem um pico e desce naturalmente — se nao lutarmos contra ela.</div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>A metafora da onda</div><div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>Emocoes sao como ondas: sobem, atingem um pico e descem naturalmente — se nao interferirmos. O problema e que a maioria das pessoas tenta resistir a onda ou e arrastada por ela. Surfar e diferente: voce se move com a onda, sem ser controlado por ela e sem fugir dela.</div><div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}><div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>A emocao nao e o problema. Resistir a ela e que a torna insuportavel.</div></div></div>
+    <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}><div style={{color:"#fdf2f8",fontSize:13,fontWeight:500,marginBottom:10}}>Resistir vs. Surfar</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}><div style={{background:"rgba(255,255,255,0.1)",borderRadius:10,padding:"12px"}}><div style={{color:"#fca5a5",fontWeight:700,fontSize:12,marginBottom:6}}>Resistir</div>{["Emocao fica mais intensa","Gera mais ansiedade","Cria comportamentos de fuga","Consome muita energia"].map(i=>(<div key={i} style={{fontSize:11,color:"#fde8d8",marginBottom:3}}>• {i}</div>))}</div><div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"12px"}}><div style={{color:"#86efac",fontWeight:700,fontSize:12,marginBottom:6}}>Surfar</div>{["Emocao tem seu curso natural","Dura menos do que parece","Reduz o medo da propria emocao","Libera energia para agir"].map(i=>(<div key={i} style={{fontSize:11,color:"#bbf7d0",marginBottom:3}}>• {i}</div>))}</div></div></div>
+    <div style={{background:"#fdf2f8",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}><div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>Como surfar na pratica</div>{[{e:"🧘",t:"Observe sem agir",d:"Quando a emocao chegar, pause antes de fazer qualquer coisa"},{e:"📍",t:"Localize no corpo",d:"Onde voce sente essa emocao? Descreva sem julgar"},{e:"🌬️",t:"Respire com ela",d:"Nao para eliminar — para acompanhar"},{e:"⏱️",t:"Espere o pico",d:"A maioria das emocoes intensas dura menos de 90 segundos no pico"}].map(({e,t,d})=>(<div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"white",borderRadius:8,padding:"8px 12px",marginBottom:6,border:"1px solid #fbcfe8"}}><span style={{fontSize:20,flexShrink:0}}>{e}</span><div><div style={{fontSize:12,fontWeight:600,color:"#831843",marginBottom:2}}>{t}</div><div style={{fontSize:11,color:"#9d174d",lineHeight:1.5}}>{d}</div></div></div>))}</div>
+    <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}><div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>Suas reflexoes</div>{PERGUNTAS.map((p,i)=>(<div key={i} style={{marginBottom:14}}><div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div></div><textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexao..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}}/></div>))}<button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>📲 Enviar reflexoes pelo WhatsApp</button></div>
+    <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicologa · CRP 09/20590</div>
+  </div>);
+}
+
+function PsicoSurfandoOndaEmocao({cat}){return <PsicoSurfarOndaEmocao cat={cat}/>;}
+
 
 const PSICO_VISUAIS = {
   // macro_ansiedade — originais (página única, sem navegação)
@@ -7032,6 +8053,36 @@ const PSICO_VISUAIS = {
   "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": PsicoTriangulacao,
   "O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental": PsicoPaisPerfeitos,
   "O Desejo Não Desaparece — Adormece": PsicoDesejoAdormece,
+  // macro_relacionamentos
+  "Ouvir É Uma Competência — E a Maioria de Nós Não Aprendeu": PsicoOuvirCompetencia,
+  "Por Que as Nossas Palavras Ferem Mais do que Queremos?": PsicoPalavrasFerem,
+  "O Tango do Conflito — Por Que Discutimos Sempre Pela Mesma Razão": PsicoTangoConflito,
+  "Limites Não São Muros — São Portas com Chave": PsicoLimitesPortas,
+  "A Carga que Não Se Vê — O que É a Carga Mental": PsicoCargaMental,
+  // macro_corpo
+  "Por Que Não Basta Tratar Um Sintoma — A Visão Integral da Saúde": PsicoVisaoIntegral,
+  "A Escada de Segurança — Como o Seu Sistema Nervoso Decide se Está em Perigo": PsicoEscadaSeguranca,
+  "O Corpo Não Mente — A Linguagem Física das Emoções Não Expressas": PsicoCorpoNaoMente,
+  "Onde Está a Sua Mente Quando o Seu Corpo Está Aqui — A Ciência da Presença": PsicoCienciaPresenca,
+  // macro_habitos
+  "O Ciclo do Alívio Falso": PsicoCicloAlivioFalso,
+  "A \"Limpeza Noturna\" do Cérebro": PsicoLimpezaNoturna,
+  "A regra dos 5 minutos": PsicoRegra5Minutos,
+  "Sinais de desgaste emocional": PsicoSinaisDesgaste,
+  "Agir antes de ter vontade": PsicoAgirantesVontade,
+  "O Mito da Bateria Infinita": PsicoMitoBateriaInfinita,
+  "O Poder do 1% Diário": PsicoPoder1Porcento,
+  "O diário de pequenas vitórias": PsicoDiarioPequenasVitorias,
+  // macro_humor
+  "Para que Servem as Emoções?": PsicoParaQueServemEmocoes,
+  "Autocompaixão": PsicoAutocompaixao,
+  "Ação Gera Motivação": PsicoAcaoGeraMotivacao,
+  "O Cérebro Sequestrado": PsicoCerebroSequestrado,
+  "O filtro negativo da mente": PsicoFiltroNegativo,
+  "O Juiz Interno vs. O Treinador": PsicoJuizInternoTreinador,
+  "A roda das emoções": PsicoRodaEmocoes,
+  "Surfar a Onda da Emoção": PsicoSurfarOndaEmocao,
+  "Surfando a onda da emoção": PsicoSurfandoOndaEmocao,
 };
 
 const CATS_PSICOEDUCACAO = {
@@ -7789,3 +8840,4 @@ function RecursosTerapeuticos({ user }) {
 // ═══════════════════════════════════════════════════════
 // LAUDOS NEUROPSICOLÓGICOS
 // ═══════════════════════════════════════════════════════
+// PLACEHOLDER_NOVOS_COMPONENTES
