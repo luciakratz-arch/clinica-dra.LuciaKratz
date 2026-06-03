@@ -6053,7 +6053,7 @@ function PsicoCurvaPanico({cat}){
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           <div style={{background:"#fee2e2",borderRadius:10,padding:"12px"}}>
             <div style={{color:"#dc2626",fontWeight:700,fontSize:12,marginBottom:6}}>🔁 Alimenta o pânico</div>
-            {[""Não vai parar"","Lutar contra os sintomas","Fugir da situação","Checar o coração com medo","Respiração hiperventilada"].map(i=>(
+            {["'Não vai parar'","Lutar contra os sintomas","Fugir da situação","Checar o coração com medo","Respiração hiperventilada"].map(i=>(
               <div key={i} style={{fontSize:11,color:"#7f1d1d",marginBottom:3}}>• {i}</div>
             ))}
           </div>
