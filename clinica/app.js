@@ -1635,6 +1635,44 @@ function RecursosPaciente({ user }) {
 }
 
 
+function PsicoeducacaoAberta({ item, user, onVoltar }) {
+  const cat = user || {};
+  const VisualComp = typeof PSICO_VISUAIS !== "undefined"
+    ? (PSICO_VISUAIS[item.visualKey] || PSICO_VISUAIS[item.titulo])
+    : null;
+  return (
+    <div style={{maxWidth:680,margin:"0 auto",paddingBottom:32}}>
+      <button onClick={onVoltar}
+        style={{marginBottom:16,display:"flex",alignItems:"center",gap:6,
+          background:"none",border:"none",cursor:"pointer",
+          color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
+        ← Voltar para Recursos
+      </button>
+      {VisualComp
+        ? <VisualComp cat={cat}/>
+        : (
+          <div>
+            <div style={{background:"var(--purple)",borderRadius:"12px 12px 0 0",
+              padding:"24px",textAlign:"center",color:"white"}}>
+              <div style={{fontSize:40,marginBottom:8}}>{item.emoji||"📚"}</div>
+              <div style={{fontSize:18,fontWeight:700,marginBottom:4}}>{item.titulo}</div>
+              {item.descricao&&<div style={{fontSize:13,opacity:0.85}}>{item.descricao}</div>}
+            </div>
+            {item.conteudo&&(
+              <div style={{background:"white",padding:"20px 24px",
+                borderRadius:"0 0 12px 12px",border:"1px solid #e8c8ff",
+                fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap",color:"#2d2d2d"}}>
+                {item.conteudo}
+              </div>
+            )}
+          </div>
+        )
+      }
+    </div>
+  );
+}
+
+
 function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve." }) {
   return (
     <div className="em-breve">
@@ -2681,11 +2719,21 @@ function AtivInventario({ user, casalId, onVoltar }) {
                 {del && <span style={{color:corParceiro}}>{del[i].soma}/35</span>}
               </span>
             </div>
-            <div style={{position:"relative",height:10,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
-              <div style={{position:"absolute",left:0,top:0,height:"100%",width:cat.pct+"%",background:corEu,borderRadius:20,opacity:0.85}}/>
-              {del && <div style={{position:"absolute",left:0,top:0,height:"100%",width:del[i].pct+"%",background:corParceiro,borderRadius:20,opacity:0.5}}/>}
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+              <span style={{fontSize:10,color:corEu,fontWeight:700,width:18,flexShrink:0}}>Eu</span>
+              <div style={{flex:1,height:10,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
+                <div style={{height:"100%",width:cat.pct+"%",background:corEu,borderRadius:20}}/>
+              </div>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
+            {del && (
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                <span style={{fontSize:9,color:corParceiro,fontWeight:700,width:18,flexShrink:0,overflow:"hidden",whiteSpace:"nowrap"}}>{parceiro.nome.split(" ")[0].slice(0,3)}</span>
+                <div style={{flex:1,height:10,borderRadius:20,background:"#f3f4f6",overflow:"hidden"}}>
+                  <div style={{height:"100%",width:del[i].pct+"%",background:corParceiro,borderRadius:20}}/>
+                </div>
+              </div>
+            )}
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2,paddingLeft:22}}>
               <span>Baixo (7)</span><span>Alto (35)</span>
             </div>
           </div>
