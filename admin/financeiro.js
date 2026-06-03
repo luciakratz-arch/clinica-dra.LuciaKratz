@@ -1000,18 +1000,20 @@ function FinanceiroClinica() {
                                     <Icon name="pencil" size={12}/>
                                   </button>
                                 )}
-                                {/* Botão NF — verde se tem link, cinza se não tem */}
-                                <button
-                                  title={l.linkNF?"Ver Nota Fiscal":"Cadastrar Nota Fiscal"}
-                                  onClick={()=>{setModalNF({lancId:l.id,linkAtual:l.linkNF||""});setLinkNF(l.linkNF||"");}}
-                                  style={{padding:"4px 8px",borderRadius:6,border:"1px solid",cursor:"pointer",
-                                    borderColor:l.linkNF?"#16a34a":"#d1d5db",
-                                    background:l.linkNF?"#dcfce7":"#f9fafb",
-                                    color:l.linkNF?"#16a34a":"#9ca3af",fontSize:11,fontWeight:600,
-                                    display:"flex",alignItems:"center",gap:3}}>
-                                  <Icon name="file-text" size={11}/>
-                                  {l.linkNF?"NF":"NF"}
-                                </button>
+                                {/* Botão NF — só para receitas, nunca despesas */}
+                                {l.tipo_lancamento!=="despesa"&&(
+                                  <button
+                                    title={l.linkNF?"Ver Nota Fiscal — clique para editar":"Cadastrar Nota Fiscal"}
+                                    onClick={()=>{setModalNF({lancId:l.id,linkAtual:l.linkNF||""});setLinkNF(l.linkNF||"");}}
+                                    style={{padding:"4px 8px",borderRadius:6,border:"1px solid",cursor:"pointer",
+                                      borderColor:l.linkNF?"#16a34a":"#d1d5db",
+                                      background:l.linkNF?"#dcfce7":"#f9fafb",
+                                      color:l.linkNF?"#16a34a":"#9ca3af",fontSize:11,fontWeight:600,
+                                      display:"flex",alignItems:"center",gap:3}}>
+                                    <Icon name="file-text" size={11}/>
+                                    {l.linkNF?"✅":"NF"}
+                                  </button>
+                                )}
                                 <button className="btn btn-ghost" style={{padding:"4px 8px",fontSize:11,color:"#dc2626"}} onClick={()=>setModalExcluirLanc(l)}>
                                   <Icon name="trash-2" size={12}/>
                                 </button>
@@ -1327,11 +1329,12 @@ function FinanceiroClinica() {
 
       {/* ABA FISCAL */}
       {aba==="fiscal"&&(()=>{
-        // Lançamentos de receita do mês selecionado
-        const lancMes = lancamentos.filter(l=>
+        // Apenas lançamentos COM nota fiscal emitida (linkNF preenchido)
+        const lancMesTodos = lancamentos.filter(l=>
           l.tipo_lancamento!=="despesa" &&
           (l.data||"").startsWith(mesFiltro)
         );
+        const lancMes = lancMesTodos.filter(l=>l.linkNF&&l.linkNF.trim()!=="");
 
         // Classificar por tipo de CNAE
         const CNAE_PSICO = ["psicologia","psicanálise","psicanálise","terapia ocupacional","psicoterapia","atendimento psicológico","sessão","consulta"];
@@ -1461,12 +1464,13 @@ function FinanceiroClinica() {
             <div style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden"}}>
               <div style={{padding:"12px 16px",background:"#f9fafb",borderBottom:"1px solid #e5e7eb",display:"flex",justifyContent:"space-between"}}>
                 <span style={{fontWeight:600,fontSize:13}}>Lançamentos de receita — {new Date(mesFiltro+"-15").toLocaleDateString("pt-BR",{month:"long"})}</span>
-                <span style={{fontSize:12,color:"#6b7280"}}>{lancMes.length} lançamentos</span>
+                <span style={{fontSize:12,color:"#6b7280"}}>{lancMes.length} com NF · {lancMesTodos.length} total</span>
               </div>
-              {lancMes.length===0&&<div style={{padding:24,textAlign:"center",color:"#9ca3af",fontSize:13}}>Nenhum lançamento de receita neste mês.</div>}
-              {lancMes.map(l=>{
+              {lancMesTodos.length===0&&<div style={{padding:24,textAlign:"center",color:"#9ca3af",fontSize:13}}>Nenhum lançamento de receita neste mês.</div>}
+              {lancMesTodos.map(l=>{
                 const cls = classificar(l);
                 const cfgCls = cls==="alerta"?{c:"#92400e",bg:"#fef3c7",label:"⚠️ Consultoria"}:cls==="psico"?{c:"#7B00C4",bg:"#f5f3ff",label:"🧠 Psico"}:{c:"#0891b2",bg:"#e0f2fe",label:"🎵 Outros"};
+                const temNF = l.linkNF&&l.linkNF.trim()!=="";
                 return (
                   <div key={l.id} style={{padding:"10px 16px",borderBottom:"1px solid #f3f4f6",display:"flex",alignItems:"center",gap:12}}>
                     <span style={{fontSize:10,fontWeight:700,color:cfgCls.c,background:cfgCls.bg,borderRadius:20,padding:"2px 8px",flexShrink:0}}>{cfgCls.label}</span>
@@ -2603,4 +2607,3 @@ function BotaoEmergenciaAdmin({ casalId, nomeCasal }) {
     </div>
   );
 }
-
