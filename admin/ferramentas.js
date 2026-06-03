@@ -6059,7 +6059,7 @@ function PsicoCurvaPanico({cat}){
           </div>
           <div style={{background:"#dcfce7",borderRadius:10,padding:"12px"}}>
             <div style={{color:"#16a34a",fontWeight:700,fontSize:12,marginBottom:6}}>✅ Quebra o ciclo</div>
-            {[""Já passou antes, vai passar"","Observar sem lutar","Permanecer e atravessar","Respiração lenta e profunda","Nomear o que está sentindo"].map(i=>(
+            {["'Já passou antes, vai passar'","Observar sem lutar","Permanecer e atravessar","Respiração lenta e profunda","Nomear o que está sentindo"].map(i=>(
               <div key={i} style={{fontSize:11,color:"#14532d",marginBottom:3}}>• {i}</div>
             ))}
           </div>
