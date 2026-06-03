@@ -5996,6 +5996,104 @@ function PsicoPensamentosSaoEventos({cat}){
   );
 }
 
+function PsicoCurvaPanico({cat}){
+  const COR="#7B00C4"; const BG="#f3e6ff";
+  const [respostas, setRespostas] = React.useState(["","",""]);
+  const PERGUNTAS = [
+    "Em um ataque de pânico, qual é o pensamento que mais te assusta no momento em que os sintomas aparecem?",
+    "Sabendo que o pânico tem pico e desce naturalmente, o que muda na sua forma de encarar os sintomas?",
+    "Que estratégia você pode usar nos primeiros minutos para não alimentar o ciclo do pânico?",
+  ];
+  function enviarWhatsApp(){
+    const tel = (cat&&cat.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — A Curva do Pânico:\n\n" +
+      PERGUNTAS.map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+  return (
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>📈</div>
+        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>O pânico atinge o pico — e desce naturalmente</div>
+        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>O maior medo de quem passa por pânico é que não vai parar. A neurociência mostra que sempre para.</div>
+      </div>
+
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:8}}>🧠 O que a neurociência diz</div>
+        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.7}}>Um dos maiores medos de quem experiencia ataques de pânico é acreditar que vai continuar a crescer indefinidamente — que o coração vai continuar a acelerar até parar, que o descontrolo vai aumentar até à loucura.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#3d006a",fontStyle:"italic",fontWeight:500}}>Isso não acontece. O pânico segue sempre uma curva previsível — e o seu corpo sabe como descer.</div>
+        </div>
+      </div>
+
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
+        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>📊 As 3 fases da curva</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[
+            {n:"1",fase:"Ativação",t:"0–3 min",desc:"O sistema nervoso simpático dispara. O coração acelera, a respiração fica curta, os músculos tensionam. O corpo entra em modo de emergência.",cor:"#fca5a5"},
+            {n:"2",fase:"Pico",t:"3–10 min",desc:"A intensidade atinge o máximo — geralmente entre 3 e 10 minutos após o início. Este é o momento mais assustador, mas também o ponto de virada.",cor:"#fde68a"},
+            {n:"3",fase:"Descida",t:"10–30 min",desc:"O sistema parassimpático assume. O cortisol e a adrenalina são metabolizados. O corpo começa a se acalmar — inevitavelmente.",cor:"#86efac"},
+          ].map(({n,fase,t,desc,cor})=>(
+            <div key={fase} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"12px 14px",display:"flex",gap:12,alignItems:"flex-start"}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:cor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#1a001a",flexShrink:0}}>{n}</div>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                  <span style={{color:"#f3e6ff",fontSize:13,fontWeight:600}}>{fase}</span>
+                  <span style={{background:"rgba(255,255,255,0.15)",color:cor,fontSize:10,fontWeight:600,padding:"2px 7px",borderRadius:10}}>{t}</span>
+                </div>
+                <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.6}}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:500,marginBottom:10}}>⚠️ O que alimenta o ciclo — e o que quebra</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#fee2e2",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#dc2626",fontWeight:700,fontSize:12,marginBottom:6}}>🔁 Alimenta o pânico</div>
+            {[""Não vai parar"","Lutar contra os sintomas","Fugir da situação","Checar o coração com medo","Respiração hiperventilada"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#7f1d1d",marginBottom:3}}>• {i}</div>
+            ))}
+          </div>
+          <div style={{background:"#dcfce7",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#16a34a",fontWeight:700,fontSize:12,marginBottom:6}}>✅ Quebra o ciclo</div>
+            {[""Já passou antes, vai passar"","Observar sem lutar","Permanecer e atravessar","Respiração lenta e profunda","Nomear o que está sentindo"].map(i=>(
+              <div key={i} style={{fontSize:11,color:"#14532d",marginBottom:3}}>• {i}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{background:"#f3e6ff",padding:"14px 20px",borderBottom:"1px solid #d9b3f5"}}>
+        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>💡 A frase que muda tudo</div>
+        <div style={{fontSize:12,color:"#3d006a",lineHeight:1.7}}>Quando o pânico aparece, o cérebro grita <em>"isso não vai parar"</em>. Mas o seu histórico prova o contrário: <strong>sempre parou</strong>. Saber disso não elimina o medo — mas cria uma âncora de realidade no momento mais difícil. A curva sempre desce. 💜</div>
+      </div>
+
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#3d006a",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#3d006a",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+              placeholder="Escreva sua reflexão..."
+              style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp}
+          style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          📲 Enviar reflexões pelo WhatsApp
+        </button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
+}
+
 function PsicoEustresseV2({ cat }){
   const COR="#7B00C4"; const BG="#f3e6ff";
   return <PsicoVisualBase titulo="Eustresse vs. distresse" emoji="⚡" cor={COR} bg={BG}
@@ -6927,6 +7025,7 @@ const PSICO_VISUAIS = {
   "7 Distorções de Pensamento": Psico7Distorcoes,
   "O Alarme Falso do Cérebro": PsicoAlarme,
   "Pensamentos São Eventos, Não Factos": PsicoPensamentosSaoEventos,
+  "A Curva do Pânico": PsicoCurvaPanico,
   // macro_casais — página única com perguntas + WhatsApp
   "Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro": PsicoDiscutirDinheiro,
   "Por Que Perder-se no Outro Não É Amor — É Fusão": PsicoFusaoCasal,
