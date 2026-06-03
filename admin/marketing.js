@@ -821,8 +821,8 @@ Estamos à disposição! 🌷`;
 function AlertasInatividade({ leads, onAbrirLead }) {
   const [descartados, setDescartados] = useState(new Set());
   const [agora, setAgora] = useState(Date.now());
+  const [expandido, setExpandido] = useState(false);
 
-  // Atualiza a cada minuto para manter alertas frescos
   useEffect(()=>{
     const t = setInterval(()=>setAgora(Date.now()), 60000);
     return ()=>clearInterval(t);
@@ -857,53 +857,60 @@ function AlertasInatividade({ leads, onAbrirLead }) {
   if (alertas.length === 0) return null;
 
   return (
-    <div style={{marginBottom:20}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-        <div style={{width:8,height:8,borderRadius:"50%",background:"#dc2626",animation:"pulse 1.5s infinite"}}/>
-        <span style={{fontWeight:700,fontSize:13,color:"#dc2626"}}>
+    <div style={{marginBottom:12}}>
+      {/* Banner colapsável — 1 linha quando fechado */}
+      <button onClick={()=>setExpandido(e=>!e)}
+        style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 14px",
+          background:"#fef2f2",border:"1.5px solid #fca5a5",borderRadius:expandido?"10px 10px 0 0":10,
+          cursor:"pointer",textAlign:"left",fontFamily:"inherit"}}>
+        <div style={{width:7,height:7,borderRadius:"50%",background:"#dc2626",flexShrink:0}}/>
+        <span style={{fontWeight:700,fontSize:13,color:"#dc2626",flex:1}}>
           {alertas.length} alerta{alertas.length!==1?"s":""} de inatividade
         </span>
-      </div>
+        <span style={{fontSize:11,color:"#dc2626",opacity:0.7}}>
+          {alertas.slice(0,2).map(a=>a.lead.nome?.split(" ")[0]).join(", ")}{alertas.length>2?` +${alertas.length-2}`:""}
+        </span>
+        <Icon name={expandido?"chevron-up":"chevron-down"} size={14} style={{color:"#dc2626",flexShrink:0}}/>
+      </button>
 
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {alertas.map(({lead, regra, inativo})=>{
-          const whats = fmtWhats(lead.telefone);
-          return (
-            <div key={lead.id} style={{
-              background:regra.bg, border:`1.5px solid ${regra.borda}`,
-              borderRadius:12, padding:"12px 16px",
-              display:"flex", alignItems:"center", justifyContent:"space-between",
-              gap:12, flexWrap:"wrap"
-            }}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:700,fontSize:13,color:regra.cor,marginBottom:2}}>
-                  {regra.titulo(lead.nome)}
+      {/* Lista expandida */}
+      {expandido&&(
+        <div style={{border:"1.5px solid #fca5a5",borderTop:"none",borderRadius:"0 0 10px 10px",overflow:"hidden"}}>
+          {alertas.map(({lead, regra, inativo},idx)=>{
+            const whats = fmtWhats(lead.telefone);
+            return (
+              <div key={lead.id} style={{
+                background:idx%2===0?"#fef9f9":"white",
+                borderTop:idx>0?"1px solid #fee2e2":"none",
+                padding:"10px 14px",
+                display:"flex", alignItems:"center", justifyContent:"space-between",
+                gap:10, flexWrap:"wrap"
+              }}>
+                <div style={{flex:1,minWidth:0}}>
+                  <span style={{fontWeight:600,fontSize:12,color:regra.cor}}>{lead.nome}</span>
+                  <span style={{fontSize:11,color:"#6b7280",marginLeft:6}}>{regra.corpo(lead.nome, formatarTempo(inativo)).replace(lead.nome+" ","")}</span>
                 </div>
-                <div style={{fontSize:12,color:regra.cor,opacity:0.85}}>
-                  {regra.corpo(lead.nome, formatarTempo(inativo))}
+                <div style={{display:"flex",gap:6,flexShrink:0}}>
+                  {whats&&(
+                    <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
+                      style={{display:"flex",alignItems:"center",gap:4,background:"#16a34a",color:"white",borderRadius:6,padding:"5px 10px",fontSize:11,fontWeight:600,textDecoration:"none"}}>
+                      <Icon name="message-circle" size={11}/> WA
+                    </a>
+                  )}
+                  <button onClick={()=>onAbrirLead(lead)}
+                    style={{background:"white",border:"1px solid #fca5a5",color:"#dc2626",borderRadius:6,padding:"5px 10px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
+                    Ver
+                  </button>
+                  <button onClick={()=>setDescartados(s=>new Set([...s,lead.id]))}
+                    style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",opacity:0.4,padding:"2px 4px",fontSize:14,lineHeight:1}}>
+                    ×
+                  </button>
                 </div>
               </div>
-              <div style={{display:"flex",gap:8,flexShrink:0}}>
-                {whats && (
-                  <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
-                    style={{display:"flex",alignItems:"center",gap:5,background:"#16a34a",color:"white",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,textDecoration:"none"}}>
-                    <Icon name="message-circle" size={13}/> WhatsApp
-                  </a>
-                )}
-                <button onClick={()=>onAbrirLead(lead)}
-                  style={{background:"white",border:`1px solid ${regra.borda}`,color:regra.cor,borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                  Ver card
-                </button>
-                <button onClick={()=>setDescartados(s=>new Set([...s,lead.id]))}
-                  style={{background:"none",border:"none",cursor:"pointer",color:regra.cor,opacity:0.5,padding:"4px",fontSize:16,lineHeight:1}}
-                  title="Dispensar alerta">
-                  ×
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1127,16 +1134,16 @@ function FunilLeads({ user }) {
 
       {abaFunil==="kanban"&&<>
       {/* Barra de busca + filtro temperatura */}
-      <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{display:"flex",gap:10,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <div style={{position:"relative",flex:1,minWidth:200}}>
-          <Icon name="search" size={15} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"var(--text-muted)",pointerEvents:"none"}}/>
+          <Icon name="search" size={15} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:"#9ca3af",pointerEvents:"none"}}/>
           <input
             value={busca} onChange={e=>setBusca(e.target.value)}
             placeholder="Buscar por nome ou telefone..."
-            style={{width:"100%",padding:"9px 12px 9px 34px",border:"1px solid var(--gray-200)",borderRadius:8,fontSize:13,fontFamily:"inherit",outline:"none"}}/>
-          {busca&&<button onClick={()=>setBusca("")} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:"var(--gray-400)"}}>×</button>}
+            style={{width:"100%",padding:"9px 12px 9px 34px",border:"1.5px solid",borderColor:busca?"#7B00C4":"#e5e7eb",borderRadius:8,fontSize:13,fontFamily:"inherit",outline:"none",transition:"border-color .15s"}}/>
+          {busca&&<button onClick={()=>setBusca("")} style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#9ca3af",lineHeight:1}}>×</button>}
         </div>
-        <div style={{display:"flex",gap:6}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
           {[
             {v:"todos", l:"Todos",   e:""},
             {v:"quente",l:"Quentes", e:"🔥"},
@@ -1144,27 +1151,81 @@ function FunilLeads({ user }) {
             {v:"frio",  l:"Frios",   e:"🧊"},
           ].map(({v,l,e})=>(
             <button key={v} onClick={()=>setFiltroTemp(v)}
-              style={{padding:"7px 14px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontWeight:filtroTemp===v?700:400,fontFamily:"inherit",
+              style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontWeight:filtroTemp===v?700:400,fontFamily:"inherit",
                 borderColor:filtroTemp===v?"#7B00C4":"#e5e7eb",
                 background:filtroTemp===v?"#7B00C4":"white",
-                color:filtroTemp===v?"white":"var(--gray-600)",
+                color:filtroTemp===v?"white":"#6b7280",
                 transition:"all .15s"}}>
-              {e} {l}
+              {e&&<span style={{marginRight:3}}>{e}</span>}{l}
             </button>
           ))}
         </div>
-        {(busca||filtroTemp!=="todos")&&(
-          <div style={{fontSize:12,color:"var(--text-muted)"}}>
-            {leads.filter(l=>!l.arquivado&&(filtroTemp==="todos"||(l.temperatura||"morno")===filtroTemp)&&(!busca.trim()||(l.nome||"").toLowerCase().includes(busca.toLowerCase())||(l.telefone||"").includes(busca))).length} resultado(s)
-          </div>
-        )}
       </div>
 
-      {/* Alertas de inatividade */}
+      {/* Alertas de inatividade — colapsável */}
       <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
 
-      {/* Kanban */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12,minWidth:0}}>
+      {/* Modo lista quando há busca ou filtro de temperatura */}
+      {(busca.trim()||filtroTemp!=="todos") ? (()=>{
+        const ORDEM_TEMP = {quente:0,morno:1,frio:2};
+        const resultados = leads
+          .filter(l=>{
+            if(l.arquivado) return false;
+            if(filtroTemp!=="todos" && (l.temperatura||"morno")!==filtroTemp) return false;
+            if(busca.trim()){
+              const q = busca.trim().toLowerCase();
+              const nome = (l.nome||"").toLowerCase();
+              const tel  = (l.telefone||"").replace(/\D/g,"");
+              const qTel = q.replace(/\D/g,"");
+              if(!nome.includes(q) && (qTel.length<3 || !tel.includes(qTel))) return false;
+            }
+            return true;
+          })
+          .sort((a,b)=>{
+            const ta = ORDEM_TEMP[a.temperatura||"morno"]??1;
+            const tb = ORDEM_TEMP[b.temperatura||"morno"]??1;
+            if(ta!==tb) return ta-tb;
+            return (a.nome||"").localeCompare(b.nome||"");
+          });
+
+        const TEMP_CFG = {quente:{e:"🔥",c:"#dc2626",bg:"#fef2f2"},morno:{e:"🌡️",c:"#d97706",bg:"#fef3c7"},frio:{e:"🧊",c:"#0891b2",bg:"#e0f2fe"}};
+        return (
+          <div>
+            <div style={{fontSize:12,color:"#6b7280",marginBottom:10,fontWeight:500}}>
+              {resultados.length} resultado{resultados.length!==1?"s":""} {busca?`para "${busca}"`:""}
+              {filtroTemp!=="todos"?` · ${filtroTemp}s`:""}
+              {" "}<button onClick={()=>{setBusca("");setFiltroTemp("todos");}} style={{background:"none",border:"none",color:"#7B00C4",cursor:"pointer",fontSize:12,fontWeight:600,padding:0}}>limpar</button>
+            </div>
+            {resultados.length===0&&(
+              <div style={{textAlign:"center",padding:40,color:"#9ca3af",fontSize:13}}>Nenhum lead encontrado.</div>
+            )}
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {resultados.map(lead=>{
+                const tcfg = TEMP_CFG[lead.temperatura||"morno"]||TEMP_CFG.morno;
+                const col = COLUNAS_FUNIL.find(c=>c.id===(lead.status||"novo"));
+                return (
+                  <div key={lead.id} onClick={()=>setModalLead(lead)}
+                    style={{background:"white",border:"1.5px solid #e5e7eb",borderRadius:10,padding:"12px 16px",
+                      display:"flex",alignItems:"center",gap:12,cursor:"pointer",transition:"border-color .15s"}}
+                    onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+                    onMouseLeave={e=>e.currentTarget.style.borderColor="#e5e7eb"}>
+                    <span style={{fontSize:18,flexShrink:0}}>{tcfg.e}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:13,color:"#111827",marginBottom:2}}>{lead.nome||"—"}</div>
+                      <div style={{fontSize:11,color:"#6b7280"}}>{lead.telefone||""}{lead.servico?` · ${lead.servico}`:""}</div>
+                    </div>
+                    {col&&<span style={{fontSize:10,fontWeight:700,color:col.cor,background:col.cor+"18",borderRadius:20,padding:"2px 8px",flexShrink:0}}>{col.label}</span>}
+                    <Icon name="chevron-right" size={14} style={{color:"#9ca3af",flexShrink:0}}/>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })() : null}
+
+      {/* Kanban — só aparece quando não há busca/filtro */}
+      {!busca.trim()&&filtroTemp==="todos"&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12,minWidth:0}}>
         {COLUNAS_FUNIL.map(col=>{
           const cards = leadsColuna(col.id);
           const isOver = dragOver===col.id;
@@ -1204,7 +1265,7 @@ function FunilLeads({ user }) {
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* Modal */}
       {modalLead!==null&&(
