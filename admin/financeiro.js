@@ -10,7 +10,9 @@ function FinanceiroClinica() {
   const [sessoes, setSessoes] = useState([]);
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
-  const [filtroCentro, setFiltroCentro] = useState("todos");
+  const [filtroCentro, setFiltroCentro] = useState(
+    user?.tipo==="secretaria" ? "clinica" : "todos"
+  );
   const [periodoCard, setPeriodoCard] = useState("mes");
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -25,12 +27,24 @@ function FinanceiroClinica() {
   const RECORRENCIAS = ["Semanal (1x/semana)","2x por semana","3x por semana","Quinzenal","Mensal","Sessão única"];
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
-  const CENTROS = [
-    {id:"clinica",   label:"🏥 Clínica",                  cor:"#7B00C4", bg:"#f5f3ff"},
-    {id:"coral",     label:"🎵 Coral & Eventos",           cor:"#0891b2", bg:"#e0f2fe"},
-    {id:"cultural",  label:"🌱 Consultoria & Treinamento", cor:"#16a34a", bg:"#dcfce7"},
-    {id:"admin",     label:"🏢 Administrativo",            cor:"#6b7280", bg:"#f3f4f6"},
+  // ── Centros de Custo — dinâmicos (Firebase) com fallback padrão ──
+  const CENTROS_PADRAO = [
+    {id:"clinica",   label:"🏥 Clínica",               cor:"#7B00C4", bg:"#f5f3ff", fixo:true},
+    {id:"onix",      label:"🎵 Ônix Brasil",            cor:"#0891b2", bg:"#e0f2fe", fixo:true},
+    {id:"flamboyant",label:"🎶 Flamboyant",             cor:"#ec4899", bg:"#fdf2f8", fixo:true},
+    {id:"estrelas",  label:"⭐ Estrelas do Cerrado",    cor:"#d97706", bg:"#fef3c7", fixo:true},
+    {id:"cultural",  label:"🌱 Projetos Culturais",     cor:"#16a34a", bg:"#dcfce7", fixo:true},
+    {id:"cursos",    label:"📚 Consultorias & Cursos",  cor:"#0891b2", bg:"#eff6ff", fixo:true},
+    {id:"admin",     label:"🏢 Administrativo",         cor:"#6b7280", bg:"#f3f4f6", fixo:true},
   ];
+  const [centrosCustom, setCentrosCustom] = useState([]);
+  const [modalCentro, setModalCentro]     = useState(false);
+  const [formCentro, setFormCentro]       = useState({label:"",cor:"#7B00C4",bg:"#f5f3ff"});
+  const [editCentroId, setEditCentroId]   = useState(null);
+  const CENTROS = [...CENTROS_PADRAO, ...centrosCustom];
+  // Secretária vê apenas Clínica — filtro travado
+  const isPsicologa = user?.tipo==="psicologa";
+  const centrosVisiveis = isPsicologa ? CENTROS : CENTROS.filter(c=>c.id==="clinica");
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:"",centroCusto:"clinica"});
   // ── Painel Fiscal ────────────────────────────────────────────────────
   const [proLabore, setProLabore] = useState(1518);
@@ -47,6 +61,13 @@ function FinanceiroClinica() {
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+
+  useEffect(()=>{
+    const unsub=db.collection("clinica_centros_custo").onSnapshot(snap=>{
+      setCentrosCustom(snap.docs.map(d=>({id:d.id,...d.data(),fixo:false})));
+    },()=>{});
+    return()=>unsub();
+  },[]);
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
@@ -943,9 +964,12 @@ function FinanceiroClinica() {
           {/* Filtro por Centro de Custo */}
           <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
             <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Centro:</span>
-            {[{id:"todos",label:"Todos",cor:"#7B00C4",bg:"#f5f3ff"},...CENTROS].map(c=>(
-              <button key={c.id} onClick={()=>setFiltroCentro(c.id)}
-                style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:11,fontWeight:filtroCentro===c.id?700:400,fontFamily:"inherit",
+            {(isPsicologa?[{id:"todos",label:"Todos",cor:"#7B00C4",bg:"#f5f3ff"},...centrosVisiveis]:centrosVisiveis).map(c=>(
+              <button key={c.id}
+                onClick={()=>isPsicologa&&setFiltroCentro(c.id)}
+                style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",
+                  cursor:isPsicologa?"pointer":"default",
+                  fontSize:11,fontWeight:filtroCentro===c.id?700:400,fontFamily:"inherit",
                   borderColor:filtroCentro===c.id?c.cor:"#e5e7eb",
                   background:filtroCentro===c.id?c.bg:"white",
                   color:filtroCentro===c.id?c.cor:"#6b7280",
@@ -953,6 +977,14 @@ function FinanceiroClinica() {
                 {c.label}
               </button>
             ))}
+            {/* Botão gerenciar centros — só psicóloga */}
+            {isPsicologa&&(
+              <button onClick={()=>setModalCentro(true)}
+                style={{padding:"4px 10px",borderRadius:20,border:"1.5px dashed #e5e7eb",cursor:"pointer",fontSize:11,color:"#9ca3af",background:"white",fontFamily:"inherit",marginLeft:4}}
+                title="Gerenciar centros de custo">
+                + Centro
+              </button>
+            )}
           </div>
 
           {lancMes.length===0?(
@@ -1008,8 +1040,7 @@ function FinanceiroClinica() {
                                   </span>
                                 )}
                                 {l.centroCusto&&(()=>{
-                                  const CENTROS_MAP={clinica:{label:"🏥 Clínica",cor:"#7B00C4",bg:"#f5f3ff"},coral:{label:"🎵 Coral",cor:"#0891b2",bg:"#e0f2fe"},cultural:{label:"🌱 Consultoria",cor:"#16a34a",bg:"#dcfce7"},admin:{label:"🏢 Admin",cor:"#6b7280",bg:"#f3f4f6"}};
-                                  const c=CENTROS_MAP[l.centroCusto];
+                                  const c=CENTROS.find(x=>x.id===l.centroCusto);
                                   return c?<span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>{c.label}</span>:null;
                                 })()}
                               </div>
@@ -1528,6 +1559,64 @@ function FinanceiroClinica() {
           </div>
         );
       })()}
+
+      {/* MODAL GERENCIAR CENTROS DE CUSTO */}
+      {modalCentro&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:700,padding:20}} onClick={()=>{setModalCentro(false);setEditCentroId(null);setFormCentro({label:"",cor:"#7B00C4",bg:"#f5f3ff"});}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:"#7B00C4"}}>🏷️ Centros de Custo</div>
+              <button onClick={()=>{setModalCentro(false);setEditCentroId(null);}} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#9ca3af"}}>✕</button>
+            </div>
+            {/* Lista centros fixos */}
+            <div style={{fontSize:11,fontWeight:600,color:"#9ca3af",marginBottom:8,textTransform:"uppercase",letterSpacing:".5px"}}>Padrão (não editável)</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
+              {CENTROS_PADRAO.map(c=>(
+                <span key={c.id} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:c.cor,background:c.bg,color:c.cor,fontSize:12,fontWeight:600}}>{c.label}</span>
+              ))}
+            </div>
+            {/* Lista centros customizados */}
+            {centrosCustom.length>0&&<>
+              <div style={{fontSize:11,fontWeight:600,color:"#9ca3af",marginBottom:8,textTransform:"uppercase",letterSpacing:".5px"}}>Personalizados</div>
+              <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
+                {centrosCustom.map(c=>(
+                  <div key={c.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",border:"1px solid #e5e7eb",borderRadius:8}}>
+                    <span style={{width:14,height:14,borderRadius:"50%",background:c.cor,flexShrink:0,display:"inline-block"}}/>
+                    <span style={{flex:1,fontSize:13,fontWeight:500}}>{c.label}</span>
+                    <button onClick={async()=>{if(confirm("Excluir centro '"+c.label+"'?"))await db.collection("clinica_centros_custo").doc(c.id).delete();}}
+                      style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:16,padding:"0 4px"}}>🗑️</button>
+                  </div>
+                ))}
+              </div>
+            </>}
+            {/* Formulário novo centro */}
+            <div style={{borderTop:"1px solid #e5e7eb",paddingTop:16}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:10}}>Adicionar novo centro</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr auto auto",gap:8,alignItems:"end"}}>
+                <div>
+                  <label style={{fontSize:11,color:"#6b7280",display:"block",marginBottom:4}}>Nome</label>
+                  <input className="form-input" placeholder="Ex: Projeto XYZ" value={formCentro.label} onChange={e=>setFormCentro({...formCentro,label:e.target.value})}
+                    style={{fontSize:13}}/>
+                </div>
+                <div>
+                  <label style={{fontSize:11,color:"#6b7280",display:"block",marginBottom:4}}>Cor</label>
+                  <input type="color" value={formCentro.cor} onChange={e=>setFormCentro({...formCentro,cor:e.target.value,bg:e.target.value+"22"})}
+                    style={{width:40,height:36,border:"1px solid #e5e7eb",borderRadius:6,cursor:"pointer",padding:2}}/>
+                </div>
+                <button className="btn btn-purple" style={{height:36,padding:"0 16px",fontSize:13}} onClick={async()=>{
+                  if(!formCentro.label.trim())return;
+                  const id=formCentro.label.toLowerCase().replace(/[^a-z0-9]/g,"_").slice(0,20)+"_"+Date.now().toString().slice(-4);
+                  await db.collection("clinica_centros_custo").doc(id).set({
+                    id, label:formCentro.label.trim(), cor:formCentro.cor, bg:formCentro.cor+"22",
+                    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+                  });
+                  setFormCentro({label:"",cor:"#7B00C4",bg:"#f5f3ff"});
+                }}>+ Criar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL ESCOLHA */}
       {modal==="escolha"&&(
