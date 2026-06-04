@@ -685,10 +685,10 @@ const FAB_LEGADO_MACRO = {
 
 // Componente base reutilizável para todas as psicoeducações visuais
 function PsicoVisualBase({ titulo, emoji, cor, bg, secoes, perguntas }){
-  const [secao,   setSecao]   = useState(0);
-  const [fase,    setFase]    = useState("leitura"); // leitura | reflexao | concluido
-  const [respostas, setRespostas] = useState(Array(perguntas.length).fill(""));
-  const [respIdx, setRespIdx] = useState(0);
+  const [secao,   setSecao]   = React.useState(0);
+  const [fase,    setFase]    = React.useState("leitura"); // leitura | reflexao | concluido
+  const [respostas, setRespostas] = React.useState(Array(perguntas.length).fill(""));
+  const [respIdx, setRespIdx] = React.useState(0);
 
   const total = secoes.length;
   const progresso = Math.round(((secao + (fase==="reflexao"?0.5:0)) / total) * 100);
