@@ -1484,7 +1484,7 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
   // Filtra cada coleção pelos IDs habilitados
   // Filtra por id do documento OU por formularioKey (modulosConfig pode guardar qualquer um)
   const ferramentasVisiveis   = ferramentas.filter(r => ids.has(r.id) || ids.has(r.formularioKey));
-  const fabulasVisiveis       = fabulas.filter(r => ids.has(r.id));
+  const fabulasVisiveis       = fabulas.filter(r => ids.has(r.id) || ids.has(r.formularioKey));
   const psicoeducacaoVisiveis = psicoeducacao.filter(r => ids.has(r.id));
 
   const visiveis = aba==="ferramentas" ? ferramentasVisiveis
