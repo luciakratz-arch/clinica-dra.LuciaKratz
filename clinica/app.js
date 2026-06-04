@@ -2707,11 +2707,10 @@ function AtivInventario({ user, casalId, onVoltar }) {
     // Buscar resposta do parceiro
     db.collection("clinica_casais_respostas")
       .where("casalId","==",casalId)
-      .where("pacienteId","==",casalId)
       .where("atividadeId","==","inventario-bem-estar")
-      
       .onSnapshot(s=>{
-        if(s.docs.length>0) setRespParceiro(s.docs[0].data().respostas||{});
+        const docParceiro = s.docs.find(d=>d.data().pacienteId !== user.id);
+        if(docParceiro) setRespParceiro(docParceiro.data().respostas||{});
       },()=>{});
   },[casalId, user.id]);
 
