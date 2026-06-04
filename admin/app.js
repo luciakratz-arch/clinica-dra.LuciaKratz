@@ -1023,12 +1023,29 @@ function AbaModulos({ paciente }) {
 
   function agruparPorMacro(ferramentas) {
     const grupos = {};
+    // Mapa de labels legíveis para macroId
+    const LABEL_PARA_MACRO = {
+      "Ansiedade e Controle dos Pensamentos": "macro_ansiedade",
+      "Humor e Regulação Emocional": "macro_humor",
+      "Hábitos e Autocuidado": "macro_habitos",
+      "Conflitos Interpessoais e Relacionamentos": "macro_relacionamentos",
+      "Casais, Família e Parentalidade": "macro_casais",
+      "Corpo, Saúde e Conexão Somática": "macro_corpo",
+      "Musicoterapia": "macro_musico",
+      "Avaliação e Anamnese": "macro_aval",
+    };
     ferramentas.forEach(f => {
-      const macroId = CAT_PARA_MACRO_MOD[f.desc] || CAT_PARA_MACRO_MOD[f.cat] || "_outros";
+      const raw = f.desc || f.cat || "";
+      // Se já é um macroId direto (macro_ansiedade etc.)
+      const macroId = MACRO_INFO[raw]
+        ? raw
+        : LABEL_PARA_MACRO[raw]
+        || CAT_PARA_MACRO_MOD[raw]
+        || CAT_PARA_MACRO_MOD[f.cat]
+        || "_outros";
       if (!grupos[macroId]) grupos[macroId] = [];
       grupos[macroId].push(f);
     });
-    // Ordena: macros com ferramentas primeiro, na ordem de MACRO_INFO
     return Object.entries(MACRO_INFO)
       .filter(([id]) => grupos[id]?.length > 0)
       .map(([id, info]) => ({ id, ...info, itens: grupos[id] }));
