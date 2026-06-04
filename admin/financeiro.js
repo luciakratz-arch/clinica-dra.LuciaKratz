@@ -10,6 +10,7 @@ function FinanceiroClinica() {
   const [sessoes, setSessoes] = useState([]);
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0,7));
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear()+"");
+  const [filtroCentro, setFiltroCentro] = useState("todos");
   const [periodoCard, setPeriodoCard] = useState("mes");
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -24,7 +25,13 @@ function FinanceiroClinica() {
   const RECORRENCIAS = ["Semanal (1x/semana)","2x por semana","3x por semana","Quinzenal","Mensal","Sessão única"];
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
-  const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
+  const CENTROS = [
+    {id:"clinica",   label:"🏥 Clínica",                  cor:"#7B00C4", bg:"#f5f3ff"},
+    {id:"coral",     label:"🎵 Coral & Eventos",           cor:"#0891b2", bg:"#e0f2fe"},
+    {id:"cultural",  label:"🌱 Consultoria & Treinamento", cor:"#16a34a", bg:"#dcfce7"},
+    {id:"admin",     label:"🏢 Administrativo",            cor:"#6b7280", bg:"#f3f4f6"},
+  ];
+  const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:"",centroCusto:"clinica"});
   // ── Painel Fiscal ────────────────────────────────────────────────────
   const [proLabore, setProLabore] = useState(1518);
   const [modalNF, setModalNF]     = useState(null); // {lancId, linkAtual}
@@ -64,7 +71,8 @@ function FinanceiroClinica() {
   // Cards do topo — mês atual do ano selecionado, fixo
   const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
-  const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
+  const lancMesBruto = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
+  const lancMes = filtroCentro==="todos" ? lancMesBruto : lancMesBruto.filter(l=>(l.centroCusto||"clinica")===filtroCentro);
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
   const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
 
@@ -102,6 +110,7 @@ function FinanceiroClinica() {
         // UPDATE cirúrgico — nunca gera novo INSERT
         await db.collection("clinica_lancamentos").doc(editando).update({
           ...dados,
+          centroCusto: formAvulso.centroCusto||"clinica",
           _editadoEm: firebase.firestore.FieldValue.serverTimestamp(),
         });
       } else {
@@ -129,27 +138,29 @@ function FinanceiroClinica() {
     // ── ETAPA 2: bifurca entre receita e despesa
     if(l.tipo_lancamento==="despesa"){
       setFormDespesaEdit({
-        descricao: l.descricao||l.tipo||"",
-        categoria: l.categoria||"",
-        valor:     l.valor+"",
-        data:      l.data||"",
-        formaPag:  l.formaPag||"",
-        status:    l.status||"pago",
-        obs:       l.obs||"",
+        descricao:   l.descricao||l.tipo||"",
+        categoria:   l.categoria||"",
+        valor:       l.valor+"",
+        data:        l.data||"",
+        formaPag:    l.formaPag||"",
+        status:      l.status||"pago",
+        obs:         l.obs||"",
+        centroCusto: l.centroCusto||"admin",
       });
       setEditando(l.id);
       setModal("editar-despesa");
     } else {
       setFormAvulso({
-        pacienteId: l.pacienteId||"",
-        tipo:       l.tipo||"Consulta",
-        valor:      l.valor+"",
-        data:       l.data||"",
-        formaPag:   l.formaPag||"PIX",
-        status:     l.status||"pendente",
-        obs:        l.obs||"",
-        categoria:  l.categoria||"",
-        descricao:  l.descricao||"",
+        pacienteId:   l.pacienteId||"",
+        tipo:         l.tipo||"Consulta",
+        valor:        l.valor+"",
+        data:         l.data||"",
+        formaPag:     l.formaPag||"PIX",
+        status:       l.status||"pendente",
+        obs:          l.obs||"",
+        categoria:    l.categoria||"",
+        descricao:    l.descricao||"",
+        centroCusto:  l.centroCusto||"clinica",
       });
       setEditando(l.id);
       setModal("avulso");
@@ -175,6 +186,7 @@ function FinanceiroClinica() {
       await db.collection("clinica_lancamentos").doc(editando).update({
         descricao:   formDespesaEdit.descricao,
         categoria:   formDespesaEdit.categoria,
+        centroCusto: formDespesaEdit.centroCusto||"admin",
         valor:       parseFloat(formDespesaEdit.valor),
         data:        formDespesaEdit.data,
         formaPag:    formDespesaEdit.formaPag,
@@ -927,6 +939,22 @@ function FinanceiroClinica() {
             }} style={{background:"var(--purple)",border:"none",borderRadius:"50%",width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"white",fontSize:16,fontWeight:700}}>›</button>
           </div>
 
+
+          {/* Filtro por Centro de Custo */}
+          <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+            <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Centro:</span>
+            {[{id:"todos",label:"Todos",cor:"#7B00C4",bg:"#f5f3ff"},...CENTROS].map(c=>(
+              <button key={c.id} onClick={()=>setFiltroCentro(c.id)}
+                style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:11,fontWeight:filtroCentro===c.id?700:400,fontFamily:"inherit",
+                  borderColor:filtroCentro===c.id?c.cor:"#e5e7eb",
+                  background:filtroCentro===c.id?c.bg:"white",
+                  color:filtroCentro===c.id?c.cor:"#6b7280",
+                  transition:"all .15s"}}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+
           {lancMes.length===0?(
             <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
               <Icon name="dollar-sign" size={40}/>
@@ -979,6 +1007,11 @@ function FinanceiroClinica() {
                                     💳 {(l.pagamentosExtras||[]).length}x forma{(l.pagamentosExtras||[]).length>1?"s":""}
                                   </span>
                                 )}
+                                {l.centroCusto&&(()=>{
+                                  const CENTROS_MAP={clinica:{label:"🏥 Clínica",cor:"#7B00C4",bg:"#f5f3ff"},coral:{label:"🎵 Coral",cor:"#0891b2",bg:"#e0f2fe"},cultural:{label:"🌱 Consultoria",cor:"#16a34a",bg:"#dcfce7"},admin:{label:"🏢 Admin",cor:"#6b7280",bg:"#f3f4f6"}};
+                                  const c=CENTROS_MAP[l.centroCusto];
+                                  return c?<span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"1px 6px",fontSize:10,fontWeight:600}}>{c.label}</span>:null;
+                                })()}
                               </div>
                             </td>
                             <td style={{padding:"8px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.categoria||"—"}</td>
@@ -1573,6 +1606,21 @@ function FinanceiroClinica() {
                   ))}
                 </div>
               </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Centro de Custo</label>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {CENTROS.map(c=>(
+                    <button key={c.id} type="button" onClick={()=>setFormAvulso({...formAvulso,centroCusto:c.id})}
+                      style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontWeight:(formAvulso.centroCusto||"clinica")===c.id?700:400,fontFamily:"inherit",
+                        borderColor:(formAvulso.centroCusto||"clinica")===c.id?c.cor:"#e5e7eb",
+                        background:(formAvulso.centroCusto||"clinica")===c.id?c.bg:"white",
+                        color:(formAvulso.centroCusto||"clinica")===c.id?c.cor:"#6b7280",
+                        transition:"all .15s"}}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                 <input className="form-input" placeholder="Opcional..." value={formAvulso.obs} onChange={e=>setFormAvulso({...formAvulso,obs:e.target.value})}/>
               </div>
@@ -1645,6 +1693,21 @@ function FinanceiroClinica() {
                     <button key={v} onClick={()=>setFormDespesaEdit({...formDespesaEdit,status:v})}
                       style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:formDespesaEdit.status===v?c:"#e5e7eb",background:formDespesaEdit.status===v?c+"15":"white",color:formDespesaEdit.status===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
                       {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Centro de Custo</label>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {CENTROS.map(c=>(
+                    <button key={c.id} type="button" onClick={()=>setFormDespesaEdit({...formDespesaEdit,centroCusto:c.id})}
+                      style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontWeight:(formDespesaEdit.centroCusto||"admin")===c.id?700:400,fontFamily:"inherit",
+                        borderColor:(formDespesaEdit.centroCusto||"admin")===c.id?c.cor:"#e5e7eb",
+                        background:(formDespesaEdit.centroCusto||"admin")===c.id?c.bg:"white",
+                        color:(formDespesaEdit.centroCusto||"admin")===c.id?c.cor:"#6b7280",
+                        transition:"all .15s"}}>
+                      {c.label}
                     </button>
                   ))}
                 </div>
