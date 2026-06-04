@@ -964,8 +964,8 @@ function AbaModulos({ paciente }) {
 
   const MODULOS_DEF = [
     { id:"mod1", nome:"Módulo I — Dashboard", desc:"Ferramentas do dia a dia", icone:"🧠", ferramentas: FERRAMENTAS_MOD1 },
-    { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
-    { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||"", cat:f.categoria||""})) },
+    { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.macroCategoria||f.categoria||"", cat:f.macroCategoria||f.categoria||""})) },
+    { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.macroCategoria||f.categoria||"", cat:f.macroCategoria||f.categoria||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
     { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑",
       ferramentas: [
@@ -976,7 +976,7 @@ function AbaModulos({ paciente }) {
       ],
       automatico: false },
     { id:"mod6", nome:"Módulo VI — Psicoeducação", desc:"Materiais psicoeducativos cadastrados em Recursos", icone:"🎓",
-      ferramentas: psicoeducacao.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||"", cat:f.categoria||""})) },
+      ferramentas: psicoeducacao.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.macroCategoria||f.categoria||"", cat:f.macroCategoria||f.categoria||""})) },
   ];
 
   // Módulos que agrupam por macrocategoria
@@ -1023,26 +1023,19 @@ function AbaModulos({ paciente }) {
 
   function agruparPorMacro(ferramentas) {
     const grupos = {};
-    // Mapa de labels legíveis para macroId
-    const LABEL_PARA_MACRO = {
-      "Ansiedade e Controle dos Pensamentos": "macro_ansiedade",
-      "Humor e Regulação Emocional": "macro_humor",
-      "Hábitos e Autocuidado": "macro_habitos",
-      "Conflitos Interpessoais e Relacionamentos": "macro_relacionamentos",
-      "Casais, Família e Parentalidade": "macro_casais",
-      "Corpo, Saúde e Conexão Somática": "macro_corpo",
-      "Musicoterapia": "macro_musico",
-      "Avaliação e Anamnese": "macro_aval",
-    };
     ferramentas.forEach(f => {
       const raw = f.desc || f.cat || "";
-      // Se já é um macroId direto (macro_ansiedade etc.)
-      const macroId = MACRO_INFO[raw]
-        ? raw
-        : LABEL_PARA_MACRO[raw]
-        || CAT_PARA_MACRO_MOD[raw]
-        || CAT_PARA_MACRO_MOD[f.cat]
-        || "_outros";
+      let macroId;
+      // 1. Já é macro_* direto
+      if (MACRO_INFO[raw]) {
+        macroId = raw;
+      // 2. É "outro" ou vazio — tentar inferir pelo nome
+      } else if (!raw || raw === "outro" || raw === "outros") {
+        macroId = "_outros";
+      // 3. Mapear categoria técnica
+      } else {
+        macroId = CAT_PARA_MACRO_MOD[raw] || CAT_PARA_MACRO_MOD[f.cat] || "_outros";
+      }
       if (!grupos[macroId]) grupos[macroId] = [];
       grupos[macroId].push(f);
     });
@@ -1113,7 +1106,7 @@ function AbaModulos({ paciente }) {
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     {agruparPorMacro(mod.ferramentas).map(grupo => {
                       const key = mod.id+"_"+grupo.id;
-                      const aberto = gruposAbertos[key] !== false; // aberto por padrão
+                      const aberto = !!gruposAbertos[key]; // fechado por padrão
                       const ativosNoGrupo = grupo.itens.filter(f=>!!ferramentas[f.id]).length;
                       return (
                         <div key={grupo.id} style={{borderRadius:10,border:`1.5px solid ${grupo.cor}30`,overflow:"hidden"}}>
