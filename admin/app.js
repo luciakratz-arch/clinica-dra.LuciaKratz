@@ -1021,6 +1021,35 @@ function AbaModulos({ paciente }) {
     _outros:              {icone:"🔧", label:"Outros",                               cor:"#6b7280", bg:"#f3f4f6"},
   };
 
+  // Mapa nome da ferramenta → macro (para itens com categoria "outro")
+  const NOME_PARA_MACRO = {
+    "Mapa de Intensidade": "macro_corpo",
+    "Roda da Vida Integral": "macro_habitos",
+    "Protocolo dos 3 Mapas": "macro_relacionamentos",
+    "Diário de Parentalidade Compassiva": "macro_casais",
+    "Diário de Autocompaixão": "macro_humor",
+    "Plano de Ativação Comportamental": "macro_humor",
+    "Prática de Presença": "macro_corpo",
+    "Empilhamento de Hábitos": "macro_habitos",
+    "Protocolo de Regulação Nervosa": "macro_corpo",
+    "Mapeamento do Ciclo de Conflito": "macro_relacionamentos",
+    "Análise em Cadeia": "macro_ansiedade",
+    "Registo CNV": "macro_relacionamentos",
+    "Registro CNV": "macro_relacionamentos",
+    "Mapa de Triangulação": "macro_casais",
+    "Kit SOS Emocional": "macro_humor",
+    "Mapa de Limites Pessoais": "macro_relacionamentos",
+    "Ritual de Descompressão Noturna": "macro_habitos",
+    "Pausa Estratégica": "macro_humor",
+    "Mapa da Bateria": "macro_habitos",
+    "Mapa de Diferenciação": "macro_relacionamentos",
+    "Diário Corpo-Mente": "macro_corpo",
+    "Escuta Ativa": "macro_relacionamentos",
+    "Regra dos 5 Minutos": "macro_habitos",
+    "Inventário de Carga Mental": "macro_relacionamentos",
+    "Árvore da Decisão": "macro_ansiedade",
+  };
+
   function agruparPorMacro(ferramentas) {
     const grupos = {};
     ferramentas.forEach(f => {
@@ -1029,9 +1058,12 @@ function AbaModulos({ paciente }) {
       // 1. Já é macro_* direto
       if (MACRO_INFO[raw]) {
         macroId = raw;
-      // 2. É "outro" ou vazio — tentar inferir pelo nome
+      // 2. É "outro" ou vazio — tentar pelo nome
       } else if (!raw || raw === "outro" || raw === "outros") {
-        macroId = "_outros";
+        // Busca parcial no nome
+        const nomeLower = (f.nome||"").toLowerCase();
+        const encontrado = Object.entries(NOME_PARA_MACRO).find(([k])=>nomeLower.includes(k.toLowerCase()));
+        macroId = encontrado ? encontrado[1] : "_outros";
       // 3. Mapear categoria técnica
       } else {
         macroId = CAT_PARA_MACRO_MOD[raw] || CAT_PARA_MACRO_MOD[f.cat] || "_outros";
