@@ -1641,9 +1641,18 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
 
 function PsicoeducacaoAberta({ item, user, onVoltar }) {
   const cat = user || {};
+  const [respostas, setRespostas] = React.useState(["","",""]);
   const VisualComp = typeof PSICO_VISUAIS !== "undefined"
     ? (PSICO_VISUAIS[item.visualKey] || PSICO_VISUAIS[item.titulo])
     : null;
+
+  function enviarWhatsApp(){
+    const tel = (user&&user.telefone||"").replace(/\D/g,"");
+    const texto = "Reflexões — "+item.titulo+":\n\n"+
+      (item.perguntas||[]).map((p,i)=>`${i+1}. ${p}\nR: ${respostas[i]||"—"}`).join("\n\n");
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
+  }
+
   return (
     <div style={{maxWidth:680,margin:"0 auto",paddingBottom:32}}>
       <button onClick={onVoltar}
@@ -1664,9 +1673,39 @@ function PsicoeducacaoAberta({ item, user, onVoltar }) {
             </div>
             {item.conteudo&&(
               <div style={{background:"white",padding:"20px 24px",
-                borderRadius:"0 0 12px 12px",border:"1px solid #e8c8ff",
-                fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap",color:"#2d2d2d"}}>
+                border:"1px solid #e8c8ff",fontSize:14,lineHeight:1.8,
+                whiteSpace:"pre-wrap",color:"#2d2d2d"}}>
                 {item.conteudo}
+              </div>
+            )}
+            {item.perguntas&&item.perguntas.length>0&&(
+              <div style={{background:"#f3e6ff",padding:"16px 20px",
+                borderRadius:"0 0 12px 12px",borderTop:"2px solid var(--purple)"}}>
+                <div style={{color:"var(--purple)",fontSize:13,fontWeight:600,marginBottom:12}}>
+                  ✏️ Suas reflexões
+                </div>
+                {item.perguntas.map((p,i)=>(
+                  <div key={i} style={{marginBottom:14}}>
+                    <div style={{display:"flex",gap:8,marginBottom:6}}>
+                      <div style={{width:22,height:22,borderRadius:"50%",background:"var(--purple)",
+                        color:"white",display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+                      <div style={{fontSize:12,fontWeight:500,color:"#3d006a",lineHeight:1.5}}>{p}</div>
+                    </div>
+                    <textarea value={respostas[i]}
+                      onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
+                      placeholder="Escreva sua reflexão..."
+                      style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,
+                        border:"1px solid #7B00C450",fontSize:13,fontFamily:"inherit",
+                        resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+                  </div>
+                ))}
+                <button onClick={enviarWhatsApp}
+                  style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
+                    background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,
+                    fontWeight:700,fontFamily:"inherit"}}>
+                  📲 Enviar reflexões pelo WhatsApp
+                </button>
               </div>
             )}
           </div>
