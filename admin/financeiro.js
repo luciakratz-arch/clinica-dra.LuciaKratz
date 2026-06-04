@@ -1334,6 +1334,132 @@ function FinanceiroClinica() {
       {/* ABA ACOMPANHAMENTO GERAL */}
       {aba==="acompanhamento"&&(
         <div>
+          {/* ── GRÁFICOS POR CENTRO DE CUSTO ── */}
+          {(()=>{
+            const ano = anoFiltro||new Date().getFullYear().toString();
+
+            // Receitas e despesas por centro no ano
+            const recPorCentro = {};
+            const despPorCentro = {};
+            const recPorMes = {};   // mes -> total receita
+            const despPorMes = {};  // mes -> total despesa
+
+            lancamentos.filter(l=>(l.data||"").startsWith(ano)).forEach(l=>{
+              const v = parseFloat(l.valor)||0;
+              const c = l.centroCusto||"clinica";
+              const mes = (l.data||"").slice(0,7);
+              const isDesp = l.tipo_lancamento==="despesa";
+              if(isDesp){
+                despPorCentro[c]=(despPorCentro[c]||0)+v;
+                despPorMes[mes]=(despPorMes[mes]||0)+v;
+              } else {
+                recPorCentro[c]=(recPorCentro[c]||0)+v;
+                recPorMes[mes]=(recPorMes[mes]||0)+v;
+              }
+            });
+
+            const totalRec  = Object.values(recPorCentro).reduce((a,v)=>a+v,0);
+            const totalDesp = Object.values(despPorCentro).reduce((a,v)=>a+v,0);
+            const lucro     = totalRec - totalDesp;
+
+            // Meses do ano ordenados
+            const meses = Array.from({length:12},(_,i)=>`${ano}-${String(i+1).padStart(2,"0")}`);
+            const maxBar = Math.max(...meses.map(m=>Math.max(recPorMes[m]||0,despPorMes[m]||0)),1);
+
+            const fmt = v=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+            const MESES_LABEL=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+            return(
+              <div style={{marginBottom:28}}>
+                {/* Cards resumo */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+                  {[
+                    {label:"Receitas",valor:totalRec,cor:"#059669",bg:"#f0fdf4"},
+                    {label:"Despesas",valor:totalDesp,cor:"#dc2626",bg:"#fef2f2"},
+                    {label:lucro>=0?"Lucro":"Prejuízo",valor:Math.abs(lucro),cor:lucro>=0?"#7B00C4":"#dc2626",bg:lucro>=0?"#f5f3ff":"#fef2f2"},
+                  ].map(({label,valor,cor,bg})=>(
+                    <div key={label} style={{background:bg,border:`1.5px solid ${cor}22`,borderRadius:12,padding:"14px 18px",textAlign:"center"}}>
+                      <div style={{fontSize:20,fontWeight:800,color:cor}}>{fmt(valor)}</div>
+                      <div style={{fontSize:12,color:"#6b7280",marginTop:2}}>{label} {ano}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+                  {/* Gráfico de barras mensal */}
+                  <div style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px"}}>
+                    <div style={{fontWeight:700,fontSize:13,marginBottom:14,color:"#374151"}}>📊 Receitas vs Despesas — {ano}</div>
+                    <div style={{display:"flex",alignItems:"flex-end",gap:4,height:120}}>
+                      {meses.map((m,i)=>{
+                        const r=recPorMes[m]||0;
+                        const d=despPorMes[m]||0;
+                        const hr=Math.round((r/maxBar)*110);
+                        const hd=Math.round((d/maxBar)*110);
+                        return(
+                          <div key={m} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+                            <div style={{display:"flex",alignItems:"flex-end",gap:1,height:110}}>
+                              <div title={`Receita: ${fmt(r)}`} style={{width:8,height:hr||2,background:"#059669",borderRadius:"2px 2px 0 0",cursor:"pointer"}}/>
+                              <div title={`Despesa: ${fmt(d)}`} style={{width:8,height:hd||2,background:"#dc2626",borderRadius:"2px 2px 0 0",cursor:"pointer"}}/>
+                            </div>
+                            <div style={{fontSize:9,color:"#9ca3af",marginTop:2}}>{MESES_LABEL[i]}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{display:"flex",gap:12,marginTop:8,justifyContent:"center"}}>
+                      <span style={{fontSize:10,color:"#6b7280",display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,background:"#059669",borderRadius:2,display:"inline-block"}}/>Receita</span>
+                      <span style={{fontSize:10,color:"#6b7280",display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,background:"#dc2626",borderRadius:2,display:"inline-block"}}/>Despesa</span>
+                    </div>
+                  </div>
+
+                  {/* Receitas por centro */}
+                  <div style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px"}}>
+                    <div style={{fontWeight:700,fontSize:13,marginBottom:14,color:"#374151"}}>🏷️ Receitas por Centro de Custo</div>
+                    {totalRec===0&&<div style={{textAlign:"center",color:"#9ca3af",fontSize:12,padding:"20px 0"}}>Nenhuma receita em {ano}</div>}
+                    {CENTROS.filter(c=>recPorCentro[c.id]>0).sort((a,b)=>(recPorCentro[b.id]||0)-(recPorCentro[a.id]||0)).map(c=>{
+                      const v=recPorCentro[c.id]||0;
+                      const pct=totalRec>0?Math.round((v/totalRec)*100):0;
+                      return(
+                        <div key={c.id} style={{marginBottom:8}}>
+                          <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                            <span style={{fontSize:11,fontWeight:600,color:c.cor}}>{c.label}</span>
+                            <span style={{fontSize:11,color:"#6b7280"}}>{fmt(v)} · {pct}%</span>
+                          </div>
+                          <div style={{height:6,background:"#f3f4f6",borderRadius:20,overflow:"hidden"}}>
+                            <div style={{width:pct+"%",height:"100%",background:c.cor,borderRadius:20,transition:"width .4s"}}/>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Despesas por centro */}
+                <div style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px",marginBottom:20}}>
+                  <div style={{fontWeight:700,fontSize:13,marginBottom:14,color:"#374151"}}>🏷️ Despesas por Centro de Custo</div>
+                  {totalDesp===0&&<div style={{textAlign:"center",color:"#9ca3af",fontSize:12,padding:"8px 0"}}>Nenhuma despesa em {ano}</div>}
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}}>
+                    {CENTROS.filter(c=>despPorCentro[c.id]>0).sort((a,b)=>(despPorCentro[b.id]||0)-(despPorCentro[a.id]||0)).map(c=>{
+                      const v=despPorCentro[c.id]||0;
+                      const rec=recPorCentro[c.id]||0;
+                      const luc=rec-v;
+                      return(
+                        <div key={c.id} style={{background:c.bg,border:`1.5px solid ${c.cor}33`,borderRadius:10,padding:"12px 14px"}}>
+                          <div style={{fontWeight:700,fontSize:12,color:c.cor,marginBottom:6}}>{c.label}</div>
+                          <div style={{fontSize:11,color:"#374151"}}>💰 Rec: <b>{fmt(rec)}</b></div>
+                          <div style={{fontSize:11,color:"#374151"}}>💸 Desp: <b>{fmt(v)}</b></div>
+                          <div style={{fontSize:12,fontWeight:700,color:luc>=0?"#059669":"#dc2626",marginTop:4,borderTop:`1px solid ${c.cor}22`,paddingTop:4}}>
+                            {luc>=0?"✅":"❌"} {fmt(Math.abs(luc))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
             Clique em um paciente para abrir o Controle de Sessões e Frequência completo.
           </div>
