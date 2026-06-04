@@ -1032,6 +1032,7 @@ function AbaModulos({ paciente }) {
   // Mapa nome da ferramenta → macro (para itens com categoria "outro")
   const NOME_PARA_MACRO = {
     "Mapa de Intensidade": "macro_corpo",
+    "Mapa de Intimidade": "macro_casais",
     "Roda da Vida Integral": "macro_habitos",
     "Protocolo dos 3 Mapas": "macro_relacionamentos",
     "Diário de Parentalidade Compassiva": "macro_casais",
