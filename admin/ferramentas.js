@@ -8549,27 +8549,40 @@ function RecursosTerapeuticos({ user }) {
   });
 
   // Agrupa por categoria no grid
-  const todasCatsConhecidas = new Set([
-    ...CATEGORIAS_LEGADO.map(c=>c.id),
-    ...TODAS_SUBCATEGORIAS.map(s=>s.id),
-    ...MACROCATEGORIAS.map(m=>m.id), // inclui macro_humor, macro_habitos etc.
-  ]);
   const porCategoria = [];
-  // Macrocategorias (agrupa todas as subcategorias)
+  const jaAgrupados = new Set();
+  // Macrocategorias — inclui categoria direta, subcategorias E categorias legadas mapeadas
   MACROCATEGORIAS.forEach(m=>{
     const subIds = new Set(m.subs.map(s=>s.id));
-    const itens = filtrados.filter(r=>r.categoria===m.id||subIds.has(r.categoria));
-    if(itens.length>0) porCategoria.push({...m, itens});
+    const legadoIds = new Set(
+      Object.entries(LEGADO_PARA_MACRO)
+        .filter(([,mid])=>mid===m.id)
+        .map(([lid])=>lid)
+    );
+    const itens = filtrados.filter(r=>{
+      const macroInferida = LEGADO_PARA_MACRO[r.categoria] || LEGADO_PARA_MACRO[r.formularioKey] || r.categoria;
+      return r.categoria===m.id || subIds.has(r.categoria) || legadoIds.has(r.categoria) || macroInferida===m.id;
+    });
+    if(itens.length>0){
+      porCategoria.push({...m, itens});
+      itens.forEach(r=>jaAgrupados.add(r.id||r.formularioKey||r.titulo));
+    }
   });
   // Musicoterapia e Avaliação separados
   ["musicoterapia","avaliacao"].forEach(cid=>{
     const cat = CATEGORIAS_LEGADO.find(c=>c.id===cid);
     if(!cat) return;
     const itens = filtrados.filter(r=>r.categoria===cid);
-    if(itens.length>0) porCategoria.push({...cat, itens});
+    if(itens.length>0){
+      porCategoria.push({...cat, itens});
+      itens.forEach(r=>jaAgrupados.add(r.id||r.formularioKey||r.titulo));
+    }
   });
-  // Órfãos (categorias não reconhecidas)
-  const orfaos = filtrados.filter(r=>!todasCatsConhecidas.has(r.categoria));
+  // Órfãos — apenas os que realmente não têm categoria reconhecida
+  const orfaos = filtrados.filter(r=>{
+    const key = r.id||r.formularioKey||r.titulo;
+    return !jaAgrupados.has(key);
+  });
   if(orfaos.length>0) porCategoria.push({
     id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
   });
