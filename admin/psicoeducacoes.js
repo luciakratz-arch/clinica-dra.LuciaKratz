@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════
-//  psicoeducacoes.js — Componentes visuais de Psicoeducação
+//  psicoeducacoes.js — Componentes Visuais de Psicoeducação
 //  Clínica Dra. Lucia Kratz — CRP 09/20590
-//  Depende de: ferramentas.js
-//  Carregar 2º no index.html (após ferramentas.js, antes de app.js)
+//  Depende de: psifabulas.js (carregado antes)
 // ═══════════════════════════════════════════════════════
 
 function PsicoPreocupacao({cat}){
@@ -685,10 +684,10 @@ const FAB_LEGADO_MACRO = {
 
 // Componente base reutilizável para todas as psicoeducações visuais
 function PsicoVisualBase({ titulo, emoji, cor, bg, secoes, perguntas }){
-  const [secao,   setSecao]   = React.useState(0);
-  const [fase,    setFase]    = React.useState("leitura"); // leitura | reflexao | concluido
-  const [respostas, setRespostas] = React.useState(Array(perguntas.length).fill(""));
-  const [respIdx, setRespIdx] = React.useState(0);
+  const [secao,   setSecao]   = useState(0);
+  const [fase,    setFase]    = useState("leitura"); // leitura | reflexao | concluido
+  const [respostas, setRespostas] = useState(Array(perguntas.length).fill(""));
+  const [respIdx, setRespIdx] = useState(0);
 
   const total = secoes.length;
   const progresso = Math.round(((secao + (fase==="reflexao"?0.5:0)) / total) * 100);
@@ -3167,3 +3166,350 @@ const PSICO_LEGADO_MACRO = {
   macro_habitos:"macro_habitos", macro_relacionamentos:"macro_relacionamentos",
   macro_casais:"macro_casais", macro_corpo:"macro_corpo",
 };
+
+function AbaPsicoeducacao() {
+  const [itens, setItens]         = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [modal, setModal]         = useState(false);
+  const [editando, setEditando]   = useState(null);
+  const [salvando, setSalvando]   = useState(false);
+  const [filtro, setFiltro]       = useState("todos");
+  const [aberto, setAberto]       = useState(null);
+
+  // Mapa de categorias legado → nova macrocategoria clínica
+  const REMAP_PSICO = {
+    "tcc":             "macro_ansiedade",
+    "ansiedade":       "macro_ansiedade",
+    "esquema":         "macro_ansiedade",
+    "emocoes":         "macro_humor",
+    "autocuidado":     "macro_habitos",
+    "relacionamentos": "macro_relacionamentos",
+    "casais":          "macro_casais",
+    "corpo":           "macro_corpo",
+    "outros":          "macro_ansiedade",
+    // legados extras
+    "autoestima":      "macro_humor",
+    "mindfulness":     "macro_habitos",
+    "trauma":          "macro_ansiedade",
+    "depressao":       "macro_humor",
+    "habitos":         "macro_habitos",
+  };
+
+  async function migrarCatPsico(){
+    if(!confirm("Migrar categorias de psicoeducação para a nova taxonomia clínica?")) return;
+    setSalvando(true);
+    try{
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const batch = db.batch();
+      let count = 0;
+      snap.docs.forEach(doc=>{
+        const cat = doc.data().categoria;
+        const nova = REMAP_PSICO[cat];
+        if(nova && nova!==cat){ batch.update(doc.ref,{categoria:nova}); count++; }
+      });
+      if(count===0){ alert("✅ Todas já estão na nova taxonomia!"); setSalvando(false); return; }
+      await batch.commit();
+      alert(`✅ ${count} material(is) migrado(s) para a nova taxonomia clínica!`);
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
+  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});
+
+  useEffect(()=>{
+    const unsub = db.collection("clinica_psicoeducacao").onSnapshot(s=>{
+      setItens(s.docs.map(d=>({id:d.id,...d.data()})));
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  async function salvar(){
+    if(!form.titulo){alert("Título obrigatório.");return;}
+    setSalvando(true);
+    if(editando){
+      await db.collection("clinica_psicoeducacao").doc(editando).update(form);
+    } else {
+      await db.collection("clinica_psicoeducacao").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModal(false);setEditando(null);setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setSalvando(false);
+  }
+
+  async function popularPilulas() {
+    if (!confirm(`Isso vai adicionar as pílulas TCC ao banco. Continuar?`)) return;
+    setSalvando(true);
+    try {
+      for (const p of PILULAS_TCC) {
+        await db.collection("clinica_psicoeducacao").add({
+          ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      alert("✓ Pílulas TCC adicionadas com sucesso!");
+    } catch(e) { alert("Erro ao popular: " + e.message); }
+    setSalvando(false);
+  }
+
+
+  async function atualizarVisuaisFirebase() {
+    if(!confirm("Salvar visualKey nos documentos do Firebase. Continuar?")) return;
+    setSalvando(true);
+    const MAPA = {
+      "Preocupação produtiva vs. improdutiva":        { visualKey:"Preocupação produtiva vs. improdutiva", tipo:"visual" },
+      "A armadilha do pior cenário":                  { visualKey:"A armadilha do pior cenário", tipo:"visual" },
+      "Eustresse vs. distresse":                      { visualKey:"Eustresse vs. distresse", tipo:"visual" },
+      "O ciclo da ansiedade":                         { visualKey:"O ciclo da ansiedade", tipo:"visual" },
+      "Desmontar o Circuito Cerebral da Ansiedade":   { visualKey:"Desmontar o Circuito Cerebral da Ansiedade", tipo:"visual" },
+      "O modelo ABC na prática":                      { visualKey:"O modelo ABC na prática", tipo:"visual" },
+      "O poder dos pensamentos":                      { visualKey:"O poder dos pensamentos", tipo:"visual" },
+      "A pizza da responsabilidade":                  { visualKey:"A pizza da responsabilidade", tipo:"visual" },
+      "Fatos vs. interpretações":                     { visualKey:"Fatos vs. interpretações", tipo:"visual" },
+      "O perigo do sempre e nunca":                   { visualKey:"O perigo do sempre e nunca", tipo:"visual" },
+      "7 Distorções de Pensamento":                   { visualKey:"7 Distorções de Pensamento", tipo:"visual" },
+      "O Alarme Falso do Cérebro":                    { visualKey:"O Alarme Falso do Cérebro", tipo:"visual" },
+      "Pensamentos São Eventos, Não Factos":          { visualKey:"Pensamentos São Eventos, Não Factos", tipo:"visual" },
+      "Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro": { visualKey:"Por Que Discutimos Sobre Dinheiro — Quando Não é Realmente Sobre Dinheiro", tipo:"visual" },
+      "Por Que Perder-se no Outro Não É Amor — É Fusão": { visualKey:"Por Que Perder-se no Outro Não É Amor — É Fusão", tipo:"visual" },
+      "A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis": { visualKey:"A Triangulação — Quando Usamos Terceiros para Evitar Conversas Difíceis", tipo:"visual" },
+      "O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental": { visualKey:"O Mito do Pai/Mãe Perfeito — E o Custo Real do Perfeccionismo Parental", tipo:"visual" },
+      "O Desejo Não Desaparece — Adormece":           { visualKey:"O Desejo Não Desaparece — Adormece", tipo:"visual" },
+    };
+    try {
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const batch = db.batch();
+      let count = 0;
+      snap.docs.forEach(d => {
+        const dados = MAPA[d.data().titulo];
+        if(dados) { batch.update(d.ref, dados); count++; }
+      });
+      if(count===0){ alert("Nenhum documento encontrado com os títulos mapeados."); setSalvando(false); return; }
+      await batch.commit();
+      alert("✅ "+count+" psicoeducações atualizadas!");
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
+
+  async function sincronizarNovas() {
+    setSalvando(true);
+    try {
+      const snap = await db.collection("clinica_psicoeducacao").get();
+      const titulosExistentes = snap.docs.map(d=>d.data().titulo);
+      const novas = PILULAS_TCC.filter(p=>!titulosExistentes.includes(p.titulo));
+      if(novas.length===0){alert("Todas as psicoeducações já estão no banco!");setSalvando(false);return;}
+      for(const p of novas){
+        await db.collection("clinica_psicoeducacao").add({...p,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      alert("✓ "+novas.length+" nova(s) psicoeducação(ões) adicionada(s): "+novas.map(p=>p.titulo).join(", "));
+    } catch(e){alert("Erro: "+e.message);}
+    setSalvando(false);
+  }
+
+  // Filtro: "todos" ou macrocategoria + legado mapeado (PSICO_LEGADO_MACRO declarado fora)
+  const filtrados = filtro==="todos" ? itens : itens.filter(i=>{
+    if(i.categoria===filtro) return true;
+    const macro = MACROCATEGORIAS.find(m=>m.id===filtro);
+    if(macro){
+      const subIds = new Set(macro.subs.map(s=>s.id));
+      return subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria]===filtro;
+    }
+    return false;
+  });
+
+  if(loading) return <Spinner/>;
+
+  if(aberto){
+    const macroAberto = MACROCATEGORIAS.find(m=>m.id===aberto.categoria||m.subs.some(s=>s.id===aberto.categoria))||MACROCATEGORIAS[0];
+    const cat = {label:macroAberto.label, cor:macroAberto.cor, bg:macroAberto.bg, accent:macroAberto.cor};
+    const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
+    return (
+      <div>
+        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
+          <Icon name="arrow-left" size={16}/> Todos os materiais
+        </button>
+        {VisualComp ? <VisualComp cat={cat}/> : (
+          <>
+            <div className="card" style={{marginBottom:16,background:cat.cor,color:"white"}}>
+              <div style={{textAlign:"center",padding:"8px 0 16px"}}>
+                <div style={{fontSize:52,marginBottom:12}}>{aberto.emoji||"📚"}</div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>{aberto.titulo}</div>
+                <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"4px 14px",fontSize:12}}>{cat.label}</span>
+              </div>
+            </div>
+            {aberto.descricao&&<div className="card" style={{marginBottom:12}}><p style={{fontSize:14,color:"var(--text-muted)",fontStyle:"italic"}}>{aberto.descricao}</p></div>}
+            {aberto.conteudo&&<div className="card"><div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div></div>}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+        <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
+        <div style={{display:"flex",gap:8}}>
+          {itens.length===0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={popularPilulas} disabled={salvando}>
+              <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={sincronizarNovas} disabled={salvando}>
+              <Icon name="refresh-cw" size={14}/> {salvando?"Sincronizando...":"Sincronizar novas"}
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
+              <Icon name="layers" size={14}/> Migrar categorias
+            </button>
+          )}
+          {itens.length>0&&(
+            <button className="btn btn-outline" style={{fontSize:12,background:"#f3e6ff",borderColor:"#7B00C4",color:"#7B00C4"}} onClick={atualizarVisuaisFirebase} disabled={salvando}>
+              <Icon name="zap" size={14}/> Ativar visuais
+            </button>
+          )}
+          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
+            <Icon name="plus" size={16}/> Novo Material
+          </button>
+        </div>
+      </div>
+
+      {/* Filtro por macrocategoria clínica */}
+      <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap",paddingBottom:4}}>
+        <button onClick={()=>setFiltro("todos")}
+          style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",whiteSpace:"nowrap",flexShrink:0,
+            borderColor:filtro==="todos"?"var(--purple)":"var(--gray-200)",
+            background:filtro==="todos"?"var(--purple)":"white",
+            color:filtro==="todos"?"white":"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:filtro==="todos"?600:400}}>
+          Todos ({itens.length})
+        </button>
+        {MACROCATEGORIAS.map(m=>{
+          const subIds = new Set(m.subs.map(s=>s.id));
+          const count = itens.filter(i=>subIds.has(i.categoria)||PSICO_LEGADO_MACRO[i.categoria]===m.id).length;
+          if(count===0) return null;
+          return (
+            <button key={m.id} onClick={()=>setFiltro(m.id)}
+              style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",whiteSpace:"nowrap",flexShrink:0,
+                borderColor:filtro===m.id?m.cor:m.cor+"50",
+                background:filtro===m.id?m.cor:m.bg,
+                color:filtro===m.id?"white":m.cor,
+                fontSize:12,cursor:"pointer",fontWeight:filtro===m.id?600:400}}>
+              {m.icone} {m.label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
+      {filtrados.length===0
+        ? <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",fontSize:14}}>
+            Nenhum material cadastrado ainda.<br/>
+            <button className="btn btn-purple" style={{marginTop:12}} onClick={()=>setModal(true)}>Adicionar primeiro material</button>
+          </div>
+        : (() => {
+            // Agrupa por macrocategoria
+            const grupos = MACROCATEGORIAS.map(m=>{
+              const itensGrupo = filtrados.filter(i=>
+                i.categoria===m.id ||
+                PSICO_LEGADO_MACRO[i.categoria]===m.id ||
+                m.subs.some(s=>s.id===i.categoria)
+              );
+              return {...m, itens: itensGrupo};
+            }).filter(g=>g.itens.length>0);
+            const orfaos = filtrados.filter(i=>!MACROCATEGORIAS.some(m=>
+              i.categoria===m.id||PSICO_LEGADO_MACRO[i.categoria]===m.id||m.subs.some(s=>s.id===i.categoria)
+            ));
+            const todosGrupos = [...grupos, ...(orfaos.length>0?[{id:"_orfaos",label:"Sem Categoria",icone:"🔧",cor:"#6b7280",bg:"#f3f4f6",itens:orfaos}]:[])];
+
+            function CardPsico({item, cat}){
+              return (
+                <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+                  <div style={{background:cat.bg,padding:"20px 16px",textAlign:"center",borderBottom:"1px solid "+cat.cor+"20"}}>
+                    <div style={{fontSize:36,marginBottom:8}}>{item.emoji||"📚"}</div>
+                    <div style={{fontWeight:700,fontSize:14,color:cat.cor}}>{item.titulo}</div>
+                    <span style={{background:cat.cor+"20",color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,marginTop:6,display:"inline-block"}}>{cat.label}</span>
+                  </div>
+                  <div style={{padding:"12px 16px"}}>
+                    {item.descricao&&<p style={{fontSize:12,color:"var(--text-muted)",marginBottom:10,lineHeight:1.5}}>{item.descricao.slice(0,80)}{item.descricao.length>80?"...":""}</p>}
+                    <div style={{display:"flex",gap:6}}>
+                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"6px 0"}} onClick={()=>setAberto(item)}>
+                        <Icon name="eye" size={13}/> Ver
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px"}} onClick={()=>{setForm({titulo:item.titulo||"",descricao:item.descricao||"",categoria:item.categoria||"ansiedade",conteudo:item.conteudo||"",emoji:item.emoji||"📚",tipo:item.tipo||"texto"});setEditando(item.id);setModal(true);}}>
+                        <Icon name="edit-2" size={13}/>
+                      </button>
+                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(item.id)}>
+                        <Icon name="trash-2" size={13}/>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div>
+                {todosGrupos.map(grupo=>(
+                  <div key={grupo.id} style={{marginBottom:28}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+                      <span style={{fontSize:18}}>{grupo.icone}</span>
+                      <span style={{fontWeight:700,fontSize:12,color:grupo.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{grupo.label}</span>
+                      <span style={{background:grupo.bg,color:grupo.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{grupo.itens.length}</span>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
+                      {grupo.itens.map(item=>(
+                        <CardPsico key={item.id} item={item} cat={{label:grupo.label,cor:grupo.cor,bg:grupo.bg}}/>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()
+      }
+
+      {/* Modal cadastro */}
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+            <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontWeight:700,fontSize:16}}>{editando?"Editar Material":"Novo Material de Psicoeducação"}</div>
+              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--text-muted)"}}>×</button>
+            </div>
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:10}}>
+                <div>
+                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Emoji</label>
+                  <input className="form-input" value={form.emoji} onChange={e=>setForm(f=>({...f,emoji:e.target.value}))} style={{textAlign:"center",fontSize:20}}/>
+                </div>
+                <div>
+                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Título *</label>
+                  <input className="form-input" value={form.titulo} onChange={e=>setForm(f=>({...f,titulo:e.target.value}))} placeholder="Ex: O que é ansiedade?"/>
+                </div>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Categoria</label>
+                <select className="form-input" value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))}>
+                  {MACROCATEGORIAS.map(m=>(
+                    <optgroup key={m.id} label={`${m.icone} ${m.label}`}>
+                      {m.subs.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Descrição breve</label>
+                <input className="form-input" value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Resumo do material..."/>
+              </div>
+              <div>
+                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Conteúdo completo</label>
+                <TextAreaVoz className="form-input" rows={6} value={form.conteudo} onChange={e=>setForm(f=>({...f,conteudo:e.target.value}))} placeholder="Texto educativo completo..." style={{resize:"vertical"}}/>
+              </div>
+            </div>
+            <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button onClick={()=>setModal(false)} className="btn btn-ghost">Cancelar</button>
+              <button onClick={salvar} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
