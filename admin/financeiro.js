@@ -286,6 +286,7 @@ function FinanceiroClinica() {
         data:hoje, formaPag, status:"recebido", dataPagamento:hoje,
         pagamentosExtras:extras,
         totalSessoes:pacote.totalSessoes, valorSessao:pacote.valorSessao,
+        centroCusto: pacote.centroCusto||"clinica",
         createdAt:firebase.firestore.FieldValue.serverTimestamp(),
       });
     }
@@ -522,6 +523,7 @@ function FinanceiroClinica() {
           dataPagamento: pacoteAlvo.dataPagamento||"",
           pagamentosExtras: pacoteAlvo.pagamentosExtras||[],
           obs: pacoteAlvo.obs||"",
+          centroCusto: pacoteAlvo.centroCusto||"clinica",
         });
         setPacoteSelecionado(null);
       }
@@ -564,6 +566,7 @@ function FinanceiroClinica() {
         totalSessoes: novoTotalSessoes,
         valorSessao: novoValorSessao,
         valorTotal: novoValorTotal,
+        centroCusto: f.centroCusto||"clinica",
         recorrencia: f.recorrencia,
         dataInicio: f.dataInicio,
         horario: f.horario,
@@ -829,6 +832,22 @@ function FinanceiroClinica() {
                     </div>
                   ))}
                 </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Centro de Custo</label>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {CENTROS.map(c=>(
+                    <button key={c.id} type="button" onClick={()=>setFormEdicaoPacote({...formEdicaoPacote,centroCusto:c.id})}
+                      style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,
+                        fontWeight:(formEdicaoPacote.centroCusto||"clinica")===c.id?700:400,fontFamily:"inherit",
+                        borderColor:(formEdicaoPacote.centroCusto||"clinica")===c.id?c.cor:"#e5e7eb",
+                        background:(formEdicaoPacote.centroCusto||"clinica")===c.id?c.bg:"white",
+                        color:(formEdicaoPacote.centroCusto||"clinica")===c.id?c.cor:"#6b7280",
+                        transition:"all .15s"}}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="form-group" style={{gridColumn:"1/-1"}}><label className="form-label">Observações</label>
                 <textarea className="form-input" rows={2} value={formEdicaoPacote.obs||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
               </div>
