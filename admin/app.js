@@ -24,7 +24,7 @@ const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
 const PERFIS = [
   { id:"psicologa",  nome:"Sou Psicologa",  desc:"Acesso ao painel clinico completo", icon:"stethoscope", cor:"#7B00C4" },
   { id:"secretaria", nome:"Sou Secretaria",  desc:"Cadastro de pacientes e financeiro da clinica", icon:"clipboard-list", cor:"#0891b2" },
-  { id:"paulo",      nome:"Paulo Sergio",    desc:"Visualizacao do financeiro familiar", icon:"wallet", cor:"#16a34a" },
+  { id:"paulo",      nome:"Financeiro",      desc:"Acesso ao módulo financeiro completo", icon:"bar-chart-2", cor:"#16a34a" },
   { id:"marketing",  nome:"Marketing",       desc:"Captacao de leads e metricas de trafego", icon:"trending-up", cor:"#ea580c" },
 ];
 
@@ -459,6 +459,9 @@ function Login({ onLogin }) {
               </span>
               Agenda da Sala
             </a>
+            <a href="../clinica/" style={{color:"#7B00C4",fontSize:13,display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <Icon name="activity" size={14}/> Área Clínica
+            </a>
             <a href="../" style={{color:"var(--gray-400)",fontSize:12}}>Voltar ao site</a>
           </div>
           </>
@@ -515,6 +518,7 @@ const NAV_PSICOLOGA = [
     {id:"fin-pessoal", label:"Fin. Pessoal",   icon:"home"},
   ]},
   { grupo:"⚙️ Configurações", itens:[
+    {id:"permissoes",  label:"Permissões",    icon:"shield"},
     {id:"depoimentos", label:"Depoimentos",    icon:"star"},
     {id:"config",      label:"Configurações",  icon:"settings"},
   ]},
@@ -530,12 +534,15 @@ const NAV_SECRETARIA = [
   {id:"fin-clinica", label:"Financeiro",   icon:"dollar-sign"},
   {id:"comissoes",   label:"Comissoes",    icon:"percent"},
 ];
-const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}];
+const NAV_PAULO = [
+  {id:"fin-pessoal",   label:"Financeiro Pessoal",  icon:"home"},
+  {id:"fin-clinica",   label:"Financeiro Clínica",   icon:"building-2"},
+];
 
 // SIDEBAR
 function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
   const isPsicologa = user.tipo==="psicologa";
-  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":user.tipo==="marketing"?"Marketing":"Area Administrativa";
+  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro":user.tipo==="marketing"?"Marketing":"Area Administrativa";
   const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || "Usuário");
   const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
 
@@ -601,6 +608,9 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
             <Icon name="door-open" size={18}/> Agenda da Sala
           </a>
         )}
+        <a href="../clinica/" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(123,0,196,0.25)",borderRadius:8,marginBottom:2}}>
+          <Icon name="activity" size={18}/> Área Clínica
+        </a>
         <a href="../" className="nav-item" style={{color:"rgba(255,255,255,0.6)"}}>
           <Icon name="globe" size={18}/> Site
         </a>
@@ -4348,7 +4358,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20,flexWrap:"wrap",gap:12}}>
         <div>
           <div className="page-title">Financeiro Pessoal</div>
-          <div className="page-subtitle">{somenteLeitura?"Visualização — Paulo Sergio":"Gestão financeira pessoal e familiar"}</div>
+          <div className="page-subtitle">{somenteLeitura?"Visualização":"Módulo Financeiro Completo"}</div>
         </div>
         {!somenteLeitura&&(
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -6018,7 +6028,113 @@ function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
   const notifProps = useBotaoNotificacao(user);
-  function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");if(u.tipo==="marketing")setTab("marketing-dashboard");}
+  // ═══════════════════════════════════════════════════════
+// PAINEL DE PERMISSÕES
+// ═══════════════════════════════════════════════════════
+const PERMISSOES_DEFAULT = {
+  psicologa:  {ver_financeiro_clinica:true,ver_financeiro_pessoal:true,ver_pacientes:true,ver_agenda:true,ver_marketing:true,ver_funil:true,ver_resumo_marketing:true,ver_supervisao:true,ver_relatorios:true,editar_financeiro:true,editar_pacientes:true},
+  secretaria: {ver_financeiro_clinica:true,ver_financeiro_pessoal:false,ver_pacientes:true,ver_agenda:true,ver_marketing:false,ver_funil:false,ver_resumo_marketing:false,ver_supervisao:false,ver_relatorios:true,editar_financeiro:true,editar_pacientes:true},
+  paulo:      {ver_financeiro_clinica:true,ver_financeiro_pessoal:true,ver_pacientes:false,ver_agenda:false,ver_marketing:false,ver_funil:false,ver_resumo_marketing:false,ver_supervisao:false,ver_relatorios:true,editar_financeiro:true,editar_pacientes:false},
+  marketing:  {ver_financeiro_clinica:false,ver_financeiro_pessoal:false,ver_pacientes:false,ver_agenda:false,ver_marketing:true,ver_funil:true,ver_resumo_marketing:true,ver_supervisao:false,ver_relatorios:false,editar_financeiro:false,editar_pacientes:false},
+};
+
+const PERMISSOES_LABELS = [
+  {id:"ver_financeiro_clinica",  label:"Ver Financeiro da Clínica",  grupo:"💰 Financeiro"},
+  {id:"ver_financeiro_pessoal",  label:"Ver Financeiro Pessoal",     grupo:"💰 Financeiro"},
+  {id:"ver_relatorios",          label:"Ver Relatórios",             grupo:"💰 Financeiro"},
+  {id:"ver_pacientes",           label:"Ver Pacientes",              grupo:"🏥 Clínica"},
+  {id:"ver_agenda",              label:"Ver Agenda",                 grupo:"🏥 Clínica"},
+  {id:"ver_supervisao",          label:"Ver Supervisão",             grupo:"🏥 Clínica"},
+  {id:"editar_pacientes",        label:"Editar Pacientes",           grupo:"🏥 Clínica"},
+  {id:"editar_financeiro",       label:"Editar Financeiro",          grupo:"💰 Financeiro"},
+  {id:"ver_marketing",           label:"Ver Dashboard Marketing",    grupo:"📊 Marketing"},
+  {id:"ver_funil",               label:"Ver Funil de Leads",        grupo:"📊 Marketing"},
+  {id:"ver_resumo_marketing",    label:"Ver Resumo Técnico",        grupo:"📊 Marketing"},
+];
+
+function PainelPermissoes() {
+  const [perfilSel, setPerfilSel] = useState("secretaria");
+  const [permissoes, setPermissoes] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  // Carregar permissões do Firebase ou usar defaults
+  useEffect(()=>{
+    db.collection("clinica_perfis_permissoes").doc(perfilSel).get().then(doc=>{
+      if(doc.exists) setPermissoes(doc.data().permissoes||{});
+      else setPermissoes(PERMISSOES_DEFAULT[perfilSel]||{});
+    });
+  },[perfilSel]);
+
+  async function salvar(){
+    setSalvando(true);
+    await db.collection("clinica_perfis_permissoes").doc(perfilSel).set({
+      perfilId:perfilSel, permissoes,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setSalvando(false); setSalvo(true);
+    setTimeout(()=>setSalvo(false),2000);
+  }
+
+  function toggle(id){ setPermissoes(p=>({...p,[id]:!p[id]})); setSalvo(false); }
+
+  const perfisEdicao = [{id:"secretaria",label:"Secretária",cor:"#0891b2"},{id:"paulo",label:"Financeiro",cor:"#16a34a"},{id:"marketing",label:"Marketing",cor:"#ea580c"}];
+  const grupos = [...new Set(PERMISSOES_LABELS.map(p=>p.grupo))];
+
+  return(
+    <div style={{maxWidth:640,margin:"0 auto"}}>
+      <h2 style={{fontFamily:"var(--font-display)",fontSize:22,marginBottom:4}}>⚙️ Permissões por Perfil</h2>
+      <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:24}}>Configure o que cada perfil pode ver e fazer no sistema.</p>
+
+      {/* Seletor de perfil */}
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        {perfisEdicao.map(p=>(
+          <button key={p.id} onClick={()=>setPerfilSel(p.id)}
+            style={{padding:"8px 20px",borderRadius:20,border:"2px solid",cursor:"pointer",fontWeight:600,fontSize:13,fontFamily:"inherit",
+              borderColor:perfilSel===p.id?p.cor:"#e5e7eb",
+              background:perfilSel===p.id?p.cor+"15":"white",
+              color:perfilSel===p.id?p.cor:"#6b7280",transition:"all .15s"}}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Permissões agrupadas */}
+      <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:24}}>
+        {grupos.map(grupo=>(
+          <div key={grupo} style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden"}}>
+            <div style={{padding:"10px 16px",background:"#f9fafb",borderBottom:"1px solid #e5e7eb",fontWeight:700,fontSize:13,color:"#374151"}}>
+              {grupo}
+            </div>
+            <div style={{padding:"8px 0"}}>
+              {PERMISSOES_LABELS.filter(p=>p.grupo===grupo).map(p=>(
+                <label key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",cursor:"pointer",transition:"background .1s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f9fafb"}
+                  onMouseLeave={e=>e.currentTarget.style.background="white"}>
+                  <input type="checkbox" checked={!!permissoes[p.id]} onChange={()=>toggle(p.id)}
+                    style={{width:16,height:16,cursor:"pointer",accentColor:"#7B00C4"}}/>
+                  <span style={{fontSize:13,color:"#374151"}}>{p.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"flex",gap:10,alignItems:"center"}}>
+        <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
+          {salvando?"Salvando...":"💾 Salvar Permissões"}
+        </button>
+        {salvo&&<span style={{fontSize:13,color:"#059669",fontWeight:600}}>✅ Salvo!</span>}
+        <button className="btn btn-ghost" onClick={()=>setPermissoes(PERMISSOES_DEFAULT[perfilSel]||{})} style={{marginLeft:"auto",fontSize:12}}>
+          Restaurar padrão
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");if(u.tipo==="marketing")setTab("marketing-dashboard");}
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
@@ -6057,9 +6173,11 @@ function App() {
         {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {user.tipo==="paulo"      &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
         {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads user={user}/>}
         {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
         {user.tipo==="psicologa"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
+        {user.tipo==="psicologa"  &&tab==="permissoes"         &&<PainelPermissoes/>}
         {(user.tipo==="psicologa"||user.tipo==="marketing")&&tab==="dashboard-performance"&&<DashboardPerformance user={user}/>}
       </div>
       <div className="nav-mobile">
