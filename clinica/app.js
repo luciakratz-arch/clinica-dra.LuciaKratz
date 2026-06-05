@@ -2006,6 +2006,9 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, 
             <Icon name="refresh-cw" size={18}/> Trocar modo
           </button>
         )}
+        <a href="../admin/" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(123,0,196,0.25)",borderRadius:8,marginBottom:2,textDecoration:"none"}}>
+          <Icon name="settings" size={18}/> Área Administrativa
+        </a>
         <a href={SITE_URL} className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
           <Icon name="arrow-left" size={18}/> Voltar ao site
         </a>
