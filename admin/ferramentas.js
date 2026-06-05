@@ -8507,19 +8507,45 @@ function RecursosTerapeuticos({ user }) {
     "musico":            "macro_musico",
     "anamnese":          "macro_aval",
     "avaliacao":         "macro_aval",
+    // categoria "outro" genérica → ignorar, usar formularioKey
+    "outro":              null,
     // formularioKey → macro
-    "breathing-478":         "macro_corpo",
-    "muscle-relaxation":     "macro_corpo",
-    "anxiety-management":    "macro_ansiedade",
-    "decision-tree":         "macro_ansiedade",
-    "abc-record":            "macro_ansiedade",
-    "emotional-eating":      "macro_corpo",
-    "gestao-ansiedade":      "macro_ansiedade",
-    "registro-pensamentos":  "macro_ansiedade",
-    "respiracao-478":        "macro_corpo",
-    "relaxamento-muscular":  "macro_corpo",
-    "arvore-decisao":        "macro_ansiedade",
-    "rastreamento-alimentar":"macro_corpo",
+    "breathing-478":          "macro_corpo",
+    "muscle-relaxation":      "macro_corpo",
+    "anxiety-management":     "macro_ansiedade",
+    "decision-tree":          "macro_ansiedade",
+    "abc-record":             "macro_ansiedade",
+    "emotional-eating":       "macro_corpo",
+    "gestao-ansiedade":       "macro_ansiedade",
+    "registro-pensamentos":   "macro_ansiedade",
+    "respiracao-478":         "macro_corpo",
+    "relaxamento-muscular":   "macro_corpo",
+    "arvore-decisao":         "macro_ansiedade",
+    "rastreamento-alimentar": "macro_corpo",
+    // recursos com categoria "outro" — mapeados pelo formularioKey
+    "mapa-intimidade":        "macro_casais",
+    "aterramento-5-sentidos": "macro_corpo",
+    "escada-polivagal":       "macro_corpo",
+    "diario-corpo-mente":     "macro_corpo",
+    "roda-vida-integral":     "macro_habitos",
+    "empilhamento-habitos":   "macro_habitos",
+    "ritual-noturno":         "macro_habitos",
+    "mapa-bateria":           "macro_habitos",
+    "regra-5-minutos":        "macro_habitos",
+    "3-mapas-financeiros":    "macro_relacionamentos",
+    "ciclo-conflito":         "macro_relacionamentos",
+    "registro-cnv":           "macro_relacionamentos",
+    "mapa-limites":           "macro_relacionamentos",
+    "escuta-ativa":           "macro_relacionamentos",
+    "carga-mental":           "macro_relacionamentos",
+    "mapa-diferenciacao":     "macro_casais",
+    "mapa-triangulacao":      "macro_casais",
+    "diario-parentalidade":   "macro_casais",
+    "diario-autocompaixao":   "macro_humor",
+    "ativacao-comportamental":"macro_humor",
+    "pausa-estrategica":      "macro_humor",
+    "kit-sos-tipp":           "macro_humor",
+    "analise-cadeia":         "macro_ansiedade",
   };
 
   const filtrados = abaRecursos.filter(r=>{
@@ -8535,7 +8561,9 @@ function RecursosTerapeuticos({ user }) {
           .map(([legId])=>legId)
       );
       // Inferir macro pelo LEGADO_PARA_MACRO para a categoria do recurso
-      const macroInferida = LEGADO_PARA_MACRO[r.categoria] || LEGADO_PARA_MACRO[r.formularioKey] || r.categoria;
+      const macroInferida = (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
+        || LEGADO_PARA_MACRO[r.formularioKey]
+        || (r.categoria!=="outro" ? r.categoria : null);
       cOk = r.categoria === filtroCateg
          || macroInferida === filtroCateg
          || subIds.has(r.categoria)
@@ -8560,7 +8588,9 @@ function RecursosTerapeuticos({ user }) {
         .map(([lid])=>lid)
     );
     const itens = filtrados.filter(r=>{
-      const macroInferida = LEGADO_PARA_MACRO[r.categoria] || LEGADO_PARA_MACRO[r.formularioKey] || r.categoria;
+      const macroInferida = (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
+        || LEGADO_PARA_MACRO[r.formularioKey]
+        || (r.categoria!=="outro" ? r.categoria : null);
       return r.categoria===m.id || subIds.has(r.categoria) || legadoIds.has(r.categoria) || macroInferida===m.id;
     });
     if(itens.length>0){
