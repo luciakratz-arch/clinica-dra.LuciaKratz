@@ -375,61 +375,20 @@ function RecursosTerapeuticos({ user }) {
 
   // Mapa de categorias legado para macrocategoria
   const LEGADO_PARA_MACRO = {
-    // Categorias legadas
-    "tcc":               "macro_ansiedade",
-    "ansiedade":         "macro_ansiedade",
-    "ansiedade_diario":  "macro_ansiedade",
-    "ansiedade_diaria":  "macro_ansiedade",
-    "distorcoes":        "macro_ansiedade",
-    "procrastinacao":    "macro_ansiedade",
-    "esquema":           "macro_ansiedade",
-    "cognitivo":         "macro_ansiedade",
-    "emocoes":           "macro_humor",
-    "humor":             "macro_humor",
-    "regulacao":         "macro_humor",
-    "autocuidado":       "macro_habitos",
-    "habitos":           "macro_habitos",
-    "sono":              "macro_habitos",
-    "relaxamento":       "macro_habitos",
-    "relacionamentos":   "macro_relacionamentos",
-    "comunicacao":       "macro_relacionamentos",
-    "limites":           "macro_relacionamentos",
-    "nervovago":         "macro_corpo",
-    "corpo":             "macro_corpo",
-    "alimentacao":       "macro_corpo",
-    "somatico":          "macro_corpo",
-    "casal":             "macro_casais",
-    "familia":           "macro_casais",
-    // formularioKey → macro
-    "breathing-478":          "macro_corpo",
-    "muscle-relaxation":      "macro_corpo",
-    "anxiety-management":     "macro_ansiedade",
-    "decision-tree":          "macro_ansiedade",
-    "abc-record":             "macro_ansiedade",
-    "emotional-eating":       "macro_corpo",
-    "mapa-intimidade":        "macro_casais",
-    "aterramento-5-sentidos": "macro_corpo",
-    "escada-polivagal":       "macro_corpo",
-    "diario-corpo-mente":     "macro_corpo",
-    "roda-vida-integral":     "macro_habitos",
-    "empilhamento-habitos":   "macro_habitos",
-    "ritual-noturno":         "macro_habitos",
-    "mapa-bateria":           "macro_habitos",
-    "regra-5-minutos":        "macro_habitos",
-    "3-mapas-financeiros":    "macro_relacionamentos",
-    "ciclo-conflito":         "macro_relacionamentos",
-    "registro-cnv":           "macro_relacionamentos",
-    "mapa-limites":           "macro_relacionamentos",
-    "escuta-ativa":           "macro_relacionamentos",
-    "carga-mental":           "macro_relacionamentos",
-    "mapa-diferenciacao":     "macro_casais",
-    "mapa-triangulacao":      "macro_casais",
-    "diario-parentalidade":   "macro_casais",
-    "diario-autocompaixao":   "macro_humor",
-    "ativacao-comportamental":"macro_humor",
-    "pausa-estrategica":      "macro_humor",
-    "kit-sos-tipp":           "macro_humor",
-    "analise-cadeia":         "macro_ansiedade",
+    "tcc":             "macro_ansiedade",
+    "ansiedade":       "macro_ansiedade",
+    "esquema":         "macro_ansiedade",
+    "emocoes":         "macro_humor",
+    "autocuidado":     "macro_habitos",
+    "relacionamentos": "macro_relacionamentos",
+    "corpo":           "macro_corpo",
+    // formularioKey → macro (para ferramentas ainda com categoria legado)
+    "breathing-478":      "macro_ansiedade",
+    "muscle-relaxation":  "macro_corpo",
+    "anxiety-management": "macro_ansiedade",
+    "decision-tree":      "macro_ansiedade",
+    "abc-record":         "macro_ansiedade",
+    "emotional-eating":   "macro_corpo",
   };
 
   const filtrados = abaRecursos.filter(r=>{
@@ -445,13 +404,10 @@ function RecursosTerapeuticos({ user }) {
           .filter(([,macroId])=>macroId===filtroCateg)
           .map(([legId])=>legId)
       );
-      const macroInferida = (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
-        || LEGADO_PARA_MACRO[r.formularioKey] || null;
-      cOk = r.categoria === filtroCateg
-         || macroInferida === filtroCateg
-         || subIds.has(r.categoria)
-         || legadoIds.has(r.categoria)
-         || legadoIds.has(r.formularioKey);
+      cOk = r.categoria === filtroCateg        // categoria igual ao id da macro (ex: "macro_humor")
+         || subIds.has(r.categoria)            // subcategoria da macro
+         || legadoIds.has(r.categoria)         // categoria legado mapeada
+         || legadoIds.has(r.formularioKey);    // formularioKey legado mapeado
     } else {
       cOk = r.categoria===filtroCateg;
     }
@@ -459,45 +415,28 @@ function RecursosTerapeuticos({ user }) {
     return cOk && bOk;
   });
 
-  // Agrupa por categoria no grid usando LEGADO_PARA_MACRO
+  // Agrupa por categoria no grid
+  const todasCatsConhecidas = new Set([
+    ...CATEGORIAS_LEGADO.map(c=>c.id),
+    ...TODAS_SUBCATEGORIAS.map(s=>s.id),
+    ...MACROCATEGORIAS.map(m=>m.id), // inclui macro_humor, macro_habitos etc.
+  ]);
   const porCategoria = [];
-  const jaAgrupados = new Set();
-  // Função para obter chave única de um recurso
-  const rKey = r => r.formularioKey || r.id || r.titulo;
-  // Função para inferir macro de um recurso
-  const inferMacro = r => (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
-    || LEGADO_PARA_MACRO[r.formularioKey] || null;
-
+  // Macrocategorias (agrupa todas as subcategorias)
   MACROCATEGORIAS.forEach(m=>{
     const subIds = new Set(m.subs.map(s=>s.id));
-    const legadoIds = new Set(
-      Object.entries(LEGADO_PARA_MACRO)
-        .filter(([,mid])=>mid===m.id)
-        .map(([lid])=>lid)
-    );
-    const itens = filtrados.filter(r=>{
-      const macroInf = inferMacro(r);
-      return r.categoria===m.id
-        || subIds.has(r.categoria)
-        || legadoIds.has(r.categoria)
-        || legadoIds.has(r.formularioKey)
-        || macroInf===m.id;
-    });
-    if(itens.length>0){
-      porCategoria.push({...m, itens});
-      itens.forEach(r=>jaAgrupados.add(rKey(r)));
-    }
+    const itens = filtrados.filter(r=>r.categoria===m.id||subIds.has(r.categoria));
+    if(itens.length>0) porCategoria.push({...m, itens});
   });
+  // Musicoterapia e Avaliação separados
   ["musicoterapia","avaliacao"].forEach(cid=>{
     const cat = CATEGORIAS_LEGADO.find(c=>c.id===cid);
     if(!cat) return;
     const itens = filtrados.filter(r=>r.categoria===cid);
-    if(itens.length>0){
-      porCategoria.push({...cat, itens});
-      itens.forEach(r=>jaAgrupados.add(rKey(r)));
-    }
+    if(itens.length>0) porCategoria.push({...cat, itens});
   });
-  const orfaos = filtrados.filter(r=>!jaAgrupados.has(rKey(r)));
+  // Órfãos (categorias não reconhecidas)
+  const orfaos = filtrados.filter(r=>!todasCatsConhecidas.has(r.categoria));
   if(orfaos.length>0) porCategoria.push({
     id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
   });
