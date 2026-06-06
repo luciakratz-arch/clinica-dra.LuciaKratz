@@ -446,7 +446,7 @@ function RecursosTerapeuticos({ user }) {
           .map(([legId])=>legId)
       );
       const macroInferida = (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
-        || LEGADO_PARA_MACRO[r.formularioKey];
+        || LEGADO_PARA_MACRO[r.formularioKey] || null;
       cOk = r.categoria === filtroCateg
          || macroInferida === filtroCateg
          || subIds.has(r.categoria)
@@ -462,6 +462,12 @@ function RecursosTerapeuticos({ user }) {
   // Agrupa por categoria no grid usando LEGADO_PARA_MACRO
   const porCategoria = [];
   const jaAgrupados = new Set();
+  // Função para obter chave única de um recurso
+  const rKey = r => r.formularioKey || r.id || r.titulo;
+  // Função para inferir macro de um recurso
+  const inferMacro = r => (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
+    || LEGADO_PARA_MACRO[r.formularioKey] || null;
+
   MACROCATEGORIAS.forEach(m=>{
     const subIds = new Set(m.subs.map(s=>s.id));
     const legadoIds = new Set(
@@ -470,14 +476,16 @@ function RecursosTerapeuticos({ user }) {
         .map(([lid])=>lid)
     );
     const itens = filtrados.filter(r=>{
-      const macroInf = (r.categoria!=="outro" && LEGADO_PARA_MACRO[r.categoria])
-        || LEGADO_PARA_MACRO[r.formularioKey];
-      return r.categoria===m.id || subIds.has(r.categoria)
-        || legadoIds.has(r.categoria) || macroInf===m.id;
+      const macroInf = inferMacro(r);
+      return r.categoria===m.id
+        || subIds.has(r.categoria)
+        || legadoIds.has(r.categoria)
+        || legadoIds.has(r.formularioKey)
+        || macroInf===m.id;
     });
     if(itens.length>0){
       porCategoria.push({...m, itens});
-      itens.forEach(r=>jaAgrupados.add(r.id));
+      itens.forEach(r=>jaAgrupados.add(rKey(r)));
     }
   });
   ["musicoterapia","avaliacao"].forEach(cid=>{
@@ -486,10 +494,10 @@ function RecursosTerapeuticos({ user }) {
     const itens = filtrados.filter(r=>r.categoria===cid);
     if(itens.length>0){
       porCategoria.push({...cat, itens});
-      itens.forEach(r=>jaAgrupados.add(r.id));
+      itens.forEach(r=>jaAgrupados.add(rKey(r)));
     }
   });
-  const orfaos = filtrados.filter(r=>!jaAgrupados.has(r.id));
+  const orfaos = filtrados.filter(r=>!jaAgrupados.has(rKey(r)));
   if(orfaos.length>0) porCategoria.push({
     id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
   });
