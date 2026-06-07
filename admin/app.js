@@ -2889,7 +2889,7 @@ function FinanceiroClinica() {
     return datas.slice(0,total);
   }
 
-  async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda }) {
+  async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda, pacoteId=null }) {
     const perc = tipoVenda === "primeira" ? 0.10 : 0.05;
     const valorComissao = parseFloat((valor * perc).toFixed(2));
     const hoje = new Date();
@@ -2898,6 +2898,7 @@ function FinanceiroClinica() {
       tipo, tipoVenda, perc: perc*100,
       valorBase: valor, valorComissao,
       pacienteNome, mesRef,
+      pacoteId: pacoteId||null,
       status: "pendente",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -2946,7 +2947,7 @@ function FinanceiroClinica() {
     });
 
     // Registra comissão da secretária
-    if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda });
+    if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda, pacoteId:pacRef.id });
 
     // Cria sessões na agenda
     const jaPago = (formPacote.statusPag||"pendente")==="recebido";
@@ -5297,22 +5298,43 @@ function Comissoes({ user }) {
             <Icon name="percent" size={32}/>
             <div style={{marginTop:8}}>Nenhuma comissão registrada neste mês</div>
           </div>
-        ) : comissoesMes.map(c => (
-          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)"}}>
-            <div>
-              <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome}</div>
-              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo}</div>
-              <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20}}>
+        ) : comissoesMes.map(c => {
+          // Verificar se o pacote ainda existe
+          const pacoteExiste = !c.pacoteId || pacotes.some(p=>p.id===c.pacoteId);
+          const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"—";
+          return(
+          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",background:pacoteExiste?"white":"#fef9f0"}}>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome||"—"}</div>
+                {!pacoteExiste&&<span style={{fontSize:10,fontWeight:700,background:"#fef3c7",color:"#92400e",padding:"1px 6px",borderRadius:10}}>⚠️ Pacote não encontrado</span>}
+              </div>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo} · {dataStr}</div>
+              {c.pacoteId&&<div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>Pacote: {c.pacoteId.slice(0,8)}...</div>}
+              <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20,display:"inline-block",marginTop:4}}>
                 {labelTipoVenda(c.tipoVenda)}
               </span>
             </div>
-            <div style={{textAlign:"right"}}>
-              <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
-              <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
-              {c.status==="pago" && <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago</div>}
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
+                <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+                {c.status==="pago" && <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago</div>}
+              </div>
+              {user.tipo==="psicologa"&&(
+                <button
+                  title="Excluir comissão"
+                  onClick={async()=>{
+                    if(!confirm(`Excluir comissão de ${c.pacienteNome} (R$ ${(c.valorComissao||0).toFixed(2).replace(".",",")})?`))return;
+                    await db.collection("clinica_comissoes").doc(c.id).delete();
+                  }}
+                  style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"4px 8px",fontSize:11}}>
+                  🗑️
+                </button>
+              )}
             </div>
           </div>
-        ))}
+        );})}
       </div>
     </div>
   );
