@@ -233,6 +233,7 @@ const MACROCATEGORIAS = [
       {id:"sintomas_fisicos",    label:"Sintomas Físicos da Ansiedade"},
       {id:"saude_mental",        label:"Integração Saúde Física e Mental"},
     ]
+  },
   {
     id:"macro_compulsao", icone:"🔒", label:"Compulsão Sexual",
     cor:"#7c3aed", bg:"#ede9fe",
