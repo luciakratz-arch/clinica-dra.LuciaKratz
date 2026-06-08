@@ -675,6 +675,8 @@ const FAB_LEGADO_MACRO = {
   "macro_habitos":"macro_habitos","macro_relacionamentos":"macro_relacionamentos",
   "macro_casais":"macro_casais","macro_corpo":"macro_corpo",
   "macro_compulsao":"macro_compulsao",
+  "compulsao_sexual":"macro_compulsao",
+  "compulsao":"macro_compulsao",
 };
 
 // Mapa de visualizações
