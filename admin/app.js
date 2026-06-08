@@ -1011,6 +1011,9 @@ function AbaModulos({ paciente }) {
     sintomas_fisicos:"macro_corpo", saude_mental:"macro_corpo", corpo:"macro_corpo",
     musicoterapia:"macro_musico",
     avaliacao:"macro_aval",
+    compulsao_sexual:"macro_compulsao",
+    compulsao:"macro_compulsao",
+    macro_compulsao:"macro_compulsao",
     // Fábulas (mod2) — por tema
     resiliencia:"macro_habitos", esperanca:"macro_humor", autoconfianca:"macro_humor",
     autoconhecimento:"macro_ansiedade", perspectiva:"macro_habitos",
@@ -1036,6 +1039,7 @@ function AbaModulos({ paciente }) {
     macro_corpo:          {icone:"🏃", label:"Corpo, Saúde e Conexão Somática",      cor:"#059669", bg:"#d1fae5"},
     macro_musico:         {icone:"🎵", label:"Musicoterapia",                        cor:"#7B00C4", bg:"#f3e6ff"},
     macro_aval:           {icone:"📋", label:"Avaliação e Anamnese",                 cor:"#6366f1", bg:"#e0e7ff"},
+    macro_compulsao:      {icone:"🔒", label:"Compulsão Sexual",                    cor:"#7c3aed", bg:"#ede9fe"},
     _outros:              {icone:"🔧", label:"Outros",                               cor:"#6b7280", bg:"#f3f4f6"},
   };
 
