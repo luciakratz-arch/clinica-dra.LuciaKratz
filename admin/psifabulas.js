@@ -234,6 +234,17 @@ const MACROCATEGORIAS = [
       {id:"saude_mental",        label:"Integração Saúde Física e Mental"},
     ]
   },
+  {
+    id:"macro_compulsao", icone:"🔒", label:"Compulsão Sexual",
+    cor:"#7c3aed", bg:"#ede9fe",
+    subs:[
+      {id:"compulsao_ciclo",     label:"Ciclo do Gatilho e Fissura"},
+      {id:"compulsao_habitos",   label:"Substituição de Hábitos"},
+      {id:"compulsao_emocional", label:"Regulação Emocional"},
+      {id:"compulsao_vinculos",  label:"Impacto nos Vínculos"},
+      {id:"compulsao_aval",      label:"Rastreamento e Avaliação"},
+    ]
+  },
 ];
 
 // Todas as subcategorias num array plano (para selects e filtros)
