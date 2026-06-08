@@ -375,51 +375,57 @@ function RecursosTerapeuticos({ user }) {
 
   // Mapa de categorias legado para macrocategoria
   const LEGADO_PARA_MACRO = {
-    "tcc":             "macro_ansiedade",
-    "ansiedade":       "macro_ansiedade",
-    "esquema":         "macro_ansiedade",
-    "emocoes":         "macro_humor",
-    "autocuidado":     "macro_habitos",
-    "relacionamentos": "macro_relacionamentos",
-    "corpo":           "macro_corpo",
-    // formularioKey → macro (para ferramentas ainda com categoria legado)
-    "breathing-478":      "macro_ansiedade",
-    "muscle-relaxation":  "macro_corpo",
-    "anxiety-management": "macro_ansiedade",
-    "decision-tree":      "macro_ansiedade",
-    "abc-record":         "macro_ansiedade",
-    "emotional-eating":         "macro_corpo",
-    // Compulsão Sexual
-    "macro_compulsao":              "macro_compulsao",
-    "compulsao_sexual":             "macro_compulsao",
-    "compulsao":                    "macro_compulsao",
-    "rastreamento-compulsao-sexual":"macro_compulsao",
-    "mapa-intimidade":              "macro_casais",
-    "aterramento-5-sentidos":       "macro_corpo",
-    "escada-polivagal":             "macro_corpo",
-    "diario-corpo-mente":           "macro_corpo",
-    "roda-vida-integral":           "macro_habitos",
-    "empilhamento-habitos":         "macro_habitos",
-    "ritual-noturno":               "macro_habitos",
-    "mapa-bateria":                 "macro_habitos",
-    "regra-5-minutos":              "macro_habitos",
-    "3-mapas-financeiros":          "macro_casais",
-    "ciclo-conflito":               "macro_relacionamentos",
-    "registro-cnv":                 "macro_relacionamentos",
-    "mapa-limites":                 "macro_relacionamentos",
-    "escuta-ativa":                 "macro_relacionamentos",
-    "carga-mental":                 "macro_relacionamentos",
-    "mapa-diferenciacao":           "macro_casais",
-    "mapa-triangulacao":            "macro_casais",
-    "diario-parentalidade":         "macro_casais",
-    "diario-autocompaixao":         "macro_humor",
-    "ativacao-comportamental":      "macro_humor",
-    "pausa-estrategica":            "macro_humor",
-    "kit-sos-tipp":                 "macro_humor",
-    "analise-cadeia":               "macro_ansiedade",
-    "relaxamento":                  "macro_habitos",
-    "ansiedade_diario":             "macro_ansiedade",
-    "outro":                        null,
+    // Categorias legadas do Firestore
+    "tcc":               "macro_ansiedade",
+    "ansiedade":         "macro_ansiedade",
+    "ansiedade_diario":  "macro_ansiedade",
+    "esquema":           "macro_ansiedade",
+    "emocoes":           "macro_humor",
+    "humor":             "macro_humor",
+    "autocuidado":       "macro_habitos",
+    "habitos":           "macro_habitos",
+    "relaxamento":       "macro_habitos",
+    "relacionamentos":   "macro_relacionamentos",
+    "comunicacao":       "macro_relacionamentos",
+    "corpo":             "macro_corpo",
+    "alimentacao":       "macro_corpo",
+    "casal":             "macro_casais",
+    "musicoterapia":     "macro_musico",
+    "avaliacao":         "macro_aval",
+    "compulsao_sexual":  "macro_compulsao",
+    "compulsao":         "macro_compulsao",
+    "macro_compulsao":   "macro_compulsao",
+    // formularioKey → macro
+    "breathing-478":              "macro_corpo",
+    "muscle-relaxation":          "macro_corpo",
+    "anxiety-management":         "macro_ansiedade",
+    "decision-tree":              "macro_ansiedade",
+    "abc-record":                 "macro_ansiedade",
+    "emotional-eating":           "macro_corpo",
+    "mapa-intimidade":            "macro_casais",
+    "aterramento-5-sentidos":     "macro_corpo",
+    "escada-polivagal":           "macro_corpo",
+    "diario-corpo-mente":         "macro_corpo",
+    "roda-vida-integral":         "macro_habitos",
+    "empilhamento-habitos":       "macro_habitos",
+    "ritual-noturno":             "macro_habitos",
+    "mapa-bateria":               "macro_habitos",
+    "regra-5-minutos":            "macro_habitos",
+    "3-mapas-financeiros":        "macro_casais",
+    "ciclo-conflito":             "macro_relacionamentos",
+    "registro-cnv":               "macro_relacionamentos",
+    "mapa-limites":               "macro_relacionamentos",
+    "escuta-ativa":               "macro_relacionamentos",
+    "carga-mental":               "macro_relacionamentos",
+    "mapa-diferenciacao":         "macro_casais",
+    "mapa-triangulacao":          "macro_casais",
+    "diario-parentalidade":       "macro_casais",
+    "diario-autocompaixao":       "macro_humor",
+    "ativacao-comportamental":    "macro_humor",
+    "pausa-estrategica":          "macro_humor",
+    "kit-sos-tipp":               "macro_humor",
+    "analise-cadeia":             "macro_ansiedade",
+    "rastreamento-compulsao-sexual": "macro_compulsao",
   };
 
   const filtrados = abaRecursos.filter(r=>{
@@ -435,10 +441,12 @@ function RecursosTerapeuticos({ user }) {
           .filter(([,macroId])=>macroId===filtroCateg)
           .map(([legId])=>legId)
       );
-      cOk = r.categoria === filtroCateg        // categoria igual ao id da macro (ex: "macro_humor")
-         || subIds.has(r.categoria)            // subcategoria da macro
-         || legadoIds.has(r.categoria)         // categoria legado mapeada
-         || legadoIds.has(r.formularioKey);    // formularioKey legado mapeado
+      const macroInf = (r.categoria!=="outro"&&LEGADO_PARA_MACRO[r.categoria])||LEGADO_PARA_MACRO[r.formularioKey];
+      cOk = r.categoria === filtroCateg
+         || macroInf === filtroCateg
+         || subIds.has(r.categoria)
+         || legadoIds.has(r.categoria)
+         || legadoIds.has(r.formularioKey);
     } else {
       cOk = r.categoria===filtroCateg;
     }
@@ -456,7 +464,11 @@ function RecursosTerapeuticos({ user }) {
   // Macrocategorias (agrupa todas as subcategorias)
   MACROCATEGORIAS.forEach(m=>{
     const subIds = new Set(m.subs.map(s=>s.id));
-    const itens = filtrados.filter(r=>r.categoria===m.id||subIds.has(r.categoria));
+    const legadoIds2 = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([,mid])=>mid===m.id).map(([k])=>k));
+    const itens = filtrados.filter(r=>{
+      const macroInf = (r.categoria!=="outro"&&LEGADO_PARA_MACRO[r.categoria])||LEGADO_PARA_MACRO[r.formularioKey];
+      return r.categoria===m.id||subIds.has(r.categoria)||legadoIds2.has(r.categoria)||legadoIds2.has(r.formularioKey)||macroInf===m.id;
+    });
     if(itens.length>0) porCategoria.push({...m, itens});
   });
   // Musicoterapia e Avaliação separados
