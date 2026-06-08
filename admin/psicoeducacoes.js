@@ -674,9 +674,6 @@ const FAB_LEGADO_MACRO = {
   "macro_ansiedade":"macro_ansiedade","macro_humor":"macro_humor",
   "macro_habitos":"macro_habitos","macro_relacionamentos":"macro_relacionamentos",
   "macro_casais":"macro_casais","macro_corpo":"macro_corpo",
-  "macro_compulsao":"macro_compulsao",
-  "compulsao_sexual":"macro_compulsao",
-  "compulsao":"macro_compulsao",
 };
 
 // Mapa de visualizações
@@ -3092,152 +3089,246 @@ function PsicoSurfandoOndaEmocao({cat}){return <PsicoSurfarOndaEmocao cat={cat}/
 
 
 // ═══════════════════════════════════════════════════════
-// COMPULSÃO SEXUAL — 4 módulos de psicoeducação visual
+// COMPULSÃO SEXUAL — Psicoeducação Visual
+// Formato: página única · JSX direto · sem navegação por seções
 // ═══════════════════════════════════════════════════════
 
-function PsicoCicloGatilho({ cat }){
+function PsicoCicloGatilho({cat}){
   const COR="#7c3aed"; const BG="#ede9fe";
-  return <PsicoVisualBase titulo="O Ciclo do Gatilho e da Fissura" emoji="🔄" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🔄", titulo:"Onde começa o ciclo?", subtitulo:"Não começa com desejo — começa com emoção",
-        texto:"O comportamento compulsivo raramente começa com desejo. Começa com um estado emocional desconfortável — estresse, solidão, tédio, ansiedade, rejeição. O cérebro busca rapidamente uma saída.",
-        destaque:"O que mantém o ciclo não é fraqueza moral — é neurobiologia. O cérebro aprendeu que esse comportamento resolve aquele estado emocional, rapidamente."
-      },
-      { tipo:"lista", icone:"⚡", titulo:"As 5 etapas do ciclo", subtitulo:"Reconhecer cada fase é o primeiro passo",
-        intro:"O ciclo compulsivo segue um padrão previsível que pode ser interrompido em diferentes pontos:",
-        itens:[
-          { icone:"⚡", titulo:"1. Gatilho", texto:"Conflito, solidão, tédio, ansiedade. O estado emocional que ativa a busca." },
-          { icone:"🌊", titulo:"2. Fissura", texto:"O cérebro acessa o comportamento como promessa de alívio. A vontade cresce." },
-          { icone:"🔑", titulo:"3. Ritual", texto:"Comportamentos preparatórios que sinalizam ao cérebro que o alívio está vindo." },
-          { icone:"✓", titulo:"4. Ato", texto:"O comportamento acontece. O alívio é real — mas temporário." },
-          { icone:"💔", titulo:"5. Culpa e Vergonha", texto:"O desconforto retorna, frequentemente maior. O ciclo se fecha." }
-        ]
-      },
-      { tipo:"destaque", icone:"🎯", titulo:"Onde intervir?",
-        frase:"Cada etapa do ciclo é um ponto de intervenção possível.",
-        subtexto:"No gatilho: identificar a emoção. Na fissura: usar técnicas de regulação. No ritual: criar barreiras de estímulo. Após o ato: praticar autocompaixão em vez de vergonha."
-      },
-      { tipo:"intro", icone:"🧭", titulo:"A ação prática", subtitulo:"Comece com observação",
-        texto:"Esta semana, toda vez que sentir o impulso, pause por 10 segundos e pergunte: 'Que emoção veio antes disso?' Não precisa resistir ainda — só observe e nomeie.",
-        destaque:"Nomear a emoção que precede o gatilho é o primeiro e mais importante passo."
-      }
-    ]}
-    perguntas={[
-      "Em qual etapa do ciclo você consegue se perceber mais claramente?",
-      "Qual emoção costuma ser o gatilho mais frequente para você?",
-      "Que estratégia poderia usar para interromper o ciclo antes do ato?"
-    ]}
-  />;
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Em qual etapa do ciclo você se percebe mais claramente?","Qual emoção costuma ser o gatilho mais frequente?","Que estratégia poderia usar para interromper o ciclo antes do ato?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexões — O Ciclo do Gatilho:
+
+"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}
+R: ${respostas[i]||"—"}`).join("
+
+");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return(
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔄</div>
+        <div style={{color:"#ede9fe",fontSize:16,fontWeight:500,marginBottom:6}}>O comportamento compulsivo raramente começa com desejo</div>
+        <div style={{color:"#c4b5fd",fontSize:13,lineHeight:1.5}}>Começa com um estado emocional desconfortável — e segue um ciclo previsível.</div>
+      </div>
+      <div style={{background:"#f9f5ff",padding:"16px 20px",borderBottom:"1px solid #e9d5ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:600,marginBottom:8}}>🧠 Por que o ciclo se repete?</div>
+        <div style={{fontSize:12,color:"#4c1d95",lineHeight:1.7}}>O que mantém o ciclo não é fraqueza moral — é neurobiologia. O cérebro aprendeu que esse comportamento resolve aquele estado emocional rapidamente. E o que funciona rapidamente, o cérebro repete.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#4c1d95",fontStyle:"italic",fontWeight:500}}>Não é falta de vontade. É um padrão neurológico aprendido — e padrões aprendidos podem ser desaprendidos.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #6d28d9"}}>
+        <div style={{color:"#ede9fe",fontSize:13,fontWeight:600,marginBottom:10}}>⚡ As 5 etapas do ciclo</div>
+        {[{e:"⚡",t:"1. Gatilho",d:"Estresse, solidão, tédio, ansiedade. O desconforto começa."},{e:"🌊",t:"2. Fissura",d:"O cérebro acessa o comportamento como promessa de alívio."},{e:"🔑",t:"3. Ritual",d:"Comportamentos preparatórios: abrir o celular, fechar a porta."},{e:"✓",t:"4. Ato",d:"O comportamento acontece. O alívio é real — mas temporário."},{e:"💔",t:"5. Culpa",d:"O desconforto retorna, maior. O ciclo se fecha e se prepara para repetir."}].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",alignItems:"flex-start",gap:10,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div><div style={{color:"#ede9fe",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#c4b5fd",fontSize:11,marginTop:2,lineHeight:1.5}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#f9f5ff",padding:"16px 20px",borderBottom:"1px solid #e9d5ff"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:600,marginBottom:8}}>🎯 Onde posso intervir?</div>
+        {[{ponto:"No gatilho",acao:"Identificar e nomear a emoção antes que vire fissura",cor:"#059669",bg:"#d1fae5"},{ponto:"Na fissura",acao:"Usar técnicas de regulação emocional",cor:"#0891b2",bg:"#e0f2fe"},{ponto:"No ritual",acao:"Criar barreiras de estímulo — dificultar o acesso",cor:"#d97706",bg:"#fef3c7"},{ponto:"Após o ato",acao:"Praticar autocompaixão em vez de vergonha",cor:"#7c3aed",bg:"#ede9fe"}].map(({ponto,acao,cor,bg})=>(
+          <div key={ponto} style={{background:bg,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${cor}`,marginBottom:6}}>
+            <div style={{color:cor,fontSize:12,fontWeight:700,marginBottom:2}}>{ponto}</div>
+            <div style={{fontSize:12,color:"#374151",lineHeight:1.5}}>{acao}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#4c1d95",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#4c1d95",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexão..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>📲 Enviar reflexões pelo WhatsApp</button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
-function PsicoDopaminaAlivio({ cat }){
+function PsicoDopaminaAlivio({cat}){
   const COR="#db2777"; const BG="#fce7f3";
-  return <PsicoVisualBase titulo="Dopamina e a Busca pelo Alívio" emoji="⚡" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"⚡", titulo:"Não é sobre prazer", subtitulo:"É sobre alívio",
-        texto:"Para muitas pessoas, o comportamento compulsivo não é buscado pelo prazer — mas pelo alívio. Alívio do tédio, da solidão, da pressão, da ansiedade, do vazio.",
-        destaque:"O maior pico de dopamina acontece antes do comportamento, na fase de busca e antecipação — não na experiência em si."
-      },
-      { tipo:"comparacao", icone:"🧠", titulo:"O que a dopamina realmente faz", subtitulo:"Antecipação, não prazer",
-        intro:"A dopamina é frequentemente chamada de 'neurotransmissor do prazer', mas a ciência mostra algo diferente:",
-        lados:[
-          { titulo:"O que pensamos 🤔", icone:"💭", cor:"#6b7280", bg:"#f3f4f6", itens:["Dopamina = prazer","Buscamos o comportamento pelo gozo","Se houvesse prazer, seria mais fácil parar","A experiência é satisfatória"] },
-          { titulo:"O que a ciência mostra 🔬", icone:"⚡", cor:COR, bg:BG, itens:["Dopamina = antecipação e alívio","Buscamos para aliviar tensão","O cérebro vicia na busca, não na experiência","A experiência frequentemente decepciona"] }
-        ]
-      },
-      { tipo:"lista", icone:"🎯", titulo:"O que alimenta o ciclo", subtitulo:"Estados que criam pressão interna",
-        intro:"O comportamento compulsivo é acionado por estados emocionais que criam 'pressão interna' que o cérebro quer resolver rapidamente:",
-        itens:[
-          { icone:"😰", titulo:"Estresse e pressão", texto:"O cérebro busca o alívio mais rápido disponível no seu 'arquivo de soluções'" },
-          { icone:"😔", titulo:"Solidão e vazio", texto:"O comportamento oferece estimulação imediata que preenche o vazio momentaneamente" },
-          { icone:"😤", titulo:"Tédio e falta de sentido", texto:"Dopamina cria uma sensação de urgência e propósito momentâneos" },
-          { icone:"😟", titulo:"Ansiedade e tensão", texto:"O comportamento age como válvula de pressão — alívio rápido da tensão acumulada" }
-        ]
-      },
-      { tipo:"destaque", icone:"💊", titulo:"A metáfora do analgésico",
-        frase:"É como usar analgésico para uma infecção — alivia a dor, mas a infecção continua.",
-        subtexto:"A ação prática: identifique os 3 estados emocionais que mais frequentemente precedem o comportamento. Para cada um, escreva uma alternativa de alívio que não seja o comportamento compulsivo."
-      }
-    ]}
-    perguntas={[
-      "Quando cede ao comportamento, é mais por prazer ou por alívio de algo difícil?",
-      "Quais emoções você mais tenta aliviar com o comportamento?",
-      "Que outras formas de alívio poderiam funcionar nesses momentos?"
-    ]}
-  />;
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Quando cede ao comportamento, é mais por prazer ou por alívio de algo difícil?","Quais emoções você mais tenta aliviar com o comportamento?","Que outras formas de alívio poderiam funcionar nesses momentos?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexões — Dopamina e a Busca pelo Alívio:
+
+"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}
+R: ${respostas[i]||"—"}`).join("
+
+");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return(
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>⚡</div>
+        <div style={{color:"#fce7f3",fontSize:16,fontWeight:500,marginBottom:6}}>Não é sobre prazer — é sobre alívio</div>
+        <div style={{color:"#fbcfe8",fontSize:13,lineHeight:1.5}}>O cérebro busca o comportamento como anestesia emocional para tédio, solidão ou estresse.</div>
+      </div>
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:600,marginBottom:8}}>🧠 O que a dopamina realmente faz</div>
+        <div style={{fontSize:12,color:"#831843",lineHeight:1.7}}>A dopamina não é o neurotransmissor do prazer — é o da <strong>antecipação e do alívio da tensão</strong>. O maior pico acontece <em>antes</em> do comportamento, na fase de busca. Isso explica por que a experiência real frequentemente decepciona — mas a busca continua.</div>
+        <div style={{marginTop:10,background:BG,borderRadius:8,padding:"10px 14px",borderLeft:`3px solid ${COR}`}}>
+          <div style={{fontSize:12,color:"#831843",fontStyle:"italic",fontWeight:500}}>É como usar analgésico para uma infecção — alivia a dor, mas a infecção continua.</div>
+        </div>
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #be185d"}}>
+        <div style={{color:"#fce7f3",fontSize:13,fontWeight:600,marginBottom:10}}>💊 Estados que criam "pressão interna"</div>
+        {[{e:"😰",t:"Estresse",d:"O cérebro busca o alívio mais rápido do seu arquivo de soluções."},{e:"😔",t:"Solidão e vazio",d:"O comportamento preenche o vazio momentaneamente."},{e:"😤",t:"Tédio",d:"Dopamina cria urgência e propósito momentâneos."},{e:"😟",t:"Ansiedade",d:"Age como válvula de pressão — alívio rápido da tensão."}].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",alignItems:"flex-start",gap:10,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div><div style={{color:"#fce7f3",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#fbcfe8",fontSize:11,marginTop:2,lineHeight:1.5}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#fff0f6",padding:"16px 20px",borderBottom:"1px solid #fbcfe8"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:600,marginBottom:8}}>💡 Analgésico vs. compulsão</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"#fee2e2",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#dc2626",fontWeight:700,fontSize:12,marginBottom:6}}>💊 Analgésico</div>
+            {["Alivia rapidamente","Não trata a causa","Precisa de mais dose","Dependência crescente"].map(i=>(<div key={i} style={{fontSize:11,color:"#7f1d1d",marginBottom:3}}>• {i}</div>))}
+          </div>
+          <div style={{background:BG,borderRadius:10,padding:"12px"}}>
+            <div style={{color:COR,fontWeight:700,fontSize:12,marginBottom:6}}>🔒 Compulsão</div>
+            {["Alivia a emoção rapidamente","Não resolve o estado","Precisa de mais intensidade","O ciclo se aprofunda"].map(i=>(<div key={i} style={{fontSize:11,color:"#831843",marginBottom:3}}>• {i}</div>))}
+          </div>
+        </div>
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#831843",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#831843",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexão..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>📲 Enviar reflexões pelo WhatsApp</button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
-function PsicoSubstituicaoHabitos({ cat }){
+function PsicoSubstituicaoHabitos({cat}){
   const COR="#059669"; const BG="#d1fae5";
-  return <PsicoVisualBase titulo="Substituição de Hábitos e Gestão de Estímulos" emoji="🔧" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🔧", titulo:"Dois princípios da TCC", subtitulo:"Controle de estímulos + Substituição comportamental",
-        texto:"Não é possível simplesmente 'não fazer'. O cérebro precisa de algo no lugar. E o ambiente precisa ser modificado para reduzir o acesso aos gatilhos. Essas duas estratégias juntas são mais eficazes do que qualquer uma sozinha.",
-        destaque:"A substituição não precisa ser prazerosa de imediato. Precisa ser acessível no momento da fissura."
-      },
-      { tipo:"lista", icone:"🛡️", titulo:"Controle de estímulos", subtitulo:"Modificar o ambiente reduz a batalha",
-        intro:"O ambiente influencia mais o comportamento do que a força de vontade. Barreiras de atrito funcionam:",
-        itens:[
-          { icone:"📱", titulo:"Filtros de conteúdo", texto:"Instalar bloqueadores com senha gerenciada por pessoa de confiança" },
-          { icone:"🚫", titulo:"Remover atalhos", texto:"Apagar apps ou históricos que facilitam o acesso" },
-          { icone:"🕐", titulo:"Mapear vulnerabilidade", texto:"Identificar horários e locais de maior risco e criar rotinas alternativas" },
-          { icone:"🛏️", titulo:"Gestão do quarto", texto:"Não usar dispositivos no quarto, especialmente antes de dormir" }
-        ]
-      },
-      { tipo:"lista", icone:"⚡", titulo:"Substituição comportamental", subtitulo:"Fontes alternativas de dopamina",
-        intro:"O cérebro busca dopamina — você pode oferecer outras fontes mais saudáveis:",
-        itens:[
-          { icone:"🏃", titulo:"Exercício físico intenso", texto:"Libera dopamina e endorfina — especialmente eficaz no pico da fissura" },
-          { icone:"👥", titulo:"Contato social real", texto:"Ativa o sistema de recompensa de forma sustentável e reduz solidão" },
-          { icone:"🎵", titulo:"Música, arte, criação", texto:"Fontes de estimulação cognitiva e emocional que não alimentam o ciclo" },
-          { icone:"🚿", titulo:"Banho frio breve", texto:"Ativa o sistema nervoso parassimpático e 'quebra' o estado de fissura" }
-        ]
-      },
-      { tipo:"destaque", icone:"🎯", titulo:"A ação prática",
-        frase:"Pequeno e concreto vale mais do que perfeito e impossível.",
-        subtexto:"Escolha UMA barreira de estímulo e UMA substituição comportamental para implementar esta semana. Não tente mudar tudo de uma vez — o hábito se forma na consistência, não na intensidade."
-      }
-    ]}
-    perguntas={[
-      "Quais são os horários e contextos de maior vulnerabilidade para você?",
-      "Que barreira de estímulo seria mais viável implementar agora?",
-      "Qual substituto comportamental tem mais chance de funcionar nos seus momentos de fissura?"
-    ]}
-  />;
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Quais são os horários e contextos de maior vulnerabilidade para você?","Que barreira de estímulo seria mais viável implementar agora?","Qual substituto comportamental tem mais chance de funcionar na sua fissura?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexões — Substituição de Hábitos:
+
+"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}
+R: ${respostas[i]||"—"}`).join("
+
+");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return(
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔧</div>
+        <div style={{color:"#d1fae5",fontSize:16,fontWeight:500,marginBottom:6}}>Não é possível simplesmente "não fazer"</div>
+        <div style={{color:"#a7f3d0",fontSize:13,lineHeight:1.5}}>O cérebro precisa de algo no lugar. E o ambiente precisa ser modificado.</div>
+      </div>
+      <div style={{background:"#f0fdf4",padding:"16px 20px",borderBottom:"1px solid #bbf7d0"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:600,marginBottom:8}}>🛡️ Controle de estímulos na prática</div>
+        {[{e:"📱",t:"Filtros de conteúdo",d:"Bloqueadores com senha gerenciada por pessoa de confiança."},{e:"🚫",t:"Remover atalhos",d:"Apagar apps ou históricos que facilitam o acesso."},{e:"🕐",t:"Mapear vulnerabilidade",d:"Identificar horários e locais de maior risco."},{e:"🛏️",t:"Gestão do quarto",d:"Não usar dispositivos no quarto, especialmente antes de dormir."}].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",alignItems:"flex-start",gap:10,background:BG,borderRadius:8,padding:"8px 12px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div><div style={{color:COR,fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#14532d",fontSize:11,marginTop:2,lineHeight:1.5}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #047857"}}>
+        <div style={{color:"#d1fae5",fontSize:13,fontWeight:600,marginBottom:10}}>⚡ Substituições que funcionam</div>
+        <div style={{fontSize:12,color:"#a7f3d0",marginBottom:10}}>A substituição não precisa ser prazerosa de imediato — precisa ser acessível no momento da fissura.</div>
+        {[{e:"🏃",t:"Exercício físico intenso",d:"Libera dopamina e endorfina — especialmente eficaz no pico da fissura."},{e:"👥",t:"Contato social real",d:"Ativa o sistema de recompensa de forma sustentável."},{e:"🎵",t:"Música, arte, criação",d:"Fontes alternativas de estimulação que não alimentam o ciclo."},{e:"🚿",t:"Banho frio breve",d:"Ativa o sistema nervoso parassimpático e quebra o estado de fissura."}].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",alignItems:"flex-start",gap:10,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div><div style={{color:"#d1fae5",fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#a7f3d0",fontSize:11,marginTop:2,lineHeight:1.5}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#14532d",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#14532d",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexão..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>📲 Enviar reflexões pelo WhatsApp</button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
-function PsicoImpactoVinculos({ cat }){
+function PsicoImpactoVinculos({cat}){
   const COR="#0891b2"; const BG="#e0f2fe";
-  return <PsicoVisualBase titulo="O Impacto nos Vínculos e na Intimidade" emoji="💔" cor={COR} bg={BG}
-    secoes={[
-      { tipo:"intro", icone:"🔒", titulo:"A compulsão vive no segredo", subtitulo:"E o segredo cobra um preço nas relações",
-        texto:"O segredo cria uma vida paralela — e essa vida paralela ocupa espaço onde poderia haver conexão. Não necessariamente porque o comportamento é descoberto, mas porque o segredo em si afasta.",
-        destaque:"A compulsão sexual não é ausência de amor ou comprometimento. É um padrão de regulação emocional que se tornou autônomo."
-      },
-      { tipo:"lista", icone:"💔", titulo:"O que acontece nos relacionamentos", subtitulo:"Efeitos que se acumulam silenciosamente",
-        intro:"Mesmo quando o comportamento não é descoberto, o segredo cria consequências reais nos vínculos:",
-        itens:[
-          { icone:"🌫️", titulo:"Distanciamento emocional", texto:"Parte da energia e atenção está sempre 'em outro lugar', reduzindo presença real" },
-          { icone:"🚪", titulo:"Intimidade substituída", texto:"O comportamento compulsivo pode ocupar o espaço da intimidade genuína" },
-          { icone:"😶", titulo:"Vergonha como barreira", texto:"A culpa cria dificuldade de se deixar ver — mesmo em áreas não relacionadas" },
-          { icone:"🏝️", titulo:"Isolamento progressivo", texto:"A vergonha leva ao afastamento → que aumenta a solidão → que alimenta o ciclo" }
-        ]
-      },
-      { tipo:"destaque", icone:"💡", titulo:"Uma distinção importante",
-        frase:"Compreender é diferente de justificar — e é o que torna a mudança possível.",
-        subtexto:"Entender que a compulsão é um padrão de regulação emocional — não um defeito de caráter — muda como tanto o paciente quanto as pessoas próximas podem abordar o processo de mudança."
-      },
-      { tipo:"intro", icone:"🌱", titulo:"A ação prática", subtitulo:"Começar com honestidade interna",
-        texto:"Reflita: em que relacionamento o segredo está pesando mais? Não é necessário revelar nada agora — mas nomear para si mesmo onde o segredo cria distância é o primeiro passo para começar a mudar.",
-        destaque:"A mudança real começa no interior — antes de qualquer conversa difícil com outra pessoa."
-      }
-    ]}
-    perguntas={[
-      "Em que relacionamento o segredo do comportamento está criando mais distância?",
-      "O que você deixou de compartilhar com pessoas próximas por causa da vergonha?",
-      "O que significaria para você ter uma relação mais autêntica — mesmo sem revelar tudo agora?"
-    ]}
-  />;
+  const [respostas,setRespostas]=React.useState(["","",""]);
+  const PERGUNTAS=["Em que relacionamento o segredo está criando mais distância?","O que você deixou de compartilhar com pessoas próximas por causa da vergonha?","O que significaria ter uma relação mais autêntica — mesmo sem revelar tudo agora?"];
+  function enviarWhatsApp(){const tel=(cat&&cat.telefone||"").replace(/\D/g,"");const texto="Reflexões — Impacto nos Vínculos:
+
+"+PERGUNTAS.map((p,i)=>`${i+1}. ${p}
+R: ${respostas[i]||"—"}`).join("
+
+");window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");}
+  return(
+    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
+        <div style={{fontSize:40,marginBottom:8}}>💔</div>
+        <div style={{color:"#e0f2fe",fontSize:16,fontWeight:500,marginBottom:6}}>A compulsão sexual vive bem no segredo</div>
+        <div style={{color:"#bae6fd",fontSize:13,lineHeight:1.5}}>E o segredo cobra um preço nas relações — mesmo quando o comportamento não é descoberto.</div>
+      </div>
+      <div style={{background:"#f0f9ff",padding:"16px 20px",borderBottom:"1px solid #bae6fd"}}>
+        <div style={{color:COR,fontSize:13,fontWeight:600,marginBottom:8}}>🔒 Como o segredo afeta os vínculos</div>
+        {[{e:"🌫️",t:"Distanciamento emocional",d:"Parte da energia está sempre 'em outro lugar', reduzindo a presença real."},{e:"🚪",t:"Intimidade substituída",d:"O comportamento pode ocupar o espaço da intimidade genuína."},{e:"😶",t:"Vergonha como barreira",d:"A culpa cria dificuldade de se deixar ver — mesmo em áreas não relacionadas."},{e:"🏝️",t:"Isolamento progressivo",d:"Vergonha → afastamento → mais solidão → alimenta o ciclo."}].map(({e,t,d})=>(
+          <div key={t} style={{display:"flex",alignItems:"flex-start",gap:10,background:BG,borderRadius:8,padding:"8px 12px",marginBottom:6}}>
+            <span style={{fontSize:18,flexShrink:0}}>{e}</span>
+            <div><div style={{color:COR,fontSize:12,fontWeight:600}}>{t}</div><div style={{color:"#0c4a6e",fontSize:11,marginTop:2,lineHeight:1.5}}>{d}</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:COR,padding:"16px 20px",borderBottom:"1px solid #0369a1"}}>
+        <div style={{color:"#e0f2fe",fontSize:13,fontWeight:600,marginBottom:10}}>💡 Uma distinção importante</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+          <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#bae6fd",fontWeight:700,fontSize:12,marginBottom:6}}>❌ O que NÃO é</div>
+            {["Falta de amor","Falta de comprometimento","Defeito de caráter","Escolha consciente"].map(i=>(<div key={i} style={{fontSize:11,color:"#e0f2fe",marginBottom:3}}>• {i}</div>))}
+          </div>
+          <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"12px"}}>
+            <div style={{color:"#bae6fd",fontWeight:700,fontSize:12,marginBottom:6}}>✓ O que realmente é</div>
+            {["Padrão de regulação emocional","Aprendizado neurológico","Resposta a estados difíceis","Algo tratável"].map(i=>(<div key={i} style={{fontSize:11,color:"#e0f2fe",marginBottom:3}}>• {i}</div>))}
+          </div>
+        </div>
+        <div style={{marginTop:10,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 14px"}}>
+          <div style={{fontSize:12,color:"#e0f2fe",lineHeight:1.6}}>Compreender não é justificar — é o que torna a mudança possível. E é o que permite que a vergonha não bloqueie o processo terapêutico.</div>
+        </div>
+      </div>
+      <div style={{background:BG,padding:"16px 20px",borderTop:`2px solid ${COR}`}}>
+        <div style={{color:"#0c4a6e",fontSize:13,fontWeight:600,marginBottom:12}}>✏️ Suas reflexões</div>
+        {PERGUNTAS.map((p,i)=>(
+          <div key={i} style={{marginBottom:14}}>
+            <div style={{display:"flex",gap:8,marginBottom:6}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:COR,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+              <div style={{fontSize:12,fontWeight:500,color:"#0c4a6e",lineHeight:1.5}}>{p}</div>
+            </div>
+            <textarea value={respostas[i]} onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}} placeholder="Escreva sua reflexão..." style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,border:`1px solid ${COR}50`,fontSize:13,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+          </div>
+        ))}
+        <button onClick={enviarWhatsApp} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:COR,color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>📲 Enviar reflexões pelo WhatsApp</button>
+      </div>
+      <div style={{textAlign:"center",fontSize:11,color:"#888",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
+    </div>
+  );
 }
 
 
