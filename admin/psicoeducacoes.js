@@ -3091,7 +3091,162 @@ function PsicoSurfarOndaEmocao({cat}){
 function PsicoSurfandoOndaEmocao({cat}){return <PsicoSurfarOndaEmocao cat={cat}/>;}
 
 
+// ═══════════════════════════════════════════════════════
+// COMPULSÃO SEXUAL — 4 módulos de psicoeducação visual
+// ═══════════════════════════════════════════════════════
+
+function PsicoCicloGatilho({ cat }){
+  const COR="#7c3aed"; const BG="#ede9fe";
+  return <PsicoVisualBase titulo="O Ciclo do Gatilho e da Fissura" emoji="🔄" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔄", titulo:"Onde começa o ciclo?", subtitulo:"Não começa com desejo — começa com emoção",
+        texto:"O comportamento compulsivo raramente começa com desejo. Começa com um estado emocional desconfortável — estresse, solidão, tédio, ansiedade, rejeição. O cérebro busca rapidamente uma saída.",
+        destaque:"O que mantém o ciclo não é fraqueza moral — é neurobiologia. O cérebro aprendeu que esse comportamento resolve aquele estado emocional, rapidamente."
+      },
+      { tipo:"lista", icone:"⚡", titulo:"As 5 etapas do ciclo", subtitulo:"Reconhecer cada fase é o primeiro passo",
+        intro:"O ciclo compulsivo segue um padrão previsível que pode ser interrompido em diferentes pontos:",
+        itens:[
+          { icone:"⚡", titulo:"1. Gatilho", texto:"Conflito, solidão, tédio, ansiedade. O estado emocional que ativa a busca." },
+          { icone:"🌊", titulo:"2. Fissura", texto:"O cérebro acessa o comportamento como promessa de alívio. A vontade cresce." },
+          { icone:"🔑", titulo:"3. Ritual", texto:"Comportamentos preparatórios que sinalizam ao cérebro que o alívio está vindo." },
+          { icone:"✓", titulo:"4. Ato", texto:"O comportamento acontece. O alívio é real — mas temporário." },
+          { icone:"💔", titulo:"5. Culpa e Vergonha", texto:"O desconforto retorna, frequentemente maior. O ciclo se fecha." }
+        ]
+      },
+      { tipo:"destaque", icone:"🎯", titulo:"Onde intervir?",
+        frase:"Cada etapa do ciclo é um ponto de intervenção possível.",
+        subtexto:"No gatilho: identificar a emoção. Na fissura: usar técnicas de regulação. No ritual: criar barreiras de estímulo. Após o ato: praticar autocompaixão em vez de vergonha."
+      },
+      { tipo:"intro", icone:"🧭", titulo:"A ação prática", subtitulo:"Comece com observação",
+        texto:"Esta semana, toda vez que sentir o impulso, pause por 10 segundos e pergunte: 'Que emoção veio antes disso?' Não precisa resistir ainda — só observe e nomeie.",
+        destaque:"Nomear a emoção que precede o gatilho é o primeiro e mais importante passo."
+      }
+    ]}
+    perguntas={[
+      "Em qual etapa do ciclo você consegue se perceber mais claramente?",
+      "Qual emoção costuma ser o gatilho mais frequente para você?",
+      "Que estratégia poderia usar para interromper o ciclo antes do ato?"
+    ]}
+  />;
+}
+
+function PsicoDopaminaAlivio({ cat }){
+  const COR="#db2777"; const BG="#fce7f3";
+  return <PsicoVisualBase titulo="Dopamina e a Busca pelo Alívio" emoji="⚡" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"⚡", titulo:"Não é sobre prazer", subtitulo:"É sobre alívio",
+        texto:"Para muitas pessoas, o comportamento compulsivo não é buscado pelo prazer — mas pelo alívio. Alívio do tédio, da solidão, da pressão, da ansiedade, do vazio.",
+        destaque:"O maior pico de dopamina acontece antes do comportamento, na fase de busca e antecipação — não na experiência em si."
+      },
+      { tipo:"comparacao", icone:"🧠", titulo:"O que a dopamina realmente faz", subtitulo:"Antecipação, não prazer",
+        intro:"A dopamina é frequentemente chamada de 'neurotransmissor do prazer', mas a ciência mostra algo diferente:",
+        lados:[
+          { titulo:"O que pensamos 🤔", icone:"💭", cor:"#6b7280", bg:"#f3f4f6", itens:["Dopamina = prazer","Buscamos o comportamento pelo gozo","Se houvesse prazer, seria mais fácil parar","A experiência é satisfatória"] },
+          { titulo:"O que a ciência mostra 🔬", icone:"⚡", cor:COR, bg:BG, itens:["Dopamina = antecipação e alívio","Buscamos para aliviar tensão","O cérebro vicia na busca, não na experiência","A experiência frequentemente decepciona"] }
+        ]
+      },
+      { tipo:"lista", icone:"🎯", titulo:"O que alimenta o ciclo", subtitulo:"Estados que criam pressão interna",
+        intro:"O comportamento compulsivo é acionado por estados emocionais que criam 'pressão interna' que o cérebro quer resolver rapidamente:",
+        itens:[
+          { icone:"😰", titulo:"Estresse e pressão", texto:"O cérebro busca o alívio mais rápido disponível no seu 'arquivo de soluções'" },
+          { icone:"😔", titulo:"Solidão e vazio", texto:"O comportamento oferece estimulação imediata que preenche o vazio momentaneamente" },
+          { icone:"😤", titulo:"Tédio e falta de sentido", texto:"Dopamina cria uma sensação de urgência e propósito momentâneos" },
+          { icone:"😟", titulo:"Ansiedade e tensão", texto:"O comportamento age como válvula de pressão — alívio rápido da tensão acumulada" }
+        ]
+      },
+      { tipo:"destaque", icone:"💊", titulo:"A metáfora do analgésico",
+        frase:"É como usar analgésico para uma infecção — alivia a dor, mas a infecção continua.",
+        subtexto:"A ação prática: identifique os 3 estados emocionais que mais frequentemente precedem o comportamento. Para cada um, escreva uma alternativa de alívio que não seja o comportamento compulsivo."
+      }
+    ]}
+    perguntas={[
+      "Quando cede ao comportamento, é mais por prazer ou por alívio de algo difícil?",
+      "Quais emoções você mais tenta aliviar com o comportamento?",
+      "Que outras formas de alívio poderiam funcionar nesses momentos?"
+    ]}
+  />;
+}
+
+function PsicoSubstituicaoHabitos({ cat }){
+  const COR="#059669"; const BG="#d1fae5";
+  return <PsicoVisualBase titulo="Substituição de Hábitos e Gestão de Estímulos" emoji="🔧" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔧", titulo:"Dois princípios da TCC", subtitulo:"Controle de estímulos + Substituição comportamental",
+        texto:"Não é possível simplesmente 'não fazer'. O cérebro precisa de algo no lugar. E o ambiente precisa ser modificado para reduzir o acesso aos gatilhos. Essas duas estratégias juntas são mais eficazes do que qualquer uma sozinha.",
+        destaque:"A substituição não precisa ser prazerosa de imediato. Precisa ser acessível no momento da fissura."
+      },
+      { tipo:"lista", icone:"🛡️", titulo:"Controle de estímulos", subtitulo:"Modificar o ambiente reduz a batalha",
+        intro:"O ambiente influencia mais o comportamento do que a força de vontade. Barreiras de atrito funcionam:",
+        itens:[
+          { icone:"📱", titulo:"Filtros de conteúdo", texto:"Instalar bloqueadores com senha gerenciada por pessoa de confiança" },
+          { icone:"🚫", titulo:"Remover atalhos", texto:"Apagar apps ou históricos que facilitam o acesso" },
+          { icone:"🕐", titulo:"Mapear vulnerabilidade", texto:"Identificar horários e locais de maior risco e criar rotinas alternativas" },
+          { icone:"🛏️", titulo:"Gestão do quarto", texto:"Não usar dispositivos no quarto, especialmente antes de dormir" }
+        ]
+      },
+      { tipo:"lista", icone:"⚡", titulo:"Substituição comportamental", subtitulo:"Fontes alternativas de dopamina",
+        intro:"O cérebro busca dopamina — você pode oferecer outras fontes mais saudáveis:",
+        itens:[
+          { icone:"🏃", titulo:"Exercício físico intenso", texto:"Libera dopamina e endorfina — especialmente eficaz no pico da fissura" },
+          { icone:"👥", titulo:"Contato social real", texto:"Ativa o sistema de recompensa de forma sustentável e reduz solidão" },
+          { icone:"🎵", titulo:"Música, arte, criação", texto:"Fontes de estimulação cognitiva e emocional que não alimentam o ciclo" },
+          { icone:"🚿", titulo:"Banho frio breve", texto:"Ativa o sistema nervoso parassimpático e 'quebra' o estado de fissura" }
+        ]
+      },
+      { tipo:"destaque", icone:"🎯", titulo:"A ação prática",
+        frase:"Pequeno e concreto vale mais do que perfeito e impossível.",
+        subtexto:"Escolha UMA barreira de estímulo e UMA substituição comportamental para implementar esta semana. Não tente mudar tudo de uma vez — o hábito se forma na consistência, não na intensidade."
+      }
+    ]}
+    perguntas={[
+      "Quais são os horários e contextos de maior vulnerabilidade para você?",
+      "Que barreira de estímulo seria mais viável implementar agora?",
+      "Qual substituto comportamental tem mais chance de funcionar nos seus momentos de fissura?"
+    ]}
+  />;
+}
+
+function PsicoImpactoVinculos({ cat }){
+  const COR="#0891b2"; const BG="#e0f2fe";
+  return <PsicoVisualBase titulo="O Impacto nos Vínculos e na Intimidade" emoji="💔" cor={COR} bg={BG}
+    secoes={[
+      { tipo:"intro", icone:"🔒", titulo:"A compulsão vive no segredo", subtitulo:"E o segredo cobra um preço nas relações",
+        texto:"O segredo cria uma vida paralela — e essa vida paralela ocupa espaço onde poderia haver conexão. Não necessariamente porque o comportamento é descoberto, mas porque o segredo em si afasta.",
+        destaque:"A compulsão sexual não é ausência de amor ou comprometimento. É um padrão de regulação emocional que se tornou autônomo."
+      },
+      { tipo:"lista", icone:"💔", titulo:"O que acontece nos relacionamentos", subtitulo:"Efeitos que se acumulam silenciosamente",
+        intro:"Mesmo quando o comportamento não é descoberto, o segredo cria consequências reais nos vínculos:",
+        itens:[
+          { icone:"🌫️", titulo:"Distanciamento emocional", texto:"Parte da energia e atenção está sempre 'em outro lugar', reduzindo presença real" },
+          { icone:"🚪", titulo:"Intimidade substituída", texto:"O comportamento compulsivo pode ocupar o espaço da intimidade genuína" },
+          { icone:"😶", titulo:"Vergonha como barreira", texto:"A culpa cria dificuldade de se deixar ver — mesmo em áreas não relacionadas" },
+          { icone:"🏝️", titulo:"Isolamento progressivo", texto:"A vergonha leva ao afastamento → que aumenta a solidão → que alimenta o ciclo" }
+        ]
+      },
+      { tipo:"destaque", icone:"💡", titulo:"Uma distinção importante",
+        frase:"Compreender é diferente de justificar — e é o que torna a mudança possível.",
+        subtexto:"Entender que a compulsão é um padrão de regulação emocional — não um defeito de caráter — muda como tanto o paciente quanto as pessoas próximas podem abordar o processo de mudança."
+      },
+      { tipo:"intro", icone:"🌱", titulo:"A ação prática", subtitulo:"Começar com honestidade interna",
+        texto:"Reflita: em que relacionamento o segredo está pesando mais? Não é necessário revelar nada agora — mas nomear para si mesmo onde o segredo cria distância é o primeiro passo para começar a mudar.",
+        destaque:"A mudança real começa no interior — antes de qualquer conversa difícil com outra pessoa."
+      }
+    ]}
+    perguntas={[
+      "Em que relacionamento o segredo do comportamento está criando mais distância?",
+      "O que você deixou de compartilhar com pessoas próximas por causa da vergonha?",
+      "O que significaria para você ter uma relação mais autêntica — mesmo sem revelar tudo agora?"
+    ]}
+  />;
+}
+
+
 const PSICO_VISUAIS = {
+  // macro_compulsao
+  "O Ciclo do Gatilho e da Fissura": PsicoCicloGatilho,
+  "Dopamina e a Busca pelo Alívio": PsicoDopaminaAlivio,
+  "Substituição de Hábitos e Gestão de Estímulos": PsicoSubstituicaoHabitos,
+  "O Impacto nos Vínculos e na Intimidade": PsicoImpactoVinculos,
   // macro_ansiedade — originais (página única, sem navegação)
   "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
   "A armadilha do pior cenário": PsicoPiorCenario,
