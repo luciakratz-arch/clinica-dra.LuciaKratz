@@ -234,17 +234,6 @@ const MACROCATEGORIAS = [
       {id:"saude_mental",        label:"Integração Saúde Física e Mental"},
     ]
   },
-  {
-    id:"macro_compulsao", icone:"🔒", label:"Compulsão Sexual",
-    cor:"#7c3aed", bg:"#ede9fe",
-    subs:[
-      {id:"compulsao_ciclo",       label:"Ciclo do Gatilho e Fissura"},
-      {id:"compulsao_habitos",     label:"Substituição de Hábitos"},
-      {id:"compulsao_emocional",   label:"Regulação Emocional"},
-      {id:"compulsao_vinculos",    label:"Impacto nos Vínculos"},
-      {id:"compulsao_avaliacao",   label:"Rastreamento e Avaliação"},
-    ]
-  },
 ];
 
 // Todas as subcategorias num array plano (para selects e filtros)
@@ -3562,6 +3551,141 @@ function FerramentaStrategicPause({ user }){
 }
 
 // ── 5. Diário de Autocompaixão ────────────────────────────────────
+function FerramentaRastreamentoCompulsao({ user }) {
+  const COR = "#7c3aed";
+  const BG  = "#ede9fe";
+  const BLOCOS = [
+    { id:"A", titulo:"Perda de Controle", icone:"🔄", perguntas:[
+      "Tento parar ou reduzir meu comportamento sexual, mas não consigo.",
+      "Gasto mais tempo do que pretendia em atividades sexuais ou relacionadas.",
+      "Já tentei parar mais de uma vez e voltei ao mesmo padrão.",
+      "Sinto que o comportamento é maior do que minha vontade de controlá-lo.",
+    ]},
+    { id:"B", titulo:"Gatilhos e Fissura", icone:"⚡", perguntas:[
+      "Situações de estresse, tédio ou solidão me levam ao comportamento.",
+      "Sinto uma tensão crescente antes de ceder, seguida de alívio temporário.",
+      "Pensamentos sobre o comportamento aparecem mesmo quando não quero.",
+      "O comportamento serve para aliviar emoções difíceis, não apenas por prazer.",
+    ]},
+    { id:"C", titulo:"Consequências", icone:"💔", perguntas:[
+      "O comportamento já afetou meus relacionamentos afetivos.",
+      "Já prejudicou meu trabalho, estudos ou compromissos.",
+      "Sinto culpa, vergonha ou arrependimento depois do comportamento.",
+      "Escondo o comportamento de pessoas próximas.",
+    ]},
+    { id:"D", titulo:"Escalada", icone:"📈", perguntas:[
+      "Preciso de estímulos cada vez mais intensos para obter o mesmo efeito.",
+      "O tempo ou frequência dedicados ao comportamento aumentou com o tempo.",
+      "Já busquei situações de risco para manter o comportamento.",
+    ]},
+  ];
+  const LABELS = ["Nunca","Raramente","Às vezes","Frequentemente","Quase sempre"];
+  const totalQ = BLOCOS.reduce((a,b)=>a+b.perguntas.length,0);
+  const [respostas, setRespostas] = React.useState({});
+  const [resultado, setResultado] = React.useState(null);
+  const [enviando, setEnviando] = React.useState(false);
+  const respondidas = Object.keys(respostas).length;
+  const scoreTotal = Object.values(respostas).reduce((a,b)=>a+b,0);
+
+  function getNivel(s){
+    if(s<=10) return {nivel:"Baixo",   cor:"#059669", texto:"Seu padrão atual não indica compulsão significativa. Continue atento aos seus gatilhos emocionais."};
+    if(s<=22) return {nivel:"Moderado",cor:"#d97706", texto:"Há sinais de que o comportamento sexual pode estar sendo usado como regulação emocional. Vale explorar isso com sua psicóloga."};
+    if(s<=35) return {nivel:"Elevado", cor:"#dc2626", texto:"Os resultados indicam padrão compulsivo com impacto na sua vida. Este é um ponto importante para trabalhar em terapia."};
+    return      {nivel:"Alto",    cor:"#7c3aed", texto:"Os dados sugerem comportamento compulsivo significativo. Seu processo terapêutico pode se beneficiar de atenção específica a este tema."};
+  }
+
+  async function enviar(){
+    if(respondidas<totalQ) return;
+    setEnviando(true);
+    const res = getNivel(scoreTotal);
+    setResultado({...res, score:scoreTotal});
+    try{
+      await db.collection("clinica_respostas_ferramentas").add({
+        pacienteId:user?.id||"", pacienteNome:user?.nome||"",
+        formularioKey:"rastreamento-compulsao-sexual",
+        respostas, score:scoreTotal, nivel:res.nivel,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }catch(e){console.warn(e);}
+    setEnviando(false);
+  }
+
+  if(resultado) return(
+    <div>
+      <div style={{background:resultado.cor,borderRadius:12,padding:"24px",textAlign:"center",color:"white",marginBottom:20}}>
+        <div style={{fontSize:40,marginBottom:8}}>🔒</div>
+        <div style={{fontSize:13,opacity:0.85,marginBottom:4}}>Nível identificado</div>
+        <div style={{fontSize:28,fontWeight:700,marginBottom:8}}>{resultado.nivel}</div>
+        <div style={{fontSize:13,opacity:0.9}}>{resultado.score} de 60 pontos</div>
+      </div>
+      <div style={{background:resultado.cor+"15",border:"1px solid "+resultado.cor+"40",borderRadius:10,padding:"16px 20px",marginBottom:16}}>
+        <div style={{fontSize:14,color:"#1f2937",lineHeight:1.7}}>{resultado.texto}</div>
+      </div>
+      <div style={{background:"#f3e6ff",borderRadius:10,padding:"14px 16px",fontSize:12,color:COR,lineHeight:1.6}}>
+        ⚠️ Instrumento de triagem interna — não substitui avaliação clínica formal. Resultado compartilhado com sua psicóloga.
+      </div>
+    </div>
+  );
+
+  let qNum=0;
+  return(
+    <div>
+      <div style={{background:COR,borderRadius:"12px 12px 0 0",padding:"20px",color:"white"}}>
+        <div style={{fontSize:13,opacity:0.85,marginBottom:4}}>Rastreamento Clínico Interno</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,marginBottom:4}}>Comportamento Sexual Compulsivo</div>
+        <div style={{fontSize:12,opacity:0.8}}>Responda pensando nos últimos 3 meses · {respondidas}/{totalQ} respondidas</div>
+      </div>
+      <div style={{background:"white",border:"1px solid #e9d5ff",borderRadius:"0 0 12px 12px",padding:"20px",marginBottom:16}}>
+        <div style={{width:"100%",height:4,background:"#f3f4f6",borderRadius:20,overflow:"hidden",marginBottom:16}}>
+          <div style={{height:"100%",width:(respondidas/totalQ*100)+"%",background:COR,transition:"width .3s"}}/>
+        </div>
+        <div style={{fontSize:11,color:COR,fontWeight:600,marginBottom:16,textAlign:"center"}}>
+          0 = Nunca · 1 = Raramente · 2 = Às vezes · 3 = Frequentemente · 4 = Quase sempre
+        </div>
+        {BLOCOS.map(bloco=>(
+          <div key={bloco.id} style={{marginBottom:20}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"8px 12px",background:BG,borderRadius:8}}>
+              <span style={{fontSize:16}}>{bloco.icone}</span>
+              <div style={{fontSize:12,fontWeight:700,color:COR}}>Bloco {bloco.id} — {bloco.titulo}</div>
+            </div>
+            {bloco.perguntas.map((p,pi)=>{
+              qNum++;
+              const key=`${bloco.id}-${pi}`;
+              return(
+                <div key={key} style={{marginBottom:14,padding:"12px",background:"#fafafa",borderRadius:8,border:"1px solid #f3f4f6"}}>
+                  <div style={{fontSize:13,color:"#374151",lineHeight:1.5,marginBottom:8}}>
+                    <span style={{fontWeight:600,color:COR}}>{qNum}. </span>{p}
+                  </div>
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                    {[0,1,2,3,4].map(v=>(
+                      <button key={v} onClick={()=>setRespostas(r=>({...r,[key]:v}))}
+                        style={{padding:"5px 8px",borderRadius:16,border:"1.5px solid",fontSize:11,cursor:"pointer",fontFamily:"inherit",
+                          borderColor:respostas[key]===v?COR:"#e5e7eb",
+                          background:respostas[key]===v?COR:"white",
+                          color:respostas[key]===v?"white":"#374151",
+                          fontWeight:respostas[key]===v?700:400}}>
+                        {v} — {LABELS[v]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+        <button onClick={enviar} disabled={respondidas<totalQ||enviando}
+          style={{width:"100%",padding:"14px",borderRadius:10,border:"none",
+            background:respondidas<totalQ?"#e5e7eb":COR,
+            color:respondidas<totalQ?"#9ca3af":"white",
+            fontSize:14,fontWeight:700,cursor:respondidas<totalQ?"not-allowed":"pointer",fontFamily:"inherit"}}>
+          {enviando?"Enviando...":respondidas<totalQ?`Responda mais ${totalQ-respondidas} pergunta(s)`:"Ver meu resultado →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 function FerramentaSelfCompassion({ user }){
   const COR="#d97706"; const BG="#fef3c7";
   const [p,setP]=useState(0);
@@ -3700,10 +3824,13 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
       </div>
     );
 
+    // macro_compulsao
+    if(k==="rastreamento-compulsao-sexual") return <FerramentaRastreamentoCompulsao user={user}/>;
+
     return <div style={{textAlign:"center",padding:40,color:"#6b7280"}}>Ferramenta não configurada.</div>;
   }
   const EMOJIS={relaxamento:"💨",tcc:"🧠",avaliacao:"📋",musicoterapia:"🎵",outro:"🔧"};
-  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
+  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓","rastreamento-compulsao-sexual":"🔒"};
   const iconeRecurso = ICONES_FERRAMENTA?.[recurso.formularioKey] || EMOJIS[recurso.categoria] || "🔧";
   return(
     <div>
