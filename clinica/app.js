@@ -1408,22 +1408,50 @@ function FerramentaPortal({ recurso, user }){
           <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{objetivo}</div>
         </div>
       )}
-      {conteudo&&(
-        <div>
-          <div style={{fontWeight:700,fontSize:12,color:"#6b7280",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.5px"}}>📋 Passo a Passo</div>
-          {conteudo.split("\n\n").filter(function(p){return p.trim().length>2;}).map(function(passo,i){
-            const linhas = passo.trim().split("\n");
-            const titulo = linhas[0];
-            const corpo  = linhas.slice(1).join("\n").trim();
-            return (
-              <div key={i} style={{background:"white",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 16px",marginBottom:10,borderLeft:"3px solid #7B00C4"}}>
-                <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:corpo?6:0}}>{titulo}</div>
-                {corpo&&<div style={{fontSize:12,color:"#6b7280",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{corpo}</div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {conteudo&&(()=>{
+        const slides = conteudo.split("\n\n").filter(function(p){return p.trim().length>2;});
+        const [idx, setIdx] = React.useState(0);
+        const atual = slides[idx]||"";
+        const linhas = atual.trim().split("\n");
+        const titulo = linhas[0];
+        const corpo  = linhas.slice(1).join("\n").trim();
+        const pct    = Math.round(((idx+1)/slides.length)*100);
+        return (
+          <div>
+            {/* Progresso */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <span style={{fontSize:11,color:"#9ca3af"}}>{idx+1} de {slides.length}</span>
+              <span style={{fontSize:11,color:"#7B00C4",fontWeight:600}}>{pct}%</span>
+            </div>
+            <div style={{height:4,background:"#f3e6ff",borderRadius:20,marginBottom:20,overflow:"hidden"}}>
+              <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:20,transition:"width .3s"}}/>
+            </div>
+            {/* Card do slide */}
+            <div style={{background:"white",border:"1px solid #e9d5ff",borderRadius:16,padding:"24px 20px",minHeight:160,marginBottom:20,borderLeft:"4px solid #7B00C4",boxShadow:"0 2px 12px rgba(123,0,196,0.06)"}}>
+              {titulo&&<div style={{fontWeight:700,fontSize:15,color:"#7B00C4",marginBottom:corpo?12:0,lineHeight:1.5}}>{titulo}</div>}
+              {corpo&&<div style={{fontSize:14,color:"#374151",lineHeight:1.8,whiteSpace:"pre-wrap"}}>{corpo}</div>}
+            </div>
+            {/* Navegação */}
+            <div style={{display:"flex",gap:12,justifyContent:"space-between"}}>
+              <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0}
+                style={{flex:1,padding:"12px",borderRadius:12,border:"1.5px solid #e9d5ff",background:"white",color:idx===0?"#d1d5db":"#7B00C4",fontWeight:600,fontSize:14,cursor:idx===0?"not-allowed":"pointer",fontFamily:"inherit",transition:"all .15s"}}>
+                ← Anterior
+              </button>
+              {idx<slides.length-1?(
+                <button onClick={()=>setIdx(i=>i+1)}
+                  style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#7B00C4",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 2px 8px rgba(123,0,196,0.3)"}}>
+                  Próximo →
+                </button>
+              ):(
+                <button onClick={()=>setIdx(0)}
+                  style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#059669",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 2px 8px rgba(5,150,105,0.3)"}}>
+                  ✅ Concluído — Recomeçar
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
       {!objetivo&&!conteudo&&(
         <div style={{textAlign:"center",padding:"40px 20px"}}>
           <div style={{fontSize:48,marginBottom:12}}>🔧</div>
