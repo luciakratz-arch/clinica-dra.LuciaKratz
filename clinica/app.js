@@ -19,6 +19,28 @@ const db = firebase.firestore();
 const LOGO_URL = "../logo-transparente.png";
 const SITE_URL  = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
 
+// ─── LOG DE USO DE RECURSOS ─────────────────────────────
+// Registra quando a paciente ABRE um recurso e quando SALVA algo.
+// Alimenta o relatório "Uso de Recursos" na Evolução do admin.
+function registrarUsoRecurso(user, info, tipo, extra) {
+  if (!user || !user.id) return;
+  try {
+    db.collection("clinica_recurso_acessos").add({
+      pacienteId:    user.id,
+      pacienteNome:  user.nome || "",
+      recursoId:     (info && info.id) || "",
+      recursoTitulo: (info && (info.titulo || info.nome)) || "",
+      formularioKey: (info && info.formularioKey) || "",
+      colecao:       (info && info._colecao) || "",
+      tipo,                                  // "abriu" | "salvou"
+      detalhe:       (extra && extra.detalhe) || "",
+      data: new Date().toLocaleDateString("pt-BR"),
+      hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) {}
+}
+
 // ─── ICON ────────────────────────────────────────────────
 function Icon({ name, size = 18 }) {
   const ref = React.useRef(null);
@@ -557,6 +579,7 @@ function NotaRelaxamento({ user, ferramenta, emoji, onRepetir }) {
         hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      registrarUsoRecurso(user,{titulo:ferramenta==="respiracao"?"Respiração 4-7-8":"Relaxamento Muscular",formularioKey:ferramenta==="respiracao"?"breathing-478":"muscle-relaxation"},"salvou",{detalhe:`Relaxamento ${n}/10`});
     } catch(e) {}
     setSalvando(false);
     setSalvo(true);
@@ -862,7 +885,8 @@ function FerramentaRelaxamento({ user }){
   );
 }
 // ── Árvore da Decisão ──
-function FerramentaArvore(){
+function FerramentaArvore({user}){
+  const INFO_REC = {titulo:"Árvore da Decisão", formularioKey:"decision-tree"};
   const [step,setStep]=React.useState("home");
   const [preocupacao,setPreocupacao]=React.useState("");
   const [acoes,setAcoes]=React.useState("");
@@ -874,6 +898,17 @@ function FerramentaArvore(){
 
   function salvarHistorico(c){
     setHistorico(h=>[{data:new Date().toLocaleDateString("pt-BR"),preocupacao,conclusao:c},...h].slice(0,10));
+    if(user&&user.id){
+      try{
+        db.collection("clinica_arvore_decisao").add({
+          pacienteId:user.id, pacienteNome:user.nome||"",
+          preocupacao, acoes, plano, conclusao:c,
+          data:new Date().toLocaleDateString("pt-BR"),
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`"${preocupacao.slice(0,80)}" → ${c}`});
+      }catch(e){}
+    }
     setConclusao(c);setStep("conclusao");
   }
 
@@ -1212,7 +1247,8 @@ function FerramentaABC(){
 
 
 // ── Gestão da Ansiedade ──────────────────────────────────────────────────────
-function FerramentaGestaoAnsiedade(){
+function FerramentaGestaoAnsiedade({user}){
+  const INFO_REC = {titulo:"Gestão da Ansiedade", formularioKey:"anxiety-management"};
   const TECNICAS=[{id:"resp",label:"Respiração Relaxada",desc:"Inspirar → Pausar → Expirar por 2 min"},{id:"visao",label:"Visão Periférica",desc:"Mover os olhos da direita para a esquerda"},{id:"musc",label:"Relaxamento Muscular",desc:"Contrair músculos 5s e relaxar com suspiro"}];
   const ATIVIDADES=[{id:"caminhada",label:"🚶 Caminhada"},{id:"meditacao",label:"🧘 Meditação"},{id:"diario",label:"📓 Diário"},{id:"musica",label:"🎵 Música"},{id:"alongamento",label:"🤸 Alongamento"},{id:"agua",label:"💧 Hidratação"}];
   const PERGUNTAS=["Qual situação está me deixando ansioso(a)?","Qual é o meu pensamento ansioso?","Tenho provas reais de que é 100% verdadeiro?","Quais evidências indicam que pode NÃO ser verdadeiro?","Qual a probabilidade real de que o pior aconteça?","O que eu diria a um amigo com esse mesmo pensamento?","Existe uma forma mais útil de ver essa situação?","Preocupar-me está me ajudando ou me machucando?"];
@@ -1238,7 +1274,21 @@ function FerramentaGestaoAnsiedade(){
         <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:64,fontWeight:900,color:sc,lineHeight:1}}>{stress}</div><div style={{fontSize:12,color:"#9ca3af"}}>/10</div><div style={{fontSize:13,fontWeight:600,color:sc}}>{DESC[stress]}</div></div>
         <input type="range" min={1} max={10} value={stress} onChange={e=>setStress(+e.target.value)} style={{width:"100%",accentColor:sc,marginBottom:12}}/>
         <textarea className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setLog(l=>[{nivel:stress,nota,data:new Date().toLocaleDateString("pt-BR")},...l].slice(0,20));setMsg("✓ Registrado!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Registrar"}</button>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={async()=>{
+          setLog(l=>[{nivel:stress,nota,data:new Date().toLocaleDateString("pt-BR")},...l].slice(0,20));
+          if(user&&user.id){
+            try{
+              await db.collection("clinica_gestao_ansiedade").add({
+                pacienteId:user.id, pacienteNome:user.nome||"", tipo:"estresse",
+                nivel:stress, nota,
+                data:new Date().toLocaleDateString("pt-BR"),
+                createdAt:firebase.firestore.FieldValue.serverTimestamp()
+              });
+              registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`Estresse ${stress}/10${nota?" — "+nota:""}`});
+            }catch(e){}
+          }
+          setNota("");setMsg("✓ Registrado!");setTimeout(()=>setMsg(""),2000);
+        }}>{msg||"Registrar"}</button>
         {log.length>0&&<div style={{marginTop:12}}>{log.slice(0,5).map((s,i)=><div key={i} style={{display:"flex",gap:8,padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4,fontSize:12}}><span style={{fontWeight:700,color:sc}}>{s.nivel}/10</span><span style={{flex:1,color:"#6b7280"}}>{s.nota||"—"}</span><span style={{color:"#9ca3af"}}>{s.data}</span></div>)}</div>}
       </div>}
       {aba===1&&<div>
@@ -1250,6 +1300,22 @@ function FerramentaGestaoAnsiedade(){
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {ATIVIDADES.map(a=><div key={a.id} onClick={()=>setTrack(tr=>({...tr,[a.id]:!tr[a.id]}))} style={{padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:track[a.id]?"var(--purple)":"#e5e7eb",background:track[a.id]?"var(--purple-soft)":"white",cursor:"pointer",fontSize:12,fontWeight:track[a.id]?600:400,color:track[a.id]?"var(--purple)":"#6b7280",textAlign:"center"}}>{a.label}</div>)}
         </div>
+        <button className="btn btn-purple" style={{width:"100%",marginTop:14}} onClick={async()=>{
+          const feitos=[...TECNICAS,...ATIVIDADES].filter(x=>track[x.id]).map(x=>x.label.replace(/^[^\s]+\s/,""));
+          if(feitos.length===0){alert("Marque pelo menos uma técnica ou atividade.");return;}
+          if(user&&user.id){
+            try{
+              await db.collection("clinica_gestao_ansiedade").add({
+                pacienteId:user.id, pacienteNome:user.nome||"", tipo:"tracking",
+                itens:feitos,
+                data:new Date().toLocaleDateString("pt-BR"),
+                createdAt:firebase.firestore.FieldValue.serverTimestamp()
+              });
+              registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Tracking do dia: "+feitos.join(", ")});
+            }catch(e){}
+          }
+          setTrack({});setMsg("✓ Tracking salvo!");setTimeout(()=>setMsg(""),2000);
+        }}>{msg||"Salvar tracking do dia"}</button>
       </div>}
       {aba===2&&<div>
         <div style={{fontSize:13,color:"#6b7280",marginBottom:14,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>Responda cada pergunta com honestidade para questionar pensamentos ansiosos.</div>
@@ -1257,7 +1323,22 @@ function FerramentaGestaoAnsiedade(){
           <div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"var(--purple-soft)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><label style={{fontSize:13,fontWeight:600,lineHeight:1.4}}>{p}</label></div>
           <textarea className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
         </div>)}
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar respostas"}</button>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={async()=>{
+          if(!resp.some(r=>r.trim())){alert("Responda pelo menos uma pergunta antes de salvar.");return;}
+          if(user&&user.id){
+            try{
+              await db.collection("clinica_tcc").add({
+                pacienteId:user.id, pacienteNome:user.nome||"",
+                origem:"gestao-ansiedade",
+                registros: PERGUNTAS.map((p,i)=>({pergunta:p, resposta:resp[i]||""})),
+                data:new Date().toLocaleDateString("pt-BR"),
+                createdAt:firebase.firestore.FieldValue.serverTimestamp()
+              });
+              registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Pensamentos guiados (8 perguntas TCC)"});
+            }catch(e){}
+          }
+          setResp(Array(8).fill(""));setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
+        }}>{msg||"Salvar respostas"}</button>
       </div>}
       {aba===3&&<div>
         <div style={{fontSize:13,color:"#6b7280",marginBottom:14}}>Avalie cada área de 0 a 10. O gráfico atualiza em tempo real.</div>
@@ -1274,14 +1355,28 @@ function FerramentaGestaoAnsiedade(){
             el._chart=new Chart(el,{type:"radar",data:{labels,datasets:[{data:vals,backgroundColor:"rgba(123,0,196,0.15)",borderColor:"#7B00C4",borderWidth:2,pointBackgroundColor:"#7B00C4",pointRadius:4}]},options:{scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{size:10}}}},plugins:{legend:{display:false}}}});
           }}/>
         </div>
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar Roda da Vida"}</button>
+        <button className="btn btn-purple" style={{width:"100%"}} onClick={async()=>{
+          if(user&&user.id){
+            try{
+              await db.collection("clinica_gestao_ansiedade").add({
+                pacienteId:user.id, pacienteNome:user.nome||"", tipo:"roda",
+                areas: AREAS.map(a=>({area:a.label, valor:roda[a.id]||0})),
+                data:new Date().toLocaleDateString("pt-BR"),
+                createdAt:firebase.firestore.FieldValue.serverTimestamp()
+              });
+              registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Roda da Vida ("+AREAS.map(a=>`${a.label}: ${roda[a.id]||0}`).join(", ")+")"});
+            }catch(e){}
+          }
+          setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2000);
+        }}>{msg||"Salvar Roda da Vida"}</button>
       </div>}
     </div>
   );
 }
 
 // ── Rastreamento Emocional da Alimentação ───────────────────────────────────
-function FerramentaRastreamento(){
+function FerramentaRastreamento({user}){
+  const INFO_REC = {titulo:"Rastreamento Emocional da Alimentação", formularioKey:"emotional-eating"};
   const EMOCOES=["Ansiedade","Tédio","Tristeza","Raiva","Solidão","Estresse","Cansaço","Felicidade"];
   const SENSACOES=["Culpa","Vergonha","Alívio","Indiferença","Satisfação","Arrependimento"];
   const [fome,setFome]=React.useState(5);
@@ -1294,10 +1389,32 @@ function FerramentaRastreamento(){
   const [reflexao,setReflexao]=React.useState("");
   const [entries,setEntries]=React.useState([]);
   const [msg,setMsg]=React.useState("");
+  React.useEffect(()=>{
+    if(!user||!user.id)return;
+    const unsub=db.collection("clinica_rastreamento_alimentar")
+      .where("pacienteId","==",user.id)
+      .onSnapshot(snap=>{
+        const docs=snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>((b.createdAt&&b.createdAt.toDate?b.createdAt.toDate():new Date(0)))-((a.createdAt&&a.createdAt.toDate?a.createdAt.toDate():new Date(0))));
+        setEntries(docs.slice(0,20));
+      },()=>{});
+    return unsub;
+  },[user&&user.id]);
   function Chips({opts,sel,toggle}){return(<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{opts.map(o=><button key={o} onClick={()=>toggle(o)} style={{padding:"4px 12px",borderRadius:20,border:"1px solid",borderColor:sel.includes(o)?"var(--purple)":"#e5e7eb",background:sel.includes(o)?"var(--purple)":"white",color:sel.includes(o)?"white":"#6b7280",fontSize:12,cursor:"pointer"}}>{o}</button>)}</div>);}
-  function salvar(){
+  async function salvar(){
     if(!comeu.trim()){alert("Descreva o que você comeu.");return;}
-    setEntries(e=>[{id:Date.now()+"",data:new Date().toLocaleDateString("pt-BR"),fome,emocoes:[...emocoes],pensamento,comeu,alivio,duracao,sensacoes:[...sensacoes],reflexao},...e]);
+    const registro={data:new Date().toLocaleDateString("pt-BR"),fome,emocoes:[...emocoes],pensamento,comeu,alivio,duracao,sensacoes:[...sensacoes],reflexao};
+    if(user&&user.id){
+      try{
+        await db.collection("clinica_rastreamento_alimentar").add({
+          ...registro, pacienteId:user.id, pacienteNome:user.nome||"",
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`Fome ${fome}/10, alívio ${alivio}/10${emocoes.length?" — "+emocoes.join(", "):""}`});
+      }catch(e){}
+    }else{
+      setEntries(e=>[{id:Date.now()+"",...registro},...e]);
+    }
     setFome(5);setEmocoes([]);setPensamento("");setComeu("");setAlivio(5);setDuracao("");setSensacoes([]);setReflexao("");
     setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
   }
@@ -1395,7 +1512,7 @@ function FerramentaPortal({ recurso, user }){
   if(k==="breathing-478")        return <FerramentaRespiracao user={user}/>;
   if(k==="muscle-relaxation")    return <FerramentaRelaxamento user={user}/>;
   if(k==="anxiety-management")   return <FerramentaGestaoAnsiedade user={user}/>;
-  if(k==="decision-tree")        return <FerramentaArvore/>;
+  if(k==="decision-tree")        return <FerramentaArvore user={user}/>;
   if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
   if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
   // ── Fábulas com campo "paginas" (array) ──────────────────────────
@@ -1543,6 +1660,48 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
   const [abrindoPsico,  setAbrindoPsico]  = React.useState(null);
   const [loading,       setLoading]       = React.useState(true);
 
+  // ── Gesto de voltar do celular fecha o exercício (em vez de sair do app) ──
+  React.useEffect(()=>{
+    if(abrindo||abrindoPsico){
+      window.history.pushState({exercicioAberto:true},"");
+      const onPop=()=>{ setAbrindo(null); setAbrindoPsico(null); };
+      window.addEventListener("popstate",onPop);
+      return ()=>window.removeEventListener("popstate",onPop);
+    }
+  },[!!abrindo,!!abrindoPsico]);
+
+  function fecharExercicio(){
+    if(window.history.state&&window.history.state.exercicioAberto){ window.history.back(); }
+    else { setAbrindo(null); setAbrindoPsico(null); }
+  }
+
+  function abrirRecurso(r){
+    registrarUsoRecurso(user, r, "abriu");
+    if(r._colecao==="psicoeducacao") setAbrindoPsico(r); else setAbrindo(r);
+  }
+
+  // ── Barra de voltar destacada e fixa no topo ──
+  function BarraVoltar({texto}){
+    return (
+      <div style={{position:"sticky",top:0,zIndex:60,background:"white",
+        margin:"-10px -6px 18px",padding:"10px 6px",
+        borderBottom:"2px solid rgba(123,0,196,0.18)",
+        boxShadow:"0 2px 10px rgba(123,0,196,0.08)",
+        display:"flex",alignItems:"center",gap:12}}>
+        <button onClick={fecharExercicio}
+          style={{display:"flex",alignItems:"center",gap:8,
+            background:"var(--purple)",color:"white",border:"none",
+            borderRadius:12,padding:"11px 20px",fontWeight:700,fontSize:14,
+            cursor:"pointer",fontFamily:"inherit",flexShrink:0,
+            boxShadow:"0 3px 10px rgba(123,0,196,0.35)"}}>
+          ← Voltar
+        </button>
+        <div style={{fontWeight:600,fontSize:13,color:"var(--purple)",
+          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{texto}</div>
+      </div>
+    );
+  }
+
   React.useEffect(()=>{
     // Busca as três coleções em paralelo
     Promise.all([
@@ -1601,17 +1760,15 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
   const descricao = r => r.descricao || r.resumo || r.texto?.slice(0,120) || "";
 
   if (abrindoPsico) return (
-    <PsicoeducacaoAberta item={abrindoPsico} user={user} onVoltar={()=>setAbrindoPsico(null)}/>
+    <div>
+      <BarraVoltar texto={abrindoPsico.titulo||"Psicoeducação"}/>
+      <PsicoeducacaoAberta item={abrindoPsico} user={user} onVoltar={fecharExercicio}/>
+    </div>
   );
 
   if (abrindo) return (
     <div>
-      <button onClick={()=>setAbrindo(null)}
-        style={{marginBottom:16,display:"flex",alignItems:"center",gap:6,
-          background:"none",border:"none",cursor:"pointer",
-          color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
-        ← Voltar para Recursos
-      </button>
+      <BarraVoltar texto={titulo(abrindo)}/>
       <FerramentaPortal recurso={abrindo} user={user}/>
     </div>
   );
@@ -1713,7 +1870,7 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
               )}
 
               {/* Botão */}
-              <button onClick={()=>r._colecao==="psicoeducacao" ? setAbrindoPsico(r) : setAbrindo(r)}
+              <button onClick={()=>abrirRecurso(r)}
                 style={{width:"100%",padding:"10px",borderRadius:10,border:"none",
                   background:"var(--purple)",color:"white",cursor:"pointer",
                   fontSize:13,fontWeight:600,fontFamily:"inherit",
@@ -1736,6 +1893,7 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
 function PsicoeducacaoAberta({ item, user, onVoltar }) {
   const cat = user || {};
   const [respostas, setRespostas] = React.useState(["","",""]);
+  const [msgSalvo, setMsgSalvo] = React.useState("");
   const VisualComp = typeof PSICO_VISUAIS !== "undefined"
     ? (PSICO_VISUAIS[item.visualKey] || PSICO_VISUAIS[item.titulo])
     : null;
@@ -1747,14 +1905,25 @@ function PsicoeducacaoAberta({ item, user, onVoltar }) {
     window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`,"_blank");
   }
 
+  async function salvarReflexoes(){
+    if(!respostas.some(r=>r.trim())){alert("Escreva pelo menos uma reflexão antes de salvar.");return;}
+    if(user&&user.id){
+      try{
+        await db.collection("clinica_reflexoes").add({
+          pacienteId:user.id, pacienteNome:user.nome||"",
+          psicoeducacaoId:item.id||"", psicoeducacaoTitulo:item.titulo||"",
+          registros:(item.perguntas||[]).map((p,i)=>({pergunta:p, resposta:respostas[i]||""})),
+          data:new Date().toLocaleDateString("pt-BR"),
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        registrarUsoRecurso(user,{...item,_colecao:"psicoeducacao"},"salvou",{detalhe:"Reflexões — "+(item.titulo||"")});
+      }catch(e){}
+    }
+    setMsgSalvo("✓ Reflexões salvas!");setTimeout(()=>setMsgSalvo(""),2500);
+  }
+
   return (
     <div style={{maxWidth:680,margin:"0 auto",paddingBottom:32}}>
-      <button onClick={onVoltar}
-        style={{marginBottom:16,display:"flex",alignItems:"center",gap:6,
-          background:"none",border:"none",cursor:"pointer",
-          color:"var(--purple)",fontSize:13,fontWeight:600,fontFamily:"inherit"}}>
-        ← Voltar para Recursos
-      </button>
       {VisualComp
         ? <VisualComp cat={cat}/>
         : (
@@ -1794,9 +1963,15 @@ function PsicoeducacaoAberta({ item, user, onVoltar }) {
                         resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
                   </div>
                 ))}
-                <button onClick={enviarWhatsApp}
+                <button onClick={salvarReflexoes}
                   style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
-                    background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,
+                    background:msgSalvo?"#059669":"var(--purple)",color:"white",cursor:"pointer",fontSize:13,
+                    fontWeight:700,fontFamily:"inherit",marginBottom:8,transition:"background .2s"}}>
+                  {msgSalvo||"💾 Salvar reflexões"}
+                </button>
+                <button onClick={enviarWhatsApp}
+                  style={{width:"100%",padding:"12px",borderRadius:10,border:"1.5px solid var(--purple)",
+                    background:"white",color:"var(--purple)",cursor:"pointer",fontSize:13,
                     fontWeight:700,fontFamily:"inherit"}}>
                   📲 Enviar reflexões pelo WhatsApp
                 </button>
@@ -1809,6 +1984,95 @@ function PsicoeducacaoAberta({ item, user, onVoltar }) {
   );
 }
 
+
+// ── MINHAS METAS (paciente) ─────────────────────────────────────────────────
+// Lê as metas cadastradas pela psicóloga em clinica_metas e permite que a
+// paciente atualize o próprio progresso.
+function MinhasMetas({ user }) {
+  const [metas, setMetas] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(()=>{
+    if(!user||!user.id){ setLoading(false); return; }
+    const unsub = db.collection("clinica_metas")
+      .where("pacienteId","==",user.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .filter(m=>m.status!=="arquivada");
+        docs.sort((a,b)=>((b.createdAt&&b.createdAt.toDate?b.createdAt.toDate():new Date(0)))-((a.createdAt&&a.createdAt.toDate?a.createdAt.toDate():new Date(0))));
+        setMetas(docs);
+        setLoading(false);
+      },()=>setLoading(false));
+    return unsub;
+  },[user&&user.id]);
+
+  async function atualizarProgresso(meta, delta){
+    const novo = Math.max(0, Math.min(100, (meta.progresso||0)+delta));
+    try{
+      await db.collection("clinica_metas").doc(meta.id).update({
+        progresso: novo,
+        atualizadoPor: "paciente",
+        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }catch(e){}
+  }
+
+  if (loading) return <Spinner/>;
+
+  return (
+    <div style={{maxWidth:680,margin:"0 auto"}}>
+      <div style={{marginBottom:20}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:24,fontWeight:600,color:"var(--purple)"}}>🎯 Minhas Metas</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>
+          Metas terapêuticas definidas com a sua psicóloga. Atualize seu progresso conforme avança!
+        </div>
+      </div>
+
+      {metas.length===0 ? (
+        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="target" size={40}/>
+          <div style={{marginTop:12,fontWeight:600}}>Nenhuma meta por enquanto</div>
+          <div style={{fontSize:13,marginTop:4}}>Suas metas aparecerão aqui assim que forem definidas na sessão.</div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          {metas.map(m=>{
+            const p = m.progresso||0;
+            const completa = p>=100;
+            return (
+              <div key={m.id} className="card" style={completa?{border:"1.5px solid #059669",background:"#f0fdf4"}:{}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,marginBottom:12}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:15}}>{completa?"🎉 ":""}{m.titulo}</div>
+                    <span className="badge badge-purple" style={{marginTop:6,display:"inline-block"}}>{m.categoria||"Meta"}</span>
+                  </div>
+                  {completa&&<span style={{fontSize:11,fontWeight:700,color:"#059669",background:"#d1fae5",borderRadius:20,padding:"4px 10px",flexShrink:0}}>Concluída!</span>}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{flex:1,background:"var(--gray-100,#f3f4f6)",borderRadius:20,height:10,overflow:"hidden"}}>
+                    <div style={{width:p+"%",height:"100%",borderRadius:20,transition:"width .4s ease",
+                      background:completa?"#059669":"linear-gradient(90deg,#7B00C4,#a855f7)"}}/>
+                  </div>
+                  <span style={{fontSize:14,fontWeight:700,color:completa?"#059669":"var(--purple)",minWidth:42,textAlign:"right"}}>{p}%</span>
+                </div>
+                {!completa&&(
+                  <div style={{display:"flex",gap:8,marginTop:12}}>
+                    <button onClick={()=>atualizarProgresso(m,-10)}
+                      style={{flex:1,padding:"9px",borderRadius:10,border:"1.5px solid #e5e7eb",background:"white",
+                        color:"#6b7280",fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>−10%</button>
+                    <button onClick={()=>atualizarProgresso(m,10)}
+                      style={{flex:2,padding:"9px",borderRadius:10,border:"none",background:"var(--purple)",
+                        color:"white",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}>✓ Avancei +10%</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function EmBreve({ titulo="Em construção", sub="Módulo disponível em breve." }) {
   return (
@@ -3844,7 +4108,7 @@ function App() {
         {!eCasal&&tab==="humor"         &&<RegistroHumor user={user}/>}
         {/* tcc e reflexoes agora estão em Recursos Terapêuticos */}
         {!eCasal&&tab==="diario"        &&<FerramentaDiario user={user}/>}
-        {!eCasal&&tab==="metas"         &&<EmBreve titulo="Minhas Metas" sub="Defina e acompanhe seus objetivos."/>}
+        {!eCasal&&tab==="metas"         &&<MinhasMetas user={user}/>}
         {!eCasal&&tab==="ferramentas"   &&<RecursosPaciente user={user} setTab={setTab}/>}
         {!eCasal&&tab==="fabulas"       &&<RecursosPaciente user={user} setTab={setTab} abaInicial="fabulas"/>}
         {!eCasal&&tab==="reflexoes"     &&<EmBreve titulo="Reflexões Cognitivas" sub="Exercícios de insight."/>}
