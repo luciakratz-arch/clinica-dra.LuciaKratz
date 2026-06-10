@@ -1,4 +1,4 @@
-  // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  ÁREA ADMINISTRATIVA — DRA. LUCIA KRATZ  
 //  app.js — Etapa 2: Cadastro completo de pacientes
 // ═══════════════════════════════════════════════════════
@@ -818,6 +818,21 @@ function AbaPerfil({ paciente, pacientes }) {
                 }}>{l}</button>
               ))}
             </div>
+          </div>
+          <div style={{gridColumn:"span 2",fontSize:12,fontWeight:700,color:"var(--purple)",borderBottom:"1px solid var(--purple-soft)",paddingBottom:4,marginTop:4,textTransform:"uppercase",letterSpacing:0.5}}>
+            🏢 Dados Ocupacionais — para documentos NR-1 e declarações
+          </div>
+          <div className="form-group" style={{gridColumn:"span 2"}}>
+            <label className="form-label">Empresa Contratante</label>
+            <input className="form-input" value={form.empresa||""} onChange={e=>setForm({...form,empresa:e.target.value})} placeholder="Ex: Construtora Horizonte Ltda."/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Setor</label>
+            <input className="form-input" value={form.setor||""} onChange={e=>setForm({...form,setor:e.target.value})} placeholder="Ex: Administrativo"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Cargo</label>
+            <input className="form-input" value={form.cargo||""} onChange={e=>setForm({...form,cargo:e.target.value})} placeholder="Ex: Analista de RH"/>
           </div>
           <div className="form-group" style={{gridColumn:"span 2"}}>
             <label className="form-label">Objetivos Terapeuticos</label>
@@ -2282,6 +2297,12 @@ function AbaOcupacional({ paciente }) {
   const [loadingHist, setLoadingHist] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [preview, setPreview] = useState(null); // doc para preview (com _rascunho quando ainda não salvo)
+  // Dados ocupacionais editáveis aqui mesmo (salvam de volta no cadastro do paciente)
+  const [ocup, setOcup] = useState({
+    empresa: paciente.empresa || paciente.empresaContratante || "",
+    setor: paciente.setor || "",
+    cargo: paciente.cargo || "",
+  });
 
   useEffect(() => {
     db.collection("clinica_documentos_nr1")
@@ -2319,9 +2340,9 @@ function AbaOcupacional({ paciente }) {
     return {
       pacienteId: paciente.id,
       pacienteNome: paciente.nome || "",
-      empresaContratante: paciente.empresa || paciente.empresaContratante || "",
-      setor: paciente.setor || "",
-      cargo: paciente.cargo || "",
+      empresaContratante: ocup.empresa || "",
+      setor: ocup.setor || "",
+      cargo: ocup.cargo || "",
       tipoDocumento: form.tipoDocumento,
       periodo: { dataInicio: form.dataInicio, dataFim: form.emAndamento ? "" : form.dataFim, emAndamento: form.emAndamento },
       sessoes: { realizadas: Number(form.sessoesRealizadas) || 0, total: Number(form.sessoesTotal) || 0 },
@@ -2348,6 +2369,10 @@ function AbaOcupacional({ paciente }) {
     const doc = { ...montarDoc(), createdAt: firebase.firestore.FieldValue.serverTimestamp() };
     try {
       const ref = await db.collection("clinica_documentos_nr1").add(doc);
+      // Atualiza os dados ocupacionais no cadastro do paciente
+      await db.collection("clinica_pacientes").doc(paciente.id).update({
+        empresa: ocup.empresa || "", setor: ocup.setor || "", cargo: ocup.cargo || ""
+      }).catch(()=>{});
       const novoDoc = { id: ref.id, ...doc, createdAt: { seconds: Date.now()/1000 } };
       setHistorico(prev => [novoDoc, ...prev]);
       setPreview(novoDoc);
@@ -2561,18 +2586,25 @@ function AbaOcupacional({ paciente }) {
             </div>
           </div>
 
-          {/* Empresa / Setor / Cargo */}
-          <div className="form-group">
+          {/* Empresa / Setor / Cargo — editáveis, salvam no cadastro */}
+          <div className="form-group" style={{ gridColumn: "span 2" }}>
             <label className="form-label">Empresa Contratante</label>
-            <input className="form-input" value={paciente.empresa || paciente.empresaContratante || ""} readOnly
-              placeholder="Preencher no cadastro do paciente"
-              style={{ background: "var(--gray-50)", color: "var(--text-muted)" }} />
+            <input className="form-input" value={ocup.empresa}
+              onChange={e => setOcup({ ...ocup, empresa: e.target.value })}
+              placeholder="Ex: Construtora Horizonte Ltda." />
           </div>
           <div className="form-group">
-            <label className="form-label">Setor / Cargo</label>
-            <input className="form-input" value={[paciente.setor, paciente.cargo].filter(Boolean).join(" · ") || ""} readOnly
-              placeholder="Preencher no cadastro do paciente"
-              style={{ background: "var(--gray-50)", color: "var(--text-muted)" }} />
+            <label className="form-label">Setor</label>
+            <input className="form-input" value={ocup.setor}
+              onChange={e => setOcup({ ...ocup, setor: e.target.value })}
+              placeholder="Ex: Administrativo" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Cargo</label>
+            <input className="form-input" value={ocup.cargo}
+              onChange={e => setOcup({ ...ocup, cargo: e.target.value })}
+              placeholder="Ex: Analista de RH" />
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>Gravados no cadastro do paciente ao salvar o documento.</div>
           </div>
 
           {eDeclaracao ? (
@@ -3133,6 +3165,9 @@ function Pacientes({ user }) {
               <div className="form-group"><label className="form-label">Telefone</label><input className="form-input" value={form.telefone||""} onChange={e=>setForm({...form,telefone:e.target.value})}/></div>
               <div className="form-group"><label className="form-label">Genero</label><select className="form-input" value={form.genero||""} onChange={e=>setForm({...form,genero:e.target.value})}><option value="">Selecione</option><option>Feminino</option><option>Masculino</option><option>Nao-binario</option><option>Nao informar</option></select></div>
               <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status||"ativo"} onChange={e=>setForm({...form,status:e.target.value})}><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="alta">Alta</option></select></div>
+              <div className="form-group" style={{gridColumn:"span 2"}}><label className="form-label">🏢 Empresa Contratante (opcional — NR-1)</label><input className="form-input" value={form.empresa||""} onChange={e=>setForm({...form,empresa:e.target.value})} placeholder="Para colaboradores de empresas"/></div>
+              <div className="form-group"><label className="form-label">Setor</label><input className="form-input" value={form.setor||""} onChange={e=>setForm({...form,setor:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">Cargo</label><input className="form-input" value={form.cargo||""} onChange={e=>setForm({...form,cargo:e.target.value})}/></div>
               <div className="form-group" style={{gridColumn:"span 2"}}><label className="form-label">Objetivos Terapeuticos</label><TextAreaVoz className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos..."/></div>
             </div>
             <div style={{display:"flex",gap:10,marginTop:20,justifyContent:"flex-end"}}>
