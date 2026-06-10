@@ -16,6 +16,22 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// ─── CONFIGURAÇÃO FINANCEIRA EDITÁVEL ───────────────────────────
+// Valores padrão; os reais ficam em clinica_config/comissoes (editáveis na tela Comissões)
+const CONFIG_FIN_PADRAO = {
+  nomeSecretaria: "Jéssica Marjane",
+  salarioFixo: 600,
+  percPrimeira: 10,
+  percRecorrente: 5,
+  percParceiroPadrao: 70
+};
+async function getConfigFin(){
+  try{
+    const d = await db.collection("clinica_config").doc("comissoes").get();
+    return d.exists ? {...CONFIG_FIN_PADRAO, ...d.data()} : {...CONFIG_FIN_PADRAO};
+  }catch(e){ return {...CONFIG_FIN_PADRAO}; }
+}
+
 const LOGO_URL = "../logo-transparente.png";
 const SENHA_ADMIN = "1234";
 const SENHA_PAULO = "1234";
@@ -2849,7 +2865,8 @@ function FinanceiroClinica() {
   const [modalAuditoria, setModalAuditoria] = useState(false);
   const [auditLog, setAuditLog] = useState([]);
   const [auditando, setAuditando] = useState(false);
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",parceiraId:"",percParceiro:"70"});
+  const [parceiras, setParceiras] = useState([]);
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
@@ -2858,7 +2875,8 @@ function FinanceiroClinica() {
     const u1=db.collection("clinica_lancamentos").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
     const u2=db.collection("clinica_pacotes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setPacotes(docs);},()=>{});
     const u3=db.collection("clinica_sessoes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(a.data||"").localeCompare(b.data||""));setSessoes(docs);},()=>{});
-    return()=>{u1();u2();u3();};
+    const u4=db.collection("clinica_parceiras").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));setParceiras(docs);},()=>{});
+    return()=>{u1();u2();u3();u4();};
   },[]);
 
   const getPacNome = id=>pacientes.find(p=>p.id===id)?.nome||"—";
@@ -3100,7 +3118,9 @@ function FinanceiroClinica() {
   }
 
   async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda, pacoteId=null }) {
-    const perc = tipoVenda === "primeira" ? 0.10 : 0.05;
+    const cfg = await getConfigFin();
+    const percNum = tipoVenda === "primeira" ? (parseFloat(cfg.percPrimeira)||10) : (parseFloat(cfg.percRecorrente)||5);
+    const perc = percNum/100;
     const valorComissao = parseFloat((valor * perc).toFixed(2));
     const hoje = new Date();
     const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,"0")}`;
@@ -3119,17 +3139,25 @@ function FinanceiroClinica() {
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, nº de sessões e data de início obrigatórios.");return;}
     const needDias=["2x por semana","3x por semana"].includes(recorrencia);
     if(needDias&&(!diasSemana||diasSemana.length===0)){alert("Selecione os dias da semana.");return;}
+    const eParceria=(formPacote.tipoAtendimento||"particular")==="parceria";
+    if(eParceria&&!formPacote.parceiraId){alert("Selecione a parceira para a venda em parceria.");return;}
     setSalvando(true);
     const pac=pacientes.find(p=>p.id===pacienteId);
     const total=parseInt(totalSessoes)||1;
     const vSessao=parseFloat(valorSessao)||0;
     const vTotal=vSessao*total;
     const datas=gerarDatas(dataInicio,recorrencia,total,diasSemana);
+    const parcSel=eParceria?parceiras.find(p=>p.id===formPacote.parceiraId):null;
+    const percParc=eParceria?(parseFloat(formPacote.percParceiro)||70):0;
 
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
+      tipoAtendimento:formPacote.tipoAtendimento||"particular",
+      parceiraId:eParceria?formPacote.parceiraId:null,
+      parceiraNome:eParceria?(parcSel?.nome||""):null,
+      percParceiro:eParceria?percParc:null,
       statusPag:formPacote.statusPag||"pendente",
       formaPag:formPacote.formaPag||"",
       dataPagamento:formPacote.dataPagamento||"",
@@ -3158,6 +3186,22 @@ function FinanceiroClinica() {
 
     // Registra comissão da secretária
     if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda, pacoteId:pacRef.id });
+
+    // Registra repasse da parceira (venda em parceria)
+    if(eParceria&&parcSel){
+      const vParceira=parseFloat((vTotal*percParc/100).toFixed(2));
+      const mesRefParc=new Date().toISOString().slice(0,7);
+      await db.collection("clinica_comissoes").add({
+        tipo:"Parceria — Repasse", tipoVenda:null, perc:percParc,
+        valorBase:vTotal, valorComissao:vParceira,
+        pacienteNome:pac?.nome||"",
+        responsavel:parcSel.nome||"Parceira",
+        parceiraId:parcSel.id,
+        mesRef:mesRefParc, pacoteId:pacRef.id,
+        status:"pendente",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
 
     // Cria sessões na agenda
     const jaPago = (formPacote.statusPag||"pendente")==="recebido";
@@ -3211,7 +3255,7 @@ function FinanceiroClinica() {
       await batchSoc.commit();
     }
 
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20"});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
@@ -4307,22 +4351,23 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Horário {needDias?"(padrão)":""}</label>
                   <input className="form-input" type="time" value={formPacote.horario} onChange={e=>setFormPacote({...formPacote,horario:e.target.value})}/>
                 </div>
-                {/* Toggle Particular / Social */}
+                {/* Toggle Particular / Social / Parceria */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
                   <label className="form-label">Tipo de Atendimento</label>
                   <div style={{display:"flex",gap:8}}>
-                    {[["particular","🏥 Particular"],["social","🌱 Social"]].map(([v,l])=>(
+                    {[["particular","🏥 Particular"],["social","🌱 Social"],["parceria","🤝 Parceria"]].map(([v,l])=>(
                       <button key={v} type="button" onClick={()=>setFormPacote({...formPacote,tipoAtendimento:v,
                         valorSessao:v==="social"?"":formPacote.valorSessao,
                         valorSupervisaoSocial:v==="social"?"40":formPacote.valorSupervisaoSocial,
-                        valorEstagiariaSocial:v==="social"?"20":formPacote.valorEstagiariaSocial})}
+                        valorEstagiariaSocial:v==="social"?"20":formPacote.valorEstagiariaSocial,
+                        percParceiro:v==="parceria"?(formPacote.percParceiro||"70"):formPacote.percParceiro})}
                         style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
                           borderColor:(formPacote.tipoAtendimento||"particular")===v?
-                            (v==="social"?"#0d9488":"#7B00C4"):"#e5e7eb",
+                            (v==="social"?"#0d9488":v==="parceria"?"#b45309":"#7B00C4"):"#e5e7eb",
                           background:(formPacote.tipoAtendimento||"particular")===v?
-                            (v==="social"?"#ccfbf1":"#f5f3ff"):"white",
+                            (v==="social"?"#ccfbf1":v==="parceria"?"#fef3c7":"#f5f3ff"):"white",
                           color:(formPacote.tipoAtendimento||"particular")===v?
-                            (v==="social"?"#0d9488":"#7B00C4"):"#6b7280"}}>
+                            (v==="social"?"#0d9488":v==="parceria"?"#b45309":"#7B00C4"):"#6b7280"}}>
                         {l}
                       </button>
                     ))}
@@ -4351,6 +4396,45 @@ function FinanceiroClinica() {
                     <div className="form-group"><label className="form-label">Total do Pacote (R$)</label>
                       <input className="form-input" type="number" placeholder="Automático" value={formPacote.valorSessao&&formPacote.totalSessoes?(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0):""} readOnly style={{background:"#f9fafb"}}/>
                     </div>
+                    {(formPacote.tipoAtendimento||"particular")==="parceria"&&(
+                      <>
+                        <div className="form-group">
+                          <label className="form-label">Parceira</label>
+                          <select className="form-input" value={formPacote.parceiraId||""}
+                            onChange={e=>{
+                              const p=parceiras.find(x=>x.id===e.target.value);
+                              setFormPacote({...formPacote,parceiraId:e.target.value,
+                                percParceiro:(p&&p.percentual)?String(p.percentual):(formPacote.percParceiro||"70")});
+                            }}>
+                            <option value="">Selecione a parceira...</option>
+                            {parceiras.filter(p=>p.tipo!=="estagiaria").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                          </select>
+                          {parceiras.filter(p=>p.tipo!=="estagiaria").length===0&&<div style={{fontSize:11,color:"#b45309",marginTop:3}}>Nenhuma parceira cadastrada — cadastre na tela Comissões.</div>}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">% do Parceiro</label>
+                          <input className="form-input" type="number" min="0" max="100" value={formPacote.percParceiro||"70"}
+                            onChange={e=>setFormPacote({...formPacote,percParceiro:e.target.value})}/>
+                          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Editável — padrão 70%</div>
+                        </div>
+                        {formPacote.valorSessao&&formPacote.totalSessoes&&(()=>{
+                          const tot=(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0);
+                          const pp=parseFloat(formPacote.percParceiro)||0;
+                          const vParc=tot*pp/100;
+                          return (
+                            <div style={{gridColumn:"1/-1",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"10px 14px",fontSize:13}}>
+                              <div style={{fontWeight:700,color:"#b45309",marginBottom:6}}>🤝 Cálculo da parceria</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:"6px 18px",color:"#374151"}}>
+                                <span>Total: <strong>R$ {tot.toFixed(2).replace(".",",")}</strong></span>
+                                <span>Repasse parceira ({pp}%): <strong style={{color:"#b45309"}}>R$ {vParc.toFixed(2).replace(".",",")}</strong></span>
+                                <span>Clínica antes da comissão: <strong style={{color:"#059669"}}>R$ {(tot-vParc).toFixed(2).replace(".",",")}</strong></span>
+                              </div>
+                              <div style={{fontSize:11,color:"#92400e",marginTop:6}}>A comissão da secretária (10% ou 5% sobre o total) é definida no botão de salvar abaixo.</div>
+                            </div>
+                          );
+                        })()}
+                      </>
+                    )}
                   </>
                 )}
                 {/* Pagamento */}
@@ -5387,15 +5471,70 @@ function Comissoes({ user }) {
   });
   const [pagando, setPagando] = useState(false);
 
-  const SALARIO_FIXO = 600;
+  // Configurações financeiras editáveis (clinica_config/comissoes)
+  const [config, setConfig] = useState({...CONFIG_FIN_PADRAO});
+  const [editandoConfig, setEditandoConfig] = useState(false);
+  const [formConfig, setFormConfig] = useState({...CONFIG_FIN_PADRAO});
+  const [salvandoConfig, setSalvandoConfig] = useState(false);
+
+  // Parceiras
+  const [parceiras, setParceiras] = useState([]);
+  const [modalParceira, setModalParceira] = useState(false);
+  const [editandoParceira, setEditandoParceira] = useState(null);
+  const [formParceira, setFormParceira] = useState({nome:"",percentual:"70",pix:"",tipo:"parceira"});
+
+  const SALARIO_FIXO = parseFloat(config.salarioFixo)||0;
 
   useEffect(() => {
     const u1 = db.collection("clinica_comissoes").orderBy("createdAt","desc")
       .onSnapshot(s => setComissoes(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
     const u2 = db.collection("clinica_lancamentos").orderBy("createdAt","desc")
       .onSnapshot(s => setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    return () => { u1(); u2(); };
+    const u3 = db.collection("clinica_config").doc("comissoes")
+      .onSnapshot(d => {
+        const cfg = d.exists ? {...CONFIG_FIN_PADRAO, ...d.data()} : {...CONFIG_FIN_PADRAO};
+        setConfig(cfg);
+        if(!editandoConfig) setFormConfig(cfg);
+      }, ()=>{});
+    const u4 = db.collection("clinica_parceiras")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
+        setParceiras(docs);
+      }, ()=>{});
+    return () => { u1(); u2(); u3(); u4(); };
   }, []);
+
+  async function salvarConfig(){
+    setSalvandoConfig(true);
+    await db.collection("clinica_config").doc("comissoes").set({
+      nomeSecretaria: formConfig.nomeSecretaria||"Secretária",
+      salarioFixo: parseFloat(formConfig.salarioFixo)||0,
+      percPrimeira: parseFloat(formConfig.percPrimeira)||10,
+      percRecorrente: parseFloat(formConfig.percRecorrente)||5,
+      percParceiroPadrao: parseFloat(formConfig.percParceiroPadrao)||70,
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    setSalvandoConfig(false);
+    setEditandoConfig(false);
+  }
+
+  async function salvarParceira(){
+    if(!formParceira.nome.trim()){alert("Nome da parceira é obrigatório.");return;}
+    const dados = {
+      nome: formParceira.nome.trim(),
+      percentual: parseFloat(formParceira.percentual)||parseFloat(config.percParceiroPadrao)||70,
+      pix: formParceira.pix||"",
+      tipo: formParceira.tipo||"parceira"
+    };
+    if(editandoParceira){
+      await db.collection("clinica_parceiras").doc(editandoParceira).update(dados);
+    } else {
+      await db.collection("clinica_parceiras").add({...dados, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModalParceira(false); setEditandoParceira(null);
+    setFormParceira({nome:"",percentual:String(config.percParceiroPadrao||70),pix:"",tipo:"parceira"});
+  }
 
   const meses = [...new Set(comissoes.map(c=>c.mesRef))].sort().reverse();
   if (!meses.includes(mesSel) && meses.length > 0) {
@@ -5403,7 +5542,13 @@ function Comissoes({ user }) {
   }
 
   const comissoesMes = comissoes.filter(c => c.mesRef === mesSel);
-  const totalComissoes = comissoesMes.reduce((a,c) => a + (c.valorComissao||0), 0);
+  // Secretária: registros sem responsável definido (vendas dela)
+  const comissoesSecretaria = comissoesMes.filter(c => !c.responsavel);
+  // Repasses: registros com responsável (parceiras, estagiária do social)
+  const repassesMes = comissoesMes.filter(c => c.responsavel);
+  const responsaveis = [...new Set(repassesMes.map(c=>c.responsavel))];
+
+  const totalComissoes = comissoesSecretaria.reduce((a,c) => a + (c.valorComissao||0), 0);
   const totalAPagar = SALARIO_FIXO + totalComissoes;
 
   // Verifica se já foi pago neste mês
@@ -5422,7 +5567,7 @@ function Comissoes({ user }) {
   }
 
   async function pagarSalario() {
-    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para Jéssica em ${getMesLabel(mesSel)}?`)) return;
+    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para ${config.nomeSecretaria} em ${getMesLabel(mesSel)}?`)) return;
     setPagando(true);
     const hoje = new Date().toISOString().slice(0,10);
     // Lança como despesa da clínica
@@ -5435,26 +5580,52 @@ function Comissoes({ user }) {
       valorComissoes: totalComissoes,
       data: hoje,
       status: "pago",
-      obs: `Salário ${getMesLabel(mesSel)} — Jéssica Marjane`,
+      obs: `Salário ${getMesLabel(mesSel)} — ${config.nomeSecretaria}`,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Marca comissões do mês como pagas
+    // Marca apenas as comissões da secretária como pagas
     const batch = db.batch();
-    comissoesMes.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    comissoesSecretaria.filter(c=>c.status!=="pago").forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
     await batch.commit();
     setPagando(false);
     alert("✅ Pagamento registrado como despesa da clínica!");
   }
 
+  async function pagarRepasse(responsavel) {
+    const pendentes = repassesMes.filter(c=>c.responsavel===responsavel && c.status!=="pago");
+    const totalRep = pendentes.reduce((a,c)=>a+(c.valorComissao||0),0);
+    if(pendentes.length===0) return;
+    const parc = parceiras.find(p=>p.nome===responsavel);
+    if (!confirm(`Confirma repasse de R$ ${totalRep.toFixed(2).replace(".",",")} para ${responsavel} em ${getMesLabel(mesSel)}?${parc?.pix?`\nPIX: ${parc.pix}`:""}`)) return;
+    setPagando(true);
+    const hoje = new Date().toISOString().slice(0,10);
+    // Lança como despesa da clínica
+    await db.collection("clinica_lancamentos").add({
+      tipo_lancamento: "repasse_parceira",
+      tipo: `Repasse — ${responsavel}`,
+      mesRef: mesSel,
+      valor: totalRep,
+      data: hoje,
+      status: "pago",
+      obs: `Repasse ${getMesLabel(mesSel)} — ${responsavel} (${pendentes.length} venda(s))`,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const batch = db.batch();
+    pendentes.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    await batch.commit();
+    setPagando(false);
+    alert(`✅ Repasse para ${responsavel} registrado como despesa da clínica!`);
+  }
+
   const corTipoVenda = t => t==="primeira" ? "#7B00C4" : "#0891b2";
-  const labelTipoVenda = t => t==="primeira" ? "🌟 Primeira Venda (10%)" : "🔁 Recorrente (5%)";
+  const labelTipoVenda = t => t==="primeira" ? `🌟 Primeira Venda (${config.percPrimeira}%)` : `🔁 Recorrente (${config.percRecorrente}%)`;
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Comissões — Jéssica</div>
-          <div className="page-subtitle">Salário fixo R$ 600 + comissões por vendas</div>
+          <div className="page-title">Comissões — {config.nomeSecretaria.split(" ")[0]}</div>
+          <div className="page-subtitle">Salário fixo R$ {SALARIO_FIXO.toFixed(2).replace(".",",")} + comissões por vendas · Repasses a parceiras</div>
         </div>
       </div>
 
@@ -5470,16 +5641,57 @@ function Comissoes({ user }) {
         ))}
       </div>
 
+      {/* ⚙️ Configurações financeiras — só psicóloga */}
+      {user.tipo==="psicologa" && (
+        <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",padding:"16px 20px",marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,fontSize:14}}>⚙️ Configurações de Salário e Percentuais</div>
+            {!editandoConfig
+              ? <button onClick={()=>{setFormConfig({...config});setEditandoConfig(true);}}
+                  style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>✏️ Editar</button>
+              : <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setEditandoConfig(false)}
+                    style={{background:"white",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:8,padding:"7px 14px",fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>Cancelar</button>
+                  <button onClick={salvarConfig} disabled={salvandoConfig}
+                    style={{background:"#16a34a",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>{salvandoConfig?"Salvando...":"💾 Salvar"}</button>
+                </div>}
+          </div>
+          {!editandoConfig ? (
+            <div style={{display:"flex",flexWrap:"wrap",gap:"8px 24px",marginTop:12,fontSize:13,color:"#374151"}}>
+              <span>👩‍💼 Secretária: <strong>{config.nomeSecretaria}</strong></span>
+              <span>💵 Salário fixo: <strong>R$ {SALARIO_FIXO.toFixed(2).replace(".",",")}</strong></span>
+              <span>🌟 Primeira venda: <strong>{config.percPrimeira}%</strong></span>
+              <span>🔁 Recorrente: <strong>{config.percRecorrente}%</strong></span>
+              <span>🤝 Parceiro (padrão): <strong>{config.percParceiroPadrao}%</strong></span>
+            </div>
+          ):(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginTop:14}}>
+              <div className="form-group"><label className="form-label">Nome da secretária</label>
+                <input className="form-input" value={formConfig.nomeSecretaria} onChange={e=>setFormConfig({...formConfig,nomeSecretaria:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">Salário fixo (R$)</label>
+                <input className="form-input" type="number" value={formConfig.salarioFixo} onChange={e=>setFormConfig({...formConfig,salarioFixo:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">% primeira venda</label>
+                <input className="form-input" type="number" value={formConfig.percPrimeira} onChange={e=>setFormConfig({...formConfig,percPrimeira:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">% recorrente</label>
+                <input className="form-input" type="number" value={formConfig.percRecorrente} onChange={e=>setFormConfig({...formConfig,percRecorrente:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">% parceiro padrão</label>
+                <input className="form-input" type="number" value={formConfig.percParceiroPadrao} onChange={e=>setFormConfig({...formConfig,percParceiroPadrao:e.target.value})}/></div>
+            </div>
+          )}
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:10}}>Os novos percentuais valem para as próximas vendas; comissões já registradas não mudam.</div>
+        </div>
+      )}
+
       {/* Cards resumo */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,marginBottom:24}}>
         <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
           <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Salário Fixo</div>
-          <div style={{fontSize:22,fontWeight:700,color:"var(--text)"}}>R$ 600,00</div>
+          <div style={{fontSize:22,fontWeight:700,color:"var(--text)"}}>R$ {SALARIO_FIXO.toFixed(2).replace(".",",")}</div>
         </div>
         <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
           <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Comissões {getMesLabel(mesSel)}</div>
           <div style={{fontSize:22,fontWeight:700,color:"#7B00C4"}}>R$ {totalComissoes.toFixed(2).replace(".",",")}</div>
-          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesMes.length} venda(s)</div>
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesSecretaria.length} venda(s)</div>
         </div>
         <div style={{background:pagamentoMes?"#f0fdf4":"#faf5ff",borderRadius:14,padding:"18px 20px",border:`2px solid ${pagamentoMes?"#16a34a":"#7B00C4"}`}}>
           <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Total a Pagar</div>
@@ -5491,7 +5703,7 @@ function Comissoes({ user }) {
       </div>
 
       {/* Botão pagar — só psicóloga vê */}
-      {user.tipo==="psicologa" && !pagamentoMes && comissoesMes.length > 0 && (
+      {user.tipo==="psicologa" && !pagamentoMes && comissoesSecretaria.length > 0 && (
         <button onClick={pagarSalario} disabled={pagando}
           style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:24,fontFamily:"var(--font-body)"}}>
           {pagando ? "Registrando..." : `💰 Registrar Pagamento — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
@@ -5501,14 +5713,14 @@ function Comissoes({ user }) {
       {/* Lista de comissões */}
       <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
-          Detalhamento — {getMesLabel(mesSel)}
+          Detalhamento — {config.nomeSecretaria.split(" ")[0]} — {getMesLabel(mesSel)}
         </div>
-        {comissoesMes.length === 0 ? (
+        {comissoesSecretaria.length === 0 ? (
           <div style={{padding:"40px 20px",textAlign:"center",color:"var(--text-muted)"}}>
             <Icon name="percent" size={32}/>
             <div style={{marginTop:8}}>Nenhuma comissão registrada neste mês</div>
           </div>
-        ) : comissoesMes.map(c => {
+        ) : comissoesSecretaria.map(c => {
           // Verificar se o pacote ainda existe
           const pacoteExiste = !c.pacoteId || pacotes.some(p=>p.id===c.pacoteId);
           const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"—";
@@ -5546,6 +5758,127 @@ function Comissoes({ user }) {
           </div>
         );})}
       </div>
+
+      {/* ── 🤝 REPASSES A PARCEIRAS ── */}
+      <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
+          🤝 Repasses a Parceiras — {getMesLabel(mesSel)}
+        </div>
+        {responsaveis.length===0 ? (
+          <div style={{padding:"30px 20px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+            Nenhum repasse neste mês. Vendas em parceria aparecem aqui automaticamente.
+          </div>
+        ) : responsaveis.map(resp => {
+          const itens = repassesMes.filter(c=>c.responsavel===resp);
+          const totalResp = itens.reduce((a,c)=>a+(c.valorComissao||0),0);
+          const pendentes = itens.filter(c=>c.status!=="pago");
+          const totalPend = pendentes.reduce((a,c)=>a+(c.valorComissao||0),0);
+          const parc = parceiras.find(p=>p.nome===resp);
+          return (
+            <div key={resp} style={{borderBottom:"1px solid var(--gray-100)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",background:"#fffbeb",flexWrap:"wrap",gap:10}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14}}>{resp}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>
+                    {itens.length} venda(s) · Total R$ {totalResp.toFixed(2).replace(".",",")}
+                    {parc?.pix?` · PIX: ${parc.pix}`:""}
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:"var(--text-muted)"}}>Pendente</div>
+                    <div style={{fontWeight:800,fontSize:18,color:totalPend>0?"#b45309":"#16a34a"}}>R$ {totalPend.toFixed(2).replace(".",",")}</div>
+                  </div>
+                  {user.tipo==="psicologa" && totalPend>0 && (
+                    <button onClick={()=>pagarRepasse(resp)} disabled={pagando}
+                      style={{background:"#b45309",color:"white",border:"none",borderRadius:8,padding:"9px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                      {pagando?"...":"💸 Marcar como pago"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {itens.map(c=>(
+                <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px",borderTop:"1px solid var(--gray-100)"}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:13}}>{c.pacienteNome||"—"}</div>
+                    <div style={{fontSize:11,color:"var(--text-muted)"}}>{c.tipo} · {c.perc?`${c.perc}% de R$ ${(c.valorBase||0).toFixed(2).replace(".",",")}`:""}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"#b45309"}}>R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+                    {c.status==="pago"
+                      ? <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago {c.dataPagamento?c.dataPagamento.split("-").reverse().join("/"):""}</div>
+                      : <div style={{fontSize:11,color:"#b45309",fontWeight:600}}>Pendente</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── 🤝 CADASTRO DE PARCEIRAS — só psicóloga ── */}
+      {user.tipo==="psicologa" && (
+        <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
+          <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>Parceiras Cadastradas</span>
+            <button onClick={()=>{setEditandoParceira(null);setFormParceira({nome:"",percentual:String(config.percParceiroPadrao||70),pix:"",tipo:"parceira"});setModalParceira(true);}}
+              style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>+ Nova Parceira</button>
+          </div>
+          {parceiras.length===0 ? (
+            <div style={{padding:"30px 20px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+              Nenhuma parceira cadastrada. Cadastre para usar nas vendas em parceria.
+            </div>
+          ) : parceiras.map(p=>(
+            <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid var(--gray-100)"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:14}}>{p.nome} {p.tipo==="estagiaria"&&<span style={{fontSize:10,fontWeight:700,background:"#ccfbf1",color:"#0d9488",padding:"2px 8px",borderRadius:10,marginLeft:6}}>Estagiária</span>}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>Repasse padrão: {p.percentual||config.percParceiroPadrao}% {p.pix?` · PIX: ${p.pix}`:""}</div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>{setEditandoParceira(p.id);setFormParceira({nome:p.nome||"",percentual:String(p.percentual||config.percParceiroPadrao||70),pix:p.pix||"",tipo:p.tipo||"parceira"});setModalParceira(true);}}
+                  style={{background:"none",border:"1px solid #e5e7eb",borderRadius:6,cursor:"pointer",padding:"5px 10px",fontSize:12}}>✏️</button>
+                <button onClick={async()=>{
+                    if(!confirm(`Excluir parceira ${p.nome}? Os repasses já registrados não serão apagados.`))return;
+                    await db.collection("clinica_parceiras").doc(p.id).delete();
+                  }}
+                  style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"5px 10px",fontSize:12}}>🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Nova/Editar Parceira */}
+      {modalParceira&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalParceira(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:420}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>{editandoParceira?"Editar Parceira":"Nova Parceira"}</div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Nome</label>
+              <input className="form-input" value={formParceira.nome} onChange={e=>setFormParceira({...formParceira,nome:e.target.value})} placeholder="Ex: Thais Cordeiro"/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">% de repasse padrão</label>
+              <input className="form-input" type="number" min="0" max="100" value={formParceira.percentual} onChange={e=>setFormParceira({...formParceira,percentual:e.target.value})}/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Chave PIX (opcional)</label>
+              <input className="form-input" value={formParceira.pix} onChange={e=>setFormParceira({...formParceira,pix:e.target.value})}/>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Tipo</label>
+              <select className="form-input" value={formParceira.tipo} onChange={e=>setFormParceira({...formParceira,tipo:e.target.value})}>
+                <option value="parceira">Parceira (vendas em parceria)</option>
+                <option value="estagiaria">Estagiária (projeto social)</option>
+              </select>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModalParceira(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvarParceira}>{editandoParceira?"Salvar alterações":"Salvar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
