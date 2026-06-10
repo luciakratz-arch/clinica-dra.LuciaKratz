@@ -5549,12 +5549,20 @@ function Comissoes({ user }) {
   const responsaveis = [...new Set(repassesMes.map(c=>c.responsavel))];
 
   const totalComissoes = comissoesSecretaria.reduce((a,c) => a + (c.valorComissao||0), 0);
-  const totalAPagar = SALARIO_FIXO + totalComissoes;
+  // Pendentes × Pagas — o ciclo zera a cada pagamento
+  const comissoesPend  = comissoesSecretaria.filter(c => c.status !== "pago");
+  const comissoesPagas = comissoesSecretaria.filter(c => c.status === "pago");
+  const totalPend  = comissoesPend.reduce((a,c) => a + (c.valorComissao||0), 0);
+  const totalPagas = comissoesPagas.reduce((a,c) => a + (c.valorComissao||0), 0);
 
-  // Verifica se já foi pago neste mês
-  const pagamentoMes = lancamentos.find(l =>
+  // Pagamentos já realizados neste mês (histórico)
+  const pagamentosDoMes = lancamentos.filter(l =>
     l.tipo_lancamento === "salario_secretaria" && l.mesRef === mesSel
   );
+  const pagamentoMes = pagamentosDoMes[0] || null;
+  const salarioJaPago = !!pagamentoMes;
+  // Ciclo atual: salário fixo entra só no 1º pagamento do mês; depois, só comissões novas
+  const totalAPagar = (salarioJaPago ? 0 : SALARIO_FIXO) + totalPend;
 
   const [mesLabel] = useState(() => {
     const [ano, mes] = mesSel.split("-");
@@ -5567,28 +5575,32 @@ function Comissoes({ user }) {
   }
 
   async function pagarSalario() {
-    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para ${config.nomeSecretaria} em ${getMesLabel(mesSel)}?`)) return;
+    const descr = salarioJaPago
+      ? `${comissoesPend.length} comissão(ões) nova(s)`
+      : `salário fixo + ${comissoesPend.length} comissão(ões)`;
+    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para ${config.nomeSecretaria} (${descr}) em ${getMesLabel(mesSel)}?`)) return;
     setPagando(true);
     const hoje = new Date().toISOString().slice(0,10);
     // Lança como despesa da clínica
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento: "salario_secretaria",
-      tipo: "Salário Secretária",
+      tipo: salarioJaPago ? "Comissões Secretária (adicional)" : "Salário Secretária",
       mesRef: mesSel,
       valor: totalAPagar,
-      valorSalarioFixo: SALARIO_FIXO,
-      valorComissoes: totalComissoes,
+      valorSalarioFixo: salarioJaPago ? 0 : SALARIO_FIXO,
+      valorComissoes: totalPend,
+      qtdComissoes: comissoesPend.length,
       data: hoje,
       status: "pago",
-      obs: `Salário ${getMesLabel(mesSel)} — ${config.nomeSecretaria}`,
+      obs: `${salarioJaPago?"Comissões adicionais":"Salário"} ${getMesLabel(mesSel)} — ${config.nomeSecretaria}`,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Marca apenas as comissões da secretária como pagas
+    // Marca apenas as comissões pendentes da secretária como pagas
     const batch = db.batch();
-    comissoesSecretaria.filter(c=>c.status!=="pago").forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    comissoesPend.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
     await batch.commit();
     setPagando(false);
-    alert("✅ Pagamento registrado como despesa da clínica!");
+    alert("✅ Pagamento registrado! O ciclo zerou — novas vendas abrem o próximo pagamento.");
   }
 
   async function pagarRepasse(responsavel) {
@@ -5689,38 +5701,39 @@ function Comissoes({ user }) {
           <div style={{fontSize:22,fontWeight:700,color:"var(--text)"}}>R$ {SALARIO_FIXO.toFixed(2).replace(".",",")}</div>
         </div>
         <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
-          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Comissões {getMesLabel(mesSel)}</div>
-          <div style={{fontSize:22,fontWeight:700,color:"#7B00C4"}}>R$ {totalComissoes.toFixed(2).replace(".",",")}</div>
-          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesSecretaria.length} venda(s)</div>
-        </div>
-        <div style={{background:pagamentoMes?"#f0fdf4":"#faf5ff",borderRadius:14,padding:"18px 20px",border:`2px solid ${pagamentoMes?"#16a34a":"#7B00C4"}`}}>
-          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Total a Pagar</div>
-          <div style={{fontSize:26,fontWeight:800,color:pagamentoMes?"#16a34a":"#7B00C4"}}>
-            R$ {totalAPagar.toFixed(2).replace(".",",")}
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Comissões Pendentes</div>
+          <div style={{fontSize:22,fontWeight:700,color:"#7B00C4"}}>R$ {totalPend.toFixed(2).replace(".",",")}</div>
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesPend.length} venda(s) nova(s)
+            {totalPagas>0&&<span style={{color:"#16a34a"}}> · ✓ R$ {totalPagas.toFixed(2).replace(".",",")} já pagas no mês</span>}
           </div>
-          {pagamentoMes && <div style={{fontSize:11,color:"#16a34a",marginTop:4,fontWeight:600}}>✓ Pago em {pagamentoMes.data?.split("-").reverse().join("/")}</div>}
+        </div>
+        <div style={{background:totalAPagar===0?"#f0fdf4":"#faf5ff",borderRadius:14,padding:"18px 20px",border:`2px solid ${totalAPagar===0?"#16a34a":"#7B00C4"}`}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Total a Pagar {salarioJaPago?"(novo ciclo)":""}</div>
+          <div style={{fontSize:26,fontWeight:800,color:totalAPagar===0?"#16a34a":"#7B00C4"}}>
+            {totalAPagar===0 ? "✓ Tudo pago" : `R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+          </div>
+          {pagamentoMes && <div style={{fontSize:11,color:"#16a34a",marginTop:4,fontWeight:600}}>Último pagamento em {pagamentosDoMes[0].data?.split("-").reverse().join("/")} · {pagamentosDoMes.length} pagamento(s) no mês</div>}
         </div>
       </div>
 
-      {/* Botão pagar — só psicóloga vê */}
-      {user.tipo==="psicologa" && !pagamentoMes && comissoesSecretaria.length > 0 && (
+      {/* Botão pagar — só psicóloga vê; reaparece quando há comissões novas */}
+      {user.tipo==="psicologa" && totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && (
         <button onClick={pagarSalario} disabled={pagando}
           style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:24,fontFamily:"var(--font-body)"}}>
-          {pagando ? "Registrando..." : `💰 Registrar Pagamento — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+          {pagando ? "Registrando..." : `💰 ${salarioJaPago?"Pagar Comissões Novas":"Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
         </button>
       )}
 
-      {/* Lista de comissões */}
+      {/* Lista de comissões — ciclo atual */}
       <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
-          Detalhamento — {config.nomeSecretaria.split(" ")[0]} — {getMesLabel(mesSel)}
+          🔄 Ciclo Atual (a pagar) — {config.nomeSecretaria.split(" ")[0]} — {getMesLabel(mesSel)}
         </div>
-        {comissoesSecretaria.length === 0 ? (
-          <div style={{padding:"40px 20px",textAlign:"center",color:"var(--text-muted)"}}>
-            <Icon name="percent" size={32}/>
-            <div style={{marginTop:8}}>Nenhuma comissão registrada neste mês</div>
+        {comissoesPend.length === 0 ? (
+          <div style={{padding:"30px 20px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+            ✓ Nenhuma comissão pendente — novas vendas aparecem aqui e reabrem o pagamento
           </div>
-        ) : comissoesSecretaria.map(c => {
+        ) : comissoesPend.map(c => {
           // Verificar se o pacote ainda existe
           const pacoteExiste = !c.pacoteId || pacotes.some(p=>p.id===c.pacoteId);
           const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"—";
@@ -5759,7 +5772,37 @@ function Comissoes({ user }) {
         );})}
       </div>
 
-      {/* ── 🤝 REPASSES A PARCEIRAS ── */}
+      {/* ── ✓ Histórico do mês: comissões já pagas e pagamentos realizados ── */}
+      {(comissoesPagas.length>0||pagamentosDoMes.length>0)&&(
+        <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
+          <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14,display:"flex",justifyContent:"space-between"}}>
+            <span>✓ Histórico — {getMesLabel(mesSel)}</span>
+            <span style={{fontSize:13,color:"#16a34a",fontWeight:600}}>R$ {totalPagas.toFixed(2).replace(".",",")} em comissões pagas</span>
+          </div>
+          {pagamentosDoMes.length>0&&(
+            <div style={{padding:"10px 20px",background:"#f0fdf4",borderBottom:"1px solid var(--gray-100)"}}>
+              {pagamentosDoMes.map(pg=>(
+                <div key={pg.id} style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"4px 0"}}>
+                  <span style={{color:"#166534"}}>💰 {pg.tipo} — {pg.data?.split("-").reverse().join("/")}
+                    {pg.qtdComissoes?` · ${pg.qtdComissoes} comissão(ões)`:""}
+                    {(pg.valorSalarioFixo||0)>0?` · inclui salário fixo`:""}
+                  </span>
+                  <strong style={{color:"#166534"}}>R$ {(pg.valor||0).toFixed(2).replace(".",",")}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+          {comissoesPagas.map(c=>(
+            <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px",borderBottom:"1px solid var(--gray-100)",opacity:0.75}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{c.pacienteNome||"—"}</div>
+                <div style={{fontSize:11,color:"var(--text-muted)"}}>{c.tipo} · {labelTipoVenda(c.tipoVenda)} · pago em {c.dataPagamento?c.dataPagamento.split("-").reverse().join("/"):"—"}</div>
+              </div>
+              <div style={{fontWeight:700,fontSize:14,color:"#16a34a"}}>✓ R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+            </div>
+          ))}
+        </div>
+      )}
       <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
           🤝 Repasses a Parceiras — {getMesLabel(mesSel)}
@@ -6714,7 +6757,7 @@ function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");i
         {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos user={user}/>}
         {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
-        {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
+        {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
         {user.tipo==="psicologa"  &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
         {tab==="__menu__"&&(
@@ -6735,7 +6778,7 @@ function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");i
         {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="secretaria" &&tab==="agenda"      &&<Agenda/>}
-        {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
+        {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
         {user.tipo==="paulo"      &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
