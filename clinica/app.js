@@ -1446,13 +1446,31 @@ function FerramentaRastreamento({user}){
 }
 
 // ── Treino Neuro-Auditivo ───────────────────────────────────────────────────
-function FerramentaTreino(){
+function FerramentaTreino({user}){
+  const INFO_REC = {titulo:"Treino Neuro-Auditivo", formularioKey:"treino-neuro-auditivo"};
   const [modulo,setModulo]=React.useState(0);
   const [respostas,setRespostas]=React.useState({});
   const [feedbacks,setFeedbacks]=React.useState({});
   const [score,setScore]=React.useState(0);
   const [total,setTotal]=React.useState(0);
   const [tocando,setTocando]=React.useState(null);
+  const [msgTreino,setMsgTreino]=React.useState("");
+  async function salvarResultado(){
+    if(total===0){alert("Responda pelo menos um exercício antes de salvar.");return;}
+    const pct=Math.round(score/total*100);
+    if(user&&user.id){
+      try{
+        await db.collection("clinica_treino_auditivo").add({
+          pacienteId:user.id, pacienteNome:user.nome||"",
+          acertos:score, total, percentual:pct,
+          data:new Date().toLocaleDateString("pt-BR"),
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`Pontuação ${score}/${total} (${pct}% de acerto)`});
+      }catch(e){}
+    }
+    setMsgTreino("✓ Resultado salvo!");setTimeout(()=>setMsgTreino(""),2500);
+  }
   const ctxRef=React.useRef(null);
   function getCtx(){if(!ctxRef.current)ctxRef.current=new AudioContext();if(ctxRef.current.state==="suspended")ctxRef.current.resume();return ctxRef.current;}
   function tocarTom(freq,dur=1.5,vol=0.4,wave="sine"){const ctx=getCtx();const osc=ctx.createOscillator();const g=ctx.createGain();osc.type=wave;osc.frequency.value=freq;g.gain.setValueAtTime(vol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);osc.connect(g);g.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+dur);}
@@ -1483,9 +1501,15 @@ function FerramentaTreino(){
   const mod=MODULOS[modulo];
   return(
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,padding:"8px 12px",background:"var(--purple-soft)",borderRadius:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,padding:"8px 12px",background:"var(--purple-soft)",borderRadius:8,gap:8,flexWrap:"wrap"}}>
         <span style={{fontSize:13,fontWeight:600,color:"var(--purple)"}}>🏆 {score}/{total}</span>
         <span style={{fontSize:12,color:"var(--purple)"}}>{Math.round(total>0?score/total*100:0)}% de acerto</span>
+        <button onClick={salvarResultado}
+          style={{padding:"7px 14px",borderRadius:8,border:"none",
+            background:msgTreino?"#059669":"var(--purple)",color:"white",fontWeight:700,
+            fontSize:12,cursor:"pointer",fontFamily:"inherit",transition:"background .2s"}}>
+          {msgTreino||"💾 Salvar resultado"}
+        </button>
       </div>
       <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
         {MODULOS.map((m,i)=><button key={i} onClick={()=>setModulo(i)} style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",borderColor:modulo===i?"var(--purple)":"#e5e7eb",background:modulo===i?"var(--purple)":"white",color:modulo===i?"white":"#6b7280",fontSize:12,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{m.emoji} {m.titulo}</button>)}
@@ -1519,6 +1543,37 @@ function FerramentaPortal({ recurso, user }){
   const paginas = recurso.paginas||[];
   if(paginas.length>0){
     const [idx,setIdx] = React.useState(0);
+    const [respFab,setRespFab] = React.useState({});
+    const [msgFab,setMsgFab] = React.useState("");
+    const jaConcluiu = React.useRef(false);
+    function avancar(){
+      setIdx(i=>{
+        const n = Math.min(paginas.length-1, i+1);
+        if(n===paginas.length-1 && !jaConcluiu.current){
+          jaConcluiu.current = true;
+          registrarUsoRecurso(user, recurso, "concluiu", {detalhe:"Leu a fábula até o fim"});
+        }
+        return n;
+      });
+    }
+    async function salvarReflexoesFabula(){
+      const perguntas = recurso.perguntas||[];
+      if(!perguntas.some((_,i)=>(respFab[i]||"").trim())){alert("Escreva pelo menos uma reflexão antes de salvar.");return;}
+      if(user&&user.id){
+        try{
+          await db.collection("clinica_reflexoes").add({
+            pacienteId:user.id, pacienteNome:user.nome||"",
+            origem:"fabula",
+            origemId:recurso.id||"", origemTitulo:recurso.titulo||recurso.nome||"",
+            registros:perguntas.map((p,i)=>({pergunta:p, resposta:respFab[i]||""})),
+            data:new Date().toLocaleDateString("pt-BR"),
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+          registrarUsoRecurso(user,recurso,"salvou",{detalhe:"Reflexões da fábula — "+(recurso.titulo||recurso.nome||"")});
+        }catch(e){}
+      }
+      setMsgFab("✓ Reflexões salvas!");setTimeout(()=>setMsgFab(""),2500);
+    }
     const pag = paginas[idx]||"";
     const pct = Math.round(((idx+1)/paginas.length)*100);
     const concluido = idx===paginas.length-1;
@@ -1549,11 +1604,25 @@ function FerramentaPortal({ recurso, user }){
           <div style={{background:"#f5f3ff",borderRadius:14,padding:"18px 20px",marginBottom:20,border:"1px solid #ede9fe"}}>
             <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.6px"}}>💭 Para Refletir</div>
             {(recurso.perguntas||[]).map((q,i)=>(
-              <div key={i} style={{display:"flex",gap:10,marginBottom:i<(recurso.perguntas||[]).length-1?10:0}}>
-                <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
-                <span style={{fontSize:14,color:"#374151",lineHeight:1.7}}>{q}</span>
+              <div key={i} style={{marginBottom:14}}>
+                <div style={{display:"flex",gap:10,marginBottom:6}}>
+                  <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
+                  <span style={{fontSize:14,color:"#374151",lineHeight:1.7}}>{q}</span>
+                </div>
+                <textarea value={respFab[i]||""}
+                  onChange={e=>setRespFab(r=>({...r,[i]:e.target.value}))}
+                  placeholder="Escreva sua reflexão..."
+                  style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
+                    border:"1px solid #7B00C450",fontSize:13,fontFamily:"Inter,sans-serif",
+                    resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
               </div>
             ))}
+            <button onClick={salvarReflexoesFabula}
+              style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
+                background:msgFab?"#059669":"#7B00C4",color:"white",cursor:"pointer",
+                fontSize:13,fontWeight:700,fontFamily:"Inter,sans-serif",transition:"background .2s"}}>
+              {msgFab||"💾 Salvar minhas reflexões"}
+            </button>
           </div>
         )}
         {/* Navegação */}
@@ -1566,7 +1635,7 @@ function FerramentaPortal({ recurso, user }){
             ← Anterior
           </button>
           {!concluido?(
-            <button onClick={()=>setIdx(i=>i+1)}
+            <button onClick={avancar}
               style={{flex:2,padding:"13px",borderRadius:12,border:"none",
                 background:"linear-gradient(135deg,#7B00C4,#a855f7)",
                 color:"white",fontWeight:700,fontSize:15,cursor:"pointer",
@@ -1600,6 +1669,17 @@ function FerramentaPortal({ recurso, user }){
       {conteudo&&(()=>{
         const slides = conteudo.split("\n\n").filter(function(p){return p.trim().length>2;});
         const [idx, setIdx] = React.useState(0);
+        const jaConc = React.useRef(false);
+        function proximoSlide(){
+          setIdx(i=>{
+            const n = Math.min(slides.length-1, i+1);
+            if(n===slides.length-1 && !jaConc.current){
+              jaConc.current = true;
+              registrarUsoRecurso(user, recurso, "concluiu", {detalhe:"Concluiu o conteúdo"});
+            }
+            return n;
+          });
+        }
         const atual = slides[idx]||"";
         const linhas = atual.trim().split("\n");
         const titulo = linhas[0];
@@ -1624,7 +1704,7 @@ function FerramentaPortal({ recurso, user }){
                 ← Anterior
               </button>
               {idx<slides.length-1?(
-                <button onClick={()=>setIdx(i=>i+1)}
+                <button onClick={proximoSlide}
                   style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#7B00C4",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
                   Próximo →
                 </button>
@@ -1640,10 +1720,14 @@ function FerramentaPortal({ recurso, user }){
       })()}
       {!objetivo&&!conteudo&&(
         <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{fontSize:48,marginBottom:12}}>🔧</div>
-          <div style={{fontFamily:"var(--font-display,Georgia)",fontSize:18,fontWeight:700,color:"#7B00C4",marginBottom:8}}>Em desenvolvimento</div>
+          <div style={{fontSize:48,marginBottom:12}}>{recurso._colecao==="fabulas"?"📖":"🔧"}</div>
+          <div style={{fontFamily:"var(--font-display,Georgia)",fontSize:18,fontWeight:700,color:"#7B00C4",marginBottom:8}}>
+            {recurso._colecao==="fabulas"?"Fábula em preparação":"Em desenvolvimento"}
+          </div>
           <div style={{fontSize:13,color:"#6b7280",lineHeight:1.6,maxWidth:280,margin:"0 auto"}}>
-            Esta ferramenta está sendo preparada especialmente para você.<br/>Em breve estará disponível nesta área. 💜
+            {recurso._colecao==="fabulas"
+              ? <span>O texto desta fábula ainda está sendo preparado pela sua psicóloga.<br/>Volte em breve para conferir a história completa. 💜</span>
+              : <span>Esta ferramenta está sendo preparada especialmente para você.<br/>Em breve estará disponível nesta área. 💜</span>}
           </div>
         </div>
       )}
