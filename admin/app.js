@@ -2263,6 +2263,596 @@ function AbaCasal({ paciente, pacientes }) {
 }
 
 // PERFIL COMPLETO
+function AbaOcupacional({ paciente }) {
+  const EMITIDO_POR = { nome: "Dra. Lucia Kratz", crp: "CRP 09/20590" };
+
+  const formVazio = {
+    tipoDocumento: "relatorio_nr1",
+    dataInicio: "",
+    dataFim: "",
+    emAndamento: false,
+    sessoesRealizadas: "",
+    sessoesTotal: "",
+    statusPrograma: "em_andamento",
+    parecerTecnico: "",
+  };
+
+  const [form, setForm] = useState(formVazio);
+  const [historico, setHistorico] = useState([]);
+  const [loadingHist, setLoadingHist] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [preview, setPreview] = useState(null); // doc para preview PDF
+
+  // Carregar histórico do paciente
+  useEffect(() => {
+    db.collection("clinica_documentos_nr1")
+      .where("pacienteId", "==", paciente.id)
+      .orderBy("createdAt", "desc")
+      .get()
+      .then(snap => {
+        setHistorico(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setLoadingHist(false);
+      })
+      .catch(() => setLoadingHist(false));
+  }, [paciente.id]);
+
+  const STATUS_LABELS = {
+    em_andamento: "Em andamento (Acompanhamento contínuo)",
+    concluido: "Concluído (Alta do programa ocupacional)",
+    encaminhado: "Encaminhado para Especialista Externo",
+    descontinuado: "Descontinuado (Faltas / Não adesão)",
+  };
+
+  const TIPO_LABELS = {
+    relatorio_nr1: "Relatório de Atendimento Psicossocial (NR-1)",
+    declaracao: "Declaração de Comparecimento",
+  };
+
+  async function salvarEGerar() {
+    if (!form.parecerTecnico && form.tipoDocumento === "relatorio_nr1") {
+      alert("Preencha o Parecer Técnico antes de gerar o documento.");
+      return;
+    }
+    setSalvando(true);
+    const doc = {
+      pacienteId: paciente.id,
+      pacienteNome: paciente.nome || "",
+      empresaContratante: paciente.empresa || paciente.empresaContratante || "",
+      setor: paciente.setor || "",
+      cargo: paciente.cargo || "",
+      tipoDocumento: form.tipoDocumento,
+      periodo: {
+        dataInicio: form.dataInicio,
+        dataFim: form.emAndamento ? "" : form.dataFim,
+        emAndamento: form.emAndamento,
+      },
+      sessoes: {
+        realizadas: Number(form.sessoesRealizadas) || 0,
+        total: Number(form.sessoesTotal) || 0,
+      },
+      statusPrograma: form.statusPrograma,
+      parecerTecnico: form.parecerTecnico,
+      emitidoPor: EMITIDO_POR,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      const ref = await db.collection("clinica_documentos_nr1").add(doc);
+      const novoDoc = { id: ref.id, ...doc, createdAt: { seconds: Date.now() / 1000 } };
+      setHistorico(prev => [novoDoc, ...prev]);
+      setPreview(novoDoc);
+      setForm(formVazio);
+    } catch (e) {
+      alert("Erro ao salvar: " + e.message);
+    }
+    setSalvando(false);
+  }
+
+  function abrirPreview(doc) { setPreview(doc); }
+
+  function imprimirPreview() {
+    const conteudo = document.getElementById("nr1-preview-print");
+    if (!conteudo) return;
+    const w = window.open("", "_blank");
+    w.document.write(`
+      <html><head><title>Documento NR-1</title>
+      <style>
+        body{font-family:Arial,sans-serif;margin:40px;color:#1f2937;font-size:13px;line-height:1.6}
+        h1{color:#7B00C4;font-size:20px;margin-bottom:4px}
+        h2{color:#7B00C4;font-size:14px;margin:18px 0 6px;border-bottom:2px solid #e9d5ff;padding-bottom:4px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-bottom:12px}
+        .label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:2px}
+        .valor{font-weight:500;font-size:13px}
+        .parecer{background:#f9f5ff;border-left:3px solid #7B00C4;padding:12px 16px;border-radius:4px;white-space:pre-wrap}
+        .rodape{margin-top:48px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:11px;color:#6b7280}
+        .aviso{background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;font-size:11px;margin-top:16px}
+        @media print{body{margin:20px}.no-print{display:none}}
+      </style></head><body>
+      ${conteudo.innerHTML}
+      </body></html>
+    `);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 400);
+  }
+
+  const fmtData = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+
+  // ─── PREVIEW PDF ──────────────────────────────────────────
+  if (preview) {
+    const periodoStr = preview.periodo?.emAndamento
+      ? `${fmtData(preview.periodo?.dataInicio)} — Em andamento`
+      : `${fmtData(preview.periodo?.dataInicio)} a ${fmtData(preview.periodo?.dataFim)}`;
+
+    return (
+      <div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+          <button className="btn btn-ghost" onClick={() => setPreview(null)}>
+            <Icon name="arrow-left" size={15} /> Voltar ao formulário
+          </button>
+          <button className="btn btn-purple" onClick={imprimirPreview}>
+            <Icon name="printer" size={15} /> Imprimir / Salvar PDF
+          </button>
+        </div>
+
+        <div id="nr1-preview-print" style={{ background: "white", borderRadius: 16, border: "1px solid var(--gray-200)", padding: 32, maxWidth: 680 }}>
+          {/* Cabeçalho timbrado */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, paddingBottom: 16, borderBottom: "2px solid #7B00C4" }}>
+            <div>
+              <div style={{ fontFamily: "Dancing Script, cursive", fontSize: 26, color: "#7B00C4", fontWeight: 700 }}>Dra. Lucia Kratz</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>Goiânia, GO — luciakratz.com.br</div>
+            </div>
+            <img src="../logo-transparente.png" style={{ height: 48, objectFit: "contain" }} onError={e => e.target.style.display = "none"} />
+          </div>
+
+          {/* Título */}
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#1f2937", textTransform: "uppercase", letterSpacing: 1 }}>
+              {TIPO_LABELS[preview.tipoDocumento] || preview.tipoDocumento}
+            </div>
+            <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+              Emitido em {preview.createdAt?.seconds ? new Date(preview.createdAt.seconds * 1000).toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR")}
+            </div>
+          </div>
+
+          {/* Dados do colaborador */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+              Dados do Colaborador
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+              {[
+                ["Nome", preview.pacienteNome],
+                ["Empresa Contratante", preview.empresaContratante || "—"],
+                ["Cargo", preview.cargo || "—"],
+                ["Setor", preview.setor || "—"],
+              ].map(([l, v]) => (
+                <div key={l}>
+                  <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dados do atendimento */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+              Dados do Atendimento
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+              {[
+                ["Vigência", periodoStr],
+                ["Sessões Realizadas", `${preview.sessoes?.realizadas || 0} de ${preview.sessoes?.total || 0}`],
+                ["Status no Programa", STATUS_LABELS[preview.statusPrograma] || preview.statusPrograma],
+              ].map(([l, v]) => (
+                <div key={l} style={{ gridColumn: l === "Status no Programa" ? "span 2" : "auto" }}>
+                  <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Parecer técnico */}
+          {preview.parecerTecnico && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                Parecer Técnico
+              </div>
+              <div style={{ background: "#f9f5ff", borderLeft: "3px solid #7B00C4", padding: "12px 16px", borderRadius: 4, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                {preview.parecerTecnico}
+              </div>
+            </div>
+          )}
+
+          {/* Aviso ético */}
+          <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 6, padding: "10px 14px", fontSize: 11, marginBottom: 24, color: "#78350f" }}>
+            ⚖️ Este documento foi elaborado em conformidade com a Resolução CFP nº 06/2019, preservando o sigilo profissional. Não contém diagnósticos, CID, sintomas clínicos ou informações íntimas do colaborador.
+          </div>
+
+          {/* Assinatura */}
+          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 20, display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ width: 200, borderBottom: "1px solid #1f2937", marginBottom: 6 }} />
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{EMITIDO_POR.nome}</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>{EMITIDO_POR.crp} · Psicóloga</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>TCC · Musicoterapia · Neuromodulação</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── FORMULÁRIO ───────────────────────────────────────────
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Formulário principal */}
+      <div className="card">
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="briefcase" size={18} style={{ color: "var(--purple)" }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Saúde Ocupacional — NR-1</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Relatórios e declarações para empresas contratantes</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+
+          {/* Tipo de documento */}
+          <div className="form-group" style={{ gridColumn: "span 2" }}>
+            <label className="form-label">Tipo de Documento</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {Object.entries(TIPO_LABELS).map(([val, label]) => (
+                <button key={val} onClick={() => setForm({ ...form, tipoDocumento: val })}
+                  style={{ padding: "8px 16px", borderRadius: 20, border: "1.5px solid", cursor: "pointer", fontSize: 13, fontFamily: "var(--font-body)", transition: "all .2s",
+                    borderColor: form.tipoDocumento === val ? "var(--purple)" : "var(--gray-200)",
+                    background: form.tipoDocumento === val ? "var(--purple)" : "white",
+                    color: form.tipoDocumento === val ? "white" : "var(--gray-600)",
+                    fontWeight: form.tipoDocumento === val ? 600 : 400 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Empresa / Setor / Cargo (lidos do cadastro, editáveis aqui) */}
+          <div className="form-group">
+            <label className="form-label">Empresa Contratante</label>
+            <input className="form-input" value={paciente.empresa || paciente.empresaContratante || ""} readOnly
+              placeholder="Preencher no cadastro do paciente"
+              style={{ background: "var(--gray-50)", color: "var(--text-muted)" }} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Setor / Cargo</label>
+            <input className="form-input" value={[paciente.setor, paciente.cargo].filter(Boolean).join(" · ") || ""} readOnly
+              placeholder="Preencher no cadastro do paciente"
+              style={{ background: "var(--gray-50)", color: "var(--text-muted)" }} />
+          </div>
+
+          {/* Vigência */}
+          <div className="form-group">
+            <label className="form-label">Data de Início</label>
+            <input className="form-input" type="date" value={form.dataInicio} onChange={e => setForm({ ...form, dataInicio: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Data de Fim</label>
+            <input className="form-input" type="date" value={form.dataFim} disabled={form.emAndamento}
+              onChange={e => setForm({ ...form, dataFim: e.target.value })}
+              style={form.emAndamento ? { background: "var(--gray-50)", color: "var(--text-muted)" } : {}} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+              <input type="checkbox" id="emAndamento" checked={form.emAndamento}
+                onChange={e => setForm({ ...form, emAndamento: e.target.checked, dataFim: "" })} />
+              <label htmlFor="emAndamento" style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}>Em andamento</label>
+            </div>
+          </div>
+
+          {/* Sessões */}
+          <div className="form-group">
+            <label className="form-label">Sessões Realizadas</label>
+            <input className="form-input" type="number" min="0" value={form.sessoesRealizadas}
+              onChange={e => setForm({ ...form, sessoesRealizadas: e.target.value })} placeholder="Ex: 4" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Total Planejado</label>
+            <input className="form-input" type="number" min="0" value={form.sessoesTotal}
+              onChange={e => setForm({ ...form, sessoesTotal: e.target.value })} placeholder="Ex: 8" />
+          </div>
+
+          {/* Status */}
+          <div className="form-group" style={{ gridColumn: "span 2" }}>
+            <label className="form-label">Status no Programa</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+              {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                <label key={val} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                  padding: "10px 14px", borderRadius: 8, border: "1.5px solid", transition: "all .2s",
+                  borderColor: form.statusPrograma === val ? "var(--purple)" : "var(--gray-200)",
+                  background: form.statusPrograma === val ? "var(--purple-soft)" : "white" }}>
+                  <input type="radio" name="statusPrograma" value={val} checked={form.statusPrograma === val}
+                    onChange={() => setForm({ ...form, statusPrograma: val })} />
+                  <span style={{ fontSize: 13, fontWeight: form.statusPrograma === val ? 600 : 400,
+                    color: form.statusPrograma === val ? "var(--purple)" : "var(--gray-700)" }}>{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Parecer técnico */}
+          <div className="form-group" style={{ gridColumn: "span 2" }}>
+            <label className="form-label">Parecer Técnico</label>
+            <TextAreaVoz className="form-input" rows={6} value={form.parecerTecnico}
+              onChange={e => setForm({ ...form, parecerTecnico: e.target.value })}
+              placeholder={"Foque em:\n• Capacidade laboral e funcionalidade no trabalho\n• Recomendações ergonômicas ou organizacionais\n• Necessidade de adaptações no posto de trabalho\n\nEvite: diagnósticos, CID, sintomas clínicos, informações íntimas."} />
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+              ⚖️ Este campo deve seguir a Resolução CFP nº 06/2019 — foco em capacidade laboral, sem expor diagnósticos ou CID.
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+          <button className="btn btn-purple" onClick={salvarEGerar} disabled={salvando}>
+            <Icon name="file-text" size={15} /> {salvando ? "Salvando..." : "Salvar e Gerar Documento"}
+          </button>
+        </div>
+      </div>
+
+      {/* Histórico */}
+      <div className="card">
+        <div style={{ fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="history" size={16} /> Histórico de Documentos NR-1
+        </div>
+        {loadingHist ? (
+          <div style={{ textAlign: "center", padding: 20, color: "var(--text-muted)" }}>Carregando...</div>
+        ) : historico.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 20, color: "var(--text-muted)", fontSize: 13 }}>
+            Nenhum documento gerado ainda.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {historico.map(doc => (
+              <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
+                borderRadius: 10, border: "1px solid var(--gray-200)", background: "white" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--purple-soft)",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon name="file-text" size={16} style={{ color: "var(--purple)" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{TIPO_LABELS[doc.tipoDocumento] || doc.tipoDocumento}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                    {doc.periodo?.emAndamento
+                      ? `${fmtData(doc.periodo?.dataInicio)} — Em andamento`
+                      : `${fmtData(doc.periodo?.dataInicio)} a ${fmtData(doc.periodo?.dataFim)}`}
+                    {" · "}
+                    {doc.sessoes?.realizadas || 0}/{doc.sessoes?.total || 0} sessões
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-outline" style={{ padding: "6px 12px", fontSize: 12 }}
+                    onClick={() => abrirPreview(doc)}>
+                    <Icon name="eye" size={13} /> Ver
+                  </button>
+                  <button className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }}
+                    onClick={() => { abrirPreview(doc); setTimeout(imprimirPreview, 300); }}>
+                    <Icon name="printer" size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO 2: LINKS COMPARTILHÁVEIS — AbaLinksPartilhados
+//  Coleção: clinica_links_partilhados
+//  Inserir: antes da função PerfilPaciente em admin/app.js
+// ═══════════════════════════════════════════════════════════════════
+
+// Ferramentas disponíveis para link compartilhável
+const FERRAMENTAS_LINK = [
+  { id: "anamnese",    nome: "Anamnese — Marcos do Desenvolvimento", emoji: "📋", desc: "Formulário completo de anamnese" },
+  { id: "entrevista",  nome: "Entrevista Clínica Inicial (DSM-5)",   emoji: "🧠", desc: "Instrumento de avaliação clínica inicial" },
+  { id: "arvore",      nome: "Árvore da Decisão",                    emoji: "🌳", desc: "Técnica TCC para transformar preocupações" },
+  { id: "ansiedade",   nome: "Gestão da Ansiedade",                  emoji: "🎯", desc: "Tracking de estresse, humor e roda da vida" },
+  { id: "alimentacao", nome: "Rastreamento Emocional da Alimentação", emoji: "🍎", desc: "Relação entre emoções e comportamento alimentar" },
+  { id: "abc-record",  nome: "Registro ABC de Pensamentos",          emoji: "📝", desc: "Modelo de registro cognitivo TCC" },
+  { id: "relaxamento", nome: "Relaxamento Muscular Progressivo",     emoji: "💆", desc: "Técnica de Jacobson para tensão e ansiedade" },
+];
+
+function gerarToken() {
+  return Math.random().toString(36).substring(2, 10).toUpperCase() +
+    Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+function AbaLinksPartilhados({ paciente }) {
+  const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+  const [links, setLinks] = useState({});       // { ferramentaId: { token, status, createdAt, docId } }
+  const [loading, setLoading] = useState(true);
+  const [gerando, setGerando] = useState({});   // { ferramentaId: true }
+  const [copiado, setCopiado] = useState({});   // { token: true }
+
+  // Carregar links existentes
+  useEffect(() => {
+    db.collection("clinica_links_partilhados")
+      .where("pacienteId", "==", paciente.id)
+      .get()
+      .then(snap => {
+        const mapa = {};
+        snap.docs.forEach(d => {
+          const data = d.data();
+          // Manter o mais recente por ferramenta
+          if (!mapa[data.tipoFerramenta] || (data.createdAt?.seconds || 0) > (mapa[data.tipoFerramenta]?.createdAt?.seconds || 0)) {
+            mapa[data.tipoFerramenta] = { docId: d.id, ...data };
+          }
+        });
+        setLinks(mapa);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [paciente.id]);
+
+  async function gerarLink(ferramenta) {
+    setGerando(g => ({ ...g, [ferramenta.id]: true }));
+    const token = gerarToken();
+    const doc = {
+      token,
+      pacienteId: paciente.id,
+      pacienteNome: paciente.nome || "",
+      tipoFerramenta: ferramenta.id,
+      nomeFerramenta: ferramenta.nome,
+      status: "pendente",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      // Desativar link anterior se existir
+      if (links[ferramenta.id]?.docId) {
+        await db.collection("clinica_links_partilhados").doc(links[ferramenta.id].docId).update({ status: "substituido" });
+      }
+      const ref = await db.collection("clinica_links_partilhados").add(doc);
+      setLinks(l => ({
+        ...l,
+        [ferramenta.id]: {
+          docId: ref.id, token, status: "pendente",
+          createdAt: { seconds: Date.now() / 1000 },
+          tipoFerramenta: ferramenta.id,
+        },
+      }));
+    } catch (e) {
+      alert("Erro ao gerar link: " + e.message);
+    }
+    setGerando(g => ({ ...g, [ferramenta.id]: false }));
+  }
+
+  function copiarLink(token) {
+    const url = `${BASE_URL}/responder?token=${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiado(c => ({ ...c, [token]: true }));
+    setTimeout(() => setCopiado(c => ({ ...c, [token]: false })), 2000);
+  }
+
+  function enviarWhatsApp(ferramenta, token) {
+    const url = `${BASE_URL}/responder?token=${token}`;
+    const nome = paciente.nome?.split(" ")[0] || "paciente";
+    const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:\n\n📋 *${ferramenta.nome}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
+  const fmtDataHora = (seconds) => {
+    if (!seconds) return "—";
+    return new Date(seconds * 1000).toLocaleDateString("pt-BR");
+  };
+
+  const STATUS_CONFIG = {
+    pendente:    { label: "Pendente",    cor: "#d97706", bg: "#fef3c7", icon: "clock" },
+    respondido:  { label: "Respondido", cor: "#059669", bg: "#d1fae5", icon: "check-circle" },
+    substituido: { label: "Substituído",cor: "#6b7280", bg: "#f3f4f6", icon: "refresh-cw" },
+  };
+
+  return (
+    <div className="card">
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="link" size={18} style={{ color: "var(--purple)" }} />
+        </div>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>Links Compartilháveis</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Envie ferramentas clínicas diretamente para {paciente.nome?.split(" ")[0] || "o paciente"} responder pelo celular</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)" }}>Carregando...</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {FERRAMENTAS_LINK.map(ferramenta => {
+            const linkAtual = links[ferramenta.id];
+            const statusCfg = STATUS_CONFIG[linkAtual?.status] || null;
+            const url = linkAtual ? `${BASE_URL}/responder?token=${linkAtual.token}` : null;
+
+            return (
+              <div key={ferramenta.id} style={{ border: "1.5px solid", borderColor: linkAtual ? "var(--purple)" : "var(--gray-200)",
+                borderRadius: 12, padding: "14px 16px", background: linkAtual ? "var(--purple-soft)" : "white", transition: "all .2s" }}>
+
+                {/* Header da ferramenta */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: linkAtual ? 12 : 0 }}>
+                  <div style={{ fontSize: 24, flexShrink: 0 }}>{ferramenta.emoji}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{ferramenta.nome}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{ferramenta.desc}</div>
+                  </div>
+
+                  {/* Badge status */}
+                  {statusCfg && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 20,
+                      background: statusCfg.bg, color: statusCfg.cor, fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                      <Icon name={statusCfg.icon} size={11} />
+                      {statusCfg.label}
+                      {linkAtual?.status === "respondido" && linkAtual?.respondidoEm &&
+                        <span> em {fmtDataHora(linkAtual.respondidoEm?.seconds)}</span>
+                      }
+                    </div>
+                  )}
+
+                  {/* Botão gerar link */}
+                  <button className="btn btn-outline" style={{ padding: "6px 12px", fontSize: 12, flexShrink: 0 }}
+                    onClick={() => gerarLink(ferramenta)} disabled={gerando[ferramenta.id]}>
+                    <Icon name="link" size={13} />
+                    {gerando[ferramenta.id] ? "Gerando..." : linkAtual ? "Novo Link" : "Gerar Link"}
+                  </button>
+                </div>
+
+                {/* Link gerado */}
+                {linkAtual && linkAtual.status !== "substituido" && url && (
+                  <div style={{ marginTop: 4 }}>
+                    {/* URL */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, background: "white",
+                      border: "1px solid var(--gray-200)", borderRadius: 8, padding: "8px 12px", marginBottom: 10 }}>
+                      <Icon name="link" size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {url}
+                      </span>
+                    </div>
+
+                    {/* Ações */}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button className="btn btn-outline" style={{ padding: "7px 14px", fontSize: 12 }}
+                        onClick={() => copiarLink(linkAtual.token)}>
+                        <Icon name={copiado[linkAtual.token] ? "check" : "copy"} size={13} />
+                        {copiado[linkAtual.token] ? "Copiado!" : "Copiar Link"}
+                      </button>
+                      <button className="btn btn-purple" style={{ padding: "7px 14px", fontSize: 12 }}
+                        onClick={() => enviarWhatsApp(ferramenta, linkAtual.token)}>
+                        <Icon name="message-circle" size={13} /> Enviar pelo WhatsApp
+                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
+                        <Icon name="calendar" size={11} />
+                        Gerado em {fmtDataHora(linkAtual.createdAt?.seconds)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Nota informativa */}
+      <div style={{ marginTop: 16, padding: "10px 14px", background: "#eff6ff", borderRadius: 8, fontSize: 11, color: "#1e40af", lineHeight: 1.6 }}>
+        💡 <strong>Como funciona:</strong> O paciente recebe o link, acessa a ferramenta no celular, preenche e envia. As respostas entram automaticamente no prontuário e o status muda para <strong>Respondido</strong>.
+        O link expira após ser respondido ou quando um novo link é gerado para a mesma ferramenta.
+      </div>
+    </div>
+  );
+}
+
 function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
   const [aba, setAba] = useState("perfil");
   const isSecretaria = user?.tipo==="secretaria";
@@ -2275,6 +2865,8 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
       {id:"laudos",   label:"Laudos",          icon:"file-text"},
       {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
       {id:"casal",    label:"Terapia de Casal",icon:"heart"},
+      {id:"nr1",      label:"Saúde Ocupacional",   icon:"briefcase"},
+      {id:"links",    label:"Links Partilhados",   icon:"link"},
     ]:[]),
   ];
   return (
@@ -2303,6 +2895,8 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
       {aba==="laudos"     &&<EmBreve titulo="Laudos" subtitulo="Etapa 10"/>}
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
       {aba==="casal"      &&<AbaCasal       paciente={paciente} pacientes={pacientes}/>}
+      {aba==="nr1"        &&<AbaOcupacional paciente={paciente}/>}
+      {aba==="links"      &&<AbaLinksPartilhados paciente={paciente}/>}
     </div>
   );
 }
