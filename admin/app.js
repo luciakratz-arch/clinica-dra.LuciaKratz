@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════
 //  ÁREA ADMINISTRATIVA — DRA. LUCIA KRATZ  
 //  app.js — Etapa 2: Cadastro completo de pacientes
 // ═══════════════════════════════════════════════════════
@@ -2265,32 +2265,32 @@ function AbaCasal({ paciente, pacientes }) {
 // PERFIL COMPLETO
 function AbaOcupacional({ paciente }) {
   const EMITIDO_POR = { nome: "Dra. Lucia Kratz", crp: "CRP 09/20590" };
+  const ASSINATURA_URL = "../Assinatura Lúcia Kratz.png"; // imagem na raiz do repositório
 
   const formVazio = {
     tipoDocumento: "relatorio_nr1",
-    dataInicio: "",
-    dataFim: "",
-    emAndamento: false,
-    sessoesRealizadas: "",
-    sessoesTotal: "",
-    statusPrograma: "em_andamento",
-    parecerTecnico: "",
+    // Relatório NR-1
+    dataInicio: "", dataFim: "", emAndamento: false,
+    sessoesRealizadas: "", sessoesTotal: "",
+    statusPrograma: "em_andamento", parecerTecnico: "",
+    // Declaração de Comparecimento
+    dataComparecimento: "", horaInicio: "", horaFim: "", obsDeclaracao: "",
   };
 
   const [form, setForm] = useState(formVazio);
   const [historico, setHistorico] = useState([]);
   const [loadingHist, setLoadingHist] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [preview, setPreview] = useState(null); // doc para preview PDF
+  const [preview, setPreview] = useState(null); // doc para preview (com _rascunho quando ainda não salvo)
 
-  // Carregar histórico do paciente
   useEffect(() => {
     db.collection("clinica_documentos_nr1")
       .where("pacienteId", "==", paciente.id)
-      .orderBy("createdAt", "desc")
       .get()
       .then(snap => {
-        setHistorico(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.sort((a,b)=>((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0));
+        setHistorico(docs);
         setLoadingHist(false);
       })
       .catch(() => setLoadingHist(false));
@@ -2307,43 +2307,52 @@ function AbaOcupacional({ paciente }) {
     relatorio_nr1: "Relatório de Atendimento Psicossocial (NR-1)",
     declaracao: "Declaração de Comparecimento",
   };
+  const TIPO_DESC = {
+    relatorio_nr1: "📊 Documento completo para a empresa: vigência do acompanhamento, sessões, status no programa e parecer técnico.",
+    declaracao: "📄 Documento simples que atesta o comparecimento do colaborador em uma data e horário específicos.",
+  };
 
-  async function salvarEGerar() {
-    if (!form.parecerTecnico && form.tipoDocumento === "relatorio_nr1") {
-      alert("Preencha o Parecer Técnico antes de gerar o documento.");
-      return;
-    }
-    setSalvando(true);
-    const doc = {
+  const eDeclaracao = form.tipoDocumento === "declaracao";
+  const fmtData = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+
+  function montarDoc() {
+    return {
       pacienteId: paciente.id,
       pacienteNome: paciente.nome || "",
       empresaContratante: paciente.empresa || paciente.empresaContratante || "",
       setor: paciente.setor || "",
       cargo: paciente.cargo || "",
       tipoDocumento: form.tipoDocumento,
-      periodo: {
-        dataInicio: form.dataInicio,
-        dataFim: form.emAndamento ? "" : form.dataFim,
-        emAndamento: form.emAndamento,
-      },
-      sessoes: {
-        realizadas: Number(form.sessoesRealizadas) || 0,
-        total: Number(form.sessoesTotal) || 0,
-      },
+      periodo: { dataInicio: form.dataInicio, dataFim: form.emAndamento ? "" : form.dataFim, emAndamento: form.emAndamento },
+      sessoes: { realizadas: Number(form.sessoesRealizadas) || 0, total: Number(form.sessoesTotal) || 0 },
       statusPrograma: form.statusPrograma,
       parecerTecnico: form.parecerTecnico,
+      dataComparecimento: form.dataComparecimento,
+      horaInicio: form.horaInicio,
+      horaFim: form.horaFim,
+      obsDeclaracao: form.obsDeclaracao,
       emitidoPor: EMITIDO_POR,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
+  }
+
+  // 1) VISUALIZAR — monta o documento sem salvar nada
+  function visualizar() {
+    if (eDeclaracao && !form.dataComparecimento) { alert("Informe a data do comparecimento."); return; }
+    if (!eDeclaracao && !form.parecerTecnico) { alert("Preencha o Parecer Técnico antes de visualizar."); return; }
+    setPreview({ ...montarDoc(), _rascunho: true, createdAt: { seconds: Date.now()/1000 } });
+  }
+
+  // 2) SALVAR — só depois de visualizar e aprovar
+  async function salvarDefinitivo() {
+    setSalvando(true);
+    const doc = { ...montarDoc(), createdAt: firebase.firestore.FieldValue.serverTimestamp() };
     try {
       const ref = await db.collection("clinica_documentos_nr1").add(doc);
-      const novoDoc = { id: ref.id, ...doc, createdAt: { seconds: Date.now() / 1000 } };
+      const novoDoc = { id: ref.id, ...doc, createdAt: { seconds: Date.now()/1000 } };
       setHistorico(prev => [novoDoc, ...prev]);
       setPreview(novoDoc);
       setForm(formVazio);
-    } catch (e) {
-      alert("Erro ao salvar: " + e.message);
-    }
+    } catch (e) { alert("Erro ao salvar: " + e.message); }
     setSalvando(false);
   }
 
@@ -2354,43 +2363,66 @@ function AbaOcupacional({ paciente }) {
     if (!conteudo) return;
     const w = window.open("", "_blank");
     w.document.write(`
-      <html><head><title>Documento NR-1</title>
+      <html><head><title>${TIPO_LABELS[preview?.tipoDocumento]||"Documento"} — ${preview?.pacienteNome||""}</title>
       <style>
         body{font-family:Arial,sans-serif;margin:40px;color:#1f2937;font-size:13px;line-height:1.6}
-        h1{color:#7B00C4;font-size:20px;margin-bottom:4px}
-        h2{color:#7B00C4;font-size:14px;margin:18px 0 6px;border-bottom:2px solid #e9d5ff;padding-bottom:4px}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-bottom:12px}
-        .label{font-size:10px;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:2px}
-        .valor{font-weight:500;font-size:13px}
-        .parecer{background:#f9f5ff;border-left:3px solid #7B00C4;padding:12px 16px;border-radius:4px;white-space:pre-wrap}
-        .rodape{margin-top:48px;border-top:1px solid #e5e7eb;padding-top:16px;font-size:11px;color:#6b7280}
-        .aviso{background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;font-size:11px;margin-top:16px}
+        img{max-height:70px}
         @media print{body{margin:20px}.no-print{display:none}}
       </style></head><body>
       ${conteudo.innerHTML}
       </body></html>
     `);
     w.document.close();
-    setTimeout(() => { w.focus(); w.print(); }, 400);
+    setTimeout(() => { w.focus(); w.print(); }, 600);
   }
 
-  const fmtData = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+  // ─── BLOCO DE ASSINATURA + CARIMBO ────────────────────────
+  function BlocoAssinatura() {
+    return (
+      <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+        <div style={{ textAlign: "center" }}>
+          <img src={ASSINATURA_URL} alt="" style={{ height: 64, objectFit: "contain", display: "block", margin: "0 auto -10px" }}
+            onError={e => e.target.style.display = "none"} />
+          <div style={{ width: 230, borderBottom: "1.5px solid #1f2937", margin: "0 auto 8px" }} />
+          {/* Carimbo profissional */}
+          <div style={{ display: "inline-block", border: "2px solid #7B00C4", borderRadius: 8, padding: "8px 20px", color: "#7B00C4" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>Dra. Lucia Kratz</div>
+            <div style={{ fontSize: 11, fontWeight: 600 }}>Psicóloga — CRP 09/20590</div>
+            <div style={{ fontSize: 9.5, marginTop: 2 }}>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // ─── PREVIEW PDF ──────────────────────────────────────────
+  // ─── PREVIEW ──────────────────────────────────────────────
   if (preview) {
+    const ehDecl = preview.tipoDocumento === "declaracao";
     const periodoStr = preview.periodo?.emAndamento
       ? `${fmtData(preview.periodo?.dataInicio)} — Em andamento`
       : `${fmtData(preview.periodo?.dataInicio)} a ${fmtData(preview.periodo?.dataFim)}`;
+    const hojeExtenso = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
 
     return (
       <div>
+        {preview._rascunho && (
+          <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 16px", marginBottom: 14, fontSize: 13, color: "#78350f", fontWeight: 600 }}>
+            👁 Pré-visualização — o documento ainda NÃO foi salvo. Confira tudo e clique em "Salvar e Gerar PDF".
+          </div>
+        )}
         <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
           <button className="btn btn-ghost" onClick={() => setPreview(null)}>
-            <Icon name="arrow-left" size={15} /> Voltar ao formulário
+            <Icon name="arrow-left" size={15} /> {preview._rascunho ? "Voltar e editar" : "Voltar"}
           </button>
-          <button className="btn btn-purple" onClick={imprimirPreview}>
-            <Icon name="printer" size={15} /> Imprimir / Salvar PDF
-          </button>
+          {preview._rascunho ? (
+            <button className="btn btn-purple" onClick={salvarDefinitivo} disabled={salvando}>
+              <Icon name="save" size={15} /> {salvando ? "Salvando..." : "💾 Salvar e Gerar PDF"}
+            </button>
+          ) : (
+            <button className="btn btn-purple" onClick={imprimirPreview}>
+              <Icon name="printer" size={15} /> Imprimir / Salvar PDF
+            </button>
+          )}
         </div>
 
         <div id="nr1-preview-print" style={{ background: "white", borderRadius: 16, border: "1px solid var(--gray-200)", padding: 32, maxWidth: 680 }}>
@@ -2414,55 +2446,72 @@ function AbaOcupacional({ paciente }) {
             </div>
           </div>
 
-          {/* Dados do colaborador */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
-              Dados do Colaborador
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
-              {[
-                ["Nome", preview.pacienteNome],
-                ["Empresa Contratante", preview.empresaContratante || "—"],
-                ["Cargo", preview.cargo || "—"],
-                ["Setor", preview.setor || "—"],
-              ].map(([l, v]) => (
-                <div key={l}>
-                  <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Dados do atendimento */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
-              Dados do Atendimento
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
-              {[
-                ["Vigência", periodoStr],
-                ["Sessões Realizadas", `${preview.sessoes?.realizadas || 0} de ${preview.sessoes?.total || 0}`],
-                ["Status no Programa", STATUS_LABELS[preview.statusPrograma] || preview.statusPrograma],
-              ].map(([l, v]) => (
-                <div key={l} style={{ gridColumn: l === "Status no Programa" ? "span 2" : "auto" }}>
-                  <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Parecer técnico */}
-          {preview.parecerTecnico && (
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
-                Parecer Técnico
+          {ehDecl ? (
+            <>
+              {/* ── CORPO DA DECLARAÇÃO ── */}
+              <div style={{ fontSize: 14, lineHeight: 2, textAlign: "justify", margin: "28px 0", textIndent: 40 }}>
+                <strong>DECLARO</strong>, para os devidos fins, que <strong>{preview.pacienteNome}</strong>
+                {preview.cargo ? `, ${preview.cargo}` : ""}
+                {preview.empresaContratante ? <>, colaborador(a) da empresa <strong>{preview.empresaContratante}</strong></> : ""}
+                , compareceu a atendimento psicológico nesta clínica no dia <strong>{fmtData(preview.dataComparecimento)}</strong>
+                {preview.horaInicio ? <>, no horário das <strong>{preview.horaInicio}</strong>{preview.horaFim ? <> às <strong>{preview.horaFim}</strong></> : ""}</> : ""}.
               </div>
-              <div style={{ background: "#f9f5ff", borderLeft: "3px solid #7B00C4", padding: "12px 16px", borderRadius: 4, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
-                {preview.parecerTecnico}
+              {preview.obsDeclaracao && (
+                <div style={{ fontSize: 13, lineHeight: 1.8, textAlign: "justify", marginBottom: 20, textIndent: 40 }}>{preview.obsDeclaracao}</div>
+              )}
+              <div style={{ fontSize: 13, margin: "28px 0 36px", textAlign: "right" }}>Goiânia, {hojeExtenso}.</div>
+            </>
+          ) : (
+            <>
+              {/* ── CORPO DO RELATÓRIO NR-1 ── */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                  Dados do Colaborador
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                  {[
+                    ["Nome", preview.pacienteNome],
+                    ["Empresa Contratante", preview.empresaContratante || "—"],
+                    ["Cargo", preview.cargo || "—"],
+                    ["Setor", preview.setor || "—"],
+                  ].map(([l, v]) => (
+                    <div key={l}>
+                      <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                  Dados do Atendimento
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                  {[
+                    ["Vigência", periodoStr],
+                    ["Sessões Realizadas", `${preview.sessoes?.realizadas || 0} de ${preview.sessoes?.total || 0}`],
+                    ["Status no Programa", STATUS_LABELS[preview.statusPrograma] || preview.statusPrograma],
+                  ].map(([l, v]) => (
+                    <div key={l} style={{ gridColumn: l === "Status no Programa" ? "span 2" : "auto" }}>
+                      <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {preview.parecerTecnico && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                    Parecer Técnico
+                  </div>
+                  <div style={{ background: "#f9f5ff", borderLeft: "3px solid #7B00C4", padding: "12px 16px", borderRadius: 4, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                    {preview.parecerTecnico}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Aviso ético */}
@@ -2470,15 +2519,7 @@ function AbaOcupacional({ paciente }) {
             ⚖️ Este documento foi elaborado em conformidade com a Resolução CFP nº 06/2019, preservando o sigilo profissional. Não contém diagnósticos, CID, sintomas clínicos ou informações íntimas do colaborador.
           </div>
 
-          {/* Assinatura */}
-          <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 20, display: "flex", justifyContent: "flex-end" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ width: 200, borderBottom: "1px solid #1f2937", marginBottom: 6 }} />
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{EMITIDO_POR.nome}</div>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>{EMITIDO_POR.crp} · Psicóloga</div>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>TCC · Musicoterapia · Neuromodulação</div>
-            </div>
-          </div>
+          <BlocoAssinatura/>
         </div>
       </div>
     );
@@ -2487,8 +2528,6 @@ function AbaOcupacional({ paciente }) {
   // ─── FORMULÁRIO ───────────────────────────────────────────
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-
-      {/* Formulário principal */}
       <div className="card">
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -2502,7 +2541,7 @@ function AbaOcupacional({ paciente }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
 
-          {/* Tipo de documento */}
+          {/* Tipo de documento + descrição do que muda */}
           <div className="form-group" style={{ gridColumn: "span 2" }}>
             <label className="form-label">Tipo de Documento</label>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -2517,9 +2556,12 @@ function AbaOcupacional({ paciente }) {
                 </button>
               ))}
             </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--purple)", background: "var(--purple-soft)", borderRadius: 8, padding: "8px 12px" }}>
+              {TIPO_DESC[form.tipoDocumento]}
+            </div>
           </div>
 
-          {/* Empresa / Setor / Cargo (lidos do cadastro, editáveis aqui) */}
+          {/* Empresa / Setor / Cargo */}
           <div className="form-group">
             <label className="form-label">Empresa Contratante</label>
             <input className="form-input" value={paciente.empresa || paciente.empresaContratante || ""} readOnly
@@ -2533,69 +2575,93 @@ function AbaOcupacional({ paciente }) {
               style={{ background: "var(--gray-50)", color: "var(--text-muted)" }} />
           </div>
 
-          {/* Vigência */}
-          <div className="form-group">
-            <label className="form-label">Data de Início</label>
-            <input className="form-input" type="date" value={form.dataInicio} onChange={e => setForm({ ...form, dataInicio: e.target.value })} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Data de Fim</label>
-            <input className="form-input" type="date" value={form.dataFim} disabled={form.emAndamento}
-              onChange={e => setForm({ ...form, dataFim: e.target.value })}
-              style={form.emAndamento ? { background: "var(--gray-50)", color: "var(--text-muted)" } : {}} />
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-              <input type="checkbox" id="emAndamento" checked={form.emAndamento}
-                onChange={e => setForm({ ...form, emAndamento: e.target.checked, dataFim: "" })} />
-              <label htmlFor="emAndamento" style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}>Em andamento</label>
-            </div>
-          </div>
-
-          {/* Sessões */}
-          <div className="form-group">
-            <label className="form-label">Sessões Realizadas</label>
-            <input className="form-input" type="number" min="0" value={form.sessoesRealizadas}
-              onChange={e => setForm({ ...form, sessoesRealizadas: e.target.value })} placeholder="Ex: 4" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Total Planejado</label>
-            <input className="form-input" type="number" min="0" value={form.sessoesTotal}
-              onChange={e => setForm({ ...form, sessoesTotal: e.target.value })} placeholder="Ex: 8" />
-          </div>
-
-          {/* Status */}
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
-            <label className="form-label">Status no Programa</label>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-              {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                <label key={val} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
-                  padding: "10px 14px", borderRadius: 8, border: "1.5px solid", transition: "all .2s",
-                  borderColor: form.statusPrograma === val ? "var(--purple)" : "var(--gray-200)",
-                  background: form.statusPrograma === val ? "var(--purple-soft)" : "white" }}>
-                  <input type="radio" name="statusPrograma" value={val} checked={form.statusPrograma === val}
-                    onChange={() => setForm({ ...form, statusPrograma: val })} />
-                  <span style={{ fontSize: 13, fontWeight: form.statusPrograma === val ? 600 : 400,
-                    color: form.statusPrograma === val ? "var(--purple)" : "var(--gray-700)" }}>{label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Parecer técnico */}
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
-            <label className="form-label">Parecer Técnico</label>
-            <TextAreaVoz className="form-input" rows={6} value={form.parecerTecnico}
-              onChange={e => setForm({ ...form, parecerTecnico: e.target.value })}
-              placeholder={"Foque em:\n• Capacidade laboral e funcionalidade no trabalho\n• Recomendações ergonômicas ou organizacionais\n• Necessidade de adaptações no posto de trabalho\n\nEvite: diagnósticos, CID, sintomas clínicos, informações íntimas."} />
-            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-              ⚖️ Este campo deve seguir a Resolução CFP nº 06/2019 — foco em capacidade laboral, sem expor diagnósticos ou CID.
-            </div>
-          </div>
+          {eDeclaracao ? (
+            <>
+              {/* ── CAMPOS DA DECLARAÇÃO ── */}
+              <div className="form-group">
+                <label className="form-label">Data do Comparecimento</label>
+                <input className="form-input" type="date" value={form.dataComparecimento}
+                  onChange={e => setForm({ ...form, dataComparecimento: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Horário (início — término)</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input className="form-input" type="time" value={form.horaInicio}
+                    onChange={e => setForm({ ...form, horaInicio: e.target.value })} />
+                  <span style={{ color: "var(--text-muted)" }}>—</span>
+                  <input className="form-input" type="time" value={form.horaFim}
+                    onChange={e => setForm({ ...form, horaFim: e.target.value })} />
+                </div>
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Observação (opcional)</label>
+                <TextAreaVoz className="form-input" rows={3} value={form.obsDeclaracao}
+                  onChange={e => setForm({ ...form, obsDeclaracao: e.target.value })}
+                  placeholder="Ex: O comparecimento integra programa de acompanhamento psicossocial vigente." />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ── CAMPOS DO RELATÓRIO NR-1 ── */}
+              <div className="form-group">
+                <label className="form-label">Data de Início</label>
+                <input className="form-input" type="date" value={form.dataInicio} onChange={e => setForm({ ...form, dataInicio: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data de Fim</label>
+                <input className="form-input" type="date" value={form.dataFim} disabled={form.emAndamento}
+                  onChange={e => setForm({ ...form, dataFim: e.target.value })}
+                  style={form.emAndamento ? { background: "var(--gray-50)", color: "var(--text-muted)" } : {}} />
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                  <input type="checkbox" id="emAndamento" checked={form.emAndamento}
+                    onChange={e => setForm({ ...form, emAndamento: e.target.checked, dataFim: "" })} />
+                  <label htmlFor="emAndamento" style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}>Em andamento</label>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Sessões Realizadas</label>
+                <input className="form-input" type="number" min="0" value={form.sessoesRealizadas}
+                  onChange={e => setForm({ ...form, sessoesRealizadas: e.target.value })} placeholder="Ex: 4" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Total Planejado</label>
+                <input className="form-input" type="number" min="0" value={form.sessoesTotal}
+                  onChange={e => setForm({ ...form, sessoesTotal: e.target.value })} placeholder="Ex: 8" />
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Status no Programa</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                  {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                    <label key={val} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                      padding: "10px 14px", borderRadius: 8, border: "1.5px solid", transition: "all .2s",
+                      borderColor: form.statusPrograma === val ? "var(--purple)" : "var(--gray-200)",
+                      background: form.statusPrograma === val ? "var(--purple-soft)" : "white" }}>
+                      <input type="radio" name="statusPrograma" value={val} checked={form.statusPrograma === val}
+                        onChange={() => setForm({ ...form, statusPrograma: val })} />
+                      <span style={{ fontSize: 13, fontWeight: form.statusPrograma === val ? 600 : 400,
+                        color: form.statusPrograma === val ? "var(--purple)" : "var(--gray-700)" }}>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Parecer Técnico</label>
+                <TextAreaVoz className="form-input" rows={6} value={form.parecerTecnico}
+                  onChange={e => setForm({ ...form, parecerTecnico: e.target.value })}
+                  placeholder={"Foque em:\n• Capacidade laboral e funcionalidade no trabalho\n• Recomendações ergonômicas ou organizacionais\n• Necessidade de adaptações no posto de trabalho\n\nEvite: diagnósticos, CID, sintomas clínicos, informações íntimas."} />
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+                  ⚖️ Este campo deve seguir a Resolução CFP nº 06/2019 — foco em capacidade laboral, sem expor diagnósticos ou CID.
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-          <button className="btn btn-purple" onClick={salvarEGerar} disabled={salvando}>
-            <Icon name="file-text" size={15} /> {salvando ? "Salvando..." : "Salvar e Gerar Documento"}
+          <button className="btn btn-purple" onClick={visualizar}>
+            <Icon name="eye" size={15} /> 👁 Visualizar documento
           </button>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", alignSelf: "center" }}>Nada é salvo antes de você conferir e aprovar.</div>
         </div>
       </div>
 
@@ -2615,18 +2681,16 @@ function AbaOcupacional({ paciente }) {
             {historico.map(doc => (
               <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
                 borderRadius: 10, border: "1px solid var(--gray-200)", background: "white" }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--purple-soft)",
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: doc.tipoDocumento==="declaracao" ? "#ccfbf1" : "var(--purple-soft)",
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Icon name="file-text" size={16} style={{ color: "var(--purple)" }} />
+                  <Icon name={doc.tipoDocumento==="declaracao" ? "badge-check" : "file-text"} size={16} style={{ color: doc.tipoDocumento==="declaracao" ? "#0d9488" : "var(--purple)" }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 500, fontSize: 13 }}>{TIPO_LABELS[doc.tipoDocumento] || doc.tipoDocumento}</div>
                   <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
-                    {doc.periodo?.emAndamento
-                      ? `${fmtData(doc.periodo?.dataInicio)} — Em andamento`
-                      : `${fmtData(doc.periodo?.dataInicio)} a ${fmtData(doc.periodo?.dataFim)}`}
-                    {" · "}
-                    {doc.sessoes?.realizadas || 0}/{doc.sessoes?.total || 0} sessões
+                    {doc.tipoDocumento==="declaracao"
+                      ? `Comparecimento em ${fmtData(doc.dataComparecimento)}${doc.horaInicio ? ` · ${doc.horaInicio}${doc.horaFim ? "–"+doc.horaFim : ""}` : ""}`
+                      : `${doc.periodo?.emAndamento ? `${fmtData(doc.periodo?.dataInicio)} — Em andamento` : `${fmtData(doc.periodo?.dataInicio)} a ${fmtData(doc.periodo?.dataFim)}`} · ${doc.sessoes?.realizadas || 0}/${doc.sessoes?.total || 0} sessões`}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
