@@ -1,0 +1,16 @@
+{
+  "name": "clinica-lucia-kratz-admin",
+  "version": "1.0.0",
+  "description": "Build script para pré-compilar os arquivos JSX/Babel do admin",
+  "scripts": {
+    "build": "npm run build:admin && npm run build:clinica",
+    "build:admin": "babel admin/psifabulas.js -o admin/psifabulas.compiled.js && babel admin/psicoeducacoes.js -o admin/psicoeducacoes.compiled.js && babel admin/psico_ui.js -o admin/psico_ui.compiled.js && babel admin/app.js -o admin/app.compiled.js && babel admin/marketing.js -o admin/marketing.compiled.js",
+    "build:clinica": "babel clinica/app.js -o clinica/app.compiled.js",
+    "watch": "babel admin/app.js --watch -o admin/app.compiled.js"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.0",
+    "@babel/core": "^7.24.0",
+    "@babel/preset-react": "^7.24.0"
+  }
+}
