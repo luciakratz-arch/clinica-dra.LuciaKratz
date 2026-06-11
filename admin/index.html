@@ -14,17 +14,16 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- SEM Babel — arquivos já pré-compilados -->
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" src="ferramentas.js?v=12"></script>
-  <script type="text/babel" src="psifabulas.js?v=3"></script>
-  <script type="text/babel" src="psicoeducacoes.js?v=6"></script>
-  <script type="text/babel" src="psico_ui.js?v=6"></script>
-  <script type="text/babel" src="app.js?v=13"></script>
-  <script type="text/babel" src="financeiro.js?v=7"></script>
-  <script type="text/babel" src="marketing.js?v=3"></script>
+  <!-- Arquivos pré-compilados — sem type="text/babel" -->
+  <script src="psifabulas.compiled.js?v=1"></script>
+  <script src="psicoeducacoes.compiled.js?v=1"></script>
+  <script src="psico_ui.compiled.js?v=1"></script>
+  <script src="app.compiled.js?v=1"></script>
+  <script src="marketing.compiled.js?v=1"></script>
 </body>
 </html>
