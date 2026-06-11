@@ -3982,16 +3982,6 @@ function PainelAluno({ user }) {
   const hora = new Date().getHours();
   const saudacao = hora<12?"Bom dia":hora<18?"Boa tarde":"Boa noite";
 
-  const FERRAMENTAS_ALUNO = [
-    { id:"tcc",       label:"Pensamentos Automáticos", sub:"Registre e questione pensamentos — TCC", icon:"brain",      cor:"#ede0fa" },
-    { id:"humor",     label:"Registro de Humor",       sub:"Escala de humor do paciente",            icon:"heart",      cor:"#fde8f0" },
-    { id:"diario",    label:"Diário Terapêutico",      sub:"Escrita reflexiva livre",                icon:"book-open",  cor:"#e0f0ff" },
-    { id:"metas",     label:"Metas Terapêuticas",      sub:"Defina objetivos com o paciente",        icon:"target",     cor:"#e0faed" },
-    { id:"fabulas",   label:"Fábulas Terapêuticas",    sub:"Histórias reflexivas para sessão",       icon:"book-heart", cor:"#fff3e0" },
-    { id:"reflexoes", label:"Reflexões Cognitivas",    sub:"Exercícios de insight e reestruturação", icon:"lightbulb",  cor:"#fefce0" },
-    { id:"ansiedade", label:"Gestão da Ansiedade",     sub:"Tracking, nível de estresse, roda",      icon:"activity",   cor:"#f0e8ff" },
-  ];
-
   return (
     <div>
       <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",borderRadius:16,padding:"28px 32px",marginBottom:24,color:"white",position:"relative",overflow:"hidden"}}>
@@ -4005,23 +3995,6 @@ function PainelAluno({ user }) {
 
       <LinkCompartilhavel user={user}/>
 
-      <div className="card" style={{marginBottom:24}}>
-        <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>Ferramentas Clínicas</div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
-          {FERRAMENTAS_ALUNO.map(f=>(
-            <div key={f.id} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 16px",borderRadius:12,border:"1px solid var(--gray-200)",background:"white"}}>
-              <div style={{width:44,height:44,borderRadius:12,background:f.cor,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <Icon name={f.icon} size={20}/>
-              </div>
-              <div>
-                <div style={{fontWeight:600,fontSize:14}}>{f.label}</div>
-                <div style={{fontSize:12,color:"var(--text-muted)"}}>{f.sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <HistoricoAluno user={user}/>
     </div>
   );
@@ -4029,21 +4002,30 @@ function PainelAluno({ user }) {
 
 function LinkCompartilhavel({ user }) {
   const [descricao, setDescricao]   = React.useState("");
-  const [ferramenta, setFerramenta] = React.useState("tcc");
+  const [ferramenta, setFerramenta] = React.useState("");
   const [salvando, setSalvando]     = React.useState(false);
   const [links, setLinks]           = React.useState([]);
   const [copiado, setCopiado]       = React.useState(null);
   const [mostrarForm, setMostrarForm] = React.useState(false);
+  const [catalogo, setCatalogo]     = React.useState([]);
 
-  const FERRAMENTAS_LINK = [
-    {id:"tcc",       label:"Pensamentos Automáticos"},
-    {id:"humor",     label:"Registro de Humor"},
-    {id:"diario",    label:"Diário Terapêutico"},
-    {id:"metas",     label:"Metas Terapêuticas"},
-    {id:"fabulas",   label:"Fábulas Terapêuticas"},
-    {id:"reflexoes", label:"Reflexões Cognitivas"},
-    {id:"ansiedade", label:"Gestão da Ansiedade"},
-  ];
+  // Carrega catálogo completo de ferramentas, fábulas e psicoeducações
+  React.useEffect(()=>{
+    Promise.all([
+      db.collection("clinica_recursos").get(),
+      db.collection("clinica_fabulas").get(),
+      db.collection("clinica_psicoeducacao").get(),
+    ]).then(([sF,sFab,sPsi])=>{
+      const ord = a => (a.titulo||a.nome||"").toLowerCase();
+      const all = [
+        ...sF.docs.map(d=>({id:d.id,...d.data(),_tipo:"🔧 Ferramenta"})),
+        ...sFab.docs.map(d=>({id:d.id,...d.data(),_tipo:"📖 Fábula"})),
+        ...sPsi.docs.map(d=>({id:d.id,...d.data(),_tipo:"🎓 Psicoeducação"})),
+      ].sort((a,b)=>ord(a).localeCompare(ord(b)));
+      setCatalogo(all);
+      if(all.length>0 && !ferramenta) setFerramenta(all[0].formularioKey||all[0].id);
+    }).catch(()=>{});
+  },[]);
 
   React.useEffect(()=>{
     const unsub = db.collection("clinica_aluno_links")
@@ -4058,11 +4040,14 @@ function LinkCompartilhavel({ user }) {
 
   async function gerarLink(){
     if(!descricao.trim()){alert("Digite uma identificação.");return;}
+    if(!ferramenta){alert("Selecione uma ferramenta.");return;}
     setSalvando(true);
     const token = Math.random().toString(36).slice(2,10).toUpperCase();
+    const recurso = catalogo.find(c=>(c.formularioKey||c.id)===ferramenta);
+    const label = recurso ? (recurso.titulo||recurso.nome||ferramenta) : ferramenta;
     await db.collection("clinica_aluno_links").add({
       alunoId:user.id, alunoNome:user.nome,
-      token, ferramenta, descricao,
+      token, ferramenta, ferramentaLabel:label, descricao,
       url:`${SITE_URL}/clinica/?link=${token}`,
       usos:0, createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -4094,7 +4079,14 @@ function LinkCompartilhavel({ user }) {
             <div className="form-group">
               <label className="form-label">Ferramenta</label>
               <select className="form-input" value={ferramenta} onChange={e=>setFerramenta(e.target.value)}>
-                {FERRAMENTAS_LINK.map(f=><option key={f.id} value={f.id}>{f.label}</option>)}
+                {catalogo.length===0?<option>Carregando...</option>:null}
+                {["🔧 Ferramenta","📖 Fábula","🎓 Psicoeducação"].map(tipo=>{
+                  const itens=catalogo.filter(c=>c._tipo===tipo);
+                  if(itens.length===0) return null;
+                  return <optgroup key={tipo} label={tipo}>
+                    {itens.map(c=><option key={c.id} value={c.formularioKey||c.id}>{c.titulo||c.nome||"—"}</option>)}
+                  </optgroup>;
+                })}
               </select>
             </div>
             <div className="form-group">
@@ -4167,9 +4159,140 @@ function HistoricoAluno({ user }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
-//  SELETOR DE MODO — individual ou casal
-// ═══════════════════════════════════════════════════════
+// ── RELATÓRIOS DE SUPERVISÃO DO ALUNO ──────────────────────────────────
+// Mostra todos os registros que os pacientes do aluno preencheram via links
+function RelatoriosSupervisao({ user }) {
+  const [registros, setRegistros] = React.useState([]);
+  const [links, setLinks]         = React.useState([]);
+  const [loading, setLoading]     = React.useState(true);
+  const [aberto, setAberto]       = React.useState(null);
+
+  React.useEffect(()=>{
+    let r1,r2;
+    r1 = db.collection("clinica_aluno_registros")
+      .where("alunoId","==",user.id)
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setRegistros(docs);
+        setLoading(false);
+      },()=>setLoading(false));
+    r2 = db.collection("clinica_aluno_links")
+      .where("alunoId","==",user.id)
+      .onSnapshot(s=>{
+        setLinks(s.docs.map(d=>({id:d.id,...d.data()})));
+      },()=>{});
+    return ()=>{r1();r2();};
+  },[user.id]);
+
+  if (loading) return <Spinner/>;
+
+  // Agrupa registros por link/token
+  const porLink = {};
+  registros.forEach(r=>{
+    const key = r.token||r.linkId||"sem-link";
+    if(!porLink[key]) porLink[key] = [];
+    porLink[key].push(r);
+  });
+  const linkMap = {};
+  links.forEach(l=>{ linkMap[l.token]=l; });
+
+  return (
+    <div style={{maxWidth:800,margin:"0 auto"}}>
+      <div style={{marginBottom:20}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:24,fontWeight:600,color:"var(--purple)"}}>📊 Relatórios de Supervisão</div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>
+          Registros preenchidos pelos seus pacientes via links compartilhados.
+        </div>
+      </div>
+
+      {/* Resumo */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}>
+        <div className="card" style={{textAlign:"center",padding:"18px 14px"}}>
+          <div style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{registros.length}</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>Registros recebidos</div>
+        </div>
+        <div className="card" style={{textAlign:"center",padding:"18px 14px"}}>
+          <div style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{links.length}</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>Links gerados</div>
+        </div>
+        <div className="card" style={{textAlign:"center",padding:"18px 14px"}}>
+          <div style={{fontSize:24,fontWeight:800,color:"var(--purple)"}}>{Object.keys(porLink).length}</div>
+          <div style={{fontSize:12,color:"var(--text-muted)"}}>Pacientes responderam</div>
+        </div>
+      </div>
+
+      {registros.length===0 ? (
+        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
+          <Icon name="inbox" size={40}/>
+          <div style={{marginTop:12,fontWeight:600}}>Nenhum registro recebido ainda</div>
+          <div style={{fontSize:13,marginTop:4}}>Gere links no "Meu Painel" e envie aos seus pacientes. Quando eles preencherem, os registros aparecem aqui.</div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {Object.entries(porLink).map(([token, regs])=>{
+            const lk = linkMap[token];
+            const isOpen = aberto===token;
+            return (
+              <div key={token} className="card" style={{padding:0,overflow:"hidden"}}>
+                <div onClick={()=>setAberto(isOpen?null:token)}
+                  style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",cursor:"pointer",background:isOpen?"var(--purple-soft)":"white"}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:14}}>{lk?.descricao||token}</div>
+                    <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
+                      {lk?.ferramentaLabel||lk?.ferramenta||"—"} · {regs.length} registro(s)
+                      {regs[0]?.createdAt?.seconds ? ` · último em ${new Date(regs[0].createdAt.seconds*1000).toLocaleDateString("pt-BR")}` : ""}
+                    </div>
+                  </div>
+                  <span style={{fontSize:12,color:"var(--purple)",fontWeight:600}}>{isOpen?"▲ Fechar":"▼ Ver registros"}</span>
+                </div>
+                {isOpen&&(
+                  <div style={{borderTop:"1px solid var(--gray-100)"}}>
+                    {regs.map((r,i)=>(
+                      <div key={r.id} style={{padding:"12px 18px",borderBottom:i<regs.length-1?"1px solid var(--gray-100)":"none"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                          <span style={{fontSize:11,fontWeight:600,color:"var(--purple)",background:"var(--purple-soft)",borderRadius:20,padding:"2px 10px"}}>
+                            {r.ferramenta||"—"}
+                          </span>
+                          <span style={{fontSize:11,color:"var(--text-muted)"}}>
+                            {r.createdAt?.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString("pt-BR")+" "+new Date(r.createdAt.seconds*1000).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""}
+                          </span>
+                        </div>
+                        {/* Conteúdo do registro */}
+                        {r.conteudo&&(
+                          <div style={{fontSize:13,color:"#374151",background:"var(--gray-50)",borderRadius:8,padding:"10px 14px",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{r.conteudo}</div>
+                        )}
+                        {r.registros&&Array.isArray(r.registros)&&(
+                          <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:4}}>
+                            {r.registros.map((reg,j)=>(
+                              <div key={j}>
+                                <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:2}}>{j+1}. {reg.pergunta||reg.label||""}</div>
+                                <div style={{fontSize:13,color:reg.resposta?"#374151":"#9ca3af",paddingLeft:14,borderLeft:"3px solid var(--purple-soft)"}}>{reg.resposta||reg.valor||"— sem resposta —"}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {r.dados&&typeof r.dados==="object"&&!Array.isArray(r.dados)&&(
+                          <div style={{fontSize:13,color:"#374151",background:"var(--gray-50)",borderRadius:8,padding:"10px 14px",lineHeight:1.6}}>
+                            {Object.entries(r.dados).map(([k,v])=>(
+                              <div key={k}><strong>{k}:</strong> {typeof v==="object"?JSON.stringify(v):String(v)}</div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function SeletorModo({ user, onEscolha }) {
   const [parceiro, setParceiro] = React.useState(null);
   const temIndividual = (user.modulosAtivos||[]).filter(m=>m!=="mod5").length > 0 ||
@@ -4294,7 +4417,7 @@ function App() {
         <div className="main-content">
           {tab==="painel-aluno"      && <PainelAluno user={user}/>}
           {tab==="ferramentas-aluno" && <FerramentasAluno user={user}/>}
-          {tab==="relatorios-aluno"  && <EmBreve titulo="Relatórios de Supervisão" sub="Em construção."/>}
+          {tab==="relatorios-aluno"  && <RelatoriosSupervisao user={user}/>}
         </div>
         <div className="nav-mobile">
           {NAV_ALUNO.slice(0,5).map(item=>(
