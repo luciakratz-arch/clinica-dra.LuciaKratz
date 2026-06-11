@@ -4280,11 +4280,14 @@ function AbaOcupacional({
 
   // Carregar histórico do paciente
   useEffect(() => {
-    db.collection("clinica_documentos_nr1").where("pacienteId", "==", paciente.id).orderBy("createdAt", "desc").get().then(snap => {
-      setHistorico(snap.docs.map(d => ({
+    db.collection("clinica_documentos_nr1").where("pacienteId", "==", paciente.id).get().then(snap => {
+      const docs = snap.docs.map(d => ({
         id: d.id,
         ...d.data()
-      })));
+      }));
+      // Ordenar client-side — não precisa de índice Firestore
+      docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setHistorico(docs);
       setLoadingHist(false);
     }).catch(() => setLoadingHist(false));
   }, [paciente.id]);
@@ -12561,7 +12564,7 @@ function BotaoEmergenciaAdmin({
         setPalavra(d.data().palavraEmergencia);
       }
     });
-    db.collection("clinica_emergencia").where("casalId", "==", casalId).orderBy("createdAt", "desc").limit(5).onSnapshot(s => setAcionamentos(s.docs.map(d => ({
+    db.collection("clinica_emergencia").where("casalId", "==", casalId).onSnapshot(s => setAcionamentos(s.docs.map(d => ({
       id: d.id,
       ...d.data()
     }))), () => {});
@@ -13166,14 +13169,22 @@ function Comissoes({
   const [pagando, setPagando] = useState(false);
   const SALARIO_FIXO = 600;
   useEffect(() => {
-    const u1 = db.collection("clinica_comissoes").orderBy("createdAt", "desc").onSnapshot(s => setComissoes(s.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }))), () => {});
-    const u2 = db.collection("clinica_lancamentos").orderBy("createdAt", "desc").onSnapshot(s => setLancamentos(s.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }))), () => {});
+    const u1 = db.collection("clinica_comissoes").onSnapshot(s => {
+      const docs = s.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setComissoes(docs);
+    }, () => {});
+    const u2 = db.collection("clinica_lancamentos").onSnapshot(s => {
+      const docs = s.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setLancamentos(docs);
+    }, () => {});
     return () => {
       u1();
       u2();
@@ -13489,7 +13500,7 @@ function Depoimentos() {
   const [aba, setAba] = useState("pendente");
   const [salvando, setSalvando] = useState(null);
   useEffect(() => {
-    const unsub = db.collection("site_depoimentos").orderBy("createdAt", "desc").onSnapshot(s => setLista(s.docs.map(d => ({
+    const unsub = db.collection("site_depoimentos").onSnapshot(s => setLista(s.docs.map(d => ({
       id: d.id,
       ...d.data()
     }))), () => {});
