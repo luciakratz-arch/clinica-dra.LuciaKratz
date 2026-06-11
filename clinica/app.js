@@ -2185,8 +2185,6 @@ function MinhasMetas({ user }) {
 }
 
 // ── FERRAMENTAS CLÍNICAS DO ALUNO/ESTAGIÁRIO ───────────────────────────────
-// Carrega o CATÁLOGO COMPLETO de recursos do Firestore (mesma fonte do paciente),
-// sem o filtro de modulosConfig — o aluno/estagiário tem acesso a tudo para supervisão.
 function FerramentasAluno({ user }) {
   const [ferramentas, setFerramentas] = React.useState([]);
   const [fabulas, setFabulas]         = React.useState([]);
@@ -2195,6 +2193,53 @@ function FerramentasAluno({ user }) {
   const [aba, setAba]                 = React.useState("ferramentas");
   const [abrindo, setAbrindo]         = React.useState(null);
   const [abrindoPsico, setAbrindoPsico] = React.useState(null);
+  const [linkModal, setLinkModal]     = React.useState(null); // recurso para gerar link
+  const [linkDesc, setLinkDesc]       = React.useState("");
+  const [linkSalvando, setLinkSalvando] = React.useState(false);
+  const [linkMsg, setLinkMsg]         = React.useState("");
+
+  // ── MACROCATEGORIAS (mesma taxonomia do admin) ──
+  const MACROS = [
+    {id:"macro_ansiedade",       icone:"🧠", label:"Ansiedade e Controle dos Pensamentos", cor:"#7B00C4", bg:"#f3e6ff"},
+    {id:"macro_humor",           icone:"❤️",  label:"Humor e Regulação Emocional",        cor:"#db2777", bg:"#fce7f3"},
+    {id:"macro_habitos",         icone:"🌱", label:"Hábitos e Autocuidado",                cor:"#16a34a", bg:"#dcfce7"},
+    {id:"macro_relacionamentos", icone:"🤝", label:"Conflitos Interpessoais",              cor:"#0891b2", bg:"#e0f2fe"},
+    {id:"macro_casais",          icone:"💑", label:"Casais, Família e Parentalidade",      cor:"#d97706", bg:"#fef3c7"},
+    {id:"macro_corpo",           icone:"🏃", label:"Corpo, Saúde e Conexão Somática",      cor:"#059669", bg:"#d1fae5"},
+    {id:"macro_musico",          icone:"🎵", label:"Musicoterapia",                        cor:"#7c3aed", bg:"#ede9fe"},
+    {id:"macro_aval",            icone:"📋", label:"Avaliação e Anamnese",                 cor:"#6b7280", bg:"#f3f4f6"},
+    {id:"macro_compulsao",       icone:"⚠️",  label:"Compulsão",                          cor:"#dc2626", bg:"#fee2e2"},
+  ];
+  const LEGADO = {
+    "tcc":"macro_ansiedade","ansiedade":"macro_ansiedade","ansiedade_diario":"macro_ansiedade",
+    "esquema":"macro_ansiedade","emocoes":"macro_humor","humor":"macro_humor",
+    "autocuidado":"macro_habitos","habitos":"macro_habitos","relaxamento":"macro_habitos",
+    "relacionamentos":"macro_relacionamentos","comunicacao":"macro_relacionamentos",
+    "corpo":"macro_corpo","alimentacao":"macro_corpo","casal":"macro_casais",
+    "musicoterapia":"macro_musico","avaliacao":"macro_aval",
+    "compulsao_sexual":"macro_compulsao","compulsao":"macro_compulsao","macro_compulsao":"macro_compulsao",
+    "autoestima":"macro_humor","mindfulness":"macro_habitos","trauma":"macro_ansiedade","depressao":"macro_humor",
+    "breathing-478":"macro_corpo","muscle-relaxation":"macro_corpo",
+    "anxiety-management":"macro_ansiedade","decision-tree":"macro_ansiedade","abc-record":"macro_ansiedade",
+    "emotional-eating":"macro_corpo","treino-neuro-auditivo":"macro_aval",
+    "polyvagal-ladder":"macro_corpo","grounding-5senses":"macro_corpo","body-mind-journal":"macro_corpo",
+    "wheel-of-life":"macro_habitos","sleep-ritual":"macro_habitos","five-minute-rule":"macro_habitos",
+    "habit-stacking":"macro_habitos","energy-map":"macro_habitos",
+    "differentiation-map":"macro_casais","triangulation-map":"macro_casais",
+    "compassionate-parenting-journal":"macro_casais","financial-three-maps":"macro_casais","intimacy-map":"macro_casais",
+    "cnv-record":"macro_relacionamentos","limits-map":"macro_relacionamentos",
+    "mental-load-inventory":"macro_relacionamentos","conflict-cycle-map":"macro_relacionamentos",
+    "active-listening":"macro_relacionamentos",
+    "chain-analysis":"macro_ansiedade","behavioral-activation":"macro_humor",
+    "tipp-sos":"macro_humor","strategic-pause":"macro_humor","self-compassion-journal":"macro_humor",
+    "diario-autocompaixao":"macro_humor","ativacao-comportamental":"macro_humor",
+    "pausa-estrategica":"macro_humor","kit-sos-tipp":"macro_humor",
+    "analise-cadeia":"macro_ansiedade","rastreamento-compulsao-sexual":"macro_compulsao",
+    "registro-cnv":"macro_relacionamentos","mapa-limites":"macro_relacionamentos",
+    "escuta-ativa":"macro_relacionamentos","carga-mental":"macro_relacionamentos",
+    "ciclo-conflito":"macro_relacionamentos",
+  };
+  function getMacro(r){ return LEGADO[r.categoria]||LEGADO[r.formularioKey]||null; }
 
   React.useEffect(()=>{
     Promise.all([
@@ -2203,14 +2248,14 @@ function FerramentasAluno({ user }) {
       db.collection("clinica_psicoeducacao").get(),
     ]).then(([sF,sFab,sPsi])=>{
       const ord = a => (a.titulo||a.nome||"").toLowerCase();
-      const f   = sF.docs.map(d=>({id:d.id,...d.data(),_colecao:"recursos"})).sort((a,b)=>ord(a).localeCompare(ord(b)));
-      const fb  = sFab.docs.map(d=>({id:d.id,...d.data(),_colecao:"fabulas"})).sort((a,b)=>ord(a).localeCompare(ord(b)));
-      const ps  = sPsi.docs.map(d=>({id:d.id,...d.data(),_colecao:"psicoeducacao"})).sort((a,b)=>ord(a).localeCompare(ord(b)));
-      setFerramentas(f); setFabulas(fb); setPsico(ps); setLoading(false);
+      setFerramentas(sF.docs.map(d=>({id:d.id,...d.data(),_colecao:"recursos"})).sort((a,b)=>ord(a).localeCompare(ord(b))));
+      setFabulas(sFab.docs.map(d=>({id:d.id,...d.data(),_colecao:"fabulas"})).sort((a,b)=>ord(a).localeCompare(ord(b))));
+      setPsico(sPsi.docs.map(d=>({id:d.id,...d.data(),_colecao:"psicoeducacao"})).sort((a,b)=>ord(a).localeCompare(ord(b))));
+      setLoading(false);
     }).catch(()=>setLoading(false));
   },[]);
 
-  // Gesto de voltar do celular fecha o exercício
+  // ── Gesto de voltar ──
   React.useEffect(()=>{
     if(abrindo||abrindoPsico){
       window.history.pushState({exercicioAberto:true},"");
@@ -2219,14 +2264,31 @@ function FerramentasAluno({ user }) {
       return ()=>window.removeEventListener("popstate",onPop);
     }
   },[!!abrindo,!!abrindoPsico]);
-
   function fechar(){
-    if(window.history.state&&window.history.state.exercicioAberto){ window.history.back(); }
+    if(window.history.state&&window.history.state.exercicioAberto) window.history.back();
     else { setAbrindo(null); setAbrindoPsico(null); }
   }
   function abrir(r){
     registrarUsoRecurso(user, r, "abriu");
     if(r._colecao==="psicoeducacao") setAbrindoPsico(r); else setAbrindo(r);
+  }
+
+  // ── Gerar link rápido ──
+  async function gerarLinkRapido(){
+    if(!linkDesc.trim()){alert("Digite uma identificação.");return;}
+    setLinkSalvando(true);
+    const token = Math.random().toString(36).slice(2,10).toUpperCase();
+    const label = linkModal.titulo||linkModal.nome||"—";
+    await db.collection("clinica_aluno_links").add({
+      alunoId:user.id, alunoNome:user.nome,
+      token, ferramenta:linkModal.formularioKey||linkModal.id, ferramentaLabel:label, descricao:linkDesc,
+      url:SITE_URL+"/clinica/?link="+token,
+      usos:0, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setLinkMsg("✓ Link copiado!");
+    try{ await navigator.clipboard.writeText(SITE_URL+"/clinica/?link="+token); }catch(e){}
+    setLinkSalvando(false);
+    setTimeout(()=>{ setLinkModal(null); setLinkDesc(""); setLinkMsg(""); },1800);
   }
 
   const ICONES_KEY = {
@@ -2235,14 +2297,13 @@ function FerramentasAluno({ user }) {
     "entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵",
   };
   const EMOJI_CAT = {
-    tcc:"🧠", ansiedade:"🎯", emocoes:"💜", autocuidado:"🌱",
-    relacionamentos:"❤️", corpo:"🥗", esquema:"🔑", musicoterapia:"🎵",
-    avaliacao:"📋", resiliencia:"🌊", esperanca:"🌟", autoconfianca:"🦅",
-    autoconhecimento:"🔍", perspectiva:"🔭", outro:"🔧",
+    tcc:"🧠",ansiedade:"🎯",emocoes:"💜",autocuidado:"🌱",
+    relacionamentos:"❤️",corpo:"🥗",esquema:"🔑",musicoterapia:"🎵",
+    avaliacao:"📋",outro:"🔧",
   };
-  const icone = r => ICONES_KEY[r.formularioKey] || EMOJI_CAT[r.categoria] || "🔧";
-  const titulo = r => r.titulo || r.nome || "—";
-  const descricao = r => r.descricao || r.resumo || (r.texto?r.texto.slice(0,120):"") || "";
+  const icone = r => ICONES_KEY[r.formularioKey]||EMOJI_CAT[r.categoria]||"🔧";
+  const titulo = r => r.titulo||r.nome||"—";
+  const descricao = r => r.descricao||r.resumo||(r.texto?r.texto.slice(0,120):"")||"";
 
   function BarraVoltar({texto}){
     return (
@@ -2282,12 +2343,54 @@ function FerramentasAluno({ user }) {
 
   const lista = aba==="ferramentas" ? ferramentas : aba==="fabulas" ? fabulas : psico;
 
+  // ── Agrupa por macrocategoria ──
+  function agrupar(itens){
+    const grupos = [];
+    MACROS.forEach(m=>{
+      const g = itens.filter(r=>getMacro(r)===m.id);
+      if(g.length>0) grupos.push({...m, itens:g});
+    });
+    const usados = new Set(grupos.flatMap(g=>g.itens.map(i=>i.id)));
+    const orfaos = itens.filter(r=>!usados.has(r.id));
+    if(orfaos.length>0) grupos.push({id:"_outros",icone:"📂",label:"Outros",cor:"#6b7280",bg:"#f3f4f6",itens:orfaos});
+    return grupos;
+  }
+  const grupos = agrupar(lista);
+
+  // ── Card de recurso com botões Abrir + Gerar Link ──
+  function CardRecurso({r}){
+    return (
+      <div className="card" style={{display:"flex",flexDirection:"column",padding:"16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <div style={{width:40,height:40,borderRadius:10,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>{icone(r)}</div>
+          <div style={{fontWeight:700,fontSize:13,lineHeight:1.3,flex:1}}>{titulo(r)}</div>
+        </div>
+        <div style={{fontSize:11,color:"var(--text-muted)",lineHeight:1.5,flex:1,marginBottom:12}}>{descricao(r)}</div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>abrir(r)}
+            style={{flex:2,padding:"10px",borderRadius:10,border:"none",
+              background:"var(--purple)",color:"white",fontWeight:700,fontSize:12,
+              cursor:"pointer",fontFamily:"inherit"}}>
+            ▶ Abrir
+          </button>
+          <button onClick={()=>{setLinkModal(r);setLinkDesc("");setLinkMsg("");}}
+            title="Gerar link para enviar ao paciente"
+            style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid var(--purple)",
+              background:"white",color:"var(--purple)",fontWeight:700,fontSize:12,
+              cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            🔗 Link
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{maxWidth:980,margin:"0 auto"}}>
       <div style={{marginBottom:16}}>
         <div style={{fontFamily:"var(--font-display)",fontSize:24,fontWeight:600,color:"var(--purple)"}}>🩺 Ferramentas Clínicas</div>
         <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>
-          Catálogo completo para uso em supervisão e nos seus atendimentos. Os registros salvos ficam vinculados ao seu acesso.
+          Catálogo completo para supervisão e atendimentos. Use o botão "Link" para enviar atividades aos seus pacientes.
         </div>
       </div>
 
@@ -2305,27 +2408,47 @@ function FerramentasAluno({ user }) {
         ))}
       </div>
 
-      {lista.length===0 ? (
+      {/* Conteúdo agrupado por macrocategoria */}
+      {grupos.length===0 ? (
         <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
           Nenhum recurso cadastrado nesta categoria ainda.
         </div>
-      ) : (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:16}}>
-          {lista.map(r=>(
-            <div key={r.id} className="card" style={{display:"flex",flexDirection:"column"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                <div style={{width:42,height:42,borderRadius:12,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{icone(r)}</div>
-                <div style={{fontWeight:700,fontSize:14,lineHeight:1.3}}>{titulo(r)}</div>
-              </div>
-              <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,flex:1,marginBottom:14}}>{descricao(r)}</div>
-              <button onClick={()=>abrir(r)}
-                style={{width:"100%",padding:"11px",borderRadius:10,border:"none",
-                  background:"var(--purple)",color:"white",fontWeight:700,fontSize:13,
-                  cursor:"pointer",fontFamily:"inherit"}}>
-                ▶ {aba==="psicoeducacao"?"Abrir Conteúdo":aba==="fabulas"?"Abrir Fábula":"Abrir Ferramenta"}
+      ) : grupos.map(g=>(
+        <div key={g.id} style={{marginBottom:28}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 16px",
+            borderRadius:12,background:g.bg||"#f3f4f6",border:"1px solid "+(g.cor||"#e5e7eb")+"30"}}>
+            <span style={{fontSize:22}}>{g.icone}</span>
+            <div>
+              <div style={{fontWeight:700,fontSize:15,color:g.cor||"#374151"}}>{g.label}</div>
+              <div style={{fontSize:11,color:"var(--text-muted)"}}>{g.itens.length} recurso(s)</div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>
+            {g.itens.map(r=><CardRecurso key={r.id} r={r}/>)}
+          </div>
+        </div>
+      ))}
+
+      {/* Modal Gerar Link rápido */}
+      {linkModal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setLinkModal(null)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:420}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:6}}>{"🔗"} Gerar Link</div>
+            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
+              Recurso: <strong>{titulo(linkModal)}</strong>
+            </div>
+            <div className="form-group" style={{marginBottom:16}}>
+              <label className="form-label">Identificação (nome do paciente, sessão etc.)</label>
+              <input className="form-input" value={linkDesc} onChange={e=>setLinkDesc(e.target.value)} placeholder="Ex: João — TCC sessão 3" autoFocus/>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setLinkModal(null)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={gerarLinkRapido} disabled={linkSalvando}>
+                {linkMsg||linkSalvando?"Gerando...":"🔗 Gerar e Copiar Link"}
               </button>
             </div>
-          ))}
+            {linkMsg&&<div style={{marginTop:12,textAlign:"center",color:"#16a34a",fontWeight:700,fontSize:14}}>{linkMsg}</div>}
+          </div>
         </div>
       )}
     </div>
