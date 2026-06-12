@@ -11165,6 +11165,7 @@ function FinanceiroPessoal({
   const RECORR = ["Mensal", "Semanal", "Quinzenal", "Bimestral", "Trimestral", "Semestral", "Anual"];
   const catsReceita = [...CATS_RECEITA_DEFAULT, ...categorias.filter(c => c.tipo === "receita").map(c => c.nome)];
   const catsDespesa = [...CATS_DESPESA_DEFAULT, ...categorias.filter(c => c.tipo === "despesa").map(c => c.nome)];
+  const CENTROS_CUSTO = ["🏥 Clínica", "🎵 Ônix Brasil", "🎶 Flamboyant", "⭐ Estrelas", "🌱 Projetos Culturais", "📚 Consultorias & Cursos", "🏢 Administrativo", "🏠 Pessoal"];
   const [formAvulso, setFormAvulso] = useState({
     tipo: "despesa",
     categoria: "",
@@ -11173,7 +11174,10 @@ function FinanceiroPessoal({
     data: new Date().toISOString().slice(0, 10),
     formaPag: "PIX",
     status: "pago",
-    obs: ""
+    obs: "",
+    centroCusto: "",
+    parcelas: "1",
+    totalParcelas: ""
   });
   const [formRecorr, setFormRecorr] = useState({
     tipo: "despesa",
@@ -11183,7 +11187,8 @@ function FinanceiroPessoal({
     recorrencia: "Mensal",
     diaVencimento: "10",
     mesInicio: new Date().toISOString().slice(0, 7),
-    ativo: true
+    ativo: true,
+    centroCusto: ""
   });
   useEffect(() => {
     const u1 = db.collection("clinica_financeiro_pessoal").onSnapshot(s => {
@@ -11261,15 +11266,55 @@ function FinanceiroPessoal({
       return;
     }
     setSalvando(true);
-    const dados = {
-      ...formAvulso,
-      valor: parseFloat(formAvulso.valor),
+    const nParc = parseInt(formAvulso.parcelas) || 1;
+    const val = parseFloat(formAvulso.valor);
+    const base = {
+      tipo: formAvulso.tipo,
+      categoria: formAvulso.categoria,
+      formaPag: formAvulso.formaPag,
+      status: formAvulso.status,
+      obs: formAvulso.obs,
+      centroCusto: formAvulso.centroCusto || "",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (editando) {
-      await db.collection("clinica_financeiro_pessoal").doc(editando).update(dados);
+      await db.collection("clinica_financeiro_pessoal").doc(editando).update({
+        ...base,
+        descricao: formAvulso.descricao,
+        valor: val,
+        data: formAvulso.data,
+        parcela: formAvulso.totalParcelas ? formAvulso.parcelas + "/" + formAvulso.totalParcelas : ""
+      });
+    } else if (nParc > 1) {
+      const batch = db.batch();
+      const [anoI, mesI, diaI] = formAvulso.data.split("-").map(Number);
+      for (let i = 0; i < nParc; i++) {
+        let m = mesI + i,
+          a = anoI;
+        while (m > 12) {
+          m -= 12;
+          a++;
+        }
+        const dataParc = `${a}-${String(m).padStart(2, "0")}-${String(diaI).padStart(2, "0")}`;
+        const desc = (formAvulso.descricao || formAvulso.categoria || "") + ` (${i + 1}/${nParc})`;
+        const ref = db.collection("clinica_financeiro_pessoal").doc();
+        batch.set(ref, {
+          ...base,
+          descricao: desc,
+          valor: val,
+          data: dataParc,
+          parcela: `${i + 1}/${nParc}`,
+          parcelaGrupo: formAvulso.data + "-" + nParc
+        });
+      }
+      await batch.commit();
     } else {
-      await db.collection("clinica_financeiro_pessoal").add(dados);
+      await db.collection("clinica_financeiro_pessoal").add({
+        ...base,
+        descricao: formAvulso.descricao,
+        valor: val,
+        data: formAvulso.data
+      });
     }
     setModal(false);
     setEditando(null);
@@ -11281,7 +11326,10 @@ function FinanceiroPessoal({
       data: new Date().toISOString().slice(0, 10),
       formaPag: "PIX",
       status: "pago",
-      obs: ""
+      obs: "",
+      centroCusto: "",
+      parcelas: "1",
+      totalParcelas: ""
     });
     setSalvando(false);
   }
@@ -11294,6 +11342,7 @@ function FinanceiroPessoal({
     const dados = {
       ...formRecorr,
       valorPrevisto: parseFloat(formRecorr.valorPrevisto),
+      centroCusto: formRecorr.centroCusto || "",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (editando) {
@@ -11311,7 +11360,8 @@ function FinanceiroPessoal({
       recorrencia: "Mensal",
       diaVencimento: "10",
       mesInicio: new Date().toISOString().slice(0, 7),
-      ativo: true
+      ativo: true,
+      centroCusto: ""
     });
     setSalvando(false);
   }
@@ -11336,6 +11386,7 @@ function FinanceiroPessoal({
         formaPag: formBaixa.formaPag,
         status: "pago",
         recorrenteId: r.id,
+        centroCusto: r.centroCusto || "",
         obs: "",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -11657,7 +11708,7 @@ function FinanceiroPessoal({
         fontSize: 12,
         color: "var(--text-muted)"
       }
-    }, r.categoria, " \xB7 vence dia ", r.diaVencimento, " \xB7 ", r.recorrencia)), React.createElement("div", {
+    }, r.categoria, " \xB7 vence dia ", r.diaVencimento, " \xB7 ", r.recorrencia, r.centroCusto ? " · " + r.centroCusto : "")), React.createElement("div", {
       style: {
         fontWeight: 700,
         color: corTipo(r.tipo),
@@ -11706,7 +11757,8 @@ function FinanceiroPessoal({
           recorrencia: r.recorrencia,
           diaVencimento: r.diaVencimento,
           mesInicio: r.mesInicio || mesAtual,
-          ativo: r.ativo
+          ativo: r.ativo,
+          centroCusto: r.centroCusto || ""
         });
         setEditando(r.id);
         setModal("recorrente");
@@ -11794,7 +11846,7 @@ function FinanceiroPessoal({
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "")), React.createElement("div", {
+  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "", l.centroCusto ? " · " + l.centroCusto : "", l.parcela ? " · " + l.parcela : "")), React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#059669"
@@ -11827,7 +11879,10 @@ function FinanceiroPessoal({
         data: l.data,
         formaPag: l.formaPag || "PIX",
         status: l.status,
-        obs: l.obs || ""
+        obs: l.obs || "",
+        centroCusto: l.centroCusto || "",
+        parcelas: "1",
+        totalParcelas: l.parcela || ""
       });
       setEditando(l.id);
       setModal("avulso");
@@ -11914,7 +11969,7 @@ function FinanceiroPessoal({
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "")), React.createElement("div", {
+  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "", l.centroCusto ? " · " + l.centroCusto : "", l.parcela ? " · " + l.parcela : "")), React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#dc2626"
@@ -11947,7 +12002,10 @@ function FinanceiroPessoal({
         data: l.data,
         formaPag: l.formaPag || "PIX",
         status: l.status,
-        obs: l.obs || ""
+        obs: l.obs || "",
+        centroCusto: l.centroCusto || "",
+        parcelas: "1",
+        totalParcelas: l.parcela || ""
       });
       setEditando(l.id);
       setModal("avulso");
@@ -12252,6 +12310,62 @@ function FinanceiroPessoal({
   }, FORMAS.map(f => React.createElement("option", {
     key: f
   }, f)))), React.createElement("div", {
+    className: "form-group"
+  }, React.createElement("label", {
+    className: "form-label"
+  }, "Centro de Custo"), React.createElement("select", {
+    className: "form-input",
+    value: formAvulso.centroCusto || "",
+    onChange: e => setFormAvulso({
+      ...formAvulso,
+      centroCusto: e.target.value
+    })
+  }, React.createElement("option", {
+    value: ""
+  }, "Nenhum"), CENTROS_CUSTO.map(c => React.createElement("option", {
+    key: c
+  }, c)))), !editando && React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "1/-1"
+    }
+  }, React.createElement("label", {
+    className: "form-label"
+  }, "Parcelas"), React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "center"
+    }
+  }, React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    min: "1",
+    max: "60",
+    value: formAvulso.parcelas || "1",
+    onChange: e => setFormAvulso({
+      ...formAvulso,
+      parcelas: e.target.value
+    }),
+    style: {
+      width: 80
+    }
+  }), React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)"
+    }
+  }, "\xD7 R$ ", formAvulso.valor || "0", " = ", React.createElement("strong", {
+    style: {
+      color: "var(--purple)"
+    }
+  }, "R$ ", ((parseFloat(formAvulso.valor) || 0) * (parseInt(formAvulso.parcelas) || 1)).toFixed(2).replace(".", ",")), " total")), React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)",
+      marginTop: 4
+    }
+  }, (parseInt(formAvulso.parcelas) || 1) > 1 ? `Serão gerados ${formAvulso.parcelas} lançamentos — um por mês a partir de ${formAvulso.data || "hoje"}, cada um de R$ ${formAvulso.valor || "0"}.` : "Lançamento único. Aumente para gerar parcelas mensais automáticas.")), React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
@@ -12498,7 +12612,25 @@ function FinanceiroPessoal({
     value: "ativo"
   }, "Ativo"), React.createElement("option", {
     value: "inativo"
-  }, "Inativo")))), React.createElement("div", {
+  }, "Inativo"))), React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "1/-1"
+    }
+  }, React.createElement("label", {
+    className: "form-label"
+  }, "Centro de Custo"), React.createElement("select", {
+    className: "form-input",
+    value: formRecorr.centroCusto || "",
+    onChange: e => setFormRecorr({
+      ...formRecorr,
+      centroCusto: e.target.value
+    })
+  }, React.createElement("option", {
+    value: ""
+  }, "Nenhum (pessoal geral)"), CENTROS_CUSTO.map(c => React.createElement("option", {
+    key: c
+  }, c))))), React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
