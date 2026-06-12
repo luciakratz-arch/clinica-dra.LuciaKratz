@@ -5222,7 +5222,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const mesAtual = new Date().toISOString().slice(0,7);
 
   const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Investimentos","Dividendos","Freelance","Outros"];
-  const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Outros"];
+  const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Investimentos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Salários","Musicoterapia","Outros"];
   const FORMAS  = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Débito Automático","Outro"];
   const RECORR  = ["Mensal","Semanal","Quinzenal","Bimestral","Trimestral","Semestral","Anual"];
 
@@ -5230,6 +5230,9 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const catsDespesa = [...CATS_DESPESA_DEFAULT,...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
 
   const CENTROS_CUSTO = ["🏥 Clínica","🎵 Ônix Brasil","🎶 Flamboyant","⭐ Estrelas","🌱 Projetos Culturais","📚 Consultorias & Cursos","🏢 Administrativo","🏠 Pessoal"];
+  const CENTROS_CLINICOS = ["🏥 Clínica","🎵 Ônix Brasil","🎶 Flamboyant","⭐ Estrelas","🌱 Projetos Culturais","📚 Consultorias & Cursos","🏢 Administrativo"];
+  function ehClinico(cc){ return cc && CENTROS_CLINICOS.includes(cc); }
+  function colecaoParaCC(cc){ return ehClinico(cc) ? "clinica_lancamentos" : "clinica_financeiro_pessoal"; }
 
   const [formAvulso, setFormAvulso] = useState({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",centroCusto:"",parcelas:"1",totalParcelas:""});
   const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true,centroCusto:"",totalParcelas:"",indeterminado:true});
@@ -5273,16 +5276,27 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     setSalvando(true);
     const nParc = parseInt(formAvulso.parcelas)||1;
     const val = parseFloat(formAvulso.valor);
-    const base = {tipo:formAvulso.tipo,categoria:formAvulso.categoria,formaPag:formAvulso.formaPag,status:formAvulso.status,obs:formAvulso.obs,centroCusto:formAvulso.centroCusto||"",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+    const cc = formAvulso.centroCusto||"";
+    const colDestino = colecaoParaCC(cc);
+    const base = {tipo:formAvulso.tipo,categoria:formAvulso.categoria,formaPag:formAvulso.formaPag,status:formAvulso.status,obs:formAvulso.obs,centroCusto:cc,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+    // Marca lançamentos roteados do pessoal para a clínica
+    if(ehClinico(cc)) base.origem = "financeiro_pessoal";
+    if(ehClinico(cc)) base.tipo_lancamento = "avulso";
 
     if(editando){
-      // Edição: atualiza apenas este lançamento
-      await db.collection("clinica_financeiro_pessoal").doc(editando).update({
-        ...base, descricao:formAvulso.descricao, valor:val, data:formAvulso.data,
-        parcela:formAvulso.totalParcelas?formAvulso.parcelas+"/"+formAvulso.totalParcelas:""
-      });
+      // Verifica se precisa mover de coleção (CC mudou)
+      const eraClinico = lancamentos.some(l=>l.id===editando) ? false : true;
+      // Se não achou nos lancamentos pessoais, tenta achar nos clínicos
+      const colOrigem = eraClinico ? "clinica_lancamentos" : "clinica_financeiro_pessoal";
+      if(colOrigem !== colDestino){
+        // Move: apaga da origem e cria no destino
+        await db.collection(colOrigem).doc(editando).delete();
+        await db.collection(colDestino).add({...base, descricao:formAvulso.descricao, valor:val, data:formAvulso.data,
+          parcela:formAvulso.totalParcelas||""});
+      } else {
+        await db.collection(colDestino).doc(editando).update({...base, descricao:formAvulso.descricao, valor:val, data:formAvulso.data});
+      }
     } else if(nParc > 1){
-      // Parcelas: gera N lançamentos com meses incrementados
       const batch = db.batch();
       const [anoI,mesI,diaI] = formAvulso.data.split("-").map(Number);
       for(let i=0; i<nParc; i++){
@@ -5290,13 +5304,14 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
         while(m>12){ m-=12; a++; }
         const dataParc = `${a}-${String(m).padStart(2,"0")}-${String(diaI).padStart(2,"0")}`;
         const desc = (formAvulso.descricao||formAvulso.categoria||"") + ` (${i+1}/${nParc})`;
-        const ref = db.collection("clinica_financeiro_pessoal").doc();
+        const ref = db.collection(colDestino).doc();
         batch.set(ref, {...base, descricao:desc, valor:val, data:dataParc, parcela:`${i+1}/${nParc}`, parcelaGrupo:formAvulso.data+"-"+nParc});
       }
       await batch.commit();
+      if(ehClinico(cc)) alert(`✅ ${nParc} parcelas lançadas no Financeiro da Clínica (${cc}).`);
     } else {
-      // Lançamento único
-      await db.collection("clinica_financeiro_pessoal").add({...base, descricao:formAvulso.descricao, valor:val, data:formAvulso.data});
+      await db.collection(colDestino).add({...base, descricao:formAvulso.descricao, valor:val, data:formAvulso.data});
+      if(ehClinico(cc)) alert(`✅ Lançamento enviado para o Financeiro da Clínica (${cc}).`);
     }
     setModal(false);setEditando(null);
     setFormAvulso({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",centroCusto:"",parcelas:"1",totalParcelas:""});
@@ -5325,11 +5340,14 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
       // Só este mês
       const dia = r.diaVencimento||"10";
       const data = `${mesFiltroEfetivo}-${String(dia).padStart(2,"0")}`;
-      const ref = db.collection("clinica_financeiro_pessoal").doc();
+      const col = colecaoParaCC(r.centroCusto);
+      const ref = db.collection(col).doc();
       batch.set(ref,{
         tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||r.categoria,
         valor:parseFloat(formBaixa.valor),data,formaPag:formBaixa.formaPag,
         status:"pago",recorrenteId:r.id,centroCusto:r.centroCusto||"",obs:"",
+        origem:ehClinico(r.centroCusto)?"financeiro_pessoal":undefined,
+        tipo_lancamento:ehClinico(r.centroCusto)?"recorrente_baixa":undefined,
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     } else {
@@ -5461,7 +5479,20 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
                   }
                   {!somenteLeitura&&(
                     <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormRecorr({tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||"",valorPrevisto:r.valorPrevisto+"",recorrencia:r.recorrencia,diaVencimento:r.diaVencimento,mesInicio:r.mesInicio||mesAtual,ativo:r.ativo,centroCusto:r.centroCusto||"",totalParcelas:r.totalParcelas?r.totalParcelas+"":"",indeterminado:r.indeterminado!==false&&!r.totalParcelas});setEditando(r.id);setModal("recorrente");}}><Icon name="pencil" size={13}/></button>
+                      {baixaDone?(
+                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar lançamento deste mês" onClick={()=>{
+                          const lancDoMes = lancamentos.find(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
+                          if(lancDoMes){
+                            setFormAvulso({tipo:lancDoMes.tipo,categoria:lancDoMes.categoria||"",descricao:lancDoMes.descricao||"",valor:lancDoMes.valor+"",data:lancDoMes.data,formaPag:lancDoMes.formaPag||"PIX",status:lancDoMes.status||"pago",obs:lancDoMes.obs||"",centroCusto:lancDoMes.centroCusto||"",parcelas:"1",totalParcelas:""});
+                            setEditando(lancDoMes.id);setModal("avulso");
+                          } else { alert("Lançamento deste mês não encontrado."); }
+                        }}><Icon name="pencil" size={13}/></button>
+                      ):(
+                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar recorrente (altera todos os meses futuros)" onClick={()=>{
+                          setFormRecorr({tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||"",valorPrevisto:r.valorPrevisto+"",recorrencia:r.recorrencia,diaVencimento:r.diaVencimento,mesInicio:r.mesInicio||mesAtual,ativo:r.ativo,centroCusto:r.centroCusto||"",totalParcelas:r.totalParcelas?r.totalParcelas+"":"",indeterminado:r.indeterminado!==false&&!r.totalParcelas});
+                          setEditando(r.id);setModal("recorrente");
+                        }}><Icon name="pencil" size={13}/></button>
+                      )}
                       <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluirRec(r.id)}><Icon name="trash-2" size={13}/></button>
                     </div>
                   )}
