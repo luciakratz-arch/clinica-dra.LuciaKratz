@@ -11188,7 +11188,9 @@ function FinanceiroPessoal({
     diaVencimento: "10",
     mesInicio: new Date().toISOString().slice(0, 7),
     ativo: true,
-    centroCusto: ""
+    centroCusto: "",
+    totalParcelas: "",
+    indeterminado: true
   });
   useEffect(() => {
     const u1 = db.collection("clinica_financeiro_pessoal").onSnapshot(s => {
@@ -11343,6 +11345,8 @@ function FinanceiroPessoal({
       ...formRecorr,
       valorPrevisto: parseFloat(formRecorr.valorPrevisto),
       centroCusto: formRecorr.centroCusto || "",
+      totalParcelas: formRecorr.indeterminado ? 0 : parseInt(formRecorr.totalParcelas) || 0,
+      indeterminado: !!formRecorr.indeterminado,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (editando) {
@@ -11361,7 +11365,9 @@ function FinanceiroPessoal({
       diaVencimento: "10",
       mesInicio: new Date().toISOString().slice(0, 7),
       ativo: true,
-      centroCusto: ""
+      centroCusto: "",
+      totalParcelas: "",
+      indeterminado: true
     });
     setSalvando(false);
   }
@@ -11415,6 +11421,15 @@ function FinanceiroPessoal({
       }
     }
     await batch.commit();
+    if (r.totalParcelas > 0) {
+      const totalPagas = lancamentos.filter(l => l.recorrenteId === r.id).length + (formBaixa.modo === "este" ? 1 : 0);
+      if (totalPagas >= r.totalParcelas) {
+        await db.collection("clinica_fin_pessoal_recorrentes").doc(r.id).update({
+          ativo: false
+        });
+        alert("✅ Baixa registrada! Todas as " + r.totalParcelas + " parcelas foram pagas — recorrente encerrado automaticamente.");
+      }
+    }
     setModalBaixa(null);
     setFormBaixa({
       valor: "",
@@ -11708,7 +11723,10 @@ function FinanceiroPessoal({
         fontSize: 12,
         color: "var(--text-muted)"
       }
-    }, r.categoria, " \xB7 vence dia ", r.diaVencimento, " \xB7 ", r.recorrencia, r.centroCusto ? " · " + r.centroCusto : "")), React.createElement("div", {
+    }, r.categoria, " \xB7 vence dia ", r.diaVencimento, " \xB7 ", r.recorrencia, r.centroCusto ? " · " + r.centroCusto : "", r.totalParcelas > 0 ? (() => {
+      const pagas = lancamentos.filter(l => l.recorrenteId === r.id).length;
+      return ` · ${pagas}/${r.totalParcelas} parcela(s)`;
+    })() : " · ♾️ Indeterminado")), React.createElement("div", {
       style: {
         fontWeight: 700,
         color: corTipo(r.tipo),
@@ -11758,7 +11776,9 @@ function FinanceiroPessoal({
           diaVencimento: r.diaVencimento,
           mesInicio: r.mesInicio || mesAtual,
           ativo: r.ativo,
-          centroCusto: r.centroCusto || ""
+          centroCusto: r.centroCusto || "",
+          totalParcelas: r.totalParcelas ? r.totalParcelas + "" : "",
+          indeterminado: r.indeterminado !== false && !r.totalParcelas
         });
         setEditando(r.id);
         setModal("recorrente");
@@ -12613,6 +12633,65 @@ function FinanceiroPessoal({
   }, "Ativo"), React.createElement("option", {
     value: "inativo"
   }, "Inativo"))), React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "1/-1"
+    }
+  }, React.createElement("label", {
+    className: "form-label"
+  }, "Dura\xE7\xE3o"), React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8
+    }
+  }, [["ind", "♾️ Indeterminado"], ["fixa", "📅 Parcelas fixas"]].map(([v, l]) => React.createElement("button", {
+    key: v,
+    type: "button",
+    onClick: () => setFormRecorr({
+      ...formRecorr,
+      indeterminado: v === "ind",
+      totalParcelas: v === "ind" ? "" : formRecorr.totalParcelas || "12"
+    }),
+    style: {
+      flex: 1,
+      padding: 9,
+      borderRadius: 10,
+      border: "1.5px solid",
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)",
+      fontWeight: 600,
+      borderColor: (v === "ind" ? formRecorr.indeterminado : !formRecorr.indeterminado) ? "var(--purple)" : "#e5e7eb",
+      background: (v === "ind" ? formRecorr.indeterminado : !formRecorr.indeterminado) ? "var(--purple-soft)" : "white",
+      color: (v === "ind" ? formRecorr.indeterminado : !formRecorr.indeterminado) ? "var(--purple)" : "#6b7280"
+    }
+  }, l))), !formRecorr.indeterminado && React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "center"
+    }
+  }, React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    min: "1",
+    max: "120",
+    value: formRecorr.totalParcelas || "",
+    onChange: e => setFormRecorr({
+      ...formRecorr,
+      totalParcelas: e.target.value
+    }),
+    placeholder: "Ex: 7",
+    style: {
+      width: 90
+    }
+  }), React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)"
+    }
+  }, "parcela(s) \u2014 encerra automaticamente ap\xF3s a \xFAltima"))), React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
