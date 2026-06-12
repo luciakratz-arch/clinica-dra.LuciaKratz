@@ -2093,8 +2093,3 @@ function DashboardMarketing({ user }) {
     </div>
   );
 }
-
-const NAV_MARKETING = [
-  { id:"marketing-dashboard",    label:"Dashboard",   icon:"trending-up" },
-  { id:"dashboard-performance",  label:"Performance", icon:"bar-chart-2" },
-];
