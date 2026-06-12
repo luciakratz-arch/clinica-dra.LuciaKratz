@@ -4324,12 +4324,3 @@ function DashboardMarketing({
     }
   }, l.createdAt?.toDate ? l.createdAt.toDate().toLocaleDateString("pt-BR") : "—"))))))), user?.tipo === "psicologa" && React.createElement(CentralLancamentosMarketing, null));
 }
-const NAV_MARKETING = [{
-  id: "marketing-dashboard",
-  label: "Dashboard",
-  icon: "trending-up"
-}, {
-  id: "dashboard-performance",
-  label: "Performance",
-  icon: "bar-chart-2"
-}];
