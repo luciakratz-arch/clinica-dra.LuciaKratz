@@ -3114,7 +3114,8 @@ function Pacientes({ user }) {
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>setModalImport(true)}><Icon name="upload" size={15}/> Importar Excel</button>
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>{
             const url="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
-            navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! Cole no WhatsApp ou e-mail:\n\n"+url)).catch(()=>prompt("Copie o link:",url));
+            const texto = `🦋 *Clínica Dra. Lucia Kratz*\n\nOlá! Para agilizar o seu atendimento, preencha o formulário de cadastro pelo link abaixo:\n\n👉 ${url}\n\nÉ rápido e seguro. Após o preenchimento, seus dados já estarão disponíveis para a sua psicóloga.\n\nQualquer dúvida, estamos à disposição! 💜`;
+            navigator.clipboard.writeText(texto).then(()=>alert("✓ Texto + link copiado!\nCole direto no WhatsApp.")).catch(()=>prompt("Copie o texto:",texto));
           }}><Icon name="link" size={15}/> Link de Cadastro</button>
           <button className="btn btn-purple" onClick={abrirNovo}><Icon name="user-plus" size={16}/> Novo Paciente</button>
         </div>
@@ -5731,11 +5732,16 @@ function Alunos() {
     return unsub;
   },[]);
 
+  const LINK_CADASTRO = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro-aluno/";
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
   const filtrados = alunos.filter(a=>{
     const fOk = filtro==="todos" || a.status===filtro;
     const bOk = !busca || a.nome?.toLowerCase().includes(busca.toLowerCase()) || a.email?.toLowerCase().includes(busca.toLowerCase());
     return fOk && bOk;
   });
+
+  const pendentes = alunos.filter(a=>a.status==="pendente");
 
   async function salvar(){
     if(!form.nome||!form.email){alert("Nome e e-mail obrigatorios.");return;}
@@ -5743,11 +5749,17 @@ function Alunos() {
     setSalvando(true);
     if(editando){
       const {senha,...dados}=form;
-      await db.collection("clinica_alunos").doc(editando).update(dados);
+      const up = {...dados};
+      if(senha) up.senha = senha; // só atualiza senha se preenchida
+      await db.collection("clinica_alunos").doc(editando).update(up);
     } else {
       await db.collection("clinica_alunos").add({...form,status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     }
     setModal(false);setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setSalvando(false);
+  }
+
+  async function alterarStatus(id, novoStatus){
+    await db.collection("clinica_alunos").doc(id).update({status:novoStatus});
   }
 
   async function excluir(id){
@@ -5766,17 +5778,39 @@ function Alunos() {
     <div>
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
-          <div className="page-title">Alunos em Supervisao</div>
+          <div className="page-title">Alunos em Supervisão</div>
           <div className="page-subtitle">{alunos.filter(a=>a.status==="ativo").length} aluno(s) cadastrado(s)</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>{setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setModal(true);}}>
-          <Icon name="user-plus" size={16}/> Cadastrar Aluno
-        </button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>{
+            const texto = `🎓 *Supervisão Clínica — Dra. Lucia Kratz*\n\nOlá! Para solicitar acesso ao Portal de Supervisão Clínica, preencha seu cadastro pelo link abaixo:\n\n👉 ${LINK_CADASTRO}\n\n📝 Você vai informar: nome, e-mail, instituição e criar uma senha de acesso.\n\n⏳ Após o envio, seu cadastro ficará pendente até a aprovação da supervisora. Assim que aprovado, você já pode acessar o portal.\n\nQualquer dúvida, entre em contato! 💜`;
+            navigator.clipboard.writeText(texto).then(()=>{setLinkCopiado(true);setTimeout(()=>setLinkCopiado(false),2500);}).catch(()=>prompt("Copie o texto:",texto));
+          }}>
+            {linkCopiado?"✓ Texto copiado!":"📋 Link de Cadastro"}
+          </button>
+          <button className="btn btn-purple" onClick={()=>{setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setModal(true);}}>
+            <Icon name="user-plus" size={16}/> Cadastrar Aluno
+          </button>
+        </div>
       </div>
+
+      {/* Alerta de pendentes */}
+      {pendentes.length>0&&(
+        <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:12,padding:"12px 18px",marginBottom:18,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>🔔 {pendentes.length} solicitação(ões) pendente(s)</div>
+            <div style={{fontSize:12,color:"#78350f",marginTop:2}}>Alunos que se cadastraram pelo link e aguardam sua aprovação.</div>
+          </div>
+          <button className="btn btn-ghost" style={{fontSize:12,color:"#92400e",border:"1px solid #f59e0b"}} onClick={()=>setFiltro("pendente")}>Ver pendentes</button>
+        </div>
+      )}
+
       <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome ou e-mail..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        {[["todos","Todos"],["ativo","Ativos"],["inativo","Inativos"]].map(([f,l])=>(
-          <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>{l}</button>
+        {[["todos","Todos"],["ativo","Ativos"],["pendente","Pendentes"],["inativo","Inativos"]].map(([f,l])=>(
+          <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>
+            {l} {f==="pendente"&&pendentes.length>0&&<span style={{background:"#f59e0b",color:"white",borderRadius:20,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>{pendentes.length}</span>}
+          </button>
         ))}
       </div>
       {filtrados.length===0?(
@@ -5787,12 +5821,15 @@ function Alunos() {
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtrados.map(a=>(
-            <div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"14px 20px"}}>
-              <div style={{width:42,height:42,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"var(--purple)",flexShrink:0,fontSize:16}}>{(a.nome||"?")[0].toUpperCase()}</div>
+            <div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"14px 20px",
+              borderLeft:a.status==="pendente"?"4px solid #f59e0b":a.status==="inativo"?"4px solid #9ca3af":"4px solid transparent"}}>
+              <div style={{width:42,height:42,borderRadius:"50%",background:a.status==="pendente"?"#fef3c7":"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:a.status==="pendente"?"#92400e":"var(--purple)",flexShrink:0,fontSize:16}}>{(a.nome||"?")[0].toUpperCase()}</div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{fontWeight:600}}>{a.nome}</span>
-                  <span className={"badge "+(a.status==="ativo"?"badge-green":"badge-gray")}>{a.status==="ativo"?"Ativo":"Inativo"}</span>
+                  <span className={"badge "+(a.status==="ativo"?"badge-green":a.status==="pendente"?"badge-yellow":"badge-gray")}
+                    style={a.status==="pendente"?{background:"#fef3c7",color:"#92400e",border:"1px solid #f59e0b"}:{}}>{a.status==="ativo"?"Ativo":a.status==="pendente"?"⏳ Pendente":"Inativo"}</span>
+                  {a.origemCadastro==="auto-cadastro"&&<span style={{fontSize:10,color:"var(--text-muted)",background:"var(--gray-100)",borderRadius:20,padding:"2px 8px"}}>auto-cadastro</span>}
                 </div>
                 <div style={{fontSize:13,color:"var(--text-muted)",display:"flex",gap:12,marginTop:2,flexWrap:"wrap"}}>
                   <span>✉ {a.email}</span>
@@ -5800,7 +5837,22 @@ function Alunos() {
                   <span>👤 {a.pacientesVinculados||0} paciente(s)</span>
                 </div>
               </div>
-              <div style={{display:"flex",gap:6}}>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {a.status==="pendente"&&(
+                  <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>alterarStatus(a.id,"ativo")}>
+                    ✓ Aprovar
+                  </button>
+                )}
+                {a.status==="ativo"&&(
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"#6b7280"}} onClick={()=>alterarStatus(a.id,"inativo")}>
+                    Inativar
+                  </button>
+                )}
+                {a.status==="inativo"&&(
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"#16a34a"}} onClick={()=>alterarStatus(a.id,"ativo")}>
+                    Reativar
+                  </button>
+                )}
                 <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",padding:"6px 12px"}} onClick={()=>setDetalhe(a)}>
                   <Icon name="eye" size={13}/> Ver
                 </button>
