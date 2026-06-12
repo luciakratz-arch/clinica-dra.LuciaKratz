@@ -10505,7 +10505,27 @@ function FinanceiroClinica() {
       setModal(false);
       setEditando(null);
     }
-  }, "Cancelar"), editando ? /*#__PURE__*/React.createElement("button", {
+  }, "Cancelar"), editando && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      border: "1px solid #fecaca",
+      color: "#dc2626",
+      fontSize: 12
+    },
+    title: "Este lan\xE7amento \xE9 uma despesa, n\xE3o uma receita",
+    onClick: () => {
+      setFormDespesaEdit({
+        descricao: formAvulso.descricao || formAvulso.tipo || "",
+        categoria: formAvulso.categoria || "",
+        valor: formAvulso.valor + "",
+        data: formAvulso.data || "",
+        formaPag: formAvulso.formaPag || "",
+        status: formAvulso.status === "recebido" ? "pago" : formAvulso.status || "pago",
+        obs: formAvulso.obs || ""
+      });
+      setModal("editar-despesa");
+    }
+  }, "\uD83D\uDD01 Marcar como Despesa"), editando ? /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => salvarAvulso(null),
     disabled: salvando
