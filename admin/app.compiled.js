@@ -6229,7 +6229,8 @@ function Pacientes({
     },
     onClick: () => {
       const url = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
-      navigator.clipboard.writeText(url).then(() => alert("✓ Link copiado! Cole no WhatsApp ou e-mail:\n\n" + url)).catch(() => prompt("Copie o link:", url));
+      const texto = `🦋 *Clínica Dra. Lucia Kratz*\n\nOlá! Para agilizar o seu atendimento, preencha o formulário de cadastro pelo link abaixo:\n\n👉 ${url}\n\nÉ rápido e seguro. Após o preenchimento, seus dados já estarão disponíveis para a sua psicóloga.\n\nQualquer dúvida, estamos à disposição! 💜`;
+      navigator.clipboard.writeText(texto).then(() => alert("✓ Texto + link copiado!\nCole direto no WhatsApp.")).catch(() => prompt("Copie o texto:", texto));
     }
   }, React.createElement(Icon, {
     name: "link",
@@ -12781,11 +12782,13 @@ function Alunos() {
       fontSize: 12
     },
     onClick: () => {
-      navigator.clipboard.writeText(LINK_CADASTRO);
-      setLinkCopiado(true);
-      setTimeout(() => setLinkCopiado(false), 2000);
+      const texto = `🎓 *Supervisão Clínica — Dra. Lucia Kratz*\n\nOlá! Para solicitar acesso ao Portal de Supervisão Clínica, preencha seu cadastro pelo link abaixo:\n\n👉 ${LINK_CADASTRO}\n\n📝 Você vai informar: nome, e-mail, instituição e criar uma senha de acesso.\n\n⏳ Após o envio, seu cadastro ficará pendente até a aprovação da supervisora. Assim que aprovado, você já pode acessar o portal.\n\nQualquer dúvida, entre em contato! 💜`;
+      navigator.clipboard.writeText(texto).then(() => {
+        setLinkCopiado(true);
+        setTimeout(() => setLinkCopiado(false), 2500);
+      }).catch(() => prompt("Copie o texto:", texto));
     }
-  }, linkCopiado ? "✓ Copiado!" : "📋 Link de Cadastro"), React.createElement("button", {
+  }, linkCopiado ? "✓ Texto copiado!" : "📋 Link de Cadastro"), React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => {
       setForm({
