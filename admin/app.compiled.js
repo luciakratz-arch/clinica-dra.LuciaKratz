@@ -1,3 +1,8 @@
+// ═══════════════════════════════════════════════════════
+//  ÁREA ADMINISTRATIVA — DRA. LUCIA KRATZ  
+//  app.js — Etapa 2: Cadastro completo de pacientes
+// ═══════════════════════════════════════════════════════
+
 const {
   useState,
   useEffect,
@@ -14,6 +19,9 @@ const firebaseConfig = {
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// ─── CONFIGURAÇÃO FINANCEIRA EDITÁVEL ───────────────────────────
+// Valores padrão; os reais ficam em clinica_config/comissoes (editáveis na tela Comissões)
 const CONFIG_FIN_PADRAO = {
   nomeSecretaria: "Jéssica Marjane",
   salarioFixo: 600,
@@ -115,6 +123,10 @@ const FERRAMENTAS = [{
   nome: "Rastreamento Emocional da Alimentacao",
   desc: "Consciencia sobre relacao entre emocoes e alimentacao."
 }];
+
+// ─── NOTIFICAÇÕES ─────────────────────────────────────────
+// ─── NOTIFICAÇÕES PUSH (modelo Família Kratz) ─────────────
+
 function fmtDataNotif(dataStr) {
   if (!dataStr) return "";
   const d = new Date(dataStr + "T00:00:00");
@@ -141,6 +153,11 @@ async function dispararNotificacao({
     });
   } catch (e) {}
 }
+
+// ─── ETAPA 1: HIGIENIZAÇÃO EM LOTE ────────────────────────
+// Detecta e deleta duplicatas de Maio/2026 para um paciente.
+// Critério: mesmo pacienteId + mesma data + mesmo valor + mesma descrição.
+// Mantém o documento que possui pacoteId preenchido (ou o mais antigo).
 async function deletarDuplicatasPaciente(pacienteId, mesRef) {
   try {
     const snap = await db.collection("clinica_lancamentos").where("pacienteId", "==", pacienteId).get();
@@ -148,6 +165,8 @@ async function deletarDuplicatasPaciente(pacienteId, mesRef) {
       id: d.id,
       ...d.data()
     })).filter(d => (d.data || "").startsWith(mesRef));
+
+    // Agrupar por chave composta
     const grupos = {};
     docs.forEach(d => {
       const chave = `${d.data}|${parseFloat(d.valor || 0).toFixed(2)}|${(d.descricao || d.tipo || "").trim().toLowerCase()}`;
@@ -158,14 +177,17 @@ async function deletarDuplicatasPaciente(pacienteId, mesRef) {
     let deletados = 0;
     Object.values(grupos).forEach(grupo => {
       if (grupo.length < 2) return;
+      // Prioriza manter o que tem pacoteId; senão mantém o primeiro (mais antigo por ordem de array)
       grupo.sort((a, b) => (b.pacoteId ? 1 : 0) - (a.pacoteId ? 1 : 0));
       const manter = grupo[0];
+      // Garante que o mantido tem pacoteId se algum tinha
       const comPacote = grupo.find(g => g.pacoteId);
       if (comPacote && !manter.pacoteId) {
         batch.update(db.collection("clinica_lancamentos").doc(manter.id), {
           pacoteId: comPacote.pacoteId
         });
       }
+      // Deleta os redundantes
       grupo.slice(1).forEach(dup => {
         batch.delete(db.collection("clinica_lancamentos").doc(dup.id));
         deletados++;
@@ -183,6 +205,8 @@ async function deletarDuplicatasPaciente(pacienteId, mesRef) {
     };
   }
 }
+
+// Categoriza lançamentos "Sem Nome" de um mês como Despesas Administrativas.
 async function categorizarSemNome(mesRef) {
   try {
     const snap = await db.collection("clinica_lancamentos").get();
@@ -216,17 +240,21 @@ async function categorizarSemNome(mesRef) {
     };
   }
 }
+
+// Deleta lançamentos tipo "sessao" que pertencem a pacotes (órfãos gerados por atualizarPagamento).
+// Regra: se tem pacoteId + tipo_lancamento==sessao → é lixo, o pacote já cobre.
 async function deletarLancamentosOrfaosDeSessao() {
   try {
     const snap = await db.collection("clinica_lancamentos").where("tipo_lancamento", "==", "sessao").get();
     const orfaos = snap.docs.filter(d => {
       const dado = d.data();
-      return !!dado.pacoteId;
+      return !!dado.pacoteId; // tem pacoteId = pertence a pacote = é duplicata
     });
     if (orfaos.length === 0) return {
       ok: true,
       deletados: 0
     };
+    // Firestore batch suporta até 500 operações
     const batches = [];
     let b = db.batch();
     orfaos.forEach((d, i) => {
@@ -265,6 +293,7 @@ async function verificarLembretesHoje(user) {
   amanha.setDate(hoje.getDate() + 1);
   const fmtDate = d => d.toISOString().split("T")[0];
   try {
+    // Sessões de hoje e amanhã
     if (["psicologa", "secretaria"].includes(user.tipo)) {
       const snap = await db.collection("clinica_sessoes").where("data", "in", [fmtDate(hoje), fmtDate(amanha)]).where("status", "==", "agendado").get();
       snap.docs.forEach(d => {
@@ -274,6 +303,8 @@ async function verificarLembretesHoje(user) {
         enviarPushLocal(`${dia} — Sessão às ${s.hora}`, `${diaSemana} · ${s.pacienteNome}`);
       });
     }
+
+    // Pagamentos previstos (psicóloga e Paulo)
     if (["psicologa", "paulo"].includes(user.tipo)) {
       const snap = await db.collection("clinica_lancamentos").where("status", "==", "pendente").where("data", "<=", fmtDate(amanha)).get();
       snap.docs.forEach(d => {
@@ -282,6 +313,8 @@ async function verificarLembretesHoje(user) {
         enviarPushLocal(`Pagamento previsto — ${diaSemana}`, `R$ ${parseFloat(l.valor || 0).toFixed(2).replace(".", ",")} · ${l.pacienteNome || l.descricao || ""}`);
       });
     }
+
+    // Pagamentos pendentes (secretária)
     if (user.tipo === "secretaria") {
       const snap = await db.collection("clinica_lancamentos").where("status", "==", "pendente").get();
       snap.docs.slice(0, 3).forEach(d => {
@@ -296,6 +329,7 @@ function useBotaoNotificacao(user) {
   const [permissao, setPermissao] = useState("Notification" in window ? Notification.permission : "denied");
   useEffect(() => {
     if (!user || permissao !== "granted") return;
+    // Verifica lembretes 2 segundos após login
     const t = setTimeout(() => verificarLembretesHoje(user), 2000);
     return () => clearTimeout(t);
   }, [user, permissao]);
@@ -320,7 +354,7 @@ function BotaoNotificacao({
   ativar
 }) {
   if (!("Notification" in window)) return null;
-  if (permissao === "granted") return React.createElement("span", {
+  if (permissao === "granted") return /*#__PURE__*/React.createElement("span", {
     style: {
       background: "rgba(255,255,255,0.15)",
       border: "1px solid rgba(255,255,255,0.3)",
@@ -331,7 +365,7 @@ function BotaoNotificacao({
       fontFamily: "var(--font-body)"
     }
   }, "\uD83D\uDD14 Ativo");
-  if (permissao === "denied") return React.createElement("span", {
+  if (permissao === "denied") return /*#__PURE__*/React.createElement("span", {
     style: {
       background: "rgba(255,0,0,0.15)",
       border: "1px solid rgba(255,0,0,0.3)",
@@ -342,7 +376,7 @@ function BotaoNotificacao({
       fontFamily: "var(--font-body)"
     }
   }, "\uD83D\uDD15 Bloqueado");
-  return React.createElement("button", {
+  return /*#__PURE__*/React.createElement("button", {
     onClick: ativar,
     style: {
       background: "rgba(255,255,255,0.15)",
@@ -401,7 +435,7 @@ function Icon({
       }
     } catch (e) {}
   }, [name, size]);
-  return React.createElement("span", {
+  return /*#__PURE__*/React.createElement("span", {
     ref: ref,
     style: {
       display: "inline-flex",
@@ -409,6 +443,8 @@ function Icon({
     }
   });
 }
+
+// ── TextArea com botão de voz reutilizável ──────────────────────────────────
 function TextAreaVoz({
   value,
   onChange,
@@ -447,11 +483,11 @@ function TextAreaVoz({
     setGravando(true);
   }
   const SR_SUPPORT = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       position: "relative"
     }
-  }, React.createElement("textarea", {
+  }, /*#__PURE__*/React.createElement("textarea", {
     className: className,
     value: value,
     onChange: onChange,
@@ -462,7 +498,7 @@ function TextAreaVoz({
       paddingRight: SR_SUPPORT ? 36 : undefined,
       resize: "vertical"
     }
-  }), SR_SUPPORT && React.createElement("button", {
+  }), SR_SUPPORT && /*#__PURE__*/React.createElement("button", {
     type: "button",
     onClick: toggleVoz,
     title: gravando ? "Parar gravação" : "Falar para digitar",
@@ -481,7 +517,7 @@ function TextAreaVoz({
       boxShadow: gravando ? "0 0 0 3px #7B00C430" : "none",
       transition: "all .2s"
     }
-  }, "\uD83C\uDF99\uFE0F"), gravando && React.createElement("div", {
+  }, "\uD83C\uDF99\uFE0F"), gravando && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#7B00C4",
@@ -490,7 +526,7 @@ function TextAreaVoz({
       alignItems: "center",
       gap: 4
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       width: 6,
       height: 6,
@@ -502,9 +538,9 @@ function TextAreaVoz({
   }), "Gravando... clique \uD83C\uDF99\uFE0F para parar"));
 }
 function Spinner() {
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     className: "spinner-wrap"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "spinner"
   }));
 }
@@ -512,17 +548,19 @@ function EmBreve({
   titulo,
   subtitulo
 }) {
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     className: "em-breve"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "wrench",
     size: 48
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     className: "em-breve-title"
-  }, titulo), React.createElement("div", {
+  }, titulo), /*#__PURE__*/React.createElement("div", {
     className: "em-breve-sub"
   }, subtitulo || "Modulo em construcao."));
 }
+
+// LOGIN
 function Login({
   onLogin
 }) {
@@ -582,13 +620,13 @@ function Login({
     setLoading(false);
   }
   const perfil = PERFIS.find(p => p.id === perfilSel);
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     className: "login-page"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "login-left"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "login-logo"
-  }, React.createElement("img", {
+  }, /*#__PURE__*/React.createElement("img", {
     src: LOGO_URL,
     alt: "Lucia Kratz",
     style: {
@@ -596,15 +634,15 @@ function Login({
       height: 140,
       objectFit: "contain"
     }
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "login-name"
-  }, "Dra. Lucia Kratz"), React.createElement("div", {
+  }, "Dra. Lucia Kratz"), /*#__PURE__*/React.createElement("div", {
     className: "login-subtitle"
-  }, "Sistema Administrativo"), React.createElement("div", {
+  }, "Sistema Administrativo"), /*#__PURE__*/React.createElement("div", {
     className: "login-crp"
-  }, "Psicologa Doutora \xB7 CRP 09/20590"), React.createElement("div", {
+  }, "Psicologa Doutora \xB7 CRP 09/20590"), /*#__PURE__*/React.createElement("div", {
     className: "login-left-btns"
-  }, PERFIS.map(p => React.createElement("button", {
+  }, PERFIS.map(p => /*#__PURE__*/React.createElement("button", {
     key: p.id,
     onClick: () => {
       setPerfilSel(p.id);
@@ -613,19 +651,19 @@ function Login({
       setSenha("");
       setEmail("");
     }
-  }, p.nome.replace("Sou ", ""))))), React.createElement("div", {
+  }, p.nome.replace("Sou ", ""))))), /*#__PURE__*/React.createElement("div", {
     className: "login-right"
-  }, etapa === "perfil" && React.createElement(React.Fragment, null, React.createElement("div", {
+  }, etapa === "perfil" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       width: "100%"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "login-right-title"
-  }, "Area Administrativa"), React.createElement("div", {
+  }, "Area Administrativa"), /*#__PURE__*/React.createElement("div", {
     className: "login-right-sub"
-  }, "Selecione seu perfil de acesso.")), React.createElement("div", {
+  }, "Selecione seu perfil de acesso.")), /*#__PURE__*/React.createElement("div", {
     className: "profile-cards"
-  }, PERFIS.map(p => React.createElement("button", {
+  }, PERFIS.map(p => /*#__PURE__*/React.createElement("button", {
     key: p.id,
     className: "profile-card",
     onClick: () => {
@@ -633,28 +671,28 @@ function Login({
       setEtapa("senha");
       setErro("");
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "profile-card-icon",
     style: {
       background: p.cor
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: p.icon,
     size: 22
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "profile-card-text"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "profile-card-name"
-  }, p.nome), React.createElement("div", {
+  }, p.nome), /*#__PURE__*/React.createElement("div", {
     className: "profile-card-desc"
-  }, p.desc)), React.createElement("div", {
+  }, p.desc)), /*#__PURE__*/React.createElement("div", {
     className: "profile-card-arrow"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "chevron-right",
     size: 18
-  }))))), React.createElement("div", {
+  }))))), /*#__PURE__*/React.createElement("div", {
     className: "login-footer"
-  }, React.createElement("a", {
+  }, /*#__PURE__*/React.createElement("a", {
     href: "../sala/",
     target: "_blank",
     style: {
@@ -666,7 +704,7 @@ function Login({
       textDecoration: "none",
       marginBottom: 8
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       width: 28,
       height: 28,
@@ -676,10 +714,10 @@ function Login({
       alignItems: "center",
       justifyContent: "center"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "door-open",
     size: 15
-  })), "Agenda da Sala"), React.createElement("a", {
+  })), "Agenda da Sala"), /*#__PURE__*/React.createElement("a", {
     href: "../clinica/",
     style: {
       color: "#7B00C4",
@@ -689,59 +727,61 @@ function Login({
       gap: 6,
       marginBottom: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "activity",
     size: 14
-  }), " \xC1rea Cl\xEDnica"), React.createElement("a", {
+  }), " \xC1rea Cl\xEDnica"), /*#__PURE__*/React.createElement("a", {
     href: "../",
     style: {
       color: "var(--gray-400)",
       fontSize: 12
     }
-  }, "Voltar ao site"))), etapa === "senha" && perfil && React.createElement(React.Fragment, null, React.createElement("button", {
+  }, "Voltar ao site"))), etapa === "senha" && perfil && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     className: "login-right-back",
     onClick: () => {
       setEtapa("perfil");
       setErro("");
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "arrow-left",
     size: 14
-  }), " Voltar"), React.createElement("form", {
+  }), " Voltar"), /*#__PURE__*/React.createElement("form", {
     className: "login-form",
     onSubmit: handleLogin
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "login-form-title"
-  }, perfil.nome), React.createElement("div", {
+  }, perfil.nome), /*#__PURE__*/React.createElement("div", {
     className: "login-form-sub"
-  }, perfil.desc)), erro && React.createElement("div", {
+  }, perfil.desc)), erro && /*#__PURE__*/React.createElement("div", {
     className: "login-error"
-  }, erro), perfilSel === "secretaria" && React.createElement("div", {
+  }, erro), perfilSel === "secretaria" && /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "E-mail"), React.createElement("input", {
+  }, "E-mail"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "email",
     value: email,
     onChange: e => setEmail(e.target.value),
     autoFocus: true
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Senha"), React.createElement("input", {
+  }, "Senha"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "password",
     value: senha,
     onChange: e => setSenha(e.target.value),
     autoFocus: perfilSel !== "secretaria"
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     className: "btn-primary",
     type: "submit",
     disabled: loading
   }, loading ? "Entrando..." : "Entrar")))));
 }
+
+// NAV
 const NAV_PSICOLOGA = [{
   grupo: "🏥 Clínica",
   itens: [{
@@ -819,6 +859,8 @@ const NAV_PSICOLOGA = [{
     icon: "settings"
   }]
 }];
+
+// Lista plana para compatibilidade com código existente
 const NAV_PSICOLOGA_FLAT = NAV_PSICOLOGA.flatMap(g => g.itens);
 const NAV_SECRETARIA = [{
   id: "pacientes",
@@ -850,6 +892,8 @@ const NAV_PAULO = [{
   label: "Financeiro Clínica",
   icon: "building-2"
 }];
+
+// SIDEBAR
 function Sidebar({
   user,
   tab,
@@ -861,14 +905,17 @@ function Sidebar({
   const titulo = user.tipo === "secretaria" ? "Area da Secretaria" : user.tipo === "paulo" ? "Financeiro" : user.tipo === "marketing" ? "Marketing" : "Area Administrativa";
   const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : user.nomeCompleto || "Usuário";
   const initials = nomeExibir.split(" ").map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "U";
-  const navFlat = user.tipo === "secretaria" ? NAV_SECRETARIA : user.tipo === "paulo" ? NAV_PAULO : user.tipo === "marketing" ? NAV_MARKETING : null;
-  return React.createElement("div", {
+
+  // Nav plana para perfis simples
+  const navFlat = user.tipo === "secretaria" ? NAV_SECRETARIA : user.tipo === "paulo" ? NAV_PAULO : user.tipo === "marketing" ? NAV_MARKETING : null; // psicologa usa grupos
+
+  return /*#__PURE__*/React.createElement("div", {
     className: "sidebar-desktop"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "sidebar-header"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "sidebar-logo"
-  }, React.createElement("img", {
+  }, /*#__PURE__*/React.createElement("img", {
     src: LOGO_URL,
     alt: "LK",
     style: {
@@ -880,23 +927,25 @@ function Sidebar({
       e.target.style.display = "none";
       e.target.nextSibling.style.display = "block";
     }
-  }), React.createElement("span", {
+  }), /*#__PURE__*/React.createElement("span", {
     className: "sidebar-logo-placeholder",
     style: {
       display: "none"
     }
-  }, "LK")), React.createElement("div", null, React.createElement("div", {
+  }, "LK")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "sidebar-title"
-  }, "Dra. Lucia Kratz"), React.createElement("div", {
+  }, "Dra. Lucia Kratz"), /*#__PURE__*/React.createElement("div", {
     className: "sidebar-role"
-  }, titulo))), React.createElement("nav", {
+  }, titulo))), /*#__PURE__*/React.createElement("nav", {
     className: "sidebar-nav"
-  }, isPsicologa ? NAV_PSICOLOGA.map(grupo => React.createElement("div", {
+  }, isPsicologa ?
+  // Menu com grupos para psicóloga
+  NAV_PSICOLOGA.map(grupo => /*#__PURE__*/React.createElement("div", {
     key: grupo.grupo,
     style: {
       marginBottom: 4
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       fontWeight: 700,
@@ -905,23 +954,25 @@ function Sidebar({
       padding: "10px 14px 4px",
       textTransform: "uppercase"
     }
-  }, grupo.grupo), grupo.itens.map(item => React.createElement("button", {
+  }, grupo.grupo), grupo.itens.map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     className: "nav-item " + (tab === item.id ? "active" : ""),
     onClick: () => setTab(item.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 18
-  }), item.label)))) : navFlat.map(item => React.createElement("button", {
+  }), item.label)))) :
+  // Menu plano para outros perfis
+  navFlat.map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     className: "nav-item " + (tab === item.id ? "active" : ""),
     onClick: () => setTab(item.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 18
-  }), item.label))), React.createElement("div", {
+  }), item.label))), /*#__PURE__*/React.createElement("div", {
     className: "sidebar-footer"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "sidebar-user",
     style: {
       display: "flex",
@@ -932,26 +983,26 @@ function Sidebar({
       borderRadius: 10,
       marginBottom: 8
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "sidebar-avatar",
     style: {
       flexShrink: 0
     }
-  }, initials), React.createElement("div", {
+  }, initials), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       minWidth: 0
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "sidebar-user-name",
     style: {
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
     }
-  }, nomeExibir), user.crp && React.createElement("div", {
+  }, nomeExibir), user.crp && /*#__PURE__*/React.createElement("div", {
     className: "sidebar-user-crp"
-  }, user.crp)), notifProps && React.createElement(BotaoNotificacao, notifProps)), user.tipo === "psicologa" && React.createElement("a", {
+  }, user.crp)), notifProps && /*#__PURE__*/React.createElement(BotaoNotificacao, notifProps)), user.tipo === "psicologa" && /*#__PURE__*/React.createElement("a", {
     href: "../sala/",
     target: "_blank",
     className: "nav-item",
@@ -961,10 +1012,10 @@ function Sidebar({
       borderRadius: 8,
       marginBottom: 2
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "door-open",
     size: 18
-  }), " Agenda da Sala"), React.createElement("a", {
+  }), " Agenda da Sala"), /*#__PURE__*/React.createElement("a", {
     href: "../clinica/",
     className: "nav-item",
     style: {
@@ -973,26 +1024,28 @@ function Sidebar({
       borderRadius: 8,
       marginBottom: 2
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "activity",
     size: 18
-  }), " \xC1rea Cl\xEDnica"), React.createElement("a", {
+  }), " \xC1rea Cl\xEDnica"), /*#__PURE__*/React.createElement("a", {
     href: "../",
     className: "nav-item",
     style: {
       color: "rgba(255,255,255,0.6)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "globe",
     size: 18
-  }), " Site"), React.createElement("button", {
+  }), " Site"), /*#__PURE__*/React.createElement("button", {
     className: "nav-item nav-item-danger",
     onClick: onLogout
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "log-out",
     size: 18
   }), " Sair")));
 }
+
+// DASHBOARD
 function DashboardAdmin({
   user
 }) {
@@ -1036,93 +1089,99 @@ function DashboardAdmin({
       currency: "BRL"
     });
   }
+
+  // Clínica mês
   const lcMes = lancClinica.filter(l => l.data?.startsWith(mesAtual));
   const recClinica = lcMes.filter(l => l.tipo_lancamento !== "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const despClinica = lcMes.filter(l => l.tipo_lancamento === "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+
+  // Pessoal mês
   const lpMes = lancPessoal.filter(l => l.data?.startsWith(mesAtual));
   const recPessoal = lpMes.filter(l => l.tipo === "receita" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const despPessoal = lpMes.filter(l => l.tipo === "despesa" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const totalRec = recClinica + recPessoal;
   const totalDesp = despClinica + despPessoal;
   const saldoMes = totalRec - totalDesp;
+
+  // Acumulado ano
   const anoAtual = new Date().getFullYear() + "";
   const lcAno = lancClinica.filter(l => l.data?.startsWith(anoAtual));
   const lpAno = lancPessoal.filter(l => l.data?.startsWith(anoAtual));
   const recAno = lcAno.filter(l => l.tipo_lancamento !== "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0) + lpAno.filter(l => l.tipo === "receita" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const despAno = lcAno.filter(l => l.tipo_lancamento === "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0) + lpAno.filter(l => l.tipo === "despesa" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const saldoAno = recAno - despAno;
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Dashboard"), React.createElement("div", {
+  }, "Dashboard"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle",
     style: {
       textTransform: "capitalize"
     }
-  }, hoje)), React.createElement("div", {
+  }, hoje)), /*#__PURE__*/React.createElement("div", {
     className: "metrics-grid",
     style: {
       marginBottom: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-icon"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "users",
     size: 20
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "metric-label"
-  }, "Pacientes Ativos"), React.createElement("div", {
+  }, "Pacientes Ativos"), /*#__PURE__*/React.createElement("div", {
     className: "metric-value"
-  }, ativos), React.createElement("div", {
+  }, ativos), /*#__PURE__*/React.createElement("div", {
     className: "metric-sub"
-  }, pacientes.length, " total")), React.createElement("div", {
+  }, pacientes.length, " total")), /*#__PURE__*/React.createElement("div", {
     className: "metric-card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-icon"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "calendar",
     size: 20
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "metric-label"
-  }, "Sess\xF5es Hoje"), React.createElement("div", {
+  }, "Sess\xF5es Hoje"), /*#__PURE__*/React.createElement("div", {
     className: "metric-value"
-  }, sessoesHoje), React.createElement("div", {
+  }, sessoesHoje), /*#__PURE__*/React.createElement("div", {
     className: "metric-sub"
-  }, "agendadas")), React.createElement("div", {
+  }, "agendadas")), /*#__PURE__*/React.createElement("div", {
     className: "metric-card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-icon"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "package",
     size: 20
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "metric-label"
-  }, "Pendente Cl\xEDnica"), React.createElement("div", {
+  }, "Pendente Cl\xEDnica"), /*#__PURE__*/React.createElement("div", {
     className: "metric-value",
     style: {
       fontSize: 18,
       color: "#d97706"
     }
-  }, fmt(lcMes.filter(l => l.status === "pendente").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0)))), React.createElement("div", {
+  }, fmt(lcMes.filter(l => l.status === "pendente").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0)))), /*#__PURE__*/React.createElement("div", {
     className: "metric-card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-icon"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "heart",
     size: 20
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "metric-label"
-  }, "Casais em Terapia"), React.createElement("div", {
+  }, "Casais em Terapia"), /*#__PURE__*/React.createElement("div", {
     className: "metric-value"
-  }, pacientes.filter(p => p.casalId).length / 2 | 0))), React.createElement("div", {
+  }, pacientes.filter(p => p.casalId).length / 2 | 0))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 16,
@@ -1131,20 +1190,20 @@ function DashboardAdmin({
       alignItems: "center",
       gap: 8
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "bar-chart-2",
     size: 18
   }), " Resumo Financeiro \u2014 ", new Date().toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
       gap: 10,
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: saldoMes >= 0 ? "#d1fae5" : "#fee2e2",
       borderRadius: 12,
@@ -1152,134 +1211,134 @@ function DashboardAdmin({
       border: "1.5px solid",
       borderColor: saldoMes >= 0 ? "#6ee7b7" : "#fca5a5"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       fontWeight: 600,
       color: saldoMes >= 0 ? "#059669" : "#dc2626",
       marginBottom: 6
     }
-  }, "Saldo do M\xEAs (Geral)"), React.createElement("div", {
+  }, "Saldo do M\xEAs (Geral)"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 24,
       fontWeight: 800,
       color: saldoMes >= 0 ? "#059669" : "#dc2626"
     }
-  }, fmt(saldoMes)), React.createElement("div", {
+  }, fmt(saldoMes)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#6b7280",
       marginTop: 4
     }
-  }, "Cl\xEDnica + Pessoal")), React.createElement("div", {
+  }, "Cl\xEDnica + Pessoal")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       borderRadius: 12,
       padding: "16px 20px",
       border: "1.5px solid #86efac"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       fontWeight: 600,
       color: "#059669",
       marginBottom: 6
     }
-  }, "Total Receitas"), React.createElement("div", {
+  }, "Total Receitas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 22,
       fontWeight: 800,
       color: "#059669"
     }
-  }, fmt(totalRec)), React.createElement("div", {
+  }, fmt(totalRec)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#6b7280",
       marginTop: 4
     }
-  }, "Cl\xEDnica: ", fmt(recClinica), " \xB7 Pessoal: ", fmt(recPessoal))), React.createElement("div", {
+  }, "Cl\xEDnica: ", fmt(recClinica), " \xB7 Pessoal: ", fmt(recPessoal))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef2f2",
       borderRadius: 12,
       padding: "16px 20px",
       border: "1.5px solid #fca5a5"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       fontWeight: 600,
       color: "#dc2626",
       marginBottom: 6
     }
-  }, "Total Despesas"), React.createElement("div", {
+  }, "Total Despesas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 22,
       fontWeight: 800,
       color: "#dc2626"
     }
-  }, fmt(totalDesp)), React.createElement("div", {
+  }, fmt(totalDesp)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#6b7280",
       marginTop: 4
     }
-  }, "Cl\xEDnica: ", fmt(despClinica), " \xB7 Pessoal: ", fmt(despPessoal)))), React.createElement("div", {
+  }, "Cl\xEDnica: ", fmt(despClinica), " \xB7 Pessoal: ", fmt(despPessoal)))), /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid var(--gray-100)",
       paddingTop: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 12,
       fontSize: 14,
       color: "var(--text-muted)"
     }
-  }, "Acumulado ", anoAtual), React.createElement("div", {
+  }, "Acumulado ", anoAtual), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(100px,1fr))",
       gap: 8
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "12px 16px",
       borderRadius: 10,
       background: "var(--gray-50)",
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 4
     }
-  }, "Receitas ", anoAtual), React.createElement("div", {
+  }, "Receitas ", anoAtual), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 18,
       color: "#059669"
     }
-  }, fmt(recAno))), React.createElement("div", {
+  }, fmt(recAno))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "12px 16px",
       borderRadius: 10,
       background: "var(--gray-50)",
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 4
     }
-  }, "Despesas ", anoAtual), React.createElement("div", {
+  }, "Despesas ", anoAtual), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 18,
       color: "#dc2626"
     }
-  }, fmt(despAno))), React.createElement("div", {
+  }, fmt(despAno))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "12px 16px",
       borderRadius: 10,
@@ -1287,26 +1346,26 @@ function DashboardAdmin({
       border: "1px solid",
       borderColor: saldoAno >= 0 ? "#86efac" : "#fca5a5"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 4
     }
-  }, "Saldo Acumulado ", anoAtual), React.createElement("div", {
+  }, "Saldo Acumulado ", anoAtual), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 18,
       color: saldoAno >= 0 ? "#059669" : "#dc2626"
     }
-  }, fmt(saldoAno)))))), React.createElement("div", {
+  }, fmt(saldoAno)))))), /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Bem-vinda, ", user.nome, " \uD83E\uDD8B"), React.createElement("a", {
+  }, "Bem-vinda, ", user.nome, " \uD83E\uDD8B"), /*#__PURE__*/React.createElement("a", {
     href: "../clinica/",
     style: {
       fontSize: 13,
@@ -1317,11 +1376,13 @@ function DashboardAdmin({
       width: "fit-content",
       marginTop: 8
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "external-link",
     size: 14
   }), " Portal do Paciente")));
 }
+
+// ABA PERFIL
 function AbaPerfil({
   paciente,
   pacientes
@@ -1354,39 +1415,39 @@ function AbaPerfil({
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   }
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Nome completo"), React.createElement("input", {
+  }, "Nome completo"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.nome || "",
     onChange: e => setForm({
       ...form,
       nome: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "E-mail"), React.createElement("input", {
+  }, "E-mail"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "email",
     value: form.email || "",
@@ -1394,22 +1455,22 @@ function AbaPerfil({
       ...form,
       email: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Telefone"), React.createElement("input", {
+  }, "Telefone"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.telefone || "",
     onChange: e => setForm({
       ...form,
       telefone: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data de Nascimento"), React.createElement("input", {
+  }, "Data de Nascimento"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: form.dataNasc || "",
@@ -1417,41 +1478,41 @@ function AbaPerfil({
       ...form,
       dataNasc: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "CPF"), React.createElement("input", {
+  }, "CPF"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.cpf || "",
     onChange: e => setForm({
       ...form,
       cpf: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Genero"), React.createElement("select", {
+  }, "Genero"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.genero || "",
     onChange: e => setForm({
       ...form,
       genero: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecione"), React.createElement("option", null, "Feminino"), React.createElement("option", null, "Masculino"), React.createElement("option", null, "Nao-binario"), React.createElement("option", null, "Nao informar"))), React.createElement("div", {
+  }, "Selecione"), /*#__PURE__*/React.createElement("option", null, "Feminino"), /*#__PURE__*/React.createElement("option", null, "Masculino"), /*#__PURE__*/React.createElement("option", null, "Nao-binario"), /*#__PURE__*/React.createElement("option", null, "Nao informar"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("div", {
+  }, "Status"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginTop: 4
     }
-  }, [["ativo", "Ativo", "var(--success)"], ["inativo", "Inativo", "var(--danger)"], ["alta", "Alta", "var(--gray-400)"]].map(([s, l, c]) => React.createElement("button", {
+  }, [["ativo", "Ativo", "var(--success)"], ["inativo", "Inativo", "var(--danger)"], ["alta", "Alta", "var(--gray-400)"]].map(([s, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: s,
     onClick: () => setForm({
       ...form,
@@ -1467,7 +1528,7 @@ function AbaPerfil({
       background: form.status === s ? c : "white",
       color: form.status === s ? "white" : c
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     style: {
       gridColumn: "span 2",
       fontSize: 12,
@@ -1479,14 +1540,14 @@ function AbaPerfil({
       textTransform: "uppercase",
       letterSpacing: 0.5
     }
-  }, "\uD83C\uDFE2 Dados Ocupacionais \u2014 para documentos NR-1 e declara\xE7\xF5es"), React.createElement("div", {
+  }, "\uD83C\uDFE2 Dados Ocupacionais \u2014 para documentos NR-1 e declara\xE7\xF5es"), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Empresa Contratante"), React.createElement("input", {
+  }, "Empresa Contratante"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.empresa || "",
     onChange: e => setForm({
@@ -1494,11 +1555,11 @@ function AbaPerfil({
       empresa: e.target.value
     }),
     placeholder: "Ex: Construtora Horizonte Ltda."
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Setor"), React.createElement("input", {
+  }, "Setor"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.setor || "",
     onChange: e => setForm({
@@ -1506,11 +1567,11 @@ function AbaPerfil({
       setor: e.target.value
     }),
     placeholder: "Ex: Administrativo"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Cargo"), React.createElement("input", {
+  }, "Cargo"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.cargo || "",
     onChange: e => setForm({
@@ -1518,14 +1579,14 @@ function AbaPerfil({
       cargo: e.target.value
     }),
     placeholder: "Ex: Analista de RH"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Objetivos Terapeuticos"), React.createElement(TextAreaVoz, {
+  }, "Objetivos Terapeuticos"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: form.objetivos || "",
@@ -1534,39 +1595,39 @@ function AbaPerfil({
       objetivos: e.target.value
     }),
     placeholder: "Descreva os objetivos da terapia..."
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       marginTop: 16
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar,
     disabled: salvando
-  }, salvando ? "Salvando..." : "Salvar alteracoes"))), React.createElement("div", {
+  }, salvando ? "Salvando..." : "Salvar alteracoes"))), /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 8,
       marginBottom: 12
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "key",
     size: 18
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "Credenciais de Acesso")), React.createElement("p", {
+  }, "Credenciais de Acesso")), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 16
     }
-  }, "Copie o texto abaixo e envie para o paciente. A senha padrao e ", React.createElement("strong", null, "1234"), "."), React.createElement("div", {
+  }, "Copie o texto abaixo e envie para o paciente. A senha padrao e ", /*#__PURE__*/React.createElement("strong", null, "1234"), "."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--gray-50)",
       border: "1px solid var(--gray-200)",
@@ -1576,26 +1637,29 @@ function AbaPerfil({
       lineHeight: 1.8,
       color: "var(--text-muted)"
     }
-  }, "Ola, " + paciente.nome + "!\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\nLink: " + SITE_URL + "/clinica/\nEmail: " + paciente.email + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"), React.createElement("div", {
+  }, "Ola, " + paciente.nome + "!\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\nLink: " + SITE_URL + "/clinica/\nEmail: " + paciente.email + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       marginTop: 12
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     onClick: copiarMsg
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "copy",
     size: 15
-  }), " ", copiado ? "Copiado!" : "Copiar mensagem"), React.createElement("button", {
+  }), " ", copiado ? "Copiado!" : "Copiar mensagem"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: redefinirSenha
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "key",
     size: 15
   }), " Redefinir senha para 1234"))));
 }
+
+// ABA MODULOS
+// FERRAMENTAS FIXAS DO MÓDULO I
 const FERRAMENTAS_MOD1 = [{
   id: "humor",
   nome: "Check-in Diário",
@@ -1608,12 +1672,14 @@ const FERRAMENTAS_MOD1 = [{
   id: "diario",
   nome: "Diário Terapêutico",
   desc: "Escrita reflexiva livre"
-}];
+}
+// Pensamentos Automáticos e Reflexões Cognitivas → Módulo III (Ansiedade e Controle dos Pensamentos)
+];
 function Toggle({
   ativo,
   onClick
 }) {
-  return React.createElement("button", {
+  return /*#__PURE__*/React.createElement("button", {
     onClick: onClick,
     style: {
       width: 44,
@@ -1626,7 +1692,7 @@ function Toggle({
       transition: "background .2s",
       flexShrink: 0
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       position: "absolute",
       top: 2,
@@ -1648,9 +1714,10 @@ function AbaModulos({
   const [fabulas, setFabulas] = useState([]);
   const [psicoeducacao, setPsicoeducacao] = useState([]);
   const [salvando, setSalvando] = useState(false);
-  const [modalSugestao, setModalSugestao] = useState(null);
+  const [modalSugestao, setModalSugestao] = useState(null); // {ferramenta, categoria, sugestoes}
   const [sugestoesSel, setSugestoesSel] = useState({});
   useEffect(() => {
+    // Busca config atualizado do Firebase (ignora cache da prop)
     db.collection("clinica_pacientes").doc(paciente.id).get().then(d => {
       if (d.exists && d.data().modulosConfig) setConfig(d.data().modulosConfig);
     });
@@ -1669,6 +1736,7 @@ function AbaModulos({
   }, [paciente.id]);
   async function salvarConfig(novaConfig) {
     setConfig(novaConfig);
+    // Atualiza também modulosAtivos para compatibilidade
     const ativos = Object.keys(novaConfig).filter(k => novaConfig[k]?.ativo);
     await db.collection("clinica_pacientes").doc(paciente.id).update({
       modulosConfig: novaConfig,
@@ -1695,6 +1763,8 @@ function AbaModulos({
     const ferrAtual = modAtual.ferramentas || {};
     const hoje = new Date().toISOString().split("T")[0];
     const estaAtiva = !!ferrAtual[ferrId];
+
+    // Se está desativando, só remove — sem sugestão
     if (estaAtiva) {
       const novaFerr = {
         ...ferrAtual
@@ -1709,6 +1779,8 @@ function AbaModulos({
       });
       return;
     }
+
+    // Ativando — primeiro salva a ferramenta
     const novaFerr = {
       ...ferrAtual,
       [ferrId]: {
@@ -1723,10 +1795,14 @@ function AbaModulos({
         ferramentas: novaFerr
       }
     });
+
+    // Busca categoria da ferramenta para sugestões
     const rec = recursos.find(r => r.id === ferrId);
     const catFerr = rec?.categoria || "";
     const macroId = FAB_LEGADO_MACRO[catFerr] || catFerr;
-    if (!macroId || !macroId.startsWith("macro_")) return;
+    if (!macroId || !macroId.startsWith("macro_")) return; // sem sugestões para cats sem macro
+
+    // Busca fábulas e psicoeducações da mesma macrocategoria não ativadas
     const ferrAtivadas = new Set(Object.keys(novaFerr));
     const fabSugest = fabulas.filter(f => (FAB_LEGADO_MACRO[f.categoria || ""] === macroId || f.categoria === macroId) && !ferrAtivadas.has(f.id)).slice(0, 3);
     const psicoSugest = psicoeducacao.filter(p => (PSICO_LEGADO_MACRO[p.categoria || ""] === macroId || p.categoria === macroId) && !ferrAtivadas.has(p.id)).slice(0, 3);
@@ -1754,6 +1830,7 @@ function AbaModulos({
     const ferrAtual = {
       ...modAtual.ferramentas
     };
+    // Ativa fábulas selecionadas no mod2
     const modFab = config["mod2"] || {
       ativo: true,
       ferramentas: {}
@@ -1761,6 +1838,7 @@ function AbaModulos({
     const ferrFab = {
       ...modFab.ferramentas
     };
+    // Ativa psico selecionadas no mod6
     const modPsico = config["mod6"] || {
       ativo: true,
       ferramentas: {}
@@ -1905,8 +1983,13 @@ function AbaModulos({
       cat: f.macroCategoria || f.categoria || ""
     }))
   }];
+
+  // Módulos que agrupam por macrocategoria
   const MODS_COM_GRUPO = new Set(["mod2", "mod3", "mod6"]);
+
+  // Mapa categoria → macrocategoria para agrupamento
   const CAT_PARA_MACRO_MOD = {
+    // Ferramentas (mod3)
     ansiedade_diaria: "macro_ansiedade",
     distorcoes: "macro_ansiedade",
     crencas_esquemas: "macro_ansiedade",
@@ -1946,6 +2029,7 @@ function AbaModulos({
     corpo: "macro_corpo",
     musicoterapia: "macro_musico",
     avaliacao: "macro_aval",
+    // Fábulas (mod2) — por tema
     resiliencia: "macro_habitos",
     esperanca: "macro_humor",
     autoconfianca: "macro_humor",
@@ -1953,6 +2037,7 @@ function AbaModulos({
     perspectiva: "macro_habitos",
     mindfulness: "macro_habitos",
     ansiedade_fab: "macro_ansiedade",
+    // Categorias adicionais de fábulas
     "resiliência": "macro_habitos",
     "esperança": "macro_humor",
     "autoconfiança": "macro_humor",
@@ -1967,7 +2052,10 @@ function AbaModulos({
     "criatividade": "macro_habitos",
     "proposito": "macro_habitos",
     "propósito": "macro_habitos"
+    // Psicoeducação (mod6) — igual ferramentas
   };
+
+  // Mapa macroId → info visual
   const MACRO_INFO = {
     macro_ansiedade: {
       icone: "🧠",
@@ -2024,6 +2112,8 @@ function AbaModulos({
       bg: "#f3f4f6"
     }
   };
+
+  // Mapa nome da ferramenta → macro (para itens com categoria "outro")
   const NOME_PARA_MACRO = {
     "Mapa de Intensidade": "macro_corpo",
     "Mapa de Intimidade": "macro_casais",
@@ -2057,12 +2147,16 @@ function AbaModulos({
     ferramentas.forEach(f => {
       const raw = f.desc || f.cat || "";
       let macroId;
+      // 1. Já é macro_* direto
       if (MACRO_INFO[raw]) {
         macroId = raw;
+        // 2. É "outro" ou vazio — tentar pelo nome
       } else if (!raw || raw === "outro" || raw === "outros") {
+        // Busca parcial no nome
         const nomeLower = (f.nome || "").toLowerCase();
         const encontrado = Object.entries(NOME_PARA_MACRO).find(([k]) => nomeLower.includes(k.toLowerCase()));
         macroId = encontrado ? encontrado[1] : "_outros";
+        // 3. Mapear categoria técnica
       } else {
         macroId = CAT_PARA_MACRO_MOD[raw] || CAT_PARA_MACRO_MOD[f.cat] || "_outros";
       }
@@ -2086,7 +2180,7 @@ function AbaModulos({
   function renderFerramenta(ferr, modId, ferramentas) {
     const ferrConfig = ferramentas[ferr.id];
     const ferrAtiva = !!ferrConfig;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: ferr.id,
       style: {
         background: "white",
@@ -2098,33 +2192,33 @@ function AbaModulos({
         gap: 12,
         transition: "border-color .2s"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 500,
         fontSize: 13
       }
-    }, ferr.nome), ferr.desc && React.createElement("div", {
+    }, ferr.nome), ferr.desc && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, ferr.desc)), ferrAtiva && React.createElement("div", {
+    }, ferr.desc)), ferrAtiva && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 8
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)"
       }
-    }, "In\xEDcio:"), React.createElement("input", {
+    }, "In\xEDcio:"), /*#__PURE__*/React.createElement("input", {
       type: "date",
       value: ferrConfig.dataInicio || "",
       onChange: e => setDataInicio(modId, ferr.id, e.target.value),
@@ -2135,12 +2229,12 @@ function AbaModulos({
         padding: "3px 6px",
         fontFamily: "var(--font-body)"
       }
-    })), React.createElement(Toggle, {
+    })), /*#__PURE__*/React.createElement(Toggle, {
       ativo: ferrAtiva,
       onClick: () => toggleFerramenta(modId, ferr.id)
     }));
   }
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -2151,7 +2245,7 @@ function AbaModulos({
     const ativo = !!modConfig.ativo;
     const ferramentas = modConfig.ferramentas || {};
     const usaGrupo = MODS_COM_GRUPO.has(mod.id);
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: mod.id,
       style: {
         background: "white",
@@ -2160,7 +2254,7 @@ function AbaModulos({
         overflow: "hidden",
         transition: "border-color .2s"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -2168,48 +2262,51 @@ function AbaModulos({
         padding: "16px 20px",
         background: ativo ? "var(--purple-bg)" : "white"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 24
       }
-    }, mod.icone), React.createElement("div", {
+    }, mod.icone), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         fontSize: 15,
         color: "var(--text)"
       }
-    }, mod.nome), React.createElement("div", {
+    }, mod.nome), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, mod.desc)), mod.automatico ? React.createElement("span", {
+    }, mod.desc)), mod.automatico ? /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)",
         fontStyle: "italic"
       }
-    }, "autom\xE1tico") : React.createElement(Toggle, {
+    }, "autom\xE1tico") : /*#__PURE__*/React.createElement(Toggle, {
       ativo: ativo,
       onClick: () => toggleModulo(mod.id)
-    })), ativo && !mod.automatico && React.createElement("div", {
+    })), ativo && !mod.automatico && /*#__PURE__*/React.createElement("div", {
       style: {
         borderTop: "1px solid var(--gray-100)",
         padding: "12px 20px",
         background: "#fafafa"
       }
-    }, mod.ferramentas.length === 0 ? React.createElement("div", {
+    }, mod.ferramentas.length === 0 ? /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
         padding: "8px 0"
       }
-    }, "Nenhuma ferramenta cadastrada neste m\xF3dulo ainda.") : usaGrupo ? React.createElement("div", {
+    }, "Nenhuma ferramenta cadastrada neste m\xF3dulo ainda.") : usaGrupo ?
+    /*#__PURE__*/
+    // ── Agrupado por macrocategoria ──
+    React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -2217,16 +2314,16 @@ function AbaModulos({
       }
     }, agruparPorMacro(mod.ferramentas).map(grupo => {
       const key = mod.id + "_" + grupo.id;
-      const aberto = !!gruposAbertos[key];
+      const aberto = !!gruposAbertos[key]; // fechado por padrão
       const ativosNoGrupo = grupo.itens.filter(f => !!ferramentas[f.id]).length;
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         key: grupo.id,
         style: {
           borderRadius: 10,
           border: `1.5px solid ${grupo.cor}30`,
           overflow: "hidden"
         }
-      }, React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
         onClick: () => toggleGrupo(mod.id, grupo.id),
         style: {
           display: "flex",
@@ -2237,18 +2334,18 @@ function AbaModulos({
           cursor: "pointer",
           userSelect: "none"
         }
-      }, React.createElement("span", {
+      }, /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 16
         }
-      }, grupo.icone), React.createElement("span", {
+      }, grupo.icone), /*#__PURE__*/React.createElement("span", {
         style: {
           fontWeight: 700,
           fontSize: 12,
           color: grupo.cor,
           flex: 1
         }
-      }, grupo.label), ativosNoGrupo > 0 && React.createElement("span", {
+      }, grupo.label), ativosNoGrupo > 0 && /*#__PURE__*/React.createElement("span", {
         style: {
           background: grupo.cor,
           color: "white",
@@ -2257,13 +2354,13 @@ function AbaModulos({
           fontSize: 11,
           fontWeight: 700
         }
-      }, ativosNoGrupo, " ativo", ativosNoGrupo !== 1 ? "s" : ""), React.createElement("span", {
+      }, ativosNoGrupo, " ativo", ativosNoGrupo !== 1 ? "s" : ""), /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 11,
           color: grupo.cor,
           marginLeft: 4
         }
-      }, aberto ? "▲" : "▼", " ", grupo.itens.length)), aberto && React.createElement("div", {
+      }, aberto ? "▲" : "▼", " ", grupo.itens.length)), aberto && /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "10px 14px",
           display: "flex",
@@ -2272,13 +2369,16 @@ function AbaModulos({
           background: "white"
         }
       }, grupo.itens.map(ferr => renderFerramenta(ferr, mod.id, ferramentas))));
-    })) : React.createElement("div", {
+    })) :
+    /*#__PURE__*/
+    // ── Lista simples (mod1, mod4, mod5) ──
+    React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
         gap: 10
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         fontWeight: 600,
@@ -2286,7 +2386,7 @@ function AbaModulos({
         marginBottom: 4
       }
     }, "FERRAMENTAS DISPON\xCDVEIS"), mod.ferramentas.map(ferr => renderFerramenta(ferr, mod.id, ferramentas)))));
-  }), modalSugestao && React.createElement("div", {
+  }), modalSugestao && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -2297,7 +2397,7 @@ function AbaModulos({
       justifyContent: "center",
       padding: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -2307,14 +2407,14 @@ function AbaModulos({
       overflowY: "auto",
       boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: `linear-gradient(135deg,${modalSugestao.cor},${modalSugestao.cor}cc)`,
       borderRadius: "16px 16px 0 0",
       padding: "18px 24px",
       color: "white"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       opacity: 0.85,
@@ -2322,27 +2422,27 @@ function AbaModulos({
       textTransform: "uppercase",
       letterSpacing: "0.6px"
     }
-  }, modalSugestao.icone, " ", modalSugestao.categoria), React.createElement("div", {
+  }, modalSugestao.icone, " ", modalSugestao.categoria), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 18,
       fontWeight: 700,
       marginBottom: 4
     }
-  }, "\u2728 Sugest\xF5es para complementar"), React.createElement("div", {
+  }, "\u2728 Sugest\xF5es para complementar"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       opacity: 0.9
     }
-  }, "Voc\xEA ativou ", React.createElement("b", null, modalSugestao.ferramenta), ". Selecione f\xE1bulas e psicoeduca\xE7\xF5es da mesma tem\xE1tica.")), React.createElement("div", {
+  }, "Voc\xEA ativou ", /*#__PURE__*/React.createElement("b", null, modalSugestao.ferramenta), ". Selecione f\xE1bulas e psicoeduca\xE7\xF5es da mesma tem\xE1tica.")), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "20px 24px"
     }
-  }, modalSugestao.fabulas.length > 0 && React.createElement("div", {
+  }, modalSugestao.fabulas.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 13,
@@ -2352,10 +2452,10 @@ function AbaModulos({
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "book-open",
     size: 15
-  }), " F\xE1bulas Terap\xEAuticas"), modalSugestao.fabulas.map(f => React.createElement("label", {
+  }), " F\xE1bulas Terap\xEAuticas"), modalSugestao.fabulas.map(f => /*#__PURE__*/React.createElement("label", {
     key: f.id,
     style: {
       display: "flex",
@@ -2369,7 +2469,7 @@ function AbaModulos({
       border: `1.5px solid ${sugestoesSel[f.id] ? "var(--purple)" : "var(--gray-200)"}`,
       transition: "all .15s"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     type: "checkbox",
     checked: !!sugestoesSel[f.id],
     onChange: e => setSugestoesSel(s => ({
@@ -2381,23 +2481,23 @@ function AbaModulos({
       accentColor: "var(--purple)",
       flexShrink: 0
     }
-  }), React.createElement("div", null, React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, f.titulo || f.nome), f.moral && React.createElement("div", {
+  }, f.titulo || f.nome), f.moral && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 2,
       fontStyle: "italic"
     }
-  }, "\"", f.moral, "\""))))), modalSugestao.psicoeducacao.length > 0 && React.createElement("div", {
+  }, "\"", f.moral, "\""))))), modalSugestao.psicoeducacao.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 13,
@@ -2407,10 +2507,10 @@ function AbaModulos({
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "brain",
     size: 15
-  }), " Psicoeduca\xE7\xE3o"), modalSugestao.psicoeducacao.map(p => React.createElement("label", {
+  }), " Psicoeduca\xE7\xE3o"), modalSugestao.psicoeducacao.map(p => /*#__PURE__*/React.createElement("label", {
     key: p.id,
     style: {
       display: "flex",
@@ -2424,7 +2524,7 @@ function AbaModulos({
       border: `1.5px solid ${sugestoesSel[p.id] ? "var(--purple)" : "var(--gray-200)"}`,
       transition: "all .15s"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     type: "checkbox",
     checked: !!sugestoesSel[p.id],
     onChange: e => setSugestoesSel(s => ({
@@ -2436,23 +2536,23 @@ function AbaModulos({
       accentColor: "var(--purple)",
       flexShrink: 0
     }
-  }), React.createElement("div", null, React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, p.titulo || p.nome), p.descricao && React.createElement("div", {
+  }, p.titulo || p.nome), p.descricao && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 2
     }
-  }, p.descricao.slice(0, 80)))))), React.createElement("div", {
+  }, p.descricao.slice(0, 80)))))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setModalSugestao(null),
     style: {
       flex: 1,
@@ -2464,7 +2564,7 @@ function AbaModulos({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "Agora n\xE3o"), React.createElement("button", {
+  }, "Agora n\xE3o"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       const algum = Object.values(sugestoesSel).some(v => v);
       if (algum) ativarSugestoes();else setModalSugestao(null);
@@ -2483,6 +2583,8 @@ function AbaModulos({
     }
   }, Object.values(sugestoesSel).some(v => v) ? `✓ Ativar ${Object.values(sugestoesSel).filter(v => v).length} selecionado(s)` : "Fechar sem ativar"))))));
 }
+
+// ABA FERRAMENTAS
 function AbaFerramentas({
   paciente
 }) {
@@ -2494,26 +2596,26 @@ function AbaFerramentas({
       ferramentasAtivas: novas
     });
   }
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 4
     }
-  }, "Ferramentas Terapeuticas"), React.createElement("p", {
+  }, "Ferramentas Terapeuticas"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Selecione as ferramentas disponiveis para este paciente no portal."), React.createElement("div", {
+  }, "Selecione as ferramentas disponiveis para este paciente no portal."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 12
     }
-  }, FERRAMENTAS.map(f => React.createElement("div", {
+  }, FERRAMENTAS.map(f => /*#__PURE__*/React.createElement("div", {
     key: f.id,
     style: {
       display: "flex",
@@ -2528,22 +2630,22 @@ function AbaFerramentas({
       transition: "all .2s"
     },
     onClick: () => toggle(f.id)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500,
       fontSize: 14
     }
-  }, f.nome), React.createElement("div", {
+  }, f.nome), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginTop: 2
     }
-  }, f.desc)), React.createElement("button", {
+  }, f.desc)), /*#__PURE__*/React.createElement("button", {
     style: {
       width: 44,
       height: 24,
@@ -2554,7 +2656,7 @@ function AbaFerramentas({
       position: "relative",
       flexShrink: 0
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       position: "absolute",
       top: 2,
@@ -2567,6 +2669,9 @@ function AbaFerramentas({
     }
   }))))));
 }
+
+// ABA METAS
+// URLs do portal do paciente para visualização de cada ferramenta
 const PORTAL_URLS = {
   humor: "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#humor",
   diario: "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/#diario",
@@ -2589,7 +2694,8 @@ function AbaModulo1({
     relaxamento: []
   });
   const [loading, setLoading] = useState(true);
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(null); // id da ferramenta em preview
+
   useEffect(() => {
     const id = paciente.id;
     Promise.all([db.collection("clinica_humor").where("pacienteId", "==", id).get(), db.collection("clinica_diario").where("pacienteId", "==", id).get(), db.collection("clinica_metas").where("pacienteId", "==", id).where("status", "==", "ativa").get(), db.collection("clinica_reflexoes").where("pacienteId", "==", id).get(), db.collection("clinica_tcc").where("pacienteId", "==", id).get(), db.collection("clinica_atividades").where("pacienteId", "==", id).where("tipo", "==", "respiracao").get(), db.collection("clinica_atividades").where("pacienteId", "==", id).where("tipo", "==", "relaxamento").get()]).then(([h, d, m, r, t, resp, relax]) => {
@@ -2644,7 +2750,11 @@ function AbaModulo1({
     nome: "Diário Terapêutico",
     qtd: dados.diario.length,
     ultima: dados.diario.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))[0]?.data
-  }];
+  }
+  // Pensamentos e Reflexões → Módulo III / Ansiedade e Controle dos Pensamentos
+  ];
+
+  // Descrições resumidas para o modal de preview
   const DESC = {
     humor: "Registro diário da escala de humor do paciente.",
     diario: "Espaço de escrita reflexiva livre, como um diário terapêutico.",
@@ -2654,31 +2764,31 @@ function AbaModulo1({
     respiracao: "Exercício de respiração diafragmática 4-7-8 para regulação emocional.",
     relaxamento: "Técnica de relaxamento muscular progressivo de Jacobson."
   };
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 16,
       marginBottom: 4
     }
-  }, "M\xF3dulo 1 \u2014 Dashboard"), React.createElement("div", {
+  }, "M\xF3dulo 1 \u2014 Dashboard"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Ferramentas b\xE1sicas do dia a dia de ", paciente.nome.split(" ")[0]), loading ? React.createElement("div", {
+  }, "Ferramentas b\xE1sicas do dia a dia de ", paciente.nome.split(" ")[0]), loading ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 32,
       color: "var(--text-muted)"
     }
-  }, "Carregando...") : React.createElement("div", {
+  }, "Carregando...") : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
       gap: 14
     }
-  }, ITENS.map(item => React.createElement("div", {
+  }, ITENS.map(item => /*#__PURE__*/React.createElement("div", {
     key: item.id,
     style: {
       background: "white",
@@ -2690,13 +2800,13 @@ function AbaModulo1({
       flexDirection: "column",
       gap: 10
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 10
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 40,
       height: 40,
@@ -2708,35 +2818,35 @@ function AbaModulo1({
       fontSize: 20,
       flexShrink: 0
     }
-  }, item.icone), React.createElement("div", {
+  }, item.icone), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       lineHeight: 1.3
     }
-  }, item.nome)), React.createElement("div", {
+  }, item.nome)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 24,
       fontWeight: 700,
       color: "var(--purple)"
     }
-  }, item.qtd), React.createElement("div", {
+  }, item.qtd), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       textAlign: "right"
     }
-  }, item.qtd === 0 ? "Sem registros" : `registro${item.qtd !== 1 ? "s" : ""}`, item.ultima && React.createElement("div", {
+  }, item.qtd === 0 ? "Sem registros" : `registro${item.qtd !== 1 ? "s" : ""}`, item.ultima && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 2
     }
-  }, "\xDAltimo: ", new Date(item.ultima + "T00:00:00").toLocaleDateString("pt-BR")))), React.createElement("button", {
+  }, "\xDAltimo: ", new Date(item.ultima + "T00:00:00").toLocaleDateString("pt-BR")))), /*#__PURE__*/React.createElement("button", {
     onClick: () => setPreview(item.id),
     style: {
       width: "100%",
@@ -2754,7 +2864,7 @@ function AbaModulo1({
       justifyContent: "center",
       gap: 5
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "eye",
     size: 13
   }), " Visualizar")))), preview && (() => {
@@ -2770,7 +2880,7 @@ function AbaModulo1({
     };
     const tab = TAB_MAP[preview] || "painel";
     const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/?preview=${tab}&email=${encodeURIComponent(paciente.email || "")}&senha=${encodeURIComponent(paciente.senha || "1234")}`;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         position: "fixed",
         inset: 0,
@@ -2782,7 +2892,7 @@ function AbaModulo1({
         padding: 16
       },
       onClick: () => setPreview(null)
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         background: "white",
         borderRadius: 16,
@@ -2794,7 +2904,7 @@ function AbaModulo1({
         boxShadow: "0 20px 60px rgba(0,0,0,0.25)"
       },
       onClick: e => e.stopPropagation()
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         background: "linear-gradient(135deg,#7B00C4,#5a0090)",
         borderRadius: "16px 16px 0 0",
@@ -2805,27 +2915,27 @@ function AbaModulo1({
         justifyContent: "space-between",
         flexShrink: 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 10
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 22
       }
-    }, item?.icone), React.createElement("div", null, React.createElement("div", {
+    }, item?.icone), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         fontSize: 15
       }
-    }, item?.nome), React.createElement("div", {
+    }, item?.nome), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         opacity: 0.8
       }
-    }, "\uD83D\uDC41 Pr\xE9via \u2014 vis\xE3o de ", paciente.nome.split(" ")[0]))), React.createElement("button", {
+    }, "\uD83D\uDC41 Pr\xE9via \u2014 vis\xE3o de ", paciente.nome.split(" ")[0]))), /*#__PURE__*/React.createElement("button", {
       onClick: () => setPreview(null),
       style: {
         background: "rgba(255,255,255,0.2)",
@@ -2837,7 +2947,7 @@ function AbaModulo1({
         fontSize: 13,
         fontFamily: "inherit"
       }
-    }, "\u2715 Fechar")), React.createElement("iframe", {
+    }, "\u2715 Fechar")), /*#__PURE__*/React.createElement("iframe", {
       src: `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/`,
       style: {
         flex: 1,
@@ -2853,7 +2963,7 @@ function AbaMetas({
 }) {
   const [metas, setMetas] = useState([]);
   const [modal, setModal] = useState(false);
-  const [editando, setEditando] = useState(null);
+  const [editando, setEditando] = useState(null); // id da meta em edição
   const [form, setForm] = useState({
     titulo: "",
     categoria: "Emocional",
@@ -2861,6 +2971,7 @@ function AbaMetas({
     status: "ativa"
   });
   useEffect(() => {
+    // Usa clinica_metas (coleção raiz) com pacienteId — mesma que o portal do paciente lê
     const unsub = db.collection("clinica_metas").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       setMetas(snap.docs.map(d => ({
         id: d.id,
@@ -2930,44 +3041,44 @@ function AbaMetas({
       progresso: val
     });
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "Metas Terapeuticas"), React.createElement("button", {
+  }, "Metas Terapeuticas"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: abrirNova
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }), " Nova Meta")), metas.length === 0 ? React.createElement("div", {
+  }), " Nova Meta")), metas.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 48,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "target",
     size: 40
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
-  }, "Nenhuma meta cadastrada.")) : React.createElement("div", {
+  }, "Nenhuma meta cadastrada.")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 14
     }
-  }, metas.map(m => React.createElement("div", {
+  }, metas.map(m => /*#__PURE__*/React.createElement("div", {
     key: m.id,
     className: "card",
     style: m.status === "concluida" ? {
@@ -2976,26 +3087,26 @@ function AbaMetas({
     } : m.status === "arquivada" ? {
       opacity: 0.55
     } : {}
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       marginBottom: 12
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500
     }
-  }, m.titulo), React.createElement("div", {
+  }, m.titulo), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
       marginTop: 4,
       alignItems: "center"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     className: "badge badge-purple"
-  }, m.categoria), m.status === "concluida" && React.createElement("span", {
+  }, m.categoria), m.status === "concluida" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       fontWeight: 700,
@@ -3004,7 +3115,7 @@ function AbaMetas({
       borderRadius: 20,
       padding: "2px 8px"
     }
-  }, "Conclu\xEDda"), m.status === "arquivada" && React.createElement("span", {
+  }, "Conclu\xEDda"), m.status === "arquivada" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       fontWeight: 700,
@@ -3013,44 +3124,44 @@ function AbaMetas({
       borderRadius: 20,
       padding: "2px 8px"
     }
-  }, "Arquivada"), m.atualizadoPor === "paciente" && React.createElement("span", {
+  }, "Arquivada"), m.atualizadoPor === "paciente" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: "var(--purple)"
     }
-  }, "\u270B atualizada pelo paciente"))), React.createElement("div", {
+  }, "\u270B atualizada pelo paciente"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 4,
       flexShrink: 0
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px"
     },
     title: "Editar meta",
     onClick: () => abrirEdicao(m)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 14
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px"
     },
     title: "Excluir meta",
     onClick: () => excluir(m.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 14
-  })))), React.createElement("div", {
+  })))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       background: "var(--gray-100)",
@@ -3058,41 +3169,41 @@ function AbaMetas({
       height: 8,
       overflow: "hidden"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: (m.progresso || 0) + "%",
       height: "100%",
       background: "var(--purple)",
       borderRadius: 20
     }
-  })), React.createElement("span", {
+  })), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       fontWeight: 600,
       color: "var(--purple)",
       minWidth: 36
     }
-  }, m.progresso || 0, "%")), React.createElement("div", {
+  }, m.progresso || 0, "%")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginTop: 10
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
       padding: "4px 10px"
     },
     onClick: () => atualizarProgresso(m.id, Math.max(0, (m.progresso || 0) - 10))
-  }, "-10%"), React.createElement("button", {
+  }, "-10%"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
       padding: "4px 10px"
     },
     onClick: () => atualizarProgresso(m.id, Math.min(100, (m.progresso || 0) + 10))
-  }, "+10%"))))), modal && React.createElement("div", {
+  }, "+10%"))))), modal && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -3104,7 +3215,7 @@ function AbaMetas({
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -3113,21 +3224,21 @@ function AbaMetas({
       maxWidth: 440
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 20
     }
-  }, editando ? "Editar Meta" : "Nova Meta"), React.createElement("div", {
+  }, editando ? "Editar Meta" : "Nova Meta"), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Titulo da Meta"), React.createElement("input", {
+  }, "Titulo da Meta"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.titulo,
     onChange: e => setForm({
@@ -3135,34 +3246,34 @@ function AbaMetas({
       titulo: e.target.value
     }),
     placeholder: "Ex: Praticar mindfulness diariamente"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Categoria"), React.createElement("select", {
+  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.categoria,
     onChange: e => setForm({
       ...form,
       categoria: e.target.value
     })
-  }, ["Emocional", "Saude", "Pessoal", "Profissional", "Relacionamento", "Outro"].map(c => React.createElement("option", {
+  }, ["Emocional", "Saude", "Pessoal", "Profissional", "Relacionamento", "Outro"].map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c)))), React.createElement("div", {
+  }, c)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Progresso: ", React.createElement("strong", {
+  }, "Progresso: ", /*#__PURE__*/React.createElement("strong", {
     style: {
       color: "var(--purple)"
     }
-  }, form.progresso, "%")), React.createElement("input", {
+  }, form.progresso, "%")), /*#__PURE__*/React.createElement("input", {
     type: "range",
     min: 0,
     max: 100,
@@ -3176,40 +3287,42 @@ function AbaMetas({
       width: "100%",
       accentColor: "var(--purple)"
     }
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("select", {
+  }, "Status"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.status,
     onChange: e => setForm({
       ...form,
       status: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: "ativa"
-  }, "Ativa (vis\xEDvel para o paciente)"), React.createElement("option", {
+  }, "Ativa (vis\xEDvel para o paciente)"), /*#__PURE__*/React.createElement("option", {
     value: "concluida"
-  }, "Conclu\xEDda (vis\xEDvel, marcada como alcan\xE7ada)"), React.createElement("option", {
+  }, "Conclu\xEDda (vis\xEDvel, marcada como alcan\xE7ada)"), /*#__PURE__*/React.createElement("option", {
     value: "arquivada"
-  }, "Arquivada (oculta do paciente)"))), React.createElement("div", {
+  }, "Arquivada (oculta do paciente)"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModal(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar
   }, editando ? "Salvar alterações" : "Salvar")))));
 }
+
+// ABA EVOLUCAO
 function AbaEvolucao({
   paciente
 }) {
@@ -3244,11 +3357,14 @@ function AbaEvolucao({
       docs.sort((a, b) => (b.createdAt?.toDate?.() ?? new Date(0)) - (a.createdAt?.toDate?.() ?? new Date(0)));
       setAtividades(docs);
     }, () => {});
+    // Busca metas ativas em clinica_metas (coleção raiz — mesma do portal do paciente)
     const u3 = db.collection("clinica_metas").where("pacienteId", "==", paciente.id).where("status", "==", "ativa").onSnapshot(snap => setMetas(snap.docs.map(d => ({
       id: d.id,
       ...d.data()
     }))), () => {});
+    // Sessões registradas do paciente
     const u4 = db.collection("clinica_sessoes").where("pacienteId", "==", paciente.id).onSnapshot(snap => setSessoes(snap.size), () => {});
+    // Registros TCC (pensamentos guiados salvos no portal)
     const u5 = db.collection("clinica_tcc").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       const docs = snap.docs.map(d => ({
         id: d.id,
@@ -3257,6 +3373,7 @@ function AbaEvolucao({
       docs.sort((a, b) => (b.createdAt?.toDate?.() ?? new Date(0)) - (a.createdAt?.toDate?.() ?? new Date(0)));
       setTcc(docs);
     }, () => {});
+    // Entradas no diário terapêutico
     const u6 = db.collection("clinica_diario").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       const docs = snap.docs.map(d => ({
         id: d.id,
@@ -3265,6 +3382,7 @@ function AbaEvolucao({
       docs.sort((a, b) => (b.createdAt?.toDate?.() ?? new Date(0)) - (a.createdAt?.toDate?.() ?? new Date(0)));
       setDiario(docs);
     }, () => {});
+    // Log de uso de recursos (abriu / salvou)
     const u7 = db.collection("clinica_recurso_acessos").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       const docs = snap.docs.map(d => ({
         id: d.id,
@@ -3273,6 +3391,7 @@ function AbaEvolucao({
       docs.sort((a, b) => (b.createdAt?.toDate?.() ?? new Date(0)) - (a.createdAt?.toDate?.() ?? new Date(0)));
       setAcessos(docs.slice(0, 40));
     }, () => {});
+    // Reflexões salvas (fábulas e psicoeducações)
     const u8 = db.collection("clinica_reflexoes").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       const docs = snap.docs.map(d => ({
         id: d.id,
@@ -3293,7 +3412,7 @@ function AbaEvolucao({
     };
   }, [paciente.id]);
   const media = humor.length ? (humor.reduce((a, h) => a + (h.valor || 0), 0) / humor.length).toFixed(1) : "—";
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "metrics-grid",
     style: {
       marginBottom: 20
@@ -3314,50 +3433,50 @@ function AbaEvolucao({
     label: "Metas ativas",
     value: metas.length,
     icon: "target"
-  }].map(m => React.createElement("div", {
+  }].map(m => /*#__PURE__*/React.createElement("div", {
     key: m.label,
     className: "metric-card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-icon"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: m.icon,
     size: 20
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "metric-label"
-  }, m.label), React.createElement("div", {
+  }, m.label), /*#__PURE__*/React.createElement("div", {
     className: "metric-value"
-  }, m.value)))), React.createElement("div", {
+  }, m.value)))), /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 16,
       display: "flex",
       justifyContent: "space-between"
     }
-  }, React.createElement("span", null, "Evolucao do Humor"), humor.length > 0 && React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "Evolucao do Humor"), humor.length > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, "Media: ", React.createElement("strong", {
+  }, "Media: ", /*#__PURE__*/React.createElement("strong", {
     style: {
       color: "var(--purple)"
     }
-  }, media, "/10"))), humor.length === 0 ? React.createElement("div", {
+  }, media, "/10"))), humor.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 40,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "heart",
     size: 40
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
-  }, "Sem dados de humor para este paciente.")) : humor.slice(0, 10).map(h => React.createElement("div", {
+  }, "Sem dados de humor para este paciente.")) : humor.slice(0, 10).map(h => /*#__PURE__*/React.createElement("div", {
     key: h.id,
     style: {
       display: "flex",
@@ -3366,37 +3485,37 @@ function AbaEvolucao({
       padding: "8px 0",
       borderBottom: "1px solid var(--gray-100)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       color: "var(--purple)",
       minWidth: 40
     }
-  }, h.valor, "/10"), React.createElement("div", {
+  }, h.valor, "/10"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       background: "var(--gray-100)",
       borderRadius: 20,
       height: 6
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: h.valor / 10 * 100 + "%",
       height: "100%",
       background: "var(--purple)",
       borderRadius: 20
     }
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, h.data)))), atividades.length > 0 && React.createElement("div", {
+  }, h.data)))), atividades.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginTop: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 16,
@@ -3404,18 +3523,18 @@ function AbaEvolucao({
       justifyContent: "space-between",
       alignItems: "center"
     }
-  }, React.createElement("span", null, "\uD83E\uDDD8 Atividades de Relaxamento"), React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83E\uDDD8 Atividades de Relaxamento"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, atividades.length, " registro(s)")), React.createElement("div", {
+  }, atividades.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8
     }
-  }, atividades.slice(0, 10).map(a => React.createElement("div", {
+  }, atividades.slice(0, 10).map(a => /*#__PURE__*/React.createElement("div", {
     key: a.id,
     style: {
       display: "flex",
@@ -3426,46 +3545,46 @@ function AbaEvolucao({
       border: "1px solid var(--gray-100)",
       background: "#fafafa"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 24
     }
-  }, a.ferramenta === "respiracao" ? "🫁" : "💆"), React.createElement("div", {
+  }, a.ferramenta === "respiracao" ? "🫁" : "💆"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       textTransform: "capitalize"
     }
-  }, a.ferramenta === "respiracao" ? "Respiração 4-7-8" : "Relaxamento Muscular"), React.createElement("div", {
+  }, a.ferramenta === "respiracao" ? "Respiração 4-7-8" : "Relaxamento Muscular"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, a.data, " \xE0s ", a.hora)), React.createElement("div", {
+  }, a.data, " \xE0s ", a.hora)), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 18,
       color: a.nota >= 7 ? "#16a34a" : a.nota >= 4 ? "#d97706" : "#dc2626"
     }
-  }, a.nota, "/10"), React.createElement("div", {
+  }, a.nota, "/10"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: "var(--text-muted)"
     }
-  }, "relaxamento")))))), React.createElement("div", {
+  }, "relaxamento")))))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginTop: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 4,
@@ -3473,32 +3592,32 @@ function AbaEvolucao({
       justifyContent: "space-between",
       alignItems: "center"
     }
-  }, React.createElement("span", null, "\uD83D\uDCCA Uso de Recursos Terap\xEAuticos"), React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCCA Uso de Recursos Terap\xEAuticos"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, acessos.length, " registro(s)")), React.createElement("div", {
+  }, acessos.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 14
     }
-  }, "Cada vez que o paciente abre um recurso ou salva um exerc\xEDcio, aparece aqui."), acessos.length === 0 ? React.createElement("div", {
+  }, "Cada vez que o paciente abre um recurso ou salva um exerc\xEDcio, aparece aqui."), acessos.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 30,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "mouse-pointer-click",
     size: 36
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       fontSize: 13
     }
-  }, "Nenhum acesso registrado ainda.")) : React.createElement("div", {
+  }, "Nenhum acesso registrado ainda.")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3506,7 +3625,7 @@ function AbaEvolucao({
       maxHeight: 420,
       overflowY: "auto"
     }
-  }, acessos.map(a => React.createElement("div", {
+  }, acessos.map(a => /*#__PURE__*/React.createElement("div", {
     key: a.id,
     style: {
       display: "flex",
@@ -3517,7 +3636,7 @@ function AbaEvolucao({
       border: "1px solid var(--gray-100)",
       background: a.tipo === "salvou" ? "#f0fdf4" : "#fafafa"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       fontWeight: 700,
@@ -3528,17 +3647,17 @@ function AbaEvolucao({
       background: a.tipo === "salvou" ? "#d1fae5" : a.tipo === "concluiu" ? "#dbeafe" : "#ede9fe",
       color: a.tipo === "salvou" ? "#059669" : a.tipo === "concluiu" ? "#1d4ed8" : "var(--purple)"
     }
-  }, a.tipo === "salvou" ? "💾 Salvou" : a.tipo === "concluiu" ? "✅ Concluiu" : "👁 Abriu"), React.createElement("div", {
+  }, a.tipo === "salvou" ? "💾 Salvou" : a.tipo === "concluiu" ? "✅ Concluiu" : "👁 Abriu"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       minWidth: 0
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, a.recursoTitulo || "Recurso"), a.detalhe && React.createElement("div", {
+  }, a.recursoTitulo || "Recurso"), a.detalhe && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#4b5563",
@@ -3546,44 +3665,44 @@ function AbaEvolucao({
       lineHeight: 1.5,
       wordBreak: "break-word"
     }
-  }, a.detalhe)), React.createElement("div", {
+  }, a.detalhe)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       flexShrink: 0,
       textAlign: "right"
     }
-  }, a.data, React.createElement("br", null), a.hora))))), tcc.length > 0 && React.createElement("div", {
+  }, a.data, /*#__PURE__*/React.createElement("br", null), a.hora))))), tcc.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginTop: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 14,
       display: "flex",
       justifyContent: "space-between"
     }
-  }, React.createElement("span", null, "\uD83E\uDDE0 Registros TCC \u2014 Pensamentos Guiados"), React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83E\uDDE0 Registros TCC \u2014 Pensamentos Guiados"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, tcc.length, " registro(s)")), React.createElement("div", {
+  }, tcc.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8
     }
-  }, tcc.slice(0, 15).map(t => React.createElement("div", {
+  }, tcc.slice(0, 15).map(t => /*#__PURE__*/React.createElement("div", {
     key: t.id,
     style: {
       border: "1px solid var(--gray-100)",
       borderRadius: 10,
       overflow: "hidden"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     onClick: () => setTccAberto(tccAberto === t.id ? null : t.id),
     style: {
       display: "flex",
@@ -3593,35 +3712,35 @@ function AbaEvolucao({
       cursor: "pointer",
       background: tccAberto === t.id ? "var(--purple-soft,#f3e8ff)" : "#fafafa"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, "Registro de ", t.data || "—"), React.createElement("span", {
+  }, "Registro de ", t.data || "—"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       color: "var(--purple)",
       fontWeight: 600
     }
-  }, tccAberto === t.id ? "▲ Fechar" : "▼ Ver respostas")), tccAberto === t.id && React.createElement("div", {
+  }, tccAberto === t.id ? "▲ Fechar" : "▼ Ver respostas")), tccAberto === t.id && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "12px 14px",
       background: "white"
     }
-  }, (t.registros || []).map((r, i) => React.createElement("div", {
+  }, (t.registros || []).map((r, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: i < (t.registros || []).length - 1 ? 12 : 0
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       fontWeight: 600,
       color: "var(--purple)",
       marginBottom: 3
     }
-  }, i + 1, ". ", r.pergunta), React.createElement("div", {
+  }, i + 1, ". ", r.pergunta), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: r.resposta ? "#1f2937" : "#9ca3af",
@@ -3629,24 +3748,24 @@ function AbaEvolucao({
       paddingLeft: 14,
       borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
     }
-  }, r.resposta || "— sem resposta —")))))))), reflexoes.length > 0 && React.createElement("div", {
+  }, r.resposta || "— sem resposta —")))))))), reflexoes.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginTop: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 14,
       display: "flex",
       justifyContent: "space-between"
     }
-  }, React.createElement("span", null, "\uD83D\uDCAD Reflex\xF5es Salvas \u2014 F\xE1bulas e Psicoeduca\xE7\xF5es"), React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCAD Reflex\xF5es Salvas \u2014 F\xE1bulas e Psicoeduca\xE7\xF5es"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, reflexoes.length, " registro(s)")), React.createElement("div", {
+  }, reflexoes.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3655,14 +3774,14 @@ function AbaEvolucao({
   }, reflexoes.slice(0, 15).map(r => {
     const titulo = r.origemTitulo || r.psicoeducacaoTitulo || "Reflexão";
     const tipoBadge = r.origem === "fabula" ? "📖 Fábula" : "🎓 Psicoeducação";
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: r.id,
       style: {
         border: "1px solid var(--gray-100)",
         borderRadius: 10,
         overflow: "hidden"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       onClick: () => setReflexaoAberta(reflexaoAberta === r.id ? null : r.id),
       style: {
         display: "flex",
@@ -3673,11 +3792,11 @@ function AbaEvolucao({
         gap: 10,
         background: reflexaoAberta === r.id ? "var(--purple-soft,#f3e8ff)" : "#fafafa"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         minWidth: 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 13,
@@ -3685,37 +3804,37 @@ function AbaEvolucao({
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
       }
-    }, titulo), React.createElement("div", {
+    }, titulo), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, tipoBadge, " \xB7 ", r.data || "—")), React.createElement("span", {
+    }, tipoBadge, " \xB7 ", r.data || "—")), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         color: "var(--purple)",
         fontWeight: 600,
         flexShrink: 0
       }
-    }, reflexaoAberta === r.id ? "▲ Fechar" : "▼ Ver respostas")), reflexaoAberta === r.id && React.createElement("div", {
+    }, reflexaoAberta === r.id ? "▲ Fechar" : "▼ Ver respostas")), reflexaoAberta === r.id && /*#__PURE__*/React.createElement("div", {
       style: {
         padding: "12px 14px",
         background: "white"
       }
-    }, (r.registros || []).map((reg, i) => React.createElement("div", {
+    }, (r.registros || []).map((reg, i) => /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
         marginBottom: i < (r.registros || []).length - 1 ? 12 : 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         fontWeight: 600,
         color: "var(--purple)",
         marginBottom: 3
       }
-    }, i + 1, ". ", reg.pergunta), React.createElement("div", {
+    }, i + 1, ". ", reg.pergunta), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: reg.resposta ? "#1f2937" : "#9ca3af",
@@ -3724,24 +3843,24 @@ function AbaEvolucao({
         borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
       }
     }, reg.resposta || "— sem resposta —")))));
-  }))), diario.length > 0 && React.createElement("div", {
+  }))), diario.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginTop: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 14,
       display: "flex",
       justifyContent: "space-between"
     }
-  }, React.createElement("span", null, "\uD83D\uDCD3 Di\xE1rio Terap\xEAutico"), React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCD3 Di\xE1rio Terap\xEAutico"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, diario.length, " entrada(s)")), React.createElement("div", {
+  }, diario.length, " entrada(s)")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3749,7 +3868,7 @@ function AbaEvolucao({
       maxHeight: 360,
       overflowY: "auto"
     }
-  }, diario.slice(0, 15).map(d => React.createElement("div", {
+  }, diario.slice(0, 15).map(d => /*#__PURE__*/React.createElement("div", {
     key: d.id,
     style: {
       padding: "10px 14px",
@@ -3757,13 +3876,13 @@ function AbaEvolucao({
       border: "1px solid var(--gray-100)",
       background: "#fafafa"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       marginBottom: 4
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       fontWeight: 700,
@@ -3773,12 +3892,12 @@ function AbaEvolucao({
       padding: "2px 8px",
       textTransform: "capitalize"
     }
-  }, d.tag || "geral"), React.createElement("span", {
+  }, d.tag || "geral"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)"
     }
-  }, d.data, " ", d.hora ? "às " + d.hora : "")), React.createElement("div", {
+  }, d.data, " ", d.hora ? "às " + d.hora : "")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       lineHeight: 1.6,
@@ -3787,6 +3906,9 @@ function AbaEvolucao({
     }
   }, d.texto))))));
 }
+
+// ABA CASAL
+// ── Categorias do Inventário (espelhadas do clinica/app.js) ─────────────────
 const INVENTARIO_CATS_C = [{
   label: "Comunicação Eficaz",
   cor: "#6366f1",
@@ -3823,6 +3945,8 @@ function calcularInventario(resp) {
     };
   });
 }
+
+// ── Bloco visual: Inventário de Bem-Estar (comparativo) ─────────────────────
 function BlocoInventario({
   docPaciente,
   docParceiro,
@@ -3830,7 +3954,7 @@ function BlocoInventario({
   nomePar
 }) {
   const [verBrutos, setVerBrutos] = useState(false);
-  if (!docPaciente && !docParceiro) return React.createElement("div", {
+  if (!docPaciente && !docParceiro) return /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
@@ -3840,15 +3964,17 @@ function BlocoInventario({
   const resPar = docParceiro?.respostas || {};
   const catsPac = docPaciente ? calcularInventario(resPac) : null;
   const catsPar = docParceiro ? calcularInventario(resPar) : null;
+
+  // Pontos fortes e fracos (baseado em quem respondeu)
   const base = catsPac || catsPar;
   const fortes = [...base].sort((a, b) => b.soma - a.soma).slice(0, 2);
   const fracos = [...base].sort((a, b) => a.soma - b.soma).slice(0, 2);
   const ESCALA = ["", "Nunca/Raramente", "Às vezes", "Frequentemente", "Sempre/Quase sempre"];
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 16,
@@ -3856,7 +3982,7 @@ function BlocoInventario({
       marginBottom: 10,
       flexWrap: "wrap"
     }
-  }, docPaciente && React.createElement("span", null, React.createElement("span", {
+  }, docPaciente && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
     style: {
       display: "inline-block",
       width: 10,
@@ -3865,7 +3991,7 @@ function BlocoInventario({
       background: "#7B00C4",
       marginRight: 4
     }
-  }), nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), docParceiro && React.createElement("span", null, React.createElement("span", {
+  }), nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), docParceiro && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
     style: {
       display: "inline-block",
       width: 10,
@@ -3874,7 +4000,7 @@ function BlocoInventario({
       background: "#ec4899",
       marginRight: 4
     }
-  }), nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")")), React.createElement("div", {
+  }), nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3883,9 +4009,9 @@ function BlocoInventario({
   }, INVENTARIO_CATS_C.map((cat, i) => {
     const vPac = catsPac?.[i];
     const vPar = catsPar?.[i];
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: cat.label
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "space-between",
@@ -3893,28 +4019,28 @@ function BlocoInventario({
         fontWeight: 600,
         marginBottom: 6
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         color: cat.cor
       }
-    }, cat.label)), vPac && React.createElement("div", {
+    }, cat.label)), vPac && /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 4
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 8
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
         color: "#7B00C4",
         minWidth: 14,
         fontWeight: 600
       }
-    }, "\uD83D\uDFE3"), React.createElement("div", {
+    }, "\uD83D\uDFE3"), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         background: "#f3f4f6",
@@ -3922,7 +4048,7 @@ function BlocoInventario({
         height: 10,
         overflow: "hidden"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: vPac.pct + "%",
         height: "100%",
@@ -3930,7 +4056,7 @@ function BlocoInventario({
         borderRadius: 20,
         transition: "width .5s"
       }
-    })), React.createElement("span", {
+    })), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         color: "#7B00C4",
@@ -3938,24 +4064,24 @@ function BlocoInventario({
         minWidth: 36,
         textAlign: "right"
       }
-    }, vPac.soma, "/35"))), vPar && React.createElement("div", {
+    }, vPac.soma, "/35"))), vPar && /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 4
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 8
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
         color: "#ec4899",
         minWidth: 14,
         fontWeight: 600
       }
-    }, "\uD83E\uDE77"), React.createElement("div", {
+    }, "\uD83E\uDE77"), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         background: "#f3f4f6",
@@ -3963,7 +4089,7 @@ function BlocoInventario({
         height: 10,
         overflow: "hidden"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: vPar.pct + "%",
         height: "100%",
@@ -3971,7 +4097,7 @@ function BlocoInventario({
         borderRadius: 20,
         transition: "width .5s"
       }
-    })), React.createElement("span", {
+    })), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         color: "#ec4899",
@@ -3979,7 +4105,7 @@ function BlocoInventario({
         minWidth: 36,
         textAlign: "right"
       }
-    }, vPar.soma, "/35"))), React.createElement("div", {
+    }, vPar.soma, "/35"))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "space-between",
@@ -3988,65 +4114,65 @@ function BlocoInventario({
         marginTop: 2,
         paddingLeft: 22
       }
-    }, React.createElement("span", null, "Baixo (7)"), React.createElement("span", null, "Alto (35)")));
-  }))), React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("span", null, "Baixo (7)"), /*#__PURE__*/React.createElement("span", null, "Alto (35)")));
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12,
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       borderRadius: 10,
       padding: 12,
       border: "1px solid #86efac"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 12,
       color: "#16a34a",
       marginBottom: 8
     }
-  }, "\uD83D\uDCAA Pontos Fortes"), fortes.map(c => React.createElement("div", {
+  }, "\uD83D\uDCAA Pontos Fortes"), fortes.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.label,
     style: {
       fontSize: 12,
       color: "#15803d",
       marginBottom: 4
     }
-  }, "\u25CF ", c.label, " ", React.createElement("span", {
+  }, "\u25CF ", c.label, " ", /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 700
     }
-  }, c.soma, "/35")))), React.createElement("div", {
+  }, c.soma, "/35")))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef2f2",
       borderRadius: 10,
       padding: 12,
       border: "1px solid #fca5a5"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 12,
       color: "#dc2626",
       marginBottom: 8
     }
-  }, "\u26A0\uFE0F Pontos de Aten\xE7\xE3o"), fracos.map(c => React.createElement("div", {
+  }, "\u26A0\uFE0F Pontos de Aten\xE7\xE3o"), fracos.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.label,
     style: {
       fontSize: 12,
       color: "#b91c1c",
       marginBottom: 4
     }
-  }, "\u25CF ", c.label, " ", React.createElement("span", {
+  }, "\u25CF ", c.label, " ", /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 700
     }
-  }, c.soma, "/35"))))), React.createElement("button", {
+  }, c.soma, "/35"))))), /*#__PURE__*/React.createElement("button", {
     onClick: () => setVerBrutos(v => !v),
     style: {
       background: "none",
@@ -4058,7 +4184,7 @@ function BlocoInventario({
       color: "var(--text-muted)",
       width: "100%"
     }
-  }, verBrutos ? "▲ Ocultar respostas brutas" : "▼ Ver respostas brutas"), verBrutos && React.createElement("div", {
+  }, verBrutos ? "▲ Ocultar respostas brutas" : "▼ Ver respostas brutas"), verBrutos && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       display: "flex",
@@ -4067,7 +4193,7 @@ function BlocoInventario({
     }
   }, Array.from({
     length: 42
-  }, (_, i) => i + 1).map(n => React.createElement("div", {
+  }, (_, i) => i + 1).map(n => /*#__PURE__*/React.createElement("div", {
     key: n,
     style: {
       display: "flex",
@@ -4077,24 +4203,26 @@ function BlocoInventario({
       background: n % 2 === 0 ? "#fafafa" : "white",
       borderRadius: 6
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       color: "var(--purple)",
       fontWeight: 600,
       minWidth: 22
     }
-  }, n, "."), docPaciente && React.createElement("span", {
+  }, n, "."), docPaciente && /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#7B00C4",
       flex: 1
     }
-  }, nomePac.split(" ")[0], ": ", ESCALA[resPac[n]] || "—"), docParceiro && React.createElement("span", {
+  }, nomePac.split(" ")[0], ": ", ESCALA[resPac[n]] || "—"), docParceiro && /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#ec4899",
       flex: 1
     }
   }, nomePar.split(" ")[0], ": ", ESCALA[resPar[n]] || "—")))));
 }
+
+// ── Bloco visual: Roda da Vida do Relacionamento ─────────────────────────────
 function BlocoRodaVida({
   docPaciente,
   docParceiro,
@@ -4102,7 +4230,7 @@ function BlocoRodaVida({
   nomePar
 }) {
   const [verBrutos, setVerBrutos] = useState(false);
-  if (!docPaciente && !docParceiro) return React.createElement("div", {
+  if (!docPaciente && !docParceiro) return /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
@@ -4110,7 +4238,7 @@ function BlocoRodaVida({
   }, "Nenhum preencheu ainda.");
   const vPac = docPaciente?.respostas || {};
   const vPar = docParceiro?.respostas || {};
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -4120,9 +4248,9 @@ function BlocoRodaVida({
   }, RODA_DIMENSOES_C.map((dim, i) => {
     const kPac = vPac[dim];
     const kPar = vPar[dim];
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: dim
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "space-between",
@@ -4130,20 +4258,20 @@ function BlocoRodaVida({
         fontWeight: 600,
         marginBottom: 3
       }
-    }, React.createElement("span", null, dim), React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", null, dim), /*#__PURE__*/React.createElement("span", {
       style: {
         display: "flex",
         gap: 10
       }
-    }, docPaciente && React.createElement("span", {
+    }, docPaciente && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "#7B00C4"
       }
-    }, kPac || 0, "/10"), docParceiro && React.createElement("span", {
+    }, kPac || 0, "/10"), docParceiro && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "#ec4899"
       }
-    }, kPar || 0, "/10"))), React.createElement("div", {
+    }, kPar || 0, "/10"))), /*#__PURE__*/React.createElement("div", {
       style: {
         position: "relative",
         height: 8,
@@ -4151,7 +4279,7 @@ function BlocoRodaVida({
         background: "#f3f4f6",
         overflow: "hidden"
       }
-    }, docPaciente && React.createElement("div", {
+    }, docPaciente && /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
         left: 0,
@@ -4162,7 +4290,7 @@ function BlocoRodaVida({
         borderRadius: 20,
         opacity: 0.85
       }
-    }), docParceiro && React.createElement("div", {
+    }), docParceiro && /*#__PURE__*/React.createElement("div", {
       style: {
         position: "absolute",
         left: 0,
@@ -4174,7 +4302,7 @@ function BlocoRodaVida({
         opacity: 0.5
       }
     })));
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setVerBrutos(v => !v),
     style: {
       background: "none",
@@ -4188,13 +4316,15 @@ function BlocoRodaVida({
     }
   }, verBrutos ? "▲ Ocultar detalhes" : "▼ Ver detalhes completos"));
 }
+
+// ── Bloco visual genérico (Metas, Quem Sou, O Que Quero) ────────────────────
 function BlocoTexto({
   docPaciente,
   docParceiro,
   nomePac,
   nomePar
 }) {
-  if (!docPaciente && !docParceiro) return React.createElement("div", {
+  if (!docPaciente && !docParceiro) return /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
@@ -4203,7 +4333,7 @@ function BlocoTexto({
   const ESCALA = ["", "Nunca/Raramente", "Às vezes", "Frequentemente", "Sempre/Quase sempre"];
   function renderResp(resp) {
     if (!resp || typeof resp !== "object") return null;
-    return Object.entries(resp).map(([k, v]) => React.createElement("div", {
+    return Object.entries(resp).map(([k, v]) => /*#__PURE__*/React.createElement("div", {
       key: k,
       style: {
         padding: "6px 10px",
@@ -4213,32 +4343,32 @@ function BlocoTexto({
         fontSize: 13,
         marginBottom: 4
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontWeight: 600,
         color: "var(--purple)",
         marginRight: 6
       }
-    }, k, ":"), React.createElement("span", {
+    }, k, ":"), /*#__PURE__*/React.createElement("span", {
       style: {
         color: "var(--gray-700)"
       }
     }, typeof v === "number" ? ESCALA[v] || v : String(v))));
   }
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: docPaciente && docParceiro ? "1fr 1fr" : "1fr",
       gap: 16
     }
-  }, docPaciente && React.createElement("div", null, React.createElement("div", {
+  }, docPaciente && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 12,
       color: "#7B00C4",
       marginBottom: 8
     }
-  }, "\uD83D\uDFE3 ", nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), renderResp(docPaciente.respostas)), docParceiro && React.createElement("div", null, React.createElement("div", {
+  }, "\uD83D\uDFE3 ", nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), renderResp(docPaciente.respostas)), docParceiro && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 12,
@@ -4247,6 +4377,8 @@ function BlocoTexto({
     }
   }, "\uD83E\uDE77 ", nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), renderResp(docParceiro.respostas)));
 }
+
+// ── Respostas do diagnóstico — componente principal do admin ─────────────────
 function RespostasCasal({
   pacienteId,
   parceiroId,
@@ -4255,7 +4387,8 @@ function RespostasCasal({
 }) {
   const [respostas, setRespostas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandido, setExpandido] = useState("inventario-bem-estar");
+  const [expandido, setExpandido] = useState("inventario-bem-estar"); // abre o primeiro por padrão
+
   const ATIVIDADES = [{
     id: "inventario-bem-estar",
     titulo: "Inventário de Bem-Estar de Casais",
@@ -4318,14 +4451,14 @@ function RespostasCasal({
       u2();
     };
   }, [pacienteId, parceiroId]);
-  if (loading) return React.createElement("div", {
+  if (loading) return /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       padding: "8px 0"
     }
   }, "Carregando...");
-  if (respostas.length === 0) return React.createElement("div", {
+  if (respostas.length === 0) return /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9fafb",
       borderRadius: 10,
@@ -4335,10 +4468,12 @@ function RespostasCasal({
       textAlign: "center"
     }
   }, "Nenhuma resposta registrada ainda.");
+
+  // Para cada atividade, pega o doc mais recente de cada pessoa
   function getDoc(atividadeId, autorId) {
     return respostas.find(r => r.atividadeId === atividadeId && r.pacienteId === autorId) || null;
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
@@ -4346,7 +4481,7 @@ function RespostasCasal({
       marginBottom: 16,
       flexWrap: "wrap"
     }
-  }, React.createElement("span", null, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
     style: {
       display: "inline-block",
       width: 10,
@@ -4355,7 +4490,7 @@ function RespostasCasal({
       background: "#7B00C4",
       marginRight: 4
     }
-  }), nomePac), React.createElement("span", null, React.createElement("span", {
+  }), nomePac), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
     style: {
       display: "inline-block",
       width: 10,
@@ -4364,7 +4499,7 @@ function RespostasCasal({
       background: "#ec4899",
       marginRight: 4
     }
-  }), nomePar)), React.createElement("div", {
+  }), nomePar)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -4376,14 +4511,14 @@ function RespostasCasal({
     const total = (docPac ? 1 : 0) + (docPar ? 1 : 0);
     if (total === 0) return null;
     const aberto = expandido === atv.id;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: atv.id,
       style: {
         border: "1px solid var(--gray-200)",
         borderRadius: 12,
         overflow: "hidden"
       }
-    }, React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       onClick: () => setExpandido(aberto ? null : atv.id),
       style: {
         width: "100%",
@@ -4396,63 +4531,63 @@ function RespostasCasal({
         cursor: "pointer",
         textAlign: "left"
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 20
       }
-    }, atv.emoji), React.createElement("div", {
+    }, atv.emoji), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 14
       }
-    }, atv.titulo), React.createElement("div", {
+    }, atv.titulo), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, docPac && React.createElement("span", {
+    }, docPac && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "#7B00C4",
         marginRight: 10
       }
-    }, "\u2713 ", nomePac), docPar && React.createElement("span", {
+    }, "\u2713 ", nomePac), docPar && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "#ec4899"
       }
-    }, "\u2713 ", nomePar), !docPac && React.createElement("span", {
+    }, "\u2713 ", nomePar), !docPac && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "var(--gray-400)",
         marginRight: 10
       }
-    }, "\u25CB ", nomePac), !docPar && React.createElement("span", {
+    }, "\u25CB ", nomePac), !docPar && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "var(--gray-400)"
       }
-    }, "\u25CB ", nomePar))), React.createElement(Icon, {
+    }, "\u25CB ", nomePar))), /*#__PURE__*/React.createElement(Icon, {
       name: aberto ? "chevron-up" : "chevron-down",
       size: 16
-    })), aberto && React.createElement("div", {
+    })), aberto && /*#__PURE__*/React.createElement("div", {
       style: {
         padding: "16px",
         background: "#fafafa",
         borderTop: "1px solid var(--gray-100)"
       }
-    }, atv.id === "inventario-bem-estar" && React.createElement(BlocoInventario, {
+    }, atv.id === "inventario-bem-estar" && /*#__PURE__*/React.createElement(BlocoInventario, {
       docPaciente: docPac,
       docParceiro: docPar,
       nomePac: nomePac,
       nomePar: nomePar
-    }), atv.id === "roda-vida-relacionamento" && React.createElement(BlocoRodaVida, {
+    }), atv.id === "roda-vida-relacionamento" && /*#__PURE__*/React.createElement(BlocoRodaVida, {
       docPaciente: docPac,
       docParceiro: docPar,
       nomePac: nomePac,
       nomePar: nomePar
-    }), (atv.id === "3-metas" || atv.id === "quem-sou" || atv.id === "o-que-quero") && React.createElement(BlocoTexto, {
+    }), (atv.id === "3-metas" || atv.id === "quem-sou" || atv.id === "o-que-quero") && /*#__PURE__*/React.createElement(BlocoTexto, {
       docPaciente: docPac,
       docParceiro: docPar,
       nomePac: nomePac,
@@ -4480,11 +4615,13 @@ function AbaCasal({
     setSalvando(true);
     try {
       const p2 = pacientes.find(p => p.id === casalId);
+      // 1. Remove vínculo antigo de clinica_casais se existir (evita duplicatas)
       const snapAntigo1 = await db.collection("clinica_casais").where("p1Id", "==", paciente.id).get();
       const snapAntigo2 = await db.collection("clinica_casais").where("p2Id", "==", paciente.id).get();
       const batch = db.batch();
       [...snapAntigo1.docs, ...snapAntigo2.docs].forEach(d => batch.delete(d.ref));
       await batch.commit();
+      // 2. Cria novo documento em clinica_casais
       await db.collection("clinica_casais").add({
         p1Id: paciente.id,
         p1Nome: paciente.nome || "",
@@ -4493,6 +4630,7 @@ function AbaCasal({
         nomeCasal: `${paciente.nome?.split(" ")[0] || ""} e ${p2?.nome?.split(" ")[0] || ""}`,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      // 3. Grava casalId + mod5 nos dois pacientes
       await db.collection("clinica_pacientes").doc(paciente.id).update({
         casalId,
         modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
@@ -4512,12 +4650,14 @@ function AbaCasal({
     setSalvando(true);
     try {
       const parcId = paciente.casalId;
+      // 1. Limpa casalId nos dois pacientes
       await db.collection("clinica_pacientes").doc(paciente.id).update({
         casalId: ""
       });
       if (parcId) await db.collection("clinica_pacientes").doc(parcId).update({
         casalId: ""
       });
+      // 2. Remove documento de clinica_casais
       const snap1 = await db.collection("clinica_casais").where("p1Id", "==", paciente.id).get();
       const snap2 = await db.collection("clinica_casais").where("p2Id", "==", paciente.id).get();
       const batch = db.batch();
@@ -4529,113 +4669,115 @@ function AbaCasal({
     }
     setSalvando(false);
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 8,
       marginBottom: 16
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "heart",
     size: 18
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "V\xEDnculo de Casal")), paciente.casalId && parceiro ? React.createElement("div", null, React.createElement("div", {
+  }, "V\xEDnculo de Casal")), paciente.casalId && parceiro ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--purple-bg)",
       borderRadius: 10,
       padding: 16,
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 4
     }
-  }, "Parceiro(a) vinculado(a):"), React.createElement("div", {
+  }, "Parceiro(a) vinculado(a):"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 16
     }
-  }, parceiro.nome), React.createElement("div", {
+  }, parceiro.nome), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, parceiro.email)), React.createElement("button", {
+  }, parceiro.email)), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-danger",
     onClick: desvincular,
     disabled: salvando
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 15
-  }), " Desvincular casal")) : React.createElement("div", null, React.createElement("p", {
+  }), " Desvincular casal")) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 16
     }
-  }, "Este paciente nao esta vinculado a um casal em terapia."), React.createElement("div", {
+  }, "Este paciente nao esta vinculado a um casal em terapia."), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 16
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Selecionar Parceiro(a)"), React.createElement("select", {
+  }, "Selecionar Parceiro(a)"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: casalId,
     onChange: e => setCasalId(e.target.value)
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecione um paciente..."), outros.map(p => React.createElement("option", {
+  }, "Selecione um paciente..."), outros.map(p => /*#__PURE__*/React.createElement("option", {
     key: p.id,
     value: p.id
-  }, p.nome)))), React.createElement("button", {
+  }, p.nome)))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: vincular,
     disabled: salvando
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "heart",
     size: 15
-  }), " Associar como Casal"))), paciente.casalId && parceiro && React.createElement("div", {
+  }), " Associar como Casal"))), paciente.casalId && parceiro && /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 8,
       marginBottom: 4
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "clipboard-list",
     size: 18
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "Diagn\xF3stico e Atividades do Casal")), React.createElement("div", {
+  }, "Diagn\xF3stico e Atividades do Casal")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 4
     }
-  }, "Respostas preenchidas por ", paciente.nome.split(" ")[0], " e ", parceiro.nome.split(" ")[0], " no portal"), React.createElement(RespostasCasal, {
+  }, "Respostas preenchidas por ", paciente.nome.split(" ")[0], " e ", parceiro.nome.split(" ")[0], " no portal"), /*#__PURE__*/React.createElement(RespostasCasal, {
     pacienteId: paciente.id,
     parceiroId: paciente.casalId,
     parceiro: parceiro,
     nomePaciente: paciente.nome
   })));
 }
+
+// PERFIL COMPLETO
 function AbaOcupacional({
   paciente
 }) {
@@ -4643,9 +4785,11 @@ function AbaOcupacional({
     nome: "Dra. Lucia Kratz",
     crp: "CRP 09/20590"
   };
-  const ASSINATURA_URL = "../Assinatura Lúcia Kratz.png";
+  const ASSINATURA_URL = "../Assinatura Lúcia Kratz.png"; // imagem na raiz do repositório
+
   const formVazio = {
     tipoDocumento: "relatorio_nr1",
+    // Relatório NR-1
     dataInicio: "",
     dataFim: "",
     emAndamento: false,
@@ -4653,6 +4797,7 @@ function AbaOcupacional({
     sessoesTotal: "",
     statusPrograma: "em_andamento",
     parecerTecnico: "",
+    // Declaração de Comparecimento
     dataComparecimento: "",
     horaInicio: "",
     horaFim: "",
@@ -4662,7 +4807,8 @@ function AbaOcupacional({
   const [historico, setHistorico] = useState([]);
   const [loadingHist, setLoadingHist] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(null); // doc para preview (com _rascunho quando ainda não salvo)
+  // Dados ocupacionais editáveis aqui mesmo (salvam de volta no cadastro do paciente)
   const [ocup, setOcup] = useState({
     empresa: paciente.empresa || paciente.empresaContratante || "",
     setor: paciente.setor || "",
@@ -4721,6 +4867,8 @@ function AbaOcupacional({
       emitidoPor: EMITIDO_POR
     };
   }
+
+  // 1) VISUALIZAR — monta o documento sem salvar nada
   function visualizar() {
     if (eDeclaracao && !form.dataComparecimento) {
       alert("Informe a data do comparecimento.");
@@ -4738,6 +4886,8 @@ function AbaOcupacional({
       }
     });
   }
+
+  // 2) SALVAR — só depois de visualizar e aprovar
   async function salvarDefinitivo() {
     setSalvando(true);
     const doc = {
@@ -4746,6 +4896,7 @@ function AbaOcupacional({
     };
     try {
       const ref = await db.collection("clinica_documentos_nr1").add(doc);
+      // Atualiza os dados ocupacionais no cadastro do paciente
       await db.collection("clinica_pacientes").doc(paciente.id).update({
         empresa: ocup.empresa || "",
         setor: ocup.setor || "",
@@ -4789,8 +4940,10 @@ function AbaOcupacional({
       w.print();
     }, 600);
   }
+
+  // ─── BLOCO DE ASSINATURA + CARIMBO ────────────────────────
   function BlocoAssinatura() {
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         borderTop: "1px solid #e5e7eb",
         paddingTop: 24,
@@ -4798,11 +4951,11 @@ function AbaOcupacional({
         flexDirection: "column",
         alignItems: "flex-end"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("img", {
+    }, /*#__PURE__*/React.createElement("img", {
       src: ASSINATURA_URL,
       alt: "",
       style: {
@@ -4812,13 +4965,13 @@ function AbaOcupacional({
         margin: "0 auto -10px"
       },
       onError: e => e.target.style.display = "none"
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         width: 230,
         borderBottom: "1.5px solid #1f2937",
         margin: "0 auto 8px"
       }
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "inline-block",
         border: "2px solid #7B00C4",
@@ -4826,24 +4979,26 @@ function AbaOcupacional({
         padding: "8px 20px",
         color: "#7B00C4"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         fontWeight: 700,
         letterSpacing: 0.5
       }
-    }, "Dra. Lucia Kratz"), React.createElement("div", {
+    }, "Dra. Lucia Kratz"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         fontWeight: 600
       }
-    }, "Psic\xF3loga \u2014 CRP 09/20590"), React.createElement("div", {
+    }, "Psic\xF3loga \u2014 CRP 09/20590"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 9.5,
         marginTop: 2
       }
     }, "Doutora em Psicologia \xB7 TCC \xB7 Musicoterapia \xB7 Neuromodula\xE7\xE3o"))));
   }
+
+  // ─── PREVIEW ──────────────────────────────────────────────
   if (preview) {
     const ehDecl = preview.tipoDocumento === "declaracao";
     const periodoStr = preview.periodo?.emAndamento ? `${fmtData(preview.periodo?.dataInicio)} — Em andamento` : `${fmtData(preview.periodo?.dataInicio)} a ${fmtData(preview.periodo?.dataFim)}`;
@@ -4852,7 +5007,7 @@ function AbaOcupacional({
       month: "long",
       year: "numeric"
     });
-    return React.createElement("div", null, preview._rascunho && React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", null, preview._rascunho && /*#__PURE__*/React.createElement("div", {
       style: {
         background: "#fef3c7",
         border: "1px solid #f59e0b",
@@ -4863,33 +5018,33 @@ function AbaOcupacional({
         color: "#78350f",
         fontWeight: 600
       }
-    }, "\uD83D\uDC41 Pr\xE9-visualiza\xE7\xE3o \u2014 o documento ainda N\xC3O foi salvo. Confira tudo e clique em \"Salvar e Gerar PDF\"."), React.createElement("div", {
+    }, "\uD83D\uDC41 Pr\xE9-visualiza\xE7\xE3o \u2014 o documento ainda N\xC3O foi salvo. Confira tudo e clique em \"Salvar e Gerar PDF\"."), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 10,
         marginBottom: 20,
         flexWrap: "wrap"
       }
-    }, React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       onClick: () => setPreview(null)
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "arrow-left",
       size: 15
-    }), " ", preview._rascunho ? "Voltar e editar" : "Voltar"), preview._rascunho ? React.createElement("button", {
+    }), " ", preview._rascunho ? "Voltar e editar" : "Voltar"), preview._rascunho ? /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       onClick: salvarDefinitivo,
       disabled: salvando
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "save",
       size: 15
-    }), " ", salvando ? "Salvando..." : "💾 Salvar e Gerar PDF") : React.createElement("button", {
+    }), " ", salvando ? "Salvando..." : "💾 Salvar e Gerar PDF") : /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       onClick: imprimirPreview
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "printer",
       size: 15
-    }), " Imprimir / Salvar PDF")), React.createElement("div", {
+    }), " Imprimir / Salvar PDF")), /*#__PURE__*/React.createElement("div", {
       id: "nr1-preview-print",
       style: {
         background: "white",
@@ -4898,7 +5053,7 @@ function AbaOcupacional({
         padding: 32,
         maxWidth: 680
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -4907,36 +5062,36 @@ function AbaOcupacional({
         paddingBottom: 16,
         borderBottom: "2px solid #7B00C4"
       }
-    }, React.createElement("div", null, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: "Dancing Script, cursive",
         fontSize: 26,
         color: "#7B00C4",
         fontWeight: 700
       }
-    }, "Dra. Lucia Kratz"), React.createElement("div", {
+    }, "Dra. Lucia Kratz"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#6b7280"
       }
-    }, "CRP 09/20590 \xB7 Psic\xF3loga \xB7 TCC \xB7 Musicoterapeuta \xB7 Neuromodula\xE7\xE3o"), React.createElement("div", {
+    }, "CRP 09/20590 \xB7 Psic\xF3loga \xB7 TCC \xB7 Musicoterapeuta \xB7 Neuromodula\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#6b7280"
       }
-    }, "Goi\xE2nia, GO \u2014 luciakratz.com.br")), React.createElement("img", {
+    }, "Goi\xE2nia, GO \u2014 luciakratz.com.br")), /*#__PURE__*/React.createElement("img", {
       src: "../logo-transparente.png",
       style: {
         height: 48,
         objectFit: "contain"
       },
       onError: e => e.target.style.display = "none"
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center",
         marginBottom: 24
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 16,
         fontWeight: 700,
@@ -4944,13 +5099,13 @@ function AbaOcupacional({
         textTransform: "uppercase",
         letterSpacing: 1
       }
-    }, TIPO_LABELS[preview.tipoDocumento] || preview.tipoDocumento), React.createElement("div", {
+    }, TIPO_LABELS[preview.tipoDocumento] || preview.tipoDocumento), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#6b7280",
         marginTop: 4
       }
-    }, "Emitido em ", preview.createdAt?.seconds ? new Date(preview.createdAt.seconds * 1000).toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"))), ehDecl ? React.createElement(React.Fragment, null, React.createElement("div", {
+    }, "Emitido em ", preview.createdAt?.seconds ? new Date(preview.createdAt.seconds * 1000).toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR"))), ehDecl ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 14,
         lineHeight: 2,
@@ -4958,7 +5113,7 @@ function AbaOcupacional({
         margin: "28px 0",
         textIndent: 40
       }
-    }, React.createElement("strong", null, "DECLARO"), ", para os devidos fins, que ", React.createElement("strong", null, preview.pacienteNome), preview.cargo ? `, ${preview.cargo}` : "", preview.empresaContratante ? React.createElement(React.Fragment, null, ", colaborador(a) da empresa ", React.createElement("strong", null, preview.empresaContratante)) : "", ", compareceu a atendimento psicol\xF3gico nesta cl\xEDnica no dia ", React.createElement("strong", null, fmtData(preview.dataComparecimento)), preview.horaInicio ? React.createElement(React.Fragment, null, ", no hor\xE1rio das ", React.createElement("strong", null, preview.horaInicio), preview.horaFim ? React.createElement(React.Fragment, null, " \xE0s ", React.createElement("strong", null, preview.horaFim)) : "") : "", "."), preview.obsDeclaracao && React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("strong", null, "DECLARO"), ", para os devidos fins, que ", /*#__PURE__*/React.createElement("strong", null, preview.pacienteNome), preview.cargo ? `, ${preview.cargo}` : "", preview.empresaContratante ? /*#__PURE__*/React.createElement(React.Fragment, null, ", colaborador(a) da empresa ", /*#__PURE__*/React.createElement("strong", null, preview.empresaContratante)) : "", ", compareceu a atendimento psicol\xF3gico nesta cl\xEDnica no dia ", /*#__PURE__*/React.createElement("strong", null, fmtData(preview.dataComparecimento)), preview.horaInicio ? /*#__PURE__*/React.createElement(React.Fragment, null, ", no hor\xE1rio das ", /*#__PURE__*/React.createElement("strong", null, preview.horaInicio), preview.horaFim ? /*#__PURE__*/React.createElement(React.Fragment, null, " \xE0s ", /*#__PURE__*/React.createElement("strong", null, preview.horaFim)) : "") : "", "."), preview.obsDeclaracao && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         lineHeight: 1.8,
@@ -4966,17 +5121,17 @@ function AbaOcupacional({
         marginBottom: 20,
         textIndent: 40
       }
-    }, preview.obsDeclaracao), React.createElement("div", {
+    }, preview.obsDeclaracao), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         margin: "28px 0 36px",
         textAlign: "right"
       }
-    }, "Goi\xE2nia, ", hojeExtenso, ".")) : React.createElement(React.Fragment, null, React.createElement("div", {
+    }, "Goi\xE2nia, ", hojeExtenso, ".")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 20
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         fontWeight: 700,
@@ -4986,15 +5141,15 @@ function AbaOcupacional({
         marginBottom: 10,
         textTransform: "uppercase"
       }
-    }, "Dados do Colaborador"), React.createElement("div", {
+    }, "Dados do Colaborador"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: "6px 24px"
       }
-    }, [["Nome", preview.pacienteNome], ["Empresa Contratante", preview.empresaContratante || "—"], ["Cargo", preview.cargo || "—"], ["Setor", preview.setor || "—"]].map(([l, v]) => React.createElement("div", {
+    }, [["Nome", preview.pacienteNome], ["Empresa Contratante", preview.empresaContratante || "—"], ["Cargo", preview.cargo || "—"], ["Setor", preview.setor || "—"]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
       key: l
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "#6b7280",
@@ -5002,16 +5157,16 @@ function AbaOcupacional({
         textTransform: "uppercase",
         marginBottom: 2
       }
-    }, l), React.createElement("div", {
+    }, l), /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 500,
         fontSize: 13
       }
-    }, v))))), React.createElement("div", {
+    }, v))))), /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 20
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         fontWeight: 700,
@@ -5021,18 +5176,18 @@ function AbaOcupacional({
         marginBottom: 10,
         textTransform: "uppercase"
       }
-    }, "Dados do Atendimento"), React.createElement("div", {
+    }, "Dados do Atendimento"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: "6px 24px"
       }
-    }, [["Vigência", periodoStr], ["Sessões Realizadas", `${preview.sessoes?.realizadas || 0} de ${preview.sessoes?.total || 0}`], ["Status no Programa", STATUS_LABELS[preview.statusPrograma] || preview.statusPrograma]].map(([l, v]) => React.createElement("div", {
+    }, [["Vigência", periodoStr], ["Sessões Realizadas", `${preview.sessoes?.realizadas || 0} de ${preview.sessoes?.total || 0}`], ["Status no Programa", STATUS_LABELS[preview.statusPrograma] || preview.statusPrograma]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
       key: l,
       style: {
         gridColumn: l === "Status no Programa" ? "span 2" : "auto"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "#6b7280",
@@ -5040,16 +5195,16 @@ function AbaOcupacional({
         textTransform: "uppercase",
         marginBottom: 2
       }
-    }, l), React.createElement("div", {
+    }, l), /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 500,
         fontSize: 13
       }
-    }, v))))), preview.parecerTecnico && React.createElement("div", {
+    }, v))))), preview.parecerTecnico && /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 20
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         fontWeight: 700,
@@ -5059,7 +5214,7 @@ function AbaOcupacional({
         marginBottom: 10,
         textTransform: "uppercase"
       }
-    }, "Parecer T\xE9cnico"), React.createElement("div", {
+    }, "Parecer T\xE9cnico"), /*#__PURE__*/React.createElement("div", {
       style: {
         background: "#f9f5ff",
         borderLeft: "3px solid #7B00C4",
@@ -5069,7 +5224,7 @@ function AbaOcupacional({
         lineHeight: 1.7,
         whiteSpace: "pre-wrap"
       }
-    }, preview.parecerTecnico))), React.createElement("div", {
+    }, preview.parecerTecnico))), /*#__PURE__*/React.createElement("div", {
       style: {
         background: "#fef3c7",
         border: "1px solid #f59e0b",
@@ -5079,24 +5234,26 @@ function AbaOcupacional({
         marginBottom: 24,
         color: "#78350f"
       }
-    }, "\u2696\uFE0F Este documento foi elaborado em conformidade com a Resolu\xE7\xE3o CFP n\xBA 06/2019, preservando o sigilo profissional. N\xE3o cont\xE9m diagn\xF3sticos, CID, sintomas cl\xEDnicos ou informa\xE7\xF5es \xEDntimas do colaborador."), React.createElement(BlocoAssinatura, null)));
+    }, "\u2696\uFE0F Este documento foi elaborado em conformidade com a Resolu\xE7\xE3o CFP n\xBA 06/2019, preservando o sigilo profissional. N\xE3o cont\xE9m diagn\xF3sticos, CID, sintomas cl\xEDnicos ou informa\xE7\xF5es \xEDntimas do colaborador."), /*#__PURE__*/React.createElement(BlocoAssinatura, null)));
   }
-  return React.createElement("div", {
+
+  // ─── FORMULÁRIO ───────────────────────────────────────────
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 36,
       height: 36,
@@ -5106,42 +5263,42 @@ function AbaOcupacional({
       alignItems: "center",
       justifyContent: "center"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "briefcase",
     size: 18,
     style: {
       color: "var(--purple)"
     }
-  })), React.createElement("div", null, React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 15
     }
-  }, "Sa\xFAde Ocupacional \u2014 NR-1"), React.createElement("div", {
+  }, "Sa\xFAde Ocupacional \u2014 NR-1"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Relat\xF3rios e declara\xE7\xF5es para empresas contratantes"))), React.createElement("div", {
+  }, "Relat\xF3rios e declara\xE7\xF5es para empresas contratantes"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo de Documento"), React.createElement("div", {
+  }, "Tipo de Documento"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       flexWrap: "wrap"
     }
-  }, Object.entries(TIPO_LABELS).map(([val, label]) => React.createElement("button", {
+  }, Object.entries(TIPO_LABELS).map(([val, label]) => /*#__PURE__*/React.createElement("button", {
     key: val,
     onClick: () => setForm({
       ...form,
@@ -5160,7 +5317,7 @@ function AbaOcupacional({
       color: form.tipoDocumento === val ? "white" : "var(--gray-600)",
       fontWeight: form.tipoDocumento === val ? 600 : 400
     }
-  }, label))), React.createElement("div", {
+  }, label))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8,
       fontSize: 12,
@@ -5169,14 +5326,14 @@ function AbaOcupacional({
       borderRadius: 8,
       padding: "8px 12px"
     }
-  }, TIPO_DESC[form.tipoDocumento])), React.createElement("div", {
+  }, TIPO_DESC[form.tipoDocumento])), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Empresa Contratante"), React.createElement("input", {
+  }, "Empresa Contratante"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: ocup.empresa,
     onChange: e => setOcup({
@@ -5184,11 +5341,11 @@ function AbaOcupacional({
       empresa: e.target.value
     }),
     placeholder: "Ex: Construtora Horizonte Ltda."
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Setor"), React.createElement("input", {
+  }, "Setor"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: ocup.setor,
     onChange: e => setOcup({
@@ -5196,11 +5353,11 @@ function AbaOcupacional({
       setor: e.target.value
     }),
     placeholder: "Ex: Administrativo"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Cargo"), React.createElement("input", {
+  }, "Cargo"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: ocup.cargo,
     onChange: e => setOcup({
@@ -5208,17 +5365,17 @@ function AbaOcupacional({
       cargo: e.target.value
     }),
     placeholder: "Ex: Analista de RH"
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 3
     }
-  }, "Gravados no cadastro do paciente ao salvar o documento.")), eDeclaracao ? React.createElement(React.Fragment, null, React.createElement("div", {
+  }, "Gravados no cadastro do paciente ao salvar o documento.")), eDeclaracao ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data do Comparecimento"), React.createElement("input", {
+  }, "Data do Comparecimento"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: form.dataComparecimento,
@@ -5226,17 +5383,17 @@ function AbaOcupacional({
       ...form,
       dataComparecimento: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Hor\xE1rio (in\xEDcio \u2014 t\xE9rmino)"), React.createElement("div", {
+  }, "Hor\xE1rio (in\xEDcio \u2014 t\xE9rmino)"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       alignItems: "center"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "time",
     value: form.horaInicio,
@@ -5244,11 +5401,11 @@ function AbaOcupacional({
       ...form,
       horaInicio: e.target.value
     })
-  }), React.createElement("span", {
+  }), /*#__PURE__*/React.createElement("span", {
     style: {
       color: "var(--text-muted)"
     }
-  }, "\u2014"), React.createElement("input", {
+  }, "\u2014"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "time",
     value: form.horaFim,
@@ -5256,14 +5413,14 @@ function AbaOcupacional({
       ...form,
       horaFim: e.target.value
     })
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xE3o (opcional)"), React.createElement(TextAreaVoz, {
+  }, "Observa\xE7\xE3o (opcional)"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: form.obsDeclaracao,
@@ -5272,11 +5429,11 @@ function AbaOcupacional({
       obsDeclaracao: e.target.value
     }),
     placeholder: "Ex: O comparecimento integra programa de acompanhamento psicossocial vigente."
-  }))) : React.createElement(React.Fragment, null, React.createElement("div", {
+  }))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data de In\xEDcio"), React.createElement("input", {
+  }, "Data de In\xEDcio"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: form.dataInicio,
@@ -5284,11 +5441,11 @@ function AbaOcupacional({
       ...form,
       dataInicio: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data de Fim"), React.createElement("input", {
+  }, "Data de Fim"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: form.dataFim,
@@ -5301,14 +5458,14 @@ function AbaOcupacional({
       background: "var(--gray-50)",
       color: "var(--text-muted)"
     } : {}
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 6,
       marginTop: 6
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     type: "checkbox",
     id: "emAndamento",
     checked: form.emAndamento,
@@ -5317,18 +5474,18 @@ function AbaOcupacional({
       emAndamento: e.target.checked,
       dataFim: ""
     })
-  }), React.createElement("label", {
+  }), /*#__PURE__*/React.createElement("label", {
     htmlFor: "emAndamento",
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       cursor: "pointer"
     }
-  }, "Em andamento"))), React.createElement("div", {
+  }, "Em andamento"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Sess\xF5es Realizadas"), React.createElement("input", {
+  }, "Sess\xF5es Realizadas"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "0",
@@ -5338,11 +5495,11 @@ function AbaOcupacional({
       sessoesRealizadas: e.target.value
     }),
     placeholder: "Ex: 4"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Total Planejado"), React.createElement("input", {
+  }, "Total Planejado"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "0",
@@ -5352,21 +5509,21 @@ function AbaOcupacional({
       sessoesTotal: e.target.value
     }),
     placeholder: "Ex: 8"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status no Programa"), React.createElement("div", {
+  }, "Status no Programa"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8,
       marginTop: 4
     }
-  }, Object.entries(STATUS_LABELS).map(([val, label]) => React.createElement("label", {
+  }, Object.entries(STATUS_LABELS).map(([val, label]) => /*#__PURE__*/React.createElement("label", {
     key: val,
     style: {
       display: "flex",
@@ -5380,7 +5537,7 @@ function AbaOcupacional({
       borderColor: form.statusPrograma === val ? "var(--purple)" : "var(--gray-200)",
       background: form.statusPrograma === val ? "var(--purple-soft)" : "white"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     type: "radio",
     name: "statusPrograma",
     value: val,
@@ -5389,20 +5546,20 @@ function AbaOcupacional({
       ...form,
       statusPrograma: val
     })
-  }), React.createElement("span", {
+  }), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       fontWeight: form.statusPrograma === val ? 600 : 400,
       color: form.statusPrograma === val ? "var(--purple)" : "var(--gray-700)"
     }
-  }, label))))), React.createElement("div", {
+  }, label))))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Parecer T\xE9cnico"), React.createElement(TextAreaVoz, {
+  }, "Parecer T\xE9cnico"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 6,
     value: form.parecerTecnico,
@@ -5411,34 +5568,34 @@ function AbaOcupacional({
       parecerTecnico: e.target.value
     }),
     placeholder: "Foque em:\n• Capacidade laboral e funcionalidade no trabalho\n• Recomendações ergonômicas ou organizacionais\n• Necessidade de adaptações no posto de trabalho\n\nEvite: diagnósticos, CID, sintomas clínicos, informações íntimas."
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, "\u2696\uFE0F Este campo deve seguir a Resolu\xE7\xE3o CFP n\xBA 06/2019 \u2014 foco em capacidade laboral, sem expor diagn\xF3sticos ou CID.")))), React.createElement("div", {
+  }, "\u2696\uFE0F Este campo deve seguir a Resolu\xE7\xE3o CFP n\xBA 06/2019 \u2014 foco em capacidade laboral, sem expor diagn\xF3sticos ou CID.")))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       marginTop: 16,
       flexWrap: "wrap"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: visualizar
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "eye",
     size: 15
-  }), " \uD83D\uDC41 Visualizar documento"), React.createElement("div", {
+  }), " \uD83D\uDC41 Visualizar documento"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       alignSelf: "center"
     }
-  }, "Nada \xE9 salvo antes de voc\xEA conferir e aprovar."))), React.createElement("div", {
+  }, "Nada \xE9 salvo antes de voc\xEA conferir e aprovar."))), /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 12,
@@ -5446,29 +5603,29 @@ function AbaOcupacional({
       alignItems: "center",
       gap: 8
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "history",
     size: 16
-  }), " Hist\xF3rico de Documentos NR-1"), loadingHist ? React.createElement("div", {
+  }), " Hist\xF3rico de Documentos NR-1"), loadingHist ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 20,
       color: "var(--text-muted)"
     }
-  }, "Carregando...") : historico.length === 0 ? React.createElement("div", {
+  }, "Carregando...") : historico.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 20,
       color: "var(--text-muted)",
       fontSize: 13
     }
-  }, "Nenhum documento gerado ainda.") : React.createElement("div", {
+  }, "Nenhum documento gerado ainda.") : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8
     }
-  }, historico.map(doc => React.createElement("div", {
+  }, historico.map(doc => /*#__PURE__*/React.createElement("div", {
     key: doc.id,
     style: {
       display: "flex",
@@ -5479,7 +5636,7 @@ function AbaOcupacional({
       border: "1px solid var(--gray-200)",
       background: "white"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 36,
       height: 36,
@@ -5490,43 +5647,43 @@ function AbaOcupacional({
       justifyContent: "center",
       flexShrink: 0
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: doc.tipoDocumento === "declaracao" ? "badge-check" : "file-text",
     size: 16,
     style: {
       color: doc.tipoDocumento === "declaracao" ? "#0d9488" : "var(--purple)"
     }
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500,
       fontSize: 13
     }
-  }, TIPO_LABELS[doc.tipoDocumento] || doc.tipoDocumento), React.createElement("div", {
+  }, TIPO_LABELS[doc.tipoDocumento] || doc.tipoDocumento), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 2
     }
-  }, doc.tipoDocumento === "declaracao" ? `Comparecimento em ${fmtData(doc.dataComparecimento)}${doc.horaInicio ? ` · ${doc.horaInicio}${doc.horaFim ? "–" + doc.horaFim : ""}` : ""}` : `${doc.periodo?.emAndamento ? `${fmtData(doc.periodo?.dataInicio)} — Em andamento` : `${fmtData(doc.periodo?.dataInicio)} a ${fmtData(doc.periodo?.dataFim)}`} · ${doc.sessoes?.realizadas || 0}/${doc.sessoes?.total || 0} sessões`)), React.createElement("div", {
+  }, doc.tipoDocumento === "declaracao" ? `Comparecimento em ${fmtData(doc.dataComparecimento)}${doc.horaInicio ? ` · ${doc.horaInicio}${doc.horaFim ? "–" + doc.horaFim : ""}` : ""}` : `${doc.periodo?.emAndamento ? `${fmtData(doc.periodo?.dataInicio)} — Em andamento` : `${fmtData(doc.periodo?.dataInicio)} a ${fmtData(doc.periodo?.dataFim)}`} · ${doc.sessoes?.realizadas || 0}/${doc.sessoes?.total || 0} sessões`)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       padding: "6px 12px",
       fontSize: 12
     },
     onClick: () => abrirPreview(doc)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "eye",
     size: 13
-  }), " Ver"), React.createElement("button", {
+  }), " Ver"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "6px 12px",
@@ -5536,11 +5693,19 @@ function AbaOcupacional({
       abrirPreview(doc);
       setTimeout(imprimirPreview, 300);
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "printer",
     size: 13
   }))))))));
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO 2: LINKS COMPARTILHÁVEIS — AbaLinksPartilhados
+//  Coleção: clinica_links_partilhados
+//  Inserir: antes da função PerfilPaciente em admin/app.js
+// ═══════════════════════════════════════════════════════════════════
+
+// Ferramentas disponíveis para link compartilhável
 const FERRAMENTAS_LINK = [{
   id: "anamnese",
   nome: "Anamnese — Marcos do Desenvolvimento",
@@ -5584,15 +5749,18 @@ function AbaLinksPartilhados({
   paciente
 }) {
   const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
-  const [links, setLinks] = useState({});
+  const [links, setLinks] = useState({}); // { ferramentaId: { token, status, createdAt, docId } }
   const [loading, setLoading] = useState(true);
-  const [gerando, setGerando] = useState({});
-  const [copiado, setCopiado] = useState({});
+  const [gerando, setGerando] = useState({}); // { ferramentaId: true }
+  const [copiado, setCopiado] = useState({}); // { token: true }
+
+  // Carregar links existentes
   useEffect(() => {
     db.collection("clinica_links_partilhados").where("pacienteId", "==", paciente.id).get().then(snap => {
       const mapa = {};
       snap.docs.forEach(d => {
         const data = d.data();
+        // Manter o mais recente por ferramenta
         if (!mapa[data.tipoFerramenta] || (data.createdAt?.seconds || 0) > (mapa[data.tipoFerramenta]?.createdAt?.seconds || 0)) {
           mapa[data.tipoFerramenta] = {
             docId: d.id,
@@ -5620,6 +5788,7 @@ function AbaLinksPartilhados({
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     try {
+      // Desativar link anterior se existir
       if (links[ferramenta.id]?.docId) {
         await db.collection("clinica_links_partilhados").doc(links[ferramenta.id].docId).update({
           status: "substituido"
@@ -5688,16 +5857,16 @@ function AbaLinksPartilhados({
       icon: "refresh-cw"
     }
   };
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 36,
       height: 36,
@@ -5707,29 +5876,29 @@ function AbaLinksPartilhados({
       alignItems: "center",
       justifyContent: "center"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 18,
     style: {
       color: "var(--purple)"
     }
-  })), React.createElement("div", null, React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 15
     }
-  }, "Links Compartilh\xE1veis"), React.createElement("div", {
+  }, "Links Compartilh\xE1veis"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Envie ferramentas cl\xEDnicas diretamente para ", paciente.nome?.split(" ")[0] || "o paciente", " responder pelo celular"))), loading ? React.createElement("div", {
+  }, "Envie ferramentas cl\xEDnicas diretamente para ", paciente.nome?.split(" ")[0] || "o paciente", " responder pelo celular"))), loading ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 24,
       color: "var(--text-muted)"
     }
-  }, "Carregando...") : React.createElement("div", {
+  }, "Carregando...") : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -5739,7 +5908,7 @@ function AbaLinksPartilhados({
     const linkAtual = links[ferramenta.id];
     const statusCfg = STATUS_CONFIG[linkAtual?.status] || null;
     const url = linkAtual ? `${BASE_URL}/responder?token=${linkAtual.token}` : null;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: ferramenta.id,
       style: {
         border: "1.5px solid",
@@ -5749,33 +5918,33 @@ function AbaLinksPartilhados({
         background: linkAtual ? "var(--purple-soft)" : "white",
         transition: "all .2s"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 12,
         marginBottom: linkAtual ? 12 : 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 24,
         flexShrink: 0
       }
-    }, ferramenta.emoji), React.createElement("div", {
+    }, ferramenta.emoji), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 13
       }
-    }, ferramenta.nome), React.createElement("div", {
+    }, ferramenta.nome), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)"
       }
-    }, ferramenta.desc)), statusCfg && React.createElement("div", {
+    }, ferramenta.desc)), statusCfg && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -5788,10 +5957,10 @@ function AbaLinksPartilhados({
         fontWeight: 600,
         flexShrink: 0
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: statusCfg.icon,
       size: 11
-    }), statusCfg.label, linkAtual?.status === "respondido" && linkAtual?.respondidoEm && React.createElement("span", null, " em ", fmtDataHora(linkAtual.respondidoEm?.seconds))), React.createElement("button", {
+    }), statusCfg.label, linkAtual?.status === "respondido" && linkAtual?.respondidoEm && /*#__PURE__*/React.createElement("span", null, " em ", fmtDataHora(linkAtual.respondidoEm?.seconds))), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-outline",
       style: {
         padding: "6px 12px",
@@ -5800,14 +5969,14 @@ function AbaLinksPartilhados({
       },
       onClick: () => gerarLink(ferramenta),
       disabled: gerando[ferramenta.id]
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "link",
       size: 13
-    }), gerando[ferramenta.id] ? "Gerando..." : linkAtual ? "Novo Link" : "Gerar Link")), linkAtual && linkAtual.status !== "substituido" && url && React.createElement("div", {
+    }), gerando[ferramenta.id] ? "Gerando..." : linkAtual ? "Novo Link" : "Gerar Link")), linkAtual && linkAtual.status !== "substituido" && url && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 4
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -5818,14 +5987,14 @@ function AbaLinksPartilhados({
         padding: "8px 12px",
         marginBottom: 10
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "link",
       size: 13,
       style: {
         color: "var(--text-muted)",
         flexShrink: 0
       }
-    }), React.createElement("span", {
+    }), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
@@ -5834,33 +6003,33 @@ function AbaLinksPartilhados({
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
       }
-    }, url)), React.createElement("div", {
+    }, url)), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
         flexWrap: "wrap"
       }
-    }, React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       className: "btn btn-outline",
       style: {
         padding: "7px 14px",
         fontSize: 12
       },
       onClick: () => copiarLink(linkAtual.token)
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: copiado[linkAtual.token] ? "check" : "copy",
       size: 13
-    }), copiado[linkAtual.token] ? "Copiado!" : "Copiar Link"), React.createElement("button", {
+    }), copiado[linkAtual.token] ? "Copiado!" : "Copiar Link"), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       style: {
         padding: "7px 14px",
         fontSize: 12
       },
       onClick: () => enviarWhatsApp(ferramenta, linkAtual.token)
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "message-circle",
       size: 13
-    }), " Enviar pelo WhatsApp"), React.createElement("div", {
+    }), " Enviar pelo WhatsApp"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -5869,11 +6038,11 @@ function AbaLinksPartilhados({
         color: "var(--text-muted)",
         marginLeft: "auto"
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "calendar",
       size: 11
     }), "Gerado em ", fmtDataHora(linkAtual.createdAt?.seconds)))));
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 16,
       padding: "10px 14px",
@@ -5883,7 +6052,7 @@ function AbaLinksPartilhados({
       color: "#1e40af",
       lineHeight: 1.6
     }
-  }, "\uD83D\uDCA1 ", React.createElement("strong", null, "Como funciona:"), " O paciente recebe o link, acessa a ferramenta no celular, preenche e envia. As respostas entram automaticamente no prontu\xE1rio e o status muda para ", React.createElement("strong", null, "Respondido"), ". O link expira ap\xF3s ser respondido ou quando um novo link \xE9 gerado para a mesma ferramenta."));
+  }, "\uD83D\uDCA1 ", /*#__PURE__*/React.createElement("strong", null, "Como funciona:"), " O paciente recebe o link, acessa a ferramenta no celular, preenche e envia. As respostas entram automaticamente no prontu\xE1rio e o status muda para ", /*#__PURE__*/React.createElement("strong", null, "Respondido"), ". O link expira ap\xF3s ser respondido ou quando um novo link \xE9 gerado para a mesma ferramenta."));
 }
 function PerfilPaciente({
   paciente,
@@ -5930,44 +6099,44 @@ function PerfilPaciente({
     label: "Links Partilhados",
     icon: "link"
   }] : [])];
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 12,
       marginBottom: 20
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: onVoltar,
     style: {
       padding: "8px 12px"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "arrow-left",
     size: 16
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "page-title",
     style: {
       fontSize: 24
     }
-  }, paciente.nome), React.createElement("div", {
+  }, paciente.nome), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, "Perfil clinico completo")), React.createElement("button", {
+  }, "Perfil clinico completo")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-danger",
     onClick: async () => {
       if (!confirm("Excluir paciente?")) return;
       await db.collection("clinica_pacientes").doc(paciente.id).delete();
       onVoltar();
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 15
-  }), " Excluir paciente")), React.createElement("div", {
+  }), " Excluir paciente")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 4,
@@ -5978,7 +6147,7 @@ function PerfilPaciente({
       WebkitOverflowScrolling: "touch",
       scrollbarWidth: "none"
     }
-  }, ABAS.map(a => React.createElement("button", {
+  }, ABAS.map(a => /*#__PURE__*/React.createElement("button", {
     key: a.id,
     onClick: () => setAba(a.id),
     style: {
@@ -5997,32 +6166,34 @@ function PerfilPaciente({
       transition: "all .2s",
       marginBottom: -1
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: a.icon,
     size: 15
-  }), a.label))), aba === "perfil" && React.createElement(AbaPerfil, {
+  }), a.label))), aba === "perfil" && /*#__PURE__*/React.createElement(AbaPerfil, {
     paciente: paciente,
     pacientes: pacientes
-  }), aba === "modulos" && React.createElement(AbaModulos, {
+  }), aba === "modulos" && /*#__PURE__*/React.createElement(AbaModulos, {
     paciente: paciente
-  }), aba === "modulo1" && React.createElement(AbaModulo1, {
+  }), aba === "modulo1" && /*#__PURE__*/React.createElement(AbaModulo1, {
     paciente: paciente
-  }), aba === "metas" && React.createElement(AbaMetas, {
+  }), aba === "metas" && /*#__PURE__*/React.createElement(AbaMetas, {
     paciente: paciente
-  }), aba === "laudos" && React.createElement(EmBreve, {
+  }), aba === "laudos" && /*#__PURE__*/React.createElement(EmBreve, {
     titulo: "Laudos",
     subtitulo: "Etapa 10"
-  }), aba === "evolucao" && React.createElement(AbaEvolucao, {
+  }), aba === "evolucao" && /*#__PURE__*/React.createElement(AbaEvolucao, {
     paciente: paciente
-  }), aba === "casal" && React.createElement(AbaCasal, {
+  }), aba === "casal" && /*#__PURE__*/React.createElement(AbaCasal, {
     paciente: paciente,
     pacientes: pacientes
-  }), aba === "nr1" && React.createElement(AbaOcupacional, {
+  }), aba === "nr1" && /*#__PURE__*/React.createElement(AbaOcupacional, {
     paciente: paciente
-  }), aba === "links" && React.createElement(AbaLinksPartilhados, {
+  }), aba === "links" && /*#__PURE__*/React.createElement(AbaLinksPartilhados, {
     paciente: paciente
   }));
 }
+
+// LISTA PACIENTES
 const MOD1_PADRAO = {
   mod1: {
     ativo: true,
@@ -6155,7 +6326,7 @@ function Pacientes({
   }
   if (perfilAberto) {
     const pac = pacientes.find(p => p.id === perfilAberto);
-    if (pac) return React.createElement(PerfilPaciente, {
+    if (pac) return /*#__PURE__*/React.createElement(PerfilPaciente, {
       paciente: pac,
       onVoltar: () => setPerfilAberto(null),
       pacientes: pacientes
@@ -6195,34 +6366,34 @@ function Pacientes({
     setModal(false);
     setSalvando(false);
   }
-  if (loading) return React.createElement(Spinner, null);
-  return React.createElement("div", null, React.createElement("div", {
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header",
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-start"
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Pacientes"), React.createElement("div", {
+  }, "Pacientes"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, pacientes.filter(p => p.status === "ativo").length, " ativos \xB7 ", pacientes.filter(p => p.status === "alta").length, " com alta \xB7 ", pacientes.filter(p => p.status === "inativo").length, " inativos")), React.createElement("div", {
+  }, pacientes.filter(p => p.status === "ativo").length, " ativos \xB7 ", pacientes.filter(p => p.status === "alta").length, " com alta \xB7 ", pacientes.filter(p => p.status === "inativo").length, " inativos")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       flexWrap: "wrap"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 13
     },
     onClick: () => setModalImport(true)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "upload",
     size: 15
-  }), " Importar Excel"), React.createElement("button", {
+  }), " Importar Excel"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 13
@@ -6232,23 +6403,23 @@ function Pacientes({
       const texto = `🦋 *Clínica Dra. Lucia Kratz*\n\nOlá! Para agilizar o seu atendimento, preencha o formulário de cadastro pelo link abaixo:\n\n👉 ${url}\n\nÉ rápido e seguro. Após o preenchimento, seus dados já estarão disponíveis para a sua psicóloga.\n\nQualquer dúvida, estamos à disposição! 💜`;
       navigator.clipboard.writeText(texto).then(() => alert("✓ Texto + link copiado!\nCole direto no WhatsApp.")).catch(() => prompt("Copie o texto:", texto));
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 15
-  }), " Link de Cadastro"), React.createElement("button", {
+  }), " Link de Cadastro"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: abrirNovo
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "user-plus",
     size: 16
-  }), " Novo Paciente"))), React.createElement("div", {
+  }), " Novo Paciente"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 12,
       marginBottom: 20,
       flexWrap: "wrap"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     style: {
       flex: 1,
@@ -6257,33 +6428,33 @@ function Pacientes({
     placeholder: "Buscar por nome ou e-mail...",
     value: busca,
     onChange: e => setBusca(e.target.value)
-  }), [["todos", "Todos"], ["ativo", "Em atendimento"], ["alta", "Alta"], ["inativo", "Inativos"]].map(([f, l]) => React.createElement("button", {
+  }), [["todos", "Todos"], ["ativo", "Em atendimento"], ["alta", "Alta"], ["inativo", "Inativos"]].map(([f, l]) => /*#__PURE__*/React.createElement("button", {
     key: f,
     className: "btn " + (filtro === f ? "btn-purple" : "btn-ghost"),
     onClick: () => setFiltro(f)
   }, l))), ["pendente", "ativo", "alta", "inativo"].map(st => {
     const grupo = filtrados.filter(p => p.status === st);
     if (grupo.length === 0) return null;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: st,
       style: {
         marginBottom: 24
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 8,
         marginBottom: 12
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: 8,
         height: 8,
         borderRadius: "50%",
         background: st === "ativo" ? "var(--success)" : st === "alta" ? "var(--gray-400)" : st === "pendente" ? "#f59e0b" : "var(--danger)"
       }
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         fontWeight: 700,
@@ -6291,12 +6462,12 @@ function Pacientes({
         textTransform: "uppercase",
         letterSpacing: "0.8px"
       }
-    }, st === "ativo" ? "Em Atendimento" : st === "alta" ? "Alta" : st === "pendente" ? "⏳ Pendentes (Autocadastro)" : "Inativos", " (", grupo.length, ")")), React.createElement("div", {
+    }, st === "ativo" ? "Em Atendimento" : st === "alta" ? "Alta" : st === "pendente" ? "⏳ Pendentes (Autocadastro)" : "Inativos", " (", grupo.length, ")")), /*#__PURE__*/React.createElement("div", {
       className: "card",
       style: {
         padding: 0
       }
-    }, grupo.map(p => React.createElement("div", {
+    }, grupo.map(p => /*#__PURE__*/React.createElement("div", {
       key: p.id,
       style: {
         display: "flex",
@@ -6310,7 +6481,7 @@ function Pacientes({
       onClick: () => setPerfilAberto(p.id),
       onMouseEnter: e => e.currentTarget.style.background = "#fafafa",
       onMouseLeave: e => e.currentTarget.style.background = "white"
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: 38,
         height: 38,
@@ -6323,31 +6494,31 @@ function Pacientes({
         color: "var(--purple)",
         flexShrink: 0
       }
-    }, (p.nome || "?")[0].toUpperCase()), React.createElement("div", {
+    }, (p.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 500
       }
-    }, p.nome), React.createElement("div", {
+    }, p.nome), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)"
       }
-    }, p.email)), React.createElement(Icon, {
+    }, p.email)), /*#__PURE__*/React.createElement(Icon, {
       name: "chevron-right",
       size: 16
     })))));
-  }), filtrados.length === 0 && React.createElement("div", {
+  }), filtrados.length === 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 48,
       color: "var(--text-muted)"
     }
-  }, "Nenhum paciente encontrado."), modal && React.createElement("div", {
+  }, "Nenhum paciente encontrado."), modal && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -6359,7 +6530,7 @@ function Pacientes({
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -6370,20 +6541,20 @@ function Pacientes({
       overflowY: "auto"
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, "Novo Paciente"), React.createElement("button", {
+  }, "Novo Paciente"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModal(false),
     style: {
       background: "none",
@@ -6391,34 +6562,34 @@ function Pacientes({
       cursor: "pointer",
       color: "var(--gray-400)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Nome completo"), React.createElement("input", {
+  }, "Nome completo"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.nome || "",
     onChange: e => setForm({
       ...form,
       nome: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "E-mail"), React.createElement("input", {
+  }, "E-mail"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "email",
     value: form.email || "",
@@ -6426,55 +6597,55 @@ function Pacientes({
       ...form,
       email: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Telefone"), React.createElement("input", {
+  }, "Telefone"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.telefone || "",
     onChange: e => setForm({
       ...form,
       telefone: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Genero"), React.createElement("select", {
+  }, "Genero"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.genero || "",
     onChange: e => setForm({
       ...form,
       genero: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecione"), React.createElement("option", null, "Feminino"), React.createElement("option", null, "Masculino"), React.createElement("option", null, "Nao-binario"), React.createElement("option", null, "Nao informar"))), React.createElement("div", {
+  }, "Selecione"), /*#__PURE__*/React.createElement("option", null, "Feminino"), /*#__PURE__*/React.createElement("option", null, "Masculino"), /*#__PURE__*/React.createElement("option", null, "Nao-binario"), /*#__PURE__*/React.createElement("option", null, "Nao informar"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("select", {
+  }, "Status"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.status || "ativo",
     onChange: e => setForm({
       ...form,
       status: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: "ativo"
-  }, "Ativo"), React.createElement("option", {
+  }, "Ativo"), /*#__PURE__*/React.createElement("option", {
     value: "inativo"
-  }, "Inativo"), React.createElement("option", {
+  }, "Inativo"), /*#__PURE__*/React.createElement("option", {
     value: "alta"
-  }, "Alta"))), React.createElement("div", {
+  }, "Alta"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "\uD83C\uDFE2 Empresa Contratante (opcional \u2014 NR-1)"), React.createElement("input", {
+  }, "\uD83C\uDFE2 Empresa Contratante (opcional \u2014 NR-1)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.empresa || "",
     onChange: e => setForm({
@@ -6482,36 +6653,36 @@ function Pacientes({
       empresa: e.target.value
     }),
     placeholder: "Para colaboradores de empresas"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Setor"), React.createElement("input", {
+  }, "Setor"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.setor || "",
     onChange: e => setForm({
       ...form,
       setor: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Cargo"), React.createElement("input", {
+  }, "Cargo"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.cargo || "",
     onChange: e => setForm({
       ...form,
       cargo: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "span 2"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Objetivos Terapeuticos"), React.createElement(TextAreaVoz, {
+  }, "Objetivos Terapeuticos"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: form.objetivos || "",
@@ -6520,21 +6691,21 @@ function Pacientes({
       objetivos: e.target.value
     }),
     placeholder: "Descreva os objetivos..."
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       marginTop: 20,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModal(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar,
     disabled: salvando
-  }, salvando ? "Salvando..." : "Salvar")))), modalImport && React.createElement("div", {
+  }, salvando ? "Salvando..." : "Salvar")))), modalImport && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -6549,7 +6720,7 @@ function Pacientes({
       setModalImport(false);
       setImportLog([]);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -6558,20 +6729,20 @@ function Pacientes({
       maxWidth: 520
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, "Importar Pacientes (Excel/CSV)"), React.createElement("button", {
+  }, "Importar Pacientes (Excel/CSV)"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setModalImport(false);
       setImportLog([]);
@@ -6582,10 +6753,10 @@ function Pacientes({
       cursor: "pointer",
       color: "var(--gray-400)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f5ff",
       border: "1px solid #e9d5ff",
@@ -6595,23 +6766,23 @@ function Pacientes({
       fontSize: 13,
       lineHeight: 1.7
     }
-  }, React.createElement("strong", null, "Colunas aceitas:"), " Nome, Email, Telefone, CPF, DataNascimento, Genero", React.createElement("br", null), React.createElement("strong", null, "Formatos:"), " .csv ou .txt com separador v\xEDrgula, ponto-e-v\xEDrgula ou tab", React.createElement("br", null), React.createElement("strong", null, "Encoding:"), " UTF-8"), React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Colunas aceitas:"), " Nome, Email, Telefone, CPF, DataNascimento, Genero", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Formatos:"), " .csv ou .txt com separador v\xEDrgula, ponto-e-v\xEDrgula ou tab", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Encoding:"), " UTF-8"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       marginBottom: 16
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       flex: 1,
       fontSize: 13
     },
     onClick: baixarTemplate
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "download",
     size: 14
-  }), " Baixar template CSV"), React.createElement("label", {
+  }), " Baixar template CSV"), /*#__PURE__*/React.createElement("label", {
     style: {
       flex: 1,
       display: "flex",
@@ -6627,17 +6798,17 @@ function Pacientes({
       fontSize: 13,
       fontWeight: 600
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "upload",
     size: 14
-  }), " Selecionar arquivo", React.createElement("input", {
+  }), " Selecionar arquivo", /*#__PURE__*/React.createElement("input", {
     type: "file",
     accept: ".csv,.txt,.xls,.xlsx",
     style: {
       display: "none"
     },
     onChange: processarExcel
-  }))), importLog.length > 0 && React.createElement("div", {
+  }))), importLog.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9fafb",
       borderRadius: 10,
@@ -6648,13 +6819,13 @@ function Pacientes({
       lineHeight: 2,
       border: "1px solid #e5e7eb"
     }
-  }, importLog.map((l, i) => React.createElement("div", {
+  }, importLog.map((l, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       color: l.tipo === "ok" ? "#059669" : l.tipo === "err" ? "#dc2626" : "#7B00C4",
       fontWeight: l.tipo === "info" ? 600 : 400
     }
-  }, l.msg))), importando && React.createElement("div", {
+  }, l.msg))), importando && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 12,
@@ -6663,6 +6834,9 @@ function Pacientes({
     }
   }, "Importando... aguarde"))));
 }
+
+// FINANCEIRO CLINICA
+// ── Relatório de Frequência (componente externo) ──────────────────────────
 function RelatorioFrequencia({
   pacienteId,
   pacoteId,
@@ -6673,11 +6847,15 @@ function RelatorioFrequencia({
   FORMAS,
   onVoltar
 }) {
+  // Normaliza IDs removendo espaços e garantindo string limpa
   const pidNorm = (pacienteId || "").trim();
   const pac = pacientes.find(p => p.id === pidNorm);
   const pacote = pacoteId ? pacotes.find(p => p.id === pacoteId) : null;
   const pacEfetivo = pac || pacientes.find(p => p.id === pacote?.pacienteId);
+
+  // Busca pacotes do paciente — também tenta pelo nome caso ID não bata
   const pacotesPorId = pacotes.filter(p => p.pacienteId === pidNorm);
+  // Fallback extra: busca por pacienteNome se nenhum pacote encontrado
   const pacotesPac = pacoteId ? [pacote].filter(Boolean) : pacotesPorId.length > 0 ? pacotesPorId : pacotes.filter(p => p.pacienteNome && pacEfetivo && p.pacienteNome === pacEfetivo.nome);
   const pacoteIdsDosPac = pacotesPac.map(p => p.id);
   const sessPac = pacoteId ? sessoes.filter(s => s.pacoteId === pacoteId).sort((a, b) => a.data?.localeCompare(b.data)) : sessoes.filter(s => s.pacienteId === pidNorm || pacoteIdsDosPac.includes(s.pacoteId)).sort((a, b) => a.data?.localeCompare(b.data));
@@ -6747,6 +6925,9 @@ function RelatorioFrequencia({
       valorPago: pago ? vPago : 0,
       dataPagamento: pago && !s.dataPagamento ? new Date().toISOString().slice(0, 10) : s.dataPagamento
     });
+    // ── REGRA: sessão de PACOTE nunca gera lançamento próprio.
+    // O lançamento do pacote já cobre todas as sessões filhas.
+    // Lançamento individual só existe para sessões AVULSAS (sem pacoteId).
     if (pago && !s.pacoteId) {
       const lancExist = lancamentos.find(l => l.sessaoId === s.id);
       if (!lancExist) {
@@ -6796,7 +6977,7 @@ function RelatorioFrequencia({
     }
     setModalExcluir(null);
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--purple)",
       borderRadius: 12,
@@ -6807,7 +6988,7 @@ function RelatorioFrequencia({
       marginBottom: 16,
       flexWrap: "wrap"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: onVoltar,
     style: {
       background: "rgba(255,255,255,0.2)",
@@ -6822,14 +7003,14 @@ function RelatorioFrequencia({
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "arrow-left",
     size: 15
-  }), " Voltar"), React.createElement("div", {
+  }), " Voltar"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "Dancing Script, cursive",
       fontSize: 20,
@@ -6837,13 +7018,13 @@ function RelatorioFrequencia({
       fontWeight: 600,
       lineHeight: 1
     }
-  }, pacEfetivo?.nome), React.createElement("div", {
+  }, pacEfetivo?.nome), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "rgba(255,255,255,0.75)",
       marginTop: 2
     }
-  }, "Controle de Sess\xF5es e Frequ\xEAncia")), React.createElement("button", {
+  }, "Controle de Sess\xF5es e Frequ\xEAncia")), /*#__PURE__*/React.createElement("button", {
     style: {
       background: "rgba(255,255,255,0.2)",
       border: "none",
@@ -6858,10 +7039,10 @@ function RelatorioFrequencia({
       gap: 6
     },
     onClick: () => window.print()
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "printer",
     size: 15
-  }), " Imprimir")), React.createElement("div", {
+  }), " Imprimir")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -6869,7 +7050,7 @@ function RelatorioFrequencia({
       border: "1px solid var(--gray-200)",
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--purple)",
       padding: "12px 20px",
@@ -6877,21 +7058,21 @@ function RelatorioFrequencia({
       alignItems: "center",
       justifyContent: "space-between"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "Dancing Script, cursive",
       fontSize: 22,
       color: "white",
       fontWeight: 600
     }
-  }, "Controle de Atendimento Terap\xEAutico"), React.createElement("img", {
+  }, "Controle de Atendimento Terap\xEAutico"), /*#__PURE__*/React.createElement("img", {
     src: "../logo-transparente.png",
     style: {
       height: 36,
       objectFit: "contain"
     },
     onError: e => e.target.style.display = "none"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "14px 20px",
       display: "grid",
@@ -6899,9 +7080,9 @@ function RelatorioFrequencia({
       gap: 12,
       borderBottom: "1px solid var(--gray-100)"
     }
-  }, [["Nome", pacEfetivo?.nome || "—"], ["Início", pacotesPac[0]?.dataInicio ? new Date(pacotesPac[0].dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "—"], ["Horário", pacotesPac[0]?.horario || "—"], ["Recorrência", pacotesPac[0]?.recorrencia || "—"]].map(([l, v]) => React.createElement("div", {
+  }, [["Nome", pacEfetivo?.nome || "—"], ["Início", pacotesPac[0]?.dataInicio ? new Date(pacotesPac[0].dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "—"], ["Horário", pacotesPac[0]?.horario || "—"], ["Recorrência", pacotesPac[0]?.recorrencia || "—"]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
     key: l
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: "var(--text-muted)",
@@ -6909,12 +7090,12 @@ function RelatorioFrequencia({
       textTransform: "uppercase",
       marginBottom: 2
     }
-  }, l), React.createElement("div", {
+  }, l), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, v)))), React.createElement("div", {
+  }, v)))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "12px 20px",
       display: "flex",
@@ -6935,25 +7116,25 @@ function RelatorioFrequencia({
     }), "#d97706"], ["Ano " + anoAtual, totalAno.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    }), "#0891b2"]].map(([l, v, c]) => React.createElement("div", {
+    }), "#0891b2"]].map(([l, v, c]) => /*#__PURE__*/React.createElement("div", {
       key: l,
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 16,
         fontWeight: 800,
         color: c
       }
-    }, v), React.createElement("div", {
+    }, v), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: c,
         fontWeight: 500
       }
     }, l)));
-  })())), React.createElement("div", {
+  })())), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -6961,13 +7142,13 @@ function RelatorioFrequencia({
       flexWrap: "wrap",
       alignItems: "center"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       fontWeight: 600,
       color: "var(--text-muted)"
     }
-  }, "M\xEAs:"), React.createElement("button", {
+  }, "M\xEAs:"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setMesFiltro("todos"),
     style: {
       padding: "4px 12px",
@@ -6980,7 +7161,7 @@ function RelatorioFrequencia({
       fontWeight: 600,
       cursor: "pointer"
     }
-  }, "Todos"), meses.map(m => React.createElement("button", {
+  }, "Todos"), meses.map(m => /*#__PURE__*/React.createElement("button", {
     key: m,
     onClick: () => setMesFiltro(m),
     style: {
@@ -7005,7 +7186,7 @@ function RelatorioFrequencia({
     });
     const recMes = sessMes.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
     const aberto = accordionAberto[mes] !== false;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: mes,
       style: {
         background: "white",
@@ -7014,7 +7195,7 @@ function RelatorioFrequencia({
         border: "1px solid var(--gray-200)",
         marginBottom: 12
       }
-    }, React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       onClick: () => setAccordionAberto(a => ({
         ...a,
         [mes]: !aberto
@@ -7030,25 +7211,25 @@ function RelatorioFrequencia({
         cursor: "pointer",
         borderBottom: aberto ? "2px solid var(--purple)" : "none"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 12
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontWeight: 700,
         fontSize: 14,
         color: "var(--purple)",
         textTransform: "capitalize"
       }
-    }, mesLabel), React.createElement("span", {
+    }, mesLabel), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)"
       }
-    }, sessMes.length, " sess\xF5es"), React.createElement("span", {
+    }, sessMes.length, " sess\xF5es"), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         fontWeight: 600,
@@ -7057,25 +7238,25 @@ function RelatorioFrequencia({
     }, recMes.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    }))), React.createElement(Icon, {
+    }))), /*#__PURE__*/React.createElement(Icon, {
       name: aberto ? "chevron-up" : "chevron-down",
       size: 16
-    })), aberto && React.createElement("div", {
+    })), aberto && /*#__PURE__*/React.createElement("div", {
       style: {
         overflowX: "auto"
       }
-    }, React.createElement("table", {
+    }, /*#__PURE__*/React.createElement("table", {
       style: {
         width: "100%",
         borderCollapse: "collapse",
         fontSize: 12
       }
-    }, React.createElement("thead", null, React.createElement("tr", {
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
       style: {
         background: "var(--purple)",
         color: "white"
       }
-    }, ["", "Nº", "Data", "Presença", "Modalidade", "V. Sessão", "V. Pago", "Saldo", "Forma Pagto", "Data Pagto", "Obs"].map(h => React.createElement("th", {
+    }, ["", "Nº", "Data", "Presença", "Modalidade", "V. Sessão", "V. Pago", "Saldo", "Forma Pagto", "Data Pagto", "Obs"].map(h => /*#__PURE__*/React.createElement("th", {
       key: h,
       style: {
         padding: "8px 10px",
@@ -7084,23 +7265,23 @@ function RelatorioFrequencia({
         whiteSpace: "nowrap",
         fontSize: 11
       }
-    }, h)))), React.createElement("tbody", null, sessMes.map((s, i) => {
+    }, h)))), /*#__PURE__*/React.createElement("tbody", null, sessMes.map((s, i) => {
       const st = STATUS_S[s.status] || STATUS_S.agendado;
-      const isPago = s.pagamento === "pago";
+      const isPago = s.pagamento === "pago"; // remarcado mantém pagamento original
       const vSessao = parseFloat(s.valorSessao) || 0;
       const vPago = parseFloat(s.valorPago) || (isPago ? vSessao : 0);
       const saldo = isPago ? vPago - vSessao : 0;
-      return React.createElement("tr", {
+      return /*#__PURE__*/React.createElement("tr", {
         key: s.id,
         style: {
           borderBottom: "1px solid var(--gray-100)",
           background: i % 2 === 0 ? "white" : "#fafafa"
         }
-      }, React.createElement("td", {
+      }, /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "5px 6px"
         }
-      }, React.createElement("button", {
+      }, /*#__PURE__*/React.createElement("button", {
         onClick: () => setModalExcluir({
           id: s.id,
           pacoteId: s.pacoteId,
@@ -7114,31 +7295,31 @@ function RelatorioFrequencia({
           color: "#dc2626",
           padding: "2px"
         }
-      }, React.createElement(Icon, {
+      }, /*#__PURE__*/React.createElement(Icon, {
         name: "trash-2",
         size: 12
-      }))), React.createElement("td", {
+      }))), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px",
           fontWeight: 700,
           color: "var(--purple)"
         }
-      }, s.numSessao || "—"), React.createElement("td", {
+      }, s.numSessao || "—"), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px",
           whiteSpace: "nowrap"
         }
-      }, s.data ? new Date(s.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", s.remarcada && React.createElement("span", {
+      }, s.data ? new Date(s.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", s.remarcada && /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 9,
           color: "#0891b2",
           marginLeft: 4
         }
-      }, "Rem.")), React.createElement("td", {
+      }, "Rem.")), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px"
         }
-      }, React.createElement("select", {
+      }, /*#__PURE__*/React.createElement("select", {
         value: s.status,
         onChange: e => atualizarSessao(s.id, {
           status: e.target.value
@@ -7154,20 +7335,20 @@ function RelatorioFrequencia({
           cursor: "pointer",
           minWidth: 88
         }
-      }, Object.entries(STATUS_S).map(([k, v]) => React.createElement("option", {
+      }, Object.entries(STATUS_S).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
         key: k,
         value: k
-      }, v.l))), (s.status === "cancelado" || s.status === "remarcado") && React.createElement("div", {
+      }, v.l))), (s.status === "cancelado" || s.status === "remarcado") && /*#__PURE__*/React.createElement("div", {
         style: {
           marginTop: 3
         }
-      }, React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           fontSize: 9,
           color: "#0891b2",
           marginBottom: 2
         }
-      }, "Nova data (sem mov. financeira):"), React.createElement("input", {
+      }, "Nova data (sem mov. financeira):"), /*#__PURE__*/React.createElement("input", {
         type: "date",
         defaultValue: s.dataRemarcada || "",
         onBlur: e => {
@@ -7181,7 +7362,7 @@ function RelatorioFrequencia({
           color: "#0891b2",
           width: 105
         }
-      }), React.createElement("select", {
+      }), /*#__PURE__*/React.createElement("select", {
         defaultValue: s.motivoRemarcacao || "remarcacao",
         onChange: e => atualizarSessao(s.id, {
           motivoRemarcacao: e.target.value
@@ -7196,17 +7377,17 @@ function RelatorioFrequencia({
           color: "#374151",
           cursor: "pointer"
         }
-      }, React.createElement("option", {
+      }, /*#__PURE__*/React.createElement("option", {
         value: "remarcacao"
-      }, "\uD83D\uDD04 Remarca\xE7\xE3o"), React.createElement("option", {
+      }, "\uD83D\uDD04 Remarca\xE7\xE3o"), /*#__PURE__*/React.createElement("option", {
         value: "falta"
-      }, "\u26A0\uFE0F Falta"), React.createElement("option", {
+      }, "\u26A0\uFE0F Falta"), /*#__PURE__*/React.createElement("option", {
         value: "compensacao"
-      }, "\u2705 Compensa\xE7\xE3o")))), React.createElement("td", {
+      }, "\u2705 Compensa\xE7\xE3o")))), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px"
         }
-      }, React.createElement("input", {
+      }, /*#__PURE__*/React.createElement("input", {
         defaultValue: s.modalidade || "on-line",
         onBlur: e => atualizarSessao(s.id, {
           modalidade: e.target.value
@@ -7218,7 +7399,7 @@ function RelatorioFrequencia({
           padding: "2px 5px",
           width: 62
         }
-      })), React.createElement("td", {
+      })), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px",
           fontWeight: 600,
@@ -7228,11 +7409,11 @@ function RelatorioFrequencia({
       }, vSessao.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
-      })), React.createElement("td", {
+      })), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px"
         }
-      }, React.createElement("input", {
+      }, /*#__PURE__*/React.createElement("input", {
         type: "number",
         defaultValue: s.valorPago || "",
         key: s.id + "_vpago",
@@ -7248,7 +7429,7 @@ function RelatorioFrequencia({
           color: isPago ? "#059669" : "#374151",
           fontWeight: isPago ? 600 : 400
         }
-      })), React.createElement("td", {
+      })), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px",
           fontWeight: 600,
@@ -7259,11 +7440,11 @@ function RelatorioFrequencia({
       }, isPago ? saldo === 0 ? "—" : saldo.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
-      }) : "—"), React.createElement("td", {
+      }) : "—"), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px"
         }
-      }, React.createElement("select", {
+      }, /*#__PURE__*/React.createElement("select", {
         value: s.formaPagamento || "",
         onChange: e => atualizarPagamento(s, e.target.value, s.valorPago || s.valorSessao),
         style: {
@@ -7278,16 +7459,16 @@ function RelatorioFrequencia({
           background: isPago ? "#f0fdf4" : "white",
           minWidth: 72
         }
-      }, React.createElement("option", {
+      }, /*#__PURE__*/React.createElement("option", {
         value: ""
-      }, "Pendente"), FORMAS.map(f => React.createElement("option", {
+      }, "Pendente"), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
         key: f,
         value: f
-      }, f)))), React.createElement("td", {
+      }, f)))), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px"
         }
-      }, React.createElement("input", {
+      }, /*#__PURE__*/React.createElement("input", {
         type: "date",
         defaultValue: s.dataPagamento || "",
         key: s.id + "_dtpag",
@@ -7301,11 +7482,11 @@ function RelatorioFrequencia({
           padding: "2px 4px",
           width: 105
         }
-      })), React.createElement("td", {
+      })), /*#__PURE__*/React.createElement("td", {
         style: {
           padding: "6px 10px"
         }
-      }, React.createElement("input", {
+      }, /*#__PURE__*/React.createElement("input", {
         defaultValue: s.obs || "",
         onBlur: e => atualizarSessao(s.id, {
           obs: e.target.value
@@ -7319,18 +7500,18 @@ function RelatorioFrequencia({
           width: 70
         }
       })));
-    })), React.createElement("tfoot", null, React.createElement("tr", {
+    })), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
       style: {
         background: "var(--purple-soft)"
       }
-    }, React.createElement("td", {
+    }, /*#__PURE__*/React.createElement("td", {
       colSpan: 5,
       style: {
         padding: "8px 10px",
         fontWeight: 700,
         fontSize: 11
       }
-    }, "Total ", mesLabel), React.createElement("td", {
+    }, "Total ", mesLabel), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 10px",
         fontWeight: 700,
@@ -7339,7 +7520,7 @@ function RelatorioFrequencia({
     }, sessMes.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0).toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    })), React.createElement("td", {
+    })), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 10px",
         fontWeight: 700,
@@ -7349,10 +7530,10 @@ function RelatorioFrequencia({
     }, recMes.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    })), React.createElement("td", {
+    })), /*#__PURE__*/React.createElement("td", {
       colSpan: 4
     }))))));
-  }), modalExcluir && React.createElement("div", {
+  }), modalExcluir && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -7363,7 +7544,7 @@ function RelatorioFrequencia({
       zIndex: 600,
       padding: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -7372,32 +7553,32 @@ function RelatorioFrequencia({
       maxWidth: 400,
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 32,
       marginBottom: 12
     }
-  }, "\uD83D\uDDD1\uFE0F"), React.createElement("div", {
+  }, "\uD83D\uDDD1\uFE0F"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 18,
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Excluir sess\xE3o #", modalExcluir.numSessao, "?"), React.createElement("p", {
+  }, "Excluir sess\xE3o #", modalExcluir.numSessao, "?"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "#6b7280",
       marginBottom: 20
     }
-  }, modalExcluir.data ? new Date(modalExcluir.data + "T00:00:00").toLocaleDateString("pt-BR") : ""), React.createElement("div", {
+  }, modalExcluir.data ? new Date(modalExcluir.data + "T00:00:00").toLocaleDateString("pt-BR") : ""), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8,
       marginBottom: 14
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       border: "1.5px solid #e5e7eb",
@@ -7405,12 +7586,12 @@ function RelatorioFrequencia({
       padding: "12px 16px"
     },
     onClick: () => confirmarExclusao("este")
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, "S\xF3 esta sess\xE3o")), React.createElement("button", {
+  }, "S\xF3 esta sess\xE3o")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       border: "1.5px solid #fbbf24",
@@ -7418,13 +7599,13 @@ function RelatorioFrequencia({
       padding: "12px 16px"
     },
     onClick: () => confirmarExclusao("daqui")
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       color: "#d97706"
     }
-  }, "Esta e todas as pr\xF3ximas")), React.createElement("button", {
+  }, "Esta e todas as pr\xF3ximas")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       border: "1.5px solid #fca5a5",
@@ -7432,13 +7613,13 @@ function RelatorioFrequencia({
       padding: "12px 16px"
     },
     onClick: () => confirmarExclusao("todos")
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       color: "#dc2626"
     }
-  }, "Cancelar todo o pacote"))), React.createElement("button", {
+  }, "Cancelar todo o pacote"))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       width: "100%"
@@ -7484,6 +7665,7 @@ function FinanceiroClinica() {
     status: "pendente",
     obs: ""
   });
+  // Estado dedicado para edição de despesas
   const CATS_DESPESA = ["Aluguel", "Condomínio", "Marketing", "Salários", "Investimentos", "Musicoterapia", "Ferramentas de IA", "Telefone/Internet", "Contador", "Impostos", "Outros"];
   const [formDespesaEdit, setFormDespesaEdit] = useState({
     descricao: "",
@@ -7494,6 +7676,7 @@ function FinanceiroClinica() {
     status: "pago",
     obs: ""
   });
+  // ── Painel de higienização ────────────
   const [modalAuditoria, setModalAuditoria] = useState(false);
   const [auditLog, setAuditLog] = useState([]);
   const [auditando, setAuditando] = useState(false);
@@ -7515,7 +7698,7 @@ function FinanceiroClinica() {
     percParceiro: "70"
   });
   const [parceiras, setParceiras] = useState([]);
-  const [modalEditarPacote, setModalEditarPacote] = useState(null);
+  const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
   useEffect(() => {
@@ -7559,18 +7742,29 @@ function FinanceiroClinica() {
     };
   }, []);
   const getPacNome = id => pacientes.find(p => p.id === id)?.nome || "—";
+
+  // Anos disponíveis
   const anosDisp = [...new Set(lancamentos.map(l => l.data?.slice(0, 4)).filter(Boolean))].sort().reverse();
   if (!anosDisp.includes(anoFiltro)) anosDisp.unshift(anoFiltro);
+
+  // Meses do ano selecionado — sempre Jan (01) → Dez (12)
   const mesAtual = new Date().toISOString().slice(0, 7);
   const mesesDisp = Array.from({
     length: 12
   }, (_, i) => `${anoFiltro}-${String(i + 1).padStart(2, "0")}`);
+
+  // Se mesFiltro não pertence ao anoFiltro, corrige para mês atual
   const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro) ? mesFiltro : mesAtual.startsWith(anoFiltro) ? mesAtual : anoFiltro + "-01";
+
+  // Cards do topo — mês atual do ano selecionado, fixo
   const mesCards = anoFiltro + "-" + new Date().toISOString().slice(5, 7);
   const lancMesCards = lancamentos.filter(l => l.data?.startsWith(mesCards));
   const lancMes = lancamentos.filter(l => l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l => l.data?.startsWith(anoFiltro));
   const lancPeriodo = periodoCard === "mes" ? lancMesCards : lancAno;
+
+  // Métricas por período selecionado nos cards
+  // Receitas somam, despesas deduzem
   function calcSaldo(lista) {
     return lista.reduce((a, l) => {
       const v = parseFloat(l.valor) || 0;
@@ -7589,6 +7783,8 @@ function FinanceiroClinica() {
   const mesAtualLabel = new Date(mesCards + "-15").toLocaleDateString("pt-BR", {
     month: "short"
   });
+
+  // Salvar lançamento avulso — ETAPA 2: UPDATE obrigatório quando editando
   async function salvarAvulso(tipoVenda) {
     if (!formAvulso.valor || !formAvulso.data) {
       alert("Valor e data obrigatórios.");
@@ -7603,6 +7799,7 @@ function FinanceiroClinica() {
         pacienteNome: pac?.nome || ""
       };
       if (editando) {
+        // ── ETAPA 2: GUARD — verifica se o contexto ainda existe antes de salvar
         const docSnap = await db.collection("clinica_lancamentos").doc(editando).get();
         if (!docSnap.exists) {
           alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");
@@ -7611,11 +7808,13 @@ function FinanceiroClinica() {
           setSalvando(false);
           return;
         }
+        // UPDATE cirúrgico — nunca gera novo INSERT
         await db.collection("clinica_lancamentos").doc(editando).update({
           ...dados,
           _editadoEm: firebase.firestore.FieldValue.serverTimestamp()
         });
       } else {
+        // Novo lançamento — INSERT legítimo
         await db.collection("clinica_lancamentos").add({
           ...dados,
           tipo_lancamento: "avulso",
@@ -7653,6 +7852,7 @@ function FinanceiroClinica() {
     setSalvando(false);
   }
   function abrirEditar(l) {
+    // ── ETAPA 2: bifurca entre receita e despesa
     if (l.tipo_lancamento === "despesa") {
       setFormDespesaEdit({
         descricao: l.descricao || l.tipo || "",
@@ -7685,6 +7885,8 @@ function FinanceiroClinica() {
     if (!confirm("Excluir lançamento?")) return;
     await db.collection("clinica_lancamentos").doc(id).delete();
   }
+
+  // ── Salvar edição de DESPESA — UPDATE obrigatório, nunca INSERT
   async function salvarDespesaEdit() {
     if (!formDespesaEdit.valor || !formDespesaEdit.data) {
       alert("Valor e data obrigatórios.");
@@ -7722,6 +7924,12 @@ function FinanceiroClinica() {
     setEditando(null);
     setSalvando(false);
   }
+
+  // ── ETAPA 3: FONTE ÚNICA DA VERDADE ─────────────────────────────────────
+  // Dar baixa em um pacote:
+  //   1. Atualiza o documento do pacote (statusPag, valorPago, valorPendente)
+  //   2. Marca todas as sessões filhas como pagas em batch
+  //   3. Garante que existe EXATAMENTE 1 lançamento vinculado (sem criar duplicata)
   async function marcarPacotePago(pacoteId, formaPag) {
     const sessPac = sessoes.filter(s => s.pacoteId === pacoteId);
     const pacote = pacotes.find(p => p.id === pacoteId);
@@ -7733,6 +7941,8 @@ function FinanceiroClinica() {
     const valorPagoFinal = totalExtras > 0 ? totalExtras : vTotal;
     const valorPendenteFinal = Math.max(0, vTotal - valorPagoFinal);
     const batch = db.batch();
+
+    // 1. Atualiza o pacote — recalcula a matriz financeira
     batch.update(db.collection("clinica_pacotes").doc(pacoteId), {
       statusPag: "recebido",
       formaPag,
@@ -7741,6 +7951,8 @@ function FinanceiroClinica() {
       valorPendente: valorPendenteFinal,
       _sincronizadoEm: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // 2. Atualiza todas as sessões filhas
     const valorPorSessao = sessPac.length > 0 ? parseFloat((valorPagoFinal / sessPac.length).toFixed(2)) : pacote.valorSessao || 0;
     sessPac.forEach(s => {
       batch.update(db.collection("clinica_sessoes").doc(s.id), {
@@ -7751,6 +7963,8 @@ function FinanceiroClinica() {
         statusFinanceiro: "pago"
       });
     });
+
+    // 3. Atualiza lançamento existente OU cria exatamente 1 novo (evita duplicata)
     const lancExistente = lancamentos.find(l => l.pacoteId === pacoteId);
     if (lancExistente) {
       batch.update(db.collection("clinica_lancamentos").doc(lancExistente.id), {
@@ -7761,6 +7975,7 @@ function FinanceiroClinica() {
         valorPendente: valorPendenteFinal
       });
     } else {
+      // Gera lançamento apenas se não existe nenhum para este pacote
       const pac = pacientes.find(p => p.id === pacote.pacienteId);
       const mes = new Date(pacote.dataInicio + "T00:00:00").toLocaleDateString("pt-BR", {
         month: "long",
@@ -7788,6 +8003,8 @@ function FinanceiroClinica() {
     }
     await batch.commit();
   }
+
+  // Geração de datas recorrentes
   function gerarDatas(dataInicio, recorrencia, total, diasSemana) {
     if (recorrencia === "Sessão única") return [dataInicio];
     const datas = [];
@@ -7799,6 +8016,7 @@ function FinanceiroClinica() {
       }
       return datas.slice(0, total);
     }
+    // 2x ou 3x por semana
     const dias = (diasSemana || []).map(Number).sort();
     if (!dias.length) return [];
     let atual = new Date(dataInicio + "T00:00:00");
@@ -7870,6 +8088,8 @@ function FinanceiroClinica() {
     const datas = gerarDatas(dataInicio, recorrencia, total, diasSemana);
     const parcSel = eParceria ? parceiras.find(p => p.id === formPacote.parceiraId) : null;
     const percParc = eParceria ? parseFloat(formPacote.percParceiro) || 70 : 0;
+
+    // Cria pacote
     const pacRef = await db.collection("clinica_pacotes").add({
       pacienteId,
       pacienteNome: pac?.nome || "",
@@ -7893,6 +8113,8 @@ function FinanceiroClinica() {
       status: "ativo",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Cria lançamento financeiro do pacote
     const mesInicioPacote = new Date(dataInicio + "T00:00:00").toLocaleDateString("pt-BR", {
       month: "long",
       year: "numeric"
@@ -7917,6 +8139,8 @@ function FinanceiroClinica() {
       valorSessao: vSessao,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Registra comissão da secretária
     if (tipoVenda) await registrarComissao({
       tipo: "Pacote",
       valor: vTotal,
@@ -7924,6 +8148,8 @@ function FinanceiroClinica() {
       tipoVenda,
       pacoteId: pacRef.id
     });
+
+    // Registra repasse da parceira (venda em parceria)
     if (eParceria && parcSel) {
       const vParceira = parseFloat((vTotal * percParc / 100).toFixed(2));
       const mesRefParc = new Date().toISOString().slice(0, 7);
@@ -7942,6 +8168,8 @@ function FinanceiroClinica() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
+
+    // Cria sessões na agenda
     const jaPago = (formPacote.statusPag || "pendente") === "recebido";
     const batch = db.batch();
     datas.forEach((data, i) => {
@@ -7968,6 +8196,7 @@ function FinanceiroClinica() {
       });
     });
     await batch.commit();
+    // Social: lança comissão estagiária automaticamente
     if ((formPacote.tipoAtendimento || "particular") === "social") {
       const hoje = new Date().toISOString().slice(0, 10);
       const mesRef = hoje.slice(0, 7);
@@ -8030,6 +8259,10 @@ function FinanceiroClinica() {
   async function atualizarSessao(id, campos) {
     await db.collection("clinica_sessoes").doc(id).update(campos);
   }
+
+  // ── ETAPA 3: Remarcação/Compensação ─────────────────────────────────────
+  // Altera APENAS data + status. Jamais toca em valor, pagamento ou lançamentos.
+  // Motivo: remarcação por falta ou compensação não gera movimentação financeira.
   async function remarcarSessao(s, novaData, motivo = "remarcacao") {
     if (!novaData) return;
     try {
@@ -8039,7 +8272,8 @@ function FinanceiroClinica() {
         remarcada: true,
         dataRemarcada: novaData,
         dataOriginal: s.dataOriginal || s.data,
-        motivoRemarcacao: motivo
+        motivoRemarcacao: motivo // "remarcacao" | "falta" | "compensacao"
+        // NÃO altera: pagamento, valorPago, valorSessao, dataPagamento, pacoteId
       });
     } catch (e) {
       console.error("Erro ao remarcar sessão:", e);
@@ -8062,6 +8296,7 @@ function FinanceiroClinica() {
         fut.forEach(s => b.delete(db.collection("clinica_sessoes").doc(s.id)));
         await b.commit();
       } else {
+        // Cancelar todo o pacote — exclusão em cascata via query direta (evita dados órfãos)
         const [snapSess, snapLanc] = await Promise.all([db.collection("clinica_sessoes").where("pacoteId", "==", pacoteId).get(), db.collection("clinica_lancamentos").where("pacoteId", "==", pacoteId).get()]);
         const b = db.batch();
         snapSess.docs.forEach(d => b.delete(d.ref));
@@ -8077,9 +8312,10 @@ function FinanceiroClinica() {
     setModalExcluir(null);
   }
   if (pacoteSelecionado) {
+    // Modo ver sessões (id__sessoes)
     if (pacoteSelecionado.endsWith("__sessoes")) {
       const pacoteId = pacoteSelecionado.replace("__sessoes", "");
-      return React.createElement(RelatorioFrequencia, {
+      return /*#__PURE__*/React.createElement(RelatorioFrequencia, {
         pacienteId: null,
         pacoteId: pacoteId,
         pacientes: pacientes,
@@ -8090,6 +8326,7 @@ function FinanceiroClinica() {
         onVoltar: () => setPacoteSelecionado(null)
       });
     }
+    // Modo editar pacote individual (id__pacote) — abre modal de edição
     if (pacoteSelecionado.endsWith("__pacote")) {
       const pacoteId = pacoteSelecionado.replace("__pacote", "");
       const pacoteAlvo = pacotes.find(p => p.id === pacoteId);
@@ -8111,7 +8348,8 @@ function FinanceiroClinica() {
         setPacoteSelecionado(null);
       }
     }
-    return React.createElement(RelatorioFrequencia, {
+    // Modo controle geral do paciente (pacienteId)
+    return /*#__PURE__*/React.createElement(RelatorioFrequencia, {
       pacienteId: pacoteSelecionado,
       pacoteId: null,
       pacientes: pacientes,
@@ -8122,6 +8360,8 @@ function FinanceiroClinica() {
       onVoltar: () => setPacoteSelecionado(null)
     });
   }
+
+  // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
   async function salvarEdicaoPacote() {
     if (!modalEditarPacote) return;
     setSalvandoEdicao(true);
@@ -8132,10 +8372,14 @@ function FinanceiroClinica() {
       const novoValorSessao = parseFloat(f.valorSessao) || modalEditarPacote.valorSessao;
       const novoValorTotal = novoTotalSessoes * novoValorSessao;
       const dataPagFinal = jaPago ? f.dataPagamento || new Date().toISOString().slice(0, 10) : "";
+
+      // Calcula valorPago por sessão distribuindo pagamentosExtras proporcionalmente
       const extras = f.pagamentosExtras || [];
       const totalExtras = extras.reduce((a, pg) => a + (parseFloat(pg.valor) || 0), 0);
       const totalPagoRef = jaPago ? totalExtras > 0 ? totalExtras : novoValorTotal : 0;
       const valorPagoPorSessao = novoTotalSessoes > 0 ? parseFloat((totalPagoRef / novoTotalSessoes).toFixed(2)) : novoValorSessao;
+
+      // 1. Atualiza o documento do pacote
       await db.collection("clinica_pacotes").doc(modalEditarPacote.id).update({
         totalSessoes: novoTotalSessoes,
         valorSessao: novoValorSessao,
@@ -8149,6 +8393,8 @@ function FinanceiroClinica() {
         pagamentosExtras: extras,
         obs: f.obs || ""
       });
+
+      // 2. Atualiza lançamento financeiro vinculado via query direta
       try {
         const snapLanc = await db.collection("clinica_lancamentos").where("pacoteId", "==", modalEditarPacote.id).get();
         if (!snapLanc.empty) {
@@ -8175,6 +8421,8 @@ function FinanceiroClinica() {
       } catch (eLanc) {
         console.warn("Aviso: lançamento não atualizado →", eLanc.message);
       }
+
+      // 3. Atualiza sessões filhas em batch
       const snapSess = await db.collection("clinica_sessoes").where("pacoteId", "==", modalEditarPacote.id).get();
       const sessDoPacote = snapSess.docs.map(d => ({
         id: d.id,
@@ -8215,14 +8463,20 @@ function FinanceiroClinica() {
     }
     setSalvandoEdicao(false);
   }
+
+  // Métricas
   const totalRecebido = lancamentos.filter(l => l.status === "recebido").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   async function executarHigienizacao() {
     if (!confirm("⚠️ Confirmar higienização completa?\n\n• Lançamentos de sessão órfãos (de pacotes) serão deletados\n• Duplicatas de Ronei e Heitor serão removidas\n• Lançamentos Sem Nome viram Despesas Administrativas\n\nEssa ação não pode ser desfeita.")) return;
     setAuditando(true);
     const log = [];
     const mesRef = "2026-05";
+
+    // ── PASSO 0: Maior fonte de duplicata — sessões de pacote gerando lançamento próprio
     const ro = await deletarLancamentosOrfaosDeSessao();
     log.push(`Sessões órfãs de pacote: ${ro.ok ? `${ro.deletados} lançamento(s) deletado(s)` : "Erro — " + ro.erro}`);
+
+    // ── PASSO 1: Duplicatas por paciente
     const snapRonei = await db.collection("clinica_pacientes").where("nome", ">=", "Ronei").where("nome", "<=", "Ronei").limit(1).get();
     const snapHeitor = await db.collection("clinica_pacientes").where("nome", ">=", "Heitor").where("nome", "<=", "Heitor").limit(1).get();
     if (!snapRonei.empty) {
@@ -8237,12 +8491,14 @@ function FinanceiroClinica() {
     } else {
       log.push("Heitor: paciente não encontrado");
     }
+
+    // ── PASSO 2: Categorizar Sem Nome
     const rc = await categorizarSemNome(mesRef);
     log.push(`Sem Nome: ${rc.ok ? `${rc.atualizados} lançamento(s) categorizados` : "Erro — " + rc.erro}`);
     setAuditLog(log);
     setAuditando(false);
   }
-  return React.createElement("div", null, modalAuditoria && React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, modalAuditoria && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -8253,7 +8509,7 @@ function FinanceiroClinica() {
       zIndex: 700,
       padding: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -8261,19 +8517,19 @@ function FinanceiroClinica() {
       width: "100%",
       maxWidth: 480
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 16
     }
-  }, React.createElement("h3", {
+  }, /*#__PURE__*/React.createElement("h3", {
     style: {
       margin: 0,
       color: "#b45309"
     }
-  }, "\uD83D\uDD27 Higieniza\xE7\xE3o \u2014 Maio/2026"), React.createElement("button", {
+  }, "\uD83D\uDD27 Higieniza\xE7\xE3o \u2014 Maio/2026"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModalAuditoria(false),
     style: {
       background: "none",
@@ -8281,14 +8537,14 @@ function FinanceiroClinica() {
       cursor: "pointer",
       fontSize: 20
     }
-  }, "\u2715")), React.createElement("div", {
+  }, "\u2715")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "#6b7280",
       marginBottom: 20,
       lineHeight: 1.6
     }
-  }, "Esta opera\xE7\xE3o ir\xE1:", React.createElement("br", null), "\u2022 Deletar ", React.createElement("b", null, "lan\xE7amentos de sess\xE3o \xF3rf\xE3os"), " \u2014 sess\xF5es de pacote que geraram lan\xE7amento pr\xF3prio indevido", React.createElement("br", null), "\u2022 Remover duplicatas de ", React.createElement("b", null, "Ronei"), " e ", React.createElement("b", null, "Heitor"), React.createElement("br", null), "\u2022 Categorizar ", React.createElement("b", null, "lan\xE7amentos Sem Nome"), " como \"Despesas Administrativas/Cl\xEDnica\""), auditLog.length > 0 && React.createElement("div", {
+  }, "Esta opera\xE7\xE3o ir\xE1:", /*#__PURE__*/React.createElement("br", null), "\u2022 Deletar ", /*#__PURE__*/React.createElement("b", null, "lan\xE7amentos de sess\xE3o \xF3rf\xE3os"), " \u2014 sess\xF5es de pacote que geraram lan\xE7amento pr\xF3prio indevido", /*#__PURE__*/React.createElement("br", null), "\u2022 Remover duplicatas de ", /*#__PURE__*/React.createElement("b", null, "Ronei"), " e ", /*#__PURE__*/React.createElement("b", null, "Heitor"), /*#__PURE__*/React.createElement("br", null), "\u2022 Categorizar ", /*#__PURE__*/React.createElement("b", null, "lan\xE7amentos Sem Nome"), " como \"Despesas Administrativas/Cl\xEDnica\""), auditLog.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       border: "1px solid #86efac",
@@ -8296,37 +8552,37 @@ function FinanceiroClinica() {
       padding: 14,
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 12,
       color: "#166534",
       marginBottom: 6
     }
-  }, "\u2705 Resultado:"), auditLog.map((l, i) => React.createElement("div", {
+  }, "\u2705 Resultado:"), auditLog.map((l, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 12,
       color: "#374151",
       marginBottom: 2
     }
-  }, "\u2022 ", l))), React.createElement("div", {
+  }, "\u2022 ", l))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModalAuditoria(false)
-  }, "Fechar"), auditLog.length === 0 && React.createElement("button", {
+  }, "Fechar"), auditLog.length === 0 && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       background: "#b45309"
     },
     onClick: executarHigienizacao,
     disabled: auditando
-  }, auditando ? "Executando..." : "⚡ Executar Higienização")))), modalEditarPacote && React.createElement("div", {
+  }, auditando ? "Executando..." : "⚡ Executar Higienização")))), modalEditarPacote && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -8340,7 +8596,7 @@ function FinanceiroClinica() {
     onClick: e => {
       if (e.target === e.currentTarget) setModalEditarPacote(null);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -8350,19 +8606,19 @@ function FinanceiroClinica() {
       maxHeight: "90vh",
       overflowY: "auto"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("h3", {
+  }, /*#__PURE__*/React.createElement("h3", {
     style: {
       margin: 0,
       color: "var(--purple)"
     }
-  }, "\u270F\uFE0F Editar Pacote"), React.createElement("button", {
+  }, "\u270F\uFE0F Editar Pacote"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModalEditarPacote(null),
     style: {
       background: "none",
@@ -8371,17 +8627,17 @@ function FinanceiroClinica() {
       fontSize: 20,
       color: "var(--gray-400)"
     }
-  }, "\u2715")), React.createElement("div", {
+  }, "\u2715")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "N\xBA de Sess\xF5es"), React.createElement("input", {
+  }, "N\xBA de Sess\xF5es"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formEdicaoPacote.totalSessoes || "",
@@ -8389,11 +8645,11 @@ function FinanceiroClinica() {
       ...formEdicaoPacote,
       totalSessoes: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Valor por Sess\xE3o (R$)"), React.createElement("input", {
+  }, "Valor por Sess\xE3o (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formEdicaoPacote.valorSessao || "",
@@ -8401,11 +8657,11 @@ function FinanceiroClinica() {
       ...formEdicaoPacote,
       valorSessao: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data de In\xEDcio"), React.createElement("input", {
+  }, "Data de In\xEDcio"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: formEdicaoPacote.dataInicio || "",
@@ -8413,11 +8669,11 @@ function FinanceiroClinica() {
       ...formEdicaoPacote,
       dataInicio: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Hor\xE1rio"), React.createElement("input", {
+  }, "Hor\xE1rio"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "time",
     value: formEdicaoPacote.horario || "",
@@ -8425,24 +8681,24 @@ function FinanceiroClinica() {
       ...formEdicaoPacote,
       horario: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Recorr\xEAncia"), React.createElement("select", {
+  }, "Recorr\xEAncia"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formEdicaoPacote.recorrencia || "",
     onChange: e => setFormEdicaoPacote({
       ...formEdicaoPacote,
       recorrencia: e.target.value
     })
-  }, RECORRENCIAS.map(r => React.createElement("option", {
+  }, RECORRENCIAS.map(r => /*#__PURE__*/React.createElement("option", {
     key: r
-  }, r)))), React.createElement("div", {
+  }, r)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Total do Pacote"), React.createElement("input", {
+  }, "Total do Pacote"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     readOnly: true,
     value: "R$ " + (parseFloat(formEdicaoPacote.valorSessao || 0) * parseInt(formEdicaoPacote.totalSessoes || 0) || 0).toFixed(2).replace(".", ","),
@@ -8450,19 +8706,19 @@ function FinanceiroClinica() {
       background: "#f9fafb",
       color: "var(--text-muted)"
     }
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status do Pagamento"), React.createElement("div", {
+  }, "Status do Pagamento"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, cor]) => React.createElement("button", {
+  }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, cor]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormEdicaoPacote({
@@ -8482,26 +8738,26 @@ function FinanceiroClinica() {
       background: (formEdicaoPacote.statusPag || "pendente") === v ? cor + "15" : "white",
       color: (formEdicaoPacote.statusPag || "pendente") === v ? cor : "#6b7280"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Forma de Pagamento Principal"), React.createElement("select", {
+  }, "Forma de Pagamento Principal"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formEdicaoPacote.formaPag || "",
     onChange: e => setFormEdicaoPacote({
       ...formEdicaoPacote,
       formaPag: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), FORMAS.map(f => React.createElement("option", {
+  }, "Selecionar..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
     key: f
-  }, f)))), React.createElement("div", {
+  }, f)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data do Pagamento"), React.createElement("input", {
+  }, "Data do Pagamento"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: formEdicaoPacote.dataPagamento || "",
@@ -8509,24 +8765,24 @@ function FinanceiroClinica() {
       ...formEdicaoPacote,
       dataPagamento: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
       marginBottom: 8
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label",
     style: {
       margin: 0
     }
-  }, "Formas de pagamento (PIX, cart\xE3o, dinheiro em datas diferentes)"), React.createElement("button", {
+  }, "Formas de pagamento (PIX, cart\xE3o, dinheiro em datas diferentes)"), /*#__PURE__*/React.createElement("button", {
     type: "button",
     style: {
       fontSize: 12,
@@ -8545,14 +8801,14 @@ function FinanceiroClinica() {
         data: new Date().toISOString().slice(0, 10)
       }]
     })
-  }, "+ Adicionar forma")), (formEdicaoPacote.pagamentosExtras || []).length === 0 && React.createElement("div", {
+  }, "+ Adicionar forma")), (formEdicaoPacote.pagamentosExtras || []).length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       fontStyle: "italic",
       padding: "6px 0"
     }
-  }, "Clique em \"+ Adicionar forma\" para registrar pagamentos parciais ou m\xFAltiplas formas."), (formEdicaoPacote.pagamentosExtras || []).map((pg, i) => React.createElement("div", {
+  }, "Clique em \"+ Adicionar forma\" para registrar pagamentos parciais ou m\xFAltiplas formas."), (formEdicaoPacote.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: "grid",
@@ -8561,7 +8817,7 @@ function FinanceiroClinica() {
       marginBottom: 6,
       alignItems: "center"
     }
-  }, React.createElement("select", {
+  }, /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     style: {
       fontSize: 12
@@ -8578,11 +8834,11 @@ function FinanceiroClinica() {
         pagamentosExtras: p
       });
     }
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Forma..."), FORMAS.map(f => React.createElement("option", {
+  }, "Forma..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
     key: f
-  }, f))), React.createElement("input", {
+  }, f))), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     style: {
       fontSize: 12
@@ -8601,7 +8857,7 @@ function FinanceiroClinica() {
         pagamentosExtras: p
       });
     }
-  }), React.createElement("input", {
+  }), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     style: {
       fontSize: 12
@@ -8619,7 +8875,7 @@ function FinanceiroClinica() {
         pagamentosExtras: p
       });
     }
-  }), React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("button", {
     type: "button",
     style: {
       color: "#dc2626",
@@ -8637,14 +8893,14 @@ function FinanceiroClinica() {
         pagamentosExtras: p
       });
     }
-  }, "\u2715")))), React.createElement("div", {
+  }, "\u2715")))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xF5es"), React.createElement("textarea", {
+  }, "Observa\xE7\xF5es"), /*#__PURE__*/React.createElement("textarea", {
     className: "form-input",
     rows: 2,
     value: formEdicaoPacote.obs || "",
@@ -8653,45 +8909,45 @@ function FinanceiroClinica() {
       obs: e.target.value
     }),
     placeholder: "Notas sobre o pacote..."
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end",
       marginTop: 20
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModalEditarPacote(null)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvarEdicaoPacote,
     disabled: salvandoEdicao
-  }, salvandoEdicao ? "Salvando..." : "💾 Salvar alterações")))), React.createElement("div", {
+  }, salvandoEdicao ? "Salvando..." : "💾 Salvar alterações")))), /*#__PURE__*/React.createElement("div", {
     className: "page-header",
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-start"
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Financeiro da Cl\xEDnica"), React.createElement("div", {
+  }, "Financeiro da Cl\xEDnica"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, "Lan\xE7amentos, pacotes e controle de sess\xF5es")), React.createElement("button", {
+  }, "Lan\xE7amentos, pacotes e controle de sess\xF5es")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => setModal("escolha")
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }), " Novo Lan\xE7amento")), React.createElement("div", {
+  }), " Novo Lan\xE7amento")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
       marginBottom: 14,
       alignItems: "center"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       fontWeight: 600,
@@ -8701,9 +8957,11 @@ function FinanceiroClinica() {
   }, "Ano:"), (() => {
     const anoAtualNum = new Date().getFullYear();
     const anosExist = [...new Set(lancamentos.map(l => l.data?.slice(0, 4)).filter(Boolean))].map(Number);
+    // Sempre mostra: todos os anos com dados + ano atual + 1 ano antes e depois do atual
     const anosSet = new Set([...anosExist, anoAtualNum - 1, anoAtualNum, anoAtualNum + 1]);
+    // Se houver dados fora dessa janela, eles já estão incluídos via anosExist
     const anos = [...anosSet].sort().map(String);
-    return anos.map(a => React.createElement("button", {
+    return anos.map(a => /*#__PURE__*/React.createElement("button", {
       key: a,
       onClick: () => {
         setAnoFiltro(a);
@@ -8720,20 +8978,20 @@ function FinanceiroClinica() {
         fontWeight: 600,
         cursor: "pointer"
       }
-    }, a, a === String(anoAtualNum) && React.createElement("span", {
+    }, a, a === String(anoAtualNum) && /*#__PURE__*/React.createElement("span", {
       style: {
         marginLeft: 3,
         fontSize: 9
       }
     }, "\u25CF")));
-  })()), React.createElement("div", {
+  })()), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
       gap: 12,
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     onClick: () => setPeriodoCard(p => p === "mes" ? "ano" : "mes"),
     style: {
       background: totalRecebidoPeriodo >= 0 ? "#d1fae5" : "#fee2e2",
@@ -8746,7 +9004,7 @@ function FinanceiroClinica() {
       transition: "all .2s",
       position: "relative"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       position: "absolute",
       top: 6,
@@ -8758,7 +9016,7 @@ function FinanceiroClinica() {
       borderRadius: 10,
       padding: "1px 6px"
     }
-  }, periodoCard === "mes" ? "mês ↕" : "ano ↕"), React.createElement("div", {
+  }, periodoCard === "mes" ? "mês ↕" : "ano ↕"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
@@ -8767,14 +9025,14 @@ function FinanceiroClinica() {
   }, totalRecebidoPeriodo.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626",
       fontWeight: 500,
       marginTop: 2
     }
-  }, "Saldo (", periodoCard === "mes" ? mesAtualLabel : anoFiltro, ")"), React.createElement("div", {
+  }, "Saldo (", periodoCard === "mes" ? mesAtualLabel : anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
       color: "#6b7280",
@@ -8786,14 +9044,14 @@ function FinanceiroClinica() {
   }), " / -", calcDespesas(lancPeriodo).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef3c7",
       borderRadius: 12,
       padding: "14px 16px",
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
@@ -8802,47 +9060,47 @@ function FinanceiroClinica() {
   }, totalPendente.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#d97706",
       fontWeight: 500,
       marginTop: 2
     }
-  }, "Pendente (", anoFiltro, ")")), React.createElement("div", {
+  }, "Pendente (", anoFiltro, ")")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--purple-soft)",
       borderRadius: 12,
       padding: "14px 16px",
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
       color: "var(--purple)"
     }
-  }, pacotes.filter(p => p.status === "ativo").length), React.createElement("div", {
+  }, pacotes.filter(p => p.status === "ativo").length), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--purple)",
       fontWeight: 500,
       marginTop: 2
     }
-  }, "Pacotes ativos")), React.createElement("div", {
+  }, "Pacotes ativos")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#e0f2fe",
       borderRadius: 12,
       padding: "14px 16px",
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
       color: "#0891b2"
     }
-  }, lancPeriodo.length), React.createElement("div", {
+  }, lancPeriodo.length), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#0891b2",
@@ -8851,7 +9109,7 @@ function FinanceiroClinica() {
     }
   }, "Lan\xE7amentos (", periodoCard === "mes" ? new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
     month: "short"
-  }) : anoFiltro, ")"))), React.createElement("div", {
+  }) : anoFiltro, ")"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 0,
@@ -8862,7 +9120,7 @@ function FinanceiroClinica() {
       scrollbarWidth: "none",
       flexShrink: 0
     }
-  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"]].map(([id, lbl, ic]) => React.createElement("button", {
+  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"]].map(([id, lbl, ic]) => /*#__PURE__*/React.createElement("button", {
     key: id,
     onClick: () => setAba(id),
     style: {
@@ -8880,10 +9138,10 @@ function FinanceiroClinica() {
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: ic,
     size: 15
-  }), lbl)), React.createElement("button", {
+  }), lbl)), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setAuditLog([]);
       setModalAuditoria(true);
@@ -8906,24 +9164,24 @@ function FinanceiroClinica() {
       flexShrink: 0
     },
     title: "Higienizar duplicatas e lan\xE7amentos sem nome \u2014 Maio/2026"
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "tool",
     size: 13
-  }), "\uD83D\uDD27 Higienizar")), aba === "lancamentos" && React.createElement("div", null, React.createElement("div", {
+  }), "\uD83D\uDD27 Higienizar")), aba === "lancamentos" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginBottom: 16,
       alignItems: "center"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       fontWeight: 600,
       color: "var(--text-muted)",
       flexShrink: 0
     }
-  }, "M\xEAs:"), React.createElement("button", {
+  }, "M\xEAs:"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       const idx = mesesDisp.indexOf(mesFiltroEfetivo);
       if (idx > 0) setMesFiltro(mesesDisp[idx - 1]);
@@ -8943,7 +9201,7 @@ function FinanceiroClinica() {
       fontSize: 16,
       fontWeight: 700
     }
-  }, "\u2039"), React.createElement("div", {
+  }, "\u2039"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -8953,7 +9211,7 @@ function FinanceiroClinica() {
   }, mesesDisp.map(m => {
     const isAtual = m === mesAtual;
     const isSel = m === mesFiltroEfetivo;
-    return React.createElement("button", {
+    return /*#__PURE__*/React.createElement("button", {
       key: m,
       onClick: () => setMesFiltro(m),
       style: {
@@ -8973,12 +9231,12 @@ function FinanceiroClinica() {
       }
     }, new Date(m + "-15").toLocaleDateString("pt-BR", {
       month: "long"
-    }), isAtual && !isSel && React.createElement("span", {
+    }), isAtual && !isSel && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 9
       }
     }, "\u25CF"));
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       const idx = mesesDisp.indexOf(mesFiltroEfetivo);
       if (idx < mesesDisp.length - 1) setMesFiltro(mesesDisp[idx + 1]);
@@ -8998,17 +9256,17 @@ function FinanceiroClinica() {
       fontSize: 16,
       fontWeight: 700
     }
-  }, "\u203A")), lancMes.length === 0 ? React.createElement("div", {
+  }, "\u203A")), lancMes.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 48,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "dollar-sign",
     size: 40
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
@@ -9029,13 +9287,13 @@ function FinanceiroClinica() {
       bgHeader
     }) {
       if (!itens.length) return null;
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         className: "card",
         style: {
           padding: 0,
           marginBottom: 16
         }
-      }, React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           padding: "10px 16px",
           background: bgHeader,
@@ -9044,13 +9302,13 @@ function FinanceiroClinica() {
           justifyContent: "space-between",
           alignItems: "center"
         }
-      }, React.createElement("span", {
+      }, /*#__PURE__*/React.createElement("span", {
         style: {
           fontWeight: 700,
           fontSize: 14,
           color: corHeader
         }
-      }, titulo), React.createElement("span", {
+      }, titulo), /*#__PURE__*/React.createElement("span", {
         style: {
           fontWeight: 800,
           fontSize: 14,
@@ -9059,17 +9317,17 @@ function FinanceiroClinica() {
       }, itens.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL"
-      }))), React.createElement("table", {
+      }))), /*#__PURE__*/React.createElement("table", {
         style: {
           width: "100%",
           borderCollapse: "collapse",
           fontSize: 13
         }
-      }, React.createElement("thead", null, React.createElement("tr", {
+      }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
         style: {
           background: "var(--gray-50)"
         }
-      }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => React.createElement("th", {
+      }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/React.createElement("th", {
         key: h,
         style: {
           padding: "8px 14px",
@@ -9080,50 +9338,50 @@ function FinanceiroClinica() {
           borderBottom: "1px solid var(--gray-200)",
           whiteSpace: "nowrap"
         }
-      }, h)))), React.createElement("tbody", null, itens.map(l => {
+      }, h)))), /*#__PURE__*/React.createElement("tbody", null, itens.map(l => {
         const isFut = l.data > new Date().toISOString().slice(0, 10);
         const statusColor = l.status === "recebido" || l.status === "pago" ? "#059669" : l.status === "planejado" ? "#0891b2" : "#d97706";
         const statusBg = l.status === "recebido" || l.status === "pago" ? "#d1fae5" : l.status === "planejado" ? "#e0f2fe" : "#fef3c7";
         const statusLabel = l.status === "recebido" ? "✓ Recebido" : l.status === "pago" ? "✓ Pago" : l.status === "planejado" ? "📅 Planejado" : "Pendente";
-        return React.createElement("tr", {
+        return /*#__PURE__*/React.createElement("tr", {
           key: l.id,
           style: {
             borderBottom: "1px solid var(--gray-100)",
             background: isFut ? "#fafafa" : "white",
             opacity: isFut ? 0.85 : 1
           }
-        }, React.createElement("td", {
+        }, /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px",
             whiteSpace: "nowrap",
             fontSize: 12
           }
-        }, l.data ? new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", isFut && React.createElement("span", {
+        }, l.data ? new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", isFut && /*#__PURE__*/React.createElement("span", {
           style: {
             marginLeft: 4,
             fontSize: 9,
             color: "#0891b2",
             fontWeight: 600
           }
-        }, "futuro")), React.createElement("td", {
+        }, "futuro")), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px",
             maxWidth: 320
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             fontWeight: 500,
             fontSize: 13,
             lineHeight: 1.4
           }
-        }, l.descricao || l.tipo || l.pacienteNome || "—"), React.createElement("div", {
+        }, l.descricao || l.tipo || l.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
             gap: 4,
             marginTop: 3,
             flexWrap: "wrap"
           }
-        }, l.tipo_lancamento === "pacote" && React.createElement("span", {
+        }, l.tipo_lancamento === "pacote" && /*#__PURE__*/React.createElement("span", {
           style: {
             background: "var(--purple-soft)",
             color: "var(--purple)",
@@ -9132,7 +9390,7 @@ function FinanceiroClinica() {
             fontSize: 10,
             fontWeight: 600
           }
-        }, "Pacote"), l.tipo_lancamento === "sessao" && React.createElement("span", {
+        }, "Pacote"), l.tipo_lancamento === "sessao" && /*#__PURE__*/React.createElement("span", {
           style: {
             background: "#e0f2fe",
             color: "#0891b2",
@@ -9141,7 +9399,7 @@ function FinanceiroClinica() {
             fontSize: 10,
             fontWeight: 600
           }
-        }, "Sess\xE3o"), (l.pagamentosExtras || []).length > 0 && React.createElement("span", {
+        }, "Sess\xE3o"), (l.pagamentosExtras || []).length > 0 && /*#__PURE__*/React.createElement("span", {
           style: {
             background: "#fef3c7",
             color: "#92400e",
@@ -9150,24 +9408,24 @@ function FinanceiroClinica() {
             fontSize: 10,
             fontWeight: 600
           }
-        }, "\uD83D\uDCB3 ", (l.pagamentosExtras || []).length, "x forma", (l.pagamentosExtras || []).length > 1 ? "s" : ""))), React.createElement("td", {
+        }, "\uD83D\uDCB3 ", (l.pagamentosExtras || []).length, "x forma", (l.pagamentosExtras || []).length > 1 ? "s" : ""))), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px",
             fontSize: 12,
             color: "var(--text-muted)"
           }
-        }, l.categoria || "—"), React.createElement("td", {
+        }, l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px"
           }
-        }, React.createElement("span", {
+        }, /*#__PURE__*/React.createElement("span", {
           style: {
             background: "#f3f4f6",
             borderRadius: 6,
             padding: "2px 6px",
             fontSize: 11
           }
-        }, l.formaPag || "—")), React.createElement("td", {
+        }, l.formaPag || "—")), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px",
             fontWeight: 700,
@@ -9177,11 +9435,11 @@ function FinanceiroClinica() {
         }, (parseFloat(l.valor) || 0).toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL"
-        })), React.createElement("td", {
+        })), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px"
           }
-        }, React.createElement("span", {
+        }, /*#__PURE__*/React.createElement("span", {
           style: {
             background: statusBg,
             color: statusColor,
@@ -9190,16 +9448,16 @@ function FinanceiroClinica() {
             fontSize: 11,
             fontWeight: 600
           }
-        }, statusLabel)), React.createElement("td", {
+        }, statusLabel)), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px"
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
             gap: 4
           }
-        }, l.tipo_lancamento === "pacote" ? React.createElement("button", {
+        }, l.tipo_lancamento === "pacote" ? /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
           style: {
             padding: "4px 8px",
@@ -9210,10 +9468,10 @@ function FinanceiroClinica() {
             setPacoteSelecionado(l.pacoteId);
             setAba("pacotes");
           }
-        }, React.createElement(Icon, {
+        }, /*#__PURE__*/React.createElement(Icon, {
           name: "clipboard-list",
           size: 12
-        })) : React.createElement("button", {
+        })) : /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
           style: {
             padding: "4px 8px",
@@ -9221,10 +9479,10 @@ function FinanceiroClinica() {
             color: "var(--purple)"
           },
           onClick: () => abrirEditar(l)
-        }, React.createElement(Icon, {
+        }, /*#__PURE__*/React.createElement(Icon, {
           name: "pencil",
           size: 12
-        })), React.createElement("button", {
+        })), /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
           style: {
             padding: "4px 8px",
@@ -9232,25 +9490,25 @@ function FinanceiroClinica() {
             color: "#dc2626"
           },
           onClick: () => setModalExcluirLanc(l)
-        }, React.createElement(Icon, {
+        }, /*#__PURE__*/React.createElement(Icon, {
           name: "trash-2",
           size: 12
         })))));
       }))));
     }
-    return React.createElement("div", null, React.createElement(TabelaLanc, {
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TabelaLanc, {
       itens: receitas,
       titulo: "\uD83D\uDCB0 Receitas",
       corHeader: "#059669",
       corValor: "#059669",
       bgHeader: "#f0fdf4"
-    }), React.createElement(TabelaLanc, {
+    }), /*#__PURE__*/React.createElement(TabelaLanc, {
       itens: despesas,
       titulo: "\uD83D\uDCB8 Despesas",
       corHeader: "#dc2626",
       corValor: "#dc2626",
       bgHeader: "#fff1f2"
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         background: "white",
         borderRadius: 12,
@@ -9261,17 +9519,17 @@ function FinanceiroClinica() {
         flexWrap: "wrap",
         alignItems: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
         marginBottom: 2
       }
-    }, "Receitas"), React.createElement("div", {
+    }, "Receitas"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 18,
         fontWeight: 800,
@@ -9280,22 +9538,22 @@ function FinanceiroClinica() {
     }, totalRec.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    }))), React.createElement("div", {
+    }))), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 20,
         color: "var(--text-muted)"
       }
-    }, "\u2212"), React.createElement("div", {
+    }, "\u2212"), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
         marginBottom: 2
       }
-    }, "Despesas"), React.createElement("div", {
+    }, "Despesas"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 18,
         fontWeight: 800,
@@ -9304,22 +9562,22 @@ function FinanceiroClinica() {
     }, totalDesp.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    }))), React.createElement("div", {
+    }))), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 20,
         color: "var(--text-muted)"
       }
-    }, "="), React.createElement("div", {
+    }, "="), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
         marginBottom: 2
       }
-    }, "Saldo do M\xEAs"), React.createElement("div", {
+    }, "Saldo do M\xEAs"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 22,
         fontWeight: 900,
@@ -9329,7 +9587,7 @@ function FinanceiroClinica() {
       style: "currency",
       currency: "BRL"
     })))));
-  })(), modalExcluirLanc && React.createElement("div", {
+  })(), modalExcluirLanc && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -9340,7 +9598,7 @@ function FinanceiroClinica() {
       zIndex: 600,
       padding: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -9349,32 +9607,32 @@ function FinanceiroClinica() {
       maxWidth: 420,
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 32,
       marginBottom: 12
     }
-  }, "\uD83D\uDDD1\uFE0F"), React.createElement("div", {
+  }, "\uD83D\uDDD1\uFE0F"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 17,
       fontWeight: 600,
       marginBottom: 6
     }
-  }, modalExcluirLanc.tipo), React.createElement("p", {
+  }, modalExcluirLanc.tipo), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "#6b7280",
       marginBottom: 20
     }
-  }, modalExcluirLanc.data ? new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR") : ""), React.createElement("div", {
+  }, modalExcluirLanc.data ? new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR") : ""), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8,
       marginBottom: 14
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       border: "1.5px solid #e5e7eb",
@@ -9385,19 +9643,19 @@ function FinanceiroClinica() {
       await db.collection("clinica_lancamentos").doc(modalExcluirLanc.id).delete();
       setModalExcluirLanc(null);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, "S\xF3 este lan\xE7amento"), React.createElement("div", {
+  }, "S\xF3 este lan\xE7amento"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#6b7280"
     }
   }, "Remove apenas ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
     month: "long"
-  }))), React.createElement("button", {
+  }))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       border: "1.5px solid #fbbf24",
@@ -9416,20 +9674,20 @@ function FinanceiroClinica() {
       await b.commit();
       setModalExcluirLanc(null);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       color: "#d97706"
     }
-  }, "Este e todos os futuros"), React.createElement("div", {
+  }, "Este e todos os futuros"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#6b7280"
     }
   }, "Remove \"", modalExcluirLanc.tipo, "\" a partir de ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
     month: "long"
-  }))), React.createElement("button", {
+  }))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       border: "1.5px solid #fca5a5",
@@ -9448,51 +9706,52 @@ function FinanceiroClinica() {
       await b.commit();
       setModalExcluirLanc(null);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13,
       color: "#dc2626"
     }
-  }, "Todos \u2014 o ano inteiro"), React.createElement("div", {
+  }, "Todos \u2014 o ano inteiro"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#6b7280"
     }
-  }, "Remove todos os meses de \"", modalExcluirLanc.tipo, "\""))), React.createElement("button", {
+  }, "Remove todos os meses de \"", modalExcluirLanc.tipo, "\""))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       width: "100%"
     },
     onClick: () => setModalExcluirLanc(null)
-  }, "Cancelar")))), aba === "pacotes" && React.createElement("div", null, pacotes.length === 0 ? React.createElement("div", {
+  }, "Cancelar")))), aba === "pacotes" && /*#__PURE__*/React.createElement("div", null, pacotes.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 60
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "package",
     size: 48
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontWeight: 500
     }
-  }, "Nenhum pacote criado ainda"), React.createElement("button", {
+  }, "Nenhum pacote criado ainda"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       marginTop: 16
     },
     onClick: () => setModal("pacote")
   }, "+ Criar Pacote")) : (() => {
+    // Agrupar pacotes por paciente
     const pacientesComPacote = [...new Set(pacotes.map(p => p.pacienteId))];
     const pacientesVisiveis = buscaPac.trim() ? pacientesComPacote.filter(id => {
       const pac = pacientes.find(p => p.id === id);
       const inicial = (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return inicial === buscaPac;
     }) : pacientesComPacote;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -9503,14 +9762,14 @@ function FinanceiroClinica() {
         const pac = pacientes.find(p => p.id === id);
         return (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       }))].sort();
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           flexWrap: "wrap",
           gap: 4,
           marginBottom: 12
         }
-      }, buscaPac && React.createElement("button", {
+      }, buscaPac && /*#__PURE__*/React.createElement("button", {
         onClick: () => setBuscaPac(""),
         style: {
           padding: "4px 12px",
@@ -9522,7 +9781,7 @@ function FinanceiroClinica() {
           fontWeight: 700,
           cursor: "pointer"
         }
-      }, "Todos"), letrasComPac.map(letra => React.createElement("button", {
+      }, "Todos"), letrasComPac.map(letra => /*#__PURE__*/React.createElement("button", {
         key: letra,
         onClick: () => setBuscaPac(buscaPac === letra ? "" : letra),
         style: {
@@ -9546,9 +9805,9 @@ function FinanceiroClinica() {
         const tb = b.createdAt?.seconds || 0;
         return tb - ta;
       });
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         key: pacId
-      }, React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           alignItems: "center",
@@ -9557,7 +9816,7 @@ function FinanceiroClinica() {
           paddingBottom: 10,
           borderBottom: "2px solid var(--purple-soft)"
         }
-      }, React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           width: 40,
           height: 40,
@@ -9572,27 +9831,27 @@ function FinanceiroClinica() {
           fontWeight: 600,
           flexShrink: 0
         }
-      }, (pac?.nome || "?")[0].toUpperCase()), React.createElement("div", null, React.createElement("div", {
+      }, (pac?.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
         style: {
           fontWeight: 700,
           fontSize: 16
         }
-      }, pac?.nome || pacotesDoPac[0]?.pacienteNome || "—"), React.createElement("div", {
+      }, pac?.nome || pacotesDoPac[0]?.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
         style: {
           fontSize: 12,
           color: "var(--text-muted)"
         }
-      }, pacotesDoPac.length, " pacote(s)")), React.createElement("button", {
+      }, pacotesDoPac.length, " pacote(s)")), /*#__PURE__*/React.createElement("button", {
         className: "btn btn-outline",
         style: {
           marginLeft: "auto",
           fontSize: 12
         },
         onClick: () => setPacoteSelecionado(pacId)
-      }, React.createElement(Icon, {
+      }, /*#__PURE__*/React.createElement(Icon, {
         name: "bar-chart-2",
         size: 13
-      }), " Acompanhamento")), React.createElement("div", {
+      }), " Acompanhamento")), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           flexDirection: "column",
@@ -9610,7 +9869,7 @@ function FinanceiroClinica() {
           month: "short",
           year: "2-digit"
         }) : "—";
-        return React.createElement("div", {
+        return /*#__PURE__*/React.createElement("div", {
           key: p.id,
           style: {
             borderRadius: 12,
@@ -9620,20 +9879,20 @@ function FinanceiroClinica() {
             marginBottom: 10,
             boxShadow: "0 1px 3px #0001"
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
             marginBottom: 10
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
             alignItems: "center",
             gap: 8
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             width: 10,
             height: 10,
@@ -9642,23 +9901,23 @@ function FinanceiroClinica() {
             flexShrink: 0,
             marginTop: 2
           }
-        }), React.createElement("div", null, React.createElement("div", {
+        }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
           style: {
             fontWeight: 700,
             fontSize: 14,
             color: "#3d006a"
           }
-        }, p.obs || p.recorrencia || "Pacote"), React.createElement("div", {
+        }, p.obs || p.recorrencia || "Pacote"), /*#__PURE__*/React.createElement("div", {
           style: {
             fontSize: 11,
             color: "var(--text-muted)",
             marginTop: 1
           }
-        }, p.recorrencia, p.horario && React.createElement("span", null, " \xB7 \uD83D\uDD50 ", p.horario), " \xB7 ", dataStr))), React.createElement("div", {
+        }, p.recorrencia, p.horario && /*#__PURE__*/React.createElement("span", null, " \xB7 \uD83D\uDD50 ", p.horario), " \xB7 ", dataStr))), /*#__PURE__*/React.createElement("div", {
           style: {
             textAlign: "right"
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             fontWeight: 800,
             fontSize: 16,
@@ -9667,22 +9926,22 @@ function FinanceiroClinica() {
         }, (p.valorTotal || 0).toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL"
-        })), React.createElement("div", {
+        })), /*#__PURE__*/React.createElement("div", {
           style: {
             fontSize: 11,
             color: isPago ? "#22c55e" : "#f59e0b",
             fontWeight: 600
           }
-        }, isPago ? "✓ Recebido" : "⏳ Pendente", p.formaPag && React.createElement("span", {
+        }, isPago ? "✓ Recebido" : "⏳ Pendente", p.formaPag && /*#__PURE__*/React.createElement("span", {
           style: {
             fontWeight: 400,
             color: "var(--text-muted)"
           }
-        }, " \xB7 ", p.formaPag)))), React.createElement("div", {
+        }, " \xB7 ", p.formaPag)))), /*#__PURE__*/React.createElement("div", {
           style: {
             marginBottom: 10
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
             justifyContent: "space-between",
@@ -9690,19 +9949,19 @@ function FinanceiroClinica() {
             color: "var(--text-muted)",
             marginBottom: 4
           }
-        }, React.createElement("span", null, realizadas, " realizadas de ", p.totalSessoes, " \xB7 ", pagas, " pagas"), React.createElement("span", {
+        }, /*#__PURE__*/React.createElement("span", null, realizadas, " realizadas de ", p.totalSessoes, " \xB7 ", pagas, " pagas"), /*#__PURE__*/React.createElement("span", {
           style: {
             fontWeight: 600,
             color: "var(--purple)"
           }
-        }, pct, "%")), React.createElement("div", {
+        }, pct, "%")), /*#__PURE__*/React.createElement("div", {
           style: {
             height: 6,
             background: "#e8c8ff",
             borderRadius: 10,
             overflow: "hidden"
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             width: pct + "%",
             height: "100%",
@@ -9710,14 +9969,14 @@ function FinanceiroClinica() {
             borderRadius: 10,
             transition: "width .4s"
           }
-        }))), (p.pagamentosExtras || []).length > 0 && React.createElement("div", {
+        }))), (p.pagamentosExtras || []).length > 0 && /*#__PURE__*/React.createElement("div", {
           style: {
             marginBottom: 10,
             display: "flex",
             gap: 6,
             flexWrap: "wrap"
           }
-        }, (p.pagamentosExtras || []).map((pg, i) => React.createElement("span", {
+        }, (p.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/React.createElement("span", {
           key: i,
           style: {
             background: "#f3e6ff",
@@ -9726,13 +9985,13 @@ function FinanceiroClinica() {
             fontSize: 11,
             color: "#6b7280"
           }
-        }, "\uD83D\uDCB3 ", pg.forma || "?", " R$", parseFloat(pg.valor || 0).toFixed(2).replace(".", ","), " \xB7 ", pg.data ? new Date(pg.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"))), React.createElement("div", {
+        }, "\uD83D\uDCB3 ", pg.forma || "?", " R$", parseFloat(pg.valor || 0).toFixed(2).replace(".", ","), " \xB7 ", pg.data ? new Date(pg.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"))), /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
             gap: 6,
             flexWrap: "wrap"
           }
-        }, React.createElement("button", {
+        }, /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
           style: {
             fontSize: 12,
@@ -9744,10 +10003,10 @@ function FinanceiroClinica() {
             e.stopPropagation();
             setPacoteSelecionado(p.id + "__pacote");
           }
-        }, React.createElement(Icon, {
+        }, /*#__PURE__*/React.createElement(Icon, {
           name: "edit-3",
           size: 13
-        }), " Editar"), React.createElement("button", {
+        }), " Editar"), /*#__PURE__*/React.createElement("button", {
           className: "btn btn-purple",
           style: {
             fontSize: 12,
@@ -9757,10 +10016,10 @@ function FinanceiroClinica() {
             e.stopPropagation();
             setPacoteSelecionado(p.id + "__sessoes");
           }
-        }, React.createElement(Icon, {
+        }, /*#__PURE__*/React.createElement(Icon, {
           name: "clipboard-list",
           size: 13
-        }), " Sess\xF5es"), React.createElement("button", {
+        }), " Sess\xF5es"), /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
           style: {
             fontSize: 12,
@@ -9782,13 +10041,13 @@ function FinanceiroClinica() {
               alert("Erro ao excluir pacote: " + e.message);
             }
           }
-        }, React.createElement(Icon, {
+        }, /*#__PURE__*/React.createElement(Icon, {
           name: "trash-2",
           size: 13
         }), " Excluir")));
       })));
     }));
-  })()), aba === "acompanhamento" && React.createElement("div", null, React.createElement("div", {
+  })()), aba === "acompanhamento" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
@@ -9799,12 +10058,15 @@ function FinanceiroClinica() {
     const pacotesPac = pacotes.filter(p => p.pacienteId === pac.id);
     if (pacotesPac.length === 0) return null;
     const totalSessoes = sessPac.length;
+    // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
     const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "remarcado").length;
     const pagas = sessPac.filter(s => s.pagamento === "pago").length;
+    // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
     const pendentes = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "cancelado" && s.status !== "remarcado").length;
     const recebido = sessPac.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
+    // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
     const aReceber = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "cancelado" && s.status !== "remarcado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: pac.id,
       className: "card",
       style: {
@@ -9816,13 +10078,13 @@ function FinanceiroClinica() {
       onClick: () => setPacoteSelecionado(pac.id),
       onMouseEnter: e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(123,0,196,0.12)",
       onMouseLeave: e => e.currentTarget.style.boxShadow = ""
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 12
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: 40,
         height: 40,
@@ -9837,48 +10099,48 @@ function FinanceiroClinica() {
         fontWeight: 600,
         flexShrink: 0
       }
-    }, (pac.nome || "?")[0].toUpperCase()), React.createElement("div", {
+    }, (pac.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         fontSize: 14
       }
-    }, pac.nome), React.createElement("div", {
+    }, pac.nome), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, pacotesPac[0]?.recorrencia, " \xB7 ", pacotesPac[0]?.horario)), React.createElement("div", {
+    }, pacotesPac[0]?.recorrencia, " \xB7 ", pacotesPac[0]?.horario)), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 16,
         alignItems: "center",
         flexWrap: "wrap"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 14,
         fontWeight: 700,
         color: "var(--purple)"
       }
-    }, realizadas, "/", totalSessoes), React.createElement("div", {
+    }, realizadas, "/", totalSessoes), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "var(--text-muted)"
       }
-    }, "Sess\xF5es")), React.createElement("div", {
+    }, "Sess\xF5es")), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 14,
         fontWeight: 700,
@@ -9887,16 +10149,16 @@ function FinanceiroClinica() {
     }, recebido.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "var(--text-muted)"
       }
-    }, "Recebido")), aReceber > 0 && React.createElement("div", {
+    }, "Recebido")), aReceber > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 14,
         fontWeight: 700,
@@ -9905,18 +10167,18 @@ function FinanceiroClinica() {
     }, aReceber.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "var(--text-muted)"
       }
-    }, "A Receber")), React.createElement("div", {
+    }, "A Receber")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 4
       }
-    }, pendentes > 0 && React.createElement("span", {
+    }, pendentes > 0 && /*#__PURE__*/React.createElement("span", {
       style: {
         background: "#fef3c7",
         color: "#b45309",
@@ -9925,7 +10187,7 @@ function FinanceiroClinica() {
         fontSize: 11,
         fontWeight: 600
       }
-    }, pendentes, " pendente(s)"), pendentes === 0 && React.createElement("span", {
+    }, pendentes, " pendente(s)"), pendentes === 0 && /*#__PURE__*/React.createElement("span", {
       style: {
         background: "#d1fae5",
         color: "#065f46",
@@ -9934,14 +10196,14 @@ function FinanceiroClinica() {
         fontSize: 11,
         fontWeight: 600
       }
-    }, "\u2713 Em dia")), React.createElement(Icon, {
+    }, "\u2713 Em dia")), /*#__PURE__*/React.createElement(Icon, {
       name: "chevron-right",
       size: 16,
       style: {
         color: "var(--text-muted)"
       }
     }))));
-  })), modal === "escolha" && React.createElement("div", {
+  })), modal === "escolha" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -9953,7 +10215,7 @@ function FinanceiroClinica() {
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -9963,26 +10225,26 @@ function FinanceiroClinica() {
       textAlign: "center"
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Novo Lan\xE7amento"), React.createElement("p", {
+  }, "Novo Lan\xE7amento"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "#6b7280",
       marginBottom: 24
     }
-  }, "Escolha o tipo de lan\xE7amento:"), React.createElement("div", {
+  }, "Escolha o tipo de lan\xE7amento:"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 10
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       width: "100%",
@@ -9994,25 +10256,25 @@ function FinanceiroClinica() {
       textAlign: "left"
     },
     onClick: () => setModal("pacote")
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 32,
       flexShrink: 0
     }
-  }, "\uD83D\uDCE6"), React.createElement("div", null, React.createElement("div", {
+  }, "\uD83D\uDCE6"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
       color: "var(--purple)"
     }
-  }, "Pacote de Sess\xF5es"), React.createElement("div", {
+  }, "Pacote de Sess\xF5es"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#6b7280",
       lineHeight: 1.5,
       marginTop: 2
     }
-  }, "Gera sess\xF5es recorrentes na agenda com ficha de frequ\xEAncia, controle de pagamento e formas mistas"))), React.createElement("button", {
+  }, "Gera sess\xF5es recorrentes na agenda com ficha de frequ\xEAncia, controle de pagamento e formas mistas"))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       width: "100%",
@@ -10024,32 +10286,32 @@ function FinanceiroClinica() {
       textAlign: "left"
     },
     onClick: () => setModal("avulso")
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 32,
       flexShrink: 0
     }
-  }, "\uD83D\uDCB2"), React.createElement("div", null, React.createElement("div", {
+  }, "\uD83D\uDCB2"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
       color: "#059669"
     }
-  }, "Lan\xE7amento Avulso"), React.createElement("div", {
+  }, "Lan\xE7amento Avulso"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#6b7280",
       lineHeight: 1.5,
       marginTop: 2
     }
-  }, "Sess\xE3o \xFAnica, avalia\xE7\xE3o, neuromodula\xE7\xE3o ou outro servi\xE7o isolado")))), React.createElement("button", {
+  }, "Sess\xE3o \xFAnica, avalia\xE7\xE3o, neuromodula\xE7\xE3o ou outro servi\xE7o isolado")))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       width: "100%",
       marginTop: 12
     },
     onClick: () => setModal(false)
-  }, "Cancelar"))), modal === "avulso" && React.createElement("div", {
+  }, "Cancelar"))), modal === "avulso" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -10064,7 +10326,7 @@ function FinanceiroClinica() {
       setModal(false);
       setEditando(null);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -10073,20 +10335,20 @@ function FinanceiroClinica() {
       maxWidth: 500
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, editando ? "Editar Lançamento" : "Lançamento Avulso"), React.createElement("button", {
+  }, editando ? "Editar Lançamento" : "Lançamento Avulso"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setModal(false);
       setEditando(null);
@@ -10096,24 +10358,24 @@ function FinanceiroClinica() {
       border: "none",
       cursor: "pointer"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12,
       marginBottom: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Paciente / Cliente"), React.createElement("select", {
+  }, "Paciente / Cliente"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formAvulso.pacienteId,
     onChange: e => {
@@ -10125,16 +10387,16 @@ function FinanceiroClinica() {
         obs: pac ? `${formAvulso.tipo} — ${pac.nome}` : formAvulso.obs
       });
     }
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => React.createElement("option", {
+  }, "Selecionar..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/React.createElement("option", {
     key: p.id,
     value: p.id
-  }, p.nome)))), React.createElement("div", {
+  }, p.nome)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo / Categoria"), React.createElement("select", {
+  }, "Tipo / Categoria"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formAvulso.tipo,
     onChange: e => {
@@ -10145,13 +10407,13 @@ function FinanceiroClinica() {
         obs: pac ? `${e.target.value} — ${pac.nome}` : formAvulso.obs
       });
     }
-  }, ["Consulta", "Sessão", "Avaliação", "Musicoterapia", "Neuromodulação", "Orientação", "Laudo", "Outro"].map(t => React.createElement("option", {
+  }, ["Consulta", "Sessão", "Avaliação", "Musicoterapia", "Neuromodulação", "Orientação", "Laudo", "Outro"].map(t => /*#__PURE__*/React.createElement("option", {
     key: t
-  }, t)))), React.createElement("div", {
+  }, t)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Valor R$"), React.createElement("input", {
+  }, "Valor R$"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     placeholder: "0,00",
@@ -10160,11 +10422,11 @@ function FinanceiroClinica() {
       ...formAvulso,
       valor: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data"), React.createElement("input", {
+  }, "Data"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: formAvulso.data,
@@ -10172,32 +10434,32 @@ function FinanceiroClinica() {
       ...formAvulso,
       data: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Forma de Pagamento"), React.createElement("select", {
+  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formAvulso.formaPag,
     onChange: e => setFormAvulso({
       ...formAvulso,
       formaPag: e.target.value
     })
-  }, FORMAS.map(f => React.createElement("option", {
+  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
     key: f
-  }, f)))), React.createElement("div", {
+  }, f)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("div", {
+  }, "Status"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     onClick: () => setFormAvulso({
       ...formAvulso,
@@ -10216,14 +10478,14 @@ function FinanceiroClinica() {
       fontSize: 13,
       fontFamily: "var(--font-body)"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xF5es"), React.createElement("input", {
+  }, "Observa\xE7\xF5es"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     placeholder: "Opcional...",
     value: formAvulso.obs,
@@ -10231,26 +10493,26 @@ function FinanceiroClinica() {
       ...formAvulso,
       obs: e.target.value
     })
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => {
       setModal(false);
       setEditando(null);
     }
-  }, "Cancelar"), editando ? React.createElement("button", {
+  }, "Cancelar"), editando ? /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => salvarAvulso(null),
     disabled: salvando
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "save",
     size: 15
-  }), " ", salvando ? "Salvando..." : "Salvar Alterações") : React.createElement(React.Fragment, null, React.createElement("button", {
+  }), " ", salvando ? "Salvando..." : "Salvar Alterações") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => salvarAvulso(null),
     disabled: salvando,
@@ -10260,7 +10522,7 @@ function FinanceiroClinica() {
       fontSize: 12
     },
     title: "Sem comiss\xE3o \u2014 para lan\xE7amentos passados"
-  }, "\uD83D\uDCCB Sem comiss\xE3o"), React.createElement("button", {
+  }, "\uD83D\uDCCB Sem comiss\xE3o"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => salvarAvulso("primeira"),
     disabled: salvando,
@@ -10268,7 +10530,7 @@ function FinanceiroClinica() {
       background: "#7B00C4"
     },
     title: "10% de comiss\xE3o"
-  }, "\uD83C\uDF1F Primeira Venda"), React.createElement("button", {
+  }, "\uD83C\uDF1F Primeira Venda"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => salvarAvulso("recorrente"),
     disabled: salvando,
@@ -10276,7 +10538,7 @@ function FinanceiroClinica() {
       background: "#0891b2"
     },
     title: "5% de comiss\xE3o"
-  }, "\uD83D\uDD01 Venda Recorrente"))))), modal === "editar-despesa" && React.createElement("div", {
+  }, "\uD83D\uDD01 Venda Recorrente"))))), modal === "editar-despesa" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -10291,7 +10553,7 @@ function FinanceiroClinica() {
       setModal(false);
       setEditando(null);
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -10300,21 +10562,21 @@ function FinanceiroClinica() {
       maxWidth: 500
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       color: "#dc2626"
     }
-  }, "\u270F\uFE0F Editar Despesa"), React.createElement("button", {
+  }, "\u270F\uFE0F Editar Despesa"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setModal(false);
       setEditando(null);
@@ -10324,24 +10586,24 @@ function FinanceiroClinica() {
       border: "none",
       cursor: "pointer"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12,
       marginBottom: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Descri\xE7\xE3o"), React.createElement("input", {
+  }, "Descri\xE7\xE3o"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     placeholder: "Ex: Consult\xF3rio loca\xE7\xE3o",
     value: formDespesaEdit.descricao,
@@ -10349,26 +10611,26 @@ function FinanceiroClinica() {
       ...formDespesaEdit,
       descricao: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Categoria"), React.createElement("select", {
+  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formDespesaEdit.categoria,
     onChange: e => setFormDespesaEdit({
       ...formDespesaEdit,
       categoria: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), CATS_DESPESA.map(c => React.createElement("option", {
+  }, "Selecionar..."), CATS_DESPESA.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c)))), React.createElement("div", {
+  }, c)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Valor R$"), React.createElement("input", {
+  }, "Valor R$"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     placeholder: "0,00",
@@ -10377,11 +10639,11 @@ function FinanceiroClinica() {
       ...formDespesaEdit,
       valor: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data"), React.createElement("input", {
+  }, "Data"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: formDespesaEdit.data,
@@ -10389,34 +10651,34 @@ function FinanceiroClinica() {
       ...formDespesaEdit,
       data: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Forma de Pagamento"), React.createElement("select", {
+  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formDespesaEdit.formaPag,
     onChange: e => setFormDespesaEdit({
       ...formDespesaEdit,
       formaPag: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "\u2014"), FORMAS.map(f => React.createElement("option", {
+  }, "\u2014"), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
     key: f
-  }, f)))), React.createElement("div", {
+  }, f)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("div", {
+  }, "Status"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     onClick: () => setFormDespesaEdit({
       ...formDespesaEdit,
@@ -10435,14 +10697,14 @@ function FinanceiroClinica() {
       fontSize: 13,
       fontFamily: "var(--font-body)"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xF5es"), React.createElement("input", {
+  }, "Observa\xE7\xF5es"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     placeholder: "Opcional...",
     value: formDespesaEdit.obs,
@@ -10450,26 +10712,26 @@ function FinanceiroClinica() {
       ...formDespesaEdit,
       obs: e.target.value
     })
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => {
       setModal(false);
       setEditando(null);
     }
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       background: "#dc2626"
     },
     onClick: salvarDespesaEdit,
     disabled: salvando
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "save",
     size: 15
   }), " ", salvando ? "Salvando..." : "Salvar Alterações")))), modal === "pacote" && (() => {
@@ -10511,7 +10773,7 @@ function FinanceiroClinica() {
         });
       }
     }
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         position: "fixed",
         inset: 0,
@@ -10523,7 +10785,7 @@ function FinanceiroClinica() {
         padding: 20
       },
       onClick: () => setModal(false)
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         background: "white",
         borderRadius: 16,
@@ -10534,60 +10796,60 @@ function FinanceiroClinica() {
         overflowY: "auto"
       },
       onClick: e => e.stopPropagation()
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         marginBottom: 16
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: "var(--font-display)",
         fontSize: 20,
         fontWeight: 600
       }
-    }, "Novo Pacote de Sess\xF5es"), React.createElement("button", {
+    }, "Novo Pacote de Sess\xF5es"), /*#__PURE__*/React.createElement("button", {
       onClick: () => setModal(false),
       style: {
         background: "none",
         border: "none",
         cursor: "pointer"
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "x",
       size: 20
-    }))), React.createElement("div", {
+    }))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: 12,
         marginBottom: 12
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Paciente *"), React.createElement("select", {
+    }, "Paciente *"), /*#__PURE__*/React.createElement("select", {
       className: "form-input",
       value: formPacote.pacienteId,
       onChange: e => setFormPacote({
         ...formPacote,
         pacienteId: e.target.value
       })
-    }, React.createElement("option", {
+    }, /*#__PURE__*/React.createElement("option", {
       value: ""
-    }, "Selecionar..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => React.createElement("option", {
+    }, "Selecionar..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/React.createElement("option", {
       key: p.id,
       value: p.id
-    }, p.nome)))), React.createElement("div", {
+    }, p.nome)))), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "N\xBA de Sess\xF5es *"), React.createElement("input", {
+    }, "N\xBA de Sess\xF5es *"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "number",
       min: "1",
@@ -10598,11 +10860,11 @@ function FinanceiroClinica() {
         ...formPacote,
         totalSessoes: e.target.value
       })
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Recorr\xEAncia *"), React.createElement("select", {
+    }, "Recorr\xEAncia *"), /*#__PURE__*/React.createElement("select", {
       className: "form-input",
       value: formPacote.recorrencia,
       onChange: e => setFormPacote({
@@ -10611,16 +10873,16 @@ function FinanceiroClinica() {
         diasSemana: [],
         horariosPorDia: {}
       })
-    }, RECORRENCIAS.map(r => React.createElement("option", {
+    }, RECORRENCIAS.map(r => /*#__PURE__*/React.createElement("option", {
       key: r
-    }, r)))), needDias && React.createElement("div", {
+    }, r)))), needDias && /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Dias da Semana * (escolha ", maxDias, ")"), React.createElement("div", {
+    }, "Dias da Semana * (escolha ", maxDias, ")"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
@@ -10630,7 +10892,7 @@ function FinanceiroClinica() {
     }, DIAS.map(d => {
       const sel = diasSel.includes(d.v);
       const dis = !sel && diasSel.length >= maxDias;
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         key: d.v,
         style: {
           display: "flex",
@@ -10638,7 +10900,7 @@ function FinanceiroClinica() {
           alignItems: "center",
           gap: 3
         }
-      }, React.createElement("button", {
+      }, /*#__PURE__*/React.createElement("button", {
         type: "button",
         onClick: () => toggleDia(d.v),
         disabled: dis,
@@ -10654,7 +10916,7 @@ function FinanceiroClinica() {
           fontSize: 13,
           fontFamily: "var(--font-body)"
         }
-      }, d.l), sel && React.createElement("input", {
+      }, d.l), sel && /*#__PURE__*/React.createElement("input", {
         type: "time",
         value: (formPacote.horariosPorDia || {})[d.v] || formPacote.horario || "09:00",
         onChange: e => setFormPacote({
@@ -10675,11 +10937,11 @@ function FinanceiroClinica() {
           fontWeight: 600
         }
       }));
-    }))), React.createElement("div", {
+    }))), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Data de In\xEDcio *"), React.createElement("input", {
+    }, "Data de In\xEDcio *"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "date",
       value: formPacote.dataInicio,
@@ -10687,11 +10949,11 @@ function FinanceiroClinica() {
         ...formPacote,
         dataInicio: e.target.value
       })
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Hor\xE1rio ", needDias ? "(padrão)" : ""), React.createElement("input", {
+    }, "Hor\xE1rio ", needDias ? "(padrão)" : ""), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "time",
       value: formPacote.horario,
@@ -10699,19 +10961,19 @@ function FinanceiroClinica() {
         ...formPacote,
         horario: e.target.value
       })
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Tipo de Atendimento"), React.createElement("div", {
+    }, "Tipo de Atendimento"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8
       }
-    }, [["particular", "🏥 Particular"], ["social", "🌱 Social"], ["parceria", "🤝 Parceria"]].map(([v, l]) => React.createElement("button", {
+    }, [["particular", "🏥 Particular"], ["social", "🌱 Social"], ["parceria", "🤝 Parceria"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
       key: v,
       type: "button",
       onClick: () => setFormPacote({
@@ -10735,11 +10997,11 @@ function FinanceiroClinica() {
         background: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#ccfbf1" : v === "parceria" ? "#fef3c7" : "#f5f3ff" : "white",
         color: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#0d9488" : v === "parceria" ? "#b45309" : "#7B00C4" : "#6b7280"
       }
-    }, l)))), (formPacote.tipoAtendimento || "particular") === "social" ? React.createElement(React.Fragment, null, React.createElement("div", {
+    }, l)))), (formPacote.tipoAtendimento || "particular") === "social" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Valor Supervis\xE3o (R$)"), React.createElement("input", {
+    }, "Valor Supervis\xE3o (R$)"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "number",
       value: formPacote.valorSupervisaoSocial || "40",
@@ -10747,17 +11009,17 @@ function FinanceiroClinica() {
         ...formPacote,
         valorSupervisaoSocial: e.target.value
       })
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
         marginTop: 3
       }
-    }, "Receita da cl\xEDnica")), React.createElement("div", {
+    }, "Receita da cl\xEDnica")), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Valor Estagi\xE1ria (R$)"), React.createElement("input", {
+    }, "Valor Estagi\xE1ria (R$)"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "number",
       value: formPacote.valorEstagiariaSocial || "20",
@@ -10765,17 +11027,17 @@ function FinanceiroClinica() {
         ...formPacote,
         valorEstagiariaSocial: e.target.value
       })
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
         marginTop: 3
       }
-    }, "Comiss\xE3o estagi\xE1ria"))) : React.createElement(React.Fragment, null, React.createElement("div", {
+    }, "Comiss\xE3o estagi\xE1ria"))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Valor por Sess\xE3o (R$)"), React.createElement("input", {
+    }, "Valor por Sess\xE3o (R$)"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "number",
       placeholder: "Ex: 250",
@@ -10784,11 +11046,11 @@ function FinanceiroClinica() {
         ...formPacote,
         valorSessao: e.target.value
       })
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Total do Pacote (R$)"), React.createElement("input", {
+    }, "Total do Pacote (R$)"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "number",
       placeholder: "Autom\xE1tico",
@@ -10797,11 +11059,11 @@ function FinanceiroClinica() {
       style: {
         background: "#f9fafb"
       }
-    })), (formPacote.tipoAtendimento || "particular") === "parceria" && React.createElement(React.Fragment, null, React.createElement("div", {
+    })), (formPacote.tipoAtendimento || "particular") === "parceria" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Parceira"), React.createElement("select", {
+    }, "Parceira"), /*#__PURE__*/React.createElement("select", {
       className: "form-input",
       value: formPacote.parceiraId || "",
       onChange: e => {
@@ -10812,22 +11074,22 @@ function FinanceiroClinica() {
           percParceiro: p && p.percentual ? String(p.percentual) : formPacote.percParceiro || "70"
         });
       }
-    }, React.createElement("option", {
+    }, /*#__PURE__*/React.createElement("option", {
       value: ""
-    }, "Selecione a parceira..."), parceiras.filter(p => p.tipo !== "estagiaria").map(p => React.createElement("option", {
+    }, "Selecione a parceira..."), parceiras.filter(p => p.tipo !== "estagiaria").map(p => /*#__PURE__*/React.createElement("option", {
       key: p.id,
       value: p.id
-    }, p.nome))), parceiras.filter(p => p.tipo !== "estagiaria").length === 0 && React.createElement("div", {
+    }, p.nome))), parceiras.filter(p => p.tipo !== "estagiaria").length === 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#b45309",
         marginTop: 3
       }
-    }, "Nenhuma parceira cadastrada \u2014 cadastre na tela Comiss\xF5es.")), React.createElement("div", {
+    }, "Nenhuma parceira cadastrada \u2014 cadastre na tela Comiss\xF5es.")), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "% do Parceiro"), React.createElement("input", {
+    }, "% do Parceiro"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "number",
       min: "0",
@@ -10837,7 +11099,7 @@ function FinanceiroClinica() {
         ...formPacote,
         percParceiro: e.target.value
       })
-    }), React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)",
@@ -10847,7 +11109,7 @@ function FinanceiroClinica() {
       const tot = (parseFloat(formPacote.valorSessao) || 0) * (parseInt(formPacote.totalSessoes) || 0);
       const pp = parseFloat(formPacote.percParceiro) || 0;
       const vParc = tot * pp / 100;
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         style: {
           gridColumn: "1/-1",
           background: "#fffbeb",
@@ -10856,47 +11118,47 @@ function FinanceiroClinica() {
           padding: "10px 14px",
           fontSize: 13
         }
-      }, React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           fontWeight: 700,
           color: "#b45309",
           marginBottom: 6
         }
-      }, "\uD83E\uDD1D C\xE1lculo da parceria"), React.createElement("div", {
+      }, "\uD83E\uDD1D C\xE1lculo da parceria"), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           flexWrap: "wrap",
           gap: "6px 18px",
           color: "#374151"
         }
-      }, React.createElement("span", null, "Total: ", React.createElement("strong", null, "R$ ", tot.toFixed(2).replace(".", ","))), React.createElement("span", null, "Repasse parceira (", pp, "%): ", React.createElement("strong", {
+      }, /*#__PURE__*/React.createElement("span", null, "Total: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", tot.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", null, "Repasse parceira (", pp, "%): ", /*#__PURE__*/React.createElement("strong", {
         style: {
           color: "#b45309"
         }
-      }, "R$ ", vParc.toFixed(2).replace(".", ","))), React.createElement("span", null, "Cl\xEDnica antes da comiss\xE3o: ", React.createElement("strong", {
+      }, "R$ ", vParc.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", null, "Cl\xEDnica antes da comiss\xE3o: ", /*#__PURE__*/React.createElement("strong", {
         style: {
           color: "#059669"
         }
-      }, "R$ ", (tot - vParc).toFixed(2).replace(".", ",")))), React.createElement("div", {
+      }, "R$ ", (tot - vParc).toFixed(2).replace(".", ",")))), /*#__PURE__*/React.createElement("div", {
         style: {
           fontSize: 11,
           color: "#92400e",
           marginTop: 6
         }
       }, "A comiss\xE3o da secret\xE1ria (10% ou 5% sobre o total) \xE9 definida no bot\xE3o de salvar abaixo."));
-    })())), React.createElement("div", {
+    })())), /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Status do Pagamento"), React.createElement("div", {
+    }, "Status do Pagamento"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8
       }
-    }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => React.createElement("button", {
+    }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
       key: v,
       type: "button",
       onClick: () => setFormPacote({
@@ -10916,26 +11178,26 @@ function FinanceiroClinica() {
         fontSize: 13,
         fontFamily: "var(--font-body)"
       }
-    }, l)))), React.createElement("div", {
+    }, l)))), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Forma de Pagamento"), React.createElement("select", {
+    }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
       className: "form-input",
       value: formPacote.formaPag || "",
       onChange: e => setFormPacote({
         ...formPacote,
         formaPag: e.target.value
       })
-    }, React.createElement("option", {
+    }, /*#__PURE__*/React.createElement("option", {
       value: ""
-    }, "Selecionar..."), FORMAS.map(f => React.createElement("option", {
+    }, "Selecionar..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
       key: f
-    }, f)))), React.createElement("div", {
+    }, f)))), /*#__PURE__*/React.createElement("div", {
       className: "form-group"
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Data do Pagamento"), React.createElement("input", {
+    }, "Data do Pagamento"), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       type: "date",
       value: formPacote.dataPagamento || "",
@@ -10943,24 +11205,24 @@ function FinanceiroClinica() {
         ...formPacote,
         dataPagamento: e.target.value
       })
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         marginBottom: 8
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label",
       style: {
         margin: 0
       }
-    }, "Formas de pagamento"), React.createElement("button", {
+    }, "Formas de pagamento"), /*#__PURE__*/React.createElement("button", {
       type: "button",
       style: {
         fontSize: 12,
@@ -10979,14 +11241,14 @@ function FinanceiroClinica() {
           data: new Date().toISOString().slice(0, 10)
         }]
       })
-    }, "+ Adicionar forma")), (formPacote.pagamentosExtras || []).length === 0 && React.createElement("div", {
+    }, "+ Adicionar forma")), (formPacote.pagamentosExtras || []).length === 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)",
         fontStyle: "italic",
         padding: "6px 0"
       }
-    }, "Clique em \"+ Adicionar forma\" para registrar PIX, cart\xE3o, dinheiro em datas diferentes."), (formPacote.pagamentosExtras || []).map((pg, i) => React.createElement("div", {
+    }, "Clique em \"+ Adicionar forma\" para registrar PIX, cart\xE3o, dinheiro em datas diferentes."), (formPacote.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
         display: "grid",
@@ -10995,7 +11257,7 @@ function FinanceiroClinica() {
         marginBottom: 6,
         alignItems: "center"
       }
-    }, React.createElement("select", {
+    }, /*#__PURE__*/React.createElement("select", {
       className: "form-input",
       style: {
         fontSize: 12
@@ -11012,11 +11274,11 @@ function FinanceiroClinica() {
           pagamentosExtras: p
         });
       }
-    }, React.createElement("option", {
+    }, /*#__PURE__*/React.createElement("option", {
       value: ""
-    }, "Forma..."), FORMAS.map(f => React.createElement("option", {
+    }, "Forma..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
       key: f
-    }, f))), React.createElement("input", {
+    }, f))), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       style: {
         fontSize: 12
@@ -11035,7 +11297,7 @@ function FinanceiroClinica() {
           pagamentosExtras: p
         });
       }
-    }), React.createElement("input", {
+    }), /*#__PURE__*/React.createElement("input", {
       className: "form-input",
       style: {
         fontSize: 12
@@ -11053,7 +11315,7 @@ function FinanceiroClinica() {
           pagamentosExtras: p
         });
       }
-    }), React.createElement("button", {
+    }), /*#__PURE__*/React.createElement("button", {
       type: "button",
       style: {
         color: "#dc2626",
@@ -11071,14 +11333,14 @@ function FinanceiroClinica() {
           pagamentosExtras: p
         });
       }
-    }, "\u2715")))), React.createElement("div", {
+    }, "\u2715")))), /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
       }
-    }, React.createElement("label", {
+    }, /*#__PURE__*/React.createElement("label", {
       className: "form-label"
-    }, "Observa\xE7\xF5es"), React.createElement(TextAreaVoz, {
+    }, "Observa\xE7\xF5es"), /*#__PURE__*/React.createElement(TextAreaVoz, {
       className: "form-input",
       rows: 2,
       value: formPacote.obs,
@@ -11087,7 +11349,7 @@ function FinanceiroClinica() {
         obs: e.target.value
       }),
       placeholder: "Notas sobre o pacote..."
-    }))), formPacote.totalSessoes && formPacote.dataInicio && React.createElement("div", {
+    }))), formPacote.totalSessoes && formPacote.dataInicio && /*#__PURE__*/React.createElement("div", {
       style: {
         background: "#f0fdf4",
         border: "1px solid #86efac",
@@ -11097,17 +11359,17 @@ function FinanceiroClinica() {
         fontSize: 13,
         color: "#065f46"
       }
-    }, "\u2705 ", React.createElement("strong", null, formPacote.totalSessoes, " sess\xF5es"), " a partir de ", React.createElement("strong", null, new Date(formPacote.dataInicio + "T00:00:00").toLocaleDateString("pt-BR")), " \xB7 ", React.createElement("strong", null, formPacote.recorrencia), needDias && diasSel.length > 0 && React.createElement("span", null, " \xB7 dias: ", React.createElement("strong", null, diasSel.map(d => DIAS_LABEL[d]).join(", ")))), React.createElement("div", {
+    }, "\u2705 ", /*#__PURE__*/React.createElement("strong", null, formPacote.totalSessoes, " sess\xF5es"), " a partir de ", /*#__PURE__*/React.createElement("strong", null, new Date(formPacote.dataInicio + "T00:00:00").toLocaleDateString("pt-BR")), " \xB7 ", /*#__PURE__*/React.createElement("strong", null, formPacote.recorrencia), needDias && diasSel.length > 0 && /*#__PURE__*/React.createElement("span", null, " \xB7 dias: ", /*#__PURE__*/React.createElement("strong", null, diasSel.map(d => DIAS_LABEL[d]).join(", ")))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 10,
         justifyContent: "flex-end",
         flexWrap: "wrap"
       }
-    }, React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       onClick: () => setModal(false)
-    }, "Cancelar"), React.createElement("button", {
+    }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       onClick: () => salvarPacote(null),
       disabled: salvando,
@@ -11117,7 +11379,7 @@ function FinanceiroClinica() {
         fontSize: 12
       },
       title: "Sem comiss\xE3o \u2014 para lan\xE7amentos passados"
-    }, "\uD83D\uDCCB Sem comiss\xE3o"), React.createElement("button", {
+    }, "\uD83D\uDCCB Sem comiss\xE3o"), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       onClick: () => salvarPacote("primeira"),
       disabled: salvando,
@@ -11125,7 +11387,7 @@ function FinanceiroClinica() {
         background: "#7B00C4"
       },
       title: "10% de comiss\xE3o"
-    }, "\uD83C\uDF1F Primeira Venda"), React.createElement("button", {
+    }, "\uD83C\uDF1F Primeira Venda"), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       onClick: () => salvarPacote("recorrente"),
       disabled: salvando,
@@ -11151,7 +11413,7 @@ function FinanceiroPessoal({
     nome: "",
     tipo: "despesa"
   });
-  const [modalBaixa, setModalBaixa] = useState(null);
+  const [modalBaixa, setModalBaixa] = useState(null); // recorrente para dar baixa
   const [formBaixa, setFormBaixa] = useState({
     valor: "",
     data: new Date().toISOString().slice(0, 10),
@@ -11265,7 +11527,10 @@ function FinanceiroPessoal({
   const pendMes = lancMes.filter(l => l.status === "pendente").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const corTipo = t => t === "receita" ? "#059669" : "#dc2626";
   const bgTipo = t => t === "receita" ? "#d1fae5" : "#fee2e2";
-  const recorrAtivos = recorrentes.filter(r => r.ativo !== false);
+
+  // Recorrentes ativos com baixa já registrada neste mês
+  // (mostra apenas os que NÃO são de centro de custo clínico — esses aparecem no Financeiro da Clínica)
+  const recorrAtivos = recorrentes.filter(r => r.ativo !== false && !ehClinico(r.centroCusto));
   function jaDeuBaixaMes(r) {
     return lancamentos.some(l => l.recorrenteId === r.id && l.data?.startsWith(mesFiltroEfetivo));
   }
@@ -11288,12 +11553,16 @@ function FinanceiroPessoal({
       centroCusto: cc,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+    // Marca lançamentos roteados do pessoal para a clínica
     if (ehClinico(cc)) base.origem = "financeiro_pessoal";
     if (ehClinico(cc)) base.tipo_lancamento = "avulso";
     if (editando) {
+      // Verifica se precisa mover de coleção (CC mudou)
       const eraClinico = lancamentos.some(l => l.id === editando) ? false : true;
+      // Se não achou nos lancamentos pessoais, tenta achar nos clínicos
       const colOrigem = eraClinico ? "clinica_lancamentos" : "clinica_financeiro_pessoal";
       if (colOrigem !== colDestino) {
+        // Move: apaga da origem e cria no destino
         await db.collection(colOrigem).doc(editando).delete();
         await db.collection(colDestino).add({
           ...base,
@@ -11366,8 +11635,17 @@ function FinanceiroPessoal({
       return;
     }
     setSalvando(true);
+    // Proteção: se a categoria escolhida não pertencer ao tipo atual (ex.: toggle Receita/Despesa
+    // mudou sem querer), corrige o tipo para o que a categoria realmente pertence.
+    let tipoFinal = formRecorr.tipo;
+    if (tipoFinal === "receita" && !catsReceita.includes(formRecorr.categoria) && catsDespesa.includes(formRecorr.categoria)) {
+      tipoFinal = "despesa";
+    } else if (tipoFinal === "despesa" && !catsDespesa.includes(formRecorr.categoria) && catsReceita.includes(formRecorr.categoria)) {
+      tipoFinal = "receita";
+    }
     const dados = {
       ...formRecorr,
+      tipo: tipoFinal,
       valorPrevisto: parseFloat(formRecorr.valorPrevisto),
       centroCusto: formRecorr.centroCusto || "",
       totalParcelas: formRecorr.indeterminado ? 0 : parseInt(formRecorr.totalParcelas) || 0,
@@ -11396,6 +11674,8 @@ function FinanceiroPessoal({
     });
     setSalvando(false);
   }
+
+  // Dar baixa — este mês ou este e os próximos (até dez)
   async function confirmarBaixa() {
     if (!formBaixa.valor) {
       alert("Digite o valor.");
@@ -11405,6 +11685,7 @@ function FinanceiroPessoal({
     const r = modalBaixa;
     const batch = db.batch();
     if (formBaixa.modo === "este") {
+      // Só este mês
       const dia = r.diaVencimento || "10";
       const data = `${mesFiltroEfetivo}-${String(dia).padStart(2, "0")}`;
       const col = colecaoParaCC(r.centroCusto);
@@ -11425,14 +11706,17 @@ function FinanceiroPessoal({
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     } else {
+      // Este e os próximos até dezembro do ano atual
       const [anoMes, mesMes] = mesFiltroEfetivo.split("-").map(Number);
+      const colSerie = colecaoParaCC(r.centroCusto);
       for (let m = mesMes; m <= 12; m++) {
         const mesStr = `${anoMes}-${String(m).padStart(2, "0")}`;
         const dia = r.diaVencimento || "10";
         const data = `${mesStr}-${String(dia).padStart(2, "0")}`;
+        // Não duplicar se já existe baixa neste mês
         const jaExiste = lancamentos.some(l => l.recorrenteId === r.id && l.data?.startsWith(mesStr));
         if (!jaExiste) {
-          const ref = db.collection("clinica_financeiro_pessoal").doc();
+          const ref = db.collection(colSerie).doc();
           batch.set(ref, {
             tipo: r.tipo,
             categoria: r.categoria,
@@ -11442,13 +11726,18 @@ function FinanceiroPessoal({
             formaPag: formBaixa.formaPag,
             status: "pago",
             recorrenteId: r.id,
+            centroCusto: r.centroCusto || "",
             obs: "Baixa automática — série",
+            origem: ehClinico(r.centroCusto) ? "financeiro_pessoal" : undefined,
+            tipo_lancamento: ehClinico(r.centroCusto) ? "recorrente_baixa" : undefined,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
         }
       }
     }
     await batch.commit();
+
+    // Auto-inativar quando todas as parcelas forem pagas
     if (r.totalParcelas > 0) {
       const totalPagas = lancamentos.filter(l => l.recorrenteId === r.id).length + (formBaixa.modo === "este" ? 1 : 0);
       if (totalPagas >= r.totalParcelas) {
@@ -11493,7 +11782,7 @@ function FinanceiroPessoal({
     if (!confirm("Excluir?")) return;
     await db.collection("clinica_fin_pessoal_categorias").doc(id).delete();
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -11502,41 +11791,41 @@ function FinanceiroPessoal({
       flexWrap: "wrap",
       gap: 12
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Financeiro Pessoal"), React.createElement("div", {
+  }, "Financeiro Pessoal"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, somenteLeitura ? "Visualização" : "Módulo Financeiro Completo")), !somenteLeitura && React.createElement("div", {
+  }, somenteLeitura ? "Visualização" : "Módulo Financeiro Completo")), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       flexWrap: "wrap"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModal("categoria")
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "tag",
     size: 15
-  }), " Categorias"), React.createElement("button", {
+  }), " Categorias"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     onClick: () => {
       setModal("recorrente");
       setEditando(null);
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "repeat",
     size: 15
-  }), " + Recorrente"), React.createElement("button", {
+  }), " + Recorrente"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => {
       setModal("avulso");
       setEditando(null);
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 15
-  }), " + Lan\xE7amento"))), React.createElement("div", {
+  }), " + Lan\xE7amento"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -11544,14 +11833,14 @@ function FinanceiroPessoal({
       alignItems: "center",
       flexWrap: "wrap"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       fontWeight: 600,
       color: "var(--text-muted)",
       flexShrink: 0
     }
-  }, "Ano:"), anos.map(a => React.createElement("button", {
+  }, "Ano:"), anos.map(a => /*#__PURE__*/React.createElement("button", {
     key: a,
     onClick: () => {
       setAnoFiltro(a);
@@ -11568,19 +11857,19 @@ function FinanceiroPessoal({
       fontWeight: 600,
       cursor: "pointer"
     }
-  }, a, a === String(anoAtualNum) && React.createElement("span", {
+  }, a, a === String(anoAtualNum) && /*#__PURE__*/React.createElement("span", {
     style: {
       marginLeft: 3,
       fontSize: 9
     }
-  }, "\u25CF")))), React.createElement("div", {
+  }, "\u25CF")))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
       gap: 12,
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: saldoMes >= 0 ? "#d1fae5" : "#fee2e2",
       borderRadius: 12,
@@ -11588,86 +11877,86 @@ function FinanceiroPessoal({
       border: "1.5px solid",
       borderColor: saldoMes >= 0 ? "#6ee7b7" : "#fca5a5"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
       color: saldoMes >= 0 ? "#059669" : "#dc2626",
       marginBottom: 4
     }
-  }, "Saldo (", mesLabel(mesFiltroEfetivo), ")"), React.createElement("div", {
+  }, "Saldo (", mesLabel(mesFiltroEfetivo), ")"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
       color: saldoMes >= 0 ? "#059669" : "#dc2626"
     }
-  }, fmt(saldoMes)), React.createElement("div", {
+  }, fmt(saldoMes)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#6b7280",
       marginTop: 2
     }
-  }, "+", fmt(recMes), " / -", fmt(despMes))), React.createElement("div", {
+  }, "+", fmt(recMes), " / -", fmt(despMes))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fffbeb",
       borderRadius: 12,
       padding: "14px 16px",
       border: "1.5px solid #fcd34d"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
       color: "#d97706",
       marginBottom: 4
     }
-  }, "Pendente"), React.createElement("div", {
+  }, "Pendente"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
       color: "#d97706"
     }
-  }, fmt(pendMes))), React.createElement("div", {
+  }, fmt(pendMes))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       borderRadius: 12,
       padding: "14px 16px",
       border: "1.5px solid #86efac"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
       color: "#059669",
       marginBottom: 4
     }
-  }, "Receitas (", anoFiltro, ")"), React.createElement("div", {
+  }, "Receitas (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
       color: "#059669"
     }
-  }, fmt(recAno))), React.createElement("div", {
+  }, fmt(recAno))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef2f2",
       borderRadius: 12,
       padding: "14px 16px",
       border: "1.5px solid #fca5a5"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
       color: "#dc2626",
       marginBottom: 4
     }
-  }, "Despesas (", anoFiltro, ")"), React.createElement("div", {
+  }, "Despesas (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 20,
       fontWeight: 800,
       color: "#dc2626"
     }
-  }, fmt(despAno)))), React.createElement("div", {
+  }, fmt(despAno)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 4,
@@ -11675,7 +11964,7 @@ function FinanceiroPessoal({
       overflowX: "auto",
       paddingBottom: 4
     }
-  }, mesesDisp.map(m => React.createElement("button", {
+  }, mesesDisp.map(m => /*#__PURE__*/React.createElement("button", {
     key: m,
     onClick: () => setMesFiltro(m),
     style: {
@@ -11690,11 +11979,11 @@ function FinanceiroPessoal({
       cursor: "pointer",
       flexShrink: 0
     }
-  }, mesLabel(m)))), recorrAtivos.length > 0 && React.createElement("div", {
+  }, mesLabel(m)))), recorrAtivos.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
@@ -11704,17 +11993,17 @@ function FinanceiroPessoal({
       gap: 6,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "repeat",
     size: 15
-  }), " Recorrentes \u2014 ", mesLabel(mesFiltroEfetivo)), React.createElement("div", {
+  }), " Recorrentes \u2014 ", mesLabel(mesFiltroEfetivo)), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       padding: 0
     }
   }, recorrAtivos.map(r => {
     const baixaDone = jaDeuBaixaMes(r);
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: r.id,
       style: {
         display: "flex",
@@ -11723,7 +12012,7 @@ function FinanceiroPessoal({
         padding: "12px 16px",
         borderBottom: "1px solid var(--gray-100)"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: 36,
         height: 36,
@@ -11734,19 +12023,19 @@ function FinanceiroPessoal({
         justifyContent: "center",
         flexShrink: 0
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: r.tipo === "receita" ? "trending-up" : "trending-down",
       size: 16
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 14
       }
-    }, r.descricao || r.categoria), React.createElement("div", {
+    }, r.descricao || r.categoria), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)"
@@ -11754,13 +12043,13 @@ function FinanceiroPessoal({
     }, r.categoria, " \xB7 vence dia ", r.diaVencimento, " \xB7 ", r.recorrencia, r.centroCusto ? " · " + r.centroCusto : "", r.totalParcelas > 0 ? (() => {
       const pagas = lancamentos.filter(l => l.recorrenteId === r.id).length;
       return ` · ${pagas}/${r.totalParcelas} parcela(s)`;
-    })() : " · ♾️ Indeterminado")), React.createElement("div", {
+    })() : " · ♾️ Indeterminado")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         color: corTipo(r.tipo),
         marginRight: 8
       }
-    }, fmt(parseFloat(r.valorPrevisto) || 0)), baixaDone ? React.createElement("span", {
+    }, fmt(parseFloat(r.valorPrevisto) || 0)), baixaDone ? /*#__PURE__*/React.createElement("span", {
       style: {
         background: "#d1fae5",
         color: "#065f46",
@@ -11769,7 +12058,7 @@ function FinanceiroPessoal({
         padding: "3px 10px",
         borderRadius: 20
       }
-    }, "\u2713 Pago") : !somenteLeitura && React.createElement("button", {
+    }, "\u2713 Pago") : !somenteLeitura && /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       style: {
         fontSize: 12,
@@ -11784,12 +12073,12 @@ function FinanceiroPessoal({
           modo: "este"
         });
       }
-    }, "Dar baixa"), !somenteLeitura && React.createElement("div", {
+    }, "Dar baixa"), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 4
       }
-    }, baixaDone ? React.createElement("button", {
+    }, baixaDone ? /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       style: {
         padding: "4px 8px"
@@ -11817,10 +12106,10 @@ function FinanceiroPessoal({
           alert("Lançamento deste mês não encontrado.");
         }
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "pencil",
       size: 13
-    })) : React.createElement("button", {
+    })) : /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       style: {
         padding: "4px 8px"
@@ -11843,32 +12132,32 @@ function FinanceiroPessoal({
         setEditando(r.id);
         setModal("recorrente");
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "pencil",
       size: 13
-    })), React.createElement("button", {
+    })), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       style: {
         padding: "4px 8px",
         color: "var(--danger)"
       },
       onClick: () => excluirRec(r.id)
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "trash-2",
       size: 13
     }))));
-  }))), React.createElement("div", null, lancMes.filter(l => l.tipo === "receita").length > 0 && React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", null, lancMes.filter(l => l.tipo === "receita").length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 8
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#059669",
@@ -11876,20 +12165,20 @@ function FinanceiroPessoal({
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trending-up",
     size: 16
-  }), " Receitas"), React.createElement("div", {
+  }), " Receitas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#059669"
     }
-  }, fmt(recMes))), React.createElement("div", {
+  }, fmt(recMes))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       padding: 0
     }
-  }, lancMes.filter(l => l.tipo === "receita").map(l => React.createElement("div", {
+  }, lancMes.filter(l => l.tipo === "receita").map(l => /*#__PURE__*/React.createElement("div", {
     key: l.id,
     style: {
       display: "flex",
@@ -11898,7 +12187,7 @@ function FinanceiroPessoal({
       padding: "12px 16px",
       borderBottom: "1px solid var(--gray-100)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 36,
       height: 36,
@@ -11909,29 +12198,29 @@ function FinanceiroPessoal({
       justifyContent: "center",
       flexShrink: 0
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "arrow-down-left",
     size: 16
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500,
       fontSize: 14
     }
-  }, l.descricao || l.categoria), React.createElement("div", {
+  }, l.descricao || l.categoria), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "", l.centroCusto ? " · " + l.centroCusto : "", l.parcela ? " · " + l.parcela : "")), React.createElement("div", {
+  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "", l.centroCusto ? " · " + l.centroCusto : "", l.parcela ? " · " + l.parcela : "")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#059669"
     }
-  }, fmt(parseFloat(l.valor) || 0)), React.createElement("span", {
+  }, fmt(parseFloat(l.valor) || 0)), /*#__PURE__*/React.createElement("span", {
     style: {
       background: "#d1fae5",
       color: "#065f46",
@@ -11940,12 +12229,12 @@ function FinanceiroPessoal({
       padding: "2px 8px",
       borderRadius: 20
     }
-  }, "\u2713 Recebido"), !somenteLeitura && React.createElement("div", {
+  }, "\u2713 Recebido"), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 4
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px"
@@ -11967,31 +12256,31 @@ function FinanceiroPessoal({
       setEditando(l.id);
       setModal("avulso");
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px",
       color: "var(--danger)"
     },
     onClick: () => excluir(l.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))))))), lancMes.filter(l => l.tipo === "despesa").length > 0 && React.createElement("div", {
+  }))))))), lancMes.filter(l => l.tipo === "despesa").length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 8
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#dc2626",
@@ -11999,20 +12288,20 @@ function FinanceiroPessoal({
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trending-down",
     size: 16
-  }), " Despesas"), React.createElement("div", {
+  }), " Despesas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#dc2626"
     }
-  }, fmt(despMes))), React.createElement("div", {
+  }, fmt(despMes))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       padding: 0
     }
-  }, lancMes.filter(l => l.tipo === "despesa").map(l => React.createElement("div", {
+  }, lancMes.filter(l => l.tipo === "despesa").map(l => /*#__PURE__*/React.createElement("div", {
     key: l.id,
     style: {
       display: "flex",
@@ -12021,7 +12310,7 @@ function FinanceiroPessoal({
       padding: "12px 16px",
       borderBottom: "1px solid var(--gray-100)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 36,
       height: 36,
@@ -12032,29 +12321,29 @@ function FinanceiroPessoal({
       justifyContent: "center",
       flexShrink: 0
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "arrow-up-right",
     size: 16
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500,
       fontSize: 14
     }
-  }, l.descricao || l.categoria), React.createElement("div", {
+  }, l.descricao || l.categoria), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "", l.centroCusto ? " · " + l.centroCusto : "", l.parcela ? " · " + l.parcela : "")), React.createElement("div", {
+  }, l.categoria, " \xB7 ", l.data, l.formaPag ? " · " + l.formaPag : "", l.centroCusto ? " · " + l.centroCusto : "", l.parcela ? " · " + l.parcela : "")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: "#dc2626"
     }
-  }, fmt(parseFloat(l.valor) || 0)), React.createElement("span", {
+  }, fmt(parseFloat(l.valor) || 0)), /*#__PURE__*/React.createElement("span", {
     style: {
       background: l.status === "pago" ? "#d1fae5" : "#fef3c7",
       color: l.status === "pago" ? "#065f46" : "#92400e",
@@ -12063,12 +12352,12 @@ function FinanceiroPessoal({
       padding: "2px 8px",
       borderRadius: 20
     }
-  }, l.status === "pago" ? "✓ Pago" : "Pendente"), !somenteLeitura && React.createElement("div", {
+  }, l.status === "pago" ? "✓ Pago" : "Pendente"), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 4
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px"
@@ -12090,40 +12379,40 @@ function FinanceiroPessoal({
       setEditando(l.id);
       setModal("avulso");
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px",
       color: "var(--danger)"
     },
     onClick: () => excluir(l.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))))))), lancMes.length === 0 && recorrAtivos.length === 0 && React.createElement("div", {
+  }))))))), lancMes.length === 0 && recorrAtivos.length === 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 40,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "wallet",
     size: 40
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontWeight: 500
     }
-  }, "Nenhum lan\xE7amento em ", mesLabel(mesFiltroEfetivo)), !somenteLeitura && React.createElement("div", {
+  }, "Nenhum lan\xE7amento em ", mesLabel(mesFiltroEfetivo)), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       marginTop: 6
     }
-  }, "Use \"+ Lan\xE7amento\" ou \"+ Recorrente\" acima."))), modalBaixa && React.createElement("div", {
+  }, "Use \"+ Lan\xE7amento\" ou \"+ Recorrente\" acima."))), modalBaixa && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -12135,7 +12424,7 @@ function FinanceiroPessoal({
       padding: 20
     },
     onClick: () => setModalBaixa(null)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -12144,31 +12433,31 @@ function FinanceiroPessoal({
       maxWidth: 460
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 18,
       fontWeight: 600,
       marginBottom: 4
     }
-  }, "Dar baixa \u2014 ", modalBaixa.descricao || modalBaixa.categoria), React.createElement("div", {
+  }, "Dar baixa \u2014 ", modalBaixa.descricao || modalBaixa.categoria), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Previsto: ", fmt(parseFloat(modalBaixa.valorPrevisto) || 0)), React.createElement("div", {
+  }, "Previsto: ", fmt(parseFloat(modalBaixa.valorPrevisto) || 0)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12,
       marginBottom: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Valor Real (R$)"), React.createElement("input", {
+  }, "Valor Real (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formBaixa.valor,
@@ -12177,32 +12466,32 @@ function FinanceiroPessoal({
       valor: e.target.value
     }),
     autoFocus: true
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Forma de Pagamento"), React.createElement("select", {
+  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formBaixa.formaPag,
     onChange: e => setFormBaixa({
       ...formBaixa,
       formaPag: e.target.value
     })
-  }, FORMAS.map(f => React.createElement("option", {
+  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
     key: f
-  }, f))))), React.createElement("div", {
+  }, f))))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Aplicar para"), React.createElement("div", {
+  }, "Aplicar para"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["este", "Só este mês", "#7B00C4"], ["proximos", "Este e os próximos (até dez.)", "#0891b2"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["este", "Só este mês", "#7B00C4"], ["proximos", "Este e os próximos (até dez.)", "#0891b2"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormBaixa({
@@ -12223,20 +12512,20 @@ function FinanceiroPessoal({
       fontFamily: "var(--font-body)",
       textAlign: "center"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModalBaixa(null)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: confirmarBaixa,
     disabled: salvando
-  }, salvando ? "Salvando..." : "Confirmar Baixa")))), modal === "avulso" && React.createElement("div", {
+  }, salvando ? "Salvando..." : "Confirmar Baixa")))), modal === "avulso" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -12248,7 +12537,7 @@ function FinanceiroPessoal({
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -12259,20 +12548,20 @@ function FinanceiroPessoal({
       overflowY: "auto"
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, editando ? "Editar" : "Novo", " Lan\xE7amento"), React.createElement("button", {
+  }, editando ? "Editar" : "Novo", " Lan\xE7amento"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setModal(false);
       setEditando(null);
@@ -12282,28 +12571,28 @@ function FinanceiroPessoal({
       border: "none",
       cursor: "pointer"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo"), React.createElement("div", {
+  }, "Tipo"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["receita", "↓ Receita", "#059669"], ["despesa", "↑ Despesa", "#dc2626"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["receita", "↓ Receita", "#059669"], ["despesa", "↑ Despesa", "#dc2626"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormAvulso({
@@ -12324,26 +12613,26 @@ function FinanceiroPessoal({
       fontSize: 13,
       fontFamily: "var(--font-body)"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Categoria"), React.createElement("select", {
+  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formAvulso.categoria,
     onChange: e => setFormAvulso({
       ...formAvulso,
       categoria: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), (formAvulso.tipo === "receita" ? catsReceita : catsDespesa).map(c => React.createElement("option", {
+  }, "Selecionar..."), (formAvulso.tipo === "receita" ? catsReceita : catsDespesa).map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c)))), React.createElement("div", {
+  }, c)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Descri\xE7\xE3o"), React.createElement("input", {
+  }, "Descri\xE7\xE3o"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formAvulso.descricao,
     onChange: e => setFormAvulso({
@@ -12351,11 +12640,11 @@ function FinanceiroPessoal({
       descricao: e.target.value
     }),
     placeholder: "Ex: Conta de luz"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Valor (R$)"), React.createElement("input", {
+  }, "Valor (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formAvulso.valor,
@@ -12364,11 +12653,11 @@ function FinanceiroPessoal({
       valor: e.target.value
     }),
     placeholder: "0,00"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data"), React.createElement("input", {
+  }, "Data"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: formAvulso.data,
@@ -12376,48 +12665,48 @@ function FinanceiroPessoal({
       ...formAvulso,
       data: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Forma de Pagamento"), React.createElement("select", {
+  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formAvulso.formaPag,
     onChange: e => setFormAvulso({
       ...formAvulso,
       formaPag: e.target.value
     })
-  }, FORMAS.map(f => React.createElement("option", {
+  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
     key: f
-  }, f)))), React.createElement("div", {
+  }, f)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Centro de Custo"), React.createElement("select", {
+  }, "Centro de Custo"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formAvulso.centroCusto || "",
     onChange: e => setFormAvulso({
       ...formAvulso,
       centroCusto: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Nenhum"), CENTROS_CUSTO.map(c => React.createElement("option", {
+  }, "Nenhum"), CENTROS_CUSTO.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c)))), !editando && React.createElement("div", {
+  }, c)))), !editando && /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Parcelas"), React.createElement("div", {
+  }, "Parcelas"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       alignItems: "center"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "1",
@@ -12430,34 +12719,34 @@ function FinanceiroPessoal({
     style: {
       width: 80
     }
-  }), React.createElement("span", {
+  }), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, "\xD7 R$ ", formAvulso.valor || "0", " = ", React.createElement("strong", {
+  }, "\xD7 R$ ", formAvulso.valor || "0", " = ", /*#__PURE__*/React.createElement("strong", {
     style: {
       color: "var(--purple)"
     }
-  }, "R$ ", ((parseFloat(formAvulso.valor) || 0) * (parseInt(formAvulso.parcelas) || 1)).toFixed(2).replace(".", ",")), " total")), React.createElement("div", {
+  }, "R$ ", ((parseFloat(formAvulso.valor) || 0) * (parseInt(formAvulso.parcelas) || 1)).toFixed(2).replace(".", ",")), " total")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, (parseInt(formAvulso.parcelas) || 1) > 1 ? `Serão gerados ${formAvulso.parcelas} lançamentos — um por mês a partir de ${formAvulso.data || "hoje"}, cada um de R$ ${formAvulso.valor || "0"}.` : "Lançamento único. Aumente para gerar parcelas mensais automáticas.")), React.createElement("div", {
+  }, (parseInt(formAvulso.parcelas) || 1) > 1 ? `Serão gerados ${formAvulso.parcelas} lançamentos — um por mês a partir de ${formAvulso.data || "hoje"}, cada um de R$ ${formAvulso.valor || "0"}.` : "Lançamento único. Aumente para gerar parcelas mensais automáticas.")), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("div", {
+  }, "Status"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["pago", formAvulso.tipo === "receita" ? "✓ Recebido" : "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["pago", formAvulso.tipo === "receita" ? "✓ Recebido" : "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormAvulso({
@@ -12477,14 +12766,14 @@ function FinanceiroPessoal({
       fontSize: 13,
       fontFamily: "var(--font-body)"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xF5es"), React.createElement("input", {
+  }, "Observa\xE7\xF5es"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formAvulso.obs || "",
     onChange: e => setFormAvulso({
@@ -12492,24 +12781,24 @@ function FinanceiroPessoal({
       obs: e.target.value
     }),
     placeholder: "Opcional..."
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end",
       marginTop: 16
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => {
       setModal(false);
       setEditando(null);
     }
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvarAvulso,
     disabled: salvando
-  }, salvando ? "Salvando..." : editando ? "Salvar" : "Lançar")))), modal === "recorrente" && React.createElement("div", {
+  }, salvando ? "Salvando..." : editando ? "Salvar" : "Lançar")))), modal === "recorrente" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -12521,7 +12810,7 @@ function FinanceiroPessoal({
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -12532,20 +12821,20 @@ function FinanceiroPessoal({
       overflowY: "auto"
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, editando ? "Editar" : "Novo", " Lan\xE7amento Recorrente"), React.createElement("button", {
+  }, editando ? "Editar" : "Novo", " Lan\xE7amento Recorrente"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setModal(false);
       setEditando(null);
@@ -12555,28 +12844,28 @@ function FinanceiroPessoal({
       border: "none",
       cursor: "pointer"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo"), React.createElement("div", {
+  }, "Tipo"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["receita", "↓ Receita", "#059669"], ["despesa", "↑ Despesa", "#dc2626"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["receita", "↓ Receita", "#059669"], ["despesa", "↑ Despesa", "#dc2626"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormRecorr({
@@ -12597,26 +12886,26 @@ function FinanceiroPessoal({
       fontSize: 13,
       fontFamily: "var(--font-body)"
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Categoria"), React.createElement("select", {
+  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formRecorr.categoria,
     onChange: e => setFormRecorr({
       ...formRecorr,
       categoria: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), (formRecorr.tipo === "receita" ? catsReceita : catsDespesa).map(c => React.createElement("option", {
+  }, "Selecionar..."), (formRecorr.tipo === "receita" ? catsReceita : catsDespesa).map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c)))), React.createElement("div", {
+  }, c)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Descri\xE7\xE3o"), React.createElement("input", {
+  }, "Descri\xE7\xE3o"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formRecorr.descricao || "",
     onChange: e => setFormRecorr({
@@ -12624,11 +12913,11 @@ function FinanceiroPessoal({
       descricao: e.target.value
     }),
     placeholder: "Ex: Aluguel ap. 302"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Valor Previsto (R$)"), React.createElement("input", {
+  }, "Valor Previsto (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formRecorr.valorPrevisto,
@@ -12637,24 +12926,24 @@ function FinanceiroPessoal({
       valorPrevisto: e.target.value
     }),
     placeholder: "0,00"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Recorr\xEAncia"), React.createElement("select", {
+  }, "Recorr\xEAncia"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formRecorr.recorrencia,
     onChange: e => setFormRecorr({
       ...formRecorr,
       recorrencia: e.target.value
     })
-  }, RECORR.map(r => React.createElement("option", {
+  }, RECORR.map(r => /*#__PURE__*/React.createElement("option", {
     key: r
-  }, r)))), React.createElement("div", {
+  }, r)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Dia de Vencimento"), React.createElement("input", {
+  }, "Dia de Vencimento"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "1",
@@ -12665,11 +12954,11 @@ function FinanceiroPessoal({
       diaVencimento: e.target.value
     }),
     placeholder: "10"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "In\xEDcio"), React.createElement("input", {
+  }, "In\xEDcio"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "month",
     value: formRecorr.mesInicio,
@@ -12677,35 +12966,35 @@ function FinanceiroPessoal({
       ...formRecorr,
       mesInicio: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("select", {
+  }, "Status"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formRecorr.ativo ? "ativo" : "inativo",
     onChange: e => setFormRecorr({
       ...formRecorr,
       ativo: e.target.value === "ativo"
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: "ativo"
-  }, "Ativo"), React.createElement("option", {
+  }, "Ativo"), /*#__PURE__*/React.createElement("option", {
     value: "inativo"
-  }, "Inativo"))), React.createElement("div", {
+  }, "Inativo"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Dura\xE7\xE3o"), React.createElement("div", {
+  }, "Dura\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginBottom: 8
     }
-  }, [["ind", "♾️ Indeterminado"], ["fixa", "📅 Parcelas fixas"]].map(([v, l]) => React.createElement("button", {
+  }, [["ind", "♾️ Indeterminado"], ["fixa", "📅 Parcelas fixas"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormRecorr({
@@ -12726,13 +13015,13 @@ function FinanceiroPessoal({
       background: (v === "ind" ? formRecorr.indeterminado : !formRecorr.indeterminado) ? "var(--purple-soft)" : "white",
       color: (v === "ind" ? formRecorr.indeterminado : !formRecorr.indeterminado) ? "var(--purple)" : "#6b7280"
     }
-  }, l))), !formRecorr.indeterminado && React.createElement("div", {
+  }, l))), !formRecorr.indeterminado && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       alignItems: "center"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "1",
@@ -12746,47 +13035,47 @@ function FinanceiroPessoal({
     style: {
       width: 90
     }
-  }), React.createElement("span", {
+  }), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, "parcela(s) \u2014 encerra automaticamente ap\xF3s a \xFAltima"))), React.createElement("div", {
+  }, "parcela(s) \u2014 encerra automaticamente ap\xF3s a \xFAltima"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Centro de Custo"), React.createElement("select", {
+  }, "Centro de Custo"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formRecorr.centroCusto || "",
     onChange: e => setFormRecorr({
       ...formRecorr,
       centroCusto: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Nenhum (pessoal geral)"), CENTROS_CUSTO.map(c => React.createElement("option", {
+  }, "Nenhum (pessoal geral)"), CENTROS_CUSTO.map(c => /*#__PURE__*/React.createElement("option", {
     key: c
-  }, c))))), React.createElement("div", {
+  }, c))))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end",
       marginTop: 16
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => {
       setModal(false);
       setEditando(null);
     }
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvarRecorrente,
     disabled: salvando
-  }, salvando ? "Salvando..." : editando ? "Salvar" : "Cadastrar")))), modal === "categoria" && React.createElement("div", {
+  }, salvando ? "Salvando..." : editando ? "Salvar" : "Cadastrar")))), modal === "categoria" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -12798,7 +13087,7 @@ function FinanceiroPessoal({
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -12809,36 +13098,36 @@ function FinanceiroPessoal({
       overflowY: "auto"
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, "Gerenciar Categorias"), React.createElement("button", {
+  }, "Gerenciar Categorias"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModal(false),
     style: {
       background: "none",
       border: "none",
       cursor: "pointer"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginBottom: 16
     }
-  }, React.createElement("select", {
+  }, /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     style: {
       width: 120,
@@ -12849,11 +13138,11 @@ function FinanceiroPessoal({
       ...novaCategoria,
       tipo: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: "receita"
-  }, "Receita"), React.createElement("option", {
+  }, "Receita"), /*#__PURE__*/React.createElement("option", {
     value: "despesa"
-  }, "Despesa")), React.createElement("input", {
+  }, "Despesa")), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     style: {
       flex: 1
@@ -12865,26 +13154,26 @@ function FinanceiroPessoal({
     }),
     placeholder: "Nova categoria...",
     onKeyDown: e => e.key === "Enter" && salvarCategoria()
-  }), React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvarCategoria
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 6
     }
-  }, categorias.length === 0 && React.createElement("div", {
+  }, categorias.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       textAlign: "center",
       padding: 20
     }
-  }, "Nenhuma categoria personalizada ainda."), categorias.map(c => React.createElement("div", {
+  }, "Nenhuma categoria personalizada ainda."), categorias.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
       display: "flex",
@@ -12896,7 +13185,7 @@ function FinanceiroPessoal({
       border: "1px solid",
       borderColor: c.tipo === "receita" ? "#86efac" : "#fca5a5"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       fontWeight: 600,
@@ -12905,22 +13194,22 @@ function FinanceiroPessoal({
       padding: "2px 8px",
       borderRadius: 10
     }
-  }, c.tipo), React.createElement("span", {
+  }, c.tipo), /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
       fontSize: 14
     }
-  }, c.nome), React.createElement("button", {
+  }, c.nome), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "4px 8px",
       color: "var(--danger)"
     },
     onClick: () => excluirCategoria(c.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))))), React.createElement("div", {
+  }))))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 16,
       padding: 12,
@@ -12931,6 +13220,10 @@ function FinanceiroPessoal({
     }
   }, "As categorias padr\xE3o j\xE1 est\xE3o inclusas (Aluguel, Contador, Impostos, etc.). Aqui voc\xEA adiciona categorias extras."))));
 }
+
+// ═══════════════════════════════════════════════════════
+// ALUNOS EM SUPERVISÃO
+// ═══════════════════════════════════════════════════════
 function Alunos() {
   const [alunos, setAlunos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12985,7 +13278,7 @@ function Alunos() {
       const up = {
         ...dados
       };
-      if (senha) up.senha = senha;
+      if (senha) up.senha = senha; // só atualiza senha se preenchida
       await db.collection("clinica_alunos").doc(editando).update(up);
     } else {
       await db.collection("clinica_alunos").add({
@@ -13029,25 +13322,25 @@ function Alunos() {
     setEditando(a.id);
     setModal(true);
   }
-  if (loading) return React.createElement(Spinner, null);
-  return React.createElement("div", null, React.createElement("div", {
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header",
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-start"
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Alunos em Supervis\xE3o"), React.createElement("div", {
+  }, "Alunos em Supervis\xE3o"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, alunos.filter(a => a.status === "ativo").length, " aluno(s) cadastrado(s)")), React.createElement("div", {
+  }, alunos.filter(a => a.status === "ativo").length, " aluno(s) cadastrado(s)")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       flexWrap: "wrap"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12
@@ -13059,7 +13352,7 @@ function Alunos() {
         setTimeout(() => setLinkCopiado(false), 2500);
       }).catch(() => prompt("Copie o texto:", texto));
     }
-  }, linkCopiado ? "✓ Texto copiado!" : "📋 Link de Cadastro"), React.createElement("button", {
+  }, linkCopiado ? "✓ Texto copiado!" : "📋 Link de Cadastro"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => {
       setForm({
@@ -13074,10 +13367,10 @@ function Alunos() {
       setEditando(null);
       setModal(true);
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "user-plus",
     size: 16
-  }), " Cadastrar Aluno"))), pendentes.length > 0 && React.createElement("div", {
+  }), " Cadastrar Aluno"))), pendentes.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef3c7",
       border: "1px solid #f59e0b",
@@ -13090,19 +13383,19 @@ function Alunos() {
       flexWrap: "wrap",
       gap: 10
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
       color: "#92400e"
     }
-  }, "\uD83D\uDD14 ", pendentes.length, " solicita\xE7\xE3o(\xF5es) pendente(s)"), React.createElement("div", {
+  }, "\uD83D\uDD14 ", pendentes.length, " solicita\xE7\xE3o(\xF5es) pendente(s)"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#78350f",
       marginTop: 2
     }
-  }, "Alunos que se cadastraram pelo link e aguardam sua aprova\xE7\xE3o.")), React.createElement("button", {
+  }, "Alunos que se cadastraram pelo link e aguardam sua aprova\xE7\xE3o.")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
@@ -13110,14 +13403,14 @@ function Alunos() {
       border: "1px solid #f59e0b"
     },
     onClick: () => setFiltro("pendente")
-  }, "Ver pendentes")), React.createElement("div", {
+  }, "Ver pendentes")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 12,
       marginBottom: 20,
       flexWrap: "wrap"
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     style: {
       flex: 1,
@@ -13126,11 +13419,11 @@ function Alunos() {
     placeholder: "Buscar por nome ou e-mail...",
     value: busca,
     onChange: e => setBusca(e.target.value)
-  }), [["todos", "Todos"], ["ativo", "Ativos"], ["pendente", "Pendentes"], ["inativo", "Inativos"]].map(([f, l]) => React.createElement("button", {
+  }), [["todos", "Todos"], ["ativo", "Ativos"], ["pendente", "Pendentes"], ["inativo", "Inativos"]].map(([f, l]) => /*#__PURE__*/React.createElement("button", {
     key: f,
     className: "btn " + (filtro === f ? "btn-purple" : "btn-ghost"),
     onClick: () => setFiltro(f)
-  }, l, " ", f === "pendente" && pendentes.length > 0 && React.createElement("span", {
+  }, l, " ", f === "pendente" && pendentes.length > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       background: "#f59e0b",
       color: "white",
@@ -13140,27 +13433,27 @@ function Alunos() {
       fontWeight: 700,
       marginLeft: 4
     }
-  }, pendentes.length)))), filtrados.length === 0 ? React.createElement("div", {
+  }, pendentes.length)))), filtrados.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 48,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "graduation-cap",
     size: 40
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
-  }, busca ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado ainda.")) : React.createElement("div", {
+  }, busca ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado ainda.")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 10
     }
-  }, filtrados.map(a => React.createElement("div", {
+  }, filtrados.map(a => /*#__PURE__*/React.createElement("div", {
     key: a.id,
     className: "card",
     style: {
@@ -13170,7 +13463,7 @@ function Alunos() {
       padding: "14px 20px",
       borderLeft: a.status === "pendente" ? "4px solid #f59e0b" : a.status === "inativo" ? "4px solid #9ca3af" : "4px solid transparent"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 42,
       height: 42,
@@ -13184,30 +13477,30 @@ function Alunos() {
       flexShrink: 0,
       fontSize: 16
     }
-  }, (a.nome || "?")[0].toUpperCase()), React.createElement("div", {
+  }, (a.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       minWidth: 0
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 8,
       flexWrap: "wrap"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 600
     }
-  }, a.nome), React.createElement("span", {
+  }, a.nome), /*#__PURE__*/React.createElement("span", {
     className: "badge " + (a.status === "ativo" ? "badge-green" : a.status === "pendente" ? "badge-yellow" : "badge-gray"),
     style: a.status === "pendente" ? {
       background: "#fef3c7",
       color: "#92400e",
       border: "1px solid #f59e0b"
     } : {}
-  }, a.status === "ativo" ? "Ativo" : a.status === "pendente" ? "⏳ Pendente" : "Inativo"), a.origemCadastro === "auto-cadastro" && React.createElement("span", {
+  }, a.status === "ativo" ? "Ativo" : a.status === "pendente" ? "⏳ Pendente" : "Inativo"), a.origemCadastro === "auto-cadastro" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
       color: "var(--text-muted)",
@@ -13215,7 +13508,7 @@ function Alunos() {
       borderRadius: 20,
       padding: "2px 8px"
     }
-  }, "auto-cadastro")), React.createElement("div", {
+  }, "auto-cadastro")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
@@ -13224,20 +13517,20 @@ function Alunos() {
       marginTop: 2,
       flexWrap: "wrap"
     }
-  }, React.createElement("span", null, "\u2709 ", a.email), a.instituicao && React.createElement("span", null, "\uD83C\uDFDB ", a.instituicao, a.semestre ? " · " + a.semestre : ""), React.createElement("span", null, "\uD83D\uDC64 ", a.pacientesVinculados || 0, " paciente(s)"))), React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u2709 ", a.email), a.instituicao && /*#__PURE__*/React.createElement("span", null, "\uD83C\uDFDB ", a.instituicao, a.semestre ? " · " + a.semestre : ""), /*#__PURE__*/React.createElement("span", null, "\uD83D\uDC64 ", a.pacientesVinculados || 0, " paciente(s)"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
       flexWrap: "wrap"
     }
-  }, a.status === "pendente" && React.createElement("button", {
+  }, a.status === "pendente" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       fontSize: 12,
       padding: "6px 14px"
     },
     onClick: () => alterarStatus(a.id, "ativo")
-  }, "\u2713 Aprovar"), a.status === "ativo" && React.createElement("button", {
+  }, "\u2713 Aprovar"), a.status === "ativo" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 11,
@@ -13245,7 +13538,7 @@ function Alunos() {
       color: "#6b7280"
     },
     onClick: () => alterarStatus(a.id, "inativo")
-  }, "Inativar"), a.status === "inativo" && React.createElement("button", {
+  }, "Inativar"), a.status === "inativo" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 11,
@@ -13253,7 +13546,7 @@ function Alunos() {
       color: "#16a34a"
     },
     onClick: () => alterarStatus(a.id, "ativo")
-  }, "Reativar"), React.createElement("button", {
+  }, "Reativar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
@@ -13261,29 +13554,29 @@ function Alunos() {
       padding: "6px 12px"
     },
     onClick: () => setDetalhe(a)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "eye",
     size: 13
-  }), " Ver"), React.createElement("button", {
+  }), " Ver"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "6px 10px"
     },
     onClick: () => abrirEditar(a)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "6px 10px",
       color: "var(--danger)"
     },
     onClick: () => excluir(a.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  })))))), modal && React.createElement("div", {
+  })))))), modal && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -13295,7 +13588,7 @@ function Alunos() {
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -13306,21 +13599,21 @@ function Alunos() {
       overflowY: "auto"
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 20
     }
-  }, editando ? "Editar Aluno" : "Cadastrar Novo Aluno"), React.createElement("div", {
+  }, editando ? "Editar Aluno" : "Cadastrar Novo Aluno"), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "NOME COMPLETO *"), React.createElement("input", {
+  }, "NOME COMPLETO *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.nome,
     onChange: e => setForm({
@@ -13329,18 +13622,18 @@ function Alunos() {
     }),
     placeholder: "Nome do aluno",
     autoFocus: true
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14,
       marginBottom: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "E-MAIL *"), React.createElement("input", {
+  }, "E-MAIL *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "email",
     value: form.email,
@@ -13350,11 +13643,11 @@ function Alunos() {
     }),
     placeholder: "aluno@email.com",
     disabled: !!editando
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "TELEFONE"), React.createElement("input", {
+  }, "TELEFONE"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.telefone,
     onChange: e => setForm({
@@ -13362,18 +13655,18 @@ function Alunos() {
       telefone: e.target.value
     }),
     placeholder: "(00) 9 0000-0000"
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14,
       marginBottom: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "INSTITUI\xC7\xC3O"), React.createElement("input", {
+  }, "INSTITUI\xC7\xC3O"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.instituicao,
     onChange: e => setForm({
@@ -13381,11 +13674,11 @@ function Alunos() {
       instituicao: e.target.value
     }),
     placeholder: "Nome da faculdade"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "SEMESTRE"), React.createElement("input", {
+  }, "SEMESTRE"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.semestre,
     onChange: e => setForm({
@@ -13393,14 +13686,14 @@ function Alunos() {
       semestre: e.target.value
     }),
     placeholder: "Ex: 8\xBA semestre"
-  }))), !editando && React.createElement("div", {
+  }))), !editando && /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "SENHA DE ACESSO *"), React.createElement("input", {
+  }, "SENHA DE ACESSO *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "password",
     value: form.senha,
@@ -13409,14 +13702,14 @@ function Alunos() {
       senha: e.target.value
     }),
     placeholder: "Senha para o aluno acessar o portal"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "OBSERVA\xC7\xD5ES"), React.createElement(TextAreaVoz, {
+  }, "OBSERVA\xC7\xD5ES"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 2,
     value: form.obs,
@@ -13425,20 +13718,20 @@ function Alunos() {
       obs: e.target.value
     }),
     placeholder: "Notas sobre o aluno..."
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModal(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar,
     disabled: salvando
-  }, salvando ? "Salvando..." : editando ? "Salvar" : "Cadastrar aluno")))), detalhe && React.createElement("div", {
+  }, salvando ? "Salvando..." : editando ? "Salvar" : "Cadastrar aluno")))), detalhe && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -13449,7 +13742,7 @@ function Alunos() {
       zIndex: 500
     },
     onClick: () => setDetalhe(null)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       width: "100%",
@@ -13459,24 +13752,24 @@ function Alunos() {
       padding: 28
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
       marginBottom: 20
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "graduation-cap",
     size: 20
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       flex: 1
     }
-  }, detalhe.nome), React.createElement("button", {
+  }, detalhe.nome), /*#__PURE__*/React.createElement("button", {
     onClick: () => setDetalhe(null),
     style: {
       background: "none",
@@ -13484,63 +13777,63 @@ function Alunos() {
       cursor: "pointer",
       color: "var(--gray-400)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginBottom: 20
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     className: "badge " + (detalhe.status === "ativo" ? "badge-green" : "badge-gray")
-  }, detalhe.status === "ativo" ? "Ativo" : "Inativo"), detalhe.instituicao && React.createElement("span", {
+  }, detalhe.status === "ativo" ? "Ativo" : "Inativo"), detalhe.instituicao && /*#__PURE__*/React.createElement("span", {
     className: "badge badge-purple"
-  }, detalhe.instituicao)), React.createElement("div", {
+  }, detalhe.instituicao)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 16,
       fontSize: 14
     }
-  }, detalhe.email && React.createElement("div", null, React.createElement("div", {
+  }, detalhe.email && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "E-mail"), React.createElement("div", {
+  }, "E-mail"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500
     }
-  }, detalhe.email)), detalhe.telefone && React.createElement("div", null, React.createElement("div", {
+  }, detalhe.email)), detalhe.telefone && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Telefone"), React.createElement("div", {
+  }, "Telefone"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500
     }
-  }, detalhe.telefone)), detalhe.instituicao && React.createElement("div", null, React.createElement("div", {
+  }, detalhe.telefone)), detalhe.instituicao && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Instituicao"), React.createElement("div", {
+  }, "Instituicao"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500
     }
-  }, detalhe.instituicao)), detalhe.semestre && React.createElement("div", null, React.createElement("div", {
+  }, detalhe.instituicao)), detalhe.semestre && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Semestre"), React.createElement("div", {
+  }, "Semestre"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 500
     }
-  }, detalhe.semestre))), detalhe.obs && React.createElement("div", {
+  }, detalhe.semestre))), detalhe.obs && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 16,
       padding: 12,
@@ -13551,6 +13844,11 @@ function Alunos() {
     }
   }, detalhe.obs))));
 }
+
+// ═══════════════════════════════════════════════════════
+// TERAPIA DE CASAIS
+// ═══════════════════════════════════════════════════════
+// ── Botão de Emergência ──
 function BotaoEmergenciaAdmin({
   casalId,
   nomeCasal
@@ -13599,7 +13897,7 @@ function BotaoEmergenciaAdmin({
       minute: "2-digit"
     });
   }
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff5f5",
       border: "2px solid #fecaca",
@@ -13607,37 +13905,37 @@ function BotaoEmergenciaAdmin({
       padding: 16,
       marginTop: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 8,
       marginBottom: 12
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 20
     }
-  }, "\uD83D\uDD34"), React.createElement("div", {
+  }, "\uD83D\uDD34"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
       color: "#dc2626"
     }
-  }, "Bot\xE3o de Emerg\xEAncia")), React.createElement("div", {
+  }, "Bot\xE3o de Emerg\xEAncia")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#6b7280",
       marginBottom: 12,
       lineHeight: 1.6
     }
-  }, "Defina a palavra-c\xF3digo que o casal usar\xE1 para acionar o tempo de pausa durante conflitos."), React.createElement("div", {
+  }, "Defina a palavra-c\xF3digo que o casal usar\xE1 para acionar o tempo de pausa durante conflitos."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginBottom: palavraSalva ? 12 : 0
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: palavra,
     onChange: e => setPalavra(e.target.value.toUpperCase()),
@@ -13649,14 +13947,14 @@ function BotaoEmergenciaAdmin({
       fontSize: 14,
       textTransform: "uppercase"
     }
-  }), React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar,
     disabled: salvando,
     style: {
       whiteSpace: "nowrap"
     }
-  }, salvando ? "..." : salvo ? "✓ Salvo!" : "Salvar")), palavraSalva && React.createElement("div", {
+  }, salvando ? "..." : salvo ? "✓ Salvo!" : "Salvar")), palavraSalva && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#7B00C4",
       borderRadius: 10,
@@ -13664,13 +13962,13 @@ function BotaoEmergenciaAdmin({
       textAlign: "center",
       marginBottom: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "rgba(255,255,255,0.7)",
       marginBottom: 4
     }
-  }, "Palavra ativa para ", nomeCasal), React.createElement("div", {
+  }, "Palavra ativa para ", nomeCasal), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 22,
@@ -13678,14 +13976,14 @@ function BotaoEmergenciaAdmin({
       color: "white",
       letterSpacing: 4
     }
-  }, palavraSalva)), acionamentos.length > 0 && React.createElement("div", null, React.createElement("div", {
+  }, palavraSalva)), acionamentos.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
       color: "#dc2626",
       marginBottom: 6
     }
-  }, "\xDALTIMOS ACIONAMENTOS"), acionamentos.map(a => React.createElement("div", {
+  }, "\xDALTIMOS ACIONAMENTOS"), acionamentos.map(a => /*#__PURE__*/React.createElement("div", {
     key: a.id,
     style: {
       display: "flex",
@@ -13694,11 +13992,11 @@ function BotaoEmergenciaAdmin({
       padding: "5px 0",
       borderBottom: "1px solid #fecaca"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#6b7280"
     }
-  }, fmtDH(a.createdAt)), React.createElement("span", {
+  }, fmtDH(a.createdAt)), /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#dc2626",
       fontWeight: 600
@@ -13799,80 +14097,80 @@ function Laudos() {
       status: "arquivado"
     });
   }
-  if (loading) return React.createElement(Spinner, null);
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
   const totalEnviado = laudos.filter(l => l.status === "enviado").length;
   const totalRascunho = laudos.filter(l => l.status === "rascunho").length;
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header",
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "flex-start"
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Laudos"), React.createElement("div", {
+  }, "Laudos"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, laudos.length, " laudo(s) \xB7 ", totalEnviado, " enviado(s) ao paciente")), React.createElement("button", {
+  }, laudos.length, " laudo(s) \xB7 ", totalEnviado, " enviado(s) ao paciente")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => setModal(true)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }), " Novo Laudo")), React.createElement("div", {
+  }), " Novo Laudo")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
       gap: 12,
       marginBottom: 24
     }
-  }, [["Rascunho", totalRascunho, "#b45309", "#fef3c7"], ["Enviado ao Paciente", totalEnviado, "#065f46", "#d1fae5"], ["Total", laudos.length, "#7B00C4", "var(--purple-soft)"]].map(([l, n, cor, bg]) => React.createElement("div", {
+  }, [["Rascunho", totalRascunho, "#b45309", "#fef3c7"], ["Enviado ao Paciente", totalEnviado, "#065f46", "#d1fae5"], ["Total", laudos.length, "#7B00C4", "var(--purple-soft)"]].map(([l, n, cor, bg]) => /*#__PURE__*/React.createElement("div", {
     key: l,
     className: "metric-card",
     style: {
       textAlign: "center",
       background: bg
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "metric-value",
     style: {
       fontSize: 28,
       color: cor
     }
-  }, n), React.createElement("div", {
+  }, n), /*#__PURE__*/React.createElement("div", {
     className: "metric-label",
     style: {
       color: cor
     }
-  }, l)))), laudos.length === 0 ? React.createElement("div", {
+  }, l)))), laudos.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 60,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "file-text",
     size: 48
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontWeight: 500
     }
-  }, "Nenhum laudo criado ainda"), React.createElement("p", {
+  }, "Nenhum laudo criado ainda"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       marginTop: 8,
       marginBottom: 20,
       color: "var(--text-muted)"
     }
-  }, "Crie o laudo no Word/Google Docs, salve como PDF no Drive, cole o link aqui e envie ao paciente."), React.createElement("button", {
+  }, "Crie o laudo no Word/Google Docs, salve como PDF no Drive, cole o link aqui e envie ao paciente."), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => setModal(true)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 14
-  }), " Criar primeiro laudo")) : React.createElement("div", {
+  }), " Criar primeiro laudo")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -13880,19 +14178,19 @@ function Laudos() {
     }
   }, laudos.map(l => {
     const st = STATUS_CONFIG[l.status] || STATUS_CONFIG.rascunho;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: l.id,
       className: "card",
       style: {
         padding: "18px 20px"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "flex-start",
         gap: 14
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: 44,
         height: 44,
@@ -13903,15 +14201,15 @@ function Laudos() {
         justifyContent: "center",
         flexShrink: 0
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: st.icon,
       size: 20
-    })), React.createElement("div", {
+    })), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         minWidth: 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -13919,12 +14217,12 @@ function Laudos() {
         flexWrap: "wrap",
         marginBottom: 4
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontWeight: 700,
         fontSize: 15
       }
-    }, l.tipo), React.createElement("span", {
+    }, l.tipo), /*#__PURE__*/React.createElement("span", {
       style: {
         background: st.bg,
         color: st.cor,
@@ -13933,7 +14231,7 @@ function Laudos() {
         fontSize: 11,
         fontWeight: 600
       }
-    }, st.label)), React.createElement("div", {
+    }, st.label)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
@@ -13941,19 +14239,19 @@ function Laudos() {
         gap: 12,
         flexWrap: "wrap"
       }
-    }, React.createElement("span", null, "\uD83D\uDC64 ", l.pacienteNome || "—"), l.createdAt?.seconds && React.createElement("span", null, "\uD83D\uDCC5 ", new Date(l.createdAt.seconds * 1000).toLocaleDateString("pt-BR")), l.enviadoEm && React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDC64 ", l.pacienteNome || "—"), l.createdAt?.seconds && /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCC5 ", new Date(l.createdAt.seconds * 1000).toLocaleDateString("pt-BR")), l.enviadoEm && /*#__PURE__*/React.createElement("span", {
       style: {
         color: "#059669",
         fontWeight: 600
       }
-    }, "\u2709 Enviado em ", new Date(l.enviadoEm).toLocaleDateString("pt-BR"))), l.observacoes && React.createElement("div", {
+    }, "\u2709 Enviado em ", new Date(l.enviadoEm).toLocaleDateString("pt-BR"))), l.observacoes && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)",
         marginTop: 4,
         fontStyle: "italic"
       }
-    }, l.observacoes))), React.createElement("div", {
+    }, l.observacoes))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
@@ -13962,7 +14260,7 @@ function Laudos() {
         borderTop: "1px solid var(--gray-100)",
         paddingTop: 12
       }
-    }, l.linkDrive && React.createElement("a", {
+    }, l.linkDrive && /*#__PURE__*/React.createElement("a", {
       href: l.linkDrive,
       target: "_blank",
       rel: "noreferrer",
@@ -13974,20 +14272,20 @@ function Laudos() {
         alignItems: "center",
         gap: 6
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "external-link",
       size: 13
-    }), " Ver PDF"), l.status === "rascunho" && React.createElement("button", {
+    }), " Ver PDF"), l.status === "rascunho" && /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       style: {
         fontSize: 12
       },
       onClick: () => enviarParaPaciente(l),
       disabled: enviando === l.id
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "send",
       size: 13
-    }), " ", enviando === l.id ? "Enviando..." : "Enviar ao Paciente"), l.status === "enviado" && React.createElement("div", {
+    }), " ", enviando === l.id ? "Enviando..." : "Enviar ao Paciente"), l.status === "enviado" && /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
@@ -13996,19 +14294,19 @@ function Laudos() {
         color: "#059669",
         fontWeight: 600
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "check-circle",
       size: 14
-    }), " Dispon\xEDvel no portal do paciente"), l.status !== "arquivado" && React.createElement("button", {
+    }), " Dispon\xEDvel no portal do paciente"), l.status !== "arquivado" && /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       style: {
         fontSize: 12
       },
       onClick: () => arquivar(l.id)
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "archive",
       size: 13
-    }), " Arquivar"), React.createElement("button", {
+    }), " Arquivar"), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       style: {
         fontSize: 12,
@@ -14016,11 +14314,11 @@ function Laudos() {
         marginLeft: "auto"
       },
       onClick: () => excluir(l.id)
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "trash-2",
       size: 13
     }))));
-  })), modal && React.createElement("div", {
+  })), modal && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -14032,7 +14330,7 @@ function Laudos() {
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -14041,20 +14339,20 @@ function Laudos() {
       maxWidth: 500
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, "Novo Laudo"), React.createElement("button", {
+  }, "Novo Laudo"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModal(false),
     style: {
       background: "none",
@@ -14062,53 +14360,53 @@ function Laudos() {
       cursor: "pointer",
       color: "var(--gray-400)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo de Laudo *"), React.createElement("select", {
+  }, "Tipo de Laudo *"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.tipo,
     onChange: e => setForm({
       ...form,
       tipo: e.target.value
     })
-  }, TIPOS_LAUDO.map(t => React.createElement("option", {
+  }, TIPOS_LAUDO.map(t => /*#__PURE__*/React.createElement("option", {
     key: t,
     value: t
-  }, t)))), React.createElement("div", {
+  }, t)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Paciente *"), React.createElement("select", {
+  }, "Paciente *"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.pacienteId,
     onChange: e => setForm({
       ...form,
       pacienteId: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar paciente..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => React.createElement("option", {
+  }, "Selecionar paciente..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/React.createElement("option", {
     key: p.id,
     value: p.id
-  }, p.nome)))), React.createElement("div", {
+  }, p.nome)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Link do PDF (Google Drive) *"), React.createElement("input", {
+  }, "Link do PDF (Google Drive) *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.linkDrive,
     onChange: e => setForm({
@@ -14116,20 +14414,20 @@ function Laudos() {
       linkDrive: e.target.value
     }),
     placeholder: "https://drive.google.com/file/d/..."
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, "No Drive: bot\xE3o direito no arquivo \u2192 \"Obter link\" \u2192 cole aqui")), React.createElement("div", {
+  }, "No Drive: bot\xE3o direito no arquivo \u2192 \"Obter link\" \u2192 cole aqui")), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xF5es internas (opcional)"), React.createElement(TextAreaVoz, {
+  }, "Observa\xE7\xF5es internas (opcional)"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 2,
     value: form.observacoes,
@@ -14138,24 +14436,29 @@ function Laudos() {
       observacoes: e.target.value
     }),
     placeholder: "Notas internas sobre este laudo..."
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModal(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar,
     disabled: salvando
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "save",
     size: 15
   }), " ", salvando ? "Salvando..." : "Salvar Laudo")))));
 }
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ═══════════════════════════════════════════════════════
+// ─── COMISSÕES ────────────────────────────────────────────
 function Comissoes({
   user
 }) {
@@ -14166,6 +14469,8 @@ function Comissoes({
     return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, "0")}`;
   });
   const [pagando, setPagando] = useState(false);
+
+  // Configurações financeiras editáveis (clinica_config/comissoes)
   const [config, setConfig] = useState({
     ...CONFIG_FIN_PADRAO
   });
@@ -14174,6 +14479,8 @@ function Comissoes({
     ...CONFIG_FIN_PADRAO
   });
   const [salvandoConfig, setSalvandoConfig] = useState(false);
+
+  // Parceiras
   const [parceiras, setParceiras] = useState([]);
   const [modalParceira, setModalParceira] = useState(false);
   const [editandoParceira, setEditandoParceira] = useState(null);
@@ -14262,19 +14569,27 @@ function Comissoes({
     });
   }
   const meses = [...new Set(comissoes.map(c => c.mesRef))].sort().reverse();
-  if (!meses.includes(mesSel) && meses.length > 0) {}
+  if (!meses.includes(mesSel) && meses.length > 0) {
+    // mantém o mês selecionado mesmo sem comissões
+  }
   const comissoesMes = comissoes.filter(c => c.mesRef === mesSel);
+  // Secretária: registros sem responsável definido (vendas dela)
   const comissoesSecretaria = comissoesMes.filter(c => !c.responsavel);
+  // Repasses: registros com responsável (parceiras, estagiária do social)
   const repassesMes = comissoesMes.filter(c => c.responsavel);
   const responsaveis = [...new Set(repassesMes.map(c => c.responsavel))];
   const totalComissoes = comissoesSecretaria.reduce((a, c) => a + (c.valorComissao || 0), 0);
+  // Pendentes × Pagas — o ciclo zera a cada pagamento
   const comissoesPend = comissoesSecretaria.filter(c => c.status !== "pago");
   const comissoesPagas = comissoesSecretaria.filter(c => c.status === "pago");
   const totalPend = comissoesPend.reduce((a, c) => a + (c.valorComissao || 0), 0);
   const totalPagas = comissoesPagas.reduce((a, c) => a + (c.valorComissao || 0), 0);
+
+  // Pagamentos já realizados neste mês (histórico)
   const pagamentosDoMes = lancamentos.filter(l => l.tipo_lancamento === "salario_secretaria" && l.mesRef === mesSel);
   const pagamentoMes = pagamentosDoMes[0] || null;
   const salarioJaPago = !!pagamentoMes;
+  // Ciclo atual: salário fixo entra só no 1º pagamento do mês; depois, só comissões novas
   const totalAPagar = (salarioJaPago ? 0 : SALARIO_FIXO) + totalPend;
   const [mesLabel] = useState(() => {
     const [ano, mes] = mesSel.split("-");
@@ -14295,6 +14610,7 @@ function Comissoes({
     if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".", ",")} para ${config.nomeSecretaria} (${descr}) em ${getMesLabel(mesSel)}?`)) return;
     setPagando(true);
     const hoje = new Date().toISOString().slice(0, 10);
+    // Lança como despesa da clínica
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento: "salario_secretaria",
       tipo: salarioJaPago ? "Comissões Secretária (adicional)" : "Salário Secretária",
@@ -14308,6 +14624,7 @@ function Comissoes({
       obs: `${salarioJaPago ? "Comissões adicionais" : "Salário"} ${getMesLabel(mesSel)} — ${config.nomeSecretaria}`,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Marca apenas as comissões pendentes da secretária como pagas
     const batch = db.batch();
     comissoesPend.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), {
       status: "pago",
@@ -14325,6 +14642,7 @@ function Comissoes({
     if (!confirm(`Confirma repasse de R$ ${totalRep.toFixed(2).replace(".", ",")} para ${responsavel} em ${getMesLabel(mesSel)}?${parc?.pix ? `\nPIX: ${parc.pix}` : ""}`)) return;
     setPagando(true);
     const hoje = new Date().toISOString().slice(0, 10);
+    // Lança como despesa da clínica
     await db.collection("clinica_lancamentos").add({
       tipo_lancamento: "repasse_parceira",
       tipo: `Repasse — ${responsavel}`,
@@ -14346,20 +14664,20 @@ function Comissoes({
   }
   const corTipoVenda = t => t === "primeira" ? "#7B00C4" : "#0891b2";
   const labelTipoVenda = t => t === "primeira" ? `🌟 Primeira Venda (${config.percPrimeira}%)` : `🔁 Recorrente (${config.percRecorrente}%)`;
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header"
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Comiss\xF5es \u2014 ", config.nomeSecretaria.split(" ")[0]), React.createElement("div", {
+  }, "Comiss\xF5es \u2014 ", config.nomeSecretaria.split(" ")[0]), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, "Sal\xE1rio fixo R$ ", SALARIO_FIXO.toFixed(2).replace(".", ","), " + comiss\xF5es por vendas \xB7 Repasses a parceiras"))), React.createElement("div", {
+  }, "Sal\xE1rio fixo R$ ", SALARIO_FIXO.toFixed(2).replace(".", ","), " + comiss\xF5es por vendas \xB7 Repasses a parceiras"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       marginBottom: 20,
       flexWrap: "wrap"
     }
-  }, (meses.length > 0 ? meses : [mesSel]).map(m => React.createElement("button", {
+  }, (meses.length > 0 ? meses : [mesSel]).map(m => /*#__PURE__*/React.createElement("button", {
     key: m,
     onClick: () => setMesSel(m),
     style: {
@@ -14373,7 +14691,7 @@ function Comissoes({
       background: m === mesSel ? "var(--purple)" : "var(--gray-100)",
       color: m === mesSel ? "white" : "var(--text)"
     }
-  }, getMesLabel(m)))), user.tipo === "psicologa" && React.createElement("div", {
+  }, getMesLabel(m)))), user.tipo === "psicologa" && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 14,
@@ -14381,18 +14699,18 @@ function Comissoes({
       padding: "16px 20px",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14
     }
-  }, "\u2699\uFE0F Configura\xE7\xF5es de Sal\xE1rio e Percentuais"), !editandoConfig ? React.createElement("button", {
+  }, "\u2699\uFE0F Configura\xE7\xF5es de Sal\xE1rio e Percentuais"), !editandoConfig ? /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setFormConfig({
         ...config
@@ -14410,12 +14728,12 @@ function Comissoes({
       cursor: "pointer",
       fontFamily: "var(--font-body)"
     }
-  }, "\u270F\uFE0F Editar") : React.createElement("div", {
+  }, "\u270F\uFE0F Editar") : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setEditandoConfig(false),
     style: {
       background: "white",
@@ -14428,7 +14746,7 @@ function Comissoes({
       cursor: "pointer",
       fontFamily: "var(--font-body)"
     }
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     onClick: salvarConfig,
     disabled: salvandoConfig,
     style: {
@@ -14442,7 +14760,7 @@ function Comissoes({
       cursor: "pointer",
       fontFamily: "var(--font-body)"
     }
-  }, salvandoConfig ? "Salvando..." : "💾 Salvar"))), !editandoConfig ? React.createElement("div", {
+  }, salvandoConfig ? "Salvando..." : "💾 Salvar"))), !editandoConfig ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
@@ -14451,29 +14769,29 @@ function Comissoes({
       fontSize: 13,
       color: "#374151"
     }
-  }, React.createElement("span", null, "\uD83D\uDC69\u200D\uD83D\uDCBC Secret\xE1ria: ", React.createElement("strong", null, config.nomeSecretaria)), React.createElement("span", null, "\uD83D\uDCB5 Sal\xE1rio fixo: ", React.createElement("strong", null, "R$ ", SALARIO_FIXO.toFixed(2).replace(".", ","))), React.createElement("span", null, "\uD83C\uDF1F Primeira venda: ", React.createElement("strong", null, config.percPrimeira, "%")), React.createElement("span", null, "\uD83D\uDD01 Recorrente: ", React.createElement("strong", null, config.percRecorrente, "%")), React.createElement("span", null, "\uD83E\uDD1D Parceiro (padr\xE3o): ", React.createElement("strong", null, config.percParceiroPadrao, "%"))) : React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDC69\u200D\uD83D\uDCBC Secret\xE1ria: ", /*#__PURE__*/React.createElement("strong", null, config.nomeSecretaria)), /*#__PURE__*/React.createElement("span", null, "\uD83D\uDCB5 Sal\xE1rio fixo: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", SALARIO_FIXO.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", null, "\uD83C\uDF1F Primeira venda: ", /*#__PURE__*/React.createElement("strong", null, config.percPrimeira, "%")), /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD01 Recorrente: ", /*#__PURE__*/React.createElement("strong", null, config.percRecorrente, "%")), /*#__PURE__*/React.createElement("span", null, "\uD83E\uDD1D Parceiro (padr\xE3o): ", /*#__PURE__*/React.createElement("strong", null, config.percParceiroPadrao, "%"))) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
       gap: 12,
       marginTop: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Nome da secret\xE1ria"), React.createElement("input", {
+  }, "Nome da secret\xE1ria"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formConfig.nomeSecretaria,
     onChange: e => setFormConfig({
       ...formConfig,
       nomeSecretaria: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Sal\xE1rio fixo (R$)"), React.createElement("input", {
+  }, "Sal\xE1rio fixo (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formConfig.salarioFixo,
@@ -14481,11 +14799,11 @@ function Comissoes({
       ...formConfig,
       salarioFixo: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "% primeira venda"), React.createElement("input", {
+  }, "% primeira venda"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formConfig.percPrimeira,
@@ -14493,11 +14811,11 @@ function Comissoes({
       ...formConfig,
       percPrimeira: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "% recorrente"), React.createElement("input", {
+  }, "% recorrente"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formConfig.percRecorrente,
@@ -14505,11 +14823,11 @@ function Comissoes({
       ...formConfig,
       percRecorrente: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "% parceiro padr\xE3o"), React.createElement("input", {
+  }, "% parceiro padr\xE3o"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     value: formConfig.percParceiroPadrao,
@@ -14517,94 +14835,94 @@ function Comissoes({
       ...formConfig,
       percParceiroPadrao: e.target.value
     })
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 10
     }
-  }, "Os novos percentuais valem para as pr\xF3ximas vendas; comiss\xF5es j\xE1 registradas n\xE3o mudam.")), React.createElement("div", {
+  }, "Os novos percentuais valem para as pr\xF3ximas vendas; comiss\xF5es j\xE1 registradas n\xE3o mudam.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
       gap: 16,
       marginBottom: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--gray-50)",
       borderRadius: 14,
       padding: "18px 20px",
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 6
     }
-  }, "Sal\xE1rio Fixo"), React.createElement("div", {
+  }, "Sal\xE1rio Fixo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 22,
       fontWeight: 700,
       color: "var(--text)"
     }
-  }, "R$ ", SALARIO_FIXO.toFixed(2).replace(".", ","))), React.createElement("div", {
+  }, "R$ ", SALARIO_FIXO.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--gray-50)",
       borderRadius: 14,
       padding: "18px 20px",
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 6
     }
-  }, "Comiss\xF5es Pendentes"), React.createElement("div", {
+  }, "Comiss\xF5es Pendentes"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 22,
       fontWeight: 700,
       color: "#7B00C4"
     }
-  }, "R$ ", totalPend.toFixed(2).replace(".", ",")), React.createElement("div", {
+  }, "R$ ", totalPend.toFixed(2).replace(".", ",")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, comissoesPend.length, " venda(s) nova(s)", totalPagas > 0 && React.createElement("span", {
+  }, comissoesPend.length, " venda(s) nova(s)", totalPagas > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#16a34a"
     }
-  }, " \xB7 \u2713 R$ ", totalPagas.toFixed(2).replace(".", ","), " j\xE1 pagas no m\xEAs"))), React.createElement("div", {
+  }, " \xB7 \u2713 R$ ", totalPagas.toFixed(2).replace(".", ","), " j\xE1 pagas no m\xEAs"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: totalAPagar === 0 ? "#f0fdf4" : "#faf5ff",
       borderRadius: 14,
       padding: "18px 20px",
       border: `2px solid ${totalAPagar === 0 ? "#16a34a" : "#7B00C4"}`
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
       marginBottom: 6
     }
-  }, "Total a Pagar ", salarioJaPago ? "(novo ciclo)" : ""), React.createElement("div", {
+  }, "Total a Pagar ", salarioJaPago ? "(novo ciclo)" : ""), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 26,
       fontWeight: 800,
       color: totalAPagar === 0 ? "#16a34a" : "#7B00C4"
     }
-  }, totalAPagar === 0 ? "✓ Tudo pago" : `R$ ${totalAPagar.toFixed(2).replace(".", ",")}`), pagamentoMes && React.createElement("div", {
+  }, totalAPagar === 0 ? "✓ Tudo pago" : `R$ ${totalAPagar.toFixed(2).replace(".", ",")}`), pagamentoMes && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#16a34a",
       marginTop: 4,
       fontWeight: 600
     }
-  }, "\xDAltimo pagamento em ", pagamentosDoMes[0].data?.split("-").reverse().join("/"), " \xB7 ", pagamentosDoMes.length, " pagamento(s) no m\xEAs"))), user.tipo === "psicologa" && totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && React.createElement("button", {
+  }, "\xDAltimo pagamento em ", pagamentosDoMes[0].data?.split("-").reverse().join("/"), " \xB7 ", pagamentosDoMes.length, " pagamento(s) no m\xEAs"))), user.tipo === "psicologa" && totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && /*#__PURE__*/React.createElement("button", {
     onClick: pagarSalario,
     disabled: pagando,
     style: {
@@ -14619,21 +14937,21 @@ function Comissoes({
       marginBottom: 24,
       fontFamily: "var(--font-body)"
     }
-  }, pagando ? "Registrando..." : `💰 ${salarioJaPago ? "Pagar Comissões Novas" : "Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".", ",")}`), React.createElement("div", {
+  }, pagando ? "Registrando..." : `💰 ${salarioJaPago ? "Pagar Comissões Novas" : "Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".", ",")}`), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 14,
       border: "1px solid var(--gray-200)",
       overflow: "hidden"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "14px 20px",
       borderBottom: "1px solid var(--gray-200)",
       fontWeight: 700,
       fontSize: 14
     }
-  }, "\uD83D\uDD04 Ciclo Atual (a pagar) \u2014 ", config.nomeSecretaria.split(" ")[0], " \u2014 ", getMesLabel(mesSel)), comissoesPend.length === 0 ? React.createElement("div", {
+  }, "\uD83D\uDD04 Ciclo Atual (a pagar) \u2014 ", config.nomeSecretaria.split(" ")[0], " \u2014 ", getMesLabel(mesSel)), comissoesPend.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "30px 20px",
       textAlign: "center",
@@ -14641,9 +14959,10 @@ function Comissoes({
       fontSize: 13
     }
   }, "\u2713 Nenhuma comiss\xE3o pendente \u2014 novas vendas aparecem aqui e reabrem o pagamento") : comissoesPend.map(c => {
+    // Verificar se o pacote ainda existe
     const pacoteExiste = !c.pacoteId || pacotes.some(p => p.id === c.pacoteId);
     const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef || "—";
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: c.id,
       style: {
         display: "flex",
@@ -14653,22 +14972,22 @@ function Comissoes({
         borderBottom: "1px solid var(--gray-100)",
         background: pacoteExiste ? "white" : "#fef9f0"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 8
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 14
       }
-    }, c.pacienteNome || "—"), !pacoteExiste && React.createElement("span", {
+    }, c.pacienteNome || "—"), !pacoteExiste && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 10,
         fontWeight: 700,
@@ -14677,19 +14996,19 @@ function Comissoes({
         padding: "1px 6px",
         borderRadius: 10
       }
-    }, "\u26A0\uFE0F Pacote n\xE3o encontrado")), React.createElement("div", {
+    }, "\u26A0\uFE0F Pacote n\xE3o encontrado")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, c.tipo, " \xB7 ", dataStr), c.pacoteId && React.createElement("div", {
+    }, c.tipo, " \xB7 ", dataStr), c.pacoteId && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         color: "#9ca3af",
         marginTop: 1
       }
-    }, "Pacote: ", c.pacoteId.slice(0, 8), "..."), React.createElement("span", {
+    }, "Pacote: ", c.pacoteId.slice(0, 8), "..."), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
         fontWeight: 700,
@@ -14700,34 +15019,34 @@ function Comissoes({
         display: "inline-block",
         marginTop: 4
       }
-    }, labelTipoVenda(c.tipoVenda))), React.createElement("div", {
+    }, labelTipoVenda(c.tipoVenda))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 12
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "right"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)"
       }
-    }, "Base: R$ ", (c.valorBase || 0).toFixed(2).replace(".", ",")), React.createElement("div", {
+    }, "Base: R$ ", (c.valorBase || 0).toFixed(2).replace(".", ",")), /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         fontSize: 16,
         color: "#7B00C4"
       }
-    }, "+R$ ", (c.valorComissao || 0).toFixed(2).replace(".", ",")), c.status === "pago" && React.createElement("div", {
+    }, "+R$ ", (c.valorComissao || 0).toFixed(2).replace(".", ",")), c.status === "pago" && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#16a34a",
         fontWeight: 600
       }
-    }, "\u2713 Pago")), user.tipo === "psicologa" && React.createElement("button", {
+    }, "\u2713 Pago")), user.tipo === "psicologa" && /*#__PURE__*/React.createElement("button", {
       title: "Excluir comiss\xE3o",
       onClick: async () => {
         if (!confirm(`Excluir comissão de ${c.pacienteNome} (R$ ${(c.valorComissao || 0).toFixed(2).replace(".", ",")})?`)) return;
@@ -14743,7 +15062,7 @@ function Comissoes({
         fontSize: 11
       }
     }, "\uD83D\uDDD1\uFE0F")));
-  })), (comissoesPagas.length > 0 || pagamentosDoMes.length > 0) && React.createElement("div", {
+  })), (comissoesPagas.length > 0 || pagamentosDoMes.length > 0) && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 14,
@@ -14751,7 +15070,7 @@ function Comissoes({
       overflow: "hidden",
       marginTop: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "14px 20px",
       borderBottom: "1px solid var(--gray-200)",
@@ -14760,19 +15079,19 @@ function Comissoes({
       display: "flex",
       justifyContent: "space-between"
     }
-  }, React.createElement("span", null, "\u2713 Hist\xF3rico \u2014 ", getMesLabel(mesSel)), React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u2713 Hist\xF3rico \u2014 ", getMesLabel(mesSel)), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: "#16a34a",
       fontWeight: 600
     }
-  }, "R$ ", totalPagas.toFixed(2).replace(".", ","), " em comiss\xF5es pagas")), pagamentosDoMes.length > 0 && React.createElement("div", {
+  }, "R$ ", totalPagas.toFixed(2).replace(".", ","), " em comiss\xF5es pagas")), pagamentosDoMes.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "10px 20px",
       background: "#f0fdf4",
       borderBottom: "1px solid var(--gray-100)"
     }
-  }, pagamentosDoMes.map(pg => React.createElement("div", {
+  }, pagamentosDoMes.map(pg => /*#__PURE__*/React.createElement("div", {
     key: pg.id,
     style: {
       display: "flex",
@@ -14780,15 +15099,15 @@ function Comissoes({
       fontSize: 13,
       padding: "4px 0"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#166534"
     }
-  }, "\uD83D\uDCB0 ", pg.tipo, " \u2014 ", pg.data?.split("-").reverse().join("/"), pg.qtdComissoes ? ` · ${pg.qtdComissoes} comissão(ões)` : "", (pg.valorSalarioFixo || 0) > 0 ? ` · inclui salário fixo` : ""), React.createElement("strong", {
+  }, "\uD83D\uDCB0 ", pg.tipo, " \u2014 ", pg.data?.split("-").reverse().join("/"), pg.qtdComissoes ? ` · ${pg.qtdComissoes} comissão(ões)` : "", (pg.valorSalarioFixo || 0) > 0 ? ` · inclui salário fixo` : ""), /*#__PURE__*/React.createElement("strong", {
     style: {
       color: "#166534"
     }
-  }, "R$ ", (pg.valor || 0).toFixed(2).replace(".", ","))))), comissoesPagas.map(c => React.createElement("div", {
+  }, "R$ ", (pg.valor || 0).toFixed(2).replace(".", ","))))), comissoesPagas.map(c => /*#__PURE__*/React.createElement("div", {
     key: c.id,
     style: {
       display: "flex",
@@ -14798,23 +15117,23 @@ function Comissoes({
       borderBottom: "1px solid var(--gray-100)",
       opacity: 0.75
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 13
     }
-  }, c.pacienteNome || "—"), React.createElement("div", {
+  }, c.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)"
     }
-  }, c.tipo, " \xB7 ", labelTipoVenda(c.tipoVenda), " \xB7 pago em ", c.dataPagamento ? c.dataPagamento.split("-").reverse().join("/") : "—")), React.createElement("div", {
+  }, c.tipo, " \xB7 ", labelTipoVenda(c.tipoVenda), " \xB7 pago em ", c.dataPagamento ? c.dataPagamento.split("-").reverse().join("/") : "—")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
       color: "#16a34a"
     }
-  }, "\u2713 R$ ", (c.valorComissao || 0).toFixed(2).replace(".", ","))))), React.createElement("div", {
+  }, "\u2713 R$ ", (c.valorComissao || 0).toFixed(2).replace(".", ","))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 14,
@@ -14822,14 +15141,14 @@ function Comissoes({
       overflow: "hidden",
       marginTop: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "14px 20px",
       borderBottom: "1px solid var(--gray-200)",
       fontWeight: 700,
       fontSize: 14
     }
-  }, "\uD83E\uDD1D Repasses a Parceiras \u2014 ", getMesLabel(mesSel)), responsaveis.length === 0 ? React.createElement("div", {
+  }, "\uD83E\uDD1D Repasses a Parceiras \u2014 ", getMesLabel(mesSel)), responsaveis.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "30px 20px",
       textAlign: "center",
@@ -14842,12 +15161,12 @@ function Comissoes({
     const pendentes = itens.filter(c => c.status !== "pago");
     const totalPend = pendentes.reduce((a, c) => a + (c.valorComissao || 0), 0);
     const parc = parceiras.find(p => p.nome === resp);
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: resp,
       style: {
         borderBottom: "1px solid var(--gray-100)"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         justifyContent: "space-between",
@@ -14857,38 +15176,38 @@ function Comissoes({
         flexWrap: "wrap",
         gap: 10
       }
-    }, React.createElement("div", null, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         fontSize: 14
       }
-    }, resp), React.createElement("div", {
+    }, resp), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)"
       }
-    }, itens.length, " venda(s) \xB7 Total R$ ", totalResp.toFixed(2).replace(".", ","), parc?.pix ? ` · PIX: ${parc.pix}` : "")), React.createElement("div", {
+    }, itens.length, " venda(s) \xB7 Total R$ ", totalResp.toFixed(2).replace(".", ","), parc?.pix ? ` · PIX: ${parc.pix}` : "")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 12
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "right"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)"
       }
-    }, "Pendente"), React.createElement("div", {
+    }, "Pendente"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 800,
         fontSize: 18,
         color: totalPend > 0 ? "#b45309" : "#16a34a"
       }
-    }, "R$ ", totalPend.toFixed(2).replace(".", ","))), user.tipo === "psicologa" && totalPend > 0 && React.createElement("button", {
+    }, "R$ ", totalPend.toFixed(2).replace(".", ","))), user.tipo === "psicologa" && totalPend > 0 && /*#__PURE__*/React.createElement("button", {
       onClick: () => pagarRepasse(resp),
       disabled: pagando,
       style: {
@@ -14902,7 +15221,7 @@ function Comissoes({
         cursor: "pointer",
         fontFamily: "var(--font-body)"
       }
-    }, pagando ? "..." : "💸 Marcar como pago"))), itens.map(c => React.createElement("div", {
+    }, pagando ? "..." : "💸 Marcar como pago"))), itens.map(c => /*#__PURE__*/React.createElement("div", {
       key: c.id,
       style: {
         display: "flex",
@@ -14911,40 +15230,40 @@ function Comissoes({
         padding: "10px 20px",
         borderTop: "1px solid var(--gray-100)"
       }
-    }, React.createElement("div", null, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 13
       }
-    }, c.pacienteNome || "—"), React.createElement("div", {
+    }, c.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "var(--text-muted)"
       }
-    }, c.tipo, " \xB7 ", c.perc ? `${c.perc}% de R$ ${(c.valorBase || 0).toFixed(2).replace(".", ",")}` : "")), React.createElement("div", {
+    }, c.tipo, " \xB7 ", c.perc ? `${c.perc}% de R$ ${(c.valorBase || 0).toFixed(2).replace(".", ",")}` : "")), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "right"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 700,
         fontSize: 14,
         color: "#b45309"
       }
-    }, "R$ ", (c.valorComissao || 0).toFixed(2).replace(".", ",")), c.status === "pago" ? React.createElement("div", {
+    }, "R$ ", (c.valorComissao || 0).toFixed(2).replace(".", ",")), c.status === "pago" ? /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#16a34a",
         fontWeight: 600
       }
-    }, "\u2713 Pago ", c.dataPagamento ? c.dataPagamento.split("-").reverse().join("/") : "") : React.createElement("div", {
+    }, "\u2713 Pago ", c.dataPagamento ? c.dataPagamento.split("-").reverse().join("/") : "") : /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         color: "#b45309",
         fontWeight: 600
       }
     }, "Pendente")))));
-  })), user.tipo === "psicologa" && React.createElement("div", {
+  })), user.tipo === "psicologa" && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 14,
@@ -14952,7 +15271,7 @@ function Comissoes({
       overflow: "hidden",
       marginTop: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "14px 20px",
       borderBottom: "1px solid var(--gray-200)",
@@ -14962,7 +15281,7 @@ function Comissoes({
       justifyContent: "space-between",
       alignItems: "center"
     }
-  }, React.createElement("span", null, "Parceiras Cadastradas"), React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("span", null, "Parceiras Cadastradas"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setEditandoParceira(null);
       setFormParceira({
@@ -14984,14 +15303,14 @@ function Comissoes({
       cursor: "pointer",
       fontFamily: "var(--font-body)"
     }
-  }, "+ Nova Parceira")), parceiras.length === 0 ? React.createElement("div", {
+  }, "+ Nova Parceira")), parceiras.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "30px 20px",
       textAlign: "center",
       color: "var(--text-muted)",
       fontSize: 13
     }
-  }, "Nenhuma parceira cadastrada. Cadastre para usar nas vendas em parceria.") : parceiras.map(p => React.createElement("div", {
+  }, "Nenhuma parceira cadastrada. Cadastre para usar nas vendas em parceria.") : parceiras.map(p => /*#__PURE__*/React.createElement("div", {
     key: p.id,
     style: {
       display: "flex",
@@ -15000,12 +15319,12 @@ function Comissoes({
       padding: "12px 20px",
       borderBottom: "1px solid var(--gray-100)"
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 14
     }
-  }, p.nome, " ", p.tipo === "estagiaria" && React.createElement("span", {
+  }, p.nome, " ", p.tipo === "estagiaria" && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
       fontWeight: 700,
@@ -15015,17 +15334,17 @@ function Comissoes({
       borderRadius: 10,
       marginLeft: 6
     }
-  }, "Estagi\xE1ria")), React.createElement("div", {
+  }, "Estagi\xE1ria")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Repasse padr\xE3o: ", p.percentual || config.percParceiroPadrao, "% ", p.pix ? ` · PIX: ${p.pix}` : "")), React.createElement("div", {
+  }, "Repasse padr\xE3o: ", p.percentual || config.percParceiroPadrao, "% ", p.pix ? ` · PIX: ${p.pix}` : "")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setEditandoParceira(p.id);
       setFormParceira({
@@ -15044,7 +15363,7 @@ function Comissoes({
       padding: "5px 10px",
       fontSize: 12
     }
-  }, "\u270F\uFE0F"), React.createElement("button", {
+  }, "\u270F\uFE0F"), /*#__PURE__*/React.createElement("button", {
     onClick: async () => {
       if (!confirm(`Excluir parceira ${p.nome}? Os repasses já registrados não serão apagados.`)) return;
       await db.collection("clinica_parceiras").doc(p.id).delete();
@@ -15058,7 +15377,7 @@ function Comissoes({
       padding: "5px 10px",
       fontSize: 12
     }
-  }, "\uD83D\uDDD1\uFE0F"))))), modalParceira && React.createElement("div", {
+  }, "\uD83D\uDDD1\uFE0F"))))), modalParceira && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -15070,7 +15389,7 @@ function Comissoes({
       padding: 20
     },
     onClick: () => setModalParceira(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -15079,21 +15398,21 @@ function Comissoes({
       maxWidth: 420
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 20
     }
-  }, editandoParceira ? "Editar Parceira" : "Nova Parceira"), React.createElement("div", {
+  }, editandoParceira ? "Editar Parceira" : "Nova Parceira"), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Nome"), React.createElement("input", {
+  }, "Nome"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formParceira.nome,
     onChange: e => setFormParceira({
@@ -15101,14 +15420,14 @@ function Comissoes({
       nome: e.target.value
     }),
     placeholder: "Ex: Thais Cordeiro"
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "% de repasse padr\xE3o"), React.createElement("input", {
+  }, "% de repasse padr\xE3o"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "0",
@@ -15118,48 +15437,48 @@ function Comissoes({
       ...formParceira,
       percentual: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Chave PIX (opcional)"), React.createElement("input", {
+  }, "Chave PIX (opcional)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formParceira.pix,
     onChange: e => setFormParceira({
       ...formParceira,
       pix: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo"), React.createElement("select", {
+  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: formParceira.tipo,
     onChange: e => setFormParceira({
       ...formParceira,
       tipo: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: "parceira"
-  }, "Parceira (vendas em parceria)"), React.createElement("option", {
+  }, "Parceira (vendas em parceria)"), /*#__PURE__*/React.createElement("option", {
     value: "estagiaria"
-  }, "Estagi\xE1ria (projeto social)"))), React.createElement("div", {
+  }, "Estagi\xE1ria (projeto social)"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModalParceira(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvarParceira
   }, editandoParceira ? "Salvar alterações" : "Salvar")))));
@@ -15197,7 +15516,7 @@ function Depoimentos() {
   function Estrelas({
     n
   }) {
-    return React.createElement("span", {
+    return /*#__PURE__*/React.createElement("span", {
       style: {
         color: "#7B00C4",
         fontSize: 16,
@@ -15205,7 +15524,7 @@ function Depoimentos() {
       }
     }, "★".repeat(n || 5), "☆".repeat(5 - (n || 5)));
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -15214,17 +15533,17 @@ function Depoimentos() {
       flexWrap: "wrap",
       gap: 12
     }
-  }, React.createElement("div", null, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Depoimentos"), React.createElement("div", {
+  }, "Depoimentos"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, "Gerencie os depoimentos do site")), React.createElement("div", {
+  }, "Gerencie os depoimentos do site")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       flexWrap: "wrap"
     }
-  }, React.createElement("a", {
+  }, /*#__PURE__*/React.createElement("a", {
     href: "../feedback/",
     target: "_blank",
     style: {
@@ -15239,10 +15558,10 @@ function Depoimentos() {
       fontWeight: 600,
       textDecoration: "none"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "external-link",
     size: 14
-  }), " Ver formul\xE1rio"), React.createElement("button", {
+  }), " Ver formul\xE1rio"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 13
@@ -15251,17 +15570,17 @@ function Depoimentos() {
       navigator.clipboard.writeText("https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/feedback/");
       alert("Link copiado!");
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "copy",
     size: 14
-  }), " Copiar link"))), React.createElement("div", {
+  }), " Copiar link"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 0,
       marginBottom: 20,
       borderBottom: "2px solid var(--gray-200)"
     }
-  }, [["pendente", "⏳ Pendentes", pendentes], ["aprovado", "✓ Aprovados", lista.filter(d => d.status === "aprovado").length], ["rejeitado", "✗ Rejeitados", lista.filter(d => d.status === "rejeitado").length]].map(([id, label, count]) => React.createElement("button", {
+  }, [["pendente", "⏳ Pendentes", pendentes], ["aprovado", "✓ Aprovados", lista.filter(d => d.status === "aprovado").length], ["rejeitado", "✗ Rejeitados", lista.filter(d => d.status === "rejeitado").length]].map(([id, label, count]) => /*#__PURE__*/React.createElement("button", {
     key: id,
     onClick: () => setAba(id),
     style: {
@@ -15279,7 +15598,7 @@ function Depoimentos() {
       alignItems: "center",
       gap: 6
     }
-  }, label, count > 0 && React.createElement("span", {
+  }, label, count > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       background: id === "pendente" ? "#dc2626" : "var(--purple-soft)",
       color: id === "pendente" ? "white" : "var(--purple)",
@@ -15288,34 +15607,34 @@ function Depoimentos() {
       fontSize: 11,
       fontWeight: 700
     }
-  }, count)))), filtrado.length === 0 ? React.createElement("div", {
+  }, count)))), filtrado.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
       padding: 48,
       color: "var(--text-muted)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "star",
     size: 40
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       fontWeight: 500
     }
-  }, aba === "pendente" ? "Nenhum depoimento aguardando aprovação" : aba === "aprovado" ? "Nenhum depoimento aprovado ainda" : "Nenhum depoimento rejeitado")) : React.createElement("div", {
+  }, aba === "pendente" ? "Nenhum depoimento aguardando aprovação" : aba === "aprovado" ? "Nenhum depoimento aprovado ainda" : "Nenhum depoimento rejeitado")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 12
     }
-  }, filtrado.map(d => React.createElement("div", {
+  }, filtrado.map(d => /*#__PURE__*/React.createElement("div", {
     key: d.id,
     className: "card",
     style: {
       padding: "20px 24px"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -15323,18 +15642,18 @@ function Depoimentos() {
       gap: 12,
       flexWrap: "wrap"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
       marginBottom: 8
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 38,
       height: 38,
@@ -15347,26 +15666,26 @@ function Depoimentos() {
       color: "var(--purple)",
       flexShrink: 0
     }
-  }, (d.nome || "?")[0].toUpperCase()), React.createElement("div", null, React.createElement("div", {
+  }, (d.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 15
     }
-  }, d.nome), d.cargo && React.createElement("div", {
+  }, d.nome), d.cargo && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, d.cargo)), React.createElement(Estrelas, {
+  }, d.cargo)), /*#__PURE__*/React.createElement(Estrelas, {
     n: d.estrelas
-  })), React.createElement("p", {
+  })), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 14,
       color: "#374151",
       lineHeight: 1.7,
       fontStyle: "italic"
     }
-  }, "\"", d.texto, "\""), React.createElement("div", {
+  }, "\"", d.texto, "\""), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "var(--text-muted)",
@@ -15376,13 +15695,13 @@ function Depoimentos() {
     day: "2-digit",
     month: "long",
     year: "numeric"
-  }) : "")), React.createElement("div", {
+  }) : "")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       flexShrink: 0
     }
-  }, aba === "pendente" && React.createElement(React.Fragment, null, React.createElement("button", {
+  }, aba === "pendente" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       fontSize: 12,
@@ -15390,10 +15709,10 @@ function Depoimentos() {
     },
     onClick: () => aprovar(d.id),
     disabled: salvando === d.id
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "check",
     size: 13
-  }), " ", salvando === d.id ? "..." : "Aprovar"), React.createElement("button", {
+  }), " ", salvando === d.id ? "..." : "Aprovar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
@@ -15402,20 +15721,20 @@ function Depoimentos() {
       borderColor: "#fca5a5"
     },
     onClick: () => rejeitar(d.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 13
-  }), " Rejeitar")), aba === "rejeitado" && React.createElement("button", {
+  }), " Rejeitar")), aba === "rejeitado" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       fontSize: 12,
       padding: "7px 14px"
     },
     onClick: () => aprovar(d.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "check",
     size: 13
-  }), " Aprovar mesmo assim"), aba === "aprovado" && React.createElement("button", {
+  }), " Aprovar mesmo assim"), aba === "aprovado" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
@@ -15424,10 +15743,10 @@ function Depoimentos() {
       borderColor: "#fca5a5"
     },
     onClick: () => rejeitar(d.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 13
-  }), " Remover do site"), React.createElement("button", {
+  }), " Remover do site"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
@@ -15435,7 +15754,7 @@ function Depoimentos() {
       color: "#dc2626"
     },
     onClick: () => excluir(d.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
   }))))))));
@@ -15485,13 +15804,13 @@ function Configuracoes() {
     setNovaSenha("");
     setConfirmSenha("");
   }
-  return React.createElement("div", null, React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Configuracoes"), React.createElement("div", {
+  }, "Configuracoes"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, "Personalize sua identidade clinica e documentos")), msg && React.createElement("div", {
+  }, "Personalize sua identidade clinica e documentos")), msg && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--purple-bg)",
       border: "1px solid var(--purple)",
@@ -15502,30 +15821,30 @@ function Configuracoes() {
       color: "var(--purple)",
       fontWeight: 500
     }
-  }, msg), React.createElement("div", {
+  }, msg), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 16,
       marginBottom: 4
     }
-  }, "Identidade Visual"), React.createElement("p", {
+  }, "Identidade Visual"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Logotipo e assinatura digital para laudos e documentos oficiais."), React.createElement("div", {
+  }, "Logotipo e assinatura digital para laudos e documentos oficiais."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -15534,7 +15853,7 @@ function Configuracoes() {
       borderRadius: 12,
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 44,
       height: 44,
@@ -15544,31 +15863,31 @@ function Configuracoes() {
       alignItems: "center",
       justifyContent: "center"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "image",
     size: 22
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "Logo / Identidade Visual"), React.createElement("div", {
+  }, "Logo / Identidade Visual"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, "Logotipo que aparecera no cabecalho dos laudos e documentos oficiais. Formatos aceitos: PNG, JPG, SVG.")), React.createElement("button", {
+  }, "Logotipo que aparecera no cabecalho dos laudos e documentos oficiais. Formatos aceitos: PNG, JPG, SVG.")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 13
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "upload",
     size: 14
-  }), " Enviar Logo")), React.createElement("div", {
+  }), " Enviar Logo")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -15577,7 +15896,7 @@ function Configuracoes() {
       borderRadius: 12,
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 44,
       height: 44,
@@ -15587,31 +15906,31 @@ function Configuracoes() {
       alignItems: "center",
       justifyContent: "center"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "pen-line",
     size: 22
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "Assinatura Digital"), React.createElement("div", {
+  }, "Assinatura Digital"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, "Imagem da sua assinatura manuscrita para uso nos laudos assinados. Recomendado fundo transparente (PNG).")), React.createElement("button", {
+  }, "Imagem da sua assinatura manuscrita para uso nos laudos assinados. Recomendado fundo transparente (PNG).")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 13
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "upload",
     size: 14
-  }), " Enviar Assinatura")), React.createElement("div", {
+  }), " Enviar Assinatura")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -15621,7 +15940,7 @@ function Configuracoes() {
       border: "1px solid var(--gray-200)",
       background: "var(--gray-50)"
     }
-  }, React.createElement("img", {
+  }, /*#__PURE__*/React.createElement("img", {
     src: "../logo-transparente.png",
     alt: "Logo padrao",
     style: {
@@ -15633,61 +15952,61 @@ function Configuracoes() {
       padding: 6
     },
     onError: e => e.target.style.display = "none"
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600
     }
-  }, "Logo Padrao do Sistema"), React.createElement("div", {
+  }, "Logo Padrao do Sistema"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, "Esta e a logo padrao. Ela e usada automaticamente enquanto voce nao enviar uma logo personalizada."), React.createElement("div", {
+  }, "Esta e a logo padrao. Ela e usada automaticamente enquanto voce nao enviar uma logo personalizada."), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       marginTop: 4
     }
-  }, React.createElement("strong", null, "Dra. Lucia Kratz"), " \xB7 Psicologa Doutora \xB7 CRP 09/20590"))))), React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Dra. Lucia Kratz"), " \xB7 Psicologa Doutora \xB7 CRP 09/20590"))))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 16,
       marginBottom: 4
     }
-  }, "Sobre os Laudos"), React.createElement("p", {
+  }, "Sobre os Laudos"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 16,
       lineHeight: 1.7
     }
-  }, "Os laudos gerados seguem a Resolucao CFP no 06/2019. Ao clicar em \"Assinar Laudo\", o documento recebe um registro de data/hora da assinatura e sua assinatura digital."), React.createElement("div", {
+  }, "Os laudos gerados seguem a Resolucao CFP no 06/2019. Ao clicar em \"Assinar Laudo\", o documento recebe um registro de data/hora da assinatura e sua assinatura digital."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "var(--purple-bg)",
       borderRadius: 10,
       padding: 16
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "Tipos de Laudo dispon\xEDveis"), React.createElement("div", {
+  }, "Tipos de Laudo dispon\xEDveis"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 8,
       marginBottom: 14
     }
-  }, tiposLaudo.map((t, i) => React.createElement("div", {
+  }, tiposLaudo.map((t, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: "flex",
@@ -15698,12 +16017,12 @@ function Configuracoes() {
       padding: "10px 14px",
       border: "1px solid var(--gray-200)"
     }
-  }, React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       flex: 1,
       fontSize: 14
     }
-  }, t), React.createElement("button", {
+  }, t), /*#__PURE__*/React.createElement("button", {
     style: {
       background: "none",
       border: "none",
@@ -15712,15 +16031,15 @@ function Configuracoes() {
       padding: 4
     },
     onClick: () => setTiposLaudo(prev => prev.filter((_, idx) => idx !== i))
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 14
-  }))))), React.createElement("div", {
+  }))))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10
     }
-  }, React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     style: {
       flex: 1
@@ -15729,13 +16048,13 @@ function Configuracoes() {
     value: novoTipo,
     onChange: e => setNovoTipo(e.target.value),
     onKeyDown: e => e.key === "Enter" && adicionarTipo()
-  }), React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     onClick: adicionarTipo
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }))), React.createElement("button", {
+  }))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       marginTop: 14,
@@ -15743,62 +16062,66 @@ function Configuracoes() {
     },
     onClick: salvarTipos,
     disabled: salvando
-  }, salvando ? "Salvando..." : "Salvar tipos de laudo"))), React.createElement("div", {
+  }, salvando ? "Salvando..." : "Salvar tipos de laudo"))), /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 16,
       marginBottom: 4
     }
-  }, "Seguran\xE7a"), React.createElement("p", {
+  }, "Seguran\xE7a"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 16
     }
-  }, "Alterar senha de acesso da Psicologa."), React.createElement("div", {
+  }, "Alterar senha de acesso da Psicologa."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr",
       gap: 14,
       marginBottom: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Senha atual"), React.createElement("input", {
+  }, "Senha atual"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "password",
     value: senhaAtual,
     onChange: e => setSenhaAtual(e.target.value)
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Nova senha"), React.createElement("input", {
+  }, "Nova senha"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "password",
     value: novaSenha,
     onChange: e => setNovaSenha(e.target.value)
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Confirmar nova senha"), React.createElement("input", {
+  }, "Confirmar nova senha"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "password",
     value: confirmSenha,
     onChange: e => setConfirmSenha(e.target.value)
-  }))), React.createElement("button", {
+  }))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: alterarSenha
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "key",
     size: 15
   }), " Alterar Senha")));
 }
+
+// ═══════════════════════════════════════════════════════
+// AGENDA — Doctoralia integrado via iframe
+// ═══════════════════════════════════════════════════════
 function Agenda() {
   const {
     data: pacientes
@@ -15855,6 +16178,7 @@ function Agenda() {
       })));
       setLoading(false);
     }, () => setLoading(false));
+    // Reservas da sala (Thais) — aparecem como bloqueios laranjas
     const u2 = db.collection("sala_reservas").onSnapshot(snap => {
       const reservasSala = snap.docs.map(d => ({
         id: "sala_" + d.id,
@@ -15875,6 +16199,8 @@ function Agenda() {
       u2();
     };
   }, []);
+
+  // Calcular semana atual
   function getInicioSemana(offset = 0) {
     const hoje = new Date();
     const dia = hoje.getDay();
@@ -15970,6 +16296,8 @@ function Agenda() {
     if (!confirm("Excluir esta sessão?")) return;
     await db.collection("clinica_sessoes").doc(id).delete();
   }
+
+  // Sessões de hoje para o painel
   const sessoesHoje = sessoesNoDia(hoje);
   const proximas = sessoes.filter(s => {
     const d = new Date(s.data + "T00:00:00");
@@ -16004,6 +16332,7 @@ function Agenda() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (formSala.recorrencia === "recorrente") {
+      // Gera para as próximas 12 semanas no mesmo dia da semana
       const dataInicio = new Date(formSala.data + "T00:00:00");
       const diaSemana = dataInicio.getDay();
       const batch = db.batch();
@@ -16045,8 +16374,8 @@ function Agenda() {
     });
     setSalvandoSala(false);
   }
-  if (loading) return React.createElement(Spinner, null);
-  return React.createElement("div", null, React.createElement("div", {
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header",
     style: {
       display: "flex",
@@ -16055,22 +16384,22 @@ function Agenda() {
       flexWrap: "wrap",
       gap: 8
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       minWidth: 0
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Agenda"), React.createElement("div", {
+  }, "Agenda"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, sessoes.filter(s => s.status === "agendado" || s.status === "confirmado").length, " sess\xF5es agendadas")), React.createElement("div", {
+  }, sessoes.filter(s => s.status === "agendado" || s.status === "confirmado").length, " sess\xF5es agendadas")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
       flexWrap: "wrap",
       justifyContent: "flex-end"
     }
-  }, React.createElement("a", {
+  }, /*#__PURE__*/React.createElement("a", {
     href: "https://docplanner.doctoralia.com.br/#/calendar/week",
     target: "_blank",
     rel: "noreferrer",
@@ -16082,10 +16411,10 @@ function Agenda() {
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "external-link",
     size: 13
-  }), " Doctoralia"), React.createElement("button", {
+  }), " Doctoralia"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       borderColor: "#ea580c",
@@ -16101,10 +16430,10 @@ function Agenda() {
       });
       setModalSala(true);
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "lock",
     size: 15
-  }), " Bloquear Sala"), React.createElement("button", {
+  }), " Bloquear Sala"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => {
       setForm({
@@ -16119,17 +16448,17 @@ function Agenda() {
       setEditando(null);
       setModal(true);
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }), " Nova Sess\xE3o"))), React.createElement("div", {
+  }), " Nova Sess\xE3o"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
       gap: 10,
       marginBottom: 20
     }
-  }, [["Hoje", sessoesHoje.length, "#7B00C4", "var(--purple-soft)"], ["Agendadas", sessoes.filter(s => s.status === "agendado").length, "#0891b2", "#e0f2fe"], ["Confirmadas", sessoes.filter(s => s.status === "confirmado").length, "#059669", "#d1fae5"], ["Este mês", sessoes.filter(s => s.data?.startsWith(new Date().toISOString().slice(0, 7))).length, "#d97706", "#fef3c7"]].map(([l, n, cor, bg]) => React.createElement("div", {
+  }, [["Hoje", sessoesHoje.length, "#7B00C4", "var(--purple-soft)"], ["Agendadas", sessoes.filter(s => s.status === "agendado").length, "#0891b2", "#e0f2fe"], ["Confirmadas", sessoes.filter(s => s.status === "confirmado").length, "#059669", "#d1fae5"], ["Este mês", sessoes.filter(s => s.data?.startsWith(new Date().toISOString().slice(0, 7))).length, "#d97706", "#fef3c7"]].map(([l, n, cor, bg]) => /*#__PURE__*/React.createElement("div", {
     key: l,
     style: {
       background: bg,
@@ -16137,35 +16466,35 @@ function Agenda() {
       padding: "12px 16px",
       textAlign: "center"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 24,
       fontWeight: 800,
       color: cor
     }
-  }, n), React.createElement("div", {
+  }, n), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: cor,
       fontWeight: 500
     }
-  }, l)))), React.createElement("div", {
+  }, l)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
       gap: 12,
       marginBottom: 16
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "8px 12px"
     },
     onClick: () => setSemanaOffset(s => s - 1)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "chevron-left",
     size: 18
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       textAlign: "center",
@@ -16179,32 +16508,32 @@ function Agenda() {
     day: "2-digit",
     month: "short",
     year: "numeric"
-  })), React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "8px 10px",
       fontSize: 12
     },
     onClick: () => setSemanaOffset(0)
-  }, "Hoje"), React.createElement("button", {
+  }, "Hoje"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "8px 12px"
     },
     onClick: () => setSemanaOffset(s => s + 1)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "chevron-right",
     size: 18
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 24
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto",
       WebkitOverflowScrolling: "touch"
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "60px repeat(7,minmax(44px,1fr))",
@@ -16212,10 +16541,10 @@ function Agenda() {
       marginBottom: 4,
       minWidth: 380
     }
-  }, React.createElement("div", null), dias.map((dia, i) => {
+  }, /*#__PURE__*/React.createElement("div", null), dias.map((dia, i) => {
     const isHoje = formatData(dia) === formatData(hoje);
     const isPassado = dia < hoje;
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
         textAlign: "center",
@@ -16225,21 +16554,21 @@ function Agenda() {
         border: "1.5px solid",
         borderColor: isHoje ? "var(--purple)" : "var(--gray-200)"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
         fontWeight: 600,
         textTransform: "uppercase",
         color: isHoje ? "rgba(255,255,255,.8)" : isPassado ? "#9ca3af" : "var(--gray-500)"
       }
-    }, DIAS_SEMANA[i]), React.createElement("div", {
+    }, DIAS_SEMANA[i]), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 20,
         fontWeight: 800,
         color: isHoje ? "white" : isPassado ? "#9ca3af" : "var(--gray-800)",
         lineHeight: 1.2
       }
-    }, dia.getDate()), React.createElement("div", {
+    }, dia.getDate()), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 9,
         color: isHoje ? "rgba(255,255,255,.7)" : "var(--gray-400)"
@@ -16247,7 +16576,7 @@ function Agenda() {
     }, dia.toLocaleDateString("pt-BR", {
       month: "short"
     })));
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto",
       WebkitOverflowScrolling: "touch",
@@ -16267,7 +16596,7 @@ function Agenda() {
     bg: "#f5f3ff"
   }].map(periodo => {
     const sessoesNoPeriodo = dias.some(dia => sessoesNoDia(dia).some(s => s.hora >= periodo.range[0] && s.hora < periodo.range[1]));
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: periodo.label,
       style: {
         display: "grid",
@@ -16276,7 +16605,7 @@ function Agenda() {
         marginBottom: 4,
         minWidth: 380
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "flex-start",
@@ -16284,7 +16613,7 @@ function Agenda() {
         paddingRight: 8,
         paddingTop: 8
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
         fontWeight: 600,
@@ -16295,7 +16624,7 @@ function Agenda() {
     }, periodo.label)), dias.map((dia, i) => {
       const isHoje = formatData(dia) === formatData(hoje);
       const sessDia = sessoesNoDia(dia).filter(s => s.hora >= periodo.range[0] && s.hora < periodo.range[1]);
-      return React.createElement("div", {
+      return /*#__PURE__*/React.createElement("div", {
         key: i,
         style: {
           minHeight: 70,
@@ -16314,7 +16643,7 @@ function Agenda() {
           cor: "#ea580c",
           label: "Sala"
         } : STATUS_CONFIG[s.status] || STATUS_CONFIG.agendado;
-        return React.createElement("div", {
+        return /*#__PURE__*/React.createElement("div", {
           key: s.id,
           onClick: () => !s._sala && abrirEditar(s),
           style: {
@@ -16326,13 +16655,13 @@ function Agenda() {
             fontSize: 11,
             lineHeight: 1.4
           }
-        }, React.createElement("div", {
+        }, /*#__PURE__*/React.createElement("div", {
           style: {
             fontWeight: 700,
             color: st.cor,
             fontSize: 12
           }
-        }, s.hora), React.createElement("div", {
+        }, s.hora), /*#__PURE__*/React.createElement("div", {
           style: {
             color: "#111",
             fontWeight: 500,
@@ -16341,13 +16670,13 @@ function Agenda() {
             whiteSpace: "nowrap",
             fontSize: 11
           }
-        }, s._sala ? s.pacienteNome || "Sala" : s.pacienteNome?.split(" ")[0] || "—"), !s._sala && React.createElement("div", {
+        }, s._sala ? s.pacienteNome || "Sala" : s.pacienteNome?.split(" ")[0] || "—"), !s._sala && /*#__PURE__*/React.createElement("div", {
           style: {
             color: "#6b7280",
             fontSize: 9
           }
         }, s.tipo));
-      }), React.createElement("button", {
+      }), /*#__PURE__*/React.createElement("button", {
         onClick: () => {
           setForm({
             pacienteId: "",
@@ -16374,9 +16703,9 @@ function Agenda() {
         }
       }, "+"));
     }));
-  }))), proximas.length > 0 && React.createElement("div", {
+  }))), proximas.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
@@ -16385,7 +16714,7 @@ function Agenda() {
       alignItems: "center",
       gap: 6
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "clock",
     size: 16
   }), " Pr\xF3ximas Sess\xF5es"), proximas.map(s => {
@@ -16395,7 +16724,7 @@ function Agenda() {
       day: "2-digit",
       month: "short"
     });
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       key: s.id,
       style: {
         display: "flex",
@@ -16404,7 +16733,7 @@ function Agenda() {
         padding: "10px 0",
         borderBottom: "1px solid var(--gray-100)"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         width: 48,
         height: 48,
@@ -16416,39 +16745,39 @@ function Agenda() {
         justifyContent: "center",
         flexShrink: 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
         fontWeight: 700,
         color: st.cor
       }
-    }, s.hora), React.createElement("div", {
+    }, s.hora), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 9,
         color: st.cor
       }
-    }, s.duracao, "min")), React.createElement("div", {
+    }, s.duracao, "min")), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 1,
         minWidth: 0
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         fontWeight: 600,
         fontSize: 13
       }
-    }, s.pacienteNome), React.createElement("div", {
+    }, s.pacienteNome), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)"
       }
-    }, dataFmt, " \xB7 ", s.tipo)), React.createElement("div", {
+    }, dataFmt, " \xB7 ", s.tipo)), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 4,
         alignItems: "center"
       }
-    }, React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         background: st.bg,
         color: st.cor,
@@ -16457,7 +16786,7 @@ function Agenda() {
         fontSize: 10,
         fontWeight: 600
       }
-    }, st.label), React.createElement("select", {
+    }, st.label), /*#__PURE__*/React.createElement("select", {
       value: s.status,
       onChange: e => mudarStatus(s.id, e.target.value),
       style: {
@@ -16469,10 +16798,10 @@ function Agenda() {
         background: "white",
         color: "#374151"
       }
-    }, Object.entries(STATUS_CONFIG).map(([k, v]) => React.createElement("option", {
+    }, Object.entries(STATUS_CONFIG).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
       key: k,
       value: k
-    }, v.label))), React.createElement("button", {
+    }, v.label))), /*#__PURE__*/React.createElement("button", {
       onClick: () => excluir(s.id),
       style: {
         background: "none",
@@ -16481,11 +16810,11 @@ function Agenda() {
         color: "#dc2626",
         padding: 4
       }
-    }, React.createElement(Icon, {
+    }, /*#__PURE__*/React.createElement(Icon, {
       name: "trash-2",
       size: 13
     }))));
-  })), modal && React.createElement("div", {
+  })), modal && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -16497,7 +16826,7 @@ function Agenda() {
       padding: 20
     },
     onClick: () => setModal(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -16506,20 +16835,20 @@ function Agenda() {
       maxWidth: 480
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600
     }
-  }, editando ? "Editar Sessão" : "Nova Sessão"), React.createElement("button", {
+  }, editando ? "Editar Sessão" : "Nova Sessão"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModal(false),
     style: {
       background: "none",
@@ -16527,40 +16856,40 @@ function Agenda() {
       cursor: "pointer",
       color: "var(--gray-400)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Paciente *"), React.createElement("select", {
+  }, "Paciente *"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.pacienteId,
     onChange: e => setForm({
       ...form,
       pacienteId: e.target.value
     })
-  }, React.createElement("option", {
+  }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar paciente..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => React.createElement("option", {
+  }, "Selecionar paciente..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/React.createElement("option", {
     key: p.id,
     value: p.id
-  }, p.nome)))), React.createElement("div", {
+  }, p.nome)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr 1fr",
       gap: 12,
       marginBottom: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data *"), React.createElement("input", {
+  }, "Data *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: form.data,
@@ -16568,11 +16897,11 @@ function Agenda() {
       ...form,
       data: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Hora *"), React.createElement("input", {
+  }, "Hora *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "time",
     value: form.hora,
@@ -16580,63 +16909,63 @@ function Agenda() {
       ...form,
       hora: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Dura\xE7\xE3o (min)"), React.createElement("select", {
+  }, "Dura\xE7\xE3o (min)"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.duracao,
     onChange: e => setForm({
       ...form,
       duracao: e.target.value
     })
-  }, ["30", "45", "50", "60", "90"].map(d => React.createElement("option", {
+  }, ["30", "45", "50", "60", "90"].map(d => /*#__PURE__*/React.createElement("option", {
     key: d,
     value: d
-  }, d, " min"))))), React.createElement("div", {
+  }, d, " min"))))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12,
       marginBottom: 14
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo"), React.createElement("select", {
+  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.tipo,
     onChange: e => setForm({
       ...form,
       tipo: e.target.value
     })
-  }, TIPOS.map(t => React.createElement("option", {
+  }, TIPOS.map(t => /*#__PURE__*/React.createElement("option", {
     key: t,
     value: t
-  }, t)))), React.createElement("div", {
+  }, t)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), React.createElement("select", {
+  }, "Status"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
     value: form.status,
     onChange: e => setForm({
       ...form,
       status: e.target.value
     })
-  }, Object.entries(STATUS_CONFIG).map(([k, v]) => React.createElement("option", {
+  }, Object.entries(STATUS_CONFIG).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
     key: k,
     value: k
-  }, v.label))))), React.createElement("div", {
+  }, v.label))))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 20
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Observa\xE7\xF5es"), React.createElement(TextAreaVoz, {
+  }, "Observa\xE7\xF5es"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 2,
     value: form.obs,
@@ -16645,23 +16974,23 @@ function Agenda() {
       obs: e.target.value
     }),
     placeholder: "Notas sobre a sess\xE3o..."
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end"
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModal(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: salvar,
     disabled: salvando
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "save",
     size: 15
-  }), " ", salvando ? "Salvando..." : "Salvar")))), modalSala && React.createElement("div", {
+  }), " ", salvando ? "Salvando..." : "Salvar")))), modalSala && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -16673,7 +17002,7 @@ function Agenda() {
       padding: 20
     },
     onClick: () => setModalSala(false)
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
@@ -16682,14 +17011,14 @@ function Agenda() {
       maxWidth: 440
     },
     onClick: e => e.stopPropagation()
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -16698,20 +17027,20 @@ function Agenda() {
       alignItems: "center",
       gap: 8
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "lock",
     size: 18
-  }), " Bloquear Sala"), React.createElement("button", {
+  }), " Bloquear Sala"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModalSala(false),
     style: {
       background: "none",
       border: "none",
       cursor: "pointer"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff7ed",
       border: "1px solid #fed7aa",
@@ -16721,19 +17050,19 @@ function Agenda() {
       fontSize: 13,
       color: "#92400e"
     }
-  }, "Este bloqueio aparece para a Thais como hor\xE1rio ocupado na agenda compartilhada."), React.createElement("div", {
+  }, "Este bloqueio aparece para a Thais como hor\xE1rio ocupado na agenda compartilhada."), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 16
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo de bloqueio"), React.createElement("div", {
+  }, "Tipo de bloqueio"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
     }
-  }, [["unico", "Só este dia", "#7B00C4"], ["recorrente", "Toda semana (12 semanas)", "#059669"]].map(([v, l, c]) => React.createElement("button", {
+  }, [["unico", "Só este dia", "#7B00C4"], ["recorrente", "Toda semana (12 semanas)", "#059669"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
     key: v,
     type: "button",
     onClick: () => setFormSala({
@@ -16754,7 +17083,7 @@ function Agenda() {
       fontFamily: "var(--font-body)",
       textAlign: "center"
     }
-  }, l))), formSala.recorrencia === "recorrente" && React.createElement("div", {
+  }, l))), formSala.recorrencia === "recorrente" && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8,
       fontSize: 12,
@@ -16763,20 +17092,20 @@ function Agenda() {
       borderRadius: 8,
       padding: "8px 12px"
     }
-  }, "\u2713 Vai bloquear o mesmo dia da semana por 12 semanas consecutivas")), React.createElement("div", {
+  }, "\u2713 Vai bloquear o mesmo dia da semana por 12 semanas consecutivas")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Data"), React.createElement("input", {
+  }, "Data"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
     value: formSala.data,
@@ -16784,11 +17113,11 @@ function Agenda() {
       ...formSala,
       data: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "In\xEDcio"), React.createElement("input", {
+  }, "In\xEDcio"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "time",
     value: formSala.horaInicio,
@@ -16796,11 +17125,11 @@ function Agenda() {
       ...formSala,
       horaInicio: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Fim"), React.createElement("input", {
+  }, "Fim"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "time",
     value: formSala.horaFim,
@@ -16808,14 +17137,14 @@ function Agenda() {
       ...formSala,
       horaFim: e.target.value
     })
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
     }
-  }, React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "T\xEDtulo (opcional)"), React.createElement("input", {
+  }, "T\xEDtulo (opcional)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: formSala.titulo,
     onChange: e => setFormSala({
@@ -16823,17 +17152,17 @@ function Agenda() {
       titulo: e.target.value
     }),
     placeholder: "Ex: Sess\xE3o, Avalia\xE7\xE3o..."
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
       justifyContent: "flex-end",
       marginTop: 16
     }
-  }, React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModalSala(false)
-  }, "Cancelar"), React.createElement("button", {
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
     style: {
       background: "#ea580c",
       color: "white",
@@ -16850,15 +17179,20 @@ function Agenda() {
     },
     onClick: salvarBloqueioSala,
     disabled: salvandoSala
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "lock",
     size: 15
   }), " ", salvandoSala ? "Salvando..." : "Bloquear")))));
 }
+
+// APP
 function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
   const notifProps = useBotaoNotificacao(user);
+  // ═══════════════════════════════════════════════════════
+  // PAINEL DE PERMISSÕES
+  // ═══════════════════════════════════════════════════════
   const PERMISSOES_DEFAULT = {
     psicologa: {
       ver_financeiro_clinica: true,
@@ -16963,6 +17297,8 @@ function App() {
     const [permissoes, setPermissoes] = useState({});
     const [salvando, setSalvando] = useState(false);
     const [salvo, setSalvo] = useState(false);
+
+    // Carregar permissões do Firebase ou usar defaults
     useEffect(() => {
       db.collection("clinica_perfis_permissoes").doc(perfilSel).get().then(doc => {
         if (doc.exists) setPermissoes(doc.data().permissoes || {});else setPermissoes(PERMISSOES_DEFAULT[perfilSel] || {});
@@ -17000,31 +17336,31 @@ function App() {
       cor: "#ea580c"
     }];
     const grupos = [...new Set(PERMISSOES_LABELS.map(p => p.grupo))];
-    return React.createElement("div", {
+    return /*#__PURE__*/React.createElement("div", {
       style: {
         maxWidth: 640,
         margin: "0 auto"
       }
-    }, React.createElement("h2", {
+    }, /*#__PURE__*/React.createElement("h2", {
       style: {
         fontFamily: "var(--font-display)",
         fontSize: 22,
         marginBottom: 4
       }
-    }, "\u2699\uFE0F Permiss\xF5es por Perfil"), React.createElement("p", {
+    }, "\u2699\uFE0F Permiss\xF5es por Perfil"), /*#__PURE__*/React.createElement("p", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
         marginBottom: 24
       }
-    }, "Configure o que cada perfil pode ver e fazer no sistema."), React.createElement("div", {
+    }, "Configure o que cada perfil pode ver e fazer no sistema."), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 8,
         marginBottom: 24,
         flexWrap: "wrap"
       }
-    }, perfisEdicao.map(p => React.createElement("button", {
+    }, perfisEdicao.map(p => /*#__PURE__*/React.createElement("button", {
       key: p.id,
       onClick: () => setPerfilSel(p.id),
       style: {
@@ -17040,14 +17376,14 @@ function App() {
         color: perfilSel === p.id ? p.cor : "#6b7280",
         transition: "all .15s"
       }
-    }, p.label))), React.createElement("div", {
+    }, p.label))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
         gap: 16,
         marginBottom: 24
       }
-    }, grupos.map(grupo => React.createElement("div", {
+    }, grupos.map(grupo => /*#__PURE__*/React.createElement("div", {
       key: grupo,
       style: {
         background: "white",
@@ -17055,7 +17391,7 @@ function App() {
         borderRadius: 12,
         overflow: "hidden"
       }
-    }, React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         padding: "10px 16px",
         background: "#f9fafb",
@@ -17064,11 +17400,11 @@ function App() {
         fontSize: 13,
         color: "#374151"
       }
-    }, grupo), React.createElement("div", {
+    }, grupo), /*#__PURE__*/React.createElement("div", {
       style: {
         padding: "8px 0"
       }
-    }, PERMISSOES_LABELS.filter(p => p.grupo === grupo).map(p => React.createElement("label", {
+    }, PERMISSOES_LABELS.filter(p => p.grupo === grupo).map(p => /*#__PURE__*/React.createElement("label", {
       key: p.id,
       style: {
         display: "flex",
@@ -17080,7 +17416,7 @@ function App() {
       },
       onMouseEnter: e => e.currentTarget.style.background = "#f9fafb",
       onMouseLeave: e => e.currentTarget.style.background = "white"
-    }, React.createElement("input", {
+    }, /*#__PURE__*/React.createElement("input", {
       type: "checkbox",
       checked: !!permissoes[p.id],
       onChange: () => toggle(p.id),
@@ -17090,28 +17426,28 @@ function App() {
         cursor: "pointer",
         accentColor: "#7B00C4"
       }
-    }), React.createElement("span", {
+    }), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 13,
         color: "#374151"
       }
-    }, p.label))))))), React.createElement("div", {
+    }, p.label))))))), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 10,
         alignItems: "center"
       }
-    }, React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       className: "btn btn-purple",
       onClick: salvar,
       disabled: salvando
-    }, salvando ? "Salvando..." : "💾 Salvar Permissões"), salvo && React.createElement("span", {
+    }, salvando ? "Salvando..." : "💾 Salvar Permissões"), salvo && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 13,
         color: "#059669",
         fontWeight: 600
       }
-    }, "\u2705 Salvo!"), React.createElement("button", {
+    }, "\u2705 Salvo!"), /*#__PURE__*/React.createElement("button", {
       className: "btn btn-ghost",
       onClick: () => setPermissoes(PERMISSOES_DEFAULT[perfilSel] || {}),
       style: {
@@ -17131,33 +17467,33 @@ function App() {
     setUser(null);
     setTab(null);
   }
-  if (!user) return React.createElement(Login, {
+  if (!user) return /*#__PURE__*/React.createElement(Login, {
     onLogin: handleLogin
   });
-  return React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       minHeight: "100vh",
       width: "100%",
       overflowX: "auto"
     }
-  }, React.createElement(Sidebar, {
+  }, /*#__PURE__*/React.createElement(Sidebar, {
     user: user,
     tab: tab,
     setTab: setTab,
     onLogout: handleLogout,
     notifProps: notifProps
-  }), React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     className: "header-mobile"
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     className: "header-mobile-logo"
-  }, "Administracao"), React.createElement("button", {
+  }, "Administracao"), /*#__PURE__*/React.createElement("button", {
     className: "header-mobile-btn",
     onClick: handleLogout
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "log-out",
     size: 18
-  }))), React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "main-content",
     style: {
       flex: 1,
@@ -17165,36 +17501,36 @@ function App() {
       maxWidth: "100%",
       overflowX: "hidden"
     }
-  }, user.tipo === "psicologa" && tab === "dashboard" && React.createElement(DashboardAdmin, {
+  }, user.tipo === "psicologa" && tab === "dashboard" && /*#__PURE__*/React.createElement(DashboardAdmin, {
     user: user
-  }), user.tipo === "psicologa" && tab === "pacientes" && React.createElement(Pacientes, {
+  }), user.tipo === "psicologa" && tab === "pacientes" && /*#__PURE__*/React.createElement(Pacientes, {
     user: user
-  }), user.tipo === "psicologa" && tab === "alunos" && React.createElement(Alunos, null), user.tipo === "psicologa" && tab === "casais" && React.createElement(TerapiaCasais, null), user.tipo === "psicologa" && tab === "recursos" && React.createElement(RecursosTerapeuticos, {
+  }), user.tipo === "psicologa" && tab === "alunos" && /*#__PURE__*/React.createElement(Alunos, null), user.tipo === "psicologa" && tab === "casais" && /*#__PURE__*/React.createElement(TerapiaCasais, null), user.tipo === "psicologa" && tab === "recursos" && /*#__PURE__*/React.createElement(RecursosTerapeuticos, {
     user: user
-  }), user.tipo === "psicologa" && tab === "laudos" && React.createElement(Laudos, null), user.tipo === "psicologa" && tab === "agenda" && React.createElement(Agenda, null), user.tipo === "psicologa" && tab === "fin-clinica" && React.createElement(FinanceiroClinica, {
+  }), user.tipo === "psicologa" && tab === "laudos" && /*#__PURE__*/React.createElement(Laudos, null), user.tipo === "psicologa" && tab === "agenda" && /*#__PURE__*/React.createElement(Agenda, null), user.tipo === "psicologa" && tab === "fin-clinica" && /*#__PURE__*/React.createElement(FinanceiroClinica, {
     user: user
-  }), user.tipo === "psicologa" && tab === "comissoes" && React.createElement(Comissoes, {
+  }), user.tipo === "psicologa" && tab === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
     user: user
-  }), user.tipo === "psicologa" && tab === "fin-pessoal" && React.createElement(FinanceiroPessoal, {
+  }), user.tipo === "psicologa" && tab === "fin-pessoal" && /*#__PURE__*/React.createElement(FinanceiroPessoal, {
     somenteLeitura: false
-  }), tab === "__menu__" && React.createElement("div", {
+  }), tab === "__menu__" && /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 20
     }
-  }, React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 20
     }
-  }, "Menu"), React.createElement("div", {
+  }, "Menu"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 12
     }
-  }, NAV_PSICOLOGA_FLAT.filter(i => !["dashboard", "pacientes", "agenda", "fin-clinica"].includes(i.id)).map(item => React.createElement("button", {
+  }, NAV_PSICOLOGA_FLAT.filter(i => !["dashboard", "pacientes", "agenda", "fin-clinica"].includes(i.id)).map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     onClick: () => setTab(item.id),
     style: {
@@ -17212,28 +17548,28 @@ function App() {
       fontWeight: 500,
       color: "var(--text)"
     }
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 24
-  }), item.label)))), user.tipo === "psicologa" && tab === "depoimentos" && React.createElement(Depoimentos, null), user.tipo === "psicologa" && tab === "config" && React.createElement(Configuracoes, null), user.tipo === "secretaria" && tab === "pacientes" && React.createElement(Pacientes, {
+  }), item.label)))), user.tipo === "psicologa" && tab === "depoimentos" && /*#__PURE__*/React.createElement(Depoimentos, null), user.tipo === "psicologa" && tab === "config" && /*#__PURE__*/React.createElement(Configuracoes, null), user.tipo === "secretaria" && tab === "pacientes" && /*#__PURE__*/React.createElement(Pacientes, {
     user: user
-  }), user.tipo === "secretaria" && tab === "agenda" && React.createElement(Agenda, null), user.tipo === "secretaria" && tab === "fin-clinica" && React.createElement(FinanceiroClinica, {
+  }), user.tipo === "secretaria" && tab === "agenda" && /*#__PURE__*/React.createElement(Agenda, null), user.tipo === "secretaria" && tab === "fin-clinica" && /*#__PURE__*/React.createElement(FinanceiroClinica, {
     user: user
-  }), user.tipo === "secretaria" && tab === "comissoes" && React.createElement(Comissoes, {
+  }), user.tipo === "secretaria" && tab === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
     user: user
-  }), user.tipo === "paulo" && tab === "fin-pessoal" && React.createElement(FinanceiroPessoal, {
+  }), user.tipo === "paulo" && tab === "fin-pessoal" && /*#__PURE__*/React.createElement(FinanceiroPessoal, {
     somenteLeitura: false
-  }), user.tipo === "paulo" && tab === "fin-clinica" && React.createElement(FinanceiroClinica, {
+  }), user.tipo === "paulo" && tab === "fin-clinica" && /*#__PURE__*/React.createElement(FinanceiroClinica, {
     user: user
-  }), (user.tipo === "psicologa" || user.tipo === "secretaria") && tab === "funil-leads" && React.createElement(FunilLeads, {
+  }), (user.tipo === "psicologa" || user.tipo === "secretaria") && tab === "funil-leads" && /*#__PURE__*/React.createElement(FunilLeads, {
     user: user
-  }), user.tipo === "marketing" && tab === "marketing-dashboard" && React.createElement(DashboardMarketing, {
+  }), user.tipo === "marketing" && tab === "marketing-dashboard" && /*#__PURE__*/React.createElement(DashboardMarketing, {
     user: user
-  }), user.tipo === "psicologa" && tab === "marketing-dashboard" && React.createElement(DashboardMarketing, {
+  }), user.tipo === "psicologa" && tab === "marketing-dashboard" && /*#__PURE__*/React.createElement(DashboardMarketing, {
     user: user
-  }), user.tipo === "psicologa" && tab === "permissoes" && React.createElement(PainelPermissoes, null), (user.tipo === "psicologa" || user.tipo === "marketing") && tab === "dashboard-performance" && React.createElement(DashboardPerformance, {
+  }), user.tipo === "psicologa" && tab === "permissoes" && /*#__PURE__*/React.createElement(PainelPermissoes, null), (user.tipo === "psicologa" || user.tipo === "marketing") && tab === "dashboard-performance" && /*#__PURE__*/React.createElement(DashboardPerformance, {
     user: user
-  })), React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: "nav-mobile"
   }, user.tipo === "psicologa" && [{
     id: "dashboard",
@@ -17251,42 +17587,47 @@ function App() {
     id: "fin-clinica",
     label: "Financeiro",
     icon: "dollar-sign"
-  }].map(item => React.createElement("button", {
+  }].map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     className: "nav-mobile-item " + (tab === item.id ? "active" : ""),
     onClick: () => setTab(item.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 20
-  }), React.createElement("span", null, item.label))), user.tipo === "psicologa" && React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("span", null, item.label))), user.tipo === "psicologa" && /*#__PURE__*/React.createElement("button", {
     className: "nav-mobile-item",
     onClick: () => setTab("__menu__")
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: "menu",
     size: 20
-  }), React.createElement("span", null, "Mais")), user.tipo === "secretaria" && NAV_SECRETARIA.slice(0, 5).map(item => React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("span", null, "Mais")), user.tipo === "secretaria" && NAV_SECRETARIA.slice(0, 5).map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     className: "nav-mobile-item " + (tab === item.id ? "active" : ""),
     onClick: () => setTab(item.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 20
-  }), React.createElement("span", null, item.label.split(" ")[0]))), user.tipo === "paulo" && NAV_PAULO.map(item => React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("span", null, item.label.split(" ")[0]))), user.tipo === "paulo" && NAV_PAULO.map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     className: "nav-mobile-item " + (tab === item.id ? "active" : ""),
     onClick: () => setTab(item.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 20
-  }), React.createElement("span", null, item.label.split(" ")[0]))), user.tipo === "marketing" && NAV_MARKETING.map(item => React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("span", null, item.label.split(" ")[0]))), user.tipo === "marketing" && NAV_MARKETING.map(item => /*#__PURE__*/React.createElement("button", {
     key: item.id,
     className: "nav-mobile-item " + (tab === item.id ? "active" : ""),
     onClick: () => setTab(item.id)
-  }, React.createElement(Icon, {
+  }, /*#__PURE__*/React.createElement(Icon, {
     name: item.icon,
     size: 20
-  }), React.createElement("span", null, item.label)))));
+  }), /*#__PURE__*/React.createElement("span", null, item.label)))));
 }
+
+// ═══════════════════════════════════════════════════════
+//  FUNIL DE LEADS — KANBAN
+// ═══════════════════════════════════════════════════════
+
 const NAV_MARKETING = [{
   id: "marketing-dashboard",
   label: "Dashboard",
@@ -17297,4 +17638,4 @@ const NAV_MARKETING = [{
   icon: "bar-chart-2"
 }];
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(React.createElement(App, null));
+root.render(/*#__PURE__*/React.createElement(App, null));
