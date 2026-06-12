@@ -2792,14 +2792,23 @@ function Login({ onLogin }) {
   async function handleLoginAluno(e) {
     e.preventDefault(); setErro(""); setLoading(true);
     try {
-      if (senha !== "1234") { setErro("Senha incorreta."); setLoading(false); return; }
-      const nomeNorm = nome.trim().toLowerCase();
-      if (!nomeNorm) { setErro("Digite seu nome completo."); setLoading(false); return; }
+      const emailNorm = (email||nome||"").trim().toLowerCase();
+      if (!emailNorm) { setErro("Digite seu e-mail ou nome completo."); setLoading(false); return; }
+      if (!senha) { setErro("Digite sua senha."); setLoading(false); return; }
       const snap = await db.collection("clinica_alunos").get();
-      const match = snap.docs.find(d => (d.data().nome||"").trim().toLowerCase() === nomeNorm);
-      if (!match) { setErro("Aluno não encontrado. Verifique o nome completo."); setLoading(false); return; }
+      // Busca por e-mail OU por nome (compatibilidade com cadastros antigos)
+      const match = snap.docs.find(d => {
+        const data = d.data();
+        return (data.email||"").trim().toLowerCase() === emailNorm
+            || (data.nome||"").trim().toLowerCase() === emailNorm;
+      });
+      if (!match) { setErro("Aluno não encontrado. Verifique seu e-mail ou nome."); setLoading(false); return; }
       const aluno = { id: match.id, ...match.data() };
-      if (aluno.status === "inativo") { setErro("Conta inativa."); setLoading(false); return; }
+      if (aluno.status === "pendente") { setErro("Sua conta ainda está pendente de aprovação pela supervisora."); setLoading(false); return; }
+      if (aluno.status === "inativo") { setErro("Conta inativa. Entre em contato com a supervisora."); setLoading(false); return; }
+      // Verifica senha: senha individual OU fallback "1234" (alunos antigos sem senha própria)
+      if (aluno.senha && aluno.senha !== senha) { setErro("Senha incorreta."); setLoading(false); return; }
+      if (!aluno.senha && senha !== "1234") { setErro("Senha incorreta."); setLoading(false); return; }
       onLogin({ tipo:"aluno", ...aluno });
     } catch(err) { setErro("Erro ao conectar. Tente novamente."); }
     setLoading(false);
@@ -2885,8 +2894,8 @@ function Login({ onLogin }) {
               </div>
               {erro && <div className="login-error">{erro}</div>}
               <div className="form-group">
-                <label className="form-label">Nome Completo</label>
-                <input className="form-input" type="text" value={nome} onChange={e=>setNome(e.target.value)} placeholder="Digite seu nome completo" autoFocus/>
+                <label className="form-label">E-mail ou Nome Completo</label>
+                <input className="form-input" type="text" value={nome} onChange={e=>setNome(e.target.value)} placeholder="seu@email.com ou nome completo" autoFocus/>
               </div>
               <div className="form-group">
                 <label className="form-label">Senha</label>
