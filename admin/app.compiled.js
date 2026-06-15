@@ -12276,94 +12276,98 @@ function FinanceiroPessoal({
       return;
     }
     setSalvando(true);
-    const nParc = parseInt(formAvulso.parcelas) || 1;
-    const val = parseFloat(formAvulso.valor);
-    const cc = formAvulso.centroCusto || "";
-    const colDestino = colecaoParaCC(cc);
-    const base = {
-      tipo: formAvulso.tipo,
-      categoria: formAvulso.categoria,
-      formaPag: formAvulso.formaPag,
-      status: formAvulso.status,
-      obs: formAvulso.obs,
-      centroCusto: cc,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    // Marca lançamentos roteados do pessoal para a clínica
-    if (ehClinico(cc)) base.origem = "financeiro_pessoal";
-    if (ehClinico(cc)) base.tipo_lancamento = "avulso";
-    if (editando) {
-      // Verifica se precisa mover de coleção (CC mudou)
-      const eraClinico = lancamentos.some(l => l.id === editando) ? false : true;
-      // Se não achou nos lancamentos pessoais, tenta achar nos clínicos
-      const colOrigem = eraClinico ? "clinica_lancamentos" : "clinica_financeiro_pessoal";
-      if (colOrigem !== colDestino) {
-        // Move: apaga da origem e cria no destino
-        await db.collection(colOrigem).doc(editando).delete();
-        await db.collection(colDestino).add({
-          ...base,
-          descricao: formAvulso.descricao,
-          valor: val,
-          data: formAvulso.data,
-          parcela: formAvulso.totalParcelas || ""
-        });
+    try {
+      const nParc = parseInt(formAvulso.parcelas) || 1;
+      const val = parseFloat(formAvulso.valor);
+      const cc = formAvulso.centroCusto || "";
+      const colDestino = colecaoParaCC(cc);
+      const base = {
+        tipo: formAvulso.tipo,
+        categoria: formAvulso.categoria,
+        formaPag: formAvulso.formaPag,
+        status: formAvulso.status,
+        obs: formAvulso.obs,
+        centroCusto: cc,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (ehClinico(cc)) {
+        base.origem = "financeiro_pessoal";
+        base.tipo_lancamento = "avulso";
+      }
+      if (editando) {
+        const eraClinico = lancamentos.some(l => l.id === editando) ? false : true;
+        const colOrigem = eraClinico ? "clinica_lancamentos" : "clinica_financeiro_pessoal";
+        if (colOrigem !== colDestino) {
+          await db.collection(colOrigem).doc(editando).delete();
+          await db.collection(colDestino).add({
+            ...base,
+            descricao: formAvulso.descricao,
+            valor: val,
+            data: formAvulso.data,
+            parcela: formAvulso.totalParcelas || ""
+          });
+        } else {
+          await db.collection(colDestino).doc(editando).update({
+            ...base,
+            descricao: formAvulso.descricao,
+            valor: val,
+            data: formAvulso.data
+          });
+        }
+      } else if (nParc > 1) {
+        const batch = db.batch();
+        const [anoI, mesI, diaI] = formAvulso.data.split("-").map(Number);
+        for (let i = 0; i < nParc; i++) {
+          let m = mesI + i,
+            a = anoI;
+          while (m > 12) {
+            m -= 12;
+            a++;
+          }
+          const dataParc = `${a}-${String(m).padStart(2, "0")}-${String(diaI).padStart(2, "0")}`;
+          const desc = (formAvulso.descricao || formAvulso.categoria || "") + ` (${i + 1}/${nParc})`;
+          const ref = db.collection(colDestino).doc();
+          batch.set(ref, {
+            ...base,
+            descricao: desc,
+            valor: val,
+            data: dataParc,
+            parcela: `${i + 1}/${nParc}`,
+            parcelaGrupo: formAvulso.data + "-" + nParc
+          });
+        }
+        await batch.commit();
+        if (ehClinico(cc)) alert(`✅ ${nParc} parcelas lançadas no Financeiro da Clínica (${cc}).`);
       } else {
-        await db.collection(colDestino).doc(editando).update({
+        await db.collection(colDestino).add({
           ...base,
           descricao: formAvulso.descricao,
           valor: val,
           data: formAvulso.data
         });
+        if (ehClinico(cc)) alert(`✅ Lançamento enviado para o Financeiro da Clínica (${cc}).`);
       }
-    } else if (nParc > 1) {
-      const batch = db.batch();
-      const [anoI, mesI, diaI] = formAvulso.data.split("-").map(Number);
-      for (let i = 0; i < nParc; i++) {
-        let m = mesI + i,
-          a = anoI;
-        while (m > 12) {
-          m -= 12;
-          a++;
-        }
-        const dataParc = `${a}-${String(m).padStart(2, "0")}-${String(diaI).padStart(2, "0")}`;
-        const desc = (formAvulso.descricao || formAvulso.categoria || "") + ` (${i + 1}/${nParc})`;
-        const ref = db.collection(colDestino).doc();
-        batch.set(ref, {
-          ...base,
-          descricao: desc,
-          valor: val,
-          data: dataParc,
-          parcela: `${i + 1}/${nParc}`,
-          parcelaGrupo: formAvulso.data + "-" + nParc
-        });
-      }
-      await batch.commit();
-      if (ehClinico(cc)) alert(`✅ ${nParc} parcelas lançadas no Financeiro da Clínica (${cc}).`);
-    } else {
-      await db.collection(colDestino).add({
-        ...base,
-        descricao: formAvulso.descricao,
-        valor: val,
-        data: formAvulso.data
+      setModal(false);
+      setEditando(null);
+      setFormAvulso({
+        tipo: "despesa",
+        categoria: "",
+        descricao: "",
+        valor: "",
+        data: new Date().toISOString().slice(0, 10),
+        formaPag: "PIX",
+        status: "pago",
+        obs: "",
+        centroCusto: "",
+        parcelas: "1",
+        totalParcelas: ""
       });
-      if (ehClinico(cc)) alert(`✅ Lançamento enviado para o Financeiro da Clínica (${cc}).`);
+    } catch (e) {
+      console.error("Erro ao salvar lançamento:", e);
+      alert("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
     }
-    setModal(false);
-    setEditando(null);
-    setFormAvulso({
-      tipo: "despesa",
-      categoria: "",
-      descricao: "",
-      valor: "",
-      data: new Date().toISOString().slice(0, 10),
-      formaPag: "PIX",
-      status: "pago",
-      obs: "",
-      centroCusto: "",
-      parcelas: "1",
-      totalParcelas: ""
-    });
-    setSalvando(false);
   }
   async function salvarRecorrente() {
     if (!formRecorr.categoria || !formRecorr.valorPrevisto) {
@@ -12371,44 +12375,48 @@ function FinanceiroPessoal({
       return;
     }
     setSalvando(true);
-    // Proteção: se a categoria escolhida não pertencer ao tipo atual (ex.: toggle Receita/Despesa
-    // mudou sem querer), corrige o tipo para o que a categoria realmente pertence.
-    let tipoFinal = formRecorr.tipo;
-    if (tipoFinal === "receita" && !catsReceita.includes(formRecorr.categoria) && catsDespesa.includes(formRecorr.categoria)) {
-      tipoFinal = "despesa";
-    } else if (tipoFinal === "despesa" && !catsDespesa.includes(formRecorr.categoria) && catsReceita.includes(formRecorr.categoria)) {
-      tipoFinal = "receita";
+    try {
+      let tipoFinal = formRecorr.tipo;
+      if (tipoFinal === "receita" && !catsReceita.includes(formRecorr.categoria) && catsDespesa.includes(formRecorr.categoria)) {
+        tipoFinal = "despesa";
+      } else if (tipoFinal === "despesa" && !catsDespesa.includes(formRecorr.categoria) && catsReceita.includes(formRecorr.categoria)) {
+        tipoFinal = "receita";
+      }
+      const dados = {
+        ...formRecorr,
+        tipo: tipoFinal,
+        valorPrevisto: parseFloat(formRecorr.valorPrevisto),
+        centroCusto: formRecorr.centroCusto || "",
+        totalParcelas: formRecorr.indeterminado ? 0 : parseInt(formRecorr.totalParcelas) || 0,
+        indeterminado: !!formRecorr.indeterminado,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (editando) {
+        await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados);
+      } else {
+        await db.collection("clinica_fin_pessoal_recorrentes").add(dados);
+      }
+      setModal(false);
+      setEditando(null);
+      setFormRecorr({
+        tipo: "despesa",
+        categoria: "",
+        descricao: "",
+        valorPrevisto: "",
+        recorrencia: "Mensal",
+        diaVencimento: "10",
+        mesInicio: new Date().toISOString().slice(0, 7),
+        ativo: true,
+        centroCusto: "",
+        totalParcelas: "",
+        indeterminado: true
+      });
+    } catch (e) {
+      console.error("Erro ao salvar recorrente:", e);
+      alert("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
     }
-    const dados = {
-      ...formRecorr,
-      tipo: tipoFinal,
-      valorPrevisto: parseFloat(formRecorr.valorPrevisto),
-      centroCusto: formRecorr.centroCusto || "",
-      totalParcelas: formRecorr.indeterminado ? 0 : parseInt(formRecorr.totalParcelas) || 0,
-      indeterminado: !!formRecorr.indeterminado,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if (editando) {
-      await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados);
-    } else {
-      await db.collection("clinica_fin_pessoal_recorrentes").add(dados);
-    }
-    setModal(false);
-    setEditando(null);
-    setFormRecorr({
-      tipo: "despesa",
-      categoria: "",
-      descricao: "",
-      valorPrevisto: "",
-      recorrencia: "Mensal",
-      diaVencimento: "10",
-      mesInicio: new Date().toISOString().slice(0, 7),
-      ativo: true,
-      centroCusto: "",
-      totalParcelas: "",
-      indeterminado: true
-    });
-    setSalvando(false);
   }
 
   // Dar baixa — este mês ou este e os próximos (até dez)
@@ -12420,77 +12428,88 @@ function FinanceiroPessoal({
     setSalvando(true);
     const r = modalBaixa;
     const batch = db.batch();
-    if (formBaixa.modo === "este") {
-      // Só este mês
-      const dia = r.diaVencimento || "10";
-      const data = `${mesFiltroEfetivo}-${String(dia).padStart(2, "0")}`;
-      const col = colecaoParaCC(r.centroCusto);
-      const ref = db.collection(col).doc();
-      batch.set(ref, {
-        tipo: r.tipo,
-        categoria: r.categoria,
-        descricao: r.descricao || r.categoria,
-        valor: parseFloat(formBaixa.valor),
-        data,
-        formaPag: formBaixa.formaPag,
-        status: "pago",
-        recorrenteId: r.id,
-        centroCusto: r.centroCusto || "",
-        obs: "",
-        origem: ehClinico(r.centroCusto) ? "financeiro_pessoal" : undefined,
-        tipo_lancamento: ehClinico(r.centroCusto) ? "recorrente_baixa" : undefined,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } else {
-      // Este e os próximos até dezembro do ano atual
-      const [anoMes, mesMes] = mesFiltroEfetivo.split("-").map(Number);
-      const colSerie = colecaoParaCC(r.centroCusto);
-      for (let m = mesMes; m <= 12; m++) {
-        const mesStr = `${anoMes}-${String(m).padStart(2, "0")}`;
+    try {
+      if (formBaixa.modo === "este") {
+        // Só este mês
         const dia = r.diaVencimento || "10";
-        const data = `${mesStr}-${String(dia).padStart(2, "0")}`;
-        // Não duplicar se já existe baixa neste mês
-        const jaExiste = lancamentos.some(l => l.recorrenteId === r.id && l.data?.startsWith(mesStr));
-        if (!jaExiste) {
-          const ref = db.collection(colSerie).doc();
-          batch.set(ref, {
-            tipo: r.tipo,
-            categoria: r.categoria,
-            descricao: r.descricao || r.categoria,
-            valor: parseFloat(formBaixa.valor),
-            data,
-            formaPag: formBaixa.formaPag,
-            status: "pago",
-            recorrenteId: r.id,
-            centroCusto: r.centroCusto || "",
-            obs: "Baixa automática — série",
-            origem: ehClinico(r.centroCusto) ? "financeiro_pessoal" : undefined,
-            tipo_lancamento: ehClinico(r.centroCusto) ? "recorrente_baixa" : undefined,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+        const data = `${mesFiltroEfetivo}-${String(dia).padStart(2, "0")}`;
+        const col = colecaoParaCC(r.centroCusto);
+        const ref = db.collection(col).doc();
+        const doc = {
+          tipo: r.tipo,
+          categoria: r.categoria,
+          descricao: r.descricao || r.categoria,
+          valor: parseFloat(formBaixa.valor),
+          data,
+          formaPag: formBaixa.formaPag,
+          status: "pago",
+          recorrenteId: r.id,
+          centroCusto: r.centroCusto || "",
+          obs: "",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (ehClinico(r.centroCusto)) {
+          doc.origem = "financeiro_pessoal";
+          doc.tipo_lancamento = "recorrente_baixa";
+        }
+        batch.set(ref, doc);
+      } else {
+        // Este e os próximos até dezembro do ano atual
+        const [anoMes, mesMes] = mesFiltroEfetivo.split("-").map(Number);
+        const colSerie = colecaoParaCC(r.centroCusto);
+        for (let m = mesMes; m <= 12; m++) {
+          const mesStr = `${anoMes}-${String(m).padStart(2, "0")}`;
+          const dia = r.diaVencimento || "10";
+          const data = `${mesStr}-${String(dia).padStart(2, "0")}`;
+          const jaExiste = lancamentos.some(l => l.recorrenteId === r.id && l.data?.startsWith(mesStr));
+          if (!jaExiste) {
+            const ref = db.collection(colSerie).doc();
+            const doc = {
+              tipo: r.tipo,
+              categoria: r.categoria,
+              descricao: r.descricao || r.categoria,
+              valor: parseFloat(formBaixa.valor),
+              data,
+              formaPag: formBaixa.formaPag,
+              status: "pago",
+              recorrenteId: r.id,
+              centroCusto: r.centroCusto || "",
+              obs: "Baixa automática — série",
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            if (ehClinico(r.centroCusto)) {
+              doc.origem = "financeiro_pessoal";
+              doc.tipo_lancamento = "recorrente_baixa";
+            }
+            batch.set(ref, doc);
+          }
         }
       }
-    }
-    await batch.commit();
+      await batch.commit();
 
-    // Auto-inativar quando todas as parcelas forem pagas
-    if (r.totalParcelas > 0) {
-      const totalPagas = lancamentos.filter(l => l.recorrenteId === r.id).length + (formBaixa.modo === "este" ? 1 : 0);
-      if (totalPagas >= r.totalParcelas) {
-        await db.collection("clinica_fin_pessoal_recorrentes").doc(r.id).update({
-          ativo: false
-        });
-        alert("✅ Baixa registrada! Todas as " + r.totalParcelas + " parcelas foram pagas — recorrente encerrado automaticamente.");
+      // Auto-inativar quando todas as parcelas forem pagas
+      if (r.totalParcelas > 0) {
+        const totalPagas = lancamentos.filter(l => l.recorrenteId === r.id).length + (formBaixa.modo === "este" ? 1 : 0);
+        if (totalPagas >= r.totalParcelas) {
+          await db.collection("clinica_fin_pessoal_recorrentes").doc(r.id).update({
+            ativo: false
+          });
+          alert("✅ Baixa registrada! Todas as " + r.totalParcelas + " parcelas foram pagas — recorrente encerrado automaticamente.");
+        }
       }
+      setModalBaixa(null);
+      setFormBaixa({
+        valor: "",
+        data: new Date().toISOString().slice(0, 10),
+        formaPag: "PIX",
+        modo: "este"
+      });
+    } catch (e) {
+      console.error("Erro ao confirmar baixa:", e);
+      alert("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
     }
-    setModalBaixa(null);
-    setFormBaixa({
-      valor: "",
-      data: new Date().toISOString().slice(0, 10),
-      formaPag: "PIX",
-      modo: "este"
-    });
-    setSalvando(false);
   }
   async function excluir(id) {
     if (!confirm("Excluir lançamento?")) return;
