@@ -827,6 +827,10 @@ const NAV_PSICOLOGA = [{
     id: "dashboard-performance",
     label: "Performance",
     icon: "activity"
+  }, {
+    id: "vitrine",
+    label: "Vitrine de Produtos",
+    icon: "shopping-bag"
   }]
 }, {
   grupo: "💰 Financeiro",
@@ -17971,6 +17975,410 @@ function Agenda() {
 }
 
 // APP
+// ─── VITRINE DE PRODUTOS (CRUD) ──────────────────────────
+function VitrineProdutos() {
+  const [produtos, setProdutos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const formVazio = {
+    titulo: "",
+    descricao: "",
+    imagemUrl: "",
+    linkVendas: "",
+    textoBotao: "",
+    ativo: true
+  };
+  const [form, setForm] = useState(formVazio);
+  useEffect(() => {
+    const unsub = db.collection("produtos_vitrine").onSnapshot(s => {
+      const docs = s.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      docs.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+      setProdutos(docs);
+      setLoading(false);
+    }, () => setLoading(false));
+    return unsub;
+  }, []);
+  function abrirNovo() {
+    setForm(formVazio);
+    setEditando(null);
+    setModal(true);
+  }
+  function abrirEditar(p) {
+    setForm({
+      titulo: p.titulo || "",
+      descricao: p.descricao || "",
+      imagemUrl: p.imagemUrl || "",
+      linkVendas: p.linkVendas || "",
+      textoBotao: p.textoBotao || "",
+      ativo: p.ativo !== false
+    });
+    setEditando(p.id);
+    setModal(true);
+  }
+  async function salvar() {
+    if (!form.titulo || !form.linkVendas) {
+      alert("Título e link de vendas são obrigatórios.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const dados = {
+        ...form,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (editando) {
+        await db.collection("produtos_vitrine").doc(editando).update(dados);
+      } else {
+        await db.collection("produtos_vitrine").add({
+          ...dados,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      setModal(false);
+      setEditando(null);
+      setForm(formVazio);
+    } catch (e) {
+      alert("Erro ao salvar: " + e.message);
+    } finally {
+      setSalvando(false);
+    }
+  }
+  async function toggleAtivo(p) {
+    await db.collection("produtos_vitrine").doc(p.id).update({
+      ativo: !p.ativo
+    });
+  }
+  async function excluir(id) {
+    if (!confirm("Excluir este produto da vitrine?")) return;
+    await db.collection("produtos_vitrine").doc(id).delete();
+  }
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 24,
+      flexWrap: "wrap",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "page-title"
+  }, "\uD83D\uDECD\uFE0F Vitrine de Produtos"), /*#__PURE__*/React.createElement("div", {
+    className: "page-subtitle"
+  }, produtos.length, " produto(s) \xB7 ", produtos.filter(p => p.ativo).length, " ativo(s)")), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: abrirNovo
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 15
+  }), " Novo Produto")), produtos.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      textAlign: "center",
+      padding: 60,
+      color: "var(--text-muted)"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "shopping-bag",
+    size: 48
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12,
+      fontWeight: 600
+    }
+  }, "Nenhum produto cadastrado"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      marginTop: 8,
+      marginBottom: 20
+    }
+  }, "Cadastre produtos como o 9&Self para exibir no portal do paciente."), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: abrirNovo
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 14
+  }), " Cadastrar primeiro produto")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    }
+  }, produtos.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    className: "card",
+    style: {
+      padding: "18px 20px",
+      opacity: p.ativo ? 1 : 0.6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 14
+    }
+  }, p.imagemUrl ? /*#__PURE__*/React.createElement("img", {
+    src: p.imagemUrl,
+    alt: p.titulo,
+    style: {
+      width: 72,
+      height: 56,
+      objectFit: "cover",
+      borderRadius: 8,
+      flexShrink: 0
+    }
+  }) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 72,
+      height: 56,
+      background: "var(--purple-soft)",
+      borderRadius: 8,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "image",
+    size: 22
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      flexWrap: "wrap",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, p.titulo), /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: p.ativo ? "#d1fae5" : "#f3f4f6",
+      color: p.ativo ? "#065f46" : "#6b7280",
+      borderRadius: 20,
+      padding: "2px 10px",
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, p.ativo ? "✓ Ativo" : "Inativo")), p.descricao && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)",
+      marginBottom: 4,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, p.descricao), p.linkVendas && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "#2563eb"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 11
+  }), " ", p.linkVendas))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 14,
+      paddingTop: 12,
+      borderTop: "1px solid var(--gray-100)",
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => abrirEditar(p)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "pencil",
+    size: 13
+  }), " Editar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      color: p.ativo ? "#d97706" : "#059669"
+    },
+    onClick: () => toggleAtivo(p)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: p.ativo ? "eye-off" : "eye",
+    size: 13
+  }), " ", p.ativo ? "Desativar" : "Ativar"), p.linkVendas && /*#__PURE__*/React.createElement("a", {
+    href: p.linkVendas,
+    target: "_blank",
+    rel: "noreferrer",
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      textDecoration: "none"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "external-link",
+    size: 13
+  }), " Ver p\xE1gina"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      color: "#dc2626",
+      marginLeft: "auto"
+    },
+    onClick: () => excluir(p.id)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "trash-2",
+    size: 13
+  })))))), modal && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.4)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 500,
+      padding: 20
+    },
+    onClick: () => setModal(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 16,
+      padding: 28,
+      width: "100%",
+      maxWidth: 520,
+      maxHeight: "90vh",
+      overflowY: "auto"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "var(--font-display)",
+      fontSize: 18,
+      fontWeight: 600,
+      marginBottom: 20
+    }
+  }, editando ? "Editar Produto" : "Novo Produto"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "T\xEDtulo *"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.titulo,
+    onChange: e => setForm({
+      ...form,
+      titulo: e.target.value
+    }),
+    placeholder: "Ex: Mapeamento de Perfil 9&Self"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Descri\xE7\xE3o (copy do produto)"), /*#__PURE__*/React.createElement("textarea", {
+    className: "form-input",
+    rows: 3,
+    value: form.descricao,
+    onChange: e => setForm({
+      ...form,
+      descricao: e.target.value
+    }),
+    placeholder: "Texto comercial exibido no card do paciente..."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "URL da imagem / banner"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.imagemUrl,
+    onChange: e => setForm({
+      ...form,
+      imagemUrl: e.target.value
+    }),
+    placeholder: "https://..."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Link de vendas / checkout *"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.linkVendas,
+    onChange: e => setForm({
+      ...form,
+      linkVendas: e.target.value
+    }),
+    placeholder: "https://..."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Texto do bot\xE3o"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.textoBotao,
+    onChange: e => setForm({
+      ...form,
+      textoBotao: e.target.value
+    }),
+    placeholder: "Ex: Quero Fazer Meu Mapeamento"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, [true, false].map(v => /*#__PURE__*/React.createElement("button", {
+    key: v + "",
+    type: "button",
+    onClick: () => setForm({
+      ...form,
+      ativo: v
+    }),
+    style: {
+      flex: 1,
+      padding: "10px",
+      borderRadius: 10,
+      border: "1.5px solid",
+      borderColor: form.ativo === v ? "var(--purple)" : "#e5e7eb",
+      background: form.ativo === v ? "var(--purple-soft)" : "white",
+      color: form.ativo === v ? "var(--purple)" : "#6b7280",
+      fontWeight: 600,
+      cursor: "pointer",
+      fontSize: 13
+    }
+  }, v ? "✓ Ativo no portal" : "Inativo (oculto)")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      justifyContent: "flex-end",
+      marginTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: () => setModal(false)
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: salvar,
+    disabled: salvando
+  }, salvando ? "Salvando..." : "Salvar")))));
+}
 function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
@@ -18292,7 +18700,7 @@ function App() {
     user: user
   }), user.tipo === "psicologa" && tab === "alunos" && /*#__PURE__*/React.createElement(Alunos, null), user.tipo === "psicologa" && tab === "casais" && /*#__PURE__*/React.createElement(TerapiaCasais, null), user.tipo === "psicologa" && tab === "recursos" && /*#__PURE__*/React.createElement(RecursosTerapeuticos, {
     user: user
-  }), user.tipo === "psicologa" && tab === "laudos" && /*#__PURE__*/React.createElement(Laudos, null), user.tipo === "psicologa" && tab === "agenda" && /*#__PURE__*/React.createElement(Agenda, null), user.tipo === "psicologa" && tab === "fin-clinica" && /*#__PURE__*/React.createElement(FinanceiroClinica, {
+  }), user.tipo === "psicologa" && tab === "laudos" && /*#__PURE__*/React.createElement(Laudos, null), user.tipo === "psicologa" && tab === "vitrine" && /*#__PURE__*/React.createElement(VitrineProdutos, null), user.tipo === "psicologa" && tab === "agenda" && /*#__PURE__*/React.createElement(Agenda, null), user.tipo === "psicologa" && tab === "fin-clinica" && /*#__PURE__*/React.createElement(FinanceiroClinica, {
     user: user
   }), user.tipo === "psicologa" && tab === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
     user: user
