@@ -7725,321 +7725,286 @@ function Agenda() {
         <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(s=>s+1)}><Icon name="chevron-right" size={18}/></button>
       </div>
 
-      {/* VIEW SELECTOR */}
-      <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-100)",borderRadius:12,padding:4}}>
-        {[["timeline","📅 Timeline"],["semana","🗓️ Semana"]].map(([v,l])=>(
-          <button key={v} onClick={()=>setViewMode(v)}
-            style={{flex:1,padding:"8px 12px",borderRadius:9,border:"none",background:viewMode===v?"white":"transparent",color:viewMode===v?"var(--purple)":"#6b7280",fontWeight:viewMode===v?700:500,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",boxShadow:viewMode===v?"0 1px 4px rgba(0,0,0,0.08)":"none",transition:"all .15s"}}>
-            {l}
-          </button>
-        ))}
-      </div>
-
-      {/* ─── TIMELINE DIÁRIA ─── */}
-      {viewMode==="timeline"&&(()=>{
-        const HORA_INICIO = 7;
-        const HORA_FIM    = 22;
-        const SLOT_MIN    = 60; // granularidade de 1h
-
-        const diaAtual  = diaSelecionado || formatData(hoje);
-        const sessDia   = sessoes.filter(s=>s.data===diaAtual&&!s._sala).sort((a,b)=>a.hora.localeCompare(b.hora));
-        const salasDia  = sessoes.filter(s=>s.data===diaAtual&&s._sala).sort((a,b)=>(s.hora||"").localeCompare(b.hora||""));
-
-        // Blocos de sala do dia (de sala_reservas via _sala flag)
-        // Cada item tem hora (horaInicio), horaFim, pacienteNome (ex "🟣 Atendimentos LK" ou "🟠 Thais...")
-        const blocosSala = sessoes.filter(s=>s._sala&&s.data===diaAtual).map(s=>({
-          id: s.id,
-          inicio: s.horaInicio||s.hora||"00:00",
-          fim:    s.horaFim||s.hora||"00:00",
-          nome:   s.pacienteNome||"Sala",
-          ehLucia: !(s.pacienteNome||"").toLowerCase().includes("thais"),
-          raw: s,
-        }));
+      {/* ── AGENDA: mobile=lista vertical / desktop=grade+lista ── */}
+      {(()=>{
+        const isMobile = window.innerWidth < 768;
+        const HORA_INI = 7, HORA_FIM = 22;
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const dias7 = getDiasSemana(semanaOffset);
 
         function horaParaMin(h){ const [hh,mm]=(h||"00:00").split(":").map(Number); return hh*60+(mm||0); }
         function minParaHora(m){ return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); }
 
-        function sessaoNoSlot(hStr){
-          return sessDia.find(s=>{
-            const ini = horaParaMin(s.hora);
-            const fim = ini+parseInt(s.duracao||50);
-            const sl  = horaParaMin(hStr);
-            return sl>=ini && sl<fim;
-          });
-        }
-        function sessaoEhInicio(hStr, s){ return s.hora.slice(0,5)===hStr; }
-        function blocoNoSlot(hStr){
-          const sl = horaParaMin(hStr);
-          return blocosSala.find(b=> sl>=horaParaMin(b.inicio) && sl<horaParaMin(b.fim));
-        }
+        // Monta linhas da timeline para um dia
+        function montarLinhasDia(diaStr){
+          const sessDia  = sessoes.filter(s=>s.data===diaStr&&!s._sala).sort((a,b)=>a.hora.localeCompare(b.hora));
+          const salasDia = sessoes.filter(s=>s.data===diaStr&&s._sala).map(s=>({
+            inicio: s.horaInicio||s.hora||"00:00",
+            fim:    s.horaFim   ||s.hora||"00:00",
+            nome:   s.pacienteNome||"Sala",
+            ehLucia:!(s.pacienteNome||"").toLowerCase().includes("thais"),
+            raw:s,
+          }));
 
-        // Gerar lista de horas do dia
-        const horas = [];
-        for(let m=HORA_INICIO*60; m<HORA_FIM*60; m+=SLOT_MIN){
-          horas.push(minParaHora(m));
-        }
+          function sessaoNoMin(m){
+            return sessDia.find(s=>{
+              const ini=horaParaMin(s.hora), fim=ini+parseInt(s.duracao||50);
+              return m>=ini&&m<fim;
+            });
+          }
+          function blocoNoMin(m){
+            return salasDia.find(b=>m>=horaParaMin(b.inicio)&&m<horaParaMin(b.fim));
+          }
 
-        // Construir linhas da timeline
-        const linhas = [];
-        let i=0;
-        while(i<horas.length){
-          const hStr = horas[i];
-          const sess = sessaoNoSlot(hStr);
-          const bloco = blocoNoSlot(hStr);
-
-          if(sess && sessaoEhInicio(hStr, sess)){
-            linhas.push({tipo:"sessao", hStr, sess});
-            const slotsOcupados = Math.max(1, Math.ceil(parseInt(sess.duracao||50)/SLOT_MIN));
-            i += slotsOcupados;
-          } else if(sess){
-            // meio de uma sessão — pular
-            i++;
-          } else if(bloco){
-            // Slot dentro de um bloco de sala
-            if(bloco.ehLucia){
-              linhas.push({tipo:"livre-bloco", hStr, bloco});
-            } else {
-              linhas.push({tipo:"thais", hStr, bloco});
+          const linhas=[];
+          for(let m=HORA_INI*60; m<HORA_FIM*60; m+=60){
+            const hStr=minParaHora(m);
+            const sess=sessaoNoMin(m);
+            const bloco=blocoNoMin(m);
+            if(sess){
+              if(sess.hora.slice(0,5)===hStr) linhas.push({tipo:"sessao",hStr,sess});
+              // else pular (meio de sessão)
+            } else if(bloco){
+              if(bloco.ehLucia) linhas.push({tipo:"livre",hStr,bloco});
+              else {
+                // só mostrar início do bloco Thais uma vez
+                if(!linhas.length||linhas[linhas.length-1].tipo!=="thais"||linhas[linhas.length-1].bloco.raw.id!==bloco.raw.id)
+                  linhas.push({tipo:"thais",hStr,bloco});
+              }
             }
-            i++;
-          } else {
-            linhas.push({tipo:"vago", hStr});
-            i++;
+            // fora de bloco: não mostrar para não poluir
           }
+          return linhas;
         }
 
-        // Colapsar slots vagos consecutivos fora de bloco
-        const linhasColapso = [];
-        for(let j=0; j<linhas.length; j++){
-          const l = linhas[j];
-          if(l.tipo==="vago" && linhasColapso.length>0 && linhasColapso[linhasColapso.length-1].tipo==="vago-grupo"){
-            linhasColapso[linhasColapso.length-1].ate = l.hStr;
-          } else if(l.tipo==="vago"){
-            linhasColapso.push({tipo:"vago-grupo", de:l.hStr, ate:l.hStr});
-          } else {
-            linhasColapso.push(l);
-          }
+        // ── COMPONENTE de um card de sessão ──
+        function CardSessao({s,hStr}){
+          const st=STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+          const dur=parseInt(s.duracao||50);
+          const fim=minParaHora(horaParaMin(s.hora)+dur);
+          const online=(s.tipo||"").toLowerCase().includes("online");
+          return (
+            <div onClick={()=>abrirEditar(s)}
+              style={{display:"flex",alignItems:"stretch",borderRadius:12,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.07)",cursor:"pointer",background:st.bg,marginBottom:4}}>
+              <div style={{width:4,background:st.cor,flexShrink:0}}/>
+              <div style={{flex:1,padding:"10px 12px"}}>
+                <div style={{fontSize:15,fontWeight:700,color:"#111827",lineHeight:1.3}}>{s.pacienteNome||"—"}</div>
+                <div style={{fontSize:12,color:st.cor,fontWeight:600,marginTop:2}}>
+                  {s.hora.slice(0,5)} – {fim}
+                  {online&&<span style={{marginLeft:6}}>📹</span>}
+                </div>
+                <div style={{fontSize:11,color:"#6b7280",marginTop:1}}>{s.tipo||"Psicoterapia"}</div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 10px",gap:4}}>
+                <span style={{background:st.cor,color:"white",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{st.label}</span>
+                <select value={s.status}
+                  onChange={e=>{e.stopPropagation();mudarStatus(s.id,e.target.value);}}
+                  onClick={e=>e.stopPropagation()}
+                  style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px 3px",background:"white",cursor:"pointer",maxWidth:84}}>
+                  {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+          );
         }
 
-        const diasSemana7 = getDiasSemana(semanaOffset);
+        function CardLivre({hStr,diaStr}){
+          return (
+            <button onClick={()=>{setForm({pacienteId:"",data:diaStr,hora:hStr,duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+              style={{display:"flex",alignItems:"center",gap:8,width:"100%",background:"#faf5ff",border:"1.5px dashed #c4b5fd",borderRadius:10,padding:"8px 12px",cursor:"pointer",color:"#7B00C4",fontSize:13,fontFamily:"var(--font-body)",marginBottom:3}}>
+              <Icon name="plus-circle" size={14}/> <span style={{fontWeight:600}}>{hStr}</span> <span style={{color:"#a78bfa",fontWeight:400}}>· Disponível</span>
+            </button>
+          );
+        }
 
-        return (
-          <div>
-            {/* Seletor de dia */}
-            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:16,WebkitOverflowScrolling:"touch"}}>
-              {diasSemana7.map((dia,idx)=>{
-                const str = formatData(dia);
-                const isHoje = str===formatData(hoje);
-                const isSelected = str===diaAtual;
-                const temSessao = sessoes.some(s=>s.data===str&&!s._sala&&s.status!=="cancelado");
-                const temBloco  = sessoes.some(s=>s.data===str&&s._sala);
+        function CardThais({bloco}){
+          return (
+            <div style={{display:"flex",alignItems:"stretch",borderRadius:10,overflow:"hidden",background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:3}}>
+              <div style={{width:4,background:"#ea580c",flexShrink:0}}/>
+              <div style={{padding:"8px 12px"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"#ea580c"}}>{bloco.nome}</div>
+                <div style={{fontSize:11,color:"#9a3412"}}>{bloco.inicio} – {bloco.fim} · Sala ocupada</div>
+              </div>
+            </div>
+          );
+        }
+
+        // ── VISÃO MOBILE: lista vertical contínua ──
+        if(isMobile){
+          // Mostrar 14 dias a partir de hoje
+          const diasMobile = Array.from({length:14},(_,i)=>{
+            const d=new Date(hoje); d.setDate(hoje.getDate()+i); return d;
+          });
+          return (
+            <div>
+              {/* Navegação semana */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <button onClick={()=>setSemanaOffset(o=>o-1)} className="btn btn-ghost" style={{padding:"6px 12px"}}>‹ Anterior</button>
+                <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
+                  {formatData(dias7[0])} – {formatData(dias7[6])}
+                </span>
+                <button onClick={()=>setSemanaOffset(o=>o+1)} className="btn btn-ghost" style={{padding:"6px 12px"}}>Próxima ›</button>
+              </div>
+              {diasMobile.map((dia,di)=>{
+                const diaStr=formatData(dia);
+                const linhas=montarLinhasDia(diaStr);
+                const isHoje=diaStr===formatData(hoje);
+                if(linhas.length===0&&!isHoje) return null; // ocultar dias vazios sem bloco
                 return (
-                  <button key={idx} onClick={()=>setDiaSelecionado(str)}
-                    style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",padding:"8px 12px",borderRadius:12,border:"1.5px solid",borderColor:isSelected?"var(--purple)":isHoje?"var(--purple)30":"#e5e7eb",background:isSelected?"var(--purple)":isHoje?"var(--purple-soft)":"white",cursor:"pointer",minWidth:52}}>
-                    <span style={{fontSize:10,fontWeight:600,color:isSelected?"rgba(255,255,255,.75)":isHoje?"var(--purple)":"#9ca3af",textTransform:"uppercase"}}>{DIAS_SEMANA[dia.getDay()]}</span>
-                    <span style={{fontSize:20,fontWeight:800,color:isSelected?"white":isHoje?"var(--purple)":"#111827",lineHeight:1.2}}>{dia.getDate()}</span>
-                    <div style={{display:"flex",gap:3,marginTop:3}}>
-                      {temSessao&&<div style={{width:5,height:5,borderRadius:"50%",background:isSelected?"rgba(255,255,255,.7)":"var(--purple)"}}/>}
-                      {temBloco&&<div style={{width:5,height:5,borderRadius:"50%",background:isSelected?"rgba(255,255,255,.5)":"#ea580c"}}/>}
+                  <div key={di} style={{display:"flex",gap:0,marginBottom:8}}>
+                    {/* Coluna lateral dia */}
+                    <div style={{width:44,flexShrink:0,paddingTop:10,textAlign:"center"}}>
+                      <div style={{fontSize:10,fontWeight:700,color:isHoje?"var(--purple)":"#9ca3af",textTransform:"uppercase"}}>
+                        {DIAS_SEMANA[dia.getDay()]}
+                      </div>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:isHoje?"var(--purple)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",margin:"2px auto 0"}}>
+                        <span style={{fontSize:18,fontWeight:800,color:isHoje?"white":isHoje?"var(--purple)":"#111827"}}>{dia.getDate()}</span>
+                      </div>
                     </div>
-                  </button>
+                    {/* Linha vertical */}
+                    <div style={{width:2,background:isHoje?"var(--purple)":"#e5e7eb",borderRadius:2,flexShrink:0,marginTop:14,marginRight:10}}/>
+                    {/* Cards */}
+                    <div style={{flex:1,paddingTop:6}}>
+                      {linhas.length===0?(
+                        <div style={{color:"#d1d5db",fontSize:12,padding:"8px 0"}}>Sem eventos</div>
+                      ):linhas.map((l,li)=>{
+                        if(l.tipo==="sessao") return <CardSessao key={li} s={l.sess} hStr={l.hStr}/>;
+                        if(l.tipo==="livre")  return <CardLivre  key={li} hStr={l.hStr} diaStr={diaStr}/>;
+                        if(l.tipo==="thais")  return <CardThais  key={li} bloco={l.bloco}/>;
+                        return null;
+                      })}
+                      <button onClick={()=>{setForm({pacienteId:"",data:diaStr,hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+                        style={{background:"none",border:"1px dashed #d1d5db",borderRadius:8,padding:"5px 12px",cursor:"pointer",color:"#9ca3af",fontSize:12,width:"100%",marginTop:2,fontFamily:"var(--font-body)"}}>
+                        + Agendar
+                      </button>
+                    </div>
+                  </div>
                 );
               })}
             </div>
+          );
+        }
 
-            {/* Label do dia */}
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-              <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
-                {new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
-              </span>
-              {sessDia.filter(s=>s.status!=="cancelado").length>0&&(
-                <span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                  {sessDia.filter(s=>s.status!=="cancelado").length} sessão(ões)
-                </span>
-              )}
-              {blocosSala.filter(b=>b.ehLucia).length>0&&(
-                <span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
-                  {blocosSala.filter(b=>b.ehLucia).map(b=>b.inicio+"–"+b.fim).join(", ")} bloqueado
-                </span>
-              )}
-            </div>
-
-            {/* Timeline */}
-            <div style={{display:"flex",flexDirection:"column",gap:2}}>
-              {linhasColapso.map((linha,idx)=>{
-
-                /* ── SESSÃO COM PACIENTE ── */
-                if(linha.tipo==="sessao"){
-                  const s = linha.sess;
-                  const st = STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
-                  const duracaoMin = parseInt(s.duracao||50);
-                  const [hh,mm] = (s.hora||"00:00").split(":").map(Number);
-                  const fimMin = hh*60+mm+duracaoMin;
-                  const horaFim = minParaHora(fimMin);
-                  const isOnline = (s.tipo||"").toLowerCase().includes("online");
-                  return (
-                    <div key={idx} onClick={()=>abrirEditar(s)} style={{display:"flex",gap:0,marginBottom:6,cursor:"pointer"}}>
-                      <div style={{width:56,flexShrink:0,paddingTop:14,paddingRight:10,textAlign:"right"}}>
-                        <span style={{fontSize:12,fontWeight:700,color:st.cor}}>{linha.hStr}</span>
-                      </div>
-                      <div style={{width:3,background:st.cor,borderRadius:2,flexShrink:0,marginTop:6,marginBottom:-2}}/>
-                      <div style={{flex:1,marginLeft:10,background:st.bg,borderLeft:"4px solid "+st.cor,borderRadius:"0 14px 14px 0",padding:"12px 14px"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
-                          <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontSize:15,fontWeight:700,color:"#111827",lineHeight:1.3,marginBottom:2}}>{s.pacienteNome||"—"}</div>
-                            <div style={{fontSize:13,color:st.cor,fontWeight:600,marginBottom:3}}>{linha.hStr} – {horaFim} · {duracaoMin}min</div>
-                            <div style={{fontSize:12,color:"#6b7280",display:"flex",alignItems:"center",gap:6}}>
-                              {isOnline&&<Icon name="video" size={12}/>}{s.tipo||"Psicoterapia"}
-                            </div>
-                            {s.obs&&<div style={{fontSize:11,color:"#9ca3af",marginTop:4,fontStyle:"italic"}}>{s.obs}</div>}
-                          </div>
-                          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6,flexShrink:0}}>
-                            <span style={{background:st.cor,color:"white",borderRadius:20,padding:"3px 10px",fontSize:10,fontWeight:700}}>{st.label}</span>
-                            <select value={s.status}
-                              onChange={e=>{e.stopPropagation();mudarStatus(s.id,e.target.value);}}
-                              onClick={e=>e.stopPropagation()}
-                              style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px 4px",background:"white",color:"#374151",cursor:"pointer",maxWidth:90}}>
-                              {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                /* ── SLOT LIVRE DENTRO DO SEU BLOCO ── */
-                if(linha.tipo==="livre-bloco"){
-                  return (
-                    <div key={idx} style={{display:"flex",gap:0,marginBottom:2}}>
-                      <div style={{width:56,flexShrink:0,paddingTop:9,paddingRight:10,textAlign:"right"}}>
-                        <span style={{fontSize:11,fontWeight:600,color:"#7B00C4"}}>{linha.hStr}</span>
-                      </div>
-                      <div style={{width:3,background:"#d8b4fe",borderRadius:2,flexShrink:0,marginTop:4}}/>
-                      <button
-                        onClick={()=>{setForm({pacienteId:"",data:diaAtual,hora:linha.hStr,duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
-                        style={{flex:1,marginLeft:10,background:"#faf5ff",border:"1.5px dashed #d8b4fe",borderRadius:"0 10px 10px 0",padding:"8px 14px",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:8,color:"#7B00C4",fontSize:13,fontFamily:"var(--font-body)"}}>
-                        <Icon name="plus-circle" size={15}/> Disponível · {linha.hStr}
-                      </button>
-                    </div>
-                  );
-                }
-
-                /* ── BLOCO DA THAIS ── */
-                if(linha.tipo==="thais"){
-                  const isFirst = idx===0 || linhasColapso[idx-1]?.bloco?.id !== linha.bloco.id;
-                  if(!isFirst) return null;
-                  return (
-                    <div key={idx} style={{display:"flex",gap:0,marginBottom:4}}>
-                      <div style={{width:56,flexShrink:0,paddingTop:12,paddingRight:10,textAlign:"right"}}>
-                        <span style={{fontSize:11,fontWeight:600,color:"#ea580c"}}>{linha.bloco.inicio}</span>
-                      </div>
-                      <div style={{width:3,background:"#ea580c",borderRadius:2,flexShrink:0,marginTop:4,opacity:0.5}}/>
-                      <div style={{flex:1,marginLeft:10,background:"#fff7ed",borderLeft:"4px solid #ea580c",borderRadius:"0 12px 12px 0",padding:"10px 14px"}}>
-                        <div style={{fontSize:13,fontWeight:700,color:"#ea580c"}}>{linha.bloco.nome}</div>
-                        <div style={{fontSize:11,color:"#9a3412",marginTop:2}}>{linha.bloco.inicio} – {linha.bloco.fim} · Sala ocupada</div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                /* ── FORA DE BLOCO (vago-grupo) ── */
-                if(linha.tipo==="vago-grupo"){
-                  const mesmoSlot = linha.de===linha.ate;
-                  return (
-                    <div key={idx} style={{display:"flex",gap:0,marginBottom:1}}>
-                      <div style={{width:56,flexShrink:0,paddingTop:7,paddingRight:10,textAlign:"right"}}>
-                        <span style={{fontSize:10,color:"#d1d5db"}}>{linha.de}{!mesmoSlot&&<><br/><span style={{color:"#e5e7eb"}}>⋮</span><br/>{linha.ate}</>}</span>
-                      </div>
-                      <div style={{width:3,background:"#f3f4f6",borderRadius:2,flexShrink:0,marginTop:4}}/>
-                      <div style={{flex:1,marginLeft:10,padding:"4px 0"}}/>
-                    </div>
-                  );
-                }
-
-                return null;
-              })}
-            </div>
-
-            {/* Se dia vazio */}
-            {linhasColapso.every(l=>l.tipo==="vago-grupo")&&(
-              <div style={{textAlign:"center",padding:"32px 20px",color:"var(--text-muted)",background:"var(--gray-50)",borderRadius:14,marginTop:8}}>
-                <Icon name="calendar" size={36}/>
-                <div style={{marginTop:10,fontWeight:600,fontSize:14}}>Nenhum agendamento neste dia</div>
-                <button className="btn btn-purple" style={{marginTop:14,fontSize:13}}
-                  onClick={()=>{setForm({pacienteId:"",data:diaAtual,hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}>
-                  <Icon name="plus" size={14}/> Agendar sessão
+        // ── VISÃO DESKTOP: seletor de view + grade/timeline ──
+        const diaAtual = diaSelecionado || formatData(hoje);
+        return (
+          <div>
+            {/* Seletor view */}
+            <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-100)",borderRadius:12,padding:4,maxWidth:260}}>
+              {[["timeline","📅 Timeline"],["semana","🗓️ Semana"]].map(([v,l])=>(
+                <button key={v} onClick={()=>setViewMode(v)}
+                  style={{flex:1,padding:"8px 12px",borderRadius:9,border:"none",background:viewMode===v?"white":"transparent",color:viewMode===v?"var(--purple)":"#6b7280",fontWeight:viewMode===v?700:500,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",boxShadow:viewMode===v?"0 1px 4px rgba(0,0,0,0.08)":"none"}}>
+                  {l}
                 </button>
+              ))}
+            </div>
+
+            {/* DESKTOP TIMELINE */}
+            {viewMode==="timeline"&&(
+              <div style={{display:"flex",gap:20}}>
+                {/* Seletor de dias */}
+                <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+                  {dias7.map((dia,idx)=>{
+                    const str=formatData(dia);
+                    const isH=str===formatData(hoje);
+                    const isSel=str===diaAtual;
+                    const temS=sessoes.some(s=>s.data===str&&!s._sala);
+                    return (
+                      <button key={idx} onClick={()=>setDiaSelecionado(str)}
+                        style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"8px 12px",borderRadius:12,border:"1.5px solid",borderColor:isSel?"var(--purple)":isH?"#c4b5fd":"#e5e7eb",background:isSel?"var(--purple)":isH?"#f5f0ff":"white",cursor:"pointer",minWidth:56}}>
+                        <span style={{fontSize:10,fontWeight:600,color:isSel?"rgba(255,255,255,.75)":isH?"var(--purple)":"#9ca3af",textTransform:"uppercase"}}>{DIAS_SEMANA[dia.getDay()]}</span>
+                        <span style={{fontSize:20,fontWeight:800,color:isSel?"white":isH?"var(--purple)":"#111827"}}>{dia.getDate()}</span>
+                        {temS&&<div style={{width:5,height:5,borderRadius:"50%",background:isSel?"rgba(255,255,255,.7)":"var(--purple)",marginTop:2}}/>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Lista do dia */}
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",marginBottom:12}}>
+                    {new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+                  </div>
+                  {(()=>{
+                    const linhas=montarLinhasDia(diaAtual);
+                    if(linhas.length===0) return (
+                      <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",background:"var(--gray-50)",borderRadius:14}}>
+                        <Icon name="calendar" size={32}/>
+                        <div style={{marginTop:8,fontWeight:600}}>Nenhum evento neste dia</div>
+                        <button className="btn btn-purple" style={{marginTop:12,fontSize:13}}
+                          onClick={()=>{setForm({pacienteId:"",data:diaAtual,hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}>
+                          + Agendar
+                        </button>
+                      </div>
+                    );
+                    return linhas.map((l,li)=>{
+                      if(l.tipo==="sessao") return <CardSessao key={li} s={l.sess} hStr={l.hStr}/>;
+                      if(l.tipo==="livre")  return <CardLivre  key={li} hStr={l.hStr} diaStr={diaAtual}/>;
+                      if(l.tipo==="thais")  return <CardThais  key={li} bloco={l.bloco}/>;
+                      return null;
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* DESKTOP GRADE SEMANAL */}
+            {viewMode==="semana"&&(
+              <div style={{marginBottom:24}}>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
+                  <div/>
+                  {dias.map((dia,i)=>{
+                    const isHoje=formatData(dia)===formatData(hoje);
+                    const isPassado=dia<hoje;
+                    return (
+                      <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:10,background:isHoje?"var(--purple)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)"}}>
+                        <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:isHoje?"rgba(255,255,255,.8)":isPassado?"#9ca3af":"var(--gray-500)"}}>{DIAS_SEMANA[i]}</div>
+                        <div style={{fontSize:20,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)",lineHeight:1.2}}>{dia.getDate()}</div>
+                        <div style={{fontSize:9,color:isHoje?"rgba(255,255,255,.7)":"var(--gray-400)"}}>{dia.toLocaleDateString("pt-BR",{month:"short"})}</div>
+                      </div>
+                    );
+                  })}
+                </div></div>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:4}}>
+                {[
+                  {label:"☀️ Manhã",   range:["06:00","12:00"],bg:"#fffbeb"},
+                  {label:"🌤️ Tarde",   range:["12:00","18:00"],bg:"#f0f9ff"},
+                  {label:"🌙 Noite",   range:["18:00","23:59"],bg:"#f5f3ff"},
+                ].map(periodo=>(
+                  <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
+                    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
+                      <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)"}}>{periodo.label}</span>
+                    </div>
+                    {dias.map((dia,i)=>{
+                      const isHoje=formatData(dia)===formatData(hoje);
+                      const sessDia=sessoesNoDia(dia).filter(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1]);
+                      return (
+                        <div key={i} style={{minHeight:70,background:isHoje?periodo.bg+"cc":periodo.bg,border:"1px solid",borderColor:isHoje?"var(--purple)30":"var(--gray-200)",borderRadius:8,padding:4,display:"flex",flexDirection:"column",gap:3}}>
+                          {sessDia.map(s=>{
+                            const st=s._sala?{bg:"#fff7ed",cor:"#ea580c",label:"Sala"}:STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+                            return (
+                              <div key={s.id} onClick={()=>!s._sala&&abrirEditar(s)}
+                                style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:5,padding:"4px 6px",cursor:s._sala?"default":"pointer",fontSize:11,lineHeight:1.4}}>
+                                <div style={{fontWeight:700,color:st.cor,fontSize:12}}>{s.hora}</div>
+                                <div style={{color:"#111",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>
+                                  {s._sala?(s.pacienteNome||"Sala"):(s.pacienteNome?.split(" ")[0]||"—")}
+                                </div>
+                                {!s._sala&&<div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>}
+                              </div>
+                            );
+                          })}
+                          <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:periodo.range[0]==="06:00"?"08:00":periodo.range[0]==="12:00"?"14:00":"19:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+                            style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"3px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:"auto"}}>+</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                </div>
               </div>
             )}
           </div>
         );
       })()}
-
-            {/* ─── GRADE SEMANAL (view antiga) ─── */}
-      {viewMode==="semana"&&(
-      <div style={{marginBottom:24}}>
-        {/* Cabeçalho dos dias */}
-        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
-          <div/>
-          {dias.map((dia,i)=>{
-            const isHoje = formatData(dia)===formatData(hoje);
-            const isPassado = dia < hoje;
-            return (
-              <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:10,background:isHoje?"var(--purple)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)"}}>
-                <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:isHoje?"rgba(255,255,255,.8)":isPassado?"#9ca3af":"var(--gray-500)"}}>{DIAS_SEMANA[i]}</div>
-                <div style={{fontSize:20,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)",lineHeight:1.2}}>{dia.getDate()}</div>
-                <div style={{fontSize:9,color:isHoje?"rgba(255,255,255,.7)":"var(--gray-400)"}}>
-                  {dia.toLocaleDateString("pt-BR",{month:"short"})}
-                </div>
-              </div>
-            );
-          })}
-        </div></div>
-        {/* Períodos */}
-        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:4}}>
-        {[
-          {label:"☀️ Manhã",   range:["06:00","12:00"], bg:"#fffbeb"},
-          {label:"🌤️ Tarde",   range:["12:00","18:00"], bg:"#f0f9ff"},
-          {label:"🌙 Noite",   range:["18:00","23:59"], bg:"#f5f3ff"},
-        ].map(periodo=>(
-          <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
-            <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
-              <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)"}}>{periodo.label}</span>
-            </div>
-            {dias.map((dia,i)=>{
-              const isHoje = formatData(dia)===formatData(hoje);
-              const sessDia = sessoesNoDia(dia).filter(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1]);
-              return (
-                <div key={i} style={{minHeight:70,background:isHoje?periodo.bg+"cc":periodo.bg,border:"1px solid",borderColor:isHoje?"var(--purple)30":"var(--gray-200)",borderRadius:8,padding:4,display:"flex",flexDirection:"column",gap:3}}>
-                  {sessDia.map(s=>{
-                    const st = s._sala
-                      ? {bg:"#fff7ed",cor:"#ea580c",label:"Sala"}
-                      : STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
-                    return (
-                      <div key={s.id}
-                        onClick={()=>!s._sala&&abrirEditar(s)}
-                        style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:5,padding:"4px 6px",cursor:s._sala?"default":"pointer",fontSize:11,lineHeight:1.4}}>
-                        <div style={{fontWeight:700,color:st.cor,fontSize:12}}>{s.hora}</div>
-                        <div style={{color:"#111",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>
-                          {s._sala ? (s.pacienteNome||"Sala") : (s.pacienteNome?.split(" ")[0]||"—")}
-                        </div>
-                        {!s._sala&&<div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>}
-                      </div>
-                    );
-                  })}
-                  <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:periodo.range[0]==="06:00"?"08:00":periodo.range[0]==="12:00"?"14:00":"19:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
-                    style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"3px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:"auto"}}>
-                    +
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-        </div>
-      </div>
-      )}
 
             {/* Lista próximas sessões */}
       {proximas.length>0&&(
