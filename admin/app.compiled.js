@@ -16930,6 +16930,8 @@ function Agenda() {
     obs: ""
   });
   const [salvando, setSalvando] = useState(false);
+  const [viewMode, setViewMode] = useState("timeline");
+  const [diaSelecionado, setDiaSelecionado] = useState(null);
   const TIPOS = ["Psicoterapia", "Avaliacao Neuropsicologica", "Avaliacao Psicologica", "Terapia de Casais", "Musicoterapia", "Orientacao de Carreira", "Retorno", "Outro"];
   const STATUS_CONFIG = {
     agendado: {
@@ -17315,6 +17317,379 @@ function Agenda() {
     size: 18
   }))), /*#__PURE__*/React.createElement("div", {
     style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 16,
+      background: "var(--gray-100)",
+      borderRadius: 12,
+      padding: 4
+    }
+  }, [["timeline", "📅 Timeline"], ["semana", "🗓️ Semana"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setViewMode(v),
+    style: {
+      flex: 1,
+      padding: "8px 12px",
+      borderRadius: 9,
+      border: "none",
+      background: viewMode === v ? "white" : "transparent",
+      color: viewMode === v ? "var(--purple)" : "#6b7280",
+      fontWeight: viewMode === v ? 700 : 500,
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)",
+      boxShadow: viewMode === v ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+      transition: "all .15s"
+    }
+  }, l))), viewMode === "timeline" && (() => {
+    const HORA_INICIO = 7;
+    const HORA_FIM = 22;
+    const slots = [];
+    for (let h = HORA_INICIO; h < HORA_FIM; h++) {
+      slots.push(String(h).padStart(2, "0") + ":00");
+    }
+
+    // Dia selecionado
+    const diaAtual = diaSelecionado || formatData(hoje);
+    const sessDia = sessoes.filter(s => s.data === diaAtual).sort((a, b) => a.hora.localeCompare(b.hora));
+    function horaParaMin(h) {
+      const [hh, mm] = (h || "00:00").split(":").map(Number);
+      return hh * 60 + (mm || 0);
+    }
+    function slotOcupado(slot) {
+      return sessDia.find(s => {
+        const ini = horaParaMin(s.hora);
+        const fim = ini + parseInt(s.duracao || 50);
+        const sl = horaParaMin(slot);
+        return sl >= ini && sl < fim;
+      });
+    }
+    function slotEhInicio(slot, s) {
+      return s.hora.slice(0, 5) === slot;
+    }
+
+    // Linha do tempo
+    const linhas = [];
+    let i = 0;
+    while (i < slots.length) {
+      const slot = slots[i];
+      const sessaoNoSlot = sessDia.find(s => s.hora.slice(0, 5) === slot);
+      if (sessaoNoSlot) {
+        linhas.push({
+          tipo: "sessao",
+          slot,
+          sessao: sessaoNoSlot
+        });
+        // Pular slots cobertos pela duração
+        const duracaoSlots = Math.ceil(parseInt(sessaoNoSlot.duracao || 50) / 60);
+        i += Math.max(1, duracaoSlots);
+      } else {
+        // Vago — agrupar slots livres consecutivos?
+        linhas.push({
+          tipo: "vago",
+          slot
+        });
+        i++;
+      }
+    }
+    const diasSemana7 = getDiasSemana(semanaOffset);
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        overflowX: "auto",
+        paddingBottom: 8,
+        marginBottom: 16,
+        WebkitOverflowScrolling: "touch"
+      }
+    }, diasSemana7.map((dia, idx) => {
+      const str = formatData(dia);
+      const isHoje = str === formatData(hoje);
+      const isSelected = str === diaAtual;
+      const temSessao = sessoes.some(s => s.data === str && s.status !== "cancelado");
+      return /*#__PURE__*/React.createElement("button", {
+        key: idx,
+        onClick: () => setDiaSelecionado(str),
+        style: {
+          flexShrink: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "8px 12px",
+          borderRadius: 12,
+          border: "1.5px solid",
+          borderColor: isSelected ? "var(--purple)" : isHoje ? "var(--purple)30" : "#e5e7eb",
+          background: isSelected ? "var(--purple)" : isHoje ? "var(--purple-soft)" : "white",
+          cursor: "pointer",
+          minWidth: 52,
+          position: "relative"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 10,
+          fontWeight: 600,
+          color: isSelected ? "rgba(255,255,255,.75)" : isHoje ? "var(--purple)" : "#9ca3af",
+          textTransform: "uppercase"
+        }
+      }, DIAS_SEMANA[dia.getDay()]), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 20,
+          fontWeight: 800,
+          color: isSelected ? "white" : isHoje ? "var(--purple)" : "#111827",
+          lineHeight: 1.2
+        }
+      }, dia.getDate()), temSessao && /*#__PURE__*/React.createElement("div", {
+        style: {
+          width: 5,
+          height: 5,
+          borderRadius: "50%",
+          background: isSelected ? "rgba(255,255,255,.7)" : "var(--purple)",
+          marginTop: 3
+        }
+      }));
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: "var(--text-muted)",
+        marginBottom: 12
+      }
+    }, new Date(diaAtual + "T12:00:00").toLocaleDateString("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    }), /*#__PURE__*/React.createElement("span", {
+      style: {
+        marginLeft: 8,
+        background: "var(--purple-soft)",
+        color: "var(--purple)",
+        borderRadius: 20,
+        padding: "2px 10px",
+        fontSize: 11
+      }
+    }, sessDia.filter(s => s.status !== "cancelado").length, " sess\xE3o(\xF5es)")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 0
+      }
+    }, linhas.map(({
+      tipo,
+      slot,
+      sessao
+    }, idx) => {
+      if (tipo === "sessao") {
+        const st = sessao._sala ? {
+          label: "Sala",
+          cor: "#ea580c",
+          bg: "#fff7ed"
+        } : STATUS_CONFIG[sessao.status] || STATUS_CONFIG.agendado;
+        const duracaoMin = parseInt(sessao.duracao || 50);
+        const horaFim = (() => {
+          const [hh, mm] = (sessao.hora || "00:00").split(":").map(Number);
+          const total = hh * 60 + mm + duracaoMin;
+          return String(Math.floor(total / 60)).padStart(2, "0") + ":" + String(total % 60).padStart(2, "0");
+        })();
+        const isOnline = (sessao.tipo || "").toLowerCase().includes("online");
+        return /*#__PURE__*/React.createElement("div", {
+          key: idx,
+          style: {
+            display: "flex",
+            gap: 0,
+            marginBottom: 4
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            width: 52,
+            flexShrink: 0,
+            paddingTop: 14,
+            paddingRight: 10,
+            textAlign: "right"
+          }
+        }, /*#__PURE__*/React.createElement("span", {
+          style: {
+            fontSize: 12,
+            fontWeight: 700,
+            color: st.cor
+          }
+        }, slot)), /*#__PURE__*/React.createElement("div", {
+          style: {
+            width: 2,
+            background: st.cor,
+            borderRadius: 2,
+            flexShrink: 0,
+            marginTop: 6,
+            marginBottom: -4,
+            opacity: 0.4
+          }
+        }), /*#__PURE__*/React.createElement("div", {
+          onClick: () => !sessao._sala && abrirEditar(sessao),
+          style: {
+            flex: 1,
+            marginLeft: 10,
+            background: st.bg,
+            borderLeft: "4px solid " + st.cor,
+            borderRadius: "0 12px 12px 0",
+            padding: "12px 14px",
+            cursor: sessao._sala ? "default" : "pointer",
+            marginBottom: 2
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 8
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            flex: 1,
+            minWidth: 0
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 15,
+            fontWeight: 700,
+            color: "#111827",
+            lineHeight: 1.3,
+            marginBottom: 3
+          }
+        }, sessao.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 13,
+            color: st.cor,
+            fontWeight: 600,
+            marginBottom: 4
+          }
+        }, slot, " \u2013 ", horaFim, " \xB7 ", duracaoMin, "min"), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            color: "#6b7280"
+          }
+        }, sessao.tipo || "Psicoterapia"), sessao.obs && /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 11,
+            color: "#9ca3af",
+            marginTop: 4,
+            fontStyle: "italic"
+          }
+        }, sessao.obs)), /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 6,
+            flexShrink: 0
+          }
+        }, isOnline && /*#__PURE__*/React.createElement(Icon, {
+          name: "video",
+          size: 16,
+          style: {
+            color: st.cor
+          }
+        }), /*#__PURE__*/React.createElement("span", {
+          style: {
+            background: st.cor,
+            color: "white",
+            borderRadius: 20,
+            padding: "3px 9px",
+            fontSize: 10,
+            fontWeight: 700,
+            whiteSpace: "nowrap"
+          }
+        }, st.label), !sessao._sala && /*#__PURE__*/React.createElement("select", {
+          value: sessao.status,
+          onChange: e => {
+            e.stopPropagation();
+            mudarStatus(sessao.id, e.target.value);
+          },
+          onClick: e => e.stopPropagation(),
+          style: {
+            fontSize: 10,
+            border: "1px solid #e5e7eb",
+            borderRadius: 6,
+            padding: "2px 4px",
+            background: "white",
+            color: "#374151",
+            cursor: "pointer"
+          }
+        }, Object.entries(STATUS_CONFIG).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
+          key: k,
+          value: k
+        }, v.label)))))));
+      } else {
+        // Slot vago
+        return /*#__PURE__*/React.createElement("div", {
+          key: idx,
+          style: {
+            display: "flex",
+            gap: 0,
+            marginBottom: 1
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            width: 52,
+            flexShrink: 0,
+            paddingTop: 8,
+            paddingRight: 10,
+            textAlign: "right"
+          }
+        }, /*#__PURE__*/React.createElement("span", {
+          style: {
+            fontSize: 11,
+            color: "#d1d5db",
+            fontWeight: 500
+          }
+        }, slot)), /*#__PURE__*/React.createElement("div", {
+          style: {
+            width: 2,
+            background: "#e5e7eb",
+            flexShrink: 0,
+            marginTop: 4,
+            opacity: 0.6
+          }
+        }), /*#__PURE__*/React.createElement("button", {
+          onClick: () => {
+            setForm({
+              pacienteId: "",
+              data: diaAtual,
+              hora: slot,
+              duracao: "50",
+              tipo: "Psicoterapia",
+              status: "agendado",
+              obs: ""
+            });
+            setEditando(null);
+            setModal(true);
+          },
+          style: {
+            flex: 1,
+            marginLeft: 10,
+            background: "transparent",
+            border: "1px dashed #e5e7eb",
+            borderRadius: "0 8px 8px 0",
+            padding: "7px 14px",
+            cursor: "pointer",
+            textAlign: "left",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: "#9ca3af",
+            fontSize: 12,
+            fontFamily: "var(--font-body)",
+            transition: "background .15s"
+          },
+          onMouseOver: e => e.currentTarget.style.background = "#f9fafb",
+          onMouseOut: e => e.currentTarget.style.background = "transparent"
+        }, /*#__PURE__*/React.createElement(Icon, {
+          name: "plus",
+          size: 13
+        }), /*#__PURE__*/React.createElement("span", null, "Dispon\xEDvel")));
+      }
+    })));
+  })(), viewMode === "semana" && /*#__PURE__*/React.createElement("div", {
+    style: {
       marginBottom: 24
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -17383,116 +17758,111 @@ function Agenda() {
     label: "🌙 Noite",
     range: ["18:00", "23:59"],
     bg: "#f5f3ff"
-  }].map(periodo => {
-    const sessoesNoPeriodo = dias.some(dia => sessoesNoDia(dia).some(s => s.hora >= periodo.range[0] && s.hora < periodo.range[1]));
+  }].map(periodo => /*#__PURE__*/React.createElement("div", {
+    key: periodo.label,
+    style: {
+      display: "grid",
+      gridTemplateColumns: "60px repeat(7,minmax(44px,1fr))",
+      gap: 3,
+      marginBottom: 4,
+      minWidth: 380
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      justifyContent: "flex-end",
+      paddingRight: 8,
+      paddingTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--gray-500)"
+    }
+  }, periodo.label)), dias.map((dia, i) => {
+    const isHoje = formatData(dia) === formatData(hoje);
+    const sessDia = sessoesNoDia(dia).filter(s => s.hora >= periodo.range[0] && s.hora < periodo.range[1]);
     return /*#__PURE__*/React.createElement("div", {
-      key: periodo.label,
+      key: i,
       style: {
-        display: "grid",
-        gridTemplateColumns: "60px repeat(7,minmax(44px,1fr))",
-        gap: 3,
-        marginBottom: 4,
-        minWidth: 380
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
+        minHeight: 70,
+        background: isHoje ? periodo.bg + "cc" : periodo.bg,
+        border: "1px solid",
+        borderColor: isHoje ? "var(--purple)30" : "var(--gray-200)",
+        borderRadius: 8,
+        padding: 4,
         display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "flex-end",
-        paddingRight: 8,
-        paddingTop: 8
+        flexDirection: "column",
+        gap: 3
       }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        fontWeight: 600,
-        color: "var(--gray-500)",
-        writingMode: "horizontal-tb",
-        whiteSpace: "nowrap"
-      }
-    }, periodo.label)), dias.map((dia, i) => {
-      const isHoje = formatData(dia) === formatData(hoje);
-      const sessDia = sessoesNoDia(dia).filter(s => s.hora >= periodo.range[0] && s.hora < periodo.range[1]);
+    }, sessDia.map(s => {
+      const st = s._sala ? {
+        bg: "#fff7ed",
+        cor: "#ea580c",
+        label: "Sala"
+      } : STATUS_CONFIG[s.status] || STATUS_CONFIG.agendado;
       return /*#__PURE__*/React.createElement("div", {
-        key: i,
+        key: s.id,
+        onClick: () => !s._sala && abrirEditar(s),
         style: {
-          minHeight: 70,
-          background: isHoje ? periodo.bg + "cc" : periodo.bg,
-          border: "1px solid",
-          borderColor: isHoje ? "var(--purple)30" : "var(--gray-200)",
-          borderRadius: 8,
-          padding: 4,
-          display: "flex",
-          flexDirection: "column",
-          gap: 3
-        }
-      }, sessDia.map(s => {
-        const st = s._sala ? {
-          bg: "#fff7ed",
-          cor: "#ea580c",
-          label: "Sala"
-        } : STATUS_CONFIG[s.status] || STATUS_CONFIG.agendado;
-        return /*#__PURE__*/React.createElement("div", {
-          key: s.id,
-          onClick: () => !s._sala && abrirEditar(s),
-          style: {
-            background: st.bg,
-            borderLeft: "3px solid " + st.cor,
-            borderRadius: 5,
-            padding: "4px 6px",
-            cursor: s._sala ? "default" : "pointer",
-            fontSize: 11,
-            lineHeight: 1.4
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontWeight: 700,
-            color: st.cor,
-            fontSize: 12
-          }
-        }, s.hora), /*#__PURE__*/React.createElement("div", {
-          style: {
-            color: "#111",
-            fontWeight: 500,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            fontSize: 11
-          }
-        }, s._sala ? s.pacienteNome || "Sala" : s.pacienteNome?.split(" ")[0] || "—"), !s._sala && /*#__PURE__*/React.createElement("div", {
-          style: {
-            color: "#6b7280",
-            fontSize: 9
-          }
-        }, s.tipo));
-      }), /*#__PURE__*/React.createElement("button", {
-        onClick: () => {
-          setForm({
-            pacienteId: "",
-            data: formatData(dia),
-            hora: periodo.range[0] === "06:00" ? "08:00" : periodo.range[0] === "12:00" ? "14:00" : "19:00",
-            duracao: "50",
-            tipo: "Psicoterapia",
-            status: "agendado",
-            obs: ""
-          });
-          setEditando(null);
-          setModal(true);
-        },
-        style: {
-          background: "none",
-          border: "1px dashed #d1d5db",
-          borderRadius: 4,
-          padding: "3px",
-          cursor: "pointer",
-          color: "#9ca3af",
+          background: st.bg,
+          borderLeft: "3px solid " + st.cor,
+          borderRadius: 5,
+          padding: "4px 6px",
+          cursor: s._sala ? "default" : "pointer",
           fontSize: 11,
-          width: "100%",
-          marginTop: "auto"
+          lineHeight: 1.4
         }
-      }, "+"));
-    }));
-  }))), proximas.length > 0 && /*#__PURE__*/React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 700,
+          color: st.cor,
+          fontSize: 12
+        }
+      }, s.hora), /*#__PURE__*/React.createElement("div", {
+        style: {
+          color: "#111",
+          fontWeight: 500,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          fontSize: 11
+        }
+      }, s._sala ? s.pacienteNome || "Sala" : s.pacienteNome?.split(" ")[0] || "—"), !s._sala && /*#__PURE__*/React.createElement("div", {
+        style: {
+          color: "#6b7280",
+          fontSize: 9
+        }
+      }, s.tipo));
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => {
+        setForm({
+          pacienteId: "",
+          data: formatData(dia),
+          hora: periodo.range[0] === "06:00" ? "08:00" : periodo.range[0] === "12:00" ? "14:00" : "19:00",
+          duracao: "50",
+          tipo: "Psicoterapia",
+          status: "agendado",
+          obs: ""
+        });
+        setEditando(null);
+        setModal(true);
+      },
+      style: {
+        background: "none",
+        border: "1px dashed #d1d5db",
+        borderRadius: 4,
+        padding: "3px",
+        cursor: "pointer",
+        color: "#9ca3af",
+        fontSize: 11,
+        width: "100%",
+        marginTop: "auto"
+      }
+    }, "+"));
+  }))))), proximas.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
