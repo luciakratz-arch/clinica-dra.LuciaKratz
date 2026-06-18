@@ -4602,6 +4602,72 @@ function FinanceiroClinica() {
       {/* ABA PACOTES */}
       {aba==="pacotes"&&(
         <div>
+          {(()=>{
+            const hoje = new Date().toISOString().slice(0,10);
+            // Sessões passadas ainda como "agendado" (deveriam ser realizadas/canceladas/remarcadas)
+            const sessoesPendentes = sessoes.filter(s=>
+              s.data < hoje &&
+              s.status === "agendado" &&
+              s.pacienteId
+            );
+            // Pacotes com pagamento pendente (não 100% pago)
+            const pacotesPendPag = pacotes.filter(p=>{
+              const sessPac = sessoes.filter(s=>s.pacoteId===p.id);
+              const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
+              return p.status !== "inativo" && pagas < (p.totalSessoes||0);
+            });
+            if(sessoesPendentes.length===0 && pacotesPendPag.length===0) return null;
+            return (
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+                {sessoesPendentes.length>0&&(
+                  <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:12,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>⚠️ {sessoesPendentes.length} sessão(ões) passada(s) sem status final</div>
+                      <div style={{fontSize:12,color:"#78350f",marginTop:4}}>
+                        Sessões que já ocorreram e ainda estão como "Agendado". Marque como <strong>Realizada</strong>, <strong>Cancelada</strong> ou <strong>Remarcada</strong>.
+                      </div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+                        {sessoesPendentes.slice(0,5).map(s=>{
+                          const nome = pacientes.find(p=>p.id===s.pacienteId)?.nome||"—";
+                          return (
+                            <span key={s.id} style={{background:"#fde68a",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#78350f",fontWeight:600}}>
+                              {nome.split(" ")[0]} · {new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})}
+                            </span>
+                          );
+                        })}
+                        {sessoesPendentes.length>5&&<span style={{fontSize:11,color:"#92400e",padding:"2px 8px"}}>+{sessoesPendentes.length-5} mais</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {pacotesPendPag.length>0&&(
+                  <div style={{background:"#fff7ed",border:"1px solid #fb923c",borderRadius:12,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:14,color:"#c2410c"}}>💰 {pacotesPendPag.length} pacote(s) com pagamento em aberto</div>
+                      <div style={{fontSize:12,color:"#9a3412",marginTop:4}}>
+                        Pacotes ativos com sessões ainda não marcadas como pagas.
+                      </div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
+                        {pacotesPendPag.slice(0,5).map(p=>{
+                          const nome = pacientes.find(pac=>pac.id===p.pacienteId)?.nome||"—";
+                          const sessPac = sessoes.filter(s=>s.pacoteId===p.id);
+                          const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
+                          const total = p.totalSessoes||0;
+                          return (
+                            <span key={p.id} style={{background:"#fed7aa",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#9a3412",fontWeight:600}}>
+                              {nome.split(" ")[0]} · {pagas}/{total} pagas
+                            </span>
+                          );
+                        })}
+                        {pacotesPendPag.length>5&&<span style={{fontSize:11,color:"#c2410c",padding:"2px 8px"}}>+{pacotesPendPag.length-5} mais</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {pacotes.length===0?(
             <div className="card" style={{textAlign:"center",padding:60}}>
               <Icon name="package" size={48}/>
@@ -4609,15 +4675,20 @@ function FinanceiroClinica() {
               <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal("pacote")}>+ Criar Pacote</button>
             </div>
           ):(()=>{
-            // Agrupar pacotes por paciente
+            // Agrupar pacotes por paciente — ordem alfabética
             const pacientesComPacote = [...new Set(pacotes.map(p=>p.pacienteId))];
-            const pacientesVisiveis = buscaPac.trim()
+            const pacientesVisiveisBruto = buscaPac.trim()
               ? pacientesComPacote.filter(id=>{
                   const pac = pacientes.find(p=>p.id===id);
-                  const inicial = (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+                  const inicial = (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
                   return inicial === buscaPac;
                 })
               : pacientesComPacote;
+            const pacientesVisiveis = pacientesVisiveisBruto.sort((a,b)=>{
+              const nA = (pacientes.find(p=>p.id===a)?.nome||"").toLowerCase();
+              const nB = (pacientes.find(p=>p.id===b)?.nome||"").toLowerCase();
+              return nA.localeCompare(nB,"pt-BR");
+            });
             return (
               <div style={{display:"flex",flexDirection:"column",gap:28}}>
                 {/* Índice A-Z */}
