@@ -4604,12 +4604,15 @@ function FinanceiroClinica() {
         <div>
           {(()=>{
             const hoje = new Date().toISOString().slice(0,10);
-            // Sessões passadas pendentes = data passada + status "agendado" apenas
-            // Excluir: falta (encerrada sem reposição), realizado, cancelado, remarcado, futuras
+            // Sessões pendentes = data PASSADA + status "agendado" + vinculada a pacote ativo
+            // Exclui: falta, realizado, cancelado, remarcado, futuras, sessões sem pacote
+            const pacoteIdsAtivos = new Set(pacotes.filter(p=>p.status!=="inativo").map(p=>p.id));
             const sessoesPendentes = sessoes.filter(s=>
               s.data < hoje &&
               s.status === "agendado" &&
-              s.pacienteId
+              s.pacienteId &&
+              s.pacoteId &&
+              pacoteIdsAtivos.has(s.pacoteId)
             );
             // Pacotes com pagamento pendente (não 100% pago)
             const pacotesPendPag = pacotes.filter(p=>{
@@ -4658,15 +4661,19 @@ function FinanceiroClinica() {
                   }
                   return <AvisoSessoes lista={sessoesPendentes} pacientes={pacientes}/>;
                 })()}
-                {pacotesPendPag.length>0&&(
-                  <div style={{background:"#fff7ed",border:"1px solid #fb923c",borderRadius:12,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
-                    <div>
-                      <div style={{fontWeight:700,fontSize:14,color:"#c2410c"}}>💰 {pacotesPendPag.length} pacote(s) com pagamento em aberto</div>
-                      <div style={{fontSize:12,color:"#9a3412",marginTop:4}}>
-                        Pacotes ativos com sessões ainda não marcadas como pagas.
-                      </div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
-                        {pacotesPendPag.slice(0,5).map(p=>{
+                {pacotesPendPag.length>0&&(()=>{
+                  function AvisoPacotes({lista, pacientes, sessoes}){
+                    const [expandidoPac, setExpandidoPac] = React.useState(false);
+                    const visiveis = expandidoPac ? lista : lista.slice(0,5);
+                    const extras = lista.length - 5;
+                    return (
+                      <div style={{background:"#fff7ed",border:"1px solid #fb923c",borderRadius:12,padding:"14px 18px"}}>
+                        <div style={{fontWeight:700,fontSize:14,color:"#c2410c",marginBottom:4}}>💰 {lista.length} pacote(s) com pagamento em aberto</div>
+                        <div style={{fontSize:12,color:"#9a3412",marginBottom:8}}>
+                          Pacotes ativos com sessões ainda não marcadas como pagas.
+                        </div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center"}}>
+                          {visiveis.map(p=>{
                           const nome = pacientes.find(pac=>pac.id===p.pacienteId)?.nome||"—";
                           const sessPac = sessoes.filter(s=>s.pacoteId===p.id);
                           const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
@@ -4677,11 +4684,24 @@ function FinanceiroClinica() {
                             </span>
                           );
                         })}
-                        {pacotesPendPag.length>5&&<span style={{fontSize:11,color:"#c2410c",padding:"2px 8px"}}>+{pacotesPendPag.length-5} mais</span>}
+                        {!expandidoPac && pacotesPendPag.length>5&&(
+                          <button onClick={()=>setExpandidoPac(true)}
+                            style={{background:"#ea580c",color:"white",border:"none",borderRadius:20,padding:"2px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                            +{pacotesPendPag.length-5} mais ▾
+                          </button>
+                        )}
+                        {expandidoPac&&(
+                          <button onClick={()=>setExpandidoPac(false)}
+                            style={{background:"none",color:"#c2410c",border:"1px solid #fb923c",borderRadius:20,padding:"2px 10px",fontSize:11,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                            ▴ recolher
+                          </button>
+                        )}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  }
+                  return <AvisoPacotes lista={pacotesPendPag} pacientes={pacientes} sessoes={sessoes}/>;
+                })()}
               </div>
             );
           })()}
