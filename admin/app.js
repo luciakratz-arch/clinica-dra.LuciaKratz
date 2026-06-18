@@ -4604,7 +4604,8 @@ function FinanceiroClinica() {
         <div>
           {(()=>{
             const hoje = new Date().toISOString().slice(0,10);
-            // Sessões passadas ainda como "agendado" (deveriam ser realizadas/canceladas/remarcadas)
+            // Sessões passadas pendentes = data passada + status "agendado" apenas
+            // Excluir: falta (encerrada sem reposição), realizado, cancelado, remarcado, futuras
             const sessoesPendentes = sessoes.filter(s=>
               s.data < hoje &&
               s.status === "agendado" &&
@@ -4619,27 +4620,44 @@ function FinanceiroClinica() {
             if(sessoesPendentes.length===0 && pacotesPendPag.length===0) return null;
             return (
               <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-                {sessoesPendentes.length>0&&(
-                  <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:12,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
-                    <div>
-                      <div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>⚠️ {sessoesPendentes.length} sessão(ões) passada(s) sem status final</div>
-                      <div style={{fontSize:12,color:"#78350f",marginTop:4}}>
-                        Sessões que já ocorreram e ainda estão como "Agendado". Marque como <strong>Realizada</strong>, <strong>Cancelada</strong> ou <strong>Remarcada</strong>.
+                {sessoesPendentes.length>0&&(()=>{
+                  function AvisoSessoes({lista, pacientes}){
+                    const [expandido, setExpandido] = React.useState(false);
+                    const visiveis = expandido ? lista : lista.slice(0,5);
+                    const extras = lista.length - 5;
+                    return (
+                      <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:12,padding:"14px 18px"}}>
+                        <div style={{fontWeight:700,fontSize:14,color:"#92400e",marginBottom:4}}>⚠️ {lista.length} sessão(ões) passada(s) sem status final</div>
+                        <div style={{fontSize:12,color:"#78350f",marginBottom:8}}>
+                          Sessões que já ocorreram e ainda estão como "Agendado". Marque como <strong>Realizada</strong>, <strong>Cancelada</strong> ou <strong>Remarcada</strong>.
+                        </div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center"}}>
+                          {visiveis.map(s=>{
+                            const nome = pacientes.find(p=>p.id===s.pacienteId)?.nome||"—";
+                            return (
+                              <span key={s.id} style={{background:"#fde68a",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#78350f",fontWeight:600}}>
+                                {nome.split(" ")[0]} · {new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})}
+                              </span>
+                            );
+                          })}
+                          {!expandido && extras>0&&(
+                            <button onClick={()=>setExpandido(true)}
+                              style={{background:"#f59e0b",color:"white",border:"none",borderRadius:20,padding:"2px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                              +{extras} mais ▾
+                            </button>
+                          )}
+                          {expandido&&(
+                            <button onClick={()=>setExpandido(false)}
+                              style={{background:"none",color:"#92400e",border:"1px solid #f59e0b",borderRadius:20,padding:"2px 10px",fontSize:11,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                              ▴ recolher
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:8}}>
-                        {sessoesPendentes.slice(0,5).map(s=>{
-                          const nome = pacientes.find(p=>p.id===s.pacienteId)?.nome||"—";
-                          return (
-                            <span key={s.id} style={{background:"#fde68a",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#78350f",fontWeight:600}}>
-                              {nome.split(" ")[0]} · {new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})}
-                            </span>
-                          );
-                        })}
-                        {sessoesPendentes.length>5&&<span style={{fontSize:11,color:"#92400e",padding:"2px 8px"}}>+{sessoesPendentes.length-5} mais</span>}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  }
+                  return <AvisoSessoes lista={sessoesPendentes} pacientes={pacientes}/>;
+                })()}
                 {pacotesPendPag.length>0&&(
                   <div style={{background:"#fff7ed",border:"1px solid #fb923c",borderRadius:12,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
                     <div>
