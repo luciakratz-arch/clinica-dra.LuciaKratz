@@ -122,6 +122,32 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 .cancel-option h4{font-size:14px;font-weight:700;margin-bottom:3px}
 .cancel-option p{font-size:12px}
 
+/* LISTA VERTICAL (estilo Doctoralia) */
+.lista-vertical{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.lv-dia{display:flex;gap:0;margin-bottom:10px}
+.lv-lateral{width:44px;flex-shrink:0;text-align:center;padding-top:8px}
+.lv-weekday{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase}
+.lv-num{font-size:18px;font-weight:800;color:#111827;margin-top:2px}
+.lv-num-hoje{width:30px;height:30px;border-radius:50%;background:var(--purple);color:white;display:flex;align-items:center;justify-content:center;margin:2px auto 0;font-size:16px}
+.lv-linha{width:2px;background:#e5e7eb;border-radius:2px;flex-shrink:0;margin:12px 10px 0 0}
+.lv-linha-hoje{background:var(--purple)}
+.lv-cards{flex:1;padding-top:4px;display:flex;flex-direction:column;gap:4px}
+.lv-vazio{color:#d1d5db;font-size:12px;padding:8px 0}
+.lv-card{border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+.lv-card-titulo{font-size:14px;font-weight:700;line-height:1.3}
+.lv-card-hora{font-size:12px;font-weight:600;margin-top:2px}
+.lv-card-actions{flex-shrink:0}
+.lv-btn{font-size:11px;background:white;border-radius:6px;padding:5px 10px;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid;white-space:nowrap}
+.lv-add{background:none;border:1px dashed #d1d5db;border-radius:8px;padding:6px;cursor:pointer;color:#9ca3af;font-size:12px;width:100%;margin-top:2px}
+.lv-add:hover{border-color:var(--purple);color:var(--purple)}
+.only-desktop{display:block}
+.only-mobile{display:none}
+@media(max-width:767px){
+  .only-desktop{display:none !important}
+  .only-mobile{display:block !important}
+  .lista-vertical{margin-top:0}
+}
+
 /* MOBILE */
 .mob-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,#7B00C4,#4a007a);z-index:20;align-items:center;justify-content:space-between;padding:0 16px}
 .mob-title{color:white;font-weight:700;font-size:15px}
@@ -412,7 +438,8 @@ function render(){
         <button class="btn btn-ghost" style="padding:8px 12px" onclick="setState({semanaOffset:${s.semanaOffset+1}})">›</button>
       </div>
 
-      <div class="grade-wrap">
+      <!-- GRADE SEMANAL (desktop) -->
+      <div class="grade-wrap only-desktop">
         <table class="grade">
           <thead>
             <tr>
@@ -469,47 +496,56 @@ function render(){
         </table>
       </div>
 
-      <div class="proximas-title">Minhas próximas reservas</div>
-      ${(()=>{
-        const minhas = s.reservas.filter(r=>r.usuarioId===u.id&&r.data>=fmt(hj))
-          .sort((a,b)=>a.data.localeCompare(b.data)||a.horaInicio.localeCompare(b.horaInicio));
-        if(!minhas.length) return `<div class="card"><div class="empty">Nenhuma reserva futura. Clique em "+ Nova Reserva".</div></div>`;
-        // Agrupa por semana
-        const semanaAtual = s.semanaOffset;
-        const diasSemana = getDias(semanaAtual);
-        const inicioSemana = fmt(diasSemana[0]);
-        const fimSemana = fmt(diasSemana[6]);
-        const daSemana = minhas.filter(r=>r.data>=inicioSemana&&r.data<=fimSemana);
-        const temAnterior = minhas.some(r=>r.data<inicioSemana);
-        const temProxima = minhas.some(r=>r.data>fimSemana);
-        const labelSemana = `${diasSemana[0].toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})} — ${diasSemana[6].toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"})}`;
-        return `
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <button class="btn btn-ghost" style="padding:6px 12px" onclick="setState({semanaOffset:${semanaAtual-1}})" ${!temAnterior?"disabled style='opacity:.4;cursor:not-allowed;padding:6px 12px'":""}>‹</button>
-            <span style="flex:1;text-align:center;font-size:13px;font-weight:600;color:#6b7280">${labelSemana}</span>
-            <button class="btn btn-ghost" style="padding:6px 12px" onclick="setState({semanaOffset:${semanaAtual+1}})" ${!temProxima?"disabled style='opacity:.4;cursor:not-allowed;padding:6px 12px'":""}>›</button>
-          </div>
-          <div class="card">${daSemana.length===0
-            ? `<div class="empty">Nenhuma reserva nesta semana.</div>`
-            : daSemana.map(r=>`
-              <div class="reserva-row">
-                <div class="reserva-icon" style="background:${u.bg}">📅</div>
-                <div>
-                  <div class="reserva-data">${new Date(r.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}</div>
-                  <div class="reserva-hora">${r.horaInicio} – ${r.horaFim}${r.titulo?" · "+r.titulo:""}${r.recorrenteRef?` <span style="font-size:10px;color:${u.cor}">↻ recorrente</span>`:""}</div>
+      <!-- LISTA VERTICAL (sempre — base no mobile, complemento no desktop) -->
+      <div class="proximas-title only-mobile" style="margin-top:8px">Próximos 14 dias</div>
+      <div class="lista-vertical">
+        ${(()=>{
+          // 14 dias a partir de hoje
+          const dias14 = Array.from({length:14},(_,i)=>{ const d=new Date(hj); d.setDate(hj.getDate()+i); return d; });
+          const DIAS_SEMANA = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
+          return dias14.map(dia=>{
+            const diaStr = fmt(dia);
+            const isHj = diaStr===fmt(hj);
+            const lista = s.reservas.filter(r=>r.data===diaStr).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
+            if(lista.length===0 && !isHj) return "";
+            return `
+              <div class="lv-dia">
+                <div class="lv-lateral">
+                  <div class="lv-weekday" style="${isHj?'color:var(--purple)':''}">${DIAS_SEMANA[dia.getDay()]}</div>
+                  <div class="lv-num ${isHj?'lv-num-hoje':''}">${dia.getDate()}</div>
                 </div>
-                <div class="reserva-actions">
-                  <button class="btn btn-ghost" style="padding:6px 10px" onclick="editarReserva('${r.id}')">✎</button>
-                  <button class="btn btn-ghost" style="padding:6px 10px;color:#dc2626" onclick="cancelarReservaById('${r.id}')">🗑</button>
+                <div class="lv-linha ${isHj?'lv-linha-hoje':''}"></div>
+                <div class="lv-cards">
+                  ${lista.length===0
+                    ? `<div class="lv-vazio">Sem reservas</div>`
+                    : lista.map(r=>{
+                        const eMinha = r.usuarioId===u.id;
+                        const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
+                        const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
+                        return `
+                        <div class="lv-card" style="background:${bg};border-left:4px solid ${cor}">
+                          <div class="lv-card-main">
+                            <div class="lv-card-titulo" style="color:#111827">${eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0]}</div>
+                            <div class="lv-card-hora" style="color:${cor}">${r.horaInicio} – ${r.horaFim}${r.recorrenteRef?' · ↻ recorrente':''}</div>
+                          </div>
+                          <div class="lv-card-actions">
+                            ${eMinha
+                              ? `<button class="lv-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>`
+                              : `<button class="lv-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>`
+                            }
+                          </div>
+                        </div>`;
+                      }).join("")
+                  }
+                  <button class="lv-add" onclick="abrirNovaDia('${diaStr}')">+ Reservar</button>
                 </div>
               </div>
-            `).join("")}
-          </div>`;
-      })()}
-    </div>
-  </div>
+            `;
+          }).join("");
+        })()}
+      </div>
 
-  <!-- Nav Mobile -->
+  <!-- Nav Mobile -->  <!-- Nav Mobile -->
   <div class="mob-nav">
     <div class="mob-nav-items">
       <button class="mob-nav-btn" onclick="setState({semanaOffset:0})">📅<span>Hoje</span></button>
