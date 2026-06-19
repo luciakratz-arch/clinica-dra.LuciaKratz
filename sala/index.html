@@ -129,26 +129,30 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 .cancel-option h4{font-size:14px;font-weight:700;margin-bottom:3px}
 .cancel-option p{font-size:12px}
 
-/* LISTA VERTICAL (estilo Doctoralia — igual ao padrão do Admin) */
-.lista-vertical{display:flex;flex-direction:column;gap:2px;margin-top:8px}
-.lv-dia{display:flex;gap:0;margin-bottom:14px}
-.lv-lateral{width:46px;flex-shrink:0;text-align:center;padding-top:10px}
-.lv-weekday{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.3px}
-.lv-num{font-size:19px;font-weight:800;color:#111827;margin-top:3px}
-.lv-num-hoje{width:32px;height:32px;border-radius:50%;background:var(--purple);color:white;display:flex;align-items:center;justify-content:center;margin:3px auto 0;font-size:17px;box-shadow:0 2px 6px rgba(123,0,196,.35)}
-.lv-linha{width:3px;background:#e5e7eb;border-radius:3px;flex-shrink:0;margin:14px 12px 0 0}
+/* LISTA VERTICAL — réplica exata do padrão Admin */
+.lista-vertical{display:flex;flex-direction:column;gap:0;margin-top:8px}
+.lv-dia{display:flex;gap:0;margin-bottom:8px}
+.lv-lateral{width:44px;flex-shrink:0;text-align:center;padding-top:10px}
+.lv-weekday{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase}
+.lv-num{font-size:18px;font-weight:800;color:#111827;margin-top:2px}
+.lv-num-hoje{width:32px;height:32px;border-radius:50%;background:var(--purple);color:white;display:flex;align-items:center;justify-content:center;margin:2px auto 0;font-size:18px;font-weight:800}
+.lv-linha{width:2px;background:#e5e7eb;flex-shrink:0;margin:14px 10px 0 0}
 .lv-linha-hoje{background:var(--purple)}
-.lv-cards{flex:1;padding-top:6px;display:flex;flex-direction:column;gap:6px}
-.lv-vazio{color:#d1d5db;font-size:12px;padding:10px 0;font-style:italic}
-.lv-card{border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between;box-shadow:0 1px 5px rgba(0,0,0,.06)}
-.lv-card-main{flex:1;min-width:0}
-.lv-card-titulo{font-size:15px;font-weight:700;line-height:1.3;color:#111827}
-.lv-card-hora{font-size:13px;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:6px}
-.lv-card-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.6)}
-.lv-card-actions{flex-shrink:0}
-.lv-btn{font-size:12px;background:white;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Inter',sans-serif;border:1.5px solid;white-space:nowrap;font-weight:600}
-.lv-add{background:none;border:1.5px dashed #d1d5db;border-radius:10px;padding:9px;cursor:pointer;color:#9ca3af;font-size:13px;width:100%;margin-top:4px;font-weight:500}
-.lv-add:hover{border-color:var(--purple);color:var(--purple);background:#faf5ff}
+.lv-cards{flex:1;padding-top:6px;display:flex;flex-direction:column;gap:4px}
+.lv-vazio{color:#d1d5db;font-size:12px;padding:8px 0}
+.lv-card{display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:default;margin-bottom:0}
+.lv-card-bar{width:4px;flex-shrink:0}
+.lv-card-main{flex:1;padding:10px 12px;min-width:0}
+.lv-card-titulo{font-size:15px;font-weight:700;color:#111827;line-height:1.3}
+.lv-card-hora{font-size:12px;font-weight:600;margin-top:2px}
+.lv-card-tag{font-size:10px;font-weight:600;margin-left:6px;opacity:.85}
+.lv-card-actions{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 10px;gap:4px;flex-shrink:0}
+.lv-badge{border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;color:white;white-space:nowrap}
+.lv-btn{font-size:10px;border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid;background:white;white-space:nowrap;font-weight:600}
+.lv-add{display:flex;align-items:center;gap:8px;width:100%;background:#faf5ff;border:1.5px dashed #c4b5fd;border-radius:10px;padding:8px 12px;cursor:pointer;color:#7B00C4;font-size:13px;font-family:'Inter',sans-serif;margin-top:2px}
+.lv-add:hover{background:#f3e8ff}
+.lv-add b{font-weight:700}
+.lv-add span{color:#a78bfa;font-weight:400}
 .only-desktop{display:block}
 .only-mobile{display:none}
 @media(max-width:767px){
@@ -158,13 +162,13 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 }
 
 /* MOBILE */
-.mob-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:linear-gradient(90deg,#7B00C4,#4a007a);z-index:20;align-items:center;justify-content:space-between;padding:0 16px}
-.mob-title{color:white;font-weight:700;font-size:15px}
-.mob-menu-btn{background:none;border:none;color:white;font-size:22px;cursor:pointer;padding:4px}
+.mob-header{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:var(--purple);z-index:20;align-items:center;justify-content:space-between;padding:0 16px}
+.mob-title{color:white;font-weight:600;font-size:16px;font-family:'Playfair Display',serif}
+.mob-menu-btn{background:rgba(255,255,255,.15);border:none;border-radius:8px;width:36px;height:36px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9}
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e5e7eb;z-index:20;padding:8px 0 12px}
-.mob-nav-items{display:flex;justify-content:space-around}
-.mob-nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-size:10px;color:#6b7280;font-family:'Inter',sans-serif;padding:4px 12px}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:white;border-top:1px solid #e5e7eb;z-index:20;align-items:center;justify-content:space-around;padding:0 8px}
+.mob-nav-items{display:flex;justify-content:space-around;width:100%}
+.mob-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;font-size:10px;color:#9ca3af;font-family:'Inter',sans-serif;padding:6px 12px;font-weight:500}
 .mob-nav-btn.active{color:#7B00C4}
 
 @media(max-width:767px){
@@ -531,16 +535,16 @@ function render(){
                         const eMinha = r.usuarioId===u.id;
                         const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
                         const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
+                        const titulo = eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0];
                         return `
-                        <div class="lv-card" style="background:${bg};border-left:4px solid ${cor}">
+                        <div class="lv-card" style="background:${bg}">
+                          <div class="lv-card-bar" style="background:${cor}"></div>
                           <div class="lv-card-main">
-                            <div class="lv-card-titulo">${eMinha?(r.titulo||"Minha reserva"):"🔒 Ocupado — "+r.usuarioNome.split(" ")[0]}</div>
-                            <div class="lv-card-hora" style="color:${cor}">
-                              <span>${r.horaInicio} – ${r.horaFim}</span>
-                              ${r.recorrenteRef?`<span class="lv-card-tag" style="color:${cor}">↻ recorrente</span>`:''}
-                            </div>
+                            <div class="lv-card-titulo">${titulo}</div>
+                            <div class="lv-card-hora" style="color:${cor}">${r.horaInicio} – ${r.horaFim}${r.recorrenteRef?`<span class="lv-card-tag">↻ recorrente</span>`:''}</div>
                           </div>
                           <div class="lv-card-actions">
+                            <span class="lv-badge" style="background:${cor}">${eMinha?"Minha":"Ocupado"}</span>
                             ${eMinha
                               ? `<button class="lv-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>`
                               : `<button class="lv-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>`
@@ -549,7 +553,9 @@ function render(){
                         </div>`;
                       }).join("")
                   }
-                  <button class="lv-add" onclick="abrirNovaDia('${diaStr}')">+ Reservar</button>
+                  <button class="lv-add" onclick="abrirNovaDia('${diaStr}')">
+                    <span style="font-size:15px">＋</span> <b>Reservar horário</b>
+                  </button>
                 </div>
               </div>
             `;
