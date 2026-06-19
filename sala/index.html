@@ -12,6 +12,11 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 
 /* LOGIN */
 .login{display:flex;min-height:100vh}
+.login-left{width:320px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;gap:12px}
+.login-left img{width:110px;height:110px;object-fit:contain;margin-bottom:8px}
+.login-left h1{font-family:'Playfair Display',serif;font-size:24px;color:white}
+.login-left p{font-size:13px;color:rgba(255,255,255,.7)}
+.login-right{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:20px}
 @media(max-width:767px){
   .login{flex-direction:column;min-height:100vh;height:auto}
   .login-left{width:100%;flex:0 0 auto;padding:28px 24px;justify-content:center}
@@ -19,11 +24,6 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
   .login-left h1{font-size:20px}
   .login-right{padding:28px 20px;flex:1 1 auto;justify-content:flex-start}
 }
-.login-left{width:320px;flex-shrink:0;background:linear-gradient(160deg,#7B00C4,#4a007a);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;gap:12px}
-.login-left img{width:110px;height:110px;object-fit:contain;margin-bottom:8px}
-.login-left h1{font-family:'Playfair Display',serif;font-size:24px;color:white}
-.login-left p{font-size:13px;color:rgba(255,255,255,.7)}
-.login-right{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:20px}
 .profile-card{display:flex;align-items:center;gap:16px;padding:20px 24px;border-radius:14px;border:2px solid #e5e7eb;background:white;cursor:pointer;text-align:left;width:100%;max-width:440px;transition:all .2s}
 .profile-card:hover{border-color:var(--purple);background:#f5f0ff}
 .profile-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
@@ -149,6 +149,7 @@ body{font-family:'Inter',sans-serif;background:#f9fafb;color:#111}
 .lv-card-actions{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 10px;gap:4px;flex-shrink:0}
 .lv-badge{border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;color:white;white-space:nowrap}
 .lv-btn{font-size:10px;border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid;background:white;white-space:nowrap;font-weight:600}
+.lv-status-select{font-size:10px;border:1px solid #e5e7eb;border-radius:6px;padding:3px 4px;background:white;color:#374151;cursor:pointer;max-width:96px;font-family:'Inter',sans-serif}
 .lv-add{display:flex;align-items:center;gap:8px;width:100%;background:#faf5ff;border:1.5px dashed #c4b5fd;border-radius:10px;padding:8px 12px;cursor:pointer;color:#7B00C4;font-size:13px;font-family:'Inter',sans-serif;margin-top:2px}
 .lv-add:hover{background:#f3e8ff}
 .lv-add b{font-weight:700}
@@ -215,7 +216,7 @@ const USUARIOS = {
 };
 
 let state = {
-  user:null, reservas:[], pedidos:[],
+  user:null, reservas:[], pedidos:[], sessoes:[],
   semanaOffset:0,
   modal:null,       // null | "reserva" | "cancelar" | "conflito"
   editandoId:null,
@@ -223,6 +224,18 @@ let state = {
   form:{ data:"", horaInicio:"09:00", horaFim:"10:00", titulo:"", recorrencia:"unico" },
   etapaLogin:"perfil", userIdLogin:"", senhaLogin:"", erroLogin:""
 };
+
+const STATUS_CONFIG = {
+  agendado:  {label:"Agendado",   cor:"#7B00C4", bg:"#f5f0ff"},
+  confirmado:{label:"Confirmado", cor:"#059669", bg:"#d1fae5"},
+  realizado: {label:"Realizado",  cor:"#0891b2", bg:"#e0f2fe"},
+  cancelado: {label:"Cancelado",  cor:"#dc2626", bg:"#fee2e2"},
+  falta:     {label:"Falta",      cor:"#d97706", bg:"#fef3c7"},
+};
+
+async function mudarStatusSessao(id, status){
+  await db.collection("clinica_sessoes").doc(id).update({status});
+}
 
 function fmt(d){ return d.toISOString().split("T")[0]; }
 function hoje(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
@@ -239,14 +252,22 @@ function setState(patch){ state={...state,...patch}; function toggleSidebar(){
 render(); }
 
 // Firebase listeners
-let unsubReservas=null, unsubPedidos=null;
+let unsubReservas=null, unsubPedidos=null, unsubSessoes=null;
 function startListeners(userId){
   if(unsubReservas) unsubReservas();
   if(unsubPedidos)  unsubPedidos();
+  if(unsubSessoes)  unsubSessoes();
   unsubReservas = db.collection("sala_reservas").orderBy("data")
     .onSnapshot(s=>{ state.reservas=s.docs.map(d=>({id:d.id,...d.data()})); render(); });
   unsubPedidos = db.collection("sala_pedidos").where("status","==","pendente")
     .onSnapshot(s=>{ state.pedidos=s.docs.map(d=>({id:d.id,...d.data()})); render(); });
+  // Sessões com pacientes (clinica_sessoes) — só relevante para a Lucia, que atende na sala
+  if(userId==="lucia"){
+    unsubSessoes = db.collection("clinica_sessoes")
+      .onSnapshot(s=>{ state.sessoes=s.docs.map(d=>({id:d.id,...d.data()})); render(); },()=>{});
+  } else {
+    state.sessoes = [];
+  }
 }
 
 async function gravar(){
@@ -516,11 +537,82 @@ function render(){
           // 14 dias a partir de hoje
           const dias14 = Array.from({length:14},(_,i)=>{ const d=new Date(hj); d.setDate(hj.getDate()+i); return d; });
           const DIAS_SEMANA = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
+
+          function horaParaMin(h){ const [hh,mm]=(h||"00:00").split(":").map(Number); return hh*60+(mm||0); }
+
           return dias14.map(dia=>{
             const diaStr = fmt(dia);
             const isHj = diaStr===fmt(hj);
-            const lista = s.reservas.filter(r=>r.data===diaStr).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
-            if(lista.length===0 && !isHj) return "";
+            const reservasDia = s.reservas.filter(r=>r.data===diaStr).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
+            const sessoesDia = (s.sessoes||[]).filter(ss=>ss.data===diaStr && ss.status!=="cancelado").sort((a,b)=>(a.hora||"").localeCompare(b.hora||""));
+            if(reservasDia.length===0 && sessoesDia.length===0 && !isHj) return "";
+
+            // Monta os cards: para cada reserva, se for da Lucia, tenta detalhar com sessões dentro do intervalo
+            const cardsHtml = reservasDia.map(r=>{
+              const eMinha = r.usuarioId===u.id;
+              const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
+              const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
+
+              if(r.usuarioId!=="lucia"){
+                // Bloco da Thais (ou outro usuário) — sempre resumido
+                return `
+                  <div class="lv-card" style="background:${bg}">
+                    <div class="lv-card-bar" style="background:${cor}"></div>
+                    <div class="lv-card-main">
+                      <div class="lv-card-titulo">Ocupado — ${r.usuarioNome.split(" ")[0]}</div>
+                      <div class="lv-card-hora" style="color:${cor}">${r.horaInicio} – ${r.horaFim}${r.recorrenteRef?`<span class="lv-card-tag">↻ recorrente</span>`:''}</div>
+                    </div>
+                    <div class="lv-card-actions">
+                      <span class="lv-badge" style="background:${cor}">Ocupado</span>
+                      <button class="lv-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>
+                    </div>
+                  </div>`;
+              }
+
+              // Bloco da Lucia — detalhar com sessões que caem dentro do intervalo
+              const ini = horaParaMin(r.horaInicio), fim = horaParaMin(r.horaFim);
+              const sessDoBloco = sessoesDia.filter(ss=>{
+                const m = horaParaMin(ss.hora);
+                return m>=ini && m<fim;
+              });
+
+              const headerBloco = `
+                <div class="lv-card" style="background:#f5f0ff;opacity:.85">
+                  <div class="lv-card-bar" style="background:#7B00C4"></div>
+                  <div class="lv-card-main">
+                    <div class="lv-card-titulo" style="font-size:13px;color:#7B00C4">🔓 ${r.titulo||"Sala reservada"} · ${r.horaInicio}–${r.horaFim}${r.recorrenteRef?` <span class="lv-card-tag">↻ recorrente</span>`:''}</div>
+                  </div>
+                  <div class="lv-card-actions">
+                    <button class="lv-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
+                  </div>
+                </div>`;
+
+              if(sessDoBloco.length===0) return headerBloco;
+
+              const sessoesHtml = sessDoBloco.map(ss=>{
+                const st = STATUS_CONFIG[ss.status]||STATUS_CONFIG.agendado;
+                const dur = parseInt(ss.duracao||50);
+                const fimMin = horaParaMin(ss.hora)+dur;
+                const horaFimStr = String(Math.floor(fimMin/60)).padStart(2,"0")+":"+String(fimMin%60).padStart(2,"0");
+                return `
+                  <div class="lv-card" style="background:${st.bg};margin-left:14px">
+                    <div class="lv-card-bar" style="background:${st.cor}"></div>
+                    <div class="lv-card-main">
+                      <div class="lv-card-titulo">${ss.pacienteNome||"—"}</div>
+                      <div class="lv-card-hora" style="color:${st.cor}">${ss.hora?.slice(0,5)} – ${horaFimStr} · ${ss.tipo||"Psicoterapia"}</div>
+                    </div>
+                    <div class="lv-card-actions">
+                      <span class="lv-badge" style="background:${st.cor}">${st.label}</span>
+                      <select class="lv-status-select" onchange="mudarStatusSessao('${ss.id}',this.value)">
+                        ${Object.entries(STATUS_CONFIG).map(([k,v])=>`<option value="${k}" ${ss.status===k?'selected':''}>${v.label}</option>`).join("")}
+                      </select>
+                    </div>
+                  </div>`;
+              }).join("");
+
+              return headerBloco + sessoesHtml;
+            }).join("");
+
             return `
               <div class="lv-dia">
                 <div class="lv-lateral">
@@ -529,30 +621,7 @@ function render(){
                 </div>
                 <div class="lv-linha ${isHj?'lv-linha-hoje':''}"></div>
                 <div class="lv-cards">
-                  ${lista.length===0
-                    ? `<div class="lv-vazio">Sem reservas</div>`
-                    : lista.map(r=>{
-                        const eMinha = r.usuarioId===u.id;
-                        const cor = r.usuarioId==="lucia"?"#7B00C4":"#ea580c";
-                        const bg  = r.usuarioId==="lucia"?"#f5f0ff":"#fff7ed";
-                        const titulo = eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0];
-                        return `
-                        <div class="lv-card" style="background:${bg}">
-                          <div class="lv-card-bar" style="background:${cor}"></div>
-                          <div class="lv-card-main">
-                            <div class="lv-card-titulo">${titulo}</div>
-                            <div class="lv-card-hora" style="color:${cor}">${r.horaInicio} – ${r.horaFim}${r.recorrenteRef?`<span class="lv-card-tag">↻ recorrente</span>`:''}</div>
-                          </div>
-                          <div class="lv-card-actions">
-                            <span class="lv-badge" style="background:${cor}">${eMinha?"Minha":"Ocupado"}</span>
-                            ${eMinha
-                              ? `<button class="lv-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>`
-                              : `<button class="lv-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>`
-                            }
-                          </div>
-                        </div>`;
-                      }).join("")
-                  }
+                  ${reservasDia.length===0 ? `<div class="lv-vazio">Sem reservas</div>` : cardsHtml}
                   <button class="lv-add" onclick="abrirNovaDia('${diaStr}')">
                     <span style="font-size:15px">＋</span> <b>Reservar horário</b>
                   </button>
