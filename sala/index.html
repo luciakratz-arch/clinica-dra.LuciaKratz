@@ -514,7 +514,10 @@ function render(){
                           <div class="chip-sub">${eMinha?(r.titulo||"Minha reserva"):"Ocupado — "+r.usuarioNome.split(" ")[0]}</div>
                           ${r.recorrenteRef?`<div class="chip-tag" style="color:${cor}">↻ recorrente</div>`:""}
                           ${eMinha?`
-                            <button class="chip-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
+                            <div style="display:flex;gap:4px">
+                              <button class="chip-btn" style="color:#7B00C4;border-color:#c4b5fd" onclick="editarReserva('${r.id}')">Editar</button>
+                              <button class="chip-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
+                            </div>
                           `:`
                             <button class="chip-btn" style="color:${cor};border-color:${cor}" onclick="pedirLiberacaoById('${r.id}')">Pedir horário</button>
                           `}
@@ -583,6 +586,7 @@ function render(){
                     <div class="lv-card-titulo" style="font-size:13px;color:#7B00C4">🔓 ${r.titulo||"Sala reservada"} · ${r.horaInicio}–${r.horaFim}${r.recorrenteRef?` <span class="lv-card-tag">↻ recorrente</span>`:''}</div>
                   </div>
                   <div class="lv-card-actions">
+                    <button class="lv-btn" style="color:#7B00C4;border-color:#c4b5fd;margin-bottom:3px" onclick="editarReserva('${r.id}')">✎ Editar</button>
                     <button class="lv-btn" style="color:#dc2626;border-color:#fca5a5" onclick="cancelarReservaById('${r.id}')">Cancelar</button>
                   </div>
                 </div>`;
