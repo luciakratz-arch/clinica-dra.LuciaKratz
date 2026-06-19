@@ -8006,39 +8006,6 @@ function Agenda() {
         );
       })()}
 
-            {/* Lista próximas sessões */}
-      {proximas.length>0&&(
-        <div className="card">
-          <div style={{fontWeight:700,fontSize:14,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>
-            <Icon name="clock" size={16}/> Próximas Sessões
-          </div>
-          {proximas.map(s=>{
-            const st = STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
-            const dataFmt = new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
-            return (
-              <div key={s.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--gray-100)"}}>
-                <div style={{width:48,height:48,borderRadius:10,background:st.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <div style={{fontSize:11,fontWeight:700,color:st.cor}}>{s.hora}</div>
-                  <div style={{fontSize:9,color:st.cor}}>{s.duracao}min</div>
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:600,fontSize:13}}>{s.pacienteNome}</div>
-                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{dataFmt} · {s.tipo}</div>
-                </div>
-                <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                  <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>{st.label}</span>
-                  <select value={s.status} onChange={e=>mudarStatus(s.id,e.target.value)}
-                    style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px 4px",cursor:"pointer",background:"white",color:"#374151"}}>
-                    {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
-                  </select>
-                  <button onClick={()=>excluir(s.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:4}}><Icon name="trash-2" size={13}/></button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Modal nova/editar sessão */}
       {modal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
