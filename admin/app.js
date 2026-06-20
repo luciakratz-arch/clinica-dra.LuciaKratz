@@ -7746,8 +7746,9 @@ function Agenda() {
             raw:s,
           }));
 
-          function sessaoNoMin(m){
-            return sessDia.find(s=>{
+          function sessoesNoMin(m){
+            // pode haver mais de uma sessão no mesmo horário (conflito de agenda)
+            return sessDia.filter(s=>{
               const ini=horaParaMin(s.hora), fim=ini+parseInt(s.duracao||50);
               return m>=ini&&m<fim;
             });
@@ -7757,13 +7758,21 @@ function Agenda() {
           }
 
           const linhas=[];
+          const jaExibidas = new Set(); // ids de sessão já lançadas na timeline
           for(let m=HORA_INI*60; m<HORA_FIM*60; m+=60){
             const hStr=minParaHora(m);
-            const sess=sessaoNoMin(m);
+            const sessNoSlot=sessoesNoMin(m);
             const bloco=blocoNoMin(m);
-            if(sess){
-              if(sess.hora.slice(0,5)===hStr) linhas.push({tipo:"sessao",hStr,sess});
-              // else pular (meio de sessão)
+            let teveSessaoInicio=false;
+            sessNoSlot.forEach(sess=>{
+              if(sess.hora.slice(0,5)===hStr && !jaExibidas.has(sess.id)){
+                linhas.push({tipo:"sessao",hStr,sess});
+                jaExibidas.add(sess.id);
+                teveSessaoInicio=true;
+              }
+            });
+            if(sessNoSlot.length>0){
+              // já tem sessão cobrindo este minuto (seja início ou meio) — não mostrar vago/bloco neste slot
             } else if(bloco){
               if(bloco.ehLucia) linhas.push({tipo:"livre",hStr,bloco});
               else {
