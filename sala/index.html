@@ -538,7 +538,8 @@ function render(){
       <div class="lista-vertical">
         ${(()=>{
           // 14 dias a partir de hoje
-          const dias14 = Array.from({length:14},(_,i)=>{ const d=new Date(hj); d.setDate(hj.getDate()+i); return d; });
+          // Lista vertical começa no mesmo dia da semana selecionada na grade (sincronizado com semanaOffset)
+          const dias14 = Array.from({length:14},(_,i)=>{ const d=new Date(dias[0]); d.setDate(dias[0].getDate()+i); return d; });
           const DIAS_SEMANA = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
 
           function horaParaMin(h){ const [hh,mm]=(h||"00:00").split(":").map(Number); return hh*60+(mm||0); }
@@ -548,7 +549,8 @@ function render(){
             const isHj = diaStr===fmt(hj);
             const reservasDia = s.reservas.filter(r=>r.data===diaStr).sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
             const sessoesDia = (s.sessoes||[]).filter(ss=>ss.data===diaStr && ss.status!=="cancelado").sort((a,b)=>(a.hora||"").localeCompare(b.hora||""));
-            if(reservasDia.length===0 && sessoesDia.length===0 && !isHj) return "";
+            const ehPrimeiroDiaLista = diaStr===fmt(dias14[0]);
+            if(reservasDia.length===0 && sessoesDia.length===0 && !isHj && !ehPrimeiroDiaLista) return "";
 
             // Monta os cards: para cada reserva, se for da Lucia, tenta detalhar com sessões dentro do intervalo
             const cardsHtml = reservasDia.map(r=>{
