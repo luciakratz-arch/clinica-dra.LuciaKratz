@@ -8055,11 +8055,19 @@ function Agenda() {
               <label className="form-label">Observações</label>
               <TextAreaVoz className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre a sessão..."/>
             </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
-                <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar"}
-              </button>
+            <div style={{display:"flex",gap:10,justifyContent:"space-between"}}>
+              {editando&&(
+                <button className="btn btn-ghost" style={{color:"#dc2626",border:"1px solid #fecaca"}}
+                  onClick={()=>{excluir(editando);setModal(false);}}>
+                  <Icon name="trash-2" size={15}/> Excluir
+                </button>
+              )}
+              <div style={{display:"flex",gap:10,marginLeft:"auto"}}>
+                <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+                <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
+                  <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
