@@ -3,7 +3,7 @@
 //  app.js — Etapa 2: Cadastro completo de pacientes
 // ═══════════════════════════════════════════════════════
 
-const { useState, useEffect, useCallback, useRef } = React;
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
@@ -3837,6 +3837,7 @@ function FinanceiroClinica() {
     const eParceria=(formPacote.tipoAtendimento||"particular")==="parceria";
     if(eParceria&&!formPacote.parceiraId){alert("Selecione a parceira para a venda em parceria.");return;}
     setSalvando(true);
+    try {
     const pac=pacientes.find(p=>p.id===pacienteId);
     const total=parseInt(totalSessoes)||1;
     const vSessao=parseFloat(valorSessao)||0;
@@ -3950,8 +3951,14 @@ function FinanceiroClinica() {
       await batchSoc.commit();
     }
 
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
+    } catch(e) {
+      console.error("Erro ao criar pacote:", e);
+      alert("⚠️ Erro ao criar pacote: "+e.message+"\n\nVerifique se o pacote e as sessões foram criados corretamente na aba Pacotes & Sessões e na Agenda antes de tentar novamente.");
+    } finally {
+      setSalvando(false);
+    }
   }
 
   async function atualizarSessao(id,campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
@@ -4060,6 +4067,36 @@ function FinanceiroClinica() {
   }
 
   // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
+  async function recalcularDatasPacote() {
+    if(!modalEditarPacote) return;
+    const f = formEdicaoPacote;
+    if(!f.dataInicio){alert("Defina a data de início antes de recalcular.");return;}
+    if(!confirm("Isso vai REESCREVER as datas de todas as sessões deste pacote a partir da nova data de início, mantendo a recorrência atual.\n\nSessões já realizadas ou pagas também terão a data alterada. Confirma?")) return;
+    setSalvandoEdicao(true);
+    try {
+      const snapSess = await db.collection("clinica_sessoes")
+        .where("pacoteId","==",modalEditarPacote.id).get();
+      const sessDoPacote = snapSess.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.numSessao||0)-(b.numSessao||0) || (a.data||"").localeCompare(b.data||""));
+      const total = sessDoPacote.length || parseInt(f.totalSessoes)||1;
+      const diasSemana = modalEditarPacote.diasSemana||[];
+      const novasDatas = gerarDatas(f.dataInicio, f.recorrencia, total, diasSemana);
+      const batch = db.batch();
+      sessDoPacote.forEach((s,idx)=>{
+        if(novasDatas[idx]){
+          batch.update(db.collection("clinica_sessoes").doc(s.id), {data: novasDatas[idx]});
+        }
+      });
+      await batch.commit();
+      alert(`✓ ${novasDatas.length} sessão(ões) realinhada(s) a partir de ${new Date(f.dataInicio+"T00:00:00").toLocaleDateString("pt-BR")}.`);
+    } catch(e){
+      console.error("Erro recalcularDatasPacote:", e);
+      alert("Erro ao recalcular datas: "+e.message);
+    }
+    setSalvandoEdicao(false);
+  }
+
   async function salvarEdicaoPacote() {
     if(!modalEditarPacote) return;
     setSalvandoEdicao(true);
@@ -4250,6 +4287,15 @@ function FinanceiroClinica() {
               </div>
               <div className="form-group"><label className="form-label">Data de Início</label>
                 <input className="form-input" type="date" value={formEdicaoPacote.dataInicio||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,dataInicio:e.target.value})}/>
+                {formEdicaoPacote.dataInicio!==modalEditarPacote.dataInicio&&(
+                  <div style={{marginTop:6,fontSize:11,color:"#d97706",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"6px 10px",lineHeight:1.5}}>
+                    ⚠️ Mudar a data de início <strong>não move</strong> as sessões já criadas — elas continuam nas datas originais. Use o botão abaixo se quiser realinhar todas as sessões a partir desta nova data.
+                    <button type="button" onClick={recalcularDatasPacote} disabled={salvandoEdicao}
+                      style={{display:"block",marginTop:8,background:"#f59e0b",color:"white",border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                      🔄 Recalcular datas das sessões
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="form-group"><label className="form-label">Horário</label>
                 <input className="form-input" type="time" value={formEdicaoPacote.horario||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,horario:e.target.value})}/>
@@ -7516,7 +7562,8 @@ function Configuracoes() {
 // ═══════════════════════════════════════════════════════
 function Agenda() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
-  const [sessoes, setSessoes] = useState([]);
+  const [sessoesPacientes, setSessoesPacientes] = useState([]);
+  const [reservasSalaRaw, setReservasSalaRaw] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -7538,26 +7585,29 @@ function Agenda() {
 
   useEffect(()=>{
     const u1 = db.collection("clinica_sessoes").onSnapshot(snap=>{
-      setSessoes(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setSessoesPacientes(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
     // Reservas da sala (Thais) — aparecem como bloqueios laranjas
     const u2 = db.collection("sala_reservas").onSnapshot(snap=>{
-      const reservasSala = snap.docs.map(d=>({
-        id:"sala_"+d.id, ...d.data(),
-        pacienteNome: d.data().usuarioId==="thais"
-          ? `🟠 Thais — ${d.data().titulo||"Sala reservada"}`
-          : `🟣 ${d.data().titulo||"Sala — Lucia"}`,
-        tipo:"sala", hora:d.data().horaInicio,
-        status:"agendado", _sala:true
-      }));
-      setSessoes(prev=>{
-        const semSala = prev.filter(s=>!s._sala);
-        return [...semSala, ...reservasSala];
-      });
+      setReservasSalaRaw(snap.docs.map(d=>({id:d.id,...d.data()})));
     },()=>{});
     return()=>{u1();u2();};
   },[]);
+
+  // Combina sessões de pacientes + reservas de sala num único array memoizado,
+  // sem race condition entre os dois listeners (cada um atualiza seu próprio estado)
+  const sessoes = useMemo(()=>{
+    const reservasSala = reservasSalaRaw.map(r=>({
+      id:"sala_"+r.id, ...r,
+      pacienteNome: r.usuarioId==="thais"
+        ? `🟠 Thais — ${r.titulo||"Sala reservada"}`
+        : `🟣 ${r.titulo||"Sala — Lucia"}`,
+      tipo:"sala", hora:r.horaInicio,
+      status:"agendado", _sala:true
+    }));
+    return [...sessoesPacientes, ...reservasSala];
+  },[sessoesPacientes, reservasSalaRaw]);
 
   // Calcular semana atual
   function getInicioSemana(offset=0){
