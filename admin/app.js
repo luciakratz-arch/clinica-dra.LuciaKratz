@@ -6824,6 +6824,7 @@ function Laudos() {
 // ═══════════════════════════════════════════════════════
 // ─── COMISSÕES ────────────────────────────────────────────
 function Comissoes({ user }) {
+  const { data:pacotes } = useCollection("clinica_pacotes");
   const [comissoes, setComissoes] = useState([]);
   const [lancamentos, setLancamentos] = useState([]);
   const [mesSel, setMesSel] = useState(() => {
@@ -7797,14 +7798,10 @@ function Agenda() {
           }));
 
           function sessoesNoMin(m){
-            // Inclui sessões que COMEÇAM neste slot OU que estão em andamento
+            // Retorna sessões que COMEÇAM neste slot de 1h (ini >= m E ini < m+60)
             return sessDia.filter(s=>{
-              const ini=horaParaMin(s.hora), fim=ini+parseInt(s.duracao||50);
-              // começa neste slot (ex: 19:30 está no slot 19:00-20:00)
-              const comecaNoSlot = ini >= m && ini < m+60;
-              // está em andamento neste slot
-              const emAndamento = m >= ini && m < fim;
-              return comecaNoSlot || emAndamento;
+              const ini=horaParaMin(s.hora);
+              return ini >= m && ini < m+60;
             });
           }
           function blocoNoMin(m){
