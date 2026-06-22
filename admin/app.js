@@ -3339,8 +3339,86 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           <div style={{fontFamily:"Dancing Script, cursive",fontSize:20,color:"white",fontWeight:600,lineHeight:1}}>{pacEfetivo?.nome}</div>
           <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Controle de Sessões e Frequência</div>
         </div>
-        <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>window.print()}>
-          <Icon name="printer" size={15}/> Imprimir
+        <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>{
+          const pac = pacEfetivo;
+          const sessMeses = {};
+          sessoesPac.forEach(s=>{
+            const mes = (s.data||"").slice(0,7);
+            if(!sessMeses[mes]) sessMeses[mes]=[];
+            sessMeses[mes].push(s);
+          });
+          const totalPago = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+          const totalValor = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+          const fmtD = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}) : "—";
+          const fmtM = m => { const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
+          const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
+          const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+          const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Resumo de Sessões — ${pac?.nome||""}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;background:white;padding:32px;max-width:680px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:16px;border-bottom:3px solid #7B00C4;margin-bottom:24px}
+  .logo-name{font-family:Georgia,serif;font-size:26px;color:#7B00C4;font-weight:700}
+  .logo-sub{font-size:11px;color:#6b7280;margin-top:3px}
+  .paciente-box{background:#f5f0ff;border-radius:12px;padding:16px 20px;margin-bottom:24px;border-left:5px solid #7B00C4}
+  .paciente-nome{font-size:22px;font-weight:700;color:#111827;margin-bottom:6px}
+  .paciente-meta{display:flex;gap:24px;flex-wrap:wrap}
+  .meta-item label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:2px}
+  .meta-item span{font-size:13px;font-weight:600;color:#374151}
+  .mes-title{font-size:14px;font-weight:700;color:#7B00C4;padding:8px 0;border-bottom:1px solid #e5e7eb;margin-bottom:8px;margin-top:20px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#7B00C4;color:white;padding:7px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase}
+  td{padding:7px 10px;border-bottom:1px solid #f3f4f6}
+  tr:nth-child(even) td{background:#fafafa}
+  .status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
+  .totais{margin-top:24px;background:#f9fafb;border-radius:10px;padding:14px 20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12}
+  .total-item label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}
+  .total-item span{font-size:18px;font-weight:800}
+  .footer{margin-top:32px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+  @media print{body{padding:16px} @page{margin:1.5cm}}
+</style></head><body>
+<div class="header">
+  <div><div class="logo-name">Dra. Lucia Kratz</div><div class="logo-sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação<br>Goiânia, GO</div></div>
+  <div style="text-align:right;font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div>
+</div>
+<div class="paciente-box">
+  <div class="paciente-nome">${pac?.nome||"—"}</div>
+  <div class="paciente-meta">
+    <div class="meta-item"><label>Início</label><span>${pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span></div>
+    <div class="meta-item"><label>Horário</label><span>${pacotesPac[0]?.horario||"—"}</span></div>
+    <div class="meta-item"><label>Recorrência</label><span>${pacotesPac[0]?.recorrencia||"—"}</span></div>
+    <div class="meta-item"><label>Total de sessões</label><span>${sessoesPac.length}</span></div>
+  </div>
+</div>
+${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])=>`
+<div class="mes-title">${fmtM(mes).charAt(0).toUpperCase()+fmtM(mes).slice(1)} — ${sess.length} sessão(ões)</div>
+<table>
+  <thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
+  <tbody>${sess.sort((a,b)=>(a.data||"").localeCompare(b.data||"")).map((s,i)=>`
+    <tr>
+      <td style="font-weight:700;color:#7B00C4">${s.numSessao||i+1}</td>
+      <td>${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}):""}</td>
+      <td>${s.hora||"—"}</td>
+      <td>${s.tipo||"Psicoterapia"}</td>
+      <td><span class="status" style="background:${statusColor[s.status]||"#7B00C4"}">${statusLabel[s.status]||s.status||"—"}</span></td>
+      <td>R$ ${(parseFloat(s.valorSessao)||0).toFixed(2).replace(".",",")}</td>
+    </tr>`).join("")}
+  </tbody>
+</table>`).join("")}
+<div class="totais">
+  <div class="total-item"><label>Total do pacote</label><span style="color:#111827">R$ ${totalValor.toFixed(2).replace(".",",")}</span></div>
+  <div class="total-item"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
+  <div class="total-item"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
+</div>
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+          const w = window.open("","_blank");
+          w.document.write(html);
+          w.document.close();
+          setTimeout(()=>w.print(),800);
+        }}>
+          <Icon name="printer" size={15}/> Imprimir / PDF
         </button>
       </div>
 
@@ -4885,6 +4963,61 @@ function FinanceiroClinica() {
                                 <button className="btn btn-purple" style={{fontSize:12,padding:"6px 12px"}}
                                   onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
                                   <Icon name="clipboard-list" size={13}/> Sessões
+                                </button>
+                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#059669",border:"1px solid #6ee7b7"}}
+                                  onClick={e=>{e.stopPropagation();
+                                    const pac = pacientes.find(x=>x.id===pacId);
+                                    const sessPac = sessoes.filter(s=>s.pacoteId===p.id).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+                                    const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
+                                    const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+                                    const totalValor = sessPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+                                    const totalPago = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+                                    const sessMeses = {};
+                                    sessPac.forEach(s=>{ const m=(s.data||"").slice(0,7); if(!sessMeses[m])sessMeses[m]=[]; sessMeses[m].push(s); });
+                                    const fmtM = m=>{ const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
+                                    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Resumo — ${pac?.nome||""}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:32px;max-width:680px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:22px}
+.logo{font-family:Georgia,serif;font-size:24px;color:#7B00C4;font-weight:700}.sub{font-size:10px;color:#6b7280;margin-top:3px}
+.box{background:#f5f0ff;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:5px solid #7B00C4}
+.nome{font-size:20px;font-weight:700;margin-bottom:8px}.meta{display:flex;gap:20px;flex-wrap:wrap}
+.mi label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:1px}.mi span{font-size:13px;font-weight:600}
+.mes{font-size:13px;font-weight:700;color:#7B00C4;padding:7px 0;border-bottom:1px solid #e5e7eb;margin:18px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:12px}th{background:#7B00C4;color:white;padding:6px 10px;text-align:left;font-size:11px}
+td{padding:6px 10px;border-bottom:1px solid #f3f4f6}tr:nth-child(even) td{background:#fafafa}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
+.totais{margin-top:20px;background:#f9fafb;border-radius:10px;padding:12px 18px;display:flex;gap:24px;flex-wrap:wrap}
+.ti label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}.ti span{font-size:17px;font-weight:800}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+@media print{body{padding:16px}@page{margin:1.5cm}}</style></head><body>
+<div class="header"><div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação · Goiânia, GO</div></div>
+<div style="font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div></div>
+<div class="box"><div class="nome">${pac?.nome||"—"}</div>
+<div class="meta">
+<div class="mi"><label>Início</label><span>${p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span></div>
+<div class="mi"><label>Horário</label><span>${p.horario||"—"}</span></div>
+<div class="mi"><label>Recorrência</label><span>${p.recorrencia||"—"}</span></div>
+<div class="mi"><label>Sessões</label><span>${sessPac.length}</span></div>
+</div></div>
+${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])=>`
+<div class="mes">${fmtM(mes).charAt(0).toUpperCase()+fmtM(mes).slice(1)} — ${sess.length} sessão(ões)</div>
+<table><thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
+<tbody>${sess.map((s,i)=>`<tr><td style="font-weight:700;color:#7B00C4">${s.numSessao||i+1}</td>
+<td>${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}):""}</td>
+<td>${s.hora||"—"}</td><td>${s.tipo||"Psicoterapia"}</td>
+<td><span class="badge" style="background:${statusColor[s.status]||"#7B00C4"}">${statusLabel[s.status]||s.status||"—"}</span></td>
+<td>R$ ${(parseFloat(s.valorSessao)||0).toFixed(2).replace(".",",")}</td></tr>`).join("")}
+</tbody></table>`).join("")}
+<div class="totais">
+<div class="ti"><label>Total do pacote</label><span>R$ ${totalValor.toFixed(2).replace(".",",")}</span></div>
+<div class="ti"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
+<div class="ti"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
+</div>
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+                                    const w=window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),800);
+                                  }}>
+                                  <Icon name="file-text" size={13}/> PDF
                                 </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#dc2626",marginLeft:"auto"}}
                                   onClick={async e=>{e.stopPropagation();
