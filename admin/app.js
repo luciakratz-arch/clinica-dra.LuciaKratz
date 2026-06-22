@@ -7797,10 +7797,14 @@ function Agenda() {
           }));
 
           function sessoesNoMin(m){
-            // Inclui sessões que começam em qualquer minuto dentro do slot de 1h (ex: 19:30 aparece no slot 19:00)
+            // Inclui sessões que COMEÇAM neste slot OU que estão em andamento
             return sessDia.filter(s=>{
               const ini=horaParaMin(s.hora), fim=ini+parseInt(s.duracao||50);
-              return m>=ini&&m<fim;
+              // começa neste slot (ex: 19:30 está no slot 19:00-20:00)
+              const comecaNoSlot = ini >= m && ini < m+60;
+              // está em andamento neste slot
+              const emAndamento = m >= ini && m < fim;
+              return comecaNoSlot || emAndamento;
             });
           }
           function blocoNoMin(m){
@@ -7815,8 +7819,9 @@ function Agenda() {
             const bloco=blocoNoMin(m);
             let teveSessaoInicio=false;
             sessNoSlot.forEach(sess=>{
-              // Exibe a sessão no slot onde ela COMEÇA (mesmo que seja 19:30 dentro do slot 19:00)
-              const iniciaSessao = horaParaMin(sess.hora) >= m && horaParaMin(sess.hora) < m+60;
+              // Exibe a sessão no slot onde ela COMEÇA (19:30 aparece no slot 19:00-20:00)
+              const sessIni = horaParaMin(sess.hora);
+              const iniciaSessao = sessIni >= m && sessIni < m+60;
               if(iniciaSessao && !jaExibidas.has(sess.id)){
                 linhas.push({tipo:"sessao",hStr,sess});
                 jaExibidas.add(sess.id);
