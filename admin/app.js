@@ -7797,7 +7797,7 @@ function Agenda() {
           }));
 
           function sessoesNoMin(m){
-            // pode haver mais de uma sessão no mesmo horário (conflito de agenda)
+            // Inclui sessões que começam em qualquer minuto dentro do slot de 1h (ex: 19:30 aparece no slot 19:00)
             return sessDia.filter(s=>{
               const ini=horaParaMin(s.hora), fim=ini+parseInt(s.duracao||50);
               return m>=ini&&m<fim;
@@ -7815,7 +7815,9 @@ function Agenda() {
             const bloco=blocoNoMin(m);
             let teveSessaoInicio=false;
             sessNoSlot.forEach(sess=>{
-              if(sess.hora.slice(0,5)===hStr && !jaExibidas.has(sess.id)){
+              // Exibe a sessão no slot onde ela COMEÇA (mesmo que seja 19:30 dentro do slot 19:00)
+              const iniciaSessao = horaParaMin(sess.hora) >= m && horaParaMin(sess.hora) < m+60;
+              if(iniciaSessao && !jaExibidas.has(sess.id)){
                 linhas.push({tipo:"sessao",hStr,sess});
                 jaExibidas.add(sess.id);
                 teveSessaoInicio=true;
