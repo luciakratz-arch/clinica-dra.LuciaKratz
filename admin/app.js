@@ -8073,6 +8073,32 @@ function Agenda() {
                         style={{background:"none",border:"1px dashed #d1d5db",borderRadius:8,padding:"5px 12px",cursor:"pointer",color:"#9ca3af",fontSize:12,width:"100%",marginTop:2,fontFamily:"var(--font-body)"}}>
                         + Agendar
                       </button>
+                      {(()=>{
+                        const sessDia=sessoes.filter(s=>s.data===diaStr&&!s._sala);
+                        if(sessDia.length===0) return null;
+                        function enviarResumoMob(){
+                          const dataFmt=new Date(diaStr+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+                          const realizadas=sessDia.filter(s=>s.status==="realizado");
+                          const confirmadas=sessDia.filter(s=>s.status==="confirmado");
+                          const agendadas=sessDia.filter(s=>s.status==="agendado");
+                          const faltas=sessDia.filter(s=>s.status==="falta");
+                          const canceladas=sessDia.filter(s=>s.status==="cancelado");
+                          let msg=`📅 *Resumo do dia — ${dataFmt}*\n🔢 Total: ${sessDia.length} sessão(ões)\n\n`;
+                          if(realizadas.length) msg+=`✅ *Realizadas (${realizadas.length}):*\n${realizadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(confirmadas.length) msg+=`🟢 *Confirmadas (${confirmadas.length}):*\n${confirmadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(agendadas.length) msg+=`🟡 *Agendadas/Pendentes (${agendadas.length}):*\n${agendadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(faltas.length) msg+=`❌ *Faltas (${faltas.length}):*\n${faltas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(canceladas.length) msg+=`🚫 *Canceladas (${canceladas.length}):*\n${canceladas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          msg+=`_Enviado pela Clínica Dra. Lucia Kratz_ 🦋`;
+                          window.open(`https://wa.me/5562991546765?text=${encodeURIComponent(msg)}`,"_blank");
+                        }
+                        return (
+                          <button onClick={enviarResumoMob}
+                            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#25D366",color:"white",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:600,width:"100%",marginTop:6,fontFamily:"var(--font-body)"}}>
+                            <span>📲</span> Resumo WhatsApp
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 );
@@ -8117,8 +8143,38 @@ function Agenda() {
                 </div>
                 {/* Lista do dia */}
                 <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",marginBottom:12}}>
-                    {new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
+                      {new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+                    </div>
+                    {(()=>{
+                      const sessDia = sessoes.filter(s=>s.data===diaAtual&&!s._sala);
+                      if(sessDia.length===0) return null;
+                      function enviarResumo(){
+                        const dataFmt = new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+                        const realizadas = sessDia.filter(s=>s.status==="realizado");
+                        const confirmadas = sessDia.filter(s=>s.status==="confirmado");
+                        const agendadas  = sessDia.filter(s=>s.status==="agendado");
+                        const faltas     = sessDia.filter(s=>s.status==="falta");
+                        const canceladas = sessDia.filter(s=>s.status==="cancelado");
+                        let msg = `📅 *Resumo do dia — ${dataFmt}*\n`;
+                        msg += `🔢 Total: ${sessDia.length} sessão(ões)\n\n`;
+                        if(realizadas.length) msg += `✅ *Realizadas (${realizadas.length}):*\n${realizadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(confirmadas.length) msg += `🟢 *Confirmadas (${confirmadas.length}):*\n${confirmadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(agendadas.length)  msg += `🟡 *Agendadas/Pendentes (${agendadas.length}):*\n${agendadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(faltas.length)     msg += `❌ *Faltas (${faltas.length}):*\n${faltas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(canceladas.length) msg += `🚫 *Canceladas (${canceladas.length}):*\n${canceladas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        msg += `_Enviado pela Clínica Dra. Lucia Kratz_ 🦋`;
+                        const url = `https://wa.me/5562991546765?text=${encodeURIComponent(msg)}`;
+                        window.open(url,"_blank");
+                      }
+                      return (
+                        <button onClick={enviarResumo}
+                          style={{display:"flex",alignItems:"center",gap:6,background:"#25D366",color:"white",border:"none",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-body)"}}>
+                          <span style={{fontSize:15}}>📲</span> Resumo WhatsApp
+                        </button>
+                      );
+                    })()}
                   </div>
                   {(()=>{
                     const linhas=montarLinhasDia(diaAtual);
