@@ -7145,9 +7145,12 @@ function Comissoes({ user }) {
 
   // Meses disponíveis: une nova coleção + legado para mostrar histórico completo
   const meses = [...new Set([...comissoes, ...comissoesLegado].map(c=>c.mesRef).filter(Boolean))].sort().reverse();
-  if (!meses.includes(mesSel) && meses.length > 0) {
-    // mantém o mês selecionado mesmo sem comissões
-  }
+  // Auto-navegar para o mês mais recente com dados se o atual estiver vazio
+  React.useEffect(()=>{
+    if(meses.length > 0 && !meses.includes(mesSel)){
+      setMesSel(meses[0]);
+    }
+  }, [meses.join(",")]); // eslint-disable-line
 
   // Mescla nova coleção + legado para garantir histórico completo
   const todasComissoes = useMemo(()=>{
