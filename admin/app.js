@@ -7226,12 +7226,28 @@ function Comissoes({ user }) {
   const repassesMes = comissoesMes.filter(c => c.responsavel);
   const responsaveis = [...new Set(repassesMes.map(c=>c.responsavel))];
 
-  const totalComissoes = comissoesSecretaria.reduce((a,c) => a + (c.valorComissao||0), 0);
-  // Pendentes × Pagas — o ciclo zera a cada pagamento
-  const comissoesPend  = comissoesSecretaria.filter(c => c.status !== "pago");
-  const comissoesPagas = comissoesSecretaria.filter(c => c.status === "pago");
+  // Classificar comissões: limpas (entram no ciclo) vs suspeitas (fora do ciclo)
+  const comissoesSecretariaPend = comissoesSecretaria.filter(c => c.status !== "pago");
+  const comissoesSecretariaPagas = comissoesSecretaria.filter(c => c.status === "pago");
+
+  function isComissaoSuspeita(c) {
+    const pacoteVinc = c.pacoteId ? pacotes.find(p=>p.id===c.pacoteId) : null;
+    // Suspeita 1: pacote existe mas ainda está pendente
+    if(pacoteVinc && (pacoteVinc.statusPag||"pendente") !== "recebido") return true;
+    // Suspeita 2: valor base diverge do valor total do pacote
+    if(pacoteVinc && Math.abs((c.valorBase||0) - (pacoteVinc.valorTotal||0)) > 0.01) return true;
+    // Suspeita 3: tem pacoteId mas o pacote não existe mais
+    if(c.pacoteId && !pacotes.some(p=>p.id===c.pacoteId)) return true;
+    return false;
+  }
+
+  // Apenas comissões limpas entram no ciclo de pagamento da Jéssica
+  const comissoesPend  = comissoesSecretariaPend.filter(c => !isComissaoSuspeita(c));
+  const comissoesSuspeitas = comissoesSecretariaPend.filter(c => isComissaoSuspeita(c));
+  const comissoesPagas = comissoesSecretariaPagas;
   const totalPend  = comissoesPend.reduce((a,c) => a + (c.valorComissao||0), 0);
   const totalPagas = comissoesPagas.reduce((a,c) => a + (c.valorComissao||0), 0);
+  const totalComissoes = totalPend + totalPagas;
 
   // Pagamentos já realizados neste mês (histórico)
   const pagamentosDoMes = lancamentos.filter(l =>
@@ -7490,30 +7506,13 @@ tr:nth-child(even) td{background:#fafafa}
             ✓ Nenhuma comissão pendente — novas vendas aparecem aqui e reabrem o pagamento
           </div>
         ) : comissoesPend.map(c => {
-          // Verificar se o pacote ainda existe
-          const pacoteExiste = !c.pacoteId || pacotes.some(p=>p.id===c.pacoteId);
-          const pacoteVinc = c.pacoteId ? pacotes.find(p=>p.id===c.pacoteId) : null;
-          // Alerta 1: pacote existe mas ainda está pendente de pagamento
-          const pacotePendente = pacoteVinc && (pacoteVinc.statusPag||"pendente") !== "recebido";
-          // Alerta 2: valor base da comissão diverge do valor total do pacote (gerada sobre parcial)
-          const valorDivergente = pacoteVinc && Math.abs((c.valorBase||0) - (pacoteVinc.valorTotal||0)) > 0.01;
-          const temAlerta = pacotePendente || valorDivergente;
           const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"—";
           return(
-          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",background:temAlerta?"#fffbeb":pacoteExiste?"white":"#fef9f0"}}>
+          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",background:"white"}}>
             <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome||"—"}</div>
-                {!pacoteExiste&&<span style={{fontSize:10,fontWeight:700,background:"#fef3c7",color:"#92400e",padding:"1px 6px",borderRadius:10}}>⚠️ Pacote não encontrado</span>}
-                {pacotePendente&&<span style={{fontSize:10,fontWeight:700,background:"#fef3c7",color:"#b45309",padding:"1px 6px",borderRadius:10}} title="O pacote ainda não foi marcado como pago — esta comissão pode ter sido gerada prematuramente">⚠️ Pacote ainda pendente</span>}
-                {valorDivergente&&<span style={{fontSize:10,fontWeight:700,background:"#fee2e2",color:"#dc2626",padding:"1px 6px",borderRadius:10}} title={`Comissão gerada sobre R$ ${(c.valorBase||0).toFixed(2)} mas o pacote vale R$ ${(pacoteVinc?.valorTotal||0).toFixed(2)} — possível geração sobre pagamento parcial`}>⚠️ Valor divergente</span>}
-              </div>
+              <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome||"—"}</div>
               <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo} · {dataStr}</div>
               {c.pacoteId&&<div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>Pacote: {c.pacoteId.slice(0,8)}...</div>}
-              {temAlerta&&<div style={{fontSize:11,color:"#b45309",marginTop:4,fontStyle:"italic"}}>
-                {pacotePendente&&!valorDivergente&&"Aguarde o pacote ser pago antes de incluir no ciclo da Jéssica. Use 🗑️ para remover e regerá automaticamente ao pagar."}
-                {valorDivergente&&`Base R$ ${(c.valorBase||0).toFixed(2).replace(".",",")} ≠ pacote R$ ${(pacoteVinc?.valorTotal||0).toFixed(2).replace(".",",")} — verifique se deve ser removida.`}
-              </div>}
               <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20,display:"inline-block",marginTop:4}}>
                 {labelTipoVenda(c.tipoVenda)}
               </span>
@@ -7521,12 +7520,10 @@ tr:nth-child(even) td{background:#fafafa}
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{textAlign:"right"}}>
                 <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
-                <div style={{fontWeight:700,fontSize:16,color:temAlerta?"#b45309":"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
-                {c.status==="pago" && <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago</div>}
+                <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
               </div>
               {user.tipo==="psicologa"&&(
-                <button
-                  title="Excluir comissão"
+                <button title="Excluir comissão"
                   onClick={async()=>{
                     if(!confirm(`Excluir comissão de ${c.pacienteNome} (R$ ${(c.valorComissao||0).toFixed(2).replace(".",",")})?`))return;
                     const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
@@ -7540,6 +7537,48 @@ tr:nth-child(even) td{background:#fafafa}
           </div>
         );})}
       </div>
+
+      {/* ── ⚠️ Comissões Aguardando — fora do ciclo até pacote ser pago ── */}
+      {comissoesSuspeitas.length > 0 && user.tipo==="psicologa" && (
+        <div style={{background:"#fffbeb",borderRadius:14,border:"1px solid #fde68a",overflow:"hidden",marginTop:16}}>
+          <div style={{padding:"12px 20px",borderBottom:"1px solid #fde68a",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+            <span style={{fontWeight:700,fontSize:13,color:"#b45309"}}>⏳ Aguardando pagamento do pacote — {comissoesSuspeitas.length} comissão(ões) fora do ciclo</span>
+            <span style={{fontSize:11,color:"#92400e"}}>Entram automaticamente quando o pacote for marcado como pago</span>
+          </div>
+          {comissoesSuspeitas.map(c => {
+            const pacoteVinc = c.pacoteId ? pacotes.find(p=>p.id===c.pacoteId) : null;
+            const semPacote = c.pacoteId && !pacoteVinc;
+            const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"-";
+            return (
+              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #fef3c7"}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <div style={{fontWeight:600,fontSize:13,color:"#78350f"}}>{c.pacienteNome||"-"}</div>
+                    {semPacote && <span style={{fontSize:10,background:"#fca5a5",color:"#7f1d1d",padding:"1px 6px",borderRadius:8,fontWeight:700}}>Pacote removido</span>}
+                    {pacoteVinc && <span style={{fontSize:10,background:"#fed7aa",color:"#7c2d12",padding:"1px 6px",borderRadius:8,fontWeight:600}}>Pacote pendente · R$ {(pacoteVinc.valorTotal||0).toFixed(2).replace(".",",")}</span>}
+                  </div>
+                  <div style={{fontSize:11,color:"#92400e",marginTop:2}}>{c.tipo} · {dataStr}</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:"#92400e"}}>Comissão prevista</div>
+                    <div style={{fontWeight:700,fontSize:14,color:"#b45309"}}>R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+                  </div>
+                  <button title="Remover do sistema"
+                    onClick={async()=>{
+                      if(!confirm(`Remover comissão de ${c.pacienteNome}? Ela será gerada novamente quando o pacote for pago.`))return;
+                      const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
+                      await db.collection(col).doc(c.id).delete();
+                    }}
+                    style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"4px 8px",fontSize:11}}>
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── ✓ Histórico do mês: comissões já pagas e pagamentos realizados ── */}
       {(comissoesPagas.length>0||pagamentosDoMes.length>0)&&(
