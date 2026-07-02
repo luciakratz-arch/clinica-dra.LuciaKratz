@@ -7132,7 +7132,18 @@ function Comissoes({ user }) {
     // mantém o mês selecionado mesmo sem comissões
   }
 
-  const comissoesMes = comissoes.filter(c => c.mesRef === mesSel);
+  // Mescla nova coleção + legado para garantir histórico completo
+  const todasComissoes = useMemo(()=>{
+    // Deduplica por pacoteId: prefere registro novo (vendas_secretaria) sobre legado
+    const porPacote = {};
+    [...comissoesLegado, ...comissoes].forEach(c=>{
+      const key = c.pacoteId || c.id;
+      if(!porPacote[key] || !c._legado) porPacote[key] = c;
+    });
+    return Object.values(porPacote);
+  }, [comissoes, comissoesLegado]);
+
+  const comissoesMes = todasComissoes.filter(c => c.mesRef === mesSel);
   // Secretária: registros sem responsável definido (vendas dela)
   const comissoesSecretaria = comissoesMes.filter(c => !c.responsavel);
   // Repasses: registros com responsável (parceiras, estagiária do social)
@@ -7188,7 +7199,11 @@ function Comissoes({ user }) {
     });
     // Marca apenas as comissões pendentes da secretária como pagas
     const batch = db.batch();
-    comissoesPend.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    comissoesPend.forEach(c => {
+      // Usa a coleção correta: nova ou legado
+      const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
+      batch.update(db.collection(col).doc(c.id), { status:"pago", dataPagamento: hoje });
+    });
     await batch.commit();
     setPagando(false);
     alert("✅ Pagamento registrado! O ciclo zerou — novas vendas abrem o próximo pagamento.");
@@ -7309,10 +7324,79 @@ function Comissoes({ user }) {
 
       {/* Botão pagar — só psicóloga vê; reaparece quando há comissões novas */}
       {user.tipo==="psicologa" && totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && (
-        <button onClick={pagarSalario} disabled={pagando}
-          style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:24,fontFamily:"var(--font-body)"}}>
-          {pagando ? "Registrando..." : `💰 ${salarioJaPago?"Pagar Comissões Novas":"Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
-        </button>
+        <div style={{display:"flex",gap:10,marginBottom:24,flexWrap:"wrap"}}>
+          <button onClick={pagarSalario} disabled={pagando}
+            style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+            {pagando ? "Registrando..." : `💰 ${salarioJaPago?"Pagar Comissões Novas":"Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+          </button>
+          <button onClick={()=>{
+            const mesLabel = getMesLabel(mesSel);
+            const nomeSecretary = config.nomeSecretaria||"Secretária";
+            const itens = [
+              ...(!salarioJaPago ? [{desc:"Salário Fixo", valor:SALARIO_FIXO}] : []),
+              ...comissoesPend.map(c=>({
+                desc:`${c.tipo==="primeira"?"1ª venda":"Recorrente"} — ${c.pacienteNome||"Paciente"} (${c.perc||10}%)`,
+                valor: c.valorComissao||0
+              }))
+            ];
+            const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Recibo de Pagamento — ${nomeSecretary} — ${mesLabel}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:40px;max-width:620px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:24px}
+.logo{font-family:Georgia,serif;font-size:22px;color:#7B00C4;font-weight:700}
+.sub{font-size:10px;color:#6b7280;margin-top:3px}
+h2{font-size:18px;color:#111827;margin-bottom:4px}
+.mes{font-size:13px;color:#7B00C4;font-weight:600;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}
+th{background:#7B00C4;color:white;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}
+td{padding:8px 12px;border-bottom:1px solid #f3f4f6}
+tr:nth-child(even) td{background:#fafafa}
+.total-row td{font-weight:700;font-size:14px;border-top:2px solid #7B00C4;background:#f5f0ff;color:#7B00C4}
+.assinatura{margin-top:40px;display:flex;justify-content:space-between;gap:40px}
+.assinatura-bloco{flex:1;text-align:center}
+.linha{border-top:1px solid #374151;margin-bottom:6px;margin-top:40px}
+.nome-assinatura{font-size:12px;font-weight:600;color:#374151}
+.cargo-assinatura{font-size:10px;color:#6b7280}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+.badge{background:#dcfce7;color:#16a34a;border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;display:inline-block}
+@media print{body{padding:20px}@page{margin:1.5cm}}
+</style></head><body>
+<div class="header">
+  <div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · Goiânia, GO</div></div>
+  <div style="text-align:right;font-size:10px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div>
+</div>
+<h2>Recibo de Pagamento</h2>
+<div class="mes">${mesLabel} · <span class="badge">✓ Quitado</span></div>
+<p style="font-size:13px;color:#374151;margin-bottom:16px">Declaro o recebimento da importância de <strong>R$ ${totalAPagar.toFixed(2).replace(".",",")}</strong> referente à competência <strong>${mesLabel}</strong>, conforme discriminado abaixo:</p>
+<table>
+  <thead><tr><th>Descrição</th><th style="text-align:right;width:120px">Valor</th></tr></thead>
+  <tbody>
+    ${itens.map(i=>`<tr><td>${i.desc}</td><td style="text-align:right">R$ ${i.valor.toFixed(2).replace(".",",")}</td></tr>`).join("")}
+    <tr class="total-row"><td>TOTAL A RECEBER</td><td style="text-align:right">R$ ${totalAPagar.toFixed(2).replace(".",",")}</td></tr>
+  </tbody>
+</table>
+<div class="assinatura">
+  <div class="assinatura-bloco">
+    <div class="linha"></div>
+    <div class="nome-assinatura">${nomeSecretary}</div>
+    <div class="cargo-assinatura">Secretária — Recebedor(a)</div>
+  </div>
+  <div class="assinatura-bloco">
+    <div class="linha"></div>
+    <div class="nome-assinatura">Dra. Lucia Kratz</div>
+    <div class="cargo-assinatura">CRP 09/20590 — Pagador(a)</div>
+  </div>
+</div>
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+            const w=window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),800);
+          }}
+            style={{background:"white",color:"#7B00C4",border:"2px solid #7B00C4",borderRadius:10,padding:"12px 20px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:6}}>
+            🖨️ Gerar Recibo
+          </button>
+        </div>
       )}
 
       {/* Lista de comissões — ciclo atual */}
