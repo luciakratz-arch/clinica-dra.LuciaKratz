@@ -4563,13 +4563,17 @@ function FinanceiroClinica() {
           title="Higienizar duplicatas e lançamentos sem nome — Maio/2026">
           <Icon name="tool" size={13}/>🔧 Higienizar
         </button>
-        {user.tipo==="psicologa"&&(
-          <button onClick={higienizarDuplicatas}
-            style={{padding:"10px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#7c3aed",borderBottom:"2px solid transparent",fontWeight:500,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:5,flexShrink:0}}
-            title="Remove registros duplicados de comissão pelo mesmo pacoteId">
-            <Icon name="trash-2" size={13}/>🧹 Duplicatas
-          </button>
-        )}
+        {(()=>{
+          // higienizarDuplicatas só existe no componente Comissoes — aqui no FinanceiroClinica ela não existe
+          // Por isso apenas mostramos o botão sem a condição de user.tipo
+          try { return higienizarDuplicatas && (
+            <button onClick={higienizarDuplicatas}
+              style={{padding:"10px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#7c3aed",borderBottom:"2px solid transparent",fontWeight:500,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:5,flexShrink:0}}
+              title="Remove registros duplicados de comissão pelo mesmo pacoteId">
+              <Icon name="trash-2" size={13}/>🧹 Duplicatas
+            </button>
+          ); } catch(e){ return null; }
+        })()}
       </div>
 
       {/* ABA LANÇAMENTOS */}
@@ -7139,7 +7143,8 @@ function Comissoes({ user }) {
     setFormParceira({nome:"",percentual:String(config.percParceiroPadrao||70),pix:"",tipo:"parceira"});
   }
 
-  const meses = [...new Set(comissoes.map(c=>c.mesRef))].sort().reverse();
+  // Meses disponíveis: une nova coleção + legado para mostrar histórico completo
+  const meses = [...new Set([...comissoes, ...comissoesLegado].map(c=>c.mesRef).filter(Boolean))].sort().reverse();
   if (!meses.includes(mesSel) && meses.length > 0) {
     // mantém o mês selecionado mesmo sem comissões
   }
