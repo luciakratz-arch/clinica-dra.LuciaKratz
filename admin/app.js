@@ -7031,15 +7031,27 @@ function Comissoes({ user }) {
   const SALARIO_FIXO = parseFloat(config.salarioFixo)||0;
 
   useEffect(() => {
-    // Esteira 1a: Comissões da secretária (nova coleção)
-    const u1 = db.collection("vendas_secretaria").orderBy("createdAt","desc")
-      .onSnapshot(s => setComissoes(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    // Esteira 1b: Repasses de parceiras (nova coleção)
-    const u1b = db.collection("repasses_parcerias").orderBy("createdAt","desc")
-      .onSnapshot(s => setRepasses(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    // Fallback: histórico legado de clinica_comissoes (leitura apenas)
-    const u1c = db.collection("clinica_comissoes").orderBy("createdAt","desc")
-      .onSnapshot(s => setComissoesLegado(s.docs.map(d=>({id:d.id,...d.data(),_legado:true}))), ()=>{});
+    // Esteira 1a: Comissões da secretária (nova coleção) — sem orderBy, ordenar client-side
+    const u1 = db.collection("vendas_secretaria")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0));
+        setComissoes(docs);
+      }, ()=>{});
+    // Esteira 1b: Repasses de parceiras — sem orderBy
+    const u1b = db.collection("repasses_parcerias")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0));
+        setRepasses(docs);
+      }, ()=>{});
+    // Fallback: histórico legado clinica_comissoes — sem orderBy
+    const u1c = db.collection("clinica_comissoes")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data(),_legado:true}));
+        docs.sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0));
+        setComissoesLegado(docs);
+      }, ()=>{});
     const u2 = db.collection("clinica_lancamentos").orderBy("createdAt","desc")
       .onSnapshot(s => setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
     const u3 = db.collection("clinica_config").doc("comissoes")
