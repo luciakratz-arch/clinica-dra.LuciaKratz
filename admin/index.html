@@ -1,29 +1,24 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin — Dra. Lucia Kratz</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600,700&family=Inter:wght@300,400,500,600,700&display=swap" rel="stylesheet"/>
-  <script src="https://unpkg.com/lucide@0.383.0/dist/umd/lucide.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- SEM Babel — arquivos já pré-compilados -->
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-  <div id="root"></div>
-  <!-- Arquivos pré-compilados — sem type="text/babel" -->
-  <script src="psifabulas.compiled.js?v=1"></script>
-  <script src="psicoeducacoes.compiled.js?v=1"></script>
-  <script src="psico_ui.compiled.js?v=1"></script>
-  <script src="app.compiled.js?v=22"></script>
-  <script src="marketing.compiled.js?v=4"></script>
-</body>
-</html>
+Claude, atue como Engenheiro de Software Full-Stack e Arquiteto de Dados Firebase Sênior. Preciso fazer um ajuste cirúrgico no arquivo `financeiro.js` da minha clínica para corrigir um problema crítico nas comissões e repasses de parceiras, organizando a casa para a entrada do módulo de assinaturas online.
+
+Regra de Ouro: Não quebre nenhuma funcionalidade atual, apenas isole os escopos e corrija a duplicidade de gatilhos.
+
+--- 1. ISOLAMENTO DE ESCOPO: SISTEMA vs. MERCADO PAGO ---
+Para fins de governança e escalabilidade, separe totalmente a inteligência financeira em duas esteiras independentes no banco de dados:
+- Esteira 1: Financeiro do Sistema Clínico (Interno): Gerencia o pro-labore, salário fixo da secretária, vendas presenciais de pacotes/avulsos e repasses das psicólogas/estagiárias parceiras. Usa as coleções: `clinica_lancamentos`, `clinica_pacotes`, `clinica_sessoes` e as duas novas coleções de repasse descritas abaixo.
+- Esteira 2: Financeiro do Mercado Pago (NR-1Map / SaaS): Focado estritamente nas assinaturas mensais e uso único online do sistema de SST. Suas regras de webhook, tracking de afiliados e split de 30% devem rodar em coleções isoladas (Ex: `leads_parceiros` e `faturamento_saas`), SEM NUNCA misturar dados com o financeiro físico da clínica.
+
+--- 2. CORREÇÃO CIRÚRGICA DE DUPLICIDADE NAS COMISSÕES DA SECRETÁRIA ---
+Analisando o comportamento do ciclo atual de Junho/2026, o painel da secretária Jéssica está exibindo lançamentos duplicados para o mesmo paciente (ex: Reginaldo de Sousa Soares) e gerando estornos manuais negativos (ex: -R$ 40,00) devido a gatilhos concorrentes.
+- Causa identificada: A função `registrarComissao` está sendo disparada tanto no `salvarPacote` (momento do insert do pacote pendente) quanto na função `marcarPacotePago` (momento da baixa).
+- Correção Obrigatória: 
+  * Altere a função `salvarPacote` para que ela SÓ dispare a comissão da secretária se o status do pacote for IMEDIATAMENTE salvo como "recebido". Se o pacote for salvo como "pendente", a função `registrarComissao` NÃO deve ser executada.
+  * O gatilho de comissão da secretária para pacotes pendentes deve ser executado única e exclusivamente dentro da função `marcarPacotePago` no momento exato em que o dinheiro entra no caixa (Batch Commit).
+
+--- 3. SEPARAÇÃO DE COLEÇÕES DE REPASSE NO FIRESTORE (FIM DA MISTURA DE DADOS) ---
+Atualmente, o repasse de 70% das psicólogas parceiras (ex: Andréia de Fátima) e as comissões da secretária estão sendo gravados na mesma coleção genérica `clinica_comissoes`, poluindo a listagem e os filtros de auditoria visual do painel.
+- Crie duas subcoleções ou tabelas separadas logicamente a partir de agora para novos registros:
+  1. `vendas_secretaria`: Armazena exclusivamente as comissões de balcão da Jéssica (10% primeira venda, 5% recorrente).
+  2. `repasses_parcerias`: Armazena os repasses técnicos das profissionais e psicólogas parceiras (ex: os 70% da Andréia ou valores de Projeto Social/Estagiárias).
+- Reajuste as queries de renderização da tela de comissões para ler cada lista em seu respectivo card, limpando os estornos e garantindo que o Total a Pagar (TaP) da secretária puxe apenas o Salário Fixo + `vendas_secretaria`.
+
+Refatore os trechos específicos das funções `marcarPacotePago`, `salvarPacote` e `registrarComissao` no arquivo `financeiro.js` aplicando essas correções com segurança. Mantenha os fallbacks e os estados do React intactos.
