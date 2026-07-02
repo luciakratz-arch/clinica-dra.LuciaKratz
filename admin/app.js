@@ -3862,6 +3862,24 @@ function FinanceiroClinica() {
     }
 
     await batch.commit();
+
+    // ── GATILHO ÚNICO + TRAVA DUPLA DE COMISSÃO ──
+    // Regra 1: Só dispara se o pacote estava estritamente "pendente" antes desta chamada
+    // Regra 2: ID derivado (COM_pacoteId) garante idempotência — retry nunca duplica
+    const eraPendente = (pacote.statusPag||"pendente") !== "recebido";
+    if(eraPendente) {
+      // Detecta se é primeira venda ou recorrente para este paciente
+      const tipoVendaDetectado = lancamentos.some(
+        l => l.pacienteId===pacote.pacienteId && l.pacoteId!==pacoteId && l.status==="recebido"
+      ) ? "recorrente" : "primeira";
+      await registrarComissao({
+        tipo: "Pacote",
+        valor: valorPagoFinal,
+        pacienteNome: pacote.pacienteNome || pacientes.find(p=>p.id===pacote.pacienteId)?.nome || "",
+        tipoVenda: tipoVendaDetectado,
+        pacoteId
+      });
+    }
   }
 
   // Geração de datas recorrentes
@@ -3891,20 +3909,33 @@ function FinanceiroClinica() {
   }
 
   async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda, pacoteId=null }) {
+    // ── TRAVA DE IDEMPOTÊNCIA: ID do documento = "COM_" + pacoteId ──
+    // Se o gatilho rodar mais de uma vez (erro de rede, retry), o Firestore
+    // fará um UPDATE (merge) e nunca um INSERT duplicado.
+    if(!pacoteId){
+      console.warn("[registrarComissao] Chamada sem pacoteId — abortando para evitar registro órfão.");
+      return;
+    }
     const cfg = await getConfigFin();
     const percNum = tipoVenda === "primeira" ? (parseFloat(cfg.percPrimeira)||10) : (parseFloat(cfg.percRecorrente)||5);
     const perc = percNum/100;
     const valorComissao = parseFloat((valor * perc).toFixed(2));
     const hoje = new Date();
     const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,"0")}`;
-    await db.collection("clinica_comissoes").add({
+    // ID derivado do pacote → idempotente
+    const docId = "COM_" + pacoteId;
+    await db.collection("vendas_secretaria").doc(docId).set({
       tipo, tipoVenda, perc: perc*100,
       valorBase: valor, valorComissao,
       pacienteNome, mesRef,
-      pacoteId: pacoteId||null,
+      pacoteId,
       status: "pendente",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    // Se não existia → cria com createdAt; se já existia → atualiza sem criar novo
+    await db.collection("vendas_secretaria").doc(docId).set({
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
   }
 
   async function salvarPacote(tipoVenda){
@@ -3958,14 +3989,20 @@ function FinanceiroClinica() {
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Registra comissão da secretária
-    if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda, pacoteId:pacRef.id });
+    // Registra comissão da secretária APENAS se o pagamento já entrou no caixa
+    // Se pendente, o gatilho será disparado exclusivamente em marcarPacotePago()
+    const pagoImediato = (formPacote.statusPag||"pendente") === "recebido";
+    if(tipoVenda && pagoImediato) {
+      await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda, pacoteId:pacRef.id });
+    }
 
-    // Registra repasse da parceira (venda em parceria)
+    // Registra repasse da parceira → coleção exclusiva repasses_parcerias
+    // ID derivado = "REP_" + pacoteId → idempotente
     if(eParceria&&parcSel){
       const vParceira=parseFloat((vTotal*percParc/100).toFixed(2));
       const mesRefParc=new Date().toISOString().slice(0,7);
-      await db.collection("clinica_comissoes").add({
+      const repDocId = "REP_" + pacRef.id;
+      await db.collection("repasses_parcerias").doc(repDocId).set({
         tipo:"Parceria — Repasse", tipoVenda:null, perc:percParc,
         valorBase:vTotal, valorComissao:vParceira,
         pacienteNome:pac?.nome||"",
@@ -3973,8 +4010,9 @@ function FinanceiroClinica() {
         parceiraId:parcSel.id,
         mesRef:mesRefParc, pacoteId:pacRef.id,
         status:"pendente",
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
     }
 
     // Cria sessões na agenda
@@ -4017,7 +4055,7 @@ function FinanceiroClinica() {
         origem:"pacote-social",
         createdAt:firebase.firestore.FieldValue.serverTimestamp(),
       });
-      batchSoc.set(db.collection("clinica_comissoes").doc(),{
+      batchSoc.set(db.collection("repasses_parcerias").doc(),{
         tipo:"Social — Estagiária",
         tipoVenda:"primeira", perc:0,
         valorBase:vSupervisao, valorComissao:vEstagiaria,
@@ -4525,6 +4563,13 @@ function FinanceiroClinica() {
           title="Higienizar duplicatas e lançamentos sem nome — Maio/2026">
           <Icon name="tool" size={13}/>🔧 Higienizar
         </button>
+        {user.tipo==="psicologa"&&(
+          <button onClick={higienizarDuplicatas}
+            style={{padding:"10px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#7c3aed",borderBottom:"2px solid transparent",fontWeight:500,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:5,flexShrink:0}}
+            title="Remove registros duplicados de comissão pelo mesmo pacoteId">
+            <Icon name="trash-2" size={13}/>🧹 Duplicatas
+          </button>
+        )}
       </div>
 
       {/* ABA LANÇAMENTOS */}
@@ -6958,7 +7003,12 @@ function Laudos() {
 // ─── COMISSÕES ────────────────────────────────────────────
 function Comissoes({ user }) {
   const { data:pacotes } = useCollection("clinica_pacotes");
+  // ── Esteira 1a: Comissões da secretária (vendas_secretaria) ──
   const [comissoes, setComissoes] = useState([]);
+  // ── Esteira 1b: Repasses de parceiras/estagiárias (repasses_parcerias) ──
+  const [repasses, setRepasses] = useState([]);
+  // Fallback: lê clinica_comissoes legado para não perder histórico anterior
+  const [comissoesLegado, setComissoesLegado] = useState([]);
   const [lancamentos, setLancamentos] = useState([]);
   const [mesSel, setMesSel] = useState(() => {
     const h = new Date();
@@ -6981,8 +7031,15 @@ function Comissoes({ user }) {
   const SALARIO_FIXO = parseFloat(config.salarioFixo)||0;
 
   useEffect(() => {
-    const u1 = db.collection("clinica_comissoes").orderBy("createdAt","desc")
+    // Esteira 1a: Comissões da secretária (nova coleção)
+    const u1 = db.collection("vendas_secretaria").orderBy("createdAt","desc")
       .onSnapshot(s => setComissoes(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    // Esteira 1b: Repasses de parceiras (nova coleção)
+    const u1b = db.collection("repasses_parcerias").orderBy("createdAt","desc")
+      .onSnapshot(s => setRepasses(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    // Fallback: histórico legado de clinica_comissoes (leitura apenas)
+    const u1c = db.collection("clinica_comissoes").orderBy("createdAt","desc")
+      .onSnapshot(s => setComissoesLegado(s.docs.map(d=>({id:d.id,...d.data(),_legado:true}))), ()=>{});
     const u2 = db.collection("clinica_lancamentos").orderBy("createdAt","desc")
       .onSnapshot(s => setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
     const u3 = db.collection("clinica_config").doc("comissoes")
@@ -6997,8 +7054,47 @@ function Comissoes({ user }) {
         docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
         setParceiras(docs);
       }, ()=>{});
-    return () => { u1(); u2(); u3(); u4(); };
+    return () => { u1(); u1b(); u1c(); u2(); u3(); u4(); };
   }, []);
+
+  // ── HIGIENIZAÇÃO: remove duplicatas por pacoteId nas coleções de comissão ──
+  async function higienizarDuplicatas() {
+    if(!confirm("Isso vai varrer as coleções de comissões e remover registros duplicados pelo mesmo pacoteId, mantendo apenas o mais recente. Confirma?")) return;
+    let removidos = 0;
+    // 1. Higieniza vendas_secretaria
+    const snapVS = await db.collection("vendas_secretaria").get();
+    const porPacoteVS = {};
+    snapVS.docs.forEach(d => {
+      const pid = d.data().pacoteId;
+      if(!pid) return;
+      if(!porPacoteVS[pid]) porPacoteVS[pid] = [];
+      porPacoteVS[pid].push({id:d.id, ts: d.data().createdAt?.toMillis?.()||0});
+    });
+    const bVS = db.batch();
+    Object.values(porPacoteVS).forEach(lista => {
+      if(lista.length <= 1) return;
+      lista.sort((a,b)=>b.ts-a.ts);
+      lista.slice(1).forEach(r => { if(!r.id.startsWith("COM_")){ bVS.delete(db.collection("vendas_secretaria").doc(r.id)); removidos++; } });
+    });
+    await bVS.commit();
+    // 2. Higieniza clinica_comissoes legado
+    const snapLeg = await db.collection("clinica_comissoes").get();
+    const porPacoteLeg = {};
+    snapLeg.docs.forEach(d => {
+      const pid = d.data().pacoteId;
+      if(!pid) return;
+      if(!porPacoteLeg[pid]) porPacoteLeg[pid] = [];
+      porPacoteLeg[pid].push({id:d.id, ts: d.data().createdAt?.toMillis?.()||0});
+    });
+    const bLeg = db.batch();
+    Object.values(porPacoteLeg).forEach(lista => {
+      if(lista.length <= 1) return;
+      lista.sort((a,b)=>b.ts-a.ts);
+      lista.slice(1).forEach(r => { bLeg.delete(db.collection("clinica_comissoes").doc(r.id)); removidos++; });
+    });
+    await bLeg.commit();
+    alert("✅ Higienização concluída. "+removidos+" registro(s) duplicado(s) removido(s).");
+  }
 
   async function salvarConfig(){
     setSalvandoConfig(true);
