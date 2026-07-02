@@ -7492,16 +7492,28 @@ tr:nth-child(even) td{background:#fafafa}
         ) : comissoesPend.map(c => {
           // Verificar se o pacote ainda existe
           const pacoteExiste = !c.pacoteId || pacotes.some(p=>p.id===c.pacoteId);
+          const pacoteVinc = c.pacoteId ? pacotes.find(p=>p.id===c.pacoteId) : null;
+          // Alerta 1: pacote existe mas ainda está pendente de pagamento
+          const pacotePendente = pacoteVinc && (pacoteVinc.statusPag||"pendente") !== "recebido";
+          // Alerta 2: valor base da comissão diverge do valor total do pacote (gerada sobre parcial)
+          const valorDivergente = pacoteVinc && Math.abs((c.valorBase||0) - (pacoteVinc.valorTotal||0)) > 0.01;
+          const temAlerta = pacotePendente || valorDivergente;
           const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"—";
           return(
-          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",background:pacoteExiste?"white":"#fef9f0"}}>
+          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",background:temAlerta?"#fffbeb":pacoteExiste?"white":"#fef9f0"}}>
             <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                 <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome||"—"}</div>
                 {!pacoteExiste&&<span style={{fontSize:10,fontWeight:700,background:"#fef3c7",color:"#92400e",padding:"1px 6px",borderRadius:10}}>⚠️ Pacote não encontrado</span>}
+                {pacotePendente&&<span style={{fontSize:10,fontWeight:700,background:"#fef3c7",color:"#b45309",padding:"1px 6px",borderRadius:10}} title="O pacote ainda não foi marcado como pago — esta comissão pode ter sido gerada prematuramente">⚠️ Pacote ainda pendente</span>}
+                {valorDivergente&&<span style={{fontSize:10,fontWeight:700,background:"#fee2e2",color:"#dc2626",padding:"1px 6px",borderRadius:10}} title={`Comissão gerada sobre R$ ${(c.valorBase||0).toFixed(2)} mas o pacote vale R$ ${(pacoteVinc?.valorTotal||0).toFixed(2)} — possível geração sobre pagamento parcial`}>⚠️ Valor divergente</span>}
               </div>
               <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo} · {dataStr}</div>
               {c.pacoteId&&<div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>Pacote: {c.pacoteId.slice(0,8)}...</div>}
+              {temAlerta&&<div style={{fontSize:11,color:"#b45309",marginTop:4,fontStyle:"italic"}}>
+                {pacotePendente&&!valorDivergente&&"Aguarde o pacote ser pago antes de incluir no ciclo da Jéssica. Use 🗑️ para remover e regerá automaticamente ao pagar."}
+                {valorDivergente&&`Base R$ ${(c.valorBase||0).toFixed(2).replace(".",",")} ≠ pacote R$ ${(pacoteVinc?.valorTotal||0).toFixed(2).replace(".",",")} — verifique se deve ser removida.`}
+              </div>}
               <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20,display:"inline-block",marginTop:4}}>
                 {labelTipoVenda(c.tipoVenda)}
               </span>
@@ -7509,7 +7521,7 @@ tr:nth-child(even) td{background:#fafafa}
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{textAlign:"right"}}>
                 <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
-                <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+                <div style={{fontWeight:700,fontSize:16,color:temAlerta?"#b45309":"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
                 {c.status==="pago" && <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago</div>}
               </div>
               {user.tipo==="psicologa"&&(
@@ -7517,7 +7529,8 @@ tr:nth-child(even) td{background:#fafafa}
                   title="Excluir comissão"
                   onClick={async()=>{
                     if(!confirm(`Excluir comissão de ${c.pacienteNome} (R$ ${(c.valorComissao||0).toFixed(2).replace(".",",")})?`))return;
-                    await db.collection("clinica_comissoes").doc(c.id).delete();
+                    const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
+                    await db.collection(col).doc(c.id).delete();
                   }}
                   style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"4px 8px",fontSize:11}}>
                   🗑️
