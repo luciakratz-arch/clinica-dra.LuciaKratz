@@ -7065,9 +7065,23 @@ function Comissoes({ user }) {
 
   // ── HIGIENIZAÇÃO: remove duplicatas por pacoteId nas coleções de comissão ──
   async function higienizarDuplicatas() {
-    if(!confirm("Isso vai varrer as coleções de comissões e remover registros duplicados pelo mesmo pacoteId, mantendo apenas o mais recente. Confirma?")) return;
+    if(!confirm(
+      "Essa operação vai:\n\n" +
+      "1. Remover comissões DUPLICADAS pelo mesmo pacoteId\n" +
+      "2. Remover comissões com ⚠️ Pacote não encontrado\n" +
+      "3. Preencher mesRef nos registros antigos (restaura histórico de meses)\n\n" +
+      "Confirma?"
+    )) return;
+
     let removidos = 0;
-    // 1. Higieniza vendas_secretaria
+    let orfaos = 0;
+    let migrados = 0;
+
+    // Carrega IDs de todos os pacotes existentes para cruzar
+    const snapPacotes = await db.collection("clinica_pacotes").get();
+    const pacotesExistentes = new Set(snapPacotes.docs.map(d => d.id));
+
+    // ── PASSO 1: Duplicatas em vendas_secretaria ──
     const snapVS = await db.collection("vendas_secretaria").get();
     const porPacoteVS = {};
     snapVS.docs.forEach(d => {
@@ -7080,26 +7094,78 @@ function Comissoes({ user }) {
     Object.values(porPacoteVS).forEach(lista => {
       if(lista.length <= 1) return;
       lista.sort((a,b)=>b.ts-a.ts);
-      lista.slice(1).forEach(r => { if(!r.id.startsWith("COM_")){ bVS.delete(db.collection("vendas_secretaria").doc(r.id)); removidos++; } });
+      lista.slice(1).forEach(r => {
+        if(!r.id.startsWith("COM_")){ bVS.delete(db.collection("vendas_secretaria").doc(r.id)); removidos++; }
+      });
     });
     await bVS.commit();
-    // 2. Higieniza clinica_comissoes legado
+
+    // ── PASSO 2: Duplicatas + órfãos em clinica_comissoes ──
     const snapLeg = await db.collection("clinica_comissoes").get();
     const porPacoteLeg = {};
+    const bLeg = db.batch();
+    let bLegCount = 0;
+
     snapLeg.docs.forEach(d => {
-      const pid = d.data().pacoteId;
+      const data = d.data();
+      const pid = data.pacoteId;
+
+      // Órfão: tem pacoteId mas o pacote não existe mais → remover
+      if(pid && !pacotesExistentes.has(pid)) {
+        bLeg.delete(db.collection("clinica_comissoes").doc(d.id));
+        orfaos++;
+        bLegCount++;
+        return;
+      }
+
+      // Agrupar para detectar duplicatas
       if(!pid) return;
       if(!porPacoteLeg[pid]) porPacoteLeg[pid] = [];
-      porPacoteLeg[pid].push({id:d.id, ts: d.data().createdAt?.toMillis?.()||0});
+      porPacoteLeg[pid].push({id:d.id, ts: data.createdAt?.toMillis?.()||0});
     });
-    const bLeg = db.batch();
+
+    // Duplicatas: manter só o mais recente
     Object.values(porPacoteLeg).forEach(lista => {
       if(lista.length <= 1) return;
       lista.sort((a,b)=>b.ts-a.ts);
-      lista.slice(1).forEach(r => { bLeg.delete(db.collection("clinica_comissoes").doc(r.id)); removidos++; });
+      lista.slice(1).forEach(r => {
+        bLeg.delete(db.collection("clinica_comissoes").doc(r.id));
+        removidos++;
+        bLegCount++;
+      });
     });
-    await bLeg.commit();
-    alert("✅ Higienização concluída. "+removidos+" registro(s) duplicado(s) removido(s).");
+    if(bLegCount > 0) await bLeg.commit();
+
+    // ── PASSO 3: Migração de mesRef (restaura histórico de meses) ──
+    // Re-ler após limpeza para não tentar migrar docs que foram deletados
+    const snapLeg2 = await db.collection("clinica_comissoes").get();
+    const bMig = db.batch();
+    let bMigCount = 0;
+    snapLeg2.docs.forEach(d => {
+      const data = d.data();
+      if(!data.mesRef) {
+        let mesRef = null;
+        if(data.createdAt?.toDate) {
+          const dt = data.createdAt.toDate();
+          mesRef = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
+        } else if(data.data) {
+          mesRef = String(data.data).slice(0,7);
+        }
+        if(mesRef) {
+          bMig.update(d.ref, {mesRef});
+          migrados++;
+          bMigCount++;
+        }
+      }
+    });
+    if(bMigCount > 0) await bMig.commit();
+
+    alert(
+      "✅ Higienização concluída!\n\n" +
+      `• ${removidos} duplicata(s) removida(s)\n` +
+      `• ${orfaos} comissão(ões) com pacote inexistente removida(s)\n` +
+      `• ${migrados} registro(s) com mesRef preenchido (histórico restaurado)`
+    );
   }
 
   async function salvarConfig(){
