@@ -4563,17 +4563,7 @@ function FinanceiroClinica() {
           title="Higienizar duplicatas e lançamentos sem nome — Maio/2026">
           <Icon name="tool" size={13}/>🔧 Higienizar
         </button>
-        {(()=>{
-          // higienizarDuplicatas só existe no componente Comissoes — aqui no FinanceiroClinica ela não existe
-          // Por isso apenas mostramos o botão sem a condição de user.tipo
-          try { return higienizarDuplicatas && (
-            <button onClick={higienizarDuplicatas}
-              style={{padding:"10px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#7c3aed",borderBottom:"2px solid transparent",fontWeight:500,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:5,flexShrink:0}}
-              title="Remove registros duplicados de comissão pelo mesmo pacoteId">
-              <Icon name="trash-2" size={13}/>🧹 Duplicatas
-            </button>
-          ); } catch(e){ return null; }
-        })()}
+        {(()=>{ return null; })()}
       </div>
 
       {/* ABA LANÇAMENTOS */}
@@ -7265,6 +7255,11 @@ function Comissoes({ user }) {
           <div className="page-title">Comissões — {config.nomeSecretaria.split(" ")[0]}</div>
           <div className="page-subtitle">Salário fixo R$ {SALARIO_FIXO.toFixed(2).replace(".",",")} + comissões por vendas · Repasses a parceiras</div>
         </div>
+        <button onClick={higienizarDuplicatas}
+          style={{background:"none",border:"1px solid #c4b5fd",borderRadius:8,cursor:"pointer",fontSize:12,color:"#7c3aed",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5,flexShrink:0}}
+          title="Remove registros duplicados de comissão pelo mesmo pacoteId">
+          <Icon name="trash-2" size={13}/>🧹 Limpar Duplicatas
+        </button>
       </div>
 
       {/* Seletor de mês */}
