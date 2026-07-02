@@ -7344,17 +7344,38 @@ function Comissoes({ user }) {
         </button>
       </div>
 
-      {/* Seletor de mês */}
-      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
-        {(meses.length > 0 ? meses : [mesSel]).map(m => (
-          <button key={m} onClick={()=>setMesSel(m)}
-            style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,
-              background:m===mesSel?"var(--purple)":"var(--gray-100)",
-              color:m===mesSel?"white":"var(--text)"}}>
-            {getMesLabel(m)}
-          </button>
-        ))}
-      </div>
+      {/* Seletor de mês — carrossel com setas */}
+      {(()=>{
+        const listaMeses = meses.length > 0 ? meses : [mesSel];
+        const idxAtual = listaMeses.indexOf(mesSel);
+        const irAntes = () => { if(idxAtual < listaMeses.length-1) setMesSel(listaMeses[idxAtual+1]); };
+        const irProx  = () => { if(idxAtual > 0) setMesSel(listaMeses[idxAtual-1]); };
+        return (
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+            <button onClick={irAntes} disabled={idxAtual >= listaMeses.length-1}
+              style={{width:32,height:32,borderRadius:"50%",border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:idxAtual>=listaMeses.length-1?0.3:1}}>
+              ‹
+            </button>
+            <div style={{display:"flex",gap:6,overflowX:"auto",flex:1,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+              {listaMeses.map(m => (
+                <button key={m} onClick={()=>setMesSel(m)}
+                  style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,flexShrink:0,
+                    background:m===mesSel?"var(--purple)":"var(--gray-100)",
+                    color:m===mesSel?"white":"var(--text)",
+                    display:Math.abs(listaMeses.indexOf(m)-idxAtual)<=2?"flex":"none",
+                    alignItems:"center"}}>
+                  {getMesLabel(m)}
+                </button>
+              ))}
+            </div>
+            <button onClick={irProx} disabled={idxAtual <= 0}
+              style={{width:32,height:32,borderRadius:"50%",border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:idxAtual<=0?0.3:1}}>
+              ›
+            </button>
+            <span style={{fontSize:12,color:"var(--text-muted)",flexShrink:0}}>{idxAtual+1}/{listaMeses.length}</span>
+          </div>
+        );
+      })()}
 
       {/* ⚙️ Configurações financeiras — só psicóloga */}
       {user.tipo==="psicologa" && (
