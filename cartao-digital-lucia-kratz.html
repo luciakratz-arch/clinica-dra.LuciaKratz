@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dra. Lucia Kratz — Cartão Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#160021;
+    --bg-card:#20083a;
+    --bg-card-2:#2a0e49;
+    --purple:#7B00C4;
+    --purple-light:#b24bf3;
+    --gold:#f0c96b;
+    --text:#f6eefb;
+    --text-muted:#cbb3de;
+    --line:rgba(255,255,255,0.09);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(178,75,243,0.35), transparent),
+      radial-gradient(ellipse 60% 30% at 90% 100%, rgba(240,201,107,0.10), transparent),
+      var(--bg-deep);
+    font-family:'Poppins', sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px 60px;
+  }
+  .card{
+    width:100%;
+    max-width:420px;
+  }
+  .eyebrow{
+    text-align:center;
+    font-size:12px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:18px;
+  }
+  .eyebrow .wing{ filter: drop-shadow(0 0 6px rgba(240,201,107,0.5)); }
+
+  .photo-wrap{
+    width:148px; height:148px;
+    margin:0 auto 18px;
+    border-radius:50%;
+    padding:4px;
+    background:conic-gradient(from 180deg, var(--purple), var(--gold), var(--purple-light), var(--purple));
+    animation: spin 9s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .photo-wrap{ animation:none; } }
+  .photo-inner{
+    width:100%; height:100%;
+    border-radius:50%;
+    overflow:hidden;
+    background:var(--bg-card);
+    border:3px solid var(--bg-deep);
+  }
+  .photo-inner img{ width:100%; height:100%; object-fit:cover; display:block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .photo-wrap img{ animation: counterspin 9s linear infinite; }
+  @keyframes counterspin{ to{ transform:rotate(-360deg); } }
+
+  h1.name{
+    font-family:'Dancing Script', cursive;
+    font-weight:700;
+    font-size:44px;
+    text-align:center;
+    background:linear-gradient(90deg, var(--gold), #fff 45%, var(--purple-light));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    line-height:1.1;
+  }
+  .subtitle{
+    text-align:center;
+    font-size:14px;
+    color:var(--text-muted);
+    margin-top:6px;
+    margin-bottom:22px;
+    font-weight:300;
+    letter-spacing:.3px;
+  }
+
+  .primary-actions{
+    display:flex;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .btn{
+    flex:1;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:13px 10px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:600;
+    text-decoration:none;
+    cursor:pointer;
+    border:none;
+    font-family:inherit;
+  }
+  .btn-primary{
+    background:linear-gradient(90deg, var(--purple), #9d1fdc);
+    color:#fff;
+    box-shadow:0 8px 20px -6px rgba(123,0,196,0.6);
+  }
+  .btn-ghost{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--line);
+  }
+
+  .icon-row{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:8px;
+    margin-bottom:26px;
+  }
+  .icon-btn{
+    display:flex; flex-direction:column; align-items:center; gap:7px;
+    padding:14px 4px;
+    border-radius:14px;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    color:var(--text);
+    text-decoration:none;
+    font-size:11.5px;
+    text-align:center;
+  }
+  .icon-btn svg{ width:20px; height:20px; stroke:var(--gold); }
+
+  .bio{
+    font-size:13.5px;
+    line-height:1.65;
+    color:var(--text-muted);
+    text-align:center;
+    padding:0 6px;
+    margin-bottom:26px;
+  }
+  .bio b{ color:var(--text); font-weight:500; }
+
+  .section-label{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 4px 10px;
+  }
+
+  .links{ display:flex; flex-direction:column; gap:9px; margin-bottom:30px; }
+  .link-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--bg-card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:13px 16px;
+    color:var(--text);
+    text-decoration:none;
+    font-size:14px;
+    font-weight:500;
+  }
+  .link-row svg{ width:18px; height:18px; stroke:var(--purple-light); flex-shrink:0; }
+  .link-row span.arrow{ margin-left:auto; color:var(--text-muted); font-size:16px; }
+
+  .products{ display:flex; flex-direction:column; gap:10px; margin-bottom:30px; }
+  .product-card{
+    display:flex; gap:12px; align-items:center;
+    background:linear-gradient(135deg, var(--bg-card), var(--bg-card-2));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:12px;
+    text-decoration:none;
+    color:var(--text);
+  }
+  .product-icon{
+    width:56px; height:56px; border-radius:10px; flex-shrink:0;
+    border:1px solid var(--line);
+    background:linear-gradient(135deg, var(--purple), var(--purple-light));
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px;
+  }
+  .product-info{ flex:1; min-width:0; }
+  .product-info .p-title{ font-size:13px; font-weight:600; line-height:1.3; }
+  .product-info .p-tag{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .product-card .buy{
+    flex-shrink:0;
+    font-size:11px;
+    font-weight:600;
+    padding:8px 12px;
+    border-radius:20px;
+    background:var(--gold);
+    color:#2a1600;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:12px;
+    padding-top:8px;
+    border-top:1px solid var(--line);
+  }
+  footer .fwing{ display:block; font-size:18px; margin-bottom:6px; }
+  footer .crp{ font-size:11px; opacity:.75; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="eyebrow"><span class="wing">🦋</span> CRP 09/20590 · GOIÂNIA — GO</div>
+
+  <div class="photo-wrap">
+    <div class="photo-inner">
+      <img src="foto-lucia.jpg" alt="Dra. Lucia Kratz" onerror="this.parentElement.innerHTML='🦋'; this.parentElement.style.display='flex'; this.parentElement.style.alignItems='center'; this.parentElement.style.justifyContent='center'; this.parentElement.style.fontSize='48px';">
+    </div>
+  </div>
+
+  <h1 class="name">Lucia Kratz</h1>
+  <div class="subtitle">Psicóloga · TCC · Musicoterapia · Neuromodulação</div>
+
+  <div class="primary-actions">
+    <button class="btn btn-primary" onclick="salvarContato()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+      Salvar Contato
+    </button>
+    <button class="btn btn-ghost" onclick="compartilhar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 3.9M15.4 6.6L8.6 10.5"/></svg>
+      Compartilhar
+    </button>
+  </div>
+
+  <div class="icon-row">
+    <a class="icon-btn" href="tel:+5562994644950">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      Ligar
+    </a>
+    <a class="icon-btn" href="mailto:luciakratz@gmail.com">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+      Email
+    </a>
+    <a class="icon-btn" href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia%2C%20vim%20pelo%20seu%20cartão%20digital." target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+      WhatsApp
+    </a>
+    <a class="icon-btn" href="https://www.google.com/maps/place/Psic%C3%B3loga+Lucia+Kratz/data=!4m2!3m1!1s0x0:0x8f798e418e415bd1?sa=X&ved=1t:2428&ictx=111" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Mapa
+    </a>
+  </div>
+
+  <p class="bio">
+    <b>Doutora em Psicologia</b>, especialista em TCC, Musicoterapia e Neuromodulação. Atendimento presencial em Goiânia e online, para adolescentes, adultos e idosos.
+  </p>
+
+  <div class="section-label">Redes & Perfis</div>
+  <div class="links">
+    <a class="link-row" href="https://www.instagram.com/luciakratz/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+      Instagram
+      <span class="arrow">→</span>
+    </a>
+    <a class="link-row" href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Doctoralia — Avalie meu atendimento
+      <span class="arrow">→</span>
+    </a>
+    <a class="link-row" href="https://www.facebook.com/luciakratz.coach/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+      Facebook
+      <span class="arrow">→</span>
+    </a>
+    <a class="link-row" href="https://www.linkedin.com/in/luciakratz/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4V8h4v1.5A5.98 5.98 0 0116 8z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+      LinkedIn
+      <span class="arrow">→</span>
+    </a>
+    <a class="link-row" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20z"/></svg>
+      Site Oficial
+      <span class="arrow">→</span>
+    </a>
+  </div>
+
+  <div class="section-label">Cursos & E-books</div>
+  <div class="products">
+    <a class="product-card" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">
+      <div class="product-icon">🧭</div>
+      <div class="product-info">
+        <div class="p-title">Mapeamento de Perfil Avançado — 9&Self</div>
+        <div class="p-tag">Autoconhecimento por Eneagrama</div>
+      </div>
+      <span class="buy">Ver</span>
+    </a>
+    <a class="product-card" href="https://pay.hotmart.com/R97548434J?off=towezuxh&checkoutMode=10&bid=1783114606337" target="_blank">
+      <div class="product-icon">🎓</div>
+      <div class="product-info">
+        <div class="p-title">Curso: Eneagrama no Amor em Tempos de Crise</div>
+        <div class="p-tag">Curso online</div>
+      </div>
+      <span class="buy">Ver</span>
+    </a>
+    <a class="product-card" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank">
+      <div class="product-icon">📖</div>
+      <div class="product-info">
+        <div class="p-title">E-book: Meu Companheiro é um Psicopata, SERÁ?</div>
+        <div class="p-tag">E-book digital</div>
+      </div>
+      <span class="buy">Ver</span>
+    </a>
+  </div>
+
+  <footer>
+    <span class="fwing">🦋</span>
+    Dra. Lucia Kratz — Psicóloga · CRP 09/20590
+    <div class="crp">© 2026 · Todos os direitos reservados</div>
+  </footer>
+</div>
+
+<script>
+function salvarContato(){
+  const vcard = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "N:Kratz;Lucia;;Dra.;",
+    "FN:Dra. Lucia Kratz",
+    "ORG:Clínica Dra. Lucia Kratz",
+    "TITLE:Psicóloga | CRP 09/20590",
+    "TEL;TYPE=CELL:+5562994644950",
+    "TEL;TYPE=CELL,WORK:+5562991546757",
+    "EMAIL:luciakratz@gmail.com",
+    "URL:https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/",
+    "END:VCARD"
+  ].join("\n");
+  const blob = new Blob([vcard], { type: "text/vcard" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "Dra-Lucia-Kratz.vcf";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function compartilhar(){
+  const shareData = {
+    title: "Dra. Lucia Kratz — Psicóloga",
+    text: "Conheça o cartão digital da Dra. Lucia Kratz",
+    url: window.location.href
+  };
+  if (navigator.share) {
+    navigator.share(shareData).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    alert("Link copiado!");
+  }
+}
+</script>
+
+</body>
+</html>
