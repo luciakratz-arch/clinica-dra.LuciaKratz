@@ -61,7 +61,7 @@
     background:var(--bg-card);
     border:3px solid var(--bg-deep);
   }
-  .photo-inner img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .photo-inner img{ width:100%; height:100%; object-fit:cover; object-position:center 15%; display:block; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
   .photo-wrap img{ animation: counterspin 9s linear infinite; }
   @keyframes counterspin{ to{ transform:rotate(-360deg); } }
@@ -352,10 +352,22 @@ function compartilhar(){
     url: window.location.href
   };
   if (navigator.share) {
-    navigator.share(shareData).catch(()=>{});
+    navigator.share(shareData).catch(()=>{ copiarLink(); });
   } else {
-    navigator.clipboard.writeText(window.location.href);
-    alert("Link copiado!");
+    copiarLink();
+  }
+}
+
+function copiarLink(){
+  const url = window.location.href;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(()=>{
+      alert("Link copiado! Cole onde quiser compartilhar.");
+    }).catch(()=>{
+      window.prompt("Copie o link abaixo:", url);
+    });
+  } else {
+    window.prompt("Copie o link abaixo:", url);
   }
 }
 </script>
