@@ -7418,13 +7418,11 @@ function Comissoes({ user }) {
           title="Remove registros duplicados de comissão pelo mesmo pacoteId">
           <Icon name="trash-2" size={13}/>🧹 Limpar Duplicatas
         </button>
-        {user.tipo==="psicologa"&&(
-          <button onClick={auditarComissoes}
-            style={{background:"none",border:"1px solid #6ee7b7",borderRadius:8,cursor:"pointer",fontSize:12,color:"#059669",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5,flexShrink:0}}
-            title="Confere pacotes pagos de jun/jul vs registros de comissão">
-            <Icon name="search" size={13}/>🔍 Auditar Jun/Jul
-          </button>
-        )}
+        <button onClick={auditarComissoes}
+          style={{background:"none",border:"1px solid #6ee7b7",borderRadius:8,cursor:"pointer",fontSize:12,color:"#059669",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5,flexShrink:0}}
+          title="Confere pacotes pagos de jun/jul vs registros de comissão">
+          <Icon name="search" size={13}/>🔍 Auditar Jun/Jul
+        </button>
       </div>
 
       {/* Modal de Auditoria */}
