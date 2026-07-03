@@ -7413,16 +7413,18 @@ function Comissoes({ user }) {
           <div className="page-title">Comissões — {config.nomeSecretaria.split(" ")[0]}</div>
           <div className="page-subtitle">Salário fixo R$ {SALARIO_FIXO.toFixed(2).replace(".",",")} + comissões por vendas · Repasses a parceiras</div>
         </div>
-        <button onClick={higienizarDuplicatas}
-          style={{background:"none",border:"1px solid #c4b5fd",borderRadius:8,cursor:"pointer",fontSize:12,color:"#7c3aed",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5,flexShrink:0}}
-          title="Remove registros duplicados de comissão pelo mesmo pacoteId">
-          <Icon name="trash-2" size={13}/>🧹 Limpar Duplicatas
-        </button>
-        <button onClick={auditarComissoes}
-          style={{background:"none",border:"1px solid #6ee7b7",borderRadius:8,cursor:"pointer",fontSize:12,color:"#059669",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5,flexShrink:0}}
-          title="Confere pacotes pagos de jun/jul vs registros de comissão">
-          <Icon name="search" size={13}/>🔍 Auditar Jun/Jul
-        </button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <button onClick={higienizarDuplicatas}
+            style={{background:"none",border:"1px solid #c4b5fd",borderRadius:8,cursor:"pointer",fontSize:12,color:"#7c3aed",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}
+            title="Remove registros duplicados de comissão pelo mesmo pacoteId">
+            <Icon name="trash-2" size={13}/>🧹 Limpar Duplicatas
+          </button>
+          <button onClick={auditarComissoes}
+            style={{background:"#059669",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,color:"white",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}
+            title="Confere pacotes pagos de jun/jul vs registros de comissão">
+            <Icon name="search" size={13}/>🔍 Auditar Jun/Jul
+          </button>
+        </div>
       </div>
 
       {/* Modal de Auditoria */}
