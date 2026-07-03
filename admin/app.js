@@ -3609,218 +3609,6 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
   );
 }
 
-
-// ═══════════════════════════════════════════════════════
-// DOCUMENTOS DO PACOTE — Resumo, Recibo, Declaração
-// ═══════════════════════════════════════════════════════
-function gerarDocumentoPacote({ tipo, paciente, pacote, sessoes }) {
-  const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
-  const LOGO     = BASE_URL + "/logo-transparente.png";
-  const ASSIN    = BASE_URL + "/Assinatura Lúcia Kratz.png";
-
-  const nomePac  = paciente?.nome || "—";
-  const cpf      = paciente?.cpf || "";
-  const agora    = new Date();
-  const dataGer  = agora.toLocaleDateString("pt-BR", {day:"2-digit",month:"long",year:"numeric"});
-  const horaGer  = agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-  const sessPac  = (sessoes||[]).filter(s=>s.pacoteId===pacote.id).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
-
-  const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"Realizado",cancelado:"Cancelado",falta:"Falta"};
-  const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
-
-  const fmtD  = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}) : "—";
-  const fmtDL = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}) : "—";
-  const fmtR  = v => "R$ " + parseFloat(v||0).toFixed(2).replace(".",",");
-
-  const realizadas  = sessPac.filter(s=>s.status==="realizado");
-  const totalValor  = sessPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
-  const totalPago   = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
-  const primData    = sessPac[0]?.data || pacote.dataInicio || "";
-  const ultData     = sessPac[sessPac.length-1]?.data || "";
-
-  const CSS_BASE = `
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:40px;max-width:700px;margin:0 auto;font-size:13px}
-    .topo{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #7B00C4;margin-bottom:24px}
-    .logo-img{height:60px;object-fit:contain}
-    .crp{font-size:10px;color:#6b7280;margin-top:6px}
-    h1{font-size:20px;font-weight:700;color:#7B00C4;margin-bottom:4px}
-    h2{font-size:15px;font-weight:600;color:#374151;margin-bottom:16px}
-    .box{background:#f5f0ff;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:5px solid #7B00C4}
-    .box-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:8px}
-    .campo label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:2px}
-    .campo span{font-size:13px;font-weight:600;color:#111827}
-    table{width:100%;border-collapse:collapse;margin-bottom:16px}
-    th{background:#7B00C4;color:white;padding:7px 10px;text-align:left;font-size:11px;text-transform:uppercase}
-    td{padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:12px}
-    tr:nth-child(even) td{background:#fafafa}
-    .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
-    .totais{display:flex;gap:24px;flex-wrap:wrap;background:#f9fafb;border-radius:10px;padding:14px 18px;margin-bottom:20px}
-    .ti label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}
-    .ti span{font-size:18px;font-weight:800;color:#111827}
-    .assinatura{display:flex;justify-content:center;margin-top:40px}
-    .assin-bloco{text-align:center}
-    .assin-img{height:70px;object-fit:contain;display:block;margin:0 auto 4px}
-    .assin-linha{border-top:1px solid #374151;width:260px;margin:0 auto 6px}
-    .assin-nome{font-size:13px;font-weight:700}
-    .assin-crp{font-size:11px;color:#6b7280}
-    .footer{margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
-    .destaque{font-size:15px;font-weight:700;color:#7B00C4}
-    p{line-height:1.7;margin-bottom:12px}
-    @media print{body{padding:20px}@page{margin:1.5cm}}
-  `;
-
-  const TOPO = `
-    <div class="topo">
-      <img src="${LOGO}" class="logo-img" alt="Logo Dra. Lucia Kratz" onerror="this.style.display='none'"/>
-      <div style="text-align:right">
-        <div style="font-size:11px;color:#6b7280">${dataGer}</div>
-        <div class="crp">CRP 09/20590 · Goiânia, GO</div>
-      </div>
-    </div>
-  `;
-
-  const RODAPE_ASSIN = `
-    <div class="assinatura">
-      <div class="assin-bloco">
-        <img src="${ASSIN}" class="assin-img" alt="Assinatura" onerror="this.style.display='none'"/>
-        <div class="assin-linha"></div>
-        <div class="assin-nome">Dra. Lucia Kratz</div>
-        <div class="assin-crp">CRP 09/20590 · Psicóloga Doutora</div>
-        <div class="assin-crp">TCC · Musicoterapia · Neuromodulação</div>
-      </div>
-    </div>
-    <div class="footer">
-      Documento gerado eletronicamente em ${dataGer} às ${horaGer} · Clínica Dra. Lucia Kratz · Goiânia, GO
-    </div>
-  `;
-
-  let corpo = "";
-
-  if(tipo === "resumo") {
-    const sessMeses = {};
-    sessPac.forEach(s=>{ const m=(s.data||"").slice(0,7); if(!sessMeses[m])sessMeses[m]=[]; sessMeses[m].push(s); });
-    const fmtM = m=>{ const [y,mo]=m.split("-"); return new Date(y,parseInt(mo)-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
-
-    corpo = `
-      <h1>Resumo do Pacote Terapêutico</h1>
-      <h2>Controle de Atendimento</h2>
-      <div class="box">
-        <div style="font-size:16px;font-weight:700;margin-bottom:8px">${nomePac}</div>
-        ${cpf?`<div style="font-size:11px;color:#6b7280;margin-bottom:8px">CPF: ${cpf}</div>`:""}
-        <div class="box-row">
-          <div class="campo"><label>Início</label><span>${fmtD(pacote.dataInicio)}</span></div>
-          <div class="campo"><label>Horário</label><span>${pacote.horario||"—"}</span></div>
-          <div class="campo"><label>Recorrência</label><span>${pacote.recorrencia||"—"}</span></div>
-          <div class="campo"><label>Total de sessões</label><span>${sessPac.length}</span></div>
-          <div class="campo"><label>Realizadas</label><span>${realizadas.length}</span></div>
-        </div>
-      </div>
-      ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])=>`
-        <div style="font-size:13px;font-weight:700;color:#7B00C4;padding:7px 0;border-bottom:1px solid #e5e7eb;margin:16px 0 8px">
-          ${fmtM(mes).charAt(0).toUpperCase()+fmtM(mes).slice(1)} — ${sess.length} sessão(ões)
-        </div>
-        <table>
-          <thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
-          <tbody>${sess.map((s,i)=>`
-            <tr>
-              <td style="font-weight:700;color:#7B00C4">${s.numSessao||i+1}</td>
-              <td>${fmtD(s.data)}</td>
-              <td>${s.hora||"—"}</td>
-              <td>${s.tipo||"Psicoterapia"}</td>
-              <td><span class="badge" style="background:${statusColor[s.status]||"#7B00C4"}">${statusLabel[s.status]||s.status||"—"}</span></td>
-              <td>${fmtR(s.valorSessao)}</td>
-            </tr>`).join("")}
-          </tbody>
-        </table>`).join("")}
-      <div class="totais">
-        <div class="ti"><label>Total do pacote</label><span>${fmtR(totalValor)}</span></div>
-        <div class="ti"><label>Recebido</label><span style="color:#059669">${fmtR(totalPago)}</span></div>
-        <div class="ti"><label>A receber</label><span style="color:#d97706">${fmtR(totalValor-totalPago)}</span></div>
-      </div>
-    `;
-  }
-
-  if(tipo === "recibo") {
-    const extras = pacote.pagamentosExtras||[];
-    const pagamentos = extras.length>0 ? extras : [{forma:pacote.formaPag||"PIX", valor:totalPago, data:pacote.dataPagamento||""}];
-    corpo = `
-      <h1>Recibo de Pagamento</h1>
-      <h2>Atendimento Psicológico</h2>
-      <div class="box">
-        <div style="font-size:16px;font-weight:700;margin-bottom:8px">${nomePac}</div>
-        ${cpf?`<div style="font-size:11px;color:#6b7280;margin-bottom:8px">CPF: ${cpf}</div>`:""}
-        <div class="box-row">
-          <div class="campo"><label>Início do pacote</label><span>${fmtD(pacote.dataInicio)}</span></div>
-          <div class="campo"><label>Recorrência</label><span>${pacote.recorrencia||"—"}</span></div>
-          <div class="campo"><label>Sessões</label><span>${sessPac.length}</span></div>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th>Descrição</th><th>Forma</th><th>Data</th><th style="text-align:right">Valor</th></tr></thead>
-        <tbody>
-          ${pagamentos.map(pg=>`
-            <tr>
-              <td>Atendimento Psicológico — Pacote ${pacote.recorrencia||""}</td>
-              <td>${pg.forma||pacote.formaPag||"PIX"}</td>
-              <td>${fmtD(pg.data||pacote.dataPagamento)}</td>
-              <td style="text-align:right;font-weight:700">${fmtR(pg.valor||totalPago)}</td>
-            </tr>`).join("")}
-          <tr style="background:#f5f0ff">
-            <td colspan="3" style="font-weight:700;color:#7B00C4">TOTAL RECEBIDO</td>
-            <td style="text-align:right;font-weight:800;font-size:15px;color:#7B00C4">${fmtR(totalPago)}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p>Declaro ter recebido a importância acima referente a serviços de <strong>Psicoterapia Individual</strong> 
-      prestados pela Psicóloga Dra. Lucia Kratz (CRP 09/20590) ao(à) paciente <strong>${nomePac}</strong>.</p>
-      <p style="font-size:11px;color:#6b7280">Este recibo foi gerado eletronicamente e tem validade como documento fiscal.</p>
-    `;
-  }
-
-  if(tipo === "declaracao") {
-    const dataInicio = primData ? fmtDL(primData) : fmtD(pacote.dataInicio);
-    const dataFim    = ultData  ? fmtDL(ultData)  : "em andamento";
-    corpo = `
-      <h1>Declaração de Frequência em Psicoterapia</h1>
-      <h2>Atendimento Psicológico Individual</h2>
-      <p>Eu, <strong>Dra. Lucia Kratz</strong>, Psicóloga inscrita no Conselho Regional de Psicologia da 
-      Região Centro-Oeste sob o número <strong>CRP 09/20590</strong>, declaro para os devidos fins que:</p>
-      <div class="box">
-        <div style="font-size:16px;font-weight:700;margin-bottom:8px">${nomePac}</div>
-        ${cpf?`<div style="font-size:11px;color:#6b7280;margin-bottom:6px">CPF: ${cpf}</div>`:""}
-        <div class="box-row">
-          <div class="campo"><label>Período</label><span>${fmtD(primData||pacote.dataInicio)} a ${ultData?fmtD(ultData):"em andamento"}</span></div>
-          <div class="campo"><label>Frequência</label><span>${pacote.recorrencia||"Semanal"}</span></div>
-          <div class="campo"><label>Sessões realizadas</label><span>${realizadas.length} de ${sessPac.length}</span></div>
-          <div class="campo"><label>Horário</label><span>${pacote.horario||"—"}</span></div>
-        </div>
-      </div>
-      <p>está(ão) sendo acompanhado(a) em <strong>Psicoterapia Individual</strong> neste consultório, 
-      com sessões de periodicidade <strong>${pacote.recorrencia||"semanal"}</strong>, 
-      com início em <strong>${fmtD(primData||pacote.dataInicio)}</strong>${ultData&&realizadas.length===sessPac.length?`, com término em <strong>${fmtD(ultData)}</strong>`:", com tratamento em andamento"}.</p>
-      <p>Foram realizadas <strong>${realizadas.length} sessão(ões)</strong> de um total de <strong>${sessPac.length} sessão(ões)</strong> previstas no plano terapêutico.</p>
-      <p>Esta declaração é emitida a pedido do(a) paciente para fins que se fizerem necessários, 
-      respeitando o sigilo profissional previsto no Código de Ética Profissional do Psicólogo 
-      (Resolução CFP nº 010/2005) e a Lei Federal nº 4.119/1962.</p>
-      <p>Goiânia, ${dataGer}.</p>
-    `;
-  }
-
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head>
-    <meta charset="UTF-8">
-    <title>${tipo==="resumo"?"Resumo":tipo==="recibo"?"Recibo":"Declaração"} — ${nomePac}</title>
-    <style>${CSS_BASE}</style>
-  </head><body>
-    ${TOPO}${corpo}${RODAPE_ASSIN}
-  </body></html>`;
-
-  const w = window.open("","_blank");
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>w.print(), 900);
-}
-
 function FinanceiroClinica() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [lancamentos, setLancamentos] = useState([]);
@@ -5215,26 +5003,60 @@ function FinanceiroClinica() {
                                   onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
                                   <Icon name="clipboard-list" size={13}/> Sessões
                                 </button>
-                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#0891b2",border:"1px solid #bae6fd"}}
-                                  onClick={e=>{e.stopPropagation();
-                                    const pac=pacientes.find(x=>x.id===pacId);
-                                    gerarDocumentoPacote({tipo:"resumo",paciente:pac,pacote:p,sessoes});
-                                  }}>
-                                  <Icon name="file-text" size={13}/> Resumo
-                                </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#059669",border:"1px solid #6ee7b7"}}
                                   onClick={e=>{e.stopPropagation();
-                                    const pac=pacientes.find(x=>x.id===pacId);
-                                    gerarDocumentoPacote({tipo:"recibo",paciente:pac,pacote:p,sessoes});
+                                    const pac = pacientes.find(x=>x.id===pacId);
+                                    const sessPac = sessoes.filter(s=>s.pacoteId===p.id).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+                                    const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
+                                    const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+                                    const totalValor = sessPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+                                    const totalPago = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+                                    const sessMeses = {};
+                                    sessPac.forEach(s=>{ const m=(s.data||"").slice(0,7); if(!sessMeses[m])sessMeses[m]=[]; sessMeses[m].push(s); });
+                                    const fmtM = m=>{ const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
+                                    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Resumo — ${pac?.nome||""}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:32px;max-width:680px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:22px}
+.logo{font-family:Georgia,serif;font-size:24px;color:#7B00C4;font-weight:700}.sub{font-size:10px;color:#6b7280;margin-top:3px}
+.box{background:#f5f0ff;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:5px solid #7B00C4}
+.nome{font-size:20px;font-weight:700;margin-bottom:8px}.meta{display:flex;gap:20px;flex-wrap:wrap}
+.mi label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:1px}.mi span{font-size:13px;font-weight:600}
+.mes{font-size:13px;font-weight:700;color:#7B00C4;padding:7px 0;border-bottom:1px solid #e5e7eb;margin:18px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:12px}th{background:#7B00C4;color:white;padding:6px 10px;text-align:left;font-size:11px}
+td{padding:6px 10px;border-bottom:1px solid #f3f4f6}tr:nth-child(even) td{background:#fafafa}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
+.totais{margin-top:20px;background:#f9fafb;border-radius:10px;padding:12px 18px;display:flex;gap:24px;flex-wrap:wrap}
+.ti label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}.ti span{font-size:17px;font-weight:800}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+@media print{body{padding:16px}@page{margin:1.5cm}}</style></head><body>
+<div class="header"><div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação · Goiânia, GO</div></div>
+<div style="font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div></div>
+<div class="box"><div class="nome">${pac?.nome||"—"}</div>
+<div class="meta">
+<div class="mi"><label>Início</label><span>${p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span></div>
+<div class="mi"><label>Horário</label><span>${p.horario||"—"}</span></div>
+<div class="mi"><label>Recorrência</label><span>${p.recorrencia||"—"}</span></div>
+<div class="mi"><label>Sessões</label><span>${sessPac.length}</span></div>
+</div></div>
+${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])=>`
+<div class="mes">${fmtM(mes).charAt(0).toUpperCase()+fmtM(mes).slice(1)} — ${sess.length} sessão(ões)</div>
+<table><thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
+<tbody>${sess.map((s,i)=>`<tr><td style="font-weight:700;color:#7B00C4">${s.numSessao||i+1}</td>
+<td>${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}):""}</td>
+<td>${s.hora||"—"}</td><td>${s.tipo||"Psicoterapia"}</td>
+<td><span class="badge" style="background:${statusColor[s.status]||"#7B00C4"}">${statusLabel[s.status]||s.status||"—"}</span></td>
+<td>R$ ${(parseFloat(s.valorSessao)||0).toFixed(2).replace(".",",")}</td></tr>`).join("")}
+</tbody></table>`).join("")}
+<div class="totais">
+<div class="ti"><label>Total do pacote</label><span>R$ ${totalValor.toFixed(2).replace(".",",")}</span></div>
+<div class="ti"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
+<div class="ti"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
+</div>
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+                                    const w=window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),800);
                                   }}>
-                                  <Icon name="receipt" size={13}/> Recibo
-                                </button>
-                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#7c3aed",border:"1px solid #c4b5fd"}}
-                                  onClick={e=>{e.stopPropagation();
-                                    const pac=pacientes.find(x=>x.id===pacId);
-                                    gerarDocumentoPacote({tipo:"declaracao",paciente:pac,pacote:p,sessoes});
-                                  }}>
-                                  <Icon name="award" size={13}/> Declaração
+                                  <Icon name="file-text" size={13}/> PDF
                                 </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#dc2626",marginLeft:"auto"}}
                                   onClick={async e=>{e.stopPropagation();
@@ -6031,8 +5853,8 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const [aba, setAba] = useState("lancamentos");
   const mesAtual = new Date().toISOString().slice(0,7);
 
-  const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Investimentos","Dividendos","Freelance","Outros"];
-  const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Investimentos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Salários","Musicoterapia","Outros"];
+  const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Dividendos","Freelance","Rendimento de Investimentos","Outros"];
+  const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Aporte em Investimentos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Salários","Musicoterapia","Outros"];
   const FORMAS  = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Débito Automático","Outro"];
   const RECORR  = ["Mensal","Semanal","Quinzenal","Bimestral","Trimestral","Semestral","Anual"];
 
@@ -6040,7 +5862,7 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const catsDespesa = [...CATS_DESPESA_DEFAULT,...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
 
   const CENTROS_CUSTO = ["🏥 Clínica","🎵 Ônix Brasil","🎶 Flamboyant","⭐ Estrelas","🌱 Projetos Culturais","📚 Consultorias & Cursos","🏢 Administrativo","🏠 Pessoal"];
-  const CENTROS_CLINICOS = ["🏥 Clínica","🎵 Ônix Brasil","🎶 Flamboyant","⭐ Estrelas","🌱 Projetos Culturais","📚 Consultorias & Cursos","🏢 Administrativo"];
+  const CENTROS_CLINICOS = ["🏥 Clínica","🎶 Flamboyant","⭐ Estrelas","🌱 Projetos Culturais","📚 Consultorias & Cursos","🏢 Administrativo"];
   function ehClinico(cc){ return cc && CENTROS_CLINICOS.includes(cc); }
   function colecaoParaCC(cc){ return ehClinico(cc) ? "clinica_lancamentos" : "clinica_financeiro_pessoal"; }
 
@@ -6134,12 +5956,13 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     if(!formRecorr.categoria||!formRecorr.valorPrevisto){alert("Categoria e valor obrigatórios.");return;}
     setSalvando(true);
     try {
+      // Auto-correção conservadora: só ajusta se a categoria pertence EXCLUSIVAMENTE
+      // à outra lista (nunca inverte se a categoria está nas duas ou em nenhuma)
       let tipoFinal = formRecorr.tipo;
-      if(tipoFinal==="receita" && !catsReceita.includes(formRecorr.categoria) && catsDespesa.includes(formRecorr.categoria)){
-        tipoFinal = "despesa";
-      } else if(tipoFinal==="despesa" && !catsDespesa.includes(formRecorr.categoria) && catsReceita.includes(formRecorr.categoria)){
-        tipoFinal = "receita";
-      }
+      const soReceita = catsReceita.includes(formRecorr.categoria) && !catsDespesa.includes(formRecorr.categoria);
+      const soDespesa = catsDespesa.includes(formRecorr.categoria) && !catsReceita.includes(formRecorr.categoria);
+      if(soReceita) tipoFinal = "receita";
+      if(soDespesa) tipoFinal = "despesa";
       const dados={...formRecorr,tipo:tipoFinal,valorPrevisto:parseFloat(formRecorr.valorPrevisto),centroCusto:formRecorr.centroCusto||"",totalParcelas:formRecorr.indeterminado?0:(parseInt(formRecorr.totalParcelas)||0),indeterminado:!!formRecorr.indeterminado,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
       if(editando){ await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados); }
       else { await db.collection("clinica_fin_pessoal_recorrentes").add(dados); }
