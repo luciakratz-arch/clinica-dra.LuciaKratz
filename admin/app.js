@@ -7749,7 +7749,7 @@ tr:nth-child(even) td{background:#fafafa}
       </div>
 
       {/* ── ⚠️ Comissões Aguardando — fora do ciclo até pacote ser pago ── */}
-      {comissoesSuspeitas.length > 0 && user.tipo==="psicologa" && (
+      {comissoesSuspeitas.length > 0 && (
         <div style={{background:"#fffbeb",borderRadius:14,border:"1px solid #fde68a",overflow:"hidden",marginTop:16}}>
           <div style={{padding:"12px 20px",borderBottom:"1px solid #fde68a",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
             <span style={{fontWeight:700,fontSize:13,color:"#b45309"}}>⏳ Aguardando pagamento do pacote — {comissoesSuspeitas.length} comissão(ões) fora do ciclo</span>
@@ -7774,6 +7774,7 @@ tr:nth-child(even) td{background:#fafafa}
                     <div style={{fontSize:11,color:"#92400e"}}>Comissão prevista</div>
                     <div style={{fontWeight:700,fontSize:14,color:"#b45309"}}>R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
                   </div>
+                  {user.tipo==="psicologa" && (
                   <button title="Remover do sistema"
                     onClick={async()=>{
                       if(!confirm(`Remover comissão de ${c.pacienteNome}? Ela será gerada novamente quando o pacote for pago.`))return;
@@ -7783,6 +7784,7 @@ tr:nth-child(even) td{background:#fafafa}
                     style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"4px 8px",fontSize:11}}>
                     🗑️
                   </button>
+                  )}
                 </div>
               </div>
             );
