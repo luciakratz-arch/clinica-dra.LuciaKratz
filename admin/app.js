@@ -7064,6 +7064,82 @@ function Comissoes({ user }) {
   }, []);
 
   // ── HIGIENIZAÇÃO: remove duplicatas por pacoteId nas coleções de comissão ──
+  // ── AUDITORIA: cruza pacotes pagos com registros de comissão ──
+  const [modalAuditComissao, setModalAuditComissao] = React.useState(false);
+  const [auditResultado, setAuditResultado] = React.useState(null);
+  const [auditando, setAuditando] = React.useState(false);
+
+  async function auditarComissoes() {
+    setAuditando(true);
+    setModalAuditComissao(true);
+
+    // 1. Buscar todos os pacotes
+    const snapPac = await db.collection("clinica_pacotes").get();
+    const todosPacotes = snapPac.docs.map(d=>({id:d.id,...d.data()}));
+
+    // 2. Buscar todas as comissões (nova + legado)
+    const [snapVS, snapLeg] = await Promise.all([
+      db.collection("vendas_secretaria").get(),
+      db.collection("clinica_comissoes").get(),
+    ]);
+    const todasComissoes = [
+      ...snapVS.docs.map(d=>({id:d.id,...d.data(),_col:"vendas_secretaria"})),
+      ...snapLeg.docs.map(d=>({id:d.id,...d.data(),_col:"clinica_comissoes"})),
+    ];
+    const comissoesPorPacote = {};
+    todasComissoes.forEach(c=>{ if(c.pacoteId) comissoesPorPacote[c.pacoteId] = c; });
+
+    // 3. Filtrar pacotes de junho e julho com tipoVenda (particular/recorrente — que geram comissão)
+    const mesesAlvo = ["2026-06","2026-07"];
+    const pacotesPagos = todosPacotes.filter(p=>{
+      const mes = (p.dataInicio||"").slice(0,7);
+      return mesesAlvo.includes(mes) && (p.statusPag||"pendente")==="recebido";
+    });
+    const pacotesPendentes = todosPacotes.filter(p=>{
+      const mes = (p.dataInicio||"").slice(0,7);
+      return mesesAlvo.includes(mes) && (p.statusPag||"pendente")!=="recebido";
+    });
+
+    // 4. Para pagos: checar se tem comissão
+    const pagosComComissao = pacotesPagos.filter(p=>comissoesPorPacote[p.id]);
+    const pagosSemComissao = pacotesPagos.filter(p=>!comissoesPorPacote[p.id]);
+
+    setAuditResultado({
+      pacotesPagos,
+      pacotesPendentes,
+      pagosComComissao,
+      pagosSemComissao,
+      todasComissoes,
+      comissoesPorPacote,
+    });
+    setAuditando(false);
+  }
+
+  async function gerarComissaoFaltante(pacote) {
+    const tipoVenda = lancamentos.some(
+      l => l.pacienteId===pacote.pacienteId && l.pacoteId!==pacote.id && l.status==="recebido"
+    ) ? "recorrente" : "primeira";
+    await registrarComissao({
+      tipo: "Pacote",
+      valor: parseFloat(pacote.valorTotal||0),
+      pacienteNome: pacote.pacienteNome || "",
+      tipoVenda,
+      pacoteId: pacote.id,
+    });
+    // Atualizar resultado
+    setAuditResultado(prev=>({
+      ...prev,
+      pagosSemComissao: prev.pagosSemComissao.filter(p=>p.id!==pacote.id),
+      pagosComComissao: [...prev.pagosComComissao, pacote],
+    }));
+  }
+
+  async function gerarTodasFaltantes(lista) {
+    if(!confirm(`Gerar ${lista.length} comissão(ões) faltante(s)? Isso vai criar os registros agora.`))return;
+    for(const p of lista) await gerarComissaoFaltante(p);
+    alert("✅ Comissões geradas!");
+  }
+
   async function higienizarDuplicatas() {
     if(!confirm(
       "Essa operação vai:\n\n" +
@@ -7342,7 +7418,115 @@ function Comissoes({ user }) {
           title="Remove registros duplicados de comissão pelo mesmo pacoteId">
           <Icon name="trash-2" size={13}/>🧹 Limpar Duplicatas
         </button>
+        {user.tipo==="psicologa"&&(
+          <button onClick={auditarComissoes}
+            style={{background:"none",border:"1px solid #6ee7b7",borderRadius:8,cursor:"pointer",fontSize:12,color:"#059669",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5,flexShrink:0}}
+            title="Confere pacotes pagos de jun/jul vs registros de comissão">
+            <Icon name="search" size={13}/>🔍 Auditar Jun/Jul
+          </button>
+        )}
       </div>
+
+      {/* Modal de Auditoria */}
+      {modalAuditComissao&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"flex-start",justifyContent:"center",zIndex:600,padding:20,overflowY:"auto"}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:700,marginTop:40}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontWeight:700,fontSize:18}}>🔍 Auditoria de Comissões — Jun/Jul 2026</div>
+              <button onClick={()=>setModalAuditComissao(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#9ca3af"}}>×</button>
+            </div>
+
+            {auditando?(
+              <div style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>Analisando pacotes e comissões...</div>
+            ):auditResultado&&(()=>{
+              const {pacotesPagos,pacotesPendentes,pagosComComissao,pagosSemComissao} = auditResultado;
+              const fmtVal = v => `R$ ${parseFloat(v||0).toFixed(2).replace(".",",")}`;
+              return (
+                <div>
+                  {/* Resumo */}
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+                    <div style={{background:"#f0fdf4",borderRadius:10,padding:14,textAlign:"center"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:"#16a34a"}}>{pacotesPagos.length}</div>
+                      <div style={{fontSize:12,color:"#166534"}}>Pacotes pagos jun/jul</div>
+                    </div>
+                    <div style={{background:"#f5f0ff",borderRadius:10,padding:14,textAlign:"center"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:"#7B00C4"}}>{pagosComComissao.length}</div>
+                      <div style={{fontSize:12,color:"#4c1d95"}}>Com comissão ✓</div>
+                    </div>
+                    <div style={{background:pagosSemComissao.length>0?"#fef2f2":"#f0fdf4",borderRadius:10,padding:14,textAlign:"center",border:pagosSemComissao.length>0?"2px solid #fca5a5":"none"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:pagosSemComissao.length>0?"#dc2626":"#16a34a"}}>{pagosSemComissao.length}</div>
+                      <div style={{fontSize:12,color:pagosSemComissao.length>0?"#7f1d1d":"#166534"}}>{pagosSemComissao.length>0?"⚠️ Sem comissão!":"Tudo ok ✓"}</div>
+                    </div>
+                  </div>
+
+                  {/* Pacotes pagos SEM comissão */}
+                  {pagosSemComissao.length>0&&(
+                    <div style={{marginBottom:20}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                        <div style={{fontWeight:700,fontSize:14,color:"#dc2626"}}>⚠️ Pacotes pagos SEM comissão registrada</div>
+                        <button onClick={()=>gerarTodasFaltantes(pagosSemComissao)}
+                          style={{background:"#dc2626",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                          ✚ Gerar todas ({pagosSemComissao.length})
+                        </button>
+                      </div>
+                      {pagosSemComissao.map(p=>(
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:"#fef2f2",borderRadius:8,marginBottom:6,border:"1px solid #fca5a5"}}>
+                          <div>
+                            <div style={{fontWeight:600,fontSize:13}}>{p.pacienteNome||"—"}</div>
+                            <div style={{fontSize:11,color:"#6b7280"}}>{p.dataInicio} · {fmtVal(p.valorTotal)} · {p.recorrencia}</div>
+                          </div>
+                          <button onClick={()=>gerarComissaoFaltante(p)}
+                            style={{background:"#7B00C4",color:"white",border:"none",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                            ✚ Gerar comissão
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pacotes pagos COM comissão */}
+                  {pagosComComissao.length>0&&(
+                    <div style={{marginBottom:20}}>
+                      <div style={{fontWeight:700,fontSize:14,color:"#059669",marginBottom:8}}>✓ Pacotes com comissão registrada</div>
+                      {pagosComComissao.map(p=>{
+                        const com = auditResultado.comissoesPorPacote[p.id];
+                        return (
+                          <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:"#f0fdf4",borderRadius:8,marginBottom:6,border:"1px solid #6ee7b7"}}>
+                            <div>
+                              <div style={{fontWeight:600,fontSize:13}}>{p.pacienteNome||"—"}</div>
+                              <div style={{fontSize:11,color:"#6b7280"}}>{p.dataInicio} · {fmtVal(p.valorTotal)}</div>
+                            </div>
+                            <div style={{textAlign:"right"}}>
+                              <div style={{fontSize:11,color:"#059669",fontWeight:600}}>✓ Comissão: {fmtVal(com?.valorComissao)}</div>
+                              <div style={{fontSize:10,color:"#9ca3af"}}>{com?.status==="pago"?"Paga":"Pendente"}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Pacotes pendentes */}
+                  {pacotesPendentes.length>0&&(
+                    <div>
+                      <div style={{fontWeight:700,fontSize:13,color:"#b45309",marginBottom:8}}>⏳ Pacotes ainda pendentes de pagamento ({pacotesPendentes.length})</div>
+                      {pacotesPendentes.map(p=>(
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:"8px 14px",background:"#fffbeb",borderRadius:8,marginBottom:4,border:"1px solid #fde68a"}}>
+                          <div>
+                            <div style={{fontWeight:600,fontSize:13}}>{p.pacienteNome||"—"}</div>
+                            <div style={{fontSize:11,color:"#6b7280"}}>{p.dataInicio} · {fmtVal(p.valorTotal)}</div>
+                          </div>
+                          <div style={{fontSize:11,color:"#b45309",fontWeight:600}}>Comissão entra ao pagar</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Seletor de mês — carrossel com setas */}
       {(()=>{
