@@ -3632,8 +3632,11 @@ function FinanceiroClinica() {
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
   // Estado dedicado para edição de despesas
-  const CATS_DESPESA = ["Aluguel","Condomínio","Marketing","Salários","Investimentos","Musicoterapia","Ferramentas de IA","Telefone/Internet","Contador","Impostos","Outros"];
-  const [formDespesaEdit, setFormDespesaEdit] = useState({descricao:"",categoria:"",valor:"",data:"",formaPag:"",status:"pago",obs:""});
+  const CATS_DESPESA_CLINICA = ["Aluguel","Condomínio","Marketing","Salários","Equipamentos","Materiais","Ferramentas de IA","Telefone/Internet","Contador","Impostos","Cursos e Capacitação","Musicoterapia","Manutenção","Outros"];
+  const FORMAS_PAG = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Outro"];
+  const [modalDespesa, setModalDespesa] = useState(false);
+  const [formDespesa, setFormDespesa] = useState({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+  const [editandoDespesa, setEditandoDespesa] = useState(null);
   // ── Painel de higienização ────────────
   const [modalAuditoria, setModalAuditoria] = useState(false);
   const [auditLog, setAuditLog] = useState([]);
@@ -3729,20 +3732,59 @@ function FinanceiroClinica() {
     setModal(false);setEditando(null);setFormAvulso({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});setSalvando(false);
   }
 
+
+  async function salvarDespesaClinica(){
+    if(!formDespesa.valor||!formDespesa.data){alert("Valor e data obrigatórios.");return;}
+    setSalvando(true);
+    try {
+      const val = parseFloat(formDespesa.valor);
+      const nParc = parseInt(formDespesa.parcelas)||1;
+      const base = {
+        tipo:"despesa", tipo_lancamento:"despesa",
+        categoria: formDespesa.categoria||"Outros",
+        descricao: formDespesa.descricao||formDespesa.categoria||"Despesa",
+        formaPag:  formDespesa.formaPag,
+        status:    formDespesa.status,
+        obs:       formDespesa.obs||"",
+        centroCusto:"🏥 Clínica",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if(editandoDespesa){
+        await db.collection("clinica_lancamentos").doc(editandoDespesa).update({...base,valor:val,data:formDespesa.data});
+      } else if(nParc>1){
+        const batch=db.batch();
+        const [ano,mes,dia]=formDespesa.data.split("-").map(Number);
+        for(let i=0;i<nParc;i++){
+          let m=mes+i,a=ano;
+          while(m>12){m-=12;a++;}
+          const dataParc=`${a}-${String(m).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+          batch.set(db.collection("clinica_lancamentos").doc(),{...base,valor:val,data:dataParc,parcela:`${i+1}/${nParc}`,descricao:(formDespesa.descricao||formDespesa.categoria||"Despesa")+` (${i+1}/${nParc})`});
+        }
+        await batch.commit();
+      } else {
+        await db.collection("clinica_lancamentos").add({...base,valor:val,data:formDespesa.data});
+      }
+      setModalDespesa(false);
+      setEditandoDespesa(null);
+      setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+    } catch(e){ alert("Erro: "+e.message); }
+    setSalvando(false);
+  }
+
   function abrirEditar(l){
-    // ── ETAPA 2: bifurca entre receita e despesa
     if(l.tipo_lancamento==="despesa"){
-      setFormDespesaEdit({
+      setFormDespesa({
         descricao: l.descricao||l.tipo||"",
         categoria: l.categoria||"",
         valor:     l.valor+"",
         data:      l.data||"",
-        formaPag:  l.formaPag||"",
+        formaPag:  l.formaPag||"PIX",
         status:    l.status||"pago",
         obs:       l.obs||"",
+        parcelas:  "1",
       });
-      setEditando(l.id);
-      setModal("editar-despesa");
+      setEditandoDespesa(l.id);
+      setModalDespesa(true);
     } else {
       setFormAvulso({
         pacienteId: l.pacienteId||"",
@@ -4569,6 +4611,80 @@ function FinanceiroClinica() {
       {/* ABA LANÇAMENTOS */}
       {aba==="lancamentos"&&(
         <div>
+          {/* Botão Nova Despesa */}
+          <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+            <button className="btn btn-purple" onClick={()=>{setModalDespesa(true);setEditandoDespesa(null);setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});}}>
+              <Icon name="plus" size={15}/> + Nova Despesa
+            </button>
+          </div>
+
+          {/* Modal Nova/Editar Despesa da Clínica */}
+          {modalDespesa&&(
+            <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalDespesa(false)}>
+              <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                  <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editandoDespesa?"Editar":"Nova"} Despesa da Clínica</div>
+                  <button onClick={()=>setModalDespesa(false)} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <div className="form-group">
+                    <label className="form-label">Categoria</label>
+                    <select className="form-input" value={formDespesa.categoria} onChange={e=>setFormDespesa({...formDespesa,categoria:e.target.value})}>
+                      <option value="">Selecionar...</option>
+                      {CATS_DESPESA_CLINICA.map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Descrição</label>
+                    <input className="form-input" value={formDespesa.descricao} onChange={e=>setFormDespesa({...formDespesa,descricao:e.target.value})} placeholder="Ex: Equipamento Neurofeedback"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Valor (R$)</label>
+                    <input className="form-input" type="number" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:e.target.value})} placeholder="0,00"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Data</label>
+                    <input className="form-input" type="date" value={formDespesa.data} onChange={e=>setFormDespesa({...formDespesa,data:e.target.value})}/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Forma de Pagamento</label>
+                    <select className="form-input" value={formDespesa.formaPag} onChange={e=>setFormDespesa({...formDespesa,formaPag:e.target.value})}>
+                      {FORMAS_PAG.map(f=><option key={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  {!editandoDespesa&&(
+                    <div className="form-group">
+                      <label className="form-label">Parcelas</label>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <input className="form-input" type="number" min="1" max="60" value={formDespesa.parcelas||"1"} onChange={e=>setFormDespesa({...formDespesa,parcelas:e.target.value})} style={{width:80}}/>
+                        <span style={{fontSize:12,color:"var(--text-muted)"}}>= <strong style={{color:"var(--purple)"}}>R$ {((parseFloat(formDespesa.valor)||0)*(parseInt(formDespesa.parcelas)||1)).toFixed(2).replace(".",",")}</strong></span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="form-group" style={{gridColumn:"1/-1"}}>
+                    <label className="form-label">Status</label>
+                    <div style={{display:"flex",gap:8}}>
+                      {[["pago","✓ Pago","#059669"],["pendente","Pendente","#d97706"]].map(([v,l,corr])=>(
+                        <button key={v} type="button" onClick={()=>setFormDespesa({...formDespesa,status:v})}
+                          style={{flex:1,padding:10,borderRadius:10,border:"1.5px solid",borderColor:formDespesa.status===v?corr:"#e5e7eb",background:formDespesa.status===v?corr+"15":"white",color:formDespesa.status===v?corr:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="form-group" style={{gridColumn:"1/-1"}}>
+                    <label className="form-label">Observações</label>
+                    <input className="form-input" value={formDespesa.obs||""} onChange={e=>setFormDespesa({...formDespesa,obs:e.target.value})} placeholder="Opcional..."/>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+                  <button className="btn btn-ghost" onClick={()=>setModalDespesa(false)}>Cancelar</button>
+                  <button className="btn btn-purple" onClick={salvarDespesaClinica} disabled={salvando}>{salvando?"Salvando...":editandoDespesa?"Salvar":"Lançar"}</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Filtro mês — jan→dez com setas */}
           <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center"}}>
             <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Mês:</span>
@@ -4607,8 +4723,8 @@ function FinanceiroClinica() {
               <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-15").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
             </div>
           ):(()=>{
-            const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa");
-            const despesas = lancMes.filter(l=>l.tipo_lancamento==="despesa");
+            const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa").sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+            const despesas = lancMes.filter(l=>l.tipo_lancamento==="despesa").sort((a,b)=>(b.data||"").localeCompare(a.data||""));
             const totalRec = calcReceitas(lancMes);
             const totalDesp = calcDespesas(lancMes);
             const saldo = totalRec - totalDesp;
