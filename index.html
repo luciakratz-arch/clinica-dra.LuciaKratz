@@ -1,29 +1,927 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin — Dra. Lucia Kratz</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600,700&family=Inter:wght@300,400,500,600,700&display=swap" rel="stylesheet"/>
-  <script src="https://unpkg.com/lucide@0.383.0/dist/umd/lucide.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- SEM Babel — arquivos já pré-compilados -->
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8" />
+  <meta name="theme-color" content="#7B00C4"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="logo-transparente.png"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dra. Lucia Kratz — Psicóloga | TCC · Musicoterapia · Neuromodulação | Goiânia</title>
+  <meta name="description" content="Psicóloga em Goiânia. Dra. Lucia Kratz, CRP 09/20590. Especialista em TCC, Musicoterapia e Neuromodulação. Avaliação neuropsicológica, psicoterapia individual, de casais e adolescentes. Atendimento presencial e online." />
+  <meta name="keywords" content="psicóloga Goiânia, TCC Goiânia, avaliação neuropsicológica, musicoterapia, neuromodulação, Lucia Kratz, psicoterapia online" />
+  <meta name="author" content="Dra. Lucia Kratz" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Dra. Lucia Kratz — Psicóloga em Goiânia" />
+  <meta property="og:description" content="Especialista em TCC, Musicoterapia e Neuromodulação. Atendimento presencial e online." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/" />
+  <meta property="og:image" content="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --purple:      #7B00C4;
+      --purple-dark: #5a0090;
+      --purple-soft: #ede0fa;
+      --purple-bg:   #f5eeff;
+      --white:       #ffffff;
+      --gray-50:     #fafafa;
+      --gray-100:    #f4f4f5;
+      --gray-200:    #e4e4e7;
+      --gray-400:    #a1a1aa;
+      --gray-600:    #52525b;
+      --text:        #1a1a2e;
+      --text-muted:  #6b7280;
+      --radius:      12px;
+      --font-display:'Playfair Display', Georgia, serif;
+      --font-body:   'DM Sans', system-ui, sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); font-size: 15px; color: var(--text); background: white; -webkit-font-smoothing: antialiased; }
+    img { max-width: 100%; display: block; }
+    a { text-decoration: none; color: inherit; }
+
+    /* NAVBAR */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 64px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; z-index: 200;
+    }
+    .navbar-brand { display: flex; align-items: center; gap: 12px; }
+    .navbar-logo {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--purple); display: flex; align-items: center;
+      justify-content: center; overflow: hidden; flex-shrink: 0;
+    }
+    .navbar-logo img { width: 28px; height: 28px; object-fit: contain; }
+    .navbar-logo-txt { font-family: var(--font-display); font-size: 13px; color: white; font-style: italic; }
+    .navbar-info .navbar-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+    .navbar-info .navbar-crp { font-size: 11px; color: var(--text-muted); }
+    .navbar-links { display: flex; align-items: center; gap: 24px; }
+    .navbar-links a { font-size: 14px; color: var(--gray-600); transition: color .2s; }
+    .navbar-links a:hover { color: var(--purple); }
+    .btn-area-clinica {
+      background: var(--purple); color: white !important;
+      padding: 9px 20px; border-radius: 20px;
+      font-size: 13px; font-weight: 500; transition: background .2s;
+    }
+    .btn-area-clinica:hover { background: var(--purple-dark) !important; }
+    .nav-mobile-toggle { display: none; background: none; border: none; cursor: pointer; padding: 4px; color: var(--text); }
+    .navbar-mobile { display:none; flex-direction:column; position:absolute; top:64px; left:0; right:0; background:white; border-bottom:1px solid #e4e4e7; padding:12px 20px 20px; gap:4px; z-index:199; box-shadow:0 8px 24px rgba(0,0,0,.08); }
+    .navbar-mobile.aberto { display:flex; }
+    .navbar-mobile a { font-size:15px; color:#52525b; padding:10px 0; border-bottom:1px solid #f4f4f5; display:block; text-decoration:none; }
+    .navbar-mobile a:last-child { border-bottom:none; }
+    .navbar-mobile .btn-mob-clinica { background:#7B00C4; color:white !important; padding:11px 20px; border-radius:8px; font-weight:600; text-align:center; margin-top:6px; }
+    .navbar-mobile .btn-mob-adm { background:white; color:#7B00C4 !important; border:1.5px solid #7B00C4; padding:11px 20px; border-radius:8px; font-weight:600; text-align:center; margin-top:4px; }
+
+    /* HERO */
+    .hero {
+      padding: 120px 40px 80px; max-width: 1100px;
+      margin: 0 auto; display: grid;
+      grid-template-columns: 1fr 420px; gap: 60px; align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--purple-soft); color: var(--purple);
+      padding: 5px 14px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .hero-title {
+      font-family: var(--font-display); font-size: 48px;
+      font-weight: 700; line-height: 1.1; margin-bottom: 16px;
+    }
+    .hero-title em { color: var(--purple); font-style: normal; }
+    .hero-sub { font-size: 16px; color: var(--text-muted); line-height: 1.7; margin-bottom: 12px; }
+    .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; margin-top: 16px; }
+    .hero-tag {
+      background: var(--gray-100); color: var(--gray-600);
+      padding: 5px 12px; border-radius: 20px; font-size: 13px;
+    }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--purple); color: white;
+      padding: 13px 28px; border-radius: 8px;
+      font-size: 15px; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background .2s, transform .2s;
+    }
+    .btn-primary:hover { background: var(--purple-dark); transform: translateY(-2px); }
+    .btn-secondary {
+      background: white; color: var(--purple);
+      padding: 13px 28px; border-radius: 8px;
+      font-size: 15px; font-weight: 500; border: 1.5px solid var(--purple);
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background .2s;
+    }
+    .btn-secondary:hover { background: var(--purple-bg); }
+    .hero-img {
+      border-radius: 20px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(123,0,196,0.15);
+      aspect-ratio: 4/5; background: var(--purple-soft);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hero-img img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-img-placeholder {
+      text-align: center; color: var(--purple);
+      font-family: var(--font-display); font-size: 18px;
+      padding: 20px;
+    }
+    .hero-links { display: flex; gap: 12px; margin-top: 20px; }
+    .hero-link {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-muted);
+      transition: color .2s;
+    }
+    .hero-link:hover { color: var(--purple); }
+    .hero-link svg { width: 16px; height: 16px; }
+
+    /* SEÇÃO GENÉRICA */
+    section { padding: 80px 40px; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 11px; font-weight: 600; color: var(--purple);
+      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: var(--font-display); font-size: 36px;
+      font-weight: 600; margin-bottom: 16px; line-height: 1.2;
+    }
+    .section-sub { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 600px; }
+
+    /* SOBRE */
+    .sobre-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+    .sobre-text p { font-size: 15px; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
+    .sobre-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .sobre-chip {
+      background: var(--purple-soft); color: var(--purple-dark);
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    }
+    .sobre-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .stat-card {
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 20px; text-align: center;
+    }
+    .stat-value { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--purple); }
+    .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    /* SERVIÇOS */
+    .servicos-bg { background: var(--gray-50); }
+    .servicos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+    .servico-card {
+      background: white; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 28px;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .servico-card:hover { box-shadow: 0 8px 32px rgba(123,0,196,0.1); transform: translateY(-4px); }
+    .servico-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--purple-soft); display: flex;
+      align-items: center; justify-content: center;
+      color: var(--purple); margin-bottom: 16px; font-size: 22px;
+    }
+    .servico-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .servico-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+    .servico-agendar {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 16px; font-size: 13px; font-weight: 500;
+      color: var(--purple); transition: gap .2s;
+    }
+    .servico-agendar:hover { gap: 10px; }
+
+    /* AVALIAÇÃO — PROCESSO */
+    .processo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 48px; }
+    .processo-card { text-align: center; padding: 24px 16px; }
+    .processo-num {
+      font-family: var(--font-display); font-size: 48px;
+      font-weight: 700; color: var(--gray-200); line-height: 1;
+      margin-bottom: 12px;
+    }
+    .processo-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .processo-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .processo-nota {
+      background: var(--purple-soft); border-radius: var(--radius);
+      padding: 16px 20px; margin-top: 40px;
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 13px; color: var(--gray-600); line-height: 1.6;
+    }
+
+    /* VALORES */
+    .valores-bg { background: var(--gray-50); }
+    .valores-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 48px; }
+    .valores-table { background: white; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--gray-200); }
+    .valores-table-header {
+      background: var(--purple); color: white;
+      padding: 14px 20px; font-weight: 600; font-size: 14px;
+    }
+    .valores-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px; border-bottom: 1px solid var(--gray-100);
+      font-size: 14px;
+    }
+    .valores-row:last-child { border-bottom: none; }
+    .valores-row .v-nome { font-weight: 500; }
+    .valores-row .v-particular { color: var(--text-muted); }
+    .valores-row .v-convenio { color: var(--purple); font-weight: 600; }
+    .valores-section-title {
+      font-size: 11px; font-weight: 700; color: var(--purple);
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 12px 20px 4px; background: var(--purple-bg);
+    }
+    .modalidades { display: flex; flex-direction: column; gap: 16px; }
+    .modalidade-card {
+      background: white; border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 20px 24px;
+    }
+    .modalidade-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+    .modalidade-desc { font-size: 13px; color: var(--text-muted); }
+    .convenio-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .convenio-badge {
+      background: var(--purple-soft); color: var(--purple-dark);
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+
+    /* CONTATO */
+    .contato-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; margin-top: 48px; }
+    .contato-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 0; border-bottom: 1px solid var(--gray-100);
+    }
+    .contato-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: var(--purple-soft); display: flex;
+      align-items: center; justify-content: center;
+      color: var(--purple); flex-shrink: 0; font-size: 18px;
+    }
+    .contato-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .contato-value { font-size: 15px; font-weight: 500; }
+    .contato-cards { display: flex; flex-direction: column; gap: 16px; }
+    .contato-card {
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .contato-card-title { font-size: 11px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .contato-card ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .contato-card ul li { font-size: 14px; color: var(--gray-600); display: flex; align-items: center; gap: 8px; }
+    .contato-card ul li::before { content: "·"; color: var(--purple); font-size: 18px; }
+
+    /* GALERIA */
+    .galeria-bg { background: var(--gray-50); }
+    .galeria-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 48px; }
+    .galeria-item {
+      border-radius: var(--radius); overflow: hidden;
+      aspect-ratio: 3/4; background: var(--purple-soft);
+    }
+    .galeria-item img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+    .galeria-item:hover img { transform: scale(1.05); }
+
+    /* MÍDIA */
+    .midia-card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 14px;
+      background: white; border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      color: var(--text); text-decoration: none;
+      transition: all .2s; line-height: 1.3;
+    }
+    .midia-card:hover {
+      border-color: var(--purple);
+      background: var(--purple-bg);
+      color: var(--purple);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(123,0,196,0.1);
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--text); color: white;
+      padding: 40px; text-align: center;
+    }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-logo { font-family: var(--font-display); font-size: 20px; margin-bottom: 8px; }
+    .footer-sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 20px; }
+    .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; }
+    .footer-links a { font-size: 13px; color: rgba(255,255,255,0.6); transition: color .2s; }
+    .footer-links a:hover { color: white; }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,0.35); }
+
+    /* WHATSAPP FLOAT */
+    .whatsapp-float {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #25D366; color: white;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.4);
+      z-index: 300; transition: transform .2s;
+      font-size: 26px;
+    }
+    .whatsapp-float:hover { transform: scale(1.1); }
+
+    /* RESPONSIVO */
+    @media (max-width: 1024px) {
+      .navbar-links { display: none; }
+      .nav-mobile-toggle { display: block; }
+      .hero { grid-template-columns: 1fr; padding: 100px 20px 60px; }
+      .hero-img { max-width: 340px; margin: 0 auto; }
+      .hero-title { font-size: 36px; }
+      section { padding: 60px 20px; }
+      .sobre-grid, .contato-grid, .valores-grid { grid-template-columns: 1fr; }
+      .servicos-grid { grid-template-columns: 1fr; }
+      .processo-grid { grid-template-columns: repeat(2, 1fr); }
+      .galeria-grid { grid-template-columns: repeat(2, 1fr); }
+      .navbar { padding: 0 20px; }
+      .sobre-stats { grid-template-columns: repeat(2, 1fr); }
+      /* Depoimentos mobile */
+      #carrossel img { width: 280px !important; height: 320px !important; }
+    }
+    @media (max-width: 500px) {
+      .hero-title { font-size: 30px; }
+      .section-title { font-size: 26px; }
+      .processo-grid { grid-template-columns: 1fr; }
+      /* Depoimentos tela pequena */
+      #carrossel img { width: calc(100vw - 60px) !important; height: 280px !important; }
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <!-- Arquivos pré-compilados — sem type="text/babel" -->
-  <script src="psifabulas.compiled.js?v=1"></script>
-  <script src="psicoeducacoes.compiled.js?v=1"></script>
-  <script src="psico_ui.compiled.js?v=1"></script>
-  <script src="app.compiled.js?v=50"></script>
-  <script src="marketing.compiled.js?v=4"></script>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="navbar-logo">
+      <img src="logo.png" alt="Lucia Kratz"
+        onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='block'" />
+      <span class="navbar-logo-txt" style="display:none">LK</span>
+    </div>
+    <div class="navbar-info">
+      <div class="navbar-name">Lucia Kratz</div>
+      <div class="navbar-crp">Psicóloga · CRP 09/20590</div>
+    </div>
+  </div>
+  <div class="navbar-links">
+    <a href="#produtos" style="color:var(--purple);font-size:13px;font-weight:600;text-decoration:none;padding:6px 4px;">🛍️ Ferramentas</a>
+    <a href="#servicos" style="color:#4b5563;font-size:13px;font-weight:500;text-decoration:none;padding:6px 4px;">Serviços</a>
+    <a href="clinica/" class="btn-area-clinica">Área Clínica</a>
+    <a href="admin/" style="background:white;color:var(--purple);border:1.5px solid var(--purple);padding:9px 20px;border-radius:20px;font-size:13px;font-weight:500;transition:background .2s;">Área Adm.</a>
+  </div>
+  <button class="nav-mobile-toggle" onclick="toggleMenuMobile()">
+    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+  <div class="navbar-mobile" id="menu-mob">
+    <a href="#produtos" style="display:block;padding:12px 20px;color:var(--purple);font-weight:600;text-decoration:none;border-bottom:1px solid var(--purple-soft)">🛍️ Ferramentas</a>
+    <a href="#servicos" style="display:block;padding:12px 20px;color:#4b5563;text-decoration:none;border-bottom:1px solid var(--purple-soft)">Serviços</a>
+    <a href="clinica/" class="btn-mob-clinica">🔬 Área Clínica</a>
+    <a href="admin/" class="btn-mob-adm">⚙️ Área Administrativa</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section style="padding:0">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🦋 CRP 09/20590 · Goiânia — GO</div>
+      <h1 class="hero-title">
+        <em>Lucia Kratz</em>
+      </h1>
+      <p class="hero-sub">
+        Psicóloga · Especialista em TCC · Musicoterapeuta · Neuromodulação
+      </p>
+      <p class="hero-sub">
+        Psicóloga (CRP 09/20590), Doutora em Psicologia, em especialização em Neuropsicologia dos Transtornos Mentais pela Artmed. Formação em Terapia Cognitivo-Comportamental (TCC), Musicoterapia e Neuromodulação não invasiva, com atuação em avaliação psicológica e estimulação cerebral por Neurofeedback EEG e Pulsetto.
+      </p>
+      <p class="hero-sub">
+        Atende a partir de 8 anos, adolescentes, adultos e idosos. Avaliações com instrumentos aprovados pelo SATEPSI/CFP e laudos conforme a Resolução CFP 06/2019.
+      </p>
+      <div class="hero-tags">
+        <span class="hero-tag">TCC</span>
+        <span class="hero-tag">Musicoterapia</span>
+        <span class="hero-tag">Neuromodulação</span>
+        <span class="hero-tag">Neuropsicologia</span>
+        <span class="hero-tag">Avaliação Psicológica</span>
+        <span class="hero-tag">Terapia de Casais</span>
+      </div>
+      <div class="hero-btns">
+        <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="btn-primary">
+          📱 Agendar pelo WhatsApp
+        </a>
+        <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20solicitar%20um%20orçamento%20de%20serviços." target="_blank" class="btn-secondary">
+          💬 Solicitar Orçamento
+        </a>
+      </div>
+      <div class="hero-links" style="margin-top:24px">
+        <a href="https://www.instagram.com/luciakratz" target="_blank" class="hero-link">
+          📸 @luciakratz
+        </a>
+        <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania" target="_blank" class="hero-link">
+          🩺 Perfil Doctoralia
+        </a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="foto3.jpeg" alt="Dra. Lucia Kratz" onerror="this.style.display='none'" />
+    </div>
+  </div>
+</section>
+
+<!-- CURRÍCULO / SOBRE -->
+<section id="curriculo" style="background:var(--gray-50)">
+  <div class="section-inner">
+    <div class="section-label">Sobre</div>
+    <div class="sobre-grid">
+      <div class="sobre-text">
+        <h2 class="section-title">Formação e Experiência</h2>
+        <p>Psicóloga com doutorado em Psicologia e especialização em andamento em Neuropsicologia dos Transtornos Mentais pela Artmed. Formação em Terapia Cognitivo-Comportamental (TCC), Musicoterapia e Neuromodulação não invasiva.</p>
+        <p>Experiência em avaliação psicológica com instrumentos aprovados pelo SATEPSI/CFP, laudos conforme Resolução CFP 06/2019, e estimulação cerebral por Neurofeedback EEG e Pulsetto.</p>
+        <p>Atende crianças a partir de 8 anos, adolescentes, adultos e idosos. Modalidade presencial em Goiânia-GO e online para psicoterapia e orientação.</p>
+        <div class="sobre-chips">
+          <span class="sobre-chip">Doutora em Psicologia</span>
+          <span class="sobre-chip">Especialista TCC</span>
+          <span class="sobre-chip">Musicoterapeuta</span>
+          <span class="sobre-chip">Neuromodulação</span>
+          <span class="sobre-chip">Neurofeedback EEG</span>
+          <span class="sobre-chip">Neuropsicologia</span>
+        </div>
+      </div>
+      <div class="sobre-stats">
+        <div class="stat-card">
+          <div class="stat-value">8+</div>
+          <div class="stat-label">Anos de experiência clínica</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">4</div>
+          <div class="stat-label">Especialidades</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">Online</div>
+          <div class="stat-label">e Presencial em Goiânia</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">CFP</div>
+          <div class="stat-label">Laudos Res. 06/2019</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section id="servicos">
+  <div class="section-inner">
+    <div class="section-label">O que ofereço</div>
+    <h2 class="section-title">Serviços</h2>
+    <p class="section-sub">Atendimento individualizado com foco no bem-estar emocional, cognitivo e neurológico.</p>
+    <div class="servicos-grid">
+      <div class="servico-card">
+        <div class="servico-icon">🧠</div>
+        <div class="servico-name">Psicoterapia (TCC)</div>
+        <div class="servico-desc">Terapia Cognitivo-Comportamental para adultos, adolescentes e crianças a partir de 8 anos. Presencial e online.</div>
+        <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20agendar%20psicoterapia." target="_blank" class="servico-agendar">Agendar consulta →</a>
+      </div>
+      <div class="servico-card">
+        <div class="servico-icon">🎵</div>
+        <div class="servico-name">Musicoterapia</div>
+        <div class="servico-desc">Uso terapêutico da música para promover saúde emocional, cognitiva e social. Abordagem integrativa e humanizada.</div>
+        <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20agendar%20musicoterapia." target="_blank" class="servico-agendar">Agendar consulta →</a>
+      </div>
+      <div class="servico-card">
+        <div class="servico-icon">⚡</div>
+        <div class="servico-name">Neuromodulação</div>
+        <div class="servico-desc">Estimulação cerebral não invasiva com Neurofeedback EEG e Pulsetto para regulação emocional e cognitiva.</div>
+        <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20saber%20mais%20sobre%20neuromodulação." target="_blank" class="servico-agendar">Saber mais →</a>
+      </div>
+      <div class="servico-card">
+        <div class="servico-icon">📋</div>
+        <div class="servico-name">Avaliação Neuropsicológica</div>
+        <div class="servico-desc">Avaliação completa com instrumentos aprovados pelo SATEPSI/CFP. Laudo conforme Resolução CFP 06/2019.</div>
+        <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20agendar%20avaliação%20neuropsicológica." target="_blank" class="servico-agendar">Agendar avaliação →</a>
+      </div>
+      <div class="servico-card">
+        <div class="servico-icon">💑</div>
+        <div class="servico-name">Terapia de Casais</div>
+        <div class="servico-desc">Acompanhamento terapêutico para casais com foco em comunicação, vínculos e reestruturação relacional.</div>
+        <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20agendar%20terapia%20de%20casais." target="_blank" class="servico-agendar">Agendar consulta →</a>
+      </div>
+      <div class="servico-card">
+        <div class="servico-icon">🔬</div>
+        <div class="servico-name">Avaliação Vocacional</div>
+        <div class="servico-desc">Orientação profissional e vocacional para adolescentes e adultos em transição de carreira.</div>
+        <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20agendar%20avaliação%20vocacional." target="_blank" class="servico-agendar">Agendar consulta →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUTOS & FERRAMENTAS -->
+<section id="produtos" style="background:var(--purple-bg)">
+  <div class="section-inner">
+    <div class="section-label">Produtos & Ferramentas</div>
+    <h2 class="section-title">Ecossistema de Soluções</h2>
+    <p class="section-sub" style="margin-bottom:48px">Cursos, mapeamentos e sistemas desenvolvidos pela Dra. Lúcia Kratz para levar autoconhecimento, saúde mental e alta performance para pessoas, casais e empresas.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px">
+
+      <!-- Card 9&Self -->
+      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+        <img src="produtos_9self-banner.png" alt="9&Self — Descubra sua Personalidade" style="width:100%;display:block">
+        <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
+          <div style="font-size:11px;font-weight:700;color:#7B00C4;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Mapeamento de Perfil Comportamental</div>
+          <p style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:16px;flex:1">
+            Descubra quem você é quando suas defesas não estão no controle. Laudo completo em PDF com interpretação da psicóloga.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="https://luciakratz-arch.github.io/9-Self/9self-landing.html" target="_blank"
+              style="display:block;text-align:center;background:transparent;border:1.5px solid #7B00C4;color:#7B00C4;padding:10px 18px;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">
+              Conheça Mais →
+            </a>
+            <a href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank"
+              style="display:block;text-align:center;background:linear-gradient(135deg,#5b1aa8,#8b3ce0);color:white;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none;transition:opacity 0.2s"
+              onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              Comprar Agora →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card NR-1 Map -->
+      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+        <img src="produtos_nr1map-banner.jpg.png" alt="NR-1 Map — Diagnóstico de Riscos Psicossociais" style="width:100%;display:block">
+        <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
+          <div style="font-size:11px;font-weight:700;color:#7B00C4;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Diagnóstico de Riscos Psicossociais</div>
+          <p style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:16px;flex:1">
+            Diagnóstico automático de saúde mental no trabalho. Mapa de riscos psicossociais para conformidade com a NR-1.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="https://luciakratz-arch.github.io/NR-1Map/" target="_blank"
+              style="display:block;text-align:center;background:#0a0a0a;color:white;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none;transition:opacity 0.2s"
+              onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              Conhecer o Sistema →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Eneagrama do Amor -->
+      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+        <img src="produtos_eneagramadoamor-banner.png" alt="Eneagrama do Amor em Tempos de Crise" style="width:100%;display:block">
+        <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
+          <div style="font-size:11px;font-weight:700;color:#8B1E2E;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Curso para Casais</div>
+          <p style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:16px;flex:1">
+            Aprenda a solucionar conflitos e renovar sua relação com base nos 9 tipos do Eneagrama aplicados ao amor.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="https://pay.hotmart.com/R97548434J?off=towezuxh&checkoutMode=10&bid=1783114606337" target="_blank"
+              style="display:block;text-align:center;background:#8B1E2E;color:white;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none;transition:opacity 0.2s"
+              onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              Comprar Curso →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Livro Psicopata -->
+      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+        <img src="produtos_livropsicopata-banner.png" alt="Meu companheiro é um psicopata, será?" style="width:100%;display:block">
+        <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
+          <div style="font-size:11px;font-weight:700;color:#0a0a0a;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Livro Digital</div>
+          <p style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:16px;flex:1">
+            Um guia direto para entender sinais de manipulação, controle e traços psicopáticos em relacionamentos.
+          </p>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <a href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank"
+              style="display:block;text-align:center;background:#dc2626;color:white;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none;transition:opacity 0.2s"
+              onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              Comprar Livro →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Líder 5.0 — Em breve -->
+      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.06);display:flex;flex-direction:column;border:2px dashed #d8b4fe">
+        <img src="produtos_lider5.o-banner.png" alt="Líder 5.0 — Revolucionando a liderança" style="width:100%;display:block">
+        <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+          <div style="font-size:11px;font-weight:700;color:#7B00C4;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Livro — Em Breve</div>
+          <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin-bottom:18px">
+            Livro sobre liderança na era digital. Em breve disponível para compra.
+          </p>
+          <a href="https://wa.me/5562991546757?text=Olá,%20quero%20saber%20quando%20o%20livro%20Líder%205.0%20estará%20disponível."
+            target="_blank"
+            style="display:block;width:100%;text-align:center;background:var(--purple);color:white;padding:11px 18px;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">
+            Avise-me quando lançar →
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<section id="neuromodulacao" style="background:var(--gray-50)">
+  <div class="section-inner">
+    <div class="section-label">Processo</div>
+    <h2 class="section-title">Como funciona a Avaliação</h2>
+    <p class="section-sub">A avaliação neuropsicológica segue um protocolo estruturado em 4 etapas.</p>
+    <div class="processo-grid">
+      <div class="processo-card">
+        <div class="processo-num">01</div>
+        <div class="processo-title">Entrevista de Anamnese</div>
+        <div class="processo-desc">Coleta do histórico clínico, queixas, histórico escolar/profissional e objetivos da avaliação.</div>
+      </div>
+      <div class="processo-card">
+        <div class="processo-num">02</div>
+        <div class="processo-title">Sessões de Testagem</div>
+        <div class="processo-desc">Aplicação da bateria de instrumentos selecionada individualmente. Em média 2 a 4 sessões de 60–90 minutos.</div>
+      </div>
+      <div class="processo-card">
+        <div class="processo-num">03</div>
+        <div class="processo-title">Análise e Integração</div>
+        <div class="processo-desc">Interpretação qualitativa e quantitativa dos resultados e elaboração do raciocínio clínico.</div>
+      </div>
+      <div class="processo-card">
+        <div class="processo-num">04</div>
+        <div class="processo-title">Devolutiva e Laudo</div>
+        <div class="processo-desc">Sessão de devolutiva com resultados em linguagem acessível. Entrega do laudo técnico assinado com CRP.</div>
+      </div>
+    </div>
+    <div class="processo-nota">
+      📄 O laudo é elaborado conforme a Resolução CFP nº 06/2019, com descrição dos instrumentos aplicados, resultados quantitativos e qualitativos, hipótese clínica fundamentada e recomendações. Documento assinado digitalmente com CRP 09/20590.
+    </div>
+    <div style="margin-top:32px; display:flex; gap:12px; flex-wrap:wrap">
+      <a href="https://wa.me/5562991546757?text=Olá,%20gostaria%20de%20agendar%20avaliação." target="_blank" class="btn-primary">📱 Agendar Avaliação</a>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section id="depoimentos" style="background:var(--gray-50)">
+  <div class="section-inner">
+    <div class="section-label">Depoimentos</div>
+    <h2 class="section-title">O que dizem sobre o atendimento</h2>
+    <p class="section-sub" style="margin-bottom:40px">Histórias reais de transformação e cuidado.</p>
+
+    <div style="position:relative">
+      <div id="carrossel-dep" style="display:flex;gap:20px;overflow:hidden;scroll-behavior:smooth;padding:4px 2px">
+
+        <!-- D.P.G.D. -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">D.P.G.D.</div><div style="font-size:12px;color:#9ca3af">23/04/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"De longe a melhor profissional do ramo. Humana, atenciosa e muito experiente. Uma grande referência no que faz. Mudou minha vida, me resgatou e salvou."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Muito obrigada pelas suas palavras tão generosas e emocionantes. Fico profundamente tocada em saber que meu trabalho pôde contribuir de forma tão significativa para sua vida. É uma honra acompanhar sua trajetória.
+          </div>
+        </div>
+
+        <!-- Vanessa -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Vanessa</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"A Dra. Lúcia é de uma maestria enorme! Com uma frase ela conseguiu virar a chave da minha mente cheia de medo, restrita e limitada. Ela traz luz onde havia escuridão."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Fico feliz em poder te ajudar e contribuir com sua jornada pessoal e profissional!
+          </div>
+        </div>
+
+        <!-- AMR -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">AMR</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Tive uma excelente experiência, ótimo atendimento."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Agradeço muito seu feedback!
+          </div>
+        </div>
+
+        <!-- E.M. -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">E.M.</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"É uma pessoa muito empática e atenciosa, uma boa profissional."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Agradeço muito seu feedback!
+          </div>
+        </div>
+
+        <!-- Marilha Cumha -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Marilha Cumha</div><div style="font-size:12px;color:#9ca3af">Empresária Bobys</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Esse processo trouxe para mim uma confiança muito grande e também despertou-me um mundo novo, de oportunidades e que está na minha mão. Basta acreditar e agir com inteligência e serenidade."</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Que presente receber esse retorno, Marilha! Ver você ressignificar seus medos e agir com confiança é exatamente o que move meu trabalho. Continue acreditando no seu potencial — ele é imenso! 💜
+          </div>
+        </div>
+
+        <!-- Flávio Sabugo -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Flávio Sabugo</div><div style="font-size:12px;color:#9ca3af">Profissional Certificado Google Adwords</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Seja através de suas aulas, processos de coaching ou consultorias empresariais, se engaja e entrega sempre mais do que o esperado! Indico a Lúcia Kratz para executivos e empresas que buscam a excelência!"</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Flávio, sua generosidade em compartilhar essa experiência significa muito! É muito gratificante trabalhar com profissionais comprometidos com a excelência como você. Obrigada pela confiança e pela indicação! 🙏
+          </div>
+        </div>
+
+        <!-- Lidiana Nascimento -->
+        <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
+          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div><div style="font-weight:700;font-size:15px">Lidiana Nascimento</div><div style="font-size:12px;color:#9ca3af">Designer de Unhas / Empresária</div></div>
+          <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Meu relacionamento com meu marido melhorou muito. Obrigada!"</p>
+          <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
+            Fico tão feliz em saber disso, Lidiana! Ver uma relação se transformar e se fortalecer é uma das maiores alegrias do meu trabalho. Obrigada pela confiança em mim! 💜
+          </div>
+        </div>
+
+      </div>
+
+      <button onclick="scrollDep(-1)" style="position:absolute;left:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:22px;color:var(--purple);display:flex;align-items:center;justify-content:center">‹</button>
+      <button onclick="scrollDep(1)"  style="position:absolute;right:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:22px;color:var(--purple);display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+
+    <div style="text-align:center;margin-top:32px">
+      <button onclick="copiarLinkDep()" id="btn-dep"
+        style="background:var(--purple);color:white;border:none;border-radius:20px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body)">
+        🔗 Compartilhar depoimentos
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+function scrollDep(dir){
+  document.getElementById('carrossel-dep').scrollLeft += dir*340;
+}
+function copiarLinkDep(){
+  navigator.clipboard.writeText('https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/#depoimentos');
+  const btn = document.getElementById('btn-dep');
+  btn.textContent = '✓ Link copiado!';
+  setTimeout(()=>btn.textContent='🔗 Compartilhar depoimentos', 2500);
+}
+</script>
+
+<!-- CONTATO -->
+<section id="contato">
+  <div class="section-inner">
+    <div class="section-label">Agendamento</div>
+    <h2 class="section-title">Contato</h2>
+    <p class="section-sub">Para agendamento de avaliação psicológica, psicoterapia ou sessão de neuromodulação, entre em contato pelo WhatsApp.</p>
+    <div class="contato-grid">
+      <div>
+        <div class="contato-item">
+          <div class="contato-icon">📱</div>
+          <div>
+            <div class="contato-label">WhatsApp</div>
+            <a href="https://wa.me/5562991546757" target="_blank" class="contato-value">(62) 99154-6757</a>
+          </div>
+        </div>
+        <div class="contato-item">
+          <div class="contato-icon">✉️</div>
+          <div>
+            <div class="contato-label">E-mail</div>
+            <a href="mailto:contato@luciakratz.com.br" class="contato-value">contato@luciakratz.com.br</a>
+          </div>
+        </div>
+        <div class="contato-item">
+          <div class="contato-icon">📸</div>
+          <div>
+            <div class="contato-label">Instagram</div>
+            <a href="https://www.instagram.com/luciakratz" target="_blank" class="contato-value">@luciakratz</a>
+          </div>
+        </div>
+        <div class="contato-item">
+          <div class="contato-icon">🩺</div>
+          <div>
+            <div class="contato-label">Doctoralia</div>
+            <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania" target="_blank" class="contato-value">Ver perfil completo</a>
+          </div>
+        </div>
+      </div>
+      <div class="contato-cards">
+        <div class="contato-card">
+          <div class="contato-card-title">Modalidades</div>
+          <ul><li>Presencial — Goiânia, GO</li><li>Online — Psicoterapia e orientação</li></ul>
+        </div>
+        <div class="contato-card">
+          <div class="contato-card-title">Convênio e Particular</div>
+          <ul><li>ADUFG</li><li>Particular</li></ul>
+          <a href="#valores" style="font-size:13px;color:var(--purple);display:inline-block;margin-top:10px">Ver tabela de valores →</a>
+        </div>
+        <div class="contato-card">
+          <div class="contato-card-title">Público Atendido</div>
+          <ul><li>A partir de 8 anos</li><li>Adolescentes e jovens adultos</li><li>Adultos e idosos</li></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALERIA -->
+<section id="galeria" style="background:var(--gray-50)">
+  <div class="section-inner">
+    <div class="section-label">Fotos</div>
+    <h2 class="section-title">Galeria</h2>
+    <div class="galeria-grid">
+      <div class="galeria-item"><img src="foto.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto2.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto3.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto4.jpeg" alt="Dra. Lucia Kratz"/></div>
+      <div class="galeria-item"><img src="foto5.jpeg" alt="Dra. Lucia Kratz"/></div>
+    </div>
+  </div>
+</section>
+
+<!-- NA MÍDIA -->
+<section id="midia">
+  <div class="section-inner">
+    <div class="section-label">Imprensa</div>
+    <h2 class="section-title">Na Mídia</h2>
+    <p class="section-sub">A trajetória da Dra. Lucia Kratz na vanguarda da saúde mental através da Neuromodulação e Tecnologia.</p>
+
+    <!-- Destaque -->
+    <div style="background:var(--purple-bg);border:1px solid var(--purple-soft);border-radius:var(--radius);padding:28px;margin:40px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="font-size:32px">📰</div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Matéria em destaque</div>
+        <div style="font-size:17px;font-weight:600;color:var(--text);margin-bottom:6px">Revolucionando a Saúde Mental através da Neuromodulação e Tecnologia</div>
+        <div style="font-size:13px;color:var(--text-muted)">A psicóloga contemporânea na linha de frente da transformação — unindo profundidade acadêmica à inovação tecnológica.</div>
+      </div>
+      <a href="https://bastidoresdosfamosos.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" style="background:var(--purple);color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap;">Ler matéria →</a>
+    </div>
+
+    <!-- Grid de portais -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">
+      <a href="https://www.clnews.com.br/2026/04/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia.html" target="_blank" class="midia-card">📰 CLNews</a>
+      <a href="https://tonamidia.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Tonamidia</a>
+      <a href="https://clickfato.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Click Fato</a>
+      <a href="https://namidia.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Namidia</a>
+      <a href="https://ab.pautabr.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Pauta BR</a>
+      <a href="https://www.bahia10.com.br/noticia/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia" target="_blank" class="midia-card">📰 Bahia 10</a>
+      <a href="https://gazetarj.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta RJ</a>
+      <a href="https://gazetadegoias.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta de Goiás</a>
+      <a href="https://diariobaiano.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Diário Baiano</a>
+      <a href="https://gazetatocantins.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Tocantins</a>
+      <a href="https://gazetapiaui.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Piauí</a>
+      <a href="https://bastidoresdosfamosos.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Bastidores dos Famosos</a>
+      <a href="https://tvnacional.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 TV Nacional</a>
+      <a href="https://folhasemanal.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Folha Semanal</a>
+      <a href="https://gazetanacional.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Nacional</a>
+      <a href="https://revistainfluencer.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Revista Influencer</a>
+      <a href="https://jornalnoticiasdobrasil.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Jornal Notícias do Brasil</a>
+      <a href="https://gazetaespiritosanto.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Gazeta Espírito Santo</a>
+      <a href="https://diariomineiro.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" class="midia-card">📰 Diário Mineiro</a>
+    </div>
+
+    <!-- Instagram -->
+    <div style="margin-top:32px;text-align:center;">
+      <a href="https://www.instagram.com/p/DXmDtmkEair/?igsh=MXE2YXJjNmcwdmhtN" target="_blank"
+        style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;">
+        📸 Ver no Instagram
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">🦋 Dra. Lucia Kratz</div>
+    <div class="footer-sub">Psicóloga · CRP 09/20590 · Goiânia, GO</div>
+    <div class="footer-links">
+
+      <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania" target="_blank">Doctoralia</a>
+      <a href="clinica/">Área Clínica</a>
+      <a href="admin/">Área Administrativa</a>
+    </div>
+    <div class="footer-copy">©2026 Dra. Lucia Kratz · Todos os direitos reservados</div>
+  </div>
+</footer>
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="whatsapp-float" title="Falar no WhatsApp">
+  💬
+</a>
+
+<script>
+function toggleMenuMobile(){
+  var m=document.getElementById("menu-mob");
+  m.classList.toggle("aberto");
+}
+function fecharMenuMob(){
+  document.getElementById("menu-mob").classList.remove("aberto");
+}
+</script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
