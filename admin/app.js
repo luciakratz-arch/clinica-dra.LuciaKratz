@@ -7626,12 +7626,93 @@ function Comissoes({ user }) {
       </div>
 
       {/* Botão pagar — só psicóloga vê; reaparece quando há comissões novas */}
-      {user.tipo==="psicologa" && totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && (
-        <div style={{display:"flex",gap:10,marginBottom:24,flexWrap:"wrap"}}>
-          <button onClick={pagarSalario} disabled={pagando}
-            style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"var(--font-body)"}}>
-            {pagando ? "Registrando..." : `💰 ${salarioJaPago?"Pagar Comissões Novas":"Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
-          </button>
+      {user.tipo==="psicologa" && (
+        <div style={{display:"flex",gap:10,marginBottom:24,flexWrap:"wrap",alignItems:"center"}}>
+          {totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && (
+            <button onClick={pagarSalario} disabled={pagando}
+              style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+              {pagando ? "Registrando..." : `💰 ${salarioJaPago?"Pagar Comissões Novas":"Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+            </button>
+          )}
+          {/* Botão de Gratificação — sempre visível para psicóloga */}
+          {(()=>{
+            const [showGrat, setShowGrat] = React.useState(false);
+            const [valGrat, setValGrat] = React.useState("");
+            const [obsGrat, setObsGrat] = React.useState("");
+            const [salvGrat, setSalvGrat] = React.useState(false);
+            async function registrarGratificacao(){
+              const valor = parseFloat(valGrat);
+              if(!valor || valor <= 0){ alert("Informe um valor válido."); return; }
+              if(!obsGrat.trim()){ alert("Informe o motivo da gratificação."); return; }
+              setSalvGrat(true);
+              try {
+                const hoje = new Date();
+                const mesRef = mesSel;
+                // Registra como comissão especial em vendas_secretaria
+                await db.collection("vendas_secretaria").add({
+                  tipo:"Gratificação",
+                  tipoVenda:"gratificacao",
+                  perc:0,
+                  valorBase:valor,
+                  valorComissao:valor,
+                  pacienteNome:`🎁 ${obsGrat.trim()}`,
+                  mesRef,
+                  pacoteId:null,
+                  status:"pendente",
+                  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Registra também como lançamento financeiro (despesa)
+                await db.collection("clinica_lancamentos").add({
+                  tipo:"despesa",
+                  categoria:"Salários",
+                  descricao:`Gratificação — ${config.nomeSecretaria} — ${obsGrat.trim()}`,
+                  valor,
+                  data:hoje.toISOString().slice(0,10),
+                  centroCusto:"🏥 Clínica",
+                  mes:mesRef,
+                  formaPag:"PIX",
+                  status:"pago",
+                  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                setShowGrat(false); setValGrat(""); setObsGrat("");
+                alert(`✅ Gratificação de R$ ${valor.toFixed(2).replace(".",",")} registrada com sucesso!`);
+              } catch(e){ alert("Erro: "+e.message); }
+              setSalvGrat(false);
+            }
+            return (
+              <div>
+                <button onClick={()=>setShowGrat(s=>!s)}
+                  style={{background:"none",border:"2px solid #7B00C4",color:"#7B00C4",borderRadius:10,padding:"11px 18px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:6}}>
+                  🎁 Registrar Gratificação
+                </button>
+                {showGrat&&(
+                  <div style={{marginTop:10,background:"#f5f0ff",border:"1px solid #c4b5fd",borderRadius:12,padding:"16px 18px",display:"flex",flexDirection:"column",gap:10,minWidth:280}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#7B00C4"}}>🎁 Gratificação para {config.nomeSecretaria}</div>
+                    <div>
+                      <label style={{fontSize:11,fontWeight:600,color:"#6b7280",display:"block",marginBottom:4}}>VALOR (R$)</label>
+                      <input type="number" value={valGrat} onChange={e=>setValGrat(e.target.value)} placeholder="Ex: 50"
+                        style={{width:"100%",padding:"8px 10px",border:"1px solid #c4b5fd",borderRadius:8,fontSize:14,fontFamily:"var(--font-body)"}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:11,fontWeight:600,color:"#6b7280",display:"block",marginBottom:4}}>MOTIVO</label>
+                      <input type="text" value={obsGrat} onChange={e=>setObsGrat(e.target.value)} placeholder="Ex: Ajuste jul/26 — diferença 10%→5%"
+                        style={{width:"100%",padding:"8px 10px",border:"1px solid #c4b5fd",borderRadius:8,fontSize:13,fontFamily:"var(--font-body)"}}/>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={registrarGratificacao} disabled={salvGrat}
+                        style={{flex:1,background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"9px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                        {salvGrat?"Salvando...":"✓ Confirmar"}
+                      </button>
+                      <button onClick={()=>setShowGrat(false)}
+                        style={{padding:"9px 14px",background:"white",border:"1px solid #e5e7eb",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
