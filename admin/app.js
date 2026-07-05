@@ -4530,7 +4530,13 @@ function FinanceiroClinica() {
           <div className="page-title">Financeiro da Clínica</div>
           <div className="page-subtitle">Lançamentos, pacotes e controle de sessões</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{color:"#dc2626",border:"1px solid #fca5a5"}}
+            onClick={()=>{setModalDespesa(true);setEditandoDespesa(null);setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});}}>
+            <Icon name="minus-circle" size={16}/> + Nova Despesa
+          </button>
+          <button className="btn btn-purple" onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
+        </div>
       </div>
 
       {/* Seletor de Ano */}
