@@ -3671,8 +3671,8 @@ function FinanceiroClinica() {
   // Cards do topo — mês atual do ano selecionado, fixo
   const mesCards = anoFiltro+"-"+new Date().toISOString().slice(5,7);
   const lancMesCards = lancamentos.filter(l=>l.data?.startsWith(mesCards));
-  const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
-  const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
+  const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   const lancPeriodo = periodoCard==="mes"?lancMesCards:lancAno;
 
   // Métricas por período selecionado nos cards
@@ -6027,6 +6027,25 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
     return lancamentos.some(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
   }
 
+  // Lista unificada: avulsos + recorrentes, ordenados por data desc
+  const recorrentesVirtuais = recorrAtivos.map(r=>{
+    const baixa = lancamentos.find(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
+    const diaStr = String(r.diaVencimento||1).padStart(2,"0");
+    return {
+      id:"_rec_"+r.id, _recorrenteId:r.id, _recorrente:r,
+      tipo:r.tipo, categoria:r.categoria, descricao:r.descricao||r.categoria,
+      valor:baixa?.valor ?? parseFloat(r.valorPrevisto||0),
+      data:baixa?.data||(mesFiltroEfetivo+"-"+diaStr),
+      formaPag:baixa?.formaPag||"—", status:baixa?(baixa.status||"pago"):"pendente",
+      _virtual:!baixa, _baixaId:baixa?.id||null, centroCusto:r.centroCusto||"",
+    };
+  });
+  const lancMesUnificado = [
+    ...lancMes.filter(l=>!l.recorrenteId),
+    ...recorrentesVirtuais.filter(r=>!r._virtual), // baixas já registradas
+    ...recorrentesVirtuais.filter(r=>r._virtual),  // recorrentes sem baixa
+  ].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+
   async function salvarAvulso(){
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
@@ -6241,126 +6260,69 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
         ))}
       </div>
 
-      {/* RECORRENTES — sempre visível */}
-      {recorrAtivos.length>0&&(
-        <div style={{marginBottom:24}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:10,display:"flex",alignItems:"center",gap:6,color:"var(--text-muted)"}}>
-            <Icon name="repeat" size={15}/> Recorrentes — {mesLabel(mesFiltroEfetivo)}
-          </div>
-          <div className="card" style={{padding:0}}>
-            {recorrAtivos.map(r=>{
-              const baixaDone = jaDeuBaixaMes(r);
-              return (
-                <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:bgTipo(r.tipo),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <Icon name={r.tipo==="receita"?"trending-up":"trending-down"} size={16}/>
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:600,fontSize:14}}>{r.descricao||r.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{r.categoria} · vence dia {r.diaVencimento} · {r.recorrencia}{r.centroCusto?" · "+r.centroCusto:""}{r.totalParcelas>0?(() => {const pagas=lancamentos.filter(l=>l.recorrenteId===r.id).length; return ` · ${pagas}/${r.totalParcelas} parcela(s)`;})():" · ♾️ Indeterminado"}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:corTipo(r.tipo),marginRight:8}}>{fmt(parseFloat(r.valorPrevisto)||0)}</div>
-                  {baixaDone
-                    ? <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20}}>✓ Pago</span>
-                    : !somenteLeitura&&<button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setModalBaixa(r);setFormBaixa({valor:r.valorPrevisto||"",data:`${mesFiltroEfetivo}-${String(r.diaVencimento||10).padStart(2,"0")}`,formaPag:"PIX",modo:"este"});}}>Dar baixa</button>
-                  }
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      {baixaDone?(
-                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar lançamento deste mês" onClick={()=>{
-                          const lancDoMes = lancamentos.find(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
-                          if(lancDoMes){
-                            setFormAvulso({tipo:lancDoMes.tipo,categoria:lancDoMes.categoria||"",descricao:lancDoMes.descricao||"",valor:lancDoMes.valor+"",data:lancDoMes.data,formaPag:lancDoMes.formaPag||"PIX",status:lancDoMes.status||"pago",obs:lancDoMes.obs||"",centroCusto:lancDoMes.centroCusto||"",parcelas:"1",totalParcelas:""});
-                            setEditando(lancDoMes.id);setModal("avulso");
-                          } else { alert("Lançamento deste mês não encontrado."); }
-                        }}><Icon name="pencil" size={13}/></button>
-                      ):(
-                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar recorrente (altera todos os meses futuros)" onClick={()=>{
-                          setFormRecorr({tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||"",valorPrevisto:r.valorPrevisto+"",recorrencia:r.recorrencia,diaVencimento:r.diaVencimento,mesInicio:r.mesInicio||mesAtual,ativo:r.ativo,centroCusto:r.centroCusto||"",totalParcelas:r.totalParcelas?r.totalParcelas+"":"",indeterminado:r.indeterminado!==false&&!r.totalParcelas});
-                          setEditando(r.id);setModal("recorrente");
-                        }}><Icon name="pencil" size={13}/></button>
-                      )}
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluirRec(r.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
+
+      {/* LISTA UNIFICADA — avulsos + recorrentes ordenados por data */}
+      {lancMesUnificado.length===0?(
+        <div className="card" style={{padding:40,textAlign:"center",color:"var(--text-muted)"}}>
+          <Icon name="dollar-sign" size={36}/>
+          <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltroEfetivo+"-15").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
+        </div>
+      ):(
+        <div className="card" style={{padding:0,marginBottom:20}}>
+          {lancMesUnificado.map(l=>{
+            const isVirtual=l._virtual;
+            const tipo=l.tipo||"despesa";
+            const corValor=tipo==="receita"?"#059669":"#dc2626";
+            const bgIcon=tipo==="receita"?"#d1fae5":"#fee2e2";
+            const statusOk=l.status==="pago"||l.status==="recebido";
+            const statusColor=statusOk?"#059669":l.status==="pendente"?"#d97706":"#6b7280";
+            const statusBg=statusOk?"#d1fae5":l.status==="pendente"?"#fef3c7":"#f3f4f6";
+            const statusLabel=l.status==="recebido"?"✓ Recebido":l.status==="pago"?"✓ Pago":"⏳ Previsto";
+            const dataFmt=l.data?new Date(l.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}):"—";
+            return (
+              <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 16px",borderBottom:"1px solid var(--gray-100)",background:isVirtual?"#fffbeb":"white"}}>
+                <div style={{width:34,height:34,borderRadius:8,background:bgIcon,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Icon name={tipo==="receita"?"arrow-down-left":"arrow-up-right"} size={15}/>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                    <span style={{fontWeight:600,fontSize:13}}>{l.descricao||l.categoria||"—"}</span>
+                    {l._recorrenteId&&<span style={{fontSize:10,background:"#e0f2fe",color:"#0369a1",padding:"1px 6px",borderRadius:20,fontWeight:600}}>↻ recorrente</span>}
+                    {isVirtual&&<span style={{fontSize:10,background:"#fef3c7",color:"#b45309",padding:"1px 6px",borderRadius:20,fontWeight:600}}>sem baixa</span>}
+                  </div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                    {dataFmt}{l.categoria?" · "+l.categoria:""}{l.centroCusto?" · "+l.centroCusto:""}{l.formaPag&&l.formaPag!=="—"?" · "+l.formaPag:""}
+                  </div>
+                </div>
+                <div style={{fontWeight:700,fontSize:14,color:corValor,flexShrink:0}}>{fmt(parseFloat(l.valor)||0)}</div>
+                <span style={{background:statusBg,color:statusColor,fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20,flexShrink:0,whiteSpace:"nowrap"}}>{statusLabel}</span>
+                {!somenteLeitura&&(
+                  <div style={{display:"flex",gap:4,flexShrink:0}}>
+                    {isVirtual?(
+                      <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}}
+                        onClick={()=>{setModalBaixa(l._recorrente);setFormBaixa({valor:l._recorrente?.valorPrevisto||"",data:l.data,formaPag:"PIX",modo:"este"});}}>
+                        Dar baixa
+                      </button>
+                    ):(
+                      <span style={{display:"flex",gap:4}}>
+                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{
+                          setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:l.parcela||""});
+                          setEditando(l.id);setModal("avulso");
+                        }}><Icon name="pencil" size={13}/></button>
+                        <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}>
+                          <Icon name="trash-2" size={13}/>
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* LANÇAMENTOS DO MÊS */}
-      <div>
-        {lancMes.filter(l=>l.tipo==="receita").length>0&&(
-          <div style={{marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontWeight:700,color:"#059669",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-up" size={16}/> Receitas</div>
-              <div style={{fontWeight:700,color:"#059669"}}>{fmt(recMes)}</div>
-            </div>
-            <div className="card" style={{padding:0}}>
-              {lancMes.filter(l=>l.tipo==="receita").map(l=>(
-                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:"#d1fae5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-down-left" size={16}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}{l.centroCusto?" · "+l.centroCusto:""}{l.parcela?" · "+l.parcela:""}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:"#059669"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                  <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>✓ Recebido</span>
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:l.parcela||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {lancMes.filter(l=>l.tipo==="despesa").length>0&&(
-          <div style={{marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontWeight:700,color:"#dc2626",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-down" size={16}/> Despesas</div>
-              <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(despMes)}</div>
-            </div>
-            <div className="card" style={{padding:0}}>
-              {lancMes.filter(l=>l.tipo==="despesa").map(l=>(
-                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-up-right" size={16}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}{l.centroCusto?" · "+l.centroCusto:""}{l.parcela?" · "+l.parcela:""}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                  <span style={{background:l.status==="pago"?"#d1fae5":"#fef3c7",color:l.status==="pago"?"#065f46":"#92400e",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{l.status==="pago"?"✓ Pago":"Pendente"}</span>
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:l.parcela||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {lancMes.length===0&&recorrAtivos.length===0&&(
-          <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
-            <Icon name="wallet" size={40}/>
-            <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)}</div>
-            {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Use "+ Lançamento" ou "+ Recorrente" acima.</div>}
-          </div>
-        )}
-      </div>
       </>)}
-
-      {aba==="geral"&&(
-        <PainelGeral lancamentos={lancamentos} lancClinica={lancClinica} anoFiltro={anoFiltro} setAnoFiltro={setAnoFiltro} anos={anos} fmt={fmt} mesLabel={mesLabel}/>
-      )}
 
       {/* MODAL BAIXA RECORRENTE */}
       {modalBaixa&&(
