@@ -3623,6 +3623,45 @@ function FinanceiroClinica() {
   const [pacoteSelecionado, setPacoteSelecionado] = useState(null);
   const [modalExcluir, setModalExcluir] = useState(null);
   const [modalExcluirLanc, setModalExcluirLanc] = useState(null);
+  const CATS_DESPESA_CLINICA = ["Aluguel","Condomínio","Energia / Água","Telefone / Internet","Salário Secretária","Contador / Impostos","Marketing","Equipamentos","Materiais","Ferramentas de IA","Cursos e Capacitação","Musicoterapia","Manutenção","Outros"];
+  const FORMAS_PAG_CLINICA = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Outro"];
+  const [modalDespesa, setModalDespesa] = useState(false);
+  const [formDespesa, setFormDespesa] = useState({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+  const [editandoDespesa, setEditandoDespesa] = useState(null);
+
+  async function salvarDespesaClinica(){
+    if(!formDespesa.valor||!formDespesa.data){alert("Preencha valor e data.");return;}
+    setSalvando(true);
+    try {
+      const val=parseFloat(formDespesa.valor);
+      const nParc=parseInt(formDespesa.parcelas)||1;
+      const base={
+        tipo:"despesa",tipo_lancamento:"despesa",
+        categoria:formDespesa.categoria||"Outros",
+        descricao:formDespesa.descricao||formDespesa.categoria||"Despesa",
+        formaPag:formDespesa.formaPag,status:formDespesa.status,
+        obs:formDespesa.obs||"",centroCusto:"🏥 Clínica",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if(editandoDespesa){
+        await db.collection("clinica_lancamentos").doc(editandoDespesa).update({...base,valor:val,data:formDespesa.data});
+      } else if(nParc>1){
+        const batch=db.batch();
+        const [ano,mes,dia]=formDespesa.data.split("-").map(Number);
+        for(let i=0;i<nParc;i++){
+          let m=mes+i,a=ano; while(m>12){m-=12;a++;}
+          const dp=`${a}-${String(m).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+          batch.set(db.collection("clinica_lancamentos").doc(),{...base,valor:val,data:dp,parcela:`${i+1}/${nParc}`,descricao:(formDespesa.descricao||formDespesa.categoria||"Despesa")+` (${i+1}/${nParc})`});
+        }
+        await batch.commit();
+      } else {
+        await db.collection("clinica_lancamentos").add({...base,valor:val,data:formDespesa.data});
+      }
+      setModalDespesa(false);setEditandoDespesa(null);
+      setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+    } catch(e){alert("Erro: "+e.message);}
+    setSalvando(false);
+  }
   const [aba, setAba] = useState("lancamentos");
   const [buscaPac, setBuscaPac] = useState("");
 
@@ -3733,17 +3772,9 @@ function FinanceiroClinica() {
   function abrirEditar(l){
     // ── ETAPA 2: bifurca entre receita e despesa
     if(l.tipo_lancamento==="despesa"){
-      setFormDespesaEdit({
-        descricao: l.descricao||l.tipo||"",
-        categoria: l.categoria||"",
-        valor:     l.valor+"",
-        data:      l.data||"",
-        formaPag:  l.formaPag||"",
-        status:    l.status||"pago",
-        obs:       l.obs||"",
-      });
-      setEditando(l.id);
-      setModal("editar-despesa");
+      setFormDespesa({descricao:l.descricao||"",categoria:l.categoria||"",valor:l.valor+"",data:l.data||"",formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",parcelas:"1"});
+      setEditandoDespesa(l.id);
+      setModalDespesa(true);
     } else {
       setFormAvulso({
         pacienteId: l.pacienteId||"",
@@ -4489,7 +4520,13 @@ function FinanceiroClinica() {
           <div className="page-title">Financeiro da Clínica</div>
           <div className="page-subtitle">Lançamentos, pacotes e controle de sessões</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{color:"#dc2626",border:"1px solid #fca5a5",display:"flex",alignItems:"center",gap:6}}
+            onClick={()=>{setModalDespesa(true);setEditandoDespesa(null);setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});}}>
+            <Icon name="minus-circle" size={16}/> Nova Despesa
+          </button>
+          <button className="btn btn-purple" style={{display:"flex",alignItems:"center",gap:6}} onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
+        </div>
       </div>
 
       {/* Seletor de Ano */}
@@ -5203,6 +5240,73 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
       )}
 
       {/* MODAL ESCOLHA */}
+      {/* MODAL NOVA DESPESA */}
+      {modalDespesa&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalDespesa(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editandoDespesa?"Editar":"Nova"} Despesa — Clínica</div>
+              <button onClick={()=>setModalDespesa(false)} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div className="form-group">
+                <label className="form-label">Categoria</label>
+                <select className="form-input" value={formDespesa.categoria} onChange={e=>setFormDespesa({...formDespesa,categoria:e.target.value})}>
+                  <option value="">Selecionar...</option>
+                  {CATS_DESPESA_CLINICA.map(cat=><option key={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Descrição</label>
+                <input className="form-input" value={formDespesa.descricao} onChange={e=>setFormDespesa({...formDespesa,descricao:e.target.value})} placeholder="Ex: Equipamento Neurofeedback"/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Valor (R$)</label>
+                <input className="form-input" type="number" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:e.target.value})} placeholder="0,00"/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data</label>
+                <input className="form-input" type="date" value={formDespesa.data} onChange={e=>setFormDespesa({...formDespesa,data:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Forma de Pagamento</label>
+                <select className="form-input" value={formDespesa.formaPag} onChange={e=>setFormDespesa({...formDespesa,formaPag:e.target.value})}>
+                  {FORMAS_PAG_CLINICA.map(f=><option key={f}>{f}</option>)}
+                </select>
+              </div>
+              {!editandoDespesa&&(
+                <div className="form-group">
+                  <label className="form-label">Parcelas</label>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <input className="form-input" type="number" min="1" max="60" value={formDespesa.parcelas} onChange={e=>setFormDespesa({...formDespesa,parcelas:e.target.value})} style={{width:80}}/>
+                    <span style={{fontSize:12,color:"var(--text-muted)"}}>= <strong style={{color:"var(--purple)"}}>R$ {((parseFloat(formDespesa.valor)||0)*(parseInt(formDespesa.parcelas)||1)).toFixed(2).replace(".",",")}</strong></span>
+                  </div>
+                </div>
+              )}
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Status</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[["pago","✓ Pago","#059669"],["pendente","Pendente","#d97706"]].map(([v,l,cor])=>(
+                    <button key={v} type="button" onClick={()=>setFormDespesa({...formDespesa,status:v})}
+                      style={{flex:1,padding:10,borderRadius:10,border:"1.5px solid",borderColor:formDespesa.status===v?cor:"#e5e7eb",background:formDespesa.status===v?cor+"15":"white",color:formDespesa.status===v?cor:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Observações</label>
+                <input className="form-input" value={formDespesa.obs||""} onChange={e=>setFormDespesa({...formDespesa,obs:e.target.value})} placeholder="Opcional..."/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+              <button className="btn btn-ghost" onClick={()=>setModalDespesa(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvarDespesaClinica} disabled={salvando}>{salvando?"Salvando...":editandoDespesa?"Salvar":"Lançar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {modal==="escolha"&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
           <div style={{background:"white",borderRadius:16,padding:32,width:"100%",maxWidth:420,textAlign:"center"}} onClick={e=>e.stopPropagation()}>
@@ -6162,126 +6266,127 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
         ))}
       </div>
 
-      {/* RECORRENTES — sempre visível */}
-      {recorrAtivos.length>0&&(
-        <div style={{marginBottom:24}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:10,display:"flex",alignItems:"center",gap:6,color:"var(--text-muted)"}}>
-            <Icon name="repeat" size={15}/> Recorrentes — {mesLabel(mesFiltroEfetivo)}
+
+      {/* LISTA UNIFICADA — recorrentes + avulsos, por data */}
+      {(()=>{
+        // Recorrentes como entradas virtuais (misturadas na lista)
+        const recVirt = recorrAtivos.map(r=>{
+          const baixa = lancamentos.find(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
+          const diaStr = String(r.diaVencimento||1).padStart(2,"0");
+          return {
+            id:"_rec_"+r.id, _rec:r, _baixaId:baixa?.id||null,
+            tipo:r.tipo, categoria:r.categoria,
+            descricao:r.descricao||r.categoria,
+            valor:baixa?.valor??parseFloat(r.valorPrevisto||0),
+            data:baixa?.data||(mesFiltroEfetivo+"-"+diaStr),
+            formaPag:baixa?.formaPag||"—",
+            status:baixa?(baixa.status||"pago"):"pendente",
+            _virtual:!baixa, centroCusto:r.centroCusto||"",
+          };
+        });
+        // Unificar: avulsos + baixas de recorrentes + recorrentes sem baixa
+        const lista = [
+          ...lancMes.filter(l=>!l.recorrenteId),
+          ...recVirt.filter(r=>!r._virtual),
+          ...recVirt.filter(r=>r._virtual),
+        ].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+
+        if(lista.length===0) return (
+          <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
+            <Icon name="wallet" size={40}/>
+            <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)}</div>
+            {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Use "+ Lançamento" ou "+ Recorrente" acima.</div>}
           </div>
-          <div className="card" style={{padding:0}}>
-            {recorrAtivos.map(r=>{
-              const baixaDone = jaDeuBaixaMes(r);
+        );
+
+        // Agrupar por tipo para mostrar totais
+        const totalRec  = lista.filter(l=>l.tipo==="receita").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+        const totalDesp = lista.filter(l=>l.tipo==="despesa").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+
+        return (<>
+          {/* Cards de saldo */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:16}}>
+            <div style={{background:"#f0fdf4",borderRadius:12,padding:"12px 16px",border:"1px solid #6ee7b7"}}>
+              <div style={{fontSize:11,color:"#15803d",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>Receitas</div>
+              <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>{fmt(totalRec)}</div>
+            </div>
+            <div style={{background:"#fef2f2",borderRadius:12,padding:"12px 16px",border:"1px solid #fca5a5"}}>
+              <div style={{fontSize:11,color:"#b91c1c",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>Despesas</div>
+              <div style={{fontSize:18,fontWeight:800,color:"#dc2626"}}>{fmt(totalDesp)}</div>
+            </div>
+            <div style={{background:"#f5f0ff",borderRadius:12,padding:"12px 16px",border:"2px solid #7B00C4"}}>
+              <div style={{fontSize:11,color:"#7B00C4",fontWeight:600,textTransform:"uppercase",marginBottom:2}}>Saldo</div>
+              <div style={{fontSize:18,fontWeight:800,color:totalRec-totalDesp>=0?"#7B00C4":"#dc2626"}}>{fmt(totalRec-totalDesp)}</div>
+            </div>
+          </div>
+
+          {/* Lista unificada */}
+          <div className="card" style={{padding:0,marginBottom:20}}>
+            {lista.map(l=>{
+              const isVirtual = l._virtual;
+              const tipo = l.tipo||"despesa";
+              const corValor = tipo==="receita"?"#059669":"#dc2626";
+              const bgIcon   = tipo==="receita"?"#d1fae5":"#fee2e2";
+              const statusOk = l.status==="pago"||l.status==="recebido";
+              const statusColor = statusOk?"#059669":"#d97706";
+              const statusBg    = statusOk?"#d1fae5":"#fef3c7";
+              const statusLabel = l.status==="recebido"?"✓ Recebido":l.status==="pago"?"✓ Pago":"⏳ Previsto";
+              const dataFmt = l.data ? new Date(l.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}) : "—";
               return (
-                <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:bgTipo(r.tipo),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <Icon name={r.tipo==="receita"?"trending-up":"trending-down"} size={16}/>
+                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 16px",borderBottom:"1px solid var(--gray-100)",background:isVirtual?"#fffbeb":"white"}}>
+                  <div style={{width:34,height:34,borderRadius:8,background:bgIcon,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Icon name={tipo==="receita"?"arrow-down-left":"arrow-up-right"} size={15}/>
                   </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:600,fontSize:14}}>{r.descricao||r.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{r.categoria} · vence dia {r.diaVencimento} · {r.recorrencia}{r.centroCusto?" · "+r.centroCusto:""}{r.totalParcelas>0?(() => {const pagas=lancamentos.filter(l=>l.recorrenteId===r.id).length; return ` · ${pagas}/${r.totalParcelas} parcela(s)`;})():" · ♾️ Indeterminado"}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                      <span style={{fontWeight:600,fontSize:13}}>{l.descricao||l.categoria||"—"}</span>
+                      {l._rec&&<span style={{fontSize:10,background:"#e0f2fe",color:"#0369a1",padding:"1px 6px",borderRadius:20,fontWeight:600}}>↻ recorrente</span>}
+                      {isVirtual&&<span style={{fontSize:10,background:"#fef3c7",color:"#b45309",padding:"1px 6px",borderRadius:20,fontWeight:600}}>sem baixa</span>}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                      {dataFmt}{l.categoria?" · "+l.categoria:""}{l.centroCusto?" · "+l.centroCusto:""}{l.formaPag&&l.formaPag!=="—"?" · "+l.formaPag:""}
+                    </div>
                   </div>
-                  <div style={{fontWeight:700,color:corTipo(r.tipo),marginRight:8}}>{fmt(parseFloat(r.valorPrevisto)||0)}</div>
-                  {baixaDone
-                    ? <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20}}>✓ Pago</span>
-                    : !somenteLeitura&&<button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setModalBaixa(r);setFormBaixa({valor:r.valorPrevisto||"",data:`${mesFiltroEfetivo}-${String(r.diaVencimento||10).padStart(2,"0")}`,formaPag:"PIX",modo:"este"});}}>Dar baixa</button>
-                  }
+                  <div style={{fontWeight:700,fontSize:14,color:corValor,flexShrink:0}}>{fmt(parseFloat(l.valor)||0)}</div>
+                  <span style={{background:statusBg,color:statusColor,fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20,flexShrink:0,whiteSpace:"nowrap"}}>{statusLabel}</span>
                   {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      {baixaDone?(
-                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar lançamento deste mês" onClick={()=>{
-                          const lancDoMes = lancamentos.find(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
-                          if(lancDoMes){
-                            setFormAvulso({tipo:lancDoMes.tipo,categoria:lancDoMes.categoria||"",descricao:lancDoMes.descricao||"",valor:lancDoMes.valor+"",data:lancDoMes.data,formaPag:lancDoMes.formaPag||"PIX",status:lancDoMes.status||"pago",obs:lancDoMes.obs||"",centroCusto:lancDoMes.centroCusto||"",parcelas:"1",totalParcelas:""});
-                            setEditando(lancDoMes.id);setModal("avulso");
-                          } else { alert("Lançamento deste mês não encontrado."); }
-                        }}><Icon name="pencil" size={13}/></button>
+                    <div style={{display:"flex",gap:4,flexShrink:0}}>
+                      {isVirtual?(
+                        <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}}
+                          onClick={()=>{setModalBaixa(l._rec);setFormBaixa({valor:l._rec?.valorPrevisto||"",data:l.data,formaPag:"PIX",modo:"este"});}}>
+                          Dar baixa
+                        </button>
                       ):(
-                        <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar recorrente (altera todos os meses futuros)" onClick={()=>{
-                          setFormRecorr({tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||"",valorPrevisto:r.valorPrevisto+"",recorrencia:r.recorrencia,diaVencimento:r.diaVencimento,mesInicio:r.mesInicio||mesAtual,ativo:r.ativo,centroCusto:r.centroCusto||"",totalParcelas:r.totalParcelas?r.totalParcelas+"":"",indeterminado:r.indeterminado!==false&&!r.totalParcelas});
-                          setEditando(r.id);setModal("recorrente");
-                        }}><Icon name="pencil" size={13}/></button>
+                        <span style={{display:"flex",gap:4}}>
+                          <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{
+                            if(l.recorrenteId){
+                              const lOrig=lancamentos.find(x=>x.id===l._baixaId||x.id===l.id);
+                              setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:""});
+                              setEditando(l.id);setModal("avulso");
+                            } else {
+                              setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:l.parcela||""});
+                              setEditando(l.id);setModal("avulso");
+                            }
+                          }}><Icon name="pencil" size={13}/></button>
+                          <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}>
+                            <Icon name="trash-2" size={13}/>
+                          </button>
+                        </span>
                       )}
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluirRec(r.id)}><Icon name="trash-2" size={13}/></button>
                     </div>
                   )}
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
-
-      {/* LANÇAMENTOS DO MÊS */}
-      <div>
-        {lancMes.filter(l=>l.tipo==="receita").length>0&&(
-          <div style={{marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontWeight:700,color:"#059669",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-up" size={16}/> Receitas</div>
-              <div style={{fontWeight:700,color:"#059669"}}>{fmt(recMes)}</div>
-            </div>
-            <div className="card" style={{padding:0}}>
-              {lancMes.filter(l=>l.tipo==="receita").map(l=>(
-                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:"#d1fae5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-down-left" size={16}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}{l.centroCusto?" · "+l.centroCusto:""}{l.parcela?" · "+l.parcela:""}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:"#059669"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                  <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>✓ Recebido</span>
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:l.parcela||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {lancMes.filter(l=>l.tipo==="despesa").length>0&&(
-          <div style={{marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontWeight:700,color:"#dc2626",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-down" size={16}/> Despesas</div>
-              <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(despMes)}</div>
-            </div>
-            <div className="card" style={{padding:0}}>
-              {lancMes.filter(l=>l.tipo==="despesa").map(l=>(
-                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-up-right" size={16}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}{l.centroCusto?" · "+l.centroCusto:""}{l.parcela?" · "+l.parcela:""}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                  <span style={{background:l.status==="pago"?"#d1fae5":"#fef3c7",color:l.status==="pago"?"#065f46":"#92400e",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{l.status==="pago"?"✓ Pago":"Pendente"}</span>
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||"",centroCusto:l.centroCusto||"",parcelas:"1",totalParcelas:l.parcela||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {lancMes.length===0&&recorrAtivos.length===0&&(
-          <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
-            <Icon name="wallet" size={40}/>
-            <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)}</div>
-            {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Use "+ Lançamento" ou "+ Recorrente" acima.</div>}
-          </div>
-        )}
-      </div>
-      </>)}
+        </>);
+      })()}
 
       {aba==="geral"&&(
         <PainelGeral lancamentos={lancamentos} lancClinica={lancClinica} anoFiltro={anoFiltro} setAnoFiltro={setAnoFiltro} anos={anos} fmt={fmt} mesLabel={mesLabel}/>
       )}
+
+      </>)}
 
       {/* MODAL BAIXA RECORRENTE */}
       {modalBaixa&&(
