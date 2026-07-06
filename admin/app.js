@@ -3636,6 +3636,7 @@ function FinanceiroClinica() {
   const [formDespesaEdit, setFormDespesaEdit] = useState({descricao:"",categoria:"",valor:"",data:"",formaPag:"",status:"pago",obs:""});
   // ── Painel de higienização ────────────
   const [modalAuditoria, setModalAuditoria] = useState(false);
+  const [filtroTipo, setFiltroTipo] = useState("tudo"); // "tudo" | "receita" | "despesa"
   const [auditLog, setAuditLog] = useState([]);
   const [auditando, setAuditando] = useState(false);
   const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",parceiraId:"",percParceiro:"70"});
@@ -4569,7 +4570,22 @@ function FinanceiroClinica() {
       {/* ABA LANÇAMENTOS */}
       {aba==="lancamentos"&&(
         <div>
-          {/* Filtro mês — jan→dez com setas */}
+          {/* Tabs filtro tipo — Tudo / Receitas / Despesas */}
+      {aba==="lancamentos"&&(
+        <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-50)",padding:6,borderRadius:12,width:"fit-content"}}>
+          {[["tudo","📊 Tudo"],["receita","💰 Receitas"],["despesa","💸 Despesas"]].map(([v,l])=>(
+            <button key={v} onClick={()=>setFiltroTipo(v)}
+              style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,
+                background:filtroTipo===v?"white":"transparent",
+                color:filtroTipo===v?(v==="receita"?"#059669":v==="despesa"?"#dc2626":"#7B00C4"):"#6b7280",
+                boxShadow:filtroTipo===v?"0 1px 4px rgba(0,0,0,.1)":"none",transition:".15s"}}>
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Filtro mês — jan→dez com setas */}
           <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center"}}>
             <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Mês:</span>
             <button onClick={()=>{
@@ -4607,11 +4623,45 @@ function FinanceiroClinica() {
               <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-15").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
             </div>
           ):(()=>{
-            const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa");
-            const despesas = lancMes.filter(l=>l.tipo_lancamento==="despesa");
+            const receitasTodas = lancMes.filter(l=>l.tipo_lancamento!=="despesa").sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+            const despesasTodas = lancMes.filter(l=>l.tipo_lancamento==="despesa").sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+            const receitas = filtroTipo==="despesa" ? [] : receitasTodas;
+            const despesas = filtroTipo==="receita" ? [] : despesasTodas;
+            const totalRecFiltro = receitasTodas.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+            const totalDespFiltro = despesasTodas.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
             const totalRec = calcReceitas(lancMes);
             const totalDesp = calcDespesas(lancMes);
             const saldo = totalRec - totalDesp;
+
+            // Cards de saldo dinâmicos por filtroTipo
+            const cardsSaldo = filtroTipo==="tudo" ? (
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+                <div style={{background:"white",borderRadius:12,padding:"14px 18px",border:"1px solid #e5e7eb"}}>
+                  <div style={{fontSize:11,color:"#6b7280",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Receitas</div>
+                  <div style={{fontSize:20,fontWeight:800,color:"#059669"}}>{totalRecFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                </div>
+                <div style={{background:"white",borderRadius:12,padding:"14px 18px",border:"1px solid #e5e7eb"}}>
+                  <div style={{fontSize:11,color:"#6b7280",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Despesas</div>
+                  <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{totalDespFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                </div>
+                <div style={{background:"#f5f0ff",borderRadius:12,padding:"14px 18px",border:"2px solid #7B00C4"}}>
+                  <div style={{fontSize:11,color:"#7B00C4",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Saldo Líquido</div>
+                  <div style={{fontSize:20,fontWeight:800,color:totalRecFiltro-totalDespFiltro>=0?"#7B00C4":"#dc2626"}}>
+                    {(totalRecFiltro-totalDespFiltro).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                  </div>
+                </div>
+              </div>
+            ) : filtroTipo==="receita" ? (
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"14px 18px",border:"1px solid #6ee7b7",marginBottom:16}}>
+                <div style={{fontSize:11,color:"#15803d",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Receitas do Mês</div>
+                <div style={{fontSize:24,fontWeight:800,color:"#059669"}}>{totalRecFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+              </div>
+            ) : (
+              <div style={{background:"#fef2f2",borderRadius:12,padding:"14px 18px",border:"1px solid #fca5a5",marginBottom:16}}>
+                <div style={{fontSize:11,color:"#b91c1c",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Despesas do Mês</div>
+                <div style={{fontSize:24,fontWeight:800,color:"#dc2626"}}>{totalDespFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+              </div>
+            );
 
             function TabelaLanc({itens, titulo, corHeader, corValor, bgHeader}){
               if(!itens.length) return null;
@@ -4690,6 +4740,7 @@ function FinanceiroClinica() {
 
             return(
               <div>
+                {cardsSaldo}
                 <TabelaLanc itens={receitas} titulo="💰 Receitas" corHeader="#059669" corValor="#059669" bgHeader="#f0fdf4"/>
                 <TabelaLanc itens={despesas} titulo="💸 Despesas" corHeader="#dc2626" corValor="#dc2626" bgHeader="#fff1f2"/>
                 {/* Resumo do mês */}
@@ -5156,7 +5207,7 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
           <div style={{background:"white",borderRadius:16,padding:32,width:"100%",maxWidth:420,textAlign:"center"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Novo Lançamento</div>
-            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Escolha o tipo de lançamento:</p>
+            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Selecione o tipo:</p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
                 onClick={()=>setModal("pacote")}>
@@ -5164,14 +5215,6 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                 <div>
                   <div style={{fontWeight:700,fontSize:14,color:"var(--purple)"}}>Pacote de Sessões</div>
                   <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas</div>
-                </div>
-              </button>
-              <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
-                onClick={()=>setModal("avulso")}>
-                <span style={{fontSize:32,flexShrink:0}}>💲</span>
-                <div>
-                  <div style={{fontWeight:700,fontSize:14,color:"#059669"}}>Lançamento Avulso</div>
-                  <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Sessão única, avaliação, neuromodulação ou outro serviço isolado</div>
                 </div>
               </button>
             </div>
@@ -7354,8 +7397,11 @@ function Comissoes({ user }) {
     const hoje = new Date().toISOString().slice(0,10);
     // Lança como despesa da clínica
     await db.collection("clinica_lancamentos").add({
-      tipo_lancamento: "salario_secretaria",
-      tipo: salarioJaPago ? "Comissões Secretária (adicional)" : "Salário Secretária",
+      tipo_lancamento: "despesa",
+      tipo: "despesa",
+      categoria: "Salário Secretária",
+      descricao: salarioJaPago ? "Comissões Secretária (adicional)" : "Salário Secretária",
+      centroCusto: "🏥 Clínica",
       mesRef: mesSel,
       valor: totalAPagar,
       valorSalarioFixo: salarioJaPago ? 0 : SALARIO_FIXO,
