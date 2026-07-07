@@ -5902,6 +5902,94 @@ function PainelGeral({ lancamentos, lancClinica, anoFiltro, setAnoFiltro, anos, 
     );
   }
 
+
+  // ── Plano de Contas — agrupamento por categoria real ──
+  const PLANO_CONTAS = {
+    "Marketing / Tráfego Pago": ["Marketing","Tráfego Pago","Publicidade","Redes Sociais","Google Ads"],
+    "Ferramentas Digitais": ["Ferramentas de IA","Software","Assinaturas","ElevenLabs","Tecnologia","Internet","Telefone / Internet"],
+    "Ocupação / Aluguel": ["Aluguel","Condomínio","Sublocação","Energia / Água","Manutenção","IPTU"],
+    "Repasses / Comissões": ["Salário Secretária","Repasse","Comissão","Parceria","Estagiária"],
+    "Educação / Capacitação": ["Cursos e Capacitação","Educação","Livros","Supervisão","Desenvolvimento Pessoal"],
+    "Saúde / Bem-estar": ["Saúde","Plano de Saúde","Medicamentos","Consultas"],
+    "Gastos Domésticos": ["Moradia","Alimentação","Transporte","Vestuário","Lazer / Entretenimento","Lazer","Saneago","Seguro","Consórcio"],
+    "Outros": [],
+  };
+  function mapearPlano(cat) {
+    if(!cat) return "Outros";
+    const c = cat.trim();
+    for(const [grupo, cats] of Object.entries(PLANO_CONTAS)) {
+      if(cats.some(k=>c.toLowerCase().includes(k.toLowerCase())||k.toLowerCase().includes(c.toLowerCase()))) return grupo;
+    }
+    return "Outros";
+  }
+  const CORES_PLANO = [
+    "#7B00C4","#0891b2","#db2777","#d97706","#059669","#2563eb","#dc2626","#9ca3af"
+  ];
+  const planoMap = {};
+  doAno.filter(l=>l.tipo==="despesa").forEach(l=>{
+    const grupo = mapearPlano(l.categoria);
+    planoMap[grupo] = (planoMap[grupo]||0) + l.valor;
+  });
+  const planoData = Object.entries(planoMap)
+    .filter(([,v])=>v>0)
+    .sort(([,a],[,b])=>b-a)
+    .map(([cat,valor],i)=>({cat,valor,cor:CORES_PLANO[i%CORES_PLANO.length]}));
+
+  function DonutPlano(){
+    const total = planoData.reduce((a,p)=>a+p.valor,0);
+    if(total<=0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem despesas no período.</div>;
+    let acc=0;
+    const r=70,cx=90,cy=90,circ=2*Math.PI*r;
+    return (
+      <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap"}}>
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f3f4f6" strokeWidth="22"/>
+          {planoData.map((p,i)=>{
+            const frac=p.valor/total;
+            const dash=frac*circ;
+            const offset=circ-acc;
+            const el=<circle key={p.cat} cx={cx} cy={cy} r={r} fill="none" stroke={p.cor} strokeWidth="22"
+              strokeDasharray={`${dash} ${circ-dash}`} strokeDashoffset={offset} transform={`rotate(-90 ${cx} ${cy})`}/>;
+            acc+=dash;
+            return el;
+          })}
+          <text x={cx} y={cy-4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#111827">{fmt(total)}</text>
+          <text x={cx} y={cy+14} textAnchor="middle" fontSize="10" fill="#6b7280">despesas {anoFiltro}</text>
+        </svg>
+        <div style={{display:"flex",flexDirection:"column",gap:5,flex:1,minWidth:180}}>
+          {planoData.map(p=>(
+            <div key={p.cat} style={{display:"flex",alignItems:"center",gap:8,fontSize:12}}>
+              <div style={{width:10,height:10,borderRadius:3,background:p.cor,flexShrink:0}}/>
+              <div style={{flex:1,lineHeight:1.3}}>{p.cat}</div>
+              <div style={{fontWeight:700,flexShrink:0}}>{fmt(p.valor)}</div>
+              <div style={{color:"var(--text-muted)",width:38,textAlign:"right",flexShrink:0}}>{(p.valor/total*100).toFixed(0)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function BarrasPlano(){
+    if(planoData.length===0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem dados.</div>;
+    const max=Math.max(1,...planoData.map(p=>p.valor));
+    return(
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {planoData.map(p=>(
+          <div key={p.cat}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
+              <span style={{fontWeight:600}}>{p.cat}</span>
+              <span style={{fontWeight:700,color:p.cor}}>{fmt(p.valor)}</span>
+            </div>
+            <div style={{background:"#f3f4f6",borderRadius:6,height:12,overflow:"hidden"}}>
+              <div style={{width:`${(p.valor/max*100)}%`,height:"100%",background:p.cor,borderRadius:6,transition:".4s"}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Seletor Ano */}
@@ -5947,6 +6035,18 @@ function PainelGeral({ lancamentos, lancClinica, anoFiltro, setAnoFiltro, anos, 
         <div className="card">
           <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>📊 Receita vs Despesa por CC</div>
           <BarrasCC/>
+        </div>
+      </div>
+
+      {/* Plano de Contas — gráfico por grupo de despesa */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:20}}>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>🎯 Despesas por Plano de Contas</div>
+          <DonutPlano/>
+        </div>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>📉 Distribuição por Grupo ({anoFiltro})</div>
+          <BarrasPlano/>
         </div>
       </div>
 
@@ -6017,7 +6117,45 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true,centroCusto:"",totalParcelas:"",indeterminado:true});
 
   useEffect(()=>{
-    const u1=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
+    // ── FILTRO SEVERO: Financeiro Pessoal só mostra despesas domésticas reais
+    // e receita de Professora CLT. Custos operacionais ficam no Fin. Clínica.
+    const CATS_PESSOAL_PERMITIDAS_DESP = [
+      "Moradia","Aluguel Pessoal","IPTU","Saneago","Energia / Água","Água / Esgoto",
+      "Consórcio","Seguro Pessoal","Seguro de Vida","Plano de Saúde","Saúde",
+      "Alimentação","Supermercado","Transporte","Combustível",
+      "Aporte em Investimentos","Investimentos","Reserva de Emergência",
+      "Lazer / Entretenimento","Lazer","Viagem","Vestuário","Outros"
+    ];
+    const CATS_PESSOAL_PERMITIDAS_REC = [
+      "Pró-labore","Salário","Professora CLT","Salário CLT","Rendimento de Investimentos",
+      "Dividendos","Aluguel Recebido","Freelance","Outros"
+    ];
+    // CCs que NÃO devem aparecer no Pessoal (são operacionais)
+    const CCS_OPERACIONAIS = [
+      "🏥 Clínica","🎶 Flamboyant","⭐ Estrelas","🌱 Projetos Culturais",
+      "📚 Consultorias & Cursos","🏢 Administrativo"
+    ];
+    function ehPermitidoPessoal(l) {
+      // Bloquear CCs operacionais
+      if(l.centroCusto && CCS_OPERACIONAIS.includes(l.centroCusto)) return false;
+      // Bloquear categorias operacionais explícitas
+      const cat = l.categoria||"";
+      const blocklist = ["Salário Secretária","Comissão","Repasse","Ferramentas de IA",
+        "Marketing","Equipamentos","Contador","Impostos","Manutenção","Musicoterapia",
+        "Cursos e Capacitação","Materiais","Software","ElevenLabs","Tráfego Pago"];
+      if(blocklist.some(b=>cat.toLowerCase().includes(b.toLowerCase()))) return false;
+      // Receitas: só permitidas
+      if(l.tipo==="receita") return CATS_PESSOAL_PERMITIDAS_REC.some(p=>cat.toLowerCase().includes(p.toLowerCase())||p.toLowerCase().includes(cat.toLowerCase())||cat===""||cat==="Outros");
+      // Despesas: só permitidas
+      if(l.tipo==="despesa") return CATS_PESSOAL_PERMITIDAS_DESP.some(p=>cat.toLowerCase().includes(p.toLowerCase())||p.toLowerCase().includes(cat.toLowerCase())||cat===""||cat==="Outros");
+      return true;
+    }
+    const u1=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>{
+      const docs=s.docs.map(d=>({id:d.id,...d.data()}))
+        .filter(ehPermitidoPessoal);
+      docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+      setLancamentos(docs);
+    },()=>{});
     const u2=db.collection("clinica_fin_pessoal_recorrentes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setRecorrentes(docs);},()=>{});
     const u3=db.collection("clinica_fin_pessoal_categorias").onSnapshot(s=>setCategorias(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const u4=db.collection("clinica_lancamentos").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancClinica(docs);},()=>{});
