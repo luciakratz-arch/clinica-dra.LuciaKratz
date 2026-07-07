@@ -3052,8 +3052,57 @@ function Login({ onLogin }) {
 //  PAINEL INDIVIDUAL
 // ═══════════════════════════════════════════════════════
 function PainelIndividual({ user, setTab }) {
-  const [humores, setHumores] = React.useState([]);
-  const [metas, setMetas]     = React.useState([]);
+  const [humores, setHumores]       = React.useState([]);
+  const [metas, setMetas]           = React.useState([]);
+  const [proximaSessao, setProxima] = React.useState(null);
+  const [loadingSessao, setLoadS]   = React.useState(true);
+  const [confirmStatus, setConfSt]  = React.useState(null); // null | "loading" | "ok" | "erro"
+
+  // Buscar próxima sessão agendada do paciente
+  React.useEffect(() => {
+    if(!user?.id) return;
+    const hoje = new Date().toISOString().slice(0,10);
+    db.collection("clinica_sessoes")
+      .where("pacienteId","==",user.id)
+      .where("status","==","agendado")
+      .get()
+      .then(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .filter(s=>s.data>=hoje)
+          .sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+        setProxima(docs[0]||null);
+        setLoadS(false);
+      }).catch(()=>setLoadS(false));
+  }, [user?.id]);
+
+  async function confirmarSessao(sessaoId){
+    setConfSt("loading");
+    try {
+      await db.collection("clinica_sessoes").doc(sessaoId).update({
+        statusConfirmacao: "confirmado",
+        confirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        confirmedBy: user.id,
+      });
+      setConfSt("ok");
+      setProxima(prev=>prev?{...prev,statusConfirmacao:"confirmado"}:prev);
+    } catch(e){ setConfSt("erro"); }
+  }
+
+  function reagendarWhatsApp(sessao){
+    const WHATSAPP_CLINICA = "5562994644950";
+    const dataFmt = sessao.data
+      ? new Date(sessao.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})
+      : sessao.data;
+    const hora    = sessao.hora || "";
+    const msg     = encodeURIComponent(
+      `Olá Jéssica! Sou ${user.nome}.
+
+Gostaria de solicitar o reagendamento da minha sessão de psicologia marcada para *${dataFmt}${hora?" às "+hora:""}*.
+
+Podemos verificar uma nova data disponível? Obrigada! 💜`
+    );
+    window.open(`https://wa.me/${WHATSAPP_CLINICA}?text=${msg}`, "_blank");
+  }
 
   React.useEffect(() => {
     const u1 = db.collection("clinica_humor").where("pacienteId","==",user.id)
@@ -3132,6 +3181,47 @@ function PainelIndividual({ user, setTab }) {
         </div>
         {humorHoje && <div style={{fontSize:14,opacity:0.85}}>Humor hoje: {humorHoje.valor}/10</div>}
       </div>
+
+      {/* Próxima Sessão — card com confirmar e reagendar */}
+      {!loadingSessao && proximaSessao && (
+        <div style={{background:"white",borderRadius:14,border:"2px solid #7B00C4",padding:"18px 20px",marginBottom:20,display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+          <div style={{width:44,height:44,borderRadius:12,background:"#f5f0ff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            <Icon name="calendar" size={22}/>
+          </div>
+          <div style={{flex:1,minWidth:160}}>
+            <div style={{fontSize:11,color:"#7B00C4",fontWeight:700,textTransform:"uppercase",marginBottom:2}}>Próxima Sessão</div>
+            <div style={{fontWeight:700,fontSize:15}}>
+              {new Date(proximaSessao.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+              {proximaSessao.hora ? ` às ${proximaSessao.hora}` : ""}
+            </div>
+            {proximaSessao.statusConfirmacao==="confirmado" && (
+              <div style={{fontSize:12,color:"#059669",fontWeight:600,marginTop:3}}>✓ Confirmada por você</div>
+            )}
+          </div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {proximaSessao.statusConfirmacao!=="confirmado" ? (
+              <button
+                onClick={()=>confirmarSessao(proximaSessao.id)}
+                disabled={confirmStatus==="loading"||confirmStatus==="ok"}
+                style={{background:"#7B00C4",color:"white",border:"none",borderRadius:10,padding:"10px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6,opacity:confirmStatus==="loading"?0.7:1}}>
+                {confirmStatus==="loading"?"Confirmando..."
+                :confirmStatus==="ok"?"✓ Confirmada!"
+                :"✓ Confirmar presença"}
+              </button>
+            ) : (
+              <div style={{background:"#d1fae5",color:"#065f46",borderRadius:10,padding:"10px 18px",fontWeight:700,fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+                ✓ Presença confirmada
+              </div>
+            )}
+            <button
+              onClick={()=>reagendarWhatsApp(proximaSessao)}
+              style={{background:"#25D366",color:"white",border:"none",borderRadius:10,padding:"10px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:6}}>
+              <Icon name="message-circle" size={15}/>
+              Reagendar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Métricas */}
       <div className="metrics-grid" style={{marginBottom:24}}>
