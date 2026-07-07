@@ -3,67 +3,260 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>9&Self | Mapeamento Avançado de Personalidade</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<title>Mapeamento de Perfil Avançado — 9&Self | Dra. Lucia Kratz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg-deep: #0f051a;
-    --purple: #7B00C4;
-    --gold: #f0c96b;
-    --text: #ffffff;
+  :root{
+    --bg-deep:#160021;
+    --bg-card:#20083a;
+    --bg-card-2:#2a0e49;
+    --purple:#7B00C4;
+    --purple-light:#b24bf3;
+    --gold:#f0c96b;
+    --text:#f6eefb;
+    --text-muted:#cbb3de;
+    --line:rgba(255,255,255,0.09);
   }
-  body { background: var(--bg-deep); font-family: 'Poppins', sans-serif; color: var(--text); margin: 0; padding: 0; }
-  
-  /* Seção Hero - Foco na Identidade do Sistema */
-  .hero { 
-    padding: 60px 20px; text-align: center; 
-    background: radial-gradient(circle at center, #2a0e49 0%, #0f051a 100%);
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(178,75,243,0.35), transparent),
+      radial-gradient(ellipse 60% 30% at 90% 100%, rgba(240,201,107,0.10), transparent),
+      var(--bg-deep);
+    font-family:'Poppins', sans-serif;
+    color:var(--text);
+    overflow-x:hidden;
   }
-  .brand { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 56px; color: #fff; margin-bottom: 5px; }
-  .tagline { letter-spacing: 6px; text-transform: uppercase; font-size: 11px; color: var(--gold); margin-bottom: 30px; }
-  h1 { font-size: 28px; margin-bottom: 20px; font-weight: 700; }
-  
-  /* Botão de Venda */
-  .cta-main { 
-    background: linear-gradient(90deg, var(--purple), #9d1fdc); 
-    color: #fff; padding: 20px 40px; border-radius: 16px; 
-    font-weight: 700; text-decoration: none; display: inline-block; 
-    margin-top: 20px; box-shadow: 0 10px 25px rgba(123,0,196,0.4);
+  .wrap{ max-width:640px; margin:0 auto; padding:0 20px; }
+  section{ padding:56px 0; }
+  h1,h2,h3{ line-height:1.25; }
+  .script{ font-family:'Dancing Script', cursive; }
+  .eyebrow{ font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); text-align:center; margin-bottom:12px; font-weight:600; }
+
+  .cta-btn{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    background:linear-gradient(90deg, var(--gold), #ffdd8a);
+    color:#3a2400; font-weight:700; font-size:16px;
+    text-decoration:none; padding:18px 20px; border-radius:16px;
+    box-shadow:0 10px 24px -8px rgba(240,201,107,0.55);
+    animation: pulseGlow 2.4s ease-in-out infinite;
+    border:none; cursor:pointer; width:100%;
   }
-  
-  /* Seção Informativa */
-  .container { max-width: 500px; margin: 0 auto; padding: 40px 20px; }
-  .feature-box { 
-    background: rgba(255,255,255,0.03); padding: 25px; 
-    border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); 
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 10px 24px -8px rgba(240,201,107,0.55); }
+    50%{ box-shadow:0 10px 34px -6px rgba(240,201,107,0.9); }
   }
-  
-  /* Footer com link de acesso */
-  footer { text-align: center; padding: 40px; font-size: 13px; color: #888; }
-  .login-link { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold); }
+  @media (prefers-reduced-motion: reduce){ .cta-btn{ animation:none; } }
+  .cta-sub{ text-align:center; font-size:12px; color:var(--text-muted); margin-top:10px; }
+
+  .logo9self{ text-align:center; margin-bottom:26px; }
+  .logo9self .brand{ font-family:'Cormorant Garamond Real', 'Cormorant Garamond', serif; font-style:italic; font-weight:500; font-size:64px; letter-spacing:0.5px; line-height:1; background:linear-gradient(90deg, #9fd8ff, #ffffff 55%, #c9e8ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .logo9self .self{ font-size:14px; letter-spacing:10px; color:#d7ecff; margin-top:6px; font-weight:400; }
+  .logo9self .tag{ font-size:11px; letter-spacing:3px; color:var(--text-muted); margin-top:8px; text-transform:uppercase; }
+
+  .hero{ text-align:center; padding-top:48px; }
+  .hero .wing{ font-size:32px; margin-bottom:10px; display:block; }
+  .hero h1{ font-size:32px; font-weight:800; }
+  .hero h1 span{ background:linear-gradient(90deg, var(--gold), #fff 45%, var(--purple-light)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p{ color:var(--text-muted); font-size:15px; margin:18px 0 28px; line-height:1.7; }
+
+  .dor{ background:var(--bg-card); border-radius:20px; border:1px solid var(--line); padding:32px 24px; }
+  .dor h2{ font-size:22px; text-align:center; margin-bottom:18px; }
+  .dor ul{ list-style:none; display:flex; flex-direction:column; gap:14px; }
+  .dor li{ display:flex; gap:12px; font-size:14.5px; color:var(--text-muted); line-height:1.6; }
+  .dor li b{ color:var(--text); }
+  .dor li .x{ color:#f87171; flex-shrink:0; font-size:18px; }
+
+  .metodo h2{ font-size:24px; text-align:center; margin-bottom:8px; }
+  .metodo .sub{ text-align:center; color:var(--purple-light); font-weight:600; font-size:14px; margin-bottom:24px; }
+  .metodo p{ color:var(--text-muted); font-size:14.5px; line-height:1.75; text-align:center; margin-bottom:20px; }
+  .metodo-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:20px; }
+  .metodo-card{ background:linear-gradient(135deg, var(--bg-card), var(--bg-card-2)); border:1px solid var(--line); border-radius:16px; padding:18px 14px; text-align:center; }
+  .metodo-card .ico{ font-size:26px; margin-bottom:8px; }
+  .metodo-card .t{ font-size:13px; font-weight:600; }
+
+  .paraquem h2{ font-size:24px; text-align:center; margin-bottom:24px; }
+  .pq-grid{ display:flex; flex-direction:column; gap:12px; }
+  .pq-card{ display:flex; gap:14px; align-items:flex-start; background:var(--bg-card); border:1px solid var(--line); border-radius:16px; padding:18px; }
+  .pq-card .ico{ font-size:24px; flex-shrink:0; }
+  .pq-card .t{ font-weight:600; font-size:14.5px; margin-bottom:3px; }
+  .pq-card .d{ font-size:13px; color:var(--text-muted); line-height:1.5; }
+
+  .autoridade{ background:linear-gradient(135deg, var(--bg-card), var(--bg-card-2)); border-radius:20px; border:1px solid var(--line); padding:32px 24px; text-align:center; }
+  .autoridade img{ width:96px; height:96px; border-radius:50%; object-fit:cover; object-position:center 15%; border:3px solid var(--purple-light); margin-bottom:16px; }
+  .autoridade h3{ font-family:'Dancing Script', cursive; font-size:30px; color:var(--gold); }
+  .autoridade .cargo{ font-size:13px; color:var(--text-muted); margin:6px 0 14px; }
+  .autoridade p{ font-size:13.5px; color:var(--text-muted); line-height:1.7; }
+  .autoridade .crp{ font-size:11.5px; color:var(--text-muted); opacity:.8; margin-top:12px; }
+
+  .oferta{ text-align:center; }
+  .oferta-box{ background:linear-gradient(135deg, var(--purple), #9d1fdc); border-radius:22px; padding:34px 24px; box-shadow:0 20px 40px -16px rgba(123,0,196,0.6); }
+  .oferta-box h2{ font-size:22px; margin-bottom:10px; }
+  .oferta-box p{ font-size:13.5px; color:#f0e6fb; margin-bottom:22px; line-height:1.6; }
+  .oferta-box .selo{ display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:20px; font-size:12px; margin-bottom:20px; }
+
+  .faq h2{ font-size:24px; text-align:center; margin-bottom:22px; }
+  .faq-item{ background:var(--bg-card); border:1px solid var(--line); border-radius:14px; margin-bottom:10px; overflow:hidden; }
+  .faq-q{ padding:16px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:14px; font-weight:600; }
+  .faq-q .arrow{ transition:transform .25s; color:var(--gold); flex-shrink:0; margin-left:10px; }
+  .faq-item.open .faq-q .arrow{ transform:rotate(180deg); }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .3s ease; }
+  .faq-item.open .faq-a{ max-height:300px; }
+  .faq-a p{ padding:0 18px 16px; font-size:13.5px; color:var(--text-muted); line-height:1.65; }
+
+  .wa-float{
+    position:fixed; bottom:22px; right:22px; z-index:50;
+    width:58px; height:58px; border-radius:50%;
+    background:#25D366; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 20px -4px rgba(0,0,0,0.5);
+    animation: floatBounce 3s ease-in-out infinite;
+  }
+  .wa-float svg{ width:28px; height:28px; fill:#fff; }
+  @keyframes floatBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+  @media (prefers-reduced-motion: reduce){ .wa-float{ animation:none; } }
+
+  footer{ text-align:center; padding:40px 0 90px; }
+  .voltar-cartao{
+    display:inline-flex; align-items:center; gap:8px;
+    border:1px solid var(--line); color:var(--text);
+    padding:13px 22px; border-radius:14px; text-decoration:none; font-size:13.5px; font-weight:500;
+    background:var(--bg-card);
+  }
+  footer .fwing{ display:block; font-size:20px; margin:26px 0 8px; }
+  footer .crp{ font-size:11px; color:var(--text-muted); opacity:.75; }
 </style>
 </head>
 <body>
 
-<section class="hero">
-  <div class="brand">9&Self</div>
-  <div class="tagline">Mapeamento Avançado de Personalidade</div>
-  <h1>Descubra os padrões que comandam suas decisões</h1>
-  <p>Não é apenas um teste. É um método clínico para você assumir o controle do seu destino.</p>
-  
-  <a href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10" class="cta-main">QUERO MEU MAPEAMENTO</a>
-</section>
+<div class="wrap">
 
-<div class="container">
-  <div class="feature-box">
-    <h2 style="color: var(--gold); font-size: 18px; margin-bottom: 10px;">O que este mapeamento revela?</h2>
-    <p>Identificamos seus traços centrais, medos inconscientes e gatilhos de comportamento. Você receberá uma leitura técnica, unindo a sabedoria do Eneagrama à prática da psicologia clínica.</p>
+  <div class="hero">
+    <span style="font-size:44px; display:block; margin-bottom:10px;">🦋</span>
+    <div class="eyebrow" style="font-size:16px; letter-spacing:3px; font-weight:800;">MÉTODO 9&SELF · ENEAGRAMA APLICADO</div>
+    <h1>Descubra os padrões que <span>comandam suas decisões</span> — antes que eles continuem comandando por você</h1>
+    <p>Um mapeamento avançado de personalidade que une a precisão do Eneagrama à ciência da Psicologia, para você entender <b>por que</b> repete os mesmos ciclos — e como sair deles com clareza.</p>
+    <a class="cta-btn" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">
+      🧭 Quero Mapear Meu Perfil Agora
+    </a>
+    <div class="cta-sub">Acesso imediato após a confirmação · Checkout seguro Hotmart</div>
   </div>
+
+  <section class="dor">
+    <h2>Isso soa familiar?</h2>
+    <ul>
+      <li><span class="x">✕</span> <span>Você sente que já tentou de tudo, mas <b>continua caindo nos mesmos padrões</b> de relacionamento, trabalho ou autossabotagem.</span></li>
+      <li><span class="x">✕</span> <span>Toma decisões importantes sem entender <b>de onde vêm</b> seus medos, travas e reações automáticas.</span></li>
+      <li><span class="x">✕</span> <span>Sente uma <b>estagnação</b> difícil de explicar — como se faltasse um mapa para saber o próximo passo.</span></li>
+      <li><span class="x">✕</span> <span>Já fez testes de personalidade genéricos que <b>não geraram nenhuma mudança real</b> na prática.</span></li>
+    </ul>
+  </section>
+
+  <section class="metodo">
+    <h2>O Método 9&Self</h2>
+    <div class="sub">Eneagrama + Psicologia Clínica, na prática</div>
+    <p>O Mapeamento de Perfil Avançado — 9&Self não é um teste de personalidade qualquer. É uma leitura profissional, conduzida com base científica, que decodifica seu tipo de Eneagrama e mostra como ele se expressa nas suas relações, na sua liderança e nas suas travas emocionais — com direcionamento prático para cada padrão identificado.</p>
+    <div class="metodo-grid">
+      <div class="metodo-card"><div class="ico">🧭</div><div class="t">Mapeamento do seu tipo no Eneagrama</div></div>
+      <div class="metodo-card"><div class="ico">🔍</div><div class="t">Leitura dos seus padrões de comportamento</div></div>
+      <div class="metodo-card"><div class="ico">🎯</div><div class="t">Direcionamento prático e aplicável</div></div>
+      <div class="metodo-card"><div class="ico">🧠</div><div class="t">Base em psicologia científica, não achismo</div></div>
+    </div>
+  </section>
+
+  <section class="paraquem">
+    <h2>Para quem é</h2>
+    <div class="pq-grid">
+      <div class="pq-card">
+        <div class="ico">👑</div>
+        <div><div class="t">Líderes e gestores</div><div class="d">Que precisam entender seu próprio estilo de liderança para conduzir equipes com mais consciência.</div></div>
+      </div>
+      <div class="pq-card">
+        <div class="ico">💼</div>
+        <div><div class="t">Profissionais em transição</div><div class="d">Que sentem que estão no caminho errado ou precisam de clareza sobre os próximos passos de carreira.</div></div>
+      </div>
+      <div class="pq-card">
+        <div class="ico">🌱</div>
+        <div><div class="t">Quem busca autoconhecimento</div><div class="d">Pessoas em processo de evolução pessoal ou terapia, buscando entender a raiz dos próprios padrões.</div></div>
+      </div>
+      <div class="pq-card">
+        <div class="ico">💑</div>
+        <div><div class="t">Casais</div><div class="d">Que querem entender as diferenças de personalidade que geram atrito, e usar isso pra se comunicar melhor.</div></div>
+      </div>
+      <div class="pq-card">
+        <div class="ico">🏢</div>
+        <div><div class="t">Empresas e equipes</div><div class="d">Gestão de pessoas, liderança situacional e mediação de conflitos internos — com pacotes especiais para grupos. Fale no WhatsApp para uma proposta corporativa.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="autoridade">
+    <img src="foto3.jpeg" alt="Dra. Lucia Kratz" onerror="this.style.display='none'">
+    <h3>Lucia Kratz</h3>
+    <div class="cargo">Doutora em Psicologia · TCC, Musicoterapia e Neuromodulação</div>
+    <p>Com formação e atuação clínica dedicadas ao entendimento profundo do comportamento humano, a Dra. Lucia Kratz une rigor científico à aplicação prática do Eneagrama, ajudando pessoas a saírem do piloto automático e tomarem decisões mais conscientes.</p>
+    <div class="crp">CRP 09/20590 · Goiânia, GO</div>
+  </section>
+
+
+  <section class="oferta">
+    <div class="oferta-box">
+      <div class="selo">🔒 Compra 100% segura via Hotmart</div>
+      <h2>Mapeamento de Perfil Avançado — 9&Self</h2>
+      <p>Confira o valor exato e as opções de parcelamento diretamente no checkout seguro da Hotmart, com garantia de 7 dias.</p>
+      <a class="cta-btn" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">
+        🧭 Quero Mapear Meu Perfil Agora
+      </a>
+    </div>
+  </section>
+
+  <section class="faq">
+    <h2>Perguntas Frequentes</h2>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Como recebo o acesso depois da compra? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Assim que o pagamento é confirmado pela Hotmart, você recebe o acesso por e-mail com todas as instruções para dar início ao seu mapeamento.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">O que exatamente é o Eneagrama? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>É um sistema de compreensão da personalidade que identifica 9 padrões centrais de comportamento, motivação e medo. Diferente de testes genéricos, ele explica não só "o que" você faz, mas "por que" você faz.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">É seguro comprar pela Hotmart? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Sim. A Hotmart é uma das maiores plataformas de produtos digitais da América Latina, com checkout criptografado e garantia de 7 dias prevista em lei para compras online.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Tenho dúvida antes de comprar, e agora? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Fala diretamente com a Dra. Lucia pelo WhatsApp — tem um botão flutuante no canto da tela só pra isso.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <a class="voltar-cartao" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cartao.html">
+      🦋 Ver Cartão de Contato & Redes
+    </a>
+    <span class="fwing">🦋</span>
+    <div class="crp">Dra. Lucia Kratz — Psicóloga · CRP 09/20590</div>
+  </footer>
+
 </div>
 
-<footer>
-  <p>Já possui seu código de acesso? <a href="SUA_URL_DE_LOGIN" class="login-link">Acesse aqui</a></p>
-</footer>
+<a class="wa-float" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20tenho%20uma%20dúvida%20sobre%20o%20Mapeamento%209Self" target="_blank" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M20.5 3.5A11 11 0 003.6 17.4L2 22l4.7-1.6a11 11 0 0013.8-16.9zM12 20.1a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.3 1.1 1.1-3.2-.2-.3A8.6 8.6 0 1120.6 12 8.6 8.6 0 0112 20.1zm4.7-6.4c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.5.1-.5.8-.7.9-.3.2-.6.1a7 7 0 01-2-1.3 7.6 7.6 0 01-1.4-1.8c-.1-.2 0-.4.1-.5l.4-.4a1.6 1.6 0 00.2-.4.5.5 0 000-.4c0-.1-.5-1.3-.7-1.8s-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.7 2.7 0 00-.8 2 4.7 4.7 0 001 2.5 10.6 10.6 0 004.1 3.6c.6.2 1 .4 1.4.5a3.4 3.4 0 001.5.1 2.5 2.5 0 001.6-1.2 2 2 0 00.2-1.2c-.1-.1-.3-.2-.6-.3z"/></svg>
+</a>
+
+<script>
+function toggleFaq(el){
+  const item = el.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+}
+</script>
 
 </body>
 </html>
