@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serviços | Dra. Lucia Kratz — Psicóloga</title>
+<meta property="og:title" content="Dra. Lucia Kratz — Serviços">
+<meta property="og:description" content="Atendimento clínico, terapia de casal, consultoria empresarial, palestras e supervisão. Goiânia e online.">
+<meta property="og:image" content="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/foto3.jpeg">
+<meta property="og:url" content="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/servicos.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#160021; --bg-card:#20083a; --bg-card-2:#2a0e49;
+    --purple:#7B00C4; --purple-light:#b24bf3; --gold:#f0c96b;
+    --text:#f6eefb; --text-muted:#cbb3de; --line:rgba(255,255,255,0.09);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(178,75,243,0.35), transparent),
+      radial-gradient(ellipse 60% 30% at 90% 100%, rgba(240,201,107,0.10), transparent),
+      var(--bg-deep);
+    font-family:'Poppins', sans-serif; color:var(--text); overflow-x:hidden;
+  }
+  .wrap{ max-width:640px; margin:0 auto; padding:0 20px 80px; }
+
+  /* HERO */
+  .hero{ text-align:center; padding:44px 0 36px; }
+  .hero .photo-wrap{
+    width:110px; height:110px; margin:0 auto 18px;
+    border-radius:50%; padding:3px;
+    background:conic-gradient(from 180deg, var(--purple), var(--gold), var(--purple-light), var(--purple));
+  }
+  .hero .photo-inner{ width:100%; height:100%; border-radius:50%; overflow:hidden; border:3px solid var(--bg-deep); }
+  .hero .photo-inner img{ width:100%; height:100%; object-fit:cover; object-position:center 15%; display:block; }
+  .hero h1{ font-family:'Dancing Script', cursive; font-size:42px; font-weight:700;
+    background:linear-gradient(90deg, var(--gold), #fff 45%, var(--purple-light));
+    -webkit-background-clip:text; background-clip:text; color:transparent; line-height:1.1; }
+  .hero .cargo{ font-size:13px; color:var(--text-muted); margin:8px 0 6px; }
+  .hero .crp{ font-size:11px; color:var(--text-muted); opacity:.75; }
+  .hero .bio{ font-size:14px; color:var(--text-muted); line-height:1.75; margin:18px 0 0; }
+
+  /* AGENDAR */
+  .cta-agendar{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    background:linear-gradient(90deg, var(--gold), #ffdd8a);
+    color:#3a2400; font-weight:700; font-size:16px;
+    text-decoration:none; padding:17px 20px; border-radius:16px;
+    box-shadow:0 10px 24px -8px rgba(240,201,107,0.55);
+    animation:pulseGlow 2.4s ease-in-out infinite;
+    margin:28px 0 10px;
+  }
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:0 10px 24px -8px rgba(240,201,107,0.55);}
+    50%{box-shadow:0 10px 34px -6px rgba(240,201,107,0.9);}
+  }
+  @media(prefers-reduced-motion:reduce){.cta-agendar{animation:none;}}
+  .cta-sub{ text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:40px; }
+
+  /* SEÇÕES */
+  .section-label{ font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); margin-bottom:14px; font-weight:600; }
+
+  /* CARDS DE SERVIÇO */
+  .servicos{ display:flex; flex-direction:column; gap:12px; margin-bottom:36px; }
+  .servico-card{
+    background:linear-gradient(135deg, var(--bg-card), var(--bg-card-2));
+    border:1px solid var(--line); border-radius:18px; padding:22px 20px;
+    display:flex; gap:16px; align-items:flex-start;
+  }
+  .servico-card .ico{ font-size:28px; flex-shrink:0; }
+  .servico-card .info .t{ font-size:15px; font-weight:700; margin-bottom:5px; }
+  .servico-card .info .d{ font-size:13px; color:var(--text-muted); line-height:1.65; }
+  .servico-card .info .tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .servico-card .info .tag{
+    font-size:11px; padding:4px 10px; border-radius:20px;
+    background:rgba(178,75,243,0.15); border:1px solid rgba(178,75,243,0.25); color:var(--purple-light);
+  }
+  .servico-card .info .tag.gold{
+    background:rgba(240,201,107,0.12); border-color:rgba(240,201,107,0.25); color:var(--gold);
+  }
+
+  /* DIFERENCIAIS */
+  .diferenciais{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:36px; }
+  .diferencial{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:14px;
+    padding:18px 14px; text-align:center;
+  }
+  .diferencial .ico{ font-size:22px; margin-bottom:8px; }
+  .diferencial .t{ font-size:12.5px; font-weight:600; margin-bottom:3px; }
+  .diferencial .d{ font-size:11.5px; color:var(--text-muted); line-height:1.5; }
+
+  /* CTA FINAL */
+  .cta-final{
+    background:linear-gradient(135deg, var(--purple), #9d1fdc);
+    border-radius:22px; padding:34px 24px; text-align:center;
+    box-shadow:0 20px 40px -16px rgba(123,0,196,0.6); margin-bottom:32px;
+  }
+  .cta-final h2{ font-family:'Dancing Script', cursive; font-size:30px; color:var(--gold); margin-bottom:10px; }
+  .cta-final p{ font-size:13.5px; color:#f0e6fb; margin-bottom:22px; line-height:1.6; }
+  .cta-final .cta-agendar{ margin:0; }
+
+  /* FLOATING WA */
+  .wa-float{
+    position:fixed; bottom:22px; right:22px; z-index:999;
+    width:58px; height:58px; border-radius:50%;
+    background:#25D366; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 20px -4px rgba(0,0,0,0.45);
+    animation:floatBounce 3s ease-in-out infinite; text-decoration:none;
+  }
+  .wa-float svg{ width:28px; height:28px; fill:#fff; }
+  @keyframes floatBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
+  @media(prefers-reduced-motion:reduce){.wa-float{animation:none;}}
+
+  footer{ text-align:center; padding-top:10px; }
+  .voltar-cartao{
+    display:inline-flex; align-items:center; gap:8px;
+    border:1px solid var(--line); color:var(--text); background:var(--bg-card);
+    padding:13px 22px; border-radius:14px; text-decoration:none; font-size:13px; font-weight:500;
+  }
+  footer .fwing{ display:block; font-size:20px; margin:22px 0 8px; }
+  footer .crp{ font-size:11px; color:var(--text-muted); opacity:.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="photo-wrap">
+      <div class="photo-inner">
+        <img src="foto3.jpeg" alt="Dra. Lucia Kratz" onerror="this.style.display='none'">
+      </div>
+    </div>
+    <h1>Lucia Kratz</h1>
+    <div class="cargo">Psicóloga Doutora · Professora Universitária · Coordenadora de Curso</div>
+    <div class="crp">CRP 09/20590 · Goiânia, GO</div>
+    <p class="bio">Especialista em TCC, Musicoterapia e Neuromodulação, com atuação clínica, acadêmica e consultiva. Atendo pessoas, casais, equipes e empresas — presencialmente em Goiânia e online.</p>
+  </div>
+
+  <a class="cta-agendar" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20conhecer%20seus%20serviços" target="_blank">
+    🦋 Agende sua Consulta
+  </a>
+  <div class="cta-sub">Atendimento presencial em Goiânia · Online para todo o Brasil</div>
+
+  <div class="section-label">Serviços</div>
+
+  <div class="servicos">
+
+    <div class="servico-card">
+      <div class="ico">🧠</div>
+      <div class="info">
+        <div class="t">Psicoterapia Individual</div>
+        <div class="d">Atendimento clínico para adolescentes, adultos e idosos, com foco em autoconhecimento, gestão emocional e transformação de padrões limitantes.</div>
+        <div class="tags">
+          <span class="tag">TCC</span>
+          <span class="tag">Musicoterapia</span>
+          <span class="tag">Neuromodulação</span>
+          <span class="tag gold">Presencial · Online</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="servico-card">
+      <div class="ico">💑</div>
+      <div class="info">
+        <div class="t">Terapia de Casal</div>
+        <div class="d">Apoio para casais em crise ou em busca de crescimento conjunto — melhorando comunicação, resolvendo conflitos e fortalecendo o vínculo.</div>
+        <div class="tags">
+          <span class="tag">Conflitos</span>
+          <span class="tag">Comunicação</span>
+          <span class="tag">Eneagrama</span>
+          <span class="tag gold">Presencial · Online</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="servico-card">
+      <div class="ico">🏢</div>
+      <div class="info">
+        <div class="t">Consultoria Empresarial & Saúde Ocupacional</div>
+        <div class="d">Suporte psicológico para gestores e equipes: liderança, gestão de conflitos internos, clima organizacional e laudos NR-1.</div>
+        <div class="tags">
+          <span class="tag">Liderança</span>
+          <span class="tag">NR-1</span>
+          <span class="tag">Gestão de Conflitos</span>
+          <span class="tag gold">Pacotes Empresariais</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="servico-card">
+      <div class="ico">🎤</div>
+      <div class="info">
+        <div class="t">Palestras & Treinamentos</div>
+        <div class="d">Palestras para empresas, instituições de ensino e eventos sobre saúde mental, Eneagrama, liderança consciente e relacionamentos.</div>
+        <div class="tags">
+          <span class="tag">Saúde Mental</span>
+          <span class="tag">Eneagrama</span>
+          <span class="tag gold">Sob Demanda</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="servico-card">
+      <div class="ico">🎓</div>
+      <div class="info">
+        <div class="t">Supervisão de Alunos & Estagiários</div>
+        <div class="d">Supervisão clínica para alunos de Psicologia em formação, com acompanhamento de casos, feedback e desenvolvimento profissional.</div>
+        <div class="tags">
+          <span class="tag">Supervisão Clínica</span>
+          <span class="tag">Formação</span>
+          <span class="tag gold">Online</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section-label">Por que escolher a Dra. Lucia</div>
+  <div class="diferenciais">
+    <div class="diferencial">
+      <div class="ico">🎓</div>
+      <div class="t">Doutora em Psicologia</div>
+      <div class="d">Formação acadêmica sólida com atuação clínica real</div>
+    </div>
+    <div class="diferencial">
+      <div class="ico">🎵</div>
+      <div class="t">Musicoterapia</div>
+      <div class="d">Uma das poucas psicólogas com esta especialização em Goiânia</div>
+    </div>
+    <div class="diferencial">
+      <div class="ico">🧩</div>
+      <div class="t">Eneagrama Avançado</div>
+      <div class="d">Aplicação clínica do Eneagrama em indivíduos, casais e equipes</div>
+    </div>
+    <div class="diferencial">
+      <div class="ico">📱</div>
+      <div class="t">Portal do Paciente</div>
+      <div class="d">Sistema digital próprio para acompanhar sua evolução terapêutica</div>
+    </div>
+  </div>
+
+  <div class="cta-final">
+    <h2>Vamos conversar?</h2>
+    <p>Entre em contato pelo WhatsApp para tirar dúvidas, conhecer os valores ou agendar sua primeira consulta.</p>
+    <a class="cta-agendar" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20agendar%20uma%20consulta" target="_blank">
+      🦋 Agendar pelo WhatsApp
+    </a>
+  </div>
+
+  <footer>
+    <a class="voltar-cartao" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cartao.html">
+      🦋 Ver Cartão de Contato & Redes
+    </a>
+    <span class="fwing">🦋</span>
+    <div class="crp">Dra. Lucia Kratz — Psicóloga · CRP 09/20590</div>
+  </footer>
+
+</div>
+
+<a class="wa-float" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20conhecer%20seus%20serviços" target="_blank" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M20.5 3.5A11 11 0 003.6 17.4L2 22l4.7-1.6a11 11 0 0013.8-16.9zM12 20.1a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.3 1.1 1.1-3.2-.2-.3A8.6 8.6 0 1120.6 12 8.6 8.6 0 0112 20.1zm4.7-6.4c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.5.1-.5.8-.7.9-.3.2-.6.1a7 7 0 01-2-1.3 7.6 7.6 0 01-1.4-1.8c-.1-.2 0-.4.1-.5l.4-.4a1.6 1.6 0 00.2-.4.5.5 0 000-.4c0-.1-.5-1.3-.7-1.8s-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.7 2.7 0 00-.8 2 4.7 4.7 0 001 2.5 10.6 10.6 0 004.1 3.6c.6.2 1 .4 1.4.5a3.4 3.4 0 001.5.1 2.5 2.5 0 001.6-1.2 2 2 0 00.2-1.2c-.1-.1-.3-.2-.6-.3z"/></svg>
+</a>
+
+</body>
+</html>
