@@ -7,38 +7,63 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#0f051a; --purple-grad:linear-gradient(135deg, #7B00C4, #4a0072);
-    --gold:#f0c96b; --text:#fff; --muted:#cbb3de;
+    --bg-deep: #0f051a;
+    --purple: #7B00C4;
+    --gold: #f0c96b;
+    --text: #ffffff;
   }
-  body { background: var(--bg); font-family: 'Poppins', sans-serif; color: var(--text); margin: 0; padding: 0; line-height: 1.6; }
-  .hero { padding: 80px 20px; text-align: center; background: radial-gradient(circle at center, #2a0e49 0%, #0f051a 80%); }
-  .brand { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 52px; color: #fff; margin-bottom: 10px; }
-  .cta-main { background: var(--purple-grad); color: #fff; padding: 20px 40px; border-radius: 50px; font-weight: 700; text-decoration: none; display: inline-block; margin-top: 20px; box-shadow: 0 10px 20px rgba(123,0,196,0.3); }
-  .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-  .feature-box { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-  h2 { color: var(--gold); margin-bottom: 15px; }
+  body { background: var(--bg-deep); font-family: 'Poppins', sans-serif; color: var(--text); margin: 0; padding: 0; }
+  
+  /* Seção Hero - Foco na Identidade do Sistema */
+  .hero { 
+    padding: 60px 20px; text-align: center; 
+    background: radial-gradient(circle at center, #2a0e49 0%, #0f051a 100%);
+  }
+  .brand { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 56px; color: #fff; margin-bottom: 5px; }
+  .tagline { letter-spacing: 6px; text-transform: uppercase; font-size: 11px; color: var(--gold); margin-bottom: 30px; }
+  h1 { font-size: 28px; margin-bottom: 20px; font-weight: 700; }
+  
+  /* Botão de Venda */
+  .cta-main { 
+    background: linear-gradient(90deg, var(--purple), #9d1fdc); 
+    color: #fff; padding: 20px 40px; border-radius: 16px; 
+    font-weight: 700; text-decoration: none; display: inline-block; 
+    margin-top: 20px; box-shadow: 0 10px 25px rgba(123,0,196,0.4);
+  }
+  
+  /* Seção Informativa */
+  .container { max-width: 500px; margin: 0 auto; padding: 40px 20px; }
+  .feature-box { 
+    background: rgba(255,255,255,0.03); padding: 25px; 
+    border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); 
+  }
+  
+  /* Footer com link de acesso */
+  footer { text-align: center; padding: 40px; font-size: 13px; color: #888; }
+  .login-link { color: var(--gold); text-decoration: none; border-bottom: 1px solid var(--gold); }
 </style>
 </head>
 <body>
 
 <section class="hero">
   <div class="brand">9&Self</div>
-  <p>Mapeamento Avançado de Personalidade</p>
+  <div class="tagline">Mapeamento Avançado de Personalidade</div>
   <h1>Descubra os padrões que comandam suas decisões</h1>
-  <a href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10" class="cta-main">INICIAR MEU MAPEAMENTO</a>
+  <p>Não é apenas um teste. É um método clínico para você assumir o controle do seu destino.</p>
+  
+  <a href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10" class="cta-main">QUERO MEU MAPEAMENTO</a>
 </section>
 
 <div class="container">
   <div class="feature-box">
-    <h2>Por que o 9&Self é diferente?</h2>
-    <p>Diferente de testes genéricos que oferecem apenas rótulos, o 9&Self integra a sabedoria do Eneagrama com a psicologia clínica, revelando não apenas quem você é, mas por que você age como age.</p>
-  </div>
-  
-  <div style="text-align: center; margin-top: 40px;">
-    <p>Já possui um código de acesso?</p>
-    <a href="URL_DA_SUA_PAGINA_DE_LOGIN" style="color: var(--gold);">Acesse aqui</a>
+    <h2 style="color: var(--gold); font-size: 18px; margin-bottom: 10px;">O que este mapeamento revela?</h2>
+    <p>Identificamos seus traços centrais, medos inconscientes e gatilhos de comportamento. Você receberá uma leitura técnica, unindo a sabedoria do Eneagrama à prática da psicologia clínica.</p>
   </div>
 </div>
+
+<footer>
+  <p>Já possui seu código de acesso? <a href="SUA_URL_DE_LOGIN" class="login-link">Acesse aqui</a></p>
+</footer>
 
 </body>
 </html>
