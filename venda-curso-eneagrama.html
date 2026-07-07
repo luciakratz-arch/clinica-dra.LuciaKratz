@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curso Eneagrama no Amor em Tempos de Crise | Dra. Lucia Kratz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#160021; --bg-card:#20083a; --bg-card-2:#2a0e49;
+    --purple:#7B00C4; --purple-light:#b24bf3; --gold:#f0c96b;
+    --text:#f6eefb; --text-muted:#cbb3de; --line:rgba(255,255,255,0.09);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(178,75,243,0.35), transparent),
+      radial-gradient(ellipse 60% 30% at 90% 100%, rgba(240,201,107,0.10), transparent),
+      var(--bg-deep);
+    font-family:'Poppins', sans-serif; color:var(--text); overflow-x:hidden;
+  }
+  .wrap{ max-width:640px; margin:0 auto; padding:40px 20px 70px; }
+  .eyebrow{ text-align:center; font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); font-weight:700; margin-bottom:14px; }
+  h1{ text-align:center; font-size:30px; font-weight:800; line-height:1.3; margin-bottom:24px; }
+  h1 span{ background:linear-gradient(90deg, var(--gold), #fff 45%, var(--purple-light)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+  .cta-btn{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    background:linear-gradient(90deg, var(--gold), #ffdd8a);
+    color:#3a2400; font-weight:700; font-size:16px;
+    text-decoration:none; padding:18px 20px; border-radius:16px;
+    box-shadow:0 10px 24px -8px rgba(240,201,107,0.55);
+    animation: pulseGlow 2.4s ease-in-out infinite;
+    margin-bottom:14px;
+  }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 10px 24px -8px rgba(240,201,107,0.55); }
+    50%{ box-shadow:0 10px 34px -6px rgba(240,201,107,0.9); }
+  }
+  @media (prefers-reduced-motion: reduce){ .cta-btn{ animation:none; } }
+
+  .cta-whats{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    border:1px solid var(--line); color:var(--text); background:var(--bg-card);
+    padding:14px 18px; border-radius:14px; text-decoration:none; font-size:14px; font-weight:500;
+    margin-bottom:36px;
+  }
+  .cta-whats svg{ width:18px; height:18px; fill:#25D366; }
+
+  .capa{
+    background:linear-gradient(135deg, var(--bg-card), var(--bg-card-2));
+    border:1px solid var(--line); border-radius:20px; padding:34px 24px; text-align:center; margin-bottom:32px;
+  }
+  .capa .icone{ font-size:44px; margin-bottom:10px; }
+  .capa .titulo{ font-family:'Dancing Script', cursive; font-weight:700; font-size:26px; color:var(--gold); margin-bottom:6px; }
+  .capa .sub{ font-size:13px; color:var(--text-muted); }
+
+  .beneficios h2{ font-size:22px; text-align:center; margin-bottom:20px; }
+  .beneficios{ margin-bottom:32px; }
+  .beneficio-grid{ display:flex; flex-direction:column; gap:10px; }
+  .beneficio{ display:flex; gap:12px; align-items:flex-start; background:var(--bg-card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .beneficio .ico{ font-size:22px; flex-shrink:0; }
+  .beneficio .t{ font-weight:600; font-size:14.5px; margin-bottom:3px; }
+  .beneficio .d{ font-size:13px; color:var(--text-muted); line-height:1.5; }
+
+  .dor{ background:var(--bg-card); border-radius:20px; border:1px solid var(--line); padding:32px 24px; margin-bottom:32px; }
+  .dor h2{ font-size:22px; text-align:center; margin-bottom:18px; }
+  .dor ul{ list-style:none; display:flex; flex-direction:column; gap:14px; }
+  .dor li{ display:flex; gap:12px; font-size:14.5px; color:var(--text-muted); line-height:1.6; }
+  .dor li b{ color:var(--text); }
+  .dor li .x{ color:#f87171; flex-shrink:0; font-size:18px; }
+
+  .autoridade{ background:linear-gradient(135deg, var(--bg-card), var(--bg-card-2)); border-radius:20px; border:1px solid var(--line); padding:32px 24px; text-align:center; margin-bottom:32px; }
+  .autoridade h3{ font-family:'Dancing Script', cursive; font-size:30px; color:var(--gold); }
+  .autoridade .cargo{ font-size:13px; color:var(--text-muted); margin:6px 0 14px; }
+  .autoridade p{ font-size:13.5px; color:var(--text-muted); line-height:1.7; }
+  .autoridade .crp{ font-size:11.5px; color:var(--text-muted); opacity:.8; margin-top:12px; }
+
+  .faq{ margin-bottom:32px; }
+  .faq h2{ font-size:22px; text-align:center; margin-bottom:20px; }
+  .faq-item{ background:var(--bg-card); border:1px solid var(--line); border-radius:14px; margin-bottom:10px; overflow:hidden; }
+  .faq-q{ padding:16px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:14px; font-weight:600; }
+  .faq-q .arrow{ transition:transform .25s; color:var(--gold); flex-shrink:0; margin-left:10px; }
+  .faq-item.open .faq-q .arrow{ transform:rotate(180deg); }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .3s ease; }
+  .faq-item.open .faq-a{ max-height:300px; }
+  .faq-a p{ padding:0 18px 16px; font-size:13.5px; color:var(--text-muted); line-height:1.65; }
+
+  .oferta-final{ text-align:center; }
+  .oferta-box{
+    background:linear-gradient(135deg, var(--purple), #9d1fdc); border-radius:22px;
+    padding:32px 22px; box-shadow:0 20px 40px -16px rgba(123,0,196,0.6);
+  }
+  .oferta-box .selo{ display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:20px; font-size:12px; margin-bottom:18px; }
+  .oferta-box h2{ font-size:20px; margin-bottom:8px; }
+  .oferta-box p{ font-size:13.5px; color:#f0e6fb; margin-bottom:20px; line-height:1.6; }
+  .oferta-box .cta-btn{ margin-bottom:0; }
+
+  footer{ text-align:center; padding-top:40px; }
+  .voltar-cartao{
+    display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); color:var(--text);
+    padding:13px 22px; border-radius:14px; text-decoration:none; font-size:13.5px; font-weight:500; background:var(--bg-card);
+  }
+  footer .fwing{ display:block; font-size:20px; margin:26px 0 8px; }
+  footer .crp{ font-size:11px; color:var(--text-muted); opacity:.75; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">🦋 CURSO ONLINE</div>
+  <h1>Transforme seu relacionamento através da <span>sabedoria do Eneagrama</span></h1>
+
+  <a class="cta-btn" href="https://pay.hotmart.com/R97548434J?off=towezuxh&checkoutMode=10&bid=1783114606337" target="_blank">
+    💞 Quero Fazer o Curso Agora
+  </a>
+  <a class="cta-whats" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20falar%20sobre%20o%20curso%20de%20Eneagrama%20no%20Amor" target="_blank">
+    <svg viewBox="0 0 24 24"><path d="M20.5 3.5A11 11 0 003.6 17.4L2 22l4.7-1.6a11 11 0 0013.8-16.9zM12 20.1a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.3 1.1 1.1-3.2-.2-.3A8.6 8.6 0 1120.6 12 8.6 8.6 0 0112 20.1z"/></svg>
+    Falar com a Dra. Lucia sobre o curso
+  </a>
+
+  <div class="capa">
+    <div class="icone">💞</div>
+    <div class="titulo">Eneagrama no Amor em Tempos de Crise</div>
+    <div class="sub">Curso online · Dra. Lucia Kratz</div>
+  </div>
+
+  <div class="dor">
+    <h2>Isso soa familiar?</h2>
+    <ul>
+      <li><span class="x">✕</span> <span>Vocês <b>brigam sempre pelos mesmos motivos</b>, sem entender por que aquilo se repete.</span></li>
+      <li><span class="x">✕</span> <span>Sente que fala uma língua e o parceiro(a) entende outra completamente diferente.</span></li>
+      <li><span class="x">✕</span> <span>A relação está passando por um momento difícil e falta clareza sobre <b>como se comunicar</b> sem piorar as coisas.</span></li>
+      <li><span class="x">✕</span> <span>Já tentou resolver sozinho(a), mas os mesmos padrões de conflito continuam voltando.</span></li>
+    </ul>
+  </div>
+
+  <div class="beneficios">
+    <h2>O que você leva do curso</h2>
+    <div class="beneficio-grid">
+      <div class="beneficio">
+        <div class="ico">🧭</div>
+        <div><div class="t">Descoberta do seu perfil no Eneagrama</div><div class="d">Entenda seus próprios padrões de comportamento dentro do relacionamento.</div></div>
+      </div>
+      <div class="beneficio">
+        <div class="ico">🧠</div>
+        <div><div class="t">Inteligência emocional aplicada</div><div class="d">Reconheça gatilhos e reações automáticas antes que gerem crise.</div></div>
+      </div>
+      <div class="beneficio">
+        <div class="ico">🤝</div>
+        <div><div class="t">Resolução de conflitos</div><div class="d">Ferramentas práticas para lidar com atritos sem desgastar a relação.</div></div>
+      </div>
+      <div class="beneficio">
+        <div class="ico">💑</div>
+        <div><div class="t">Comunicação em tempos de crise</div><div class="d">Como se comunicar com clareza mesmo nos momentos mais difíceis do casal.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="autoridade">
+    <h3>Lucia Kratz</h3>
+    <div class="cargo">Doutora em Psicologia · TCC, Musicoterapia e Neuromodulação</div>
+    <p>Com formação e atuação clínica dedicadas ao entendimento profundo do comportamento humano, a Dra. Lucia Kratz une rigor científico à aplicação prática do Eneagrama nas relações, ajudando casais a se comunicarem com mais consciência mesmo nos momentos mais difíceis.</p>
+    <div class="crp">CRP 09/20590 · Goiânia, GO</div>
+  </div>
+
+  <div class="faq">
+    <h2>Perguntas Frequentes</h2>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Como recebo o acesso ao curso? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Assim que o pagamento é confirmado pela Hotmart, você recebe o acesso por e-mail com as instruções de acesso às aulas.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">O curso é feito em dupla ou individual? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Você pode fazer sozinho(a) e aplicar na relação, ou assistir junto com seu parceiro(a) — o conteúdo funciona nos dois formatos.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">É seguro comprar pela Hotmart? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Sim. A Hotmart é uma das maiores plataformas de produtos digitais da América Latina, com checkout criptografado e garantia de 7 dias prevista em lei.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Tenho dúvida antes de comprar, e agora? <span class="arrow">▾</span></div>
+      <div class="faq-a"><p>Fala diretamente com a Dra. Lucia pelo WhatsApp — tem um botão logo no topo da página só pra isso.</p></div>
+    </div>
+  </div>
+
+  <div class="oferta-final">
+    <div class="oferta-box">
+      <div class="selo">🔒 Compra segura via Hotmart</div>
+      <h2>Eneagrama no Amor em Tempos de Crise</h2>
+      <p>Confira o valor e as formas de pagamento diretamente no checkout seguro da Hotmart.</p>
+      <a class="cta-btn" href="https://pay.hotmart.com/R97548434J?off=towezuxh&checkoutMode=10&bid=1783114606337" target="_blank">
+        💞 Quero Fazer o Curso Agora
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <a class="voltar-cartao" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cartao.html">
+      🦋 Ver Cartão de Contato & Redes
+    </a>
+    <span class="fwing">🦋</span>
+    <div class="crp">Dra. Lucia Kratz — Psicóloga · CRP 09/20590</div>
+  </footer>
+
+</div>
+
+<script>
+function toggleFaq(el){
+  const item = el.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if(!wasOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>
