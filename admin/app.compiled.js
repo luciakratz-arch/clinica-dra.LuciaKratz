@@ -238,7 +238,41 @@ const mesInicioPacote=new Date(dataInicio+"T00:00:00").toLocaleDateString("pt-BR
 // Se pendente, o gatilho será disparado exclusivamente em marcarPacotePago()
 const pagoImediato=(formPacote.statusPag||"pendente")==="recebido";if(tipoVenda&&pagoImediato){await registrarComissao({tipo:"Pacote",valor:vTotal,pacienteNome:pac?.nome||"",tipoVenda,pacoteId:pacRef.id});}// Registra repasse da parceira → coleção exclusiva repasses_parcerias
 // ID derivado = "REP_" + pacoteId → idempotente
-if(eParceria&&parcSel){const vParceira=parseFloat((vTotal*percParc/100).toFixed(2));const mesRefParc=new Date().toISOString().slice(0,7);const repDocId="REP_"+pacRef.id;await db.collection("repasses_parcerias").doc(repDocId).set({tipo:"Parceria — Repasse",tipoVenda:null,perc:percParc,valorBase:vTotal,valorComissao:vParceira,pacienteNome:pac?.nome||"",responsavel:parcSel.nome||"Parceira",parceiraId:parcSel.id,mesRef:mesRefParc,pacoteId:pacRef.id,status:"pendente",createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}// Cria sessões na agenda
+if(eParceria&&parcSel){const vParceira=parseFloat((vTotal*percParc/100).toFixed(2));const mesRefParc=new Date().toISOString().slice(0,7);const repDocId="REP_"+pacRef.id;await db.collection("repasses_parcerias").doc(repDocId).set({tipo:"Parceria — Repasse",tipoVenda:null,perc:percParc,valorBase:vTotal,valorComissao:vParceira,pacienteNome:pac?.nome||"",responsavel:parcSel.nome||"Parceira",parceiraId:parcSel.id,mesRef:mesRefParc,pacoteId:pacRef.id,status:"pendente",createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});}// ── E-MAIL AUTOMÁTICO via extensão ext-firestore-send-email ──────
+// Só envia se o paciente tiver e-mail cadastrado
+const emailPaciente=pac?.email||pac?.emailPaciente||"";if(emailPaciente){const dataFmtEmail=new Date(dataInicio+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});await db.collection("mail").add({to:emailPaciente,message:{subject:`✅ Seu pacote de sessões foi confirmado — Dra. Lucia Kratz`,html:`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0ff;margin:0;padding:20px;}
+.c{max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;}
+.h{background:linear-gradient(135deg,#7B00C4,#5a0090);padding:32px;color:white;text-align:center;}
+.b{padding:28px;}.box{background:#f5f0ff;border-radius:12px;padding:18px;border-left:4px solid #7B00C4;margin-bottom:20px;}
+.row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;}
+.label{color:#6b7280;}.val{font-weight:600;color:#111827;}
+.btn{display:inline-block;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;margin:4px;}
+.f{background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #f3f4f6;}
+</style></head><body><div class="c">
+<div class="h"><div style="font-size:28px;margin-bottom:8px">🦋</div>
+<h1 style="margin:0;font-size:22px">Dra. Lucia Kratz</h1>
+<p style="margin:8px 0 0;opacity:.85;font-size:13px">CRP 09/20590 · Psicóloga Doutora</p></div>
+<div class="b">
+<p style="font-size:16px;color:#374151;line-height:1.6">Olá, <strong>${pac?.nome||"Paciente"}</strong>! 💜<br><br>
+Seu pacote de sessões de psicoterapia foi confirmado com sucesso.</p>
+<div class="box"><h3 style="margin:0 0 12px;color:#7B00C4;font-size:14px">📋 Detalhes do pacote</h3>
+<div class="row"><span class="label">Início</span><span class="val">${dataFmtEmail}</span></div>
+<div class="row"><span class="label">Total de sessões</span><span class="val">${total} sessão(ões)</span></div>
+${horario?`<div class="row"><span class="label">Horário</span><span class="val">${horario}</span></div>`:""}
+<div class="row"><span class="label">Recorrência</span><span class="val">${recorrencia||"A combinar"}</span></div>
+<div class="row"><span class="label">Valor total</span><span class="val">R$ ${vTotal.toFixed(2).replace(".",",")}</span></div>
+</div>
+<div style="background:#f0fdf4;border-radius:12px;padding:16px;border-left:4px solid #059669;margin-bottom:20px;font-size:13px;color:#065f46;line-height:1.6">
+💡 Para reagendar ou tirar dúvidas, entre em contato pelo WhatsApp da clínica.
+</div>
+<div style="text-align:center;margin:20px 0">
+<a href="https://wa.me/5562994644950" class="btn" style="background:#25D366;color:white">💬 WhatsApp da Clínica</a>
+<a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica" class="btn" style="background:#7B00C4;color:white">🌐 Acessar Portal</a>
+</div></div>
+<div class="f"><p>Este e-mail foi enviado automaticamente pelo sistema da Dra. Lucia Kratz.</p>
+<p>Goiânia, GO · CRP 09/20590</p></div></div></body></html>`}});}// ─────────────────────────────────────────────────────────────────
+// Cria sessões na agenda
 const jaPago=(formPacote.statusPag||"pendente")==="recebido";const batch=db.batch();datas.forEach((data,i)=>{const ref=db.collection("clinica_sessoes").doc();const dia=new Date(data+"T00:00:00").getDay().toString();const horaDia=(horariosPorDia||{})[dia]||horario;batch.set(ref,{pacienteId,pacienteNome:pac?.nome||"",data,hora:horaDia,duracao:"50",tipo:"Psicoterapia",status:"agendado",numSessao:i+1,pacoteId:pacRef.id,valorSessao:vSessao,pagamento:jaPago?"pago":"pendente",valorPago:jaPago?vSessao:0,formaPagamento:formPacote.formaPag||"",dataPagamento:jaPago?formPacote.dataPagamento||new Date().toISOString().slice(0,10):"",obs:"",createdAt:firebase.firestore.FieldValue.serverTimestamp()});});await batch.commit();// Social: lança comissão estagiária automaticamente
 if((formPacote.tipoAtendimento||"particular")==="social"){const hoje=new Date().toISOString().slice(0,10);const mesRef=hoje.slice(0,7);const vSupervisao=parseFloat(formPacote.valorSupervisaoSocial||40);const vEstagiaria=parseFloat(formPacote.valorEstagiariaSocial||20);const snapEst=await db.collection("clinica_parceiras").where("tipo","==","estagiaria").limit(1).get();const nomeEst=!snapEst.empty?snapEst.docs[0].data().nome:"Estagiária";const batchSoc=db.batch();batchSoc.set(db.collection("clinica_lancamentos").doc(),{tipo_lancamento:"social",tipo:`${pac?.nome||""} — Projeto Social`,descricao:`${pac?.nome||""} — Projeto Social`,pacienteNome:pac?.nome||"",valor:vSupervisao,data:dataInicio,mesRef,formaPag:formPacote.formaPag||"PIX",status:formPacote.statusPag||"pendente",origem:"pacote-social",createdAt:firebase.firestore.FieldValue.serverTimestamp()});batchSoc.set(db.collection("repasses_parcerias").doc(),{tipo:"Social — Estagiária",tipoVenda:"primeira",perc:0,valorBase:vSupervisao,valorComissao:vEstagiaria,pacienteNome:pac?.nome||"",responsavel:nomeEst,mesRef,status:"pendente",createdAt:firebase.firestore.FieldValue.serverTimestamp()});await batchSoc.commit();}setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);}catch(e){console.error("Erro ao criar pacote:",e);alert("⚠️ Erro ao criar pacote: "+e.message+"\n\nVerifique se o pacote e as sessões foram criados corretamente na aba Pacotes & Sessões e na Agenda antes de tentar novamente.");}finally{setSalvando(false);}}async function atualizarSessao(id,campos){await db.collection("clinica_sessoes").doc(id).update(campos);}// ── ETAPA 3: Remarcação/Compensação ─────────────────────────────────────
 // Altera APENAS data + status. Jamais toca em valor, pagamento ou lançamentos.
