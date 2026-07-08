@@ -4052,7 +4052,7 @@ function FinanceiroClinica() {
     const emailPaciente = pac?.email || pac?.emailPaciente || "";
     if(emailPaciente) {
       const dataFmtEmail = new Date(dataInicio+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
-      await db.collection("mail").add({
+      await db.collection("nr1map_emails").add({
         to: emailPaciente,
         message: {
           subject: `✅ Seu pacote de sessões foi confirmado — Dra. Lucia Kratz`,
