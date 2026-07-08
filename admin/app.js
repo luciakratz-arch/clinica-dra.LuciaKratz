@@ -6570,9 +6570,14 @@ function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B0
                   <label className="form-label">Observação</label>
                   <input className="form-input" value={formLanc.obs} onChange={e=>setFormLanc({...formLanc,obs:e.target.value})} placeholder="Opcional"/>
                 </div>
-                <div style={{gridColumn:"span 2",display:"flex",gap:8,justifyContent:"flex-end"}}>
-                  <button onClick={()=>{setModal(false);setEditando(null);}} className="btn btn-ghost">Cancelar</button>
-                  <button onClick={salvarLanc} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+                <div style={{gridColumn:"span 2",display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+                  {editando&&(
+                    <button onClick={async()=>{if(confirm("Excluir este lançamento?")){await excluir(editando);setModal(false);setEditando(null);}}} style={{background:"none",border:"1px solid #dc2626",color:"#dc2626",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-body)"}}>🗑️ Excluir</button>
+                  )}
+                  <div style={{display:"flex",gap:8,marginLeft:"auto"}}>
+                    <button onClick={()=>{setModal(false);setEditando(null);}} className="btn btn-ghost">Cancelar</button>
+                    <button onClick={salvarLanc} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+                  </div>
                 </div>
               </div>
             ):(
@@ -6681,7 +6686,20 @@ function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B0
                 </div>
               ))}
             </div>
-            <button onClick={()=>setModalMover(null)} className="btn btn-ghost" style={{width:"100%"}}>Cancelar</button>
+            <div style={{borderTop:"1px solid #fee2e2",paddingTop:14,marginTop:4,display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#dc2626",marginBottom:2}}>🗑️ Excluir</div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={async()=>{if(confirm("Excluir só este lançamento?")){await excluir(modalMover.lanc.id);setModalMover(null);}}} disabled={!!movendoId} style={{flex:1,padding:"9px",border:"1px solid #fca5a5",borderRadius:10,background:"#fef2f2",cursor:"pointer",fontSize:13,fontWeight:600,color:"#dc2626",fontFamily:"var(--font-body)"}}>
+                  Excluir só este
+                </button>
+                {modalMover.isRecorrente&&modalMover.lanc.recorrenteId&&(
+                  <button onClick={async()=>{if(confirm("Excluir este e desativar o recorrente?")){await excluir(modalMover.lanc.id);await db.collection(colRecorr).doc(modalMover.lanc.recorrenteId).update({ativo:false});setModalMover(null);}}} disabled={!!movendoId} style={{flex:1,padding:"9px",border:"2px solid #dc2626",borderRadius:10,background:"#fef2f2",cursor:"pointer",fontSize:13,fontWeight:700,color:"#dc2626",fontFamily:"var(--font-body)"}}>
+                    Excluir + desativar recorrente
+                  </button>
+                )}
+              </div>
+            </div>
+            <button onClick={()=>setModalMover(null)} className="btn btn-ghost" style={{width:"100%",marginTop:8}}>Cancelar</button>
           </div>
         </div>
       )}
