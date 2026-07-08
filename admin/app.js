@@ -4436,36 +4436,7 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
   return(
     <div>
       {/* ── Modal Auditoria / Higienização Etapa 1 ── */}
-      {modalAuditoria&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:700,padding:20}}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:480}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <h3 style={{margin:0,color:"#b45309"}}>🔧 Higienização — Maio/2026</h3>
-              <button onClick={()=>setModalAuditoria(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20}}>✕</button>
-            </div>
-            <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6}}>
-              Esta operação irá:<br/>
-              • Deletar <b>lançamentos de sessão órfãos</b> — sessões de pacote que geraram lançamento próprio indevido<br/>
-              • Remover duplicatas de <b>Ronei</b> e <b>Heitor</b><br/>
-              • Categorizar <b>lançamentos Sem Nome</b> como "Despesas Administrativas/Clínica"
-            </div>
-            {auditLog.length > 0 && (
-              <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:8,padding:14,marginBottom:16}}>
-                <div style={{fontWeight:700,fontSize:12,color:"#166534",marginBottom:6}}>✅ Resultado:</div>
-                {auditLog.map((l,i)=><div key={i} style={{fontSize:12,color:"#374151",marginBottom:2}}>• {l}</div>)}
-              </div>
-            )}
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModalAuditoria(false)}>Fechar</button>
-              {auditLog.length===0&&(
-                <button className="btn btn-purple" style={{background:"#b45309"}} onClick={executarHigienizacao} disabled={auditando}>
-                  {auditando?"Executando...":"⚡ Executar Higienização"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
       {modalEditarPacote&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={e=>{if(e.target===e.currentTarget)setModalEditarPacote(null);}}>
           <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto"}}>
@@ -4643,11 +4614,7 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
           </button>
         ))}
         {/* Botão de higienização — Etapa 1 */}
-        <button onClick={()=>{setAuditLog([]);setModalAuditoria(true);}}
-          style={{marginLeft:"auto",padding:"10px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,color:"#b45309",borderBottom:"2px solid transparent",fontWeight:500,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:5,flexShrink:0}}
-          title="Higienizar duplicatas e lançamentos sem nome — Maio/2026">
-          <Icon name="tool" size={13}/>🔧 Higienizar
-        </button>
+
         {(()=>{ return null; })()}
       </div>
 
