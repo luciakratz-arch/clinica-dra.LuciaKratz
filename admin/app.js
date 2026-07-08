@@ -4831,30 +4831,29 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                     <div style={{fontSize:11,color:"#6b7280"}}>Remove apenas {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
                   </button>
                   <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
-                    const chave = modalExcluirLanc.descricaoRecorrente||modalExcluirLanc.tipo;
+                    if(!modalExcluirLanc.pacoteId){alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");return;}
+                    if(!confirm("Excluir este e todos os lançamentos futuros deste pacote?"))return;
                     const snap = await db.collection("clinica_lancamentos").get();
                     const futuros = snap.docs.filter(d=>{
                       const dd=d.data();
-                      return (dd.descricaoRecorrente===chave||dd.tipo===chave)&&dd.data>=modalExcluirLanc.data;
+                      return dd.pacoteId===modalExcluirLanc.pacoteId && dd.data>=modalExcluirLanc.data;
                     });
                     const b=db.batch();futuros.forEach(d=>b.delete(d.ref));await b.commit();
                     setModalExcluirLanc(null);
                   }}>
                     <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Este e todos os futuros</div>
-                    <div style={{fontSize:11,color:"#6b7280"}}>Remove "{modalExcluirLanc.tipo}" a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove lançamentos deste pacote a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
                   </button>
                   <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
-                    const chave = modalExcluirLanc.descricaoRecorrente||modalExcluirLanc.tipo;
+                    if(!modalExcluirLanc.pacoteId){alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");return;}
+                    if(!confirm("Excluir TODOS os lançamentos deste pacote no ano inteiro?"))return;
                     const snap = await db.collection("clinica_lancamentos").get();
-                    const todos = snap.docs.filter(d=>{
-                      const dd=d.data();
-                      return dd.descricaoRecorrente===chave||dd.tipo===chave;
-                    });
+                    const todos = snap.docs.filter(d=>d.data().pacoteId===modalExcluirLanc.pacoteId);
                     const b=db.batch();todos.forEach(d=>b.delete(d.ref));await b.commit();
                     setModalExcluirLanc(null);
                   }}>
                     <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Todos — o ano inteiro</div>
-                    <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os meses de "{modalExcluirLanc.tipo}"</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os lançamentos deste pacote</div>
                   </button>
                 </div>
                 <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>setModalExcluirLanc(null)}>Cancelar</button>
