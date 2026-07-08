@@ -8003,6 +8003,7 @@ function Comissoes({ user }) {
                 // Registra também como lançamento financeiro (despesa)
                 await db.collection("clinica_lancamentos").add({
                   tipo:"despesa",
+                  tipo_lancamento:"despesa",
                   categoria:"Salários",
                   descricao:`Gratificação — ${config.nomeSecretaria} — ${obsGrat.trim()}`,
                   valor,
