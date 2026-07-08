@@ -6430,7 +6430,7 @@ function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B0
                         )}
                         {!l._virtual&&(<>
                           <button onClick={()=>{ setFormLanc({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",parcelas:"1"}); setEditando(l.id); setAbaModal("avulso"); setModal("lanc"); }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",padding:"3px 6px"}} title="Editar"><Icon name="pencil" size={13}/></button>
-                          <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--danger)",padding:"3px 6px"}} title="Excluir"><Icon name="trash-2" size={13}/></button>
+                          <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"3px 6px"}} title="Excluir"><Icon name="trash-2" size={13}/></button>
                         </>)}
                         <button onClick={()=>setModalMover({lanc:l._virtual?{...l,id:l._recObj.id}:l,isRecorrente:true})} title="Mover para outro financeiro" style={{background:"#f3f0ff",border:"none",cursor:"pointer",color:"#7B00C4",padding:"3px 8px",borderRadius:6,fontSize:11,fontWeight:600}}>↗ Mover</button>
                       </div>
@@ -6480,7 +6480,7 @@ function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B0
                         )}
                         {!l._virtual&&(<>
                           <button onClick={()=>{ setFormLanc({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",parcelas:"1"}); setEditando(l.id); setAbaModal("avulso"); setModal("lanc"); }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",padding:"3px 6px"}} title="Editar"><Icon name="pencil" size={13}/></button>
-                          <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--danger)",padding:"3px 6px"}} title="Excluir"><Icon name="trash-2" size={13}/></button>
+                          <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"3px 6px"}} title="Excluir"><Icon name="trash-2" size={13}/></button>
                         </>)}
                         <button onClick={()=>setModalMover({lanc:l._virtual?{...l,id:l._recObj.id}:l,isRecorrente:true})} title="Mover para outro financeiro" style={{background:"#f3f0ff",border:"none",cursor:"pointer",color:"#7B00C4",padding:"3px 8px",borderRadius:6,fontSize:11,fontWeight:600}}>↗ Mover</button>
                       </div>
