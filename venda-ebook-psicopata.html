@@ -118,6 +118,16 @@
   .wa-float svg{ width:28px; height:28px; fill:#fff; }
   @keyframes floatBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @media(prefers-reduced-motion:reduce){ .wa-float{ animation:none; } }
+
+  .cta-fisico{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    background:transparent; border:1px solid rgba(255,255,255,0.2);
+    color:var(--text); font-weight:600; font-size:14px;
+    text-decoration:none; padding:14px 20px; border-radius:6px;
+    margin-top:10px; width:100%;
+  }
+  .cta-fisico svg{ width:17px; height:17px; fill:#25D366; flex-shrink:0; }
+  .cta-fisico .preco{ font-size:11px; color:rgba(255,255,255,0.6); margin-left:4px; }
 </style>
 </head>
 <body>
@@ -224,6 +234,10 @@
       <p>Confira o valor e as formas de pagamento diretamente no checkout seguro da Hotmart.</p>
       <a class="cta-btn" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank">
         Quero o E-book Agora
+      </a>
+      <a class="cta-fisico" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20comprar%20o%20livro%20físico%20Meu%20Companheiro%20é%20um%20Psicopata%2C%20SERÁ%3F%20pelo%20valor%20de%20R%2459%2C90%20%2B%20frete" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M20.5 3.5A11 11 0 003.6 17.4L2 22l4.7-1.6a11 11 0 0013.8-16.9zM12 20.1a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.3 1.1 1.1-3.2-.2-.3A8.6 8.6 0 1120.6 12 8.6 8.6 0 0112 20.1z"/></svg>
+        Comprar livro físico via WhatsApp <span class="preco">R$ 59,90 + frete</span>
       </a>
     </div>
   </div>
