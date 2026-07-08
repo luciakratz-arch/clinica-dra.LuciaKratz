@@ -531,7 +531,6 @@ const NAV_PSICOLOGA = [
   ]},
   { grupo:"💰 Financeiro", itens:[
     {id:"fin-clinica", label:"Fin. Clínica",   icon:"dollar-sign"},
-    {id:"comissoes",   label:"Comissões",      icon:"percent"},
     {id:"fin-pessoal", label:"Fin. Pessoal",   icon:"home"},
   ]},
   { grupo:"⚙️ Configurações", itens:[
@@ -3609,7 +3608,7 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
   );
 }
 
-function FinanceiroClinica() {
+function FinanceiroClinica({ user }) {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [lancamentos, setLancamentos] = useState([]);
   const [pacotes, setPacotes] = useState([]);
@@ -4636,7 +4635,7 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
 
       {/* Abas */}
       <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none",flexShrink:0}}>
-        {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"]].map(([id,lbl,ic])=>(
+        {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"],["comissoes","Comissões","percent"]].map(([id,lbl,ic])=>(
           <button key={id} onClick={()=>setAba(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:aba===id?"var(--purple)":"var(--gray-600)",borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
             <Icon name={ic} size={15}/>{lbl}
           </button>
@@ -5283,6 +5282,11 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
             );
           })}
         </div>
+      )}
+
+      {/* ABA COMISSÕES — embutida no Fin. Clínica para a psicóloga */}
+      {aba==="comissoes"&&(
+        <Comissoes user={user}/>
       )}
 
       {/* MODAL ESCOLHA */}
