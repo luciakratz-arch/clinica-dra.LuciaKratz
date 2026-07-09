@@ -1,4 +1,4 @@
-  // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  ÁREA ADMINISTRATIVA — DRA. LUCIA KRATZ  
 //  app.js — Etapa 2: Cadastro completo de pacientes
 // ═══════════════════════════════════════════════════════
@@ -6695,6 +6695,7 @@ function FinanceiroEmpresa({ somenteLeitura=false }) {
 function PainelGeralFinanceiro() {
   const [dados, setDados] = useState({clinica:[],pessoal:[],empresa:[]});
   const [ano, setAno]     = useState(new Date().getFullYear()+"");
+  const [mesSel, setMesSel] = useState(new Date().toISOString().slice(0,7));
   const [loading, setLoading] = useState(true);
 
   useEffect(()=>{
@@ -6706,42 +6707,37 @@ function PainelGeralFinanceiro() {
   },[]);
 
   function fmt(v){ return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
-  function mesLabel(m){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short"}); }catch(e){return m;} }
+  function mesLabel(m,longo){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:longo?"long":"short"}); }catch(e){return m;} }
   function isRec(l){ return l.tipo!=="despesa"&&l.tipo_lancamento!=="despesa"; }
   function isDes(l){ return l.tipo==="despesa"||l.tipo_lancamento==="despesa"; }
   function isPago(l){ return l.status==="pago"||l.status==="recebido"; }
 
   const anoAtual = new Date().getFullYear();
+  const mesAtual = new Date().toISOString().slice(0,7);
   const anosDisp = [...new Set([...dados.clinica,...dados.pessoal,...dados.empresa].map(l=>l.data?.slice(0,4)).filter(Boolean).map(Number))];
   const anos = [...new Set([...anosDisp,anoAtual-1,anoAtual,anoAtual+1])].sort().map(String);
-  const mesAtual = new Date().toISOString().slice(0,7);
   const mesesAno = Array.from({length:12},(_,i)=>`${ano}-${String(i+1).padStart(2,"0")}`);
-
-  function calcMes(lista, mes){
-    const l = lista.filter(x=>x.data?.startsWith(mes));
-    return {
-      rec: l.filter(x=>isRec(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
-      des: l.filter(x=>isDes(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
-      pend: l.filter(x=>x.status==="pendente").reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
-    };
-  }
-  function calcAno(lista){
-    const l = lista.filter(x=>x.data?.startsWith(ano));
-    return {
-      rec: l.filter(x=>isRec(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
-      des: l.filter(x=>isDes(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
-      pend: l.filter(x=>x.status==="pendente").reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
-    };
-  }
-
   const todas = [...dados.clinica,...dados.pessoal,...dados.empresa];
-  const aCl=calcAno(dados.clinica), aPs=calcAno(dados.pessoal), aEm=calcAno(dados.empresa);
+
+  function calcPeriodo(lista, prefixo){
+    const l = lista.filter(x=>x.data?.startsWith(prefixo));
+    return {
+      rec: l.filter(x=>isRec(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
+      des: l.filter(x=>isDes(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
+      pend: l.filter(x=>x.status==="pendente").reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
+    };
+  }
+
+  // Anual
+  const aCl=calcPeriodo(dados.clinica,ano), aPs=calcPeriodo(dados.pessoal,ano), aEm=calcPeriodo(dados.empresa,ano);
   const totalRec=aCl.rec+aPs.rec+aEm.rec, totalDes=aCl.des+aPs.des+aEm.des, totalSaldo=totalRec-totalDes;
   const totalPend=aCl.pend+aPs.pend+aEm.pend;
-  const mCl=calcMes(dados.clinica,mesAtual), mPs=calcMes(dados.pessoal,mesAtual), mEm=calcMes(dados.empresa,mesAtual);
+
+  // Mês selecionado
+  const mCl=calcPeriodo(dados.clinica,mesSel), mPs=calcPeriodo(dados.pessoal,mesSel), mEm=calcPeriodo(dados.empresa,mesSel);
   const mesRec=mCl.rec+mPs.rec+mEm.rec, mesDes=mCl.des+mPs.des+mEm.des, mesSaldo=mesRec-mesDes;
 
-  // Dados do gráfico por mês (todos os financeiros)
+  // Gráfico por mês
   const grafico = mesesAno.map(m=>{
     const rec = todas.filter(l=>l.data?.startsWith(m)&&isRec(l)&&isPago(l)).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
     const des = todas.filter(l=>l.data?.startsWith(m)&&isDes(l)&&isPago(l)).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
@@ -6762,56 +6758,51 @@ function PainelGeralFinanceiro() {
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
           {anos.map(a=>(
-            <button key={a} onClick={()=>setAno(a)} style={{padding:"6px 14px",borderRadius:20,border:"none",background:ano===a?"var(--purple)":"var(--gray-100)",color:ano===a?"white":"var(--gray-600)",fontWeight:ano===a?700:400,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>{a}</button>
+            <button key={a} onClick={()=>{setAno(a);setMesSel(a===ano?mesSel:a+"-01");}} style={{padding:"6px 14px",borderRadius:20,border:"none",background:ano===a?"var(--purple)":"var(--gray-100)",color:ano===a?"white":"var(--gray-600)",fontWeight:ano===a?700:400,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>{a}</button>
           ))}
         </div>
       </div>
 
-      {/* CARDS MÊS ATUAL — PRIMEIRO */}
-      <div style={{marginBottom:8,fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:1}}>
-        📅 Mês atual — {new Date(mesAtual+"-02").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:28}}>
-        <div className="card" style={{padding:18,background:mesSaldo>=0?"#f0fdf4":"#fef2f2",border:`1px solid ${mesSaldo>=0?"#86efac":"#fca5a5"}`}}>
-          <div style={{fontSize:11,fontWeight:600,color:mesSaldo>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo do Mês</div>
-          <div style={{fontSize:20,fontWeight:700,color:mesSaldo>=0?"#059669":"#dc2626"}}>{fmt(mesSaldo)}</div>
+      {/* CARDS ANUAIS */}
+      <div style={{marginBottom:8,fontSize:11,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:1}}>Acumulado {ano}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:24}}>
+        <div className="card" style={{padding:18,background:totalSaldo>=0?"#f0fdf4":"#fef2f2",border:`1px solid ${totalSaldo>=0?"#86efac":"#fca5a5"}`}}>
+          <div style={{fontSize:11,fontWeight:600,color:totalSaldo>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo Total</div>
+          <div style={{fontSize:20,fontWeight:700,color:totalSaldo>=0?"#059669":"#dc2626"}}>{fmt(totalSaldo)}</div>
+          <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>+{fmt(totalRec)} / -{fmt(totalDes)}</div>
         </div>
         <div className="card" style={{padding:18}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#059669",marginBottom:4}}>Receitas do Mês</div>
-          <div style={{fontSize:20,fontWeight:700,color:"#059669"}}>{fmt(mesRec)}</div>
-          <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>🏥{fmt(mCl.rec)} · 🏠{fmt(mPs.rec)} · 🏢{fmt(mEm.rec)}</div>
+          <div style={{fontSize:11,fontWeight:600,color:"#059669",marginBottom:4}}>Receitas {ano}</div>
+          <div style={{fontSize:20,fontWeight:700,color:"#059669"}}>{fmt(totalRec)}</div>
         </div>
         <div className="card" style={{padding:18}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:4}}>Despesas do Mês</div>
-          <div style={{fontSize:20,fontWeight:700,color:"#dc2626"}}>{fmt(mesDes)}</div>
-          <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>🏥{fmt(mCl.des)} · 🏠{fmt(mPs.des)} · 🏢{fmt(mEm.des)}</div>
+          <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:4}}>Despesas {ano}</div>
+          <div style={{fontSize:20,fontWeight:700,color:"#dc2626"}}>{fmt(totalDes)}</div>
         </div>
         <div className="card" style={{padding:18,background:"#fffbeb",border:"1px solid #fde68a"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente ({ano})</div>
+          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente {ano}</div>
           <div style={{fontSize:20,fontWeight:700,color:"#d97706"}}>{fmt(totalPend)}</div>
         </div>
       </div>
 
-      {/* GRÁFICO RECEITAS VS DESPESAS POR MÊS */}
+      {/* GRÁFICO — clicável por mês */}
       <div className="card" style={{padding:20,marginBottom:24}}>
-        <div style={{fontWeight:700,fontSize:14,marginBottom:16}}>📊 Receitas vs Despesas — {ano}</div>
-        <div style={{display:"flex",alignItems:"flex-end",gap:6,overflowX:"auto",paddingBottom:8}}>
-          {grafico.map((g,i)=>{
-            const hRec = maxVal>0 ? (g.rec/maxVal)*altBar : 0;
-            const hDes = maxVal>0 ? (g.des/maxVal)*altBar : 0;
+        <div style={{fontWeight:700,fontSize:14,marginBottom:4}}>📊 Receitas vs Despesas — {ano}</div>
+        <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:16}}>Clique em um mês para ver o detalhamento abaixo</div>
+        <div style={{display:"flex",alignItems:"flex-end",gap:4,overflowX:"auto",paddingBottom:8}}>
+          {grafico.map((g)=>{
+            const hRec = maxVal>0?(g.rec/maxVal)*altBar:0;
+            const hDes = maxVal>0?(g.des/maxVal)*altBar:0;
+            const sel = g.mes===mesSel;
             const temDados = g.rec>0||g.des>0;
             return (
-              <div key={g.mes} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:48,flex:1}}>
+              <div key={g.mes} onClick={()=>setMesSel(g.mes)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:52,flex:1,cursor:"pointer",padding:"6px 4px",borderRadius:8,background:sel?"#f3f0ff":"transparent",border:sel?"2px solid var(--purple)":"2px solid transparent",transition:".15s"}}>
                 <div style={{display:"flex",alignItems:"flex-end",gap:3,height:altBar}}>
-                  <div title={`Receitas: ${fmt(g.rec)}`} style={{width:18,height:Math.max(hRec,2),background:"#059669",borderRadius:"4px 4px 0 0",transition:".3s",opacity:temDados?1:0.2}}/>
-                  <div title={`Despesas: ${fmt(g.des)}`} style={{width:18,height:Math.max(hDes,2),background:"#dc2626",borderRadius:"4px 4px 0 0",transition:".3s",opacity:temDados?1:0.2}}/>
+                  <div title={`Receitas: ${fmt(g.rec)}`} style={{width:18,height:Math.max(hRec,2),background:"#059669",borderRadius:"4px 4px 0 0",opacity:temDados?1:0.15}}/>
+                  <div title={`Despesas: ${fmt(g.des)}`} style={{width:18,height:Math.max(hDes,2),background:"#dc2626",borderRadius:"4px 4px 0 0",opacity:temDados?1:0.15}}/>
                 </div>
-                {g.saldo!==0&&temDados&&(
-                  <div style={{fontSize:9,fontWeight:700,color:g.saldo>=0?"#059669":"#dc2626",whiteSpace:"nowrap"}}>
-                    {g.saldo>=0?"+":""}{fmt(g.saldo).replace("R$","").trim()}
-                  </div>
-                )}
-                <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:g.mes===mesAtual?700:400}}>{mesLabel(g.mes)}</div>
+                {temDados&&<div style={{fontSize:9,fontWeight:700,color:g.saldo>=0?"#059669":"#dc2626",whiteSpace:"nowrap"}}>{g.saldo>=0?"+":""}{fmt(g.saldo).replace("R$","").trim()}</div>}
+                <div style={{fontSize:11,color:sel?"var(--purple)":"var(--text-muted)",fontWeight:sel?700:400}}>{mesLabel(g.mes)}</div>
               </div>
             );
           })}
@@ -6822,7 +6813,48 @@ function PainelGeralFinanceiro() {
         </div>
       </div>
 
-      {/* RESUMO ANUAL POR FINANCEIRO */}
+      {/* DETALHAMENTO DO MÊS SELECIONADO */}
+      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:24,border:"2px solid var(--purple)"}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:700,fontSize:14,background:"#f3f0ff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span>📅 {mesLabel(mesSel,true).charAt(0).toUpperCase()+mesLabel(mesSel,true).slice(1)} de {mesSel.slice(0,4)}</span>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{ const idx=mesesAno.indexOf(mesSel); if(idx>0)setMesSel(mesesAno[idx-1]); }} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:"50%",width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="chevron-left" size={13}/></button>
+            <button onClick={()=>{ const idx=mesesAno.indexOf(mesSel); if(idx<mesesAno.length-1)setMesSel(mesesAno[idx+1]); }} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:"50%",width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="chevron-right" size={13}/></button>
+          </div>
+        </div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:"var(--gray-50)"}}>
+            {["Financeiro","Receitas","Despesas","Saldo"].map(h=>(
+              <th key={h} style={{padding:"10px 20px",fontSize:11,fontWeight:600,color:"var(--text-muted)",textAlign:"left",borderBottom:"1px solid var(--gray-200)"}}>{h}</th>
+            ))}
+          </tr></thead>
+          <tbody>
+            {[
+              {label:"🏥 Clínica", rec:mCl.rec, des:mCl.des},
+              {label:"🏠 Pessoal", rec:mPs.rec, des:mPs.des},
+              {label:"🏢 Empresa", rec:mEm.rec, des:mEm.des},
+            ].map((row,i)=>{
+              const saldo=row.rec-row.des;
+              return (
+                <tr key={i} style={{borderBottom:"1px solid var(--gray-100)"}}>
+                  <td style={{padding:"12px 20px",fontWeight:600,fontSize:14}}>{row.label}</td>
+                  <td style={{padding:"12px 20px",color:"#059669",fontWeight:700}}>{fmt(row.rec)}</td>
+                  <td style={{padding:"12px 20px",color:"#dc2626",fontWeight:700}}>{fmt(row.des)}</td>
+                  <td style={{padding:"12px 20px",color:saldo>=0?"#059669":"#dc2626",fontWeight:700,fontSize:15}}>{fmt(saldo)}</td>
+                </tr>
+              );
+            })}
+            <tr style={{background:"#f3f0ff",borderTop:"2px solid var(--purple)"}}>
+              <td style={{padding:"12px 20px",fontWeight:700,fontSize:14}}>TOTAL DO MÊS</td>
+              <td style={{padding:"12px 20px",color:"#059669",fontWeight:700,fontSize:15}}>{fmt(mesRec)}</td>
+              <td style={{padding:"12px 20px",color:"#dc2626",fontWeight:700,fontSize:15}}>{fmt(mesDes)}</td>
+              <td style={{padding:"12px 20px",color:mesSaldo>=0?"#059669":"#dc2626",fontWeight:700,fontSize:16}}>{fmt(mesSaldo)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* RESUMO ANUAL */}
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:24}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:700,fontSize:14}}>📋 Resumo Anual — {ano}</div>
         <table style={{width:"100%",borderCollapse:"collapse"}}>
@@ -6859,8 +6891,6 @@ function PainelGeralFinanceiro() {
     </div>
   );
 }
-
-
 // ═══════════════════════════════════════════════════════
 // ALUNOS EM SUPERVISÃO
 // ═══════════════════════════════════════════════════════
