@@ -104,6 +104,21 @@
   @keyframes floatBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @media(prefers-reduced-motion:reduce){ .wa-float{ animation:none; } }
 </style>
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1626778084286933');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1626778084286933&ev=PageView&noscript=1"
+/></noscript>
 </head>
 <body>
 <div class="wrap">
@@ -112,10 +127,10 @@
   <div class="eyebrow">Curso Online</div>
   <h1>Transforme seu relacionamento através da <em>sabedoria do Eneagrama</em></h1>
 
-  <a class="cta-btn" href="https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829" target="_blank">
+  <a class="cta-btn" href="https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829" target="_blank" onclick="fbq('track', 'InitiateCheckout', {content_name:'cta_hero_topo'})">
     Quero Fazer o Curso Agora
   </a>
-  <a class="cta-whats" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20falar%20sobre%20o%20curso%20de%20Eneagrama%20no%20Amor" target="_blank">
+  <a class="cta-whats" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20falar%20sobre%20o%20curso%20de%20Eneagrama%20no%20Amor" target="_blank" onclick="fbq('track', 'Contact', {content_name:'whatsapp_duvida_topo'})">
     <svg viewBox="0 0 24 24"><path d="M20.5 3.5A11 11 0 003.6 17.4L2 22l4.7-1.6a11 11 0 0013.8-16.9zM12 20.1a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.3 1.1 1.1-3.2-.2-.3A8.6 8.6 0 1120.6 12 8.6 8.6 0 0112 20.1z"/></svg>
     Falar com a Dra. Lucia sobre o curso
   </a>
@@ -189,7 +204,7 @@
       <div class="selo">Compra segura via Hotmart</div>
       <h2>Eneagrama no Amor em Tempos de Crise</h2>
       <p>Confira o valor e as formas de pagamento diretamente no checkout seguro da Hotmart.</p>
-      <a class="cta-btn" href="https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829" target="_blank">
+      <a class="cta-btn" href="https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829" target="_blank" onclick="fbq('track', 'InitiateCheckout', {content_name:'cta_final_pricing'})">
         Quero Fazer o Curso Agora
       </a>
     </div>
@@ -212,7 +227,7 @@ function toggleFaq(el){
   if(!wasOpen) item.classList.add('open');
 }
 </script>
-<a class="wa-float" href="https://wa.me/5562994644950?text=Ol%C3%A1%20Dra.%20Lucia%2C%20gostaria%20de%20falar%20sobre%20o%20curso%20de%20Eneagrama%20no%20Amor" target="_blank" aria-label="WhatsApp">
+<a class="wa-float" href="https://wa.me/5562994644950?text=Ol%C3%A1%20Dra.%20Lucia%2C%20gostaria%20de%20falar%20sobre%20o%20curso%20de%20Eneagrama%20no%20Amor" target="_blank" aria-label="WhatsApp" onclick="fbq('track', 'Contact', {content_name:'whatsapp_flutuante'})">
   <svg viewBox="0 0 24 24"><path d="M20.5 3.5A11 11 0 003.6 17.4L2 22l4.7-1.6a11 11 0 0013.8-16.9zM12 20.1a8.6 8.6 0 01-4.4-1.2l-.3-.2-3.3 1.1 1.1-3.2-.2-.3A8.6 8.6 0 1120.6 12 8.6 8.6 0 0112 20.1zm4.7-6.4c-.3-.1-1.5-.7-1.7-.8s-.4-.1-.5.1-.5.8-.7.9-.3.2-.6.1a7 7 0 01-2-1.3 7.6 7.6 0 01-1.4-1.8c-.1-.2 0-.4.1-.5l.4-.4a1.6 1.6 0 00.2-.4.5.5 0 000-.4c0-.1-.5-1.3-.7-1.8s-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3 2.7 2.7 0 00-.8 2 4.7 4.7 0 001 2.5 10.6 10.6 0 004.1 3.6c.6.2 1 .4 1.4.5a3.4 3.4 0 001.5.1 2.5 2.5 0 001.6-1.2 2 2 0 00.2-1.2c-.1-.1-.3-.2-.6-.3z"/></svg>
 </a>
 </body>
