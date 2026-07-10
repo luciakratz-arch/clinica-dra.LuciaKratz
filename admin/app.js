@@ -6235,36 +6235,64 @@ function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B0
     try {
       const r=modalBaixa;
       await db.collection(colLanc).add({
-        tipo:r.tipo, tipo_lancamento:r.tipo==="despesa"?"despesa":"receita",
-        categoria:r.categoria, descricao:r.descricao,
-        valor:parseFloat(formBaixa.valor), data:formBaixa.data,
-        formaPag:formBaixa.formaPag, status:"pago",
-        recorrenteId:r.id, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        tipo: r.tipo||"despesa",
+        tipo_lancamento: (r.tipo||"despesa")==="despesa"?"despesa":"receita",
+        categoria: r.categoria||"",
+        descricao: r.descricao||r.categoria||"",
+        valor: parseFloat(formBaixa.valor),
+        data: formBaixa.data,
+        formaPag: formBaixa.formaPag||"PIX",
+        status: "pago",
+        recorrenteId: r.id,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       setModalBaixa(null);
-    } catch(e){alert("Erro: "+e.message);}
-    setSalvando(false);
+    } catch(e){ alert("Erro ao dar baixa: "+e.message); }
+    finally { setSalvando(false); }
   }
 
-  async function excluir(id){ if(!confirm("Excluir este lançamento?"))return; await db.collection(colLanc).doc(id).delete(); }
+  async function excluir(id){
+    if(!confirm("Excluir este lançamento?")) return;
+    try { await db.collection(colLanc).doc(id).delete(); }
+    catch(e){ alert("Erro ao excluir: "+e.message); }
+  }
 
   async function moverLancamento(lanc, destino, modoRecorr){
     setMovendoId(lanc.id);
     try {
-      // Buscar documento original
-      const snap = await db.collection(colLanc).doc(lanc.id).get();
-      if(!snap.exists){alert("Lançamento não encontrado.");return;}
-      const dados = snap.data();
+      let dados = null;
 
+      // Se é virtual (sem baixa), não tem doc em colLanc — usar os dados do próprio objeto
+      if(lanc._virtual){
+        const {_virtual, _recObj, ...rest} = lanc;
+        dados = {...rest};
+        // Para virtual, só mover o recorrente — não há lançamento real para mover
+        if(destino.colRec && _recObj?.id){
+          const rSnap = await db.collection(colRecorr).doc(_recObj.id).get();
+          if(rSnap.exists){
+            await db.collection(destino.colRec).add(rSnap.data());
+            await db.collection(colRecorr).doc(_recObj.id).delete();
+          }
+        }
+        setModalMover(null);
+        setMovendoId(null);
+        return;
+      }
+
+      // Lançamento real — buscar do Firestore
+      const snap = await db.collection(colLanc).doc(lanc.id).get();
+      if(!snap.exists){ alert("Lançamento não encontrado."); setMovendoId(null); return; }
+      dados = snap.data();
+
+      // Gravar no destino
       if(destino.col==="clinica_lancamentos"){
-        // Clínica usa tipo_lancamento:"despesa" ou não tem
         await db.collection("clinica_lancamentos").add({...dados, tipo_lancamento: dados.tipo==="despesa"?"despesa":dados.tipo_lancamento||"avulso"});
       } else {
         await db.collection(destino.col).add({...dados});
       }
       await db.collection(colLanc).doc(lanc.id).delete();
 
-      // Se tem recorrente associado
+      // Mover recorrente vinculado se pedido
       if(lanc.recorrenteId && destino.colRec && modoRecorr==="todos"){
         const rSnap = await db.collection(colRecorr).doc(lanc.recorrenteId).get();
         if(rSnap.exists){
@@ -6273,8 +6301,8 @@ function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B0
         }
       }
       setModalMover(null);
-    } catch(e){alert("Erro ao mover: "+e.message);}
-    setMovendoId(null);
+    } catch(e){ alert("Erro ao mover: "+e.message); }
+    finally { setMovendoId(null); }
   }
 
   const corRec="#059669"; const corDes="#dc2626";
