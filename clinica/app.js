@@ -60,6 +60,53 @@ function Icon({ name, size = 18 }) {
 }
 
 function Spinner() { return <div className="spinner-wrap"><div className="spinner"/></div>; }
+
+function TextAreaVoz({value, onChange, placeholder, rows=3, className="form-input", style={}}){
+  const [gravando, setGravando] = React.useState(false);
+  const recRef = React.useRef(null);
+  function toggleVoz(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return;
+    if(gravando){ recRef.current?.stop(); setGravando(false); return; }
+    const rec = new SR();
+    rec.lang="pt-BR"; rec.continuous=true; rec.interimResults=true;
+    rec.onresult = e=>{
+      const t = Array.from(e.results).map(r=>r[0].transcript).join(" ");
+      const base = (value||"").replace(/\s*\[\.\.\.]$/,"").trimEnd();
+      onChange({target:{value: base ? base+" "+t : t}});
+    };
+    rec.onerror = ()=>setGravando(false);
+    rec.onend   = ()=>setGravando(false);
+    recRef.current = rec;
+    rec.start();
+    setGravando(true);
+  }
+  const SR_SUPPORT = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  return (
+    <div style={{position:"relative"}}>
+      <textarea
+        className={className}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows={rows}
+        style={{...style, paddingRight: SR_SUPPORT ? 36 : undefined, resize:"vertical"}}
+      />
+      {SR_SUPPORT && (
+        <button type="button" onClick={toggleVoz} title={gravando?"Parar gravação":"Falar para digitar"}
+          style={{position:"absolute",right:6,bottom:8,background:gravando?"#7B00C4":"#f3e6ff",border:"none",borderRadius:6,padding:"4px 6px",cursor:"pointer",color:gravando?"white":"#7B00C4",fontSize:14,lineHeight:1,boxShadow:gravando?"0 0 0 3px #7B00C430":"none",transition:"all .2s"}}>
+          🎙️
+        </button>
+      )}
+      {gravando && (
+        <div style={{fontSize:11,color:"#7B00C4",marginTop:3,display:"flex",alignItems:"center",gap:4}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"#7B00C4",display:"inline-block"}}/>
+          Gravando... clique 🎙️ para parar
+        </div>
+      )}
+    </div>
+  );
+}
 function MinhaConta({ user }) {
   const [form, setForm]       = React.useState({
     nome:     user.nome||"",
@@ -276,7 +323,7 @@ function FerramentaDiario({ user }){
         border:"1px solid #f3e6c0",marginBottom:12,overflow:"hidden"}}>
         {/* Margem vermelha */}
         <div style={{position:"absolute",left:40,top:0,bottom:0,width:1,background:"#fca5a5",opacity:0.4}}/>
-        <textarea
+        <TextAreaVoz
           value={texto}
           onChange={e=>setTexto(e.target.value)}
           placeholder="Escreva livremente aqui..."
@@ -523,7 +570,7 @@ function RegistroHumor({ user }) {
           );
         })}
       </div>
-      <textarea value={nota} onChange={e=>setNota(e.target.value)}
+      <TextAreaVoz value={nota} onChange={e=>setNota(e.target.value)}
         placeholder="Algo mais que queira registrar? (opcional)"
         style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid var(--gray-200)",
           fontSize:13,fontFamily:"inherit",resize:"none",height:72,marginBottom:16,boxSizing:"border-box"}}/>
@@ -937,7 +984,7 @@ function FerramentaArvore({user}){
   if(step==="worry") return(
     <div>
       <div style={{fontWeight:600,marginBottom:8}}>Qual é a sua preocupação agora?</div>
-      <textarea className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
+      <TextAreaVoz className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
       <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
         <button className="btn btn-ghost" onClick={()=>setStep("home")}>Voltar</button>
         <button className="btn btn-purple" onClick={()=>setStep("can-intervene")} disabled={!preocupacao.trim()}>Próximo →</button>
@@ -957,7 +1004,7 @@ function FerramentaArvore({user}){
   if(step==="actions") return(
     <div>
       <div style={{fontWeight:600,marginBottom:8}}>Quais ações você pode tomar?</div>
-      <textarea className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
+      <TextAreaVoz className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
       <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
         <button className="btn btn-ghost" onClick={()=>setStep("can-intervene")}>Voltar</button>
         <button className="btn btn-purple" onClick={()=>setStep("can-act-now")} disabled={!acoes.trim()}>Próximo →</button>
@@ -976,7 +1023,7 @@ function FerramentaArvore({user}){
   if(step==="plan") return(
     <div>
       <div style={{fontWeight:600,marginBottom:8}}>Crie um plano de ação:</div>
-      <textarea className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
+      <TextAreaVoz className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
       <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
         <button className="btn btn-ghost" onClick={()=>setStep("can-act-now")}>Voltar</button>
         <button className="btn btn-purple" onClick={()=>salvarHistorico("plan")} disabled={!plano.trim()}>Finalizar →</button>
@@ -1144,7 +1191,7 @@ function FerramentaABC(){
 
       {/* Campo do passo */}
       {passo<=2&&(
-        <textarea value={draft[passo===1?"situacao":"pensamento"]}
+        <TextAreaVoz value={draft[passo===1?"situacao":"pensamento"]}
           onChange={e=>setDraft({...draft,[passo===1?"situacao":"pensamento"]:e.target.value})}
           placeholder={passoInfo.placeholder}
           style={{width:"100%",minHeight:100,padding:"12px",borderRadius:10,
@@ -1187,7 +1234,7 @@ function FerramentaABC(){
       )}
 
       {passo===4&&(
-        <textarea value={draft.alternativo}
+        <TextAreaVoz value={draft.alternativo}
           onChange={e=>setDraft({...draft,alternativo:e.target.value})}
           placeholder={passoInfo.placeholder}
           style={{width:"100%",minHeight:100,padding:"12px",borderRadius:10,
@@ -1273,7 +1320,7 @@ function FerramentaGestaoAnsiedade({user}){
       {aba===0&&<div>
         <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:64,fontWeight:900,color:sc,lineHeight:1}}>{stress}</div><div style={{fontSize:12,color:"#9ca3af"}}>/10</div><div style={{fontSize:13,fontWeight:600,color:sc}}>{DESC[stress]}</div></div>
         <input type="range" min={1} max={10} value={stress} onChange={e=>setStress(+e.target.value)} style={{width:"100%",accentColor:sc,marginBottom:12}}/>
-        <textarea className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
+        <TextAreaVoz className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
         <button className="btn btn-purple" style={{width:"100%"}} onClick={async()=>{
           setLog(l=>[{nivel:stress,nota,data:new Date().toLocaleDateString("pt-BR")},...l].slice(0,20));
           if(user&&user.id){
@@ -1321,7 +1368,7 @@ function FerramentaGestaoAnsiedade({user}){
         <div style={{fontSize:13,color:"#6b7280",marginBottom:14,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>Responda cada pergunta com honestidade para questionar pensamentos ansiosos.</div>
         {PERGUNTAS.map((p,i)=><div key={i} style={{marginBottom:14}}>
           <div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"var(--purple-soft)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><label style={{fontSize:13,fontWeight:600,lineHeight:1.4}}>{p}</label></div>
-          <textarea className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
+          <TextAreaVoz className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
         </div>)}
         <button className="btn btn-purple" style={{width:"100%"}} onClick={async()=>{
           if(!resp.some(r=>r.trim())){alert("Responda pelo menos uma pergunta antes de salvar.");return;}
@@ -1428,10 +1475,10 @@ function FerramentaRastreamento({user}){
         <input type="range" min={0} max={10} value={val} onChange={e=>set(+e.target.value)} style={{width:"100%",accentColor:"var(--purple)"}}/>
       </div>)}
       <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Emoções presentes</label><Chips opts={EMOCOES} sel={emocoes} toggle={o=>setEmocoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Pensamento permissivo</label><textarea className="form-input" rows={2} value={pensamento} onChange={e=>setPensamento(e.target.value)} placeholder="'Só desta vez...' 'Mereço isso...'"/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>O que você comeu?</label><textarea className="form-input" rows={2} value={comeu} onChange={e=>setComeu(e.target.value)} placeholder="Descreva os alimentos..."/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Pensamento permissivo</label><TextAreaVoz className="form-input" rows={2} value={pensamento} onChange={e=>setPensamento(e.target.value)} placeholder="'Só desta vez...' 'Mereço isso...'"/></div>
+      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>O que você comeu?</label><TextAreaVoz className="form-input" rows={2} value={comeu} onChange={e=>setComeu(e.target.value)} placeholder="Descreva os alimentos..."/></div>
       <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Como você se sentiu depois?</label><Chips opts={SENSACOES} sel={sensacoes} toggle={o=>setSensacoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
-      <div style={{marginBottom:16}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão</label><textarea className="form-input" rows={2} value={reflexao} onChange={e=>setReflexao(e.target.value)} placeholder="O que esse episódio revela sobre suas necessidades emocionais?"/></div>
+      <div style={{marginBottom:16}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão</label><TextAreaVoz className="form-input" rows={2} value={reflexao} onChange={e=>setReflexao(e.target.value)} placeholder="O que esse episódio revela sobre suas necessidades emocionais?"/></div>
       <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>{msg||"Salvar registro"}</button>
       {entries.length>0&&<div style={{marginTop:14}}>
         <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>{entries.length} registro(s)</div>
@@ -1620,7 +1667,7 @@ function FerramentaPortal({ recurso, user }){
                   <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
                   <span style={{fontSize:14,color:"#374151",lineHeight:1.7}}>{q}</span>
                 </div>
-                <textarea value={respFab[i]||""}
+                <TextAreaVoz value={respFab[i]||""}
                   onChange={e=>setRespFab(r=>({...r,[i]:e.target.value}))}
                   placeholder="Escreva sua reflexão..."
                   style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
@@ -2065,7 +2112,7 @@ function PsicoeducacaoAberta({ item, user, onVoltar }) {
                         fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
                       <div style={{fontSize:12,fontWeight:500,color:"#3d006a",lineHeight:1.5}}>{p}</div>
                     </div>
-                    <textarea value={respostas[i]}
+                    <TextAreaVoz value={respostas[i]}
                       onChange={e=>{const r=[...respostas];r[i]=e.target.value;setRespostas(r);}}
                       placeholder="Escreva sua reflexão..."
                       style={{width:"100%",minHeight:70,padding:"8px 10px",borderRadius:8,
@@ -4110,7 +4157,7 @@ function AtivQuemSou({ user, casalId, onVoltar }) {
           <div key={q.id} style={{background:q.bg,borderRadius:10,padding:12,border:`1px solid ${q.cor}30`}}>
             <div style={{fontWeight:700,fontSize:11,color:q.cor,marginBottom:4}}>{q.label}</div>
             <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{q.desc}</div>
-            <textarea className="form-input" rows={4} value={campos[q.id]||""}
+            <TextAreaVoz className="form-input" rows={4} value={campos[q.id]||""}
               onChange={e=>setCampos(c=>({...c,[q.id]:e.target.value}))}
               placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
           </div>
@@ -4191,7 +4238,7 @@ function AtivOQueQuero({ user, casalId, onVoltar }) {
           <div key={c.id} style={{background:c.bg,borderRadius:10,padding:12,border:`1px solid ${c.cor}30`}}>
             <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:4}}>{c.label}</div>
             <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{c.desc}</div>
-            <textarea className="form-input" rows={4} value={campos[c.id]||""}
+            <TextAreaVoz className="form-input" rows={4} value={campos[c.id]||""}
               onChange={e=>setCampos(v=>({...v,[c.id]:e.target.value}))}
               placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
           </div>
@@ -4284,7 +4331,7 @@ function EtapaCasal({ user, etapaData }) {
             {[1,2,3].map(n=>(
               <div key={n}>
                 <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão {n}</label>
-                <textarea className="form-input" rows={3}
+                <TextAreaVoz className="form-input" rows={3}
                   value={respostas[atividadeAberta.id+"_"+n]||""}
                   onChange={e=>setRespostas(r=>({...r,[atividadeAberta.id+"_"+n]:e.target.value}))}
                   placeholder="Escreva sua resposta..." style={{resize:"vertical"}}/>
