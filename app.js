@@ -3,7 +3,7 @@
 //  app.js — Etapa 2: Cadastro completo de pacientes
 // ═══════════════════════════════════════════════════════
 
-const { useState, useEffect, useCallback, useRef } = React;
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
@@ -16,6 +16,22 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// ─── CONFIGURAÇÃO FINANCEIRA EDITÁVEL ───────────────────────────
+// Valores padrão; os reais ficam em clinica_config/comissoes (editáveis na tela Comissões)
+const CONFIG_FIN_PADRAO = {
+  nomeSecretaria: "Jéssica Marjane",
+  salarioFixo: 600,
+  percPrimeira: 10,
+  percRecorrente: 5,
+  percParceiroPadrao: 70
+};
+async function getConfigFin(){
+  try{
+    const d = await db.collection("clinica_config").doc("comissoes").get();
+    return d.exists ? {...CONFIG_FIN_PADRAO, ...d.data()} : {...CONFIG_FIN_PADRAO};
+  }catch(e){ return {...CONFIG_FIN_PADRAO}; }
+}
+
 const LOGO_URL = "../logo-transparente.png";
 const SENHA_ADMIN = "1234";
 const SENHA_PAULO = "1234";
@@ -24,7 +40,7 @@ const SITE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
 const PERFIS = [
   { id:"psicologa",  nome:"Sou Psicologa",  desc:"Acesso ao painel clinico completo", icon:"stethoscope", cor:"#7B00C4" },
   { id:"secretaria", nome:"Sou Secretaria",  desc:"Cadastro de pacientes e financeiro da clinica", icon:"clipboard-list", cor:"#0891b2" },
-  { id:"paulo",      nome:"Paulo Sergio",    desc:"Visualizacao do financeiro familiar", icon:"wallet", cor:"#16a34a" },
+  { id:"paulo",      nome:"Financeiro",      desc:"Acesso ao módulo financeiro completo", icon:"wallet", cor:"#16a34a" },
   { id:"marketing",  nome:"Marketing",       desc:"Captacao de leads e metricas de trafego", icon:"trending-up", cor:"#ea580c" },
 ];
 
@@ -63,6 +79,104 @@ async function dispararNotificacao({ tipo, titulo, corpo="", pacienteId="" }) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch(e) {}
+}
+
+// ─── ETAPA 1: HIGIENIZAÇÃO EM LOTE ────────────────────────
+// Detecta e deleta duplicatas de Maio/2026 para um paciente.
+// Critério: mesmo pacienteId + mesma data + mesmo valor + mesma descrição.
+// Mantém o documento que possui pacoteId preenchido (ou o mais antigo).
+async function deletarDuplicatasPaciente(pacienteId, mesRef) {
+  try {
+    const snap = await db.collection("clinica_lancamentos")
+      .where("pacienteId","==",pacienteId)
+      .get();
+    const docs = snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(d=>(d.data||"").startsWith(mesRef));
+
+    // Agrupar por chave composta
+    const grupos = {};
+    docs.forEach(d=>{
+      const chave = `${d.data}|${parseFloat(d.valor||0).toFixed(2)}|${(d.descricao||d.tipo||"").trim().toLowerCase()}`;
+      if(!grupos[chave]) grupos[chave]=[];
+      grupos[chave].push(d);
+    });
+
+    const batch = db.batch();
+    let deletados = 0;
+    Object.values(grupos).forEach(grupo=>{
+      if(grupo.length < 2) return;
+      // Prioriza manter o que tem pacoteId; senão mantém o primeiro (mais antigo por ordem de array)
+      grupo.sort((a,b)=>(b.pacoteId?1:0)-(a.pacoteId?1:0));
+      const manter = grupo[0];
+      // Garante que o mantido tem pacoteId se algum tinha
+      const comPacote = grupo.find(g=>g.pacoteId);
+      if(comPacote && !manter.pacoteId){
+        batch.update(db.collection("clinica_lancamentos").doc(manter.id),{pacoteId:comPacote.pacoteId});
+      }
+      // Deleta os redundantes
+      grupo.slice(1).forEach(dup=>{
+        batch.delete(db.collection("clinica_lancamentos").doc(dup.id));
+        deletados++;
+      });
+    });
+    await batch.commit();
+    return { ok:true, deletados };
+  } catch(e) {
+    return { ok:false, erro:e.message };
+  }
+}
+
+// Categoriza lançamentos "Sem Nome" de um mês como Despesas Administrativas.
+async function categorizarSemNome(mesRef) {
+  try {
+    const snap = await db.collection("clinica_lancamentos").get();
+    const semNome = snap.docs.filter(d=>{
+      const dado = d.data();
+      const nome = (dado.pacienteNome||dado.nomePaciente||"").trim();
+      return (!nome || nome==="") && (dado.data||"").startsWith(mesRef);
+    });
+    if(semNome.length===0) return { ok:true, atualizados:0 };
+    const batch = db.batch();
+    semNome.forEach(d=>{
+      batch.update(d.ref,{
+        pacienteNome:"— Clínica —",
+        categoria:"Despesas Administrativas/Clínica",
+        tipo_lancamento:"despesa",
+        _auditoria:"categorizado_automatico_"+mesRef,
+      });
+    });
+    await batch.commit();
+    return { ok:true, atualizados:semNome.length };
+  } catch(e) {
+    return { ok:false, erro:e.message };
+  }
+}
+
+// Deleta lançamentos tipo "sessao" que pertencem a pacotes (órfãos gerados por atualizarPagamento).
+// Regra: se tem pacoteId + tipo_lancamento==sessao → é lixo, o pacote já cobre.
+async function deletarLancamentosOrfaosDeSessao() {
+  try {
+    const snap = await db.collection("clinica_lancamentos")
+      .where("tipo_lancamento","==","sessao").get();
+    const orfaos = snap.docs.filter(d=>{
+      const dado = d.data();
+      return !!dado.pacoteId; // tem pacoteId = pertence a pacote = é duplicata
+    });
+    if(orfaos.length===0) return { ok:true, deletados:0 };
+    // Firestore batch suporta até 500 operações
+    const batches = [];
+    let b = db.batch();
+    orfaos.forEach((d,i)=>{
+      b.delete(d.ref);
+      if((i+1)%499===0){ batches.push(b); b=db.batch(); }
+    });
+    batches.push(b);
+    await Promise.all(batches.map(bt=>bt.commit()));
+    return { ok:true, deletados:orfaos.length };
+  } catch(e) {
+    return { ok:false, erro:e.message };
+  }
 }
 
 function enviarPushLocal(titulo, corpo) {
@@ -361,6 +475,9 @@ function Login({ onLogin }) {
               </span>
               Agenda da Sala
             </a>
+            <a href="../clinica/" style={{color:"#7B00C4",fontSize:13,display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <Icon name="activity" size={14}/> Área Clínica
+            </a>
             <a href="../" style={{color:"var(--gray-400)",fontSize:12}}>Voltar ao site</a>
           </div>
           </>
@@ -410,13 +527,16 @@ const NAV_PSICOLOGA = [
     {id:"funil-leads",           label:"Funil de Leads", icon:"filter"},
     {id:"marketing-dashboard",   label:"Marketing",      icon:"trending-up"},
     {id:"dashboard-performance", label:"Performance",    icon:"activity"},
+    {id:"vitrine",               label:"Vitrine de Produtos", icon:"shopping-bag"},
   ]},
   { grupo:"💰 Financeiro", itens:[
-    {id:"fin-clinica", label:"Fin. Clínica",   icon:"dollar-sign"},
-    {id:"comissoes",   label:"Comissões",      icon:"percent"},
-    {id:"fin-pessoal", label:"Fin. Pessoal",   icon:"home"},
+    {id:"fin-clinica",  label:"Fin. Clínica",  icon:"dollar-sign"},
+    {id:"fin-pessoal",  label:"Fin. Pessoal",  icon:"home"},
+    {id:"fin-empresa",  label:"Fin. Empresa",  icon:"briefcase"},
+    {id:"painel-geral", label:"Painel Geral",  icon:"pie-chart"},
   ]},
   { grupo:"⚙️ Configurações", itens:[
+    {id:"permissoes",  label:"Permissões",    icon:"shield"},
     {id:"depoimentos", label:"Depoimentos",    icon:"star"},
     {id:"config",      label:"Configurações",  icon:"settings"},
   ]},
@@ -432,12 +552,16 @@ const NAV_SECRETARIA = [
   {id:"fin-clinica", label:"Financeiro",   icon:"dollar-sign"},
   {id:"comissoes",   label:"Comissoes",    icon:"percent"},
 ];
-const NAV_PAULO = [{id:"fin-pessoal", label:"Financeiro Familiar", icon:"home"}];
+const NAV_PAULO = [
+  {id:"fin-pessoal",  label:"Financeiro Pessoal",  icon:"home"},
+  {id:"fin-empresa",  label:"Financeiro Empresa",  icon:"briefcase"},
+  {id:"fin-clinica",  label:"Financeiro Clínica",  icon:"building-2"},
+];
 
 // SIDEBAR
 function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
   const isPsicologa = user.tipo==="psicologa";
-  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro Familiar":user.tipo==="marketing"?"Marketing":"Area Administrativa";
+  const titulo = user.tipo==="secretaria"?"Area da Secretaria":user.tipo==="paulo"?"Financeiro":user.tipo==="marketing"?"Marketing":"Area Administrativa";
   const nomeExibir = user.nome && !user.nome.includes("@") ? user.nome : (user.nomeCompleto || "Usuário");
   const initials = nomeExibir.split(" ").map(w=>w[0]).filter(Boolean).slice(0,2).join("").toUpperCase() || "U";
 
@@ -503,6 +627,9 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
             <Icon name="door-open" size={18}/> Agenda da Sala
           </a>
         )}
+        <a href="../clinica/" className="nav-item" style={{color:"rgba(255,255,255,0.85)",background:"rgba(123,0,196,0.25)",borderRadius:8,marginBottom:2}}>
+          <Icon name="activity" size={18}/> Área Clínica
+        </a>
         <a href="../" className="nav-item" style={{color:"rgba(255,255,255,0.6)"}}>
           <Icon name="globe" size={18}/> Site
         </a>
@@ -695,6 +822,21 @@ function AbaPerfil({ paciente, pacientes }) {
               ))}
             </div>
           </div>
+          <div style={{gridColumn:"span 2",fontSize:12,fontWeight:700,color:"var(--purple)",borderBottom:"1px solid var(--purple-soft)",paddingBottom:4,marginTop:4,textTransform:"uppercase",letterSpacing:0.5}}>
+            🏢 Dados Ocupacionais — para documentos NR-1 e declarações
+          </div>
+          <div className="form-group" style={{gridColumn:"span 2"}}>
+            <label className="form-label">Empresa Contratante</label>
+            <input className="form-input" value={form.empresa||""} onChange={e=>setForm({...form,empresa:e.target.value})} placeholder="Ex: Construtora Horizonte Ltda."/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Setor</label>
+            <input className="form-input" value={form.setor||""} onChange={e=>setForm({...form,setor:e.target.value})} placeholder="Ex: Administrativo"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Cargo</label>
+            <input className="form-input" value={form.cargo||""} onChange={e=>setForm({...form,cargo:e.target.value})} placeholder="Ex: Analista de RH"/>
+          </div>
           <div className="form-group" style={{gridColumn:"span 2"}}>
             <label className="form-label">Objetivos Terapeuticos</label>
             <TextAreaVoz className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos da terapia..."/>
@@ -722,13 +864,10 @@ function AbaPerfil({ paciente, pacientes }) {
 // ABA MODULOS
 // FERRAMENTAS FIXAS DO MÓDULO I
 const FERRAMENTAS_MOD1 = [
-  { id:"humor",     nome:"Registro de Humor",        desc:"Escala de humor diária" },
-  { id:"diario",    nome:"Diário Terapêutico",        desc:"Escrita reflexiva livre" },
-  { id:"metas",     nome:"Metas Terapêuticas",        desc:"Acompanhamento de metas" },
-  { id:"reflexoes", nome:"Reflexões Cognitivas",      desc:"Reestruturação cognitiva" },
-  { id:"tcc",       nome:"Pensamentos Automáticos",   desc:"Registro TCC" },
-  { id:"respiracao",nome:"Técnica de Respiração",     desc:"Exercício de respiração diafragmática" },
-  { id:"relaxamento",nome:"Relaxamento Muscular",     desc:"Técnica de Jacobson" },
+  { id:"humor",  nome:"Check-in Diário",      desc:"Registro de humor e bem-estar diário" },
+  { id:"metas",  nome:"Metas Terapêuticas",   desc:"Acompanhamento de metas" },
+  { id:"diario", nome:"Diário Terapêutico",   desc:"Escrita reflexiva livre" },
+  // Pensamentos Automáticos e Reflexões Cognitivas → Módulo III (Ansiedade e Controle dos Pensamentos)
 ];
 
 function Toggle({ ativo, onClick }) {
@@ -745,6 +884,8 @@ function AbaModulos({ paciente }) {
   const [fabulas, setFabulas] = useState([]);
   const [psicoeducacao, setPsicoeducacao] = useState([]);
   const [salvando, setSalvando] = useState(false);
+  const [modalSugestao, setModalSugestao] = useState(null); // {ferramenta, categoria, sugestoes}
+  const [sugestoesSel, setSugestoesSel] = useState({});
 
   useEffect(() => {
     // Busca config atualizado do Firebase (ignora cache da prop)
@@ -776,11 +917,87 @@ function AbaModulos({ paciente }) {
     const modAtual = config[modId] || { ativo: true, ferramentas: {} };
     const ferrAtual = modAtual.ferramentas || {};
     const hoje = new Date().toISOString().split("T")[0];
-    const ferrNova = ferrAtual[ferrId] ? null : { ativo: true, dataInicio: hoje };
-    const novaFerr = { ...ferrAtual };
-    if (ferrNova) novaFerr[ferrId] = ferrNova;
-    else delete novaFerr[ferrId];
+    const estaAtiva = !!ferrAtual[ferrId];
+
+    // Se está desativando, só remove — sem sugestão
+    if(estaAtiva){
+      const novaFerr = { ...ferrAtual };
+      delete novaFerr[ferrId];
+      salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: novaFerr } });
+      return;
+    }
+
+    // Ativando — primeiro salva a ferramenta
+    const novaFerr = { ...ferrAtual, [ferrId]: { ativo: true, dataInicio: hoje } };
     salvarConfig({ ...config, [modId]: { ...modAtual, ferramentas: novaFerr } });
+
+    // Busca categoria da ferramenta para sugestões
+    const rec = recursos.find(r=>r.id===ferrId);
+    const catFerr = rec?.categoria || "";
+    const macroId = FAB_LEGADO_MACRO[catFerr] || catFerr;
+    if(!macroId || !macroId.startsWith("macro_")) return; // sem sugestões para cats sem macro
+
+    // Busca fábulas e psicoeducações da mesma macrocategoria não ativadas
+    const ferrAtivadas = new Set(Object.keys(novaFerr));
+    const fabSugest = fabulas.filter(f=>
+      (FAB_LEGADO_MACRO[f.categoria||""]===macroId || f.categoria===macroId) &&
+      !ferrAtivadas.has(f.id)
+    ).slice(0,3);
+    const psicoSugest = psicoeducacao.filter(p=>
+      (PSICO_LEGADO_MACRO[p.categoria||""]===macroId || p.categoria===macroId) &&
+      !ferrAtivadas.has(p.id)
+    ).slice(0,3);
+
+    if(fabSugest.length===0 && psicoSugest.length===0) return;
+
+    const macro = MACROCATEGORIAS.find(m=>m.id===macroId);
+    setModalSugestao({
+      ferramenta: rec?.titulo || ferrId,
+      categoria: macro?.label || macroId,
+      cor: macro?.cor || "#7B00C4",
+      bg: macro?.bg || "#f3e6ff",
+      icone: macro?.icone || "🔧",
+      modId,
+      fabulas: fabSugest,
+      psicoeducacao: psicoSugest,
+    });
+    setSugestoesSel({});
+  }
+
+  async function ativarSugestoes(){
+    if(!modalSugestao) return;
+    const hoje = new Date().toISOString().split("T")[0];
+    const modAtual = config[modalSugestao.modId] || { ativo:true, ferramentas:{} };
+    const ferrAtual = { ...modAtual.ferramentas };
+    // Ativa fábulas selecionadas no mod2
+    const modFab = config["mod2"] || { ativo:true, ferramentas:{} };
+    const ferrFab = { ...modFab.ferramentas };
+    // Ativa psico selecionadas no mod6
+    const modPsico = config["mod6"] || { ativo:true, ferramentas:{} };
+    const ferrPsico = { ...modPsico.ferramentas };
+
+    Object.entries(sugestoesSel).forEach(([id, sel])=>{
+      if(!sel) return;
+      const isFab = modalSugestao.fabulas.some(f=>f.id===id);
+      const isPsico = modalSugestao.psicoeducacao.some(p=>p.id===id);
+      if(isFab) ferrFab[id] = { ativo:true, dataInicio: hoje };
+      if(isPsico) ferrPsico[id] = { ativo:true, dataInicio: hoje };
+    });
+
+    await db.collection("clinica_pacientes").doc(paciente.id).update({
+      modulosConfig: {
+        ...config,
+        mod2: { ...modFab, ativo:true, ferramentas: ferrFab },
+        mod6: { ...modPsico, ativo:true, ferramentas: ferrPsico },
+      },
+      modulosAtivos: [...new Set([...Object.keys(config).filter(k=>config[k]?.ativo), "mod2", "mod6"])],
+    });
+    setConfig(c=>({
+      ...c,
+      mod2: { ...modFab, ativo:true, ferramentas: ferrFab },
+      mod6: { ...modPsico, ativo:true, ferramentas: ferrPsico },
+    }));
+    setModalSugestao(null);
   }
 
   function setDataInicio(modId, ferrId, data) {
@@ -791,8 +1008,8 @@ function AbaModulos({ paciente }) {
 
   const MODULOS_DEF = [
     { id:"mod1", nome:"Módulo I — Dashboard", desc:"Ferramentas do dia a dia", icone:"🧠", ferramentas: FERRAMENTAS_MOD1 },
-    { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
-    { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
+    { id:"mod2", nome:"Módulo II — Fábulas Terapêuticas", desc:"Fábulas cadastradas em Recursos", icone:"📖", ferramentas: fabulas.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.macroCategoria||f.categoria||"", cat:f.macroCategoria||f.categoria||""})) },
+    { id:"mod3", nome:"Módulo III — Ferramentas", desc:"Ferramentas cadastradas em Recursos", icone:"🔧", ferramentas: recursos.filter(r=>r.categoria!=="musicoterapia"&&r.categoria!=="casal").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.macroCategoria||f.categoria||"", cat:f.macroCategoria||f.categoria||""})) },
     { id:"mod4", nome:"Módulo IV — Musicoterapia", desc:"Ferramentas de musicoterapia", icone:"🎵", ferramentas: recursos.filter(r=>r.categoria==="musicoterapia").map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.descricao||""})) },
     { id:"mod5", nome:"Módulo V — Terapia de Casais", desc:"Etapas da terapia de casais", icone:"💑",
       ferramentas: [
@@ -803,8 +1020,143 @@ function AbaModulos({ paciente }) {
       ],
       automatico: false },
     { id:"mod6", nome:"Módulo VI — Psicoeducação", desc:"Materiais psicoeducativos cadastrados em Recursos", icone:"🎓",
-      ferramentas: psicoeducacao.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.categoria||""})) },
+      ferramentas: psicoeducacao.map(f=>({id:f.id, nome:f.titulo||f.nome, desc:f.macroCategoria||f.categoria||"", cat:f.macroCategoria||f.categoria||""})) },
   ];
+
+  // Módulos que agrupam por macrocategoria
+  const MODS_COM_GRUPO = new Set(["mod2","mod3","mod6"]);
+
+  // Mapa categoria → macrocategoria para agrupamento
+  const CAT_PARA_MACRO_MOD = {
+    // Ferramentas (mod3)
+    ansiedade_diaria:"macro_ansiedade", distorcoes:"macro_ansiedade",
+    crencas_esquemas:"macro_ansiedade", autocritica:"macro_ansiedade", procrastinacao:"macro_ansiedade",
+    tcc:"macro_ansiedade", ansiedade:"macro_ansiedade", esquema:"macro_ansiedade",
+    depressao:"macro_humor", desamor:"macro_humor", regulacao_emocional:"macro_humor",
+    burnout:"macro_humor", vergonha:"macro_humor", emocoes:"macro_humor",
+    rotina:"macro_habitos", sono:"macro_habitos", motivacao:"macro_habitos",
+    neuroplasticidade:"macro_habitos", praticas_autocuidado:"macro_habitos", autocuidado:"macro_habitos",
+    comunicacao:"macro_relacionamentos", dependencia:"macro_relacionamentos",
+    limites:"macro_relacionamentos", ciumes:"macro_relacionamentos", toxicos:"macro_relacionamentos",
+    relacionamentos:"macro_relacionamentos",
+    conflitos_casal:"macro_casais", sexualidade:"macro_casais",
+    parentalidade:"macro_casais", conflitos_familia:"macro_casais", traicao:"macro_casais",
+    alimentacao:"macro_corpo", autoimagem:"macro_corpo", nervovago:"macro_corpo",
+    sintomas_fisicos:"macro_corpo", saude_mental:"macro_corpo", corpo:"macro_corpo",
+    musicoterapia:"macro_musico",
+    avaliacao:"macro_aval",
+    // Fábulas (mod2) — por tema
+    resiliencia:"macro_habitos", esperanca:"macro_humor", autoconfianca:"macro_humor",
+    autoconhecimento:"macro_ansiedade", perspectiva:"macro_habitos",
+    mindfulness:"macro_habitos", ansiedade_fab:"macro_ansiedade",
+    // Categorias adicionais de fábulas
+    "resiliência":"macro_habitos", "esperança":"macro_humor",
+    "autoconfiança":"macro_humor", "autoestima":"macro_humor",
+    "expressão emocional":"macro_humor", "regulação emocional":"macro_humor",
+    "perdão":"macro_humor", "crescimento":"macro_habitos",
+    "autoconhecimento":"macro_ansiedade", "perspectiva":"macro_habitos",
+    "mindfulness":"macro_habitos", "criatividade":"macro_habitos",
+    "proposito":"macro_habitos", "propósito":"macro_habitos",
+    // Psicoeducação (mod6) — igual ferramentas
+  };
+
+  // Mapa macroId → info visual
+  const MACRO_INFO = {
+    macro_ansiedade:      {icone:"🧠", label:"Ansiedade e Controle dos Pensamentos", cor:"#7B00C4", bg:"#f3e6ff"},
+    macro_humor:          {icone:"❤️", label:"Humor e Regulação Emocional",          cor:"#db2777", bg:"#fce7f3"},
+    macro_habitos:        {icone:"🌱", label:"Hábitos e Autocuidado",                cor:"#16a34a", bg:"#dcfce7"},
+    macro_relacionamentos:{icone:"🤝", label:"Conflitos Interpessoais e Relacionamentos", cor:"#0891b2", bg:"#e0f2fe"},
+    macro_casais:         {icone:"💑", label:"Casais, Família e Parentalidade",      cor:"#d97706", bg:"#fef3c7"},
+    macro_corpo:          {icone:"🏃", label:"Corpo, Saúde e Conexão Somática",      cor:"#059669", bg:"#d1fae5"},
+    macro_musico:         {icone:"🎵", label:"Musicoterapia",                        cor:"#7B00C4", bg:"#f3e6ff"},
+    macro_aval:           {icone:"📋", label:"Avaliação e Anamnese",                 cor:"#6366f1", bg:"#e0e7ff"},
+    _outros:              {icone:"🔧", label:"Outros",                               cor:"#6b7280", bg:"#f3f4f6"},
+  };
+
+  // Mapa nome da ferramenta → macro (para itens com categoria "outro")
+  const NOME_PARA_MACRO = {
+    "Mapa de Intensidade": "macro_corpo",
+    "Mapa de Intimidade": "macro_casais",
+    "Roda da Vida Integral": "macro_habitos",
+    "Protocolo dos 3 Mapas": "macro_relacionamentos",
+    "Diário de Parentalidade Compassiva": "macro_casais",
+    "Diário de Autocompaixão": "macro_humor",
+    "Plano de Ativação Comportamental": "macro_humor",
+    "Prática de Presença": "macro_corpo",
+    "Empilhamento de Hábitos": "macro_habitos",
+    "Protocolo de Regulação Nervosa": "macro_corpo",
+    "Mapeamento do Ciclo de Conflito": "macro_relacionamentos",
+    "Análise em Cadeia": "macro_ansiedade",
+    "Registo CNV": "macro_relacionamentos",
+    "Registro CNV": "macro_relacionamentos",
+    "Mapa de Triangulação": "macro_casais",
+    "Kit SOS Emocional": "macro_humor",
+    "Mapa de Limites Pessoais": "macro_relacionamentos",
+    "Ritual de Descompressão Noturna": "macro_habitos",
+    "Pausa Estratégica": "macro_humor",
+    "Mapa da Bateria": "macro_habitos",
+    "Mapa de Diferenciação": "macro_relacionamentos",
+    "Diário Corpo-Mente": "macro_corpo",
+    "Escuta Ativa": "macro_relacionamentos",
+    "Regra dos 5 Minutos": "macro_habitos",
+    "Inventário de Carga Mental": "macro_relacionamentos",
+    "Árvore da Decisão": "macro_ansiedade",
+  };
+
+  function agruparPorMacro(ferramentas) {
+    const grupos = {};
+    ferramentas.forEach(f => {
+      const raw = f.desc || f.cat || "";
+      let macroId;
+      // 1. Já é macro_* direto
+      if (MACRO_INFO[raw]) {
+        macroId = raw;
+      // 2. É "outro" ou vazio — tentar pelo nome
+      } else if (!raw || raw === "outro" || raw === "outros") {
+        // Busca parcial no nome
+        const nomeLower = (f.nome||"").toLowerCase();
+        const encontrado = Object.entries(NOME_PARA_MACRO).find(([k])=>nomeLower.includes(k.toLowerCase()));
+        macroId = encontrado ? encontrado[1] : "_outros";
+      // 3. Mapear categoria técnica
+      } else {
+        macroId = CAT_PARA_MACRO_MOD[raw] || CAT_PARA_MACRO_MOD[f.cat] || "_outros";
+      }
+      if (!grupos[macroId]) grupos[macroId] = [];
+      grupos[macroId].push(f);
+    });
+    return Object.entries(MACRO_INFO)
+      .filter(([id]) => grupos[id]?.length > 0)
+      .map(([id, info]) => ({ id, ...info, itens: grupos[id] }));
+  }
+
+  const [gruposAbertos, setGruposAbertos] = useState({});
+  function toggleGrupo(modId, grupoId) {
+    const key = modId+"_"+grupoId;
+    setGruposAbertos(g => ({...g, [key]: !g[key]}));
+  }
+
+  function renderFerramenta(ferr, modId, ferramentas) {
+    const ferrConfig = ferramentas[ferr.id];
+    const ferrAtiva = !!ferrConfig;
+    return (
+      <div key={ferr.id} style={{background:"white",borderRadius:10,
+        border:`1.5px solid ${ferrAtiva?"var(--purple)":"var(--gray-200)"}`,
+        padding:"12px 16px",display:"flex",alignItems:"center",gap:12,transition:"border-color .2s"}}>
+        <div style={{flex:1}}>
+          <div style={{fontWeight:500,fontSize:13}}>{ferr.nome}</div>
+          {ferr.desc && <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{ferr.desc}</div>}
+        </div>
+        {ferrAtiva && (
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <label style={{fontSize:11,color:"var(--text-muted)"}}>Início:</label>
+            <input type="date" value={ferrConfig.dataInicio||""} onChange={e=>setDataInicio(modId,ferr.id,e.target.value)}
+              style={{fontSize:12,border:"1px solid var(--gray-200)",borderRadius:6,padding:"3px 6px",fontFamily:"var(--font-body)"}}/>
+          </div>
+        )}
+        <Toggle ativo={ferrAtiva} onClick={()=>toggleFerramenta(modId,ferr.id)}/>
+      </div>
+    );
+  }
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
@@ -812,52 +1164,70 @@ function AbaModulos({ paciente }) {
         const modConfig = config[mod.id] || {};
         const ativo = !!modConfig.ativo;
         const ferramentas = modConfig.ferramentas || {};
+        const usaGrupo = MODS_COM_GRUPO.has(mod.id);
         return (
           <div key={mod.id} style={{background:"white",borderRadius:14,border:`2px solid ${ativo?"var(--purple)":"var(--gray-200)"}`,overflow:"hidden",transition:"border-color .2s"}}>
-            {/* Cabeçalho do módulo */}
+            {/* Cabeçalho */}
             <div style={{display:"flex",alignItems:"center",gap:14,padding:"16px 20px",background:ativo?"var(--purple-bg)":"white"}}>
               <div style={{fontSize:24}}>{mod.icone}</div>
               <div style={{flex:1}}>
                 <div style={{fontWeight:700,fontSize:15,color:"var(--text)"}}>{mod.nome}</div>
                 <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{mod.desc}</div>
               </div>
-              {mod.automatico ? (
-                <span style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>automático</span>
-              ) : (
-                <Toggle ativo={ativo} onClick={()=>toggleModulo(mod.id)}/>
-              )}
+              {mod.automatico
+                ? <span style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic"}}>automático</span>
+                : <Toggle ativo={ativo} onClick={()=>toggleModulo(mod.id)}/>}
             </div>
 
-            {/* Ferramentas do módulo */}
+            {/* Ferramentas */}
             {ativo && !mod.automatico && (
               <div style={{borderTop:"1px solid var(--gray-100)",padding:"12px 20px",background:"#fafafa"}}>
                 {mod.ferramentas.length === 0 ? (
                   <div style={{fontSize:13,color:"var(--text-muted)",padding:"8px 0"}}>
                     Nenhuma ferramenta cadastrada neste módulo ainda.
                   </div>
-                ) : (
-                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                    <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:4}}>FERRAMENTAS DISPONÍVEIS</div>
-                    {mod.ferramentas.map(ferr => {
-                      const ferrConfig = ferramentas[ferr.id];
-                      const ferrAtiva = !!ferrConfig;
+                ) : usaGrupo ? (
+                  // ── Agrupado por macrocategoria ──
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {agruparPorMacro(mod.ferramentas).map(grupo => {
+                      const key = mod.id+"_"+grupo.id;
+                      const aberto = !!gruposAbertos[key]; // fechado por padrão
+                      const ativosNoGrupo = grupo.itens.filter(f=>!!ferramentas[f.id]).length;
                       return (
-                        <div key={ferr.id} style={{background:"white",borderRadius:10,border:`1.5px solid ${ferrAtiva?"var(--purple)":"var(--gray-200)"}`,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,transition:"border-color .2s"}}>
-                          <div style={{flex:1}}>
-                            <div style={{fontWeight:500,fontSize:13}}>{ferr.nome}</div>
-                            {ferr.desc && <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{ferr.desc}</div>}
+                        <div key={grupo.id} style={{borderRadius:10,border:`1.5px solid ${grupo.cor}30`,overflow:"hidden"}}>
+                          {/* Header do grupo */}
+                          <div onClick={()=>toggleGrupo(mod.id,grupo.id)}
+                            style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                              background:grupo.bg,cursor:"pointer",userSelect:"none"}}>
+                            <span style={{fontSize:16}}>{grupo.icone}</span>
+                            <span style={{fontWeight:700,fontSize:12,color:grupo.cor,flex:1}}>
+                              {grupo.label}
+                            </span>
+                            {ativosNoGrupo>0 && (
+                              <span style={{background:grupo.cor,color:"white",borderRadius:20,
+                                padding:"2px 8px",fontSize:11,fontWeight:700}}>
+                                {ativosNoGrupo} ativo{ativosNoGrupo!==1?"s":""}
+                              </span>
+                            )}
+                            <span style={{fontSize:11,color:grupo.cor,marginLeft:4}}>
+                              {aberto?"▲":"▼"} {grupo.itens.length}
+                            </span>
                           </div>
-                          {ferrAtiva && (
-                            <div style={{display:"flex",alignItems:"center",gap:8}}>
-                              <label style={{fontSize:11,color:"var(--text-muted)"}}>Início:</label>
-                              <input type="date" value={ferrConfig.dataInicio||""} onChange={e=>setDataInicio(mod.id,ferr.id,e.target.value)}
-                                style={{fontSize:12,border:"1px solid var(--gray-200)",borderRadius:6,padding:"3px 6px",fontFamily:"var(--font-body)"}}/>
+                          {/* Itens do grupo */}
+                          {aberto && (
+                            <div style={{padding:"10px 14px",display:"flex",flexDirection:"column",gap:8,background:"white"}}>
+                              {grupo.itens.map(ferr => renderFerramenta(ferr, mod.id, ferramentas))}
                             </div>
                           )}
-                          <Toggle ativo={ferrAtiva} onClick={()=>toggleFerramenta(mod.id,ferr.id)}/>
                         </div>
                       );
                     })}
+                  </div>
+                ) : (
+                  // ── Lista simples (mod1, mod4, mod5) ──
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:4}}>FERRAMENTAS DISPONÍVEIS</div>
+                    {mod.ferramentas.map(ferr => renderFerramenta(ferr, mod.id, ferramentas))}
                   </div>
                 )}
               </div>
@@ -865,6 +1235,79 @@ function AbaModulos({ paciente }) {
           </div>
         );
       })}
+    {/* Modal de sugestões */}
+    {modalSugestao&&(
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:2000,
+        display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+        <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:520,
+          maxHeight:"85vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
+          <div style={{background:`linear-gradient(135deg,${modalSugestao.cor},${modalSugestao.cor}cc)`,
+            borderRadius:"16px 16px 0 0",padding:"18px 24px",color:"white"}}>
+            <div style={{fontSize:11,opacity:0.85,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.6px"}}>
+              {modalSugestao.icone} {modalSugestao.categoria}
+            </div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,marginBottom:4}}>
+              ✨ Sugestões para complementar
+            </div>
+            <div style={{fontSize:13,opacity:0.9}}>
+              Você ativou <b>{modalSugestao.ferramenta}</b>. Selecione fábulas e psicoeducações da mesma temática.
+            </div>
+          </div>
+          <div style={{padding:"20px 24px"}}>
+            {modalSugestao.fabulas.length>0&&(
+              <div style={{marginBottom:20}}>
+                <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                  <Icon name="book-open" size={15}/> Fábulas Terapêuticas
+                </div>
+                {modalSugestao.fabulas.map(f=>(
+                  <label key={f.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:10,cursor:"pointer",marginBottom:6,
+                    background:sugestoesSel[f.id]?"var(--purple-soft)":"#fafafa",
+                    border:`1.5px solid ${sugestoesSel[f.id]?"var(--purple)":"var(--gray-200)"}`,transition:"all .15s"}}>
+                    <input type="checkbox" checked={!!sugestoesSel[f.id]}
+                      onChange={e=>setSugestoesSel(s=>({...s,[f.id]:e.target.checked}))}
+                      style={{marginTop:2,accentColor:"var(--purple)",flexShrink:0}}/>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{f.titulo||f.nome}</div>
+                      {f.moral&&<div style={{fontSize:11,color:"var(--text-muted)",marginTop:2,fontStyle:"italic"}}>"{f.moral}"</div>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            {modalSugestao.psicoeducacao.length>0&&(
+              <div style={{marginBottom:20}}>
+                <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                  <Icon name="brain" size={15}/> Psicoeducação
+                </div>
+                {modalSugestao.psicoeducacao.map(p=>(
+                  <label key={p.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:10,cursor:"pointer",marginBottom:6,
+                    background:sugestoesSel[p.id]?"var(--purple-soft)":"#fafafa",
+                    border:`1.5px solid ${sugestoesSel[p.id]?"var(--purple)":"var(--gray-200)"}`,transition:"all .15s"}}>
+                    <input type="checkbox" checked={!!sugestoesSel[p.id]}
+                      onChange={e=>setSugestoesSel(s=>({...s,[p.id]:e.target.checked}))}
+                      style={{marginTop:2,accentColor:"var(--purple)",flexShrink:0}}/>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{p.titulo||p.nome}</div>
+                      {p.descricao&&<div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{p.descricao.slice(0,80)}</div>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setModalSugestao(null)}
+                style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                Agora não
+              </button>
+              <button onClick={()=>{const algum=Object.values(sugestoesSel).some(v=>v);if(algum)ativarSugestoes();else setModalSugestao(null);}}
+                style={{flex:2,padding:"10px",borderRadius:8,border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"inherit"}}>
+                {Object.values(sugestoesSel).some(v=>v)?`✓ Ativar ${Object.values(sugestoesSel).filter(v=>v).length} selecionado(s)`:"Fechar sem ativar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }
@@ -937,13 +1380,10 @@ function AbaModulo1({ paciente }) {
   },[paciente.id]);
 
   const ITENS = [
-    { id:"humor",       icone:"❤️", nome:"Registro de Humor",      qtd:dados.humor.length,       ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
-    { id:"diario",      icone:"📔", nome:"Diário Terapêutico",      qtd:dados.diario.length,      ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
-    { id:"metas",       icone:"🎯", nome:"Metas Terapêuticas",      qtd:dados.metas.length,       ultima:null },
-    { id:"reflexoes",   icone:"💡", nome:"Reflexões Cognitivas",    qtd:dados.reflexoes.length,   ultima:null },
-    { id:"tcc",         icone:"🧠", nome:"Pensamentos Automáticos", qtd:dados.tcc.length,         ultima:null },
-    { id:"respiracao",  icone:"💨", nome:"Técnica de Respiração",   qtd:dados.respiracao.length,  ultima:null },
-    { id:"relaxamento", icone:"💪", nome:"Relaxamento Muscular",    qtd:dados.relaxamento.length, ultima:null },
+    { id:"humor",  icone:"❤️", nome:"Check-in Diário",     qtd:dados.humor.length,  ultima:dados.humor.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0]?.data },
+    { id:"metas",  icone:"🎯", nome:"Metas Terapêuticas",  qtd:dados.metas.length,  ultima:null },
+    { id:"diario", icone:"📔", nome:"Diário Terapêutico",  qtd:dados.diario.length, ultima:dados.diario.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0]?.data },
+    // Pensamentos e Reflexões → Módulo III / Ansiedade e Controle dos Pensamentos
   ];
 
   // Descrições resumidas para o modal de preview
@@ -1005,84 +1445,49 @@ function AbaModulo1({ paciente }) {
         )
       }
 
-      {/* Modal de preview — renderiza a ferramenta real aqui no admin */}
+      {/* Modal de preview — iframe do portal */}
       {preview&&(()=>{
         const item = ITENS.find(i=>i.id===preview);
-        // Mapeia id da ferramenta para o formularioKey usado em FerramentaInterativaAdmin
-        const KEY_MAP = {
-          respiracao:"breathing-478", relaxamento:"muscle-relaxation",
-          tcc:"abc-record", humor:null, diario:null, metas:null,
-          reflexoes:null, ansiedade:"anxiety-management"
+        const TAB_MAP = {
+          humor:"humor", diario:"diario", metas:"metas",
+          reflexoes:"reflexoes", tcc:"tcc",
+          respiracao:"ferramentas", relaxamento:"ferramentas",
         };
-        const fKey = KEY_MAP[preview];
+        const tab = TAB_MAP[preview]||"painel";
+        const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/?preview=${tab}&email=${encodeURIComponent(paciente.email||"")}&senha=${encodeURIComponent(paciente.senha||"1234")}`;
         return (
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:1000,
             display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
             onClick={()=>setPreview(null)}>
-            <div style={{background:"white",borderRadius:16,width:"100%",
-              maxWidth: fKey ? 700 : 520,
-              maxHeight:"90vh",overflowY:"auto",
-              boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}
+            <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:900,
+              height:"85vh",display:"flex",flexDirection:"column",
+              boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}
               onClick={e=>e.stopPropagation()}>
 
               {/* Header */}
               <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",
-                borderRadius:"16px 16px 0 0",padding:"16px 24px",color:"white",
-                display:"flex",alignItems:"center",justifyContent:"space-between",
-                position:"sticky",top:0,zIndex:1}}>
+                borderRadius:"16px 16px 0 0",padding:"14px 20px",color:"white",
+                display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:24}}>{item?.icone}</span>
+                  <span style={{fontSize:22}}>{item?.icone}</span>
                   <div>
                     <div style={{fontWeight:700,fontSize:15}}>{item?.nome}</div>
-                    <div style={{fontSize:11,opacity:0.8,marginTop:1}}>👁 Prévia — como o paciente vê</div>
+                    <div style={{fontSize:11,opacity:0.8}}>👁 Prévia — visão de {paciente.nome.split(" ")[0]}</div>
                   </div>
                 </div>
                 <button onClick={()=>setPreview(null)}
                   style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:8,
-                    padding:"6px 12px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
+                    padding:"6px 14px",color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
                   ✕ Fechar
                 </button>
               </div>
 
-              {/* Corpo — ferramenta interativa ou mensagem */}
-              <div style={{padding:24}}>
-                {fKey ? (
-                  // Renderiza a ferramenta interativa real
-                  {(()=>{
-                    const k = fKey;
-                    if(k==="breathing-478")     return <FerramentaRespiracao user={paciente}/>;
-                    if(k==="muscle-relaxation") return <FerramentaRelaxamento user={paciente}/>;
-                    if(k==="abc-record")        return <FerramentaABC user={paciente}/>;
-                    if(k==="anxiety-management")return <FerramentaGestaoAnsiedade user={paciente}/>;
-                    return <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>Prévia não disponível para esta ferramenta.</div>;
-                  })()}
-                ) : (
-                  // Ferramentas sem formulário interativo — mostra info + dados
-                  <>
-                    <div style={{background:"var(--purple-soft)",borderRadius:10,padding:"14px 16px",
-                      marginBottom:20,fontSize:13,color:"var(--purple)",lineHeight:1.6}}>
-                      <strong>ℹ️ Como o paciente vê:</strong><br/>{DESC[preview]}
-                    </div>
-                    <div style={{background:"#f9fafb",borderRadius:10,padding:16,
-                      border:"1px solid var(--gray-100)"}}>
-                      <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8,
-                        textTransform:"uppercase",letterSpacing:"0.5px"}}>
-                        Registros de {paciente.nome.split(" ")[0]}
-                      </div>
-                      <div style={{fontSize:22,fontWeight:700,color:"var(--purple)"}}>{item?.qtd}</div>
-                      <div style={{fontSize:12,color:"var(--text-muted)"}}>
-                        {item?.qtd===0 ? "Sem registros ainda" : `registro${item?.qtd!==1?"s":""} realizados`}
-                      </div>
-                    </div>
-                  </>
-                )}
-                <button onClick={()=>setPreview(null)}
-                  style={{width:"100%",marginTop:16,padding:"10px",borderRadius:8,
-                    border:"1px solid var(--gray-200)",background:"white",
-                    cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
-                  Fechar prévia
-                </button>
-              </div>
+              {/* iFrame do portal */}
+              <iframe
+                src={`https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/`}
+                style={{flex:1,border:"none",borderRadius:"0 0 16px 16px"}}
+                title="Prévia do portal do paciente"
+              />
             </div>
           </div>
         );
@@ -1094,7 +1499,8 @@ function AbaModulo1({ paciente }) {
 function AbaMetas({ paciente }) {
   const [metas, setMetas] = useState([]);
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({titulo:"",categoria:"Emocional",progresso:0});
+  const [editando, setEditando] = useState(null); // id da meta em edição
+  const [form, setForm] = useState({titulo:"",categoria:"Emocional",progresso:0,status:"ativa"});
 
   useEffect(()=>{
     // Usa clinica_metas (coleção raiz) com pacienteId — mesma que o portal do paciente lê
@@ -1106,15 +1512,34 @@ function AbaMetas({ paciente }) {
     return unsub;
   },[paciente.id]);
 
+  function abrirNova(){
+    setEditando(null);
+    setForm({titulo:"",categoria:"Emocional",progresso:0,status:"ativa"});
+    setModal(true);
+  }
+  function abrirEdicao(m){
+    setEditando(m.id);
+    setForm({titulo:m.titulo||"",categoria:m.categoria||"Emocional",progresso:m.progresso||0,status:m.status||"ativa"});
+    setModal(true);
+  }
   async function salvar() {
     if(!form.titulo){alert("Titulo obrigatorio.");return;}
-    await db.collection("clinica_metas").add({
-      ...form,
-      pacienteId: paciente.id,
-      status: "ativa",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    setModal(false); setForm({titulo:"",categoria:"Emocional",progresso:0});
+    if(editando){
+      await db.collection("clinica_metas").doc(editando).update({
+        titulo:form.titulo, categoria:form.categoria,
+        progresso:Number(form.progresso)||0, status:form.status,
+        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      await db.collection("clinica_metas").add({
+        titulo:form.titulo, categoria:form.categoria,
+        progresso:Number(form.progresso)||0, status:form.status,
+        pacienteId: paciente.id,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    setModal(false); setEditando(null);
+    setForm({titulo:"",categoria:"Emocional",progresso:0,status:"ativa"});
   }
   async function excluir(id){
     if(!confirm("Excluir meta?"))return;
@@ -1128,17 +1553,28 @@ function AbaMetas({ paciente }) {
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
         <div style={{fontWeight:600}}>Metas Terapeuticas</div>
-        <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Nova Meta</button>
+        <button className="btn btn-purple" onClick={abrirNova}><Icon name="plus" size={16}/> Nova Meta</button>
       </div>
       {metas.length===0?(
         <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}><Icon name="target" size={40}/><div style={{marginTop:12}}>Nenhuma meta cadastrada.</div></div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {metas.map(m=>(
-            <div key={m.id} className="card">
+            <div key={m.id} className="card" style={m.status==="concluida"?{border:"1.5px solid #059669",background:"#f0fdf4"}:m.status==="arquivada"?{opacity:0.55}:{}}>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
-                <div><div style={{fontWeight:500}}>{m.titulo}</div><span className="badge badge-purple" style={{marginTop:4}}>{m.categoria}</span></div>
-                <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>excluir(m.id)}><Icon name="trash-2" size={14}/></button>
+                <div>
+                  <div style={{fontWeight:500}}>{m.titulo}</div>
+                  <div style={{display:"flex",gap:6,marginTop:4,alignItems:"center"}}>
+                    <span className="badge badge-purple">{m.categoria}</span>
+                    {m.status==="concluida"&&<span style={{fontSize:11,fontWeight:700,color:"#059669",background:"#d1fae5",borderRadius:20,padding:"2px 8px"}}>Concluída</span>}
+                    {m.status==="arquivada"&&<span style={{fontSize:11,fontWeight:700,color:"#6b7280",background:"#f3f4f6",borderRadius:20,padding:"2px 8px"}}>Arquivada</span>}
+                    {m.atualizadoPor==="paciente"&&<span style={{fontSize:11,color:"var(--purple)"}}>✋ atualizada pelo paciente</span>}
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:4,flexShrink:0}}>
+                  <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Editar meta" onClick={()=>abrirEdicao(m)}><Icon name="pencil" size={14}/></button>
+                  <button className="btn btn-ghost" style={{padding:"4px 8px"}} title="Excluir meta" onClick={()=>excluir(m.id)}><Icon name="trash-2" size={14}/></button>
+                </div>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{flex:1,background:"var(--gray-100)",borderRadius:20,height:8,overflow:"hidden"}}>
@@ -1157,20 +1593,34 @@ function AbaMetas({ paciente }) {
       {modal&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
           <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:440}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>Nova Meta</div>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>{editando?"Editar Meta":"Nova Meta"}</div>
             <div className="form-group" style={{marginBottom:14}}>
               <label className="form-label">Titulo da Meta</label>
               <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Ex: Praticar mindfulness diariamente"/>
             </div>
-            <div className="form-group" style={{marginBottom:20}}>
+            <div className="form-group" style={{marginBottom:14}}>
               <label className="form-label">Categoria</label>
               <select className="form-input" value={form.categoria} onChange={e=>setForm({...form,categoria:e.target.value})}>
                 {["Emocional","Saude","Pessoal","Profissional","Relacionamento","Outro"].map(c=><option key={c}>{c}</option>)}
               </select>
             </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Progresso: <strong style={{color:"var(--purple)"}}>{form.progresso}%</strong></label>
+              <input type="range" min={0} max={100} step={5} value={form.progresso}
+                onChange={e=>setForm({...form,progresso:+e.target.value})}
+                style={{width:"100%",accentColor:"var(--purple)"}}/>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Status</label>
+              <select className="form-input" value={form.status} onChange={e=>setForm({...form,status:e.target.value})}>
+                <option value="ativa">Ativa (visível para o paciente)</option>
+                <option value="concluida">Concluída (visível, marcada como alcançada)</option>
+                <option value="arquivada">Arquivada (oculta do paciente)</option>
+              </select>
+            </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar}>Salvar</button>
+              <button className="btn btn-purple" onClick={salvar}>{editando?"Salvar alterações":"Salvar"}</button>
             </div>
           </div>
         </div>
@@ -1184,6 +1634,13 @@ function AbaEvolucao({ paciente }) {
   const [humor, setHumor] = useState([]);
   const [atividades, setAtividades] = useState([]);
   const [metas, setMetas] = useState([]);
+  const [sessoes, setSessoes] = useState(0);
+  const [tcc, setTcc] = useState([]);
+  const [diario, setDiario] = useState([]);
+  const [acessos, setAcessos] = useState([]);
+  const [reflexoes, setReflexoes] = useState([]);
+  const [reflexaoAberta, setReflexaoAberta] = useState(null);
+  const [tccAberto, setTccAberto] = useState(null);
   useEffect(()=>{
     const u1 = db.collection("clinica_humor")
       .where("pacienteId","==",paciente.id)
@@ -1204,13 +1661,49 @@ function AbaEvolucao({ paciente }) {
       .where("pacienteId","==",paciente.id)
       .where("status","==","ativa")
       .onSnapshot(snap=>setMetas(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    return ()=>{ u1(); u2(); u3(); };
+    // Sessões registradas do paciente
+    const u4 = db.collection("clinica_sessoes")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>setSessoes(snap.size),()=>{});
+    // Registros TCC (pensamentos guiados salvos no portal)
+    const u5 = db.collection("clinica_tcc")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setTcc(docs);
+      },()=>{});
+    // Entradas no diário terapêutico
+    const u6 = db.collection("clinica_diario")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setDiario(docs);
+      },()=>{});
+    // Log de uso de recursos (abriu / salvou)
+    const u7 = db.collection("clinica_recurso_acessos")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setAcessos(docs.slice(0,40));
+      },()=>{});
+    // Reflexões salvas (fábulas e psicoeducações)
+    const u8 = db.collection("clinica_reflexoes")
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(snap=>{
+        const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setReflexoes(docs);
+      },()=>{});
+    return ()=>{ u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); };
   },[paciente.id]);
   const media = humor.length?(humor.reduce((a,h)=>a+(h.valor||0),0)/humor.length).toFixed(1):"—";
   return (
     <div>
       <div className="metrics-grid" style={{marginBottom:20}}>
-        {[{label:"Sessoes recentes",value:0,icon:"calendar"},{label:"Registros TCC",value:0,icon:"brain"},{label:"Entradas no diario",value:atividades.length,icon:"book-open"},{label:"Metas ativas",value:metas.length,icon:"target"}].map(m=>(
+        {[{label:"Sessoes registradas",value:sessoes,icon:"calendar"},{label:"Registros TCC",value:tcc.length,icon:"brain"},{label:"Entradas no diario",value:diario.length,icon:"book-open"},{label:"Metas ativas",value:metas.length,icon:"target"}].map(m=>(
           <div key={m.label} className="metric-card"><div className="metric-icon"><Icon name={m.icon} size={20}/></div><div className="metric-label">{m.label}</div><div className="metric-value">{m.value}</div></div>
         ))}
       </div>
@@ -1251,6 +1744,128 @@ function AbaEvolucao({ paciente }) {
                   <div style={{fontWeight:700,fontSize:18,color:a.nota>=7?"#16a34a":a.nota>=4?"#d97706":"#dc2626"}}>{a.nota}/10</div>
                   <div style={{fontSize:10,color:"var(--text-muted)"}}>relaxamento</div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── USO DE RECURSOS (log de acessos) ── */}
+      <div className="card" style={{marginTop:16}}>
+        <div style={{fontWeight:600,marginBottom:4,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span>📊 Uso de Recursos Terapêuticos</span>
+          <span style={{fontSize:13,color:"var(--text-muted)"}}>{acessos.length} registro(s)</span>
+        </div>
+        <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:14}}>Cada vez que o paciente abre um recurso ou salva um exercício, aparece aqui.</div>
+        {acessos.length===0?(
+          <div style={{textAlign:"center",padding:30,color:"var(--text-muted)"}}>
+            <Icon name="mouse-pointer-click" size={36}/>
+            <div style={{marginTop:10,fontSize:13}}>Nenhum acesso registrado ainda.</div>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:420,overflowY:"auto"}}>
+            {acessos.map(a=>(
+              <div key={a.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 12px",borderRadius:10,border:"1px solid var(--gray-100)",background:a.tipo==="salvou"?"#f0fdf4":"#fafafa"}}>
+                <span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:"3px 9px",flexShrink:0,marginTop:1,
+                  background:a.tipo==="salvou"?"#d1fae5":a.tipo==="concluiu"?"#dbeafe":"#ede9fe",
+                  color:a.tipo==="salvou"?"#059669":a.tipo==="concluiu"?"#1d4ed8":"var(--purple)"}}>
+                  {a.tipo==="salvou"?"💾 Salvou":a.tipo==="concluiu"?"✅ Concluiu":"👁 Abriu"}
+                </span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:600,fontSize:13}}>{a.recursoTitulo||"Recurso"}</div>
+                  {a.detalhe&&<div style={{fontSize:12,color:"#4b5563",marginTop:2,lineHeight:1.5,wordBreak:"break-word"}}>{a.detalhe}</div>}
+                </div>
+                <div style={{fontSize:11,color:"var(--text-muted)",flexShrink:0,textAlign:"right"}}>{a.data}<br/>{a.hora}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── REGISTROS TCC (pensamentos guiados) ── */}
+      {tcc.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:14,display:"flex",justifyContent:"space-between"}}>
+            <span>🧠 Registros TCC — Pensamentos Guiados</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{tcc.length} registro(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {tcc.slice(0,15).map(t=>(
+              <div key={t.id} style={{border:"1px solid var(--gray-100)",borderRadius:10,overflow:"hidden"}}>
+                <div onClick={()=>setTccAberto(tccAberto===t.id?null:t.id)}
+                  style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",cursor:"pointer",background:tccAberto===t.id?"var(--purple-soft,#f3e8ff)":"#fafafa"}}>
+                  <div style={{fontWeight:600,fontSize:13}}>Registro de {t.data||"—"}</div>
+                  <span style={{fontSize:12,color:"var(--purple)",fontWeight:600}}>{tccAberto===t.id?"▲ Fechar":"▼ Ver respostas"}</span>
+                </div>
+                {tccAberto===t.id&&(
+                  <div style={{padding:"12px 14px",background:"white"}}>
+                    {(t.registros||[]).map((r,i)=>(
+                      <div key={i} style={{marginBottom:i<(t.registros||[]).length-1?12:0}}>
+                        <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:3}}>{i+1}. {r.pergunta}</div>
+                        <div style={{fontSize:13,color:r.resposta?"#1f2937":"#9ca3af",lineHeight:1.6,paddingLeft:14,borderLeft:"3px solid var(--purple-soft,#f3e8ff)"}}>{r.resposta||"— sem resposta —"}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── REFLEXÕES SALVAS (fábulas e psicoeducações) ── */}
+      {reflexoes.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:14,display:"flex",justifyContent:"space-between"}}>
+            <span>💭 Reflexões Salvas — Fábulas e Psicoeducações</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{reflexoes.length} registro(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {reflexoes.slice(0,15).map(r=>{
+              const titulo = r.origemTitulo||r.psicoeducacaoTitulo||"Reflexão";
+              const tipoBadge = r.origem==="fabula"?"📖 Fábula":"🎓 Psicoeducação";
+              return (
+                <div key={r.id} style={{border:"1px solid var(--gray-100)",borderRadius:10,overflow:"hidden"}}>
+                  <div onClick={()=>setReflexaoAberta(reflexaoAberta===r.id?null:r.id)}
+                    style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",cursor:"pointer",gap:10,background:reflexaoAberta===r.id?"var(--purple-soft,#f3e8ff)":"#fafafa"}}>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{titulo}</div>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{tipoBadge} · {r.data||"—"}</div>
+                    </div>
+                    <span style={{fontSize:12,color:"var(--purple)",fontWeight:600,flexShrink:0}}>{reflexaoAberta===r.id?"▲ Fechar":"▼ Ver respostas"}</span>
+                  </div>
+                  {reflexaoAberta===r.id&&(
+                    <div style={{padding:"12px 14px",background:"white"}}>
+                      {(r.registros||[]).map((reg,i)=>(
+                        <div key={i} style={{marginBottom:i<(r.registros||[]).length-1?12:0}}>
+                          <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:3}}>{i+1}. {reg.pergunta}</div>
+                          <div style={{fontSize:13,color:reg.resposta?"#1f2937":"#9ca3af",lineHeight:1.6,paddingLeft:14,borderLeft:"3px solid var(--purple-soft,#f3e8ff)"}}>{reg.resposta||"— sem resposta —"}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── DIÁRIO TERAPÊUTICO ── */}
+      {diario.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:14,display:"flex",justifyContent:"space-between"}}>
+            <span>📓 Diário Terapêutico</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{diario.length} entrada(s)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:360,overflowY:"auto"}}>
+            {diario.slice(0,15).map(d=>(
+              <div key={d.id} style={{padding:"10px 14px",borderRadius:10,border:"1px solid var(--gray-100)",background:"#fafafa"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:11,fontWeight:700,color:"var(--purple)",background:"var(--purple-soft,#f3e8ff)",borderRadius:20,padding:"2px 8px",textTransform:"capitalize"}}>{d.tag||"geral"}</span>
+                  <span style={{fontSize:11,color:"var(--text-muted)"}}>{d.data} {d.hora?("às "+d.hora):""}</span>
+                </div>
+                <div style={{fontSize:13,lineHeight:1.6,color:"#1f2937",whiteSpace:"pre-wrap"}}>{d.texto}</div>
               </div>
             ))}
           </div>
@@ -1666,6 +2281,677 @@ function AbaCasal({ paciente, pacientes }) {
 }
 
 // PERFIL COMPLETO
+function AbaOcupacional({ paciente }) {
+  const EMITIDO_POR = { nome: "Dra. Lucia Kratz", crp: "CRP 09/20590" };
+  const ASSINATURA_URL = "../Assinatura Lúcia Kratz.png"; // imagem na raiz do repositório
+
+  const formVazio = {
+    tipoDocumento: "relatorio_nr1",
+    // Relatório NR-1
+    dataInicio: "", dataFim: "", emAndamento: false,
+    sessoesRealizadas: "", sessoesTotal: "",
+    statusPrograma: "em_andamento", parecerTecnico: "",
+    // Declaração de Comparecimento
+    dataComparecimento: "", horaInicio: "", horaFim: "", obsDeclaracao: "",
+  };
+
+  const [form, setForm] = useState(formVazio);
+  const [historico, setHistorico] = useState([]);
+  const [loadingHist, setLoadingHist] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [preview, setPreview] = useState(null); // doc para preview (com _rascunho quando ainda não salvo)
+  // Dados ocupacionais editáveis aqui mesmo (salvam de volta no cadastro do paciente)
+  const [ocup, setOcup] = useState({
+    empresa: paciente.empresa || paciente.empresaContratante || "",
+    setor: paciente.setor || "",
+    cargo: paciente.cargo || "",
+  });
+
+  useEffect(() => {
+    db.collection("clinica_documentos_nr1")
+      .where("pacienteId", "==", paciente.id)
+      .get()
+      .then(snap => {
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.sort((a,b)=>((b.createdAt&&b.createdAt.seconds)||0)-((a.createdAt&&a.createdAt.seconds)||0));
+        setHistorico(docs);
+        setLoadingHist(false);
+      })
+      .catch(() => setLoadingHist(false));
+  }, [paciente.id]);
+
+  const STATUS_LABELS = {
+    em_andamento: "Em andamento (Acompanhamento contínuo)",
+    concluido: "Concluído (Alta do programa ocupacional)",
+    encaminhado: "Encaminhado para Especialista Externo",
+    descontinuado: "Descontinuado (Faltas / Não adesão)",
+  };
+
+  const TIPO_LABELS = {
+    relatorio_nr1: "Relatório de Atendimento Psicossocial (NR-1)",
+    declaracao: "Declaração de Comparecimento",
+  };
+  const TIPO_DESC = {
+    relatorio_nr1: "📊 Documento completo para a empresa: vigência do acompanhamento, sessões, status no programa e parecer técnico.",
+    declaracao: "📄 Documento simples que atesta o comparecimento do colaborador em uma data e horário específicos.",
+  };
+
+  const eDeclaracao = form.tipoDocumento === "declaracao";
+  const fmtData = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "—";
+
+  function montarDoc() {
+    return {
+      pacienteId: paciente.id,
+      pacienteNome: paciente.nome || "",
+      empresaContratante: ocup.empresa || "",
+      setor: ocup.setor || "",
+      cargo: ocup.cargo || "",
+      tipoDocumento: form.tipoDocumento,
+      periodo: { dataInicio: form.dataInicio, dataFim: form.emAndamento ? "" : form.dataFim, emAndamento: form.emAndamento },
+      sessoes: { realizadas: Number(form.sessoesRealizadas) || 0, total: Number(form.sessoesTotal) || 0 },
+      statusPrograma: form.statusPrograma,
+      parecerTecnico: form.parecerTecnico,
+      dataComparecimento: form.dataComparecimento,
+      horaInicio: form.horaInicio,
+      horaFim: form.horaFim,
+      obsDeclaracao: form.obsDeclaracao,
+      emitidoPor: EMITIDO_POR,
+    };
+  }
+
+  // 1) VISUALIZAR — monta o documento sem salvar nada
+  function visualizar() {
+    if (eDeclaracao && !form.dataComparecimento) { alert("Informe a data do comparecimento."); return; }
+    if (!eDeclaracao && !form.parecerTecnico) { alert("Preencha o Parecer Técnico antes de visualizar."); return; }
+    setPreview({ ...montarDoc(), _rascunho: true, createdAt: { seconds: Date.now()/1000 } });
+  }
+
+  // 2) SALVAR — só depois de visualizar e aprovar
+  async function salvarDefinitivo() {
+    setSalvando(true);
+    const doc = { ...montarDoc(), createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+    try {
+      const ref = await db.collection("clinica_documentos_nr1").add(doc);
+      // Atualiza os dados ocupacionais no cadastro do paciente
+      await db.collection("clinica_pacientes").doc(paciente.id).update({
+        empresa: ocup.empresa || "", setor: ocup.setor || "", cargo: ocup.cargo || ""
+      }).catch(()=>{});
+      const novoDoc = { id: ref.id, ...doc, createdAt: { seconds: Date.now()/1000 } };
+      setHistorico(prev => [novoDoc, ...prev]);
+      setPreview(novoDoc);
+      setForm(formVazio);
+    } catch (e) { alert("Erro ao salvar: " + e.message); }
+    setSalvando(false);
+  }
+
+  function abrirPreview(doc) { setPreview(doc); }
+
+  function imprimirPreview() {
+    const conteudo = document.getElementById("nr1-preview-print");
+    if (!conteudo) return;
+    const w = window.open("", "_blank");
+    w.document.write(`
+      <html><head><title>${TIPO_LABELS[preview?.tipoDocumento]||"Documento"} — ${preview?.pacienteNome||""}</title>
+      <style>
+        body{font-family:Arial,sans-serif;margin:40px;color:#1f2937;font-size:13px;line-height:1.6}
+        img{max-height:70px}
+        @media print{body{margin:20px}.no-print{display:none}}
+      </style></head><body>
+      ${conteudo.innerHTML}
+      </body></html>
+    `);
+    w.document.close();
+    setTimeout(() => { w.focus(); w.print(); }, 600);
+  }
+
+  // ─── BLOCO DE ASSINATURA + CARIMBO ────────────────────────
+  function BlocoAssinatura() {
+    return (
+      <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: 24, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+        <div style={{ textAlign: "center" }}>
+          <img src={ASSINATURA_URL} alt="" style={{ height: 64, objectFit: "contain", display: "block", margin: "0 auto -10px" }}
+            onError={e => e.target.style.display = "none"} />
+          <div style={{ width: 230, borderBottom: "1.5px solid #1f2937", margin: "0 auto 8px" }} />
+          {/* Carimbo profissional */}
+          <div style={{ display: "inline-block", border: "2px solid #7B00C4", borderRadius: 8, padding: "8px 20px", color: "#7B00C4" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.5 }}>Dra. Lucia Kratz</div>
+            <div style={{ fontSize: 11, fontWeight: 600 }}>Psicóloga — CRP 09/20590</div>
+            <div style={{ fontSize: 9.5, marginTop: 2 }}>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── PREVIEW ──────────────────────────────────────────────
+  if (preview) {
+    const ehDecl = preview.tipoDocumento === "declaracao";
+    const periodoStr = preview.periodo?.emAndamento
+      ? `${fmtData(preview.periodo?.dataInicio)} — Em andamento`
+      : `${fmtData(preview.periodo?.dataInicio)} a ${fmtData(preview.periodo?.dataFim)}`;
+    const hojeExtenso = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+
+    return (
+      <div>
+        {preview._rascunho && (
+          <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 10, padding: "10px 16px", marginBottom: 14, fontSize: 13, color: "#78350f", fontWeight: 600 }}>
+            👁 Pré-visualização — o documento ainda NÃO foi salvo. Confira tudo e clique em "Salvar e Gerar PDF".
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+          <button className="btn btn-ghost" onClick={() => setPreview(null)}>
+            <Icon name="arrow-left" size={15} /> {preview._rascunho ? "Voltar e editar" : "Voltar"}
+          </button>
+          {preview._rascunho ? (
+            <button className="btn btn-purple" onClick={salvarDefinitivo} disabled={salvando}>
+              <Icon name="save" size={15} /> {salvando ? "Salvando..." : "💾 Salvar e Gerar PDF"}
+            </button>
+          ) : (
+            <button className="btn btn-purple" onClick={imprimirPreview}>
+              <Icon name="printer" size={15} /> Imprimir / Salvar PDF
+            </button>
+          )}
+        </div>
+
+        <div id="nr1-preview-print" style={{ background: "white", borderRadius: 16, border: "1px solid var(--gray-200)", padding: 32, maxWidth: 680 }}>
+          {/* Cabeçalho timbrado */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, paddingBottom: 16, borderBottom: "2px solid #7B00C4" }}>
+            <div>
+              <div style={{ fontFamily: "Dancing Script, cursive", fontSize: 26, color: "#7B00C4", fontWeight: 700 }}>Dra. Lucia Kratz</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação</div>
+              <div style={{ fontSize: 11, color: "#6b7280" }}>Goiânia, GO — luciakratz.com.br</div>
+            </div>
+            <img src="../logo-transparente.png" style={{ height: 48, objectFit: "contain" }} onError={e => e.target.style.display = "none"} />
+          </div>
+
+          {/* Título */}
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#1f2937", textTransform: "uppercase", letterSpacing: 1 }}>
+              {TIPO_LABELS[preview.tipoDocumento] || preview.tipoDocumento}
+            </div>
+            <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
+              Emitido em {preview.createdAt?.seconds ? new Date(preview.createdAt.seconds * 1000).toLocaleDateString("pt-BR") : new Date().toLocaleDateString("pt-BR")}
+            </div>
+          </div>
+
+          {ehDecl ? (
+            <>
+              {/* ── CORPO DA DECLARAÇÃO ── */}
+              <div style={{ fontSize: 14, lineHeight: 2, textAlign: "justify", margin: "28px 0", textIndent: 40 }}>
+                <strong>DECLARO</strong>, para os devidos fins, que <strong>{preview.pacienteNome}</strong>
+                {preview.cargo ? `, ${preview.cargo}` : ""}
+                {preview.empresaContratante ? <>, colaborador(a) da empresa <strong>{preview.empresaContratante}</strong></> : ""}
+                , compareceu a atendimento psicológico nesta clínica no dia <strong>{fmtData(preview.dataComparecimento)}</strong>
+                {preview.horaInicio ? <>, no horário das <strong>{preview.horaInicio}</strong>{preview.horaFim ? <> às <strong>{preview.horaFim}</strong></> : ""}</> : ""}.
+              </div>
+              {preview.obsDeclaracao && (
+                <div style={{ fontSize: 13, lineHeight: 1.8, textAlign: "justify", marginBottom: 20, textIndent: 40 }}>{preview.obsDeclaracao}</div>
+              )}
+              <div style={{ fontSize: 13, margin: "28px 0 36px", textAlign: "right" }}>Goiânia, {hojeExtenso}.</div>
+            </>
+          ) : (
+            <>
+              {/* ── CORPO DO RELATÓRIO NR-1 ── */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                  Dados do Colaborador
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                  {[
+                    ["Nome", preview.pacienteNome],
+                    ["Empresa Contratante", preview.empresaContratante || "—"],
+                    ["Cargo", preview.cargo || "—"],
+                    ["Setor", preview.setor || "—"],
+                  ].map(([l, v]) => (
+                    <div key={l}>
+                      <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                  Dados do Atendimento
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                  {[
+                    ["Vigência", periodoStr],
+                    ["Sessões Realizadas", `${preview.sessoes?.realizadas || 0} de ${preview.sessoes?.total || 0}`],
+                    ["Status no Programa", STATUS_LABELS[preview.statusPrograma] || preview.statusPrograma],
+                  ].map(([l, v]) => (
+                    <div key={l} style={{ gridColumn: l === "Status no Programa" ? "span 2" : "auto" }}>
+                      <div style={{ fontSize: 10, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>{l}</div>
+                      <div style={{ fontWeight: 500, fontSize: 13 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {preview.parecerTecnico && (
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#7B00C4", borderBottom: "1px solid #e9d5ff", paddingBottom: 4, marginBottom: 10, textTransform: "uppercase" }}>
+                    Parecer Técnico
+                  </div>
+                  <div style={{ background: "#f9f5ff", borderLeft: "3px solid #7B00C4", padding: "12px 16px", borderRadius: 4, fontSize: 13, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                    {preview.parecerTecnico}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Aviso ético */}
+          <div style={{ background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 6, padding: "10px 14px", fontSize: 11, marginBottom: 24, color: "#78350f" }}>
+            ⚖️ Este documento foi elaborado em conformidade com a Resolução CFP nº 06/2019, preservando o sigilo profissional. Não contém diagnósticos, CID, sintomas clínicos ou informações íntimas do colaborador.
+          </div>
+
+          <BlocoAssinatura/>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── FORMULÁRIO ───────────────────────────────────────────
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div className="card">
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon name="briefcase" size={18} style={{ color: "var(--purple)" }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Saúde Ocupacional — NR-1</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Relatórios e declarações para empresas contratantes</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+
+          {/* Tipo de documento + descrição do que muda */}
+          <div className="form-group" style={{ gridColumn: "span 2" }}>
+            <label className="form-label">Tipo de Documento</label>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              {Object.entries(TIPO_LABELS).map(([val, label]) => (
+                <button key={val} onClick={() => setForm({ ...form, tipoDocumento: val })}
+                  style={{ padding: "8px 16px", borderRadius: 20, border: "1.5px solid", cursor: "pointer", fontSize: 13, fontFamily: "var(--font-body)", transition: "all .2s",
+                    borderColor: form.tipoDocumento === val ? "var(--purple)" : "var(--gray-200)",
+                    background: form.tipoDocumento === val ? "var(--purple)" : "white",
+                    color: form.tipoDocumento === val ? "white" : "var(--gray-600)",
+                    fontWeight: form.tipoDocumento === val ? 600 : 400 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--purple)", background: "var(--purple-soft)", borderRadius: 8, padding: "8px 12px" }}>
+              {TIPO_DESC[form.tipoDocumento]}
+            </div>
+          </div>
+
+          {/* Empresa / Setor / Cargo — editáveis, salvam no cadastro */}
+          <div className="form-group" style={{ gridColumn: "span 2" }}>
+            <label className="form-label">Empresa Contratante</label>
+            <input className="form-input" value={ocup.empresa}
+              onChange={e => setOcup({ ...ocup, empresa: e.target.value })}
+              placeholder="Ex: Construtora Horizonte Ltda." />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Setor</label>
+            <input className="form-input" value={ocup.setor}
+              onChange={e => setOcup({ ...ocup, setor: e.target.value })}
+              placeholder="Ex: Administrativo" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Cargo</label>
+            <input className="form-input" value={ocup.cargo}
+              onChange={e => setOcup({ ...ocup, cargo: e.target.value })}
+              placeholder="Ex: Analista de RH" />
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>Gravados no cadastro do paciente ao salvar o documento.</div>
+          </div>
+
+          {eDeclaracao ? (
+            <>
+              {/* ── CAMPOS DA DECLARAÇÃO ── */}
+              <div className="form-group">
+                <label className="form-label">Data do Comparecimento</label>
+                <input className="form-input" type="date" value={form.dataComparecimento}
+                  onChange={e => setForm({ ...form, dataComparecimento: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Horário (início — término)</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input className="form-input" type="time" value={form.horaInicio}
+                    onChange={e => setForm({ ...form, horaInicio: e.target.value })} />
+                  <span style={{ color: "var(--text-muted)" }}>—</span>
+                  <input className="form-input" type="time" value={form.horaFim}
+                    onChange={e => setForm({ ...form, horaFim: e.target.value })} />
+                </div>
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Observação (opcional)</label>
+                <TextAreaVoz className="form-input" rows={3} value={form.obsDeclaracao}
+                  onChange={e => setForm({ ...form, obsDeclaracao: e.target.value })}
+                  placeholder="Ex: O comparecimento integra programa de acompanhamento psicossocial vigente." />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ── CAMPOS DO RELATÓRIO NR-1 ── */}
+              <div className="form-group">
+                <label className="form-label">Data de Início</label>
+                <input className="form-input" type="date" value={form.dataInicio} onChange={e => setForm({ ...form, dataInicio: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data de Fim</label>
+                <input className="form-input" type="date" value={form.dataFim} disabled={form.emAndamento}
+                  onChange={e => setForm({ ...form, dataFim: e.target.value })}
+                  style={form.emAndamento ? { background: "var(--gray-50)", color: "var(--text-muted)" } : {}} />
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                  <input type="checkbox" id="emAndamento" checked={form.emAndamento}
+                    onChange={e => setForm({ ...form, emAndamento: e.target.checked, dataFim: "" })} />
+                  <label htmlFor="emAndamento" style={{ fontSize: 12, color: "var(--text-muted)", cursor: "pointer" }}>Em andamento</label>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Sessões Realizadas</label>
+                <input className="form-input" type="number" min="0" value={form.sessoesRealizadas}
+                  onChange={e => setForm({ ...form, sessoesRealizadas: e.target.value })} placeholder="Ex: 4" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Total Planejado</label>
+                <input className="form-input" type="number" min="0" value={form.sessoesTotal}
+                  onChange={e => setForm({ ...form, sessoesTotal: e.target.value })} placeholder="Ex: 8" />
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Status no Programa</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                  {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                    <label key={val} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
+                      padding: "10px 14px", borderRadius: 8, border: "1.5px solid", transition: "all .2s",
+                      borderColor: form.statusPrograma === val ? "var(--purple)" : "var(--gray-200)",
+                      background: form.statusPrograma === val ? "var(--purple-soft)" : "white" }}>
+                      <input type="radio" name="statusPrograma" value={val} checked={form.statusPrograma === val}
+                        onChange={() => setForm({ ...form, statusPrograma: val })} />
+                      <span style={{ fontSize: 13, fontWeight: form.statusPrograma === val ? 600 : 400,
+                        color: form.statusPrograma === val ? "var(--purple)" : "var(--gray-700)" }}>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{ gridColumn: "span 2" }}>
+                <label className="form-label">Parecer Técnico</label>
+                <TextAreaVoz className="form-input" rows={6} value={form.parecerTecnico}
+                  onChange={e => setForm({ ...form, parecerTecnico: e.target.value })}
+                  placeholder={"Foque em:\n• Capacidade laboral e funcionalidade no trabalho\n• Recomendações ergonômicas ou organizacionais\n• Necessidade de adaptações no posto de trabalho\n\nEvite: diagnósticos, CID, sintomas clínicos, informações íntimas."} />
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+                  ⚖️ Este campo deve seguir a Resolução CFP nº 06/2019 — foco em capacidade laboral, sem expor diagnósticos ou CID.
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+          <button className="btn btn-purple" onClick={visualizar}>
+            <Icon name="eye" size={15} /> 👁 Visualizar documento
+          </button>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", alignSelf: "center" }}>Nada é salvo antes de você conferir e aprovar.</div>
+        </div>
+      </div>
+
+      {/* Histórico */}
+      <div className="card">
+        <div style={{ fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="history" size={16} /> Histórico de Documentos NR-1
+        </div>
+        {loadingHist ? (
+          <div style={{ textAlign: "center", padding: 20, color: "var(--text-muted)" }}>Carregando...</div>
+        ) : historico.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 20, color: "var(--text-muted)", fontSize: 13 }}>
+            Nenhum documento gerado ainda.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {historico.map(doc => (
+              <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px",
+                borderRadius: 10, border: "1px solid var(--gray-200)", background: "white" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: doc.tipoDocumento==="declaracao" ? "#ccfbf1" : "var(--purple-soft)",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon name={doc.tipoDocumento==="declaracao" ? "badge-check" : "file-text"} size={16} style={{ color: doc.tipoDocumento==="declaracao" ? "#0d9488" : "var(--purple)" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, fontSize: 13 }}>{TIPO_LABELS[doc.tipoDocumento] || doc.tipoDocumento}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                    {doc.tipoDocumento==="declaracao"
+                      ? `Comparecimento em ${fmtData(doc.dataComparecimento)}${doc.horaInicio ? ` · ${doc.horaInicio}${doc.horaFim ? "–"+doc.horaFim : ""}` : ""}`
+                      : `${doc.periodo?.emAndamento ? `${fmtData(doc.periodo?.dataInicio)} — Em andamento` : `${fmtData(doc.periodo?.dataInicio)} a ${fmtData(doc.periodo?.dataFim)}`} · ${doc.sessoes?.realizadas || 0}/${doc.sessoes?.total || 0} sessões`}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-outline" style={{ padding: "6px 12px", fontSize: 12 }}
+                    onClick={() => abrirPreview(doc)}>
+                    <Icon name="eye" size={13} /> Ver
+                  </button>
+                  <button className="btn btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }}
+                    onClick={() => { abrirPreview(doc); setTimeout(imprimirPreview, 300); }}>
+                    <Icon name="printer" size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO 2: LINKS COMPARTILHÁVEIS — AbaLinksPartilhados
+//  Coleção: clinica_links_partilhados
+//  Inserir: antes da função PerfilPaciente em admin/app.js
+// ═══════════════════════════════════════════════════════════════════
+
+// Ferramentas disponíveis para link compartilhável
+const FERRAMENTAS_LINK = [
+  { id: "anamnese",    nome: "Anamnese — Marcos do Desenvolvimento", emoji: "📋", desc: "Formulário completo de anamnese" },
+  { id: "entrevista",  nome: "Entrevista Clínica Inicial (DSM-5)",   emoji: "🧠", desc: "Instrumento de avaliação clínica inicial" },
+  { id: "arvore",      nome: "Árvore da Decisão",                    emoji: "🌳", desc: "Técnica TCC para transformar preocupações" },
+  { id: "ansiedade",   nome: "Gestão da Ansiedade",                  emoji: "🎯", desc: "Tracking de estresse, humor e roda da vida" },
+  { id: "alimentacao", nome: "Rastreamento Emocional da Alimentação", emoji: "🍎", desc: "Relação entre emoções e comportamento alimentar" },
+  { id: "abc-record",  nome: "Registro ABC de Pensamentos",          emoji: "📝", desc: "Modelo de registro cognitivo TCC" },
+  { id: "relaxamento", nome: "Relaxamento Muscular Progressivo",     emoji: "💆", desc: "Técnica de Jacobson para tensão e ansiedade" },
+];
+
+function gerarToken() {
+  return Math.random().toString(36).substring(2, 10).toUpperCase() +
+    Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+function AbaLinksPartilhados({ paciente }) {
+  const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+  const [links, setLinks] = useState({});       // { ferramentaId: { token, status, createdAt, docId } }
+  const [loading, setLoading] = useState(true);
+  const [gerando, setGerando] = useState({});   // { ferramentaId: true }
+  const [copiado, setCopiado] = useState({});   // { token: true }
+
+  // Carregar links existentes
+  useEffect(() => {
+    db.collection("clinica_links_partilhados")
+      .where("pacienteId", "==", paciente.id)
+      .get()
+      .then(snap => {
+        const mapa = {};
+        snap.docs.forEach(d => {
+          const data = d.data();
+          // Manter o mais recente por ferramenta
+          if (!mapa[data.tipoFerramenta] || (data.createdAt?.seconds || 0) > (mapa[data.tipoFerramenta]?.createdAt?.seconds || 0)) {
+            mapa[data.tipoFerramenta] = { docId: d.id, ...data };
+          }
+        });
+        setLinks(mapa);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [paciente.id]);
+
+  async function gerarLink(ferramenta) {
+    setGerando(g => ({ ...g, [ferramenta.id]: true }));
+    const token = gerarToken();
+    const doc = {
+      token,
+      pacienteId: paciente.id,
+      pacienteNome: paciente.nome || "",
+      tipoFerramenta: ferramenta.id,
+      nomeFerramenta: ferramenta.nome,
+      status: "pendente",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      // Desativar link anterior se existir
+      if (links[ferramenta.id]?.docId) {
+        await db.collection("clinica_links_partilhados").doc(links[ferramenta.id].docId).update({ status: "substituido" });
+      }
+      const ref = await db.collection("clinica_links_partilhados").add(doc);
+      setLinks(l => ({
+        ...l,
+        [ferramenta.id]: {
+          docId: ref.id, token, status: "pendente",
+          createdAt: { seconds: Date.now() / 1000 },
+          tipoFerramenta: ferramenta.id,
+        },
+      }));
+    } catch (e) {
+      alert("Erro ao gerar link: " + e.message);
+    }
+    setGerando(g => ({ ...g, [ferramenta.id]: false }));
+  }
+
+  function copiarLink(token) {
+    const url = `${BASE_URL}/responder?token=${token}`;
+    navigator.clipboard.writeText(url);
+    setCopiado(c => ({ ...c, [token]: true }));
+    setTimeout(() => setCopiado(c => ({ ...c, [token]: false })), 2000);
+  }
+
+  function enviarWhatsApp(ferramenta, token) {
+    const url = `${BASE_URL}/responder?token=${token}`;
+    const nome = paciente.nome?.split(" ")[0] || "paciente";
+    const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:\n\n📋 *${ferramenta.nome}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
+  const fmtDataHora = (seconds) => {
+    if (!seconds) return "—";
+    return new Date(seconds * 1000).toLocaleDateString("pt-BR");
+  };
+
+  const STATUS_CONFIG = {
+    pendente:    { label: "Pendente",    cor: "#d97706", bg: "#fef3c7", icon: "clock" },
+    respondido:  { label: "Respondido", cor: "#059669", bg: "#d1fae5", icon: "check-circle" },
+    substituido: { label: "Substituído",cor: "#6b7280", bg: "#f3f4f6", icon: "refresh-cw" },
+  };
+
+  return (
+    <div className="card">
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--purple-soft)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Icon name="link" size={18} style={{ color: "var(--purple)" }} />
+        </div>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>Links Compartilháveis</div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Envie ferramentas clínicas diretamente para {paciente.nome?.split(" ")[0] || "o paciente"} responder pelo celular</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)" }}>Carregando...</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {FERRAMENTAS_LINK.map(ferramenta => {
+            const linkAtual = links[ferramenta.id];
+            const statusCfg = STATUS_CONFIG[linkAtual?.status] || null;
+            const url = linkAtual ? `${BASE_URL}/responder?token=${linkAtual.token}` : null;
+
+            return (
+              <div key={ferramenta.id} style={{ border: "1.5px solid", borderColor: linkAtual ? "var(--purple)" : "var(--gray-200)",
+                borderRadius: 12, padding: "14px 16px", background: linkAtual ? "var(--purple-soft)" : "white", transition: "all .2s" }}>
+
+                {/* Header da ferramenta */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: linkAtual ? 12 : 0 }}>
+                  <div style={{ fontSize: 24, flexShrink: 0 }}>{ferramenta.emoji}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{ferramenta.nome}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{ferramenta.desc}</div>
+                  </div>
+
+                  {/* Badge status */}
+                  {statusCfg && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 20,
+                      background: statusCfg.bg, color: statusCfg.cor, fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                      <Icon name={statusCfg.icon} size={11} />
+                      {statusCfg.label}
+                      {linkAtual?.status === "respondido" && linkAtual?.respondidoEm &&
+                        <span> em {fmtDataHora(linkAtual.respondidoEm?.seconds)}</span>
+                      }
+                    </div>
+                  )}
+
+                  {/* Botão gerar link */}
+                  <button className="btn btn-outline" style={{ padding: "6px 12px", fontSize: 12, flexShrink: 0 }}
+                    onClick={() => gerarLink(ferramenta)} disabled={gerando[ferramenta.id]}>
+                    <Icon name="link" size={13} />
+                    {gerando[ferramenta.id] ? "Gerando..." : linkAtual ? "Novo Link" : "Gerar Link"}
+                  </button>
+                </div>
+
+                {/* Link gerado */}
+                {linkAtual && linkAtual.status !== "substituido" && url && (
+                  <div style={{ marginTop: 4 }}>
+                    {/* URL */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, background: "white",
+                      border: "1px solid var(--gray-200)", borderRadius: 8, padding: "8px 12px", marginBottom: 10 }}>
+                      <Icon name="link" size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {url}
+                      </span>
+                    </div>
+
+                    {/* Ações */}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button className="btn btn-outline" style={{ padding: "7px 14px", fontSize: 12 }}
+                        onClick={() => copiarLink(linkAtual.token)}>
+                        <Icon name={copiado[linkAtual.token] ? "check" : "copy"} size={13} />
+                        {copiado[linkAtual.token] ? "Copiado!" : "Copiar Link"}
+                      </button>
+                      <button className="btn btn-purple" style={{ padding: "7px 14px", fontSize: 12 }}
+                        onClick={() => enviarWhatsApp(ferramenta, linkAtual.token)}>
+                        <Icon name="message-circle" size={13} /> Enviar pelo WhatsApp
+                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>
+                        <Icon name="calendar" size={11} />
+                        Gerado em {fmtDataHora(linkAtual.createdAt?.seconds)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Nota informativa */}
+      <div style={{ marginTop: 16, padding: "10px 14px", background: "#eff6ff", borderRadius: 8, fontSize: 11, color: "#1e40af", lineHeight: 1.6 }}>
+        💡 <strong>Como funciona:</strong> O paciente recebe o link, acessa a ferramenta no celular, preenche e envia. As respostas entram automaticamente no prontuário e o status muda para <strong>Respondido</strong>.
+        O link expira após ser respondido ou quando um novo link é gerado para a mesma ferramenta.
+      </div>
+    </div>
+  );
+}
+
 function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
   const [aba, setAba] = useState("perfil");
   const isSecretaria = user?.tipo==="secretaria";
@@ -1678,6 +2964,8 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
       {id:"laudos",   label:"Laudos",          icon:"file-text"},
       {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
       {id:"casal",    label:"Terapia de Casal",icon:"heart"},
+      {id:"nr1",      label:"Saúde Ocupacional",   icon:"briefcase"},
+      {id:"links",    label:"Links Partilhados",   icon:"link"},
     ]:[]),
   ];
   return (
@@ -1706,11 +2994,24 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
       {aba==="laudos"     &&<EmBreve titulo="Laudos" subtitulo="Etapa 10"/>}
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
       {aba==="casal"      &&<AbaCasal       paciente={paciente} pacientes={pacientes}/>}
+      {aba==="nr1"        &&<AbaOcupacional paciente={paciente}/>}
+      {aba==="links"      &&<AbaLinksPartilhados paciente={paciente}/>}
     </div>
   );
 }
 
 // LISTA PACIENTES
+const MOD1_PADRAO = {
+  mod1: {
+    ativo: true,
+    ferramentas: {
+      humor:  { ativo:true, dataInicio: new Date().toISOString().slice(0,10) },
+      metas:  { ativo:true, dataInicio: new Date().toISOString().slice(0,10) },
+      diario: { ativo:true, dataInicio: new Date().toISOString().slice(0,10) },
+    }
+  }
+};
+
 function Pacientes({ user }) {
   const { data:pacientes, loading } = useCollection("clinica_pacientes","nome");
   const [busca, setBusca] = useState("");
@@ -1757,6 +3058,8 @@ function Pacientes({ user }) {
               genero:idx.genero>=0?cols[idx.genero]?.trim()||"Não informar":"Não informar",
               status:"ativo",senha:"",objetivosTerapeuticos:"",observacoesClinicas:"",
               origem:"importacao-excel",
+              modulosConfig: MOD1_PADRAO,
+              modulosAtivos: ["mod1"],
               createdAt:firebase.firestore.FieldValue.serverTimestamp()
             });
             ok++;log.push({tipo:"ok",msg:`✓ ${nome}`});
@@ -1792,7 +3095,12 @@ function Pacientes({ user }) {
   async function salvar(){
     if(!form.nome||!form.email){alert("Nome e e-mail obrigatorios.");return;}
     setSalvando(true);
-    await db.collection("clinica_pacientes").add({...form,senha:"1234",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection("clinica_pacientes").add({
+      ...form, senha:"1234",
+      modulosConfig: MOD1_PADRAO,
+      modulosAtivos: ["mod1"],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
     setModal(false);setSalvando(false);
   }
 
@@ -1809,7 +3117,8 @@ function Pacientes({ user }) {
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>setModalImport(true)}><Icon name="upload" size={15}/> Importar Excel</button>
           <button className="btn btn-ghost" style={{fontSize:13}} onClick={()=>{
             const url="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
-            navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! Cole no WhatsApp ou e-mail:\n\n"+url)).catch(()=>prompt("Copie o link:",url));
+            const texto = `🦋 *Clínica Dra. Lucia Kratz*\n\nOlá! Para agilizar o seu atendimento, preencha o formulário de cadastro pelo link abaixo:\n\n👉 ${url}\n\nÉ rápido e seguro. Após o preenchimento, seus dados já estarão disponíveis para a sua psicóloga.\n\nQualquer dúvida, estamos à disposição! 💜`;
+            navigator.clipboard.writeText(texto).then(()=>alert("✓ Texto + link copiado!\nCole direto no WhatsApp.")).catch(()=>prompt("Copie o texto:",texto));
           }}><Icon name="link" size={15}/> Link de Cadastro</button>
           <button className="btn btn-purple" onClick={abrirNovo}><Icon name="user-plus" size={16}/> Novo Paciente</button>
         </div>
@@ -1860,6 +3169,9 @@ function Pacientes({ user }) {
               <div className="form-group"><label className="form-label">Telefone</label><input className="form-input" value={form.telefone||""} onChange={e=>setForm({...form,telefone:e.target.value})}/></div>
               <div className="form-group"><label className="form-label">Genero</label><select className="form-input" value={form.genero||""} onChange={e=>setForm({...form,genero:e.target.value})}><option value="">Selecione</option><option>Feminino</option><option>Masculino</option><option>Nao-binario</option><option>Nao informar</option></select></div>
               <div className="form-group"><label className="form-label">Status</label><select className="form-input" value={form.status||"ativo"} onChange={e=>setForm({...form,status:e.target.value})}><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="alta">Alta</option></select></div>
+              <div className="form-group" style={{gridColumn:"span 2"}}><label className="form-label">🏢 Empresa Contratante (opcional — NR-1)</label><input className="form-input" value={form.empresa||""} onChange={e=>setForm({...form,empresa:e.target.value})} placeholder="Para colaboradores de empresas"/></div>
+              <div className="form-group"><label className="form-label">Setor</label><input className="form-input" value={form.setor||""} onChange={e=>setForm({...form,setor:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">Cargo</label><input className="form-input" value={form.cargo||""} onChange={e=>setForm({...form,cargo:e.target.value})}/></div>
               <div className="form-group" style={{gridColumn:"span 2"}}><label className="form-label">Objetivos Terapeuticos</label><TextAreaVoz className="form-input" rows={3} value={form.objetivos||""} onChange={e=>setForm({...form,objetivos:e.target.value})} placeholder="Descreva os objetivos..."/></div>
             </div>
             <div style={{display:"flex",gap:10,marginTop:20,justifyContent:"flex-end"}}>
@@ -1979,7 +3291,10 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
       valorPago:pago?vPago:0,
       dataPagamento:pago&&!s.dataPagamento?new Date().toISOString().slice(0,10):s.dataPagamento
     });
-    if(pago){
+    // ── REGRA: sessão de PACOTE nunca gera lançamento próprio.
+    // O lançamento do pacote já cobre todas as sessões filhas.
+    // Lançamento individual só existe para sessões AVULSAS (sem pacoteId).
+    if(pago && !s.pacoteId){
       const lancExist = lancamentos.find(l=>l.sessaoId===s.id);
       if(!lancExist){
         await db.collection("clinica_lancamentos").add({
@@ -2026,8 +3341,86 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           <div style={{fontFamily:"Dancing Script, cursive",fontSize:20,color:"white",fontWeight:600,lineHeight:1}}>{pacEfetivo?.nome}</div>
           <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>Controle de Sessões e Frequência</div>
         </div>
-        <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>window.print()}>
-          <Icon name="printer" size={15}/> Imprimir
+        <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>{
+          const pac = pacEfetivo;
+          const sessMeses = {};
+          sessoesPac.forEach(s=>{
+            const mes = (s.data||"").slice(0,7);
+            if(!sessMeses[mes]) sessMeses[mes]=[];
+            sessMeses[mes].push(s);
+          });
+          const totalPago = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+          const totalValor = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+          const fmtD = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}) : "—";
+          const fmtM = m => { const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
+          const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
+          const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+          const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Resumo de Sessões — ${pac?.nome||""}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;background:white;padding:32px;max-width:680px;margin:0 auto}
+  .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:16px;border-bottom:3px solid #7B00C4;margin-bottom:24px}
+  .logo-name{font-family:Georgia,serif;font-size:26px;color:#7B00C4;font-weight:700}
+  .logo-sub{font-size:11px;color:#6b7280;margin-top:3px}
+  .paciente-box{background:#f5f0ff;border-radius:12px;padding:16px 20px;margin-bottom:24px;border-left:5px solid #7B00C4}
+  .paciente-nome{font-size:22px;font-weight:700;color:#111827;margin-bottom:6px}
+  .paciente-meta{display:flex;gap:24px;flex-wrap:wrap}
+  .meta-item label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:2px}
+  .meta-item span{font-size:13px;font-weight:600;color:#374151}
+  .mes-title{font-size:14px;font-weight:700;color:#7B00C4;padding:8px 0;border-bottom:1px solid #e5e7eb;margin-bottom:8px;margin-top:20px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#7B00C4;color:white;padding:7px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase}
+  td{padding:7px 10px;border-bottom:1px solid #f3f4f6}
+  tr:nth-child(even) td{background:#fafafa}
+  .status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
+  .totais{margin-top:24px;background:#f9fafb;border-radius:10px;padding:14px 20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12}
+  .total-item label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}
+  .total-item span{font-size:18px;font-weight:800}
+  .footer{margin-top:32px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+  @media print{body{padding:16px} @page{margin:1.5cm}}
+</style></head><body>
+<div class="header">
+  <div><div class="logo-name">Dra. Lucia Kratz</div><div class="logo-sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação<br>Goiânia, GO</div></div>
+  <div style="text-align:right;font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div>
+</div>
+<div class="paciente-box">
+  <div class="paciente-nome">${pac?.nome||"—"}</div>
+  <div class="paciente-meta">
+    <div class="meta-item"><label>Início</label><span>${pacotesPac[0]?.dataInicio?new Date(pacotesPac[0].dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span></div>
+    <div class="meta-item"><label>Horário</label><span>${pacotesPac[0]?.horario||"—"}</span></div>
+    <div class="meta-item"><label>Recorrência</label><span>${pacotesPac[0]?.recorrencia||"—"}</span></div>
+    <div class="meta-item"><label>Total de sessões</label><span>${sessoesPac.length}</span></div>
+  </div>
+</div>
+${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])=>`
+<div class="mes-title">${fmtM(mes).charAt(0).toUpperCase()+fmtM(mes).slice(1)} — ${sess.length} sessão(ões)</div>
+<table>
+  <thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
+  <tbody>${sess.sort((a,b)=>(a.data||"").localeCompare(b.data||"")).map((s,i)=>`
+    <tr>
+      <td style="font-weight:700;color:#7B00C4">${s.numSessao||i+1}</td>
+      <td>${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}):""}</td>
+      <td>${s.hora||"—"}</td>
+      <td>${s.tipo||"Psicoterapia"}</td>
+      <td><span class="status" style="background:${statusColor[s.status]||"#7B00C4"}">${statusLabel[s.status]||s.status||"—"}</span></td>
+      <td>R$ ${(parseFloat(s.valorSessao)||0).toFixed(2).replace(".",",")}</td>
+    </tr>`).join("")}
+  </tbody>
+</table>`).join("")}
+<div class="totais">
+  <div class="total-item"><label>Total do pacote</label><span style="color:#111827">R$ ${totalValor.toFixed(2).replace(".",",")}</span></div>
+  <div class="total-item"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
+  <div class="total-item"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
+</div>
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+          const w = window.open("","_blank");
+          w.document.write(html);
+          w.document.close();
+          setTimeout(()=>w.print(),800);
+        }}>
+          <Icon name="printer" size={15}/> Imprimir / PDF
         </button>
       </div>
 
@@ -2073,7 +3466,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
         <button onClick={()=>setMesFiltro("todos")} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro==="todos"?"var(--purple)":"#e5e7eb",background:mesFiltro==="todos"?"var(--purple)":"white",color:mesFiltro==="todos"?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>Todos</button>
         {meses.map(m=>(
           <button key={m} onClick={()=>setMesFiltro(m)} style={{padding:"4px 12px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltro===m?"var(--purple)":"#e5e7eb",background:mesFiltro===m?"var(--purple)":"white",color:mesFiltro===m?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
+            {new Date(m+"-15").toLocaleDateString("pt-BR",{month:"short",year:"2-digit"})}
           </button>
         ))}
       </div>
@@ -2081,7 +3474,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
       {/* Accordion por mês */}
       {mesesFiltrados.map(mes=>{
         const sessMes = porMes[mes]||[];
-        const mesLabel = new Date(mes+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+        const mesLabel = new Date(mes+"-15").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
         const recMes = sessMes.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
         const aberto = accordionAberto[mes]!==false;
         return(
@@ -2132,9 +3525,15 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
                             </select>
                             {(s.status==="cancelado"||s.status==="remarcado")&&(
                               <div style={{marginTop:3}}>
-                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data:</div>
-                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value);}}
+                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data (sem mov. financeira):</div>
+                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value,s._motivoRemarc||"remarcacao");}}
                                   style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:105}}/>
+                                <select defaultValue={s.motivoRemarcacao||"remarcacao"} onChange={e=>atualizarSessao(s.id,{motivoRemarcacao:e.target.value})}
+                                  style={{fontSize:9,marginTop:2,border:"1px solid #cbd5e1",borderRadius:3,padding:"1px 3px",width:105,color:"#374151",cursor:"pointer"}}>
+                                  <option value="remarcacao">🔄 Remarcação</option>
+                                  <option value="falta">⚠️ Falta</option>
+                                  <option value="compensacao">✅ Compensação</option>
+                                </select>
                               </div>
                             )}
                           </td>
@@ -2212,7 +3611,7 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   );
 }
 
-function FinanceiroClinica() {
+function FinanceiroClinica({ user }) {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [lancamentos, setLancamentos] = useState([]);
   const [pacotes, setPacotes] = useState([]);
@@ -2226,6 +3625,45 @@ function FinanceiroClinica() {
   const [pacoteSelecionado, setPacoteSelecionado] = useState(null);
   const [modalExcluir, setModalExcluir] = useState(null);
   const [modalExcluirLanc, setModalExcluirLanc] = useState(null);
+  const CATS_DESPESA_CLINICA = ["Aluguel","Condomínio","Energia / Água","Telefone / Internet","Salário Secretária","Contador / Impostos","Marketing","Equipamentos","Materiais","Ferramentas de IA","Cursos e Capacitação","Musicoterapia","Manutenção","Outros"];
+  const FORMAS_PAG_CLINICA = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Outro"];
+  const [modalDespesa, setModalDespesa] = useState(false);
+  const [formDespesa, setFormDespesa] = useState({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+  const [editandoDespesa, setEditandoDespesa] = useState(null);
+
+  async function salvarDespesaClinica(){
+    if(!formDespesa.valor||!formDespesa.data){alert("Preencha valor e data.");return;}
+    setSalvando(true);
+    try {
+      const val=parseFloat(formDespesa.valor);
+      const nParc=parseInt(formDespesa.parcelas)||1;
+      const base={
+        tipo:"despesa",tipo_lancamento:"despesa",
+        categoria:formDespesa.categoria||"Outros",
+        descricao:formDespesa.descricao||formDespesa.categoria||"Despesa",
+        formaPag:formDespesa.formaPag,status:formDespesa.status,
+        obs:formDespesa.obs||"",centroCusto:"🏥 Clínica",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if(editandoDespesa){
+        await db.collection("clinica_lancamentos").doc(editandoDespesa).update({...base,valor:val,data:formDespesa.data});
+      } else if(nParc>1){
+        const batch=db.batch();
+        const [ano,mes,dia]=formDespesa.data.split("-").map(Number);
+        for(let i=0;i<nParc;i++){
+          let m=mes+i,a=ano; while(m>12){m-=12;a++;}
+          const dp=`${a}-${String(m).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+          batch.set(db.collection("clinica_lancamentos").doc(),{...base,valor:val,data:dp,parcela:`${i+1}/${nParc}`,descricao:(formDespesa.descricao||formDespesa.categoria||"Despesa")+` (${i+1}/${nParc})`});
+        }
+        await batch.commit();
+      } else {
+        await db.collection("clinica_lancamentos").add({...base,valor:val,data:formDespesa.data});
+      }
+      setModalDespesa(false);setEditandoDespesa(null);
+      setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+    } catch(e){alert("Erro: "+e.message);}
+    setSalvando(false);
+  }
   const [aba, setAba] = useState("lancamentos");
   const [buscaPac, setBuscaPac] = useState("");
 
@@ -2234,7 +3672,16 @@ function FinanceiroClinica() {
   const DIAS_LABEL = {0:"Dom",1:"Seg",2:"Ter",3:"Qua",4:"Qui",5:"Sex",6:"Sáb"};
 
   const [formAvulso, setFormAvulso] = useState({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:""});
+  // Estado dedicado para edição de despesas
+  const CATS_DESPESA = ["Aluguel","Condomínio","Marketing","Salários","Investimentos","Musicoterapia","Ferramentas de IA","Telefone/Internet","Contador","Impostos","Outros"];
+  const [formDespesaEdit, setFormDespesaEdit] = useState({descricao:"",categoria:"",valor:"",data:"",formaPag:"",status:"pago",obs:""});
+  // ── Painel de higienização ────────────
+  const [modalAuditoria, setModalAuditoria] = useState(false);
+  const [filtroTipo, setFiltroTipo] = useState("tudo"); // "tudo" | "receita" | "despesa"
+  const [auditLog, setAuditLog] = useState([]);
+  const [auditando, setAuditando] = useState(false);
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",parceiraId:"",percParceiro:"70"});
+  const [parceiras, setParceiras] = useState([]);
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
@@ -2243,7 +3690,8 @@ function FinanceiroClinica() {
     const u1=db.collection("clinica_lancamentos").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
     const u2=db.collection("clinica_pacotes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setPacotes(docs);},()=>{});
     const u3=db.collection("clinica_sessoes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(a.data||"").localeCompare(b.data||""));setSessoes(docs);},()=>{});
-    return()=>{u1();u2();u3();};
+    const u4=db.collection("clinica_parceiras").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));setParceiras(docs);},()=>{});
+    return()=>{u1();u2();u3();u4();};
   },[]);
 
   const getPacNome = id=>pacientes.find(p=>p.id===id)?.nome||"—";
@@ -2280,35 +3728,70 @@ function FinanceiroClinica() {
   const totalRecebidoPeriodo = calcSaldo(lancPeriodo.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalRecebidoMes = calcSaldo(lancMes.filter(l=>l.status==="recebido"||l.status==="pago"));
   const totalPendente = calcReceitas(lancamentos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro)));
-  const mesAtualLabel = new Date(mesCards+"-01").toLocaleDateString("pt-BR",{month:"short"});
+  const mesAtualLabel = new Date(mesCards+"-15").toLocaleDateString("pt-BR",{month:"short"});
 
-  // Salvar lançamento avulso
+  // Salvar lançamento avulso — ETAPA 2: UPDATE obrigatório quando editando
   async function salvarAvulso(tipoVenda){
     if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
-    const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
-    const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pac?.nome||""};
-    if(editando){
-      await db.collection("clinica_lancamentos").doc(editando).update(dados);
-    } else {
-      await db.collection("clinica_lancamentos").add({...dados,tipo_lancamento:"avulso",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-      if(formAvulso.status==="pendente"){
-        await dispararNotificacao({
-          tipo:"pagamento_pendente",
-          titulo:`Pagamento pendente — ${pac?.nome||"Paciente"}`,
-          corpo:`R$ ${parseFloat(formAvulso.valor).toFixed(2).replace(".",",")} · ${formAvulso.tipo} · ${formAvulso.data?.split("-").reverse().join("/")||""}`,
-          pacienteId: formAvulso.pacienteId
+    try {
+      const pac = pacientes.find(p=>p.id===formAvulso.pacienteId);
+      const dados = {...formAvulso,valor:parseFloat(formAvulso.valor),pacienteNome:pac?.nome||""};
+
+      if(editando){
+        // ── ETAPA 2: GUARD — verifica se o contexto ainda existe antes de salvar
+        const docSnap = await db.collection("clinica_lancamentos").doc(editando).get();
+        if(!docSnap.exists){
+          alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");
+          setModal(false);setEditando(null);setSalvando(false);return;
+        }
+        // UPDATE cirúrgico — nunca gera novo INSERT
+        await db.collection("clinica_lancamentos").doc(editando).update({
+          ...dados,
+          _editadoEm: firebase.firestore.FieldValue.serverTimestamp(),
         });
+      } else {
+        // Novo lançamento — INSERT legítimo
+        await db.collection("clinica_lancamentos").add({
+          ...dados,tipo_lancamento:"avulso",createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        if(formAvulso.status==="pendente"){
+          await dispararNotificacao({
+            tipo:"pagamento_pendente",
+            titulo:`Pagamento pendente — ${pac?.nome||"Paciente"}`,
+            corpo:`R$ ${parseFloat(formAvulso.valor).toFixed(2).replace(".",",")} · ${formAvulso.tipo} · ${formAvulso.data?.split("-").reverse().join("/")||""}`,
+            pacienteId: formAvulso.pacienteId
+          });
+        }
+        if(tipoVenda) await registrarComissao({ tipo:"Sessão Avulsa", valor:parseFloat(formAvulso.valor), pacienteNome:pac?.nome||"", tipoVenda });
       }
-      // Registra comissão da secretária
-      if(tipoVenda) await registrarComissao({ tipo:"Sessão Avulsa", valor:parseFloat(formAvulso.valor), pacienteNome:pac?.nome||"", tipoVenda });
+    } catch(e){
+      alert("Erro ao salvar: "+e.message);
     }
     setModal(false);setEditando(null);setFormAvulso({pacienteId:"",tipo:"Consulta",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pendente",obs:""});setSalvando(false);
   }
 
   function abrirEditar(l){
-    setFormAvulso({pacienteId:l.pacienteId||"",tipo:l.tipo||"Consulta",valor:l.valor||"",data:l.data||"",formaPag:l.formaPag||"PIX",status:l.status||"pendente",obs:l.obs||""});
-    setEditando(l.id);setModal("avulso");
+    // ── ETAPA 2: bifurca entre receita e despesa
+    if(l.tipo_lancamento==="despesa"){
+      setFormDespesa({descricao:l.descricao||"",categoria:l.categoria||"",valor:l.valor+"",data:l.data||"",formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",parcelas:"1"});
+      setEditandoDespesa(l.id);
+      setModalDespesa(true);
+    } else {
+      setFormAvulso({
+        pacienteId: l.pacienteId||"",
+        tipo:       l.tipo||"Consulta",
+        valor:      l.valor+"",
+        data:       l.data||"",
+        formaPag:   l.formaPag||"PIX",
+        status:     l.status||"pendente",
+        obs:        l.obs||"",
+        categoria:  l.categoria||"",
+        descricao:  l.descricao||"",
+      });
+      setEditando(l.id);
+      setModal("avulso");
+    }
   }
 
   async function excluirLanc(id){
@@ -2316,19 +3799,121 @@ function FinanceiroClinica() {
     await db.collection("clinica_lancamentos").doc(id).delete();
   }
 
-  // Marcar pago — marca todas as sessões do pacote
+  // ── Salvar edição de DESPESA — UPDATE obrigatório, nunca INSERT
+  async function salvarDespesaEdit(){
+    if(!formDespesaEdit.valor||!formDespesaEdit.data){alert("Valor e data obrigatórios.");return;}
+    if(!editando){alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");return;}
+    setSalvando(true);
+    try {
+      const docSnap = await db.collection("clinica_lancamentos").doc(editando).get();
+      if(!docSnap.exists){
+        alert("Desculpe, perdi o contexto da edição. Por favor, clique no lápis novamente.");
+        setModal(false);setEditando(null);setSalvando(false);return;
+      }
+      await db.collection("clinica_lancamentos").doc(editando).update({
+        descricao:   formDespesaEdit.descricao,
+        categoria:   formDespesaEdit.categoria,
+        valor:       parseFloat(formDespesaEdit.valor),
+        data:        formDespesaEdit.data,
+        formaPag:    formDespesaEdit.formaPag,
+        status:      formDespesaEdit.status,
+        obs:         formDespesaEdit.obs,
+        tipo_lancamento: "despesa",
+        _editadoEm:  firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch(e){ alert("Erro ao salvar: "+e.message); }
+    setModal(false);setEditando(null);setSalvando(false);
+  }
+
+  // ── ETAPA 3: FONTE ÚNICA DA VERDADE ─────────────────────────────────────
+  // Dar baixa em um pacote:
+  //   1. Atualiza o documento do pacote (statusPag, valorPago, valorPendente)
+  //   2. Marca todas as sessões filhas como pagas em batch
+  //   3. Garante que existe EXATAMENTE 1 lançamento vinculado (sem criar duplicata)
   async function marcarPacotePago(pacoteId, formaPag){
     const sessPac = sessoes.filter(s=>s.pacoteId===pacoteId);
+    const pacote  = pacotes.find(p=>p.id===pacoteId);
+    if(!pacote) return;
+
+    const hoje = new Date().toISOString().slice(0,10);
+    const vTotal = parseFloat(pacote.valorTotal||0);
+    const extras = pacote.pagamentosExtras||[];
+    const totalExtras = extras.reduce((a,pg)=>a+(parseFloat(pg.valor)||0),0);
+    const valorPagoFinal = totalExtras > 0 ? totalExtras : vTotal;
+    const valorPendenteFinal = Math.max(0, vTotal - valorPagoFinal);
+
     const batch = db.batch();
-    sessPac.forEach(s=>{
-      batch.update(db.collection("clinica_sessoes").doc(s.id),{pagamento:"pago",formaPagamento:formaPag,dataPagamento:new Date().toISOString().slice(0,10)});
+
+    // 1. Atualiza o pacote — recalcula a matriz financeira
+    batch.update(db.collection("clinica_pacotes").doc(pacoteId),{
+      statusPag: "recebido",
+      formaPag,
+      dataPagamento: hoje,
+      valorPago: valorPagoFinal,
+      valorPendente: valorPendenteFinal,
+      _sincronizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
     });
-    // Atualiza lançamento do pacote
-    const lancPacote = lancamentos.find(l=>l.pacoteId===pacoteId);
-    if(lancPacote){
-      batch.update(db.collection("clinica_lancamentos").doc(lancPacote.id),{status:"recebido",formaPag,dataPagamento:new Date().toISOString().slice(0,10)});
+
+    // 2. Atualiza todas as sessões filhas
+    const valorPorSessao = sessPac.length > 0
+      ? parseFloat((valorPagoFinal/sessPac.length).toFixed(2))
+      : (pacote.valorSessao||0);
+    sessPac.forEach(s=>{
+      batch.update(db.collection("clinica_sessoes").doc(s.id),{
+        pagamento:"pago",
+        formaPagamento:formaPag,
+        dataPagamento:hoje,
+        valorPago: parseFloat(s.valorPago||0) > 0 ? s.valorPago : valorPorSessao,
+        statusFinanceiro:"pago",
+      });
+    });
+
+    // 3. Atualiza lançamento existente OU cria exatamente 1 novo (evita duplicata)
+    const lancExistente = lancamentos.find(l=>l.pacoteId===pacoteId);
+    if(lancExistente){
+      batch.update(db.collection("clinica_lancamentos").doc(lancExistente.id),{
+        status:"recebido",
+        formaPag,
+        dataPagamento:hoje,
+        valor: valorPagoFinal,
+        valorPendente: valorPendenteFinal,
+      });
+    } else {
+      // Gera lançamento apenas se não existe nenhum para este pacote
+      const pac = pacientes.find(p=>p.id===pacote.pacienteId);
+      const mes = new Date(pacote.dataInicio+"T00:00:00").toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+      const desc = `${pac?.nome||pacote.pacienteNome||"Paciente"} — Pacote ${pacote.totalSessoes||""} Sessões — ${mes.charAt(0).toUpperCase()+mes.slice(1)}`;
+      batch.set(db.collection("clinica_lancamentos").doc(),{
+        tipo_lancamento:"pacote", pacoteId,
+        pacienteId:pacote.pacienteId, pacienteNome:pac?.nome||pacote.pacienteNome||"",
+        tipo:desc, descricao:desc,
+        valor:valorPagoFinal, valorPendente:valorPendenteFinal,
+        data:hoje, formaPag, status:"recebido", dataPagamento:hoje,
+        pagamentosExtras:extras,
+        totalSessoes:pacote.totalSessoes, valorSessao:pacote.valorSessao,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      });
     }
+
     await batch.commit();
+
+    // ── GATILHO ÚNICO + TRAVA DUPLA DE COMISSÃO ──
+    // Regra 1: Só dispara se o pacote estava estritamente "pendente" antes desta chamada
+    // Regra 2: ID derivado (COM_pacoteId) garante idempotência — retry nunca duplica
+    const eraPendente = (pacote.statusPag||"pendente") !== "recebido";
+    if(eraPendente) {
+      // Detecta se é primeira venda ou recorrente para este paciente
+      const tipoVendaDetectado = lancamentos.some(
+        l => l.pacienteId===pacote.pacienteId && l.pacoteId!==pacoteId && l.status==="recebido"
+      ) ? "recorrente" : "primeira";
+      await registrarComissao({
+        tipo: "Pacote",
+        valor: valorPagoFinal,
+        pacienteNome: pacote.pacienteNome || pacientes.find(p=>p.id===pacote.pacienteId)?.nome || "",
+        tipoVenda: tipoVendaDetectado,
+        pacoteId
+      });
+    }
   }
 
   // Geração de datas recorrentes
@@ -2357,18 +3942,34 @@ function FinanceiroClinica() {
     return datas.slice(0,total);
   }
 
-  async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda }) {
-    const perc = tipoVenda === "primeira" ? 0.10 : 0.05;
+  async function registrarComissao({ tipo, valor, pacienteNome, tipoVenda, pacoteId=null }) {
+    // ── TRAVA DE IDEMPOTÊNCIA: ID do documento = "COM_" + pacoteId ──
+    // Se o gatilho rodar mais de uma vez (erro de rede, retry), o Firestore
+    // fará um UPDATE (merge) e nunca um INSERT duplicado.
+    if(!pacoteId){
+      console.warn("[registrarComissao] Chamada sem pacoteId — abortando para evitar registro órfão.");
+      return;
+    }
+    const cfg = await getConfigFin();
+    const percNum = tipoVenda === "primeira" ? (parseFloat(cfg.percPrimeira)||10) : (parseFloat(cfg.percRecorrente)||5);
+    const perc = percNum/100;
     const valorComissao = parseFloat((valor * perc).toFixed(2));
     const hoje = new Date();
     const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,"0")}`;
-    await db.collection("clinica_comissoes").add({
+    // ID derivado do pacote → idempotente
+    const docId = "COM_" + pacoteId;
+    await db.collection("vendas_secretaria").doc(docId).set({
       tipo, tipoVenda, perc: perc*100,
       valorBase: valor, valorComissao,
       pacienteNome, mesRef,
+      pacoteId,
       status: "pendente",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    // Se não existia → cria com createdAt; se já existia → atualiza sem criar novo
+    await db.collection("vendas_secretaria").doc(docId).set({
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
   }
 
   async function salvarPacote(tipoVenda){
@@ -2376,17 +3977,26 @@ function FinanceiroClinica() {
     if(!pacienteId||!totalSessoes||!dataInicio){alert("Paciente, nº de sessões e data de início obrigatórios.");return;}
     const needDias=["2x por semana","3x por semana"].includes(recorrencia);
     if(needDias&&(!diasSemana||diasSemana.length===0)){alert("Selecione os dias da semana.");return;}
+    const eParceria=(formPacote.tipoAtendimento||"particular")==="parceria";
+    if(eParceria&&!formPacote.parceiraId){alert("Selecione a parceira para a venda em parceria.");return;}
     setSalvando(true);
+    try {
     const pac=pacientes.find(p=>p.id===pacienteId);
     const total=parseInt(totalSessoes)||1;
     const vSessao=parseFloat(valorSessao)||0;
     const vTotal=vSessao*total;
     const datas=gerarDatas(dataInicio,recorrencia,total,diasSemana);
+    const parcSel=eParceria?parceiras.find(p=>p.id===formPacote.parceiraId):null;
+    const percParc=eParceria?(parseFloat(formPacote.percParceiro)||70):0;
 
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
       recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
+      tipoAtendimento:formPacote.tipoAtendimento||"particular",
+      parceiraId:eParceria?formPacote.parceiraId:null,
+      parceiraNome:eParceria?(parcSel?.nome||""):null,
+      percParceiro:eParceria?percParc:null,
       statusPag:formPacote.statusPag||"pendente",
       formaPag:formPacote.formaPag||"",
       dataPagamento:formPacote.dataPagamento||"",
@@ -2413,8 +4023,77 @@ function FinanceiroClinica() {
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Registra comissão da secretária
-    if(tipoVenda) await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda });
+    // Registra comissão da secretária APENAS se o pagamento já entrou no caixa
+    // Se pendente, o gatilho será disparado exclusivamente em marcarPacotePago()
+    const pagoImediato = (formPacote.statusPag||"pendente") === "recebido";
+    if(tipoVenda && pagoImediato) {
+      await registrarComissao({ tipo:"Pacote", valor:vTotal, pacienteNome:pac?.nome||"", tipoVenda, pacoteId:pacRef.id });
+    }
+
+    // Registra repasse da parceira → coleção exclusiva repasses_parcerias
+    // ID derivado = "REP_" + pacoteId → idempotente
+    if(eParceria&&parcSel){
+      const vParceira=parseFloat((vTotal*percParc/100).toFixed(2));
+      const mesRefParc=new Date().toISOString().slice(0,7);
+      const repDocId = "REP_" + pacRef.id;
+      await db.collection("repasses_parcerias").doc(repDocId).set({
+        tipo:"Parceria — Repasse", tipoVenda:null, perc:percParc,
+        valorBase:vTotal, valorComissao:vParceira,
+        pacienteNome:pac?.nome||"",
+        responsavel:parcSel.nome||"Parceira",
+        parceiraId:parcSel.id,
+        mesRef:mesRefParc, pacoteId:pacRef.id,
+        status:"pendente",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+
+    // ── E-MAIL AUTOMÁTICO via extensão ext-firestore-send-email ──────
+    // Só envia se o paciente tiver e-mail cadastrado
+    const emailPaciente = pac?.email || pac?.emailPaciente || "";
+    if(emailPaciente) {
+      const dataFmtEmail = new Date(dataInicio+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+      await db.collection("nr1map_emails").add({
+        to: emailPaciente,
+        message: {
+          subject: `✅ Seu pacote de sessões foi confirmado — Dra. Lucia Kratz`,
+          html: `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0ff;margin:0;padding:20px;}
+.c{max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;}
+.h{background:linear-gradient(135deg,#7B00C4,#5a0090);padding:32px;color:white;text-align:center;}
+.b{padding:28px;}.box{background:#f5f0ff;border-radius:12px;padding:18px;border-left:4px solid #7B00C4;margin-bottom:20px;}
+.row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;}
+.label{color:#6b7280;}.val{font-weight:600;color:#111827;}
+.btn{display:inline-block;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;margin:4px;}
+.f{background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #f3f4f6;}
+</style></head><body><div class="c">
+<div class="h"><div style="font-size:28px;margin-bottom:8px">🦋</div>
+<h1 style="margin:0;font-size:22px">Dra. Lucia Kratz</h1>
+<p style="margin:8px 0 0;opacity:.85;font-size:13px">CRP 09/20590 · Psicóloga Doutora</p></div>
+<div class="b">
+<p style="font-size:16px;color:#374151;line-height:1.6">Olá, <strong>${pac?.nome||"Paciente"}</strong>! 💜<br><br>
+Seu pacote de sessões de psicoterapia foi confirmado com sucesso.</p>
+<div class="box"><h3 style="margin:0 0 12px;color:#7B00C4;font-size:14px">📋 Detalhes do pacote</h3>
+<div class="row"><span class="label">Início</span><span class="val">${dataFmtEmail}</span></div>
+<div class="row"><span class="label">Total de sessões</span><span class="val">${total} sessão(ões)</span></div>
+${horario?`<div class="row"><span class="label">Horário</span><span class="val">${horario}</span></div>`:""}
+<div class="row"><span class="label">Recorrência</span><span class="val">${recorrencia||"A combinar"}</span></div>
+<div class="row"><span class="label">Valor total</span><span class="val">R$ ${vTotal.toFixed(2).replace(".",",")}</span></div>
+</div>
+<div style="background:#f0fdf4;border-radius:12px;padding:16px;border-left:4px solid #059669;margin-bottom:20px;font-size:13px;color:#065f46;line-height:1.6">
+💡 Para reagendar ou tirar dúvidas, entre em contato pelo WhatsApp da clínica.
+</div>
+<div style="text-align:center;margin:20px 0">
+<a href="https://wa.me/5562994644950" class="btn" style="background:#25D366;color:white">💬 WhatsApp da Clínica</a>
+<a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica" class="btn" style="background:#7B00C4;color:white">🌐 Acessar Portal</a>
+</div></div>
+<div class="f"><p>Este e-mail foi enviado automaticamente pelo sistema da Dra. Lucia Kratz.</p>
+<p>Goiânia, GO · CRP 09/20590</p></div></div></body></html>`
+        }
+      });
+    }
+    // ─────────────────────────────────────────────────────────────────
 
     // Cria sessões na agenda
     const jaPago = (formPacote.statusPag||"pendente")==="recebido";
@@ -2456,7 +4135,7 @@ function FinanceiroClinica() {
         origem:"pacote-social",
         createdAt:firebase.firestore.FieldValue.serverTimestamp(),
       });
-      batchSoc.set(db.collection("clinica_comissoes").doc(),{
+      batchSoc.set(db.collection("repasses_parcerias").doc(),{
         tipo:"Social — Estagiária",
         tipoVenda:"primeira", perc:0,
         valorBase:vSupervisao, valorComissao:vEstagiaria,
@@ -2468,13 +4147,22 @@ function FinanceiroClinica() {
       await batchSoc.commit();
     }
 
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20"});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
+    } catch(e) {
+      console.error("Erro ao criar pacote:", e);
+      alert("⚠️ Erro ao criar pacote: "+e.message+"\n\nVerifique se o pacote e as sessões foram criados corretamente na aba Pacotes & Sessões e na Agenda antes de tentar novamente.");
+    } finally {
+      setSalvando(false);
+    }
   }
 
   async function atualizarSessao(id,campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
 
-  async function remarcarSessao(s, novaData){
+  // ── ETAPA 3: Remarcação/Compensação ─────────────────────────────────────
+  // Altera APENAS data + status. Jamais toca em valor, pagamento ou lançamentos.
+  // Motivo: remarcação por falta ou compensação não gera movimentação financeira.
+  async function remarcarSessao(s, novaData, motivo="remarcacao"){
     if(!novaData) return;
     try {
       await db.collection("clinica_sessoes").doc(s.id).update({
@@ -2483,6 +4171,8 @@ function FinanceiroClinica() {
         remarcada: true,
         dataRemarcada: novaData,
         dataOriginal: s.dataOriginal||s.data,
+        motivoRemarcacao: motivo,           // "remarcacao" | "falta" | "compensacao"
+        // NÃO altera: pagamento, valorPago, valorSessao, dataPagamento, pacoteId
       });
     } catch(e){
       console.error("Erro ao remarcar sessão:", e);
@@ -2573,6 +4263,36 @@ function FinanceiroClinica() {
   }
 
   // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
+  async function recalcularDatasPacote() {
+    if(!modalEditarPacote) return;
+    const f = formEdicaoPacote;
+    if(!f.dataInicio){alert("Defina a data de início antes de recalcular.");return;}
+    if(!confirm("Isso vai REESCREVER as datas de todas as sessões deste pacote a partir da nova data de início, mantendo a recorrência atual.\n\nSessões já realizadas ou pagas também terão a data alterada. Confirma?")) return;
+    setSalvandoEdicao(true);
+    try {
+      const snapSess = await db.collection("clinica_sessoes")
+        .where("pacoteId","==",modalEditarPacote.id).get();
+      const sessDoPacote = snapSess.docs
+        .map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>(a.numSessao||0)-(b.numSessao||0) || (a.data||"").localeCompare(b.data||""));
+      const total = sessDoPacote.length || parseInt(f.totalSessoes)||1;
+      const diasSemana = modalEditarPacote.diasSemana||[];
+      const novasDatas = gerarDatas(f.dataInicio, f.recorrencia, total, diasSemana);
+      const batch = db.batch();
+      sessDoPacote.forEach((s,idx)=>{
+        if(novasDatas[idx]){
+          batch.update(db.collection("clinica_sessoes").doc(s.id), {data: novasDatas[idx]});
+        }
+      });
+      await batch.commit();
+      alert(`✓ ${novasDatas.length} sessão(ões) realinhada(s) a partir de ${new Date(f.dataInicio+"T00:00:00").toLocaleDateString("pt-BR")}.`);
+    } catch(e){
+      console.error("Erro recalcularDatasPacote:", e);
+      alert("Erro ao recalcular datas: "+e.message);
+    }
+    setSalvandoEdicao(false);
+  }
+
   async function salvarEdicaoPacote() {
     if(!modalEditarPacote) return;
     setSalvandoEdicao(true);
@@ -2682,9 +4402,42 @@ function FinanceiroClinica() {
   // Métricas
   const totalRecebido=lancamentos.filter(l=>l.status==="recebido").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
 
+  async function executarHigienizacao() {
+    if(!confirm("⚠️ Confirmar higienização completa?\n\n• Lançamentos de sessão órfãos (de pacotes) serão deletados\n• Duplicatas de Ronei e Heitor serão removidas\n• Lançamentos Sem Nome viram Despesas Administrativas\n\nEssa ação não pode ser desfeita.")) return;
+    setAuditando(true);
+    const log = [];
+    const mesRef = "2026-05";
+
+    // ── PASSO 0: Maior fonte de duplicata — sessões de pacote gerando lançamento próprio
+    const ro = await deletarLancamentosOrfaosDeSessao();
+    log.push(`Sessões órfãs de pacote: ${ro.ok ? `${ro.deletados} lançamento(s) deletado(s)` : "Erro — "+ro.erro}`);
+
+    // ── PASSO 1: Duplicatas por paciente
+    const snapRonei  = await db.collection("clinica_pacientes").where("nome",">=","Ronei").where("nome","<=","Ronei").limit(1).get();
+    const snapHeitor = await db.collection("clinica_pacientes").where("nome",">=","Heitor").where("nome","<=","Heitor").limit(1).get();
+
+    if(!snapRonei.empty){
+      const r = await deletarDuplicatasPaciente(snapRonei.docs[0].id, mesRef);
+      log.push(`Ronei: ${r.ok ? `${r.deletados} duplicata(s) removida(s)` : "Erro — "+r.erro}`);
+    } else { log.push("Ronei: paciente não encontrado"); }
+
+    if(!snapHeitor.empty){
+      const r = await deletarDuplicatasPaciente(snapHeitor.docs[0].id, mesRef);
+      log.push(`Heitor: ${r.ok ? `${r.deletados} duplicata(s) removida(s)` : "Erro — "+r.erro}`);
+    } else { log.push("Heitor: paciente não encontrado"); }
+
+    // ── PASSO 2: Categorizar Sem Nome
+    const rc = await categorizarSemNome(mesRef);
+    log.push(`Sem Nome: ${rc.ok ? `${rc.atualizados} lançamento(s) categorizados` : "Erro — "+rc.erro}`);
+
+    setAuditLog(log);
+    setAuditando(false);
+  }
+
   return(
     <div>
-      {/* ── Modal Editar Pacote ── */}
+      {/* ── Modal Auditoria / Higienização Etapa 1 ── */}
+
       {modalEditarPacote&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={e=>{if(e.target===e.currentTarget)setModalEditarPacote(null);}}>
           <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto"}}>
@@ -2701,6 +4454,15 @@ function FinanceiroClinica() {
               </div>
               <div className="form-group"><label className="form-label">Data de Início</label>
                 <input className="form-input" type="date" value={formEdicaoPacote.dataInicio||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,dataInicio:e.target.value})}/>
+                {formEdicaoPacote.dataInicio!==modalEditarPacote.dataInicio&&(
+                  <div style={{marginTop:6,fontSize:11,color:"#d97706",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:8,padding:"6px 10px",lineHeight:1.5}}>
+                    ⚠️ Mudar a data de início <strong>não move</strong> as sessões já criadas — elas continuam nas datas originais. Use o botão abaixo se quiser realinhar todas as sessões a partir desta nova data.
+                    <button type="button" onClick={recalcularDatasPacote} disabled={salvandoEdicao}
+                      style={{display:"block",marginTop:8,background:"#f59e0b",color:"white",border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                      🔄 Recalcular datas das sessões
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="form-group"><label className="form-label">Horário</label>
                 <input className="form-input" type="time" value={formEdicaoPacote.horario||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,horario:e.target.value})}/>
@@ -2777,7 +4539,13 @@ function FinanceiroClinica() {
           <div className="page-title">Financeiro da Clínica</div>
           <div className="page-subtitle">Lançamentos, pacotes e controle de sessões</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{color:"#dc2626",border:"1px solid #fca5a5",display:"flex",alignItems:"center",gap:6}}
+            onClick={()=>{setModalDespesa(true);setEditandoDespesa(null);setFormDespesa({descricao:"",categoria:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});}}>
+            <Icon name="minus-circle" size={16}/> Nova Despesa
+          </button>
+          <button className="btn btn-purple" style={{display:"flex",alignItems:"center",gap:6}} onClick={()=>setModal("escolha")}><Icon name="plus" size={16}/> Novo Lançamento</button>
+        </div>
       </div>
 
       {/* Seletor de Ano */}
@@ -2835,23 +4603,41 @@ function FinanceiroClinica() {
         {/* Card Lançamentos */}
         <div style={{background:"#e0f2fe",borderRadius:12,padding:"14px 16px",textAlign:"center"}}>
           <div style={{fontSize:20,fontWeight:800,color:"#0891b2"}}>{lancPeriodo.length}</div>
-          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
+          <div style={{fontSize:12,color:"#0891b2",fontWeight:500,marginTop:2}}>Lançamentos ({periodoCard==="mes"?new Date(mesFiltro+"-15").toLocaleDateString("pt-BR",{month:"short"}):anoFiltro})</div>
         </div>
       </div>
 
       {/* Abas */}
       <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none",flexShrink:0}}>
-        {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"]].map(([id,lbl,ic])=>(
+        {[["lancamentos","Lançamentos","dollar-sign"],["pacotes","Pacotes & Sessões","package"],["acompanhamento","Acompanhamento Geral","users"],["comissoes","Comissões","percent"]].map(([id,lbl,ic])=>(
           <button key={id} onClick={()=>setAba(id)} style={{padding:"10px 20px",border:"none",background:"none",cursor:"pointer",fontSize:14,color:aba===id?"var(--purple)":"var(--gray-600)",borderBottom:aba===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:aba===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:6}}>
             <Icon name={ic} size={15}/>{lbl}
           </button>
         ))}
+        {/* Botão de higienização — Etapa 1 */}
+
+        {(()=>{ return null; })()}
       </div>
 
       {/* ABA LANÇAMENTOS */}
       {aba==="lancamentos"&&(
         <div>
-          {/* Filtro mês — jan→dez com setas */}
+          {/* Tabs filtro tipo — Tudo / Receitas / Despesas */}
+      {aba==="lancamentos"&&(
+        <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-50)",padding:6,borderRadius:12,width:"fit-content"}}>
+          {[["tudo","📊 Tudo"],["receita","💰 Receitas"],["despesa","💸 Despesas"]].map(([v,l])=>(
+            <button key={v} onClick={()=>setFiltroTipo(v)}
+              style={{padding:"8px 16px",borderRadius:8,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,
+                background:filtroTipo===v?"white":"transparent",
+                color:filtroTipo===v?(v==="receita"?"#059669":v==="despesa"?"#dc2626":"#7B00C4"):"#6b7280",
+                boxShadow:filtroTipo===v?"0 1px 4px rgba(0,0,0,.1)":"none",transition:".15s"}}>
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Filtro mês — jan→dez com setas */}
           <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center"}}>
             <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Mês:</span>
             <button onClick={()=>{
@@ -2871,7 +4657,7 @@ function FinanceiroClinica() {
                       fontSize:12,fontWeight:isSel||isAtual?700:400,cursor:"pointer",
                       display:Math.abs(mesesDisp.indexOf(m)-mesesDisp.indexOf(mesFiltroEfetivo))<=2?"flex":"none",
                       alignItems:"center",gap:4}}>
-                    {new Date(m+"-01").toLocaleDateString("pt-BR",{month:"long"})}
+                    {new Date(m+"-15").toLocaleDateString("pt-BR",{month:"long"})}
                     {isAtual&&!isSel&&<span style={{fontSize:9}}>●</span>}
                   </button>
                 );
@@ -2886,14 +4672,48 @@ function FinanceiroClinica() {
           {lancMes.length===0?(
             <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
               <Icon name="dollar-sign" size={40}/>
-              <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-01").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
+              <div style={{marginTop:12}}>Nenhum lançamento em {new Date(mesFiltro+"-15").toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
             </div>
           ):(()=>{
-            const receitas = lancMes.filter(l=>l.tipo_lancamento!=="despesa");
-            const despesas = lancMes.filter(l=>l.tipo_lancamento==="despesa");
+            const receitasTodas = lancMes.filter(l=>l.tipo_lancamento!=="despesa").sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+            const despesasTodas = lancMes.filter(l=>l.tipo_lancamento==="despesa").sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+            const receitas = filtroTipo==="despesa" ? [] : receitasTodas;
+            const despesas = filtroTipo==="receita" ? [] : despesasTodas;
+            const totalRecFiltro = receitasTodas.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+            const totalDespFiltro = despesasTodas.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
             const totalRec = calcReceitas(lancMes);
             const totalDesp = calcDespesas(lancMes);
             const saldo = totalRec - totalDesp;
+
+            // Cards de saldo dinâmicos por filtroTipo
+            const cardsSaldo = filtroTipo==="tudo" ? (
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+                <div style={{background:"white",borderRadius:12,padding:"14px 18px",border:"1px solid #e5e7eb"}}>
+                  <div style={{fontSize:11,color:"#6b7280",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Receitas</div>
+                  <div style={{fontSize:20,fontWeight:800,color:"#059669"}}>{totalRecFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                </div>
+                <div style={{background:"white",borderRadius:12,padding:"14px 18px",border:"1px solid #e5e7eb"}}>
+                  <div style={{fontSize:11,color:"#6b7280",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Despesas</div>
+                  <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{totalDespFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+                </div>
+                <div style={{background:"#f5f0ff",borderRadius:12,padding:"14px 18px",border:"2px solid #7B00C4"}}>
+                  <div style={{fontSize:11,color:"#7B00C4",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Saldo Líquido</div>
+                  <div style={{fontSize:20,fontWeight:800,color:totalRecFiltro-totalDespFiltro>=0?"#7B00C4":"#dc2626"}}>
+                    {(totalRecFiltro-totalDespFiltro).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+                  </div>
+                </div>
+              </div>
+            ) : filtroTipo==="receita" ? (
+              <div style={{background:"#f0fdf4",borderRadius:12,padding:"14px 18px",border:"1px solid #6ee7b7",marginBottom:16}}>
+                <div style={{fontSize:11,color:"#15803d",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Receitas do Mês</div>
+                <div style={{fontSize:24,fontWeight:800,color:"#059669"}}>{totalRecFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+              </div>
+            ) : (
+              <div style={{background:"#fef2f2",borderRadius:12,padding:"14px 18px",border:"1px solid #fca5a5",marginBottom:16}}>
+                <div style={{fontSize:11,color:"#b91c1c",fontWeight:600,textTransform:"uppercase",marginBottom:4}}>Total Despesas do Mês</div>
+                <div style={{fontSize:24,fontWeight:800,color:"#dc2626"}}>{totalDespFiltro.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
+              </div>
+            );
 
             function TabelaLanc({itens, titulo, corHeader, corValor, bgHeader}){
               if(!itens.length) return null;
@@ -2972,6 +4792,7 @@ function FinanceiroClinica() {
 
             return(
               <div>
+                {cardsSaldo}
                 <TabelaLanc itens={receitas} titulo="💰 Receitas" corHeader="#059669" corValor="#059669" bgHeader="#f0fdf4"/>
                 <TabelaLanc itens={despesas} titulo="💸 Despesas" corHeader="#dc2626" corValor="#dc2626" bgHeader="#fff1f2"/>
                 {/* Resumo do mês */}
@@ -3011,30 +4832,29 @@ function FinanceiroClinica() {
                     <div style={{fontSize:11,color:"#6b7280"}}>Remove apenas {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
                   </button>
                   <button className="btn btn-ghost" style={{border:"1.5px solid #fbbf24",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
-                    const chave = modalExcluirLanc.descricaoRecorrente||modalExcluirLanc.tipo;
+                    if(!modalExcluirLanc.pacoteId){alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");return;}
+                    if(!confirm("Excluir este e todos os lançamentos futuros deste pacote?"))return;
                     const snap = await db.collection("clinica_lancamentos").get();
                     const futuros = snap.docs.filter(d=>{
                       const dd=d.data();
-                      return (dd.descricaoRecorrente===chave||dd.tipo===chave)&&dd.data>=modalExcluirLanc.data;
+                      return dd.pacoteId===modalExcluirLanc.pacoteId && dd.data>=modalExcluirLanc.data;
                     });
                     const b=db.batch();futuros.forEach(d=>b.delete(d.ref));await b.commit();
                     setModalExcluirLanc(null);
                   }}>
                     <div style={{fontWeight:600,fontSize:13,color:"#d97706"}}>Este e todos os futuros</div>
-                    <div style={{fontSize:11,color:"#6b7280"}}>Remove "{modalExcluirLanc.tipo}" a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove lançamentos deste pacote a partir de {new Date(modalExcluirLanc.data+"T00:00:00").toLocaleDateString("pt-BR",{month:"long"})}</div>
                   </button>
                   <button className="btn btn-ghost" style={{border:"1.5px solid #fca5a5",textAlign:"left",padding:"12px 16px"}} onClick={async()=>{
-                    const chave = modalExcluirLanc.descricaoRecorrente||modalExcluirLanc.tipo;
+                    if(!modalExcluirLanc.pacoteId){alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");return;}
+                    if(!confirm("Excluir TODOS os lançamentos deste pacote no ano inteiro?"))return;
                     const snap = await db.collection("clinica_lancamentos").get();
-                    const todos = snap.docs.filter(d=>{
-                      const dd=d.data();
-                      return dd.descricaoRecorrente===chave||dd.tipo===chave;
-                    });
+                    const todos = snap.docs.filter(d=>d.data().pacoteId===modalExcluirLanc.pacoteId);
                     const b=db.batch();todos.forEach(d=>b.delete(d.ref));await b.commit();
                     setModalExcluirLanc(null);
                   }}>
                     <div style={{fontWeight:600,fontSize:13,color:"#dc2626"}}>Todos — o ano inteiro</div>
-                    <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os meses de "{modalExcluirLanc.tipo}"</div>
+                    <div style={{fontSize:11,color:"#6b7280"}}>Remove todos os lançamentos deste pacote</div>
                   </button>
                 </div>
                 <button className="btn btn-ghost" style={{width:"100%"}} onClick={()=>setModalExcluirLanc(null)}>Cancelar</button>
@@ -3047,6 +4867,110 @@ function FinanceiroClinica() {
       {/* ABA PACOTES */}
       {aba==="pacotes"&&(
         <div>
+          {(()=>{
+            const hoje = new Date().toISOString().slice(0,10);
+            // Sessões pendentes = data PASSADA + status "agendado" + vinculada a pacote ativo
+            // Exclui: falta, realizado, cancelado, remarcado, futuras, sessões sem pacote
+            const pacoteIdsAtivos = new Set(pacotes.filter(p=>p.status!=="inativo").map(p=>p.id));
+            const sessoesPendentes = sessoes.filter(s=>
+              s.data < hoje &&
+              s.status === "agendado" &&
+              s.pacienteId &&
+              s.pacoteId &&
+              pacoteIdsAtivos.has(s.pacoteId)
+            );
+            // Pacotes com pagamento pendente (não 100% pago)
+            const pacotesPendPag = pacotes.filter(p=>{
+              const sessPac = sessoes.filter(s=>s.pacoteId===p.id);
+              const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
+              return p.status !== "inativo" && pagas < (p.totalSessoes||0);
+            });
+            if(sessoesPendentes.length===0 && pacotesPendPag.length===0) return null;
+            return (
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+                {sessoesPendentes.length>0&&(()=>{
+                  function AvisoSessoes({lista, pacientes}){
+                    const [expandido, setExpandido] = React.useState(false);
+                    const visiveis = expandido ? lista : lista.slice(0,5);
+                    const extras = lista.length - 5;
+                    return (
+                      <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:12,padding:"14px 18px"}}>
+                        <div style={{fontWeight:700,fontSize:14,color:"#92400e",marginBottom:4}}>⚠️ {lista.length} sessão(ões) passada(s) sem status final</div>
+                        <div style={{fontSize:12,color:"#78350f",marginBottom:8}}>
+                          Sessões que já ocorreram e ainda estão como "Agendado". Marque como <strong>Realizada</strong>, <strong>Cancelada</strong> ou <strong>Remarcada</strong>.
+                        </div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center"}}>
+                          {visiveis.map(s=>{
+                            const nome = pacientes.find(p=>p.id===s.pacienteId)?.nome||"—";
+                            return (
+                              <span key={s.id} style={{background:"#fde68a",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#78350f",fontWeight:600}}>
+                                {nome.split(" ")[0]} · {new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})}
+                              </span>
+                            );
+                          })}
+                          {!expandido && extras>0&&(
+                            <button onClick={()=>setExpandido(true)}
+                              style={{background:"#f59e0b",color:"white",border:"none",borderRadius:20,padding:"2px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                              +{extras} mais ▾
+                            </button>
+                          )}
+                          {expandido&&(
+                            <button onClick={()=>setExpandido(false)}
+                              style={{background:"none",color:"#92400e",border:"1px solid #f59e0b",borderRadius:20,padding:"2px 10px",fontSize:11,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                              ▴ recolher
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return <AvisoSessoes lista={sessoesPendentes} pacientes={pacientes}/>;
+                })()}
+                {pacotesPendPag.length>0&&(()=>{
+                  function AvisoPacotes({lista, pacientes, sessoes}){
+                    const [expandidoPac, setExpandidoPac] = React.useState(false);
+                    const visiveis = expandidoPac ? lista : lista.slice(0,5);
+                    const extras = lista.length - 5;
+                    return (
+                      <div style={{background:"#fff7ed",border:"1px solid #fb923c",borderRadius:12,padding:"14px 18px"}}>
+                        <div style={{fontWeight:700,fontSize:14,color:"#c2410c",marginBottom:4}}>💰 {lista.length} pacote(s) com pagamento em aberto</div>
+                        <div style={{fontSize:12,color:"#9a3412",marginBottom:8}}>
+                          Pacotes ativos com sessões ainda não marcadas como pagas.
+                        </div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6,alignItems:"center"}}>
+                          {visiveis.map(p=>{
+                          const nome = pacientes.find(pac=>pac.id===p.pacienteId)?.nome||"—";
+                          const sessPac = sessoes.filter(s=>s.pacoteId===p.id);
+                          const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
+                          const total = p.totalSessoes||0;
+                          return (
+                            <span key={p.id} style={{background:"#fed7aa",borderRadius:20,padding:"2px 10px",fontSize:11,color:"#9a3412",fontWeight:600}}>
+                              {nome.split(" ")[0]} · {pagas}/{total} pagas
+                            </span>
+                          );
+                        })}
+                        {!expandidoPac && pacotesPendPag.length>5&&(
+                          <button onClick={()=>setExpandidoPac(true)}
+                            style={{background:"#ea580c",color:"white",border:"none",borderRadius:20,padding:"2px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                            +{pacotesPendPag.length-5} mais ▾
+                          </button>
+                        )}
+                        {expandidoPac&&(
+                          <button onClick={()=>setExpandidoPac(false)}
+                            style={{background:"none",color:"#c2410c",border:"1px solid #fb923c",borderRadius:20,padding:"2px 10px",fontSize:11,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                            ▴ recolher
+                          </button>
+                        )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return <AvisoPacotes lista={pacotesPendPag} pacientes={pacientes} sessoes={sessoes}/>;
+                })()}
+              </div>
+            );
+          })()}
+
           {pacotes.length===0?(
             <div className="card" style={{textAlign:"center",padding:60}}>
               <Icon name="package" size={48}/>
@@ -3054,15 +4978,20 @@ function FinanceiroClinica() {
               <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal("pacote")}>+ Criar Pacote</button>
             </div>
           ):(()=>{
-            // Agrupar pacotes por paciente
+            // Agrupar pacotes por paciente — ordem alfabética
             const pacientesComPacote = [...new Set(pacotes.map(p=>p.pacienteId))];
-            const pacientesVisiveis = buscaPac.trim()
+            const pacientesVisiveisBruto = buscaPac.trim()
               ? pacientesComPacote.filter(id=>{
                   const pac = pacientes.find(p=>p.id===id);
-                  const inicial = (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+                  const inicial = (pac?.nome||"?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
                   return inicial === buscaPac;
                 })
               : pacientesComPacote;
+            const pacientesVisiveis = pacientesVisiveisBruto.sort((a,b)=>{
+              const nA = (pacientes.find(p=>p.id===a)?.nome||"").toLowerCase();
+              const nB = (pacientes.find(p=>p.id===b)?.nome||"").toLowerCase();
+              return nA.localeCompare(nB,"pt-BR");
+            });
             return (
               <div style={{display:"flex",flexDirection:"column",gap:28}}>
                 {/* Índice A-Z */}
@@ -3176,6 +5105,63 @@ function FinanceiroClinica() {
                                   onClick={e=>{e.stopPropagation();setPacoteSelecionado(p.id+"__sessoes");}}>
                                   <Icon name="clipboard-list" size={13}/> Sessões
                                 </button>
+                                <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#059669",border:"1px solid #6ee7b7"}}
+                                  onClick={e=>{e.stopPropagation();
+                                    const pac = pacientes.find(x=>x.id===pacId);
+                                    const sessPac = sessoes.filter(s=>s.pacoteId===p.id).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+                                    const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
+                                    const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+                                    const totalValor = sessPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+                                    const totalPago = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+                                    const sessMeses = {};
+                                    sessPac.forEach(s=>{ const m=(s.data||"").slice(0,7); if(!sessMeses[m])sessMeses[m]=[]; sessMeses[m].push(s); });
+                                    const fmtM = m=>{ const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
+                                    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Resumo — ${pac?.nome||""}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:32px;max-width:680px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:22px}
+.logo{font-family:Georgia,serif;font-size:24px;color:#7B00C4;font-weight:700}.sub{font-size:10px;color:#6b7280;margin-top:3px}
+.box{background:#f5f0ff;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:5px solid #7B00C4}
+.nome{font-size:20px;font-weight:700;margin-bottom:8px}.meta{display:flex;gap:20px;flex-wrap:wrap}
+.mi label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:1px}.mi span{font-size:13px;font-weight:600}
+.mes{font-size:13px;font-weight:700;color:#7B00C4;padding:7px 0;border-bottom:1px solid #e5e7eb;margin:18px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:12px}th{background:#7B00C4;color:white;padding:6px 10px;text-align:left;font-size:11px}
+td{padding:6px 10px;border-bottom:1px solid #f3f4f6}tr:nth-child(even) td{background:#fafafa}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
+.totais{margin-top:20px;background:#f9fafb;border-radius:10px;padding:12px 18px;display:flex;gap:24px;flex-wrap:wrap}
+.ti label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}.ti span{font-size:17px;font-weight:800}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+@media print{body{padding:16px}@page{margin:1.5cm}}</style></head><body>
+<div class="header"><div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação · Goiânia, GO</div></div>
+<div style="font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div></div>
+<div class="box"><div class="nome">${pac?.nome||"—"}</div>
+<div class="meta">
+<div class="mi"><label>Início</label><span>${p.dataInicio?new Date(p.dataInicio+"T00:00:00").toLocaleDateString("pt-BR"):"—"}</span></div>
+<div class="mi"><label>Horário</label><span>${p.horario||"—"}</span></div>
+<div class="mi"><label>Recorrência</label><span>${p.recorrencia||"—"}</span></div>
+<div class="mi"><label>Sessões</label><span>${sessPac.length}</span></div>
+</div></div>
+${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])=>`
+<div class="mes">${fmtM(mes).charAt(0).toUpperCase()+fmtM(mes).slice(1)} — ${sess.length} sessão(ões)</div>
+<table><thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
+<tbody>${sess.map((s,i)=>`<tr><td style="font-weight:700;color:#7B00C4">${s.numSessao||i+1}</td>
+<td>${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"}):""}</td>
+<td>${s.hora||"—"}</td><td>${s.tipo||"Psicoterapia"}</td>
+<td><span class="badge" style="background:${statusColor[s.status]||"#7B00C4"}">${statusLabel[s.status]||s.status||"—"}</span></td>
+<td>R$ ${(parseFloat(s.valorSessao)||0).toFixed(2).replace(".",",")}</td></tr>`).join("")}
+</tbody></table>`).join("")}
+<div class="totais">
+<div class="ti"><label>Total do pacote</label><span>R$ ${totalValor.toFixed(2).replace(".",",")}</span></div>
+<div class="ti"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
+<div class="ti"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
+</div>
+${(p.dataPagamento||p.dataRecebimento)?`<div style="margin-top:14px;background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:18px">✅</span><div><div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#065f46;letter-spacing:.5px">Data de Pagamento</div><div style="font-size:16px;font-weight:800;color:#059669">${new Date((p.dataPagamento||p.dataRecebimento)+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div></div>`:""}
+${sessPac.some(s=>s.dataPagamento||s.dataRecebimento)?`<div style="margin-top:10px;font-size:11px;color:#6b7280;font-weight:600">Pagamentos por sessão:</div><table style="margin-top:4px;font-size:11px"><tbody>${sessPac.filter(s=>s.dataPagamento||s.dataRecebimento).map(s=>`<tr><td style="padding:3px 10px 3px 0;color:#374151">Sessão ${s.numSessao||""} — ${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR"):""}:</td><td style="color:#059669;font-weight:700">pago em ${new Date((s.dataPagamento||s.dataRecebimento)+"T00:00:00").toLocaleDateString("pt-BR")}</td></tr>`).join("")}</tbody></table>`:""}
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+                                    const w=window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),800);
+                                  }}>
+                                  <Icon name="file-text" size={13}/> PDF
+                                </button>
                                 <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 12px",color:"#dc2626",marginLeft:"auto"}}
                                   onClick={async e=>{e.stopPropagation();
                                     if(!confirm("Excluir pacote e TODAS as sessões e lançamentos vinculados? Esta ação não pode ser desfeita."))return;
@@ -3269,12 +5255,84 @@ function FinanceiroClinica() {
         </div>
       )}
 
+      {/* ABA COMISSÕES — embutida no Fin. Clínica para a psicóloga */}
+      {aba==="comissoes"&&(
+        <Comissoes user={user}/>
+      )}
+
       {/* MODAL ESCOLHA */}
+      {/* MODAL NOVA DESPESA */}
+      {modalDespesa&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalDespesa(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editandoDespesa?"Editar":"Nova"} Despesa — Clínica</div>
+              <button onClick={()=>setModalDespesa(false)} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <div className="form-group">
+                <label className="form-label">Categoria</label>
+                <select className="form-input" value={formDespesa.categoria} onChange={e=>setFormDespesa({...formDespesa,categoria:e.target.value})}>
+                  <option value="">Selecionar...</option>
+                  {CATS_DESPESA_CLINICA.map(cat=><option key={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Descrição</label>
+                <input className="form-input" value={formDespesa.descricao} onChange={e=>setFormDespesa({...formDespesa,descricao:e.target.value})} placeholder="Ex: Equipamento Neurofeedback"/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Valor (R$)</label>
+                <input className="form-input" type="number" value={formDespesa.valor} onChange={e=>setFormDespesa({...formDespesa,valor:e.target.value})} placeholder="0,00"/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data</label>
+                <input className="form-input" type="date" value={formDespesa.data} onChange={e=>setFormDespesa({...formDespesa,data:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Forma de Pagamento</label>
+                <select className="form-input" value={formDespesa.formaPag} onChange={e=>setFormDespesa({...formDespesa,formaPag:e.target.value})}>
+                  {FORMAS_PAG_CLINICA.map(f=><option key={f}>{f}</option>)}
+                </select>
+              </div>
+              {!editandoDespesa&&(
+                <div className="form-group">
+                  <label className="form-label">Parcelas</label>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <input className="form-input" type="number" min="1" max="60" value={formDespesa.parcelas} onChange={e=>setFormDespesa({...formDespesa,parcelas:e.target.value})} style={{width:80}}/>
+                    <span style={{fontSize:12,color:"var(--text-muted)"}}>= <strong style={{color:"var(--purple)"}}>R$ {((parseFloat(formDespesa.valor)||0)*(parseInt(formDespesa.parcelas)||1)).toFixed(2).replace(".",",")}</strong></span>
+                  </div>
+                </div>
+              )}
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Status</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[["pago","✓ Pago","#059669"],["pendente","Pendente","#d97706"]].map(([v,l,cor])=>(
+                    <button key={v} type="button" onClick={()=>setFormDespesa({...formDespesa,status:v})}
+                      style={{flex:1,padding:10,borderRadius:10,border:"1.5px solid",borderColor:formDespesa.status===v?cor:"#e5e7eb",background:formDespesa.status===v?cor+"15":"white",color:formDespesa.status===v?cor:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Observações</label>
+                <input className="form-input" value={formDespesa.obs||""} onChange={e=>setFormDespesa({...formDespesa,obs:e.target.value})} placeholder="Opcional..."/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
+              <button className="btn btn-ghost" onClick={()=>setModalDespesa(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvarDespesaClinica} disabled={salvando}>{salvando?"Salvando...":editandoDespesa?"Salvar":"Lançar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {modal==="escolha"&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
           <div style={{background:"white",borderRadius:16,padding:32,width:"100%",maxWidth:420,textAlign:"center"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Novo Lançamento</div>
-            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Escolha o tipo de lançamento:</p>
+            <p style={{fontSize:13,color:"#6b7280",marginBottom:24}}>Selecione o tipo:</p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
                 onClick={()=>setModal("pacote")}>
@@ -3282,14 +5340,6 @@ function FinanceiroClinica() {
                 <div>
                   <div style={{fontWeight:700,fontSize:14,color:"var(--purple)"}}>Pacote de Sessões</div>
                   <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas</div>
-                </div>
-              </button>
-              <button className="btn btn-outline" style={{width:"100%",padding:"20px 20px",fontSize:13,display:"flex",alignItems:"center",gap:16,textAlign:"left"}}
-                onClick={()=>setModal("avulso")}>
-                <span style={{fontSize:32,flexShrink:0}}>💲</span>
-                <div>
-                  <div style={{fontWeight:700,fontSize:14,color:"#059669"}}>Lançamento Avulso</div>
-                  <div style={{fontSize:11,color:"#6b7280",lineHeight:1.5,marginTop:2}}>Sessão única, avaliação, neuromodulação ou outro serviço isolado</div>
                 </div>
               </button>
             </div>
@@ -3352,6 +5402,24 @@ function FinanceiroClinica() {
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
+              {editando&&(
+                <button className="btn btn-ghost" style={{border:"1px solid #fecaca",color:"#dc2626",fontSize:12}}
+                  title="Este lançamento é uma despesa, não uma receita"
+                  onClick={()=>{
+                    setFormDespesaEdit({
+                      descricao: formAvulso.descricao||formAvulso.tipo||"",
+                      categoria: formAvulso.categoria||"",
+                      valor:     formAvulso.valor+"",
+                      data:      formAvulso.data||"",
+                      formaPag:  formAvulso.formaPag||"",
+                      status:    formAvulso.status==="recebido"?"pago":(formAvulso.status||"pago"),
+                      obs:       formAvulso.obs||"",
+                    });
+                    setModal("editar-despesa");
+                  }}>
+                  🔁 Marcar como Despesa
+                </button>
+              )}
               {editando ? (
                 <button className="btn btn-purple" onClick={()=>salvarAvulso(null)} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alterações"}</button>
               ) : (
@@ -3371,6 +5439,67 @@ function FinanceiroClinica() {
                 </>
                 )
               }
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR DESPESA */}
+      {modal==="editar-despesa"&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>{setModal(false);setEditando(null);}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,color:"#dc2626"}}>✏️ Editar Despesa</div>
+              <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Descrição</label>
+                <input className="form-input" placeholder="Ex: Consultório locação" value={formDespesaEdit.descricao} onChange={e=>setFormDespesaEdit({...formDespesaEdit,descricao:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Categoria</label>
+                <select className="form-input" value={formDespesaEdit.categoria} onChange={e=>setFormDespesaEdit({...formDespesaEdit,categoria:e.target.value})}>
+                  <option value="">Selecionar...</option>
+                  {CATS_DESPESA.map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Valor R$</label>
+                <input className="form-input" type="number" placeholder="0,00" value={formDespesaEdit.valor} onChange={e=>setFormDespesaEdit({...formDespesaEdit,valor:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Data</label>
+                <input className="form-input" type="date" value={formDespesaEdit.data} onChange={e=>setFormDespesaEdit({...formDespesaEdit,data:e.target.value})}/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Forma de Pagamento</label>
+                <select className="form-input" value={formDespesaEdit.formaPag} onChange={e=>setFormDespesaEdit({...formDespesaEdit,formaPag:e.target.value})}>
+                  <option value="">—</option>
+                  {FORMAS.map(f=><option key={f}>{f}</option>)}
+                </select>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Status</label>
+                <div style={{display:"flex",gap:8}}>
+                  {[["pago","✓ Pago","#059669"],["pendente","Pendente","#d97706"]].map(([v,l,c])=>(
+                    <button key={v} onClick={()=>setFormDespesaEdit({...formDespesaEdit,status:v})}
+                      style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:formDespesaEdit.status===v?c:"#e5e7eb",background:formDespesaEdit.status===v?c+"15":"white",color:formDespesaEdit.status===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-group" style={{gridColumn:"1/-1"}}>
+                <label className="form-label">Observações</label>
+                <input className="form-input" placeholder="Opcional..." value={formDespesaEdit.obs} onChange={e=>setFormDespesaEdit({...formDespesaEdit,obs:e.target.value})}/>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
+              <button className="btn btn-purple" style={{background:"#dc2626"}} onClick={salvarDespesaEdit} disabled={salvando}>
+                <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alterações"}
+              </button>
             </div>
           </div>
         </div>
@@ -3430,22 +5559,23 @@ function FinanceiroClinica() {
                 <div className="form-group"><label className="form-label">Horário {needDias?"(padrão)":""}</label>
                   <input className="form-input" type="time" value={formPacote.horario} onChange={e=>setFormPacote({...formPacote,horario:e.target.value})}/>
                 </div>
-                {/* Toggle Particular / Social */}
+                {/* Toggle Particular / Social / Parceria */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
                   <label className="form-label">Tipo de Atendimento</label>
                   <div style={{display:"flex",gap:8}}>
-                    {[["particular","🏥 Particular"],["social","🌱 Social"]].map(([v,l])=>(
+                    {[["particular","🏥 Particular"],["social","🌱 Social"],["parceria","🤝 Parceria"]].map(([v,l])=>(
                       <button key={v} type="button" onClick={()=>setFormPacote({...formPacote,tipoAtendimento:v,
                         valorSessao:v==="social"?"":formPacote.valorSessao,
                         valorSupervisaoSocial:v==="social"?"40":formPacote.valorSupervisaoSocial,
-                        valorEstagiariaSocial:v==="social"?"20":formPacote.valorEstagiariaSocial})}
+                        valorEstagiariaSocial:v==="social"?"20":formPacote.valorEstagiariaSocial,
+                        percParceiro:v==="parceria"?(formPacote.percParceiro||"70"):formPacote.percParceiro})}
                         style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
                           borderColor:(formPacote.tipoAtendimento||"particular")===v?
-                            (v==="social"?"#0d9488":"#7B00C4"):"#e5e7eb",
+                            (v==="social"?"#0d9488":v==="parceria"?"#b45309":"#7B00C4"):"#e5e7eb",
                           background:(formPacote.tipoAtendimento||"particular")===v?
-                            (v==="social"?"#ccfbf1":"#f5f3ff"):"white",
+                            (v==="social"?"#ccfbf1":v==="parceria"?"#fef3c7":"#f5f3ff"):"white",
                           color:(formPacote.tipoAtendimento||"particular")===v?
-                            (v==="social"?"#0d9488":"#7B00C4"):"#6b7280"}}>
+                            (v==="social"?"#0d9488":v==="parceria"?"#b45309":"#7B00C4"):"#6b7280"}}>
                         {l}
                       </button>
                     ))}
@@ -3474,6 +5604,45 @@ function FinanceiroClinica() {
                     <div className="form-group"><label className="form-label">Total do Pacote (R$)</label>
                       <input className="form-input" type="number" placeholder="Automático" value={formPacote.valorSessao&&formPacote.totalSessoes?(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0):""} readOnly style={{background:"#f9fafb"}}/>
                     </div>
+                    {(formPacote.tipoAtendimento||"particular")==="parceria"&&(
+                      <>
+                        <div className="form-group">
+                          <label className="form-label">Parceira</label>
+                          <select className="form-input" value={formPacote.parceiraId||""}
+                            onChange={e=>{
+                              const p=parceiras.find(x=>x.id===e.target.value);
+                              setFormPacote({...formPacote,parceiraId:e.target.value,
+                                percParceiro:(p&&p.percentual)?String(p.percentual):(formPacote.percParceiro||"70")});
+                            }}>
+                            <option value="">Selecione a parceira...</option>
+                            {parceiras.filter(p=>p.tipo!=="estagiaria").map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
+                          </select>
+                          {parceiras.filter(p=>p.tipo!=="estagiaria").length===0&&<div style={{fontSize:11,color:"#b45309",marginTop:3}}>Nenhuma parceira cadastrada — cadastre na tela Comissões.</div>}
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">% do Parceiro</label>
+                          <input className="form-input" type="number" min="0" max="100" value={formPacote.percParceiro||"70"}
+                            onChange={e=>setFormPacote({...formPacote,percParceiro:e.target.value})}/>
+                          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:3}}>Editável — padrão 70%</div>
+                        </div>
+                        {formPacote.valorSessao&&formPacote.totalSessoes&&(()=>{
+                          const tot=(parseFloat(formPacote.valorSessao)||0)*(parseInt(formPacote.totalSessoes)||0);
+                          const pp=parseFloat(formPacote.percParceiro)||0;
+                          const vParc=tot*pp/100;
+                          return (
+                            <div style={{gridColumn:"1/-1",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"10px 14px",fontSize:13}}>
+                              <div style={{fontWeight:700,color:"#b45309",marginBottom:6}}>🤝 Cálculo da parceria</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:"6px 18px",color:"#374151"}}>
+                                <span>Total: <strong>R$ {tot.toFixed(2).replace(".",",")}</strong></span>
+                                <span>Repasse parceira ({pp}%): <strong style={{color:"#b45309"}}>R$ {vParc.toFixed(2).replace(".",",")}</strong></span>
+                                <span>Clínica antes da comissão: <strong style={{color:"#059669"}}>R$ {(tot-vParc).toFixed(2).replace(".",",")}</strong></span>
+                              </div>
+                              <div style={{fontSize:11,color:"#92400e",marginTop:6}}>A comissão da secretária (10% ou 5% sobre o total) é definida no botão de salvar abaixo.</div>
+                            </div>
+                          );
+                        })()}
+                      </>
+                    )}
                   </>
                 )}
                 {/* Pagamento */}
@@ -3552,502 +5721,982 @@ function FinanceiroClinica() {
   );
 }
 
-function FinanceiroPessoal({ somenteLeitura=false }) {
-  const [lancamentos, setLancamentos] = useState([]);
-  const [recorrentes, setRecorrentes] = useState([]);
-  const [categorias, setCategorias]   = useState([]);
-  const [anoFiltro, setAnoFiltro]     = useState(new Date().getFullYear()+"");
-  const [mesFiltro, setMesFiltro]     = useState(new Date().toISOString().slice(0,7));
-  const [modal, setModal]             = useState(false);
-  const [editando, setEditando]       = useState(null);
-  const [salvando, setSalvando]       = useState(false);
-  const [novaCategoria, setNovaCategoria] = useState({nome:"",tipo:"despesa"});
-  const [modalBaixa, setModalBaixa]   = useState(null); // recorrente para dar baixa
-  const [formBaixa, setFormBaixa]     = useState({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
-  const mesAtual = new Date().toISOString().slice(0,7);
+// ───────────────────────────────────────────────────────────
+// PAINEL GERAL — Dashboard consolidado (Pessoal + Clínica, todos os CCs)
+// ───────────────────────────────────────────────────────────
+function PainelGeral({ lancamentos, lancClinica, anoFiltro, setAnoFiltro, anos, fmt, mesLabel }){
+  const CORES_CC = {
+    "🏥 Clínica":"#7B00C4","🎵 Ônix Brasil":"#0891b2","🎶 Flamboyant":"#db2777",
+    "⭐ Estrelas":"#d97706","🌱 Projetos Culturais":"#059669","📚 Consultorias & Cursos":"#2563eb",
+    "🏢 Administrativo":"#6b7280","🏠 Pessoal":"#dc2626","—":"#9ca3af"
+  };
+  const CORES_CAT = ["#7B00C4","#0891b2","#db2777","#d97706","#059669","#2563eb","#dc2626","#6b7280","#9333ea","#16a34a","#ea580c","#0284c7"];
 
-  const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore","Consultoria","Aluguel Recebido","Investimentos","Dividendos","Freelance","Outros"];
-  const CATS_DESPESA_DEFAULT = ["Aluguel","Condomínio","Alimentação","Saúde","Educação","Transporte","Lazer","Assinaturas","Cartão de Crédito","Empréstimo/Financiamento","Contador","Impostos","Marketing","Ferramentas de IA","Telefone/Internet","Energia/Água","Vestuário","Viagem","Outros"];
-  const FORMAS  = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Débito Automático","Outro"];
-  const RECORR  = ["Mensal","Semanal","Quinzenal","Bimestral","Trimestral","Semestral","Anual"];
+  // Normaliza lançamentos de ambas as origens em um formato único
+  const normPessoal = lancamentos.map(l=>({
+    tipo: l.tipo==="receita"?"receita":"despesa",
+    valor: parseFloat(l.valor)||0,
+    data: l.data||"",
+    categoria: l.categoria||"Outros",
+    centroCusto: l.centroCusto||"🏠 Pessoal",
+    status: l.status||"pago",
+  }));
+  const normClinica = lancClinica.map(l=>({
+    tipo: (l.tipo_lancamento==="despesa"||l.tipo==="despesa")?"despesa":"receita",
+    valor: parseFloat(l.valor)||0,
+    data: l.data||"",
+    categoria: l.categoria||l.tipo||"Outros",
+    centroCusto: l.centroCusto||"🏥 Clínica",
+    status: l.status||"pago",
+  }));
+  const todos = [...normPessoal, ...normClinica];
 
-  const catsReceita = [...CATS_RECEITA_DEFAULT,...categorias.filter(c=>c.tipo==="receita").map(c=>c.nome)];
-  const catsDespesa = [...CATS_DESPESA_DEFAULT,...categorias.filter(c=>c.tipo==="despesa").map(c=>c.nome)];
+  const pagos = t=>t.status==="pago"||t.status==="recebido";
+  const doAno = todos.filter(l=>l.data?.startsWith(anoFiltro) && pagos(l));
 
-  const [formAvulso, setFormAvulso] = useState({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:""});
-  const [formRecorr, setFormRecorr] = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
+  // Resumo por Centro de Custo
+  const ccMap = {};
+  doAno.forEach(l=>{
+    const cc = l.centroCusto||"—";
+    if(!ccMap[cc]) ccMap[cc]={receita:0,despesa:0};
+    ccMap[cc][l.tipo] += l.valor;
+  });
+  const ccs = Object.entries(ccMap).map(([cc,v])=>({cc,...v,saldo:v.receita-v.despesa}))
+    .sort((a,b)=>b.despesa-a.despesa);
+
+  const totalReceita = doAno.filter(l=>l.tipo==="receita").reduce((a,l)=>a+l.valor,0);
+  const totalDespesa = doAno.filter(l=>l.tipo==="despesa").reduce((a,l)=>a+l.valor,0);
+  const saldoConsolidado = totalReceita-totalDespesa;
+  const margem = totalReceita>0 ? (saldoConsolidado/totalReceita*100) : 0;
+
+  // Comparativo com mês anterior
+  const hoje = new Date();
+  const mesAtualStr = hoje.toISOString().slice(0,7);
+  const mesAnteriorDate = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+  const mesAnteriorStr = mesAnteriorDate.toISOString().slice(0,7);
+  const saldoMesAtual = (()=>{ const l=todos.filter(x=>x.data?.startsWith(mesAtualStr)&&pagos(x)); return l.filter(x=>x.tipo==="receita").reduce((a,x)=>a+x.valor,0) - l.filter(x=>x.tipo==="despesa").reduce((a,x)=>a+x.valor,0); })();
+  const saldoMesAnterior = (()=>{ const l=todos.filter(x=>x.data?.startsWith(mesAnteriorStr)&&pagos(x)); return l.filter(x=>x.tipo==="receita").reduce((a,x)=>a+x.valor,0) - l.filter(x=>x.tipo==="despesa").reduce((a,x)=>a+x.valor,0); })();
+  const variacaoMes = saldoMesAnterior!==0 ? ((saldoMesAtual-saldoMesAnterior)/Math.abs(saldoMesAnterior)*100) : (saldoMesAtual>0?100:0);
+
+  // Despesas pendentes
+  const pendentes = todos.filter(l=>l.status==="pendente"&&l.data?.startsWith(anoFiltro));
+  const totalPendente = pendentes.reduce((a,l)=>a+l.valor,0);
+
+  // Top 5 maiores despesas do mês atual
+  const despesasMesAtual = todos.filter(l=>l.tipo==="despesa"&&l.data?.startsWith(mesAtualStr)&&pagos(l)).sort((a,b)=>b.valor-a.valor).slice(0,5);
+
+  // Evolução últimos 12 meses (saldo total)
+  const meses12 = Array.from({length:12},(_,i)=>{
+    const d = new Date(hoje.getFullYear(), hoje.getMonth()-11+i, 1);
+    return d.toISOString().slice(0,7);
+  });
+  const evolucao = meses12.map(m=>{
+    const l = todos.filter(x=>x.data?.startsWith(m)&&pagos(x));
+    const rec = l.filter(x=>x.tipo==="receita").reduce((a,x)=>a+x.valor,0);
+    const desp = l.filter(x=>x.tipo==="despesa").reduce((a,x)=>a+x.valor,0);
+    return {mes:m, saldo:rec-desp, receita:rec, despesa:desp};
+  });
+
+  // Despesas por categoria (geral, todos os CCs)
+  const catMap = {};
+  doAno.filter(l=>l.tipo==="despesa").forEach(l=>{
+    catMap[l.categoria] = (catMap[l.categoria]||0) + l.valor;
+  });
+  const categorias = Object.entries(catMap).map(([cat,v])=>({cat,valor:v})).sort((a,b)=>b.valor-a.valor);
+
+  const maxDespCC = Math.max(1,...ccs.map(c=>Math.max(c.receita,c.despesa)));
+  const maxEvol = Math.max(1,...evolucao.map(e=>Math.max(Math.abs(e.saldo),e.receita,e.despesa)));
+
+  // Donut SVG — despesas por CC
+  function Donut(){
+    const total = ccs.reduce((a,c)=>a+c.despesa,0);
+    if(total<=0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem despesas no período.</div>;
+    let acc=0;
+    const r=70, cx=90, cy=90, circ=2*Math.PI*r;
+    return (
+      <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap"}}>
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f3f4f6" strokeWidth="22"/>
+          {ccs.filter(c=>c.despesa>0).map((c,i)=>{
+            const frac = c.despesa/total;
+            const dash = frac*circ;
+            const offset = circ - acc;
+            const el = <circle key={c.cc} cx={cx} cy={cy} r={r} fill="none" stroke={CORES_CC[c.cc]||CORES_CAT[i%CORES_CAT.length]} strokeWidth="22"
+              strokeDasharray={`${dash} ${circ-dash}`} strokeDashoffset={offset} transform={`rotate(-90 ${cx} ${cy})`}/>;
+            acc += dash;
+            return el;
+          })}
+          <text x={cx} y={cy-4} textAnchor="middle" fontSize="13" fontWeight="700" fill="#111827">{fmt(total)}</text>
+          <text x={cx} y={cy+14} textAnchor="middle" fontSize="10" fill="#6b7280">despesas {anoFiltro}</text>
+        </svg>
+        <div style={{display:"flex",flexDirection:"column",gap:6,flex:1,minWidth:160}}>
+          {ccs.filter(c=>c.despesa>0).sort((a,b)=>b.despesa-a.despesa).map((c,i)=>(
+            <div key={c.cc} style={{display:"flex",alignItems:"center",gap:8,fontSize:12}}>
+              <div style={{width:10,height:10,borderRadius:3,background:CORES_CC[c.cc]||CORES_CAT[i%CORES_CAT.length],flexShrink:0}}/>
+              <div style={{flex:1}}>{c.cc}</div>
+              <div style={{fontWeight:700}}>{fmt(c.despesa)}</div>
+              <div style={{color:"var(--text-muted)",width:42,textAlign:"right"}}>{(c.despesa/total*100).toFixed(0)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Barras — receita vs despesa por CC
+  function BarrasCC(){
+    if(ccs.length===0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem dados no período.</div>;
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        {ccs.map(c=>(
+          <div key={c.cc}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+              <span style={{fontWeight:600}}>{c.cc}</span>
+              <span style={{color:c.saldo>=0?"#059669":"#dc2626",fontWeight:700}}>{fmt(c.saldo)}</span>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:3}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:60,fontSize:10,color:"#059669"}}>Receita</div>
+                <div style={{flex:1,background:"#f3f4f6",borderRadius:4,height:10,overflow:"hidden"}}>
+                  <div style={{width:`${(c.receita/maxDespCC*100)}%`,height:"100%",background:"#10b981",borderRadius:4}}/>
+                </div>
+                <div style={{width:80,fontSize:11,textAlign:"right"}}>{fmt(c.receita)}</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:60,fontSize:10,color:"#dc2626"}}>Despesa</div>
+                <div style={{flex:1,background:"#f3f4f6",borderRadius:4,height:10,overflow:"hidden"}}>
+                  <div style={{width:`${(c.despesa/maxDespCC*100)}%`,height:"100%",background:"#ef4444",borderRadius:4}}/>
+                </div>
+                <div style={{width:80,fontSize:11,textAlign:"right"}}>{fmt(c.despesa)}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Linha — evolução do saldo (12 meses)
+  function LinhaEvolucao(){
+    const w=600,h=160,pad=30;
+    const pontos = evolucao.map((e,i)=>{
+      const x = pad + (i/(evolucao.length-1))*(w-2*pad);
+      const yZero = h/2;
+      const scale = (h/2-10)/maxEvol;
+      const y = yZero - e.saldo*scale;
+      return {x,y,...e};
+    });
+    const path = pontos.map((p,i)=>`${i===0?"M":"L"}${p.x},${p.y}`).join(" ");
+    return (
+      <div style={{overflowX:"auto"}}>
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{minWidth:500}}>
+          <line x1={pad} y1={h/2} x2={w-pad} y2={h/2} stroke="#e5e7eb" strokeWidth="1"/>
+          <path d={path} fill="none" stroke="#7B00C4" strokeWidth="2.5"/>
+          {pontos.map((p,i)=>(
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r="3.5" fill={p.saldo>=0?"#059669":"#dc2626"}/>
+              <text x={p.x} y={h-6} textAnchor="middle" fontSize="9" fill="#9ca3af">{mesLabel(p.mes)}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    );
+  }
+
+  // Barras — despesas por categoria (geral)
+  function BarrasCategorias(){
+    const top = categorias.slice(0,10);
+    const max = Math.max(1,...top.map(c=>c.valor));
+    if(top.length===0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem despesas no período.</div>;
+    return (
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {top.map((c,i)=>(
+          <div key={c.cat} style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:130,fontSize:12,flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.cat}</div>
+            <div style={{flex:1,background:"#f3f4f6",borderRadius:4,height:14,overflow:"hidden"}}>
+              <div style={{width:`${(c.valor/max*100)}%`,height:"100%",background:CORES_CAT[i%CORES_CAT.length],borderRadius:4}}/>
+            </div>
+            <div style={{width:90,fontSize:12,fontWeight:700,textAlign:"right"}}>{fmt(c.valor)}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+
+  // ── Plano de Contas — agrupamento por categoria real ──
+  const PLANO_CONTAS = {
+    "Marketing / Tráfego Pago": ["Marketing","Tráfego Pago","Publicidade","Redes Sociais","Google Ads"],
+    "Ferramentas Digitais": ["Ferramentas de IA","Software","Assinaturas","ElevenLabs","Tecnologia","Internet","Telefone / Internet"],
+    "Ocupação / Aluguel": ["Aluguel","Condomínio","Sublocação","Energia / Água","Manutenção","IPTU"],
+    "Repasses / Comissões": ["Salário Secretária","Repasse","Comissão","Parceria","Estagiária"],
+    "Educação / Capacitação": ["Cursos e Capacitação","Educação","Livros","Supervisão","Desenvolvimento Pessoal"],
+    "Saúde / Bem-estar": ["Saúde","Plano de Saúde","Medicamentos","Consultas"],
+    "Gastos Domésticos": ["Moradia","Alimentação","Transporte","Vestuário","Lazer / Entretenimento","Lazer","Saneago","Seguro","Consórcio"],
+    "Outros": [],
+  };
+  function mapearPlano(cat) {
+    if(!cat) return "Outros";
+    const c = cat.trim();
+    for(const [grupo, cats] of Object.entries(PLANO_CONTAS)) {
+      if(cats.some(k=>c.toLowerCase().includes(k.toLowerCase())||k.toLowerCase().includes(c.toLowerCase()))) return grupo;
+    }
+    return "Outros";
+  }
+  const CORES_PLANO = [
+    "#7B00C4","#0891b2","#db2777","#d97706","#059669","#2563eb","#dc2626","#9ca3af"
+  ];
+  const planoMap = {};
+  doAno.filter(l=>l.tipo==="despesa").forEach(l=>{
+    const grupo = mapearPlano(l.categoria);
+    planoMap[grupo] = (planoMap[grupo]||0) + l.valor;
+  });
+  const planoData = Object.entries(planoMap)
+    .filter(([,v])=>v>0)
+    .sort(([,a],[,b])=>b-a)
+    .map(([cat,valor],i)=>({cat,valor,cor:CORES_PLANO[i%CORES_PLANO.length]}));
+
+  function DonutPlano(){
+    const total = planoData.reduce((a,p)=>a+p.valor,0);
+    if(total<=0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem despesas no período.</div>;
+    let acc=0;
+    const r=70,cx=90,cy=90,circ=2*Math.PI*r;
+    return (
+      <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap"}}>
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f3f4f6" strokeWidth="22"/>
+          {planoData.map((p,i)=>{
+            const frac=p.valor/total;
+            const dash=frac*circ;
+            const offset=circ-acc;
+            const el=<circle key={p.cat} cx={cx} cy={cy} r={r} fill="none" stroke={p.cor} strokeWidth="22"
+              strokeDasharray={`${dash} ${circ-dash}`} strokeDashoffset={offset} transform={`rotate(-90 ${cx} ${cy})`}/>;
+            acc+=dash;
+            return el;
+          })}
+          <text x={cx} y={cy-4} textAnchor="middle" fontSize="12" fontWeight="700" fill="#111827">{fmt(total)}</text>
+          <text x={cx} y={cy+14} textAnchor="middle" fontSize="10" fill="#6b7280">despesas {anoFiltro}</text>
+        </svg>
+        <div style={{display:"flex",flexDirection:"column",gap:5,flex:1,minWidth:180}}>
+          {planoData.map(p=>(
+            <div key={p.cat} style={{display:"flex",alignItems:"center",gap:8,fontSize:12}}>
+              <div style={{width:10,height:10,borderRadius:3,background:p.cor,flexShrink:0}}/>
+              <div style={{flex:1,lineHeight:1.3}}>{p.cat}</div>
+              <div style={{fontWeight:700,flexShrink:0}}>{fmt(p.valor)}</div>
+              <div style={{color:"var(--text-muted)",width:38,textAlign:"right",flexShrink:0}}>{(p.valor/total*100).toFixed(0)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function BarrasPlano(){
+    if(planoData.length===0) return <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem dados.</div>;
+    const max=Math.max(1,...planoData.map(p=>p.valor));
+    return(
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {planoData.map(p=>(
+          <div key={p.cat}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
+              <span style={{fontWeight:600}}>{p.cat}</span>
+              <span style={{fontWeight:700,color:p.cor}}>{fmt(p.valor)}</span>
+            </div>
+            <div style={{background:"#f3f4f6",borderRadius:6,height:12,overflow:"hidden"}}>
+              <div style={{width:`${(p.valor/max*100)}%`,height:"100%",background:p.cor,borderRadius:6,transition:".4s"}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Seletor Ano */}
+      <div style={{display:"flex",gap:6,marginBottom:18,alignItems:"center",flexWrap:"wrap"}}>
+        <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Ano:</span>
+        {anos.map(a=>(
+          <button key={a} onClick={()=>setAnoFiltro(a)}
+            style={{padding:"5px 16px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+            {a}
+          </button>
+        ))}
+      </div>
+
+      {/* Indicadores */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:24}}>
+        <div style={{background:saldoConsolidado>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",border:"1.5px solid",borderColor:saldoConsolidado>=0?"#6ee7b7":"#fca5a5"}}>
+          <div style={{fontSize:11,fontWeight:600,color:saldoConsolidado>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo Consolidado ({anoFiltro})</div>
+          <div style={{fontSize:20,fontWeight:800,color:saldoConsolidado>=0?"#059669":"#dc2626"}}>{fmt(saldoConsolidado)}</div>
+          <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>+{fmt(totalReceita)} / -{fmt(totalDespesa)}</div>
+        </div>
+        <div style={{background:"#f0f9ff",borderRadius:12,padding:"14px 16px",border:"1.5px solid #93c5fd"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#2563eb",marginBottom:4}}>Margem</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#2563eb"}}>{margem.toFixed(1)}%</div>
+          <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>(receita - despesa) / receita</div>
+        </div>
+        <div style={{background:variacaoMes>=0?"#f0fdf4":"#fef2f2",borderRadius:12,padding:"14px 16px",border:"1.5px solid",borderColor:variacaoMes>=0?"#86efac":"#fca5a5"}}>
+          <div style={{fontSize:11,fontWeight:600,color:variacaoMes>=0?"#059669":"#dc2626",marginBottom:4}}>Vs. mês anterior</div>
+          <div style={{fontSize:20,fontWeight:800,color:variacaoMes>=0?"#059669":"#dc2626"}}>{variacaoMes>=0?"▲":"▼"} {Math.abs(variacaoMes).toFixed(0)}%</div>
+          <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{fmt(saldoMesAnterior)} → {fmt(saldoMesAtual)}</div>
+        </div>
+        <div style={{background:"#fffbeb",borderRadius:12,padding:"14px 16px",border:"1.5px solid #fcd34d"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendentes ({anoFiltro})</div>
+          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{fmt(totalPendente)}</div>
+          <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>{pendentes.length} lançamento(s)</div>
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:20}}>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>🥧 Despesas por Centro de Custo</div>
+          <Donut/>
+        </div>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>📊 Receita vs Despesa por CC</div>
+          <BarrasCC/>
+        </div>
+      </div>
+
+      {/* Plano de Contas — gráfico por grupo de despesa */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:20}}>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>🎯 Despesas por Plano de Contas</div>
+          <DonutPlano/>
+        </div>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>📉 Distribuição por Grupo ({anoFiltro})</div>
+          <BarrasPlano/>
+        </div>
+      </div>
+
+      <div className="card" style={{marginBottom:20}}>
+        <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>📈 Evolução do Saldo — últimos 12 meses</div>
+        <LinhaEvolucao/>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(320px,1fr))",gap:16,marginBottom:20}}>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>🏷️ Maiores Categorias de Despesa ({anoFiltro})</div>
+          <BarrasCategorias/>
+        </div>
+        <div className="card">
+          <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>🔝 Top 5 Maiores Despesas — {mesLabel(mesAtualStr)}</div>
+          {despesasMesAtual.length===0
+            ? <div style={{textAlign:"center",color:"var(--text-muted)",padding:20,fontSize:13}}>Sem despesas neste mês.</div>
+            : (
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {despesasMesAtual.map((d,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<despesasMesAtual.length-1?"1px solid var(--gray-100)":"none"}}>
+                    <div style={{width:24,height:24,borderRadius:"50%",background:"#fee2e2",color:"#dc2626",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:13}}>{d.categoria}</div>
+                      <div style={{fontSize:11,color:"var(--text-muted)"}}>{d.centroCusto} · {d.data}</div>
+                    </div>
+                    <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(d.valor)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// FINANCEIRO PESSOAL & EMPRESA — componente unificado por tipo
+// ═══════════════════════════════════════════════════════
+
+// Componente base reutilizável para Pessoal e Empresa
+function FinanceiroBase({ titulo, subtitulo, colLanc, colRecorr, corAcento="#7B00C4", user }) {
+  const [lancamentos, setLancamentos]   = useState([]);
+  const [recorrentes, setRecorrentes]   = useState([]);
+  const [anoFiltro, setAnoFiltro]       = useState(new Date().getFullYear()+"");
+  const [mesFiltro, setMesFiltro]       = useState(new Date().toISOString().slice(0,7));
+  const [filtroTipo, setFiltroTipo]     = useState("tudo");
+  const [modal, setModal]               = useState(false);
+  const [editando, setEditando]         = useState(null);
+  const [salvando, setSalvando]         = useState(false);
+  const [modalBaixa, setModalBaixa]     = useState(null);
+  const [modalMover, setModalMover]     = useState(null); // {lanc, isRecorrente}
+  const [movendoId, setMovendoId]       = useState(null);
+  const [formBaixa, setFormBaixa]       = useState({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
+  const [formLanc, setFormLanc]         = useState({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"});
+  const [formRecorr, setFormRecorr]     = useState({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true,indeterminado:true,totalParcelas:""});
+  const [abaModal, setAbaModal]         = useState("avulso");
+
+  const FORMAS    = ["PIX","Cartão de Crédito","Cartão de Débito","Dinheiro","Depósito","Transferência","Débito Automático","Outro"];
+  const RECORRS   = ["Mensal","Semanal","Quinzenal","Bimestral","Trimestral","Semestral","Anual"];
+
+  const CATS_REC_PES  = ["Pró-labore","Salário CLT","Professora CLT","Rendimento de Investimentos","Dividendos","Aluguel Recebido","Freelance","Outros"];
+  const CATS_DES_PES  = ["Moradia","Aluguel","IPTU","Saneago","Energia / Água","Condomínio","Alimentação","Supermercado","Saúde","Plano de Saúde","Transporte","Combustível","Lazer","Vestuário","Viagem","Aporte em Investimentos","Seguro","Outros"];
+  const CATS_REC_EMP  = ["Venda de Infoproduto","Consultoria","Curso Ministrado","Palestra","Licença","Outros"];
+  const CATS_DES_EMP  = ["Marketing / Tráfego Pago","Ferramentas de IA","ElevenLabs","Designer / Freelancer","Equipamentos Digitais","Cursos / Treinamentos","Ônix Brasil","Contador","Impostos","Assinaturas","Outros"];
+
+  const isPessoal = colLanc === "clinica_financeiro_pessoal";
+  const catsRec   = isPessoal ? CATS_REC_PES : CATS_REC_EMP;
+  const catsDes   = isPessoal ? CATS_DES_PES : CATS_DES_EMP;
+
+  const DESTINOS = [
+    {col:"clinica_financeiro_pessoal",  colRec:"clinica_fin_pessoal_recorrentes",  label:"💼 Financeiro Pessoal"},
+    {col:"clinica_financeiro_empresa",  colRec:"clinica_fin_empresa_recorrentes",  label:"🏢 Financeiro Empresa"},
+    {col:"clinica_lancamentos",         colRec:null,                               label:"🏥 Financeiro Clínica"},
+  ].filter(d => d.col !== colLanc);
 
   useEffect(()=>{
-    const u1=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));setLancamentos(docs);},()=>{});
-    const u2=db.collection("clinica_fin_pessoal_recorrentes").onSnapshot(s=>{const docs=s.docs.map(d=>({id:d.id,...d.data()}));docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));setRecorrentes(docs);},()=>{});
-    const u3=db.collection("clinica_fin_pessoal_categorias").onSnapshot(s=>setCategorias(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    return()=>{u1();u2();u3();};
-  },[]);
+    const u1 = db.collection(colLanc).onSnapshot(s=>{
+      const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+      docs.sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+      setLancamentos(docs);
+    },()=>{});
+    const u2 = db.collection(colRecorr).onSnapshot(s=>{
+      const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+      docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+      setRecorrentes(docs);
+    },()=>{});
+    return ()=>{ u1(); u2(); };
+  },[colLanc, colRecorr]);
 
+  const mesAtual = new Date().toISOString().slice(0,7);
   const anoAtualNum = new Date().getFullYear();
-  const anosExist   = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
-  const anosSet     = new Set([...anosExist, anoAtualNum-1, anoAtualNum, anoAtualNum+1]);
-  const anos        = [...anosSet].sort().map(String);
-  const mesesDisp   = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
+  const anosExist = [...new Set(lancamentos.map(l=>l.data?.slice(0,4)).filter(Boolean))].map(Number);
+  const anos = [...new Set([...anosExist, anoAtualNum-1, anoAtualNum, anoAtualNum+1])].sort().map(String);
+  const mesesDisp = Array.from({length:12},(_,i)=>`${anoFiltro}-${String(i+1).padStart(2,"0")}`);
   const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro)?mesFiltro:mesAtual.startsWith(anoFiltro)?mesAtual:anoFiltro+"-01";
+
+  function fmt(v){ return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+  function mesLabel(m){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short"}); }catch(e){ return m; } }
 
   const lancMes = lancamentos.filter(l=>l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l=>l.data?.startsWith(anoFiltro));
 
-  function fmt(v){ return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
-  function mesLabel(m){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:"short"}); }catch(e){ return m; } }
   function calcRec(l){ return l.filter(x=>x.tipo==="receita"&&(x.status==="pago"||x.status==="recebido")).reduce((a,x)=>a+(parseFloat(x.valor)||0),0); }
-  function calcDesp(l){ return l.filter(x=>x.tipo==="despesa"&&(x.status==="pago"||x.status==="recebido")).reduce((a,x)=>a+(parseFloat(x.valor)||0),0); }
+  function calcDes(l){ return l.filter(x=>x.tipo==="despesa"&&(x.status==="pago"||x.status==="recebido")).reduce((a,x)=>a+(parseFloat(x.valor)||0),0); }
 
-  const recMes=calcRec(lancMes), despMes=calcDesp(lancMes), saldoMes=recMes-despMes;
-  const recAno=calcRec(lancAno), despAno=calcDesp(lancAno);
+  const recMes=calcRec(lancMes), desMes=calcDes(lancMes), saldoMes=recMes-desMes;
+  const recAno=calcRec(lancAno), desAno=calcDes(lancAno);
   const pendMes=lancMes.filter(l=>l.status==="pendente").reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-  const corTipo=t=>t==="receita"?"#059669":"#dc2626";
-  const bgTipo=t=>t==="receita"?"#d1fae5":"#fee2e2";
 
-  // Recorrentes ativos com baixa já registrada neste mês
+  // Recorrentes ativos sem baixa neste mês
   const recorrAtivos = recorrentes.filter(r=>r.ativo!==false);
   function jaDeuBaixaMes(r){
     return lancamentos.some(l=>l.recorrenteId===r.id && l.data?.startsWith(mesFiltroEfetivo));
   }
 
-  async function salvarAvulso(){
-    if(!formAvulso.valor||!formAvulso.data){alert("Valor e data obrigatórios.");return;}
+  // Lista unificada: lançamentos do mês + recorrentes sem baixa
+  const recSemBaixa = recorrAtivos.filter(r=>!jaDeuBaixaMes(r)).map(r=>({
+    _virtual:true, id:r.id, tipo:r.tipo, categoria:r.categoria,
+    descricao:r.descricao, valor:r.valorPrevisto, data:`${mesFiltroEfetivo}-${String(r.diaVencimento||10).padStart(2,"0")}`,
+    status:"pendente", recorrenteId:r.id, _recObj:r
+  }));
+  const listaUnif = [...lancMes, ...recSemBaixa].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  const receitas  = filtroTipo==="despesa" ? [] : listaUnif.filter(l=>l.tipo==="receita");
+  const despesas  = filtroTipo==="receita" ? [] : listaUnif.filter(l=>l.tipo==="despesa");
+
+  function abrirNovo(tipo){ setFormLanc({tipo,categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:"",parcelas:"1"}); setEditando(null); setAbaModal("avulso"); setModal("lanc"); }
+
+  async function salvarLanc(){
+    if(!formLanc.valor||!formLanc.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
-    const dados={...formAvulso,valor:parseFloat(formAvulso.valor),createdAt:firebase.firestore.FieldValue.serverTimestamp()};
-    if(editando){ await db.collection("clinica_financeiro_pessoal").doc(editando).update(dados); }
-    else { await db.collection("clinica_financeiro_pessoal").add(dados); }
-    setModal(false);setEditando(null);
-    setFormAvulso({tipo:"despesa",categoria:"",descricao:"",valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",status:"pago",obs:""});
+    try {
+      const val=parseFloat(formLanc.valor); const nParc=parseInt(formLanc.parcelas)||1;
+      const base={tipo:formLanc.tipo,tipo_lancamento:formLanc.tipo==="despesa"?"despesa":"receita",categoria:formLanc.categoria||"Outros",descricao:formLanc.descricao||formLanc.categoria||"Lançamento",formaPag:formLanc.formaPag,status:formLanc.status,obs:formLanc.obs||"",createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+      if(editando){ await db.collection(colLanc).doc(editando).update({...base,valor:val,data:formLanc.data}); }
+      else if(nParc>1){
+        const batch=db.batch();
+        const [a,m,d]=formLanc.data.split("-").map(Number);
+        for(let i=0;i<nParc;i++){
+          let mm=m+i,aa=a; while(mm>12){mm-=12;aa++;}
+          const dp=`${aa}-${String(mm).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+          batch.set(db.collection(colLanc).doc(),{...base,valor:val,data:dp,parcela:`${i+1}/${nParc}`,descricao:(formLanc.descricao||formLanc.categoria||"Lançamento")+` (${i+1}/${nParc})`});
+        }
+        await batch.commit();
+      } else { await db.collection(colLanc).add({...base,valor:val,data:formLanc.data}); }
+      setModal(false); setEditando(null);
+    } catch(e){alert("Erro: "+e.message);}
     setSalvando(false);
   }
 
-  async function salvarRecorrente(){
+  async function salvarRecorr(){
     if(!formRecorr.categoria||!formRecorr.valorPrevisto){alert("Categoria e valor obrigatórios.");return;}
     setSalvando(true);
-    const dados={...formRecorr,valorPrevisto:parseFloat(formRecorr.valorPrevisto),createdAt:firebase.firestore.FieldValue.serverTimestamp()};
-    if(editando){ await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados); }
-    else { await db.collection("clinica_fin_pessoal_recorrentes").add(dados); }
-    setModal(false);setEditando(null);
-    setFormRecorr({tipo:"despesa",categoria:"",descricao:"",valorPrevisto:"",recorrencia:"Mensal",diaVencimento:"10",mesInicio:new Date().toISOString().slice(0,7),ativo:true});
+    try {
+      const dados={...formRecorr,valorPrevisto:parseFloat(formRecorr.valorPrevisto),totalParcelas:formRecorr.indeterminado?0:(parseInt(formRecorr.totalParcelas)||0),indeterminado:!!formRecorr.indeterminado,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+      if(editando){ await db.collection(colRecorr).doc(editando).update(dados); }
+      else { await db.collection(colRecorr).add(dados); }
+      setModal(false); setEditando(null);
+    } catch(e){alert("Erro: "+e.message);}
     setSalvando(false);
   }
 
-  // Dar baixa — este mês ou este e os próximos (até dez)
-  async function confirmarBaixa(){
-    if(!formBaixa.valor){alert("Digite o valor.");return;}
+  async function darBaixa(){
+    if(!formBaixa.valor||!formBaixa.data){alert("Valor e data obrigatórios.");return;}
     setSalvando(true);
-    const r = modalBaixa;
-    const batch = db.batch();
-
-    if(formBaixa.modo==="este"){
-      // Só este mês
-      const dia = r.diaVencimento||"10";
-      const data = `${mesFiltroEfetivo}-${String(dia).padStart(2,"0")}`;
-      const ref = db.collection("clinica_financeiro_pessoal").doc();
-      batch.set(ref,{
-        tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||r.categoria,
-        valor:parseFloat(formBaixa.valor),data,formaPag:formBaixa.formaPag,
-        status:"pago",recorrenteId:r.id,obs:"",
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    try {
+      const r=modalBaixa;
+      await db.collection(colLanc).add({
+        tipo: r.tipo||"despesa",
+        tipo_lancamento: (r.tipo||"despesa")==="despesa"?"despesa":"receita",
+        categoria: r.categoria||"",
+        descricao: r.descricao||r.categoria||"",
+        valor: parseFloat(formBaixa.valor),
+        data: formBaixa.data,
+        formaPag: formBaixa.formaPag||"PIX",
+        status: "pago",
+        recorrenteId: r.id,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-    } else {
-      // Este e os próximos até dezembro do ano atual
-      const [anoMes, mesMes] = mesFiltroEfetivo.split("-").map(Number);
-      for(let m=mesMes; m<=12; m++){
-        const mesStr = `${anoMes}-${String(m).padStart(2,"0")}`;
-        const dia = r.diaVencimento||"10";
-        const data = `${mesStr}-${String(dia).padStart(2,"0")}`;
-        // Não duplicar se já existe baixa neste mês
-        const jaExiste = lancamentos.some(l=>l.recorrenteId===r.id&&l.data?.startsWith(mesStr));
-        if(!jaExiste){
-          const ref = db.collection("clinica_financeiro_pessoal").doc();
-          batch.set(ref,{
-            tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||r.categoria,
-            valor:parseFloat(formBaixa.valor),data,formaPag:formBaixa.formaPag,
-            status:"pago",recorrenteId:r.id,obs:"Baixa automática — série",
-            createdAt:firebase.firestore.FieldValue.serverTimestamp()
-          });
+      setModalBaixa(null);
+    } catch(e){ alert("Erro ao dar baixa: "+e.message); }
+    finally { setSalvando(false); }
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir este lançamento?")) return;
+    try { await db.collection(colLanc).doc(id).delete(); }
+    catch(e){ alert("Erro ao excluir: "+e.message); }
+  }
+
+  async function moverLancamento(lanc, destino, modoRecorr){
+    setMovendoId(lanc.id);
+    try {
+      let dados = null;
+
+      // Se é virtual (sem baixa), não tem doc em colLanc — usar os dados do próprio objeto
+      if(lanc._virtual){
+        const {_virtual, _recObj, ...rest} = lanc;
+        dados = {...rest};
+        // Para virtual, só mover o recorrente — não há lançamento real para mover
+        if(destino.colRec && _recObj?.id){
+          const rSnap = await db.collection(colRecorr).doc(_recObj.id).get();
+          if(rSnap.exists){
+            await db.collection(destino.colRec).add(rSnap.data());
+            await db.collection(colRecorr).doc(_recObj.id).delete();
+          }
+        }
+        setModalMover(null);
+        setMovendoId(null);
+        return;
+      }
+
+      // Lançamento real — buscar do Firestore
+      const snap = await db.collection(colLanc).doc(lanc.id).get();
+      if(!snap.exists){ alert("Lançamento não encontrado."); setMovendoId(null); return; }
+      dados = snap.data();
+
+      // Gravar no destino
+      if(destino.col==="clinica_lancamentos"){
+        await db.collection("clinica_lancamentos").add({...dados, tipo_lancamento: dados.tipo==="despesa"?"despesa":dados.tipo_lancamento||"avulso"});
+      } else {
+        await db.collection(destino.col).add({...dados});
+      }
+      await db.collection(colLanc).doc(lanc.id).delete();
+
+      // Mover recorrente vinculado se pedido
+      if(lanc.recorrenteId && destino.colRec && modoRecorr==="todos"){
+        const rSnap = await db.collection(colRecorr).doc(lanc.recorrenteId).get();
+        if(rSnap.exists){
+          await db.collection(destino.colRec).add(rSnap.data());
+          await db.collection(colRecorr).doc(lanc.recorrenteId).delete();
         }
       }
-    }
-    await batch.commit();
-    setModalBaixa(null);
-    setFormBaixa({valor:"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"});
-    setSalvando(false);
+      setModalMover(null);
+    } catch(e){ alert("Erro ao mover: "+e.message); }
+    finally { setMovendoId(null); }
   }
 
-  async function excluir(id){ if(!confirm("Excluir lançamento?"))return; await db.collection("clinica_financeiro_pessoal").doc(id).delete(); }
-  async function excluirRec(id){ if(!confirm("Excluir recorrente?"))return; await db.collection("clinica_fin_pessoal_recorrentes").doc(id).delete(); }
-  async function salvarCategoria(){
-    if(!novaCategoria.nome.trim()){alert("Digite o nome.");return;}
-    await db.collection("clinica_fin_pessoal_categorias").add({...novaCategoria,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    setNovaCategoria({nome:"",tipo:"despesa"});
-  }
-  async function excluirCategoria(id){ if(!confirm("Excluir?"))return; await db.collection("clinica_fin_pessoal_categorias").doc(id).delete(); }
+  const corRec="#059669"; const corDes="#dc2626";
 
   return (
     <div>
-      {/* Header */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20,flexWrap:"wrap",gap:12}}>
+      {/* HEADER */}
+      <div className="page-header">
         <div>
-          <div className="page-title">Financeiro Pessoal</div>
-          <div className="page-subtitle">{somenteLeitura?"Visualização — Paulo Sergio":"Gestão financeira pessoal e familiar"}</div>
+          <div className="page-title">{titulo}</div>
+          <div className="page-subtitle">{subtitulo}</div>
         </div>
-        {!somenteLeitura&&(
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <button className="btn btn-ghost" onClick={()=>setModal("categoria")}><Icon name="tag" size={15}/> Categorias</button>
-            <button className="btn btn-outline" onClick={()=>{setModal("recorrente");setEditando(null);}}><Icon name="repeat" size={15}/> + Recorrente</button>
-            <button className="btn btn-purple" onClick={()=>{setModal("avulso");setEditando(null);}}><Icon name="plus" size={15}/> + Lançamento</button>
-          </div>
-        )}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button onClick={()=>abrirNovo("receita")} className="btn" style={{background:"none",border:`1px solid ${corRec}`,color:corRec,borderRadius:8,padding:"8px 16px",fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+            <Icon name="plus" size={14}/> Nova Receita
+          </button>
+          <button onClick={()=>abrirNovo("despesa")} className="btn btn-purple" style={{padding:"8px 16px",fontSize:13}}>
+            <Icon name="plus" size={14}/> Nova Despesa
+          </button>
+        </div>
       </div>
 
-      {/* Seletor Ano */}
-      <div style={{display:"flex",gap:6,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
-        <span style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",flexShrink:0}}>Ano:</span>
+      {/* CARDS TOPO */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:24}}>
+        <div className="card" style={{padding:20,background:saldoMes>=0?"#f0fdf4":"#fef2f2",border:`1px solid ${saldoMes>=0?"#86efac":"#fca5a5"}`}}>
+          <div style={{fontSize:11,fontWeight:600,color:saldoMes>=0?corRec:corDes,marginBottom:4}}>Saldo ({mesLabel(mesFiltroEfetivo)})</div>
+          <div style={{fontSize:24,fontWeight:700,color:saldoMes>=0?corRec:corDes}}>{fmt(saldoMes)}</div>
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>+{fmt(recMes)} / -{fmt(desMes)}</div>
+        </div>
+        <div className="card" style={{padding:20,background:"#fffbeb",border:"1px solid #fde68a"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente ({anoFiltro})</div>
+          <div style={{fontSize:24,fontWeight:700,color:"#d97706"}}>{fmt(pendMes)}</div>
+        </div>
+        <div className="card" style={{padding:20}}>
+          <div style={{fontSize:11,fontWeight:600,color:corRec,marginBottom:4}}>Receitas ({anoFiltro})</div>
+          <div style={{fontSize:24,fontWeight:700,color:corRec}}>{fmt(recAno)}</div>
+        </div>
+        <div className="card" style={{padding:20}}>
+          <div style={{fontSize:11,fontWeight:600,color:corDes,marginBottom:4}}>Despesas ({anoFiltro})</div>
+          <div style={{fontSize:24,fontWeight:700,color:corDes}}>{fmt(desAno)}</div>
+        </div>
+      </div>
+
+      {/* FILTRO ANO */}
+      <div style={{display:"flex",gap:8,marginBottom:16,alignItems:"center"}}>
+        <span style={{fontSize:12,color:"var(--text-muted)",fontWeight:600}}>Ano:</span>
         {anos.map(a=>(
-          <button key={a} onClick={()=>{setAnoFiltro(a);setMesFiltro(a===String(anoAtualNum)?mesAtual:a+"-01");}}
-            style={{padding:"5px 16px",borderRadius:20,border:"1.5px solid",borderColor:anoFiltro===a?"var(--purple)":"#e5e7eb",background:anoFiltro===a?"var(--purple)":"white",color:anoFiltro===a?"white":"#6b7280",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-            {a}{a===String(anoAtualNum)&&<span style={{marginLeft:3,fontSize:9}}>●</span>}
+          <button key={a} onClick={()=>setAnoFiltro(a)} style={{padding:"4px 14px",borderRadius:20,border:"none",background:anoFiltro===a?"var(--purple)":"var(--gray-100)",color:anoFiltro===a?"white":"var(--gray-600)",fontWeight:anoFiltro===a?700:400,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>{a}</button>
+        ))}
+      </div>
+
+      {/* FILTRO TIPO */}
+      <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-50)",padding:6,borderRadius:12,width:"fit-content"}}>
+        {[["tudo","📊 Tudo"],["receita","💰 Receitas"],["despesa","💸 Despesas"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setFiltroTipo(v)} style={{padding:"6px 16px",borderRadius:8,border:"none",background:filtroTipo===v?"white":"transparent",color:filtroTipo===v?(v==="receita"?corRec:v==="despesa"?corDes:"var(--purple)"):"#6b7280",fontWeight:filtroTipo===v?700:500,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",boxShadow:filtroTipo===v?"0 1px 4px rgba(0,0,0,.1)":"none",transition:".15s"}}>
+            {l}
           </button>
         ))}
       </div>
 
-      {/* Cards métricas */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
-        <div style={{background:saldoMes>=0?"#d1fae5":"#fee2e2",borderRadius:12,padding:"14px 16px",border:"1.5px solid",borderColor:saldoMes>=0?"#6ee7b7":"#fca5a5"}}>
-          <div style={{fontSize:11,fontWeight:600,color:saldoMes>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo ({mesLabel(mesFiltroEfetivo)})</div>
-          <div style={{fontSize:20,fontWeight:800,color:saldoMes>=0?"#059669":"#dc2626"}}>{fmt(saldoMes)}</div>
-          <div style={{fontSize:11,color:"#6b7280",marginTop:2}}>+{fmt(recMes)} / -{fmt(despMes)}</div>
-        </div>
-        <div style={{background:"#fffbeb",borderRadius:12,padding:"14px 16px",border:"1.5px solid #fcd34d"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente</div>
-          <div style={{fontSize:20,fontWeight:800,color:"#d97706"}}>{fmt(pendMes)}</div>
-        </div>
-        <div style={{background:"#f0fdf4",borderRadius:12,padding:"14px 16px",border:"1.5px solid #86efac"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#059669",marginBottom:4}}>Receitas ({anoFiltro})</div>
-          <div style={{fontSize:20,fontWeight:800,color:"#059669"}}>{fmt(recAno)}</div>
-        </div>
-        <div style={{background:"#fef2f2",borderRadius:12,padding:"14px 16px",border:"1.5px solid #fca5a5"}}>
-          <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:4}}>Despesas ({anoFiltro})</div>
-          <div style={{fontSize:20,fontWeight:800,color:"#dc2626"}}>{fmt(despAno)}</div>
-        </div>
-      </div>
-
-      {/* Seletor Mês */}
-      <div style={{display:"flex",gap:4,marginBottom:24,overflowX:"auto",paddingBottom:4}}>
+      {/* NAVEGAÇÃO MÊS */}
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20,overflowX:"auto",scrollbarWidth:"none"}}>
+        <button onClick={()=>{ const idx=mesesDisp.indexOf(mesFiltroEfetivo); if(idx>0)setMesFiltro(mesesDisp[idx-1]); }} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:"50%",width:28,height:28,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="chevron-left" size={14}/></button>
         {mesesDisp.map(m=>(
-          <button key={m} onClick={()=>setMesFiltro(m)}
-            style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",borderColor:mesFiltroEfetivo===m?"var(--purple)":"#e5e7eb",background:mesFiltroEfetivo===m?"var(--purple)":"white",color:mesFiltroEfetivo===m?"white":"#6b7280",fontSize:12,fontWeight:mesFiltroEfetivo===m?700:400,cursor:"pointer",flexShrink:0}}>
+          <button key={m} onClick={()=>setMesFiltro(m)} style={{padding:"5px 14px",borderRadius:20,border:"none",background:m===mesFiltroEfetivo?"var(--purple)":"var(--gray-100)",color:m===mesFiltroEfetivo?"white":"var(--gray-600)",fontWeight:m===mesFiltroEfetivo?700:400,cursor:"pointer",fontSize:13,flexShrink:0,fontFamily:"var(--font-body)"}}>
             {mesLabel(m)}
           </button>
         ))}
+        <button onClick={()=>{ const idx=mesesDisp.indexOf(mesFiltroEfetivo); if(idx<mesesDisp.length-1)setMesFiltro(mesesDisp[idx+1]); }} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:"50%",width:28,height:28,cursor:"pointer",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="chevron-right" size={14}/></button>
       </div>
 
-      {/* RECORRENTES — sempre visível */}
-      {recorrAtivos.length>0&&(
+      {/* CARDS SALDO MÊS */}
+      {filtroTipo!=="despesa"&&(
+        <div style={{padding:"12px 20px",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:12,marginBottom:12}}>
+          <span style={{fontSize:12,color:corRec,fontWeight:600}}>TOTAL RECEITAS DO MÊS </span>
+          <span style={{fontSize:18,fontWeight:700,color:corRec,marginLeft:8}}>{fmt(recMes)}</span>
+        </div>
+      )}
+      {filtroTipo!=="receita"&&(
+        <div style={{padding:"12px 20px",background:"#fef2f2",border:"1px solid #fca5a5",borderRadius:12,marginBottom:12}}>
+          <span style={{fontSize:12,color:corDes,fontWeight:600}}>TOTAL DESPESAS DO MÊS </span>
+          <span style={{fontSize:18,fontWeight:700,color:corDes,marginLeft:8}}>{fmt(desMes)}</span>
+        </div>
+      )}
+
+      {/* TABELA RECEITAS */}
+      {receitas.length>0&&(
         <div style={{marginBottom:24}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:10,display:"flex",alignItems:"center",gap:6,color:"var(--text-muted)"}}>
-            <Icon name="repeat" size={15}/> Recorrentes — {mesLabel(mesFiltroEfetivo)}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontWeight:700,fontSize:14,color:corRec}}>🟢 Receitas</div>
+            <div style={{fontWeight:700,color:corRec}}>{fmt(calcRec(receitas))}</div>
           </div>
-          <div className="card" style={{padding:0}}>
-            {recorrAtivos.map(r=>{
-              const baixaDone = jaDeuBaixaMes(r);
-              return (
-                <div key={r.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:bgTipo(r.tipo),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <Icon name={r.tipo==="receita"?"trending-up":"trending-down"} size={16}/>
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:600,fontSize:14}}>{r.descricao||r.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{r.categoria} · vence dia {r.diaVencimento} · {r.recorrencia}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:corTipo(r.tipo),marginRight:8}}>{fmt(parseFloat(r.valorPrevisto)||0)}</div>
-                  {baixaDone
-                    ? <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20}}>✓ Pago</span>
-                    : !somenteLeitura&&<button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setModalBaixa(r);setFormBaixa({valor:r.valorPrevisto||"",data:`${mesFiltroEfetivo}-${String(r.diaVencimento||10).padStart(2,"0")}`,formaPag:"PIX",modo:"este"});}}>Dar baixa</button>
-                  }
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormRecorr({tipo:r.tipo,categoria:r.categoria,descricao:r.descricao||"",valorPrevisto:r.valorPrevisto+"",recorrencia:r.recorrencia,diaVencimento:r.diaVencimento,mesInicio:r.mesInicio||mesAtual,ativo:r.ativo});setEditando(r.id);setModal("recorrente");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluirRec(r.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div className="card" style={{padding:0,overflow:"hidden"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr style={{background:"var(--gray-50)"}}>
+                {["Data","Descrição","Categoria","Forma Pag.","Valor","Status","Ações"].map(h=>(
+                  <th key={h} style={{padding:"10px 14px",fontSize:11,fontWeight:600,color:"var(--text-muted)",textAlign:"left",borderBottom:"1px solid var(--gray-200)"}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {receitas.map((l,i)=>(
+                  <tr key={l.id} style={{borderBottom:"1px solid var(--gray-100)",background:i%2===0?"white":"var(--gray-50)"}}>
+                    <td style={{padding:"10px 14px",fontSize:13,color:"var(--text-muted)",whiteSpace:"nowrap"}}>
+                      {l.data}
+                      {l._virtual&&<span style={{fontSize:10,background:"#fef3c7",color:"#b45309",padding:"1px 6px",borderRadius:20,fontWeight:600,marginLeft:6}}>sem baixa</span>}
+                    </td>
+                    <td style={{padding:"10px 14px",fontSize:13,fontWeight:500}}>{l.descricao||l.categoria||"—"}</td>
+                    <td style={{padding:"10px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.categoria||"—"}</td>
+                    <td style={{padding:"10px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.formaPag||"—"}</td>
+                    <td style={{padding:"10px 14px",fontSize:13,fontWeight:700,color:corRec,whiteSpace:"nowrap"}}>{fmt(l.valor)}</td>
+                    <td style={{padding:"10px 14px"}}>
+                      <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:l.status==="pago"||l.status==="recebido"?"#d1fae5":"#fef3c7",color:l.status==="pago"||l.status==="recebido"?"#065f46":"#b45309"}}>
+                        {l.status==="pago"||l.status==="recebido"?"✓ Recebido":"Pendente"}
+                      </span>
+                    </td>
+                    <td style={{padding:"10px 14px"}}>
+                      <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+                        {l._virtual&&(
+                          <button onClick={()=>{ setModalBaixa(l._recObj); setFormBaixa({valor:l.valor+"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"}); }} style={{fontSize:11,background:"#d1fae5",color:"#065f46",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}}>Dar baixa</button>
+                        )}
+                        {!l._virtual&&(<>
+                          <button onClick={()=>{ setFormLanc({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",parcelas:"1"}); setEditando(l.id); setAbaModal("avulso"); setModal("lanc"); }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",padding:"3px 6px"}} title="Editar"><Icon name="pencil" size={13}/></button>
+                          <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"3px 6px"}} title="Excluir"><Icon name="trash-2" size={13}/></button>
+                        </>)}
+                        <button onClick={()=>setModalMover({lanc:l._virtual?{...l,id:l._recObj.id}:l,isRecorrente:true})} title="Mover para outro financeiro" style={{background:"#f3f0ff",border:"none",cursor:"pointer",color:"#7B00C4",padding:"3px 8px",borderRadius:6,fontSize:11,fontWeight:600}}>↗ Mover</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* LANÇAMENTOS DO MÊS */}
-      <div>
-        {lancMes.filter(l=>l.tipo==="receita").length>0&&(
-          <div style={{marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontWeight:700,color:"#059669",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-up" size={16}/> Receitas</div>
-              <div style={{fontWeight:700,color:"#059669"}}>{fmt(recMes)}</div>
-            </div>
-            <div className="card" style={{padding:0}}>
-              {lancMes.filter(l=>l.tipo==="receita").map(l=>(
-                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:"#d1fae5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-down-left" size={16}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:"#059669"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                  <span style={{background:"#d1fae5",color:"#065f46",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>✓ Recebido</span>
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+      {/* TABELA DESPESAS */}
+      {despesas.length>0&&(
+        <div style={{marginBottom:24}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontWeight:700,fontSize:14,color:corDes}}>🔴 Despesas</div>
+            <div style={{fontWeight:700,color:corDes}}>{fmt(calcDes(despesas))}</div>
           </div>
-        )}
+          <div className="card" style={{padding:0,overflow:"hidden"}}>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr style={{background:"var(--gray-50)"}}>
+                {["Data","Descrição","Categoria","Forma Pag.","Valor","Status","Ações"].map(h=>(
+                  <th key={h} style={{padding:"10px 14px",fontSize:11,fontWeight:600,color:"var(--text-muted)",textAlign:"left",borderBottom:"1px solid var(--gray-200)"}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {despesas.map((l,i)=>(
+                  <tr key={l.id} style={{borderBottom:"1px solid var(--gray-100)",background:i%2===0?"white":"var(--gray-50)"}}>
+                    <td style={{padding:"10px 14px",fontSize:13,color:"var(--text-muted)",whiteSpace:"nowrap"}}>
+                      {l.data}
+                      {l._virtual&&<span style={{fontSize:10,background:"#fef3c7",color:"#b45309",padding:"1px 6px",borderRadius:20,fontWeight:600,marginLeft:6}}>sem baixa</span>}
+                    </td>
+                    <td style={{padding:"10px 14px",fontSize:13,fontWeight:500}}>{l.descricao||l.categoria||"—"}</td>
+                    <td style={{padding:"10px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.categoria||"—"}</td>
+                    <td style={{padding:"10px 14px",fontSize:12,color:"var(--text-muted)"}}>{l.formaPag||"—"}</td>
+                    <td style={{padding:"10px 14px",fontSize:13,fontWeight:700,color:corDes,whiteSpace:"nowrap"}}>{fmt(l.valor)}</td>
+                    <td style={{padding:"10px 14px"}}>
+                      <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:l.status==="pago"?"#d1fae5":"#fef3c7",color:l.status==="pago"?"#065f46":"#b45309"}}>
+                        {l.status==="pago"?"✓ Pago":"Pendente"}
+                      </span>
+                    </td>
+                    <td style={{padding:"10px 14px"}}>
+                      <div style={{display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+                        {l._virtual&&(
+                          <button onClick={()=>{ setModalBaixa(l._recObj); setFormBaixa({valor:l.valor+"",data:new Date().toISOString().slice(0,10),formaPag:"PIX",modo:"este"}); }} style={{fontSize:11,background:"#d1fae5",color:"#065f46",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}}>Dar baixa</button>
+                        )}
+                        {!l._virtual&&(<>
+                          <button onClick={()=>{ setFormLanc({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status||"pago",obs:l.obs||"",parcelas:"1"}); setEditando(l.id); setAbaModal("avulso"); setModal("lanc"); }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",padding:"3px 6px"}} title="Editar"><Icon name="pencil" size={13}/></button>
+                          <button onClick={()=>excluir(l.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"3px 6px"}} title="Excluir"><Icon name="trash-2" size={13}/></button>
+                        </>)}
+                        <button onClick={()=>setModalMover({lanc:l._virtual?{...l,id:l._recObj.id}:l,isRecorrente:true})} title="Mover para outro financeiro" style={{background:"#f3f0ff",border:"none",cursor:"pointer",color:"#7B00C4",padding:"3px 8px",borderRadius:6,fontSize:11,fontWeight:600}}>↗ Mover</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-        {lancMes.filter(l=>l.tipo==="despesa").length>0&&(
-          <div style={{marginBottom:20}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-              <div style={{fontWeight:700,color:"#dc2626",display:"flex",alignItems:"center",gap:6}}><Icon name="trending-down" size={16}/> Despesas</div>
-              <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(despMes)}</div>
-            </div>
-            <div className="card" style={{padding:0}}>
-              {lancMes.filter(l=>l.tipo==="despesa").map(l=>(
-                <div key={l.id} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--gray-100)"}}>
-                  <div style={{width:36,height:36,borderRadius:8,background:"#fee2e2",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="arrow-up-right" size={16}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:500,fontSize:14}}>{l.descricao||l.categoria}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)"}}>{l.categoria} · {l.data}{l.formaPag?" · "+l.formaPag:""}</div>
-                  </div>
-                  <div style={{fontWeight:700,color:"#dc2626"}}>{fmt(parseFloat(l.valor)||0)}</div>
-                  <span style={{background:l.status==="pago"?"#d1fae5":"#fef3c7",color:l.status==="pago"?"#065f46":"#92400e",fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:20}}>{l.status==="pago"?"✓ Pago":"Pendente"}</span>
-                  {!somenteLeitura&&(
-                    <div style={{display:"flex",gap:4}}>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px"}} onClick={()=>{setFormAvulso({tipo:l.tipo,categoria:l.categoria||"",descricao:l.descricao||"",valor:l.valor+"",data:l.data,formaPag:l.formaPag||"PIX",status:l.status,obs:l.obs||""});setEditando(l.id);setModal("avulso");}}><Icon name="pencil" size={13}/></button>
-                      <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluir(l.id)}><Icon name="trash-2" size={13}/></button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      {receitas.length===0&&despesas.length===0&&(
+        <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",fontSize:14}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)} de {anoFiltro}.</div>
+      )}
 
-        {lancMes.length===0&&recorrAtivos.length===0&&(
-          <div className="card" style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
-            <Icon name="wallet" size={40}/>
-            <div style={{marginTop:12,fontWeight:500}}>Nenhum lançamento em {mesLabel(mesFiltroEfetivo)}</div>
-            {!somenteLeitura&&<div style={{fontSize:13,marginTop:6}}>Use "+ Lançamento" ou "+ Recorrente" acima.</div>}
-          </div>
-        )}
+      {/* RODAPÉ SALDO */}
+      <div style={{display:"flex",gap:16,alignItems:"center",justifyContent:"flex-end",padding:"16px 0",borderTop:"1px solid var(--gray-200)",flexWrap:"wrap"}}>
+        <div style={{textAlign:"center"}}><div style={{fontSize:11,color:"var(--text-muted)"}}>Receitas</div><div style={{fontWeight:700,color:corRec}}>{fmt(recMes)}</div></div>
+        <div style={{fontSize:18,color:"var(--text-muted)"}}>—</div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:11,color:"var(--text-muted)"}}>Despesas</div><div style={{fontWeight:700,color:corDes}}>{fmt(desMes)}</div></div>
+        <div style={{fontSize:18,color:"var(--text-muted)"}}>=</div>
+        <div style={{textAlign:"center"}}><div style={{fontSize:11,color:"var(--text-muted)"}}>Saldo do Mês</div><div style={{fontWeight:700,fontSize:18,color:saldoMes>=0?corRec:corDes}}>{fmt(saldoMes)}</div></div>
       </div>
 
-      {/* MODAL BAIXA RECORRENTE */}
-      {modalBaixa&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalBaixa(null)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:460}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>Dar baixa — {modalBaixa.descricao||modalBaixa.categoria}</div>
-            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Previsto: {fmt(parseFloat(modalBaixa.valorPrevisto)||0)}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-              <div className="form-group">
-                <label className="form-label">Valor Real (R$)</label>
-                <input className="form-input" type="number" value={formBaixa.valor} onChange={e=>setFormBaixa({...formBaixa,valor:e.target.value})} autoFocus/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Forma de Pagamento</label>
-                <select className="form-input" value={formBaixa.formaPag} onChange={e=>setFormBaixa({...formBaixa,formaPag:e.target.value})}>
-                  {FORMAS.map(f=><option key={f}>{f}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="form-group" style={{marginBottom:20}}>
-              <label className="form-label">Aplicar para</label>
-              <div style={{display:"flex",gap:8}}>
-                {[["este","Só este mês","#7B00C4"],["proximos","Este e os próximos (até dez.)","#0891b2"]].map(([v,l,c])=>(
-                  <button key={v} type="button" onClick={()=>setFormBaixa({...formBaixa,modo:v})}
-                    style={{flex:1,padding:"10px 8px",borderRadius:10,border:"1.5px solid",borderColor:formBaixa.modo===v?c:"#e5e7eb",background:formBaixa.modo===v?c+"15":"white",color:formBaixa.modo===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",textAlign:"center"}}>
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModalBaixa(null)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={confirmarBaixa} disabled={salvando}>{salvando?"Salvando...":"Confirmar Baixa"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL LANÇAMENTO AVULSO */}
-      {modal==="avulso"&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+      {/* MODAL LANÇAMENTO */}
+      {modal==="lanc"&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>{setModal(false);setEditando(null);}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
               <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editando?"Editar":"Novo"} Lançamento</div>
               <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <div className="form-group" style={{gridColumn:"1/-1"}}>
-                <label className="form-label">Tipo</label>
-                <div style={{display:"flex",gap:8}}>
-                  {[["receita","↓ Receita","#059669"],["despesa","↑ Despesa","#dc2626"]].map(([v,l,c])=>(
-                    <button key={v} type="button" onClick={()=>setFormAvulso({...formAvulso,tipo:v,categoria:""})}
-                      style={{flex:1,padding:10,borderRadius:10,border:"1.5px solid",borderColor:formAvulso.tipo===v?c:"#e5e7eb",background:formAvulso.tipo===v?c+"15":"white",color:formAvulso.tipo===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
-                      {l}
-                    </button>
-                  ))}
+            {!editando&&(
+              <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-50)",padding:4,borderRadius:10}}>
+                {[["avulso","💰 Avulso"],["recorrente","🔁 Recorrente"]].map(([v,l])=>(
+                  <button key={v} onClick={()=>setAbaModal(v)} style={{flex:1,padding:"7px",border:"none",borderRadius:8,background:abaModal===v?"white":"transparent",color:abaModal===v?"var(--purple)":"#6b7280",fontWeight:abaModal===v?700:500,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>{l}</button>
+                ))}
+              </div>
+            )}
+            {abaModal==="avulso"?(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <div className="form-group" style={{gridColumn:"span 2"}}>
+                  <label className="form-label">Tipo</label>
+                  <select className="form-input" value={formLanc.tipo} onChange={e=>setFormLanc({...formLanc,tipo:e.target.value,categoria:""})}>
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Categoria</label>
+                  <select className="form-input" value={formLanc.categoria} onChange={e=>setFormLanc({...formLanc,categoria:e.target.value})}>
+                    <option value="">Selecionar...</option>
+                    {(formLanc.tipo==="receita"?catsRec:catsDes).map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Valor (R$)</label>
+                  <input className="form-input" type="number" step="0.01" value={formLanc.valor} onChange={e=>setFormLanc({...formLanc,valor:e.target.value})} placeholder="0,00"/>
+                </div>
+                <div className="form-group" style={{gridColumn:"span 2"}}>
+                  <label className="form-label">Descrição</label>
+                  <input className="form-input" value={formLanc.descricao} onChange={e=>setFormLanc({...formLanc,descricao:e.target.value})} placeholder="Descrição opcional"/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data</label>
+                  <input className="form-input" type="date" value={formLanc.data} onChange={e=>setFormLanc({...formLanc,data:e.target.value})}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Forma Pag.</label>
+                  <select className="form-input" value={formLanc.formaPag} onChange={e=>setFormLanc({...formLanc,formaPag:e.target.value})}>
+                    {FORMAS.map(f=><option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Status</label>
+                  <select className="form-input" value={formLanc.status} onChange={e=>setFormLanc({...formLanc,status:e.target.value})}>
+                    <option value="pago">✓ Pago / Recebido</option>
+                    <option value="pendente">Pendente</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Parcelas</label>
+                  <input className="form-input" type="number" min="1" max="48" value={formLanc.parcelas} onChange={e=>setFormLanc({...formLanc,parcelas:e.target.value})}/>
+                </div>
+                <div className="form-group" style={{gridColumn:"span 2"}}>
+                  <label className="form-label">Observação</label>
+                  <input className="form-input" value={formLanc.obs} onChange={e=>setFormLanc({...formLanc,obs:e.target.value})} placeholder="Opcional"/>
+                </div>
+                <div style={{gridColumn:"span 2",display:"flex",gap:8,justifyContent:"space-between",alignItems:"center"}}>
+                  {editando&&(
+                    <button onClick={async()=>{if(confirm("Excluir este lançamento?")){await excluir(editando);setModal(false);setEditando(null);}}} style={{background:"none",border:"1px solid #dc2626",color:"#dc2626",borderRadius:8,padding:"7px 14px",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-body)"}}>🗑️ Excluir</button>
+                  )}
+                  <div style={{display:"flex",gap:8,marginLeft:"auto"}}>
+                    <button onClick={()=>{setModal(false);setEditando(null);}} className="btn btn-ghost">Cancelar</button>
+                    <button onClick={salvarLanc} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+                  </div>
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Categoria</label>
-                <select className="form-input" value={formAvulso.categoria} onChange={e=>setFormAvulso({...formAvulso,categoria:e.target.value})}>
-                  <option value="">Selecionar...</option>
-                  {(formAvulso.tipo==="receita"?catsReceita:catsDespesa).map(c=><option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Descrição</label>
-                <input className="form-input" value={formAvulso.descricao} onChange={e=>setFormAvulso({...formAvulso,descricao:e.target.value})} placeholder="Ex: Conta de luz"/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Valor (R$)</label>
-                <input className="form-input" type="number" value={formAvulso.valor} onChange={e=>setFormAvulso({...formAvulso,valor:e.target.value})} placeholder="0,00"/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Data</label>
-                <input className="form-input" type="date" value={formAvulso.data} onChange={e=>setFormAvulso({...formAvulso,data:e.target.value})}/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Forma de Pagamento</label>
-                <select className="form-input" value={formAvulso.formaPag} onChange={e=>setFormAvulso({...formAvulso,formaPag:e.target.value})}>
-                  {FORMAS.map(f=><option key={f}>{f}</option>)}
-                </select>
-              </div>
-              <div className="form-group" style={{gridColumn:"1/-1"}}>
-                <label className="form-label">Status</label>
-                <div style={{display:"flex",gap:8}}>
-                  {[["pago",formAvulso.tipo==="receita"?"✓ Recebido":"✓ Pago","#059669"],["pendente","Pendente","#d97706"]].map(([v,l,c])=>(
-                    <button key={v} type="button" onClick={()=>setFormAvulso({...formAvulso,status:v})}
-                      style={{flex:1,padding:10,borderRadius:10,border:"1.5px solid",borderColor:formAvulso.status===v?c:"#e5e7eb",background:formAvulso.status===v?c+"15":"white",color:formAvulso.status===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
-                      {l}
-                    </button>
-                  ))}
+            ):(
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                <div className="form-group" style={{gridColumn:"span 2"}}>
+                  <label className="form-label">Tipo</label>
+                  <select className="form-input" value={formRecorr.tipo} onChange={e=>setFormRecorr({...formRecorr,tipo:e.target.value,categoria:""})}>
+                    <option value="receita">Receita</option>
+                    <option value="despesa">Despesa</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Categoria</label>
+                  <select className="form-input" value={formRecorr.categoria} onChange={e=>setFormRecorr({...formRecorr,categoria:e.target.value})}>
+                    <option value="">Selecionar...</option>
+                    {(formRecorr.tipo==="receita"?catsRec:catsDes).map(c=><option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Valor Previsto (R$)</label>
+                  <input className="form-input" type="number" step="0.01" value={formRecorr.valorPrevisto} onChange={e=>setFormRecorr({...formRecorr,valorPrevisto:e.target.value})} placeholder="0,00"/>
+                </div>
+                <div className="form-group" style={{gridColumn:"span 2"}}>
+                  <label className="form-label">Descrição</label>
+                  <input className="form-input" value={formRecorr.descricao} onChange={e=>setFormRecorr({...formRecorr,descricao:e.target.value})} placeholder="Ex: Aluguel apartamento"/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Recorrência</label>
+                  <select className="form-input" value={formRecorr.recorrencia} onChange={e=>setFormRecorr({...formRecorr,recorrencia:e.target.value})}>
+                    {RECORRS.map(r=><option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Dia vencimento</label>
+                  <input className="form-input" type="number" min="1" max="31" value={formRecorr.diaVencimento} onChange={e=>setFormRecorr({...formRecorr,diaVencimento:e.target.value})}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Início</label>
+                  <input className="form-input" type="month" value={formRecorr.mesInicio} onChange={e=>setFormRecorr({...formRecorr,mesInicio:e.target.value})}/>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Duração</label>
+                  <select className="form-input" value={formRecorr.indeterminado?"ind":"det"} onChange={e=>setFormRecorr({...formRecorr,indeterminado:e.target.value==="ind"})}>
+                    <option value="ind">Indeterminado</option>
+                    <option value="det">Número fixo de meses</option>
+                  </select>
+                </div>
+                {!formRecorr.indeterminado&&(
+                  <div className="form-group">
+                    <label className="form-label">Qtd meses</label>
+                    <input className="form-input" type="number" min="1" value={formRecorr.totalParcelas} onChange={e=>setFormRecorr({...formRecorr,totalParcelas:e.target.value})}/>
+                  </div>
+                )}
+                <div style={{gridColumn:"span 2",display:"flex",gap:8,justifyContent:"flex-end"}}>
+                  <button onClick={()=>{setModal(false);setEditando(null);}} className="btn btn-ghost">Cancelar</button>
+                  <button onClick={salvarRecorr} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
                 </div>
               </div>
-              <div className="form-group" style={{gridColumn:"1/-1"}}>
-                <label className="form-label">Observações</label>
-                <input className="form-input" value={formAvulso.obs||""} onChange={e=>setFormAvulso({...formAvulso,obs:e.target.value})} placeholder="Opcional..."/>
-              </div>
-            </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
-              <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvarAvulso} disabled={salvando}>{salvando?"Salvando...":editando?"Salvar":"Lançar"}</button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DAR BAIXA */}
+      {modalBaixa&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:20}} onClick={()=>setModalBaixa(null)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:400}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:16}}>Dar baixa — {modalBaixa.descricao||modalBaixa.categoria}</div>
+            <div className="form-group"><label className="form-label">Valor pago</label><input className="form-input" type="number" step="0.01" value={formBaixa.valor} onChange={e=>setFormBaixa({...formBaixa,valor:e.target.value})}/></div>
+            <div className="form-group"><label className="form-label">Data</label><input className="form-input" type="date" value={formBaixa.data} onChange={e=>setFormBaixa({...formBaixa,data:e.target.value})}/></div>
+            <div className="form-group"><label className="form-label">Forma Pag.</label><select className="form-input" value={formBaixa.formaPag} onChange={e=>setFormBaixa({...formBaixa,formaPag:e.target.value})}>{FORMAS.map(f=><option key={f} value={f}>{f}</option>)}</select></div>
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:16}}>
+              <button onClick={()=>setModalBaixa(null)} className="btn btn-ghost">Cancelar</button>
+              <button onClick={darBaixa} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Confirmar baixa"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL RECORRENTE */}
-      {modal==="recorrente"&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:500,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editando?"Editar":"Novo"} Lançamento Recorrente</div>
-              <button onClick={()=>{setModal(false);setEditando(null);}} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
+      {/* MODAL MOVER */}
+      {modalMover&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:700,padding:20}} onClick={()=>setModalMover(null)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:420}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>↗ Mover lançamento</div>
+            <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>
+              <strong>{modalMover.lanc.descricao||modalMover.lanc.categoria}</strong> — {fmt(modalMover.lanc.valor)}<br/>
+              Para onde deseja mover?
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <div className="form-group" style={{gridColumn:"1/-1"}}>
-                <label className="form-label">Tipo</label>
-                <div style={{display:"flex",gap:8}}>
-                  {[["receita","↓ Receita","#059669"],["despesa","↑ Despesa","#dc2626"]].map(([v,l,c])=>(
-                    <button key={v} type="button" onClick={()=>setFormRecorr({...formRecorr,tipo:v,categoria:""})}
-                      style={{flex:1,padding:10,borderRadius:10,border:"1.5px solid",borderColor:formRecorr.tipo===v?c:"#e5e7eb",background:formRecorr.tipo===v?c+"15":"white",color:formRecorr.tipo===v?c:"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
-                      {l}
+            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+              {DESTINOS.map(dest=>(
+                <div key={dest.col}>
+                  {modalMover.isRecorrente&&dest.colRec?(
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={()=>moverLancamento(modalMover.lanc,dest,"este")} disabled={!!movendoId} style={{flex:1,padding:"10px",border:"1px solid #e5e7eb",borderRadius:10,background:"white",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-body)"}}>
+                        {movendoId===modalMover.lanc.id?"Movendo...":dest.label+" (só este)"}
+                      </button>
+                      <button onClick={()=>moverLancamento(modalMover.lanc,dest,"todos")} disabled={!!movendoId} style={{flex:1,padding:"10px",border:"2px solid var(--purple)",borderRadius:10,background:"#f3f0ff",cursor:"pointer",fontSize:13,fontWeight:700,color:"var(--purple)",fontFamily:"var(--font-body)"}}>
+                        {dest.label+" + recorrente"}
+                      </button>
+                    </div>
+                  ):(
+                    <button onClick={()=>moverLancamento(modalMover.lanc,dest,"este")} disabled={!!movendoId} style={{width:"100%",padding:"12px",border:"1px solid #e5e7eb",borderRadius:10,background:"white",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"var(--font-body)",textAlign:"left"}}>
+                      {movendoId===modalMover.lanc.id?"Movendo...":dest.label}
                     </button>
-                  ))}
-                </div>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Categoria</label>
-                <select className="form-input" value={formRecorr.categoria} onChange={e=>setFormRecorr({...formRecorr,categoria:e.target.value})}>
-                  <option value="">Selecionar...</option>
-                  {(formRecorr.tipo==="receita"?catsReceita:catsDespesa).map(c=><option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Descrição</label>
-                <input className="form-input" value={formRecorr.descricao||""} onChange={e=>setFormRecorr({...formRecorr,descricao:e.target.value})} placeholder="Ex: Aluguel ap. 302"/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Valor Previsto (R$)</label>
-                <input className="form-input" type="number" value={formRecorr.valorPrevisto} onChange={e=>setFormRecorr({...formRecorr,valorPrevisto:e.target.value})} placeholder="0,00"/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Recorrência</label>
-                <select className="form-input" value={formRecorr.recorrencia} onChange={e=>setFormRecorr({...formRecorr,recorrencia:e.target.value})}>
-                  {RECORR.map(r=><option key={r}>{r}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Dia de Vencimento</label>
-                <input className="form-input" type="number" min="1" max="31" value={formRecorr.diaVencimento} onChange={e=>setFormRecorr({...formRecorr,diaVencimento:e.target.value})} placeholder="10"/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Início</label>
-                <input className="form-input" type="month" value={formRecorr.mesInicio} onChange={e=>setFormRecorr({...formRecorr,mesInicio:e.target.value})}/>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select className="form-input" value={formRecorr.ativo?"ativo":"inativo"} onChange={e=>setFormRecorr({...formRecorr,ativo:e.target.value==="ativo"})}>
-                  <option value="ativo">Ativo</option>
-                  <option value="inativo">Inativo</option>
-                </select>
-              </div>
-            </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:16}}>
-              <button className="btn btn-ghost" onClick={()=>{setModal(false);setEditando(null);}}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvarRecorrente} disabled={salvando}>{salvando?"Salvando...":editando?"Salvar":"Cadastrar"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL CATEGORIAS */}
-      {modal==="categoria"&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Gerenciar Categorias</div>
-              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer"}}><Icon name="x" size={20}/></button>
-            </div>
-            <div style={{display:"flex",gap:8,marginBottom:16}}>
-              <select className="form-input" style={{width:120,flexShrink:0}} value={novaCategoria.tipo} onChange={e=>setNovaCategoria({...novaCategoria,tipo:e.target.value})}>
-                <option value="receita">Receita</option>
-                <option value="despesa">Despesa</option>
-              </select>
-              <input className="form-input" style={{flex:1}} value={novaCategoria.nome} onChange={e=>setNovaCategoria({...novaCategoria,nome:e.target.value})} placeholder="Nova categoria..." onKeyDown={e=>e.key==="Enter"&&salvarCategoria()}/>
-              <button className="btn btn-purple" onClick={salvarCategoria}><Icon name="plus" size={16}/></button>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {categorias.length===0&&<div style={{fontSize:13,color:"var(--text-muted)",textAlign:"center",padding:20}}>Nenhuma categoria personalizada ainda.</div>}
-              {categorias.map(c=>(
-                <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:c.tipo==="receita"?"#f0fdf4":"#fef2f2",border:"1px solid",borderColor:c.tipo==="receita"?"#86efac":"#fca5a5"}}>
-                  <span style={{fontSize:11,fontWeight:600,color:c.tipo==="receita"?"#059669":"#dc2626",background:"white",padding:"2px 8px",borderRadius:10}}>{c.tipo}</span>
-                  <span style={{flex:1,fontSize:14}}>{c.nome}</span>
-                  <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}} onClick={()=>excluirCategoria(c.id)}><Icon name="trash-2" size={13}/></button>
+                  )}
                 </div>
               ))}
             </div>
-            <div style={{marginTop:16,padding:12,background:"var(--gray-50)",borderRadius:10,fontSize:12,color:"var(--text-muted)"}}>
-              As categorias padrão já estão inclusas (Aluguel, Contador, Impostos, etc.). Aqui você adiciona categorias extras.
+            <div style={{borderTop:"1px solid #fee2e2",paddingTop:14,marginTop:4,display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#dc2626",marginBottom:2}}>🗑️ Excluir</div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={async()=>{if(confirm("Excluir só este lançamento?")){await excluir(modalMover.lanc.id);setModalMover(null);}}} disabled={!!movendoId} style={{flex:1,padding:"9px",border:"1px solid #fca5a5",borderRadius:10,background:"#fef2f2",cursor:"pointer",fontSize:13,fontWeight:600,color:"#dc2626",fontFamily:"var(--font-body)"}}>
+                  Excluir só este
+                </button>
+                {modalMover.isRecorrente&&modalMover.lanc.recorrenteId&&(
+                  <button onClick={async()=>{if(confirm("Excluir este e desativar o recorrente?")){await excluir(modalMover.lanc.id);await db.collection(colRecorr).doc(modalMover.lanc.recorrenteId).update({ativo:false});setModalMover(null);}}} disabled={!!movendoId} style={{flex:1,padding:"9px",border:"2px solid #dc2626",borderRadius:10,background:"#fef2f2",cursor:"pointer",fontSize:13,fontWeight:700,color:"#dc2626",fontFamily:"var(--font-body)"}}>
+                    Excluir + desativar recorrente
+                  </button>
+                )}
+              </div>
             </div>
+            <button onClick={()=>setModalMover(null)} className="btn btn-ghost" style={{width:"100%",marginTop:8}}>Cancelar</button>
           </div>
         </div>
       )}
@@ -4055,6 +6704,223 @@ function FinanceiroPessoal({ somenteLeitura=false }) {
   );
 }
 
+function FinanceiroPessoal({ somenteLeitura=false }) {
+  return <FinanceiroBase
+    titulo="Financeiro Pessoal"
+    subtitulo="Receitas e despesas pessoais — moradia, saúde, alimentação, investimentos"
+    colLanc="clinica_financeiro_pessoal"
+    colRecorr="clinica_fin_pessoal_recorrentes"
+  />;
+}
+
+function FinanceiroEmpresa({ somenteLeitura=false }) {
+  return <FinanceiroBase
+    titulo="Financeiro Empresa"
+    subtitulo="Negócio digital — Ônix Brasil, infoprodutos, marketing, ferramentas, treinamentos"
+    colLanc="clinica_financeiro_empresa"
+    colRecorr="clinica_fin_empresa_recorrentes"
+  />;
+}
+
+function PainelGeralFinanceiro() {
+  const [dados, setDados] = useState({clinica:[],pessoal:[],empresa:[]});
+  const [ano, setAno]     = useState(new Date().getFullYear()+"");
+  const [mesSel, setMesSel] = useState(new Date().toISOString().slice(0,7));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    let d={clinica:[],pessoal:[],empresa:[]}; let count=0;
+    function check(){ count++; if(count===3){setDados({...d});setLoading(false);} }
+    db.collection("clinica_lancamentos").onSnapshot(s=>{d.clinica=s.docs.map(x=>({id:x.id,...x.data()}));check();},()=>check());
+    db.collection("clinica_financeiro_pessoal").onSnapshot(s=>{d.pessoal=s.docs.map(x=>({id:x.id,...x.data()}));check();},()=>check());
+    db.collection("clinica_financeiro_empresa").onSnapshot(s=>{d.empresa=s.docs.map(x=>({id:x.id,...x.data()}));check();},()=>check());
+  },[]);
+
+  function fmt(v){ return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+  function mesLabel(m,longo){ try{ return new Date(m+"-02").toLocaleDateString("pt-BR",{month:longo?"long":"short"}); }catch(e){return m;} }
+  function isRec(l){ return l.tipo!=="despesa"&&l.tipo_lancamento!=="despesa"; }
+  function isDes(l){ return l.tipo==="despesa"||l.tipo_lancamento==="despesa"; }
+  function isPago(l){ return l.status==="pago"||l.status==="recebido"; }
+
+  const anoAtual = new Date().getFullYear();
+  const mesAtual = new Date().toISOString().slice(0,7);
+  const anosDisp = [...new Set([...dados.clinica,...dados.pessoal,...dados.empresa].map(l=>l.data?.slice(0,4)).filter(Boolean).map(Number))];
+  const anos = [...new Set([...anosDisp,anoAtual-1,anoAtual,anoAtual+1])].sort().map(String);
+  const mesesAno = Array.from({length:12},(_,i)=>`${ano}-${String(i+1).padStart(2,"0")}`);
+  const todas = [...dados.clinica,...dados.pessoal,...dados.empresa];
+
+  function calcPeriodo(lista, prefixo){
+    const l = lista.filter(x=>x.data?.startsWith(prefixo));
+    return {
+      rec: l.filter(x=>isRec(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
+      des: l.filter(x=>isDes(x)&&isPago(x)).reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
+      pend: l.filter(x=>x.status==="pendente").reduce((a,x)=>a+(parseFloat(x.valor)||0),0),
+    };
+  }
+
+  // Anual
+  const aCl=calcPeriodo(dados.clinica,ano), aPs=calcPeriodo(dados.pessoal,ano), aEm=calcPeriodo(dados.empresa,ano);
+  const totalRec=aCl.rec+aPs.rec+aEm.rec, totalDes=aCl.des+aPs.des+aEm.des, totalSaldo=totalRec-totalDes;
+  const totalPend=aCl.pend+aPs.pend+aEm.pend;
+
+  // Mês selecionado
+  const mCl=calcPeriodo(dados.clinica,mesSel), mPs=calcPeriodo(dados.pessoal,mesSel), mEm=calcPeriodo(dados.empresa,mesSel);
+  const mesRec=mCl.rec+mPs.rec+mEm.rec, mesDes=mCl.des+mPs.des+mEm.des, mesSaldo=mesRec-mesDes;
+
+  // Gráfico por mês
+  const grafico = mesesAno.map(m=>{
+    const rec = todas.filter(l=>l.data?.startsWith(m)&&isRec(l)&&isPago(l)).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+    const des = todas.filter(l=>l.data?.startsWith(m)&&isDes(l)&&isPago(l)).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+    return {mes:m, rec, des, saldo:rec-des};
+  });
+  const maxVal = Math.max(...grafico.map(g=>Math.max(g.rec,g.des)),1);
+  const altBar = 160;
+
+  if(loading) return <div style={{textAlign:"center",padding:60}}><Spinner/><div style={{marginTop:12,color:"var(--text-muted)"}}>Carregando...</div></div>;
+
+  return (
+    <div>
+      {/* HEADER */}
+      <div className="page-header">
+        <div>
+          <div className="page-title">Painel Geral</div>
+          <div className="page-subtitle">Consolidado — Clínica + Pessoal + Empresa</div>
+        </div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {anos.map(a=>(
+            <button key={a} onClick={()=>{setAno(a);setMesSel(a===ano?mesSel:a+"-01");}} style={{padding:"6px 14px",borderRadius:20,border:"none",background:ano===a?"var(--purple)":"var(--gray-100)",color:ano===a?"white":"var(--gray-600)",fontWeight:ano===a?700:400,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>{a}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* CARDS ANUAIS */}
+      <div style={{marginBottom:8,fontSize:11,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:1}}>Acumulado {ano}</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:12,marginBottom:24}}>
+        <div className="card" style={{padding:18,background:totalSaldo>=0?"#f0fdf4":"#fef2f2",border:`1px solid ${totalSaldo>=0?"#86efac":"#fca5a5"}`}}>
+          <div style={{fontSize:11,fontWeight:600,color:totalSaldo>=0?"#059669":"#dc2626",marginBottom:4}}>Saldo Total</div>
+          <div style={{fontSize:20,fontWeight:700,color:totalSaldo>=0?"#059669":"#dc2626"}}>{fmt(totalSaldo)}</div>
+          <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>+{fmt(totalRec)} / -{fmt(totalDes)}</div>
+        </div>
+        <div className="card" style={{padding:18}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#059669",marginBottom:4}}>Receitas {ano}</div>
+          <div style={{fontSize:20,fontWeight:700,color:"#059669"}}>{fmt(totalRec)}</div>
+        </div>
+        <div className="card" style={{padding:18}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#dc2626",marginBottom:4}}>Despesas {ano}</div>
+          <div style={{fontSize:20,fontWeight:700,color:"#dc2626"}}>{fmt(totalDes)}</div>
+        </div>
+        <div className="card" style={{padding:18,background:"#fffbeb",border:"1px solid #fde68a"}}>
+          <div style={{fontSize:11,fontWeight:600,color:"#d97706",marginBottom:4}}>Pendente {ano}</div>
+          <div style={{fontSize:20,fontWeight:700,color:"#d97706"}}>{fmt(totalPend)}</div>
+        </div>
+      </div>
+
+      {/* GRÁFICO — clicável por mês */}
+      <div className="card" style={{padding:20,marginBottom:24}}>
+        <div style={{fontWeight:700,fontSize:14,marginBottom:4}}>📊 Receitas vs Despesas — {ano}</div>
+        <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:16}}>Clique em um mês para ver o detalhamento abaixo</div>
+        <div style={{display:"flex",alignItems:"flex-end",gap:4,overflowX:"auto",paddingBottom:8}}>
+          {grafico.map((g)=>{
+            const hRec = maxVal>0?(g.rec/maxVal)*altBar:0;
+            const hDes = maxVal>0?(g.des/maxVal)*altBar:0;
+            const sel = g.mes===mesSel;
+            const temDados = g.rec>0||g.des>0;
+            return (
+              <div key={g.mes} onClick={()=>setMesSel(g.mes)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:52,flex:1,cursor:"pointer",padding:"6px 4px",borderRadius:8,background:sel?"#f3f0ff":"transparent",border:sel?"2px solid var(--purple)":"2px solid transparent",transition:".15s"}}>
+                <div style={{display:"flex",alignItems:"flex-end",gap:3,height:altBar}}>
+                  <div title={`Receitas: ${fmt(g.rec)}`} style={{width:18,height:Math.max(hRec,2),background:"#059669",borderRadius:"4px 4px 0 0",opacity:temDados?1:0.15}}/>
+                  <div title={`Despesas: ${fmt(g.des)}`} style={{width:18,height:Math.max(hDes,2),background:"#dc2626",borderRadius:"4px 4px 0 0",opacity:temDados?1:0.15}}/>
+                </div>
+                {temDados&&<div style={{fontSize:9,fontWeight:700,color:g.saldo>=0?"#059669":"#dc2626",whiteSpace:"nowrap"}}>{g.saldo>=0?"+":""}{fmt(g.saldo).replace("R$","").trim()}</div>}
+                <div style={{fontSize:11,color:sel?"var(--purple)":"var(--text-muted)",fontWeight:sel?700:400}}>{mesLabel(g.mes)}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:16,marginTop:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}><div style={{width:12,height:12,background:"#059669",borderRadius:3}}/> Receitas</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,fontSize:12}}><div style={{width:12,height:12,background:"#dc2626",borderRadius:3}}/> Despesas</div>
+        </div>
+      </div>
+
+      {/* DETALHAMENTO DO MÊS SELECIONADO */}
+      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:24,border:"2px solid var(--purple)"}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:700,fontSize:14,background:"#f3f0ff",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <span>📅 {mesLabel(mesSel,true).charAt(0).toUpperCase()+mesLabel(mesSel,true).slice(1)} de {mesSel.slice(0,4)}</span>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={()=>{ const idx=mesesAno.indexOf(mesSel); if(idx>0)setMesSel(mesesAno[idx-1]); }} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:"50%",width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="chevron-left" size={13}/></button>
+            <button onClick={()=>{ const idx=mesesAno.indexOf(mesSel); if(idx<mesesAno.length-1)setMesSel(mesesAno[idx+1]); }} style={{background:"var(--purple)",color:"white",border:"none",borderRadius:"50%",width:26,height:26,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Icon name="chevron-right" size={13}/></button>
+          </div>
+        </div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:"var(--gray-50)"}}>
+            {["Financeiro","Receitas","Despesas","Saldo"].map(h=>(
+              <th key={h} style={{padding:"10px 20px",fontSize:11,fontWeight:600,color:"var(--text-muted)",textAlign:"left",borderBottom:"1px solid var(--gray-200)"}}>{h}</th>
+            ))}
+          </tr></thead>
+          <tbody>
+            {[
+              {label:"🏥 Clínica", rec:mCl.rec, des:mCl.des},
+              {label:"🏠 Pessoal", rec:mPs.rec, des:mPs.des},
+              {label:"🏢 Empresa", rec:mEm.rec, des:mEm.des},
+            ].map((row,i)=>{
+              const saldo=row.rec-row.des;
+              return (
+                <tr key={i} style={{borderBottom:"1px solid var(--gray-100)"}}>
+                  <td style={{padding:"12px 20px",fontWeight:600,fontSize:14}}>{row.label}</td>
+                  <td style={{padding:"12px 20px",color:"#059669",fontWeight:700}}>{fmt(row.rec)}</td>
+                  <td style={{padding:"12px 20px",color:"#dc2626",fontWeight:700}}>{fmt(row.des)}</td>
+                  <td style={{padding:"12px 20px",color:saldo>=0?"#059669":"#dc2626",fontWeight:700,fontSize:15}}>{fmt(saldo)}</td>
+                </tr>
+              );
+            })}
+            <tr style={{background:"#f3f0ff",borderTop:"2px solid var(--purple)"}}>
+              <td style={{padding:"12px 20px",fontWeight:700,fontSize:14}}>TOTAL DO MÊS</td>
+              <td style={{padding:"12px 20px",color:"#059669",fontWeight:700,fontSize:15}}>{fmt(mesRec)}</td>
+              <td style={{padding:"12px 20px",color:"#dc2626",fontWeight:700,fontSize:15}}>{fmt(mesDes)}</td>
+              <td style={{padding:"12px 20px",color:mesSaldo>=0?"#059669":"#dc2626",fontWeight:700,fontSize:16}}>{fmt(mesSaldo)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* RESUMO ANUAL */}
+      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:24}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:700,fontSize:14}}>📋 Resumo Anual — {ano}</div>
+        <table style={{width:"100%",borderCollapse:"collapse"}}>
+          <thead><tr style={{background:"var(--gray-50)"}}>
+            {["Financeiro","Receitas","Despesas","Saldo"].map(h=>(
+              <th key={h} style={{padding:"10px 20px",fontSize:11,fontWeight:600,color:"var(--text-muted)",textAlign:"left",borderBottom:"1px solid var(--gray-200)"}}>{h}</th>
+            ))}
+          </tr></thead>
+          <tbody>
+            {[
+              {label:"🏥 Clínica", rec:aCl.rec, des:aCl.des},
+              {label:"🏠 Pessoal", rec:aPs.rec, des:aPs.des},
+              {label:"🏢 Empresa", rec:aEm.rec, des:aEm.des},
+            ].map((row,i)=>{
+              const saldo=row.rec-row.des;
+              return (
+                <tr key={i} style={{borderBottom:"1px solid var(--gray-100)"}}>
+                  <td style={{padding:"12px 20px",fontWeight:600,fontSize:14}}>{row.label}</td>
+                  <td style={{padding:"12px 20px",color:"#059669",fontWeight:700}}>{fmt(row.rec)}</td>
+                  <td style={{padding:"12px 20px",color:"#dc2626",fontWeight:700}}>{fmt(row.des)}</td>
+                  <td style={{padding:"12px 20px",color:saldo>=0?"#059669":"#dc2626",fontWeight:700,fontSize:15}}>{fmt(saldo)}</td>
+                </tr>
+              );
+            })}
+            <tr style={{background:"var(--gray-50)",borderTop:"2px solid var(--gray-200)"}}>
+              <td style={{padding:"12px 20px",fontWeight:700,fontSize:14}}>TOTAL</td>
+              <td style={{padding:"12px 20px",color:"#059669",fontWeight:700,fontSize:15}}>{fmt(totalRec)}</td>
+              <td style={{padding:"12px 20px",color:"#dc2626",fontWeight:700,fontSize:15}}>{fmt(totalDes)}</td>
+              <td style={{padding:"12px 20px",color:totalSaldo>=0?"#059669":"#dc2626",fontWeight:700,fontSize:16}}>{fmt(totalSaldo)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 // ═══════════════════════════════════════════════════════
 // ALUNOS EM SUPERVISÃO
 // ═══════════════════════════════════════════════════════
@@ -4077,11 +6943,16 @@ function Alunos() {
     return unsub;
   },[]);
 
+  const LINK_CADASTRO = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro-aluno/";
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
   const filtrados = alunos.filter(a=>{
     const fOk = filtro==="todos" || a.status===filtro;
     const bOk = !busca || a.nome?.toLowerCase().includes(busca.toLowerCase()) || a.email?.toLowerCase().includes(busca.toLowerCase());
     return fOk && bOk;
   });
+
+  const pendentes = alunos.filter(a=>a.status==="pendente");
 
   async function salvar(){
     if(!form.nome||!form.email){alert("Nome e e-mail obrigatorios.");return;}
@@ -4089,11 +6960,17 @@ function Alunos() {
     setSalvando(true);
     if(editando){
       const {senha,...dados}=form;
-      await db.collection("clinica_alunos").doc(editando).update(dados);
+      const up = {...dados};
+      if(senha) up.senha = senha; // só atualiza senha se preenchida
+      await db.collection("clinica_alunos").doc(editando).update(up);
     } else {
       await db.collection("clinica_alunos").add({...form,status:"ativo",createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     }
     setModal(false);setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setSalvando(false);
+  }
+
+  async function alterarStatus(id, novoStatus){
+    await db.collection("clinica_alunos").doc(id).update({status:novoStatus});
   }
 
   async function excluir(id){
@@ -4112,17 +6989,39 @@ function Alunos() {
     <div>
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div>
-          <div className="page-title">Alunos em Supervisao</div>
+          <div className="page-title">Alunos em Supervisão</div>
           <div className="page-subtitle">{alunos.filter(a=>a.status==="ativo").length} aluno(s) cadastrado(s)</div>
         </div>
-        <button className="btn btn-purple" onClick={()=>{setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setModal(true);}}>
-          <Icon name="user-plus" size={16}/> Cadastrar Aluno
-        </button>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>{
+            const texto = `🎓 *Supervisão Clínica — Dra. Lucia Kratz*\n\nOlá! Para solicitar acesso ao Portal de Supervisão Clínica, preencha seu cadastro pelo link abaixo:\n\n👉 ${LINK_CADASTRO}\n\n📝 Você vai informar: nome, e-mail, instituição e criar uma senha de acesso.\n\n⏳ Após o envio, seu cadastro ficará pendente até a aprovação da supervisora. Assim que aprovado, você já pode acessar o portal.\n\nQualquer dúvida, entre em contato! 💜`;
+            navigator.clipboard.writeText(texto).then(()=>{setLinkCopiado(true);setTimeout(()=>setLinkCopiado(false),2500);}).catch(()=>prompt("Copie o texto:",texto));
+          }}>
+            {linkCopiado?"✓ Texto copiado!":"📋 Link de Cadastro"}
+          </button>
+          <button className="btn btn-purple" onClick={()=>{setForm({nome:"",email:"",telefone:"",instituicao:"",semestre:"",senha:"",obs:""});setEditando(null);setModal(true);}}>
+            <Icon name="user-plus" size={16}/> Cadastrar Aluno
+          </button>
+        </div>
       </div>
+
+      {/* Alerta de pendentes */}
+      {pendentes.length>0&&(
+        <div style={{background:"#fef3c7",border:"1px solid #f59e0b",borderRadius:12,padding:"12px 18px",marginBottom:18,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>🔔 {pendentes.length} solicitação(ões) pendente(s)</div>
+            <div style={{fontSize:12,color:"#78350f",marginTop:2}}>Alunos que se cadastraram pelo link e aguardam sua aprovação.</div>
+          </div>
+          <button className="btn btn-ghost" style={{fontSize:12,color:"#92400e",border:"1px solid #f59e0b"}} onClick={()=>setFiltro("pendente")}>Ver pendentes</button>
+        </div>
+      )}
+
       <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome ou e-mail..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        {[["todos","Todos"],["ativo","Ativos"],["inativo","Inativos"]].map(([f,l])=>(
-          <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>{l}</button>
+        {[["todos","Todos"],["ativo","Ativos"],["pendente","Pendentes"],["inativo","Inativos"]].map(([f,l])=>(
+          <button key={f} className={"btn "+(filtro===f?"btn-purple":"btn-ghost")} onClick={()=>setFiltro(f)}>
+            {l} {f==="pendente"&&pendentes.length>0&&<span style={{background:"#f59e0b",color:"white",borderRadius:20,padding:"1px 7px",fontSize:10,fontWeight:700,marginLeft:4}}>{pendentes.length}</span>}
+          </button>
         ))}
       </div>
       {filtrados.length===0?(
@@ -4133,12 +7032,15 @@ function Alunos() {
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {filtrados.map(a=>(
-            <div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"14px 20px"}}>
-              <div style={{width:42,height:42,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"var(--purple)",flexShrink:0,fontSize:16}}>{(a.nome||"?")[0].toUpperCase()}</div>
+            <div key={a.id} className="card" style={{display:"flex",alignItems:"center",gap:14,padding:"14px 20px",
+              borderLeft:a.status==="pendente"?"4px solid #f59e0b":a.status==="inativo"?"4px solid #9ca3af":"4px solid transparent"}}>
+              <div style={{width:42,height:42,borderRadius:"50%",background:a.status==="pendente"?"#fef3c7":"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:a.status==="pendente"?"#92400e":"var(--purple)",flexShrink:0,fontSize:16}}>{(a.nome||"?")[0].toUpperCase()}</div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                   <span style={{fontWeight:600}}>{a.nome}</span>
-                  <span className={"badge "+(a.status==="ativo"?"badge-green":"badge-gray")}>{a.status==="ativo"?"Ativo":"Inativo"}</span>
+                  <span className={"badge "+(a.status==="ativo"?"badge-green":a.status==="pendente"?"badge-yellow":"badge-gray")}
+                    style={a.status==="pendente"?{background:"#fef3c7",color:"#92400e",border:"1px solid #f59e0b"}:{}}>{a.status==="ativo"?"Ativo":a.status==="pendente"?"⏳ Pendente":"Inativo"}</span>
+                  {a.origemCadastro==="auto-cadastro"&&<span style={{fontSize:10,color:"var(--text-muted)",background:"var(--gray-100)",borderRadius:20,padding:"2px 8px"}}>auto-cadastro</span>}
                 </div>
                 <div style={{fontSize:13,color:"var(--text-muted)",display:"flex",gap:12,marginTop:2,flexWrap:"wrap"}}>
                   <span>✉ {a.email}</span>
@@ -4146,7 +7048,22 @@ function Alunos() {
                   <span>👤 {a.pacientesVinculados||0} paciente(s)</span>
                 </div>
               </div>
-              <div style={{display:"flex",gap:6}}>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {a.status==="pendente"&&(
+                  <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>alterarStatus(a.id,"ativo")}>
+                    ✓ Aprovar
+                  </button>
+                )}
+                {a.status==="ativo"&&(
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"#6b7280"}} onClick={()=>alterarStatus(a.id,"inativo")}>
+                    Inativar
+                  </button>
+                )}
+                {a.status==="inativo"&&(
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",color:"#16a34a"}} onClick={()=>alterarStatus(a.id,"ativo")}>
+                    Reativar
+                  </button>
+                )}
                 <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",padding:"6px 12px"}} onClick={()=>setDetalhe(a)}>
                   <Icon name="eye" size={13}/> Ver
                 </button>
@@ -4320,3382 +7237,6 @@ function BotaoEmergenciaAdmin({ casalId, nomeCasal }) {
   );
 }
 
-function TerapiaCasais() {
-  const { data:pacientes } = useCollection("clinica_pacientes","nome");
-  const [casais, setCasais] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({nomeCasal:"",p1:"",p2:""});
-  const [salvando, setSalvando] = useState(false);
-  const [expandido, setExpandido] = useState(null);
-
-  useEffect(()=>{
-    const unsub = db.collection("clinica_casais").onSnapshot(snap=>{
-      setCasais(snap.docs.map(d=>({id:d.id,...d.data()})));
-      setLoading(false);
-    },()=>setLoading(false));
-    return unsub;
-  },[]);
-
-  async function vincular(){
-    if(!form.p1||!form.p2||form.p1===form.p2){alert("Selecione dois pacientes diferentes.");return;}
-    setSalvando(true);
-    const p1 = pacientes.find(p=>p.id===form.p1);
-    const p2 = pacientes.find(p=>p.id===form.p2);
-    // Grava na coleção de casais
-    await db.collection("clinica_casais").add({
-      nomeCasal:form.nomeCasal||null,
-      p1Id:form.p1, p1Nome:p1?.nome||"",
-      p2Id:form.p2, p2Nome:p2?.nome||"",
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    // Grava casalId + mod5 nos dois pacientes para o portal clínico detectar
-    await db.collection("clinica_pacientes").doc(form.p1).update({
-      casalId:form.p2,
-      modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
-    });
-    await db.collection("clinica_pacientes").doc(form.p2).update({
-      casalId:form.p1,
-      modulosAtivos: firebase.firestore.FieldValue.arrayUnion("mod5")
-    });
-    setModal(false);setForm({nomeCasal:"",p1:"",p2:""});setSalvando(false);
-  }
-
-  async function excluir(id){
-    if(!confirm("Remover vinculo?"))return;
-    // Busca o casal para limpar casalId dos pacientes
-    const casal = casais.find(c=>c.id===id);
-    if(casal){
-      await db.collection("clinica_pacientes").doc(casal.p1Id).update({casalId:""}).catch(()=>{});
-      await db.collection("clinica_pacientes").doc(casal.p2Id).update({casalId:""}).catch(()=>{});
-    }
-    await db.collection("clinica_casais").doc(id).delete();
-  }
-
-  const getNomeExibicao = (c) => c.nomeCasal || `${c.p1Nome} & ${c.p2Nome}`;
-
-  if(loading) return <Spinner/>;
-
-  return (
-    <div>
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div>
-          <div className="page-title">Terapia de Casais</div>
-          <div className="page-subtitle">{casais.length} casal{casais.length!==1?"is":""} em acompanhamento</div>
-        </div>
-        <button className="btn btn-purple" onClick={()=>setModal(true)}><Icon name="plus" size={16}/> Vincular Casal</button>
-      </div>
-
-      {casais.length===0?(
-        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
-          <Icon name="heart" size={40}/>
-          <div style={{marginTop:12}}>Nenhum casal vinculado ainda.</div>
-          <button className="btn btn-purple" style={{marginTop:16}} onClick={()=>setModal(true)}><Icon name="plus" size={14}/> Vincular primeiro casal</button>
-        </div>
-      ):(
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {casais.map(c=>(
-            <React.Fragment key={c.id}>
-            <div className="card" style={{display:"flex",alignItems:"center",gap:16,padding:"18px 24px"}}>
-              <div style={{width:44,height:44,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                <Icon name="heart" size={20}/>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                  <span style={{fontWeight:600}}>{c.nomeCasal||`${c.p1Nome} & ${c.p2Nome}`}</span>
-                  {c.nomeCasal&&<span style={{fontSize:13,color:"var(--text-muted)"}}>({c.p1Nome} & {c.p2Nome})</span>}
-                </div>
-                {(c.satisfacao||c.estadoCivil)&&(
-                  <div style={{display:"flex",gap:8,marginTop:4}}>
-                    {c.satisfacao&&<span className="badge badge-purple">Satisfacao: {c.satisfacao}/10</span>}
-                    {c.estadoCivil&&<span className="badge badge-gray">{c.estadoCivil}</span>}
-                  </div>
-                )}
-              </div>
-              <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(c.id)}><Icon name="trash-2" size={14}/></button>
-                <button className="btn btn-outline" style={{fontSize:13}} onClick={()=>setExpandido(expandido===c.id?null:c.id)}>
-                  🔴 Emergência <Icon name={expandido===c.id?"chevron-up":"chevron-down"} size={14}/>
-                </button>
-              </div>
-            </div>
-            {expandido===c.id && (
-              <BotaoEmergenciaAdmin casalId={c.id} nomeCasal={getNomeExibicao(c)}/>
-            )}
-            </React.Fragment>
-          ))}
-        </div>
-      )}
-
-      {modal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:440}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-              <Icon name="heart" size={18}/>
-              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Vincular Casal</div>
-            </div>
-            <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Selecione dois pacientes cadastrados para vincular como casal em terapia.</p>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Nome do casal (opcional)</label>
-              <input className="form-input" value={form.nomeCasal} onChange={e=>setForm({...form,nomeCasal:e.target.value})} placeholder="Ex: Silva & Costa"/>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Parceiro(a) 1 *</label>
-              <select className="form-input" value={form.p1} onChange={e=>setForm({...form,p1:e.target.value})}>
-                <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo").sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
-              </select>
-            </div>
-            <div className="form-group" style={{marginBottom:20}}>
-              <label className="form-label">Parceiro(a) 2 *</label>
-              <select className="form-input" value={form.p2} onChange={e=>setForm({...form,p2:e.target.value})}>
-                <option value="">Selecionar paciente...</option>
-                {pacientes.filter(p=>p.status==="ativo"&&p.id!==form.p1).sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR")).map(p=><option key={p.id} value={p.id}>{p.nome}</option>)}
-              </select>
-            </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={vincular} disabled={salvando}><Icon name="heart" size={15}/> {salvando?"Salvando...":"Vincular"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════
-// RECURSOS TERAPÊUTICOS
-// ═══════════════════════════════════════════════════════
-const CATEGORIAS_RECURSOS = [
-  {id:"tcc",          label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
-  {id:"ansiedade",    label:"Ansiedade",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
-  {id:"emocoes",      label:"Emocoes",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
-  {id:"autocuidado",  label:"Autocuidado",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
-  {id:"relacionamentos",label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
-  {id:"corpo",        label:"Corpo & Alimentacao",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
-  {id:"esquema",      label:"Terapia do Esquema",    cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
-  {id:"musicoterapia",label:"Musicoterapia",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
-  {id:"avaliacao",    label:"Avaliacao e Anamnese",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#6366F1"},
-  {id:"outro",        label:"Outros",                cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
-];
-
-const FERRAMENTAS_INTERATIVAS = [
-  {key:"breathing-478",       label:"Exercicio de Respiracao 4-7-8"},
-  {key:"abc-record",          label:"Registro ABC de Pensamentos"},
-  {key:"muscle-relaxation",   label:"Relaxamento Muscular Progressivo"},
-  {key:"anxiety-management",  label:"Gestao da Ansiedade"},
-  {key:"entrevista-clinica",  label:"Entrevista Clinica Inicial"},
-  {key:"emotional-eating",    label:"Rastreamento Emocional da Alimentacao"},
-  {key:"treino-neuro-auditivo",label:"Treino Neuro-Auditivo"},
-  {key:"decision-tree",       label:"Arvore da Decisao"},
-  {key:"anamnese",            label:"Anamnese — Marcos do Desenvolvimento"},
-  {key:"diario-terapeutico",  label:"Diário Terapêutico"},
-];
-
-
-// ═══════════════════════════════════════════════════════
-// FERRAMENTAS INTERATIVAS — MODAL VISUALIZAR
-// ═══════════════════════════════════════════════════════
-
-// ── helpers compartilhados ──
-function getYouTubeEmbed(url){
-  if(!url||!url.trim()) return null;
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
-  if(!m) return null;
-  return `https://www.youtube.com/embed/${m[1]}?autoplay=1&loop=1&playlist=${m[1]}&controls=1&rel=0`;
-}
-function falarTexto(txt){
-  if(!("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(txt);
-  u.lang="pt-BR"; u.rate=0.85; u.pitch=1.05;
-  const v = window.speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"));
-  if(v) u.voice=v;
-  window.speechSynthesis.speak(u);
-}
-
-// ── Nota de Relaxamento — salva no Firebase após conclusão ──────────────────
-function NotaRelaxamento({ user, ferramenta, emoji, onRepetir }) {
-  const [nota, setNota] = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const [salvo, setSalvo] = useState(false);
-
-  async function salvarNota(n) {
-    setNota(n);
-    if (!user?.id) { setSalvo(true); return; }
-    setSalvando(true);
-    try {
-      await db.collection("clinica_atividades").add({
-        pacienteId: user.id,
-        pacienteNome: user.nome || "",
-        ferramenta,
-        nota: n,
-        data: new Date().toLocaleDateString("pt-BR"),
-        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    } catch(e) {}
-    setSalvando(false);
-    setSalvo(true);
-  }
-
-  if (salvo) return (
-    <div style={{marginTop:8}}>
-      <div style={{background:"#d1fae5",borderRadius:12,padding:"14px 20px",fontSize:14,color:"#065f46",marginBottom:20}}>
-        ✓ Nota {nota}/10 registrada! Seu progresso foi salvo. 💜
-      </div>
-      <button className="btn btn-purple" onClick={onRepetir}>
-        <Icon name="rotate-ccw" size={16}/> Repetir
-      </button>
-    </div>
-  );
-
-  return (
-    <div style={{marginTop:8}}>
-      <div style={{fontWeight:600,fontSize:15,marginBottom:6}}>Como você está se sentindo agora?</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Dê uma nota de 0 a 10 para o seu nível de relaxamento</div>
-      <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:20}}>
-        {[0,1,2,3,4,5,6,7,8,9,10].map(n=>(
-          <button key={n} onClick={()=>salvarNota(n)} disabled={salvando}
-            style={{width:44,height:44,borderRadius:10,border:"1.5px solid",
-              borderColor: n<=3?"#fca5a5":n<=6?"#fbbf24":"#6ee7b7",
-              background: n<=3?"#fef2f2":n<=6?"#fef3c7":"#f0fdf4",
-              color: n<=3?"#dc2626":n<=6?"#d97706":"#16a34a",
-              fontWeight:700,fontSize:15,cursor:"pointer"}}>
-            {n}
-          </button>
-        ))}
-      </div>
-      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",paddingLeft:4,paddingRight:4}}>
-        <span>😰 Muito tenso</span><span>😐 Regular</span><span>😌 Muito relaxado</span>
-      </div>
-    </div>
-  );
-}
-
-// ── Técnica de Respiração 4-7-8 (áudio MP4 guiado) ──
-function FerramentaRespiracao({ user }){
-  const AUDIO_SRC = "../media/atividade2respiracao.mp4";
-  const [iniciado,  setIniciado]  = useState(false);
-  const [concluido, setConcluido] = useState(false);
-  const [tempo,     setTempo]     = useState(0);
-  const [pausado,   setPausado]   = useState(false);
-  const audioRef = useRef(null);
-  const timerRef = useRef(null);
-
-  function iniciar() {
-    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
-    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
-    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
-  }
-
-  function togglePausa() {
-    if (!audioRef.current) return;
-    if (pausado) { audioRef.current.play().catch(()=>{}); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
-    else { audioRef.current.pause(); clearInterval(timerRef.current); }
-    setPausado(p=>!p);
-  }
-
-  function parar() {
-    clearInterval(timerRef.current);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
-    setIniciado(false); setTempo(0); setPausado(false);
-  }
-
-  function onEnded() {
-    clearInterval(timerRef.current);
-    setIniciado(false); setConcluido(true);
-  }
-
-  useEffect(()=>()=>clearInterval(timerRef.current),[]);
-
-  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
-  const ss = String(tempo%60).padStart(2,"0");
-
-  if (concluido) return (
-    <div style={{textAlign:"center",padding:"40px 20px"}}>
-      <div style={{fontSize:56,marginBottom:12}}>🌿</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Respiração Concluída!</div>
-      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
-      <NotaRelaxamento user={user} ferramenta="respiracao" emoji="🫁" onRepetir={iniciar}/>
-    </div>
-  );
-
-  if (!iniciado) return (
-    <div style={{textAlign:"center",padding:"32px 20px"}}>
-      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
-      <div style={{fontSize:56,marginBottom:16}}>🫁</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Técnica de Respiração 4-7-8</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
-        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
-        Siga as instruções do áudio e respire no seu próprio ritmo.
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
-        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
-          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
-            <span style={{fontSize:22}}>{i.e}</span>
-            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
-          </div>
-        ))}
-      </div>
-      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
-        <Icon name="play" size={18}/> Iniciar
-      </button>
-    </div>
-  );
-
-  return (
-    <div style={{textAlign:"center",padding:"20px 0"}}>
-      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
-
-      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
-        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
-        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
-          <div style={{fontSize:28}}>🫁</div>
-        </div>
-      </div>
-
-      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
-        {pausado ? "Pausado" : "Siga o áudio..."}
-      </div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Respire no ritmo da voz guiada</div>
-
-      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
-        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
-        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
-      </div>
-
-      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-        <button className="btn btn-purple" onClick={togglePausa}>
-          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
-        </button>
-        <button className="btn btn-ghost" onClick={parar}>
-          <Icon name="square" size={15}/> Parar
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Relaxamento Muscular Progressivo ──
-// ── Relaxamento Muscular (arquivo único de vídeo) ──
-function FerramentaRelaxamento({ user }){
-  const AUDIO_SRC = "../media/atividade1meditacao.mp4";
-  const [iniciado,  setIniciado]  = useState(false);
-  const [concluido, setConcluido] = useState(false);
-  const [tempo,     setTempo]     = useState(0);
-  const [pausado,   setPausado]   = useState(false);
-  const audioRef = useRef(null);
-  const timerRef = useRef(null);
-
-  function iniciar() {
-    setIniciado(true); setConcluido(false); setTempo(0); setPausado(false);
-    if (audioRef.current) { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); }
-    timerRef.current = setInterval(()=>setTempo(t=>t+1), 1000);
-  }
-
-  function togglePausa() {
-    if (!audioRef.current) return;
-    if (pausado) { audioRef.current.play().catch(()=>{}); clearInterval(timerRef.current); timerRef.current=setInterval(()=>setTempo(t=>t+1),1000); }
-    else { audioRef.current.pause(); clearInterval(timerRef.current); }
-    setPausado(p=>!p);
-  }
-
-  function parar() {
-    clearInterval(timerRef.current);
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime=0; }
-    setIniciado(false); setTempo(0); setPausado(false);
-  }
-
-  function onEnded() {
-    clearInterval(timerRef.current);
-    setIniciado(false); setConcluido(true);
-  }
-
-  useEffect(()=>()=>clearInterval(timerRef.current),[]);
-
-  const mm = String(Math.floor(tempo/60)).padStart(2,"0");
-  const ss = String(tempo%60).padStart(2,"0");
-
-  if (concluido) return (
-    <div style={{textAlign:"center",padding:"40px 20px"}}>
-      <div style={{fontSize:56,marginBottom:12}}>✅</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>Relaxamento Completo!</div>
-      <div style={{fontSize:14,color:"var(--text-muted)",marginBottom:24}}>Parabéns por cuidar de você. 💜</div>
-      <NotaRelaxamento user={user} ferramenta="relaxamento" emoji="💆" onRepetir={iniciar}/>
-    </div>
-  );
-
-  if (!iniciado) return (
-    <div style={{textAlign:"center",padding:"32px 20px"}}>
-      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
-      <div style={{fontSize:56,marginBottom:16}}>💆</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Relaxamento Muscular Progressivo</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:24,lineHeight:1.6}}>
-        Exercício guiado pela voz da Dra. Lucia Kratz.<br/>
-        Siga as instruções do áudio e relaxe cada grupo muscular.
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,textAlign:"left"}}>
-        {[{e:"🧘",t:"Encontre uma posição confortável"},{e:"🎧",t:"Use fone de ouvido se possível"},{e:"📵",t:"Coloque o celular no silencioso"}].map((i,idx)=>(
-          <div key={idx} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:"#f5f3ff",border:"1px solid #ede9fe"}}>
-            <span style={{fontSize:22}}>{i.e}</span>
-            <span style={{fontSize:13,color:"var(--gray-700)"}}>{i.t}</span>
-          </div>
-        ))}
-      </div>
-      <button className="btn btn-purple" style={{minWidth:160,fontSize:15,padding:"12px 24px"}} onClick={iniciar}>
-        <Icon name="play" size={18}/> Iniciar
-      </button>
-    </div>
-  );
-
-  return (
-    <div style={{textAlign:"center",padding:"20px 0"}}>
-      <audio ref={audioRef} src={AUDIO_SRC} onEnded={onEnded} preload="auto"/>
-
-      {/* Animação pulsante */}
-      <div style={{position:"relative",width:200,height:200,margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{position:"absolute",width:190,height:190,borderRadius:"50%",background:"#7B00C408",border:"2px solid #7B00C420",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite"}}/>
-        <div style={{position:"absolute",width:150,height:150,borderRadius:"50%",background:"#7B00C415",border:"2px solid #7B00C430",animation:pausado?"none":"pulse-slow 3s ease-in-out infinite 0.5s"}}/>
-        <div style={{width:110,height:110,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#b040e0)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",boxShadow:"0 0 30px #7B00C440",color:"white"}}>
-          <div style={{fontSize:28}}>💆</div>
-        </div>
-      </div>
-
-      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>
-        {pausado ? "Pausado" : "Em relaxamento..."}
-      </div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Siga as instruções do áudio</div>
-
-      {/* Cronômetro */}
-      <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"#f5f3ff",borderRadius:20,padding:"8px 20px",border:"1px solid #ede9fe",marginBottom:24}}>
-        <Icon name="clock" size={14} style={{color:"#7B00C4"}}/>
-        <span style={{fontWeight:700,fontSize:18,fontFamily:"monospace",color:"#7B00C4"}}>{mm}:{ss}</span>
-      </div>
-
-      <div style={{display:"flex",gap:10,justifyContent:"center"}}>
-        <button className="btn btn-purple" onClick={togglePausa}>
-          <Icon name={pausado?"play":"pause"} size={16}/> {pausado?"Continuar":"Pausar"}
-        </button>
-        <button className="btn btn-ghost" onClick={parar}>
-          <Icon name="square" size={15}/> Parar
-        </button>
-      </div>
-
-      <style>{`
-        @keyframes pulse-slow {
-          0%,100%{transform:scale(1);opacity:0.6}
-          50%{transform:scale(1.08);opacity:1}
-        }
-        .pulse-slow{animation:pulse-slow 3s ease-in-out infinite}
-      `}</style>
-    </div>
-  );
-}
-// ── Árvore da Decisão ──
-function FerramentaArvore(){
-  const [step,setStep]=useState("home");
-  const [preocupacao,setPreocupacao]=useState("");
-  const [acoes,setAcoes]=useState("");
-  const [plano,setPlano]=useState("");
-  const [conclusao,setConclusao]=useState(null);
-  const [historico,setHistorico]=useState([]);
-
-  function reiniciar(){setStep("home");setPreocupacao("");setAcoes("");setPlano("");setConclusao(null);}
-
-  function salvarHistorico(c){
-    setHistorico(h=>[{data:new Date().toLocaleDateString("pt-BR"),preocupacao,conclusao:c},...h].slice(0,10));
-    setConclusao(c);setStep("conclusao");
-  }
-
-  const CONCLUSOES={
-    redirect:{emoji:"🌿",titulo:"Redirecione sua atenção",desc:"Esta situação está fora do seu controle agora. Direcione sua energia para algo que possa fazer.",cor:"#0891b2",bg:"#e0f2fe"},
-    "act-now":{emoji:"⚡",titulo:"Realize esta tarefa agora!",desc:"Você identificou uma ação que pode ser feita agora. Coloque-a em prática!",cor:"#059669",bg:"#d1fae5"},
-    plan:{emoji:"📋",titulo:"Siga o seu plano",desc:"Você tem um plano para agir no momento certo. Confie nele e direcione sua atenção.",cor:"#d97706",bg:"#fef3c7"},
-  };
-
-  if(step==="home") return(
-    <div style={{textAlign:"center",padding:"20px 0"}}>
-      <div style={{fontSize:48,marginBottom:12}}>🌳</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Árvore da Decisão</div>
-      <p style={{fontSize:13,color:"#6b7280",marginBottom:8}}>Uma técnica da TCC para transformar preocupações em ações concretas — distinguindo o que está ou não no seu controle.</p>
-      <p style={{fontSize:12,color:"#9ca3af",marginBottom:24}}>💡 Preocupações <strong>produtivas</strong> levam à ação. <strong>Improdutivas</strong> paralisam.</p>
-      <button className="btn btn-purple" style={{fontSize:15,padding:"12px 32px"}} onClick={()=>setStep("worry")}>Iniciar exercício →</button>
-      {historico.length>0&&<div style={{marginTop:24,textAlign:"left"}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Registros anteriores</div>
-        {historico.map((h,i)=><div key={i} style={{padding:"8px 12px",background:"#f9fafb",borderRadius:8,marginBottom:6,fontSize:12,display:"flex",justifyContent:"space-between"}}>
-          <span style={{flex:1,color:"#374151",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{h.preocupacao}</span>
-          <span style={{color:"#9ca3af",marginLeft:8,flexShrink:0}}>{h.data}</span>
-        </div>)}
-      </div>}
-    </div>
-  );
-  if(step==="worry") return(
-    <div>
-      <div style={{fontWeight:600,marginBottom:8}}>Qual é a sua preocupação agora?</div>
-      <TextAreaVoz className="form-input" rows={3} value={preocupacao} onChange={e=>setPreocupacao(e.target.value)} placeholder="Descreva o que está te preocupando..."/>
-      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
-        <button className="btn btn-ghost" onClick={()=>setStep("home")}>Voltar</button>
-        <button className="btn btn-purple" onClick={()=>setStep("can-intervene")} disabled={!preocupacao.trim()}>Próximo →</button>
-      </div>
-    </div>
-  );
-  if(step==="can-intervene") return(
-    <div>
-      <div style={{fontWeight:600,marginBottom:8}}>Você pode fazer algo para resolver esta preocupação?</div>
-      <p style={{fontSize:13,color:"#6b7280",marginBottom:20}}>Pense se existe alguma ação concreta que você pode tomar.</p>
-      <div style={{display:"flex",gap:12}}>
-        <button className="btn btn-purple" style={{flex:1,padding:16}} onClick={()=>setStep("actions")}>✅ Sim, posso agir</button>
-        <button className="btn btn-outline" style={{flex:1,padding:16}} onClick={()=>salvarHistorico("redirect")}>❌ Não está no meu controle</button>
-      </div>
-    </div>
-  );
-  if(step==="actions") return(
-    <div>
-      <div style={{fontWeight:600,marginBottom:8}}>Quais ações você pode tomar?</div>
-      <TextAreaVoz className="form-input" rows={3} value={acoes} onChange={e=>setAcoes(e.target.value)} placeholder="Liste as ações possíveis..."/>
-      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
-        <button className="btn btn-ghost" onClick={()=>setStep("can-intervene")}>Voltar</button>
-        <button className="btn btn-purple" onClick={()=>setStep("can-act-now")} disabled={!acoes.trim()}>Próximo →</button>
-      </div>
-    </div>
-  );
-  if(step==="can-act-now") return(
-    <div>
-      <div style={{fontWeight:600,marginBottom:8}}>Você pode realizar alguma dessas ações agora?</div>
-      <div style={{display:"flex",gap:12,marginTop:16}}>
-        <button className="btn btn-purple" style={{flex:1,padding:16}} onClick={()=>salvarHistorico("act-now")}>⚡ Sim, agora</button>
-        <button className="btn btn-outline" style={{flex:1,padding:16}} onClick={()=>setStep("plan")}>📋 Preciso planejar</button>
-      </div>
-    </div>
-  );
-  if(step==="plan") return(
-    <div>
-      <div style={{fontWeight:600,marginBottom:8}}>Crie um plano de ação:</div>
-      <TextAreaVoz className="form-input" rows={3} value={plano} onChange={e=>setPlano(e.target.value)} placeholder="Quando e como você vai agir?"/>
-      <div style={{display:"flex",gap:10,marginTop:16,justifyContent:"flex-end"}}>
-        <button className="btn btn-ghost" onClick={()=>setStep("can-act-now")}>Voltar</button>
-        <button className="btn btn-purple" onClick={()=>salvarHistorico("plan")} disabled={!plano.trim()}>Finalizar →</button>
-      </div>
-    </div>
-  );
-  if(step==="conclusao"&&conclusao){
-    const c=CONCLUSOES[conclusao];
-    return(
-      <div>
-        <div style={{background:c.bg,borderRadius:16,padding:24,textAlign:"center",marginBottom:20}}>
-          <div style={{fontSize:40,marginBottom:8}}>{c.emoji}</div>
-          <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:c.cor,marginBottom:8}}>{c.titulo}</div>
-          <p style={{fontSize:13,color:"#6b7280"}}>{c.desc}</p>
-        </div>
-        <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13}}>
-          <div style={{fontWeight:600,marginBottom:4}}>Sua preocupação:</div>
-          <div style={{color:"#6b7280"}}>{preocupacao}</div>
-          {acoes&&<><div style={{fontWeight:600,marginBottom:4,marginTop:10}}>Ações identificadas:</div><div style={{color:"#6b7280"}}>{acoes}</div></>}
-          {plano&&<><div style={{fontWeight:600,marginBottom:4,marginTop:10}}>Seu plano:</div><div style={{color:"#6b7280"}}>{plano}</div></>}
-        </div>
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={reiniciar}><Icon name="rotate-ccw" size={16}/> Nova preocupação</button>
-      </div>
-    );
-  }
-  return null;
-}
-
-// ── Ferramenta genérica (placeholder para as demais) ──
-function FerramentaGenerica({recurso}){
-  const INFO={
-    "abc-record":     {emoji:"📋",titulo:"Registro ABC de Pensamentos",   desc:"Identifique a Situação (A), o Pensamento Automático (B) e a Emoção/Consequência (C).",cor:"#7c3aed"},
-    "anxiety-management":{emoji:"🎯",titulo:"Gestão da Ansiedade",        desc:"Monitore seu nível de estresse, atividades anti-ansiedade, pensamentos e roda da vida.",cor:"#6366f1"},
-    "emotional-eating":  {emoji:"🍃",titulo:"Rastreamento Emocional da Alimentação",desc:"Registre a emoção, o gatilho e o comportamento alimentar.",cor:"#059669"},
-    "entrevista-clinica":{emoji:"📝",titulo:"Entrevista Clínica Inicial",  desc:"Instrumento de avaliação clínica inicial com perfil etário e hipóteses DSM-5.",cor:"#0891b2"},
-    "anamnese":          {emoji:"📄",titulo:"Anamnese — Marcos do Desenvolvimento",desc:"Formulário completo de anamnese para histórico do desenvolvimento.",cor:"#7c3aed"},
-    "treino-neuro-auditivo":{emoji:"🎵",titulo:"Treino Neuro-Auditivo",   desc:"Discriminação auditiva: sons graves/agudos, vozes, intensidade, ritmo e melodia.",cor:"#be185d"},
-  };
-  const info = INFO[recurso.formularioKey]||{emoji:"🔧",titulo:recurso.titulo,desc:recurso.descricao,cor:"#7c3aed"};
-  return(
-    <div style={{textAlign:"center",padding:"30px 20px"}}>
-      <div style={{width:80,height:80,borderRadius:20,background:info.cor+"15",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px",fontSize:36}}>{info.emoji}</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>{info.titulo}</div>
-      <p style={{fontSize:13,color:"#6b7280",lineHeight:1.7,marginBottom:24,maxWidth:400,margin:"0 auto 24px"}}>{info.desc}</p>
-      <div style={{background:"#f9f5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:16,fontSize:13,color:"#7c3aed"}}>
-        Esta ferramenta está disponível no portal do paciente. O paciente acessa e preenche diretamente pelo login deles.
-      </div>
-    </div>
-  );
-}
-
-// ── Modal principal ──
-// ── ABC de Pensamentos ──────────────────────────────────────────────────────
-function FerramentaABC(){
-  const EMOCOES=["Ansiedade","Tristeza","Raiva","Medo","Vergonha","Culpa","Frustração","Insegurança"];
-  const [entries,setEntries]=useState([]);
-  const [draft,setDraft]=useState({situacao:"",pensamento:"",emocao:"",intensidade:50,alternativo:"",showAlt:false});
-  const [msg,setMsg]=useState("");
-  function salvar(){
-    if(!draft.situacao||!draft.pensamento||!draft.emocao){alert("Preencha Situação, Pensamento e Emoção.");return;}
-    setEntries(e=>[{...draft,id:Date.now()+"",data:new Date().toLocaleDateString("pt-BR")},...e]);
-    setDraft({situacao:"",pensamento:"",emocao:"",intensidade:50,alternativo:"",showAlt:false});
-    setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
-  }
-  const intColor=draft.intensidade<34?"#059669":draft.intensidade<67?"#d97706":"#dc2626";
-  return(
-    <div>
-      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:12,marginBottom:16,fontSize:13,lineHeight:1.6}}>
-        <strong style={{color:"#1d4ed8"}}>A</strong><span style={{color:"#3b82f6"}}> (Situação) → </span><strong style={{color:"#7c3aed"}}>B</strong><span style={{color:"#7c3aed"}}> (Pensamento) → </span><strong style={{color:"#d97706"}}>C</strong><span style={{color:"#d97706"}}> (Emoção/Consequência)</span>
-      </div>
-      {[["A","#dbeafe","#1d4ed8","situacao","Situação (Antecedente)","O que aconteceu? Onde, quando, com quem?","Ex: Meu chefe me chamou para conversar..."],
-        ["B","#ede9fe","#7c3aed","pensamento","Pensamento (Belief)","O que passou pela sua cabeça naquele momento?","Ex: Devo ter feito algo errado..."]].map(([letra,bg,cor,campo,titulo,dica,ph])=>(
-        <div key={campo} style={{marginBottom:14}}>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-            <div style={{width:24,height:24,borderRadius:"50%",background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:cor,fontSize:12,flexShrink:0}}>{letra}</div>
-            <div style={{fontWeight:600,fontSize:13}}>{titulo}</div>
-          </div>
-          <div style={{fontSize:11,color:"#9ca3af",marginBottom:6,paddingLeft:32}}>{dica}</div>
-          <TextAreaVoz className="form-input" rows={2} value={draft[campo]} onChange={e=>setDraft({...draft,[campo]:e.target.value})} placeholder={ph}/>
-        </div>
-      ))}
-      <div style={{marginBottom:14}}>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-          <div style={{width:24,height:24,borderRadius:"50%",background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:"#d97706",fontSize:12,flexShrink:0}}>C</div>
-          <div style={{fontWeight:600,fontSize:13}}>Consequência (Emoção)</div>
-        </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10,paddingLeft:32}}>
-          {EMOCOES.map(em=><button key={em} onClick={()=>setDraft({...draft,emocao:em})} style={{padding:"4px 12px",borderRadius:20,border:"1px solid",borderColor:draft.emocao===em?"var(--purple)":"#e5e7eb",background:draft.emocao===em?"var(--purple)":"white",color:draft.emocao===em?"white":"#6b7280",fontSize:12,cursor:"pointer"}}>{em}</button>)}
-        </div>
-        <div style={{paddingLeft:32}}>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{color:"#6b7280"}}>Intensidade</span><span style={{fontWeight:700,color:intColor}}>{draft.intensidade}/100</span></div>
-          <input type="range" min={0} max={100} value={draft.intensidade} onChange={e=>setDraft({...draft,intensidade:+e.target.value})} style={{width:"100%",accentColor:"var(--purple)"}}/>
-        </div>
-      </div>
-      <div style={{marginBottom:16}}>
-        <button onClick={()=>setDraft({...draft,showAlt:!draft.showAlt})} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,color:"#6b7280",padding:0}}>
-          💡 Pensamento alternativo (opcional) {draft.showAlt?"▲":"▼"}
-        </button>
-        {draft.showAlt&&<TextAreaVoz className="form-input" style={{marginTop:8}} rows={2} value={draft.alternativo} onChange={e=>setDraft({...draft,alternativo:e.target.value})} placeholder="Existe outra forma de ver essa situação?"/>}
-      </div>
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>{msg||"Salvar registro"}</button>
-      {entries.length>0&&<div style={{marginTop:16}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>{entries.length} registro(s)</div>
-        {entries.map(en=><div key={en.id} style={{background:"#f9fafb",borderRadius:10,padding:12,marginBottom:8,fontSize:12,border:"1px solid #e5e7eb"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{color:"#6b7280"}}>{en.data}</span><span style={{background:"var(--purple-soft)",color:"var(--purple)",borderRadius:20,padding:"1px 8px",fontWeight:600}}>{en.emocao} {en.intensidade}%</span></div>
-          <div><strong>A:</strong> {en.situacao}</div><div><strong>B:</strong> {en.pensamento}</div>
-          {en.alternativo&&<div style={{color:"#059669"}}><strong>Alt:</strong> {en.alternativo}</div>}
-        </div>)}
-      </div>}
-    </div>
-  );
-}
-
-// ── Gestão da Ansiedade ──────────────────────────────────────────────────────
-function FerramentaGestaoAnsiedade(){
-  const TECNICAS=[{id:"resp",label:"Respiração Relaxada",desc:"Inspirar → Pausar → Expirar por 2 min"},{id:"visao",label:"Visão Periférica",desc:"Mover os olhos da direita para a esquerda"},{id:"musc",label:"Relaxamento Muscular",desc:"Contrair músculos 5s e relaxar com suspiro"}];
-  const ATIVIDADES=[{id:"caminhada",label:"🚶 Caminhada"},{id:"meditacao",label:"🧘 Meditação"},{id:"diario",label:"📓 Diário"},{id:"musica",label:"🎵 Música"},{id:"alongamento",label:"🤸 Alongamento"},{id:"agua",label:"💧 Hidratação"}];
-  const PERGUNTAS=["Qual situação está me deixando ansioso(a)?","Qual é o meu pensamento ansioso?","Tenho provas reais de que é 100% verdadeiro?","Quais evidências indicam que pode NÃO ser verdadeiro?","Qual a probabilidade real de que o pior aconteça?","O que eu diria a um amigo com esse mesmo pensamento?","Existe uma forma mais útil de ver essa situação?","Preocupar-me está me ajudando ou me machucando?"];
-  const AREAS=[{id:"interior",label:"Cuidado Interior"},{id:"familiar",label:"Vida Familiar"},{id:"carreira",label:"Carreira"},{id:"social",label:"Vida Social"},{id:"qualidade",label:"Qualidade de Vida"},{id:"saudavel",label:"Vida Saudável"},{id:"financeiro",label:"Financeiro"},{id:"espiritualidade",label:"Espiritualidade"}];
-  const DESC={1:"Em paz.",2:"Otimista.",3:"Calmo.",4:"Confortável.",5:"Neutro.",6:"Estressando.",7:"Estressado.",8:"Irritado.",9:"Tenso.",10:"Em pânico."};
-  const [aba,setAba]=useState(0);
-  const [stress,setStress]=useState(5);
-  const [nota,setNota]=useState("");
-  const [track,setTrack]=useState({});
-  const [resp,setResp]=useState(Array(8).fill(""));
-  const [roda,setRoda]=useState({});
-  const [log,setLog]=useState([]);
-  const [msg,setMsg]=useState("");
-  const sc=stress<=3?"#059669":stress<=5?"#d97706":stress<=7?"#f97316":"#dc2626";
-  return(
-    <div>
-      <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #e5e7eb",overflowX:"auto"}}>
-        {["😰 Estresse","✅ Tracking","🧠 Pensamentos","🎯 Roda da Vida"].map((n,i)=>
-          <button key={i} onClick={()=>setAba(i)} style={{padding:"8px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,fontWeight:aba===i?700:400,color:aba===i?"var(--purple)":"#6b7280",borderBottom:aba===i?"2px solid var(--purple)":"2px solid transparent",whiteSpace:"nowrap",fontFamily:"var(--font-body)"}}>{n}</button>
-        )}
-      </div>
-      {aba===0&&<div>
-        <div style={{textAlign:"center",marginBottom:16}}><div style={{fontSize:64,fontWeight:900,color:sc,lineHeight:1}}>{stress}</div><div style={{fontSize:12,color:"#9ca3af"}}>/10</div><div style={{fontSize:13,fontWeight:600,color:sc}}>{DESC[stress]}</div></div>
-        <input type="range" min={1} max={10} value={stress} onChange={e=>setStress(+e.target.value)} style={{width:"100%",accentColor:sc,marginBottom:12}}/>
-        <TextAreaVoz className="form-input" rows={2} value={nota} onChange={e=>setNota(e.target.value)} placeholder="Observações..." style={{marginBottom:10}}/>
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setLog(l=>[{nivel:stress,nota,data:new Date().toLocaleDateString("pt-BR")},...l].slice(0,20));setMsg("✓ Registrado!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Registrar"}</button>
-        {log.length>0&&<div style={{marginTop:12}}>{log.slice(0,5).map((s,i)=><div key={i} style={{display:"flex",gap:8,padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4,fontSize:12}}><span style={{fontWeight:700,color:sc}}>{s.nivel}/10</span><span style={{flex:1,color:"#6b7280"}}>{s.nota||"—"}</span><span style={{color:"#9ca3af"}}>{s.data}</span></div>)}</div>}
-      </div>}
-      {aba===1&&<div>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:10,color:"var(--purple)"}}>Técnicas Anti-Ansiedade</div>
-        {TECNICAS.map(t=><div key={t.id} onClick={()=>setTrack(tr=>({...tr,[t.id]:!tr[t.id]}))} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderRadius:10,border:"1.5px solid",borderColor:track[t.id]?"var(--purple)":"#e5e7eb",background:track[t.id]?"var(--purple-soft)":"white",cursor:"pointer",marginBottom:8}}>
-          <span style={{fontSize:16}}>{track[t.id]?"✅":"⭕"}</span><div><div style={{fontWeight:600,fontSize:13}}>{t.label}</div><div style={{fontSize:12,color:"#6b7280"}}>{t.desc}</div></div>
-        </div>)}
-        <div style={{fontWeight:600,fontSize:13,margin:"14px 0 10px",color:"var(--purple)"}}>Atividades</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          {ATIVIDADES.map(a=><div key={a.id} onClick={()=>setTrack(tr=>({...tr,[a.id]:!tr[a.id]}))} style={{padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:track[a.id]?"var(--purple)":"#e5e7eb",background:track[a.id]?"var(--purple-soft)":"white",cursor:"pointer",fontSize:12,fontWeight:track[a.id]?600:400,color:track[a.id]?"var(--purple)":"#6b7280",textAlign:"center"}}>{a.label}</div>)}
-        </div>
-      </div>}
-      {aba===2&&<div>
-        <div style={{fontSize:13,color:"#6b7280",marginBottom:14,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>Responda cada pergunta com honestidade para questionar pensamentos ansiosos.</div>
-        {PERGUNTAS.map((p,i)=><div key={i} style={{marginBottom:14}}>
-          <div style={{display:"flex",gap:8,marginBottom:6}}><div style={{width:22,height:22,borderRadius:"50%",background:"var(--purple-soft)",color:"var(--purple)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div><label style={{fontSize:13,fontWeight:600,lineHeight:1.4}}>{p}</label></div>
-          <TextAreaVoz className="form-input" rows={2} value={resp[i]} onChange={e=>{const r=[...resp];r[i]=e.target.value;setResp(r);}} placeholder="Sua resposta..."/>
-        </div>)}
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar respostas"}</button>
-      </div>}
-      {aba===3&&<div>
-        <div style={{fontSize:13,color:"#6b7280",marginBottom:14}}>Avalie cada área de 0 a 10. O gráfico atualiza em tempo real.</div>
-        {AREAS.map(a=><div key={a.id} style={{marginBottom:10}}>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{fontWeight:600}}>{a.label}</span><span style={{fontWeight:700,color:"var(--purple)"}}>{roda[a.id]||0}/10</span></div>
-          <input type="range" min={0} max={10} value={roda[a.id]||0} onChange={e=>setRoda(r=>({...r,[a.id]:+e.target.value}))} style={{width:"100%",accentColor:"var(--purple)"}}/>
-        </div>)}
-        <div style={{display:"flex",justifyContent:"center",margin:"16px 0"}}>
-          <canvas id="rodaChart" width="260" height="260" ref={el=>{
-            if(!el||typeof Chart==="undefined")return;
-            const vals=AREAS.map(a=>roda[a.id]||0);
-            const labels=AREAS.map(a=>a.label);
-            if(el._chart)el._chart.destroy();
-            el._chart=new Chart(el,{type:"radar",data:{labels,datasets:[{data:vals,backgroundColor:"rgba(123,0,196,0.15)",borderColor:"#7B00C4",borderWidth:2,pointBackgroundColor:"#7B00C4",pointRadius:4}]},options:{scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{size:10}}}},plugins:{legend:{display:false}}}});
-          }}/>
-        </div>
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={()=>{setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2000);}}>{msg||"Salvar Roda da Vida"}</button>
-      </div>}
-    </div>
-  );
-}
-
-// ── Rastreamento Emocional da Alimentação ───────────────────────────────────
-function FerramentaRastreamento(){
-  const EMOCOES=["Ansiedade","Tédio","Tristeza","Raiva","Solidão","Estresse","Cansaço","Felicidade"];
-  const SENSACOES=["Culpa","Vergonha","Alívio","Indiferença","Satisfação","Arrependimento"];
-  const [fome,setFome]=useState(5);
-  const [emocoes,setEmocoes]=useState([]);
-  const [pensamento,setPensamento]=useState("");
-  const [comeu,setComeu]=useState("");
-  const [alivio,setAlivio]=useState(5);
-  const [duracao,setDuracao]=useState("");
-  const [sensacoes,setSensacoes]=useState([]);
-  const [reflexao,setReflexao]=useState("");
-  const [entries,setEntries]=useState([]);
-  const [msg,setMsg]=useState("");
-  function Chips({opts,sel,toggle}){return(<div style={{display:"flex",flexWrap:"wrap",gap:6}}>{opts.map(o=><button key={o} onClick={()=>toggle(o)} style={{padding:"4px 12px",borderRadius:20,border:"1px solid",borderColor:sel.includes(o)?"var(--purple)":"#e5e7eb",background:sel.includes(o)?"var(--purple)":"white",color:sel.includes(o)?"white":"#6b7280",fontSize:12,cursor:"pointer"}}>{o}</button>)}</div>);}
-  function salvar(){
-    if(!comeu.trim()){alert("Descreva o que você comeu.");return;}
-    setEntries(e=>[{id:Date.now()+"",data:new Date().toLocaleDateString("pt-BR"),fome,emocoes:[...emocoes],pensamento,comeu,alivio,duracao,sensacoes:[...sensacoes],reflexao},...e]);
-    setFome(5);setEmocoes([]);setPensamento("");setComeu("");setAlivio(5);setDuracao("");setSensacoes([]);setReflexao("");
-    setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
-  }
-  const fc=fome<=3?"#059669":fome<=6?"#d97706":"#dc2626";
-  const ac=alivio<=3?"#059669":alivio<=6?"#d97706":"#dc2626";
-  return(
-    <div>
-      <div style={{background:"#fdf4ff",border:"1px solid #e9d5ff",borderRadius:10,padding:12,marginBottom:16,fontSize:12,color:"#5a007a",lineHeight:1.6}}>Use sempre que sentir urgência de comer ou após um episódio de compulsão. O objetivo é entender o "porquê" — sem julgamento.</div>
-      {[["Nível de Fome Física",fome,setFome,fc],["Nível de Alívio após comer",alivio,setAlivio,ac]].map(([lbl,val,set,col])=><div key={lbl} style={{marginBottom:14}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{fontWeight:600}}>{lbl}</span><span style={{fontWeight:700,color:col}}>{val}/10</span></div>
-        <input type="range" min={0} max={10} value={val} onChange={e=>set(+e.target.value)} style={{width:"100%",accentColor:"var(--purple)"}}/>
-      </div>)}
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Emoções presentes</label><Chips opts={EMOCOES} sel={emocoes} toggle={o=>setEmocoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Pensamento permissivo</label><TextAreaVoz className="form-input" rows={2} value={pensamento} onChange={e=>setPensamento(e.target.value)} placeholder="'Só desta vez...' 'Mereço isso...'"/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>O que você comeu?</label><TextAreaVoz className="form-input" rows={2} value={comeu} onChange={e=>setComeu(e.target.value)} placeholder="Descreva os alimentos..."/></div>
-      <div style={{marginBottom:12}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Como você se sentiu depois?</label><Chips opts={SENSACOES} sel={sensacoes} toggle={o=>setSensacoes(v=>v.includes(o)?v.filter(x=>x!==o):[...v,o])}/></div>
-      <div style={{marginBottom:16}}><label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão</label><TextAreaVoz className="form-input" rows={2} value={reflexao} onChange={e=>setReflexao(e.target.value)} placeholder="O que esse episódio revela sobre suas necessidades emocionais?"/></div>
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>{msg||"Salvar registro"}</button>
-      {entries.length>0&&<div style={{marginTop:14}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>{entries.length} registro(s)</div>
-        {entries.map(en=><div key={en.id} style={{background:"#f9fafb",borderRadius:10,padding:12,marginBottom:8,fontSize:12,border:"1px solid #e5e7eb"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{color:"#6b7280"}}>{en.data}</span><span style={{background:"#ede9fe",color:"var(--purple)",borderRadius:20,padding:"1px 8px",fontWeight:600}}>Fome: {en.fome}/10</span></div>
-          <div><strong>Comeu:</strong> {en.comeu}</div>
-          {en.emocoes.length>0&&<div style={{color:"#6b7280"}}><strong>Emoções:</strong> {en.emocoes.join(", ")}</div>}
-        </div>)}
-      </div>}
-    </div>
-  );
-}
-
-// ── Treino Neuro-Auditivo ───────────────────────────────────────────────────
-function FerramentaTreino(){
-  const [modulo,setModulo]=useState(0);
-  const [respostas,setRespostas]=useState({});
-  const [feedbacks,setFeedbacks]=useState({});
-  const [score,setScore]=useState(0);
-  const [total,setTotal]=useState(0);
-  const [tocando,setTocando]=useState(null);
-  const ctxRef=useRef(null);
-  function getCtx(){if(!ctxRef.current)ctxRef.current=new AudioContext();if(ctxRef.current.state==="suspended")ctxRef.current.resume();return ctxRef.current;}
-  function tocarTom(freq,dur=1.5,vol=0.4,wave="sine"){const ctx=getCtx();const osc=ctx.createOscillator();const g=ctx.createGain();osc.type=wave;osc.frequency.value=freq;g.gain.setValueAtTime(vol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);osc.connect(g);g.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+dur);}
-  function falar(txt,pitch=1,rate=0.9){if(!("speechSynthesis" in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang="pt-BR";u.pitch=pitch;u.rate=rate;const v=window.speechSynthesis.getVoices().find(x=>x.lang.startsWith("pt"));if(v)u.voice=v;window.speechSynthesis.speak(u);}
-  const MODULOS=[
-    {titulo:"Grave / Agudo",emoji:"🎵",exercicios:[
-      {id:"m0e0",pergunta:"Ouça e diga: GRAVE ou AGUDO?",btn:{label:"▶ Tocar",action:()=>{const f=Math.random()>0.5?180:2200;tocarTom(f);return f>500?"agudo":"grave";}},opcoes:["grave","agudo"],resposta:"grave",dica:"Sons graves têm frequência baixa. Sons agudos têm frequência alta."},
-      {id:"m0e1",pergunta:"Qual som é mais GRAVE?",btn:{label:"▶ Som A (80Hz)",action:()=>tocarTom(80)},btn2:{label:"▶ Som B (800Hz)",action:()=>tocarTom(800)},opcoes:["Som A","Som B"],resposta:"Som A",dica:"O Som A (80Hz) é grave — similar a um contrabaixo."},
-    ]},
-    {titulo:"Vozes",emoji:"🎤",exercicios:[
-      {id:"m1e0",pergunta:"Feminina ou masculina?",btn:{label:"▶ Ouvir",action:()=>falar("Olá, como você está hoje?",1.4,0.95)},opcoes:["Feminina","Masculina"],resposta:"Feminina",dica:"Tom agudo + pitch alto = voz feminina."},
-      {id:"m1e1",pergunta:"Feminina ou masculina?",btn:{label:"▶ Ouvir",action:()=>falar("Bom dia, tudo bem com você?",0.5,0.85)},opcoes:["Feminina","Masculina"],resposta:"Masculina",dica:"Pitch baixo indica voz masculina."},
-    ]},
-    {titulo:"Intensidade",emoji:"🔊",exercicios:[
-      {id:"m2e0",pergunta:"Qual som tem mais VOLUME?",btn:{label:"▶ Som Fraco",action:()=>tocarTom(440,1,0.08)},btn2:{label:"▶ Som Forte",action:()=>tocarTom(440,1,0.7)},opcoes:["Som Fraco","Som Forte"],resposta:"Som Forte",dica:"O Som Forte foi tocado com volume muito maior."},
-    ]},
-    {titulo:"Emoções",emoji:"😊",exercicios:[
-      {id:"m3e0",pergunta:"Que emoção você identifica?",btn:{label:"▶ Ouvir",action:()=>falar("Hoje foi um dia incrível, estou muito feliz!",1.4,1.1)},opcoes:["Alegria","Tristeza","Raiva","Medo"],resposta:"Alegria",dica:"Tom agudo, rápido e animado = alegria."},
-      {id:"m3e1",pergunta:"Que emoção você identifica?",btn:{label:"▶ Ouvir",action:()=>falar("Não sei o que fazer, tudo parece muito difícil.",0.8,0.8)},opcoes:["Alegria","Tristeza","Frustração","Ansiedade"],resposta:"Tristeza",dica:"Tom baixo e pausado = tristeza."},
-    ]},
-  ];
-  function responder(exId,val,correto){
-    const c=val===correto;
-    setRespostas(r=>({...r,[exId]:val}));
-    setFeedbacks(f=>({...f,[exId]:c}));
-    if(!respostas[exId]){setTotal(t=>t+1);if(c)setScore(s=>s+1);}
-  }
-  const mod=MODULOS[modulo];
-  return(
-    <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,padding:"8px 12px",background:"var(--purple-soft)",borderRadius:8}}>
-        <span style={{fontSize:13,fontWeight:600,color:"var(--purple)"}}>🏆 {score}/{total}</span>
-        <span style={{fontSize:12,color:"var(--purple)"}}>{Math.round(total>0?score/total*100:0)}% de acerto</span>
-      </div>
-      <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
-        {MODULOS.map((m,i)=><button key={i} onClick={()=>setModulo(i)} style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",borderColor:modulo===i?"var(--purple)":"#e5e7eb",background:modulo===i?"var(--purple)":"white",color:modulo===i?"white":"#6b7280",fontSize:12,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>{m.emoji} {m.titulo}</button>)}
-      </div>
-      <div style={{fontWeight:700,fontSize:14,marginBottom:14}}>{mod.emoji} {mod.titulo}</div>
-      {mod.exercicios.map(ex=><div key={ex.id} style={{background:"#f9fafb",borderRadius:12,padding:14,marginBottom:14,border:"1px solid #e5e7eb"}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>{ex.pergunta}</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
-          <button className="btn btn-purple" style={{fontSize:12}} onClick={()=>{setTocando(ex.id);ex.btn.action();setTimeout(()=>setTocando(null),2000);}}>{tocando===ex.id?"🔊 Tocando...":ex.btn.label}</button>
-          {ex.btn2&&<button className="btn btn-outline" style={{fontSize:12}} onClick={()=>ex.btn2.action()}>{ex.btn2.label}</button>}
-        </div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
-          {ex.opcoes.map((op,oi)=><button key={oi} onClick={()=>responder(ex.id,op,ex.resposta)} style={{padding:"8px 16px",borderRadius:10,border:"1.5px solid",fontSize:13,cursor:"pointer",fontWeight:500,borderColor:respostas[ex.id]===op?(feedbacks[ex.id]?"#059669":"#dc2626"):"#e5e7eb",background:respostas[ex.id]===op?(feedbacks[ex.id]?"#d1fae5":"#fee2e2"):"white",color:respostas[ex.id]===op?(feedbacks[ex.id]?"#059669":"#dc2626"):"#374151"}}>{op}</button>)}
-        </div>
-        {respostas[ex.id]&&<div style={{padding:"8px 12px",borderRadius:8,background:feedbacks[ex.id]?"#d1fae5":"#fee2e2",fontSize:12,color:feedbacks[ex.id]?"#059669":"#dc2626",fontWeight:600}}>{feedbacks[ex.id]?"✓ Correto! ":"✗ Incorreto. "}{ex.dica}</div>}
-      </div>)}
-    </div>
-  );
-}
-
-// ── Anamnese ────────────────────────────────────────────────────────────────
-function FerramentaAnamnese(){
-  const PERFIS=["Criança (0-12)","Adolescente (13-17)","Adulto (18-59)","Idoso (60+)"];
-  const SECOES={"Criança (0-12)":["Identificação","Gestação e Parto","Marcos do Desenvolvimento","Alimentação e Sono","Desenvolvimento Motor","Linguagem","Comportamento","Escolaridade","Histórico de Saúde","Dinâmica Familiar"],"Adolescente (13-17)":["Identificação","Histórico Escolar","Relações Sociais","Comportamento e Humor","Sexualidade","Substâncias","Histórico de Saúde","Dinâmica Familiar"],"Adulto (18-59)":["Identificação","Queixa Principal","Histórico da Queixa","Histórico Psicológico","Saúde Física","Relacionamentos","Trabalho e Estudo","Sono e Alimentação","Histórico Familiar"],"Idoso (60+)":["Identificação","Queixa Principal","Histórico Médico","Medicamentos","Cognição","Mobilidade","Sono","Suporte Social","Dinâmica Familiar"]};
-  const [perfil,setPerfil]=useState("");
-  const [secao,setSecao]=useState(0);
-  const [respostas,setRespostas]=useState({});
-  const [concluido,setConcluido]=useState(false);
-  if(!perfil)return(<div style={{textAlign:"center",padding:"20px 0"}}>
-    <div style={{fontSize:44,marginBottom:12}}>📄</div>
-    <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:14}}>Selecione o perfil:</div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,maxWidth:320,margin:"0 auto"}}>
-      {PERFIS.map(p=><button key={p} className="btn btn-outline" style={{padding:"12px 8px",fontSize:12,fontWeight:600}} onClick={()=>setPerfil(p)}>{p}</button>)}
-    </div>
-  </div>);
-  const secs=SECOES[perfil]||[];
-  if(concluido)return(<div style={{textAlign:"center",padding:40}}>
-    <div style={{fontSize:48,marginBottom:12}}>✅</div>
-    <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Anamnese Concluída!</div>
-    <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>{perfil} · {secs.length} seções</div>
-    <button className="btn btn-purple" onClick={()=>{setPerfil("");setSecao(0);setRespostas({});setConcluido(false);}}>Nova Anamnese</button>
-  </div>);
-  return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6b7280",marginBottom:8}}><span style={{color:"var(--purple)",fontWeight:600}}>{perfil}</span><span>Seção {secao+1}/{secs.length}</span></div>
-    <div style={{background:"#e5e7eb",borderRadius:20,height:5,marginBottom:16}}><div style={{background:"var(--purple)",height:5,borderRadius:20,width:(secao/secs.length*100)+"%",transition:"width .3s"}}/></div>
-    <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:600,marginBottom:12}}>{secs[secao]}</div>
-    <TextAreaVoz className="form-input" rows={5} value={respostas[secs[secao]]||""} onChange={e=>setRespostas(r=>({...r,[secs[secao]]:e.target.value}))} placeholder={"Registre as informações sobre "+secs[secao].toLowerCase()+"..."}/>
-    <div style={{display:"flex",gap:10,marginTop:14,justifyContent:"space-between"}}>
-      <button className="btn btn-ghost" onClick={()=>setSecao(s=>Math.max(0,s-1))} disabled={secao===0}>← Anterior</button>
-      {secao<secs.length-1?<button className="btn btn-purple" onClick={()=>setSecao(s=>s+1)}>Próxima →</button>:<button className="btn btn-purple" onClick={()=>setConcluido(true)}>✓ Concluir</button>}
-    </div>
-  </div>);
-}
-
-// ── Diário Terapêutico ──────────────────────────────────────────────────────
-function FerramentaDiario({ user }){
-  const [entradas, setEntradas] = useState([]);
-  const [texto,    setTexto]    = useState("");
-  const [tag,      setTag]      = useState("geral");
-  const [salvando, setSalvando] = useState(false);
-  const [msg,      setMsg]      = useState("");
-  const [verEntrada, setVerEntrada] = useState(null);
-  const [gravando,   setGravando]   = useState(false);
-  const [loading,    setLoading]    = useState(true);
-  const recRef = useRef(null);
-
-  const TAGS = [
-    {v:"geral",     l:"Geral",     e:"📝"},
-    {v:"gratidao",  l:"Gratidão",  e:"🙏"},
-    {v:"desafio",   l:"Desafio",   e:"⚡"},
-    {v:"conquista", l:"Conquista", e:"🏆"},
-    {v:"emocao",    l:"Emoção",    e:"💜"},
-  ];
-
-  useEffect(()=>{
-    if(!user?.id){setLoading(false);return;}
-    const unsub = db.collection("clinica_diario")
-      .where("pacienteId","==",user.id)
-      .orderBy("createdAt","desc")
-      .onSnapshot(snap=>{
-        setEntradas(snap.docs.map(d=>({id:d.id,...d.data()})));
-        setLoading(false);
-      }, ()=>setLoading(false));
-    return ()=>unsub();
-  },[user?.id]);
-
-  function toggleGravacao(){
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){alert("Seu navegador não suporta reconhecimento de voz. Tente o Chrome.");return;}
-    if(gravando){
-      recRef.current?.stop();
-      setGravando(false);
-      return;
-    }
-    const rec = new SR();
-    rec.lang = "pt-BR";
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.onresult = e=>{
-      const transcript = Array.from(e.results).map(r=>r[0].transcript).join(" ");
-      setTexto(t => {
-        const base = t.replace(/\s*\[gravando\.\.\.\]$/,"").trimEnd();
-        return base ? base+" "+transcript : transcript;
-      });
-    };
-    rec.onerror = ()=>setGravando(false);
-    rec.onend   = ()=>setGravando(false);
-    recRef.current = rec;
-    rec.start();
-    setGravando(true);
-  }
-
-  async function salvar(){
-    if(!texto.trim()){setMsg("Escreva ou grave algo antes de salvar.");setTimeout(()=>setMsg(""),2500);return;}
-    setSalvando(true);
-    try {
-      await db.collection("clinica_diario").add({
-        pacienteId: user?.id || "",
-        pacienteNome: user?.nome || "",
-        texto: texto.trim(),
-        tag,
-        data: new Date().toLocaleDateString("pt-BR"),
-        hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      setTexto(""); setTag("geral");
-      setMsg("✓ Entrada salva! 💜");
-      setTimeout(()=>setMsg(""),2500);
-    } catch(e){ setMsg("Erro ao salvar: "+e.message); }
-    setSalvando(false);
-  }
-
-  async function excluir(id){
-    if(!confirm("Excluir esta entrada?"))return;
-    await db.collection("clinica_diario").doc(id).delete();
-    setVerEntrada(null);
-  }
-
-  if(verEntrada) return(
-    <div style={{padding:"0 4px"}}>
-      <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setVerEntrada(null)}>
-        <Icon name="arrow-left" size={16}/> Voltar
-      </button>
-      <div style={{background:"#f9f5ff",borderRadius:14,padding:20,marginBottom:12,border:"1px solid #ede9fe"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <span style={{fontSize:13,color:"var(--text-muted)"}}>{verEntrada.data} às {verEntrada.hora}</span>
-          <span style={{fontSize:11,color:"var(--purple)",background:"#ede9fe",borderRadius:20,padding:"2px 10px"}}>
-            {TAGS.find(t=>t.v===verEntrada.tag)?.e} {TAGS.find(t=>t.v===verEntrada.tag)?.l}
-          </span>
-        </div>
-        <div style={{fontSize:14,lineHeight:1.8,color:"var(--gray-800)",whiteSpace:"pre-wrap"}}>{verEntrada.texto}</div>
-      </div>
-      <button className="btn btn-ghost" style={{color:"#dc2626",borderColor:"#fca5a5",fontSize:13}} onClick={()=>excluir(verEntrada.id)}>
-        <Icon name="trash-2" size={14}/> Excluir entrada
-      </button>
-    </div>
-  );
-
-  return(
-    <div style={{padding:"0 4px"}}>
-      {/* Nova entrada */}
-      <div style={{background:"#faf5ff",borderRadius:14,padding:16,marginBottom:20,border:"1px solid #ede9fe"}}>
-        <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:600,marginBottom:12,color:"var(--purple)"}}>
-          📓 Nova entrada
-        </div>
-
-        {/* Tag */}
-        <div style={{marginBottom:12}}>
-          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Categoria</div>
-          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-            {TAGS.map(t=>(
-              <button key={t.v} onClick={()=>setTag(t.v)}
-                style={{fontSize:12,padding:"4px 10px",borderRadius:20,border:tag===t.v?"2px solid var(--purple)":"1px solid #e5e7eb",background:tag===t.v?"#ede9fe":"white",color:tag===t.v?"var(--purple)":"var(--gray-600)",cursor:"pointer"}}>
-                {t.e} {t.l}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Texto + microfone */}
-        <div style={{position:"relative"}}>
-          <textarea value={texto} onChange={e=>setTexto(e.target.value)}
-            placeholder="Escreva ou use o microfone para falar sobre o seu dia..."
-            style={{width:"100%",minHeight:120,borderRadius:10,border:gravando?"2px solid var(--purple)":"1px solid #e5e7eb",padding:"10px 44px 10px 14px",fontSize:14,fontFamily:"var(--font-body)",resize:"vertical",outline:"none",lineHeight:1.7,boxSizing:"border-box",transition:"border .2s"}}/>
-          <button onClick={toggleGravacao} title={gravando?"Parar gravação":"Falar"}
-            style={{position:"absolute",right:8,bottom:10,background:gravando?"#7B00C4":"#f3f0ff",border:"none",borderRadius:8,padding:"6px 8px",cursor:"pointer",color:gravando?"white":"var(--purple)",fontSize:18,lineHeight:1,boxShadow:gravando?"0 0 0 3px #7B00C430":"none",transition:"all .2s"}}>
-            🎙️
-          </button>
-        </div>
-        {gravando && <div style={{fontSize:12,color:"var(--purple)",marginTop:4,display:"flex",alignItems:"center",gap:6}}>
-          <span style={{width:8,height:8,borderRadius:"50%",background:"#7B00C4",display:"inline-block",animation:"pulse-slow 1s infinite"}}/>
-          Gravando... fale normalmente. Clique 🎙️ para parar.
-        </div>}
-
-        {msg && <div style={{fontSize:13,color:"var(--purple)",marginTop:6,fontWeight:500}}>{msg}</div>}
-
-        <button className="btn btn-purple" style={{width:"100%",marginTop:10}} onClick={salvar} disabled={salvando}>
-          <Icon name="save" size={16}/> {salvando?"Salvando...":"Salvar entrada"}
-        </button>
-      </div>
-
-      {/* Entradas anteriores */}
-      {loading && <div style={{textAlign:"center",color:"var(--text-muted)",fontSize:13,padding:16}}>Carregando...</div>}
-      {!loading && entradas.length>0 && (
-        <div>
-          <div style={{fontWeight:600,fontSize:14,marginBottom:10,color:"var(--gray-700)"}}>
-            Entradas anteriores ({entradas.length})
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {entradas.map(en=>(
-              <div key={en.id} onClick={()=>setVerEntrada(en)}
-                style={{background:"white",borderRadius:12,padding:"12px 14px",border:"1px solid #e5e7eb",cursor:"pointer"}}
-                onMouseEnter={e=>e.currentTarget.style.boxShadow="0 2px 8px #7B00C420"}
-                onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                  <span style={{fontSize:12,color:"var(--text-muted)"}}>{en.data} · {en.hora}</span>
-                  <span style={{fontSize:11,color:"var(--purple)"}}>{TAGS.find(t=>t.v===en.tag)?.e}</span>
-                </div>
-                <div style={{fontSize:13,color:"var(--gray-700)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{en.texto}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {!loading && entradas.length===0 && (
-        <div style={{textAlign:"center",padding:"24px 0",color:"var(--text-muted)",fontSize:13}}>
-          Nenhuma entrada ainda. Comece escrevendo hoje! 💜
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-// ── Modal Visualizar Ferramenta ─────────────────────────────────────────────
-function ModalVisualizarFerramenta({recurso,onClose,user}){
-  function renderFerramenta(){
-    const k=recurso.formularioKey;
-    if(k==="breathing-478")      return <FerramentaRespiracao/>;
-    if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
-    if(k==="decision-tree")      return <FerramentaArvore/>;
-    if(k==="abc-record")         return <FerramentaABC/>;
-    if(k==="anxiety-management") return <FerramentaGestaoAnsiedade/>;
-    if(k==="emotional-eating")   return <FerramentaRastreamento/>;
-    if(k==="treino-neuro-auditivo") return <FerramentaTreino/>;
-    if(k==="entrevista-clinica") return(
-      <div style={{textAlign:"center",padding:"30px 20px"}}>
-        <div style={{fontSize:44,marginBottom:12}}>📝</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Entrevista Clínica Inicial</div>
-        <p style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.7}}>Instrumento de avaliação com perfil etário, escalas de observação, questionário de habilidades e hipóteses DSM-5.</p>
-        <a href="https://luciakratz-arch.github.io/entrevista-inicial/" target="_blank" className="btn btn-purple" style={{textDecoration:"none",display:"inline-flex",alignItems:"center",gap:8}}>🔗 Abrir Entrevista Clínica</a>
-      </div>
-    );
-    if(k==="anamnese") return <FerramentaAnamnese/>;
-    if(k==="diario-terapeutico") return <FerramentaDiario user={user}/>;
-    return <div style={{textAlign:"center",padding:40,color:"#6b7280"}}>Ferramenta não configurada.</div>;
-  }
-  const EMOJIS={relaxamento:"💨",tcc:"🧠",avaliacao:"📋",musicoterapia:"🎵",outro:"🔧"};
-  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
-  const iconeRecurso = ICONES_FERRAMENTA?.[recurso.formularioKey] || EMOJIS[recurso.categoria] || "🔧";
-  return(
-    <div>
-      <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={onClose}>
-        <Icon name="arrow-left" size={16}/> Voltar para Recursos
-      </button>
-      <div style={{background:"#f9f5ff",border:"1px solid #e9d5ff",borderRadius:8,padding:"10px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:8,fontSize:12,color:"#7c3aed"}}>
-        <Icon name="eye" size={14}/> <strong>Visualização do paciente</strong> — assim a ferramenta aparecerá na área do paciente
-      </div>
-      <div className="card">
-        <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:16,paddingBottom:16,borderBottom:"1px solid #f3f4f6"}}>
-          <div style={{width:52,height:52,borderRadius:12,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:26}}>
-            {iconeRecurso}
-          </div>
-          <div style={{flex:1}}>
-            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600}}>{recurso.titulo}</div>
-            <div style={{fontSize:13,color:"#6b7280",marginTop:4}}>{recurso.descricao}</div>
-            {recurso.mediaUrl&&<a href={recurso.mediaUrl} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,marginTop:8,padding:"6px 14px",borderRadius:20,background:"var(--purple-soft)",color:"var(--purple)",fontSize:12,fontWeight:600,textDecoration:"none",border:"1px solid #e9d5ff"}}>
-              ▶ Ouvir / Assistir
-            </a>}
-          </div>
-        </div>
-        {renderFerramenta()}
-      </div>
-    </div>
-  );
-}
-
-// ── Protocolo de Terapia de Casais ──────────────────────────────────────────
-const PROTOCOLO_CASAIS = [
-  {
-    stage:0, titulo:"Diagnóstico Inicial de Casal", subtitulo:"Avaliação inicial do bem-estar conjugal antes da jornada", emoji:"🔍", cor:"#7c3aed", bg:"#f5f3ff",
-    atividades:[
-      {id:"inventario-bem-estar", titulo:"Inventário de Bem-Estar de Casais", desc:"42 questões sobre comunicação, resolução de conflitos, intimidade emocional, satisfação sexual e cooperação"},
-      {id:"roda-vida-relacionamento", titulo:"Roda da Vida do Relacionamento", desc:"Avalie 8 dimensões do relacionamento em formato visual"},
-      {id:"3-metas", titulo:"Nossas 3 Metas do Relacionamento", desc:"Definam juntos as 3 principais metas terapêuticas"},
-      {id:"quem-sou", titulo:"Quem Eu Sou no Relacionamento", desc:"Reflexão individual sobre identidade no relacionamento"},
-      {id:"o-que-quero", titulo:"O Que Eu Quero e Não Quero Mais", desc:"Mapeamento de expectativas e limites"}
-    ]
-  },
-  {
-    stage:1, titulo:"Reconexão e Segurança Emocional", subtitulo:"Reduzir defensividade e aumentar conexão emocional", emoji:"💚", cor:"#059669", bg:"#d1fae5",
-    atividades:[
-      {id:"detalhes-dia", titulo:"Detalhes do Dia a Dia", desc:"Compartilhem os pequenos detalhes que fazem diferença na conexão diária"},
-      {id:"plano-casal-ocupado", titulo:"Plano de Ação para um Casal Ocupado Demais", desc:"Estratégias práticas para manter conexão na correria"}
-    ]
-  },
-  {
-    stage:2, titulo:"Identidade e Vínculo do Casal", subtitulo:"Resgatar identidade afetiva e visão compartilhada", emoji:"💜", cor:"#7c3aed", bg:"#ede9fe",
-    atividades:[
-      {id:"renovando-votos", titulo:"Renovando os Votos", desc:"Recontem a história do casal e renovem seus compromissos através de 5 narrativas guiadas"}
-    ]
-  },
-  {
-    stage:3, titulo:"Conceitualização Cognitiva", subtitulo:"Identificar padrões cognitivos e crenças relacionais", emoji:"🧠", cor:"#0891b2", bg:"#e0f2fe",
-    atividades:[
-      {id:"mapa-cognitivo", titulo:"Mapa Cognitivo do Relacionamento", desc:"Identificar pensamentos automáticos, crenças e padrões que afetam o relacionamento"}
-    ]
-  },
-  {
-    stage:4, titulo:"Reestruturação Relacional", subtitulo:"Criar novos padrões emocionais e comportamentais", emoji:"🌱", cor:"#16a34a", bg:"#dcfce7",
-    atividades:[
-      {id:"novos-padroes", titulo:"Novos Padrões Relacionais", desc:"Desenvolver e praticar novos comportamentos e respostas emocionais"}
-    ]
-  }
-];
-
-const CHECKIN_SEMANAL = [
-  "Hoje eu me sinto conectado(a) com meu parceiro(a)",
-  "Sinto que fui ouvido(a) esta semana",
-  "Expressamos afeto um pelo outro",
-  "Resolvemos conflitos de forma saudável",
-  "Dedicamos tempo de qualidade juntos",
-  "Sinto que somos uma equipe",
-  "Me sinto seguro(a) emocionalmente com meu parceiro(a)"
-];
-
-// ── Inventário de Bem-Estar de Casais (42 questões) ──
-const INVENTARIO_QUESTOES = [
-  {n:1,  texto:"Com que frequência você e seu parceiro(a) trabalham juntos para alcançar objetivos comuns?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:2,  texto:"Como você descreveria a frequência com que você e seu parceiro(a) têm conversas abertas e honestas sobre suas preocupações e problemas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:3,  texto:"Como você avalia sua satisfação geral com a vida sexual em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
-  {n:4,  texto:"Quando você e seu parceiro(a) enfrentam um desentendimento, com que frequência vocês conseguem encontrar uma solução que seja satisfatória para ambos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:5,  texto:"Em geral, como você avalia a qualidade das discussões que você e seu parceiro(a) têm sobre assuntos importantes?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:6,  texto:"Com que frequência você e seu parceiro(a) se comunicam sobre suas necessidades e desejos sexuais?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:7,  texto:"Com que frequência você e seu parceiro(a) compartilham seus sentimentos mais profundos um com o outro?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:8,  texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma efetiva?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:9,  texto:"Como você descreveria a qualidade de suas relações sexuais em seu relacionamento?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:10, texto:"Como você descreveria a capacidade de seu relacionamento em criar um ambiente emocionalmente seguro e acolhedor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:11, texto:"Quando você e seu parceiro(a) discordam sobre algo, com que frequência vocês conseguem resolver o conflito de maneira efetiva?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:12, texto:"Como você se sente em relação à habilidade de seu parceiro(a) de expressar seus sentimentos de forma clara e compreensível durante uma conversa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
-  {n:13, texto:"Com que frequência você e seu parceiro(a) encontram soluções diferentes para resolver problemas ou desafios em seu relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:14, texto:"Com que frequência você e seu parceiro(a) conseguem discutir um problema sem que isso afete negativamente o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:15, texto:"Com que frequência você e seu parceiro(a) experimentam momentos íntimos e prazerosos juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:16, texto:"Como você avalia a disposição de seu parceiro(a) para ajudá-lo(a) nas tarefas domésticas e responsabilidades compartilhadas?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:17, texto:"Quando você está passando por momentos difíceis, com quem você costuma compartilhar seus sentimentos primeiro?", opcoes:["Com ninguém","Com um membro da família","Com um amigo(a)","Com meu parceiro(a)","Com um profissional especializado(a)"]},
-  {n:18, texto:"Quando ocorre um desacordo entre vocês, como vocês costumam resolver a situação?", opcoes:["Ignorando o problema","Gritando ou discutindo","Evitando o assunto","Argumentando meu ponto de vista","Conversando e buscando uma solução"]},
-  {n:19, texto:"Quando você compartilha suas opiniões com seu parceiro(a), com que frequência você se sente ouvido(a) e compreendido(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:20, texto:"Com que frequência você e seu parceiro(a) reservam um tempo específico para conversar sobre questões importantes ou preocupações relacionadas ao relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:21, texto:"Você se sente à vontade para expressar suas preferências sexuais e fantasias com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:22, texto:"Como você se sente em relação à capacidade de seu parceiro(a) de compreender suas emoções e oferecer apoio quando você precisa?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
-  {n:23, texto:"Vocês conseguem chegar a um consenso sobre questões importantes, mesmo quando têm opiniões diferentes?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:24, texto:"Com que frequência você e seu parceiro(a) dedicam tempo para se conectar emocionalmente, sem distrações externas?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:25, texto:"Como você avalia a capacidade de seu relacionamento em superar desafios ou dificuldades na vida sexual?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:26, texto:"Você e seu parceiro(a) costumam discutir e tomar decisões importantes juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:27, texto:"Você e seu parceiro(a) estão satisfeitos com a frequência das relações sexuais em seu relacionamento?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
-  {n:28, texto:"Com que frequência vocês conseguem manter o respeito mútuo mesmo durante uma discussão acalorada?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:29, texto:"Você se sente à vontade para expressar suas emoções, mesmo as mais vulneráveis, com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:30, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de diversão e risadas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:31, texto:"Quando um conflito é resolvido, como vocês se sentem em relação ao processo de resolução?", opcoes:["Muito insatisfeito(a)","Insatisfeito(a)","Neutro(a)","Satisfeito(a)","Muito satisfeito(a)"]},
-  {n:32, texto:"Como você avalia a capacidade de seu parceiro(a) de fazer você rir e levantar seu ânimo quando necessário?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:33, texto:"Você e seu parceiro(a) têm interesses em comum que os levam a participar de atividades recreativas juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:34, texto:"Como você descreveria a importância do humor em seu relacionamento?", opcoes:["Muito pouco importante","Pouco importante","Neutro(a)","Importante","Muito importante"]},
-  {n:35, texto:"Como você descreveria a profundidade do vínculo emocional entre você e seu parceiro(a)?", opcoes:["Muito superficial","Superficial","Moderado","Profundo","Muito profundo"]},
-  {n:36, texto:"Com que frequência você e seu parceiro(a) compartilham momentos de descontração e relaxamento juntos?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:37, texto:"Com que frequência você e seu parceiro(a) se apoiam mutuamente para lidar com o estresse e os desafios da vida?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:38, texto:"Você se sente valorizado(a) e reconhecido(a) pelo seu parceiro(a) em suas contribuições para o relacionamento?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:39, texto:"Como você descreveria a igualdade de contribuição entre você e seu parceiro(a) nos compromissos financeiros e nas despesas domésticas?", opcoes:["Muito desigual","Desigual","Neutra","Igual","Muito igual"]},
-  {n:40, texto:"Você se sente confortável para expressar seu senso de humor com seu parceiro(a)?", opcoes:["Nunca","Raramente","Às vezes","Frequentemente","Sempre"]},
-  {n:41, texto:"Como você avalia a capacidade de seu relacionamento em resolver conflitos de forma colaborativa, buscando soluções que beneficiem ambos os parceiros?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-  {n:42, texto:"Como você avalia a capacidade de seu relacionamento em lidar com situações difíceis com leveza e humor?", opcoes:["Muito insatisfatória","Insatisfatória","Neutra","Satisfatória","Muito satisfatória"]},
-];
-
-const INVENTARIO_CATEGORIAS = [
-  {label:"Comunicação Eficaz",          cor:"#6366f1", questoes:[2,5,11,12,13,19,20]},
-  {label:"Resolução de Conflitos",       cor:"#f59e0b", questoes:[4,8,14,18,23,28,31]},
-  {label:"Intimidade Emocional",         cor:"#ec4899", questoes:[7,10,17,22,24,29,35]},
-  {label:"Satisfação Sexual",            cor:"#dc2626", questoes:[3,6,9,15,21,25,27]},
-  {label:"Cooperação e Colaboração",     cor:"#16a34a", questoes:[1,16,26,37,38,39,41]},
-  {label:"Senso de Humor e Lazer",       cor:"#0891b2", questoes:[30,32,33,34,36,40,42]},
-];
-
-function InventarioBemEstarCasal({ onVoltar }) {
-  const [respostas, setRespostas] = useState({});
-  const [pagina, setPagina]       = useState(0); // 0=instrucoes, 1-7=grupos de 6q, 8=resultado
-  const [salvando, setSalvando]   = useState(false);
-
-  const POR_PAG = 6;
-  const totalPaginas = Math.ceil(INVENTARIO_QUESTOES.length / POR_PAG);
-
-  function responder(n, val) { setRespostas(r=>({...r,[n]:val})); }
-
-  function calcular() {
-    return INVENTARIO_CATEGORIAS.map(cat => {
-      const soma = cat.questoes.reduce((acc, q) => acc + (respostas[q] || 0), 0);
-      const pct  = Math.round(((soma - 7) / 28) * 100);
-      return { ...cat, soma, pct: Math.max(0, pct) };
-    });
-  }
-
-  const questoesPagina = INVENTARIO_QUESTOES.slice((pagina-1)*POR_PAG, pagina*POR_PAG);
-  const totalRespondidas = Object.keys(respostas).length;
-  const completo = totalRespondidas === 42;
-
-  // Tela de instruções
-  if (pagina === 0) return (
-    <div style={{textAlign:"center",padding:"20px 0"}}>
-      <div style={{fontSize:48,marginBottom:12}}>💑</div>
-      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:8}}>Inventário de Bem-Estar de Casais</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.7,maxWidth:480,margin:"0 auto 16px"}}>
-        Este questionário avalia 6 dimensões importantes do relacionamento: Comunicação, Resolução de Conflitos, Intimidade Emocional, Satisfação Sexual, Cooperação e Senso de Humor.<br/><br/>
-        <strong>42 questões</strong> · Responda com honestidade · Não há respostas certas ou erradas<br/>
-        <em>Seja rápido, não pondere!</em>
-      </div>
-      <button className="btn btn-purple" style={{fontSize:15,padding:"12px 32px"}} onClick={()=>setPagina(1)}>
-        <Icon name="play" size={16}/> Iniciar Inventário
-      </button>
-    </div>
-  );
-
-  // Tela de resultado
-  if (pagina === totalPaginas + 1) {
-    const resultados = calcular();
-    const totalGeral = resultados.reduce((a,r)=>a+r.soma,0);
-    return (
-      <div>
-        <div style={{textAlign:"center",marginBottom:24}}>
-          <div style={{fontSize:40,marginBottom:8}}>📊</div>
-          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>Resultado do Inventário</div>
-          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Pontuação total: {totalGeral} / 252</div>
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:24}}>
-          {resultados.map(cat=>(
-            <div key={cat.label}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:600,marginBottom:6}}>
-                <span style={{color:cat.cor}}>{cat.label}</span>
-                <span>{cat.soma} / 35</span>
-              </div>
-              <div style={{background:"#f3f4f6",borderRadius:20,height:12,overflow:"hidden"}}>
-                <div style={{
-                  width:cat.pct+"%", height:"100%",
-                  background:cat.cor,
-                  borderRadius:20,
-                  transition:"width 1s ease"
-                }}/>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text-muted)",marginTop:2}}>
-                <span>Baixo (7)</span>
-                <span style={{fontWeight:600,color:cat.cor}}>{cat.pct}%</span>
-                <span>Alto (35)</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:12,color:"var(--gray-600)",lineHeight:1.7}}>
-          <strong>Como interpretar:</strong> Pontuações mais altas (próximas de 35) indicam maior satisfação naquela dimensão. Pontuações baixas (próximas de 7) indicam áreas que merecem atenção terapêutica.
-        </div>
-        <div style={{display:"flex",gap:10}}>
-          <button className="btn btn-ghost" style={{flex:1}} onClick={()=>{setRespostas({});setPagina(0);}}>
-            <Icon name="rotate-ccw" size={15}/> Refazer
-          </button>
-          <button className="btn btn-purple" style={{flex:1}} onClick={onVoltar}>
-            <Icon name="check" size={15}/> Concluir
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Páginas de questões
-  const progresso = Math.round((totalRespondidas / 42) * 100);
-  return (
-    <div>
-      {/* Barra de progresso */}
-      <div style={{marginBottom:20}}>
-        <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--text-muted)",marginBottom:6}}>
-          <span>Questões {(pagina-1)*POR_PAG+1}–{Math.min(pagina*POR_PAG,42)} de 42</span>
-          <span>{totalRespondidas} respondidas · {progresso}%</span>
-        </div>
-        <div style={{background:"#f3f4f6",borderRadius:20,height:6}}>
-          <div style={{width:progresso+"%",height:"100%",background:"var(--purple)",borderRadius:20,transition:"width .3s"}}/>
-        </div>
-      </div>
-
-      <div style={{display:"flex",flexDirection:"column",gap:20}}>
-        {questoesPagina.map(q=>(
-          <div key={q.n} style={{background:"#fafafa",borderRadius:10,padding:16,border:"1px solid var(--gray-100)"}}>
-            <div style={{fontWeight:600,fontSize:13,marginBottom:12,lineHeight:1.5}}>
-              <span style={{color:"var(--purple)",marginRight:6}}>{q.n}.</span>{q.texto}
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {q.opcoes.map((op,i)=>(
-                <button key={i} onClick={()=>responder(q.n, i+1)}
-                  style={{
-                    display:"flex",alignItems:"center",gap:10,
-                    padding:"8px 12px",borderRadius:8,
-                    border:`1.5px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-200)"}`,
-                    background:respostas[q.n]===i+1?"var(--purple-bg)":"white",
-                    cursor:"pointer",textAlign:"left",fontFamily:"inherit",fontSize:13,
-                    color:respostas[q.n]===i+1?"var(--purple)":"var(--gray-700)",
-                    fontWeight:respostas[q.n]===i+1?600:400,
-                    transition:"all .15s"
-                  }}>
-                  <div style={{
-                    width:18,height:18,borderRadius:"50%",flexShrink:0,
-                    border:`2px solid ${respostas[q.n]===i+1?"var(--purple)":"var(--gray-300)"}`,
-                    background:respostas[q.n]===i+1?"var(--purple)":"white",
-                    display:"flex",alignItems:"center",justifyContent:"center"
-                  }}>
-                    {respostas[q.n]===i+1&&<div style={{width:6,height:6,borderRadius:"50%",background:"white"}}/>}
-                  </div>
-                  <span style={{fontWeight:500,fontSize:11,color:"var(--gray-400)",minWidth:16}}>{String.fromCharCode(97+i)})</span>
-                  {op}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Navegação */}
-      <div style={{display:"flex",gap:10,marginTop:24}}>
-        <button className="btn btn-ghost" onClick={()=>setPagina(p=>p-1)} disabled={pagina===1}>
-          <Icon name="arrow-left" size={15}/> Anterior
-        </button>
-        <div style={{flex:1}}/>
-        {pagina < totalPaginas ? (
-          <button className="btn btn-purple" onClick={()=>setPagina(p=>p+1)}>
-            Próximo <Icon name="arrow-right" size={15}/>
-          </button>
-        ) : (
-          <button className="btn btn-purple" onClick={()=>setPagina(totalPaginas+1)}
-            disabled={!completo} style={{opacity:completo?1:0.5}}>
-            {completo ? "Ver Resultado" : `Faltam ${42-totalRespondidas}`} <Icon name="bar-chart-2" size={15}/>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Admin: Roda da Vida ──
-const RODA_DIMS_ADM = [
-  "Comunicação","Família","Sexualidade","Estresse e Pressão",
-  "Divisão","Ciúmes","Espiritualidade","Diferenças e Conflitos",
-  "Estabilidade Financeira","Rel. de Poder","Mudanças","Expectativas e Equilíbrio"
-];
-
-function AdminRodaVida({ onVoltar }) {
-  const [valores, setValores] = useState({});
-  const [salvando, setSalvando] = useState(false);
-  const [salvo, setSalvo] = useState(false);
-
-  async function salvar() {
-    setSalvando(true);
-    try {
-      await db.collection("clinica_casais_respostas").add({
-        pacienteId:"admin", casalId:"admin",
-        atividadeId:"roda-vida-relacionamento",
-        respostas:valores,
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      setSalvo(true);
-    } catch(e){alert("Erro ao salvar.");}
-    setSalvando(false);
-  }
-
-  function RodaSVG() {
-    const n=RODA_DIMS_ADM.length, cx=120,cy=120,r=90;
-    const pontos = RODA_DIMS_ADM.map((_,i)=>{
-      const ang=(i/n)*2*Math.PI-Math.PI/2;
-      const v=(valores[RODA_DIMS_ADM[i]]||0)/10;
-      return [cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)];
-    });
-    const pts=pontos.map(p=>p.join(",")).join(" ");
-    const grades=[2,4,6,8,10].map(g=>{
-      const gpts=RODA_DIMS_ADM.map((_,i)=>{
-        const ang=(i/n)*2*Math.PI-Math.PI/2;
-        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
-      }).join(" ");
-      return <polygon key={g} points={gpts} fill="none" stroke="#e5e7eb" strokeWidth="0.5"/>;
-    });
-    const eixos=RODA_DIMS_ADM.map((_,i)=>{
-      const ang=(i/n)*2*Math.PI-Math.PI/2;
-      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
-    });
-    const labels=RODA_DIMS_ADM.map((d,i)=>{
-      const ang=(i/n)*2*Math.PI-Math.PI/2;
-      return <text key={i} x={cx+(r+14)*Math.cos(ang)} y={cy+(r+14)*Math.sin(ang)} textAnchor="middle" dominantBaseline="middle" fontSize="5.5" fill="#6b7280">{d}</text>;
-    });
-    return (
-      <svg width="240" height="240" viewBox="0 0 240 240" style={{display:"block",margin:"0 auto 16px"}}>
-        {grades}{eixos}
-        <polygon points={pts} fill="#7B00C440" stroke="#7B00C4" strokeWidth="1.5"/>
-        {labels}
-      </svg>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16,lineHeight:1.6}}>
-        Avalie cada dimensão de 0 a 10. <strong>0</strong> = nenhuma tensão · <strong>10</strong> = tensão máxima.
-      </div>
-      {Object.keys(valores).length>0 && <RodaSVG/>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-        {RODA_DIMS_ADM.map(dim=>(
-          <div key={dim}>
-            <div style={{fontSize:12,fontWeight:600,marginBottom:3}}>{dim}</div>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <input type="range" min="0" max="10" step="1"
-                value={valores[dim]||0}
-                onChange={e=>setValores(v=>({...v,[dim]:parseInt(e.target.value)}))}
-                style={{flex:1,accentColor:"var(--purple)"}}/>
-              <span style={{width:18,textAlign:"center",fontWeight:700,fontSize:12,color:"var(--purple)"}}>{valores[dim]||0}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo com sucesso!</div>}
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
-        {salvando?"Salvando...":"💾 Salvar Roda da Vida"}
-      </button>
-    </div>
-  );
-}
-
-// ── Admin: Nossas 3 Metas ──
-function AdminMetas({ onVoltar }) {
-  const [metas, setMetas] = useState([
-    {titulo:"",indicador:"",dataInicio:""},
-    {titulo:"",indicador:"",dataInicio:""},
-    {titulo:"",indicador:"",dataInicio:""},
-  ]);
-  const [metasSalvas, setMetasSalvas] = useState([]);
-  const [evolucoes,   setEvolucoes]   = useState({});
-  const [novaEv,      setNovaEv]      = useState({});
-  const [salvando,    setSalvando]    = useState(false);
-  const [salvo,       setSalvo]       = useState(false);
-  const [aba,         setAba]         = useState("definir"); // definir | evolucao
-
-  useEffect(()=>{
-    db.collection("clinica_metas_casal")
-      .where("tipo","==","admin")
-      .orderBy("createdAt","desc").limit(3)
-      .onSnapshot(s=>setMetasSalvas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-  },[]);
-
-  useEffect(()=>{
-    metasSalvas.forEach(m=>{
-      db.collection("clinica_metas_casal").doc(m.id).collection("evolucoes")
-        .orderBy("data","asc")
-        .onSnapshot(s=>setEvolucoes(ev=>({...ev,[m.id]:s.docs.map(d=>({id:d.id,...d.data()}))})),()=>{});
-    });
-  },[metasSalvas]);
-
-  async function salvarMetas() {
-    const validas = metas.filter(m=>m.titulo.trim());
-    if(!validas.length){alert("Digite pelo menos 1 meta.");return;}
-    setSalvando(true);
-    try {
-      // Arquiva metas antigas
-      const antigas = await db.collection("clinica_metas_casal").where("tipo","==","admin").where("status","==","ativa").get();
-      const batch = db.batch();
-      antigas.docs.forEach(d=>batch.update(d.ref,{status:"arquivada"}));
-      await batch.commit();
-      // Cria novas
-      for(const m of validas){
-        await db.collection("clinica_metas_casal").add({
-          ...m, tipo:"admin", status:"ativa",
-          createdAt:firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      setSalvo(true); setAba("evolucao");
-    } catch(e){alert("Erro ao salvar.");}
-    setSalvando(false);
-  }
-
-  async function registrarEvolucao(metaId) {
-    const ev = novaEv[metaId];
-    if(!ev?.nota||!ev?.data){alert("Preencha nota e data.");return;}
-    await db.collection("clinica_metas_casal").doc(metaId).collection("evolucoes").add({
-      nota: parseFloat(ev.nota), data:ev.data,
-      obs: ev.obs||"",
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    setNovaEv(n=>({...n,[metaId]:{nota:"",data:new Date().toISOString().slice(0,10),obs:""}}));
-  }
-
-  function GraficoLinha({evs}) {
-    if(!evs||evs.length<2) return <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"center",padding:8}}>Registre pelo menos 2 evoluções para ver o gráfico</div>;
-    const w=260,h=80,pad=20;
-    const notas=evs.map(e=>e.nota);
-    const min=0,max=10;
-    const pts=evs.map((e,i)=>{
-      const x=pad+(i/(evs.length-1))*(w-2*pad);
-      const y=h-pad-((e.nota-min)/(max-min))*(h-2*pad);
-      return [x,y];
-    });
-    const path="M"+pts.map(p=>p.join(",")).join(" L");
-    return (
-      <svg width={w} height={h} style={{display:"block",margin:"8px auto"}}>
-        {[0,2,4,6,8,10].map(v=>{
-          const y=h-pad-((v-min)/(max-min))*(h-2*pad);
-          return <g key={v}><line x1={pad} y1={y} x2={w-pad} y2={y} stroke="#f3f4f6" strokeWidth="1"/><text x={pad-4} y={y} textAnchor="end" fontSize="7" fill="#9ca3af" dominantBaseline="middle">{v}</text></g>;
-        })}
-        <path d={path} fill="none" stroke="#7B00C4" strokeWidth="2"/>
-        {pts.map((p,i)=>(
-          <g key={i}>
-            <circle cx={p[0]} cy={p[1]} r="3" fill="#7B00C4"/>
-            <text x={p[0]} y={p[1]-6} textAnchor="middle" fontSize="7" fill="#7B00C4" fontWeight="bold">{evs[i].nota}</text>
-          </g>
-        ))}
-      </svg>
-    );
-  }
-
-  return (
-    <div>
-      {/* Abas */}
-      <div style={{display:"flex",borderBottom:"1px solid var(--gray-200)",marginBottom:16}}>
-        {[{id:"definir",label:"📋 Definir Metas"},{id:"evolucao",label:"📈 Registrar Evolução"}].map(a=>(
-          <button key={a.id} onClick={()=>setAba(a.id)}
-            style={{padding:"10px 16px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit",
-              fontWeight:aba===a.id?700:400,
-              borderBottom:aba===a.id?"2px solid var(--purple)":"2px solid transparent",
-              color:aba===a.id?"var(--purple)":"var(--text-muted)"}}>
-            {a.label}
-          </button>
-        ))}
-      </div>
-
-      {aba==="definir"&&(
-        <div>
-          <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
-            Defina metas quantificáveis com indicador de progresso. Cada cônjuge define as suas pelo portal.
-          </div>
-          {[0,1,2].map(i=>(
-            <div key={i} style={{background:"#fafafa",borderRadius:10,padding:14,marginBottom:12,border:"1px solid var(--gray-100)"}}>
-              <div style={{fontWeight:600,fontSize:13,color:"var(--purple)",marginBottom:10}}>Meta {i+1}</div>
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                <input className="form-input" value={metas[i].titulo}
-                  onChange={e=>{const n=[...metas];n[i]={...n[i],titulo:e.target.value};setMetas(n);}}
-                  placeholder="Ex: Melhorar a comunicação diária"/>
-                <input className="form-input" value={metas[i].indicador}
-                  onChange={e=>{const n=[...metas];n[i]={...n[i],indicador:e.target.value};setMetas(n);}}
-                  placeholder="Indicador quantificável: Ex: De 3 para 8 na escala de comunicação"/>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <label style={{fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>Data de início:</label>
-                  <input type="date" className="form-input" value={metas[i].dataInicio}
-                    onChange={e=>{const n=[...metas];n[i]={...n[i],dataInicio:e.target.value};setMetas(n);}}
-                    style={{flex:1}}/>
-                </div>
-              </div>
-            </div>
-          ))}
-          {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Metas salvas! Aparecem no dashboard do casal.</div>}
-          <button className="btn btn-purple" style={{width:"100%"}} onClick={salvarMetas} disabled={salvando}>
-            {salvando?"Salvando...":"💾 Salvar metas"}
-          </button>
-        </div>
-      )}
-
-      {aba==="evolucao"&&(
-        <div>
-          {metasSalvas.length===0
-            ? <div style={{textAlign:"center",padding:24,fontSize:13,color:"var(--text-muted)"}}>Defina as metas primeiro na aba "Definir Metas".</div>
-            : metasSalvas.map(m=>{
-                const evs = evolucoes[m.id]||[];
-                const ev  = novaEv[m.id]||{nota:"",data:new Date().toISOString().slice(0,10),obs:""};
-                return (
-                  <div key={m.id} style={{background:"#fafafa",borderRadius:12,padding:16,marginBottom:16,border:"1px solid var(--gray-100)"}}>
-                    <div style={{fontWeight:700,fontSize:14,color:"var(--purple)",marginBottom:2}}>{m.titulo}</div>
-                    {m.indicador&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:10}}>🎯 {m.indicador}</div>}
-
-                    <GraficoLinha evs={evs}/>
-
-                    {/* Histórico */}
-                    {evs.length>0&&(
-                      <div style={{marginBottom:12}}>
-                        <div style={{fontSize:11,fontWeight:600,color:"var(--text-muted)",marginBottom:6}}>HISTÓRICO</div>
-                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                          {[...evs].reverse().slice(0,5).map(e=>(
-                            <div key={e.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,padding:"5px 10px",borderRadius:6,background:"white",border:"1px solid var(--gray-100)"}}>
-                              <span style={{color:"var(--text-muted)"}}>{e.data?.split("-").reverse().join("/")}</span>
-                              <span style={{fontWeight:700,color:"var(--purple)",fontSize:14}}>{e.nota}/10</span>
-                              {e.obs&&<span style={{color:"var(--text-muted)",fontSize:11,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.obs}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Novo registro */}
-                    <div style={{background:"white",borderRadius:8,padding:12,border:"1px solid var(--gray-200)"}}>
-                      <div style={{fontSize:12,fontWeight:600,marginBottom:8}}>Registrar nova nota</div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                        <div>
-                          <label style={{fontSize:11,fontWeight:600,display:"block",marginBottom:4}}>Nota (0-10)</label>
-                          <input type="number" min="0" max="10" step="0.5" className="form-input"
-                            value={ev.nota} onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,nota:e.target.value}}))}
-                            placeholder="0-10"/>
-                        </div>
-                        <div>
-                          <label style={{fontSize:11,fontWeight:600,display:"block",marginBottom:4}}>Data</label>
-                          <input type="date" className="form-input" value={ev.data}
-                            onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,data:e.target.value}}))}/>
-                        </div>
-                      </div>
-                      <input className="form-input" value={ev.obs||""}
-                        onChange={e=>setNovaEv(n=>({...n,[m.id]:{...ev,obs:e.target.value}}))}
-                        placeholder="Observação (opcional)" style={{marginBottom:8}}/>
-                      <button className="btn btn-purple" style={{width:"100%",fontSize:12}} onClick={()=>registrarEvolucao(m.id)}>
-                        + Registrar nota
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-          }
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Admin: Quem Eu Sou ──
-function AdminQuemSou({ onVoltar }) {
-  const QUADRANTES = [
-    {id:"sou",    label:"SOU",                   desc:"Características que possuo e não me incomodam.",    cor:"#7B00C4",bg:"#f5f3ff"},
-    {id:"nao_mas",label:"NÃO SOU, MAS GOSTARIA",  desc:"Características que não possuo e me fazem falta.",  cor:"#0891b2",bg:"#e0f2fe"},
-    {id:"sou_nao",label:"SOU, MAS NÃO GOSTARIA",  desc:"Características que possuo mas me incomodam.",      cor:"#d97706",bg:"#fef3c7"},
-    {id:"nao_sou",label:"NÃO SOU",                desc:"Características que não possuo e não me incomodam.",cor:"#6b7280",bg:"#f3f4f6"},
-  ];
-  const [campos, setCampos]   = useState({});
-  const [salvando, setSalvando] = useState(false);
-  const [salvo, setSalvo]     = useState(false);
-
-  async function salvar() {
-    setSalvando(true);
-    try {
-      await db.collection("clinica_casais_respostas").add({
-        pacienteId:"admin", casalId:"admin", atividadeId:"quem-sou",
-        respostas:campos, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      setSalvo(true);
-    } catch(e){alert("Erro ao salvar.");}
-    setSalvando(false);
-  }
-
-  return (
-    <div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
-        Reflexão individual sobre identidade no relacionamento. Cada cônjuge preenche pelo próprio login no portal.
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-        {QUADRANTES.map(q=>(
-          <div key={q.id} style={{background:q.bg,borderRadius:10,padding:12,border:`1px solid ${q.cor}30`}}>
-            <div style={{fontWeight:700,fontSize:11,color:q.cor,marginBottom:3}}>{q.label}</div>
-            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{q.desc}</div>
-            <TextAreaVoz className="form-input" rows={4} value={campos[q.id]||""}
-              onChange={e=>setCampos(c=>({...c,[q.id]:e.target.value}))}
-              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
-          </div>
-        ))}
-      </div>
-      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo!</div>}
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
-        {salvando?"Salvando...":"💾 Salvar"}
-      </button>
-    </div>
-  );
-}
-
-// ── Admin: O Que Eu Quero e Não Quero Mais ──
-function AdminOQueQuero({ onVoltar }) {
-  const CAMPOS = [
-    {id:"quero_sit",  label:"QUERO +  Situações",  desc:"Situações que gosta e quer que continuem.", cor:"#16a34a",bg:"#f0fdf4"},
-    {id:"quero_val",  label:"QUERO +  Valores",     desc:"Situações MUITO IMPORTANTES a manter.",    cor:"#16a34a",bg:"#dcfce7"},
-    {id:"nquero_sit", label:"QUERO −  Situações",   desc:"Situações que NÃO gosta e quer que parem.",cor:"#dc2626",bg:"#fef2f2"},
-    {id:"nquero_val", label:"QUERO −  Valores",     desc:"Situações MUITO IMPORTANTES a mudar.",     cor:"#dc2626",bg:"#fee2e2"},
-  ];
-  const [campos, setCampos]     = useState({});
-  const [salvando, setSalvando] = useState(false);
-  const [salvo, setSalvo]       = useState(false);
-
-  async function salvar() {
-    setSalvando(true);
-    try {
-      await db.collection("clinica_casais_respostas").add({
-        pacienteId:"admin", casalId:"admin", atividadeId:"o-que-quero",
-        respostas:campos, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      setSalvo(true);
-    } catch(e){alert("Erro ao salvar.");}
-    setSalvando(false);
-  }
-
-  return (
-    <div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
-        Mapeamento de expectativas e limites no relacionamento.
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-        {CAMPOS.map(c=>(
-          <div key={c.id} style={{background:c.bg,borderRadius:10,padding:12,border:`1px solid ${c.cor}30`}}>
-            <div style={{fontWeight:700,fontSize:11,color:c.cor,marginBottom:3}}>{c.label}</div>
-            <div style={{fontSize:10,color:"var(--text-muted)",marginBottom:8,lineHeight:1.4}}>{c.desc}</div>
-            <TextAreaVoz className="form-input" rows={4} value={campos[c.id]||""}
-              onChange={e=>setCampos(v=>({...v,[c.id]:e.target.value}))}
-              placeholder="Digite aqui..." style={{fontSize:12,resize:"none",background:"white"}}/>
-          </div>
-        ))}
-      </div>
-      {salvo&&<div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Salvo!</div>}
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
-        {salvando?"Salvando...":"💾 Salvar"}
-      </button>
-    </div>
-  );
-}
-
-// ── Formulário genérico para atividades das etapas ──
-const ATIVIDADES_FORMULARIOS = {
-  "detalhes-dia": {
-    titulo: "Detalhes do Dia a Dia",
-    instrucao: "Pequenos gestos que reconstroem a conexão",
-    perguntas: [
-      "Que pequeno gesto positivo você fez hoje pelo(a) seu/sua parceiro(a)?",
-      "Como foi a resposta do(a) seu/sua parceiro(a)?",
-      "Como esse gesto te fez sentir?",
-      "O que você gostaria de receber do(a) seu/sua parceiro(a) amanhã?",
-      "Impacto emocional desse momento (0 = nenhum, 10 = muito intenso)",
-    ]
-  },
-  "plano-casal-ocupado": {
-    titulo: "Plano de Ação para um Casal Ocupado Demais",
-    instrucao: "Reorganizando a conexão na rotina",
-    perguntas: [
-      "Quais são os maiores obstáculos para a conexão no dia a dia de vocês?",
-      "Que rituais gostaríamos de criar juntos?",
-      "Qual o momento do dia que podemos reservar só para nós?",
-      "O que admiro no(a) meu/minha parceiro(a) que nunca digo?",
-      "Meu compromisso desta semana com o nosso relacionamento:",
-    ]
-  },
-  "renovando-votos": {
-    titulo: "Renovando os Votos",
-    instrucao: "Uma jornada de reflexão profunda sobre o relacionamento",
-    perguntas: [
-      "Quem éramos no início — Como vocês se conheceram? O que te atraiu nessa pessoa? Que memória do início do relacionamento você ainda guarda com carinho?",
-      "O que construímos juntos — Quais conquistas, momentos e experiências construímos como casal? O que só existiu porque estávamos juntos?",
-      "Sobre meu parceiro(a) — O que você admira profundamente no(a) seu/sua parceiro(a)? Que qualidades fazem você se sentir grato(a) por tê-lo(a) ao seu lado?",
-      "Nosso futuro — Que tipo de casal queremos ser daqui a 5 anos? Como imaginamos nossa vida juntos? O que queremos preservar e o que queremos construir?",
-      "Meus votos renovados — Escreva seus votos renovados. O que você se compromete a oferecer neste relacionamento? O que promete cuidar e honrar?",
-    ]
-  },
-  "mapa-cognitivo": {
-    titulo: "Mapa Cognitivo do Relacionamento",
-    instrucao: "Identificando crenças e padrões que moldam a relação",
-    perguntas: [
-      "Uma memória da sua história de vida que influencia como você se relaciona hoje:",
-      "Quais crenças você carrega sobre relacionamentos? (Ex: 'Amor exige sacrifício', 'Parceiro(a) deve me adivinhar'...)",
-      "Que situações no relacionamento disparam emoções intensas em você?",
-      "Quando há conflito, qual é a sua estratégia habitual de enfrentamento?",
-      "Que padrão repetitivo você observa em vocês como casal?",
-      "O que você mais deseja que mude na dinâmica do relacionamento?",
-    ]
-  },
-  "novos-padroes": {
-    titulo: "Novos Padrões Relacionais",
-    instrucao: "Construindo acordos e comunicação saudável",
-    perguntas: [
-      "Descreva uma situação onde você reconheceu e validou o sentimento do(a) seu/sua parceiro(a) esta semana:",
-      "Em vez de 'Você sempre...', use: 'Eu me sinto ___ quando ___. Preciso de ___.' Escreva uma situação real usando essa fórmula:",
-      "Que acordo relacional vocês podem fazer para melhorar a convivência? (Ex: sem celular durante as refeições, check-in diário de 10 min...)",
-      "Descreva um conflito passado e como poderiam tê-lo reparado de forma mais gentil:",
-      "Que melhoria concreta você observou no relacionamento desde o início desta jornada?",
-    ]
-  },
-};
-
-function FormularioCasal({ atividadeId, onVoltar }) {
-  const config = ATIVIDADES_FORMULARIOS[atividadeId];
-  const [respostas, setRespostas] = useState({});
-  const [salvando,  setSalvando]  = useState(false);
-  const [salvo,     setSalvo]     = useState(false);
-
-  if (!config) return (
-    <div style={{textAlign:"center",padding:32,color:"var(--text-muted)"}}>
-      Formulário não configurado para esta atividade.
-    </div>
-  );
-
-  async function salvar() {
-    setSalvando(true);
-    try {
-      await db.collection("clinica_casais_respostas").add({
-        pacienteId:"admin", casalId:"admin",
-        atividadeId,
-        respostas,
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      setSalvo(true);
-    } catch(e) { alert("Erro ao salvar."); }
-    setSalvando(false);
-  }
-
-  return (
-    <div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,fontStyle:"italic"}}>
-        {config.instrucao}
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
-        {config.perguntas.map((p,i)=>(
-          <div key={i} style={{background:"#fafafa",borderRadius:10,padding:14,border:"1px solid var(--gray-100)"}}>
-            <div style={{display:"flex",gap:10,marginBottom:8}}>
-              <span style={{background:"var(--purple)",color:"white",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</span>
-              <span style={{fontSize:13,fontWeight:500,lineHeight:1.5}}>{p}</span>
-            </div>
-            <TextAreaVoz className="form-input" rows={3}
-              value={respostas[i]||""}
-              onChange={e=>setRespostas(r=>({...r,[i]:e.target.value}))}
-              placeholder="Escreva sua resposta..."
-              style={{resize:"vertical"}}/>
-          </div>
-        ))}
-      </div>
-      {salvo && <div style={{background:"#d1fae5",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:13,color:"#065f46"}}>✓ Respostas salvas!</div>}
-      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar} disabled={salvando}>
-        {salvando?"Salvando...":"💾 Salvar respostas"}
-      </button>
-    </div>
-  );
-}
-
-
-// ── Psicoeducações e Fábulas para Casais ────────────────────────────────────
-function PsicoFabCasais(){
-  const [psicos, setPsicos]     = useState([]);
-  const [fabulas, setFabulas]   = useState([]);
-  const [abaAtiva, setAbaAtiva] = useState("psico");
-  const [aberto, setAberto]     = useState(null);
-  const [loading, setLoading]   = useState(true);
-
-  useEffect(()=>{
-    let loaded = 0;
-    const check = ()=>{ loaded++; if(loaded===2) setLoading(false); };
-    const u1 = db.collection("clinica_psicoeducacao")
-      .where("categoria","==","casais")
-      .onSnapshot(s=>{ setPsicos(s.docs.map(d=>({id:d.id,...d.data()}))); check(); }, check);
-    const u2 = db.collection("clinica_fabulas")
-      .where("categoria","==","casais")
-      .onSnapshot(s=>{ setFabulas(s.docs.map(d=>({id:d.id,...d.data()}))); check(); }, check);
-    return ()=>{ u1(); u2(); };
-  },[]);
-
-  if(loading) return null;
-  if(psicos.length===0 && fabulas.length===0) return null;
-
-  if(aberto){
-    const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
-    return(
-      <div style={{marginBottom:12}}>
-        <button className="btn btn-ghost" style={{marginBottom:12,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
-          <Icon name="arrow-left" size={16}/> Voltar
-        </button>
-        {VisualComp ? <VisualComp cat={{cor:"#7B00C4",bg:"#f3e6ff",accent:"#EC4899"}}/> : (
-          <div className="card">
-            <div style={{textAlign:"center",padding:"8px 0 16px"}}>
-              <div style={{fontSize:40,marginBottom:8}}>{aberto.emoji||"💜"}</div>
-              <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:6}}>{aberto.titulo}</div>
-            </div>
-            {aberto.descricao&&<p style={{fontSize:13,color:"var(--text-muted)",fontStyle:"italic",marginBottom:12}}>{aberto.descricao}</p>}
-            {aberto.conteudo&&<div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div>}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return(
-    <div style={{borderRadius:12,border:"1.5px solid #f0b8ff",overflow:"hidden",marginBottom:12}}>
-      <div style={{background:"linear-gradient(to right,#f9f0ff,#f3e6ff)",padding:"12px 18px",display:"flex",alignItems:"center",gap:10,borderBottom:"1px solid #e8c8ff"}}>
-        <span style={{fontSize:20}}>💜</span>
-        <div style={{fontWeight:700,fontSize:14,color:"#7B00C4"}}>Recursos para o Casal</div>
-      </div>
-      <div style={{background:"white",padding:"10px 18px",borderBottom:"1px solid #e8c8ff",display:"flex",gap:8}}>
-        {[["psico","Psicoeducação",psicos.length],["fabula","Fábulas",fabulas.length]].map(([k,l,c])=>(
-          <button key={k} onClick={()=>setAbaAtiva(k)}
-            style={{padding:"5px 14px",borderRadius:20,border:"1.5px solid",borderColor:abaAtiva===k?"#7B00C4":"#e5e7eb",background:abaAtiva===k?"#f3e6ff":"white",color:abaAtiva===k?"#7B00C4":"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:abaAtiva===k?600:400}}>
-            {l} ({c})
-          </button>
-        ))}
-      </div>
-      <div style={{background:"white",padding:"12px 18px",display:"flex",flexDirection:"column",gap:8}}>
-        {(abaAtiva==="psico"?psicos:fabulas).map(item=>(
-          <div key={item.id} onClick={()=>setAberto(item)}
-            style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:"#faf5ff",borderRadius:10,border:"1px solid #e8c8ff",cursor:"pointer"}}
-            onMouseEnter={e=>e.currentTarget.style.background="#f3e6ff"}
-            onMouseLeave={e=>e.currentTarget.style.background="#faf5ff"}>
-            <div style={{fontSize:26,flexShrink:0}}>{item.emoji||"💜"}</div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:600,fontSize:13,color:"#3d006a"}}>{item.titulo}</div>
-              {item.descricao&&<div style={{fontSize:11,color:"#7B00C4",marginTop:2,lineHeight:1.4}}>{item.descricao}</div>}
-            </div>
-            <span style={{fontSize:12,color:"#7B00C4",fontWeight:600,flexShrink:0}}>Ver →</span>
-          </div>
-        ))}
-        {(abaAtiva==="psico"?psicos:fabulas).length===0&&(
-          <div style={{textAlign:"center",padding:"16px 0",color:"var(--text-muted)",fontSize:13}}>
-            Nenhum item cadastrado para casais ainda.
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AbaProtocoloCasais() {
-  const [expandido, setExpandido] = useState(null);
-  const [atividadeAberta, setAtividadeAberta] = useState(null);
-  const [respostas, setRespostas] = useState({});
-  const [checkin, setCheckin] = useState({});
-  const [msg, setMsg] = useState("");
-
-  if(atividadeAberta){
-    const {etapa, at} = atividadeAberta;
-    return(
-      <div>
-        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setAtividadeAberta(null)}>
-          <Icon name="arrow-left" size={16}/> Voltar ao Protocolo
-        </button>
-        <div className="card" style={{marginBottom:16,background:etapa.bg,border:"1.5px solid "+etapa.cor+"40"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
-            <span style={{fontSize:28}}>{etapa.emoji}</span>
-            <div>
-              <div style={{fontWeight:700,fontSize:14,color:etapa.cor}}>{etapa.stage===0?"Diagnóstico":"Etapa "+etapa.stage} — {etapa.titulo}</div>
-              <div style={{fontSize:12,color:"var(--text-muted)"}}>{at.titulo}</div>
-            </div>
-          </div>
-          <p style={{fontSize:13,color:"var(--gray-700)",marginTop:8,paddingLeft:38}}>{at.desc}</p>
-        </div>
-        <div className="card">
-          <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>{at.titulo}</div>
-          {at.id==="inventario-bem-estar"
-            ? <InventarioBemEstarCasal onVoltar={()=>setAtividadeAberta(null)}/>
-            : at.id==="roda-vida-relacionamento"
-            ? <AdminRodaVida onVoltar={()=>setAtividadeAberta(null)}/>
-            : at.id==="3-metas"
-            ? <AdminMetas onVoltar={()=>setAtividadeAberta(null)}/>
-            : at.id==="quem-sou"
-            ? <AdminQuemSou onVoltar={()=>setAtividadeAberta(null)}/>
-            : at.id==="o-que-quero"
-            ? <AdminOQueQuero onVoltar={()=>setAtividadeAberta(null)}/>
-            : ATIVIDADES_FORMULARIOS[at.id]
-            ? <FormularioCasal atividadeId={at.id} onVoltar={()=>setAtividadeAberta(null)}/>
-            : (<>
-          <div style={{background:"#f9fafb",borderRadius:10,padding:14,marginBottom:16,fontSize:13,color:"#6b7280",lineHeight:1.7}}>
-            Responda com honestidade e na presença da psicóloga. Esta atividade faz parte do protocolo de Terapia de Casais TCC.
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            {[1,2,3].map(n=>(
-              <div key={n}>
-                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Reflexão {n}</label>
-                <TextAreaVoz className="form-input" rows={3}
-                  value={respostas[at.id+"_"+n]||""}
-                  onChange={e=>setRespostas(r=>({...r,[at.id+"_"+n]:e.target.value}))}
-                  placeholder="Escreva sua resposta..."/>
-              </div>
-            ))}
-          </div>
-          <button className="btn btn-purple" style={{width:"100%",marginTop:16}} onClick={()=>{setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);}}>
-            {msg||<><Icon name="save" size={15}/> Salvar respostas</>}
-          </button>
-          </>)}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{background:"var(--purple-bg)",border:"1px solid var(--purple)30",borderRadius:12,padding:14,marginBottom:20,display:"flex",alignItems:"flex-start",gap:10}}>
-        <Icon name="heart" size={16}/>
-        <div style={{fontSize:13,color:"var(--gray-700)",lineHeight:1.6}}>
-          <strong>Protocolo TCC para Casais</strong> — diagnóstico inicial + 4 etapas progressivas. Clique em cada atividade para acessar.
-        </div>
-      </div>
-
-      {/* Check-in Semanal */}
-      <div style={{borderRadius:12,border:"1.5px solid #fda4af",overflow:"hidden",marginBottom:12}}>
-        <button onClick={()=>setExpandido(expandido==="checkin"?null:"checkin")}
-          style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:"linear-gradient(to right,#fff1f2,#fdf2f8)",border:"none",cursor:"pointer",textAlign:"left"}}>
-          <span style={{fontSize:22}}>✨</span>
-          <div style={{flex:1}}>
-            <div style={{fontWeight:700,fontSize:14,color:"#be185d"}}>Check-in Semanal do Casal</div>
-            <div style={{fontSize:12,color:"var(--text-muted)"}}>Recorrente · 7 questões de conexão emocional</div>
-          </div>
-          <Icon name={expandido==="checkin"?"chevron-up":"chevron-down"} size={16}/>
-        </button>
-        {expandido==="checkin"&&(
-          <div style={{background:"white",padding:"16px 18px"}}>
-            <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:12}}>Escala: 1=Nunca · 2=Raramente · 3=Às vezes · 4=Frequentemente · 5=Sempre</div>
-            {CHECKIN_SEMANAL.map((q,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<CHECKIN_SEMANAL.length-1?"1px solid var(--gray-100)":"none"}}>
-                <div style={{width:22,height:22,borderRadius:"50%",background:"#ffe4e6",color:"#be185d",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}}>{i+1}</div>
-                <div style={{fontSize:13,flex:1,lineHeight:1.4}}>{q}</div>
-                <div style={{display:"flex",gap:4}}>
-                  {[1,2,3,4,5].map(v=>(
-                    <button key={v} onClick={()=>setCheckin(c=>({...c,[i]:v}))} style={{width:28,height:28,borderRadius:"50%",border:"1.5px solid",borderColor:checkin[i]===v?"#be185d":"#e5e7eb",background:checkin[i]===v?"#be185d":"white",color:checkin[i]===v?"white":"#6b7280",fontSize:11,fontWeight:600,cursor:"pointer"}}>{v}</button>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <button className="btn btn-purple" style={{width:"100%",marginTop:12,background:"#be185d",border:"none"}} onClick={()=>{setMsg("✓ Check-in salvo!");setTimeout(()=>setMsg(""),2000);}}>
-              {msg||"Salvar Check-in"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Psicoeducações para Casais */}
-      <PsicoFabCasais/>
-
-      {PROTOCOLO_CASAIS.map(etapa=>(
-        <div key={etapa.stage} style={{borderRadius:12,border:"1.5px solid",borderColor:etapa.cor+"40",overflow:"hidden",marginBottom:12}}>
-          <button onClick={()=>setExpandido(expandido===etapa.stage?null:etapa.stage)}
-            style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 18px",background:etapa.bg,border:"none",cursor:"pointer",textAlign:"left"}}>
-            <span style={{fontSize:22}}>{etapa.emoji}</span>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:14,color:etapa.cor}}>
-                {etapa.stage===0?"Diagnóstico":"Etapa "+etapa.stage} — {etapa.titulo}
-              </div>
-              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{etapa.subtitulo}</div>
-            </div>
-            <span style={{background:"white",color:etapa.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,border:"1px solid "+etapa.cor+"40"}}>
-              {etapa.atividades.length} ativ.
-            </span>
-            <Icon name={expandido===etapa.stage?"chevron-up":"chevron-down"} size={16}/>
-          </button>
-          {expandido===etapa.stage&&(
-            <div style={{background:"white",padding:"12px 18px",display:"flex",flexDirection:"column",gap:8}}>
-              {etapa.atividades.map(at=>(
-                <div key={at.id} style={{display:"flex",alignItems:"flex-start",gap:12,padding:"12px 14px",background:"var(--gray-50)",borderRadius:10,border:"1px solid var(--gray-200)",cursor:"pointer",transition:"all .15s"}}
-                  onClick={()=>setAtividadeAberta({etapa,at})}
-                  onMouseEnter={e=>{e.currentTarget.style.background=etapa.bg;e.currentTarget.style.borderColor=etapa.cor+"40";}}
-                  onMouseLeave={e=>{e.currentTarget.style.background="var(--gray-50)";e.currentTarget.style.borderColor="var(--gray-200)";}}>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:etapa.cor,marginTop:5,flexShrink:0}}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:600,fontSize:13}}>{at.titulo}</div>
-                    <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2,lineHeight:1.5}}>{at.desc}</div>
-                  </div>
-                  <span style={{fontSize:12,color:etapa.cor,fontWeight:600,flexShrink:0}}>Acessar →</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Aba Fábulas ──────────────────────────────────────────────────────────────
-const CATS_FABULAS = {
-  ansiedade:      {label:"Ansiedade",           cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
-  emocoes:        {label:"Emoções",             cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
-  autoconhecimento:{label:"Autoconhecimento",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
-  crescimento:    {label:"Crescimento",         cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
-  relacionamentos:{label:"Relacionamentos",     cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
-  casais:         {label:"Casais",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
-  perdao:         {label:"Perdão",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
-  outros:         {label:"Outros",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
-};
-
-function AbaFabulas() {
-  const [fabulas, setFabulas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fabulaAberta, setFabulaAberta] = useState(null);
-  const [filtro, setFiltro] = useState("todos");
-  const [migrando, setMigrando] = useState(false);
-
-  const MIGRACAO_CATS = {
-    "resiliência":"crescimento","resiliencia":"crescimento",
-    "esperança":"crescimento","esperanca":"crescimento",
-    "autoconfiança":"autoconhecimento","autoconfianca":"autoconhecimento",
-    "autoestima":"autoconhecimento",
-    "mindfulness":"emocoes",
-    "tcc":"autoconhecimento",
-    "expressão emocional":"emocoes","expressao emocional":"emocoes",
-    "regulação emocional":"emocoes","regulacao emocional":"emocoes",
-    "perspectiva":"autoconhecimento",
-    "perdão":"perdao",
-  };
-
-  async function migrarCategorias(){
-    if(!confirm("Migrar categorias antigas para as novas? Isso atualiza os documentos no Firebase.")) return;
-    // Garante que breathing-478 e muscle-relaxation ficam visíveis com categoria ansiedade
-    const snapAnsi = await db.collection("clinica_recursos")
-      .where("formularioKey","in",["breathing-478","muscle-relaxation"]).get();
-    for(const doc of snapAnsi.docs){
-      const cat = doc.data().categoria;
-      if(!["tcc","ansiedade","emocoes","autocuidado","relacionamentos","corpo","esquema","musicoterapia","avaliacao","outro"].includes(cat)){
-        await doc.ref.update({categoria:"ansiedade"});
-      }
-    }
-    setMigrando(true);
-    try{
-      const snap = await db.collection("clinica_fabulas").get();
-      let count = 0;
-      for(const doc of snap.docs){
-        const cat = doc.data().categoria;
-        const nova = MIGRACAO_CATS[cat];
-        if(nova){ await db.collection("clinica_fabulas").doc(doc.id).update({categoria:nova}); count++; }
-      }
-      alert("✓ "+count+" fábulas migradas!");
-    } catch(e){ alert("Erro: "+e.message); }
-    setMigrando(false);
-  }
-
-  useEffect(()=>{
-    const unsub = db.collection("clinica_fabulas").onSnapshot(snap=>{
-      setFabulas(snap.docs.map(d=>({id:d.id,...d.data()})));
-      setLoading(false);
-    },()=>setLoading(false));
-    return unsub;
-  },[]);
-
-  if(loading) return <Spinner/>;
-
-  if(fabulaAberta){
-    const cat = CATS_FABULAS[fabulaAberta.categoria]||{label:fabulaAberta.categoria,cor:"#7c3aed",bg:"#ede9fe"};
-    return (
-      <div>
-        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setFabulaAberta(null)}>
-          <Icon name="arrow-left" size={16}/> Todas as fábulas
-        </button>
-        <div className="card" style={{marginBottom:16,background:cat.cor,color:"white"}}>
-          <div style={{textAlign:"center",padding:"8px 0 16px"}}>
-            <div style={{fontSize:52,marginBottom:12}}>{fabulaAberta.emoji}</div>
-            <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>{fabulaAberta.titulo}</div>
-            <div style={{fontSize:13,fontStyle:"italic",opacity:0.9}}>"{fabulaAberta.moral}"</div>
-            <div style={{marginTop:12,fontSize:12,opacity:0.75}}>{(fabulaAberta.paginas||[]).length} páginas · {(fabulaAberta.perguntas||[]).length} reflexões</div>
-          </div>
-        </div>
-        {(fabulaAberta.paginas||[]).map((pag,i)=>(
-          <div key={i} className="card" style={{marginBottom:12}}>
-            <div style={{fontSize:11,fontWeight:700,color:cat.cor,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.8px"}}>Página {i+1} de {fabulaAberta.paginas.length}</div>
-            <p style={{fontSize:14,lineHeight:1.9,color:"var(--gray-700)"}}>{pag}</p>
-          </div>
-        ))}
-        {(fabulaAberta.perguntas||[]).length>0&&(
-          <div className="card" style={{border:"1.5px solid "+cat.cor+"30",background:cat.bg}}>
-            <div style={{fontWeight:700,marginBottom:14,display:"flex",alignItems:"center",gap:8,color:cat.cor}}>
-              <Icon name="help-circle" size={16}/> Perguntas de Reflexão
-            </div>
-            {fabulaAberta.perguntas.map((p,i)=>(
-              <div key={i} style={{display:"flex",gap:10,padding:"12px 0",borderBottom:i<fabulaAberta.perguntas.length-1?"1px solid "+cat.cor+"20":"none"}}>
-                <div style={{width:26,height:26,borderRadius:"50%",background:cat.cor,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>{i+1}</div>
-                <p style={{fontSize:13,lineHeight:1.6,color:"var(--gray-700)"}}>{p}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if(fabulas.length===0) return (
-    <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
-      <Icon name="book-open" size={40}/>
-      <div style={{marginTop:12,fontWeight:500}}>Nenhuma fábula cadastrada ainda.</div>
-      <div style={{fontSize:13,marginTop:6}}>Execute o arquivo <code>popular-recursos.html</code> para criar as 15 fábulas.</div>
-    </div>
-  );
-
-  // Categorias únicas
-  const cats = ["todos", ...new Set(fabulas.map(f=>f.categoria||"outro"))];
-  const filtradas = filtro==="todos" ? fabulas : fabulas.filter(f=>(f.categoria||"outro")===filtro);
-  const porCat = filtradas.reduce((acc,f)=>{
-    const k = f.categoria||"outro";
-    if(!acc[k]) acc[k]=[];
-    acc[k].push(f);
-    return acc;
-  },{});
-
-  return (
-    <div>
-      {/* Filtros */}
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20,overflowX:"auto",paddingBottom:4}}>
-        {cats.map(cat=>{
-          const c = CATS_FABULAS[cat]||{label:cat==="todos"?"Todas":cat,cor:"#7c3aed",bg:"#ede9fe"};
-          const n = cat==="todos"?fabulas.length:fabulas.filter(f=>(f.categoria||"outro")===cat).length;
-          const ativo = filtro===cat;
-          return(
-            <button key={cat} onClick={()=>setFiltro(cat)} style={{display:"flex",alignItems:"center",gap:5,padding:"6px 14px",borderRadius:20,border:"1.5px solid",borderColor:ativo?c.cor:"#e5e7eb",background:ativo?c.cor:"white",color:ativo?"white":c.cor,fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .15s"}}>
-              {cat!=="todos"&&<span style={{fontSize:14}}>{fabulas.find(f=>f.categoria===cat)?.emoji||"📖"}</span>}
-              {cat==="todos"?"📚 Todas":c.label} <span style={{opacity:0.8,fontSize:11}}>{n}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {Object.entries(porCat).map(([cat,itens])=>{
-        const c = CATS_FABULAS[cat]||{label:cat,cor:"#7c3aed",bg:"#ede9fe"};
-        return (
-          <div key={cat} style={{marginBottom:28}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
-              <span style={{fontWeight:700,fontSize:11,color:c.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{c.label}</span>
-              <span style={{background:c.bg,color:c.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>{itens.length}</span>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
-              {itens.map(f=>(
-                <div key={f.id} style={{background:"white",border:"1.5px solid",borderColor:c.cor+"40",borderRadius:14,overflow:"hidden",cursor:"pointer",transition:"box-shadow .15s"}}
-                  onClick={()=>setFabulaAberta(f)}
-                  onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px "+c.cor+"30"}
-                  onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
-                  <div style={{background:c.cor,padding:"16px",display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:28}}>{f.emoji||"📖"}</span>
-                    <div>
-                      <div style={{fontWeight:600,fontSize:13,color:"white",lineHeight:1.3}}>{f.titulo}</div>
-                      <span style={{background:"rgba(255,255,255,0.2)",color:"white",borderRadius:20,padding:"1px 8px",fontSize:10,fontWeight:600}}>{c.label}</span>
-                    </div>
-                  </div>
-                  <div style={{padding:"12px 14px"}}>
-                    <p style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",lineHeight:1.5,marginBottom:8}}>"{f.moral}"</p>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,color:"var(--text-muted)"}}>
-                      <span>{(f.paginas||[]).length} pág. · {(f.perguntas||[]).length} reflexões</span>
-                      <span style={{color:c.cor,fontWeight:600,fontSize:12}}>Começar a ler →</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Aba Psicoeducação ─────────────────────────────────────────────────────────
-const PILULAS_TCC = [
-  {emoji:"💭",titulo:"O poder dos pensamentos",descricao:"Como o que pensamos afeta o que sentimos",categoria:"tcc",tipo:"texto",
-   conteudo:"Você já reparou como uma ideia pode mudar completamente o seu humor?\n\nA mente funciona como um filtro: o que pensamos molda o que sentimos e o que fazemos. Um mesmo evento pode gerar tristeza ou tranquilidade — depende do que sua cabeça conta sobre ele. Não são as coisas em si que nos perturbam, mas o que acreditamos sobre elas.\n\n🎯 Na prática:\nHoje, quando notar uma emoção forte, pergunte: \"Que pensamento veio antes disso?\" Escreva num papel. Só observar já muda tudo."},
-  {emoji:"🔍",titulo:"Fatos vs. interpretações",descricao:"Como não acreditar em tudo o que nossa mente diz",categoria:"tcc",tipo:"texto",
-   conteudo:"A mente preenche lacunas automaticamente — e nem sempre acerta.\n\n\"Ela não me respondeu, deve estar com raiva de mim\" é uma interpretação, não um fato. O fato é apenas: \"Ela não respondeu\". Todo o resto é história que criamos. E histórias podem ser reescritas.\n\n🎯 Na prática:\nPegue uma situação que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOCÊ acrescentou? Escreva os dois lados."},
-  {emoji:"⛈️",titulo:"A armadilha do pior cenário",descricao:"O hábito de catastrofizar o futuro e como parar",categoria:"ansiedade",tipo:"texto",
-   conteudo:"Catastrofizar é o hábito de imaginar sempre o pior desfecho possível — e tratá-lo como certeza.\n\n\"E se eu reprovar? E se perder o emprego? E se ninguém me amar?\" O problema é que o cérebro não distingue ameaça real de imaginada, então você sofre antecipado por algo que talvez nunca aconteça.\n\n🎯 Na prática:\nQuando catastrofizar aparecer, faça 3 perguntas:\n1. Isso é provável?\n2. Já aconteceu antes?\n3. Se acontecer, eu consigo lidar?\nQuase sempre a resposta ao item 3 é sim."},
-  {emoji:"🌀",titulo:"O ciclo da ansiedade",descricao:"Como evitar o que tememos só faz o medo crescer",categoria:"ansiedade",tipo:"texto",
-   conteudo:"Quanto mais evitamos o que tememos, mais o medo cresce.\n\nParece contraditório, mas é assim: ao fugir da situação, o alívio imediato ensina ao cérebro que \"fugir = segurança\". Com o tempo, o gatilho fica cada vez menor e a evitação, cada vez maior. A única saída é, aos poucos, enfrentar.\n\n🎯 Na prática:\nEscolha uma coisa pequena que você evita há tempo. Faça por 5 minutos hoje — só 5. Observe que o pior quase nunca acontece."},
-  {emoji:"🚀",titulo:"Agir antes de ter vontade",descricao:"O princípio prático: fazer algo para gerar motivação",categoria:"autocuidado",tipo:"texto",
-   conteudo:"Esperamos a motivação aparecer para agir — mas funciona ao contrário.\n\nA ação cria a motivação, não o contrário. Você não precisa estar animado para começar; precisa começar para ficar animado. É como empurrar um carro parado: o começo exige mais força, depois o movimento sustenta.\n\n🎯 Na prática:\nEscolha uma tarefa que você está adiando. Faça os primeiros 2 minutos agora — sem julgamento. Só isso. Veja o que acontece depois."},
-  {emoji:"🤗",titulo:"Autocompaixão",descricao:"Como ser menos crítico consigo mesmo",categoria:"autoestima",tipo:"texto",
-   conteudo:"Nós seríamos horrorosos como amigos de nós mesmos.\n\nCom uma pessoa que amamos, somos gentis e pacientes. Com nós, somos críticos e impacientes. Autocompaixão não é preguiça nem fraqueza — é tratar a si mesmo com a mesma ternura que você ofereceria a quem você ama.\n\n🎯 Na prática:\nHoje, quando errar algo, diga internamente: \"Tudo bem, isso é humano. Qualquer pessoa teria dificuldade aqui. Eu faço o que posso.\" Apenas isso."},
-  {emoji:"🎨",titulo:"A roda das emoções",descricao:"A importância de saber nomear exatamente o que sente",categoria:"mindfulness",tipo:"texto",
-   conteudo:"\"Estou mal\" é vago demais para o cérebro agir.\n\nQuando nomeamos com precisão o que sentimos — \"estou ansioso\", \"estou frustrado\", \"estou envergonhado\" — ativamos o córtex pré-frontal, que acalma a amígdala. Nomear emoções é uma forma de regulação emocional.\n\nEmoções primárias: Alegria, Tristeza, Raiva, Medo, Surpresa, Nojo.\nCada uma tem dezenas de nuances — quanto mais preciso o nome, mais controle você tem.\n\n🎯 Na prática:\nAntes de dormir, escreva: \"Hoje me senti ___\" — use o nome mais preciso possível. Evite \"bem\" ou \"mal\"."},
-  {emoji:"🔺",titulo:"O modelo ABC na prática",descricao:"Como nossa crença sobre um evento muda nossa reação",categoria:"tcc",tipo:"texto",
-   conteudo:"A — Adversidade (o que aconteceu)\nB — Belief, ou seja, a crença sobre o que aconteceu\nC — Consequência emocional\n\nA mesma situação pode gerar emoções completamente diferentes dependendo do B. Dois colegas recebem críticas do chefe: um pensa \"Sou um fracasso\" e fica triste; o outro pensa \"Posso melhorar\" e fica motivado. Mesmo A, B diferente, C diferente.\n\n🎯 Na prática:\nPense em uma situação que te deixou mal. Escreva o A (fato), o B (o que você acreditou) e o C (emoção). Agora invente um B diferente — o que mudaria?"},
-  {emoji:"⚡",titulo:"Eustresse vs. distresse",descricao:"Como diferenciar o estresse que impulsiona do que adoece",categoria:"ansiedade",tipo:"texto",
-   conteudo:"Nem todo estresse é ruim.\n\nEustresse é o estresse que nos impulsiona — aquela energia antes de uma apresentação importante, a adrenalina de um desafio. Distresse é quando a pressão ultrapassa nossa capacidade e começa a nos adoecer. A diferença está na duração e na percepção de controle.\n\n🎯 Na prática:\nHoje, pergunte sobre um estressor: \"Isso me desafia ou me paralisa?\" Se desafia, use a energia. Se paralisa, é sinal de que precisa de pausa ou ajuda."},
-  {emoji:"🪫",titulo:"Sinais de desgaste emocional",descricao:"Como identificar a sobrecarga e estratégias de pausa",categoria:"autocuidado",tipo:"texto",
-   conteudo:"O corpo e a mente avisam antes de entrar em colapso — mas aprendemos a ignorar esses sinais.\n\nIrritabilidade sem causa, dificuldade de concentração, sono perturbado, sensação de vazio ou indiferença são sinais de que o sistema está sobrecarregado. Pausar não é fraqueza; é manutenção obrigatória.\n\n🎯 Na prática:\nHoje, reserve 15 minutos para fazer absolutamente nada útil: sentar ao sol, ouvir música, tomar um chá. Sem culpa. É recuperação."},
-  {emoji:"∞",titulo:"O perigo do sempre e nunca",descricao:"Como a supergeneralização afeta nosso humor",categoria:"tcc",tipo:"texto",
-   conteudo:"\"Eu SEMPRE faço isso errado.\" \"Ele NUNCA me ouve.\"\n\nEssas palavras parecem verdade, mas são armadilhas. Uma generalização transforma um evento pontual em característica permanente. E o que parece permanente gera desânimo. Quase nada na vida humana é realmente \"sempre\" ou \"nunca\".\n\n🎯 Na prática:\nQuando notar um \"sempre\" ou \"nunca\" no seu pensamento ou fala, troque por: \"desta vez\", \"às vezes\", \"com frequência\". Observe como a frase — e a emoção — mudam."},
-  {emoji:"🍕",titulo:"A pizza da responsabilidade",descricao:"Como dividir a culpa evitando autoculpa ou vitimização",categoria:"tcc",tipo:"texto",
-   conteudo:"Quando algo dá errado, tendemos aos extremos: ou colocamos toda a culpa em nós mesmos (autoculpa tóxica) ou em outro alguém (vitimização).\n\nA verdade é que a maioria dos problemas tem múltiplos autores: você, o outro e as circunstâncias. Dividir a culpa em fatias mais justas libera peso.\n\nFórmula: 33% Eu + 33% O Outro + 33% As Circunstâncias\n\n🎯 Na prática:\nPense num problema recente. Divida: qual parte foi sua? Qual foi do outro? Qual foi das circunstâncias? Você ficará surpreso com o quanto não precisa carregar."},
-  {emoji:"🔦",titulo:"O filtro negativo da mente",descricao:"Por que ignoramos 10 elogios e focamos em 1 crítica",categoria:"autoestima",tipo:"texto",
-   conteudo:"O cérebro tem um viés de negatividade — herança evolutiva para detectar perigos.\n\nIsso nos faz ignorar 10 elogios e ruminar 1 crítica por dias. É automático, não é fraqueza. Mas podemos treinar ativamente a atenção para o que funcionou.\n\n🎯 Na prática:\nAntes de dormir, anote 3 coisas que deram certo hoje — podem ser minúsculas. Fazer isso por 21 dias literalmente reconfigura os circuitos atencionais do cérebro."},
-  {emoji:"⏱️",titulo:"A regra dos 5 minutos",descricao:"Uma técnica infalível para vencer a procrastinação",categoria:"autocuidado",tipo:"texto",
-   conteudo:"Procrastinamos porque o cérebro antecipa a tarefa como enorme e desagradável.\n\nMas a aversão quase sempre é maior na antecipação do que na execução. A regra é: comprometa-se com apenas 5 minutos. Só. Após esses 5 minutos, você pode parar — com honra. Na maioria das vezes, você continua.\n\n🎯 Na prática:\nEscolha a tarefa mais temida da sua lista hoje. Configure um timer para 5 minutos. Comece agora. Só 5 minutos."},
-  {emoji:"🌊",titulo:"Surfando a onda da emoção",descricao:"Como sentir uma emoção intensa sem agir por impulso",categoria:"mindfulness",tipo:"texto",
-   conteudo:"Emoções intensas parecem eternas, mas têm um pico e depois diminuem — como uma onda do mar.\n\nO problema é que quando agimos por impulso no pico da onda, quase sempre nos arrependemos. A técnica de \"surfar a onda\" é: observe a emoção sem agir nela, sabendo que ela vai passar.\n\n🎯 Na prática:\nNa próxima emoção intensa, observe como uma onda: onde ela começa no corpo? Ela sobe? Quando chega ao pico? Você verá que em 10 a 20 minutos ela diminui naturalmente."},
-  {emoji:"🧩",titulo:"7 Distorções de Pensamento",descricao:"Os padrões de pensamento que distorcem sua realidade",categoria:"tcc",tipo:"visual",conteudo:""},
-  {emoji:"🧠",titulo:"Desmontar o Circuito Cerebral da Ansiedade",descricao:"4 passos para retomar o comando da sua própria vida",categoria:"ansiedade",tipo:"visual",conteudo:""},
-  {emoji:"🎛️",titulo:"Preocupação produtiva vs. improdutiva",descricao:"Como separar o que posso resolver do que está fora do controle",categoria:"ansiedade",tipo:"texto",
-   conteudo:"Preocupação produtiva: tenho uma ação concreta que posso fazer agora para resolver isso.\n\nPreocupação improdutiva: o problema está fora do meu controle ou no futuro, e ficar ruminando só gasta energia. A pergunta-chave é: existe algo que eu possa FAZER agora?\n\n🎯 Na prática:\nListe suas 3 preocupações do momento. Para cada uma: existe uma ação concreta que você pode fazer hoje? Se sim, faça. Se não, escreva: \"Isso está fora do meu controle agora\" e pratique soltar."},
-  {emoji:"🏆",titulo:"O diário de pequenas vitórias",descricao:"Como treinar o cérebro para notar o que deu certo",categoria:"autocuidado",tipo:"texto",
-   conteudo:"Positividade tóxica é fingir que tudo está bem quando não está.\n\nO diário de pequenas vitórias é diferente: é treinar o cérebro para notar o que realmente funcionou — por menor que seja. \"Tomei água hoje.\" \"Respondi um email difícil.\" \"Saí da cama quando não queria.\" Essas coisas contam.\n\n🎯 Na prática:\nHoje à noite, escreva 3 pequenas vitórias do dia. Podem ser minúsculas. Não vale inventar — vale notar o que realmente aconteceu e que você normalmente ignoraria."},
-];
-
-
-// ═══════════════════════════════════════════════════════════════════════
-// PSICOEDUCAÇÕES VISUAIS — ANSIEDADE
-// ═══════════════════════════════════════════════════════════════════════
-
-function PsicoPreocupacao({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🧩</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você preocupa com o que pode — ou com o que não pode controlar?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Aprender a separar as preocupações muda sua relação com a ansiedade.</div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
-        <div style={{background:"#f9f0ff",padding:"16px 18px",borderRight:"2px solid #e8c8ff",borderBottom:"1px solid #e8c8ff"}}>
-          <div style={{color:"#22C55E",fontWeight:600,fontSize:13,marginBottom:6}}>✅ Produtiva</div>
-          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Existe uma ação concreta que posso fazer agora para resolver. A energia vai para a solução.</div>
-        </div>
-        <div style={{background:"#f3e6ff",padding:"16px 18px",borderBottom:"1px solid #e8c8ff"}}>
-          <div style={{color:"#F97316",fontWeight:600,fontSize:13,marginBottom:6}}>⚠️ Improdutiva</div>
-          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>O problema está fora do meu controle ou no futuro. Ruminar só gasta energia sem resolver nada.</div>
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"14px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:8}}>Pergunta-chave:</div>
-        <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"10px 14px",color:"#f3e6ff",fontSize:13,fontStyle:"italic"}}>
-          "Existe algo que eu possa FAZER agora para resolver isso?"
-        </div>
-        <div style={{display:"flex",gap:10,marginTop:10}}>
-          <div style={{flex:1,background:"rgba(34,197,94,0.2)",borderRadius:8,padding:"8px 10px",border:"1px solid rgba(34,197,94,0.4)"}}>
-            <div style={{color:"#86efac",fontSize:12,fontWeight:500}}>SIM → Aja agora</div>
-            <div style={{color:"#d9b3f5",fontSize:11,marginTop:2}}>Transforme em tarefa concreta</div>
-          </div>
-          <div style={{flex:1,background:"rgba(249,115,22,0.2)",borderRadius:8,padding:"8px 10px",border:"1px solid rgba(249,115,22,0.4)"}}>
-            <div style={{color:"#fed7aa",fontSize:12,fontWeight:500}}>NÃO → Solte conscientemente</div>
-            <div style={{color:"#d9b3f5",fontSize:11,marginTop:2}}>Escreva: "Isso está fora do meu controle"</div>
-          </div>
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Liste suas 3 preocupações do momento. Para cada uma: existe uma ação concreta que você pode fazer hoje? Se sim, faça. Se não, pratique soltar conscientemente.</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>De cada 10 preocupações, 8 estão fora do nosso controle. Quanto de energia você investe nessas 8? 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoPiorCenario({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>⛈️</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você vive imaginando o pior?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Catastrofizar é um hábito mental — e hábitos podem ser mudados.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:8}}>O que é catastrofizar?</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>É o hábito de imaginar o pior resultado possível como o mais provável. A mente entra em modo de ameaça — mesmo quando não há perigo real — e a ansiedade dispara.</div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>O triângulo da catastrofização</div>
-        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-          {[["🔮","Superestimar o perigo","Trata incerteza como certeza negativa"],["🙈","Subestimar a capacidade","Esquece que já superou coisas difíceis"],["🚫","Descartar o positivo","Ignora evidências de que pode dar certo"]].map(([e,t,d],i)=>(
-            <div key={i} style={{flex:1,minWidth:140,background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(255,255,255,0.2)"}}>
-              <div style={{fontSize:22,marginBottom:4}}>{e}</div>
-              <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:3}}>{t}</div>
-              <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>{d}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:8}}>3 perguntas para quebrar o ciclo</div>
-        {[["1","Qual é a evidência real de que isso vai acontecer?"],["2","Qual é o resultado mais provável — não o mais temido?"],["3","Se acontecer, conseguirei lidar? O que faria?"]].map(([n,q])=>(
-          <div key={n} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8}}>
-            <div style={{width:22,height:22,borderRadius:"50%",background:"#7B00C4",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,flexShrink:0}}>{n}</div>
-            <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5}}>{q}</div>
-          </div>
-        ))}
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Da última vez que você imaginou o pior — o que realmente aconteceu? Sua mente provavelmente superestimou o perigo. 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoEustresse({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>⚡</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Nem todo estresse é seu inimigo</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Aprender a diferenciá-los muda como você responde às pressões da vida.</div>
-      </div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:0}}>
-        <div style={{background:"#f9f0ff",padding:"16px 18px",borderRight:"2px solid #e8c8ff",borderBottom:"1px solid #e8c8ff"}}>
-          <div style={{color:"#22C55E",fontWeight:600,fontSize:14,marginBottom:8}}>Eustresse ✅</div>
-          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:10}}>O estresse que impulsiona. Gera energia, foco e motivação para superar desafios.</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-            {["Antes de apresentações","Novos desafios","Metas importantes","Adrenalina saudável"].map(t=>(
-              <span key={t} style={{background:"#dcfce7",color:"#16a34a",borderRadius:20,padding:"2px 8px",fontSize:10}}>{t}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{background:"#f3e6ff",padding:"16px 18px",borderBottom:"1px solid #e8c8ff"}}>
-          <div style={{color:"#F97316",fontWeight:600,fontSize:14,marginBottom:8}}>Distresse ⚠️</div>
-          <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:10}}>O estresse que adoece. Quando a pressão ultrapassa a capacidade e se torna crônica.</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-            {["Pressão constante","Sem descanso","Sensação de descontrole","Esgotamento"].map(t=>(
-              <span key={t} style={{background:"#fff7ed",color:"#ea580c",borderRadius:20,padding:"2px 8px",fontSize:10}}>{t}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"14px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:8}}>A diferença está em 2 fatores:</div>
-        <div style={{display:"flex",gap:10}}>
-          <div style={{flex:1,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 12px"}}>
-            <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:3}}>⏱️ Duração</div>
-            <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>Temporário = eustresse. Crônico = distresse.</div>
-          </div>
-          <div style={{flex:1,background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 12px"}}>
-            <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:3}}>🎮 Percepção de controle</div>
-            <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>Sinto que posso lidar = eustresse. Paralisado = distresse.</div>
-          </div>
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Hoje, identifique um estressor e pergunte: <em>"Isso me desafia ou me paralisa?"</em> Se desafia, use a energia. Se paralisa, é sinal de que precisa de pausa ou ajuda.</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>O estresse que você sente agora — está te impulsionando ou te adoecendo? Essa resposta é o primeiro passo para cuidar de você. 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoCicloAnsiedade({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🌀</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Evitar o que teme só faz o medo crescer</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Entender o ciclo da ansiedade é o primeiro passo para quebrá-lo.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>O ciclo que alimenta a ansiedade</div>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {[
-            {n:"1",e:"😰",t:"Situação temida",d:"Algo aciona a ameaça percebida",c:"#7B00C4"},
-            {n:"2",e:"💓",t:"Reação física",d:"Coração acelera, tensão, sudorese",c:"#9a00e0"},
-            {n:"3",e:"🧠",t:"Pensamento catastrófico",d:"'Não vou conseguir', 'Algo vai dar errado'",c:"#b040e0"},
-            {n:"4",e:"🚪",t:"Evitação",d:"Foge ou evita a situação temida",c:"#c870f0"},
-            {n:"5",e:"😮",t:"Alívio temporário",d:"A ansiedade cai — mas o medo cresce",c:"#d9b3f5"},
-          ].map(({n,e,t,d,c})=>(
-            <div key={n} style={{display:"flex",gap:10,alignItems:"center",background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid #e8c8ff"}}>
-              <div style={{width:24,height:24,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,flexShrink:0}}>{n}</div>
-              <div style={{fontSize:18,flexShrink:0}}>{e}</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#3d006a"}}>{t}</div>
-                <div style={{fontSize:11,color:"#7B00C4",lineHeight:1.4}}>{d}</div>
-              </div>
-            </div>
-          ))}
-          <div style={{textAlign:"center",fontSize:12,color:"#F97316",fontWeight:500,padding:"4px 0"}}>↩️ Volta para o passo 1 — o ciclo se repete e se fortalece</div>
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"14px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:8}}>Como quebrar o ciclo?</div>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {[["🎯","Exposição gradual","Enfrente a situação temida em pequenos passos — o medo diminui com a prática"],["💨","Técnicas de regulação","Respiração, mindfulness e relaxamento interrompem a resposta física"],["🧩","Reestruturação cognitiva","Questione os pensamentos catastróficos — são fatos ou suposições?"]].map(([e,t,d])=>(
-            <div key={t} style={{display:"flex",gap:10,alignItems:"flex-start",background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"8px 12px"}}>
-              <div style={{fontSize:18,flexShrink:0}}>{e}</div>
-              <div>
-                <div style={{color:"#f3e6ff",fontSize:12,fontWeight:500,marginBottom:2}}>{t}</div>
-                <div style={{color:"#d9b3f5",fontSize:11,lineHeight:1.4}}>{d}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>O que você tem evitado por ansiedade? Cada vez que evita, o medo ganha poder. Cada vez que enfrenta — mesmo com medo — você retoma o controle. 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoDesmontarAnsiedade({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🧠</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você pode desmontar o circuito cerebral da ansiedade</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>4 passos para retomar o comando da sua própria vida.</div>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:0}}>
-        {[
-          {n:"1",e:"🔍",t:"SEPARAR",c:"#7B00C4",bg:"#f9f0ff",tc:"#3d006a",dc:"#5a0090",d:"Quando separamos a ansiedade de quem você é, podemos colocá-la no banco do carona. Assim você que estará no comando — não importa o quanto a ansiedade grite."},
-          {n:"2",e:"🎯",t:"CONHECER",c:"#9a00e0",bg:"#f3e6ff",tc:"#3d006a",dc:"#5a0090",d:"A ansiedade é composta por sensações físicas, pensamentos automáticos negativos e ações comportamentais. Quando conhecemos esses três aspectos em nós mesmos, podemos desarmar o ciclo ansioso."},
-          {n:"3",e:"🛡️",t:"NEUTRALIZAR",c:"#b040e0",bg:"#f9f0ff",tc:"#3d006a",dc:"#5a0090",d:"É importante reunir ferramentas estratégicas de força mental antes que a crise de ansiedade comece — e treinar o sistema natural de relaxamento e confiança do corpo."},
-          {n:"4",e:"🗺️",t:"PLANEJAR",c:"#c870f0",bg:"#f3e6ff",tc:"#3d006a",dc:"#5a0090",d:"Para vencer a ansiedade precisamos mapear como e quando ela tende a atacar. Assim criamos um roteiro de como agir — com ações práticas e declarações de coragem."},
-        ].map(({n,e,t,c,bg,tc,dc,d})=>(
-          <div key={n} style={{background:bg,padding:"14px 20px",borderBottom:"1px solid #e8c8ff",display:"flex",gap:12,alignItems:"flex-start"}}>
-            <div style={{width:32,height:32,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,flexShrink:0}}>{n}</div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                <span style={{fontSize:18}}>{e}</span>
-                <span style={{fontSize:13,fontWeight:600,color:tc,letterSpacing:1}}>{t}</span>
-              </div>
-              <div style={{fontSize:12,color:dc,lineHeight:1.6}}>{d}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Em qual dos 4 passos você sente que precisa trabalhar mais? A consciência sobre o próprio processo ansioso já é, em si, um ato de cura. 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-
-// ═══════════════════════════════════════════════════════════════════════
-// PSICOEDUCAÇÕES VISUAIS — TCC
-// ═══════════════════════════════════════════════════════════════════════
-
-function PsicoModeloABC({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🔺</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>O que realmente gera suas emoções?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Não é o evento — é o que você acredita sobre ele.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:12}}>O Modelo ABC da TCC</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[
-            {l:"A","t":"Adversidade","e":"📌","d":"O evento que aconteceu — o fato puro, sem julgamento","c":"#7B00C4"},
-            {l:"B","t":"Belief (Crença)","e":"🧠","d":"O que você acredita, pensa ou interpreta sobre o evento","c":"#9a00e0"},
-            {l:"C","t":"Consequência","e":"💭","d":"A emoção e o comportamento que surgem da crença","c":"#b040e0"},
-          ].map(({l,t,e,d,c})=>(
-            <div key={l} style={{display:"flex",gap:12,alignItems:"flex-start",background:"white",borderRadius:10,padding:"10px 14px",border:"1px solid #e8c8ff"}}>
-              <div style={{width:32,height:32,borderRadius:"50%",background:c,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,flexShrink:0}}>{l}</div>
-              <div style={{flex:1}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                  <span style={{fontSize:16}}>{e}</span>
-                  <span style={{fontSize:13,fontWeight:600,color:"#3d006a"}}>{t}</span>
-                </div>
-                <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5}}>{d}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Exemplo prático</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <div style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px"}}>
-            <div style={{color:"#d9b3f5",fontSize:11,fontWeight:500,marginBottom:4}}>Situação A (mesmo evento)</div>
-            <div style={{color:"#f3e6ff",fontSize:11,lineHeight:1.4}}>Chefe critica seu trabalho</div>
-          </div>
-          <div style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 12px"}}>
-            <div style={{color:"#d9b3f5",fontSize:11,fontWeight:500,marginBottom:4}}>Situação A (mesmo evento)</div>
-            <div style={{color:"#f3e6ff",fontSize:11,lineHeight:1.4}}>Chefe critica seu trabalho</div>
-          </div>
-          <div style={{background:"rgba(249,115,22,0.2)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(249,115,22,0.3)"}}>
-            <div style={{color:"#fed7aa",fontSize:11,fontWeight:500,marginBottom:4}}>B: "Sou um fracasso"</div>
-            <div style={{color:"#fde68a",fontSize:11}}>C: Tristeza, desmotivação</div>
-          </div>
-          <div style={{background:"rgba(34,197,94,0.2)",borderRadius:10,padding:"10px 12px",border:"1px solid rgba(34,197,94,0.3)"}}>
-            <div style={{color:"#86efac",fontSize:11,fontWeight:500,marginBottom:4}}>B: "Posso melhorar"</div>
-            <div style={{color:"#86efac",fontSize:11}}>C: Motivação, foco</div>
-          </div>
-        </div>
-        <div style={{color:"#d9b3f5",fontSize:12,marginTop:10,textAlign:"center",fontStyle:"italic"}}>Mesmo A — B diferente — C completamente diferente</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense em uma situação que te deixou mal. Escreva o A (fato), o B (o que você acreditou) e o C (emoção). Agora invente um B diferente — o que mudaria?</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você não pode controlar tudo que acontece (A), mas pode trabalhar suas crenças (B) — e isso muda tudo no que você sente (C). 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoPensamentos({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>💭</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Seus pensamentos criam sua realidade emocional</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Não são as coisas em si — é o que você acredita sobre elas.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Como funciona o ciclo</div>
-        <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",flexWrap:"wrap",gap:8}}>
-          {[["💭","Pensamento"],["💓","Emoção"],["🏃","Comportamento"],["🌍","Resultado"]].map(([e,t],i,arr)=>(
-            <React.Fragment key={t}>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:28,marginBottom:4}}>{e}</div>
-                <div style={{fontSize:11,color:"#5a0090",fontWeight:500}}>{t}</div>
-              </div>
-              {i<arr.length-1&&<div style={{color:"#b040e0",fontSize:18,fontWeight:700}}>→</div>}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>O mesmo evento — perspectivas diferentes</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[
-            {p:"'Fui ignorado — ninguém gosta de mim'",e:"Tristeza, isolamento",cor:"rgba(249,115,22,0.2)",bc:"rgba(249,115,22,0.4)"},
-            {p:"'Fui ignorado — ela deve estar ocupada'",e:"Neutralidade, tranquilidade",cor:"rgba(34,197,94,0.2)",bc:"rgba(34,197,94,0.4)"},
-          ].map(({p,e,cor,bc})=>(
-            <div key={p} style={{background:cor,borderRadius:8,padding:"10px 12px",border:"1px solid "+bc}}>
-              <div style={{color:"#f3e6ff",fontSize:12,fontStyle:"italic",marginBottom:4}}>{p}</div>
-              <div style={{color:"#d9b3f5",fontSize:11}}>→ {e}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Hoje, quando notar uma emoção forte, pergunte: "Que pensamento veio antes disso?" Escreva num papel. Só observar já começa a mudar tudo.</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Que história sua mente conta sobre você quando as coisas dão errado? Essa história é um fato — ou uma interpretação? 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoPizzaResponsabilidade({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🍕</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você carrega mais culpa do que te pertence?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Dividir a responsabilidade libera peso — sem isentar ninguém.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Os dois extremos que nos prendem</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
-            <div style={{fontSize:22,marginBottom:6}}>😔</div>
-            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Autoculpa tóxica</div>
-            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"Tudo foi culpa minha." Você assume 100% de uma situação que tinha múltiplos fatores.</div>
-          </div>
-          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"1px solid #d9b3f5"}}>
-            <div style={{fontSize:22,marginBottom:6}}>😤</div>
-            <div style={{color:"#3d006a",fontSize:12,fontWeight:500,marginBottom:4}}>Vitimização</div>
-            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>"A culpa é sempre do outro." Você se isenta completamente e perde o poder de mudar.</div>
-          </div>
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>A pizza da responsabilidade</div>
-        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="70" fill="#9a00e0"/>
-            <path d="M80 80 L80 10 A70 70 0 0 1 140.6 45 Z" fill="#F97316"/>
-            <path d="M80 80 L140.6 45 A70 70 0 0 1 140.6 115 Z" fill="#0EA5E9"/>
-            <path d="M80 80 L140.6 115 A70 70 0 0 1 19.4 115 Z" fill="#22C55E"/>
-            <path d="M80 80 L19.4 115 A70 70 0 0 1 19.4 45 Z" fill="#EAB308"/>
-            <path d="M80 80 L19.4 45 A70 70 0 0 1 80 10 Z" fill="#EC4899"/>
-            <circle cx="80" cy="80" r="20" fill="#7B00C4"/>
-            <text x="80" y="84" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">VOCÊ</text>
-          </svg>
-        </div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
-          {[["#F97316","Suas escolhas"],["#0EA5E9","O outro envolvido"],["#22C55E","As circunstâncias"],["#EAB308","O contexto"],["#EC4899","O acaso"]].map(([c,l])=>(
-            <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:c,flexShrink:0}}/>
-              <span style={{fontSize:11,color:"#f3e6ff"}}>{l}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pense num problema recente. Divida: qual parte foi sua? Qual foi do outro? Qual foi das circunstâncias? Você ficará surpreso com o quanto não precisa carregar.</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Você costuma assumir mais ou menos responsabilidade do que te pertence? Qual dos dois extremos é mais comum em você? 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoFatosInterpretacoes({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🔍</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Você acredita em tudo que sua mente diz?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>Separar fatos de interpretações é uma das habilidades mais poderosas da TCC.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>Qual é a diferença?</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-          <div style={{background:"#f3e6ff",borderRadius:10,padding:"12px 14px",border:"2px solid #7B00C4"}}>
-            <div style={{color:"#3d006a",fontSize:12,fontWeight:600,marginBottom:6}}>📌 Fato</div>
-            <div style={{color:"#5a0090",fontSize:11,lineHeight:1.5}}>O que aconteceu objetivamente. Pode ser verificado. Qualquer pessoa que estivesse lá veria a mesma coisa.</div>
-          </div>
-          <div style={{background:"#fff7ed",borderRadius:10,padding:"12px 14px",border:"2px solid #F97316"}}>
-            <div style={{color:"#9a3412",fontSize:12,fontWeight:600,marginBottom:6}}>🧠 Interpretação</div>
-            <div style={{color:"#7c2d12",fontSize:11,lineHeight:1.5}}>O significado que sua mente atribui ao fato. Depende da sua história, crenças e estado emocional.</div>
-          </div>
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Exemplos do dia a dia</div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[
-            {f:"Ela não respondeu minha mensagem",i:"Deve estar com raiva de mim"},
-            {f:"Meu chefe não sorriu para mim",i:"Devo ter feito algo errado"},
-            {f:"Fui reprovado na prova",i:"Não sou inteligente o suficiente"},
-          ].map(({f,i})=>(
-            <div key={f} style={{background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px"}}>
-              <div style={{color:"#f3e6ff",fontSize:11,marginBottom:3}}><span style={{color:"#d9b3f5",fontWeight:500}}>Fato:</span> {f}</div>
-              <div style={{color:"#fde68a",fontSize:11}}><span style={{color:"#fde68a",fontWeight:500}}>Interpretação:</span> {i}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Pegue uma situação que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOCÊ acrescentou com sua interpretação? Escreva os dois lados.</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Quantas vezes sua mente criou uma história sobre alguém — e você sofreu por algo que nunca aconteceu de verdade? 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function PsicoSempreNunca({cat}){
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>∞</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>"Eu SEMPRE faço isso errado" — isso é verdade?</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>A supergeneralização transforma eventos pontuais em verdades permanentes.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"16px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:10}}>O que é supergeneralização?</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6,marginBottom:12}}>É quando transformamos um evento específico em uma regra geral sobre nós, os outros ou o mundo. Uma experiência ruim vira uma "verdade eterna".</div>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {[
-            {a:"Errei uma vez",b:"SEMPRE erro tudo"},
-            {a:"Ela não me ouviu hoje",b:"NUNCA me ouve"},
-            {a:"Não consegui dormir ontem",b:"NUNCA durmo bem"},
-          ].map(({a,b})=>(
-            <div key={a} style={{display:"flex",alignItems:"center",gap:8,background:"white",borderRadius:8,padding:"8px 12px",border:"1px solid #e8c8ff"}}>
-              <span style={{fontSize:11,color:"#5a0090",flex:1}}>{a}</span>
-              <span style={{color:"#F97316",fontWeight:700,fontSize:14}}>→</span>
-              <span style={{fontSize:11,color:"#F97316",fontWeight:500,flex:1}}>{b}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#7B00C4",padding:"16px 20px",borderBottom:"1px solid #9a00e0"}}>
-        <div style={{color:"#f3e6ff",fontSize:13,fontWeight:500,marginBottom:10}}>Como quebrar a generalização</div>
-        <div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {[
-            {de:"SEMPRE / NUNCA",para:"Desta vez / Às vezes / Com frequência"},
-            {de:"TODO MUNDO",para:"Algumas pessoas / Nesse contexto"},
-            {de:"SOU assim",para:"Agi assim nessa situação"},
-          ].map(({de,para})=>(
-            <div key={de} style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px"}}>
-              <span style={{fontSize:11,color:"#fde68a",fontWeight:500,flex:1}}>{de}</span>
-              <span style={{color:"#86efac",fontWeight:700}}>→</span>
-              <span style={{fontSize:11,color:"#86efac",flex:1}}>{para}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{color:"#7B00C4",fontSize:13,fontWeight:500,marginBottom:6}}>🎯 Na prática</div>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Quando notar um "sempre" ou "nunca" no seu pensamento, troque por: "desta vez", "às vezes", "com frequência". Observe como a frase — e a emoção — mudam completamente.</div>
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Que "verdades permanentes" você carrega sobre si mesmo que na verdade foram apenas momentos passageiros? 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-function Psico7Distorcoes({cat}){
-  const distorcoes = [
-    {e:"📢",t:"Generalização Excessiva",d:"Tirar conclusões amplas com base em uma única experiência negativa.",ex:"'Eu sempre falho.'"},
-    {e:"🎭",t:"Pensamento Dicotômico",d:"Ver as coisas como preto ou branco, sem considerar outras opções — o famoso 8 ou 80.",ex:"'Ou faço perfeito ou não faço.'"},
-    {e:"👥",t:"Leitura da Mente",d:"Presumir que sabe o que os outros estão pensando ou sentindo, sem evidências.",ex:"'Ele está com raiva de mim.'"},
-    {e:"👤",t:"Culpa Pessoal",d:"Atribuir a si mesmo a culpa por tudo que acontece de ruim.",ex:"'Estraguei tudo mesmo.'"},
-    {e:"💔",t:"Raciocínio Emocional",d:"Tomar decisões com base em emoções em vez de fatos ou lógica.",ex:"'Sinto que vai dar errado, então vai.'"},
-    {e:"🏆",t:"Desqualificação do Positivo",d:"Nomear eventos positivos como sorte ou coincidência, nunca como conquista.",ex:"'Foi pura sorte.'"},
-    {e:"🌪️",t:"Catastrofização",d:"Supor que as coisas sempre serão as piores possíveis, sem considerar outras saídas.",ex:"'Não vai dar certo de jeito nenhum.'"},
-  ];
-  return (
-    <div style={{fontFamily:"var(--font-body)",maxWidth:640,margin:"0 auto",paddingBottom:16}}>
-      <div style={{background:"#7B00C4",borderRadius:"12px 12px 0 0",padding:"20px 24px",textAlign:"center"}}>
-        <div style={{fontSize:40,marginBottom:8}}>🧩</div>
-        <div style={{color:"#f3e6ff",fontSize:16,fontWeight:500,marginBottom:6}}>Sua mente te engana — e você nem percebe</div>
-        <div style={{color:"#d9b3f5",fontSize:13,lineHeight:1.5}}>As 7 distorções de pensamento mais comuns que afetam como você sente e age.</div>
-      </div>
-      <div style={{background:"#f9f0ff",padding:"14px 20px",borderBottom:"1px solid #e8c8ff"}}>
-        <div style={{fontSize:12,color:"#5a0090",lineHeight:1.6}}>Distorções cognitivas são padrões de pensamento que levam a conclusões imprecisas e negativas. Eles se repetem na nossa mente, afetando nossa interpretação da realidade, nossos sentimentos e nossas reações.</div>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:0}}>
-        {distorcoes.map(({e,t,d,ex},i)=>(
-          <div key={t} style={{padding:"12px 20px",borderBottom:"1px solid #e8c8ff",background:i%2===0?"#f9f0ff":"white",display:"flex",gap:12,alignItems:"flex-start"}}>
-            <div style={{width:36,height:36,borderRadius:"50%",background:"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{e}</div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#3d006a",marginBottom:3}}>{t}</div>
-              <div style={{fontSize:12,color:"#5a0090",lineHeight:1.5,marginBottom:4}}>{d}</div>
-              <div style={{fontSize:11,color:"#9a00e0",fontStyle:"italic",background:"#f3e6ff",borderRadius:6,padding:"3px 8px",display:"inline-block"}}>{ex}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{background:"#f3e6ff",borderRadius:"0 0 12px 12px",padding:"14px 20px",borderTop:"2px solid #d9b3f5"}}>
-        <div style={{color:"#5a0090",fontSize:13,fontWeight:500,marginBottom:6}}>Reflita</div>
-        <div style={{color:"#7B00C4",fontSize:12,lineHeight:1.6}}>Qual dessas distorções aparece mais nos seus pensamentos? Reconhecer o padrão é o primeiro passo para mudar a narrativa interna. 💜</div>
-      </div>
-      <div style={{textAlign:"center",fontSize:11,color:"#888780",marginTop:8}}>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</div>
-    </div>
-  );
-}
-
-// Mapa de visualizações
-const PSICO_VISUAIS = {
-  "Preocupação produtiva vs. improdutiva": PsicoPreocupacao,
-  "A armadilha do pior cenário": PsicoPiorCenario,
-  "Eustresse vs. distresse": PsicoEustresse,
-  "O ciclo da ansiedade": PsicoCicloAnsiedade,
-  "Desmontar o Circuito Cerebral da Ansiedade": PsicoDesmontarAnsiedade,
-  "O modelo ABC na prática": PsicoModeloABC,
-  "O poder dos pensamentos": PsicoPensamentos,
-  "A pizza da responsabilidade": PsicoPizzaResponsabilidade,
-  "Fatos vs. interpretações": PsicoFatosInterpretacoes,
-  "O perigo do sempre e nunca": PsicoSempreNunca,
-  "7 Distorções de Pensamento": Psico7Distorcoes,
-};
-
-const CATS_PSICOEDUCACAO = {
-  tcc:              {label:"TCC",                  cor:"#7B00C4", bg:"#f3e6ff", accent:"#0EA5E9"},
-  ansiedade:        {label:"Ansiedade",            cor:"#7B00C4", bg:"#f3e6ff", accent:"#F97316"},
-  emocoes:          {label:"Emoções",              cor:"#7B00C4", bg:"#f3e6ff", accent:"#F43F5E"},
-  autocuidado:      {label:"Autocuidado",          cor:"#7B00C4", bg:"#f3e6ff", accent:"#22C55E"},
-  relacionamentos:  {label:"Relacionamentos",      cor:"#7B00C4", bg:"#f3e6ff", accent:"#EF4444"},
-  casais:           {label:"Casais",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#EC4899"},
-  corpo:            {label:"Corpo & Alimentação",  cor:"#7B00C4", bg:"#f3e6ff", accent:"#EAB308"},
-  esquema:          {label:"Terapia do Esquema",   cor:"#7B00C4", bg:"#f3e6ff", accent:"#8B5CF6"},
-  outros:           {label:"Outros",               cor:"#7B00C4", bg:"#f3e6ff", accent:"#64748B"},
-};
-
-function AbaPsicoeducacao() {
-  const [itens, setItens]         = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [modal, setModal]         = useState(false);
-  const [editando, setEditando]   = useState(null);
-  const [salvando, setSalvando]   = useState(false);
-  const [filtro, setFiltro]       = useState("todos");
-  const [aberto, setAberto]       = useState(null);
-
-  const MIGRACAO_PSICO = {
-    "autoestima":"emocoes","mindfulness":"emocoes","trauma":"esquema",
-    "depressao":"emocoes","habitos":"autocuidado",
-  };
-
-  async function migrarCatPsico(){
-    if(!confirm("Migrar categorias antigas de psicoeducação?")) return;
-    setSalvando(true);
-    try{
-      const snap = await db.collection("clinica_psicoeducacao").get();
-      let count = 0;
-      for(const doc of snap.docs){
-        const cat = doc.data().categoria;
-        const nova = MIGRACAO_PSICO[cat];
-        if(nova){ await db.collection("clinica_psicoeducacao").doc(doc.id).update({categoria:nova}); count++; }
-      }
-      alert("✓ "+count+" psicoeducações migradas!");
-    } catch(e){ alert("Erro: "+e.message); }
-    setSalvando(false);
-  }
-  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});
-
-  useEffect(()=>{
-    const unsub = db.collection("clinica_psicoeducacao").onSnapshot(s=>{
-      setItens(s.docs.map(d=>({id:d.id,...d.data()})));
-      setLoading(false);
-    },()=>setLoading(false));
-    return unsub;
-  },[]);
-
-  async function salvar(){
-    if(!form.titulo){alert("Título obrigatório.");return;}
-    setSalvando(true);
-    if(editando){
-      await db.collection("clinica_psicoeducacao").doc(editando).update(form);
-    } else {
-      await db.collection("clinica_psicoeducacao").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    }
-    setModal(false);setEditando(null);setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setSalvando(false);
-  }
-
-  async function popularPilulas() {
-    if (!confirm(`Isso vai adicionar as pílulas TCC ao banco. Continuar?`)) return;
-    setSalvando(true);
-    try {
-      for (const p of PILULAS_TCC) {
-        await db.collection("clinica_psicoeducacao").add({
-          ...p, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-      alert("✓ Pílulas TCC adicionadas com sucesso!");
-    } catch(e) { alert("Erro ao popular: " + e.message); }
-    setSalvando(false);
-  }
-
-  async function sincronizarNovas() {
-    setSalvando(true);
-    try {
-      const snap = await db.collection("clinica_psicoeducacao").get();
-      const titulosExistentes = snap.docs.map(d=>d.data().titulo);
-      const novas = PILULAS_TCC.filter(p=>!titulosExistentes.includes(p.titulo));
-      if(novas.length===0){alert("Todas as psicoeducações já estão no banco!");setSalvando(false);return;}
-      for(const p of novas){
-        await db.collection("clinica_psicoeducacao").add({...p,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-      }
-      alert("✓ "+novas.length+" nova(s) psicoeducação(ões) adicionada(s): "+novas.map(p=>p.titulo).join(", "));
-    } catch(e){alert("Erro: "+e.message);}
-    setSalvando(false);
-  }
-
-  const cats = ["todos",...Object.keys(CATS_PSICOEDUCACAO)];
-  const filtrados = filtro==="todos" ? itens : itens.filter(i=>i.categoria===filtro);
-
-  if(loading) return <Spinner/>;
-
-  if(aberto){
-    const cat = CATS_PSICOEDUCACAO[aberto.categoria]||CATS_PSICOEDUCACAO.outros;
-    const VisualComp = PSICO_VISUAIS[aberto.visualKey||aberto.titulo];
-    return (
-      <div>
-        <button className="btn btn-ghost" style={{marginBottom:16,padding:"8px 12px"}} onClick={()=>setAberto(null)}>
-          <Icon name="arrow-left" size={16}/> Todos os materiais
-        </button>
-        {VisualComp ? <VisualComp cat={cat}/> : (
-          <>
-            <div className="card" style={{marginBottom:16,background:cat.cor,color:"white"}}>
-              <div style={{textAlign:"center",padding:"8px 0 16px"}}>
-                <div style={{fontSize:52,marginBottom:12}}>{aberto.emoji||"📚"}</div>
-                <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,marginBottom:8}}>{aberto.titulo}</div>
-                <span style={{background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"4px 14px",fontSize:12}}>{cat.label}</span>
-              </div>
-            </div>
-            {aberto.descricao&&<div className="card" style={{marginBottom:12}}><p style={{fontSize:14,color:"var(--text-muted)",fontStyle:"italic"}}>{aberto.descricao}</p></div>}
-            {aberto.conteudo&&<div className="card"><div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap"}}>{aberto.conteudo}</div></div>}
-          </>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
-        <div style={{display:"flex",gap:8}}>
-          {itens.length===0&&(
-            <button className="btn btn-outline" style={{fontSize:12}} onClick={popularPilulas} disabled={salvando}>
-              <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
-            </button>
-          )}
-          {itens.length>0&&(
-            <button className="btn btn-outline" style={{fontSize:12}} onClick={sincronizarNovas} disabled={salvando}>
-              <Icon name="refresh-cw" size={14}/> {salvando?"Sincronizando...":"Sincronizar novas"}
-            </button>
-          )}
-          {itens.length>0&&(
-            <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
-              <Icon name="layers" size={14}/> Migrar categorias
-            </button>
-          )}
-          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
-            <Icon name="plus" size={16}/> Novo Material
-          </button>
-        </div>
-      </div>
-
-      {/* Filtro por categoria */}
-      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:20}}>
-        {cats.map(cat=>{
-          const info = CATS_PSICOEDUCACAO[cat];
-          const count = cat==="todos"?itens.length:itens.filter(i=>i.categoria===cat).length;
-          if(count===0&&cat!=="todos") return null;
-          return (
-            <button key={cat} onClick={()=>setFiltro(cat)}
-              style={{padding:"5px 12px",borderRadius:20,border:"1.5px solid",borderColor:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-200)",background:filtro===cat?(info?.bg||"var(--purple-bg)"):"white",color:filtro===cat?(info?.cor||"var(--purple)"):"var(--gray-600)",fontSize:12,cursor:"pointer",fontWeight:filtro===cat?600:400}}>
-              {cat==="todos"?"Todos":info?.label} ({count})
-            </button>
-          );
-        })}
-      </div>
-
-      {filtrados.length===0
-        ? <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",fontSize:14}}>
-            Nenhum material cadastrado ainda.<br/>
-            <button className="btn btn-purple" style={{marginTop:12}} onClick={()=>setModal(true)}>Adicionar primeiro material</button>
-          </div>
-        : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
-            {filtrados.map(item=>{
-              const cat = CATS_PSICOEDUCACAO[item.categoria]||CATS_PSICOEDUCACAO.outros;
-              return (
-                <div key={item.id} style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
-                  <div style={{background:cat.bg,padding:"20px 16px",textAlign:"center",borderBottom:"1px solid "+cat.cor+"20"}}>
-                    <div style={{fontSize:36,marginBottom:8}}>{item.emoji||"📚"}</div>
-                    <div style={{fontWeight:700,fontSize:14,color:cat.cor}}>{item.titulo}</div>
-                    <span style={{background:cat.cor+"20",color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,marginTop:6,display:"inline-block"}}>{cat.label}</span>
-                  </div>
-                  <div style={{padding:"12px 16px"}}>
-                    {item.descricao&&<p style={{fontSize:12,color:"var(--text-muted)",marginBottom:10,lineHeight:1.5}}>{item.descricao.slice(0,80)}{item.descricao.length>80?"...":""}</p>}
-                    <div style={{display:"flex",gap:6}}>
-                      <button className="btn btn-ghost" style={{flex:1,fontSize:12,padding:"6px 0"}} onClick={()=>setAberto(item)}>
-                        <Icon name="eye" size={13}/> Ver
-                      </button>
-                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px"}} onClick={()=>{setForm({titulo:item.titulo||"",descricao:item.descricao||"",categoria:item.categoria||"ansiedade",conteudo:item.conteudo||"",emoji:item.emoji||"📚",tipo:item.tipo||"texto"});setEditando(item.id);setModal(true);}}>
-                        <Icon name="edit-2" size={13}/>
-                      </button>
-                      <button className="btn btn-ghost" style={{fontSize:12,padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(item.id)}>
-                        <Icon name="trash-2" size={13}/>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-      }
-
-      {/* Modal cadastro */}
-      {modal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
-            <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontWeight:700,fontSize:16}}>{editando?"Editar Material":"Novo Material de Psicoeducação"}</div>
-              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--text-muted)"}}>×</button>
-            </div>
-            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:14}}>
-              <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:10}}>
-                <div>
-                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Emoji</label>
-                  <input className="form-input" value={form.emoji} onChange={e=>setForm(f=>({...f,emoji:e.target.value}))} style={{textAlign:"center",fontSize:20}}/>
-                </div>
-                <div>
-                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Título *</label>
-                  <input className="form-input" value={form.titulo} onChange={e=>setForm(f=>({...f,titulo:e.target.value}))} placeholder="Ex: O que é ansiedade?"/>
-                </div>
-              </div>
-              <div>
-                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Categoria</label>
-                <select className="form-input" value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))}>
-                  {Object.entries(CATS_PSICOEDUCACAO).map(([id,{label}])=><option key={id} value={id}>{label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Descrição breve</label>
-                <input className="form-input" value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Resumo do material..."/>
-              </div>
-              <div>
-                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Conteúdo completo</label>
-                <TextAreaVoz className="form-input" rows={6} value={form.conteudo} onChange={e=>setForm(f=>({...f,conteudo:e.target.value}))} placeholder="Texto educativo completo..." style={{resize:"vertical"}}/>
-              </div>
-            </div>
-            <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button onClick={()=>setModal(false)} className="btn btn-ghost">Cancelar</button>
-              <button onClick={salvar} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RecursosTerapeuticos({ user }) {
-  const [recursos, setRecursos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
-  const [filtroCateg, setFiltroCateg] = useState("todos");
-  const [modal, setModal] = useState(false);
-  const [editando, setEditando] = useState(null);
-  const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});
-  const [salvando, setSalvando] = useState(false);
-  const [abaView, setAbaView] = useState("ferramentas");
-
-  useEffect(()=>{
-    const unsub = db.collection("clinica_recursos").onSnapshot(snap=>{
-      setRecursos(snap.docs.map(d=>({id:d.id,...d.data()})));
-      setLoading(false);
-    },()=>setLoading(false));
-    return unsub;
-  },[]);
-
-  const abaRecursos = recursos.filter(r=>abaView==="ferramentas"?r.categoria!=="casal":r.categoria==="casal");
-  const filtrados = abaRecursos.filter(r=>{
-    const cOk = filtroCateg==="todos" || r.categoria===filtroCateg;
-    const bOk = !busca || r.titulo?.toLowerCase().includes(busca.toLowerCase()) || r.descricao?.toLowerCase().includes(busca.toLowerCase());
-    return cOk && bOk;
-  });
-
-  const idsCategoriasConhecidas = new Set(CATEGORIAS_RECURSOS.map(c=>c.id));
-  const porCategoria = CATEGORIAS_RECURSOS.reduce((acc,cat)=>{
-    const itens = filtrados.filter(r=>r.categoria===cat.id);
-    if(itens.length>0) acc.push({...cat, itens});
-    return acc;
-  },[]);
-  // Recursos com categoria desconhecida ou vazia — não ficam perdidos
-  const orfaos = filtrados.filter(r=>!idsCategoriasConhecidas.has(r.categoria));
-  if(orfaos.length>0) porCategoria.push({
-    id:"_orfaos", label:"Sem Categoria", cor:"#6b7280", bg:"#f3f4f6", itens:orfaos
-  });
-
-  async function salvar(){
-    if(!form.titulo){alert("Titulo obrigatorio.");return;}
-    setSalvando(true);
-    if(editando){
-      await db.collection("clinica_recursos").doc(editando).update(form);
-    } else {
-      await db.collection("clinica_recursos").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    }
-    setModal(false);setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setSalvando(false);
-  }
-
-  async function excluir(id){if(!confirm("Excluir recurso?"))return;await db.collection("clinica_recursos").doc(id).delete();}
-
-  function abrirEditar(r){
-    setForm({titulo:r.titulo||"",descricao:r.descricao||"",categoria:r.categoria||"tcc",tipo:r.tipo||"interativa",formularioKey:r.formularioKey||"",musicUrl:r.musicUrl||""});
-    setEditando(r.id);setModal(true);
-  }
-
-  const getCatInfo = (id) => CATEGORIAS_RECURSOS.find(c=>c.id===id)||CATEGORIAS_RECURSOS[6];
-  const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
-  const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="tcc"?"🧠":r.categoria==="ansiedade"?"😮":r.categoria==="emocoes"?"💜":r.categoria==="autocuidado"?"🌱":r.categoria==="relacionamentos"?"❤️":r.categoria==="corpo"?"🥗":r.categoria==="esquema"?"🔑":r.categoria==="musicoterapia"?"🎵":r.categoria==="avaliacao"?"📋":"🔧");
-  const [visualizando, setVisualizando] = useState(null);
-
-  if(loading) return <Spinner/>;
-
-  if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)} user={user}/>;
-  return (
-    <div>
-      <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
-        <div style={{minWidth:0,flex:1}}>
-          <div className="page-title">Recursos Terapeuticos</div>
-          <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          <button className="btn btn-ghost" style={{fontSize:12}} title="Corrige categorias antigas no Firebase"
-            onClick={async()=>{
-              if(!confirm("Corrigir categorias de Respiração e Relaxamento no Firebase?")) return;
-              const snap = await db.collection("clinica_recursos").get();
-              const validas = new Set(["tcc","ansiedade","emocoes","autocuidado","relacionamentos","corpo","esquema","musicoterapia","avaliacao","outro","casal"]);
-              const batch = db.batch();
-              let n = 0;
-              snap.docs.forEach(doc=>{
-                const d = doc.data();
-                // Respiração e Relaxamento → ansiedade
-                if(["breathing-478","muscle-relaxation"].includes(d.formularioKey) && !validas.has(d.categoria)){
-                  batch.update(doc.ref,{categoria:"ansiedade"}); n++;
-                }
-                // Qualquer outra categoria inválida → outro
-                else if(d.categoria && !validas.has(d.categoria)){
-                  batch.update(doc.ref,{categoria:"outro"}); n++;
-                }
-              });
-              if(n===0){alert("✅ Nenhuma correção necessária — todas as categorias já estão corretas!");return;}
-              await batch.commit();
-              alert(`✅ ${n} ferramenta(s) corrigida(s)! Respiração e Relaxamento agora aparecem em Ansiedade.`);
-            }}>
-            🔧 Corrigir Categorias
-          </button>
-          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
-            <Icon name="plus" size={16}/> Nova Ferramenta
-          </button>
-        </div>
-      </div>
-
-      {/* Abas — 3 abas */}
-      <div style={{display:"flex",gap:0,marginBottom:20,borderBottom:"1px solid var(--gray-200)",overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
-        {[["ferramentas","Ferramentas","wrench"],["fabulas","Fábulas Terapêuticas","book-open"],["psicoeducacao","Psicoeducação","brain"],["casais","Terapia de Casais","heart"]].map(([id,label,ic])=>(
-          <button key={id} onClick={()=>setAbaView(id)} style={{padding:"10px 16px",border:"none",background:"none",cursor:"pointer",fontSize:13,color:abaView===id?"var(--purple)":"var(--gray-600)",borderBottom:abaView===id?"2px solid var(--purple)":"2px solid transparent",fontWeight:abaView===id?600:400,fontFamily:"var(--font-body)",marginBottom:-1,display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}}>
-            <Icon name={ic} size={15}/>{label}
-          </button>
-        ))}
-      </div>
-
-      {/* Aba Fábulas */}
-      {abaView==="fabulas"&&<AbaFabulas/>}
-
-      {/* Aba Psicoeducação */}
-      {abaView==="psicoeducacao"&&<AbaPsicoeducacao/>}
-
-      {/* Aba Terapia de Casais */}
-      {abaView==="casais"&&<AbaProtocoloCasais/>}
-
-      {/* Aba Ferramentas — busca + filtros + grid */}
-      {abaView==="ferramentas"&&(<>
-      <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
-        <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          <button className={"btn "+(filtroCateg==="todos"?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>setFiltroCateg("todos")}>Todas {recursos.length}</button>
-          {CATEGORIAS_RECURSOS.map(c=>{
-            const n = recursos.filter(r=>r.categoria===c.id).length;
-            if(!n) return null;
-            return <button key={c.id} className={"btn "+(filtroCateg===c.id?"btn-purple":"btn-ghost")} style={{fontSize:12}} onClick={()=>setFiltroCateg(c.id)}>{c.label.split(" ")[0]} {n}</button>;
-          })}
-        </div>
-      </div>
-      {filtrados.length===0?(
-        <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
-          <Icon name="wrench" size={40}/>
-          <div style={{marginTop:12}}>Nenhuma ferramenta encontrada.</div>
-        </div>
-      ):(
-        porCategoria.map(cat=>(
-          <div key={cat.id} style={{marginBottom:28}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
-              <span style={{fontWeight:700,fontSize:12,color:cat.cor,textTransform:"uppercase",letterSpacing:"0.8px"}}>{cat.label}</span>
-              <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}}>{cat.itens.length}</span>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
-              {cat.itens.map(r=>(
-                <div key={r.id} style={{background:"white",border:"1.5px solid",borderColor:cat.cor+"40",borderRadius:14,padding:18,display:"flex",flexDirection:"column",gap:10}}>
-                  <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
-                    <div style={{width:44,height:44,borderRadius:10,background:cat.cor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>{getIcone(r)}</div>
-                    <div style={{flex:1}}>
-                      <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
-                        <span style={{background:cat.bg,color:cat.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid "+cat.cor+"30"}}>{r.tipo==="interativa"?"INTERATIVA":"CONTEÚDO"}</span>
-                        {r.categoria==="musicoterapia"&&<span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>Música</span>}
-                      </div>
-                      <div style={{fontWeight:600,fontSize:14}}>{r.titulo}</div>
-                    </div>
-                  </div>
-                  <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>{r.descricao}</p>
-                  {r.formularioKey&&<span style={{fontSize:11,color:"var(--gray-400)",background:"var(--gray-50)",borderRadius:6,padding:"2px 8px",display:"inline-block",width:"fit-content"}}>{r.formularioKey}</span>}
-                  <div style={{display:"flex",gap:8,borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
-                    <button className="btn btn-ghost" style={{fontSize:12,flex:1,color:"var(--purple)"}} onClick={()=>setVisualizando(r)}><Icon name="eye" size={13}/> Visualizar</button>
-                    <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
-                    <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))
-      )}
-      </>)}
-
-      {/* Modal novo/editar recurso */}
-      {modal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editando?"Editar Ferramenta":"Nova Ferramenta"}</div>
-              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Titulo da Ferramenta *</label>
-              <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} autoFocus/>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Descricao curta</label>
-              <TextAreaVoz className="form-input" rows={2} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Categoria</label>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:8}}>
-                {CATEGORIAS_RECURSOS.map(c=>(
-                  <button key={c.id} onClick={()=>setForm({...form,categoria:c.id})} style={{padding:"10px 12px",borderRadius:8,border:"1.5px solid",borderColor:form.categoria===c.id?c.cor:"var(--gray-200)",background:form.categoria===c.id?c.bg:"white",cursor:"pointer",fontSize:13,textAlign:"left",fontFamily:"var(--font-body)",color:form.categoria===c.id?c.cor:"var(--gray-700)"}}>
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Tipo de ferramenta</label>
-              <div style={{display:"flex",gap:10}}>
-                {[["conteudo","Conteudo para leitura","file-text"],["interativa","Formulario interativo","zap"]].map(([v,l,ic])=>(
-                  <button key={v} onClick={()=>setForm({...form,tipo:v})} style={{flex:1,padding:"12px",borderRadius:10,border:"1.5px solid",borderColor:form.tipo===v?"var(--purple)":"var(--gray-200)",background:form.tipo===v?"var(--purple-bg)":"white",cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",color:form.tipo===v?"var(--purple)":"var(--gray-700)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                    <Icon name={ic} size={15}/>{l}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {form.tipo==="interativa"&&(
-              <div className="form-group" style={{marginBottom:14}}>
-                <label className="form-label">Formulario interativo</label>
-                <select className="form-input" value={form.formularioKey} onChange={e=>setForm({...form,formularioKey:e.target.value})}>
-                  <option value="">Selecionar formulario...</option>
-                  {FERRAMENTAS_INTERATIVAS.map(f=><option key={f.key} value={f.key}>{f.label}</option>)}
-                </select>
-              </div>
-            )}
-            {(form.formularioKey==="breathing-478"||form.formularioKey==="muscle-relaxation")&&(
-              <div className="form-group" style={{marginBottom:14}}>
-                <label className="form-label">🎵 Link de Música (YouTube) — opcional</label>
-                <input className="form-input" value={form.musicUrl||""} onChange={e=>setForm({...form,musicUrl:e.target.value})} placeholder="https://www.youtube.com/watch?v=..."/>
-                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Tocará em loop durante o exercício no portal do paciente.</div>
-              </div>
-            )}
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">🎬 Link de Áudio ou Vídeo complementar — opcional</label>
-              <input className="form-input" value={form.mediaUrl||""} onChange={e=>setForm({...form,mediaUrl:e.target.value})} placeholder="YouTube, Spotify, SoundCloud, Google Drive..."/>
-              <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Aparecerá como botão "▶ Ouvir / Assistir" no portal do paciente junto com a ferramenta.</div>
-            </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
-              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alteracoes"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════
-// LAUDOS NEUROPSICOLÓGICOS
-// ═══════════════════════════════════════════════════════
 function Laudos() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [laudos, setLaudos] = useState([]);
@@ -7878,7 +7419,13 @@ function Laudos() {
 // ═══════════════════════════════════════════════════════
 // ─── COMISSÕES ────────────────────────────────────────────
 function Comissoes({ user }) {
+  const { data:pacotes } = useCollection("clinica_pacotes");
+  // ── Esteira 1a: Comissões da secretária (vendas_secretaria) ──
   const [comissoes, setComissoes] = useState([]);
+  // ── Esteira 1b: Repasses de parceiras/estagiárias (repasses_parcerias) ──
+  const [repasses, setRepasses] = useState([]);
+  // Fallback: lê clinica_comissoes legado para não perder histórico anterior
+  const [comissoesLegado, setComissoesLegado] = useState([]);
   const [lancamentos, setLancamentos] = useState([]);
   const [mesSel, setMesSel] = useState(() => {
     const h = new Date();
@@ -7886,29 +7433,329 @@ function Comissoes({ user }) {
   });
   const [pagando, setPagando] = useState(false);
 
-  const SALARIO_FIXO = 600;
+  // Configurações financeiras editáveis (clinica_config/comissoes)
+  const [config, setConfig] = useState({...CONFIG_FIN_PADRAO});
+  const [editandoConfig, setEditandoConfig] = useState(false);
+  const [formConfig, setFormConfig] = useState({...CONFIG_FIN_PADRAO});
+  const [salvandoConfig, setSalvandoConfig] = useState(false);
+
+  // Parceiras
+  const [parceiras, setParceiras] = useState([]);
+  const [modalParceira, setModalParceira] = useState(false);
+  const [editandoParceira, setEditandoParceira] = useState(null);
+  const [formParceira, setFormParceira] = useState({nome:"",percentual:"70",pix:"",tipo:"parceira"});
+
+  const SALARIO_FIXO = parseFloat(config.salarioFixo)||0;
 
   useEffect(() => {
-    const u1 = db.collection("clinica_comissoes").orderBy("createdAt","desc")
-      .onSnapshot(s => setComissoes(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
+    // Esteira 1a: Comissões da secretária (nova coleção) — sem orderBy, ordenar client-side
+    const u1 = db.collection("vendas_secretaria")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0));
+        setComissoes(docs);
+      }, ()=>{});
+    // Esteira 1b: Repasses de parceiras — sem orderBy
+    const u1b = db.collection("repasses_parcerias")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0));
+        setRepasses(docs);
+      }, ()=>{});
+    // Fallback: histórico legado clinica_comissoes — sem orderBy
+    const u1c = db.collection("clinica_comissoes")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data(),_legado:true}));
+        docs.sort((a,b)=>(b.createdAt?.toMillis?.()??0)-(a.createdAt?.toMillis?.()??0));
+        setComissoesLegado(docs);
+      }, ()=>{});
     const u2 = db.collection("clinica_lancamentos").orderBy("createdAt","desc")
       .onSnapshot(s => setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))), ()=>{});
-    return () => { u1(); u2(); };
+    const u3 = db.collection("clinica_config").doc("comissoes")
+      .onSnapshot(d => {
+        const cfg = d.exists ? {...CONFIG_FIN_PADRAO, ...d.data()} : {...CONFIG_FIN_PADRAO};
+        setConfig(cfg);
+        if(!editandoConfig) setFormConfig(cfg);
+      }, ()=>{});
+    const u4 = db.collection("clinica_parceiras")
+      .onSnapshot(s => {
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
+        setParceiras(docs);
+      }, ()=>{});
+    return () => { u1(); u1b(); u1c(); u2(); u3(); u4(); };
   }, []);
 
-  const meses = [...new Set(comissoes.map(c=>c.mesRef))].sort().reverse();
-  if (!meses.includes(mesSel) && meses.length > 0) {
-    // mantém o mês selecionado mesmo sem comissões
+  // ── HIGIENIZAÇÃO: remove duplicatas por pacoteId nas coleções de comissão ──
+  // ── AUDITORIA: cruza pacotes pagos com registros de comissão ──
+  const [modalAuditComissao, setModalAuditComissao] = React.useState(false);
+  const [auditResultado, setAuditResultado] = React.useState(null);
+  const [auditando, setAuditando] = React.useState(false);
+
+  async function auditarComissoes() {
+    setAuditando(true);
+    setModalAuditComissao(true);
+
+    // 1. Buscar todos os pacotes
+    const snapPac = await db.collection("clinica_pacotes").get();
+    const todosPacotes = snapPac.docs.map(d=>({id:d.id,...d.data()}));
+
+    // 2. Buscar todas as comissões (nova + legado)
+    const [snapVS, snapLeg] = await Promise.all([
+      db.collection("vendas_secretaria").get(),
+      db.collection("clinica_comissoes").get(),
+    ]);
+    const todasComissoes = [
+      ...snapVS.docs.map(d=>({id:d.id,...d.data(),_col:"vendas_secretaria"})),
+      ...snapLeg.docs.map(d=>({id:d.id,...d.data(),_col:"clinica_comissoes"})),
+    ];
+    const comissoesPorPacote = {};
+    todasComissoes.forEach(c=>{ if(c.pacoteId) comissoesPorPacote[c.pacoteId] = c; });
+
+    // 3. Filtrar pacotes de junho e julho com tipoVenda (particular/recorrente — que geram comissão)
+    const mesesAlvo = ["2026-06","2026-07"];
+    const pacotesPagos = todosPacotes.filter(p=>{
+      const mes = (p.dataInicio||"").slice(0,7);
+      return mesesAlvo.includes(mes) && (p.statusPag||"pendente")==="recebido";
+    });
+    const pacotesPendentes = todosPacotes.filter(p=>{
+      const mes = (p.dataInicio||"").slice(0,7);
+      return mesesAlvo.includes(mes) && (p.statusPag||"pendente")!=="recebido";
+    });
+
+    // 4. Para pagos: checar se tem comissão
+    const pagosComComissao = pacotesPagos.filter(p=>comissoesPorPacote[p.id]);
+    const pagosSemComissao = pacotesPagos.filter(p=>!comissoesPorPacote[p.id]);
+
+    setAuditResultado({
+      pacotesPagos,
+      pacotesPendentes,
+      pagosComComissao,
+      pagosSemComissao,
+      todasComissoes,
+      comissoesPorPacote,
+    });
+    setAuditando(false);
   }
 
-  const comissoesMes = comissoes.filter(c => c.mesRef === mesSel);
-  const totalComissoes = comissoesMes.reduce((a,c) => a + (c.valorComissao||0), 0);
-  const totalAPagar = SALARIO_FIXO + totalComissoes;
+  async function gerarComissaoFaltante(pacote) {
+    const tipoVenda = lancamentos.some(
+      l => l.pacienteId===pacote.pacienteId && l.pacoteId!==pacote.id && l.status==="recebido"
+    ) ? "recorrente" : "primeira";
+    await registrarComissao({
+      tipo: "Pacote",
+      valor: parseFloat(pacote.valorTotal||0),
+      pacienteNome: pacote.pacienteNome || "",
+      tipoVenda,
+      pacoteId: pacote.id,
+    });
+    // Atualizar resultado
+    setAuditResultado(prev=>({
+      ...prev,
+      pagosSemComissao: prev.pagosSemComissao.filter(p=>p.id!==pacote.id),
+      pagosComComissao: [...prev.pagosComComissao, pacote],
+    }));
+  }
 
-  // Verifica se já foi pago neste mês
-  const pagamentoMes = lancamentos.find(l =>
+  async function gerarTodasFaltantes(lista) {
+    if(!confirm(`Gerar ${lista.length} comissão(ões) faltante(s)? Isso vai criar os registros agora.`))return;
+    for(const p of lista) await gerarComissaoFaltante(p);
+    alert("✅ Comissões geradas!");
+  }
+
+  async function higienizarDuplicatas() {
+    if(!confirm(
+      "Essa operação vai:\n\n" +
+      "1. Remover comissões DUPLICADAS pelo mesmo pacoteId\n" +
+      "2. Remover comissões com ⚠️ Pacote não encontrado\n" +
+      "3. Preencher mesRef nos registros antigos (restaura histórico de meses)\n\n" +
+      "Confirma?"
+    )) return;
+
+    let removidos = 0;
+    let orfaos = 0;
+    let migrados = 0;
+
+    // Carrega IDs de todos os pacotes existentes para cruzar
+    const snapPacotes = await db.collection("clinica_pacotes").get();
+    const pacotesExistentes = new Set(snapPacotes.docs.map(d => d.id));
+
+    // ── PASSO 1: Duplicatas em vendas_secretaria ──
+    const snapVS = await db.collection("vendas_secretaria").get();
+    const porPacoteVS = {};
+    snapVS.docs.forEach(d => {
+      const pid = d.data().pacoteId;
+      if(!pid) return;
+      if(!porPacoteVS[pid]) porPacoteVS[pid] = [];
+      porPacoteVS[pid].push({id:d.id, ts: d.data().createdAt?.toMillis?.()||0});
+    });
+    const bVS = db.batch();
+    Object.values(porPacoteVS).forEach(lista => {
+      if(lista.length <= 1) return;
+      lista.sort((a,b)=>b.ts-a.ts);
+      lista.slice(1).forEach(r => {
+        if(!r.id.startsWith("COM_")){ bVS.delete(db.collection("vendas_secretaria").doc(r.id)); removidos++; }
+      });
+    });
+    await bVS.commit();
+
+    // ── PASSO 2: Duplicatas + órfãos em clinica_comissoes ──
+    const snapLeg = await db.collection("clinica_comissoes").get();
+    const porPacoteLeg = {};
+    const bLeg = db.batch();
+    let bLegCount = 0;
+
+    snapLeg.docs.forEach(d => {
+      const data = d.data();
+      const pid = data.pacoteId;
+
+      // Órfão: tem pacoteId mas o pacote não existe mais → remover
+      if(pid && !pacotesExistentes.has(pid)) {
+        bLeg.delete(db.collection("clinica_comissoes").doc(d.id));
+        orfaos++;
+        bLegCount++;
+        return;
+      }
+
+      // Agrupar para detectar duplicatas
+      if(!pid) return;
+      if(!porPacoteLeg[pid]) porPacoteLeg[pid] = [];
+      porPacoteLeg[pid].push({id:d.id, ts: data.createdAt?.toMillis?.()||0});
+    });
+
+    // Duplicatas: manter só o mais recente
+    Object.values(porPacoteLeg).forEach(lista => {
+      if(lista.length <= 1) return;
+      lista.sort((a,b)=>b.ts-a.ts);
+      lista.slice(1).forEach(r => {
+        bLeg.delete(db.collection("clinica_comissoes").doc(r.id));
+        removidos++;
+        bLegCount++;
+      });
+    });
+    if(bLegCount > 0) await bLeg.commit();
+
+    // ── PASSO 3: Migração de mesRef (restaura histórico de meses) ──
+    // Re-ler após limpeza para não tentar migrar docs que foram deletados
+    const snapLeg2 = await db.collection("clinica_comissoes").get();
+    const bMig = db.batch();
+    let bMigCount = 0;
+    snapLeg2.docs.forEach(d => {
+      const data = d.data();
+      if(!data.mesRef) {
+        let mesRef = null;
+        if(data.createdAt?.toDate) {
+          const dt = data.createdAt.toDate();
+          mesRef = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
+        } else if(data.data) {
+          mesRef = String(data.data).slice(0,7);
+        }
+        if(mesRef) {
+          bMig.update(d.ref, {mesRef});
+          migrados++;
+          bMigCount++;
+        }
+      }
+    });
+    if(bMigCount > 0) await bMig.commit();
+
+    alert(
+      "✅ Higienização concluída!\n\n" +
+      `• ${removidos} duplicata(s) removida(s)\n` +
+      `• ${orfaos} comissão(ões) com pacote inexistente removida(s)\n` +
+      `• ${migrados} registro(s) com mesRef preenchido (histórico restaurado)`
+    );
+  }
+
+  async function salvarConfig(){
+    setSalvandoConfig(true);
+    await db.collection("clinica_config").doc("comissoes").set({
+      nomeSecretaria: formConfig.nomeSecretaria||"Secretária",
+      salarioFixo: parseFloat(formConfig.salarioFixo)||0,
+      percPrimeira: parseFloat(formConfig.percPrimeira)||10,
+      percRecorrente: parseFloat(formConfig.percRecorrente)||5,
+      percParceiroPadrao: parseFloat(formConfig.percParceiroPadrao)||70,
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    },{merge:true});
+    setSalvandoConfig(false);
+    setEditandoConfig(false);
+  }
+
+  async function salvarParceira(){
+    if(!formParceira.nome.trim()){alert("Nome da parceira é obrigatório.");return;}
+    const dados = {
+      nome: formParceira.nome.trim(),
+      percentual: parseFloat(formParceira.percentual)||parseFloat(config.percParceiroPadrao)||70,
+      pix: formParceira.pix||"",
+      tipo: formParceira.tipo||"parceira"
+    };
+    if(editandoParceira){
+      await db.collection("clinica_parceiras").doc(editandoParceira).update(dados);
+    } else {
+      await db.collection("clinica_parceiras").add({...dados, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+    }
+    setModalParceira(false); setEditandoParceira(null);
+    setFormParceira({nome:"",percentual:String(config.percParceiroPadrao||70),pix:"",tipo:"parceira"});
+  }
+
+  // Meses disponíveis: une nova coleção + legado para mostrar histórico completo
+  const meses = [...new Set([...comissoes, ...comissoesLegado].map(c=>c.mesRef).filter(Boolean))].sort().reverse();
+  // Auto-navegar para o mês mais recente com dados se o atual estiver vazio
+  React.useEffect(()=>{
+    if(meses.length > 0 && !meses.includes(mesSel)){
+      setMesSel(meses[0]);
+    }
+  }, [meses.join(",")]); // eslint-disable-line
+
+  // Mescla nova coleção + legado para garantir histórico completo
+  const todasComissoes = useMemo(()=>{
+    // Deduplica por pacoteId: prefere registro novo (vendas_secretaria) sobre legado
+    const porPacote = {};
+    [...comissoesLegado, ...comissoes].forEach(c=>{
+      const key = c.pacoteId || c.id;
+      if(!porPacote[key] || !c._legado) porPacote[key] = c;
+    });
+    return Object.values(porPacote);
+  }, [comissoes, comissoesLegado]);
+
+  const comissoesMes = todasComissoes.filter(c => c.mesRef === mesSel);
+  // Secretária: registros sem responsável definido (vendas dela)
+  const comissoesSecretaria = comissoesMes.filter(c => !c.responsavel);
+  // Repasses: registros com responsável (parceiras, estagiária do social)
+  const repassesMes = comissoesMes.filter(c => c.responsavel);
+  const responsaveis = [...new Set(repassesMes.map(c=>c.responsavel))];
+
+  // Classificar comissões: limpas (entram no ciclo) vs suspeitas (fora do ciclo)
+  const comissoesSecretariaPend = comissoesSecretaria.filter(c => c.status !== "pago");
+  const comissoesSecretariaPagas = comissoesSecretaria.filter(c => c.status === "pago");
+
+  function isComissaoSuspeita(c) {
+    const pacoteVinc = c.pacoteId ? pacotes.find(p=>p.id===c.pacoteId) : null;
+    // Suspeita 1: pacote existe mas ainda está pendente
+    if(pacoteVinc && (pacoteVinc.statusPag||"pendente") !== "recebido") return true;
+    // Suspeita 2: valor base diverge do valor total do pacote
+    if(pacoteVinc && Math.abs((c.valorBase||0) - (pacoteVinc.valorTotal||0)) > 0.01) return true;
+    // Suspeita 3: tem pacoteId mas o pacote não existe mais
+    if(c.pacoteId && !pacotes.some(p=>p.id===c.pacoteId)) return true;
+    return false;
+  }
+
+  // Apenas comissões limpas entram no ciclo de pagamento da Jéssica
+  const comissoesPend  = comissoesSecretariaPend.filter(c => !isComissaoSuspeita(c));
+  const comissoesSuspeitas = comissoesSecretariaPend.filter(c => isComissaoSuspeita(c));
+  const comissoesPagas = comissoesSecretariaPagas;
+  const totalPend  = comissoesPend.reduce((a,c) => a + (c.valorComissao||0), 0);
+  const totalPagas = comissoesPagas.reduce((a,c) => a + (c.valorComissao||0), 0);
+  const totalComissoes = totalPend + totalPagas;
+
+  // Pagamentos já realizados neste mês (histórico)
+  const pagamentosDoMes = lancamentos.filter(l =>
     l.tipo_lancamento === "salario_secretaria" && l.mesRef === mesSel
   );
+  const pagamentoMes = pagamentosDoMes[0] || null;
+  const salarioJaPago = !!pagamentoMes;
+  // Ciclo atual: salário fixo entra só no 1º pagamento do mês; depois, só comissões novas
+  const totalAPagar = (salarioJaPago ? 0 : SALARIO_FIXO) + totalPend;
 
   const [mesLabel] = useState(() => {
     const [ano, mes] = mesSel.split("-");
@@ -7921,109 +7768,688 @@ function Comissoes({ user }) {
   }
 
   async function pagarSalario() {
-    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para Jéssica em ${getMesLabel(mesSel)}?`)) return;
+    const descr = salarioJaPago
+      ? `${comissoesPend.length} comissão(ões) nova(s)`
+      : `salário fixo + ${comissoesPend.length} comissão(ões)`;
+    if (!confirm(`Confirma pagamento de R$ ${totalAPagar.toFixed(2).replace(".",",")} para ${config.nomeSecretaria} (${descr}) em ${getMesLabel(mesSel)}?`)) return;
     setPagando(true);
     const hoje = new Date().toISOString().slice(0,10);
     // Lança como despesa da clínica
     await db.collection("clinica_lancamentos").add({
-      tipo_lancamento: "salario_secretaria",
-      tipo: "Salário Secretária",
+      tipo_lancamento: "despesa",
+      tipo: "despesa",
+      categoria: "Salário Secretária",
+      descricao: salarioJaPago ? "Comissões Secretária (adicional)" : "Salário Secretária",
+      centroCusto: "🏥 Clínica",
       mesRef: mesSel,
       valor: totalAPagar,
-      valorSalarioFixo: SALARIO_FIXO,
-      valorComissoes: totalComissoes,
+      valorSalarioFixo: salarioJaPago ? 0 : SALARIO_FIXO,
+      valorComissoes: totalPend,
+      qtdComissoes: comissoesPend.length,
       data: hoje,
       status: "pago",
-      obs: `Salário ${getMesLabel(mesSel)} — Jéssica Marjane`,
+      obs: `${salarioJaPago?"Comissões adicionais":"Salário"} ${getMesLabel(mesSel)} — ${config.nomeSecretaria}`,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Marca comissões do mês como pagas
+    // Marca apenas as comissões pendentes da secretária como pagas
     const batch = db.batch();
-    comissoesMes.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    comissoesPend.forEach(c => {
+      // Usa a coleção correta: nova ou legado
+      const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
+      batch.update(db.collection(col).doc(c.id), { status:"pago", dataPagamento: hoje });
+    });
     await batch.commit();
     setPagando(false);
-    alert("✅ Pagamento registrado como despesa da clínica!");
+    alert("✅ Pagamento registrado! O ciclo zerou — novas vendas abrem o próximo pagamento.");
+  }
+
+  async function pagarRepasse(responsavel) {
+    const pendentes = repassesMes.filter(c=>c.responsavel===responsavel && c.status!=="pago");
+    const totalRep = pendentes.reduce((a,c)=>a+(c.valorComissao||0),0);
+    if(pendentes.length===0) return;
+    const parc = parceiras.find(p=>p.nome===responsavel);
+    if (!confirm(`Confirma repasse de R$ ${totalRep.toFixed(2).replace(".",",")} para ${responsavel} em ${getMesLabel(mesSel)}?${parc?.pix?`\nPIX: ${parc.pix}`:""}`)) return;
+    setPagando(true);
+    const hoje = new Date().toISOString().slice(0,10);
+    // Lança como despesa da clínica
+    await db.collection("clinica_lancamentos").add({
+      tipo_lancamento: "repasse_parceira",
+      tipo: `Repasse — ${responsavel}`,
+      mesRef: mesSel,
+      valor: totalRep,
+      data: hoje,
+      status: "pago",
+      obs: `Repasse ${getMesLabel(mesSel)} — ${responsavel} (${pendentes.length} venda(s))`,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const batch = db.batch();
+    pendentes.forEach(c => batch.update(db.collection("clinica_comissoes").doc(c.id), { status:"pago", dataPagamento: hoje }));
+    await batch.commit();
+    setPagando(false);
+    alert(`✅ Repasse para ${responsavel} registrado como despesa da clínica!`);
   }
 
   const corTipoVenda = t => t==="primeira" ? "#7B00C4" : "#0891b2";
-  const labelTipoVenda = t => t==="primeira" ? "🌟 Primeira Venda (10%)" : "🔁 Recorrente (5%)";
+  const labelTipoVenda = t => t==="primeira" ? `🌟 Primeira Venda (${config.percPrimeira}%)` : `🔁 Recorrente (${config.percRecorrente}%)`;
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Comissões — Jéssica</div>
-          <div className="page-subtitle">Salário fixo R$ 600 + comissões por vendas</div>
+          <div className="page-title">Comissões — {config.nomeSecretaria.split(" ")[0]}</div>
+          <div className="page-subtitle">Salário fixo R$ {SALARIO_FIXO.toFixed(2).replace(".",",")} + comissões por vendas · Repasses a parceiras</div>
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <button onClick={higienizarDuplicatas}
+            style={{background:"none",border:"1px solid #c4b5fd",borderRadius:8,cursor:"pointer",fontSize:12,color:"#7c3aed",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}
+            title="Remove registros duplicados de comissão pelo mesmo pacoteId">
+            <Icon name="trash-2" size={13}/>🧹 Limpar Duplicatas
+          </button>
+          <button onClick={auditarComissoes}
+            style={{background:"#059669",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,color:"white",padding:"7px 14px",fontWeight:600,fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}
+            title="Confere pacotes pagos de jun/jul vs registros de comissão">
+            <Icon name="search" size={13}/>🔍 Auditar Jun/Jul
+          </button>
         </div>
       </div>
 
-      {/* Seletor de mês */}
-      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
-        {(meses.length > 0 ? meses : [mesSel]).map(m => (
-          <button key={m} onClick={()=>setMesSel(m)}
-            style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,
-              background:m===mesSel?"var(--purple)":"var(--gray-100)",
-              color:m===mesSel?"white":"var(--text)"}}>
-            {getMesLabel(m)}
-          </button>
-        ))}
-      </div>
+      {/* Modal de Auditoria */}
+      {modalAuditComissao&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"flex-start",justifyContent:"center",zIndex:600,padding:20,overflowY:"auto"}}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:700,marginTop:40}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontWeight:700,fontSize:18}}>🔍 Auditoria de Comissões — Jun/Jul 2026</div>
+              <button onClick={()=>setModalAuditComissao(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:"#9ca3af"}}>×</button>
+            </div>
+
+            {auditando?(
+              <div style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>Analisando pacotes e comissões...</div>
+            ):auditResultado&&(()=>{
+              const {pacotesPagos,pacotesPendentes,pagosComComissao,pagosSemComissao} = auditResultado;
+              const fmtVal = v => `R$ ${parseFloat(v||0).toFixed(2).replace(".",",")}`;
+              return (
+                <div>
+                  {/* Resumo */}
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20}}>
+                    <div style={{background:"#f0fdf4",borderRadius:10,padding:14,textAlign:"center"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:"#16a34a"}}>{pacotesPagos.length}</div>
+                      <div style={{fontSize:12,color:"#166534"}}>Pacotes pagos jun/jul</div>
+                    </div>
+                    <div style={{background:"#f5f0ff",borderRadius:10,padding:14,textAlign:"center"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:"#7B00C4"}}>{pagosComComissao.length}</div>
+                      <div style={{fontSize:12,color:"#4c1d95"}}>Com comissão ✓</div>
+                    </div>
+                    <div style={{background:pagosSemComissao.length>0?"#fef2f2":"#f0fdf4",borderRadius:10,padding:14,textAlign:"center",border:pagosSemComissao.length>0?"2px solid #fca5a5":"none"}}>
+                      <div style={{fontSize:24,fontWeight:800,color:pagosSemComissao.length>0?"#dc2626":"#16a34a"}}>{pagosSemComissao.length}</div>
+                      <div style={{fontSize:12,color:pagosSemComissao.length>0?"#7f1d1d":"#166534"}}>{pagosSemComissao.length>0?"⚠️ Sem comissão!":"Tudo ok ✓"}</div>
+                    </div>
+                  </div>
+
+                  {/* Pacotes pagos SEM comissão */}
+                  {pagosSemComissao.length>0&&(
+                    <div style={{marginBottom:20}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                        <div style={{fontWeight:700,fontSize:14,color:"#dc2626"}}>⚠️ Pacotes pagos SEM comissão registrada</div>
+                        <button onClick={()=>gerarTodasFaltantes(pagosSemComissao)}
+                          style={{background:"#dc2626",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                          ✚ Gerar todas ({pagosSemComissao.length})
+                        </button>
+                      </div>
+                      {pagosSemComissao.map(p=>(
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:"#fef2f2",borderRadius:8,marginBottom:6,border:"1px solid #fca5a5"}}>
+                          <div>
+                            <div style={{fontWeight:600,fontSize:13}}>{p.pacienteNome||"—"}</div>
+                            <div style={{fontSize:11,color:"#6b7280"}}>{p.dataInicio} · {fmtVal(p.valorTotal)} · {p.recorrencia}</div>
+                          </div>
+                          <button onClick={()=>gerarComissaoFaltante(p)}
+                            style={{background:"#7B00C4",color:"white",border:"none",borderRadius:6,padding:"5px 12px",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                            ✚ Gerar comissão
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pacotes pagos COM comissão */}
+                  {pagosComComissao.length>0&&(
+                    <div style={{marginBottom:20}}>
+                      <div style={{fontWeight:700,fontSize:14,color:"#059669",marginBottom:8}}>✓ Pacotes com comissão registrada</div>
+                      {pagosComComissao.map(p=>{
+                        const com = auditResultado.comissoesPorPacote[p.id];
+                        return (
+                          <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:"#f0fdf4",borderRadius:8,marginBottom:6,border:"1px solid #6ee7b7"}}>
+                            <div>
+                              <div style={{fontWeight:600,fontSize:13}}>{p.pacienteNome||"—"}</div>
+                              <div style={{fontSize:11,color:"#6b7280"}}>{p.dataInicio} · {fmtVal(p.valorTotal)}</div>
+                            </div>
+                            <div style={{textAlign:"right"}}>
+                              <div style={{fontSize:11,color:"#059669",fontWeight:600}}>✓ Comissão: {fmtVal(com?.valorComissao)}</div>
+                              <div style={{fontSize:10,color:"#9ca3af"}}>{com?.status==="pago"?"Paga":"Pendente"}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Pacotes pendentes */}
+                  {pacotesPendentes.length>0&&(
+                    <div>
+                      <div style={{fontWeight:700,fontSize:13,color:"#b45309",marginBottom:8}}>⏳ Pacotes ainda pendentes de pagamento ({pacotesPendentes.length})</div>
+                      {pacotesPendentes.map(p=>(
+                        <div key={p.id} style={{display:"flex",justifyContent:"space-between",padding:"8px 14px",background:"#fffbeb",borderRadius:8,marginBottom:4,border:"1px solid #fde68a"}}>
+                          <div>
+                            <div style={{fontWeight:600,fontSize:13}}>{p.pacienteNome||"—"}</div>
+                            <div style={{fontSize:11,color:"#6b7280"}}>{p.dataInicio} · {fmtVal(p.valorTotal)}</div>
+                          </div>
+                          <div style={{fontSize:11,color:"#b45309",fontWeight:600}}>Comissão entra ao pagar</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Seletor de mês — carrossel com setas */}
+      {(()=>{
+        const listaMeses = meses.length > 0 ? meses : [mesSel];
+        const idxAtual = listaMeses.indexOf(mesSel);
+        const irAntes = () => { if(idxAtual < listaMeses.length-1) setMesSel(listaMeses[idxAtual+1]); };
+        const irProx  = () => { if(idxAtual > 0) setMesSel(listaMeses[idxAtual-1]); };
+        return (
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
+            <button onClick={irAntes} disabled={idxAtual >= listaMeses.length-1}
+              style={{width:32,height:32,borderRadius:"50%",border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:idxAtual>=listaMeses.length-1?0.3:1}}>
+              ‹
+            </button>
+            <div style={{display:"flex",gap:6,overflowX:"auto",flex:1,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+              {listaMeses.map(m => (
+                <button key={m} onClick={()=>setMesSel(m)}
+                  style={{padding:"6px 14px",borderRadius:20,border:"none",cursor:"pointer",fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,flexShrink:0,
+                    background:m===mesSel?"var(--purple)":"var(--gray-100)",
+                    color:m===mesSel?"white":"var(--text)",
+                    display:Math.abs(listaMeses.indexOf(m)-idxAtual)<=2?"flex":"none",
+                    alignItems:"center"}}>
+                  {getMesLabel(m)}
+                </button>
+              ))}
+            </div>
+            <button onClick={irProx} disabled={idxAtual <= 0}
+              style={{width:32,height:32,borderRadius:"50%",border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:16,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",opacity:idxAtual<=0?0.3:1}}>
+              ›
+            </button>
+            <span style={{fontSize:12,color:"var(--text-muted)",flexShrink:0}}>{idxAtual+1}/{listaMeses.length}</span>
+          </div>
+        );
+      })()}
+
+      {/* ⚙️ Configurações financeiras — só psicóloga */}
+      {user.tipo==="psicologa" && (
+        <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",padding:"16px 20px",marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:700,fontSize:14}}>⚙️ Configurações de Salário e Percentuais</div>
+            {!editandoConfig
+              ? <button onClick={()=>{setFormConfig({...config});setEditandoConfig(true);}}
+                  style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>✏️ Editar</button>
+              : <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>setEditandoConfig(false)}
+                    style={{background:"white",color:"#6b7280",border:"1px solid #e5e7eb",borderRadius:8,padding:"7px 14px",fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>Cancelar</button>
+                  <button onClick={salvarConfig} disabled={salvandoConfig}
+                    style={{background:"#16a34a",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>{salvandoConfig?"Salvando...":"💾 Salvar"}</button>
+                </div>}
+          </div>
+          {!editandoConfig ? (
+            <div style={{display:"flex",flexWrap:"wrap",gap:"8px 24px",marginTop:12,fontSize:13,color:"#374151"}}>
+              <span>👩‍💼 Secretária: <strong>{config.nomeSecretaria}</strong></span>
+              <span>💵 Salário fixo: <strong>R$ {SALARIO_FIXO.toFixed(2).replace(".",",")}</strong></span>
+              <span>🌟 Primeira venda: <strong>{config.percPrimeira}%</strong></span>
+              <span>🔁 Recorrente: <strong>{config.percRecorrente}%</strong></span>
+              <span>🤝 Parceiro (padrão): <strong>{config.percParceiroPadrao}%</strong></span>
+            </div>
+          ):(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginTop:14}}>
+              <div className="form-group"><label className="form-label">Nome da secretária</label>
+                <input className="form-input" value={formConfig.nomeSecretaria} onChange={e=>setFormConfig({...formConfig,nomeSecretaria:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">Salário fixo (R$)</label>
+                <input className="form-input" type="number" value={formConfig.salarioFixo} onChange={e=>setFormConfig({...formConfig,salarioFixo:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">% primeira venda</label>
+                <input className="form-input" type="number" value={formConfig.percPrimeira} onChange={e=>setFormConfig({...formConfig,percPrimeira:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">% recorrente</label>
+                <input className="form-input" type="number" value={formConfig.percRecorrente} onChange={e=>setFormConfig({...formConfig,percRecorrente:e.target.value})}/></div>
+              <div className="form-group"><label className="form-label">% parceiro padrão</label>
+                <input className="form-input" type="number" value={formConfig.percParceiroPadrao} onChange={e=>setFormConfig({...formConfig,percParceiroPadrao:e.target.value})}/></div>
+            </div>
+          )}
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:10}}>Os novos percentuais valem para as próximas vendas; comissões já registradas não mudam.</div>
+        </div>
+      )}
 
       {/* Cards resumo */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,marginBottom:24}}>
         <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
           <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Salário Fixo</div>
-          <div style={{fontSize:22,fontWeight:700,color:"var(--text)"}}>R$ 600,00</div>
+          <div style={{fontSize:22,fontWeight:700,color:"var(--text)"}}>R$ {SALARIO_FIXO.toFixed(2).replace(".",",")}</div>
         </div>
         <div style={{background:"var(--gray-50)",borderRadius:14,padding:"18px 20px",border:"1px solid var(--gray-200)"}}>
-          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Comissões {getMesLabel(mesSel)}</div>
-          <div style={{fontSize:22,fontWeight:700,color:"#7B00C4"}}>R$ {totalComissoes.toFixed(2).replace(".",",")}</div>
-          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesMes.length} venda(s)</div>
-        </div>
-        <div style={{background:pagamentoMes?"#f0fdf4":"#faf5ff",borderRadius:14,padding:"18px 20px",border:`2px solid ${pagamentoMes?"#16a34a":"#7B00C4"}`}}>
-          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Total a Pagar</div>
-          <div style={{fontSize:26,fontWeight:800,color:pagamentoMes?"#16a34a":"#7B00C4"}}>
-            R$ {totalAPagar.toFixed(2).replace(".",",")}
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Comissões Pendentes</div>
+          <div style={{fontSize:22,fontWeight:700,color:"#7B00C4"}}>R$ {totalPend.toFixed(2).replace(".",",")}</div>
+          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>{comissoesPend.length} venda(s) nova(s)
+            {totalPagas>0&&<span style={{color:"#16a34a"}}> · ✓ R$ {totalPagas.toFixed(2).replace(".",",")} já pagas no mês</span>}
           </div>
-          {pagamentoMes && <div style={{fontSize:11,color:"#16a34a",marginTop:4,fontWeight:600}}>✓ Pago em {pagamentoMes.data?.split("-").reverse().join("/")}</div>}
+        </div>
+        <div style={{background:totalAPagar===0?"#f0fdf4":"#faf5ff",borderRadius:14,padding:"18px 20px",border:`2px solid ${totalAPagar===0?"#16a34a":"#7B00C4"}`}}>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:6}}>Total a Pagar {salarioJaPago?"(novo ciclo)":""}</div>
+          <div style={{fontSize:26,fontWeight:800,color:totalAPagar===0?"#16a34a":"#7B00C4"}}>
+            {totalAPagar===0 ? "✓ Tudo pago" : `R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+          </div>
+          {pagamentoMes && <div style={{fontSize:11,color:"#16a34a",marginTop:4,fontWeight:600}}>Último pagamento em {pagamentosDoMes[0].data?.split("-").reverse().join("/")} · {pagamentosDoMes.length} pagamento(s) no mês</div>}
         </div>
       </div>
 
-      {/* Botão pagar — só psicóloga vê */}
-      {user.tipo==="psicologa" && !pagamentoMes && comissoesMes.length > 0 && (
-        <button onClick={pagarSalario} disabled={pagando}
-          style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",marginBottom:24,fontFamily:"var(--font-body)"}}>
-          {pagando ? "Registrando..." : `💰 Registrar Pagamento — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
-        </button>
+      {/* Botão pagar — só psicóloga vê; reaparece quando há comissões novas */}
+      {user.tipo==="psicologa" && (
+        <div style={{display:"flex",gap:10,marginBottom:24,flexWrap:"wrap",alignItems:"center"}}>
+          {totalAPagar > 0 && (salarioJaPago ? comissoesPend.length > 0 : true) && (
+            <button onClick={pagarSalario} disabled={pagando}
+              style={{background:"#16a34a",color:"white",border:"none",borderRadius:10,padding:"12px 28px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+              {pagando ? "Registrando..." : `💰 ${salarioJaPago?"Pagar Comissões Novas":"Registrar Pagamento"} — R$ ${totalAPagar.toFixed(2).replace(".",",")}`}
+            </button>
+          )}
+          {/* Botão de Gratificação — sempre visível para psicóloga */}
+          {(()=>{
+            const [showGrat, setShowGrat] = React.useState(false);
+            const [valGrat, setValGrat] = React.useState("");
+            const [obsGrat, setObsGrat] = React.useState("");
+            const [salvGrat, setSalvGrat] = React.useState(false);
+            async function registrarGratificacao(){
+              const valor = parseFloat(valGrat);
+              if(!valor || valor <= 0){ alert("Informe um valor válido."); return; }
+              if(!obsGrat.trim()){ alert("Informe o motivo da gratificação."); return; }
+              setSalvGrat(true);
+              try {
+                const hoje = new Date();
+                const mesRef = mesSel;
+                // Registra como comissão especial em vendas_secretaria
+                await db.collection("vendas_secretaria").add({
+                  tipo:"Gratificação",
+                  tipoVenda:"gratificacao",
+                  perc:0,
+                  valorBase:valor,
+                  valorComissao:valor,
+                  pacienteNome:`🎁 ${obsGrat.trim()}`,
+                  mesRef,
+                  pacoteId:null,
+                  status:"pendente",
+                  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Registra também como lançamento financeiro (despesa)
+                await db.collection("clinica_lancamentos").add({
+                  tipo:"despesa",
+                  tipo_lancamento:"despesa",
+                  categoria:"Salários",
+                  descricao:`Gratificação — ${config.nomeSecretaria} — ${obsGrat.trim()}`,
+                  valor,
+                  data:hoje.toISOString().slice(0,10),
+                  centroCusto:"🏥 Clínica",
+                  mes:mesRef,
+                  formaPag:"PIX",
+                  status:"pago",
+                  createdAt:firebase.firestore.FieldValue.serverTimestamp()
+                });
+                setShowGrat(false); setValGrat(""); setObsGrat("");
+                alert(`✅ Gratificação de R$ ${valor.toFixed(2).replace(".",",")} registrada com sucesso!`);
+              } catch(e){ alert("Erro: "+e.message); }
+              setSalvGrat(false);
+            }
+            return (
+              <div>
+                <button onClick={()=>setShowGrat(s=>!s)}
+                  style={{background:"none",border:"2px solid #7B00C4",color:"#7B00C4",borderRadius:10,padding:"11px 18px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:6}}>
+                  🎁 Registrar Gratificação
+                </button>
+                {showGrat&&(
+                  <div style={{marginTop:10,background:"#f5f0ff",border:"1px solid #c4b5fd",borderRadius:12,padding:"16px 18px",display:"flex",flexDirection:"column",gap:10,minWidth:280}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#7B00C4"}}>🎁 Gratificação para {config.nomeSecretaria}</div>
+                    <div>
+                      <label style={{fontSize:11,fontWeight:600,color:"#6b7280",display:"block",marginBottom:4}}>VALOR (R$)</label>
+                      <input type="number" value={valGrat} onChange={e=>setValGrat(e.target.value)} placeholder="Ex: 50"
+                        style={{width:"100%",padding:"8px 10px",border:"1px solid #c4b5fd",borderRadius:8,fontSize:14,fontFamily:"var(--font-body)"}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:11,fontWeight:600,color:"#6b7280",display:"block",marginBottom:4}}>MOTIVO</label>
+                      <input type="text" value={obsGrat} onChange={e=>setObsGrat(e.target.value)} placeholder="Ex: Ajuste jul/26 — diferença 10%→5%"
+                        style={{width:"100%",padding:"8px 10px",border:"1px solid #c4b5fd",borderRadius:8,fontSize:13,fontFamily:"var(--font-body)"}}/>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={registrarGratificacao} disabled={salvGrat}
+                        style={{flex:1,background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"9px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                        {salvGrat?"Salvando...":"✓ Confirmar"}
+                      </button>
+                      <button onClick={()=>setShowGrat(false)}
+                        style={{padding:"9px 14px",background:"white",border:"1px solid #e5e7eb",borderRadius:8,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)"}}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
       )}
 
-      {/* Lista de comissões */}
+      {/* Botão Gerar Recibo — sempre visível para qualquer mês */}
+      {(()=>{
+        function gerarRecibo(){
+          const mesLabel = getMesLabel(mesSel);
+          const nomeSecretary = config.nomeSecretaria||"Secretária";
+          // Inclui tanto pendentes quanto pagas do mês para o recibo histórico
+          const itensPend = comissoesPend.map(c=>({
+            desc:`${c.tipoVenda==="primeira"?"1ª venda":"Recorrente"} — ${c.pacienteNome||"Paciente"} (${c.perc||10}%)`,
+            valor: c.valorComissao||0, status:"pendente"
+          }));
+          const itensPagos = comissoesPagas.map(c=>({
+            desc:`${c.tipoVenda==="primeira"?"1ª venda":"Recorrente"} — ${c.pacienteNome||"Paciente"} (${c.perc||10}%)`,
+            valor: c.valorComissao||0, status:"pago"
+          }));
+          const todoItens = [...itensPend,...itensPagos];
+          const totalRecibo = SALARIO_FIXO + todoItens.reduce((a,i)=>a+i.valor,0);
+          const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Recibo de Pagamento — ${nomeSecretary} — ${mesLabel}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:40px;max-width:620px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:24px}
+.logo{font-family:Georgia,serif;font-size:22px;color:#7B00C4;font-weight:700}
+.sub{font-size:10px;color:#6b7280;margin-top:3px}
+h2{font-size:18px;color:#111827;margin-bottom:4px}
+.mes{font-size:13px;color:#7B00C4;font-weight:600;margin-bottom:20px}
+p{font-size:13px;color:#374151;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}
+th{background:#7B00C4;color:white;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase}
+td{padding:8px 12px;border-bottom:1px solid #f3f4f6}
+tr:nth-child(even) td{background:#fafafa}
+.total-row td{font-weight:700;font-size:14px;border-top:2px solid #7B00C4;background:#f5f0ff;color:#7B00C4}
+.assinatura{margin-top:40px;display:flex;justify-content:space-between;gap:40px}
+.assinatura-bloco{flex:1;text-align:center}
+.linha{border-top:1px solid #374151;margin-bottom:6px;margin-top:40px}
+.nome-assinatura{font-size:12px;font-weight:600}
+.cargo-assinatura{font-size:10px;color:#6b7280}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+@media print{body{padding:20px}@page{margin:1.5cm}}
+</style></head><body>
+<div class="header">
+  <div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · Goiânia, GO</div></div>
+  <div style="font-size:10px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"})}</div>
+</div>
+<h2>Recibo de Pagamento</h2>
+<div class="mes">${mesLabel}</div>
+<p>Declaro o recebimento da importância de <strong>R$ ${totalRecibo.toFixed(2).replace(".",",")}</strong> referente à competência <strong>${mesLabel}</strong>:</p>
+<table>
+  <thead><tr><th>Descrição</th><th style="text-align:right;width:120px">Valor</th></tr></thead>
+  <tbody>
+    <tr><td>Salário Fixo</td><td style="text-align:right">R$ ${SALARIO_FIXO.toFixed(2).replace(".",",")}</td></tr>
+    ${todoItens.map(i=>`<tr><td>${i.desc}</td><td style="text-align:right">R$ ${i.valor.toFixed(2).replace(".",",")}</td></tr>`).join("")}
+    <tr class="total-row"><td>TOTAL</td><td style="text-align:right">R$ ${totalRecibo.toFixed(2).replace(".",",")}</td></tr>
+  </tbody>
+</table>
+<div class="assinatura">
+  <div class="assinatura-bloco"><div class="linha"></div><div class="nome-assinatura">${nomeSecretary}</div><div class="cargo-assinatura">Secretária — Recebedor(a)</div></div>
+  <div class="assinatura-bloco"><div class="linha"></div><div class="nome-assinatura">Dra. Lucia Kratz</div><div class="cargo-assinatura">CRP 09/20590 — Pagador(a)</div></div>
+</div>
+<div class="footer">Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+          const w=window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),800);
+        }
+        return (
+          <div style={{marginBottom:16}}>
+            <button onClick={gerarRecibo}
+              style={{background:"white",color:"#7B00C4",border:"2px solid #7B00C4",borderRadius:10,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:6}}>
+              🖨️ Gerar Recibo — {getMesLabel(mesSel)}
+            </button>
+          </div>
+        );
+      })()}
+      {/* Lista de comissões — ciclo atual */}
       <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
         <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
-          Detalhamento — {getMesLabel(mesSel)}
+          🔄 Ciclo Atual (a pagar) — {config.nomeSecretaria.split(" ")[0]} — {getMesLabel(mesSel)}
         </div>
-        {comissoesMes.length === 0 ? (
-          <div style={{padding:"40px 20px",textAlign:"center",color:"var(--text-muted)"}}>
-            <Icon name="percent" size={32}/>
-            <div style={{marginTop:8}}>Nenhuma comissão registrada neste mês</div>
+        {comissoesPend.length === 0 ? (
+          <div style={{padding:"30px 20px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+            ✓ Nenhuma comissão pendente — novas vendas aparecem aqui e reabrem o pagamento
           </div>
-        ) : comissoesMes.map(c => (
-          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)"}}>
-            <div>
-              <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome}</div>
-              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo}</div>
-              <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20}}>
+        ) : comissoesPend.map(c => {
+          const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"—";
+          return(
+          <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",borderBottom:"1px solid var(--gray-100)",background:"white"}}>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:14}}>{c.pacienteNome||"—"}</div>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{c.tipo} · {dataStr}</div>
+              {c.pacoteId&&<div style={{fontSize:10,color:"#9ca3af",marginTop:1}}>Pacote: {c.pacoteId.slice(0,8)}...</div>}
+              <span style={{fontSize:11,fontWeight:700,color:corTipoVenda(c.tipoVenda),background:corTipoVenda(c.tipoVenda)+"18",padding:"2px 8px",borderRadius:20,display:"inline-block",marginTop:4}}>
                 {labelTipoVenda(c.tipoVenda)}
               </span>
             </div>
-            <div style={{textAlign:"right"}}>
-              <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
-              <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
-              {c.status==="pago" && <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago</div>}
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>Base: R$ {(c.valorBase||0).toFixed(2).replace(".",",")}</div>
+                <div style={{fontWeight:700,fontSize:16,color:"#7B00C4"}}>+R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+              </div>
+              {user.tipo==="psicologa"&&(
+                <button title="Excluir comissão"
+                  onClick={async()=>{
+                    if(!confirm(`Excluir comissão de ${c.pacienteNome} (R$ ${(c.valorComissao||0).toFixed(2).replace(".",",")})?`))return;
+                    const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
+                    await db.collection(col).doc(c.id).delete();
+                  }}
+                  style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"4px 8px",fontSize:11}}>
+                  🗑️
+                </button>
+              )}
             </div>
           </div>
-        ))}
+        );})}
       </div>
+
+      {/* ── ⚠️ Comissões Aguardando — fora do ciclo até pacote ser pago ── */}
+      {comissoesSuspeitas.length > 0 && (
+        <div style={{background:"#fffbeb",borderRadius:14,border:"1px solid #fde68a",overflow:"hidden",marginTop:16}}>
+          <div style={{padding:"12px 20px",borderBottom:"1px solid #fde68a",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+            <span style={{fontWeight:700,fontSize:13,color:"#b45309"}}>⏳ Aguardando pagamento do pacote — {comissoesSuspeitas.length} comissão(ões) fora do ciclo</span>
+            <span style={{fontSize:11,color:"#92400e"}}>Entram automaticamente quando o pacote for marcado como pago</span>
+          </div>
+          {comissoesSuspeitas.map(c => {
+            const pacoteVinc = c.pacoteId ? pacotes.find(p=>p.id===c.pacoteId) : null;
+            const semPacote = c.pacoteId && !pacoteVinc;
+            const dataStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString("pt-BR") : c.mesRef||"-";
+            return (
+              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid #fef3c7"}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <div style={{fontWeight:600,fontSize:13,color:"#78350f"}}>{c.pacienteNome||"-"}</div>
+                    {semPacote && <span style={{fontSize:10,background:"#fca5a5",color:"#7f1d1d",padding:"1px 6px",borderRadius:8,fontWeight:700}}>Pacote removido</span>}
+                    {pacoteVinc && <span style={{fontSize:10,background:"#fed7aa",color:"#7c2d12",padding:"1px 6px",borderRadius:8,fontWeight:600}}>Pacote pendente · R$ {(pacoteVinc.valorTotal||0).toFixed(2).replace(".",",")}</span>}
+                  </div>
+                  <div style={{fontSize:11,color:"#92400e",marginTop:2}}>{c.tipo} · {dataStr}</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:"#92400e"}}>Comissão prevista</div>
+                    <div style={{fontWeight:700,fontSize:14,color:"#b45309"}}>R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+                  </div>
+                  {user.tipo==="psicologa" && (
+                  <button title="Remover do sistema"
+                    onClick={async()=>{
+                      if(!confirm(`Remover comissão de ${c.pacienteNome}? Ela será gerada novamente quando o pacote for pago.`))return;
+                      const col = c._legado ? "clinica_comissoes" : "vendas_secretaria";
+                      await db.collection(col).doc(c.id).delete();
+                    }}
+                    style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"4px 8px",fontSize:11}}>
+                    🗑️
+                  </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── ✓ Histórico do mês: comissões já pagas e pagamentos realizados ── */}
+      {(comissoesPagas.length>0||pagamentosDoMes.length>0)&&(
+        <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
+          <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14,display:"flex",justifyContent:"space-between"}}>
+            <span>✓ Histórico — {getMesLabel(mesSel)}</span>
+            <span style={{fontSize:13,color:"#16a34a",fontWeight:600}}>R$ {totalPagas.toFixed(2).replace(".",",")} em comissões pagas</span>
+          </div>
+          {pagamentosDoMes.length>0&&(
+            <div style={{padding:"10px 20px",background:"#f0fdf4",borderBottom:"1px solid var(--gray-100)"}}>
+              {pagamentosDoMes.map(pg=>(
+                <div key={pg.id} style={{display:"flex",justifyContent:"space-between",fontSize:13,padding:"4px 0"}}>
+                  <span style={{color:"#166534"}}>💰 {pg.tipo} — {pg.data?.split("-").reverse().join("/")}
+                    {pg.qtdComissoes?` · ${pg.qtdComissoes} comissão(ões)`:""}
+                    {(pg.valorSalarioFixo||0)>0?` · inclui salário fixo`:""}
+                  </span>
+                  <strong style={{color:"#166534"}}>R$ {(pg.valor||0).toFixed(2).replace(".",",")}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+          {comissoesPagas.map(c=>(
+            <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px",borderBottom:"1px solid var(--gray-100)",opacity:0.75}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:13}}>{c.pacienteNome||"—"}</div>
+                <div style={{fontSize:11,color:"var(--text-muted)"}}>{c.tipo} · {labelTipoVenda(c.tipoVenda)} · pago em {c.dataPagamento?c.dataPagamento.split("-").reverse().join("/"):"—"}</div>
+              </div>
+              <div style={{fontWeight:700,fontSize:14,color:"#16a34a"}}>✓ R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14}}>
+          🤝 Repasses a Parceiras — {getMesLabel(mesSel)}
+        </div>
+        {responsaveis.length===0 ? (
+          <div style={{padding:"30px 20px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+            Nenhum repasse neste mês. Vendas em parceria aparecem aqui automaticamente.
+          </div>
+        ) : responsaveis.map(resp => {
+          const itens = repassesMes.filter(c=>c.responsavel===resp);
+          const totalResp = itens.reduce((a,c)=>a+(c.valorComissao||0),0);
+          const pendentes = itens.filter(c=>c.status!=="pago");
+          const totalPend = pendentes.reduce((a,c)=>a+(c.valorComissao||0),0);
+          const parc = parceiras.find(p=>p.nome===resp);
+          return (
+            <div key={resp} style={{borderBottom:"1px solid var(--gray-100)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 20px",background:"#fffbeb",flexWrap:"wrap",gap:10}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14}}>{resp}</div>
+                  <div style={{fontSize:12,color:"var(--text-muted)"}}>
+                    {itens.length} venda(s) · Total R$ {totalResp.toFixed(2).replace(".",",")}
+                    {parc?.pix?` · PIX: ${parc.pix}`:""}
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:"var(--text-muted)"}}>Pendente</div>
+                    <div style={{fontWeight:800,fontSize:18,color:totalPend>0?"#b45309":"#16a34a"}}>R$ {totalPend.toFixed(2).replace(".",",")}</div>
+                  </div>
+                  {user.tipo==="psicologa" && totalPend>0 && (
+                    <button onClick={()=>pagarRepasse(resp)} disabled={pagando}
+                      style={{background:"#b45309",color:"white",border:"none",borderRadius:8,padding:"9px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>
+                      {pagando?"...":"💸 Marcar como pago"}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {itens.map(c=>(
+                <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 20px",borderTop:"1px solid var(--gray-100)"}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:13}}>{c.pacienteNome||"—"}</div>
+                    <div style={{fontSize:11,color:"var(--text-muted)"}}>{c.tipo} · {c.perc?`${c.perc}% de R$ ${(c.valorBase||0).toFixed(2).replace(".",",")}`:""}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:700,fontSize:14,color:"#b45309"}}>R$ {(c.valorComissao||0).toFixed(2).replace(".",",")}</div>
+                    {c.status==="pago"
+                      ? <div style={{fontSize:11,color:"#16a34a",fontWeight:600}}>✓ Pago {c.dataPagamento?c.dataPagamento.split("-").reverse().join("/"):""}</div>
+                      : <div style={{fontSize:11,color:"#b45309",fontWeight:600}}>Pendente</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── 🤝 CADASTRO DE PARCEIRAS — só psicóloga ── */}
+      {user.tipo==="psicologa" && (
+        <div style={{background:"white",borderRadius:14,border:"1px solid var(--gray-200)",overflow:"hidden",marginTop:24}}>
+          <div style={{padding:"14px 20px",borderBottom:"1px solid var(--gray-200)",fontWeight:700,fontSize:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>Parceiras Cadastradas</span>
+            <button onClick={()=>{setEditandoParceira(null);setFormParceira({nome:"",percentual:String(config.percParceiroPadrao||70),pix:"",tipo:"parceira"});setModalParceira(true);}}
+              style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-body)"}}>+ Nova Parceira</button>
+          </div>
+          {parceiras.length===0 ? (
+            <div style={{padding:"30px 20px",textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+              Nenhuma parceira cadastrada. Cadastre para usar nas vendas em parceria.
+            </div>
+          ) : parceiras.map(p=>(
+            <div key={p.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 20px",borderBottom:"1px solid var(--gray-100)"}}>
+              <div>
+                <div style={{fontWeight:600,fontSize:14}}>{p.nome} {p.tipo==="estagiaria"&&<span style={{fontSize:10,fontWeight:700,background:"#ccfbf1",color:"#0d9488",padding:"2px 8px",borderRadius:10,marginLeft:6}}>Estagiária</span>}</div>
+                <div style={{fontSize:12,color:"var(--text-muted)"}}>Repasse padrão: {p.percentual||config.percParceiroPadrao}% {p.pix?` · PIX: ${p.pix}`:""}</div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>{setEditandoParceira(p.id);setFormParceira({nome:p.nome||"",percentual:String(p.percentual||config.percParceiroPadrao||70),pix:p.pix||"",tipo:p.tipo||"parceira"});setModalParceira(true);}}
+                  style={{background:"none",border:"1px solid #e5e7eb",borderRadius:6,cursor:"pointer",padding:"5px 10px",fontSize:12}}>✏️</button>
+                <button onClick={async()=>{
+                    if(!confirm(`Excluir parceira ${p.nome}? Os repasses já registrados não serão apagados.`))return;
+                    await db.collection("clinica_parceiras").doc(p.id).delete();
+                  }}
+                  style={{background:"none",border:"1px solid #fca5a5",borderRadius:6,color:"#dc2626",cursor:"pointer",padding:"5px 10px",fontSize:12}}>🗑️</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Nova/Editar Parceira */}
+      {modalParceira&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModalParceira(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:420}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>{editandoParceira?"Editar Parceira":"Nova Parceira"}</div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Nome</label>
+              <input className="form-input" value={formParceira.nome} onChange={e=>setFormParceira({...formParceira,nome:e.target.value})} placeholder="Ex: Thais Cordeiro"/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">% de repasse padrão</label>
+              <input className="form-input" type="number" min="0" max="100" value={formParceira.percentual} onChange={e=>setFormParceira({...formParceira,percentual:e.target.value})}/>
+            </div>
+            <div className="form-group" style={{marginBottom:14}}>
+              <label className="form-label">Chave PIX (opcional)</label>
+              <input className="form-input" value={formParceira.pix} onChange={e=>setFormParceira({...formParceira,pix:e.target.value})}/>
+            </div>
+            <div className="form-group" style={{marginBottom:20}}>
+              <label className="form-label">Tipo</label>
+              <select className="form-input" value={formParceira.tipo} onChange={e=>setFormParceira({...formParceira,tipo:e.target.value})}>
+                <option value="parceira">Parceira (vendas em parceria)</option>
+                <option value="estagiaria">Estagiária (projeto social)</option>
+              </select>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setModalParceira(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvarParceira}>{editandoParceira?"Salvar alterações":"Salvar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -8032,6 +8458,8 @@ function Depoimentos() {
   const [lista, setLista] = useState([]);
   const [aba, setAba] = useState("pendente");
   const [salvando, setSalvando] = useState(null);
+  const [respostaEdit, setRespostaEdit] = useState({});
+  const [salvandoResposta, setSalvandoResposta] = useState(null);
 
   useEffect(()=>{
     const unsub = db.collection("site_depoimentos")
@@ -8055,6 +8483,12 @@ function Depoimentos() {
   async function excluir(id){
     if(!confirm("Excluir permanentemente?")) return;
     await db.collection("site_depoimentos").doc(id).delete();
+  }
+  async function salvarResposta(id){
+    const texto = (respostaEdit[id]||"").trim();
+    setSalvandoResposta(id);
+    await db.collection("site_depoimentos").doc(id).update({resposta:texto});
+    setSalvandoResposta(null);
   }
 
   function Estrelas({n}){
@@ -8126,6 +8560,26 @@ function Depoimentos() {
                   <p style={{fontSize:14,color:"#374151",lineHeight:1.7,fontStyle:"italic"}}>"{d.texto}"</p>
                   <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8}}>
                     {d.createdAt?.seconds ? new Date(d.createdAt.seconds*1000).toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"}) : ""}
+                  </div>
+
+                  {/* Resposta da psicóloga */}
+                  <div style={{marginTop:14,background:"var(--purple-bg,#f5eeff)",borderRadius:10,padding:14}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"var(--purple)",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                      <Icon name="message-circle" size={14}/> Sua resposta (aparece no site)
+                    </div>
+                    <textarea
+                      className="form-input"
+                      style={{width:"100%",minHeight:60,fontSize:13,fontFamily:"var(--font-body)",resize:"vertical"}}
+                      placeholder="Escreva aqui sua resposta pública a este depoimento..."
+                      value={respostaEdit[d.id] !== undefined ? respostaEdit[d.id] : (d.resposta||"")}
+                      onChange={e=>setRespostaEdit(prev=>({...prev,[d.id]:e.target.value}))}
+                    />
+                    <div style={{display:"flex",justifyContent:"flex-end",marginTop:8}}>
+                      <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}}
+                        onClick={()=>salvarResposta(d.id)} disabled={salvandoResposta===d.id}>
+                        <Icon name="save" size={13}/> {salvandoResposta===d.id?"Salvando...":"Salvar resposta"}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div style={{display:"flex",gap:8,flexShrink:0}}>
@@ -8303,13 +8757,16 @@ function Configuracoes() {
 // ═══════════════════════════════════════════════════════
 function Agenda() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
-  const [sessoes, setSessoes] = useState([]);
+  const [sessoesPacientes, setSessoesPacientes] = useState([]);
+  const [reservasSalaRaw, setReservasSalaRaw] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [semanaOffset, setSemanaOffset] = useState(0);
   const [form, setForm] = useState({pacienteId:"",data:"",hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});
   const [salvando, setSalvando] = useState(false);
+  const [viewMode, setViewMode] = useState("timeline");
+  const [diaSelecionado, setDiaSelecionado] = useState(null);
 
   const TIPOS = ["Psicoterapia","Avaliacao Neuropsicologica","Avaliacao Psicologica","Terapia de Casais","Musicoterapia","Orientacao de Carreira","Retorno","Outro"];
   const STATUS_CONFIG = {
@@ -8323,26 +8780,29 @@ function Agenda() {
 
   useEffect(()=>{
     const u1 = db.collection("clinica_sessoes").onSnapshot(snap=>{
-      setSessoes(snap.docs.map(d=>({id:d.id,...d.data()})));
+      setSessoesPacientes(snap.docs.map(d=>({id:d.id,...d.data()})));
       setLoading(false);
     },()=>setLoading(false));
     // Reservas da sala (Thais) — aparecem como bloqueios laranjas
     const u2 = db.collection("sala_reservas").onSnapshot(snap=>{
-      const reservasSala = snap.docs.map(d=>({
-        id:"sala_"+d.id, ...d.data(),
-        pacienteNome: d.data().usuarioId==="thais"
-          ? `🟠 Thais — ${d.data().titulo||"Sala reservada"}`
-          : `🟣 ${d.data().titulo||"Sala — Lucia"}`,
-        tipo:"sala", hora:d.data().horaInicio,
-        status:"agendado", _sala:true
-      }));
-      setSessoes(prev=>{
-        const semSala = prev.filter(s=>!s._sala);
-        return [...semSala, ...reservasSala];
-      });
+      setReservasSalaRaw(snap.docs.map(d=>({id:d.id,...d.data()})));
     },()=>{});
     return()=>{u1();u2();};
   },[]);
+
+  // Combina sessões de pacientes + reservas de sala num único array memoizado,
+  // sem race condition entre os dois listeners (cada um atualiza seu próprio estado)
+  const sessoes = useMemo(()=>{
+    const reservasSala = reservasSalaRaw.map(r=>({
+      id:"sala_"+r.id, ...r,
+      pacienteNome: r.usuarioId==="thais"
+        ? `🟠 Thais — ${r.titulo||"Sala reservada"}`
+        : `🟣 ${r.titulo||"Sala — Lucia"}`,
+      tipo:"sala", hora:r.horaInicio,
+      status:"agendado", _sala:true
+    }));
+    return [...sessoesPacientes, ...reservasSala];
+  },[sessoesPacientes, reservasSalaRaw]);
 
   // Calcular semana atual
   function getInicioSemana(offset=0){
@@ -8510,109 +8970,354 @@ function Agenda() {
         <button className="btn btn-ghost" style={{padding:"8px 12px"}} onClick={()=>setSemanaOffset(s=>s+1)}><Icon name="chevron-right" size={18}/></button>
       </div>
 
-      {/* Grade semanal — separada por período */}
-      <div style={{marginBottom:24}}>
-        {/* Cabeçalho dos dias */}
-        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
-          <div/>
-          {dias.map((dia,i)=>{
-            const isHoje = formatData(dia)===formatData(hoje);
-            const isPassado = dia < hoje;
-            return (
-              <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:10,background:isHoje?"var(--purple)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)"}}>
-                <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:isHoje?"rgba(255,255,255,.8)":isPassado?"#9ca3af":"var(--gray-500)"}}>{DIAS_SEMANA[i]}</div>
-                <div style={{fontSize:20,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)",lineHeight:1.2}}>{dia.getDate()}</div>
-                <div style={{fontSize:9,color:isHoje?"rgba(255,255,255,.7)":"var(--gray-400)"}}>
-                  {dia.toLocaleDateString("pt-BR",{month:"short"})}
-                </div>
-              </div>
-            );
-          })}
-        </div></div>
+      {/* ── AGENDA: mobile=lista vertical / desktop=grade+lista ── */}
+      {(()=>{
+        const isMobile = window.innerWidth < 768;
+        const HORA_INI = 7, HORA_FIM = 22;
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const dias7 = getDiasSemana(semanaOffset);
 
-        {/* Períodos */}
-        <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:4}}>
-        {[
-          {label:"☀️ Manhã",   range:["06:00","12:00"], bg:"#fffbeb"},
-          {label:"🌤️ Tarde",   range:["12:00","18:00"], bg:"#f0f9ff"},
-          {label:"🌙 Noite",   range:["18:00","23:59"], bg:"#f5f3ff"},
-        ].map(periodo=>{
-          const sessoesNoPeriodo = dias.some(dia=>
-            sessoesNoDia(dia).some(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1])
-          );
+        function horaParaMin(h){ const [hh,mm]=(h||"00:00").split(":").map(Number); return hh*60+(mm||0); }
+        function minParaHora(m){ return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"); }
+
+        // Monta linhas da timeline para um dia
+        function montarLinhasDia(diaStr){
+          const sessDia  = sessoes.filter(s=>s.data===diaStr&&!s._sala).sort((a,b)=>a.hora.localeCompare(b.hora));
+          const salasDia = sessoes.filter(s=>s.data===diaStr&&s._sala).map(s=>({
+            inicio: s.horaInicio||s.hora||"00:00",
+            fim:    s.horaFim   ||s.hora||"00:00",
+            nome:   s.pacienteNome||"Sala",
+            ehLucia:!(s.pacienteNome||"").toLowerCase().includes("thais"),
+            raw:s,
+          }));
+
+          function sessoesNoMin(m){
+            // Retorna sessões que COMEÇAM neste slot de 1h (ini >= m E ini < m+60)
+            return sessDia.filter(s=>{
+              const ini=horaParaMin(s.hora);
+              return ini >= m && ini < m+60;
+            });
+          }
+          function blocoNoMin(m){
+            return salasDia.find(b=>m>=horaParaMin(b.inicio)&&m<horaParaMin(b.fim));
+          }
+
+          const linhas=[];
+          const jaExibidas = new Set(); // ids de sessão já lançadas na timeline
+          for(let m=HORA_INI*60; m<HORA_FIM*60; m+=60){
+            const hStr=minParaHora(m);
+            const sessNoSlot=sessoesNoMin(m);
+            const bloco=blocoNoMin(m);
+            let teveSessaoInicio=false;
+            sessNoSlot.forEach(sess=>{
+              // Exibe a sessão no slot onde ela COMEÇA (19:30 aparece no slot 19:00-20:00)
+              const sessIni = horaParaMin(sess.hora);
+              const iniciaSessao = sessIni >= m && sessIni < m+60;
+              if(iniciaSessao && !jaExibidas.has(sess.id)){
+                linhas.push({tipo:"sessao",hStr,sess});
+                jaExibidas.add(sess.id);
+                teveSessaoInicio=true;
+              }
+            });
+            if(sessNoSlot.length>0){
+              // já tem sessão cobrindo este minuto (seja início ou meio) — não mostrar vago/bloco neste slot
+            } else if(bloco){
+              if(bloco.ehLucia) linhas.push({tipo:"livre",hStr,bloco});
+              else {
+                // só mostrar início do bloco Thais uma vez
+                if(!linhas.length||linhas[linhas.length-1].tipo!=="thais"||linhas[linhas.length-1].bloco.raw.id!==bloco.raw.id)
+                  linhas.push({tipo:"thais",hStr,bloco});
+              }
+            }
+            // fora de bloco: não mostrar para não poluir
+          }
+          return linhas;
+        }
+
+        // ── COMPONENTE de um card de sessão ──
+        function CardSessao({s,hStr}){
+          const st=STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+          const dur=parseInt(s.duracao||50);
+          const fim=minParaHora(horaParaMin(s.hora)+dur);
+          const online=(s.tipo||"").toLowerCase().includes("online");
           return (
-            <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
-              {/* Label período */}
-              <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
-                <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)",writingMode:"horizontal-tb",whiteSpace:"nowrap"}}>{periodo.label}</span>
+            <div onClick={()=>abrirEditar(s)}
+              style={{display:"flex",alignItems:"stretch",borderRadius:12,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.07)",cursor:"pointer",background:st.bg,marginBottom:4}}>
+              <div style={{width:4,background:st.cor,flexShrink:0}}/>
+              <div style={{flex:1,padding:"10px 12px"}}>
+                <div style={{fontSize:15,fontWeight:700,color:"#111827",lineHeight:1.3}}>{s.pacienteNome||"—"}</div>
+                <div style={{fontSize:12,color:st.cor,fontWeight:600,marginTop:2}}>
+                  {s.hora.slice(0,5)} – {fim}
+                  {online&&<span style={{marginLeft:6}}>📹</span>}
+                </div>
+                <div style={{fontSize:11,color:"#6b7280",marginTop:1}}>{s.tipo||"Psicoterapia"}</div>
               </div>
-              {/* Dias */}
-              {dias.map((dia,i)=>{
-                const isHoje = formatData(dia)===formatData(hoje);
-                const sessDia = sessoesNoDia(dia).filter(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1]);
+              <div style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"0 10px",gap:4}}>
+                <span style={{background:st.cor,color:"white",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{st.label}</span>
+                <select value={s.status}
+                  onChange={e=>{e.stopPropagation();mudarStatus(s.id,e.target.value);}}
+                  onClick={e=>e.stopPropagation()}
+                  style={{fontSize:10,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px 3px",background:"white",cursor:"pointer",maxWidth:84}}>
+                  {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                </select>
+              </div>
+            </div>
+          );
+        }
+
+        function CardLivre({hStr,diaStr}){
+          return (
+            <button onClick={()=>{setForm({pacienteId:"",data:diaStr,hora:hStr,duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+              style={{display:"flex",alignItems:"center",gap:8,width:"100%",background:"#faf5ff",border:"1.5px dashed #c4b5fd",borderRadius:10,padding:"8px 12px",cursor:"pointer",color:"#7B00C4",fontSize:13,fontFamily:"var(--font-body)",marginBottom:3}}>
+              <Icon name="plus-circle" size={14}/> <span style={{fontWeight:600}}>{hStr}</span> <span style={{color:"#a78bfa",fontWeight:400}}>· Disponível</span>
+            </button>
+          );
+        }
+
+        function CardThais({bloco}){
+          return (
+            <div style={{display:"flex",alignItems:"stretch",borderRadius:10,overflow:"hidden",background:"#fff7ed",border:"1px solid #fed7aa",marginBottom:3}}>
+              <div style={{width:4,background:"#ea580c",flexShrink:0}}/>
+              <div style={{padding:"8px 12px"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"#ea580c"}}>{bloco.nome}</div>
+                <div style={{fontSize:11,color:"#9a3412"}}>{bloco.inicio} – {bloco.fim} · Sala ocupada</div>
+              </div>
+            </div>
+          );
+        }
+
+        // ── VISÃO MOBILE: lista vertical contínua ──
+        if(isMobile){
+          // Mostrar 14 dias a partir de hoje
+          const diasMobile = Array.from({length:14},(_,i)=>{
+            const d=new Date(hoje); d.setDate(hoje.getDate()+i); return d;
+          });
+          return (
+            <div>
+              {/* Navegação semana */}
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                <button onClick={()=>setSemanaOffset(o=>o-1)} className="btn btn-ghost" style={{padding:"6px 12px"}}>‹ Anterior</button>
+                <span style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
+                  {formatData(dias7[0])} – {formatData(dias7[6])}
+                </span>
+                <button onClick={()=>setSemanaOffset(o=>o+1)} className="btn btn-ghost" style={{padding:"6px 12px"}}>Próxima ›</button>
+              </div>
+              {diasMobile.map((dia,di)=>{
+                const diaStr=formatData(dia);
+                const linhas=montarLinhasDia(diaStr);
+                const isHoje=diaStr===formatData(hoje);
+                if(linhas.length===0&&!isHoje) return null; // ocultar dias vazios sem bloco
                 return (
-                  <div key={i} style={{minHeight:70,background:isHoje?periodo.bg+"cc":periodo.bg,border:"1px solid",borderColor:isHoje?"var(--purple)30":"var(--gray-200)",borderRadius:8,padding:4,display:"flex",flexDirection:"column",gap:3}}>
-                    {sessDia.map(s=>{
-                      const st = s._sala
-                        ? {bg:"#fff7ed",cor:"#ea580c",label:"Sala"}
-                        : STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
-                      return (
-                        <div key={s.id}
-                          onClick={()=>!s._sala&&abrirEditar(s)}
-                          style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:5,padding:"4px 6px",cursor:s._sala?"default":"pointer",fontSize:11,lineHeight:1.4}}>
-                          <div style={{fontWeight:700,color:st.cor,fontSize:12}}>{s.hora}</div>
-                          <div style={{color:"#111",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>
-                            {s._sala ? (s.pacienteNome||"Sala") : (s.pacienteNome?.split(" ")[0]||"—")}
-                          </div>
-                          {!s._sala&&<div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>}
-                        </div>
-                      );
-                    })}
-                    <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:periodo.range[0]==="06:00"?"08:00":periodo.range[0]==="12:00"?"14:00":"19:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
-                      style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"3px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:"auto"}}>
-                      +
-                    </button>
+                  <div key={di} style={{display:"flex",gap:0,marginBottom:8}}>
+                    {/* Coluna lateral dia */}
+                    <div style={{width:44,flexShrink:0,paddingTop:10,textAlign:"center"}}>
+                      <div style={{fontSize:10,fontWeight:700,color:isHoje?"var(--purple)":"#9ca3af",textTransform:"uppercase"}}>
+                        {DIAS_SEMANA[dia.getDay()]}
+                      </div>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:isHoje?"var(--purple)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",margin:"2px auto 0"}}>
+                        <span style={{fontSize:18,fontWeight:800,color:isHoje?"white":isHoje?"var(--purple)":"#111827"}}>{dia.getDate()}</span>
+                      </div>
+                    </div>
+                    {/* Linha vertical */}
+                    <div style={{width:2,background:isHoje?"var(--purple)":"#e5e7eb",borderRadius:2,flexShrink:0,marginTop:14,marginRight:10}}/>
+                    {/* Cards */}
+                    <div style={{flex:1,paddingTop:6}}>
+                      {linhas.length===0?(
+                        <div style={{color:"#d1d5db",fontSize:12,padding:"8px 0"}}>Sem eventos</div>
+                      ):linhas.map((l,li)=>{
+                        if(l.tipo==="sessao") return <CardSessao key={li} s={l.sess} hStr={l.hStr}/>;
+                        if(l.tipo==="livre")  return <CardLivre  key={li} hStr={l.hStr} diaStr={diaStr}/>;
+                        if(l.tipo==="thais")  return <CardThais  key={li} bloco={l.bloco}/>;
+                        return null;
+                      })}
+                      <button onClick={()=>{setForm({pacienteId:"",data:diaStr,hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+                        style={{background:"none",border:"1px dashed #d1d5db",borderRadius:8,padding:"5px 12px",cursor:"pointer",color:"#9ca3af",fontSize:12,width:"100%",marginTop:2,fontFamily:"var(--font-body)"}}>
+                        + Agendar
+                      </button>
+                      {(()=>{
+                        const sessDia=sessoes.filter(s=>s.data===diaStr&&!s._sala);
+                        if(sessDia.length===0) return null;
+                        function enviarResumoMob(){
+                          const dataFmt=new Date(diaStr+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+                          const realizadas=sessDia.filter(s=>s.status==="realizado");
+                          const confirmadas=sessDia.filter(s=>s.status==="confirmado");
+                          const agendadas=sessDia.filter(s=>s.status==="agendado");
+                          const faltas=sessDia.filter(s=>s.status==="falta");
+                          const canceladas=sessDia.filter(s=>s.status==="cancelado");
+                          let msg=`📅 *Resumo do dia — ${dataFmt}*\n🔢 Total: ${sessDia.length} sessão(ões)\n\n`;
+                          if(realizadas.length) msg+=`✅ *Realizadas (${realizadas.length}):*\n${realizadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(confirmadas.length) msg+=`🟢 *Confirmadas (${confirmadas.length}):*\n${confirmadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(agendadas.length) msg+=`🟡 *Agendadas/Pendentes (${agendadas.length}):*\n${agendadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(faltas.length) msg+=`❌ *Faltas (${faltas.length}):*\n${faltas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          if(canceladas.length) msg+=`🚫 *Canceladas (${canceladas.length}):*\n${canceladas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                          msg+=`_Enviado pela Clínica Dra. Lucia Kratz_ 🦋`;
+                          window.open(`https://wa.me/5562991546765?text=${encodeURIComponent(msg)}`,"_blank");
+                        }
+                        return (
+                          <button onClick={enviarResumoMob}
+                            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:"#25D366",color:"white",border:"none",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontSize:12,fontWeight:600,width:"100%",marginTop:6,fontFamily:"var(--font-body)"}}>
+                            <span>📲</span> Resumo WhatsApp
+                          </button>
+                        );
+                      })()}
+                    </div>
                   </div>
                 );
               })}
             </div>
           );
-        })}
-        </div>{/* fecha overflow wrapper períodos */}
-      </div>
+        }
 
-      {/* Lista próximas sessões */}
-      {proximas.length>0&&(
-        <div className="card">
-          <div style={{fontWeight:700,fontSize:14,marginBottom:14,display:"flex",alignItems:"center",gap:6}}>
-            <Icon name="clock" size={16}/> Próximas Sessões
-          </div>
-          {proximas.map(s=>{
-            const st = STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
-            const dataFmt = new Date(s.data+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
-            return (
-              <div key={s.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid var(--gray-100)"}}>
-                <div style={{width:48,height:48,borderRadius:10,background:st.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <div style={{fontSize:11,fontWeight:700,color:st.cor}}>{s.hora}</div>
-                  <div style={{fontSize:9,color:st.cor}}>{s.duracao}min</div>
+        // ── VISÃO DESKTOP: seletor de view + grade/timeline ──
+        const diaAtual = diaSelecionado || formatData(hoje);
+        return (
+          <div>
+            {/* Seletor view */}
+            <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--gray-100)",borderRadius:12,padding:4,maxWidth:260}}>
+              {[["timeline","📅 Timeline"],["semana","🗓️ Semana"]].map(([v,l])=>(
+                <button key={v} onClick={()=>setViewMode(v)}
+                  style={{flex:1,padding:"8px 12px",borderRadius:9,border:"none",background:viewMode===v?"white":"transparent",color:viewMode===v?"var(--purple)":"#6b7280",fontWeight:viewMode===v?700:500,cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",boxShadow:viewMode===v?"0 1px 4px rgba(0,0,0,0.08)":"none"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            {/* DESKTOP TIMELINE */}
+            {viewMode==="timeline"&&(
+              <div style={{display:"flex",gap:20}}>
+                {/* Seletor de dias */}
+                <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+                  {dias7.map((dia,idx)=>{
+                    const str=formatData(dia);
+                    const isH=str===formatData(hoje);
+                    const isSel=str===diaAtual;
+                    const temS=sessoes.some(s=>s.data===str&&!s._sala);
+                    return (
+                      <button key={idx} onClick={()=>setDiaSelecionado(str)}
+                        style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"8px 12px",borderRadius:12,border:"1.5px solid",borderColor:isSel?"var(--purple)":isH?"#c4b5fd":"#e5e7eb",background:isSel?"var(--purple)":isH?"#f5f0ff":"white",cursor:"pointer",minWidth:56}}>
+                        <span style={{fontSize:10,fontWeight:600,color:isSel?"rgba(255,255,255,.75)":isH?"var(--purple)":"#9ca3af",textTransform:"uppercase"}}>{DIAS_SEMANA[dia.getDay()]}</span>
+                        <span style={{fontSize:20,fontWeight:800,color:isSel?"white":isH?"var(--purple)":"#111827"}}>{dia.getDate()}</span>
+                        {temS&&<div style={{width:5,height:5,borderRadius:"50%",background:isSel?"rgba(255,255,255,.7)":"var(--purple)",marginTop:2}}/>}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:600,fontSize:13}}>{s.pacienteNome}</div>
-                  <div style={{fontSize:12,color:"var(--text-muted)"}}>{dataFmt} · {s.tipo}</div>
-                </div>
-                <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                  <span style={{background:st.bg,color:st.cor,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>{st.label}</span>
-                  <select value={s.status} onChange={e=>mudarStatus(s.id,e.target.value)}
-                    style={{fontSize:11,border:"1px solid #e5e7eb",borderRadius:6,padding:"2px 4px",cursor:"pointer",background:"white",color:"#374151"}}>
-                    {Object.entries(STATUS_CONFIG).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
-                  </select>
-                  <button onClick={()=>excluir(s.id)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:4}}><Icon name="trash-2" size={13}/></button>
+                {/* Lista do dia */}
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"var(--text-muted)"}}>
+                      {new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+                    </div>
+                    {(()=>{
+                      const sessDia = sessoes.filter(s=>s.data===diaAtual&&!s._sala);
+                      if(sessDia.length===0) return null;
+                      function enviarResumo(){
+                        const dataFmt = new Date(diaAtual+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+                        const realizadas = sessDia.filter(s=>s.status==="realizado");
+                        const confirmadas = sessDia.filter(s=>s.status==="confirmado");
+                        const agendadas  = sessDia.filter(s=>s.status==="agendado");
+                        const faltas     = sessDia.filter(s=>s.status==="falta");
+                        const canceladas = sessDia.filter(s=>s.status==="cancelado");
+                        let msg = `📅 *Resumo do dia — ${dataFmt}*\n`;
+                        msg += `🔢 Total: ${sessDia.length} sessão(ões)\n\n`;
+                        if(realizadas.length) msg += `✅ *Realizadas (${realizadas.length}):*\n${realizadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(confirmadas.length) msg += `🟢 *Confirmadas (${confirmadas.length}):*\n${confirmadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(agendadas.length)  msg += `🟡 *Agendadas/Pendentes (${agendadas.length}):*\n${agendadas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(faltas.length)     msg += `❌ *Faltas (${faltas.length}):*\n${faltas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        if(canceladas.length) msg += `🚫 *Canceladas (${canceladas.length}):*\n${canceladas.map(s=>`  • ${s.pacienteNome} — ${s.hora?.slice(0,5)}`).join("\n")}\n\n`;
+                        msg += `_Enviado pela Clínica Dra. Lucia Kratz_ 🦋`;
+                        const url = `https://wa.me/5562991546765?text=${encodeURIComponent(msg)}`;
+                        window.open(url,"_blank");
+                      }
+                      return (
+                        <button onClick={enviarResumo}
+                          style={{display:"flex",alignItems:"center",gap:6,background:"#25D366",color:"white",border:"none",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-body)"}}>
+                          <span style={{fontSize:15}}>📲</span> Resumo WhatsApp
+                        </button>
+                      );
+                    })()}
+                  </div>
+                  {(()=>{
+                    const linhas=montarLinhasDia(diaAtual);
+                    if(linhas.length===0) return (
+                      <div style={{textAlign:"center",padding:40,color:"var(--text-muted)",background:"var(--gray-50)",borderRadius:14}}>
+                        <Icon name="calendar" size={32}/>
+                        <div style={{marginTop:8,fontWeight:600}}>Nenhum evento neste dia</div>
+                        <button className="btn btn-purple" style={{marginTop:12,fontSize:13}}
+                          onClick={()=>{setForm({pacienteId:"",data:diaAtual,hora:"09:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}>
+                          + Agendar
+                        </button>
+                      </div>
+                    );
+                    return linhas.map((l,li)=>{
+                      if(l.tipo==="sessao") return <CardSessao key={li} s={l.sess} hStr={l.hStr}/>;
+                      if(l.tipo==="livre")  return <CardLivre  key={li} hStr={l.hStr} diaStr={diaAtual}/>;
+                      if(l.tipo==="thais")  return <CardThais  key={li} bloco={l.bloco}/>;
+                      return null;
+                    });
+                  })()}
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
+
+            {/* DESKTOP GRADE SEMANAL */}
+            {viewMode==="semana"&&(
+              <div style={{marginBottom:24}}>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><div style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
+                  <div/>
+                  {dias.map((dia,i)=>{
+                    const isHoje=formatData(dia)===formatData(hoje);
+                    const isPassado=dia<hoje;
+                    return (
+                      <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:10,background:isHoje?"var(--purple)":"white",border:"1.5px solid",borderColor:isHoje?"var(--purple)":"var(--gray-200)"}}>
+                        <div style={{fontSize:10,fontWeight:600,textTransform:"uppercase",color:isHoje?"rgba(255,255,255,.8)":isPassado?"#9ca3af":"var(--gray-500)"}}>{DIAS_SEMANA[i]}</div>
+                        <div style={{fontSize:20,fontWeight:800,color:isHoje?"white":isPassado?"#9ca3af":"var(--gray-800)",lineHeight:1.2}}>{dia.getDate()}</div>
+                        <div style={{fontSize:9,color:isHoje?"rgba(255,255,255,.7)":"var(--gray-400)"}}>{dia.toLocaleDateString("pt-BR",{month:"short"})}</div>
+                      </div>
+                    );
+                  })}
+                </div></div>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch",marginBottom:4}}>
+                {[
+                  {label:"☀️ Manhã",   range:["06:00","12:00"],bg:"#fffbeb"},
+                  {label:"🌤️ Tarde",   range:["12:00","18:00"],bg:"#f0f9ff"},
+                  {label:"🌙 Noite",   range:["18:00","23:59"],bg:"#f5f3ff"},
+                ].map(periodo=>(
+                  <div key={periodo.label} style={{display:"grid",gridTemplateColumns:"60px repeat(7,minmax(44px,1fr))",gap:3,marginBottom:4,minWidth:380}}>
+                    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"flex-end",paddingRight:8,paddingTop:8}}>
+                      <span style={{fontSize:11,fontWeight:600,color:"var(--gray-500)"}}>{periodo.label}</span>
+                    </div>
+                    {dias.map((dia,i)=>{
+                      const isHoje=formatData(dia)===formatData(hoje);
+                      const sessDia=sessoesNoDia(dia).filter(s=>s.hora>=periodo.range[0]&&s.hora<periodo.range[1]);
+                      return (
+                        <div key={i} style={{minHeight:70,background:isHoje?periodo.bg+"cc":periodo.bg,border:"1px solid",borderColor:isHoje?"var(--purple)30":"var(--gray-200)",borderRadius:8,padding:4,display:"flex",flexDirection:"column",gap:3}}>
+                          {sessDia.map(s=>{
+                            const st=s._sala?{bg:"#fff7ed",cor:"#ea580c",label:"Sala"}:STATUS_CONFIG[s.status]||STATUS_CONFIG.agendado;
+                            return (
+                              <div key={s.id} onClick={()=>!s._sala&&abrirEditar(s)}
+                                style={{background:st.bg,borderLeft:"3px solid "+st.cor,borderRadius:5,padding:"4px 6px",cursor:s._sala?"default":"pointer",fontSize:11,lineHeight:1.4}}>
+                                <div style={{fontWeight:700,color:st.cor,fontSize:12}}>{s.hora}</div>
+                                <div style={{color:"#111",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>
+                                  {s._sala?(s.pacienteNome||"Sala"):(s.pacienteNome?.split(" ")[0]||"—")}
+                                </div>
+                                {!s._sala&&<div style={{color:"#6b7280",fontSize:9}}>{s.tipo}</div>}
+                              </div>
+                            );
+                          })}
+                          <button onClick={()=>{setForm({pacienteId:"",data:formatData(dia),hora:periodo.range[0]==="06:00"?"08:00":periodo.range[0]==="12:00"?"14:00":"19:00",duracao:"50",tipo:"Psicoterapia",status:"agendado",obs:""});setEditando(null);setModal(true);}}
+                            style={{background:"none",border:"1px dashed #d1d5db",borderRadius:4,padding:"3px",cursor:"pointer",color:"#9ca3af",fontSize:11,width:"100%",marginTop:"auto"}}>+</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Modal nova/editar sessão */}
       {modal&&(
@@ -8663,11 +9368,19 @@ function Agenda() {
               <label className="form-label">Observações</label>
               <TextAreaVoz className="form-input" rows={2} value={form.obs} onChange={e=>setForm({...form,obs:e.target.value})} placeholder="Notas sobre a sessão..."/>
             </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
-                <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar"}
-              </button>
+            <div style={{display:"flex",gap:10,justifyContent:"space-between"}}>
+              {editando&&(
+                <button className="btn btn-ghost" style={{color:"#dc2626",border:"1px solid #fecaca"}}
+                  onClick={()=>{excluir(editando);setModal(false);}}>
+                  <Icon name="trash-2" size={15}/> Excluir
+                </button>
+              )}
+              <div style={{display:"flex",gap:10,marginLeft:"auto"}}>
+                <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+                <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
+                  <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -8734,28 +9447,288 @@ function Agenda() {
 }
 
 // APP
+// ─── VITRINE DE PRODUTOS (CRUD) ──────────────────────────
+function VitrineProdutos() {
+  const [produtos, setProdutos] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [modal, setModal]       = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const formVazio = {titulo:"",descricao:"",imagemUrl:"",linkVendas:"",textoBotao:"",ativo:true};
+  const [form, setForm] = useState(formVazio);
+
+  useEffect(()=>{
+    const unsub = db.collection("produtos_vitrine").onSnapshot(s=>{
+      const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+      docs.sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+      setProdutos(docs);
+      setLoading(false);
+    },()=>setLoading(false));
+    return unsub;
+  },[]);
+
+  function abrirNovo(){ setForm(formVazio); setEditando(null); setModal(true); }
+  function abrirEditar(p){ setForm({titulo:p.titulo||"",descricao:p.descricao||"",imagemUrl:p.imagemUrl||"",linkVendas:p.linkVendas||"",textoBotao:p.textoBotao||"",ativo:p.ativo!==false}); setEditando(p.id); setModal(true); }
+
+  async function salvar(){
+    if(!form.titulo||!form.linkVendas){ alert("Título e link de vendas são obrigatórios."); return; }
+    setSalvando(true);
+    try {
+      const dados = {...form, updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+      if(editando){
+        await db.collection("produtos_vitrine").doc(editando).update(dados);
+      } else {
+        await db.collection("produtos_vitrine").add({...dados, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+      }
+      setModal(false); setEditando(null); setForm(formVazio);
+    } catch(e){ alert("Erro ao salvar: "+e.message); }
+    finally{ setSalvando(false); }
+  }
+
+  async function toggleAtivo(p){
+    await db.collection("produtos_vitrine").doc(p.id).update({ativo:!p.ativo});
+  }
+
+  async function excluir(id){
+    if(!confirm("Excluir este produto da vitrine?")) return;
+    await db.collection("produtos_vitrine").doc(id).delete();
+  }
+
+  if(loading) return <Spinner/>;
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,flexWrap:"wrap",gap:12}}>
+        <div>
+          <div className="page-title">🛍️ Vitrine de Produtos</div>
+          <div className="page-subtitle">{produtos.length} produto(s) · {produtos.filter(p=>p.ativo).length} ativo(s)</div>
+        </div>
+        <button className="btn btn-purple" onClick={abrirNovo}><Icon name="plus" size={15}/> Novo Produto</button>
+      </div>
+
+      {produtos.length===0?(
+        <div className="card" style={{textAlign:"center",padding:60,color:"var(--text-muted)"}}>
+          <Icon name="shopping-bag" size={48}/>
+          <div style={{marginTop:12,fontWeight:600}}>Nenhum produto cadastrado</div>
+          <p style={{fontSize:13,marginTop:8,marginBottom:20}}>Cadastre produtos como o 9&Self para exibir no portal do paciente.</p>
+          <button className="btn btn-purple" onClick={abrirNovo}><Icon name="plus" size={14}/> Cadastrar primeiro produto</button>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {produtos.map(p=>(
+            <div key={p.id} className="card" style={{padding:"18px 20px",opacity:p.ativo?1:0.6}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:14}}>
+                {p.imagemUrl?(
+                  <img src={p.imagemUrl} alt={p.titulo} style={{width:72,height:56,objectFit:"cover",borderRadius:8,flexShrink:0}}/>
+                ):(
+                  <div style={{width:72,height:56,background:"var(--purple-soft)",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <Icon name="image" size={22}/>
+                  </div>
+                )}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
+                    <span style={{fontWeight:700,fontSize:15}}>{p.titulo}</span>
+                    <span style={{background:p.ativo?"#d1fae5":"#f3f4f6",color:p.ativo?"#065f46":"#6b7280",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>
+                      {p.ativo?"✓ Ativo":"Inativo"}
+                    </span>
+                  </div>
+                  {p.descricao&&<div style={{fontSize:13,color:"var(--text-muted)",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.descricao}</div>}
+                  {p.linkVendas&&<div style={{fontSize:12,color:"#2563eb"}}><Icon name="link" size={11}/> {p.linkVendas}</div>}
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:14,paddingTop:12,borderTop:"1px solid var(--gray-100)",flexWrap:"wrap"}}>
+                <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>abrirEditar(p)}><Icon name="pencil" size={13}/> Editar</button>
+                <button className="btn btn-ghost" style={{fontSize:12,color:p.ativo?"#d97706":"#059669"}} onClick={()=>toggleAtivo(p)}>
+                  <Icon name={p.ativo?"eye-off":"eye"} size={13}/> {p.ativo?"Desativar":"Ativar"}
+                </button>
+                {p.linkVendas&&(
+                  <a href={p.linkVendas} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:12,textDecoration:"none"}}>
+                    <Icon name="external-link" size={13}/> Ver página
+                  </a>
+                )}
+                <button className="btn btn-ghost" style={{fontSize:12,color:"#dc2626",marginLeft:"auto"}} onClick={()=>excluir(p.id)}><Icon name="trash-2" size={13}/></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modal&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:20}}>{editando?"Editar Produto":"Novo Produto"}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:14}}>
+              <div className="form-group">
+                <label className="form-label">Título *</label>
+                <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Ex: Mapeamento de Perfil 9&Self"/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Descrição (copy do produto)</label>
+                <textarea className="form-input" rows={3} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})} placeholder="Texto comercial exibido no card do paciente..."/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">URL da imagem / banner</label>
+                <input className="form-input" value={form.imagemUrl} onChange={e=>setForm({...form,imagemUrl:e.target.value})} placeholder="https://..."/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Link de vendas / checkout *</label>
+                <input className="form-input" value={form.linkVendas} onChange={e=>setForm({...form,linkVendas:e.target.value})} placeholder="https://..."/>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Texto do botão</label>
+                <input className="form-input" value={form.textoBotao} onChange={e=>setForm({...form,textoBotao:e.target.value})} placeholder="Ex: Quero Fazer Meu Mapeamento"/>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                {[true,false].map(v=>(
+                  <button key={v+""}  type="button" onClick={()=>setForm({...form,ativo:v})}
+                    style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid",borderColor:form.ativo===v?"var(--purple)":"#e5e7eb",background:form.ativo===v?"var(--purple-soft)":"white",color:form.ativo===v?"var(--purple)":"#6b7280",fontWeight:600,cursor:"pointer",fontSize:13}}>
+                    {v?"✓ Ativo no portal":"Inativo (oculto)"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
+              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
+              <button className="btn btn-purple" onClick={salvar} disabled={salvando}>{salvando?"Salvando...":"Salvar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState(null);
   const notifProps = useBotaoNotificacao(user);
-  function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");if(u.tipo==="marketing")setTab("marketing-dashboard");}
+  // ═══════════════════════════════════════════════════════
+// PAINEL DE PERMISSÕES
+// ═══════════════════════════════════════════════════════
+const PERMISSOES_DEFAULT = {
+  psicologa:  {ver_financeiro_clinica:true,ver_financeiro_pessoal:true,ver_pacientes:true,ver_agenda:true,ver_marketing:true,ver_funil:true,ver_resumo_marketing:true,ver_supervisao:true,ver_relatorios:true,editar_financeiro:true,editar_pacientes:true},
+  secretaria: {ver_financeiro_clinica:true,ver_financeiro_pessoal:false,ver_pacientes:true,ver_agenda:true,ver_marketing:false,ver_funil:false,ver_resumo_marketing:false,ver_supervisao:false,ver_relatorios:true,editar_financeiro:true,editar_pacientes:true},
+  paulo:      {ver_financeiro_clinica:true,ver_financeiro_pessoal:true,ver_pacientes:false,ver_agenda:false,ver_marketing:false,ver_funil:false,ver_resumo_marketing:false,ver_supervisao:false,ver_relatorios:true,editar_financeiro:true,editar_pacientes:false},
+  marketing:  {ver_financeiro_clinica:false,ver_financeiro_pessoal:false,ver_pacientes:false,ver_agenda:false,ver_marketing:true,ver_funil:true,ver_resumo_marketing:true,ver_supervisao:false,ver_relatorios:false,editar_financeiro:false,editar_pacientes:false},
+};
+
+const PERMISSOES_LABELS = [
+  {id:"ver_financeiro_clinica",  label:"Ver Financeiro da Clínica",  grupo:"💰 Financeiro"},
+  {id:"ver_financeiro_pessoal",  label:"Ver Financeiro Pessoal",     grupo:"💰 Financeiro"},
+  {id:"ver_relatorios",          label:"Ver Relatórios",             grupo:"💰 Financeiro"},
+  {id:"ver_pacientes",           label:"Ver Pacientes",              grupo:"🏥 Clínica"},
+  {id:"ver_agenda",              label:"Ver Agenda",                 grupo:"🏥 Clínica"},
+  {id:"ver_supervisao",          label:"Ver Supervisão",             grupo:"🏥 Clínica"},
+  {id:"editar_pacientes",        label:"Editar Pacientes",           grupo:"🏥 Clínica"},
+  {id:"editar_financeiro",       label:"Editar Financeiro",          grupo:"💰 Financeiro"},
+  {id:"ver_marketing",           label:"Ver Dashboard Marketing",    grupo:"📊 Marketing"},
+  {id:"ver_funil",               label:"Ver Funil de Leads",        grupo:"📊 Marketing"},
+  {id:"ver_resumo_marketing",    label:"Ver Resumo Técnico",        grupo:"📊 Marketing"},
+];
+
+function PainelPermissoes() {
+  const [perfilSel, setPerfilSel] = useState("secretaria");
+  const [permissoes, setPermissoes] = useState({});
+  const [salvando, setSalvando] = useState(false);
+  const [salvo, setSalvo] = useState(false);
+
+  // Carregar permissões do Firebase ou usar defaults
+  useEffect(()=>{
+    db.collection("clinica_perfis_permissoes").doc(perfilSel).get().then(doc=>{
+      if(doc.exists) setPermissoes(doc.data().permissoes||{});
+      else setPermissoes(PERMISSOES_DEFAULT[perfilSel]||{});
+    });
+  },[perfilSel]);
+
+  async function salvar(){
+    setSalvando(true);
+    await db.collection("clinica_perfis_permissoes").doc(perfilSel).set({
+      perfilId:perfilSel, permissoes,
+      updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setSalvando(false); setSalvo(true);
+    setTimeout(()=>setSalvo(false),2000);
+  }
+
+  function toggle(id){ setPermissoes(p=>({...p,[id]:!p[id]})); setSalvo(false); }
+
+  const perfisEdicao = [{id:"secretaria",label:"Secretária",cor:"#0891b2"},{id:"paulo",label:"Financeiro",cor:"#16a34a"},{id:"marketing",label:"Marketing",cor:"#ea580c"}];
+  const grupos = [...new Set(PERMISSOES_LABELS.map(p=>p.grupo))];
+
+  return(
+    <div style={{maxWidth:640,margin:"0 auto"}}>
+      <h2 style={{fontFamily:"var(--font-display)",fontSize:22,marginBottom:4}}>⚙️ Permissões por Perfil</h2>
+      <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:24}}>Configure o que cada perfil pode ver e fazer no sistema.</p>
+
+      {/* Seletor de perfil */}
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        {perfisEdicao.map(p=>(
+          <button key={p.id} onClick={()=>setPerfilSel(p.id)}
+            style={{padding:"8px 20px",borderRadius:20,border:"2px solid",cursor:"pointer",fontWeight:600,fontSize:13,fontFamily:"inherit",
+              borderColor:perfilSel===p.id?p.cor:"#e5e7eb",
+              background:perfilSel===p.id?p.cor+"15":"white",
+              color:perfilSel===p.id?p.cor:"#6b7280",transition:"all .15s"}}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Permissões agrupadas */}
+      <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:24}}>
+        {grupos.map(grupo=>(
+          <div key={grupo} style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden"}}>
+            <div style={{padding:"10px 16px",background:"#f9fafb",borderBottom:"1px solid #e5e7eb",fontWeight:700,fontSize:13,color:"#374151"}}>
+              {grupo}
+            </div>
+            <div style={{padding:"8px 0"}}>
+              {PERMISSOES_LABELS.filter(p=>p.grupo===grupo).map(p=>(
+                <label key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 16px",cursor:"pointer",transition:"background .1s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background="#f9fafb"}
+                  onMouseLeave={e=>e.currentTarget.style.background="white"}>
+                  <input type="checkbox" checked={!!permissoes[p.id]} onChange={()=>toggle(p.id)}
+                    style={{width:16,height:16,cursor:"pointer",accentColor:"#7B00C4"}}/>
+                  <span style={{fontSize:13,color:"#374151"}}>{p.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"flex",gap:10,alignItems:"center"}}>
+        <button className="btn btn-purple" onClick={salvar} disabled={salvando}>
+          {salvando?"Salvando...":"💾 Salvar Permissões"}
+        </button>
+        {salvo&&<span style={{fontSize:13,color:"#059669",fontWeight:600}}>✅ Salvo!</span>}
+        <button className="btn btn-ghost" onClick={()=>setPermissoes(PERMISSOES_DEFAULT[perfilSel]||{})} style={{marginLeft:"auto",fontSize:12}}>
+          Restaurar padrão
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");if(u.tipo==="secretaria")setTab("pacientes");if(u.tipo==="paulo")setTab("fin-pessoal");if(u.tipo==="marketing")setTab("marketing-dashboard");}
   function handleLogout(){setUser(null);setTab(null);}
   if(!user) return <Login onLogin={handleLogin}/>;
   return (
-    <div style={{maxWidth:"100vw",overflowX:"hidden"}}>
+    <div style={{display:"flex",minHeight:"100vh",width:"100%",overflowX:"auto"}}>
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} notifProps={notifProps}/>
       <div className="header-mobile"><div className="header-mobile-logo">Administracao</div><button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button></div>
-      <div className="main-content">
+      <div className="main-content" style={{flex:1,minWidth:0,maxWidth:"100%",overflowX:"hidden"}}>
         {user.tipo==="psicologa"  &&tab==="dashboard"   &&<DashboardAdmin user={user}/>}
         {user.tipo==="psicologa"  &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="alunos"      &&<Alunos/>}
         {user.tipo==="psicologa"  &&tab==="casais"      &&<TerapiaCasais/>}
         {user.tipo==="psicologa"  &&tab==="recursos"    &&<RecursosTerapeuticos user={user}/>}
         {user.tipo==="psicologa"  &&tab==="laudos"      &&<Laudos/>}
+        {user.tipo==="psicologa"  &&tab==="vitrine"     &&<VitrineProdutos/>}
         {user.tipo==="psicologa"  &&tab==="agenda"      &&<Agenda/>}
-        {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica/>}
+        {user.tipo==="psicologa"  &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
         {user.tipo==="psicologa"  &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {user.tipo==="psicologa"  &&tab==="fin-empresa"   &&<FinanceiroEmpresa somenteLeitura={false}/>}
+        {user.tipo==="psicologa"  &&tab==="painel-geral"  &&<PainelGeralFinanceiro/>}
         {tab==="__menu__"&&(
           <div style={{padding:20}}>
             <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600,marginBottom:20}}>Menu</div>
@@ -8774,12 +9747,15 @@ function App() {
         {user.tipo==="psicologa"  &&tab==="config"      &&<Configuracoes/>}
         {user.tipo==="secretaria" &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="secretaria" &&tab==="agenda"      &&<Agenda/>}
-        {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica/>}
+        {user.tipo==="secretaria" &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
         {user.tipo==="secretaria" &&tab==="comissoes"   &&<Comissoes user={user}/>}
         {user.tipo==="paulo"      &&tab==="fin-pessoal" &&<FinanceiroPessoal somenteLeitura={false}/>}
+        {user.tipo==="paulo"      &&tab==="fin-empresa" &&<FinanceiroEmpresa somenteLeitura={false}/>}
+        {user.tipo==="paulo"      &&tab==="fin-clinica" &&<FinanceiroClinica user={user}/>}
         {(user.tipo==="psicologa"||user.tipo==="secretaria")&&tab==="funil-leads"&&<FunilLeads user={user}/>}
         {user.tipo==="marketing"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
         {user.tipo==="psicologa"  &&tab==="marketing-dashboard" &&<DashboardMarketing user={user}/>}
+        {user.tipo==="psicologa"  &&tab==="permissoes"         &&<PainelPermissoes/>}
         {(user.tipo==="psicologa"||user.tipo==="marketing")&&tab==="dashboard-performance"&&<DashboardPerformance user={user}/>}
       </div>
       <div className="nav-mobile">
@@ -8821,1955 +9797,6 @@ function App() {
 // ═══════════════════════════════════════════════════════
 //  FUNIL DE LEADS — KANBAN
 // ═══════════════════════════════════════════════════════
-const COLUNAS_FUNIL = [
-  { id:"novo",              label:"Lead Novo",             cor:"#6b7280", bg:"#f3f4f6" },
-  { id:"contato",           label:"Primeiro Contato",      cor:"#0891b2", bg:"#e0f2fe" },
-  { id:"agendamento",       label:"Agendamento Pendente",  cor:"#d97706", bg:"#fef3c7" },
-  { id:"agendado",          label:"Agendado & Confirmado", cor:"#7B00C4", bg:"#f5f3ff" },
-  { id:"convertido",        label:"Convertido",            cor:"#16a34a", bg:"#dcfce7" },
-  { id:"convertido_social",   label:"Convertido Social",       cor:"#0d9488", bg:"#ccfbf1" },
-  { id:"convertido_parceria", label:"Convertido — Parceria",   cor:"#7B00C4", bg:"#f5f3ff" },
-  { id:"perdido",             label:"Perdido",                 cor:"#dc2626", bg:"#fef2f2" },
-];
-
-function parsearLeadIA(texto) {
-  const linhas = texto.split("\n");
-  function extrairLinha(chaves) {
-    for (const linha of linhas) {
-      const limpa = linha.replace(/\*/g,"").replace(/\[|\]/g,"").trim();
-      for (const chave of chaves) {
-        const idx = limpa.toLowerCase().indexOf(chave.toLowerCase() + ":");
-        if (idx !== -1) return limpa.substring(idx + chave.length + 1).trim();
-      }
-    }
-    return "";
-  }
-  return {
-    nome:     extrairLinha(["Nome do Lead","Nome"]),
-    telefone: extrairLinha(["WhatsApp/Contato","WhatsApp","Contato","Telefone"]),
-    queixa:   extrairLinha(["Principal Queixa/Objetivo","Queixa/Objetivo","Principal Queixa","Queixa","Objetivo"]),
-    servico:  extrairLinha(["Serviço de Interesse","Servico de Interesse","Serviço","Servico"]),
-  };
-}
-
-function TagInputCampanha({ value=[], onChange }) {
-  const [input, setInput]           = useState("");
-  const [sugestoes, setSugestoes]   = useState([]);
-  const [todasTags, setTodasTags]   = useState([]);
-
-  useEffect(()=>{
-    db.collection("clinica_campanhas").orderBy("nome").onSnapshot(
-      s => setTodasTags(s.docs.map(d=>d.data().nome)),
-      ()=>{}
-    );
-  },[]);
-
-  const filtradas = input.length>0
-    ? todasTags.filter(t=>t.toLowerCase().includes(input.toLowerCase()) && !value.includes(t))
-    : [];
-
-  async function adicionarTag(tag) {
-    const t = tag.trim();
-    if (!t || value.includes(t)) return;
-    // salvar no Firebase se nova
-    if (!todasTags.includes(t)) {
-      await db.collection("clinica_campanhas").add({ nome:t, createdAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(()=>{});
-    }
-    onChange([...value, t]);
-    setInput(""); setSugestoes([]);
-  }
-
-  function removerTag(t) { onChange(value.filter(x=>x!==t)); }
-
-  function onKeyDown(e) {
-    if ((e.key==="Enter"||e.key===",") && input.trim()) { e.preventDefault(); adicionarTag(input); }
-    if (e.key==="Backspace" && !input && value.length>0) removerTag(value[value.length-1]);
-  }
-
-  return (
-    <div style={{border:"1px solid var(--gray-200)",borderRadius:8,padding:"6px 8px",background:"white",minHeight:38,cursor:"text"}}
-      onClick={()=>document.getElementById("tag-input-camp")?.focus()}>
-      <div style={{display:"flex",flexWrap:"wrap",gap:4,alignItems:"center"}}>
-        {value.map(t=>(
-          <span key={t} style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:4}}>
-            {t}
-            <button onClick={()=>removerTag(t)} style={{background:"none",border:"none",cursor:"pointer",color:"#ea580c",padding:0,fontSize:14,lineHeight:1}}>×</button>
-          </span>
-        ))}
-        <div style={{position:"relative",flex:1,minWidth:120}}>
-          <input id="tag-input-camp" value={input} onChange={e=>{setInput(e.target.value);}}
-            onKeyDown={onKeyDown} placeholder={value.length===0?"Campanha/Origem...":""}
-            style={{border:"none",outline:"none",fontSize:13,width:"100%",padding:"2px 0",background:"transparent"}}/>
-          {filtradas.length>0&&(
-            <div style={{position:"absolute",top:"100%",left:0,background:"white",border:"1px solid var(--gray-200)",borderRadius:8,boxShadow:"0 4px 12px rgba(0,0,0,0.1)",zIndex:100,minWidth:200}}>
-              {filtradas.slice(0,6).map(t=>(
-                <button key={t} onMouseDown={e=>{e.preventDefault();adicionarTag(t);}}
-                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}
-                  onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
-                  onMouseLeave={e=>e.currentTarget.style.background="none"}>
-                  {t}
-                </button>
-              ))}
-              {input&&!todasTags.includes(input.trim())&&(
-                <button onMouseDown={e=>{e.preventDefault();adicionarTag(input);}}
-                  style={{display:"block",width:"100%",textAlign:"left",padding:"8px 12px",background:"none",border:"none",cursor:"pointer",fontSize:13,fontFamily:"inherit",color:"#7B00C4",fontWeight:600}}
-                  onMouseEnter={e=>e.currentTarget.style.background="#f5f3ff"}
-                  onMouseLeave={e=>e.currentTarget.style.background="none"}>
-                  + Criar "{input.trim()}"
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ModalLead({ lead, onSalvar, onFechar, user, onConverter }) {
-  const novo = !lead?.id;
-  const [form, setForm]         = useState(lead || { nome:"", telefone:"", queixa:"", servico:"", campanhas:[], status:"novo", obs:"" });
-  const [textoIA, setTextoIA]   = useState("");
-  const [salvando, setSalvando] = useState(false);
-  const [aba, setAba]           = useState("dados"); // "dados" | "timeline"
-  const [interacoes, setInteracoes] = useState([]);
-  const [novaAnotacao, setNovaAnotacao] = useState("");
-  const [registrando, setRegistrando]   = useState(false);
-  const [excluindo, setExcluindo]        = useState(false);
-
-  useEffect(()=>{
-    if (!lead?.id) return;
-    db.collection("clinica_leads").doc(lead.id).collection("interacoes")
-      .orderBy("createdAt","desc")
-      .onSnapshot(s=>setInteracoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-  },[lead?.id]);
-
-  function aplicarIA() {
-    const parsed = parsearLeadIA(textoIA);
-    if (!parsed.nome && !parsed.telefone) { alert("Não foi possível identificar os campos. Verifique o formato do texto."); return; }
-    setForm(f=>({...f, ...parsed}));
-    setTextoIA("");
-  }
-
-  async function salvar() {
-    if (!form.nome?.trim()) { alert("Nome é obrigatório."); return; }
-    setSalvando(true);
-    try {
-      const dados = { ...form, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-      if (novo) {
-        dados.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        dados.status = dados.status || "novo";
-        await db.collection("clinica_leads").add(dados);
-      } else {
-        await db.collection("clinica_leads").doc(lead.id).update(dados);
-      }
-      onSalvar();
-    } catch(e) { alert("Erro ao salvar."); }
-    setSalvando(false);
-  }
-
-  async function registrarContato() {
-    if (!novaAnotacao.trim()) return;
-    if (!lead?.id) { alert("Salve o lead primeiro antes de registrar interações."); return; }
-    setRegistrando(true);
-    try {
-      await db.collection("clinica_leads").doc(lead.id).collection("interacoes").add({
-        texto: novaAnotacao.trim(),
-        autor: user?.nome || "Usuário",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      setNovaAnotacao("");
-    } catch(e) { alert("Erro ao registrar."); }
-    setRegistrando(false);
-  }
-
-  async function excluirLead() {
-    if (!lead?.id) return;
-    if (!window.confirm("Tem certeza que deseja excluir permanentemente este lead? Esta ação não poderá ser desfeita.")) return;
-    setExcluindo(true);
-    try {
-      await db.collection("clinica_leads").doc(lead.id).delete();
-      onFechar();
-    } catch(e) { alert("Erro ao excluir."); }
-    setExcluindo(false);
-  }
-
-  const f = (campo, val) => setForm(x=>({...x,[campo]:val}));
-
-  function fmtDataHora(ts) {
-    if (!ts?.toDate) return "—";
-    const d = ts.toDate();
-    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-  }
-
-  return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:600,maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
-
-        {/* Header */}
-        <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-          <div style={{fontWeight:700,fontSize:16}}>{novo?"Novo Lead": form.nome||"Lead"}</div>
-          <button onClick={onFechar} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:22,lineHeight:1}}>×</button>
-        </div>
-
-        {/* Abas — só para lead existente */}
-        {!novo && (
-          <div style={{display:"flex",borderBottom:"1px solid var(--gray-100)",flexShrink:0}}>
-            {[{id:"dados",label:"📋 Dados"},{id:"timeline",label:`💬 Follow-up (${interacoes.length})`}].map(a=>(
-              <button key={a.id} onClick={()=>setAba(a.id)}
-                style={{flex:1,padding:"12px 0",background:"none",border:"none",cursor:"pointer",fontWeight:aba===a.id?700:400,fontSize:13,fontFamily:"inherit",borderBottom:aba===a.id?"2px solid #7B00C4":"2px solid transparent",color:aba===a.id?"#7B00C4":"var(--text-muted)",transition:"all .15s"}}>
-                {a.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Corpo scrollável */}
-        <div style={{overflowY:"auto",flex:1}}>
-
-          {/* ABA DADOS */}
-          {(novo || aba==="dados") && (
-            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
-              {novo && (
-                <div style={{background:"#f5f3ff",border:"1px solid #7B00C420",borderRadius:10,padding:14}}>
-                  <div style={{fontWeight:600,fontSize:13,color:"#7B00C4",marginBottom:8}}>✨ Inserir Lead via IA</div>
-                  <TextAreaVoz value={textoIA} onChange={e=>setTextoIA(e.target.value)} rows={5}
-                    placeholder={"Cole aqui o bloco gerado pela IA de triagem:\n\n### ESTRUTURA PARA O CRM\n* **Nome do Lead:** ...\n* **WhatsApp/Contato:** ...\n* **Principal Queixa/Objetivo:** ...\n* **Serviço de Interesse:** ..."}
-                    style={{width:"100%",border:"1px solid #7B00C430",borderRadius:8,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"vertical",outline:"none",boxSizing:"border-box",background:"white"}}/>
-                  <button onClick={aplicarIA} style={{marginTop:8,background:"#7B00C4",color:"white",border:"none",borderRadius:20,padding:"7px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
-                    ⚡ Preencher campos automaticamente
-                  </button>
-                </div>
-              )}
-
-              {[
-                {label:"Nome do Lead *",          campo:"nome",     placeholder:"Nome completo"},
-                {label:"WhatsApp / Contato",       campo:"telefone", placeholder:"(62) 99999-9999"},
-                {label:"Principal Queixa/Objetivo",campo:"queixa",   placeholder:"Ex: Ansiedade, insônia..."},
-                {label:"Serviço de Interesse",     campo:"servico",  placeholder:"Ex: Psicoterapia individual"},
-              ].map(({label,campo,placeholder})=>(
-                <div key={campo}>
-                  <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>{label}</label>
-                  <input type="text" value={form[campo]||""} onChange={e=>f(campo,e.target.value)}
-                    placeholder={placeholder} className="form-input"/>
-                </div>
-              ))}
-
-              <div>
-                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Campanha / Origem</label>
-                <TagInputCampanha value={form.campanhas||[]} onChange={v=>f("campanhas",v)}/>
-                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Digite e pressione Enter. Campanhas novas são salvas automaticamente.</div>
-              </div>
-
-              <div>
-                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Status</label>
-                <select value={form.status||"novo"} onChange={e=>{
-                  const novoStatus = e.target.value;
-                  f("status", novoStatus);
-                  if ((novoStatus==="convertido" || novoStatus==="convertido_social" || novoStatus==="convertido_parceria") && !novo && onConverter) {
-                    onConverter({...form, id:lead.id, _tipoConversao: novoStatus});
-                  }
-                }} className="form-input">
-                  {COLUNAS_FUNIL.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Observações</label>
-                <TextAreaVoz value={form.obs||""} onChange={e=>f("obs",e.target.value)} rows={3}
-                  className="form-input" placeholder="Anotações internas..." style={{resize:"vertical"}}/>
-              </div>
-            </div>
-          )}
-
-          {/* ABA TIMELINE */}
-          {!novo && aba==="timeline" && (
-            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:16}}>
-
-              {/* Campo nova anotação */}
-              <div style={{background:"#f9fafb",border:"1px solid var(--gray-200)",borderRadius:12,padding:16}}>
-                <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>📝 Nova anotação de follow-up</div>
-                <TextAreaVoz value={novaAnotacao} onChange={e=>setNovaAnotacao(e.target.value)} rows={3}
-                  className="form-input"
-                  placeholder='Ex: "Cliente disse que vai falar com o marido e pediu para retornar na quinta-feira."'
-                  style={{resize:"vertical",marginBottom:10}}/>
-                <button onClick={registrarContato} disabled={registrando||!novaAnotacao.trim()}
-                  style={{background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"9px 20px",fontSize:13,fontWeight:600,cursor:"pointer",opacity:(!novaAnotacao.trim()||registrando)?0.5:1}}>
-                  {registrando?"Registrando...":"✅ Registrar Contato"}
-                </button>
-              </div>
-
-              {/* Timeline */}
-              <div>
-                <div style={{fontWeight:600,fontSize:13,marginBottom:12,color:"var(--text-muted)"}}>HISTÓRICO DE INTERAÇÕES</div>
-                {interacoes.length===0
-                  ? <div style={{textAlign:"center",padding:"32px 0",color:"var(--gray-400)",fontSize:13}}>Nenhuma interação registrada ainda.</div>
-                  : (
-                    <div style={{position:"relative"}}>
-                      {/* Linha vertical */}
-                      <div style={{position:"absolute",left:15,top:0,bottom:0,width:2,background:"var(--gray-100)"}}/>
-                      <div style={{display:"flex",flexDirection:"column",gap:0}}>
-                        {interacoes.map((it,idx)=>(
-                          <div key={it.id} style={{display:"flex",gap:16,paddingBottom:20,position:"relative"}}>
-                            {/* Bolinha */}
-                            <div style={{width:32,height:32,borderRadius:"50%",background:"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,zIndex:1,fontSize:13}}>
-                              💬
-                            </div>
-                            {/* Conteúdo */}
-                            <div style={{flex:1,background:"white",border:"1px solid var(--gray-100)",borderRadius:10,padding:"12px 14px",boxShadow:"0 1px 3px rgba(0,0,0,0.04)"}}>
-                              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:4}}>
-                                <span style={{fontWeight:600,fontSize:12,color:"#7B00C4"}}>{it.autor}</span>
-                                <span style={{fontSize:11,color:"var(--gray-400)"}}>{fmtDataHora(it.createdAt)}</span>
-                              </div>
-                              <div style={{fontSize:13,lineHeight:1.6,color:"var(--text)"}}>{it.texto}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                }
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-          {/* Lixeira — só para lead existente */}
-          {!novo ? (
-            <button onClick={excluirLead} disabled={excluindo}
-              style={{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",borderRadius:8,border:"1px solid #fecaca",background:"#fef2f2",color:"#dc2626",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
-              <Icon name="trash-2" size={14}/> {excluindo?"Excluindo...":"Excluir lead"}
-            </button>
-          ) : <div/>}
-          <div style={{display:"flex",gap:10}}>
-            <button onClick={onFechar} style={{padding:"9px 20px",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>
-              {aba==="timeline"?"Fechar":"Cancelar"}
-            </button>
-            {(novo||aba==="dados") && (
-              <button onClick={salvar} disabled={salvando} className="btn-primary">
-                {salvando?"Salvando...":"Salvar Lead"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const REGRAS_INATIVIDADE = [
-  {
-    status: "novo",
-    limiteMs: 30 * 60 * 1000, // 30 minutos
-    emoji: "⚠️",
-    titulo: (nome) => `⚠️ Lead aguardando primeiro contato`,
-    corpo:  (nome, tempo) => `${nome} está em "Lead Novo" há ${tempo} sem contato.`,
-    cor: "#d97706", bg: "#fef3c7", borda: "#fde68a",
-  },
-  {
-    status: "contato",
-    limiteMs: 4 * 60 * 60 * 1000, // 4 horas
-    emoji: "📞",
-    titulo: (nome) => `📞 Primeiro contato sem avanço`,
-    corpo:  (nome, tempo) => `${nome} está em "Primeiro Contato" há ${tempo}. Tentar avançar para agendamento.`,
-    cor: "#0891b2", bg: "#e0f2fe", borda: "#bae6fd",
-  },
-  {
-    status: "agendamento",
-    limiteMs: 24 * 60 * 60 * 1000, // 24 horas
-    emoji: "⏰",
-    titulo: (nome) => `⏰ Agendamento pendente há mais de 24h`,
-    corpo:  (nome, tempo) => `${nome} está em "Agendamento Pendente" há ${tempo}. Verificar contato.`,
-    cor: "#dc2626", bg: "#fef2f2", borda: "#fecaca",
-  },
-];
-
-function formatarTempo(ms) {
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (h >= 24) return `${Math.floor(h/24)}d ${h%24}h`;
-  if (h > 0) return `${h}h ${m}min`;
-  return `${m}min`;
-}
-
-function fmtWhats(tel) {
-  if (!tel) return null;
-  const num = tel.replace(/\D/g,"");
-  if (!num) return null;
-  return num.startsWith("55") ? num : "55"+num;
-}
-
-function CardLead({ lead, onEditar, onMover, colunas }) {
-  const [dragging, setDragging] = useState(false);
-
-  // Verifica se está em alerta
-  const regra = REGRAS_INATIVIDADE.find(r=>r.status===(lead.status||"novo"));
-  const rawRef = lead.updatedAt || lead.createdAt;
-  const refMs = rawRef ? (typeof rawRef.toDate==="function" ? rawRef.toDate().getTime() : rawRef.seconds ? rawRef.seconds*1000 : null) : null;
-  const emAlerta = regra && refMs && (Date.now()-refMs) >= regra.limiteMs;
-  const whats = fmtWhats(lead.telefone);
-
-  return (
-    <div draggable
-      onDragStart={e=>{ setDragging(true); e.dataTransfer.setData("leadId", lead.id); }}
-      onDragEnd={()=>setDragging(false)}
-      onClick={()=>onEditar(lead)}
-      style={{
-        background:"white", borderRadius:10, padding:"12px 14px",
-        boxShadow:"0 1px 4px rgba(0,0,0,0.08)", cursor:"grab",
-        opacity: dragging?0.5:1, transition:"opacity .15s",
-        border: emAlerta ? `1.5px solid ${regra.borda}` : "1px solid var(--gray-100)",
-        marginBottom:8,
-      }}>
-      <div style={{fontWeight:600,fontSize:13,marginBottom:4}}>{lead.nome}</div>
-      {lead.servico&&<div style={{fontSize:12,color:"var(--text-muted)",marginBottom:4}}>🎯 {lead.servico}</div>}
-      {lead.queixa&&<div style={{fontSize:11,color:"var(--gray-500)",marginBottom:6,lineHeight:1.4}}>{lead.queixa.slice(0,60)}{lead.queixa.length>60?"...":""}</div>}
-      {lead.telefone&&<div style={{fontSize:12,color:"var(--text-muted)"}}>📱 {lead.telefone}</div>}
-      {(lead.campanhas||[]).length>0&&(
-        <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:8}}>
-          {lead.campanhas.map(c=>(
-            <span key={c} style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600}}>{c}</span>
-          ))}
-        </div>
-      )}
-      <div style={{fontSize:10,color:"var(--gray-400)",marginTop:8}}>
-        {lead.createdAt?.toDate ? lead.createdAt.toDate().toLocaleDateString("pt-BR") : ""}
-      </div>
-      {emAlerta && whats && (
-        <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
-          onClick={e=>e.stopPropagation()}
-          style={{display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:8,background:"#16a34a",color:"white",borderRadius:6,padding:"5px 0",fontSize:11,fontWeight:600,textDecoration:"none"}}>
-          <Icon name="message-circle" size={11}/> Acessar WhatsApp
-        </a>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════
-//  MODAL CONVERSÃO — Lead → Paciente
-// ═══════════════════════════════════════════════════════
-// ── Psicólogas parceiras do Instituto Cegatti ─────────────────────────────
-const PARCEIRAS_CEGATTI = [
-  { nome: "Psicóloga Parceira A", crp: "09/XXXXX", telefone: "5562999999999" },
-  { nome: "Psicóloga Parceira B", crp: "09/XXXXX", telefone: "5562999999999" },
-];
-
-function ModalConversao({ lead, onConfirmar, onCancelar }) {
-  const isSocial    = lead._tipoConversao === "convertido_social";
-  const isParceria  = lead._tipoConversao === "convertido_parceria";
-
-  const [email, setEmail]                     = useState("");
-  const [tipoContratacao, setTipoContratacao] = useState("individual");
-  const [salvando, setSalvando]               = useState(false);
-  const [erro, setErro]                       = useState("");
-  const [salvo, setSalvo]                     = useState(false);
-  const [parceiraSel, setParceiraSel]         = useState(null); // id no Firestore
-  const [parceiras, setParceiras]             = useState([]);
-  const [valorPacoteParceria, setValorPacoteParceria] = useState("");
-
-  const valorEstimado = tipoContratacao === "pacote" ? 250 : 300;
-
-  // Carrega parceiras do Firestore
-  useEffect(()=>{
-    db.collection("clinica_parceiras").orderBy("createdAt","asc")
-      .onSnapshot(s=>{
-        const lista = s.docs.map(d=>({id:d.id,...d.data()}));
-        setParceiras(lista);
-        if(isParceria && lista.filter(p=>p.tipo==="parceira").length>0){
-          setParceiraSel(lista.filter(p=>p.tipo==="parceira")[0].id);
-        }
-      },()=>{});
-  },[]);
-
-  const parceiraObj = parceiras.find(p=>p.id===parceiraSel)||null;
-  const estagiaria  = parceiras.find(p=>p.tipo==="estagiaria")||null;
-
-  // Cor e ícone do header conforme tipo
-  const headerGrad = isParceria
-    ? "linear-gradient(135deg,#7B00C4,#5a0090)"
-    : isSocial
-      ? "linear-gradient(135deg,#0d9488,#0f766e)"
-      : "linear-gradient(135deg,#16a34a,#15803d)";
-  const headerIcon  = isParceria ? "🤝" : isSocial ? "📱" : "🎉";
-  const headerTitulo = isParceria
-    ? "Encaminhamento — Parceria!"
-    : isSocial
-      ? "Convertido pelo Social!"
-      : "Lead Convertido!";
-
-  async function confirmar() {
-    const hoje = new Date().toISOString().slice(0,10);
-    const mesRef = hoje.slice(0,7);
-
-    if(isParceria){
-      // Parceria: não precisa de email, só valor do pacote
-      const vBase = parseFloat(valorPacoteParceria)||0;
-      if(vBase<=0){setErro("Informe o valor do pacote fechado.");return;}
-      setSalvando(true);
-      try {
-        const comissao10 = parseFloat((vBase*0.10).toFixed(2));
-        const nomePac = lead.nome||"Lead";
-        const nomeParc = parceiraObj?.nome||"Parceira";
-        const batch = db.batch();
-        // Receita clínica: 10% do pacote
-        batch.set(db.collection("clinica_lancamentos").doc(),{
-          tipo_lancamento:"parceria",
-          tipo:`${nomePac} — Parceria ${nomeParc}`,
-          descricao:`${nomePac} — Parceria ${nomeParc}`,
-          pacienteNome: nomePac,
-          valor: comissao10,
-          data: hoje, mesRef,
-          formaPag:"PIX",
-          status:"recebido",
-          origem:"convertido_parceria",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        // Comissão clínica
-        batch.set(db.collection("clinica_comissoes").doc(),{
-          tipo:"Parceria — Clínica",
-          tipoVenda:"primeira",
-          perc:10,
-          valorBase: vBase,
-          valorComissao: comissao10,
-          pacienteNome: nomePac,
-          mesRef, status:"pendente",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        // Comissão estagiária: 10%
-        if(estagiaria){
-          batch.set(db.collection("clinica_comissoes").doc(),{
-            tipo:"Parceria — Estagiária",
-            tipoVenda:"primeira",
-            perc:10,
-            valorBase: vBase,
-            valorComissao: comissao10,
-            pacienteNome: nomePac,
-            responsavel: estagiaria.nome,
-            mesRef, status:"pendente",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-        }
-        await batch.commit();
-        // Arquiva lead
-        await db.collection("clinica_leads").doc(lead.id).update({
-          status:"convertido_parceria", arquivado:true,
-          convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        setSalvo(true);
-      } catch(e){setErro("Erro: "+e.message);}
-      setSalvando(false);
-      return;
-    }
-
-    // Social ou Convertido normal — cadastra paciente
-    if (!email.trim()) { setErro("E-mail é obrigatório para criar o cadastro clínico."); return; }
-    setSalvando(true);
-    try {
-      const nomePac = lead.nome||"";
-      await db.collection("clinica_pacientes").add({
-        nome: nomePac,
-        email: email.trim().toLowerCase(),
-        telefone: lead.telefone||"",
-        cpf:"", dataNascimento:"",
-        genero:"Não informar",
-        status:"ativo", senha:"1234",
-        objetivosTerapeuticos: lead.queixa||"",
-        observacoesClinicas:"",
-        origem: isSocial ? "projeto-social" : "crm-lead",
-        leadId: lead.id,
-        tipoContratacao, valorEstimado,
-        campanhas: lead.campanhas||[],
-        isSocial: isSocial||false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-
-      if(isSocial){
-        const batch = db.batch();
-        // Receita clínica: R$40 fixo
-        batch.set(db.collection("clinica_lancamentos").doc(),{
-          tipo_lancamento:"social",
-          tipo:`${nomePac} — Projeto Social`,
-          descricao:`${nomePac} — Projeto Social`,
-          pacienteNome: nomePac,
-          valor: 40,
-          data: hoje, mesRef,
-          formaPag:"PIX",
-          status:"recebido",
-          origem:"convertido_social",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        // Comissão estagiária: R$20 fixo
-        if(estagiaria){
-          batch.set(db.collection("clinica_comissoes").doc(),{
-            tipo:"Social — Estagiária",
-            tipoVenda:"primeira",
-            perc:0,
-            valorBase:40,
-            valorComissao:20,
-            pacienteNome: nomePac,
-            responsavel: estagiaria.nome,
-            mesRef, status:"pendente",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-          });
-        }
-        await batch.commit();
-      }
-
-      await db.collection("clinica_leads").doc(lead.id).update({
-        status: lead._tipoConversao||"convertido",
-        arquivado:true,
-        convertidoEm: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      setSalvo(true);
-    } catch(e){setErro("Erro ao cadastrar. Tente novamente.");}
-    setSalvando(false);
-  }
-
-  function gerarWhatsApp() {
-    const parceira = parceiraObj;
-    if(!parceira){alert("Selecione uma parceira.");return;}
-    const telPaciente = (lead.telefone || "").replace(/[^0-9]/g,"");
-    const msg = `Olá, ${lead.nome || ""}! Tudo bem?
-Aqui é da equipe de atendimento. Passando para informar que realizamos o seu encaminhamento clínico. Você será atendido(a) pela psicóloga ${parceira.nome}, CRP: ${parceira.crp}.
-Ela faz parte dos grupos do Instituto Cegatti, que integram o projeto social e de parcerias da Doutora Lúcia Kratz.
-Você pode entrar em contato diretamente com ela através do número abaixo para alinhar o seu primeiro horário:
-👉 WhatsApp: https://wa.me/${parceira.telefone}
-Estamos à disposição!`;
-    const url = `https://wa.me/${telPaciente}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-  }
-
-  function gerarWhatsAppSocial() {
-    const telPaciente = (lead.telefone || "").replace(/\D/g,"");
-    const msg = `Olá, ${lead.nome || ""}! Tudo bem?
-Aqui é da equipe da Dra. Lúcia Kratz. Que bom ter você com a gente!
-Seu cadastro foi realizado com sucesso. Entraremos em contato para alinhar os próximos passos do seu atendimento.
-Estamos à disposição! 🌷`;
-    const url = `https://wa.me/${telPaciente}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-  }
-
-  return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.25)"}}>
-
-        {/* Header */}
-        <div style={{background:headerGrad,borderRadius:"16px 16px 0 0",padding:"24px",textAlign:"center",color:"white"}}>
-          <div style={{fontSize:40,marginBottom:8}}>{headerIcon}</div>
-          <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>{headerTitulo}</div>
-          <div style={{fontSize:13,opacity:0.85,marginTop:4}}>Deseja cadastrar como Paciente na Clínica?</div>
-        </div>
-
-        {/* Dados migrados */}
-        <div style={{padding:"20px 24px",borderBottom:"1px solid var(--gray-100)"}}>
-          <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px",marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:600,color:"#16a34a",marginBottom:8}}>DADOS QUE SERÃO MIGRADOS</div>
-            <div style={{fontSize:13,display:"flex",flexDirection:"column",gap:4}}>
-              <div><strong>Nome:</strong> {lead.nome}</div>
-              {lead.telefone&&<div><strong>WhatsApp:</strong> {lead.telefone}</div>}
-              {lead.queixa&&<div><strong>Queixa:</strong> {lead.queixa}</div>}
-            </div>
-          </div>
-
-          {/* Seleção de parceira — só para parceria */}
-          {isParceria&&(
-            <div style={{marginBottom:14}}>
-              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Psicóloga Parceira</label>
-              {parceiras.filter(p=>p.tipo==="parceira").length===0
-                ? <div style={{fontSize:12,color:"#d97706",padding:"8px 12px",background:"#fef3c7",borderRadius:8}}>
-                    Nenhuma parceira cadastrada. Vá em Funil → aba Parceiras & Estagiárias.
-                  </div>
-                : <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                    {parceiras.filter(p=>p.tipo==="parceira").map(p=>(
-                      <button key={p.id} onClick={()=>setParceiraSel(p.id)}
-                        style={{padding:"10px 14px",borderRadius:8,border:"2px solid",textAlign:"left",
-                          borderColor:parceiraSel===p.id?"#7B00C4":"var(--gray-200)",
-                          background:parceiraSel===p.id?"#f5f3ff":"white",
-                          cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
-                          color:parceiraSel===p.id?"#7B00C4":"var(--text-muted)"}}>
-                        {p.nome}
-                        <span style={{display:"block",fontSize:11,fontWeight:400,marginTop:2}}>
-                          {p.crp&&<span>CRP {p.crp} · </span>}WhatsApp: {p.telefone}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-              }
-              {/* Valor do pacote fechado */}
-              <div style={{marginTop:12}}>
-                <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
-                  Valor do pacote fechado (R$) <span style={{color:"#dc2626"}}>*</span>
-                </label>
-                <input type="number" value={valorPacoteParceria}
-                  onChange={e=>setValorPacoteParceria(e.target.value)}
-                  className="form-input" placeholder="Ex: 800"/>
-                {valorPacoteParceria&&parseFloat(valorPacoteParceria)>0&&(
-                  <div style={{fontSize:12,color:"#7B00C4",marginTop:6,background:"#f5f3ff",borderRadius:6,padding:"6px 10px"}}>
-                    Comissão clínica: <b>R$ {(parseFloat(valorPacoteParceria)*0.10).toFixed(2).replace(".",",")}</b>
-                    {estagiaria&&<span> · Comissão estagiária: <b>R$ {(parseFloat(valorPacoteParceria)*0.10).toFixed(2).replace(".",",")}</b></span>}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tipo de contratação */}
-          <div style={{marginBottom:14}}>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:8}}>Tipo de Contratação</label>
-            <div style={{display:"flex",gap:8}}>
-              {[{id:"individual",label:"Consulta Individual",valor:300},{id:"pacote",label:"Pacote",valor:250}].map(op=>(
-                <button key={op.id} onClick={()=>setTipoContratacao(op.id)}
-                  style={{flex:1,padding:"10px 8px",borderRadius:8,border:"2px solid",
-                    borderColor:tipoContratacao===op.id?"#16a34a":"var(--gray-200)",
-                    background:tipoContratacao===op.id?"#f0fdf4":"white",
-                    cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
-                    color:tipoContratacao===op.id?"#16a34a":"var(--text-muted)"}}>
-                  {op.label}<br/>
-                  <span style={{fontSize:11,fontWeight:400}}>Est. R$ {op.valor}/sessão</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
-              E-mail do paciente <span style={{color:"#dc2626"}}>*</span>
-            </label>
-            <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setErro("");}}
-              className="form-input" placeholder="email@exemplo.com" autoFocus/>
-            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>
-              Necessário para acesso ao portal. Senha inicial: <strong>1234</strong>
-            </div>
-          </div>
-
-          {erro&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"10px 14px",marginTop:12,fontSize:13,color:"#dc2626"}}>{erro}</div>}
-
-          {/* Feedback pós-salvamento */}
-          {salvo&&(
-            <div style={{background:"#f0fdf4",border:"1px solid #86efac",borderRadius:10,padding:"14px 16px",marginTop:16}}>
-              <div style={{fontWeight:700,fontSize:13,color:"#059669",marginBottom:10}}>✅ Paciente cadastrado com sucesso!</div>
-              {isParceria&&(
-                <button onClick={gerarWhatsApp}
-                  style={{width:"100%",padding:"12px",borderRadius:8,border:"none",
-                    background:"#25D366",color:"white",cursor:"pointer",
-                    fontSize:13,fontWeight:700,fontFamily:"inherit",
-                    display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                  📲 Gerar Mensagem para o Paciente (WhatsApp)
-                </button>
-              )}
-              {(isSocial||(!isParceria&&!isSocial))&&lead.telefone&&(
-                <button onClick={gerarWhatsAppSocial}
-                  style={{width:"100%",padding:"12px",borderRadius:8,border:"none",
-                    background:"#25D366",color:"white",cursor:"pointer",
-                    fontSize:13,fontWeight:700,fontFamily:"inherit",
-                    display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                  📲 Enviar boas-vindas pelo WhatsApp
-                </button>
-              )}
-              <button onClick={onConfirmar}
-                style={{width:"100%",marginTop:8,padding:"10px",borderRadius:8,
-                  border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",
-                  fontSize:13,fontFamily:"inherit",color:"var(--text-muted)"}}>
-                Fechar
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Botões principais */}
-        {!salvo&&(
-          <div style={{padding:"16px 24px",display:"flex",gap:10}}>
-            <button onClick={onCancelar}
-              style={{flex:1,padding:"11px 0",borderRadius:8,border:"1px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:500}}>
-              Apenas mover o card
-            </button>
-            <button onClick={confirmar} disabled={salvando}
-              style={{flex:1,padding:"11px 0",borderRadius:8,border:"none",
-                background: isParceria?"#7B00C4":isSocial?"#0d9488":"#16a34a",
-                color:"white",cursor:"pointer",fontSize:13,fontFamily:"inherit",fontWeight:700,
-                opacity:salvando?0.7:1}}>
-              {salvando?"Cadastrando...":"✓ Sim, cadastrar paciente"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-
-
-
-// ═══════════════════════════════════════════════════════
-//  ALERTAS DE INATIVIDADE — ETAPA 6
-// ═══════════════════════════════════════════════════════
-function AlertasInatividade({ leads, onAbrirLead }) {
-  const [descartados, setDescartados] = useState(new Set());
-  const [agora, setAgora] = useState(Date.now());
-
-  // Atualiza a cada minuto para manter alertas frescos
-  useEffect(()=>{
-    const t = setInterval(()=>setAgora(Date.now()), 60000);
-    return ()=>clearInterval(t);
-  },[]);
-
-  function extrairMs(campo) {
-    if (!campo) return null;
-    // Objeto Firestore Timestamp
-    if (campo.seconds) return campo.seconds * 1000;
-    // Já é Date
-    if (campo instanceof Date) return campo.getTime();
-    // String ISO
-    if (typeof campo === "string") return new Date(campo).getTime();
-    // Tenta toDate()
-    try { return campo.toDate().getTime(); } catch(e) {}
-    return null;
-  }
-
-  const alertas = leads
-    .filter(l => !l.arquivado && !descartados.has(l.id) && l.status !== "perdido")
-    .reduce((acc, lead) => {
-      const regra = REGRAS_INATIVIDADE.find(r => r.status === (lead.status || "novo"));
-      if (!regra) return acc;
-      const ms = extrairMs(lead.updatedAt) || extrairMs(lead.createdAt);
-      if (!ms || isNaN(ms)) return acc;
-      const inativo = agora - ms;
-      if (inativo >= regra.limiteMs) acc.push({ lead, regra, inativo });
-      return acc;
-    }, [])
-    .sort((a,b) => b.inativo - a.inativo);
-
-  if (alertas.length === 0) return null;
-
-  return (
-    <div style={{marginBottom:20}}>
-      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-        <div style={{width:8,height:8,borderRadius:"50%",background:"#dc2626",animation:"pulse 1.5s infinite"}}/>
-        <span style={{fontWeight:700,fontSize:13,color:"#dc2626"}}>
-          {alertas.length} alerta{alertas.length!==1?"s":""} de inatividade
-        </span>
-      </div>
-
-      <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {alertas.map(({lead, regra, inativo})=>{
-          const whats = fmtWhats(lead.telefone);
-          return (
-            <div key={lead.id} style={{
-              background:regra.bg, border:`1.5px solid ${regra.borda}`,
-              borderRadius:12, padding:"12px 16px",
-              display:"flex", alignItems:"center", justifyContent:"space-between",
-              gap:12, flexWrap:"wrap"
-            }}>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:700,fontSize:13,color:regra.cor,marginBottom:2}}>
-                  {regra.titulo(lead.nome)}
-                </div>
-                <div style={{fontSize:12,color:regra.cor,opacity:0.85}}>
-                  {regra.corpo(lead.nome, formatarTempo(inativo))}
-                </div>
-              </div>
-              <div style={{display:"flex",gap:8,flexShrink:0}}>
-                {whats && (
-                  <a href={`https://wa.me/${whats}`} target="_blank" rel="noopener noreferrer"
-                    style={{display:"flex",alignItems:"center",gap:5,background:"#16a34a",color:"white",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,textDecoration:"none"}}>
-                    <Icon name="message-circle" size={13}/> WhatsApp
-                  </a>
-                )}
-                <button onClick={()=>onAbrirLead(lead)}
-                  style={{background:"white",border:`1px solid ${regra.borda}`,color:regra.cor,borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                  Ver card
-                </button>
-                <button onClick={()=>setDescartados(s=>new Set([...s,lead.id]))}
-                  style={{background:"none",border:"none",cursor:"pointer",color:regra.cor,opacity:0.5,padding:"4px",fontSize:16,lineHeight:1}}
-                  title="Dispensar alerta">
-                  ×
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function GerenciamentoParceiras() {
-  const [parceiras, setParceiras] = useState([]);
-  const [form, setForm]           = useState({nome:"",crp:"",telefone:"",tipo:"parceira"});
-  const [editandoId, setEditandoId] = useState(null);
-  const [salvando, setSalvando]   = useState(false);
-
-  useEffect(()=>{
-    db.collection("clinica_parceiras").orderBy("createdAt","asc")
-      .onSnapshot(s=>setParceiras(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-  },[]);
-
-  async function salvar(){
-    if(!form.nome.trim()||!form.telefone.trim()){alert("Nome e telefone obrigatórios.");return;}
-    setSalvando(true);
-    try {
-      if(editandoId){
-        await db.collection("clinica_parceiras").doc(editandoId).update({nome:form.nome,crp:form.crp,telefone:form.telefone.replace(/\D/g,""),tipo:form.tipo});
-        setEditandoId(null);
-      } else {
-        await db.collection("clinica_parceiras").add({nome:form.nome,crp:form.crp,telefone:form.telefone.replace(/\D/g,""),tipo:form.tipo,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-      }
-      setForm({nome:"",crp:"",telefone:"",tipo:"parceira"});
-    } catch(e){alert("Erro: "+e.message);}
-    setSalvando(false);
-  }
-
-  async function excluir(id){
-    if(!confirm("Excluir este cadastro?"))return;
-    await db.collection("clinica_parceiras").doc(id).delete();
-  }
-
-  function editar(p){
-    setForm({nome:p.nome,crp:p.crp||"",telefone:p.telefone||"",tipo:p.tipo||"parceira"});
-    setEditandoId(p.id);
-  }
-
-  const parceirasLista   = parceiras.filter(p=>p.tipo==="parceira");
-  const estagiariasLista = parceiras.filter(p=>p.tipo==="estagiaria");
-
-  return(
-    <div style={{maxWidth:700}}>
-      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:4}}>Parceiras & Estagiárias</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Psicólogas parceiras e estagiárias do Instituto Cegatti</div>
-
-      {/* Formulário */}
-      <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid #e8c8ff",marginBottom:24}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>{editandoId?"✏️ Editar cadastro":"➕ Novo cadastro"}</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-          <div style={{gridColumn:"1/-1"}}>
-            <label className="form-label">Nome completo *</label>
-            <input className="form-input" value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Ex: Andréia de Fátima Mateus Silva"/>
-          </div>
-          <div>
-            <label className="form-label">CRP</label>
-            <input className="form-input" value={form.crp} onChange={e=>setForm({...form,crp:e.target.value})} placeholder="Ex: 09/14031"/>
-          </div>
-          <div>
-            <label className="form-label">Telefone (WhatsApp) *</label>
-            <input className="form-input" value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})} placeholder="Ex: 5562985666960"/>
-          </div>
-          <div style={{gridColumn:"1/-1"}}>
-            <label className="form-label">Tipo</label>
-            <div style={{display:"flex",gap:8}}>
-              {[["parceira","🤝 Parceira"],["estagiaria","🎓 Estagiária"]].map(([v,l])=>(
-                <button key={v} type="button" onClick={()=>setForm({...form,tipo:v})}
-                  style={{flex:1,padding:"9px",borderRadius:8,border:"2px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:600,
-                    borderColor:form.tipo===v?"#7B00C4":"#e5e7eb",
-                    background:form.tipo===v?"#f5f3ff":"white",
-                    color:form.tipo===v?"#7B00C4":"#6b7280"}}>
-                  {l}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{display:"flex",gap:8}}>
-          {editandoId&&<button className="btn btn-ghost" onClick={()=>{setEditandoId(null);setForm({nome:"",crp:"",telefone:"",tipo:"parceira"});}}>Cancelar</button>}
-          <button className="btn btn-purple" onClick={salvar} disabled={salvando} style={{flex:1}}>
-            {salvando?"Salvando...":(editandoId?"💾 Salvar alterações":"➕ Cadastrar")}
-          </button>
-        </div>
-      </div>
-
-      {/* Lista Parceiras */}
-      {parceirasLista.length>0&&(
-        <div style={{marginBottom:20}}>
-          <div style={{fontWeight:700,fontSize:13,color:"#7B00C4",marginBottom:8}}>🤝 Parceiras</div>
-          {parceirasLista.map(p=>(
-            <div key={p.id} style={{background:"white",borderRadius:10,padding:"12px 16px",border:"1px solid #e8c8ff",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div>
-                <div style={{fontWeight:600,fontSize:13}}>{p.nome}</div>
-                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
-                  {p.crp&&<span>CRP {p.crp} · </span>}
-                  <a href={`https://wa.me/${p.telefone}`} target="_blank" style={{color:"#16a34a",textDecoration:"none"}}>📱 {p.telefone}</a>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>editar(p)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12}}><Icon name="pencil" size={13}/></button>
-                <button onClick={()=>excluir(p.id)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12,color:"#dc2626"}}><Icon name="trash-2" size={13}/></button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Lista Estagiárias */}
-      {estagiariasLista.length>0&&(
-        <div>
-          <div style={{fontWeight:700,fontSize:13,color:"#0891b2",marginBottom:8}}>🎓 Estagiárias</div>
-          {estagiariasLista.map(p=>(
-            <div key={p.id} style={{background:"white",borderRadius:10,padding:"12px 16px",border:"1px solid #bae6fd",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div>
-                <div style={{fontWeight:600,fontSize:13}}>{p.nome}</div>
-                <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>
-                  {p.crp&&<span>CRP {p.crp} · </span>}
-                  <a href={`https://wa.me/${p.telefone}`} target="_blank" style={{color:"#16a34a",textDecoration:"none"}}>📱 {p.telefone}</a>
-                </div>
-              </div>
-              <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>editar(p)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12}}><Icon name="pencil" size={13}/></button>
-                <button onClick={()=>excluir(p.id)} className="btn btn-ghost" style={{padding:"6px 10px",fontSize:12,color:"#dc2626"}}><Icon name="trash-2" size={13}/></button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {parceiras.length===0&&(
-        <div style={{textAlign:"center",padding:"32px 0",color:"var(--text-muted)",fontSize:13}}>
-          Nenhuma parceira ou estagiária cadastrada ainda.
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FunilLeads({ user }) {
-  const [leads, setLeads]                   = useState([]);
-  const [modalLead, setModalLead]           = useState(null);
-  const [dragOver, setDragOver]             = useState(null);
-  const [modalConversao, setModalConversao] = useState(null);
-  const [abaFunil, setAbaFunil]             = useState("kanban");
-
-  useEffect(()=>{
-    db.collection("clinica_leads")
-      .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-  },[]);
-
-  async function moverLead(leadId, novoStatus) {
-    await db.collection("clinica_leads").doc(leadId).update({
-      status: novoStatus,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(()=>{});
-  }
-
-  function onDrop(e, colId) {
-    e.preventDefault();
-    const leadId = e.dataTransfer.getData("leadId");
-    if (!leadId) { setDragOver(null); return; }
-    if (colId === "convertido" || colId === "convertido_social" || colId === "convertido_parceria") {
-      const lead = leads.find(l=>l.id===leadId);
-      if (lead) {
-        moverLead(leadId, colId);
-        setModalConversao({...lead, _tipoConversao: colId});
-      }
-    } else {
-      moverLead(leadId, colId);
-    }
-    setDragOver(null);
-  }
-
-  const leadsColuna = (colId) => leads.filter(l=>(l.status||"novo")===colId && !l.arquivado);
-
-  return (
-    <div style={{padding:"20px 24px"}}>
-      {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-        <div>
-          <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600}}>Funil de Leads</div>
-          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>{leads.filter(l=>!l.arquivado).length} lead{leads.filter(l=>!l.arquivado).length!==1?"s":""} no funil</div>
-        </div>
-        {abaFunil==="kanban"&&(
-          <button onClick={()=>setModalLead({})} className="btn-primary" style={{display:"flex",alignItems:"center",gap:6}}>
-            <Icon name="plus" size={15}/> Novo Lead
-          </button>
-        )}
-      </div>
-
-      {/* Abas */}
-      <div style={{display:"flex",gap:4,marginBottom:20,borderBottom:"2px solid var(--gray-100)",paddingBottom:0}}>
-        {[["kanban","📋 Kanban"],["parceiras","🤝 Parceiras & Estagiárias"]].map(([id,label])=>(
-          <button key={id} onClick={()=>setAbaFunil(id)}
-            style={{padding:"8px 16px",border:"none",background:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:abaFunil===id?700:400,
-              color:abaFunil===id?"#7B00C4":"var(--text-muted)",
-              borderBottom:abaFunil===id?"2px solid #7B00C4":"2px solid transparent",
-              marginBottom:-2,transition:"all .15s"}}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Aba Parceiras */}
-      {abaFunil==="parceiras"&&<GerenciamentoParceiras/>}
-
-      {abaFunil==="kanban"&&<>
-      {/* Alertas de inatividade */}
-      <AlertasInatividade leads={leads} onAbrirLead={l=>setModalLead(l)}/>
-
-      {/* Kanban */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:12,minWidth:0}}>
-        {COLUNAS_FUNIL.map(col=>{
-          const cards = leadsColuna(col.id);
-          const isOver = dragOver===col.id;
-          return (
-            <div key={col.id}
-              onDragOver={e=>{e.preventDefault();setDragOver(col.id);}}
-              onDragLeave={()=>setDragOver(null)}
-              onDrop={e=>onDrop(e,col.id)}
-              style={{
-                background: isOver ? col.bg : "#f9fafb",
-                borderRadius:12, padding:"12px 10px",
-                border: isOver ? `2px solid ${col.cor}` : "2px solid transparent",
-                transition:"all .15s", minHeight:400,
-              }}>
-              {/* Cabeçalho coluna */}
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:col.cor}}/>
-                  <span style={{fontWeight:700,fontSize:12,color:col.cor}}>{col.label.toUpperCase()}</span>
-                </div>
-                <span style={{background:col.cor+"20",color:col.cor,borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:700}}>{cards.length}</span>
-              </div>
-
-              {/* Cards */}
-              {cards.map(lead=>(
-                <CardLead key={lead.id} lead={lead}
-                  onEditar={l=>setModalLead(l)}
-                  onMover={moverLead}
-                  colunas={COLUNAS_FUNIL}/>
-              ))}
-
-              {cards.length===0&&(
-                <div style={{textAlign:"center",padding:"20px 0",color:"var(--gray-400)",fontSize:12}}>
-                  {isOver?"Solte aqui":"Nenhum lead"}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Modal */}
-      {modalLead!==null&&(
-        <ModalLead
-          lead={modalLead?.id ? modalLead : null}
-          user={user}
-          onConverter={l=>{ setModalLead(null); setModalConversao(l); }}
-          onSalvar={()=>setModalLead(null)}
-          onFechar={()=>setModalLead(null)}/>
-      )}
-      {modalConversao&&(
-        <ModalConversao
-          lead={modalConversao}
-          onConfirmar={()=>setModalConversao(null)}
-          onCancelar={()=>setModalConversao(null)}/>
-      )}
-      </>}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════
-//  DASHBOARD DE PERFORMANCE — ETAPA 5
-// ═══════════════════════════════════════════════════════
-const CPL_LIMITES = {
-  nacional:      { verde:10,  amarelo:15 },
-  internacional: { verde:50,  amarelo:999 },
-};
-
-function badgeCPL(cpl, abrangencia) {
-  const lim = CPL_LIMITES[abrangencia||"nacional"];
-  if (cpl <= lim.verde)   return { cor:"#16a34a", bg:"#f0fdf4", label:"✅ Saudável" };
-  if (cpl <= lim.amarelo) return { cor:"#d97706", bg:"#fef3c7", label:"⚠️ Atenção" };
-  const aviso = abrangencia==="internacional"
-    ? "🚨 Alerta de teto atingido. Custo de captação internacional inviabilizando o retorno do consultório."
-    : "🚨 Custo acima do limite realista para o mercado nacional. Avaliar pausa imediata do anúncio.";
-  return { cor:"#dc2626", bg:"#fef2f2", label:"🚨 Acima do limite", aviso };
-}
-
-// ═══════════════════════════════════════════════════════
-//  ANÁLISE COLABORATIVA POR CAMPANHA
-// ═══════════════════════════════════════════════════════
-function AnaliseCampanha({ campanha, user }) {
-  const [comentarios, setComentarios] = useState([]);
-  const [texto, setTexto]             = useState("");
-  const [enviando, setEnviando]       = useState(false);
-  const [pdfs, setPdfs]               = useState([]);
-  const [uploadando, setUploadando]   = useState(false);
-  const [aberto, setAberto]           = useState(false);
-
-  useEffect(()=>{
-    if (!aberto) return;
-    const unsub = db.collection("clinica_campanhas").doc(campanha.id)
-      .collection("analises").orderBy("createdAt","asc")
-      .onSnapshot(s=>setComentarios(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    const unsubPdf = db.collection("clinica_campanhas").doc(campanha.id)
-      .collection("relatorios").orderBy("createdAt","desc")
-      .onSnapshot(s=>setPdfs(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    return ()=>{ unsub(); unsubPdf(); };
-  },[campanha.id, aberto]);
-
-  async function enviar() {
-    if (!texto.trim()) return;
-    setEnviando(true);
-    try {
-      await db.collection("clinica_campanhas").doc(campanha.id).collection("analises").add({
-        texto: texto.trim(),
-        autor: user?.nome || "Usuário",
-        tipo:  user?.tipo || "psicologa",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      setTexto("");
-    } catch(e) { alert("Erro ao enviar."); }
-    setEnviando(false);
-  }
-
-  async function uploadPdf(e) {
-    const file = e.target.files?.[0];
-    if (!file || file.type !== "application/pdf") { alert("Selecione um arquivo PDF."); return; }
-    if (file.size > 5*1024*1024) { alert("Arquivo muito grande. Máximo 5MB."); return; }
-    setUploadando(true);
-    const reader = new FileReader();
-    reader.onload = async(ev)=>{
-      try {
-        await db.collection("clinica_campanhas").doc(campanha.id).collection("relatorios").add({
-          nome:      file.name,
-          tamanho:   (file.size/1024).toFixed(0)+"KB",
-          base64:    ev.target.result,
-          autor:     user?.nome || "Usuário",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-      } catch(e) { alert("Erro ao fazer upload."); }
-      setUploadando(false);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  }
-
-  async function excluirPdf(id) {
-    if (!window.confirm("Excluir este relatório?")) return;
-    await db.collection("clinica_campanhas").doc(campanha.id).collection("relatorios").doc(id).delete();
-  }
-
-  async function excluirComentario(id) {
-    await db.collection("clinica_campanhas").doc(campanha.id).collection("analises").doc(id).delete();
-  }
-
-  function fmtDH(ts) {
-    if (!ts?.toDate) return "";
-    const d = ts.toDate();
-    return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-  }
-
-  const corTipo = { psicologa:"#7B00C4", marketing:"#ea580c", secretaria:"#0891b2" };
-
-  return (
-    <div style={{border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden",marginBottom:12,background:"white"}}>
-      <button onClick={()=>setAberto(x=>!x)}
-        style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 18px",background:"white",border:"none",cursor:"pointer",fontFamily:"inherit"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-          <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{campanha.nome}</span>
-          <span style={{fontSize:11,color:"var(--text-muted)"}}>{campanha.abrangencia==="internacional"?"🌍 Internacional":"🇧🇷 Nacional"}</span>
-          {comentarios.length>0&&<span style={{background:"#7B00C418",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>💬 {comentarios.length}</span>}
-          {pdfs.length>0&&<span style={{background:"#dc262618",color:"#dc2626",borderRadius:20,padding:"2px 8px",fontSize:11,fontWeight:600}}>📄 {pdfs.length}</span>}
-        </div>
-        <Icon name={aberto?"chevron-up":"chevron-down"} size={16}/>
-      </button>
-
-      {aberto&&(
-        <div style={{borderTop:"1px solid var(--gray-100)",background:"#fafafa"}}>
-
-          {/* PDFs */}
-          <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <div style={{fontWeight:600,fontSize:13}}>📄 Relatórios em PDF</div>
-              <label style={{display:"flex",alignItems:"center",gap:6,background:"#7B00C4",color:"white",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-                <Icon name="upload" size={13}/> {uploadando?"Enviando...":"Upload PDF"}
-                <input type="file" accept=".pdf" onChange={uploadPdf} style={{display:"none"}} disabled={uploadando}/>
-              </label>
-            </div>
-            {pdfs.length===0
-              ? <div style={{fontSize:12,color:"var(--text-muted)"}}>Nenhum relatório ainda.</div>
-              : pdfs.map(pdf=>(
-                  <div key={pdf.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"white",borderRadius:8,padding:"10px 14px",border:"1px solid var(--gray-100)",marginBottom:6}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <span style={{fontSize:20}}>📄</span>
-                      <div>
-                        <div style={{fontWeight:600,fontSize:13}}>{pdf.nome}</div>
-                        <div style={{fontSize:11,color:"var(--text-muted)"}}>{pdf.tamanho} · {pdf.autor} · {fmtDH(pdf.createdAt)}</div>
-                      </div>
-                    </div>
-                    <div style={{display:"flex",gap:8}}>
-                      <a href={pdf.base64} download={pdf.nome}
-                        style={{background:"#f0fdf4",color:"#16a34a",borderRadius:6,padding:"5px 10px",fontSize:11,fontWeight:600,textDecoration:"none"}}>
-                        ⬇ Baixar
-                      </a>
-                      {(user?.tipo==="psicologa"||pdf.autor===user?.nome)&&(
-                        <button onClick={()=>excluirPdf(pdf.id)}
-                          style={{background:"#fef2f2",color:"#dc2626",border:"none",borderRadius:6,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
-                          🗑
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))
-            }
-          </div>
-
-          {/* Chat */}
-          <div style={{padding:"14px 18px"}}>
-            <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>💬 Análise e Ações de Ajuste</div>
-            <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:14,maxHeight:300,overflowY:"auto",padding:"4px 0"}}>
-              {comentarios.length===0
-                ? <div style={{fontSize:12,color:"var(--text-muted)",textAlign:"center",padding:16}}>Nenhuma análise ainda.</div>
-                : comentarios.map(c=>{
-                    const isMe = c.autor===user?.nome;
-                    return (
-                      <div key={c.id} style={{display:"flex",flexDirection:isMe?"row-reverse":"row",gap:8,alignItems:"flex-start"}}>
-                        <div style={{width:30,height:30,borderRadius:"50%",background:corTipo[c.tipo]||"#7B00C4",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontWeight:700,fontSize:12,flexShrink:0}}>
-                          {(c.autor||"?")[0].toUpperCase()}
-                        </div>
-                        <div style={{maxWidth:"75%"}}>
-                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexDirection:isMe?"row-reverse":"row"}}>
-                            <span style={{fontSize:11,fontWeight:600,color:corTipo[c.tipo]||"#7B00C4"}}>{c.autor}</span>
-                            <span style={{fontSize:10,color:"var(--gray-400)"}}>{fmtDH(c.createdAt)}</span>
-                          </div>
-                          <div style={{background:isMe?"#7B00C4":"white",color:isMe?"white":"var(--text)",borderRadius:isMe?"12px 4px 12px 12px":"4px 12px 12px 12px",padding:"10px 14px",fontSize:13,lineHeight:1.6,boxShadow:"0 1px 3px rgba(0,0,0,0.06)",border:isMe?"none":"1px solid var(--gray-100)"}}>
-                            {c.texto}
-                          </div>
-                          {(user?.tipo==="psicologa"||isMe)&&(
-                            <button onClick={()=>excluirComentario(c.id)}
-                              style={{background:"none",border:"none",cursor:"pointer",fontSize:10,color:"var(--gray-400)",marginTop:2,padding:"0 4px",fontFamily:"inherit",float:isMe?"right":"left"}}
-                              onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
-                              onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
-                              excluir
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-              }
-            </div>
-            <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-              <TextAreaVoz value={texto} onChange={e=>setTexto(e.target.value)}
-                onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();enviar();} }}
-                rows={2} placeholder="Escreva sua análise ou ação de ajuste... (Enter para enviar)"
-                className="form-input" style={{flex:1,resize:"none",fontSize:13}}/>
-              <button onClick={enviar} disabled={enviando||!texto.trim()}
-                style={{background:"#7B00C4",color:"white",border:"none",borderRadius:8,padding:"10px 14px",cursor:"pointer",opacity:(!texto.trim()||enviando)?0.5:1,flexShrink:0}}>
-                <Icon name="send" size={16}/>
-              </button>
-            </div>
-            <div style={{fontSize:10,color:"var(--text-muted)",marginTop:4}}>Enter para enviar · Shift+Enter para nova linha</div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AnaliseCampanhas({ campanhas, user }) {
-  if (campanhas.length===0) return null;
-  return (
-    <div style={{marginTop:24}}>
-      <div style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:700,marginBottom:4}}>📊 Análise por Campanha</div>
-      <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Relatórios em PDF e chat de estratégia entre Psicóloga e Marketing.</div>
-      {campanhas.map(c=><AnaliseCampanha key={c.id} campanha={c} user={user}/>)}
-    </div>
-  );
-}
-
-function DashboardPerformance({ user }) {
-  const [leads, setLeads]           = useState([]);
-  const [pacientes, setPacientes]   = useState([]);
-  const [campanhas, setCampanhas]   = useState([]);
-  const [lancamentos, setLancamentos] = useState([]);
-  const [lancClinica, setLancClinica] = useState([]);
-  const [periodo, setPeriodo]       = useState({ de: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10), ate: new Date().toISOString().slice(0,10) });
-
-  useEffect(()=>{
-    db.collection("clinica_leads").onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    db.collection("clinica_pacientes").where("origem","==","crm-lead").onSnapshot(s=>setPacientes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    db.collection("clinica_campanhas").onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    db.collection("clinica_lancamentos").where("origem","==","crm-marketing").onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    db.collection("clinica_lancamentos").where("tipo_lancamento","!=","despesa").onSnapshot(s=>setLancClinica(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-  },[]);
-
-  // Filtro por período
-  function noPeriodo(data) { return data >= periodo.de && data <= periodo.ate; }
-
-  const leadsFiltrados      = leads.filter(l=>{ const d=l.createdAt?.toDate?.()?.toISOString().slice(0,10)||""; return d>=periodo.de&&d<=periodo.ate; });
-  const convertidosFiltrados = pacientes.filter(p=>{ const d=p.createdAt?.toDate?.()?.toISOString().slice(0,10)||""; return d>=periodo.de&&d<=periodo.ate; });
-  const lancFiltrados       = lancamentos.filter(l=>l.data&&noPeriodo(l.data));
-
-  const totalLeads      = leadsFiltrados.length;
-  const totalConvertidos = convertidosFiltrados.length;
-  const taxaConversao   = totalLeads>0 ? ((totalConvertidos/totalLeads)*100).toFixed(1) : 0;
-  const totalInvestido  = lancFiltrados.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-
-  // CAC
-  const cac = totalConvertidos>0 ? totalInvestido/totalConvertidos : 0;
-
-  // Faturamento real (lançamentos do financeiro vinculados a pacientes do CRM)
-  const idsConversos = new Set(convertidosFiltrados.map(p=>p.id));
-  const receitaReal  = lancClinica.filter(l=>l.pacienteId&&idsConversos.has(l.pacienteId)&&(l.status==="recebido"||l.status==="pago")).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-  // Faturamento estimado para pacientes sem lançamentos
-  const pacientesComReceita = new Set(lancClinica.filter(l=>l.pacienteId&&idsConversos.has(l.pacienteId)).map(l=>l.pacienteId));
-  const pacientesSemReceita = convertidosFiltrados.filter(p=>!pacientesComReceita.has(p.id));
-  const receitaEstimada     = pacientesSemReceita.reduce((a,p)=>a+(p.valorEstimado||300),0);
-  const receitaTotal        = receitaReal + receitaEstimada;
-  const roi                 = totalInvestido>0 ? (((receitaTotal-totalInvestido)/totalInvestido)*100).toFixed(1) : 0;
-
-  // Por campanha
-  const porCampanha = campanhas.map(camp=>{
-    const leadsC      = leadsFiltrados.filter(l=>(l.campanhas||[]).includes(camp.nome));
-    const convertC    = convertidosFiltrados.filter(p=>(p.campanhas||[]).includes(camp.nome));
-    const investidoC  = lancFiltrados.filter(l=>l.campanhaNome===camp.nome).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-    const cpl         = leadsC.length>0&&investidoC>0 ? investidoC/leadsC.length : 0;
-    const receitaC    = convertC.reduce((a,p)=>{
-      const real = lancClinica.filter(l=>l.pacienteId===p.id&&(l.status==="recebido"||l.status==="pago")).reduce((x,l)=>x+(parseFloat(l.valor)||0),0);
-      return a + (real > 0 ? real : (p.valorEstimado||300));
-    },0);
-    const roiC = investidoC>0 ? (((receitaC-investidoC)/investidoC)*100).toFixed(1) : "—";
-    const badge = cpl>0 ? badgeCPL(cpl, camp.abrangencia) : null;
-    return { ...camp, leadsC:leadsC.length, convertC:convertC.length, investidoC, cpl, receitaC, roiC, badge };
-  }).filter(c=>c.leadsC>0||c.investidoC>0);
-
-  function fmtR(v){ return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
-  function fmtPct(v){ return v+"%"; }
-
-  return (
-    <div style={{padding:"20px 28px",maxWidth:1000}}>
-      <div style={{marginBottom:20}}>
-        <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700}}>Dashboard de Performance</div>
-        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>Métricas de captação, custo e retorno</div>
-      </div>
-
-      {/* Filtro período */}
-      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:10,padding:"12px 16px",marginBottom:20,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-        <span style={{fontSize:13,fontWeight:600}}>📅 Período:</span>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <input type="date" value={periodo.de} onChange={e=>setPeriodo(p=>({...p,de:e.target.value}))}
-            style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit"}}/>
-          <span style={{fontSize:12,color:"var(--text-muted)"}}>até</span>
-          <input type="date" value={periodo.ate} onChange={e=>setPeriodo(p=>({...p,ate:e.target.value}))}
-            style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"5px 8px",fontSize:12,fontFamily:"inherit"}}/>
-        </div>
-        <button onClick={()=>setPeriodo({de:new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().slice(0,10),ate:new Date().toISOString().slice(0,10)})}
-          style={{background:"var(--gray-100)",border:"none",borderRadius:6,padding:"5px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>
-          Este mês
-        </button>
-      </div>
-
-      {/* Cards de resumo */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:14,marginBottom:24}}>
-        {[
-          {label:"Leads Recebidos",    valor:totalLeads,           icon:"users",         cor:"#7B00C4"},
-          {label:"Convertidos",        valor:totalConvertidos,     icon:"check-circle",  cor:"#16a34a"},
-          {label:"Taxa de Conversão",  valor:fmtPct(taxaConversao),icon:"trending-up",   cor:"#0891b2"},
-          {label:"Total Investido",    valor:fmtR(totalInvestido), icon:"dollar-sign",   cor:"#ea580c"},
-        ].map((c,i)=>(
-          <div key={i} style={{background:"white",borderRadius:12,padding:"16px 18px",border:"1px solid var(--gray-200)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-              <div style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{c.label}</div>
-              <div style={{width:30,height:30,borderRadius:8,background:c.cor+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <Icon name={c.icon} size={15} style={{color:c.cor}}/>
-              </div>
-            </div>
-            <div style={{fontSize:24,fontWeight:700,color:c.cor}}>{c.valor}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* CAC e ROI */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:24}}>
-        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
-          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8}}>💰 CAC — CUSTO DE AQUISIÇÃO POR CLIENTE</div>
-          <div style={{fontSize:32,fontWeight:700,color:cac>300?"#dc2626":"#16a34a",marginBottom:4}}>{fmtR(cac)}</div>
-          {cac>300&&<div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#dc2626"}}>
-            ⚠️ CAC acima de R$ 300,00 — avaliar eficiência das campanhas
-          </div>}
-          {cac>0&&cac<=300&&<div style={{fontSize:12,color:"#16a34a"}}>✅ Dentro do limite saudável (até R$ 300,00)</div>}
-          <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8}}>Total investido ÷ pacientes convertidos no período</div>
-        </div>
-        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
-          <div style={{fontSize:12,fontWeight:600,color:"var(--text-muted)",marginBottom:8}}>📈 ROI — RETORNO SOBRE INVESTIMENTO</div>
-          <div style={{fontSize:32,fontWeight:700,color:parseFloat(roi)>=0?"#16a34a":"#dc2626",marginBottom:4}}>{roi}%</div>
-          <div style={{display:"flex",flexDirection:"column",gap:4,fontSize:12,color:"var(--text-muted)"}}>
-            <div>Receita real: <strong style={{color:"#16a34a"}}>{fmtR(receitaReal)}</strong></div>
-            <div>Receita estimada: <strong style={{color:"#0891b2"}}>{fmtR(receitaEstimada)}</strong> ({pacientesSemReceita.length} pac. sem lançamentos)</div>
-            <div>Total investido: <strong style={{color:"#ea580c"}}>{fmtR(totalInvestido)}</strong></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabela por campanha */}
-      {porCampanha.length>0&&(
-        <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden",marginBottom:24}}>
-          <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",fontWeight:600,fontSize:14}}>
-            🎯 Performance por Campanha
-          </div>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-              <thead>
-                <tr style={{background:"var(--gray-50)"}}>
-                  {["Campanha","Tipo","Leads","Convertidos","Investido","CPL","Receita","ROI","Status CPL"].map(h=>(
-                    <th key={h} style={{padding:"10px 14px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {porCampanha.map(c=>{
-                  const b = c.badge;
-                  return (
-                    <tr key={c.id} style={{borderTop:"1px solid var(--gray-100)"}}>
-                      <td style={{padding:"12px 14px",fontWeight:600}}>{c.nome}</td>
-                      <td style={{padding:"12px 14px"}}>
-                        <span style={{fontSize:11,fontWeight:600,color:c.abrangencia==="internacional"?"#7B00C4":"#0891b2"}}>
-                          {c.abrangencia==="internacional"?"🌍 Intl":"🇧🇷 Nac"}
-                        </span>
-                      </td>
-                      <td style={{padding:"12px 14px",textAlign:"center"}}>{c.leadsC}</td>
-                      <td style={{padding:"12px 14px",textAlign:"center",color:"#16a34a",fontWeight:600}}>{c.convertC}</td>
-                      <td style={{padding:"12px 14px",color:"#ea580c",fontWeight:500}}>{fmtR(c.investidoC)}</td>
-                      <td style={{padding:"12px 14px",fontWeight:700,color:b?.cor||"var(--text-muted)"}}>{c.cpl>0?fmtR(c.cpl):"—"}</td>
-                      <td style={{padding:"12px 14px",color:"#16a34a",fontWeight:500}}>{fmtR(c.receitaC)}</td>
-                      <td style={{padding:"12px 14px",fontWeight:700,color:parseFloat(c.roiC)>=0?"#16a34a":"#dc2626"}}>{c.roiC!=="—"?c.roiC+"%":"—"}</td>
-                      <td style={{padding:"12px 14px"}}>
-                        {b?(
-                          <div>
-                            <span style={{background:b.bg,color:b.cor,borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}}>{b.label}</span>
-                            {b.aviso&&<div style={{fontSize:10,color:b.cor,marginTop:4,maxWidth:200,lineHeight:1.4}}>{b.aviso}</div>}
-                          </div>
-                        ):"—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {porCampanha.length===0&&(
-        <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",padding:32,textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
-          Nenhuma campanha com dados no período selecionado. Crie campanhas no Funil de Leads e lance gastos em Marketing para ver as métricas.
-        </div>
-      )}
-
-      {/* Área colaborativa por campanha */}
-      <AnaliseCampanhas campanhas={campanhas} user={user}/>
-    </div>
-  );
-}
-
-
-// ═══════════════════════════════════════════════════════
-function CentralLancamentosMarketing() {
-  const [campanhas, setCampanhas]         = useState([]);
-  const [lancamentos, setLancamentos]     = useState([]);
-  const [salvando, setSalvando]           = useState(false);
-  const [msg, setMsg]                     = useState(null);
-  const [novaCampanha, setNovaCampanha]   = useState("");
-  const [novaAbrangencia, setNovaAbrangencia] = useState("nacional");
-  const [criandoCamp, setCriandoCamp]     = useState(false);
-  const [mesFiltro, setMesFiltro]         = useState(new Date().toISOString().slice(0,7));
-  const [form, setForm] = useState({
-    tipoDespesa: "trafego",
-    descricao: "",
-    valor: "",
-    data: new Date().toISOString().slice(0,10),
-    campanhaId: "",
-  });
-
-  useEffect(()=>{
-    db.collection("clinica_campanhas").orderBy("nome")
-      .onSnapshot(s=>setCampanhas(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-    db.collection("clinica_lancamentos")
-      .where("origem","==","crm-marketing")
-      .orderBy("createdAt","desc").limit(20)
-      .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()}))),
-        err=>{ // fallback sem orderBy se não tiver índice
-          db.collection("clinica_lancamentos")
-            .where("origem","==","crm-marketing")
-            .onSnapshot(s=>setLancamentos(s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))),()=>{});
-        });
-  },[]);
-
-  const TIPOS = [
-    {id:"trafego", label:"Impulsionamento / Tráfego Pago"},
-    {id:"agencia", label:"Honorários da Equipe / Agência"},
-  ];
-
-  const f = (k,v) => setForm(x=>({...x,[k]:v}));
-
-  async function criarCampanha() {
-    if (!novaCampanha.trim()) return;
-    if (campanhas.find(c=>c.nome.toLowerCase()===novaCampanha.trim().toLowerCase())) {
-      setMsg({tipo:"erro",texto:"Campanha já existe."}); return;
-    }
-    try {
-      const ref = await db.collection("clinica_campanhas").add({
-        nome: novaCampanha.trim(),
-        abrangencia: novaAbrangencia,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      f("campanhaId", ref.id);
-      setNovaCampanha(""); setNovaAbrangencia("nacional");
-      setCriandoCamp(false);
-    } catch(e) { setMsg({tipo:"erro",texto:"Erro ao criar campanha."}); }
-  }
-
-  async function salvar() {
-    if (!form.descricao?.trim()) { setMsg({tipo:"erro",texto:"Descrição é obrigatória."}); return; }
-    if (!form.valor || !form.data) { setMsg({tipo:"erro",texto:"Valor e data são obrigatórios."}); return; }
-    if (parseFloat(form.valor)<=0) { setMsg({tipo:"erro",texto:"Valor deve ser maior que zero."}); return; }
-    setSalvando(true);
-    try {
-      const campanha = campanhas.find(c=>c.id===form.campanhaId);
-      await db.collection("clinica_lancamentos").add({
-        tipo_lancamento: "despesa",
-        tipo:            form.descricao.trim(),
-        categoria:       "Marketing",
-        descricao:       form.descricao.trim(),
-        tipoDespesaMkt:  form.tipoDespesa,
-        campanhaId:      form.campanhaId || null,
-        campanhaNome:    campanha?.nome || null,
-        valor:           parseFloat(form.valor),
-        data:            form.data,
-        formaPag:        "PIX",
-        status:          "pago",
-        origem:          "crm-marketing",
-        createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      setMsg({tipo:"ok", texto:`✓ Lançado R$ ${parseFloat(form.valor).toFixed(2).replace(".",",")} — ${form.descricao.trim()}`});
-      setForm({tipoDespesa:"trafego", descricao:"", valor:"", data:new Date().toISOString().slice(0,10), campanhaId:""});
-      setTimeout(()=>setMsg(null), 4000);
-    } catch(e) { setMsg({tipo:"erro",texto:"Erro ao salvar. Tente novamente."}); }
-    setSalvando(false);
-  }
-
-  async function excluir(lanc) {
-    if (!window.confirm(`Excluir o lançamento "${lanc.descricao}" de ${fmtVal(lanc.valor)}? Esta ação não pode ser desfeita.`)) return;
-    await db.collection("clinica_lancamentos").doc(lanc.id).delete().catch(()=>{});
-  }
-
-  const lancamentosFiltrados = lancamentos.filter(l=>l.data?.startsWith(mesFiltro));
-
-  const totalMes = lancamentosFiltrados.reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
-
-  function fmtData(d) { return d ? d.split("-").reverse().join("/") : "—"; }
-  function fmtVal(v)  { return "R$ "+parseFloat(v||0).toFixed(2).replace(".",","); }
-
-  return (
-    <div style={{marginTop:28}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-        <div style={{fontWeight:700,fontSize:15}}>💸 Central de Lançamentos</div>
-        <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:8,padding:"6px 14px",fontSize:12,color:"#dc2626",fontWeight:600}}>
-          🔒 Visível apenas para Administradora
-        </div>
-      </div>
-
-      {/* Formulário */}
-      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:20,marginBottom:20}}>
-        <div style={{fontWeight:600,fontSize:13,marginBottom:16,color:"var(--text-muted)"}}>LANÇAR NOVO GASTO DE MARKETING</div>
-        <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:14}}>
-
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Tipo de Despesa</label>
-            <select value={form.tipoDespesa} onChange={e=>f("tipoDespesa",e.target.value)} className="form-input">
-              {TIPOS.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Descrição / Observação <span style={{color:"#dc2626"}}>*</span></label>
-            <input type="text" value={form.descricao} onChange={e=>f("descricao",e.target.value)}
-              className="form-input" placeholder='Ex: "Pagamento mensal Agência Scale Views" ou "Créditos Meta Ads maio"'/>
-          </div>
-
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-            <div>
-              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Valor (R$)</label>
-              <input type="number" min="0" step="0.01" value={form.valor}
-                onChange={e=>f("valor",e.target.value)} className="form-input" placeholder="0,00"/>
-            </div>
-            <div>
-              <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>Data de Competência</label>
-              <input type="date" value={form.data} onChange={e=>f("data",e.target.value)} className="form-input"/>
-            </div>
-          </div>
-
-          {/* Campanha + botão criar nova */}
-          <div>
-            <label style={{fontWeight:600,fontSize:13,display:"block",marginBottom:6}}>
-              Campanha Vinculada <span style={{fontWeight:400,color:"var(--text-muted)"}}>(opcional)</span>
-            </label>
-            <div style={{display:"flex",gap:8}}>
-              <select value={form.campanhaId} onChange={e=>f("campanhaId",e.target.value)} className="form-input" style={{flex:1}}>
-                <option value="">— Selecionar campanha —</option>
-                {campanhas.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}
-              </select>
-              <button onClick={()=>setCriandoCamp(x=>!x)}
-                style={{background: criandoCamp?"#ea580c":"#ea580c18",color: criandoCamp?"white":"#ea580c",border:"1px solid #ea580c40",borderRadius:8,padding:"0 14px",fontWeight:700,fontSize:18,cursor:"pointer",flexShrink:0}}>
-                {criandoCamp?"×":"+"}
-              </button>
-            </div>
-            {criandoCamp && (
-              <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:8}}>
-                <div style={{display:"flex",gap:8}}>
-                  <input type="text" value={novaCampanha} onChange={e=>setNovaCampanha(e.target.value)}
-                    onKeyDown={e=>e.key==="Enter"&&criarCampanha()}
-                    className="form-input" placeholder="Nome da nova campanha..." style={{flex:1}}
-                    autoFocus/>
-                  <button onClick={criarCampanha}
-                    style={{background:"#ea580c",color:"white",border:"none",borderRadius:8,padding:"0 16px",fontWeight:600,fontSize:13,cursor:"pointer",flexShrink:0,fontFamily:"inherit"}}>
-                    Criar
-                  </button>
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  {["nacional","internacional"].map(op=>(
-                    <button key={op} onClick={()=>setNovaAbrangencia(op)}
-                      style={{flex:1,padding:"7px 0",borderRadius:8,border:"2px solid",
-                        borderColor:novaAbrangencia===op?"#ea580c":"var(--gray-200)",
-                        background:novaAbrangencia===op?"#fff7ed":"white",
-                        cursor:"pointer",fontFamily:"inherit",fontSize:12,fontWeight:600,
-                        color:novaAbrangencia===op?"#ea580c":"var(--text-muted)",textTransform:"capitalize"}}>
-                      {op==="nacional"?"🇧🇷 Nacional":"🌍 Internacional"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {msg&&(
-          <div style={{background:msg.tipo==="ok"?"#f0fdf4":"#fef2f2",border:"1px solid",borderColor:msg.tipo==="ok"?"#bbf7d0":"#fecaca",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,color:msg.tipo==="ok"?"#15803d":"#dc2626",fontWeight:500}}>
-            {msg.texto}
-          </div>
-        )}
-
-        <button onClick={salvar} disabled={salvando} className="btn-primary" style={{width:"100%"}}>
-          {salvando?"Salvando...":"💾 Salvar e Lançar no Financeiro"}
-        </button>
-        <div style={{fontSize:11,color:"var(--text-muted)",marginTop:8,textAlign:"center"}}>
-          O lançamento será registrado automaticamente como despesa paga em "Financeiro Clínica"
-        </div>
-      </div>
-
-      {/* Histórico */}
-      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden"}}>
-        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{fontWeight:600,fontSize:13}}>Lançamentos de Marketing</div>
-            <input type="month" value={mesFiltro} onChange={e=>setMesFiltro(e.target.value)}
-              style={{border:"1px solid var(--gray-200)",borderRadius:6,padding:"4px 8px",fontSize:12,fontFamily:"inherit",outline:"none"}}/>
-          </div>
-          <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>{mesFiltro.split("-").reverse().join("/")} : {fmtVal(totalMes)}</div>
-        </div>
-        {lancamentosFiltrados.length===0
-          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lançamento em {mesFiltro.split("-").reverse().join("/")}.</div>
-          : <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-              <thead>
-                <tr style={{background:"var(--gray-50)"}}>
-                  {["Data","Descrição","Campanha","Valor",""].map(h=>(
-                    <th key={h} style={{padding:"9px 14px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:12}}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {lancamentosFiltrados.map(l=>(
-                  <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
-                    <td style={{padding:"10px 14px",color:"var(--text-muted)"}}>{fmtData(l.data)}</td>
-                    <td style={{padding:"10px 14px",fontWeight:500}}>{l.descricao||"—"}</td>
-                    <td style={{padding:"10px 14px"}}>
-                      {l.campanhaNome
-                        ? <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600}}>{l.campanhaNome}</span>
-                        : <span style={{color:"var(--gray-400)",fontSize:12}}>—</span>}
-                    </td>
-                    <td style={{padding:"10px 14px",fontWeight:700,color:"#dc2626"}}>{fmtVal(l.valor)}</td>
-                    <td style={{padding:"10px 14px"}}>
-                      <button onClick={()=>excluir(l)}
-                        style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
-                        onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
-                        onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
-                        <Icon name="trash-2" size={13}/> Excluir
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-        }
-      </div>
-
-      {/* Gerenciamento de Campanhas */}
-      <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,overflow:"hidden",marginTop:20}}>
-        <div style={{padding:"14px 18px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontWeight:600,fontSize:13}}>🏷️ Gerenciar Campanhas</div>
-          <div style={{fontSize:12,color:"var(--text-muted)"}}>{campanhas.length} campanha{campanhas.length!==1?"s":""} cadastrada{campanhas.length!==1?"s":""}</div>
-        </div>
-        {campanhas.length===0
-          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhuma campanha cadastrada ainda.</div>
-          : <div style={{padding:"8px 0"}}>
-              {campanhas.map(c=>(
-                <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 18px",borderBottom:"1px solid var(--gray-50)"}}>
-                  <span style={{background:"#ea580c18",color:"#ea580c",borderRadius:20,padding:"3px 12px",fontSize:12,fontWeight:600}}>{c.nome}</span>
-                  <button onClick={async()=>{
-                    if (!window.confirm(`Excluir a campanha "${c.nome}" e todos os lançamentos financeiros vinculados? Esta ação não pode ser desfeita.`)) return;
-                    try {
-                      const snap = await db.collection("clinica_lancamentos").where("campanhaId","==",c.id).get();
-                      const batch = db.batch();
-                      snap.docs.forEach(d=>batch.delete(d.ref));
-                      await batch.commit();
-                      await db.collection("clinica_campanhas").doc(c.id).delete();
-                    } catch(e) { alert("Erro ao excluir."); }
-                  }} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)",padding:4,display:"flex",alignItems:"center",gap:4,fontSize:12,fontFamily:"inherit"}}
-                    onMouseEnter={e=>e.currentTarget.style.color="#dc2626"}
-                    onMouseLeave={e=>e.currentTarget.style.color="var(--gray-400)"}>
-                    <Icon name="trash-2" size={13}/> Excluir
-                  </button>
-                </div>
-              ))}
-            </div>
-        }
-      </div>
-    </div>
-  );
-}
-
-
-
-// ═══════════════════════════════════════════════════════
-function DashboardMarketing({ user }) {
-  const [leads, setLeads] = useState([]);
-  useEffect(()=>{
-    db.collection("clinica_leads").limit(100)
-      .onSnapshot(s=>setLeads(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
-  },[]);
-
-  const total     = leads.length;
-  const converted = leads.filter(l=>l.status==="convertido").length;
-  const inProgress= leads.filter(l=>["contato","proposta","agendado"].includes(l.status)).length;
-  const taxa      = total>0 ? Math.round((converted/total)*100) : 0;
-
-  const porOrigem = leads.reduce((acc,l)=>{ const o=l.origem||"Não informado"; acc[o]=(acc[o]||0)+1; return acc; },{});
-  const porStatus = leads.reduce((acc,l)=>{ const s=l.status||"novo"; acc[s]=(acc[s]||0)+1; return acc; },{});
-
-  const STATUS_LABEL = { novo:"Novo", contato:"Em contato", proposta:"Proposta enviada", agendado:"Agendado", convertido:"Convertido", convertido_social:"Convertido Social", convertido_parceria:"Convertido — Parceria", perdido:"Perdido" };
-  const STATUS_COR   = { novo:"#6b7280", contato:"#0891b2", proposta:"#7B00C4", agendado:"#d97706", convertido:"#16a34a", convertido_social:"#0d9488", convertido_parceria:"#7B00C4", perdido:"#dc2626" };
-
-  return (
-    <div style={{padding:"24px 28px",maxWidth:900}}>
-      <div style={{marginBottom:24}}>
-        <div style={{fontFamily:"var(--font-display)",fontSize:26,fontWeight:600}}>Dashboard de Marketing</div>
-        <div style={{fontSize:13,color:"var(--text-muted)",marginTop:4}}>Captação de leads — somente leitura</div>
-      </div>
-
-      {/* Cards resumo */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:16,marginBottom:28}}>
-        {[
-          {label:"Total de Leads",   valor:total,      icon:"users",        cor:"#7B00C4"},
-          {label:"Em andamento",     valor:inProgress,  icon:"clock",        cor:"#0891b2"},
-          {label:"Convertidos",      valor:converted,   icon:"check-circle", cor:"#16a34a"},
-          {label:"Taxa de conversão",valor:taxa+"%",    icon:"trending-up",  cor:"#ea580c"},
-        ].map((c,i)=>(
-          <div key={i} style={{background:"white",borderRadius:12,padding:"18px 20px",border:"1px solid var(--gray-200)",boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
-              <div style={{fontSize:12,color:"var(--text-muted)",fontWeight:500}}>{c.label}</div>
-              <div style={{width:32,height:32,borderRadius:8,background:c.cor+"18",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <Icon name={c.icon} size={16} style={{color:c.cor}}/>
-              </div>
-            </div>
-            <div style={{fontSize:28,fontWeight:700,color:c.cor}}>{c.valor}</div>
-          </div>
-        ))}
-      </div>
-
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:28}}>
-        {/* Por origem */}
-        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
-          <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>📊 Leads por Origem</div>
-          {Object.keys(porOrigem).length===0
-            ? <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum dado ainda.</div>
-            : Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]).map(([origem,qty])=>{
-                const pct = total>0?Math.round((qty/total)*100):0;
-                return (
-                  <div key={origem} style={{marginBottom:12}}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4}}>
-                      <span>{origem}</span><span style={{fontWeight:600}}>{qty} ({pct}%)</span>
-                    </div>
-                    <div style={{background:"var(--gray-100)",borderRadius:4,height:6}}>
-                      <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:4}}/>
-                    </div>
-                  </div>
-                );
-              })
-          }
-        </div>
-
-        {/* Por status */}
-        <div style={{background:"white",borderRadius:12,padding:20,border:"1px solid var(--gray-200)"}}>
-          <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>🎯 Leads por Status</div>
-          {Object.keys(porStatus).length===0
-            ? <div style={{fontSize:13,color:"var(--text-muted)"}}>Nenhum dado ainda.</div>
-            : Object.entries(porStatus).sort((a,b)=>b[1]-a[1]).map(([status,qty])=>(
-                <div key={status} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 12px",borderRadius:8,marginBottom:6,background:((STATUS_COR[status]||"#6b7280")+"15")}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:8,height:8,borderRadius:"50%",background:STATUS_COR[status]||"#6b7280"}}/>
-                    <span style={{fontSize:13}}>{STATUS_LABEL[status]||status}</span>
-                  </div>
-                  <span style={{fontWeight:700,fontSize:14,color:STATUS_COR[status]||"#6b7280"}}>{qty}</span>
-                </div>
-              ))
-          }
-        </div>
-      </div>
-
-      {/* Lista de leads recentes */}
-      <div style={{background:"white",borderRadius:12,border:"1px solid var(--gray-200)",overflow:"hidden"}}>
-        <div style={{padding:"16px 20px",borderBottom:"1px solid var(--gray-100)",fontWeight:600,fontSize:14}}>
-          📋 Leads Recentes
-        </div>
-        {leads.length===0
-          ? <div style={{padding:24,textAlign:"center",fontSize:13,color:"var(--text-muted)"}}>Nenhum lead cadastrado ainda.</div>
-          : <div style={{overflowX:"auto"}}>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-                <thead>
-                  <tr style={{background:"var(--gray-50)"}}>
-                    {["Nome","Origem","Status","Contato","Data"].map(h=>(
-                      <th key={h} style={{padding:"10px 16px",textAlign:"left",fontWeight:600,color:"var(--text-muted)",fontSize:12}}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {leads.slice(0,20).map(l=>(
-                    <tr key={l.id} style={{borderTop:"1px solid var(--gray-100)"}}>
-                      <td style={{padding:"10px 16px",fontWeight:500}}>{l.nome||"—"}</td>
-                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.origem||"—"}</td>
-                      <td style={{padding:"10px 16px"}}>
-                        <span style={{background:(STATUS_COR[l.status]||"#6b7280")+"20",color:STATUS_COR[l.status]||"#6b7280",borderRadius:20,padding:"3px 10px",fontSize:11,fontWeight:600}}>
-                          {STATUS_LABEL[l.status]||l.status||"novo"}
-                        </span>
-                      </td>
-                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>{l.telefone||l.email||"—"}</td>
-                      <td style={{padding:"10px 16px",color:"var(--text-muted)"}}>
-                        {l.createdAt?.toDate ? l.createdAt.toDate().toLocaleDateString("pt-BR") : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-        }
-      </div>
-      {/* Central de Lançamentos — só psicóloga */}
-      {user?.tipo==="psicologa" && <CentralLancamentosMarketing/>}
-    </div>
-  );
-}
 
 const NAV_MARKETING = [
   { id:"marketing-dashboard",    label:"Dashboard",   icon:"trending-up" },
