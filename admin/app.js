@@ -5022,9 +5022,9 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                 {pacientesVisiveis.map(pacId=>{
                   const pac = pacientes.find(p=>p.id===pacId);
                   const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
-                    const ta = a.createdAt?.seconds||0;
-                    const tb = b.createdAt?.seconds||0;
-                    return tb-ta;
+                    const da = a.dataInicio||a.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
+                    const db2 = b.dataInicio||b.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
+                    return db2.localeCompare(da);
                   });
                   return (
                     <div key={pacId}>
@@ -5154,6 +5154,8 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
 <div class="ti"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
 <div class="ti"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
 </div>
+${(p.dataPagamento||p.dataRecebimento)?`<div style="margin-top:14px;background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:18px">✅</span><div><div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#065f46;letter-spacing:.5px">Data de Pagamento</div><div style="font-size:16px;font-weight:800;color:#059669">${new Date((p.dataPagamento||p.dataRecebimento)+"T00:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div></div></div>`:""}
+${sessPac.some(s=>s.dataPagamento||s.dataRecebimento)?`<div style="margin-top:10px;font-size:11px;color:#6b7280;font-weight:600">Pagamentos por sessão:</div><table style="margin-top:4px;font-size:11px"><tbody>${sessPac.filter(s=>s.dataPagamento||s.dataRecebimento).map(s=>`<tr><td style="padding:3px 10px 3px 0;color:#374151">Sessão ${s.numSessao||""} — ${s.data?new Date(s.data+"T12:00:00").toLocaleDateString("pt-BR"):""}:</td><td style="color:#059669;font-weight:700">pago em ${new Date((s.dataPagamento||s.dataRecebimento)+"T00:00:00").toLocaleDateString("pt-BR")}</td></tr>`).join("")}</tbody></table>`:""}
 <div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
 </body></html>`;
                                     const w=window.open("","_blank"); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),800);
