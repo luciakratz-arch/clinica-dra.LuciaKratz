@@ -661,6 +661,7 @@ function DashboardAdmin({ user, onVerEvolucao }) {
 
   // Buscar atividades dos últimos 8 dias
   useEffect(()=>{
+    if(!pacientes||pacientes.length===0) return;
     const limite = new Date();
     limite.setDate(limite.getDate()-8);
     const limiteStr = limite.toISOString().slice(0,10);
@@ -694,29 +695,27 @@ function DashboardAdmin({ user, onVerEvolucao }) {
         });
         pending--;
         if(pending===0){
-            // Resolver nomes vazios pela lista de pacientes do window
-            const pacsList = window._pacientesCache || [];
+            // Resolver nomes vazios pela lista de pacientes
             Object.keys(agrupado).forEach(pid=>{
               if(!agrupado[pid].nome){
-                const pac = pacsList.find(p=>p.id===pid);
+                const pac = pacientes.find(p=>p.id===pid);
                 if(pac) agrupado[pid].nome = pac.nome||"";
               }
             });
             setAtividades({...agrupado}); setLoadingAtiv(false);
           }
       }).catch(()=>{ pending--; if(pending===0){
-            // Resolver nomes vazios pela lista de pacientes do window
-            const pacsList = window._pacientesCache || [];
+            // Resolver nomes vazios pela lista de pacientes
             Object.keys(agrupado).forEach(pid=>{
               if(!agrupado[pid].nome){
-                const pac = pacsList.find(p=>p.id===pid);
+                const pac = pacientes.find(p=>p.id===pid);
                 if(pac) agrupado[pid].nome = pac.nome||"";
               }
             });
             setAtividades({...agrupado}); setLoadingAtiv(false);
           } });
     });
-  },[]);
+  },[pacientes]);
 
   const mesAtual = new Date().toISOString().slice(0,7);
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
