@@ -3319,17 +3319,58 @@ Podemos verificar uma nova data disponível? Obrigada! 💜`
       {/* Gráfico de humor */}
       {chartData.length > 0 && (
         <div className="card" style={{marginBottom:24}}>
-          <div style={{fontWeight:600,fontSize:15,marginBottom:16}}>Minha Evolução de Humor</div>
-          <canvas id="humorChart" height={120}/>
-          <script dangerouslySetInnerHTML={{__html:`
-            (function(){
-              var ctx = document.getElementById('humorChart');
-              if(!ctx||!window.Chart) return;
-              var labels = ${JSON.stringify(chartData.map(h=>h.data?.split("/").slice(0,2).join("/")||""))};
-              var vals   = ${JSON.stringify(chartData.map(h=>h.valor||0))};
-              new Chart(ctx,{type:'line',data:{labels,datasets:[{data:vals,borderColor:'#7B00C4',backgroundColor:'rgba(123,0,196,0.08)',pointBackgroundColor:'white',pointBorderColor:'#7B00C4',pointBorderWidth:2,pointRadius:5,tension:0.4,fill:true}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Humor: '+ctx.raw+'/10'}}},scales:{y:{min:0,max:10,ticks:{stepSize:2}},x:{ticks:{maxTicksLimit:7}}}}});
-            })();
-          `}}/>
+          <div style={{fontWeight:600,fontSize:15,marginBottom:4,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>Minha Evolução de Humor</span>
+            <span style={{fontSize:13,color:"#7B00C4",fontWeight:700}}>
+              Média: {(chartData.reduce((a,h)=>a+(h.valor||0),0)/chartData.length).toFixed(1)}/10
+            </span>
+          </div>
+          {(()=>{
+            const W=320, H=120, PL=28, PR=12, PT=10, PB=28;
+            const GW=W-PL-PR, GH=H-PT-PB;
+            const vals=chartData.map(h=>h.valor||0);
+            const labels=chartData.map(h=>{
+              const d=h.data||"";
+              // data pode ser "DD/MM/YYYY" ou "YYYY-MM-DD"
+              if(d.includes("-")) return d.slice(5).split("-").reverse().join("/");
+              return d.split("/").slice(0,2).join("/");
+            });
+            const n=vals.length;
+            const xPos=i=>PL+(i/(Math.max(n-1,1)))*GW;
+            const yPos=v=>PT+GH-(v/10)*GH;
+            // Linha
+            const linePath=vals.map((v,i)=>`${i===0?"M":"L"}${xPos(i).toFixed(1)},${yPos(v).toFixed(1)}`).join(" ");
+            // Área
+            const areaPath=`${linePath} L${xPos(n-1).toFixed(1)},${(PT+GH).toFixed(1)} L${xPos(0).toFixed(1)},${(PT+GH).toFixed(1)} Z`;
+            // Labels X — mostrar só primeiros e últimos se muitos
+            const labelIdxs = n<=5 ? vals.map((_,i)=>i) : [0, Math.floor(n/2), n-1];
+            return (
+              <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto",display:"block"}}>
+                {/* Linhas guia */}
+                {[0,2,4,6,8,10].map(v=>(
+                  <g key={v}>
+                    <line x1={PL} y1={yPos(v)} x2={W-PR} y2={yPos(v)} stroke="#f0f0f0" strokeWidth="1"/>
+                    <text x={PL-4} y={yPos(v)+4} textAnchor="end" fontSize="8" fill="#9ca3af">{v}</text>
+                  </g>
+                ))}
+                {/* Área */}
+                <path d={areaPath} fill="rgba(123,0,196,0.08)"/>
+                {/* Linha */}
+                <path d={linePath} fill="none" stroke="#7B00C4" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+                {/* Pontos */}
+                {vals.map((v,i)=>(
+                  <g key={i}>
+                    <circle cx={xPos(i)} cy={yPos(v)} r="4" fill="white" stroke="#7B00C4" strokeWidth="2"/>
+                    <text x={xPos(i)} y={yPos(v)-8} textAnchor="middle" fontSize="9" fill="#7B00C4" fontWeight="700">{v}</text>
+                  </g>
+                ))}
+                {/* Labels X */}
+                {labelIdxs.map(i=>(
+                  <text key={i} x={xPos(i)} y={H-4} textAnchor="middle" fontSize="8" fill="#9ca3af">{labels[i]}</text>
+                ))}
+              </svg>
+            );
+          })()}
         </div>
       )}
 
