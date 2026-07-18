@@ -644,6 +644,8 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
 // DASHBOARD
 function DashboardAdmin({ user, onVerEvolucao }) {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
+  // Disponibilizar lista de pacientes para o feed resolver nomes ausentes
+  useEffect(()=>{ window._pacientesCache = pacientes; },[pacientes]);
   const [lancClinica, setLancClinica]   = useState([]);
   const [lancPessoal, setLancPessoal]   = useState([]);
   const [sessoes, setSessoes]           = useState([]);
@@ -687,11 +689,32 @@ function DashboardAdmin({ user, onVerEvolucao }) {
           if(!agrupado[pacId]) agrupado[pacId] = {nome:pacNome, itens:{}};
           if(!agrupado[pacId].itens[label]) agrupado[pacId].itens[label] = 0;
           agrupado[pacId].itens[label]++;
+          // Se nome ainda vazio, guardar para resolver depois com a lista de pacientes
           if(pacNome && !agrupado[pacId].nome) agrupado[pacId].nome = pacNome;
         });
         pending--;
-        if(pending===0){ setAtividades({...agrupado}); setLoadingAtiv(false); }
-      }).catch(()=>{ pending--; if(pending===0){ setAtividades({...agrupado}); setLoadingAtiv(false); } });
+        if(pending===0){
+            // Resolver nomes vazios pela lista de pacientes do window
+            const pacsList = window._pacientesCache || [];
+            Object.keys(agrupado).forEach(pid=>{
+              if(!agrupado[pid].nome){
+                const pac = pacsList.find(p=>p.id===pid);
+                if(pac) agrupado[pid].nome = pac.nome||"";
+              }
+            });
+            setAtividades({...agrupado}); setLoadingAtiv(false);
+          }
+      }).catch(()=>{ pending--; if(pending===0){
+            // Resolver nomes vazios pela lista de pacientes do window
+            const pacsList = window._pacientesCache || [];
+            Object.keys(agrupado).forEach(pid=>{
+              if(!agrupado[pid].nome){
+                const pac = pacsList.find(p=>p.id===pid);
+                if(pac) agrupado[pid].nome = pac.nome||"";
+              }
+            });
+            setAtividades({...agrupado}); setLoadingAtiv(false);
+          } });
     });
   },[]);
 
