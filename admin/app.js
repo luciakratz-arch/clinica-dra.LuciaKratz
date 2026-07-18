@@ -1748,6 +1748,8 @@ function AbaEvolucao({ paciente }) {
   const [reflexoes, setReflexoes] = useState([]);
   const [reflexaoAberta, setReflexaoAberta] = useState(null);
   const [tccAberto, setTccAberto] = useState(null);
+  const [verTodoHistorico, setVerTodoHistorico] = useState(false);
+  const [itemExpandido, setItemExpandido] = useState(null);
   useEffect(()=>{
     const u1 = db.collection("clinica_humor")
       .where("pacienteId","==",paciente.id)
@@ -1794,7 +1796,7 @@ function AbaEvolucao({ paciente }) {
       .onSnapshot(snap=>{
         const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
         docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
-        setAcessos(docs.slice(0,40));
+        setAcessos(docs);
       },()=>{});
     // Reflexões salvas (fábulas e psicoeducações)
     const u8 = db.collection("clinica_reflexoes")
@@ -1810,9 +1812,32 @@ function AbaEvolucao({ paciente }) {
   return (
     <div>
       <div className="metrics-grid" style={{marginBottom:20}}>
-        {[{label:"Sessoes registradas",value:sessoes,icon:"calendar"},{label:"Registros TCC",value:tcc.length,icon:"brain"},{label:"Entradas no diario",value:diario.length,icon:"book-open"},{label:"Metas ativas",value:metas.length,icon:"target"}].map(m=>(
-          <div key={m.label} className="metric-card"><div className="metric-icon"><Icon name={m.icon} size={20}/></div><div className="metric-label">{m.label}</div><div className="metric-value">{m.value}</div></div>
-        ))}
+        {/* Card Sessões */}
+        <div className="metric-card">
+          <div className="metric-icon"><Icon name="calendar" size={20}/></div>
+          <div className="metric-label">Sessões registradas</div>
+          <div className="metric-value">{sessoes}</div>
+        </div>
+        {/* Card Diário */}
+        <div className="metric-card">
+          <div className="metric-icon"><Icon name="book-open" size={20}/></div>
+          <div className="metric-label">Diário Terapêutico</div>
+          <div className="metric-value">{diario.length}</div>
+          {diario.length>0&&<div className="metric-sub">última: {diario[0]?.data||diario[0]?.createdAt?.toDate?.()?.toLocaleDateString?.("pt-BR")||"—"}</div>}
+        </div>
+        {/* Card Metas */}
+        <div className="metric-card">
+          <div className="metric-icon"><Icon name="target" size={20}/></div>
+          <div className="metric-label">Metas ativas</div>
+          <div className="metric-value">{metas.length}</div>
+        </div>
+        {/* Card Humor */}
+        <div className="metric-card">
+          <div className="metric-icon"><Icon name="heart" size={20}/></div>
+          <div className="metric-label">Humor médio</div>
+          <div className="metric-value">{media}/10</div>
+          {humor.length>0&&<div className="metric-sub">última: {humor[0]?.data||"—"}</div>}
+        </div>
       </div>
       <div className="card">
         <div style={{fontWeight:600,marginBottom:16,display:"flex",justifyContent:"space-between"}}>
@@ -1869,24 +1894,63 @@ function AbaEvolucao({ paciente }) {
             <Icon name="mouse-pointer-click" size={36}/>
             <div style={{marginTop:10,fontSize:13}}>Nenhum acesso registrado ainda.</div>
           </div>
-        ):(
-          <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:420,overflowY:"auto"}}>
-            {acessos.map(a=>(
-              <div key={a.id} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 12px",borderRadius:10,border:"1px solid var(--gray-100)",background:a.tipo==="salvou"?"#f0fdf4":"#fafafa"}}>
-                <span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:"3px 9px",flexShrink:0,marginTop:1,
-                  background:a.tipo==="salvou"?"#d1fae5":a.tipo==="concluiu"?"#dbeafe":"#ede9fe",
-                  color:a.tipo==="salvou"?"#059669":a.tipo==="concluiu"?"#1d4ed8":"var(--purple)"}}>
-                  {a.tipo==="salvou"?"💾 Salvou":a.tipo==="concluiu"?"✅ Concluiu":"👁 Abriu"}
-                </span>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontWeight:600,fontSize:13}}>{a.recursoTitulo||"Recurso"}</div>
-                  {a.detalhe&&<div style={{fontSize:12,color:"#4b5563",marginTop:2,lineHeight:1.5,wordBreak:"break-word"}}>{a.detalhe}</div>}
-                </div>
-                <div style={{fontSize:11,color:"var(--text-muted)",flexShrink:0,textAlign:"right"}}>{a.data}<br/>{a.hora}</div>
-              </div>
-            ))}
-          </div>
-        )}
+        ):(()=>{
+          const limite8 = new Date(); limite8.setDate(limite8.getDate()-8);
+          const filtrados = verTodoHistorico ? acessos : acessos.filter(a=>{
+            const d = a.createdAt?.toDate?.();
+            return d && d >= limite8;
+          });
+          if(filtrados.length===0) return (
+            <div style={{textAlign:"center",padding:20,color:"var(--text-muted)",fontSize:13}}>
+              Nenhuma atividade nos últimos 8 dias.
+              <button onClick={()=>setVerTodoHistorico(true)} style={{display:"block",margin:"8px auto 0",background:"none",border:"none",color:"var(--purple)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-body)"}}>Ver histórico completo →</button>
+            </div>
+          );
+          return (
+            <div style={{display:"flex",flexDirection:"column",gap:6,maxHeight:500,overflowY:"auto"}}>
+              {filtrados.map(a=>{
+                const temReflexao = a.tipo==="salvou" && a.detalhe;
+                const expandido = itemExpandido===a.id;
+                // Buscar reflexão salva correspondente
+                const reflexaoVinc = reflexoes.find(r=>r.recursoId===a.recursoId&&r.pacienteId===a.pacienteId);
+                return (
+                  <div key={a.id} style={{borderRadius:10,border:"1px solid var(--gray-100)",overflow:"hidden"}}>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:10,padding:"9px 12px",background:a.tipo==="salvou"?"#f0fdf4":"#fafafa",cursor:(temReflexao||reflexaoVinc)?"pointer":"default"}}
+                      onClick={()=>(temReflexao||reflexaoVinc)&&setItemExpandido(expandido?null:a.id)}>
+                      <span style={{fontSize:11,fontWeight:700,borderRadius:20,padding:"3px 9px",flexShrink:0,marginTop:1,
+                        background:a.tipo==="salvou"?"#d1fae5":a.tipo==="concluiu"?"#dbeafe":"#ede9fe",
+                        color:a.tipo==="salvou"?"#059669":a.tipo==="concluiu"?"#1d4ed8":"var(--purple)"}}>
+                        {a.tipo==="salvou"?"💾 Salvou":a.tipo==="concluiu"?"✅ Concluiu":"👁 Abriu"}
+                      </span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:600,fontSize:13}}>{a.recursoTitulo||"Recurso"}</div>
+                        {a.detalhe&&!expandido&&<div style={{fontSize:12,color:"#4b5563",marginTop:2,lineHeight:1.5,wordBreak:"break-word",opacity:.7}}>{a.detalhe}</div>}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                        <div style={{fontSize:11,color:"var(--text-muted)",textAlign:"right"}}>{a.data}<br/>{a.hora}</div>
+                        {(temReflexao||reflexaoVinc)&&<span style={{fontSize:12,color:"var(--purple)",fontWeight:600}}>{expandido?"▲":"▼"}</span>}
+                      </div>
+                    </div>
+                    {expandido&&(
+                      <div style={{padding:"12px 14px",background:"white",borderTop:"1px solid var(--gray-100)"}}>
+                        {reflexaoVinc&&reflexaoVinc.respostas?(
+                          (reflexaoVinc.respostas||[]).map((resp,i)=>(
+                            <div key={i} style={{marginBottom:i<reflexaoVinc.respostas.length-1?12:0}}>
+                              {reflexaoVinc.perguntas&&<div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:4}}>{reflexaoVinc.perguntas[i]||`Reflexão ${i+1}`}</div>}
+                              <div style={{fontSize:13,color:resp?"#1f2937":"#9ca3af",lineHeight:1.65,paddingLeft:12,borderLeft:"3px solid #e9d5ff"}}>{resp||"— sem resposta —"}</div>
+                            </div>
+                          ))
+                        ):a.detalhe?(
+                          <div style={{fontSize:13,color:"#1f2937",lineHeight:1.65,paddingLeft:12,borderLeft:"3px solid #e9d5ff"}}>{a.detalhe}</div>
+                        ):null}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── REGISTROS TCC (pensamentos guiados) ── */}
