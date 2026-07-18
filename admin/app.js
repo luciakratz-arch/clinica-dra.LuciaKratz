@@ -642,17 +642,57 @@ function Sidebar({ user, tab, setTab, onLogout, notifProps }) {
 }
 
 // DASHBOARD
-function DashboardAdmin({ user }) {
+function DashboardAdmin({ user, onVerEvolucao }) {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [lancClinica, setLancClinica]   = useState([]);
   const [lancPessoal, setLancPessoal]   = useState([]);
   const [sessoes, setSessoes]           = useState([]);
+  const [atividades, setAtividades]     = useState({});
+  const [loadingAtiv, setLoadingAtiv]   = useState(true);
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").onSnapshot(s=>setLancClinica(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const u2=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>setLancPessoal(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const u3=db.collection("clinica_sessoes").onSnapshot(s=>setSessoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     return()=>{u1();u2();u3();};
+  },[]);
+
+  // Buscar atividades dos últimos 8 dias
+  useEffect(()=>{
+    const limite = new Date();
+    limite.setDate(limite.getDate()-8);
+    const limiteStr = limite.toISOString().slice(0,10);
+
+    const COLS = [
+      {col:"clinica_diario",    label:"📓 Diário",   campoData:"data", campoNome:"pacienteNome", campoPacId:"pacienteId"},
+      {col:"clinica_humor",     label:"😊 Humor",    campoData:"data", campoNome:"pacienteNome", campoPacId:"pacienteId"},
+      {col:"clinica_metas",     label:"🎯 Metas",    campoData:"updatedAt", campoNome:"pacienteNome", campoPacId:"pacienteId"},
+      {col:"clinica_tcc",       label:"🧠 TCC",      campoData:"data", campoNome:"pacienteNome", campoPacId:"pacienteId"},
+      {col:"clinica_reflexoes", label:"💭 Reflexão", campoData:"data", campoNome:"pacienteNome", campoPacId:"pacienteId"},
+    ];
+
+    let pending = COLS.length;
+    const agrupado = {};
+
+    COLS.forEach(({col, label, campoData, campoNome, campoPacId})=>{
+      db.collection(col).get().then(snap=>{
+        snap.docs.forEach(d=>{
+          const doc = d.data();
+          let dataStr = doc[campoData];
+          if(dataStr?.toDate) dataStr = dataStr.toDate().toISOString().slice(0,10);
+          if(!dataStr || dataStr < limiteStr) return;
+          const pacId = doc[campoPacId] || doc.pacienteId || "";
+          const pacNome = doc[campoNome] || doc.pacienteNome || "";
+          if(!pacId) return;
+          if(!agrupado[pacId]) agrupado[pacId] = {nome:pacNome, itens:{}};
+          if(!agrupado[pacId].itens[label]) agrupado[pacId].itens[label] = 0;
+          agrupado[pacId].itens[label]++;
+          if(pacNome && !agrupado[pacId].nome) agrupado[pacId].nome = pacNome;
+        });
+        pending--;
+        if(pending===0){ setAtividades({...agrupado}); setLoadingAtiv(false); }
+      }).catch(()=>{ pending--; if(pending===0){ setAtividades({...agrupado}); setLoadingAtiv(false); } });
+    });
   },[]);
 
   const mesAtual = new Date().toISOString().slice(0,7);
@@ -686,6 +726,9 @@ function DashboardAdmin({ user }) {
                 + lpAno.filter(l=>l.tipo==="despesa"&&(l.status==="pago"||l.status==="recebido")).reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
   const saldoAno = recAno - despAno;
 
+  const pacAtivos = Object.entries(atividades).filter(([,v])=>Object.keys(v.itens).length>0)
+    .sort((a,b)=>(a[1].nome||"").localeCompare(b[1].nome||""));
+
   return (
     <div>
       <div className="page-header">
@@ -699,6 +742,48 @@ function DashboardAdmin({ user }) {
         <div className="metric-card"><div className="metric-icon"><Icon name="calendar" size={20}/></div><div className="metric-label">Sessões Hoje</div><div className="metric-value">{sessoesHoje}</div><div className="metric-sub">agendadas</div></div>
         <div className="metric-card"><div className="metric-icon"><Icon name="package" size={20}/></div><div className="metric-label">Pendente Clínica</div><div className="metric-value" style={{fontSize:18,color:"#d97706"}}>{fmt(lcMes.filter(l=>l.status==="pendente").reduce((a,l)=>a+(parseFloat(l.valor)||0),0))}</div></div>
         <div className="metric-card"><div className="metric-icon"><Icon name="heart" size={20}/></div><div className="metric-label">Casais em Terapia</div><div className="metric-value">{pacientes.filter(p=>p.casalId).length/2|0}</div></div>
+      </div>
+
+      {/* FEED DE ATIVIDADES */}
+      <div className="card" style={{marginBottom:24}}>
+        <div style={{fontWeight:700,fontSize:16,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
+          <Icon name="activity" size={18}/> Atividades dos últimos 8 dias
+        </div>
+        <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Pacientes que interagiram no app</div>
+        {loadingAtiv?(
+          <div style={{textAlign:"center",padding:20}}><Spinner/></div>
+        ):pacAtivos.length===0?(
+          <div style={{textAlign:"center",padding:24,color:"var(--text-muted)",fontSize:14}}>
+            Nenhuma atividade nos últimos 8 dias.
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {pacAtivos.map(([pacId, info])=>(
+              <div key={pacId} style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:"14px 18px",background:"var(--gray-50)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
+                  <div style={{width:36,height:36,borderRadius:"50%",background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontWeight:700,color:"var(--purple)",fontSize:14,flexShrink:0}}>
+                    {(info.nome||"?").charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>{info.nome||"Paciente"}</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {Object.entries(info.itens).map(([label, count])=>(
+                        <span key={label} style={{fontSize:12,background:"white",border:"1px solid var(--gray-200)",borderRadius:20,padding:"2px 10px",color:"var(--text-muted)"}}>
+                          {label} {count>1?`(${count})`:""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={()=>onVerEvolucao&&onVerEvolucao(pacId)}
+                  style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"7px 16px",fontSize:13,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                  <Icon name="trending-up" size={13}/> Ver Evolução
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Resumo Financeiro Integrado */}
@@ -2952,8 +3037,8 @@ function AbaLinksPartilhados({ paciente }) {
   );
 }
 
-function PerfilPaciente({ paciente, onVoltar, pacientes, user }) {
-  const [aba, setAba] = useState("perfil");
+function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
+  const [aba, setAba] = useState(abaInicial||"perfil");
   const isSecretaria = user?.tipo==="secretaria";
   const ABAS = [
     {id:"perfil",   label:"Perfil",          icon:"user"},
@@ -3021,6 +3106,16 @@ function Pacientes({ user }) {
   const [form, setForm] = useState({});
   const [salvando, setSalvando] = useState(false);
   const [perfilAberto, setPerfilAberto] = useState(null);
+  const [abaInicialPerfil, setAbaInicialPerfil] = useState(null);
+
+  // Navegar direto para um paciente vindo do Dashboard
+  useEffect(()=>{
+    if(window._pacienteInicialId){
+      setPerfilAberto(window._pacienteInicialId);
+      setAbaInicialPerfil("evolucao");
+      window._pacienteInicialId = null;
+    }
+  },[]);
   const [importLog, setImportLog] = useState([]);
   const [importando, setImportando] = useState(false);
 
@@ -3082,7 +3177,7 @@ function Pacientes({ user }) {
 
   if(perfilAberto) {
     const pac = pacientes.find(p=>p.id===perfilAberto);
-    if(pac) return <PerfilPaciente paciente={pac} onVoltar={()=>setPerfilAberto(null)} pacientes={pacientes}/>;
+    if(pac) return <PerfilPaciente paciente={pac} onVoltar={()=>{setPerfilAberto(null);setAbaInicialPerfil(null);}} pacientes={pacientes} abaInicial={abaInicialPerfil}/>;
   }
 
   const filtrados = pacientes.filter(p=>{
@@ -9716,7 +9811,7 @@ function handleLogin(u){setUser(u);if(u.tipo==="psicologa")setTab("dashboard");i
       <Sidebar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} notifProps={notifProps}/>
       <div className="header-mobile"><div className="header-mobile-logo">Administracao</div><button className="header-mobile-btn" onClick={handleLogout}><Icon name="log-out" size={18}/></button></div>
       <div className="main-content" style={{flex:1,minWidth:0,maxWidth:"100%",overflowX:"hidden"}}>
-        {user.tipo==="psicologa"  &&tab==="dashboard"   &&<DashboardAdmin user={user}/>}
+        {user.tipo==="psicologa"  &&tab==="dashboard"   &&<DashboardAdmin user={user} onVerEvolucao={(pacId)=>{window._pacienteInicialId=pacId;setTab("pacientes");}}/>}
         {user.tipo==="psicologa"  &&tab==="pacientes"   &&<Pacientes user={user}/>}
         {user.tipo==="psicologa"  &&tab==="alunos"      &&<Alunos/>}
         {user.tipo==="psicologa"  &&tab==="casais"      &&<TerapiaCasais/>}
