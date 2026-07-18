@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plataforma Clínica — Dra. Lucia Kratz</title>
+  <title>Dra. Lucia Kratz</title>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#7B00C4"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Dra. Lucia Kratz"/>
+  <link rel="apple-touch-icon" href="../logo-transparente.png"/>
+  <!-- Fontes e estilos -->
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,7 +26,15 @@
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" src="../admin/psicoeducacoes.js?v=10" data-presets="react"></script>
-  <script type="text/babel" src="app.js?v=19" data-presets="react"></script>
+  <script type="text/babel" src="../admin/psicoeducacoes.js?v=9" data-presets="react"></script>
+  <script type="text/babel" src="app.js?v=11" data-presets="react"></script>
+  <!-- Registro do Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', ()=>{
+        navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      });
+    }
+  </script>
 </body>
 </html>
