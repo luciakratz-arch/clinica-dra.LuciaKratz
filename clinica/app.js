@@ -1951,9 +1951,9 @@ function RecursosPaciente({ user, setTab, abaInicial }) {
         msOverflowStyle:"none",WebkitOverflowScrolling:"touch",
         paddingBottom:0}}>
         {[
-          ["ferramentas",   "🔧 Ferramentas",         ferramentasVisiveis.length],
-          ["fabulas",       "📖 Fábulas",              fabulasVisiveis.length],
-          ["psicoeducacao", "🎓 Psicoeducação",        psicoeducacaoVisiveis.length],
+          ["ferramentas",   "🔧 Ferramentas",    ferramentasVisiveis.length],
+          ["fabulas",       "📖 Fábulas",         fabulasVisiveis.length],
+          ["psicoeducacao", "🎓 Psicoed.",         psicoeducacaoVisiveis.length],
         ].map(([id,label,count])=>(
           <button key={id} onClick={()=>setAba(id)}
             style={{padding:"10px 14px",border:"none",background:"none",cursor:"pointer",
@@ -3207,7 +3207,6 @@ Podemos verificar uma nova data disponível? Obrigada! 💜`
   const modulos = user.modulosAtivos || [];
   const todasFerramentas = [
     { id:"humor",       label:"Registrar Humor",         sub:"Como você está se sentindo hoje?",  icon:"heart",      cor:"#fde8f0", tab:"humor" },
-    { id:"tcc",         label:"Pensamentos Automáticos", sub:"Registre e questione pensamentos",  icon:"brain",      cor:"#ede0fa", tab:"tcc" },
     { id:"diario",      label:"Diário Terapêutico",      sub:"Escreva sobre o seu dia",           icon:"book-open",  cor:"#e0f0ff", tab:"diario" },
     { id:"metas",       label:"Minhas Metas",            sub:"Acompanhe seu progresso",           icon:"target",     cor:"#e0faed", tab:"metas" },
     { id:"fabulas",     label:"Fábulas Terapêuticas",    sub:"Histórias reflexivas",              icon:"book-heart", cor:"#fff3e0", tab:"fabulas" },
