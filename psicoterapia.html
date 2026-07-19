@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Psicoterapia Individual — Dra. Lucia Kratz</title>
+  <meta name="description" content="Psicoterapia individual em Goiânia com a Dra. Lucia Kratz, CRP 09/20590. Especialista em TCC, Musicoterapia e Neuromodulação. Atendimento presencial e online."/>
+  <meta name="keywords" content="psicoterapia Goiânia, psicóloga individual Goiânia, TCC Goiânia, terapia individual, Lucia Kratz"/>
+  <meta name="author" content="Dra. Lucia Kratz"/>
+  <meta name="robots" content="index, follow"/>
+  <meta property="og:title" content="Psicoterapia Individual — Dra. Lucia Kratz"/>
+  <meta property="og:description" content="Psicoterapia individual em Goiânia com a Dra. Lucia Kratz, CRP 09/20590. Especialista em TCC, Musicoterapia e Neuromodulação. Atendimento presencial e online."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:url" content="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/psicoterapia"/>
+  <meta property="og:image" content="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/foto3.jpeg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-S8T7H1DEY5"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-S8T7H1DEY5');</script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --purple:#7B00C4;--purple-dark:#5a0090;--purple-soft:#ede0fa;--purple-bg:#f5eeff;
+      --text:#1a1a2e;--text-muted:#6b7280;
+      --gray-50:#fafafa;--gray-100:#f4f4f5;--gray-200:#e4e4e7;--gray-600:#52525b;
+      --radius:12px;
+      --font-display:'Playfair Display',Georgia,serif;
+      --font-body:'DM Sans',system-ui,sans-serif;
+    }
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font-body);color:var(--text);background:white;-webkit-font-smoothing:antialiased;font-size:15px;}
+    a{text-decoration:none;color:inherit;}
+    img{max-width:100%;display:block;}
+
+    /* NAVBAR */
+    .navbar{position:fixed;top:0;left:0;right:0;height:64px;background:rgba(255,255,255,0.97);backdrop-filter:blur(8px);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;padding:0 40px;z-index:200;}
+    .brand{display:flex;align-items:center;gap:12px;}
+    .brand-logo{width:36px;height:36px;border-radius:8px;background:var(--purple);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
+    .brand-logo img{width:28px;height:28px;object-fit:contain;}
+    .brand-name{font-family:var(--font-display);font-size:15px;font-weight:600;}
+    .brand-crp{font-size:11px;color:var(--text-muted);}
+    .nav-actions{display:flex;gap:10px;align-items:center;}
+    .btn-voltar{font-size:13px;color:var(--gray-600);padding:8px 16px;border-radius:20px;border:1px solid var(--gray-200);transition:all .2s;display:flex;align-items:center;gap:6px;}
+    .btn-voltar:hover{border-color:var(--purple);color:var(--purple);}
+    .btn-wpp-nav{background:#25D366;color:white;font-size:13px;font-weight:600;padding:9px 20px;border-radius:20px;display:flex;align-items:center;gap:6px;transition:background .2s;}
+    .btn-wpp-nav:hover{background:#1da851;}
+
+    /* HERO */
+    .hero-wrap{margin-top:64px;padding:80px 40px 60px;max-width:1100px;margin-left:auto;margin-right:auto;display:grid;grid-template-columns:1fr 400px;gap:64px;align-items:center;}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--purple-soft);color:var(--purple);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;margin-bottom:20px;}
+    .hero-titulo{font-family:var(--font-display);font-size:clamp(28px,3.5vw,44px);font-weight:700;line-height:1.15;margin-bottom:20px;}
+    .hero-titulo em{color:var(--purple);font-style:normal;}
+    .hero-sub{font-size:16px;color:var(--text-muted);line-height:1.75;margin-bottom:32px;}
+    .hero-btns{display:flex;gap:12px;flex-wrap:wrap;}
+    .btn-primary{background:var(--purple);color:white;padding:13px 28px;border-radius:8px;font-size:15px;font-weight:500;display:inline-flex;align-items:center;gap:8px;transition:all .2s;}
+    .btn-primary:hover{background:var(--purple-dark);transform:translateY(-2px);}
+    .btn-secondary{background:white;color:var(--purple);padding:13px 24px;border-radius:8px;font-size:14px;font-weight:500;border:1.5px solid var(--purple);transition:all .2s;}
+    .btn-secondary:hover{background:var(--purple-bg);}
+    .hero-img{border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(123,0,196,.15);aspect-ratio:4/5;background:var(--purple-soft);}
+    .hero-img img{width:100%;height:100%;object-fit:cover;object-position:top;}
+    .hero-credenciais{display:flex;gap:20px;margin-top:28px;flex-wrap:wrap;}
+    .cred{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);}
+    .cred-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);flex-shrink:0;}
+
+    /* SEÇÕES */
+    .section{padding:72px 40px;}
+    .section-inner{max-width:1100px;margin:0 auto;}
+    .section-label{font-size:11px;font-weight:600;color:var(--purple);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+    .section-titulo{font-family:var(--font-display);font-size:clamp(22px,3vw,34px);font-weight:600;margin-bottom:16px;line-height:1.2;}
+    .section-sub{font-size:15px;color:var(--text-muted);line-height:1.7;max-width:560px;margin-bottom:48px;}
+
+    /* ITENS */
+    .itens-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--gray-200);border-radius:16px;overflow:hidden;}
+    .item{background:white;padding:28px;transition:background .2s;}
+    .item:hover{background:var(--gray-50);}
+    .item-title{font-size:15px;font-weight:600;margin-bottom:10px;}
+    .item-desc{font-size:14px;color:var(--text-muted);line-height:1.65;}
+
+    /* PARA QUEM */
+    .para-quem-bg{background:var(--gray-50);}
+    .para-quem-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;margin-top:0;}
+    .para-quem ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+    .para-quem li{display:flex;align-items:center;gap:10px;font-size:14px;padding:12px 16px;background:white;border-radius:10px;border:1px solid var(--gray-200);}
+    .para-quem li::before{content:'→';color:var(--purple);font-weight:700;flex-shrink:0;}
+    .para-quem-texto{font-size:15px;color:var(--text-muted);line-height:1.8;}
+    .para-quem-cta{margin-top:28px;}
+
+    /* PROCESSO */
+    .processo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px;}
+    .passo{padding:28px 20px;}
+    .passo-num{font-family:var(--font-display);font-size:40px;font-weight:700;color:var(--purple-soft);margin-bottom:12px;}
+    .passo-titulo{font-size:14px;font-weight:700;margin-bottom:8px;}
+    .passo-desc{font-size:13px;color:var(--text-muted);line-height:1.6;}
+
+    /* CTA FINAL */
+    .cta-section{padding:80px 40px;}
+    .cta-box{max-width:700px;margin:0 auto;text-align:center;background:white;border:1px solid var(--gray-200);border-radius:24px;padding:56px 48px;box-shadow:0 4px 40px rgba(123,0,196,.06);}
+    .cta-box h2{font-family:var(--font-display);font-size:clamp(22px,3vw,32px);font-weight:700;margin-bottom:14px;}
+    .cta-box p{color:var(--text-muted);font-size:15px;line-height:1.7;margin-bottom:32px;}
+    .btn-wpp-cta{background:#25D366;color:white;font-weight:700;font-size:15px;padding:15px 32px;border-radius:10px;display:inline-flex;align-items:center;gap:10px;transition:all .2s;box-shadow:0 4px 16px rgba(37,211,102,.3);}
+    .btn-wpp-cta:hover{background:#1da851;transform:translateY(-2px);}
+
+    /* FOOTER */
+    footer{background:#1a1a2e;color:rgba(255,255,255,.5);text-align:center;padding:32px 20px;font-size:13px;}
+    footer a{color:rgba(255,255,255,.7);margin:0 10px;transition:color .2s;}
+    footer a:hover{color:white;}
+
+    /* DIVISOR */
+    hr{border:none;border-top:1px solid var(--gray-200);}
+
+    /* MOBILE */
+    @media(max-width:768px){
+      .navbar{padding:0 16px;}
+      .btn-voltar span{display:none;}
+      .hero-wrap{grid-template-columns:1fr;gap:40px;padding:60px 20px 40px;margin-top:64px;}
+      .hero-img{max-width:280px;margin:0 auto;aspect-ratio:3/4;}
+      .section{padding:48px 20px;}
+      .processo-grid{grid-template-columns:1fr 1fr;}
+      .para-quem-grid{grid-template-columns:1fr;}
+      .cta-box{padding:36px 24px;}
+      .cta-section{padding:48px 20px;}
+    }
+    @media(max-width:480px){
+      .processo-grid{grid-template-columns:1fr;}
+      .itens-grid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz" class="brand">
+    <div class="brand-logo">
+      <img src="logo-transparente.png" alt="Logo"/>
+    </div>
+    <div>
+      <div class="brand-name">Dra. Lucia Kratz</div>
+      <div class="brand-crp">CRP 09/20590</div>
+    </div>
+  </a>
+  <div class="nav-actions">
+    <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz" class="btn-voltar">← <span>Site principal</span></a>
+    <a href="https://wa.me/5562994644950?text=Olá,%20Dra.%20Lucia!%20Gostaria%20de%20agendar%20uma%20sessão%20de%20Psicoterapia%20Individual." target="_blank" class="btn-wpp-nav"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Agendar</a>
+  </div>
+</nav>
+
+<div class="hero-wrap">
+  <div class="hero-content">
+    <div class="hero-badge">Psicoterapia Individual</div>
+    <h1 class="hero-titulo">Um espaço para você se conhecer e transformar sua vida</h1>
+    <p class="hero-sub">Com base científica e olhar humano, a psicoterapia com a Dra. Lucia Kratz integra TCC, Musicoterapia e Neuromodulação em um processo personalizado para você.</p>
+    <div class="hero-btns">
+      <a href="https://wa.me/5562994644950?text=Olá,%20Dra.%20Lucia!%20Gostaria%20de%20agendar%20uma%20sessão%20de%20Psicoterapia%20Individual." target="_blank" class="btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Agendar consulta</a>
+      <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz" class="btn-secondary">Ver todos os serviços</a>
+    </div>
+    <div class="hero-credenciais">
+      <div class="cred"><div class="cred-dot"></div> Doutora em Psicologia</div>
+      <div class="cred"><div class="cred-dot"></div> CRP 09/20590</div>
+      <div class="cred"><div class="cred-dot"></div> Goiânia, GO</div>
+      <div class="cred"><div class="cred-dot"></div> Presencial e Online</div>
+    </div>
+  </div>
+  <div class="hero-img">
+    <img src="foto3.jpeg" alt="Dra. Lucia Kratz — Psicóloga em Goiânia" onerror="this.parentElement.style.background='var(--purple-soft)'"/>
+  </div>
+</div>
+
+<hr/>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="section-label">Abordagem</div>
+    <h2 class="section-titulo">Como funciona o atendimento</h2>
+    <p class="section-sub">Uma abordagem integrativa que combina o que há de melhor em ciência e cuidado humano.</p>
+    <div class="itens-grid">
+          <div class="item">
+            <div class="item-title">TCC — Terapia Cognitivo-Comportamental</div>
+            <div class="item-desc">Abordagem baseada em evidências científicas para identificar e transformar padrões de pensamento e comportamento que causam sofrimento.</div>
+          </div>
+          <div class="item">
+            <div class="item-title">Musicoterapia</div>
+            <div class="item-desc">Uso terapêutico da música para acessar emoções, promover expressão e criar experiências de cura que transcendem a linguagem verbal.</div>
+          </div>
+          <div class="item">
+            <div class="item-title">Neuromodulação</div>
+            <div class="item-desc">Tecnologia não-invasiva que potencializa os resultados terapêuticos, acelerando mudanças neuronais positivas.</div>
+          </div>
+          <div class="item">
+            <div class="item-title">Processo personalizado</div>
+            <div class="item-desc">Cada pessoa é única. O plano terapêutico é construído junto com você, respeitando seu ritmo, história e objetivos.</div>
+          </div>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<section class="section para-quem-bg">
+  <div class="section-inner">
+    <div class="para-quem-grid">
+      <div>
+        <div class="section-label">Indicações</div>
+        <h2 class="section-titulo">Para quem é indicado?</h2>
+        <p class="para-quem-texto">Este serviço pode ajudar pessoas que passam por diversas situações. Se você se identificar com algum desses contextos, entre em contato para conversarmos.</p>
+        <div class="para-quem-cta">
+          <a href="https://wa.me/5562994644950?text=Olá,%20Dra.%20Lucia!%20Gostaria%20de%20agendar%20uma%20sessão%20de%20Psicoterapia%20Individual." target="_blank" class="btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Falar com a Dra. Lucia</a>
+        </div>
+      </div>
+      <div class="para-quem">
+        <ul>
+              <li>Ansiedade e estresse crônico</li>
+              <li>Depressão e tristeza persistente</li>
+              <li>Baixa autoestima e insegurança</li>
+              <li>Dificuldades nos relacionamentos</li>
+              <li>Transtornos alimentares</li>
+              <li>Crises existenciais e de identidade</li>
+              <li>Luto e perdas significativas</li>
+              <li>Burnout e esgotamento profissional</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr/>
+
+<section class="section">
+  <div class="section-inner">
+    <div class="section-label">Processo</div>
+    <h2 class="section-titulo">Como é o processo</h2>
+    <p class="section-sub">Cada etapa é pensada para que você se sinta acolhido e seguro ao longo de todo o caminho.</p>
+    <div class="processo-grid">
+          <div class="passo">
+            <div class="passo-num">01</div>
+            <div class="passo-titulo">Primeira sessão</div>
+            <div class="passo-desc">Escuta ativa e acolhimento para entender sua história e objetivos.</div>
+          </div>
+          <div class="passo">
+            <div class="passo-num">02</div>
+            <div class="passo-titulo">Avaliação e plano</div>
+            <div class="passo-desc">Definição dos caminhos e abordagens mais indicados para você.</div>
+          </div>
+          <div class="passo">
+            <div class="passo-num">03</div>
+            <div class="passo-titulo">Processo terapêutico</div>
+            <div class="passo-desc">Sessões semanais com técnicas integradas e acompanhamento contínuo.</div>
+          </div>
+          <div class="passo">
+            <div class="passo-num">04</div>
+            <div class="passo-titulo">Evolução e autonomia</div>
+            <div class="passo-desc">Desenvolvimento de ferramentas próprias para uma vida mais plena.</div>
+          </div>
+    </div>
+  </div>
+</section>
+
+
+      <!-- BANNER APP -->
+      <div style="background:linear-gradient(135deg,#f5eeff,#ede0fa);border:1.5px solid #d8b4fe;border-radius:16px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:0;">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#7B00C4;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">📱 App do Paciente</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:600;margin-bottom:6px;">Acompanhe sua evolução pelo celular</div>
+          <div style="font-size:14px;color:#6b7280;line-height:1.5;">Pacientes em atendimento têm acesso ao app — metas, humor, diário terapêutico e muito mais.</div>
+        </div>
+        <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/instalar-app" style="background:#7B00C4;color:white;font-weight:700;font-size:14px;padding:12px 24px;border-radius:10px;white-space:nowrap;display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Instalar App
+        </a>
+      </div>
+
+<section class="cta-section">
+  <div class="cta-box">
+    <h2>Pronto para dar o primeiro passo?</h2>
+    <p>Entre em contato e agende sua consulta. A Dra. Lucia irá esclarecer suas dúvidas e apresentar o melhor caminho para você.</p>
+    <a href="https://wa.me/5562994644950?text=Olá,%20Dra.%20Lucia!%20Gostaria%20de%20agendar%20uma%20sessão%20de%20Psicoterapia%20Individual." target="_blank" class="btn-wpp-cta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Agendar pelo WhatsApp
+    </a>
+  </div>
+</section>
+
+<footer>
+  <p style="margin-bottom:10px">
+    <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz">Site Principal</a>
+    <a href="https://wa.me/5562994644950" target="_blank">WhatsApp</a>
+    <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cartao">Cartão de Visita</a>
+    <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/servicos">Serviços</a>
+  </p>
+  <p>© 2026 Dra. Lucia Kratz · CRP 09/20590 · Psicóloga · Goiânia, GO</p>
+</footer>
+
+</body>
+</html>
