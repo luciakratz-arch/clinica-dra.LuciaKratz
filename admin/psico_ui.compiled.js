@@ -1402,13 +1402,16 @@ function RecursosTerapeuticos({
     },
     onClick: () => {
       const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
-      const msg = encodeURIComponent("Olá! 🦋 A Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\nPor favor, clique no link abaixo e preencha com calma — são informações importantes para o atendimento:\n\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜");
-      window.open("https://wa.me/?text=" + msg, "_blank");
+      navigator.clipboard.writeText(link).then(() => {
+        alert("✅ Link copiado!\n\nCole no WhatsApp para o paciente:\n\n" + link);
+      }).catch(() => {
+        window.prompt("Copie o link abaixo e envie para o paciente:", link);
+      });
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 13
-  }), " 🔗 Link Público"), /*#__PURE__*/React.createElement("button", {
+  }), " 🔗 Copiar Link"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "6px 10px",
