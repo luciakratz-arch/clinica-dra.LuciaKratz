@@ -1167,8 +1167,9 @@ function FerramentaAnamnese(){
       </a>
       <div style={{marginTop:8}}>
         <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>{
-          navigator.clipboard.writeText(link).then(()=>alert("✅ Link copiado!")).catch(()=>window.prompt("Copie o link:",link));
-        }}>🔗 Copiar link para o paciente</button>
+          const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\n📋 *O que é isso?*\nSão perguntas sobre seu histórico de saúde e desenvolvimento — informações importantes para o atendimento.\n\n⏱️ *Quanto tempo leva?*\nEntre 10 e 20 minutos.\n\n💡 *Dicas:*\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n• Tenha em mãos informações sobre a infância, se possível\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
+          navigator.clipboard.writeText(msg).then(()=>alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.")).catch(()=>window.prompt("Copie a mensagem abaixo:",msg));
+        }}>🔗 Copiar mensagem para o paciente</button>
       </div>
     </div>
   );
