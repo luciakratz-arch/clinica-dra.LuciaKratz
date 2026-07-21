@@ -199,6 +199,26 @@ function iniciar(){
   respostas.nomeRespondente = document.getElementById("nomeRespondente")?.value.trim()||"";
   respostas.parentescoRespondente = document.getElementById("parentescoRespondente")?.value.trim()||"";
   stepsData = perfil==="infantil" ? stepsInfantil() : stepsAdulto();
+
+  // Verificar rascunho salvo
+  try{
+    const raw = localStorage.getItem("anamnese_rascunho");
+    if(raw){
+      const draft = JSON.parse(raw);
+      const mins = Math.round((Date.now()-draft.ts)/60000);
+      if(draft.perfil===perfil && draft.respostas && confirm(
+        "⚠️ Encontramos um rascunho salvo há "+mins+" minuto(s).\n\nDeseja continuar de onde parou?\n\n(Clique em Cancelar para começar do zero)"
+      )){
+        respostas = draft.respostas;
+        step = draft.step||1;
+        document.getElementById("telaInicial").style.display="none";
+        document.getElementById("formArea").style.display="block";
+        renderStep();
+        return;
+      }
+    }
+  }catch(e){}
+
   step = 1;
   document.getElementById("telaInicial").style.display="none";
   document.getElementById("formArea").style.display="block";
@@ -274,16 +294,29 @@ function renderField(c, opt){
   return h;
 }
 
+function salvarRascunho(){
+  try{
+    localStorage.setItem("anamnese_rascunho", JSON.stringify({
+      perfil, step, respostas,
+      informanteTipo: getRadioVal("informanteTipo"),
+      nomeRespondente: document.getElementById("nomeRespondente")?.value||"",
+      parentescoRespondente: document.getElementById("parentescoRespondente")?.value||"",
+      ts: Date.now()
+    }));
+  }catch(e){}
+}
+
 function avancarStep(){
   const s = stepsData[step-1];
   if(step===1 && !getVal("nome")){ alert("Por favor, informe o nome."); return; }
   salvarRespostasStep();
+  salvarRascunho();
   if(step<stepsData.length){ step++; renderStep(); }
   else { enviar(); }
 }
 
 function voltarStep(){
-  if(step>1){ salvarRespostasStep(); step--; renderStep(); }
+  if(step>1){ salvarRespostasStep(); salvarRascunho(); step--; renderStep(); }
 }
 
 // ═══════════════════════════════════════════
@@ -540,6 +573,7 @@ async function enviar(){
       });
     }
 
+    try{localStorage.removeItem("anamnese_rascunho");}catch(e){}
     document.getElementById("formArea").style.display="none";
     document.getElementById("successArea").style.display="block";
     window.scrollTo({top:0,behavior:"smooth"});
