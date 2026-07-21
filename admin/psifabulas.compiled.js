@@ -200,7 +200,7 @@ function TerapiaCasais() {
       fontSize: 13
     },
     onClick: () => setExpandido(expandido === c.id ? null : c.id)
-  }, "\uD83D\uDD34 Emerg\xEAncia ", /*#__PURE__*/React.createElement(Icon, {
+  }, "🔴 Emergência ", /*#__PURE__*/React.createElement(Icon, {
     name: expandido === c.id ? "chevron-up" : "chevron-down",
     size: 14
   })))), expandido === c.id && /*#__PURE__*/React.createElement(BotaoEmergenciaAdmin, {
@@ -648,7 +648,7 @@ function NotaRelaxamento({
       color: "#065f46",
       marginBottom: 20
     }
-  }, "\u2713 Nota ", nota, "/10 registrada! Seu progresso foi salvo. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Nota ", nota, "/10 registrada! Seu progresso foi salvo. 💜"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: onRepetir
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -665,13 +665,13 @@ function NotaRelaxamento({
       fontSize: 15,
       marginBottom: 6
     }
-  }, "Como voc\xEA est\xE1 se sentindo agora?"), /*#__PURE__*/React.createElement("div", {
+  }, "Como você está se sentindo agora?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "D\xEA uma nota de 0 a 10 para o seu n\xEDvel de relaxamento"), /*#__PURE__*/React.createElement("div", {
+  }, "Dê uma nota de 0 a 10 para o seu nível de relaxamento"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
@@ -704,7 +704,7 @@ function NotaRelaxamento({
       paddingLeft: 4,
       paddingRight: 4
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE30 Muito tenso"), /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE10 Regular"), /*#__PURE__*/React.createElement("span", null, "\uD83D\uDE0C Muito relaxado")));
+  }, /*#__PURE__*/React.createElement("span", null, "😰 Muito tenso"), /*#__PURE__*/React.createElement("span", null, "😐 Regular"), /*#__PURE__*/React.createElement("span", null, "😌 Muito relaxado")));
 }
 
 // ── Técnica de Respiração 4-7-8 (áudio MP4 guiado) ──
@@ -800,7 +800,7 @@ function FerramentaRespiracao({
       fontSize: 64,
       marginBottom: 16
     }
-  }, "\u2728"), /*#__PURE__*/React.createElement("div", {
+  }, "✨"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 22,
@@ -808,14 +808,14 @@ function FerramentaRespiracao({
       color: "var(--purple)",
       marginBottom: 8
     }
-  }, "Pr\xE1tica conclu\xEDda!"), /*#__PURE__*/React.createElement("div", {
+  }, "Prática concluída!"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       color: "var(--text-muted)",
       marginBottom: 32,
       lineHeight: 1.6
     }
-  }, TOTAL_CICLOS, " ciclos de respira\xE7\xE3o 4-7-8 conclu\xEDdos.", /*#__PURE__*/React.createElement("br", null), "O seu sistema nervoso agradece. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, TOTAL_CICLOS, " ciclos de respiração 4-7-8 concluídos.", /*#__PURE__*/React.createElement("br", null), "O seu sistema nervoso agradece. 💜"), /*#__PURE__*/React.createElement("button", {
     onClick: iniciar,
     style: {
       padding: "11px 24px",
@@ -842,7 +842,7 @@ function FerramentaRespiracao({
       color: "var(--text)",
       marginBottom: 8
     }
-  }, "T\xE9cnica de Respira\xE7\xE3o 4-7-8"), /*#__PURE__*/React.createElement("div", {
+  }, "Técnica de Respiração 4-7-8"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
@@ -851,7 +851,7 @@ function FerramentaRespiracao({
       maxWidth: 300,
       margin: "0 auto 32px"
     }
-  }, "Esta t\xE9cnica ativa o nervo vago e reduz a ansiedade em minutos.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "4"), " ciclos \xB7 ", /*#__PURE__*/React.createElement("strong", null, "4"), " inspirar \xB7 ", /*#__PURE__*/React.createElement("strong", null, "7"), " segurar \xB7 ", /*#__PURE__*/React.createElement("strong", null, "8"), " expirar"), /*#__PURE__*/React.createElement("div", {
+  }, "Esta técnica ativa o nervo vago e reduz a ansiedade em minutos.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "4"), " ciclos · ", /*#__PURE__*/React.createElement("strong", null, "4"), " inspirar · ", /*#__PURE__*/React.createElement("strong", null, "7"), " segurar · ", /*#__PURE__*/React.createElement("strong", null, "8"), " expirar"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "center",
@@ -870,7 +870,7 @@ function FerramentaRespiracao({
       fontSize: 32,
       opacity: 0.6
     }
-  }, "\uD83D\uDCA8")), /*#__PURE__*/React.createElement("button", {
+  }, "💨")), /*#__PURE__*/React.createElement("button", {
     onClick: iniciar,
     style: {
       padding: "14px 32px",
@@ -883,7 +883,7 @@ function FerramentaRespiracao({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\u25B6 Iniciar Pr\xE1tica")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }, "▶ Iniciar Prática")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "center",
@@ -971,7 +971,7 @@ function FerramentaRespiracao({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2715 Parar")));
+  }, "✕ Parar")));
 }
 
 // ── Relaxamento Muscular Progressivo ──
@@ -1037,7 +1037,7 @@ function FerramentaRelaxamento({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+  }, "✅"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 22,
@@ -1050,10 +1050,10 @@ function FerramentaRelaxamento({
       color: "var(--text-muted)",
       marginBottom: 24
     }
-  }, "Parab\xE9ns por cuidar de voc\xEA. \uD83D\uDC9C"), /*#__PURE__*/React.createElement(NotaRelaxamento, {
+  }, "Parabéns por cuidar de você. 💜"), /*#__PURE__*/React.createElement(NotaRelaxamento, {
     user: user,
     ferramenta: "relaxamento",
-    emoji: "\uD83D\uDC86",
+    emoji: "💆",
     onRepetir: iniciar
   }));
   if (!iniciado) return /*#__PURE__*/React.createElement("div", {
@@ -1071,7 +1071,7 @@ function FerramentaRelaxamento({
       fontSize: 56,
       marginBottom: 16
     }
-  }, "\uD83D\uDC86"), /*#__PURE__*/React.createElement("div", {
+  }, "💆"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -1085,7 +1085,7 @@ function FerramentaRelaxamento({
       marginBottom: 24,
       lineHeight: 1.6
     }
-  }, "Exerc\xEDcio guiado pela voz da Dra. Lucia Kratz.", /*#__PURE__*/React.createElement("br", null), "Siga as instru\xE7\xF5es do \xE1udio e relaxe cada grupo muscular."), /*#__PURE__*/React.createElement("div", {
+  }, "Exercício guiado pela voz da Dra. Lucia Kratz.", /*#__PURE__*/React.createElement("br", null), "Siga as instruções do áudio e relaxe cada grupo muscular."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -1191,7 +1191,7 @@ function FerramentaRelaxamento({
     style: {
       fontSize: 28
     }
-  }, "\uD83D\uDC86"))), /*#__PURE__*/React.createElement("div", {
+  }, "💆"))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 18,
@@ -1204,7 +1204,7 @@ function FerramentaRelaxamento({
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Siga as instru\xE7\xF5es do \xE1udio"), /*#__PURE__*/React.createElement("div", {
+  }, "Siga as instruções do áudio"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "inline-flex",
       alignItems: "center",
@@ -1311,33 +1311,33 @@ function FerramentaArvore() {
       fontSize: 48,
       marginBottom: 12
     }
-  }, "\uD83C\uDF33"), /*#__PURE__*/React.createElement("div", {
+  }, "🌳"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\xC1rvore da Decis\xE3o"), /*#__PURE__*/React.createElement("p", {
+  }, "Árvore da Decisão"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "#6b7280",
       marginBottom: 8
     }
-  }, "Uma t\xE9cnica da TCC para transformar preocupa\xE7\xF5es em a\xE7\xF5es concretas \u2014 distinguindo o que est\xE1 ou n\xE3o no seu controle."), /*#__PURE__*/React.createElement("p", {
+  }, "Uma técnica da TCC para transformar preocupações em ações concretas — distinguindo o que está ou não no seu controle."), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 12,
       color: "#9ca3af",
       marginBottom: 24
     }
-  }, "\uD83D\uDCA1 Preocupa\xE7\xF5es ", /*#__PURE__*/React.createElement("strong", null, "produtivas"), " levam \xE0 a\xE7\xE3o. ", /*#__PURE__*/React.createElement("strong", null, "Improdutivas"), " paralisam."), /*#__PURE__*/React.createElement("button", {
+  }, "💡 Preocupações ", /*#__PURE__*/React.createElement("strong", null, "produtivas"), " levam à ação. ", /*#__PURE__*/React.createElement("strong", null, "Improdutivas"), " paralisam."), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       fontSize: 15,
       padding: "12px 32px"
     },
     onClick: () => setStep("worry")
-  }, "Iniciar exerc\xEDcio \u2192"), historico.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Iniciar exercício →"), historico.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 24,
       textAlign: "left"
@@ -1379,12 +1379,12 @@ function FerramentaArvore() {
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Qual \xE9 a sua preocupa\xE7\xE3o agora?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "Qual é a sua preocupação agora?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: preocupacao,
     onChange: e => setPreocupacao(e.target.value),
-    placeholder: "Descreva o que est\xE1 te preocupando..."
+    placeholder: "Descreva o que está te preocupando..."
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -1399,19 +1399,19 @@ function FerramentaArvore() {
     className: "btn btn-purple",
     onClick: () => setStep("can-intervene"),
     disabled: !preocupacao.trim()
-  }, "Pr\xF3ximo \u2192")));
+  }, "Próximo →")));
   if (step === "can-intervene") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Voc\xEA pode fazer algo para resolver esta preocupa\xE7\xE3o?"), /*#__PURE__*/React.createElement("p", {
+  }, "Você pode fazer algo para resolver esta preocupação?"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: "#6b7280",
       marginBottom: 20
     }
-  }, "Pense se existe alguma a\xE7\xE3o concreta que voc\xEA pode tomar."), /*#__PURE__*/React.createElement("div", {
+  }, "Pense se existe alguma ação concreta que você pode tomar."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 12
@@ -1423,25 +1423,25 @@ function FerramentaArvore() {
       padding: 16
     },
     onClick: () => setStep("actions")
-  }, "\u2705 Sim, posso agir"), /*#__PURE__*/React.createElement("button", {
+  }, "✅ Sim, posso agir"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       flex: 1,
       padding: 16
     },
     onClick: () => salvarHistorico("redirect")
-  }, "\u274C N\xE3o est\xE1 no meu controle")));
+  }, "❌ Não está no meu controle")));
   if (step === "actions") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Quais a\xE7\xF5es voc\xEA pode tomar?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "Quais ações você pode tomar?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: acoes,
     onChange: e => setAcoes(e.target.value),
-    placeholder: "Liste as a\xE7\xF5es poss\xEDveis..."
+    placeholder: "Liste as ações possíveis..."
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -1456,13 +1456,13 @@ function FerramentaArvore() {
     className: "btn btn-purple",
     onClick: () => setStep("can-act-now"),
     disabled: !acoes.trim()
-  }, "Pr\xF3ximo \u2192")));
+  }, "Próximo →")));
   if (step === "can-act-now") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Voc\xEA pode realizar alguma dessas a\xE7\xF5es agora?"), /*#__PURE__*/React.createElement("div", {
+  }, "Você pode realizar alguma dessas ações agora?"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 12,
@@ -1475,25 +1475,25 @@ function FerramentaArvore() {
       padding: 16
     },
     onClick: () => salvarHistorico("act-now")
-  }, "\u26A1 Sim, agora"), /*#__PURE__*/React.createElement("button", {
+  }, "⚡ Sim, agora"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       flex: 1,
       padding: 16
     },
     onClick: () => setStep("plan")
-  }, "\uD83D\uDCCB Preciso planejar")));
+  }, "📋 Preciso planejar")));
   if (step === "plan") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Crie um plano de a\xE7\xE3o:"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "Crie um plano de ação:"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: plano,
     onChange: e => setPlano(e.target.value),
-    placeholder: "Quando e como voc\xEA vai agir?"
+    placeholder: "Quando e como você vai agir?"
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -1508,7 +1508,7 @@ function FerramentaArvore() {
     className: "btn btn-purple",
     onClick: () => salvarHistorico("plan"),
     disabled: !plano.trim()
-  }, "Finalizar \u2192")));
+  }, "Finalizar →")));
   if (step === "conclusao" && conclusao) {
     const c = CONCLUSOES[conclusao];
     return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -1550,7 +1550,7 @@ function FerramentaArvore() {
         fontWeight: 600,
         marginBottom: 4
       }
-    }, "Sua preocupa\xE7\xE3o:"), /*#__PURE__*/React.createElement("div", {
+    }, "Sua preocupação:"), /*#__PURE__*/React.createElement("div", {
       style: {
         color: "#6b7280"
       }
@@ -1560,7 +1560,7 @@ function FerramentaArvore() {
         marginBottom: 4,
         marginTop: 10
       }
-    }, "A\xE7\xF5es identificadas:"), /*#__PURE__*/React.createElement("div", {
+    }, "Ações identificadas:"), /*#__PURE__*/React.createElement("div", {
       style: {
         color: "#6b7280"
       }
@@ -1583,7 +1583,7 @@ function FerramentaArvore() {
     }, /*#__PURE__*/React.createElement(Icon, {
       name: "rotate-ccw",
       size: 16
-    }), " Nova preocupa\xE7\xE3o"));
+    }), " Nova preocupação"));
   }
   return null;
 }
@@ -1678,7 +1678,7 @@ function FerramentaGenerica({
       fontSize: 13,
       color: "#7c3aed"
     }
-  }, "Esta ferramenta est\xE1 dispon\xEDvel no portal do paciente. O paciente acessa e preenche diretamente pelo login deles."));
+  }, "Esta ferramenta está disponível no portal do paciente. O paciente acessa e preenche diretamente pelo login deles."));
 }
 
 // ── Modal principal ──
@@ -1773,7 +1773,7 @@ function FerramentaABC() {
       alignItems: "center",
       gap: 6
     }
-  }, "\u2190 Voltar"), /*#__PURE__*/React.createElement("div", {
+  }, "← Voltar"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
@@ -1821,7 +1821,7 @@ function FerramentaABC() {
       textTransform: "uppercase",
       letterSpacing: "0.5px"
     }
-  }, c.letra, " \u2014 ", c.titulo), c.val && /*#__PURE__*/React.createElement("div", {
+  }, c.letra, " — ", c.titulo), c.val && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "#374151",
@@ -1840,7 +1840,7 @@ function FerramentaABC() {
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\u2696\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, "⚖️"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -1855,7 +1855,7 @@ function FerramentaABC() {
       marginBottom: 32,
       lineHeight: 1.6
     }
-  }, "Identificar e questionar pensamentos autom\xE1ticos \xE9 um dos exerc\xEDcios mais poderosos da TCC. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("div", {
+  }, "Identificar e questionar pensamentos automáticos é um dos exercícios mais poderosos da TCC. 💜"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
@@ -1887,7 +1887,7 @@ function FerramentaABC() {
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "Ver \xFAltimo")));
+  }, "Ver último")));
 
   // ── Wizard ───────────────────────────────────────────────────────
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -2078,7 +2078,7 @@ function FerramentaABC() {
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2190 Anterior"), passo < 4 && /*#__PURE__*/React.createElement("button", {
+  }, "← Anterior"), passo < 4 && /*#__PURE__*/React.createElement("button", {
     onClick: () => setPasso(passo + 1),
     disabled: passo === 1 && !draft.situacao || passo === 2 && !draft.pensamento || passo === 3 && !draft.emocao,
     style: {
@@ -2093,7 +2093,7 @@ function FerramentaABC() {
       fontWeight: 600,
       fontFamily: "inherit"
     }
-  }, "Pr\xF3ximo \u2192"), passo === 4 && /*#__PURE__*/React.createElement("button", {
+  }, "Próximo →"), passo === 4 && /*#__PURE__*/React.createElement("button", {
     onClick: salvar,
     style: {
       flex: 2,
@@ -2107,7 +2107,7 @@ function FerramentaABC() {
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Salvar Registro \u2713")), registros.length > 0 && passo === 1 && /*#__PURE__*/React.createElement("div", {
+  }, "Salvar Registro ✓")), registros.length > 0 && passo === 1 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 24
     }
@@ -2308,7 +2308,7 @@ function FerramentaGestaoAnsiedade() {
     rows: 2,
     value: nota,
     onChange: e => setNota(e.target.value),
-    placeholder: "Observa\xE7\xF5es...",
+    placeholder: "Observações...",
     style: {
       marginBottom: 10
     }
@@ -2362,7 +2362,7 @@ function FerramentaGestaoAnsiedade() {
       marginBottom: 10,
       color: "var(--purple)"
     }
-  }, "T\xE9cnicas Anti-Ansiedade"), TECNICAS.map(t => /*#__PURE__*/React.createElement("div", {
+  }, "Técnicas Anti-Ansiedade"), TECNICAS.map(t => /*#__PURE__*/React.createElement("div", {
     key: t.id,
     onClick: () => setTrack(tr => ({
       ...tr,
@@ -2490,7 +2490,7 @@ function FerramentaGestaoAnsiedade() {
       color: "#6b7280",
       marginBottom: 14
     }
-  }, "Avalie cada \xE1rea de 0 a 10. O gr\xE1fico atualiza em tempo real."), AREAS.map(a => /*#__PURE__*/React.createElement("div", {
+  }, "Avalie cada área de 0 a 10. O gráfico atualiza em tempo real."), AREAS.map(a => /*#__PURE__*/React.createElement("div", {
     key: a.id,
     style: {
       marginBottom: 10
@@ -2671,7 +2671,7 @@ function FerramentaRastreamento() {
       color: "#5a007a",
       lineHeight: 1.6
     }
-  }, "Use sempre que sentir urg\xEAncia de comer ou ap\xF3s um epis\xF3dio de compuls\xE3o. O objetivo \xE9 entender o \"porqu\xEA\" \u2014 sem julgamento."), [["Nível de Fome Física", fome, setFome, fc], ["Nível de Alívio após comer", alivio, setAlivio, ac]].map(([lbl, val, set, col]) => /*#__PURE__*/React.createElement("div", {
+  }, "Use sempre que sentir urgência de comer ou após um episódio de compulsão. O objetivo é entender o \"porquê\" — sem julgamento."), [["Nível de Fome Física", fome, setFome, fc], ["Nível de Alívio após comer", alivio, setAlivio, ac]].map(([lbl, val, set, col]) => /*#__PURE__*/React.createElement("div", {
     key: lbl,
     style: {
       marginBottom: 14
@@ -2713,7 +2713,7 @@ function FerramentaRastreamento() {
       display: "block",
       marginBottom: 6
     }
-  }, "Emo\xE7\xF5es presentes"), /*#__PURE__*/React.createElement(Chips, {
+  }, "Emoções presentes"), /*#__PURE__*/React.createElement(Chips, {
     opts: EMOCOES,
     sel: emocoes,
     toggle: o => setEmocoes(v => v.includes(o) ? v.filter(x => x !== o) : [...v, o])
@@ -2733,7 +2733,7 @@ function FerramentaRastreamento() {
     rows: 2,
     value: pensamento,
     onChange: e => setPensamento(e.target.value),
-    placeholder: "'S\xF3 desta vez...' 'Mere\xE7o isso...'"
+    placeholder: "'Só desta vez...' 'Mereço isso...'"
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
@@ -2745,7 +2745,7 @@ function FerramentaRastreamento() {
       display: "block",
       marginBottom: 6
     }
-  }, "O que voc\xEA comeu?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "O que você comeu?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 2,
     value: comeu,
@@ -2762,7 +2762,7 @@ function FerramentaRastreamento() {
       display: "block",
       marginBottom: 8
     }
-  }, "Como voc\xEA se sentiu depois?"), /*#__PURE__*/React.createElement(Chips, {
+  }, "Como você se sentiu depois?"), /*#__PURE__*/React.createElement(Chips, {
     opts: SENSACOES,
     sel: sensacoes,
     toggle: o => setSensacoes(v => v.includes(o) ? v.filter(x => x !== o) : [...v, o])
@@ -2777,12 +2777,12 @@ function FerramentaRastreamento() {
       display: "block",
       marginBottom: 6
     }
-  }, "Reflex\xE3o"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "Reflexão"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 2,
     value: reflexao,
     onChange: e => setReflexao(e.target.value),
-    placeholder: "O que esse epis\xF3dio revela sobre suas necessidades emocionais?"
+    placeholder: "O que esse episódio revela sobre suas necessidades emocionais?"
   })), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
@@ -2831,7 +2831,7 @@ function FerramentaRastreamento() {
     style: {
       color: "#6b7280"
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "Emo\xE7\xF5es:"), " ", en.emocoes.join(", "))))));
+  }, /*#__PURE__*/React.createElement("strong", null, "Emoções:"), " ", en.emocoes.join(", "))))));
 }
 
 // ── Treino Neuro-Auditivo ───────────────────────────────────────────────────
@@ -3003,7 +3003,7 @@ function FerramentaTreino() {
       fontWeight: 600,
       color: "var(--purple)"
     }
-  }, "\uD83C\uDFC6 ", score, "/", total), /*#__PURE__*/React.createElement("span", {
+  }, "🏆 ", score, "/", total), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 12,
       color: "var(--purple)"
@@ -3110,147 +3110,65 @@ function FerramentaTreino() {
 
 // ── Anamnese ────────────────────────────────────────────────────────────────
 function FerramentaAnamnese() {
-  const PERFIS = ["Criança (0-12)", "Adolescente (13-17)", "Adulto (18-59)", "Idoso (60+)"];
-  const SECOES = {
-    "Criança (0-12)": ["Identificação", "Gestação e Parto", "Marcos do Desenvolvimento", "Alimentação e Sono", "Desenvolvimento Motor", "Linguagem", "Comportamento", "Escolaridade", "Histórico de Saúde", "Dinâmica Familiar"],
-    "Adolescente (13-17)": ["Identificação", "Histórico Escolar", "Relações Sociais", "Comportamento e Humor", "Sexualidade", "Substâncias", "Histórico de Saúde", "Dinâmica Familiar"],
-    "Adulto (18-59)": ["Identificação", "Queixa Principal", "Histórico da Queixa", "Histórico Psicológico", "Saúde Física", "Relacionamentos", "Trabalho e Estudo", "Sono e Alimentação", "Histórico Familiar"],
-    "Idoso (60+)": ["Identificação", "Queixa Principal", "Histórico Médico", "Medicamentos", "Cognição", "Mobilidade", "Sono", "Suporte Social", "Dinâmica Familiar"]
-  };
-  const [perfil, setPerfil] = useState("");
-  const [secao, setSecao] = useState(0);
-  const [respostas, setRespostas] = useState({});
-  const [concluido, setConcluido] = useState(false);
-  if (!perfil) return /*#__PURE__*/React.createElement("div", {
+  const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
-      padding: "20px 0"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 44,
-      marginBottom: 12
-    }
-  }, "\uD83D\uDCC4"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 600,
-      marginBottom: 14
-    }
-  }, "Selecione o perfil:"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 10,
-      maxWidth: 320,
-      margin: "0 auto"
-    }
-  }, PERFIS.map(p => /*#__PURE__*/React.createElement("button", {
-    key: p,
-    className: "btn btn-outline",
-    style: {
-      padding: "12px 8px",
-      fontSize: 12,
-      fontWeight: 600
-    },
-    onClick: () => setPerfil(p)
-  }, p))));
-  const secs = SECOES[perfil] || [];
-  if (concluido) return /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 40
+      padding: "28px 16px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 48,
       marginBottom: 12
     }
-  }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+  }, "📋"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 18,
-      fontWeight: 600,
+      fontWeight: 700,
+      color: "#3d006a",
       marginBottom: 8
     }
-  }, "Anamnese Conclu\xEDda!"), /*#__PURE__*/React.createElement("div", {
+  }, "Anamnese — Marcos do Desenvolvimento"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "#6b7280",
-      marginBottom: 16
+      marginBottom: 20,
+      lineHeight: 1.6,
+      maxWidth: 380,
+      margin: "0 auto 20px"
     }
-  }, perfil, " \xB7 ", secs.length, " se\xE7\xF5es"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => {
-      setPerfil("");
-      setSecao(0);
-      setRespostas({});
-      setConcluido(false);
-    }
-  }, "Nova Anamnese"));
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "O formulário completo de anamnese está disponível em uma página dedicada.", /*#__PURE__*/React.createElement("br", null), "Acesse o link abaixo para preencher ou envie para o paciente."), /*#__PURE__*/React.createElement("a", {
+    href: link,
+    target: "_blank",
+    rel: "noreferrer",
     style: {
-      display: "flex",
-      justifyContent: "space-between",
-      fontSize: 12,
-      color: "#6b7280",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--purple)",
-      fontWeight: 600
-    }
-  }, perfil), /*#__PURE__*/React.createElement("span", null, "Se\xE7\xE3o ", secao + 1, "/", secs.length)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#e5e7eb",
-      borderRadius: 20,
-      height: 5,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--purple)",
-      height: 5,
-      borderRadius: 20,
-      width: secao / secs.length * 100 + "%",
-      transition: "width .3s"
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 17,
-      fontWeight: 600,
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 8,
+      background: "#7B00C4",
+      color: "white",
+      padding: "13px 24px",
+      borderRadius: 12,
+      fontWeight: 700,
+      fontSize: 14,
+      textDecoration: "none",
+      boxShadow: "0 4px 14px rgba(123,0,196,0.35)",
       marginBottom: 12
     }
-  }, secs[secao]), /*#__PURE__*/React.createElement(TextAreaVoz, {
-    className: "form-input",
-    rows: 5,
-    value: respostas[secs[secao]] || "",
-    onChange: e => setRespostas(r => ({
-      ...r,
-      [secs[secao]]: e.target.value
-    })),
-    placeholder: `Registre as informações sobre "+secs[secao].toLowerCase()+"...`
-  }), /*#__PURE__*/React.createElement("div", {
+  }, "📋 Abrir Formulário de Anamnese"), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      gap: 10,
-      marginTop: 14,
-      justifyContent: "space-between"
+      marginTop: 8
     }
   }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
-    onClick: () => setSecao(s => Math.max(0, s - 1)),
-    disabled: secao === 0
-  }, "\u2190 Anterior"), secao < secs.length - 1 ? /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => setSecao(s => s + 1)
-  }, "Pr\xF3xima \u2192") : /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => setConcluido(true)
-  }, "\u2713 Concluir")));
+    style: {
+      fontSize: 12
+    },
+    onClick: () => {
+      navigator.clipboard.writeText(link).then(() => alert("✅ Link copiado!")).catch(() => window.prompt("Copie o link:", link));
+    }
+  }, "🔗 Copiar link para o paciente")));
 }
 
 // ── Diário Terapêutico ──────────────────────────────────────────────────────
@@ -3397,7 +3315,7 @@ function FerramentaDiario({
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, verEntrada.data, " \xE0s ", verEntrada.hora), /*#__PURE__*/React.createElement("span", {
+  }, verEntrada.data, " às ", verEntrada.hora), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: "var(--purple)",
@@ -3444,7 +3362,7 @@ function FerramentaDiario({
       marginBottom: 12,
       color: "var(--purple)"
     }
-  }, "\uD83D\uDCD3 Nova entrada"), /*#__PURE__*/React.createElement("div", {
+  }, "📓 Nova entrada"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
     }
@@ -3512,7 +3430,7 @@ function FerramentaDiario({
       boxShadow: gravando ? "0 0 0 3px #7B00C430" : "none",
       transition: "all .2s"
     }
-  }, "\uD83C\uDF99\uFE0F")), gravando && /*#__PURE__*/React.createElement("div", {
+  }, "🎙️")), gravando && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--purple)",
@@ -3530,7 +3448,7 @@ function FerramentaDiario({
       display: "inline-block",
       animation: "pulse-slow 1s infinite"
     }
-  }), "Gravando... fale normalmente. Clique \uD83C\uDF99\uFE0F para parar."), msg && /*#__PURE__*/React.createElement("div", {
+  }), "Gravando... fale normalmente. Clique 🎙️ para parar."), msg && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--purple)",
@@ -3592,7 +3510,7 @@ function FerramentaDiario({
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, en.data, " \xB7 ", en.hora), /*#__PURE__*/React.createElement("span", {
+  }, en.data, " · ", en.hora), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: "var(--purple)"
@@ -3612,7 +3530,7 @@ function FerramentaDiario({
       color: "var(--text-muted)",
       fontSize: 13
     }
-  }, "Nenhuma entrada ainda. Comece escrevendo hoje! \uD83D\uDC9C"));
+  }, "Nenhuma entrada ainda. Comece escrevendo hoje! 💜"));
 }
 
 // ── Modal Visualizar Ferramenta ─────────────────────────────────────────────
@@ -3700,7 +3618,7 @@ function FerramentaSleepRitual({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83C\uDF19"), /*#__PURE__*/React.createElement("div", {
+  }, "🌙"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -3708,14 +3626,14 @@ function FerramentaSleepRitual({
       color: COR,
       marginBottom: 8
     }
-  }, "Ritual conclu\xEDdo!"), /*#__PURE__*/React.createElement("div", {
+  }, "Ritual concluído!"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 24,
       lineHeight: 1.6
     }
-  }, feitos, " de ", PASSOS_RITUAL.length, " passos completados.", /*#__PURE__*/React.createElement("br", null), "O seu sistema nervoso agradece. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, feitos, " de ", PASSOS_RITUAL.length, " passos completados.", /*#__PURE__*/React.createElement("br", null), "O seu sistema nervoso agradece. 💜"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setChecks({});
       setTextos({});
@@ -3807,7 +3725,7 @@ function FerramentaSleepRitual({
         color: "white",
         fontSize: 12
       }
-    }, "\u2713")), p.tipo !== "check" && /*#__PURE__*/React.createElement("div", {
+    }, "✓")), p.tipo !== "check" && /*#__PURE__*/React.createElement("div", {
       style: {
         width: 22,
         height: 22,
@@ -3906,7 +3824,7 @@ function FerramentaSleepRitual({
         color: COR,
         fontWeight: 600
       }
-    }, "\u2713 feito")))));
+    }, "✓ feito")))));
   }), /*#__PURE__*/React.createElement("button", {
     onClick: () => setConcluido(true),
     style: {
@@ -3967,7 +3885,7 @@ function FerramentaFiveMinute({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
+  }, "⚡"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -3984,13 +3902,13 @@ function FerramentaFiveMinute({
       fontSize: 13,
       color: "#4c1d95"
     }
-  }, "Desconforto antecipado: ", /*#__PURE__*/React.createElement("strong", null, desconfortAntes, "/10"), " \u2192 Desconforto real: ", /*#__PURE__*/React.createElement("strong", null, desconfortDurante, "/10"), desconfortDurante < desconfortAntes && /*#__PURE__*/React.createElement("div", {
+  }, "Desconforto antecipado: ", /*#__PURE__*/React.createElement("strong", null, desconfortAntes, "/10"), " → Desconforto real: ", /*#__PURE__*/React.createElement("strong", null, desconfortDurante, "/10"), desconfortDurante < desconfortAntes && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 4,
       color: "#059669",
       fontWeight: 600
     }
-  }, "\u2713 O real foi menor que o imaginado!")), /*#__PURE__*/React.createElement("button", {
+  }, "✓ O real foi menor que o imaginado!")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setTarefa("");
       setDesconfortAntes(7);
@@ -4019,15 +3937,15 @@ function FerramentaFiveMinute({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Qual tarefa est\xE1 evitando?",
-    subtitulo: "Seja espec\xEDfico \u2014 uma tarefa s\xF3",
-    dica: "Quanto mais espec\xEDfico, mais f\xE1cil de come\xE7ar. N\xE3o 'trabalho' \u2014 mas 'responder o email do cliente X'.",
+    titulo: "Qual tarefa está evitando?",
+    subtitulo: "Seja específico — uma tarefa só",
+    dica: "Quanto mais específico, mais fácil de começar. Não 'trabalho' — mas 'responder o email do cliente X'.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: tarefa,
     onChange: e => setTarefa(e.target.value),
-    placeholder: "Ex: Responder o email do cliente sobre o relat\xF3rio...",
+    placeholder: "Ex: Responder o email do cliente sobre o relatório...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -4048,9 +3966,9 @@ function FerramentaFiveMinute({
     podeProsseguir: tarefa.trim().length > 5
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
-    titulo: "Qu\xE3o dif\xEDcil parece agora?",
+    titulo: "Quão difícil parece agora?",
     subtitulo: "Desconforto antecipado",
-    dica: "Avalie ANTES de come\xE7ar. Vamos comparar com o real depois.",
+    dica: "Avalie ANTES de começar. Vamos comparar com o real depois.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(SliderStep, {
@@ -4059,7 +3977,7 @@ function FerramentaFiveMinute({
     onChange: setDesconfortAntes,
     cor: COR,
     antes: "Tranquilo",
-    depois: "Muito dif\xEDcil"
+    depois: "Muito difícil"
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
@@ -4079,8 +3997,8 @@ function FerramentaFiveMinute({
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
     titulo: "Timer de 5 minutos",
-    subtitulo: "Apenas o primeiro passo f\xEDsico",
-    dica: "Abra o documento, pegue o caderno, escreva a primeira frase. S\xF3 isso.",
+    subtitulo: "Apenas o primeiro passo físico",
+    dica: "Abra o documento, pegue o caderno, escreva a primeira frase. Só isso.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -4165,9 +4083,9 @@ function FerramentaFiveMinute({
     podeProsseguir: concluido || timerVal < 290
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Como foi na pr\xE1tica?",
+    titulo: "Como foi na prática?",
     subtitulo: "Compare o real com o antecipado",
-    dica: "Esta compara\xE7\xE3o \xE9 o aprendizado mais valioso da ferramenta.",
+    dica: "Esta comparação é o aprendizado mais valioso da ferramenta.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -4180,7 +4098,7 @@ function FerramentaFiveMinute({
     onChange: setDesconfortDurante,
     cor: COR,
     antes: "Tranquilo",
-    depois: "Muito dif\xEDcil"
+    depois: "Muito difícil"
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
@@ -4291,7 +4209,7 @@ function FerramentaHabitStacking({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83C\uDF31"), /*#__PURE__*/React.createElement("div", {
+  }, "🌱"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -4299,7 +4217,7 @@ function FerramentaHabitStacking({
       color: COR,
       marginBottom: 8
     }
-  }, "H\xE1bito registrado!"), /*#__PURE__*/React.createElement("div", {
+  }, "Hábito registrado!"), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
@@ -4309,7 +4227,7 @@ function FerramentaHabitStacking({
       color: "#064e3b",
       lineHeight: 1.6
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "F\xF3rmula:"), " \"", formula || `Depois de ${ancora}, vou ${novoHabito}`, "\"", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Consist\xEAncia:"), " ", feitos, "/7 dias", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Resist\xEAncia:"), " ", resistencia, "/10"), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Fórmula:"), " \"", formula || `Depois de ${ancora}, vou ${novoHabito}`, "\"", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Consistência:"), " ", feitos, "/7 dias", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Resistência:"), " ", resistencia, "/10"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setAncora("");
       setNovoHabito("");
@@ -4330,16 +4248,16 @@ function FerramentaHabitStacking({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Novo h\xE1bito"));
+  }, "Novo hábito"));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepProgress, {
     passo: p,
     total: 4,
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Escolha o h\xE1bito \xE2ncora",
-    subtitulo: "Algo que j\xE1 faz todos os dias sem falhar",
-    dica: "Este ser\xE1 o gatilho autom\xE1tico do novo h\xE1bito. Quanto mais fixo na rotina, melhor.",
+    titulo: "Escolha o hábito âncora",
+    subtitulo: "Algo que já faz todos os dias sem falhar",
+    dica: "Este será o gatilho automático do novo hábito. Quanto mais fixo na rotina, melhor.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -4377,15 +4295,15 @@ function FerramentaHabitStacking({
     podeProsseguir: ancora.length > 0
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
-    titulo: "Defina o novo h\xE1bito",
-    subtitulo: "Pequeno e espec\xEDfico",
-    dica: "N\xE3o 'meditar' \u2014 mas 'respirar profundamente por 2 minutos'. Quanto menor, maior a chance.",
+    titulo: "Defina o novo hábito",
+    subtitulo: "Pequeno e específico",
+    dica: "Não 'meditar' — mas 'respirar profundamente por 2 minutos'. Quanto menor, maior a chance.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: novoHabito,
     onChange: e => setNovoHabito(e.target.value),
-    placeholder: "Ex: Escrever uma coisa pela qual sou grato, respirar 2 minutos, fazer 10 flex\xF5es...",
+    placeholder: "Ex: Escrever uma coisa pela qual sou grato, respirar 2 minutos, fazer 10 flexões...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -4420,7 +4338,7 @@ function FerramentaHabitStacking({
     letra: "3",
     titulo: "Registro da semana",
     subtitulo: "Marque os dias que executou",
-    dica: "Os primeiros 7 dias exigem inten\xE7\xE3o consciente. Marque honestamente.",
+    dica: "Os primeiros 7 dias exigem intenção consciente. Marque honestamente.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -4459,12 +4377,12 @@ function FerramentaHabitStacking({
       marginBottom: 16
     }
   }, feitos, " de 7 dias executados"), /*#__PURE__*/React.createElement(SliderStep, {
-    label: "Resist\xEAncia sentida",
+    label: "Resistência sentida",
     valor: resistencia,
     onChange: setResistencia,
     cor: COR,
-    antes: "F\xE1cil",
-    depois: "Muito dif\xEDcil"
+    antes: "Fácil",
+    depois: "Muito difícil"
   }), resistencia >= 7 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef3c7",
@@ -4474,7 +4392,7 @@ function FerramentaHabitStacking({
       fontSize: 12,
       color: "#854F0B"
     }
-  }, "Resist\xEAncia alta \u2014 considere reduzir o h\xE1bito pela metade."), /*#__PURE__*/React.createElement(NavButtons, {
+  }, "Resistência alta — considere reduzir o hábito pela metade."), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
     total: 4,
     onBack: () => setP(1),
@@ -4482,9 +4400,9 @@ function FerramentaHabitStacking({
     podeProsseguir: feitos > 0
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Reflex\xE3o da semana",
+    titulo: "Reflexão da semana",
     subtitulo: "O que funcionou e o que ajustar?",
-    dica: "Ap\xF3s 21 dias de consist\xEAncia, o h\xE1bito come\xE7a a ser autom\xE1tico.",
+    dica: "Após 21 dias de consistência, o hábito começa a ser automático.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -4504,18 +4422,18 @@ function FerramentaHabitStacking({
     style: {
       marginBottom: 4
     }
-  }, "\xC2ncora: ", /*#__PURE__*/React.createElement("strong", null, ancora)), /*#__PURE__*/React.createElement("div", {
+  }, "Âncora: ", /*#__PURE__*/React.createElement("strong", null, ancora)), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 4
     }
-  }, "H\xE1bito: ", /*#__PURE__*/React.createElement("strong", null, novoHabito)), /*#__PURE__*/React.createElement("div", {
+  }, "Hábito: ", /*#__PURE__*/React.createElement("strong", null, novoHabito)), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 4
     }
-  }, "Consist\xEAncia: ", /*#__PURE__*/React.createElement("strong", null, feitos, "/7 dias")), /*#__PURE__*/React.createElement("div", null, "Resist\xEAncia: ", /*#__PURE__*/React.createElement("strong", null, resistencia, "/10"), " ", resistencia <= 3 ? "— ótimo!" : resistencia <= 6 ? "— ajustável" : ""))), /*#__PURE__*/React.createElement("textarea", {
+  }, "Consistência: ", /*#__PURE__*/React.createElement("strong", null, feitos, "/7 dias")), /*#__PURE__*/React.createElement("div", null, "Resistência: ", /*#__PURE__*/React.createElement("strong", null, resistencia, "/10"), " ", resistencia <= 3 ? "— ótimo!" : resistencia <= 6 ? "— ajustável" : ""))), /*#__PURE__*/React.createElement("textarea", {
     value: formula,
     onChange: e => setFormula(e.target.value),
-    placeholder: "Alguma observa\xE7\xE3o sobre como correu? O que pode ajustar na pr\xF3xima semana?",
+    placeholder: "Alguma observação sobre como correu? O que pode ajustar na próxima semana?",
     style: {
       width: "100%",
       minHeight: 70,
@@ -4629,7 +4547,7 @@ function FerramentaEnergyMap({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDD0B"), /*#__PURE__*/React.createElement("div", {
+  }, "🔋"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -4651,11 +4569,11 @@ function FerramentaEnergyMap({
     style: {
       color: batCor
     }
-  }, bateria, "%"), /*#__PURE__*/React.createElement("br", null), "Drenos: ", /*#__PURE__*/React.createElement("strong", null, drenos.length), " \xB7 Recargas: ", /*#__PURE__*/React.createElement("strong", null, recargas.length), /*#__PURE__*/React.createElement("br", null), alertas.length > 0 && /*#__PURE__*/React.createElement("span", {
+  }, bateria, "%"), /*#__PURE__*/React.createElement("br", null), "Drenos: ", /*#__PURE__*/React.createElement("strong", null, drenos.length), " · Recargas: ", /*#__PURE__*/React.createElement("strong", null, recargas.length), /*#__PURE__*/React.createElement("br", null), alertas.length > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#dc2626"
     }
-  }, "\u26A0\uFE0F ", alertas.length, " sinal(is) de alerta")), recargaAmanha && /*#__PURE__*/React.createElement("div", {
+  }, "⚠️ ", alertas.length, " sinal(is) de alerta")), recargaAmanha && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#dcfce7",
       borderRadius: 10,
@@ -4664,7 +4582,7 @@ function FerramentaEnergyMap({
       color: "#064e3b",
       marginBottom: 20
     }
-  }, "Recarga amanh\xE3: ", /*#__PURE__*/React.createElement("strong", null, recargaAmanha)), /*#__PURE__*/React.createElement("button", {
+  }, "Recarga amanhã: ", /*#__PURE__*/React.createElement("strong", null, recargaAmanha)), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setBateria(60);
       setDrenos([]);
@@ -4692,9 +4610,9 @@ function FerramentaEnergyMap({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "N\xEDvel da bateria",
-    subtitulo: "Qual \xE9 sua energia agora?",
-    dica: "N\xE3o pense \u2014 responda instintivamente. De 0 (esgotado) a 100 (plena energia).",
+    titulo: "Nível da bateria",
+    subtitulo: "Qual é sua energia agora?",
+    dica: "Não pense — responda instintivamente. De 0 (esgotado) a 100 (plena energia).",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -4749,9 +4667,9 @@ function FerramentaEnergyMap({
     podeProsseguir: true
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
-    titulo: "O que est\xE1 drenando?",
+    titulo: "O que está drenando?",
     subtitulo: "Selecione o que consumiu energia esta semana",
-    dica: "Seja honesto \u2014 o mapa s\xF3 \xE9 \xFAtil se for real.",
+    dica: "Seja honesto — o mapa só é útil se for real.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -4770,7 +4688,7 @@ function FerramentaEnergyMap({
     letra: "3",
     titulo: "O que recarrega?",
     subtitulo: "O que deu energia esta semana?",
-    dica: "Inclua tamb\xE9m coisas que sabe que recarregam mas que n\xE3o fez \u2014 isso \xE9 informa\xE7\xE3o importante.",
+    dica: "Inclua também coisas que sabe que recarregam mas que não fez — isso é informação importante.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -4823,7 +4741,7 @@ function FerramentaEnergyMap({
       color: "white",
       fontSize: 10
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: alertas.includes(a) ? "#7f1d1d" : "var(--text-muted)"
@@ -4837,7 +4755,7 @@ function FerramentaEnergyMap({
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
     titulo: "Plano de recarga",
-    subtitulo: "Uma a\xE7\xE3o para amanh\xE3",
+    subtitulo: "Uma ação para amanhã",
     dica: "Escolha uma recarga concreta e agende com hora definida.",
     cor: COR,
     bg: BG
@@ -4854,7 +4772,7 @@ function FerramentaEnergyMap({
   }, bateria < 40 ? "⚠️ Bateria crítica — priorize uma recarga hoje mesmo." : bateria < 60 ? "Atenção — planeje recargas antes de chegar ao vermelho." : "Bateria ok — mantenha o equilíbrio com recargas regulares."), /*#__PURE__*/React.createElement("textarea", {
     value: recargaAmanha,
     onChange: e => setRecargaAmanha(e.target.value),
-    placeholder: "Ex: Caminhada de 20min \xE0s 18h, ligar para amiga \xE0s 19h...",
+    placeholder: "Ex: Caminhada de 20min às 18h, ligar para amiga às 19h...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -5006,7 +4924,7 @@ function FerramentaPolyvagal({
       color: est?.cor,
       marginBottom: 8
     }
-  }, "Regula\xE7\xE3o registrada!"), /*#__PURE__*/React.createElement("div", {
+  }, "Regulação registrada!"), /*#__PURE__*/React.createElement("div", {
     style: {
       background: est?.bg,
       borderRadius: 12,
@@ -5015,7 +4933,7 @@ function FerramentaPolyvagal({
       fontSize: 13,
       lineHeight: 1.7
     }
-  }, /*#__PURE__*/React.createElement("div", null, "Estado inicial: ", /*#__PURE__*/React.createElement("strong", null, est?.label)), /*#__PURE__*/React.createElement("div", null, "Seguran\xE7a antes: ", /*#__PURE__*/React.createElement("strong", null, segAntes, "/10"), " \u2192 depois: ", /*#__PURE__*/React.createElement("strong", null, segDepois, "/10")), /*#__PURE__*/React.createElement("div", null, "T\xE9cnicas aplicadas: ", /*#__PURE__*/React.createElement("strong", null, feitosChecks)), ancora.length > 0 && /*#__PURE__*/React.createElement("div", null, "\xC2ncoras: ", /*#__PURE__*/React.createElement("strong", null, ancora.join(", ")))), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("div", null, "Estado inicial: ", /*#__PURE__*/React.createElement("strong", null, est?.label)), /*#__PURE__*/React.createElement("div", null, "Segurança antes: ", /*#__PURE__*/React.createElement("strong", null, segAntes, "/10"), " → depois: ", /*#__PURE__*/React.createElement("strong", null, segDepois, "/10")), /*#__PURE__*/React.createElement("div", null, "Técnicas aplicadas: ", /*#__PURE__*/React.createElement("strong", null, feitosChecks)), ancora.length > 0 && /*#__PURE__*/React.createElement("div", null, "Âncoras: ", /*#__PURE__*/React.createElement("strong", null, ancora.join(", ")))), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setEstado(null);
       setAncora([]);
@@ -5035,7 +4953,7 @@ function FerramentaPolyvagal({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Nova pr\xE1tica"));
+  }, "Nova prática"));
   if (fase === "tecnica" && est) return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: est.bg,
@@ -5057,12 +4975,12 @@ function FerramentaPolyvagal({
       color: "var(--text)",
       lineHeight: 1.5
     }
-  }, "Aplique as t\xE9cnicas abaixo para subir a escada de regula\xE7\xE3o.")), /*#__PURE__*/React.createElement("div", {
+  }, "Aplique as técnicas abaixo para subir a escada de regulação.")), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement(SliderStep, {
-    label: "Sensa\xE7\xE3o de seguran\xE7a agora",
+    label: "Sensação de segurança agora",
     valor: segAntes,
     onChange: setSegAntes,
     cor: est.cor,
@@ -5108,7 +5026,7 @@ function FerramentaPolyvagal({
       color: "white",
       fontSize: 11
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: checks[t.id] ? est.cor : "var(--text-muted)"
@@ -5123,7 +5041,7 @@ function FerramentaPolyvagal({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "As suas \xE2ncoras pessoais"), /*#__PURE__*/React.createElement(TagsSelector, {
+  }, "As suas âncoras pessoais"), /*#__PURE__*/React.createElement(TagsSelector, {
     opcoes: ANCORAS,
     selecionadas: ancora,
     onChange: setAncora,
@@ -5134,7 +5052,7 @@ function FerramentaPolyvagal({
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement(SliderStep, {
-    label: "Sensa\xE7\xE3o de seguran\xE7a ap\xF3s as t\xE9cnicas",
+    label: "Sensação de segurança após as técnicas",
     valor: segDepois,
     onChange: setSegDepois,
     cor: est.cor,
@@ -5154,7 +5072,7 @@ function FerramentaPolyvagal({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Registrar pr\xE1tica \u2713"));
+  }, "Registrar prática ✓"));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
@@ -5169,7 +5087,7 @@ function FerramentaPolyvagal({
       marginBottom: 20,
       lineHeight: 1.5
     }
-  }, "Identifique o seu estado atual e aplique t\xE9cnicas espec\xEDficas para regula\xE7\xE3o."), Object.entries(ESTADOS).map(([k, e]) => /*#__PURE__*/React.createElement("div", {
+  }, "Identifique o seu estado atual e aplique técnicas específicas para regulação."), Object.entries(ESTADOS).map(([k, e]) => /*#__PURE__*/React.createElement("div", {
     key: k,
     onClick: () => {
       setEstado(k);
@@ -5267,7 +5185,7 @@ function FerramentaGrounding({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\u2693"), /*#__PURE__*/React.createElement("div", {
+  }, "⚓"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -5275,7 +5193,7 @@ function FerramentaGrounding({
       color: COR,
       marginBottom: 12
     }
-  }, "Aterramento conclu\xEDdo!"), /*#__PURE__*/React.createElement("div", {
+  }, "Aterramento concluído!"), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 12,
@@ -5284,13 +5202,13 @@ function FerramentaGrounding({
       fontSize: 13,
       lineHeight: 1.7
     }
-  }, /*#__PURE__*/React.createElement("div", null, "Presen\xE7a antes: ", /*#__PURE__*/React.createElement("strong", null, presAntes, "/10")), /*#__PURE__*/React.createElement("div", null, "Presen\xE7a depois: ", /*#__PURE__*/React.createElement("strong", null, presDepois, "/10")), presDepois > presAntes && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, "Presença antes: ", /*#__PURE__*/React.createElement("strong", null, presAntes, "/10")), /*#__PURE__*/React.createElement("div", null, "Presença depois: ", /*#__PURE__*/React.createElement("strong", null, presDepois, "/10")), presDepois > presAntes && /*#__PURE__*/React.createElement("div", {
     style: {
       color: COR,
       fontWeight: 600,
       marginTop: 4
     }
-  }, "\u2713 +", presDepois - presAntes, " pontos de presen\xE7a \uD83D\uDC9C")), /*#__PURE__*/React.createElement("button", {
+  }, "✓ +", presDepois - presAntes, " pontos de presença 💜")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setP(-1);
       setRespostas({
@@ -5315,7 +5233,7 @@ function FerramentaGrounding({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Nova pr\xE1tica"));
+  }, "Nova prática"));
   if (p === -1) return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
@@ -5330,12 +5248,12 @@ function FerramentaGrounding({
       marginBottom: 20,
       lineHeight: 1.5
     }
-  }, "Exerc\xEDcio de presen\xE7a sensorial para interromper rumina\xE7\xE3o, dissocia\xE7\xE3o ou ansiedade."), /*#__PURE__*/React.createElement("div", {
+  }, "Exercício de presença sensorial para interromper ruminação, dissociação ou ansiedade."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
   }, /*#__PURE__*/React.createElement(SliderStep, {
-    label: "Presen\xE7a no momento atual",
+    label: "Presença no momento atual",
     valor: presAntes,
     onChange: setPresAntes,
     cor: COR,
@@ -5351,7 +5269,7 @@ function FerramentaGrounding({
       color: "#0c4a6e",
       lineHeight: 1.5
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "Como funciona:"), " Vamos ativar os 5 sentidos um a um \u2014 do maior para o menor n\xFAmero de itens. Isso ancora a mente no presente."), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Como funciona:"), " Vamos ativar os 5 sentidos um a um — do maior para o menor número de itens. Isso ancora a mente no presente."), /*#__PURE__*/React.createElement("button", {
     onClick: () => setP(0),
     style: {
       width: "100%",
@@ -5365,7 +5283,7 @@ function FerramentaGrounding({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\u25B6 Iniciar aterramento"));
+  }, "▶ Iniciar aterramento"));
   const sentido = SENTIDOS[p];
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepProgress, {
     passo: p,
@@ -5390,7 +5308,7 @@ function FerramentaGrounding({
       fontSize: 17,
       marginBottom: 4
     }
-  }, sentido.n, " \u2014 ", sentido.titulo), /*#__PURE__*/React.createElement("div", {
+  }, sentido.n, " — ", sentido.titulo), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       opacity: 0.9,
@@ -5435,7 +5353,7 @@ function FerramentaGrounding({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2190"), p < SENTIDOS.length - 1 && /*#__PURE__*/React.createElement("button", {
+  }, "←"), p < SENTIDOS.length - 1 && /*#__PURE__*/React.createElement("button", {
     onClick: () => setP(p + 1),
     style: {
       flex: 2,
@@ -5449,7 +5367,7 @@ function FerramentaGrounding({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Pr\xF3ximo sentido \u2192"), p === SENTIDOS.length - 1 && /*#__PURE__*/React.createElement("button", {
+  }, "Próximo sentido →"), p === SENTIDOS.length - 1 && /*#__PURE__*/React.createElement("button", {
     onClick: () => {},
     style: {
       flex: 2,
@@ -5469,7 +5387,7 @@ function FerramentaGrounding({
       fontWeight: 600,
       color: "var(--text)"
     }
-  }, "Como est\xE1 a presen\xE7a agora?"), /*#__PURE__*/React.createElement("input", {
+  }, "Como está a presença agora?"), /*#__PURE__*/React.createElement("input", {
     type: "range",
     min: 1,
     max: 10,
@@ -5497,12 +5415,12 @@ function FerramentaGrounding({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\u2713")), p === SENTIDOS.length - 1 && /*#__PURE__*/React.createElement("div", {
+  }, "✓")), p === SENTIDOS.length - 1 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
   }, /*#__PURE__*/React.createElement(SliderStep, {
-    label: "Presen\xE7a agora",
+    label: "Presença agora",
     valor: presDepois,
     onChange: setPresDepois,
     cor: COR,
@@ -5523,7 +5441,7 @@ function FerramentaGrounding({
       fontFamily: "inherit",
       marginTop: 10
     }
-  }, "Concluir \u2713")));
+  }, "Concluir ✓")));
 }
 
 // ── 3. Diário Corpo-Mente ────────────────────────────────────────
@@ -5626,7 +5544,7 @@ function FerramentaBodyMind({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83E\uDEC0"), /*#__PURE__*/React.createElement("div", {
+  }, "🫀"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -5648,7 +5566,7 @@ function FerramentaBodyMind({
     style: {
       color: intCor
     }
-  }, intensidade, "/10")), padroes.length > 0 && /*#__PURE__*/React.createElement("div", null, "Padr\xE3o emocional: ", /*#__PURE__*/React.createElement("strong", null, padroes.join(", ")))), /*#__PURE__*/React.createElement("button", {
+  }, intensidade, "/10")), padroes.length > 0 && /*#__PURE__*/React.createElement("div", null, "Padrão emocional: ", /*#__PURE__*/React.createElement("strong", null, padroes.join(", ")))), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setSintoma("");
       setIntensidade(5);
@@ -5678,14 +5596,14 @@ function FerramentaBodyMind({
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
     titulo: "O sintoma",
-    subtitulo: "O que est\xE1 sentindo no corpo?",
-    dica: "Localiza\xE7\xE3o, qualidade e dura\xE7\xE3o. Ex: 'Aperto no peito desde esta manh\xE3, intensidade 7'.",
+    subtitulo: "O que está sentindo no corpo?",
+    dica: "Localização, qualidade e duração. Ex: 'Aperto no peito desde esta manhã, intensidade 7'.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: sintoma,
     onChange: e => setSintoma(e.target.value),
-    placeholder: "Ex: Tens\xE3o nos ombros e pesco\xE7o desde ontem, piora ao fim do dia...",
+    placeholder: "Ex: Tensão nos ombros e pescoço desde ontem, piora ao fim do dia...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -5722,7 +5640,7 @@ function FerramentaBodyMind({
   }), /*#__PURE__*/React.createElement("textarea", {
     value: contexto,
     onChange: e => setContexto(e.target.value),
-    placeholder: "Ex: Tive uma reuni\xE3o dif\xEDcil, depois recebi uma mensagem que me deixou tensa...",
+    placeholder: "Ex: Tive uma reunião difícil, depois recebi uma mensagem que me deixou tensa...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -5756,9 +5674,9 @@ function FerramentaBodyMind({
     podeProsseguir: true
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
-    titulo: "Padr\xE3o emocional",
-    subtitulo: "Que emo\xE7\xE3o pode estar associada?",
-    dica: "'Este sintoma aparece mais quando eu sinto...' \u2014 seja honesto consigo mesmo.",
+    titulo: "Padrão emocional",
+    subtitulo: "Que emoção pode estar associada?",
+    dica: "'Este sintoma aparece mais quando eu sinto...' — seja honesto consigo mesmo.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -5777,7 +5695,7 @@ function FerramentaBodyMind({
     letra: "4",
     titulo: "O que aliviou?",
     subtitulo: "O que reduziu o sintoma?",
-    dica: "Pode incluir coisas que ainda n\xE3o tentou mas que costumam funcionar.",
+    dica: "Pode incluir coisas que ainda não tentou mas que costumam funcionar.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -5864,7 +5782,7 @@ function FerramentaWheelOfLife({
       fontSize: 48,
       marginBottom: 8
     }
-  }, "\u2B55"), /*#__PURE__*/React.createElement("div", {
+  }, "⭕"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -5877,7 +5795,7 @@ function FerramentaWheelOfLife({
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, "M\xE9dia: ", /*#__PURE__*/React.createElement("strong", {
+  }, "Média: ", /*#__PURE__*/React.createElement("strong", {
     style: {
       color: COR
     }
@@ -5939,7 +5857,7 @@ function FerramentaWheelOfLife({
       fontSize: 13,
       color: "#064e3b"
     }
-  }, "\uD83C\uDFAF Foco: ", /*#__PURE__*/React.createElement("strong", null, foco)), acoes && /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Foco: ", /*#__PURE__*/React.createElement("strong", null, foco)), acoes && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#ede9fe",
       borderRadius: 10,
@@ -5948,7 +5866,7 @@ function FerramentaWheelOfLife({
       fontSize: 13,
       color: "#4c1d95"
     }
-  }, "\uD83D\uDCCB A\xE7\xF5es: ", acoes), /*#__PURE__*/React.createElement("button", {
+  }, "📋 Ações: ", acoes), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setValores(Object.fromEntries(DIMENSOES.map(d => [d.id, 5])));
       setFoco("");
@@ -5968,16 +5886,16 @@ function FerramentaWheelOfLife({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Nova avalia\xE7\xE3o"));
+  }, "Nova avaliação"));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepProgress, {
     passo: p,
     total: 2,
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Avalie as 8 dimens\xF5es",
-    subtitulo: "Como est\xE1 cada \xE1rea da sua vida agora?",
-    dica: "Responda com honestidade \u2014 n\xE3o como gostaria, mas como realmente est\xE1.",
+    titulo: "Avalie as 8 dimensões",
+    subtitulo: "Como está cada área da sua vida agora?",
+    dica: "Responda com honestidade — não como gostaria, mas como realmente está.",
     cor: COR,
     bg: BG
   }), DIMENSOES.map(d => {
@@ -6053,16 +5971,16 @@ function FerramentaWheelOfLife({
       display: "flex",
       justifyContent: "space-between"
     }
-  }, /*#__PURE__*/React.createElement("span", null, "M\xE9dia geral: ", /*#__PURE__*/React.createElement("strong", null, media, "/10")), /*#__PURE__*/React.createElement("span", null, "Mais alto: ", maisAlto.emoji, " ", /*#__PURE__*/React.createElement("strong", null, valores[maisAlto.id])), /*#__PURE__*/React.createElement("span", null, "Mais baixo: ", maisBaixo.emoji, " ", /*#__PURE__*/React.createElement("strong", null, valores[maisBaixo.id])))), /*#__PURE__*/React.createElement(NavButtons, {
+  }, /*#__PURE__*/React.createElement("span", null, "Média geral: ", /*#__PURE__*/React.createElement("strong", null, media, "/10")), /*#__PURE__*/React.createElement("span", null, "Mais alto: ", maisAlto.emoji, " ", /*#__PURE__*/React.createElement("strong", null, valores[maisAlto.id])), /*#__PURE__*/React.createElement("span", null, "Mais baixo: ", maisBaixo.emoji, " ", /*#__PURE__*/React.createElement("strong", null, valores[maisBaixo.id])))), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
     total: 2,
     onNext: () => setP(1),
     podeProsseguir: true
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
-    titulo: "Foco e a\xE7\xF5es",
+    titulo: "Foco e ações",
     subtitulo: "O que vai priorizar?",
-    dica: "N\xE3o tente melhorar tudo. Escolha a dimens\xE3o que mais impacto teria nas outras se melhorada.",
+    dica: "Não tente melhorar tudo. Escolha a dimensão que mais impacto teria nas outras se melhorada.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -6074,7 +5992,7 @@ function FerramentaWheelOfLife({
       fontSize: 13,
       color: "#7f1d1d"
     }
-  }, "\u26A0\uFE0F Menor pontua\xE7\xE3o: ", maisBaixo.emoji, " ", /*#__PURE__*/React.createElement("strong", null, maisBaixo.label), " (", valores[maisBaixo.id], "/10)"), /*#__PURE__*/React.createElement("div", {
+  }, "⚠️ Menor pontuação: ", maisBaixo.emoji, " ", /*#__PURE__*/React.createElement("strong", null, maisBaixo.label), " (", valores[maisBaixo.id], "/10)"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
     }
@@ -6085,7 +6003,7 @@ function FerramentaWheelOfLife({
       marginBottom: 6,
       display: "block"
     }
-  }, "Dimens\xE3o de foco escolhida"), /*#__PURE__*/React.createElement("input", {
+  }, "Dimensão de foco escolhida"), /*#__PURE__*/React.createElement("input", {
     value: foco,
     onChange: e => setFoco(e.target.value),
     placeholder: `Ex: ${maisBaixo.label} — ${maisBaixo.desc}`,
@@ -6106,7 +6024,7 @@ function FerramentaWheelOfLife({
       marginBottom: 6,
       display: "block"
     }
-  }, "3 micro-a\xE7\xF5es para esta semana"), /*#__PURE__*/React.createElement("textarea", {
+  }, "3 micro-ações para esta semana"), /*#__PURE__*/React.createElement("textarea", {
     value: acoes,
     onChange: e => setAcoes(e.target.value),
     placeholder: `Ex:\n1. Dormir às 23h esta semana\n2. Caminhar 20min na terça\n3. Desligar telemóvel 1h antes de dormir`,
@@ -6192,7 +6110,7 @@ function FerramentaDifferentiation({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83C\uDF31"), /*#__PURE__*/React.createElement("div", {
+  }, "🌱"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -6210,7 +6128,7 @@ function FerramentaDifferentiation({
       color: "#4c1d95",
       lineHeight: 1.7
     }
-  }, /*#__PURE__*/React.createElement("div", null, "Depend\xEAncia emocional: ", /*#__PURE__*/React.createElement("strong", null, dependencia, "/10")), /*#__PURE__*/React.createElement("div", null, "\xC1reas de fus\xE3o: ", /*#__PURE__*/React.createElement("strong", null, fusao.length)), espacos && /*#__PURE__*/React.createElement("div", null, "Espa\xE7os pr\xF3prios: ", /*#__PURE__*/React.createElement("strong", null, espacos.slice(0, 50)))), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("div", null, "Dependência emocional: ", /*#__PURE__*/React.createElement("strong", null, dependencia, "/10")), /*#__PURE__*/React.createElement("div", null, "Áreas de fusão: ", /*#__PURE__*/React.createElement("strong", null, fusao.length)), espacos && /*#__PURE__*/React.createElement("div", null, "Espaços próprios: ", /*#__PURE__*/React.createElement("strong", null, espacos.slice(0, 50)))), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setOpinioes("");
       setFusao([]);
@@ -6238,9 +6156,9 @@ function FerramentaDifferentiation({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Opini\xF5es aut\xF3nomas",
+    titulo: "Opiniões autónomas",
     subtitulo: "O que pensa independentemente do parceiro?",
-    dica: "Escreva 3-5 opini\xF5es ou prefer\xEAncias genuinamente suas \u2014 n\xE3o moldadas pela rela\xE7\xE3o.",
+    dica: "Escreva 3-5 opiniões ou preferências genuinamente suas — não moldadas pela relação.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
@@ -6267,9 +6185,9 @@ function FerramentaDifferentiation({
     podeProsseguir: opinioes.trim().length > 10
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
-    titulo: "\xC1reas de fus\xE3o",
+    titulo: "Áreas de fusão",
     subtitulo: "Onde tende a ceder automaticamente?",
-    dica: "Fus\xE3o \xE9 quando deixa de processar a sua pr\xF3pria posi\xE7\xE3o antes de responder ao outro.",
+    dica: "Fusão é quando deixa de processar a sua própria posição antes de responder ao outro.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -6299,13 +6217,13 @@ function FerramentaDifferentiation({
     letra: "3",
     titulo: "A voz honesta",
     subtitulo: "O que diria se pudesse ser totalmente honesto?",
-    dica: "Pense numa situa\xE7\xE3o recente em que cedeu quando n\xE3o queria. O que teria dito?",
+    dica: "Pense numa situação recente em que cedeu quando não queria. O que teria dito?",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: honesto,
     onChange: e => setHonesto(e.target.value),
-    placeholder: "Ex: Quando ele decidiu as f\xE9rias sem me perguntar, queria dizer que precisava de ser consultada...",
+    placeholder: "Ex: Quando ele decidiu as férias sem me perguntar, queria dizer que precisava de ser consultada...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -6327,9 +6245,9 @@ function FerramentaDifferentiation({
     podeProsseguir: honesto.trim().length > 5
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Espa\xE7os genuinamente seus",
+    titulo: "Espaços genuinamente seus",
     subtitulo: "3 atividades, amizades ou interesses independentes",
-    dica: "O que mant\xE9m independentemente da rela\xE7\xE3o? S\xE3o espa\xE7os de identidade pr\xF3pria.",
+    dica: "O que mantém independentemente da relação? São espaços de identidade própria.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
@@ -6401,7 +6319,7 @@ function FerramentaTriangulation({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDD3A"), /*#__PURE__*/React.createElement("div", {
+  }, "🔺"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -6409,7 +6327,7 @@ function FerramentaTriangulation({
       color: COR,
       marginBottom: 8
     }
-  }, "Triangula\xE7\xE3o mapeada!"), /*#__PURE__*/React.createElement("div", {
+  }, "Triangulação mapeada!"), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 12,
@@ -6419,12 +6337,12 @@ function FerramentaTriangulation({
       color: "#0c4a6e",
       lineHeight: 1.7
     }
-  }, vertices.a && /*#__PURE__*/React.createElement("div", null, "V\xE9rtice A: ", /*#__PURE__*/React.createElement("strong", null, vertices.a)), vertices.b && /*#__PURE__*/React.createElement("div", null, "V\xE9rtice B: ", /*#__PURE__*/React.createElement("strong", null, vertices.b)), vertices.c && /*#__PURE__*/React.createElement("div", null, "Intermedi\xE1rio: ", /*#__PURE__*/React.createElement("strong", null, vertices.c)), direto && /*#__PURE__*/React.createElement("div", {
+  }, vertices.a && /*#__PURE__*/React.createElement("div", null, "Vértice A: ", /*#__PURE__*/React.createElement("strong", null, vertices.a)), vertices.b && /*#__PURE__*/React.createElement("div", null, "Vértice B: ", /*#__PURE__*/React.createElement("strong", null, vertices.b)), vertices.c && /*#__PURE__*/React.createElement("div", null, "Intermediário: ", /*#__PURE__*/React.createElement("strong", null, vertices.c)), direto && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8,
       fontStyle: "italic"
     }
-  }, "Comunica\xE7\xE3o direta: \"", direto.slice(0, 60), "...\"")), /*#__PURE__*/React.createElement("button", {
+  }, "Comunicação direta: \"", direto.slice(0, 60), "...\"")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setVertices({
         a: "",
@@ -6455,9 +6373,9 @@ function FerramentaTriangulation({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Os 3 v\xE9rtices",
-    subtitulo: "Quem s\xE3o as pessoas no tri\xE2ngulo?",
-    dica: "Identifique as tr\xEAs pessoas: quem tem tens\xE3o com quem, e quem est\xE1 no meio.",
+    titulo: "Os 3 vértices",
+    subtitulo: "Quem são as pessoas no triângulo?",
+    dica: "Identifique as três pessoas: quem tem tensão com quem, e quem está no meio.",
     cor: COR,
     bg: BG
   }), [{
@@ -6507,8 +6425,8 @@ function FerramentaTriangulation({
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
     titulo: "Seu papel",
-    subtitulo: "Como voc\xEA participa deste tri\xE2ngulo?",
-    dica: "Identifique o seu papel mais frequente \u2014 sem julgamento.",
+    subtitulo: "Como você participa deste triângulo?",
+    dica: "Identifique o seu papel mais frequente — sem julgamento.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -6528,10 +6446,10 @@ function FerramentaTriangulation({
       marginBottom: 6,
       display: "block"
     }
-  }, "O que est\xE1 a evitar comunicar diretamente?"), /*#__PURE__*/React.createElement("textarea", {
+  }, "O que está a evitar comunicar diretamente?"), /*#__PURE__*/React.createElement("textarea", {
     value: evita,
     onChange: e => setEvita(e.target.value),
-    placeholder: "Ex: Evito dizer diretamente ao meu pai que preciso de mais espa\xE7o...",
+    placeholder: "Ex: Evito dizer diretamente ao meu pai que preciso de mais espaço...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -6552,15 +6470,15 @@ function FerramentaTriangulation({
     podeProsseguir: papel.length > 0
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
-    titulo: "A comunica\xE7\xE3o direta",
-    subtitulo: "O que diria diretamente \xE0 pessoa?",
-    dica: "Sem intermedi\xE1rios. Escreva como se fosse dizer agora \u2014 com calma e assertividade.",
+    titulo: "A comunicação direta",
+    subtitulo: "O que diria diretamente à pessoa?",
+    dica: "Sem intermediários. Escreva como se fosse dizer agora — com calma e assertividade.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: direto,
     onChange: e => setDireto(e.target.value),
-    placeholder: "Ex: 'Pai, preciso de te dizer diretamente que preciso de mais espa\xE7o nas nossas conversas...' ",
+    placeholder: "Ex: 'Pai, preciso de te dizer diretamente que preciso de mais espaço nas nossas conversas...' ",
     style: {
       width: "100%",
       minHeight: 100,
@@ -6632,7 +6550,7 @@ function FerramentaCompassionateParenting({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDC9B"), /*#__PURE__*/React.createElement("div", {
+  }, "💛"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -6650,11 +6568,11 @@ function FerramentaCompassionateParenting({
       color: "#78350f",
       lineHeight: 1.7
     }
-  }, bom && /*#__PURE__*/React.createElement("div", null, "\u2728 Hoje foi bem: ", /*#__PURE__*/React.createElement("em", null, "\"", bom, "\"")), gentil && /*#__PURE__*/React.createElement("div", {
+  }, bom && /*#__PURE__*/React.createElement("div", null, "✨ Hoje foi bem: ", /*#__PURE__*/React.createElement("em", null, "\"", bom, "\"")), gentil && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
-  }, "\uD83D\uDC9C Para mim mesmo: ", /*#__PURE__*/React.createElement("em", null, "\"", gentil.slice(0, 80), "...\""))), /*#__PURE__*/React.createElement("button", {
+  }, "💜 Para mim mesmo: ", /*#__PURE__*/React.createElement("em", null, "\"", gentil.slice(0, 80), "...\""))), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setMomento("");
       setGatilho([]);
@@ -6683,15 +6601,15 @@ function FerramentaCompassionateParenting({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "O momento dif\xEDcil",
+    titulo: "O momento difícil",
     subtitulo: "O que aconteceu?",
-    dica: "Descreva a situa\xE7\xE3o brevemente. Sem julgamento \u2014 apenas os factos.",
+    dica: "Descreva a situação brevemente. Sem julgamento — apenas os factos.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: momento,
     onChange: e => setMomento(e.target.value),
-    placeholder: "Ex: Perdi a paci\xEAncia quando o meu filho recusou fazer a li\xE7\xE3o pela terceira vez...",
+    placeholder: "Ex: Perdi a paciência quando o meu filho recusou fazer a lição pela terceira vez...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -6730,14 +6648,14 @@ function FerramentaCompassionateParenting({
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
     titulo: "O juiz interno",
-    subtitulo: "O que a voz cr\xEDtica est\xE1 a dizer?",
-    dica: "Escreva exatamente os pensamentos autocr\xEDticos. Sem filtrar.",
+    subtitulo: "O que a voz crítica está a dizer?",
+    dica: "Escreva exatamente os pensamentos autocríticos. Sem filtrar.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: juiz,
     onChange: e => setJuiz(e.target.value),
-    placeholder: "Ex: Sou uma p\xE9ssima m\xE3e. Estou a marcar os meus filhos para sempre. Nunca consigo controlar-me...",
+    placeholder: "Ex: Sou uma péssima mãe. Estou a marcar os meus filhos para sempre. Nunca consigo controlar-me...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -6767,7 +6685,7 @@ function FerramentaCompassionateParenting({
   }), /*#__PURE__*/React.createElement("textarea", {
     value: amigo,
     onChange: e => setAmigo(e.target.value),
-    placeholder: "Ex: 'Olha, voc\xEA est\xE1 cansada e sob press\xE3o. N\xE3o \xE9s uma m\xE1 m\xE3e \u2014 \xE9s uma m\xE3e humana que est\xE1 a tentar...'",
+    placeholder: "Ex: 'Olha, você está cansada e sob pressão. Não és uma má mãe — és uma mãe humana que está a tentar...'",
     style: {
       width: "100%",
       minHeight: 90,
@@ -6791,13 +6709,13 @@ function FerramentaCompassionateParenting({
     letra: "4",
     titulo: "Reescreva com gentileza",
     subtitulo: "Agora aplique a si mesmo",
-    dica: "Mesmo tom que usou com o amigo \u2014 rigoroso mas gentil. Reconhe\xE7a o erro sem atacar a identidade.",
+    dica: "Mesmo tom que usou com o amigo — rigoroso mas gentil. Reconheça o erro sem atacar a identidade.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: gentil,
     onChange: e => setGentil(e.target.value),
-    placeholder: "Ex: 'Cometi um erro. Estou cansada. Isso n\xE3o me define como m\xE3e. Posso pedir desculpa e tentar diferente amanh\xE3...'",
+    placeholder: "Ex: 'Cometi um erro. Estou cansada. Isso não me define como mãe. Posso pedir desculpa e tentar diferente amanhã...'",
     style: {
       width: "100%",
       minHeight: 90,
@@ -6821,7 +6739,7 @@ function FerramentaCompassionateParenting({
     letra: "5",
     titulo: "O que correu bem hoje?",
     subtitulo: "Pelo menos uma coisa",
-    dica: "Por menor que pare\xE7a \u2014 um momento de paci\xEAncia, de presen\xE7a, de amor. Ele conta.",
+    dica: "Por menor que pareça — um momento de paciência, de presença, de amor. Ele conta.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
@@ -6907,7 +6825,7 @@ function FerramentaFinancialMaps({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDCB0"), /*#__PURE__*/React.createElement("div", {
+  }, "💰"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -6925,7 +6843,7 @@ function FerramentaFinancialMaps({
       color: "#064e3b",
       lineHeight: 1.7
     }
-  }, /*#__PURE__*/React.createElement("div", null, "Valores priorit\xE1rios: ", /*#__PURE__*/React.createElement("strong", null, valores.slice(0, 3).join(", "))), objetivo1 && /*#__PURE__*/React.createElement("div", null, "Objetivo 1 ano: ", /*#__PURE__*/React.createElement("strong", null, objetivo1.slice(0, 50))), objetivo5 && /*#__PURE__*/React.createElement("div", null, "Objetivo 5 anos: ", /*#__PURE__*/React.createElement("strong", null, objetivo5.slice(0, 50)))), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("div", null, "Valores prioritários: ", /*#__PURE__*/React.createElement("strong", null, valores.slice(0, 3).join(", "))), objetivo1 && /*#__PURE__*/React.createElement("div", null, "Objetivo 1 ano: ", /*#__PURE__*/React.createElement("strong", null, objetivo1.slice(0, 50))), objetivo5 && /*#__PURE__*/React.createElement("div", null, "Objetivo 5 anos: ", /*#__PURE__*/React.createElement("strong", null, objetivo5.slice(0, 50)))), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setHistoria("");
       setValores([]);
@@ -6954,9 +6872,9 @@ function FerramentaFinancialMaps({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "M1",
-    titulo: "Mapa da Hist\xF3ria",
-    subtitulo: "Como era o dinheiro na sua fam\xEDlia?",
-    dica: "O gui\xE3o financeiro que aprendeu na inf\xE2ncia opera de forma inconsciente. Torn\xE1-lo vis\xEDvel \xE9 o primeiro passo.",
+    titulo: "Mapa da História",
+    subtitulo: "Como era o dinheiro na sua família?",
+    dica: "O guião financeiro que aprendeu na infância opera de forma inconsciente. Torná-lo visível é o primeiro passo.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
@@ -6984,8 +6902,8 @@ function FerramentaFinancialMaps({
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "M2",
     titulo: "Mapa dos Valores",
-    subtitulo: "O que o dinheiro representa para voc\xEA?",
-    dica: "Escolha os 3 valores mais importantes. A diverg\xEAncia de valores \xE9 a raiz da maioria dos conflitos financeiros em casal.",
+    subtitulo: "O que o dinheiro representa para você?",
+    dica: "Escolha os 3 valores mais importantes. A divergência de valores é a raiz da maioria dos conflitos financeiros em casal.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -7001,13 +6919,13 @@ function FerramentaFinancialMaps({
       color: "var(--text-muted)"
     }
   }, "Selecionados: ", valores.length, "/3"), /*#__PURE__*/React.createElement(SliderStep, {
-    label: "Seguran\xE7a vs. Liberdade",
+    label: "Segurança vs. Liberdade",
     valor: segLiberdade,
     onChange: setSegLiberdade,
     min: 0,
     max: 100,
     cor: COR,
-    antes: "Priorizo seguran\xE7a",
+    antes: "Priorizo segurança",
     depois: "Priorizo liberdade"
   }), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
@@ -7019,7 +6937,7 @@ function FerramentaFinancialMaps({
     letra: "M3",
     titulo: "Mapa do Projeto Partilhado",
     subtitulo: "Para onde vamos juntos?",
-    dica: "Transformar o dinheiro de campo de batalha em projeto partilhado come\xE7a por ter objetivos comuns.",
+    dica: "Transformar o dinheiro de campo de batalha em projeto partilhado começa por ter objetivos comuns.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -7036,7 +6954,7 @@ function FerramentaFinancialMaps({
   }, "Objetivo financeiro a 1 ano"), /*#__PURE__*/React.createElement("textarea", {
     value: objetivo1,
     onChange: e => setObjetivo1(e.target.value),
-    placeholder: "Ex: Criar uma reserva de emerg\xEAncia de 3 meses, quitar a d\xEDvida do cart\xE3o...",
+    placeholder: "Ex: Criar uma reserva de emergência de 3 meses, quitar a dívida do cartão...",
     style: {
       width: "100%",
       minHeight: 60,
@@ -7063,7 +6981,7 @@ function FerramentaFinancialMaps({
   }, "Objetivo a 5 anos"), /*#__PURE__*/React.createElement("textarea", {
     value: objetivo5,
     onChange: e => setObjetivo5(e.target.value),
-    placeholder: "Ex: Casa pr\xF3pria, viagem grande, investimento para os filhos...",
+    placeholder: "Ex: Casa própria, viagem grande, investimento para os filhos...",
     style: {
       width: "100%",
       minHeight: 60,
@@ -7086,7 +7004,7 @@ function FerramentaFinancialMaps({
   }, "Valor de autonomia individual (cada um)"), /*#__PURE__*/React.createElement("input", {
     value: autonomia,
     onChange: e => setAutonomia(e.target.value),
-    placeholder: "Ex: R$ 300 por m\xEAs cada um sem precisar justificar...",
+    placeholder: "Ex: R$ 300 por mês cada um sem precisar justificar...",
     style: {
       width: "100%",
       padding: "10px",
@@ -7155,7 +7073,7 @@ function FerramentaIntimacyMap({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDC91"), /*#__PURE__*/React.createElement("div", {
+  }, "💑"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -7195,7 +7113,7 @@ function FerramentaIntimacyMap({
       fontWeight: 700,
       color: COR
     }
-  }, "M\xE9dia: ", media, "/10")), ritual && /*#__PURE__*/React.createElement("div", {
+  }, "Média: ", media, "/10")), ritual && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#dcfce7",
       borderRadius: 10,
@@ -7204,7 +7122,7 @@ function FerramentaIntimacyMap({
       color: "#064e3b",
       marginBottom: 20
     }
-  }, "\uD83C\uDF31 Ritual desta semana: ", /*#__PURE__*/React.createElement("em", null, "\"", ritual, "\"")), /*#__PURE__*/React.createElement("button", {
+  }, "🌱 Ritual desta semana: ", /*#__PURE__*/React.createElement("em", null, "\"", ritual, "\"")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setValores({
         emocional: 5,
@@ -7235,9 +7153,9 @@ function FerramentaIntimacyMap({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Os 4 n\xEDveis de intimidade",
-    subtitulo: "Avalie a qualidade atual de cada n\xEDvel",
-    dica: "Responda com honestidade \u2014 n\xE3o como gostaria que fosse, mas como realmente est\xE1.",
+    titulo: "Os 4 níveis de intimidade",
+    subtitulo: "Avalie a qualidade atual de cada nível",
+    dica: "Responda com honestidade — não como gostaria que fosse, mas como realmente está.",
     cor: COR,
     bg: BG
   }), NIVEIS.map(n => /*#__PURE__*/React.createElement("div", {
@@ -7298,8 +7216,8 @@ function FerramentaIntimacyMap({
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
     titulo: "Foco e ritual",
-    subtitulo: "O que precisa de aten\xE7\xE3o?",
-    dica: "Escolha apenas uma \xE1rea de foco. Um ritual pequeno e consistente vale mais do que grandes gestos espor\xE1dicos.",
+    subtitulo: "O que precisa de atenção?",
+    dica: "Escolha apenas uma área de foco. Um ritual pequeno e consistente vale mais do que grandes gestos esporádicos.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -7311,7 +7229,7 @@ function FerramentaIntimacyMap({
       fontSize: 13,
       color: "#831843"
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "N\xEDvel mais baixo:"), " ", NIVEIS.find(n => n.id === nivelMaisBaixo[0])?.icone, " ", NIVEIS.find(n => n.id === nivelMaisBaixo[0])?.label, " (", nivelMaisBaixo[1], "/10)"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Nível mais baixo:"), " ", NIVEIS.find(n => n.id === nivelMaisBaixo[0])?.icone, " ", NIVEIS.find(n => n.id === nivelMaisBaixo[0])?.label, " (", nivelMaisBaixo[1], "/10)"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
     }
@@ -7322,10 +7240,10 @@ function FerramentaIntimacyMap({
       marginBottom: 6,
       display: "block"
     }
-  }, "\xC1rea de foco escolhida"), /*#__PURE__*/React.createElement("input", {
+  }, "Área de foco escolhida"), /*#__PURE__*/React.createElement("input", {
     value: foco,
     onChange: e => setFoco(e.target.value),
-    placeholder: "Ex: Intimidade emocional \u2014 ter conversas mais profundas...",
+    placeholder: "Ex: Intimidade emocional — ter conversas mais profundas...",
     style: {
       width: "100%",
       padding: "10px",
@@ -7343,10 +7261,10 @@ function FerramentaIntimacyMap({
       marginBottom: 6,
       display: "block"
     }
-  }, "Ritual de reconex\xE3o esta semana"), /*#__PURE__*/React.createElement("textarea", {
+  }, "Ritual de reconexão esta semana"), /*#__PURE__*/React.createElement("textarea", {
     value: ritual,
     onChange: e => setRitual(e.target.value),
-    placeholder: "Ex: 20 minutos sem telem\xF3vel a conversar \xE0s sextas ap\xF3s o jantar...",
+    placeholder: "Ex: 20 minutos sem telemóvel a conversar às sextas após o jantar...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -7425,7 +7343,7 @@ function FerramentaCNV({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDCAC"), /*#__PURE__*/React.createElement("div", {
+  }, "💬"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -7455,7 +7373,7 @@ function FerramentaCNV({
       color: COR,
       marginBottom: 3
     }
-  }, ps.letra, " \u2014 ", ps.titulo), /*#__PURE__*/React.createElement("div", {
+  }, ps.letra, " — ", ps.titulo), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text)"
@@ -7580,7 +7498,7 @@ function FerramentaLimitsMap({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDEAA"), /*#__PURE__*/React.createElement("div", {
+  }, "🚪"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -7598,7 +7516,7 @@ function FerramentaLimitsMap({
       fontSize: 13,
       lineHeight: 1.7
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Situa\xE7\xE3o:"), " ", situacao), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Com quem:"), " ", quem), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Formula\xE7\xE3o:"), " ", formulacao)), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Situação:"), " ", situacao), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Com quem:"), " ", quem), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, "Formulação:"), " ", formulacao)), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setSituacao("");
       setQuem("");
@@ -7626,15 +7544,15 @@ function FerramentaLimitsMap({
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "A situa\xE7\xE3o de desconforto",
-    subtitulo: "Onde sente que um limite est\xE1 sendo violado?",
-    dica: "Pense numa situa\xE7\xE3o recente em que ficou ressentido, esgotado ou com sensa\xE7\xE3o de injusti\xE7a.",
+    titulo: "A situação de desconforto",
+    subtitulo: "Onde sente que um limite está sendo violado?",
+    dica: "Pense numa situação recente em que ficou ressentido, esgotado ou com sensação de injustiça.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: situacao,
     onChange: e => setSituacao(e.target.value),
-    placeholder: "Ex: Minha chefe pede tarefas fora do hor\xE1rio de trabalho regularmente...",
+    placeholder: "Ex: Minha chefe pede tarefas fora do horário de trabalho regularmente...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -7679,8 +7597,8 @@ function FerramentaLimitsMap({
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
     titulo: "Sua resposta habitual",
-    subtitulo: "O que costuma fazer quando o limite \xE9 violado?",
-    dica: "Cada padr\xE3o tem um custo \u2014 identifique o seu sem julgamento.",
+    subtitulo: "O que costuma fazer quando o limite é violado?",
+    dica: "Cada padrão tem um custo — identifique o seu sem julgamento.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -7699,13 +7617,13 @@ function FerramentaLimitsMap({
     letra: "3",
     titulo: "Formule o limite",
     subtitulo: "Como comunicar de forma clara e assertiva",
-    dica: "\"Quando [situa\xE7\xE3o], eu preciso que [pedido]. Se isso n\xE3o mudar, vou [consequ\xEAncia realista].\"",
+    dica: "\"Quando [situação], eu preciso que [pedido]. Se isso não mudar, vou [consequência realista].\"",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: formulacao,
     onChange: e => setFormulacao(e.target.value),
-    placeholder: "Ex: Quando recebo pedidos fora do hor\xE1rio, preciso que sejam deixados para o dia seguinte. Se isso continuar, terei de conversar formalmente...",
+    placeholder: "Ex: Quando recebo pedidos fora do horário, preciso que sejam deixados para o dia seguinte. Se isso continuar, terei de conversar formalmente...",
     style: {
       width: "100%",
       minHeight: 100,
@@ -7727,9 +7645,9 @@ function FerramentaLimitsMap({
     podeProsseguir: formulacao.trim().length > 10
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Prepare-se para a resist\xEAncia",
+    titulo: "Prepare-se para a resistência",
     subtitulo: "Como vai responder se o limite for pressionado?",
-    dica: "Limites novos geram resist\xEAncia. Ter uma resposta pronta reduz a ansiedade.",
+    dica: "Limites novos geram resistência. Ter uma resposta pronta reduz a ansiedade.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
@@ -7784,7 +7702,7 @@ function FerramentaMentalLoad({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83E\uDDE9"), /*#__PURE__*/React.createElement("div", {
+  }, "🧩"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -7792,7 +7710,7 @@ function FerramentaMentalLoad({
       color: COR,
       marginBottom: 12
     }
-  }, "Invent\xE1rio registrado!"), /*#__PURE__*/React.createElement("div", {
+  }, "Inventário registrado!"), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 12,
@@ -7810,7 +7728,7 @@ function FerramentaMentalLoad({
     style: {
       color: corBal
     }
-  }, "Voc\xEA: ", pctVoce, "%"), /*#__PURE__*/React.createElement("span", {
+  }, "Você: ", pctVoce, "%"), /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#059669"
     }
@@ -7836,22 +7754,22 @@ function FerramentaMentalLoad({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Novo invent\xE1rio"));
+  }, "Novo inventário"));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepProgress, {
     passo: p,
     total: 4,
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "VER \u2014 O que voc\xEA percebe",
-    subtitulo: "Tarefas que voc\xEA nota precisam ser feitas",
-    dica: "Durante 3 dias, anote tudo que 'gere' mentalmente: compras, consultas, necessidades dos filhos, gest\xE3o da casa.",
+    titulo: "VER — O que você percebe",
+    subtitulo: "Tarefas que você nota precisam ser feitas",
+    dica: "Durante 3 dias, anote tudo que 'gere' mentalmente: compras, consultas, necessidades dos filhos, gestão da casa.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: ver,
     onChange: e => setVer(e.target.value),
-    placeholder: "Ex: Leite acabou, consulta do m\xE9dico para marcar, anivers\xE1rio da professora, carro precisa de revis\xE3o...",
+    placeholder: "Ex: Leite acabou, consulta do médico para marcar, aniversário da professora, carro precisa de revisão...",
     style: {
       width: "100%",
       minHeight: 100,
@@ -7874,7 +7792,7 @@ function FerramentaMentalLoad({
     letra: "2",
     titulo: "PLANEAR + FAZER",
     subtitulo: "Quem decide e quem executa?",
-    dica: "Separar quem planeia de quem faz revela onde est\xE1 o desequil\xEDbrio real.",
+    dica: "Separar quem planeia de quem faz revela onde está o desequilíbrio real.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -7889,10 +7807,10 @@ function FerramentaMentalLoad({
       display: "block",
       color: "var(--text)"
     }
-  }, "Quem planeia (como, quando, com qu\xEA)?"), /*#__PURE__*/React.createElement("textarea", {
+  }, "Quem planeia (como, quando, com quê)?"), /*#__PURE__*/React.createElement("textarea", {
     value: planear,
     onChange: e => setPlanear(e.target.value),
-    placeholder: "Ex: Eu decido tudo sobre as refei\xE7\xF5es, escola, m\xE9dico...",
+    placeholder: "Ex: Eu decido tudo sobre as refeições, escola, médico...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -7916,7 +7834,7 @@ function FerramentaMentalLoad({
   }, "Quem executa as tarefas?"), /*#__PURE__*/React.createElement("textarea", {
     value: fazer,
     onChange: e => setFazer(e.target.value),
-    placeholder: "Ex: Eu fa\xE7o 80%, ele faz 20%...",
+    placeholder: "Ex: Eu faço 80%, ele faz 20%...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -7937,9 +7855,9 @@ function FerramentaMentalLoad({
     podeProsseguir: planear.trim().length > 3
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
-    titulo: "Balan\xE7o da carga",
-    subtitulo: "Quanto voc\xEA carrega?",
-    dica: "Seja honesto \u2014 este dado \xE9 para voc\xEA, n\xE3o para acusar.",
+    titulo: "Balanço da carga",
+    subtitulo: "Quanto você carrega?",
+    dica: "Seja honesto — este dado é para você, não para acusar.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -7980,7 +7898,7 @@ function FerramentaMentalLoad({
       color: corBal,
       fontWeight: 700
     }
-  }, "Voc\xEA: ", pctVoce, "%"), /*#__PURE__*/React.createElement("span", {
+  }, "Você: ", pctVoce, "%"), /*#__PURE__*/React.createElement("span", {
     style: {
       color: "#059669",
       fontWeight: 700
@@ -7994,7 +7912,7 @@ function FerramentaMentalLoad({
       fontSize: 12,
       color: "#7f1d1d"
     }
-  }, "\u26A0\uFE0F Carga assim\xE9trica \u2014 considere a conversa de redistribui\xE7\xE3o."), /*#__PURE__*/React.createElement(NavButtons, {
+  }, "⚠️ Carga assimétrica — considere a conversa de redistribuição."), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
     total: 4,
     onBack: () => setP(1),
@@ -8002,15 +7920,15 @@ function FerramentaMentalLoad({
     podeProsseguir: true
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Plano de redistribui\xE7\xE3o",
-    subtitulo: "O que pode ser redistribu\xEDdo?",
-    dica: "Apresente como dados, n\xE3o como acusa\xE7\xE3o. 'Quero que vejamos juntos' em vez de 'nunca fazes nada'.",
+    titulo: "Plano de redistribuição",
+    subtitulo: "O que pode ser redistribuído?",
+    dica: "Apresente como dados, não como acusação. 'Quero que vejamos juntos' em vez de 'nunca fazes nada'.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: atrito,
     onChange: e => setAtrito(e.target.value),
-    placeholder: "Qual tarefa gera mais atrito ou \xE9 mais negligenciada?",
+    placeholder: "Qual tarefa gera mais atrito ou é mais negligenciada?",
     style: {
       width: "100%",
       minHeight: 60,
@@ -8097,7 +8015,7 @@ function FerramentaConflictCycle({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDD04"), /*#__PURE__*/React.createElement("div", {
+  }, "🔄"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -8144,14 +8062,14 @@ function FerramentaConflictCycle({
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
     titulo: "O conflito recorrente",
-    subtitulo: "Qual discuss\xE3o se repete?",
-    dica: "N\xE3o o conte\xFAdo espec\xEDfico \u2014 o padr\xE3o. 'Quando discutimos sobre X, o que acontece \xE9 sempre...'",
+    subtitulo: "Qual discussão se repete?",
+    dica: "Não o conteúdo específico — o padrão. 'Quando discutimos sobre X, o que acontece é sempre...'",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: conflito,
     onChange: e => setConflito(e.target.value),
-    placeholder: "Ex: Sempre que discutimos sobre organiza\xE7\xE3o da casa, o padr\xE3o \xE9...",
+    placeholder: "Ex: Sempre que discutimos sobre organização da casa, o padrão é...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -8172,9 +8090,9 @@ function FerramentaConflictCycle({
     podeProsseguir: conflito.trim().length > 5
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
-    titulo: "Pap\xE9is no ciclo",
-    subtitulo: "Quem costuma fazer o qu\xEA?",
-    dica: "Os pap\xE9is s\xE3o fluidos \u2014 podem mudar conforme o tema.",
+    titulo: "Papéis no ciclo",
+    subtitulo: "Quem costuma fazer o quê?",
+    dica: "Os papéis são fluidos — podem mudar conforme o tema.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -8194,10 +8112,10 @@ function FerramentaConflictCycle({
       marginBottom: 6,
       display: "block"
     }
-  }, "Qual \xE9 o gatilho principal?"), /*#__PURE__*/React.createElement("input", {
+  }, "Qual é o gatilho principal?"), /*#__PURE__*/React.createElement("input", {
     value: gatilho,
     onChange: e => setGatilho(e.target.value),
-    placeholder: "Ex: Tom de voz, uma frase espec\xEDfica, momento do dia...",
+    placeholder: "Ex: Tom de voz, uma frase específica, momento do dia...",
     style: {
       width: "100%",
       padding: "10px",
@@ -8216,9 +8134,9 @@ function FerramentaConflictCycle({
     podeProsseguir: papeis.length > 0 && gatilho.trim().length > 3
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
-    titulo: "A sequ\xEAncia t\xEDpica",
-    subtitulo: "O que acontece do in\xEDcio ao fim?",
-    dica: "Escreva em passos numerados: eu digo X \u2192 ele reage Y \u2192 eu fa\xE7o Z...",
+    titulo: "A sequência típica",
+    subtitulo: "O que acontece do início ao fim?",
+    dica: "Escreva em passos numerados: eu digo X → ele reage Y → eu faço Z...",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
@@ -8246,15 +8164,15 @@ function FerramentaConflictCycle({
     podeProsseguir: sequencia.trim().length > 10
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Sinal de interrup\xE7\xE3o",
-    subtitulo: "O que v\xE3o usar para sair do ciclo?",
-    dica: "Acordem em momento de calma \u2014 uma palavra, gesto ou frase neutra que significa 'estamos no ciclo, precisamos parar'.",
+    titulo: "Sinal de interrupção",
+    subtitulo: "O que vão usar para sair do ciclo?",
+    dica: "Acordem em momento de calma — uma palavra, gesto ou frase neutra que significa 'estamos no ciclo, precisamos parar'.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("input", {
     value: sinal,
     onChange: e => setSinal(e.target.value),
-    placeholder: "Ex: 'Pausa', 'Tempo', um gesto com a m\xE3o...",
+    placeholder: "Ex: 'Pausa', 'Tempo', um gesto com a mão...",
     style: {
       width: "100%",
       padding: "11px",
@@ -8275,7 +8193,7 @@ function FerramentaConflictCycle({
       color: "#7f1d1d",
       lineHeight: 1.6
     }
-  }, "\uD83D\uDCA1 Ap\xF3s o sinal: separem-se 20 minutos, evitem rever a conversa mentalmente, regressem quando conseguirem falar com calma."), /*#__PURE__*/React.createElement(NavButtons, {
+  }, "💡 Após o sinal: separem-se 20 minutos, evitem rever a conversa mentalmente, regressem quando conseguirem falar com calma."), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
     total: 4,
     onBack: () => setP(2),
@@ -8327,7 +8245,7 @@ function FerramentaActiveListening({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDC42"), /*#__PURE__*/React.createElement("div", {
+  }, "👂"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -8354,7 +8272,7 @@ function FerramentaActiveListening({
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, feitos, "/", CHECKS.length, " pr\xE1ticas realizadas")), /*#__PURE__*/React.createElement("button", {
+  }, feitos, "/", CHECKS.length, " práticas realizadas")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setQualidade(5);
       setParafrase("");
@@ -8374,16 +8292,16 @@ function FerramentaActiveListening({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Nova sess\xE3o"));
+  }, "Nova sessão"));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepProgress, {
     passo: p,
     total: 3,
     cor: COR
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
-    titulo: "Auto-avalia\xE7\xE3o da escuta",
+    titulo: "Auto-avaliação da escuta",
     subtitulo: "Como foi a sua escuta hoje?",
-    dica: "Avalie honestamente \u2014 n\xE3o como gostaria de ter sido, mas como realmente foi.",
+    dica: "Avalie honestamente — não como gostaria de ter sido, mas como realmente foi.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -8456,7 +8374,7 @@ function FerramentaActiveListening({
       color: "white",
       fontSize: 11
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: checks[c.id] ? COR : "var(--text-muted)"
@@ -8468,15 +8386,15 @@ function FerramentaActiveListening({
     podeProsseguir: true
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
-    titulo: "Par\xE1frase",
-    subtitulo: "O que voc\xEA entendeu que o outro quis dizer?",
-    dica: "Escreva como se fosse devolver ao outro: 'Se entendi bem, o que te preocupa \xE9...'",
+    titulo: "Paráfrase",
+    subtitulo: "O que você entendeu que o outro quis dizer?",
+    dica: "Escreva como se fosse devolver ao outro: 'Se entendi bem, o que te preocupa é...'",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: parafrase,
     onChange: e => setParafrase(e.target.value),
-    placeholder: "Ex: Se entendi bem, o que te preocupa \xE9 que te sentes sozinho quando trabalho at\xE9 tarde...",
+    placeholder: "Ex: Se entendi bem, o que te preocupa é que te sentes sozinho quando trabalho até tarde...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -8498,15 +8416,15 @@ function FerramentaActiveListening({
     podeProsseguir: parafrase.trim().length > 5
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Reflex\xE3o final",
+    titulo: "Reflexão final",
     subtitulo: "O que aprendeu sobre a sua escuta?",
-    dica: "O que foi mais dif\xEDcil? O que quer praticar diferente na pr\xF3xima conversa?",
+    dica: "O que foi mais difícil? O que quer praticar diferente na próxima conversa?",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("textarea", {
     value: reflexao,
     onChange: e => setReflexao(e.target.value),
-    placeholder: "Ex: Percebi que j\xE1 estava a preparar a resposta enquanto ela falava...",
+    placeholder: "Ex: Percebi que já estava a preparar a resposta enquanto ela falava...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -8732,7 +8650,7 @@ function NavButtons({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2190 Anterior"), passo < total - 1 && /*#__PURE__*/React.createElement("button", {
+  }, "← Anterior"), passo < total - 1 && /*#__PURE__*/React.createElement("button", {
     onClick: onNext,
     disabled: !podeProsseguir,
     style: {
@@ -8747,7 +8665,7 @@ function NavButtons({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Pr\xF3ximo \u2192"), passo === total - 1 && onSave && /*#__PURE__*/React.createElement("button", {
+  }, "Próximo →"), passo === total - 1 && onSave && /*#__PURE__*/React.createElement("button", {
     onClick: onSave,
     disabled: salvando || !podeProsseguir,
     style: {
@@ -8894,7 +8812,7 @@ function FerramentaChainAnalysis({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDD17"), /*#__PURE__*/React.createElement("div", {
+  }, "🔗"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -8902,14 +8820,14 @@ function FerramentaChainAnalysis({
       color: COR,
       marginBottom: 8
     }
-  }, "An\xE1lise registrada!"), /*#__PURE__*/React.createElement("div", {
+  }, "Análise registrada!"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 24,
       lineHeight: 1.6
     }
-  }, "Identificar a cadeia \xE9 o primeiro passo para interromp\xEA-la. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, "Identificar a cadeia é o primeiro passo para interrompê-la. 💜"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setD({
         episodio: "",
@@ -8935,7 +8853,7 @@ function FerramentaChainAnalysis({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Nova an\xE1lise"));
+  }, "Nova análise"));
   const pInfo = PASSOS[p];
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepProgress, {
     passo: p,
@@ -8954,7 +8872,7 @@ function FerramentaChainAnalysis({
       ...d,
       episodio: e.target.value
     }),
-    placeholder: "Ex: Minha chefe me chamou para conversar de \xFAltima hora...",
+    placeholder: "Ex: Minha chefe me chamou para conversar de última hora...",
     style: {
       width: "100%",
       minHeight: 90,
@@ -8994,7 +8912,7 @@ function FerramentaChainAnalysis({
       ...d,
       pensamento: e.target.value
     }),
-    placeholder: "Ex: Fiz algo errado. Vou ser demitida. N\xE3o sirvo para este trabalho...",
+    placeholder: "Ex: Fiz algo errado. Vou ser demitida. Não sirvo para este trabalho...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -9037,7 +8955,7 @@ function FerramentaChainAnalysis({
       ...d,
       sensacao: e.target.value
     }),
-    placeholder: "Ex: Aperto no peito, respira\xE7\xE3o acelerada, est\xF4mago contra\xEDdo...",
+    placeholder: "Ex: Aperto no peito, respiração acelerada, estômago contraído...",
     style: {
       width: "100%",
       minHeight: 80,
@@ -9186,7 +9104,7 @@ function FerramentaBehavioralActivation({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
+  }, "⚡"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -9201,13 +9119,13 @@ function FerramentaBehavioralActivation({
       marginBottom: 8,
       lineHeight: 1.6
     }
-  }, "Humor antes: ", /*#__PURE__*/React.createElement("strong", null, humorAntes, "/10"), " \u2192 depois: ", /*#__PURE__*/React.createElement("strong", null, humorDepois, "/10")), /*#__PURE__*/React.createElement("div", {
+  }, "Humor antes: ", /*#__PURE__*/React.createElement("strong", null, humorAntes, "/10"), " → depois: ", /*#__PURE__*/React.createElement("strong", null, humorDepois, "/10")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 24
     }
-  }, "A a\xE7\xE3o gerou a motiva\xE7\xE3o. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, "A ação gerou a motivação. 💜"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setPrazer([]);
       setDominio([]);
@@ -9243,8 +9161,8 @@ function FerramentaBehavioralActivation({
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
     titulo: "Humor agora",
-    subtitulo: "Como est\xE1 se sentindo antes de come\xE7ar?",
-    dica: "Seja honesto \u2014 n\xE3o h\xE1 resposta certa.",
+    subtitulo: "Como está se sentindo antes de começar?",
+    dica: "Seja honesto — não há resposta certa.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(SliderStep, {
@@ -9263,7 +9181,7 @@ function FerramentaBehavioralActivation({
     letra: "2",
     titulo: "Atividades de prazer",
     subtitulo: "O que pode dar leveza hoje?",
-    dica: "Escolha op\xE7\xF5es pequenas \u2014 poss\xEDveis mesmo num dia dif\xEDcil.",
+    dica: "Escolha opções pequenas — possíveis mesmo num dia difícil.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -9280,9 +9198,9 @@ function FerramentaBehavioralActivation({
     podeProsseguir: prazer.length > 0
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
-    titulo: "Atividades de dom\xEDnio",
+    titulo: "Atividades de domínio",
     subtitulo: "O que pode concluir hoje?",
-    dica: "Tarefas pequenas que d\xE3o sensa\xE7\xE3o de capacidade quando conclu\xEDdas.",
+    dica: "Tarefas pequenas que dão sensação de capacidade quando concluídas.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -9316,7 +9234,7 @@ function FerramentaBehavioralActivation({
       marginBottom: 6,
       display: "block"
     }
-  }, "Prazer \u2014 ", PRAZER_OPCOES.find(x => x.v === prazer[0])?.l || prazer[0]), /*#__PURE__*/React.createElement("input", {
+  }, "Prazer — ", PRAZER_OPCOES.find(x => x.v === prazer[0])?.l || prazer[0]), /*#__PURE__*/React.createElement("input", {
     type: "time",
     value: horaPrazer,
     onChange: e => setHoraPrazer(e.target.value),
@@ -9336,7 +9254,7 @@ function FerramentaBehavioralActivation({
       marginBottom: 6,
       display: "block"
     }
-  }, "Dom\xEDnio \u2014 ", DOMINIO_OPCOES.find(x => x.v === dominio[0])?.l || dominio[0]), /*#__PURE__*/React.createElement("input", {
+  }, "Domínio — ", DOMINIO_OPCOES.find(x => x.v === dominio[0])?.l || dominio[0]), /*#__PURE__*/React.createElement("input", {
     type: "time",
     value: horaDominio,
     onChange: e => setHoraDominio(e.target.value),
@@ -9357,7 +9275,7 @@ function FerramentaBehavioralActivation({
   })), p === 4 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "5",
     titulo: "Como ficou?",
-    subtitulo: "Registre ap\xF3s realizar as atividades",
+    subtitulo: "Registre após realizar as atividades",
     dica: "Marque o que fez e avalie o humor depois.",
     cor: COR,
     bg: BG
@@ -9407,7 +9325,7 @@ function FerramentaBehavioralActivation({
       color: "white",
       fontSize: 13
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       fontWeight: feito[item.k] ? 700 : 400,
@@ -9512,13 +9430,13 @@ function FerramentaTIPP({
       color: COR,
       marginBottom: 6
     }
-  }, "Kit SOS Emocional \u2014 T\xE9cnica TIPP"), /*#__PURE__*/React.createElement("div", {
+  }, "Kit SOS Emocional — Técnica TIPP"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "#7f1d1d",
       lineHeight: 1.6
     }
-  }, "Esta t\xE9cnica ativa o sistema nervoso parassimp\xE1tico em minutos. Use quando estiver em pico emocional.")), /*#__PURE__*/React.createElement("div", {
+  }, "Esta técnica ativa o sistema nervoso parassimpático em minutos. Use quando estiver em pico emocional.")), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
@@ -9543,7 +9461,7 @@ function FerramentaTIPP({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Iniciar SOS \u2192"));
+  }, "Iniciar SOS →"));
   if (p >= FASES.length) return /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
@@ -9554,7 +9472,7 @@ function FerramentaTIPP({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83E\uDDD8"), /*#__PURE__*/React.createElement("div", {
+  }, "🧘"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -9562,7 +9480,7 @@ function FerramentaTIPP({
       color: "#059669",
       marginBottom: 12
     }
-  }, "TIPP conclu\xEDdo!"), /*#__PURE__*/React.createElement("div", {
+  }, "TIPP concluído!"), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
@@ -9582,7 +9500,7 @@ function FerramentaTIPP({
       color: "#166534",
       marginBottom: 20
     }
-  }, "\u2713 Redu\xE7\xE3o de ", intensAntes - intensDepois, " pontos. O seu sistema nervoso respondeu. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Redução de ", intensAntes - intensDepois, " pontos. O seu sistema nervoso respondeu. 💜"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setP(-1);
       setFaseConcluida({});
@@ -9648,7 +9566,7 @@ function FerramentaTIPP({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\u25B6 Iniciar (", fase.dur, "s)"), rodando && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "▶ Iniciar (", fase.dur, "s)"), rodando && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       width: 90,
       height: 90,
@@ -9695,7 +9613,7 @@ function FerramentaTIPP({
       fontWeight: 600,
       color: fase.cor
     }
-  }, "\u2713 Conclu\xEDdo!")), fase.tipo === "check" && /*#__PURE__*/React.createElement("div", {
+  }, "✓ Concluído!")), fase.tipo === "check" && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 16
     }
@@ -9735,7 +9653,7 @@ function FerramentaTIPP({
       color: "white",
       fontSize: 11
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: checks[m] ? fase.cor : "var(--text-muted)"
@@ -9763,7 +9681,7 @@ function FerramentaTIPP({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2190 Voltar"), /*#__PURE__*/React.createElement("button", {
+  }, "← Voltar"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setP(p + 1);
       setRodando(false);
@@ -9848,8 +9766,8 @@ function FerramentaStrategicPause({
   }), p === 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "1",
     titulo: "Seus sinais de alarme",
-    subtitulo: "O que sente quando est\xE1 sendo sequestrado?",
-    dica: "Reconhecer o sinal \xE9 o primeiro passo para a pausa.",
+    subtitulo: "O que sente quando está sendo sequestrado?",
+    dica: "Reconhecer o sinal é o primeiro passo para a pausa.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement(TagsSelector, {
@@ -9866,8 +9784,8 @@ function FerramentaStrategicPause({
   })), p === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "2",
     titulo: "Anuncie a pausa",
-    subtitulo: "N\xE3o saia sem avisar",
-    dica: "\"Preciso de 20 minutos. N\xE3o estou fugindo \u2014 vou voltar para resolvermos isso.\"",
+    subtitulo: "Não saia sem avisar",
+    dica: "\"Preciso de 20 minutos. Não estou fugindo — vou voltar para resolvermos isso.\"",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -9902,7 +9820,7 @@ function FerramentaStrategicPause({
       color: "white",
       fontSize: 12
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       fontWeight: anunciou ? 700 : 400,
@@ -9920,8 +9838,8 @@ function FerramentaStrategicPause({
   })), p === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "3",
     titulo: "Pausa de 20 minutos",
-    subtitulo: "N\xE3o alimente a raiva durante a pausa",
-    dica: "Evite rever a conversa mentalmente. Caminhe, beba \xE1gua, respire.",
+    subtitulo: "Não alimente a raiva durante a pausa",
+    dica: "Evite rever a conversa mentalmente. Caminhe, beba água, respire.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -9988,9 +9906,9 @@ function FerramentaStrategicPause({
     podeProsseguir: true
   })), p === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(StepHeader, {
     letra: "4",
-    titulo: "Voc\xEA est\xE1 pronto?",
+    titulo: "Você está pronto?",
     subtitulo: "Antes de voltar, verifique",
-    dica: "S\xF3 volte ao assunto quando conseguir falar com tom calmo e acesso ao racioc\xEDnio.",
+    dica: "Só volte ao assunto quando conseguir falar com tom calmo e acesso ao raciocínio.",
     cor: COR,
     bg: BG
   }), /*#__PURE__*/React.createElement("div", {
@@ -10030,7 +9948,7 @@ function FerramentaStrategicPause({
       color: "white",
       fontSize: 11
     }
-  }, "\u2713")), /*#__PURE__*/React.createElement("span", {
+  }, "✓")), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: ativou.includes(item) ? COR : "var(--text-muted)"
@@ -10045,7 +9963,7 @@ function FerramentaStrategicPause({
       fontWeight: 600,
       marginBottom: 16
     }
-  }, "\u2713 Pronto para retomar a conversa com equil\xEDbrio."), ativou.length < 3 && /*#__PURE__*/React.createElement("div", {
+  }, "✓ Pronto para retomar a conversa com equilíbrio."), ativou.length < 3 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef3c7",
       borderRadius: 10,
@@ -10054,7 +9972,7 @@ function FerramentaStrategicPause({
       color: "#854F0B",
       marginBottom: 16
     }
-  }, "Ainda n\xE3o \u2014 aguarde mais um pouco ou estenda a pausa."), /*#__PURE__*/React.createElement(NavButtons, {
+  }, "Ainda não — aguarde mais um pouco ou estenda a pausa."), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
     total: 4,
     onBack: () => setP(2),
@@ -10194,13 +10112,13 @@ function FerramentaRastreamentoCompulsao({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD12"), /*#__PURE__*/React.createElement("div", {
+  }, "🔒"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       opacity: 0.85,
       marginBottom: 4
     }
-  }, "N\xEDvel identificado"), /*#__PURE__*/React.createElement("div", {
+  }, "Nível identificado"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 28,
       fontWeight: 700,
@@ -10234,7 +10152,7 @@ function FerramentaRastreamentoCompulsao({
       color: COR,
       lineHeight: 1.6
     }
-  }, "\u26A0\uFE0F Instrumento de triagem interna \u2014 n\xE3o substitui avalia\xE7\xE3o cl\xEDnica formal. Resultado compartilhado com sua psic\xF3loga."));
+  }, "⚠️ Instrumento de triagem interna — não substitui avaliação clínica formal. Resultado compartilhado com sua psicóloga."));
   let qNum = 0;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10249,7 +10167,7 @@ function FerramentaRastreamentoCompulsao({
       opacity: 0.85,
       marginBottom: 4
     }
-  }, "Rastreamento Cl\xEDnico Interno"), /*#__PURE__*/React.createElement("div", {
+  }, "Rastreamento Clínico Interno"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 18,
@@ -10261,7 +10179,7 @@ function FerramentaRastreamentoCompulsao({
       fontSize: 12,
       opacity: 0.8
     }
-  }, "Responda pensando nos \xFAltimos 3 meses \xB7 ", respondidas, "/", totalQ, " respondidas")), /*#__PURE__*/React.createElement("div", {
+  }, "Responda pensando nos últimos 3 meses · ", respondidas, "/", totalQ, " respondidas")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       border: "1px solid #e9d5ff",
@@ -10293,7 +10211,7 @@ function FerramentaRastreamentoCompulsao({
       marginBottom: 16,
       textAlign: "center"
     }
-  }, "0 = Nunca \xB7 1 = Raramente \xB7 2 = \xC0s vezes \xB7 3 = Frequentemente \xB7 4 = Quase sempre"), BLOCOS.map(bloco => /*#__PURE__*/React.createElement("div", {
+  }, "0 = Nunca · 1 = Raramente · 2 = Às vezes · 3 = Frequentemente · 4 = Quase sempre"), BLOCOS.map(bloco => /*#__PURE__*/React.createElement("div", {
     key: bloco.id,
     style: {
       marginBottom: 20
@@ -10318,7 +10236,7 @@ function FerramentaRastreamentoCompulsao({
       fontWeight: 700,
       color: COR
     }
-  }, "Bloco ", bloco.id, " \u2014 ", bloco.titulo)), bloco.perguntas.map((p, pi) => {
+  }, "Bloco ", bloco.id, " — ", bloco.titulo)), bloco.perguntas.map((p, pi) => {
     qNum++;
     const key = `${bloco.id}-${pi}`;
     return /*#__PURE__*/React.createElement("div", {
@@ -10366,7 +10284,7 @@ function FerramentaRastreamentoCompulsao({
         color: respostas[key] === v ? "white" : "#374151",
         fontWeight: respostas[key] === v ? 700 : 400
       }
-    }, v, " \u2014 ", LABELS[v]))));
+    }, v, " — ", LABELS[v]))));
   }))), /*#__PURE__*/React.createElement("button", {
     onClick: enviar,
     disabled: respondidas < totalQ || enviando,
@@ -10406,7 +10324,7 @@ function FerramentaSelfCompassion({
       fontSize: 56,
       marginBottom: 12
     }
-  }, "\uD83D\uDC9B"), /*#__PURE__*/React.createElement("div", {
+  }, "💛"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
@@ -10414,14 +10332,14 @@ function FerramentaSelfCompassion({
       color: COR,
       marginBottom: 8
     }
-  }, "Autocompaix\xE3o registrada!"), /*#__PURE__*/React.createElement("div", {
+  }, "Autocompaixão registrada!"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       marginBottom: 24,
       lineHeight: 1.6
     }
-  }, "Voc\xEA praticou falar consigo mesmo com a gentileza que merece. \uD83D\uDC9C"), /*#__PURE__*/React.createElement("button", {
+  }, "Você praticou falar consigo mesmo com a gentileza que merece. 💜"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setSituacao("");
       setJuiz("");
@@ -10451,7 +10369,7 @@ function FerramentaSelfCompassion({
     campo: /*#__PURE__*/React.createElement("textarea", {
       value: situacao,
       onChange: e => setSituacao(e.target.value),
-      placeholder: "Ex: Esqueci de um compromisso importante e decepcionei algu\xE9m...",
+      placeholder: "Ex: Esqueci de um compromisso importante e decepcionei alguém...",
       style: {
         width: "100%",
         minHeight: 80,
@@ -10475,7 +10393,7 @@ function FerramentaSelfCompassion({
     campo: /*#__PURE__*/React.createElement("textarea", {
       value: juiz,
       onChange: e => setJuiz(e.target.value),
-      placeholder: "Ex: Que idiota. Sou irrespons\xE1vel. Nunca fa\xE7o nada certo...",
+      placeholder: "Ex: Que idiota. Sou irresponsável. Nunca faço nada certo...",
       style: {
         width: "100%",
         minHeight: 80,
@@ -10499,7 +10417,7 @@ function FerramentaSelfCompassion({
     campo: /*#__PURE__*/React.createElement("textarea", {
       value: amigo,
       onChange: e => setAmigo(e.target.value),
-      placeholder: "Ex: Acontece, voc\xEA n\xE3o \xE9 perfeito. O que importa \xE9 como vai reparar...",
+      placeholder: "Ex: Acontece, você não é perfeito. O que importa é como vai reparar...",
       style: {
         width: "100%",
         minHeight: 80,
@@ -10523,7 +10441,7 @@ function FerramentaSelfCompassion({
     campo: /*#__PURE__*/React.createElement("textarea", {
       value: reescrita,
       onChange: e => setReescrita(e.target.value),
-      placeholder: "Ex: Cometi um erro e isso n\xE3o me define. Posso pedir desculpa e fazer diferente...",
+      placeholder: "Ex: Cometi um erro e isso não me define. Posso pedir desculpa e fazer diferente...",
       style: {
         width: "100%",
         minHeight: 80,
@@ -10586,7 +10504,7 @@ function FerramentaSelfCompassion({
       color: "var(--text-muted)",
       fontStyle: "italic"
     }
-  }, "\uD83D\uDCAD Voc\xEA diria isso a algu\xE9m que ama? Guarde essa pergunta para o pr\xF3ximo passo."), /*#__PURE__*/React.createElement(NavButtons, {
+  }, "💭 Você diria isso a alguém que ama? Guarde essa pergunta para o próximo passo."), /*#__PURE__*/React.createElement(NavButtons, {
     passo: p,
     total: PASSOS.length,
     onBack: () => setP(p - 1),
@@ -10619,21 +10537,21 @@ function ModalVisualizarFerramenta({
         fontSize: 44,
         marginBottom: 12
       }
-    }, "\uD83D\uDCDD"), /*#__PURE__*/React.createElement("div", {
+    }, "📝"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: "var(--font-display)",
         fontSize: 18,
         fontWeight: 600,
         marginBottom: 8
       }
-    }, "Entrevista Cl\xEDnica Inicial"), /*#__PURE__*/React.createElement("p", {
+    }, "Entrevista Clínica Inicial"), /*#__PURE__*/React.createElement("p", {
       style: {
         fontSize: 13,
         color: "#6b7280",
         marginBottom: 20,
         lineHeight: 1.7
       }
-    }, "Instrumento de avalia\xE7\xE3o com perfil et\xE1rio, escalas de observa\xE7\xE3o, question\xE1rio de habilidades e hip\xF3teses DSM-5."), /*#__PURE__*/React.createElement("a", {
+    }, "Instrumento de avaliação com perfil etário, escalas de observação, questionário de habilidades e hipóteses DSM-5."), /*#__PURE__*/React.createElement("a", {
       href: "https://luciakratz-arch.github.io/entrevista-inicial/",
       target: "_blank",
       className: "btn btn-purple",
@@ -10643,7 +10561,7 @@ function ModalVisualizarFerramenta({
         alignItems: "center",
         gap: 8
       }
-    }, "\uD83D\uDD17 Abrir Entrevista Cl\xEDnica"));
+    }, "🔗 Abrir Entrevista Clínica"));
     if (k === "anamnese") return /*#__PURE__*/React.createElement(FerramentaAnamnese, null);
     if (k === "diario-terapeutico") return /*#__PURE__*/React.createElement(FerramentaDiario, {
       user: user
@@ -10745,7 +10663,7 @@ function ModalVisualizarFerramenta({
         textTransform: "uppercase",
         letterSpacing: "0.5px"
       }
-    }, "\uD83C\uDFAF Objetivo Terap\xEAutico"), /*#__PURE__*/React.createElement("div", {
+    }, "🎯 Objetivo Terapêutico"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "#3d006a",
@@ -10760,7 +10678,7 @@ function ModalVisualizarFerramenta({
         textTransform: "uppercase",
         letterSpacing: "0.5px"
       }
-    }, "\uD83D\uDCCB Passo a Passo"), recurso.passos.split(/(?=\d+\.)/).filter(Boolean).map((passo, i) => {
+    }, "📋 Passo a Passo"), recurso.passos.split(/(?=\d+\.)/).filter(Boolean).map((passo, i) => {
       const linhas = passo.trim().split("\n");
       const titulo = linhas[0];
       const corpo = linhas.slice(1).join("\n").trim();
@@ -10801,7 +10719,7 @@ function ModalVisualizarFerramenta({
         padding: 40,
         color: "#6b7280"
       }
-    }, "Ferramenta n\xE3o configurada.");
+    }, "Ferramenta não configurada.");
   }
   const EMOJIS = {
     relaxamento: "💨",
@@ -10850,7 +10768,7 @@ function ModalVisualizarFerramenta({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "eye",
     size: 14
-  }), " ", /*#__PURE__*/React.createElement("strong", null, "Visualiza\xE7\xE3o do paciente"), " \u2014 assim a ferramenta aparecer\xE1 na \xE1rea do paciente"), /*#__PURE__*/React.createElement("div", {
+  }), " ", /*#__PURE__*/React.createElement("strong", null, "Visualização do paciente"), " — assim a ferramenta aparecerá na área do paciente"), /*#__PURE__*/React.createElement("div", {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10907,7 +10825,7 @@ function ModalVisualizarFerramenta({
       textDecoration: "none",
       border: "1px solid #e9d5ff"
     }
-  }, "\u25B6 Ouvir / Assistir"))), renderFerramenta()));
+  }, "▶ Ouvir / Assistir"))), renderFerramenta()));
 }
 
 // ── Protocolo de Terapia de Casais ──────────────────────────────────────────
@@ -11229,14 +11147,14 @@ function InventarioBemEstarCasal({
       fontSize: 48,
       marginBottom: 12
     }
-  }, "\uD83D\uDC91"), /*#__PURE__*/React.createElement("div", {
+  }, "💑"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
       fontSize: 20,
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "Invent\xE1rio de Bem-Estar de Casais"), /*#__PURE__*/React.createElement("div", {
+  }, "Inventário de Bem-Estar de Casais"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
@@ -11245,7 +11163,7 @@ function InventarioBemEstarCasal({
       maxWidth: 480,
       margin: "0 auto 16px"
     }
-  }, "Este question\xE1rio avalia 6 dimens\xF5es importantes do relacionamento: Comunica\xE7\xE3o, Resolu\xE7\xE3o de Conflitos, Intimidade Emocional, Satisfa\xE7\xE3o Sexual, Coopera\xE7\xE3o e Senso de Humor.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "42 quest\xF5es"), " \xB7 Responda com honestidade \xB7 N\xE3o h\xE1 respostas certas ou erradas", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("em", null, "Seja r\xE1pido, n\xE3o pondere!")), /*#__PURE__*/React.createElement("button", {
+  }, "Este questionário avalia 6 dimensões importantes do relacionamento: Comunicação, Resolução de Conflitos, Intimidade Emocional, Satisfação Sexual, Cooperação e Senso de Humor.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "42 questões"), " · Responda com honestidade · Não há respostas certas ou erradas", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("em", null, "Seja rápido, não pondere!")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       fontSize: 15,
@@ -11255,7 +11173,7 @@ function InventarioBemEstarCasal({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "play",
     size: 16
-  }), " Iniciar Invent\xE1rio"));
+  }), " Iniciar Inventário"));
 
   // Tela de resultado
   if (pagina === totalPaginas + 1) {
@@ -11271,19 +11189,19 @@ function InventarioBemEstarCasal({
         fontSize: 40,
         marginBottom: 8
       }
-    }, "\uD83D\uDCCA"), /*#__PURE__*/React.createElement("div", {
+    }, "📊"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: "var(--font-display)",
         fontSize: 20,
         fontWeight: 600
       }
-    }, "Resultado do Invent\xE1rio"), /*#__PURE__*/React.createElement("div", {
+    }, "Resultado do Inventário"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         color: "var(--text-muted)",
         marginTop: 4
       }
-    }, "Pontua\xE7\xE3o total: ", totalGeral, " / 252")), /*#__PURE__*/React.createElement("div", {
+    }, "Pontuação total: ", totalGeral, " / 252")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -11342,7 +11260,7 @@ function InventarioBemEstarCasal({
         color: "var(--gray-600)",
         lineHeight: 1.7
       }
-    }, /*#__PURE__*/React.createElement("strong", null, "Como interpretar:"), " Pontua\xE7\xF5es mais altas (pr\xF3ximas de 35) indicam maior satisfa\xE7\xE3o naquela dimens\xE3o. Pontua\xE7\xF5es baixas (pr\xF3ximas de 7) indicam \xE1reas que merecem aten\xE7\xE3o terap\xEAutica."), /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("strong", null, "Como interpretar:"), " Pontuações mais altas (próximas de 35) indicam maior satisfação naquela dimensão. Pontuações baixas (próximas de 7) indicam áreas que merecem atenção terapêutica."), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         gap: 10
@@ -11385,7 +11303,7 @@ function InventarioBemEstarCasal({
       color: "var(--text-muted)",
       marginBottom: 6
     }
-  }, /*#__PURE__*/React.createElement("span", null, "Quest\xF5es ", (pagina - 1) * POR_PAG + 1, "\u2013", Math.min(pagina * POR_PAG, 42), " de 42"), /*#__PURE__*/React.createElement("span", null, totalRespondidas, " respondidas \xB7 ", progresso, "%")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, "Questões ", (pagina - 1) * POR_PAG + 1, "–", Math.min(pagina * POR_PAG, 42), " de 42"), /*#__PURE__*/React.createElement("span", null, totalRespondidas, " respondidas · ", progresso, "%")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3f4f6",
       borderRadius: 20,
@@ -11496,7 +11414,7 @@ function InventarioBemEstarCasal({
   }), pagina < totalPaginas ? /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => setPagina(p => p + 1)
-  }, "Pr\xF3ximo ", /*#__PURE__*/React.createElement(Icon, {
+  }, "Próximo ", /*#__PURE__*/React.createElement(Icon, {
     name: "arrow-right",
     size: 15
   })) : /*#__PURE__*/React.createElement("button", {
@@ -11606,7 +11524,7 @@ function AdminRodaVida({
       marginBottom: 16,
       lineHeight: 1.6
     }
-  }, "Avalie cada dimens\xE3o de 0 a 10. ", /*#__PURE__*/React.createElement("strong", null, "0"), " = nenhuma tens\xE3o \xB7 ", /*#__PURE__*/React.createElement("strong", null, "10"), " = tens\xE3o m\xE1xima."), Object.keys(valores).length > 0 && /*#__PURE__*/React.createElement(RodaSVG, null), /*#__PURE__*/React.createElement("div", {
+  }, "Avalie cada dimensão de 0 a 10. ", /*#__PURE__*/React.createElement("strong", null, "0"), " = nenhuma tensão · ", /*#__PURE__*/React.createElement("strong", null, "10"), " = tensão máxima."), Object.keys(valores).length > 0 && /*#__PURE__*/React.createElement(RodaSVG, null), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -11658,7 +11576,7 @@ function AdminRodaVida({
       fontSize: 13,
       color: "#065f46"
     }
-  }, "\u2713 Salvo com sucesso!"), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Salvo com sucesso!"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       width: "100%"
@@ -11771,7 +11689,7 @@ function AdminMetas({
         textAlign: "center",
         padding: 8
       }
-    }, "Registre pelo menos 2 evolu\xE7\xF5es para ver o gr\xE1fico");
+    }, "Registre pelo menos 2 evoluções para ver o gráfico");
     const w = 260,
       h = 80,
       pad = 20;
@@ -11863,7 +11781,7 @@ function AdminMetas({
       color: "var(--text-muted)",
       marginBottom: 16
     }
-  }, "Defina metas quantific\xE1veis com indicador de progresso. Cada c\xF4njuge define as suas pelo portal."), [0, 1, 2].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "Defina metas quantificáveis com indicador de progresso. Cada cônjuge define as suas pelo portal."), [0, 1, 2].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       background: "#fafafa",
@@ -11896,7 +11814,7 @@ function AdminMetas({
       };
       setMetas(n);
     },
-    placeholder: "Ex: Melhorar a comunica\xE7\xE3o di\xE1ria"
+    placeholder: "Ex: Melhorar a comunicação diária"
   }), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: metas[i].indicador,
@@ -11908,7 +11826,7 @@ function AdminMetas({
       };
       setMetas(n);
     },
-    placeholder: "Indicador quantific\xE1vel: Ex: De 3 para 8 na escala de comunica\xE7\xE3o"
+    placeholder: "Indicador quantificável: Ex: De 3 para 8 na escala de comunicação"
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -11921,7 +11839,7 @@ function AdminMetas({
       fontWeight: 600,
       whiteSpace: "nowrap"
     }
-  }, "Data de in\xEDcio:"), /*#__PURE__*/React.createElement("input", {
+  }, "Data de início:"), /*#__PURE__*/React.createElement("input", {
     type: "date",
     className: "form-input",
     value: metas[i].dataInicio,
@@ -11945,7 +11863,7 @@ function AdminMetas({
       fontSize: 13,
       color: "#065f46"
     }
-  }, "\u2713 Metas salvas! Aparecem no dashboard do casal."), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Metas salvas! Aparecem no dashboard do casal."), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       width: "100%"
@@ -11988,7 +11906,7 @@ function AdminMetas({
         color: "var(--text-muted)",
         marginBottom: 10
       }
-    }, "\uD83C\uDFAF ", m.indicador), /*#__PURE__*/React.createElement(GraficoLinha, {
+    }, "🎯 ", m.indicador), /*#__PURE__*/React.createElement(GraficoLinha, {
       evs: evs
     }), evs.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
@@ -12001,7 +11919,7 @@ function AdminMetas({
         color: "var(--text-muted)",
         marginBottom: 6
       }
-    }, "HIST\xD3RICO"), /*#__PURE__*/React.createElement("div", {
+    }, "HISTÓRICO"), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -12108,7 +12026,7 @@ function AdminMetas({
           obs: e.target.value
         }
       })),
-      placeholder: "Observa\xE7\xE3o (opcional)",
+      placeholder: "Observação (opcional)",
       style: {
         marginBottom: 8
       }
@@ -12177,7 +12095,7 @@ function AdminQuemSou({
       color: "var(--text-muted)",
       marginBottom: 16
     }
-  }, "Reflex\xE3o individual sobre identidade no relacionamento. Cada c\xF4njuge preenche pelo pr\xF3prio login no portal."), /*#__PURE__*/React.createElement("div", {
+  }, "Reflexão individual sobre identidade no relacionamento. Cada cônjuge preenche pelo próprio login no portal."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -12229,7 +12147,7 @@ function AdminQuemSou({
       fontSize: 13,
       color: "#065f46"
     }
-  }, "\u2713 Salvo!"), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Salvo!"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       width: "100%"
@@ -12345,7 +12263,7 @@ function AdminOQueQuero({
       fontSize: 13,
       color: "#065f46"
     }
-  }, "\u2713 Salvo!"), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Salvo!"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       width: "100%"
@@ -12397,7 +12315,7 @@ function FormularioCasal({
       padding: 32,
       color: "var(--text-muted)"
     }
-  }, "Formul\xE1rio n\xE3o configurado para esta atividade.");
+  }, "Formulário não configurado para esta atividade.");
   async function salvar() {
     setSalvando(true);
     try {
@@ -12483,7 +12401,7 @@ function FormularioCasal({
       fontSize: 13,
       color: "#065f46"
     }
-  }, "\u2713 Respostas salvas!"), /*#__PURE__*/React.createElement("button", {
+  }, "✓ Respostas salvas!"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       width: "100%"
@@ -12603,7 +12521,7 @@ function PsicoFabCasais() {
     style: {
       fontSize: 20
     }
-  }, "\uD83D\uDC9C"), /*#__PURE__*/React.createElement("div", {
+  }, "💜"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 14,
@@ -12683,7 +12601,7 @@ function PsicoFabCasais() {
       fontWeight: 600,
       flexShrink: 0
     }
-  }, "Ver \u2192"))), (abaAtiva === "psico" ? psicos : fabulas).length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "Ver →"))), (abaAtiva === "psico" ? psicos : fabulas).length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "16px 0",
@@ -12737,7 +12655,7 @@ function AbaProtocoloCasais() {
         fontSize: 14,
         color: etapa.cor
       }
-    }, etapa.stage === 0 ? "Diagnóstico" : "Etapa " + etapa.stage, " \u2014 ", etapa.titulo), /*#__PURE__*/React.createElement("div", {
+    }, etapa.stage === 0 ? "Diagnóstico" : "Etapa " + etapa.stage, " — ", etapa.titulo), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
         color: "var(--text-muted)"
@@ -12780,7 +12698,7 @@ function AbaProtocoloCasais() {
         color: "#6b7280",
         lineHeight: 1.7
       }
-    }, "Responda com honestidade e na presen\xE7a da psic\xF3loga. Esta atividade faz parte do protocolo de Terapia de Casais TCC."), /*#__PURE__*/React.createElement("div", {
+    }, "Responda com honestidade e na presença da psicóloga. Esta atividade faz parte do protocolo de Terapia de Casais TCC."), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         flexDirection: "column",
@@ -12795,7 +12713,7 @@ function AbaProtocoloCasais() {
         display: "block",
         marginBottom: 6
       }
-    }, "Reflex\xE3o ", n), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    }, "Reflexão ", n), /*#__PURE__*/React.createElement(TextAreaVoz, {
       className: "form-input",
       rows: 3,
       value: respostas[at.id + "_" + n] || "",
@@ -12839,7 +12757,7 @@ function AbaProtocoloCasais() {
       color: "var(--gray-700)",
       lineHeight: 1.6
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "Protocolo TCC para Casais"), " \u2014 diagn\xF3stico inicial + 4 etapas progressivas. Clique em cada atividade para acessar.")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Protocolo TCC para Casais"), " — diagnóstico inicial + 4 etapas progressivas. Clique em cada atividade para acessar.")), /*#__PURE__*/React.createElement("div", {
     style: {
       borderRadius: 12,
       border: "1.5px solid #fda4af",
@@ -12863,7 +12781,7 @@ function AbaProtocoloCasais() {
     style: {
       fontSize: 22
     }
-  }, "\u2728"), /*#__PURE__*/React.createElement("div", {
+  }, "✨"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1
     }
@@ -12878,7 +12796,7 @@ function AbaProtocoloCasais() {
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, "Recorrente \xB7 7 quest\xF5es de conex\xE3o emocional")), /*#__PURE__*/React.createElement(Icon, {
+  }, "Recorrente · 7 questões de conexão emocional")), /*#__PURE__*/React.createElement(Icon, {
     name: expandido === "checkin" ? "chevron-up" : "chevron-down",
     size: 16
   })), expandido === "checkin" && /*#__PURE__*/React.createElement("div", {
@@ -12892,7 +12810,7 @@ function AbaProtocoloCasais() {
       color: "var(--text-muted)",
       marginBottom: 12
     }
-  }, "Escala: 1=Nunca \xB7 2=Raramente \xB7 3=\xC0s vezes \xB7 4=Frequentemente \xB7 5=Sempre"), CHECKIN_SEMANAL.map((q, i) => /*#__PURE__*/React.createElement("div", {
+  }, "Escala: 1=Nunca · 2=Raramente · 3=Às vezes · 4=Frequentemente · 5=Sempre"), CHECKIN_SEMANAL.map((q, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: "flex",
@@ -12992,7 +12910,7 @@ function AbaProtocoloCasais() {
       fontSize: 14,
       color: etapa.cor
     }
-  }, etapa.stage === 0 ? "Diagnóstico" : "Etapa " + etapa.stage, " \u2014 ", etapa.titulo), /*#__PURE__*/React.createElement("div", {
+  }, etapa.stage === 0 ? "Diagnóstico" : "Etapa " + etapa.stage, " — ", etapa.titulo), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "var(--text-muted)",
@@ -13076,7 +12994,7 @@ function AbaProtocoloCasais() {
       fontWeight: 600,
       flexShrink: 0
     }
-  }, "Acessar \u2192")))))));
+  }, "Acessar →")))))));
 }
 
 // ── Aba Fábulas ──────────────────────────────────────────────────────────────
@@ -13212,7 +13130,7 @@ function AbaFabulas() {
     }, /*#__PURE__*/React.createElement(Icon, {
       name: "arrow-left",
       size: 16
-    }), " Todas as f\xE1bulas"), /*#__PURE__*/React.createElement("div", {
+    }), " Todas as fábulas"), /*#__PURE__*/React.createElement("div", {
       className: "card",
       style: {
         marginBottom: 16,
@@ -13248,7 +13166,7 @@ function AbaFabulas() {
         fontSize: 12,
         opacity: 0.75
       }
-    }, (fabulaAberta.paginas || []).length, " p\xE1ginas \xB7 ", (fabulaAberta.perguntas || []).length, " reflex\xF5es"))), (fabulaAberta.paginas || []).map((pag, i) => /*#__PURE__*/React.createElement("div", {
+    }, (fabulaAberta.paginas || []).length, " páginas · ", (fabulaAberta.perguntas || []).length, " reflexões"))), (fabulaAberta.paginas || []).map((pag, i) => /*#__PURE__*/React.createElement("div", {
       key: i,
       className: "card",
       style: {
@@ -13263,7 +13181,7 @@ function AbaFabulas() {
         textTransform: "uppercase",
         letterSpacing: "0.8px"
       }
-    }, "P\xE1gina ", i + 1, " de ", fabulaAberta.paginas.length), /*#__PURE__*/React.createElement("p", {
+    }, "Página ", i + 1, " de ", fabulaAberta.paginas.length), /*#__PURE__*/React.createElement("p", {
       style: {
         fontSize: 14,
         lineHeight: 1.9,
@@ -13287,7 +13205,7 @@ function AbaFabulas() {
     }, /*#__PURE__*/React.createElement(Icon, {
       name: "help-circle",
       size: 16
-    }), " Perguntas de Reflex\xE3o"), fabulaAberta.perguntas.map((p, i) => /*#__PURE__*/React.createElement("div", {
+    }), " Perguntas de Reflexão"), fabulaAberta.perguntas.map((p, i) => /*#__PURE__*/React.createElement("div", {
       key: i,
       style: {
         display: "flex",
@@ -13332,12 +13250,12 @@ function AbaFabulas() {
       marginTop: 12,
       fontWeight: 500
     }
-  }, "Nenhuma f\xE1bula cadastrada ainda."), /*#__PURE__*/React.createElement("div", {
+  }, "Nenhuma fábula cadastrada ainda."), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       marginTop: 6
     }
-  }, "Execute o arquivo ", /*#__PURE__*/React.createElement("code", null, "popular-recursos.html"), " para criar as 15 f\xE1bulas."));
+  }, "Execute o arquivo ", /*#__PURE__*/React.createElement("code", null, "popular-recursos.html"), " para criar as 15 fábulas."));
 
   // Agrupa por macrocategoria
   const filtradas = filtro === "todos" ? fabulas : fabulas.filter(f => {
@@ -13382,7 +13300,7 @@ function AbaFabulas() {
       fontWeight: 600,
       cursor: "pointer"
     }
-  }, "\uD83D\uDCDA Todas (", fabulas.length, ")"), MACROCATEGORIAS.map(m => {
+  }, "📚 Todas (", fabulas.length, ")"), MACROCATEGORIAS.map(m => {
     const n = fabulas.filter(f => FAB_LEGADO_MACRO[f.categoria || "outro"] === m.id || f.categoria === m.id).length;
     if (n === 0) return null;
     const ativo = filtro === m.id;
@@ -13519,13 +13437,13 @@ function AbaFabulas() {
         fontSize: 11,
         color: "var(--text-muted)"
       }
-    }, /*#__PURE__*/React.createElement("span", null, (f.paginas || []).length, " p\xE1g. \xB7 ", (f.perguntas || []).length, " reflex\xF5es"), /*#__PURE__*/React.createElement("span", {
+    }, /*#__PURE__*/React.createElement("span", null, (f.paginas || []).length, " pág. · ", (f.perguntas || []).length, " reflexões"), /*#__PURE__*/React.createElement("span", {
       style: {
         color: c.cor,
         fontWeight: 600,
         fontSize: 12
       }
-    }, "Come\xE7ar a ler \u2192")))))));
+    }, "Começar a ler →")))))));
   }));
 }
 
