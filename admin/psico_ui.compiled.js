@@ -1396,9 +1396,10 @@ function RecursosTerapeuticos({
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
-      flex: 2,
+      width: "100%",
       color: "#059669",
-      border: "1px solid #059669"
+      border: "1px solid #059669",
+      marginTop: 4
     },
     onClick: () => {
       const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
