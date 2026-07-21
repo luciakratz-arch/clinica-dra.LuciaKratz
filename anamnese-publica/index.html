@@ -121,10 +121,16 @@ textarea.has-mic{padding-right:40px}
     <div class="fg" style="margin-top:18px">
       <label>Quem está preenchendo este formulário?</label>
       <div class="radio-group" id="rgInformante">
-        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante')"><input type="radio" name="informanteTipo" value="proprio"/> A própria pessoa</label>
-        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante')"><input type="radio" name="informanteTipo" value="responsavel"/> Pai, mãe ou responsável</label>
-        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante')"><input type="radio" name="informanteTipo" value="cuidador"/> Cuidador ou familiar</label>
-        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante')"><input type="radio" name="informanteTipo" value="outro"/> Outro</label>
+        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante');toggleRespondente(this)"><input type="radio" name="informanteTipo" value="proprio"/> A própria pessoa</label>
+        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante');toggleRespondente(this)"><input type="radio" name="informanteTipo" value="responsavel"/> Pai, mãe ou responsável</label>
+        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante');toggleRespondente(this)"><input type="radio" name="informanteTipo" value="cuidador"/> Cuidador ou familiar</label>
+        <label class="radio-opt" onclick="toggleRadio(this,'rgInformante');toggleRespondente(this)"><input type="radio" name="informanteTipo" value="outro"/> Outro</label>
+      </div>
+      <div id="boxRespondente" style="display:none;margin-top:12px;display:none">
+        <div class="grid">
+          <div class="fg"><label>Nome de quem está respondendo</label><input id="nomeRespondente" type="text" placeholder="Nome completo"/></div>
+          <div class="fg"><label>Grau de parentesco ou relação</label><input id="parentescoRespondente" type="text" placeholder="Ex: Mãe, filho, cônjuge..."/></div>
+        </div>
       </div>
     </div>
 
@@ -178,12 +184,20 @@ function selecionarPerfil(p){
   document.getElementById("btnAdulto").classList.toggle("selected", p==="adulto");
 }
 
+function toggleRespondente(el){
+  const val = el.querySelector("input").value;
+  const box = document.getElementById("boxRespondente");
+  box.style.display = val==="proprio" ? "none" : "block";
+}
+
 function getRadioVal(name){ const el=document.querySelector("input[name='"+name+"']:checked"); return el?el.value:""; }
 
 function iniciar(){
   if(!perfil){ alert("Por favor, selecione para quem é a avaliação."); return; }
   respostas.perfil = perfil;
   respostas.informanteTipo = getRadioVal("informanteTipo");
+  respostas.nomeRespondente = document.getElementById("nomeRespondente")?.value.trim()||"";
+  respostas.parentescoRespondente = document.getElementById("parentescoRespondente")?.value.trim()||"";
   stepsData = perfil==="infantil" ? stepsInfantil() : stepsAdulto();
   step = 1;
   document.getElementById("telaInicial").style.display="none";
