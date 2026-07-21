@@ -2344,6 +2344,106 @@ function RespostasCasal({ pacienteId, parceiroId, parceiro, nomePaciente }) {
   );
 }
 
+
+// ── Aba Anamnese ─────────────────────────────────────────────────────────────
+function AbaAnamnese({paciente}){
+  const [anamnese, setAnamnese] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    if(!paciente?.id) return;
+    db.collection("clinica_anamneses")
+      .where("pacienteId","==",paciente.id)
+      .get()
+      .then(snap=>{
+        if(!snap.empty){
+          const doc = snap.docs[0];
+          setAnamnese({id:doc.id,...doc.data()});
+        }
+        setLoading(false);
+      })
+      .catch(()=>setLoading(false));
+  },[paciente?.id]);
+
+  const LABELS = {
+    perfil:"Perfil",informanteTipo:"Quem respondeu",nomeRespondente:"Nome do respondente",
+    parentescoRespondente:"Parentesco",queixa:"Queixa Principal",
+    gestacaoPlanejada:"Gestação planejada",tipoParto:"Tipo de parto",
+    idadeGestacional:"Idade gestacional",choroNascer:"Chorou ao nascer",
+    sustCabeca:"Firmou a cabeça",sentou:"Sentou sozinho",engatinhou:"Engatinhou",
+    caminhou:"Caminhou",lateralidade:"Lateralidade",balbucio:"Balbucio",
+    primeirasParalavras:"Primeiras palavras",frasesSimples:"Frases simples",
+    clarezaFala:"Clareza da fala",contatoVisual:"Contato visual",
+    sorrisoSocial:"Sorriso social",padraOSono:"Padrão de sono",
+    padraoAlimentar:"Padrão alimentar",desfralDiurno:"Desfralde diurno",
+    desfralNoturno:"Desfralde noturno",idadeEscola:"Idade na escola",
+    adaptacaoEscola:"Adaptação escolar",repetencia:"Repetência",
+    facilidades:"Facilidades",dificuldades:"Dificuldades",
+    foco:"Atenção/Foco",organizacao:"Organização",memoria:"Memória",
+    convulsoes:"Convulsões/Desmaios",medicacoes:"Medicações",
+    historicoFamiliar:"Histórico familiar",obsFinais:"Observações finais",
+    // Adulto
+    escolaridade:"Escolaridade",profissao:"Profissão",comQuemMora:"Com quem mora",
+    contextoEncaminhamento:"Contexto do encaminhamento",inicioQueixa:"Início dos sintomas",
+    evolucaoQueixa:"Evolução",usoAlcoolDrogas:"Uso de álcool/drogas",
+    memoria:"Memória",orientacao:"Orientação",atencao:"Atenção",
+    decisoes:"Tomada de decisões",avdBasicas:"Higiene/vestir",
+    avdFinanceiro:"Gestão financeira",avdSair:"Sair sozinho",
+    doencasCronicas:"Doenças crônicas",quedas:"Quedas frequentes",
+    marcha:"Alteração de marcha",tremores:"Tremores",confusaoNoturna:"Confusão noturna",
+  };
+
+  const SKIP = ["pacienteId","pacienteNome","tipo","createdAt","id","perfil","informanteTipo","nomeRespondente","parentescoRespondente"];
+
+  if(loading) return <div style={{padding:40,textAlign:"center"}}><Spinner/></div>;
+
+  if(!anamnese) return (
+    <div style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
+      <div style={{fontSize:40,marginBottom:12}}>📋</div>
+      <div style={{fontWeight:600,marginBottom:6}}>Nenhuma anamnese encontrada</div>
+      <div style={{fontSize:13}}>O paciente ainda não preencheu o formulário de anamnese.</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:20,flexWrap:"wrap"}}>
+        <div style={{background:"var(--purple-light-bg)",color:"var(--purple)",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>
+          {anamnese.perfil==="infantil"?"👶 Infantil/Neurodesenvolvimento":"🧑 Adulto/Idoso"}
+        </div>
+        {anamnese.informanteTipo && anamnese.informanteTipo!=="proprio" && (
+          <div style={{background:"#f3f4f6",color:"#374151",padding:"4px 12px",borderRadius:20,fontSize:12}}>
+            Respondido por: {anamnese.nomeRespondente||anamnese.informanteTipo} {anamnese.parentescoRespondente?"("+anamnese.parentescoRespondente+")":""}
+          </div>
+        )}
+      </div>
+
+      {/* Queixa em destaque */}
+      {anamnese.queixa && (
+        <div style={{background:"#f0f4ff",border:"1px solid #c7d2fe",borderRadius:12,padding:16,marginBottom:20}}>
+          <div style={{fontSize:11,fontWeight:700,color:"#4338ca",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Queixa Principal</div>
+          <div style={{fontSize:14,color:"#1f2937",lineHeight:1.7}}>{anamnese.queixa}</div>
+        </div>
+      )}
+
+      {/* Demais campos */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        {Object.entries(anamnese)
+          .filter(([k,v])=>!SKIP.includes(k)&&v&&String(v).trim())
+          .map(([k,v])=>(
+            <div key={k} style={{background:"var(--gray-50)",border:"1px solid var(--gray-200)",borderRadius:10,padding:"12px 14px"}}>
+              <div style={{fontSize:10.5,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>
+                {LABELS[k]||k}
+              </div>
+              <div style={{fontSize:13.5,color:"var(--text-dark)",lineHeight:1.55}}>{String(v)}</div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
 function AbaCasal({ paciente, pacientes }) {
   const [casalId, setCasalId] = useState(paciente.casalId||"");
   const [salvando, setSalvando] = useState(false);
@@ -3136,6 +3236,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
       {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
       {id:"casal",    label:"Terapia de Casal",icon:"heart"},
       {id:"nr1",      label:"Saúde Ocupacional",   icon:"briefcase"},
+      {id:"anamnese", label:"Anamnese",             icon:"clipboard"},
       {id:"links",    label:"Links Partilhados",   icon:"link"},
     ]:[]),
   ];
@@ -3166,6 +3267,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
       {aba==="casal"      &&<AbaCasal       paciente={paciente} pacientes={pacientes}/>}
       {aba==="nr1"        &&<AbaOcupacional paciente={paciente}/>}
+      {aba==="anamnese"   &&<AbaAnamnese paciente={paciente}/>}
       {aba==="links"      &&<AbaLinksPartilhados paciente={paciente}/>}
     </div>
   );
