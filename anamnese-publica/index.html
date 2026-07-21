@@ -534,49 +534,53 @@ async function enviar(){
     const email = respostas.email||"";
     const nome = respostas.nome||"";
 
-    const pacRef = await db.collection("clinica_pacientes").add({
-      nome,
-      email,
+    const email = respostas.email||"";
+    const nome = respostas.nome||"";
+
+    // Batch — garante que paciente e anamnese são criados juntos ou nenhum
+    const pacienteRef = db.collection("clinica_pacientes").doc();
+    const anamneseRef = db.collection("clinica_anamneses").doc();
+    const emailRef = db.collection("nr1map_emails").doc();
+    const batch = db.batch();
+
+    batch.set(pacienteRef, {
+      nome, email,
       telefone: respostas.telefone||"",
       dataNasc: respostas.dataNasc||"",
-      status: "pendente",
-      origem: "anamnese-publica",
-      perfil: respostas.perfil,
-      modulosAtivos: ["mod1"],
-      senha: "1234",
+      status: "pendente", origem: "anamnese-publica",
+      perfil: respostas.perfil, modulosAtivos: ["mod1"], senha: "1234",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    await db.collection("clinica_anamneses").add({
-      pacienteId:pacRef.id,
-      pacienteNome:nome,
-      tipo:"anamnese-"+respostas.perfil,
-      informanteTipo:respostas.informanteTipo||"",
-      ...respostas,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    batch.set(anamneseRef, {
+      pacienteId: pacienteRef.id, pacienteNome: nome,
+      tipo: "anamnese-"+respostas.perfil, informanteTipo: respostas.informanteTipo||"",
+      ...respostas, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // E-mail para Dra. Lucia
-    await db.collection("nr1map_emails").add({
+    batch.set(emailRef, {
       to:"luciakratz@gmail.com",
       message:{
-        subject:"📋 Nova Anamnese — "+nome+" ("+( respostas.perfil==="infantil"?"Infantil":"Adulto/Idoso")+")",
-        html:"<h2>Nova Anamnese recebida</h2><table style='border-collapse:collapse;width:100%'><tr><td style='padding:6px;border:1px solid #ddd'><b>Paciente</b></td><td style='padding:6px;border:1px solid #ddd'>"+nome+"</td></tr><tr><td style='padding:6px;border:1px solid #ddd'><b>Perfil</b></td><td style='padding:6px;border:1px solid #ddd'>"+(respostas.perfil==="infantil"?"Infantil/Neurodesenvolvimento":"Adulto/Idoso")+"</td></tr><tr><td style='padding:6px;border:1px solid #ddd'><b>Telefone</b></td><td style='padding:6px;border:1px solid #ddd'>"+(respostas.telefone||"—")+"</td></tr><tr><td style='padding:6px;border:1px solid #ddd'><b>E-mail</b></td><td style='padding:6px;border:1px solid #ddd'>"+(email||"—")+"</td></tr><tr><td style='padding:6px;border:1px solid #ddd'><b>Queixa Principal</b></td><td style='padding:6px;border:1px solid #ddd'>"+(respostas.queixa||"—")+"</td></tr></table><p style='margin-top:16px'>Acesse o sistema para ver todos os dados preenchidos.</p>"
+        subject:"📋 Nova Anamnese — "+nome+" ("+(respostas.perfil==="infantil"?"Infantil":"Adulto/Idoso")+")",
+        html:"<h2>Nova Anamnese recebida</h2><p><b>Paciente:</b> "+nome+"</p><p><b>Perfil:</b> "+(respostas.perfil==="infantil"?"Infantil/Neurodesenvolvimento":"Adulto/Idoso")+"</p><p><b>Telefone:</b> "+(respostas.telefone||"—")+"</p><p><b>Queixa:</b> "+(respostas.queixa||"—")+"</p>"
       },
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
+    await batch.commit();
+
     if(email){
-      await db.collection("nr1map_emails").add({
+      db.collection("nr1map_emails").add({
         to:email,
         message:{
           subject:"✅ Formulário recebido — Dra. Lucia Kratz",
-          html:"<p>Olá, <b>"+nome+"</b>! 🦋</p><p>Recebemos seu formulário de anamnese com sucesso.</p><p>A Dra. Lucia Kratz analisará as informações antes da sua consulta.</p><p>Dúvidas? Fale pelo WhatsApp: <a href='https://wa.me/5562994644950'>62 9 9464-4950</a></p><p>Obrigado pela confiança! 💜</p>"
+          html:"<p>Olá, <b>"+nome+"</b>! 🦋</p><p>Recebemos sua anamnese.</p><p>Dúvidas? WhatsApp: <a href='https://wa.me/5562994644950'>62 9 9464-4950</a></p><p>Obrigado! 💜</p>"
         },
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
 
+    try{localStorage.removeItem("anamnese_rascunho");}catch(e){}
     try{localStorage.removeItem("anamnese_rascunho");}catch(e){}
     document.getElementById("formArea").style.display="none";
     document.getElementById("successArea").style.display="block";
