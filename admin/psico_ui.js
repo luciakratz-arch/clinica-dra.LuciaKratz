@@ -667,9 +667,12 @@ function RecursosTerapeuticos({ user }) {
                     {r.formularioKey==="anamnese"&&(
                       <button className="btn btn-ghost" style={{fontSize:12,flex:2,color:"#059669",border:"1px solid #059669"}} onClick={()=>{
                         const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
-                        const msg = encodeURIComponent("Olá! 🦋 A Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\nPor favor, clique no link abaixo e preencha com calma — são informações importantes para o atendimento:\n\n"+link+"\n\nQualquer dúvida, pode responder aqui. 💜");
-                        window.open("https://wa.me/?text="+msg,"_blank");
-                      }}><Icon name="link" size={13}/> 🔗 Link Público</button>
+                        navigator.clipboard.writeText(link).then(()=>{
+                          alert("✅ Link copiado!\n\nCole no WhatsApp para o paciente:\n\n"+link);
+                        }).catch(()=>{
+                          window.prompt("Copie o link abaixo e envie para o paciente:", link);
+                        });
+                      }}><Icon name="link" size={13}/> 🔗 Copiar Link</button>
                     )}
                     <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                   </div>
