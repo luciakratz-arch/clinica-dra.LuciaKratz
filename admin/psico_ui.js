@@ -664,6 +664,13 @@ function RecursosTerapeuticos({ user }) {
                   <div style={{display:"flex",gap:8,borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1,color:"var(--purple)"}} onClick={()=>setVisualizando(r)}><Icon name="eye" size={13}/> Visualizar</button>
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
+                    {r.formularioKey==="anamnese"&&(
+                      <button className="btn btn-ghost" style={{fontSize:12,flex:2,color:"#059669",border:"1px solid #059669"}} onClick={()=>{
+                        const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
+                        const msg = encodeURIComponent("Olá! 🦋 A Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\nPor favor, clique no link abaixo e preencha com calma — são informações importantes para o atendimento:\n\n"+link+"\n\nQualquer dúvida, pode responder aqui. 💜");
+                        window.open("https://wa.me/?text="+msg,"_blank");
+                      }}><Icon name="link" size={13}/> 🔗 Link Público</button>
+                    )}
                     <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                   </div>
                 </div>
