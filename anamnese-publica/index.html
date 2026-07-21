@@ -535,12 +535,16 @@ async function enviar(){
     const nome = respostas.nome||"";
 
     const pacRef = await db.collection("clinica_pacientes").add({
-      nome, email, telefone:respostas.telefone||"",
-      dataNascimento:respostas.dataNasc||"",
-      status:"pendente", origem:"anamnese-publica",
-      perfil:respostas.perfil,
-      modulosAtivos:["mod1"],
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      nome,
+      email,
+      telefone: respostas.telefone||"",
+      dataNasc: respostas.dataNasc||"",
+      status: "pendente",
+      origem: "anamnese-publica",
+      perfil: respostas.perfil,
+      modulosAtivos: ["mod1"],
+      senha: "1234",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     await db.collection("clinica_anamneses").add({
