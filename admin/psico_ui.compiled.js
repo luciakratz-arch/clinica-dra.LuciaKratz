@@ -341,7 +341,7 @@ function AbaPsicoeducacao() {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeduca\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeducação"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -676,7 +676,7 @@ function AbaPsicoeducacao() {
       fontSize: 22,
       color: "var(--text-muted)"
     }
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
+  }, "×")), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "20px 24px",
       display: "flex",
@@ -714,14 +714,14 @@ function AbaPsicoeducacao() {
       display: "block",
       marginBottom: 6
     }
-  }, "T\xEDtulo *"), /*#__PURE__*/React.createElement("input", {
+  }, "Título *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.titulo,
     onChange: e => setForm(f => ({
       ...f,
       titulo: e.target.value
     })),
-    placeholder: "Ex: O que \xE9 ansiedade?"
+    placeholder: "Ex: O que é ansiedade?"
   }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontWeight: 600,
@@ -749,7 +749,7 @@ function AbaPsicoeducacao() {
       display: "block",
       marginBottom: 6
     }
-  }, "Descri\xE7\xE3o breve"), /*#__PURE__*/React.createElement("input", {
+  }, "Descrição breve"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.descricao,
     onChange: e => setForm(f => ({
@@ -764,7 +764,7 @@ function AbaPsicoeducacao() {
       display: "block",
       marginBottom: 6
     }
-  }, "Conte\xFAdo completo"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "Conteúdo completo"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 6,
     value: form.conteudo,
@@ -1013,7 +1013,7 @@ function RecursosTerapeuticos({
     className: "page-title"
   }, "Recursos Terapeuticos"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, recursos.length, " ferramenta", recursos.length !== 1 ? "s" : "", " \xB7 ", recursos.filter(r => r.tipo === "interativa").length, " interativas \xB7 ", recursos.filter(r => r.tipo === "conteudo").length, " de conteudo")), /*#__PURE__*/React.createElement("div", {
+  }, recursos.length, " ferramenta", recursos.length !== 1 ? "s" : "", " · ", recursos.filter(r => r.tipo === "interativa").length, " interativas · ", recursos.filter(r => r.tipo === "conteudo").length, " de conteudo")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -1093,7 +1093,7 @@ function RecursosTerapeuticos({
       await batch.commit();
       alert(`✅ ${n} ferramenta(s) corrigida(s)! Respiração e Relaxamento agora aparecem em Ansiedade.`);
     }
-  }, "\uD83D\uDD27 Corrigir Categorias"), /*#__PURE__*/React.createElement("button", {
+  }, "🔧 Corrigir Categorias"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => {
       setForm({
@@ -1342,7 +1342,7 @@ function RecursosTerapeuticos({
       fontSize: 10,
       fontWeight: 600
     }
-  }, "M\xFAsica")), /*#__PURE__*/React.createElement("div", {
+  }, "Música")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 600,
       fontSize: 14
@@ -1392,7 +1392,23 @@ function RecursosTerapeuticos({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
-  }), " Editar"), /*#__PURE__*/React.createElement("button", {
+  }), " Editar"), r.formularioKey === "anamnese" && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      flex: 2,
+      color: "#059669",
+      border: "1px solid #059669"
+    },
+    onClick: () => {
+      const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
+      const msg = encodeURIComponent("Olá! 🦋 A Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\nPor favor, clique no link abaixo e preencha com calma — são informações importantes para o atendimento:\n\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜");
+      window.open("https://wa.me/?text=" + msg, "_blank");
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " 🔗 Link Público"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       padding: "6px 10px",
@@ -1633,7 +1649,7 @@ function RecursosTerapeuticos({
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "\uD83C\uDFB5 Link de M\xFAsica (YouTube) \u2014 opcional"), /*#__PURE__*/React.createElement("input", {
+  }, "🎵 Link de Música (YouTube) — opcional"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.musicUrl || "",
     onChange: e => setForm({
@@ -1647,14 +1663,14 @@ function RecursosTerapeuticos({
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, "Tocar\xE1 em loop durante o exerc\xEDcio no portal do paciente.")), /*#__PURE__*/React.createElement("div", {
+  }, "Tocará em loop durante o exercício no portal do paciente.")), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       marginBottom: 14
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "\uD83C\uDFAC Link de \xC1udio ou V\xEDdeo complementar \u2014 opcional"), /*#__PURE__*/React.createElement("input", {
+  }, "🎬 Link de Áudio ou Vídeo complementar — opcional"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.mediaUrl || "",
     onChange: e => setForm({
@@ -1668,7 +1684,7 @@ function RecursosTerapeuticos({
       color: "var(--text-muted)",
       marginTop: 4
     }
-  }, "Aparecer\xE1 como bot\xE3o \"\u25B6 Ouvir / Assistir\" no portal do paciente junto com a ferramenta.")), /*#__PURE__*/React.createElement("div", {
+  }, "Aparecerá como botão \"▶ Ouvir / Assistir\" no portal do paciente junto com a ferramenta.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
