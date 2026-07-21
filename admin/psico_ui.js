@@ -667,12 +667,13 @@ function RecursosTerapeuticos({ user }) {
                     {r.formularioKey==="anamnese"&&(
                       <button className="btn btn-ghost" style={{fontSize:12,flex:2,color:"#059669",border:"1px solid #059669"}} onClick={()=>{
                         const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
-                        navigator.clipboard.writeText(link).then(()=>{
-                          alert("✅ Link copiado!\n\nCole no WhatsApp para o paciente:\n\n"+link);
+                        const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\n📋 *O que é isso?*\nSão perguntas sobre seu histórico de saúde e desenvolvimento — informações importantes para o atendimento.\n\n⏱️ *Quanto tempo leva?*\nEntre 10 e 20 minutos.\n\n💡 *Dicas:*\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n• Tenha em mãos informações sobre a infância, se possível\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
+                        navigator.clipboard.writeText(msg).then(()=>{
+                          alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
                         }).catch(()=>{
-                          window.prompt("Copie o link abaixo e envie para o paciente:", link);
+                          window.prompt("Copie a mensagem abaixo e envie para o paciente:", msg);
                         });
-                      }}><Icon name="link" size={13}/> 🔗 Copiar Link</button>
+                      }}><Icon name="link" size={13}/> 🔗 Copiar Mensagem</button>
                     )}
                     <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                   </div>
