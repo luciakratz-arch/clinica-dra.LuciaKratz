@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Anamnese — Marcos do Desenvolvimento | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
+.card{background:white;border-radius:20px;padding:32px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 8px 40px rgba(123,0,196,0.12)}
+.header{text-align:center;margin-bottom:28px}
+.header img{width:72px;height:72px;border-radius:14px;object-fit:cover;box-shadow:0 4px 16px rgba(123,0,196,0.15)}
+.header h1{font-size:20px;color:#3d006a;margin:10px 0 4px;font-weight:700}
+.header p{font-size:13px;color:#6b7280}
+
+/* Progress */
+.progress-wrap{margin-bottom:28px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:6px}
+.progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
+.step-title{font-size:16px;font-weight:700;color:#3d006a;margin-bottom:4px}
+.step-sub{font-size:12.5px;color:#6b7280;margin-bottom:20px}
+
+/* Form */
+.fg{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:#7B00C4}
+textarea{resize:vertical;min-height:72px;line-height:1.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.opt{font-size:10px;color:#9ca3af;font-weight:400;margin-left:4px;text-transform:none}
+
+/* Mic button */
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#f3e8ff;border:none;border-radius:8px;padding:5px 8px;cursor:pointer;font-size:16px;line-height:1}
+textarea.has-mic{padding-right:40px}
+
+/* Nav buttons */
+.nav{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
+.btn-back{background:#f3f4f6;color:#374151;flex:1}
+.btn-next{background:#7B00C4;color:white;flex:2;box-shadow:0 4px 14px rgba(123,0,196,0.35)}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.6;cursor:default}
+
+/* Success */
+.success{text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.success-msg{font-size:14px;color:#6b7280;line-height:1.7}
+
+/* Section divider */
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:14px;margin-top:4px}
+
+@media(max-width:500px){.grid,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="../logo.png" alt="Logo" onerror="this.style.display='none'"/>
+    <h1>Anamnese — Marcos do Desenvolvimento</h1>
+    <p>Dra. Lucia Kratz · CRP 09/20590 · Psicóloga</p>
+  </div>
+
+  <div id="formArea">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="stepLabel">Etapa 1 de 8</span>
+        <span id="stepName">Identificação</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:12.5%"></div></div>
+    </div>
+
+    <!-- STEP 1: Identificação -->
+    <div class="step" id="step1">
+      <div class="step-title">1. Identificação e Dados Gerais</div>
+      <div class="step-sub">Informações básicas sobre o paciente e motivo do encaminhamento.</div>
+      <div class="fg"><label>Nome do Paciente *</label><input id="nome" type="text" placeholder="Nome completo"/></div>
+      <div class="grid">
+        <div class="fg"><label>Data de Nascimento</label><input id="dataNasc" type="date"/></div>
+        <div class="fg"><label>Idade Atual</label><input id="idade" type="text" placeholder="Ex: 8 anos"/></div>
+      </div>
+      <div class="grid">
+        <div class="fg"><label>E-mail <span class="opt">opcional</span></label><input id="email" type="email" placeholder="seu@email.com"/></div>
+        <div class="fg"><label>Telefone / WhatsApp</label><input id="telefone" type="tel" placeholder="+55 (62) 9 9999-9999"/></div>
+      </div>
+      <div class="fg"><label>Informante e Grau de Parentesco</label><input id="informante" type="text" placeholder="Ex: Mãe, pai, responsável"/></div>
+      <div class="fg"><label>Quem encaminhou</label><input id="encaminhador" type="text" placeholder="Profissional ou instituição"/></div>
+      <div class="fg"><label>Queixa Principal (motivo da avaliação)</label><textarea id="queixa" placeholder="Descreva o motivo da avaliação..." class="has-mic"></textarea></div>
+    </div>
+
+    <!-- STEP 2: Gestacional -->
+    <div class="step" id="step2" style="display:none">
+      <div class="step-title">2. Histórico Gestacional e Perinatal</div>
+      <div class="step-sub">Informações sobre a gestação, parto e período neonatal.</div>
+      <div class="fg">
+        <label>Gestação Planejada?</label>
+        <select id="gestacaoPlanejada"><option value="">Selecione</option><option>Sim</option><option>Não</option></select>
+      </div>
+      <div class="fg"><label>Intercorrências na Gestação <span class="opt">opcional</span></label>
+        <textarea id="intercorrenciasGest" placeholder="Infecções, hipertensão, diabetes, medicações, uso de álcool/tabaco/drogas, sangramentos, traumas emocionais..." class="has-mic"></textarea></div>
+      <div class="grid">
+        <div class="fg"><label>Tipo de Parto</label>
+          <select id="tipoParto"><option value="">Selecione</option><option>Normal</option><option>Cesárea</option><option>Fórceps</option></select></div>
+        <div class="fg"><label>Idade Gestacional (semanas)</label>
+          <select id="idadeGestacional"><option value="">Selecione</option><option>Termo (37-42 semanas)</option><option>Prematuro (antes de 37 semanas)</option><option>Pós-termo (após 42 semanas)</option></select></div>
+      </div>
+      <div class="fg"><label>Intercorrências Perinatais <span class="opt">opcional</span></label>
+        <textarea id="intercorrenciasPeri" placeholder="Apgar baixo, cianose, icterícia grave, UTI neonatal, hipóxia..." class="has-mic"></textarea></div>
+      <div class="grid">
+        <div class="fg"><label>Choro ao Nascer?</label>
+          <select id="choroNascer"><option value="">Selecione</option><option>Sim, imediato</option><option>Sim, com estimulação</option><option>Não</option></select></div>
+        <div class="fg"><label>Tempo de Internação (dias)</label>
+          <input id="tempoInternacao" type="text" placeholder="Ex: 2 dias ou não houve"/></div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Motor -->
+    <div class="step" id="step3" style="display:none">
+      <div class="step-title">3. Desenvolvimento Motor</div>
+      <div class="step-sub">Marcos motores grossos e finos.</div>
+      <div class="sec">Motor Grosso</div>
+      <div class="grid">
+        <div class="fg"><label>Sustentação da cabeça (meses)</label><input id="sustCabeca" type="text" placeholder="Ex: 3 meses"/></div>
+        <div class="fg"><label>Sentou sem apoio (meses)</label><input id="sentou" type="text" placeholder="Ex: 6 meses"/></div>
+      </div>
+      <div class="grid">
+        <div class="fg"><label>Engatinhou (meses)</label><input id="engatinhou" type="text" placeholder="Ex: 9 meses"/></div>
+        <div class="fg"><label>Caminhou sem apoio (meses)</label><input id="caminhou" type="text" placeholder="Ex: 12 meses"/></div>
+      </div>
+      <div class="fg"><label>Padrão ao engatinhar</label>
+        <select id="padraoEngatinhar"><option value="">Selecione</option><option>Padrão cruzado normal</option><option>Arrastou-se (não engatinhou)</option><option>Pulou a fase</option><option>Não se aplica</option></select></div>
+      <div class="fg"><label>Dificuldades atuais de coordenação motora grossa <span class="opt">opcional</span></label>
+        <textarea id="dificMotorGrosso" placeholder="Quedas frequentes, tropeços, desajeitamento..." class="has-mic"></textarea></div>
+      <div class="sec">Motor Fino</div>
+      <div class="grid">
+        <div class="fg"><label>Pegou objetos voluntariamente (meses)</label><input id="pegouObjetos" type="text" placeholder="Ex: 4 meses"/></div>
+        <div class="fg"><label>Pinça fina (meses)</label><input id="pincaFina" type="text" placeholder="Ex: 9 meses"/></div>
+      </div>
+      <div class="fg"><label>Uso de talheres e escrita/desenho</label>
+        <textarea id="talheiresEscrita" placeholder="Como está o uso de talheres? Qualidade da escrita e do desenho..." class="has-mic"></textarea></div>
+      <div class="fg"><label>Lateralidade</label>
+        <select id="lateralidade"><option value="">Selecione</option><option>Destro</option><option>Canhoto</option><option>Ambidestro</option><option>Lateralidade cruzada</option><option>Em definição</option></select></div>
+    </div>
+
+    <!-- STEP 4: Linguagem -->
+    <div class="step" id="step4" style="display:none">
+      <div class="step-title">4. Desenvolvimento da Linguagem e Comunicação</div>
+      <div class="step-sub">Fase pré-linguística, linguagem expressiva, receptiva e comunicação não-verbal.</div>
+      <div class="sec">Fase Pré-Linguística</div>
+      <div class="grid">
+        <div class="fg"><label>Balbucio (meses)</label><input id="balbucio" type="text" placeholder="Ex: 4 meses"/></div>
+        <div class="fg"><label>Resposta a sons e ao próprio nome</label>
+          <select id="respostaSons"><option value="">Selecione</option><option>Adequada para a idade</option><option>Com atraso</option><option>Ausente</option></select></div>
+      </div>
+      <div class="sec">Linguagem Expressiva</div>
+      <div class="grid">
+        <div class="fg"><label>Primeiras palavras funcionais (meses)</label><input id="primeirasParalavras" type="text" placeholder="Ex: 12 meses"/></div>
+        <div class="fg"><label>Frases simples (meses/anos)</label><input id="frasesSimples" type="text" placeholder="Ex: 18 meses"/></div>
+      </div>
+      <div class="fg"><label>Clareza da fala atual</label>
+        <select id="clarezaFala"><option value="">Selecione</option><option>Compreensível para todos</option><option>Compreensível apenas para familiares</option><option>Difícil compreensão mesmo para familiares</option></select></div>
+      <div class="fg"><label>Atrasos, trocas fonológicas ou gagueira <span class="opt">opcional</span></label>
+        <textarea id="atrasosLing" placeholder="Descreva se houve atraso, trocas de letras, gagueira..." class="has-mic"></textarea></div>
+      <div class="sec">Comunicação Não-Verbal</div>
+      <div class="grid">
+        <div class="fg"><label>Contato visual</label>
+          <select id="contatoVisual"><option value="">Selecione</option><option>Funcional e adequado</option><option>Reduzido</option><option>Ausente ou muito escasso</option></select></div>
+        <div class="fg"><label>Uso de gestos de apontar (meses)</label><input id="gestos" type="text" placeholder="Ex: 12 meses"/></div>
+      </div>
+      <div class="fg"><label>Expressão facial e responsividade socioemocional</label>
+        <select id="expressaoFacial"><option value="">Selecione</option><option>Adequada</option><option>Reduzida</option><option>Ausente</option></select></div>
+    </div>
+
+    <!-- STEP 5: Socioemocional -->
+    <div class="step" id="step5" style="display:none">
+      <div class="step-title">5. Desenvolvimento Socioemocional e Comportamental</div>
+      <div class="step-sub">Interação social, autonomia e comportamentos.</div>
+      <div class="sec">Interação Social</div>
+      <div class="grid">
+        <div class="fg"><label>Sorriso social (meses)</label><input id="sorrisoSocial" type="text" placeholder="Ex: 2 meses"/></div>
+        <div class="fg"><label>Interesse por outras crianças</label>
+          <select id="interessePares"><option value="">Selecione</option><option>Presente e adequado</option><option>Reduzido</option><option>Ausente</option></select></div>
+      </div>
+      <div class="fg"><label>Empatia e reconhecimento de emoções</label>
+        <select id="empatia"><option value="">Selecione</option><option>Adequado</option><option>Parcialmente presente</option><option>Ausente ou muito reduzido</option></select></div>
+      <div class="sec">Autonomia e Rotina</div>
+      <div class="fg"><label>Padrão de sono</label>
+        <textarea id="padraOSono" placeholder="Latência para dormir, despertares noturnos, roncos, qualidade do sono..." class="has-mic"></textarea></div>
+      <div class="fg"><label>Padrão alimentar</label>
+        <textarea id="padraoAlimentar" placeholder="Seletividade alimentar, recusa de texturas, mastigação..." class="has-mic"></textarea></div>
+      <div class="grid">
+        <div class="fg"><label>Desfralde diurno (anos)</label><input id="desfralDiurno" type="text" placeholder="Ex: 2 anos e meio"/></div>
+        <div class="fg"><label>Desfralde noturno (anos)</label><input id="desfralNoturno" type="text" placeholder="Ex: 3 anos"/></div>
+      </div>
+      <div class="fg"><label>Comportamentos repetitivos ou estereotipias <span class="opt">opcional</span></label>
+        <textarea id="comportRepetitivos" placeholder="Movimentos repetitivos, manias rígidas, apego excessivo a rotinas..." class="has-mic"></textarea></div>
+      <div class="fg"><label>Nível de atividade e regulação emocional</label>
+        <textarea id="atividadeEmocional" placeholder="Inquietação, impulsividade, tolerância à frustração, como reage a mudanças..." class="has-mic"></textarea></div>
+    </div>
+
+    <!-- STEP 6: Cognitivo/Escolar -->
+    <div class="step" id="step6" style="display:none">
+      <div class="step-title">6. Histórico Cognitivo, Escolar e de Aprendizagem</div>
+      <div class="step-sub">Desenvolvimento escolar, atenção e funções executivas.</div>
+      <div class="sec">Desenvolvimento Escolar</div>
+      <div class="grid">
+        <div class="fg"><label>Idade de ingresso na escola</label><input id="idadeEscola" type="text" placeholder="Ex: 1 ano e meio"/></div>
+        <div class="fg"><label>Adaptação inicial</label>
+          <select id="adaptacaoEscola"><option value="">Selecione</option><option>Tranquila</option><option>Choro excessivo por curto período</option><option>Recusa prolongada</option><option>Não se aplica</option></select></div>
+      </div>
+      <div class="grid">
+        <div class="fg"><label>Histórico de repetência</label>
+          <select id="repetencia"><option value="">Selecione</option><option>Não</option><option>Sim, uma vez</option><option>Sim, mais de uma vez</option></select></div>
+        <div class="fg"><label>Trocas frequentes de escola</label>
+          <select id="trocaEscola"><option value="">Selecione</option><option>Não</option><option>Sim, por escolha familiar</option><option>Sim, por dificuldades de adaptação</option></select></div>
+      </div>
+      <div class="fg"><label>Áreas de maior facilidade</label>
+        <textarea id="facilidades" placeholder="Leitura, escrita, cálculo, raciocínio lógico, artes, educação física..." class="has-mic"></textarea></div>
+      <div class="fg"><label>Áreas de maior dificuldade</label>
+        <textarea id="dificuldades" placeholder="Leitura, escrita, cálculo, raciocínio lógico, concentração..." class="has-mic"></textarea></div>
+      <div class="sec">Funções Executivas e Atenção</div>
+      <div class="fg"><label>Capacidade de manter o foco</label>
+        <select id="foco"><option value="">Selecione</option><option>Adequada para a idade</option><option>Reduzida — distrai com facilidade</option><option>Muito comprometida</option></select></div>
+      <div class="fg"><label>Organização e autonomia para lições de casa</label>
+        <select id="organizacao"><option value="">Selecione</option><option>Adequada</option><option>Precisa de muita ajuda</option><option>Não consegue sem supervisão constante</option></select></div>
+      <div class="fg"><label>Memória para recados e instruções</label>
+        <select id="memoria"><option value="">Selecione</option><option>Adequada</option><option>Esquece com frequência</option><option>Muito comprometida</option></select></div>
+    </div>
+
+    <!-- STEP 7: Médico/Familiar -->
+    <div class="step" id="step7" style="display:none">
+      <div class="step-title">7. Histórico Médico, Neurológico e Antecedentes Familiares</div>
+      <div class="step-sub">Saúde geral e histórico familiar relevante.</div>
+      <div class="sec">Saúde Geral</div>
+      <div class="fg"><label>Internações, cirurgias ou traumas cranianos <span class="opt">opcional</span></label>
+        <textarea id="internacoes" placeholder="Descreva internações, cirurgias ou TCE relevantes..." class="has-mic"></textarea></div>
+      <div class="fg"><label>Quadros convulsivos ou desmaios</label>
+        <select id="convulsoes"><option value="">Selecione</option><option>Não</option><option>Sim — crises epilépticas</option><option>Sim — desmaios/síncopes</option><option>Sim — convulsões febris</option></select></div>
+      <div class="fg"><label>Medicações em uso contínuo <span class="opt">opcional</span></label>
+        <textarea id="medicacoes" placeholder="Nome do medicamento, dose e indicação..." class="has-mic"></textarea></div>
+      <div class="fg"><label>Exames complementares realizados <span class="opt">opcional</span></label>
+        <textarea id="exames" placeholder="Audiometria, EEG, RM, neuropsicológico..." class="has-mic"></textarea></div>
+      <div class="sec">Antecedentes Familiares</div>
+      <div class="fg"><label>Histórico familiar de neurodesenvolvimento ou saúde mental</label>
+        <textarea id="historicoFamiliar" placeholder="TDAH, TEA, dislexia, ansiedade, depressão, epilepsia, atrasos de desenvolvimento na família nuclear ou estendida..." class="has-mic"></textarea></div>
+    </div>
+
+    <!-- STEP 8: Observações finais -->
+    <div class="step" id="step8" style="display:none">
+      <div class="step-title">8. Observações Finais</div>
+      <div class="step-sub">Informações complementares que possam ser relevantes para a avaliação.</div>
+      <div class="fg"><label>Outras informações relevantes <span class="opt">opcional</span></label>
+        <textarea id="obsFinais" placeholder="Qualquer outra informação que considere importante para a avaliação..." style="min-height:120px" class="has-mic"></textarea></div>
+      <div class="fg"><label>Como ficou sabendo da Dra. Lucia Kratz? <span class="opt">opcional</span></label>
+        <select id="origem"><option value="">Selecione</option><option>Indicação de amigo/familiar</option><option>Indicação médica</option><option>Instagram</option><option>Google</option><option>Doctoralia</option><option>Outro</option></select></div>
+      <div style="background:#f3e8ff;border-radius:12px;padding:14px 16px;margin-top:8px">
+        <p style="font-size:12.5px;color:#5a0090;line-height:1.6">🔒 Suas informações são confidenciais e serão utilizadas exclusivamente para fins clínicos, em conformidade com o Código de Ética do Psicólogo e a LGPD.</p>
+      </div>
+    </div>
+
+    <div class="nav" id="navBtns">
+      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">← Voltar</button>
+      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Próximo →</button>
+    </div>
+  </div>
+
+  <div id="successArea" class="success" style="display:none">
+    <div class="success-icon">🦋</div>
+    <div class="success-title">Anamnese recebida!</div>
+    <p class="success-msg">
+      Suas informações foram enviadas com sucesso.<br>
+      Você receberá um e-mail de confirmação em breve.<br><br>
+      A Dra. Lucia Kratz analisará os dados antes da consulta.<br><br>
+      Obrigado pela confiança! 💜
+    </p>
+  </div>
+</div>
+
+<script>
+const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial"};
+if(!firebase.apps.length)firebase.initializeApp(fc);
+const db=firebase.firestore();
+
+let step = 1;
+const TOTAL = 8;
+const STEP_NAMES = ["Identificação","Gestacional","Motor","Linguagem","Socioemocional","Escolar","Médico/Familiar","Observações Finais"];
+
+function updateProgress(){
+  document.getElementById("stepLabel").textContent = "Etapa "+step+" de "+TOTAL;
+  document.getElementById("stepName").textContent = STEP_NAMES[step-1];
+  document.getElementById("progressFill").style.width = (step/TOTAL*100)+"%";
+  document.getElementById("btnBack").style.display = step>1?"block":"none";
+  document.getElementById("btnNext").textContent = step===TOTAL?"✓ Enviar Anamnese":"Próximo →";
+}
+
+function avancarStep(){
+  if(step===1 && !document.getElementById("nome").value.trim()){
+    alert("Por favor, informe o nome do paciente.");return;
+  }
+  if(step<TOTAL){
+    document.getElementById("step"+step).style.display="none";
+    step++;
+    document.getElementById("step"+step).style.display="block";
+    updateProgress();
+    window.scrollTo({top:0,behavior:"smooth"});
+  } else {
+    enviar();
+  }
+}
+
+function voltarStep(){
+  if(step>1){
+    document.getElementById("step"+step).style.display="none";
+    step--;
+    document.getElementById("step"+step).style.display="block";
+    updateProgress();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+}
+
+function getVal(id){ const el=document.getElementById(id); return el?el.value.trim():""; }
+
+async function enviar(){
+  const btn=document.getElementById("btnNext");
+  btn.disabled=true;btn.textContent="Enviando...";
+  try{
+    const email = getVal("email");
+    const nome = getVal("nome");
+
+    // 1. Criar paciente
+    const pacRef = await db.collection("clinica_pacientes").add({
+      nome, email, telefone:getVal("telefone"),
+      dataNascimento:getVal("dataNasc"),
+      status:"pendente", origem:"anamnese-publica",
+      modulosAtivos:["mod1"],
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 2. Salvar anamnese completa
+    await db.collection("clinica_anamneses").add({
+      pacienteId: pacRef.id,
+      pacienteNome: nome,
+      tipo: "marcos-desenvolvimento",
+      // Etapa 1
+      dataNascimento:getVal("dataNasc"), idade:getVal("idade"),
+      informante:getVal("informante"), encaminhador:getVal("encaminhador"),
+      queixa:getVal("queixa"),
+      // Etapa 2
+      gestacaoPlanejada:getVal("gestacaoPlanejada"),
+      intercorrenciasGest:getVal("intercorrenciasGest"),
+      tipoParto:getVal("tipoParto"), idadeGestacional:getVal("idadeGestacional"),
+      intercorrenciasPeri:getVal("intercorrenciasPeri"),
+      choroNascer:getVal("choroNascer"), tempoInternacao:getVal("tempoInternacao"),
+      // Etapa 3
+      sustCabeca:getVal("sustCabeca"), sentou:getVal("sentou"),
+      engatinhou:getVal("engatinhou"), caminhou:getVal("caminhou"),
+      padraoEngatinhar:getVal("padraoEngatinhar"), dificMotorGrosso:getVal("dificMotorGrosso"),
+      pegouObjetos:getVal("pegouObjetos"), pincaFina:getVal("pincaFina"),
+      talheiresEscrita:getVal("talheiresEscrita"), lateralidade:getVal("lateralidade"),
+      // Etapa 4
+      balbucio:getVal("balbucio"), respostaSons:getVal("respostaSons"),
+      primeirasParalavras:getVal("primeirasParalavras"), frasesSimples:getVal("frasesSimples"),
+      clarezaFala:getVal("clarezaFala"), atrasosLing:getVal("atrasosLing"),
+      contatoVisual:getVal("contatoVisual"), gestos:getVal("gestos"),
+      expressaoFacial:getVal("expressaoFacial"),
+      // Etapa 5
+      sorrisoSocial:getVal("sorrisoSocial"), interessePares:getVal("interessePares"),
+      empatia:getVal("empatia"), padraOSono:getVal("padraOSono"),
+      padraoAlimentar:getVal("padraoAlimentar"),
+      desfralDiurno:getVal("desfralDiurno"), desfralNoturno:getVal("desfralNoturno"),
+      comportRepetitivos:getVal("comportRepetitivos"), atividadeEmocional:getVal("atividadeEmocional"),
+      // Etapa 6
+      idadeEscola:getVal("idadeEscola"), adaptacaoEscola:getVal("adaptacaoEscola"),
+      repetencia:getVal("repetencia"), trocaEscola:getVal("trocaEscola"),
+      facilidades:getVal("facilidades"), dificuldades:getVal("dificuldades"),
+      foco:getVal("foco"), organizacao:getVal("organizacao"), memoria:getVal("memoria"),
+      // Etapa 7
+      internacoes:getVal("internacoes"), convulsoes:getVal("convulsoes"),
+      medicacoes:getVal("medicacoes"), exames:getVal("exames"),
+      historicoFamiliar:getVal("historicoFamiliar"),
+      // Etapa 8
+      obsFinais:getVal("obsFinais"), origemIndicacao:getVal("origem"),
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 3. E-mail para a Dra. Lucia
+    await db.collection("nr1map_emails").add({
+      to:"luciakratz@gmail.com",
+      message:{
+        subject:"📋 Nova Anamnese recebida — "+nome,
+        html:"<h2>Nova Anamnese — Marcos do Desenvolvimento</h2><p><b>Paciente:</b> "+nome+"</p><p><b>Telefone:</b> "+(getVal("telefone")||"—")+"</p><p><b>E-mail:</b> "+(email||"—")+"</p><p><b>Queixa Principal:</b> "+(getVal("queixa")||"—")+"</p><p>Acesse o sistema admin para ver todos os dados preenchidos.</p>"
+      },
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 4. E-mail de confirmação para o paciente (se tiver e-mail)
+    if(email){
+      await db.collection("nr1map_emails").add({
+        to:email,
+        message:{
+          subject:"✅ Anamnese recebida — Dra. Lucia Kratz",
+          html:"<p>Olá, <b>"+nome+"</b>! 🦋</p><p>Recebemos sua anamnese com sucesso. A Dra. Lucia Kratz analisará as informações antes da sua consulta.</p><p>Qualquer dúvida, entre em contato pelo WhatsApp: <a href='https://wa.me/5562994644950'>62 9 9464-4950</a></p><p>Obrigado pela confiança! 💜</p>"
+        },
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    document.getElementById("formArea").style.display="none";
+    document.getElementById("successArea").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){
+    alert("Erro ao enviar. Tente novamente.");
+    btn.disabled=false;btn.textContent="✓ Enviar Anamnese";
+  }
+}
+
+// Mic/voz
+if(typeof SpeechRecognition!=="undefined"||typeof webkitSpeechRecognition!=="undefined"){
+  const SR = typeof SpeechRecognition!=="undefined"?SpeechRecognition:webkitSpeechRecognition;
+  document.querySelectorAll("textarea.has-mic").forEach(ta=>{
+    const wrap=document.createElement("div");
+    wrap.className="mic-wrap";
+    ta.parentNode.insertBefore(wrap,ta);
+    wrap.appendChild(ta);
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="mic-btn";btn.title="Ditado por voz";btn.textContent="🎤";
+    let rec=null;
+    btn.onclick=()=>{
+      if(rec){rec.stop();rec=null;btn.textContent="🎤";return;}
+      rec=new SR();rec.lang="pt-BR";rec.continuous=true;rec.interimResults=false;
+      rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)ta.value+=(ta.value?" ":"")+e.results[i][0].transcript;};
+      rec.onend=()=>{rec=null;btn.textContent="🎤";};
+      rec.start();btn.textContent="🔴";
+    };
+    wrap.appendChild(btn);
+  });
+}
+</script>
+</body>
+</html>
