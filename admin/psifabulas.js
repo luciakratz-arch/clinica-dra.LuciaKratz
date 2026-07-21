@@ -1147,36 +1147,31 @@ function FerramentaTreino(){
 
 // ── Anamnese ────────────────────────────────────────────────────────────────
 function FerramentaAnamnese(){
-  const PERFIS=["Criança (0-12)","Adolescente (13-17)","Adulto (18-59)","Idoso (60+)"];
-  const SECOES={"Criança (0-12)":["Identificação","Gestação e Parto","Marcos do Desenvolvimento","Alimentação e Sono","Desenvolvimento Motor","Linguagem","Comportamento","Escolaridade","Histórico de Saúde","Dinâmica Familiar"],"Adolescente (13-17)":["Identificação","Histórico Escolar","Relações Sociais","Comportamento e Humor","Sexualidade","Substâncias","Histórico de Saúde","Dinâmica Familiar"],"Adulto (18-59)":["Identificação","Queixa Principal","Histórico da Queixa","Histórico Psicológico","Saúde Física","Relacionamentos","Trabalho e Estudo","Sono e Alimentação","Histórico Familiar"],"Idoso (60+)":["Identificação","Queixa Principal","Histórico Médico","Medicamentos","Cognição","Mobilidade","Sono","Suporte Social","Dinâmica Familiar"]};
-  const [perfil,setPerfil]=useState("");
-  const [secao,setSecao]=useState(0);
-  const [respostas,setRespostas]=useState({});
-  const [concluido,setConcluido]=useState(false);
-  if(!perfil)return(<div style={{textAlign:"center",padding:"20px 0"}}>
-    <div style={{fontSize:44,marginBottom:12}}>📄</div>
-    <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:14}}>Selecione o perfil:</div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,maxWidth:320,margin:"0 auto"}}>
-      {PERFIS.map(p=><button key={p} className="btn btn-outline" style={{padding:"12px 8px",fontSize:12,fontWeight:600}} onClick={()=>setPerfil(p)}>{p}</button>)}
+  const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
+  return(
+    <div style={{textAlign:"center",padding:"28px 16px"}}>
+      <div style={{fontSize:48,marginBottom:12}}>📋</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:700,color:"#3d006a",marginBottom:8}}>
+        Anamnese — Marcos do Desenvolvimento
+      </div>
+      <div style={{fontSize:13,color:"#6b7280",marginBottom:20,lineHeight:1.6,maxWidth:380,margin:"0 auto 20px"}}>
+        O formulário completo de anamnese está disponível em uma página dedicada.<br/>
+        Acesse o link abaixo para preencher ou envie para o paciente.
+      </div>
+      <a href={link} target="_blank" rel="noreferrer"
+        style={{display:"inline-flex",alignItems:"center",gap:8,
+          background:"#7B00C4",color:"white",padding:"13px 24px",
+          borderRadius:12,fontWeight:700,fontSize:14,textDecoration:"none",
+          boxShadow:"0 4px 14px rgba(123,0,196,0.35)",marginBottom:12}}>
+        📋 Abrir Formulário de Anamnese
+      </a>
+      <div style={{marginTop:8}}>
+        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>{
+          navigator.clipboard.writeText(link).then(()=>alert("✅ Link copiado!")).catch(()=>window.prompt("Copie o link:",link));
+        }}>🔗 Copiar link para o paciente</button>
+      </div>
     </div>
-  </div>);
-  const secs=SECOES[perfil]||[];
-  if(concluido)return(<div style={{textAlign:"center",padding:40}}>
-    <div style={{fontSize:48,marginBottom:12}}>✅</div>
-    <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>Anamnese Concluída!</div>
-    <div style={{fontSize:13,color:"#6b7280",marginBottom:16}}>{perfil} · {secs.length} seções</div>
-    <button className="btn btn-purple" onClick={()=>{setPerfil("");setSecao(0);setRespostas({});setConcluido(false);}}>Nova Anamnese</button>
-  </div>);
-  return(<div>
-    <div style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#6b7280",marginBottom:8}}><span style={{color:"var(--purple)",fontWeight:600}}>{perfil}</span><span>Seção {secao+1}/{secs.length}</span></div>
-    <div style={{background:"#e5e7eb",borderRadius:20,height:5,marginBottom:16}}><div style={{background:"var(--purple)",height:5,borderRadius:20,width:(secao/secs.length*100)+"%",transition:"width .3s"}}/></div>
-    <div style={{fontFamily:"var(--font-display)",fontSize:17,fontWeight:600,marginBottom:12}}>{secs[secao]}</div>
-    <TextAreaVoz className="form-input" rows={5} value={respostas[secs[secao]]||""} onChange={e=>setRespostas(r=>({...r,[secs[secao]]:e.target.value}))} placeholder={`Registre as informações sobre "+secs[secao].toLowerCase()+"...`}/>
-    <div style={{display:"flex",gap:10,marginTop:14,justifyContent:"space-between"}}>
-      <button className="btn btn-ghost" onClick={()=>setSecao(s=>Math.max(0,s-1))} disabled={secao===0}>← Anterior</button>
-      {secao<secs.length-1?<button className="btn btn-purple" onClick={()=>setSecao(s=>s+1)}>Próxima →</button>:<button className="btn btn-purple" onClick={()=>setConcluido(true)}>✓ Concluir</button>}
-    </div>
-  </div>);
+  );
 }
 
 // ── Diário Terapêutico ──────────────────────────────────────────────────────
