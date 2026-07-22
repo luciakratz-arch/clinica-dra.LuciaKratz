@@ -4630,12 +4630,13 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
     setSalvandoEdicao(false);
   }
 
-  async function salvarEdicaoPacote() {
+  async function salvarEdicaoPacote(tipoVenda) {
     if(!modalEditarPacote) return;
     setSalvandoEdicao(true);
     try {
       const f = formEdicaoPacote;
       const jaPago = (f.statusPag||"pendente")==="recebido";
+      const eraPendente = (modalEditarPacote.statusPag||"pendente") !== "recebido";
       const novoTotalSessoes = parseInt(f.totalSessoes)||modalEditarPacote.totalSessoes;
       const novoValorSessao = parseFloat(f.valorSessao)||modalEditarPacote.valorSessao;
       const novoValorTotal = novoTotalSessoes * novoValorSessao;
@@ -4725,6 +4726,18 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
           }
         });
         await batch.commit();
+      }
+
+      // ── COMISSÃO: só dispara se estava pendente, agora recebido e tipoVenda informado ──
+      if(jaPago && eraPendente && tipoVenda) {
+        const pacNome = pacientes.find(p=>p.id===modalEditarPacote.pacienteId)?.nome || modalEditarPacote.pacienteNome || "";
+        await registrarComissao({
+          tipo: "Pacote",
+          valor: novoValorTotal,
+          pacienteNome: pacNome,
+          tipoVenda,
+          pacoteId: modalEditarPacote.id,
+        });
       }
 
       alert("✓ Pacote atualizado! Sessões e financeiro sincronizados.");
@@ -4861,11 +4874,23 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                 <textarea className="form-input" rows={2} value={formEdicaoPacote.obs||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,obs:e.target.value})} placeholder="Notas sobre o pacote..."/>
               </div>
             </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
+            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20,flexWrap:"wrap"}}>
               <button className="btn btn-ghost" onClick={()=>setModalEditarPacote(null)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvarEdicaoPacote} disabled={salvandoEdicao}>
-                {salvandoEdicao?"Salvando...":"💾 Salvar alterações"}
-              </button>
+              {(formEdicaoPacote.statusPag||"pendente")==="recebido" && (modalEditarPacote.statusPag||"pendente")!=="recebido" ? (<>
+                <button className="btn btn-ghost" style={{border:"1px solid #e5e7eb",color:"#6b7280",fontSize:13}} onClick={()=>salvarEdicaoPacote(null)} disabled={salvandoEdicao} title="Salvar sem registrar comissão">
+                  {salvandoEdicao?"Salvando...":"📋 Sem comissão"}
+                </button>
+                <button className="btn btn-purple" onClick={()=>salvarEdicaoPacote("primeira")} disabled={salvandoEdicao} title="10% de comissão">
+                  {salvandoEdicao?"Salvando...":"✨ Primeira Venda"}
+                </button>
+                <button className="btn" style={{background:"#0891b2",color:"white"}} onClick={()=>salvarEdicaoPacote("recorrente")} disabled={salvandoEdicao} title="5% de comissão">
+                  {salvandoEdicao?"Salvando...":"🔄 Venda Recorrente"}
+                </button>
+              </>) : (
+                <button className="btn btn-purple" onClick={()=>salvarEdicaoPacote(null)} disabled={salvandoEdicao}>
+                  {salvandoEdicao?"Salvando...":"💾 Salvar alterações"}
+                </button>
+              )}
             </div>
           </div>
         </div>
