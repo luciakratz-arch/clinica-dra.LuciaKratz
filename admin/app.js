@@ -2353,7 +2353,7 @@ function AbaAnamnese({paciente}){
   useEffect(()=>{
     if(!paciente?.id) return;
     db.collection("clinica_anamneses")
-      .where("pacienteId","==",paciente.id)
+      .where("pacienteNome","==",paciente.nome)
       .get()
       .then(snap=>{
         if(!snap.empty){
