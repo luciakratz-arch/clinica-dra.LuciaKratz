@@ -2346,6 +2346,54 @@ function RespostasCasal({ pacienteId, parceiroId, parceiro, nomePaciente }) {
 
 
 // ── Aba Anamnese ─────────────────────────────────────────────────────────────
+function gerarPDFAnamnese(paciente, anamnese, LABELS, SKIP){
+  const ts = anamnese.createdAt?.toDate?.()?.toLocaleString("pt-BR")||"—";
+  const respondente = anamnese.informanteTipo && anamnese.informanteTipo!=="proprio"
+    ? (anamnese.nomeRespondente||anamnese.informanteTipo)+(anamnese.parentescoRespondente?" ("+anamnese.parentescoRespondente+")":"")
+    : "A própria pessoa";
+  const linhas = Object.entries(anamnese)
+    .filter(([k,v])=>!SKIP.includes(k)&&k!=="queixa"&&v&&String(v).trim())
+    .map(([k,v])=>`<tr><td style="font-weight:600;color:#374151;font-size:11px;text-transform:uppercase;background:#f3f4f6;width:200px;padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top">${LABELS[k]||k}</td><td style="padding:7px 10px;border:1px solid #e5e7eb;font-size:13px;vertical-align:top">${String(v)}</td></tr>`).join("");
+  const w = window.open("","_blank");
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Anamnese — ${paciente.nome}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:30px 40px;color:#1f2937}
+  @page{margin:20mm}@media print{.no-print{display:none}}</style></head><body>
+  <div style="border-bottom:2px solid #7B00C4;padding-bottom:14px;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1 style="font-size:20px;color:#3d006a;margin-bottom:8px">📋 Anamnese — ${paciente.nome||"—"}</h1>
+        <table style="font-size:12px;border-collapse:collapse;width:100%">
+          <tr><td style="padding:3px 12px 3px 0;width:50%"><b>Perfil:</b> ${anamnese.perfil==="infantil"?"Infantil/Neurodesenvolvimento":"Adulto/Idoso"}</td>
+              <td style="padding:3px 0"><b>Data de nascimento:</b> ${paciente.dataNasc||"—"}</td></tr>
+          <tr><td style="padding:3px 12px 3px 0"><b>CPF:</b> ${paciente.cpf||"—"}</td>
+              <td style="padding:3px 0"><b>Gênero:</b> ${paciente.genero||"—"}</td></tr>
+          <tr><td style="padding:3px 12px 3px 0"><b>Telefone:</b> ${paciente.telefone||"—"}</td>
+              <td style="padding:3px 0"><b>E-mail:</b> ${paciente.email||"—"}</td></tr>
+          <tr><td style="padding:3px 12px 3px 0"><b>Escolaridade:</b> ${paciente.escolaridade||anamnese.escolaridade||"—"}</td>
+              <td style="padding:3px 0"><b>Preenchido em:</b> ${ts}</td></tr>
+          <tr><td colspan="2" style="padding:3px 0"><b>Respondido por:</b> ${respondente}</td></tr>
+          ${paciente.encaminhador||anamnese.encaminhador?`<tr><td colspan="2" style="padding:3px 0"><b>Encaminhado por:</b> ${paciente.encaminhador||anamnese.encaminhador}</td></tr>`:""}
+        </table>
+      </div>
+      <div style="text-align:right;font-size:11px;color:#6b7280">
+        <div style="font-weight:700;color:#3d006a">Dra. Lucia Kratz</div>
+        <div>Psicóloga · CRP 09/20590</div>
+        <div>Goiânia, GO</div>
+      </div>
+    </div>
+  </div>
+  ${anamnese.queixa?`<div style="background:#f0f4ff;border-left:4px solid #4338ca;padding:10px 14px;margin-bottom:16px"><div style="font-size:10px;font-weight:700;color:#4338ca;text-transform:uppercase;margin-bottom:4px">Queixa Principal</div><div style="font-size:13.5px;line-height:1.6">${anamnese.queixa}</div></div>`:""}
+  <table style="width:100%;border-collapse:collapse">${linhas}</table>
+  <div style="margin-top:24px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center">
+    Documento gerado em ${new Date().toLocaleString("pt-BR")} · Clínica Dra. Lucia Kratz
+  </div>
+  <div class="no-print" style="margin-top:20px;text-align:center">
+    <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  </body></html>`);
+  w.document.close();
+}
+
 function AbaAnamnese({paciente}){
   const [anamnese, setAnamnese] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2407,15 +2455,21 @@ function AbaAnamnese({paciente}){
 
   return (
     <div>
-      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:20,flexWrap:"wrap"}}>
-        <div style={{background:"var(--purple-light-bg)",color:"var(--purple)",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>
-          {anamnese.perfil==="infantil"?"👶 Infantil/Neurodesenvolvimento":"🧑 Adulto/Idoso"}
-        </div>
-        {anamnese.informanteTipo && anamnese.informanteTipo!=="proprio" && (
-          <div style={{background:"#f3f4f6",color:"#374151",padding:"4px 12px",borderRadius:20,fontSize:12}}>
-            Respondido por: {anamnese.nomeRespondente||anamnese.informanteTipo} {anamnese.parentescoRespondente?"("+anamnese.parentescoRespondente+")":""}
+      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:20,flexWrap:"wrap",justifyContent:"space-between"}}>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+          <div style={{background:"var(--purple-light-bg)",color:"var(--purple)",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>
+            {anamnese.perfil==="infantil"?"👶 Infantil/Neurodesenvolvimento":"🧑 Adulto/Idoso"}
           </div>
-        )}
+          {anamnese.informanteTipo && anamnese.informanteTipo!=="proprio" && (
+            <div style={{background:"#f3f4f6",color:"#374151",padding:"4px 12px",borderRadius:20,fontSize:12}}>
+              Respondido por: {anamnese.nomeRespondente||anamnese.informanteTipo} {anamnese.parentescoRespondente?"("+anamnese.parentescoRespondente+")":""}
+            </div>
+          )}
+        </div>
+        <button className="btn btn-ghost" style={{fontSize:12,color:"var(--purple)",border:"1px solid var(--purple)",padding:"7px 14px"}}
+          onClick={()=>gerarPDFAnamnese(paciente,anamnese,LABELS,SKIP)}>
+          <Icon name="file-text" size={13}/> Gerar PDF
+        </button>
       </div>
 
       {/* Queixa em destaque */}
