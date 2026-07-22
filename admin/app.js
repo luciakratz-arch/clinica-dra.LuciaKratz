@@ -3246,7 +3246,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
         <button className="btn btn-ghost" onClick={onVoltar} style={{padding:"8px 12px"}}><Icon name="arrow-left" size={16}/></button>
         <div style={{flex:1}}>
           <div className="page-title" style={{fontSize:24}}>{paciente.nome}</div>
-          <div className="page-subtitle">Perfil clinico completo</div>
+          <div className="page-subtitle">Perfil clinico completo · <span style={{fontSize:11,color:"var(--text-muted)",cursor:"pointer"}} onClick={()=>{navigator.clipboard.writeText(paciente.id);alert("ID copiado: "+paciente.id);}}>ID: {paciente.id} 📋</span></div>
         </div>
         <button className="btn btn-danger" onClick={async()=>{if(!confirm("Excluir paciente?"))return;await db.collection("clinica_pacientes").doc(paciente.id).delete();onVoltar();}}>
           <Icon name="trash-2" size={15}/> Excluir paciente
