@@ -2401,12 +2401,26 @@ function gerarPDFAnamnese(paciente, anamnese, LABELS, SKIP){
 function AbaQuestionarios({ paciente }) {
   const [sub, setSub] = useState(null); // null | "anamnese" | "rastreamento"
 
+  function abrirEntrevista() {
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/entrevista/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    window.open(url, "_blank");
+  }
+
   if(sub==="anamnese") return (
     <div>
       <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
         <Icon name="arrow-left" size={15}/> Voltar para Questionários
       </button>
       <AbaAnamnese paciente={paciente}/>
+    </div>
+  );
+
+  if(sub==="entrevista") return (
+    <div>
+      <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
+        <Icon name="arrow-left" size={15}/> Voltar para Questionários
+      </button>
+      <AbaEntrevistaClinica paciente={paciente}/>
     </div>
   );
 
@@ -2424,7 +2438,7 @@ function AbaQuestionarios({ paciente }) {
     <div>
       <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)",marginBottom:4}}>Questionários Clínicos</div>
       <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Selecione um questionário para visualizar ou enviar ao paciente.</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
 
         {/* Card Anamnese */}
         <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
@@ -2437,6 +2451,21 @@ function AbaQuestionarios({ paciente }) {
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <span style={{background:"var(--purple-light-bg)",color:"var(--purple)",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
               📋 Ver anamnese →
+            </span>
+          </div>
+        </div>
+
+        {/* Card Entrevista Clínica Inicial */}
+        <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
+          onClick={()=>setSub("entrevista")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor="var(--gray-200)"}>
+          <div style={{fontSize:32,marginBottom:10}}>🧠</div>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--text-dark)",marginBottom:4}}>Entrevista Clínica Inicial</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginBottom:14}}>Instrumento de avaliação clínica inicial com perfil etário, escalas de observação e hipóteses diagnósticas DSM-5.</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{background:"#f0fdf4",color:"#16a34a",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
+              🧠 Ver entrevista →
             </span>
           </div>
         </div>
@@ -2456,6 +2485,109 @@ function AbaQuestionarios({ paciente }) {
           </div>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  Entrevista Clínica Inicial — sub-tela de Questionários
+// ═══════════════════════════════════════════════════════════════════
+function AbaEntrevistaClinica({ paciente }) {
+  const [link, setLink] = useState(null);
+  const [gerando, setGerando] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+
+  useEffect(()=>{
+    db.collection("clinica_links_partilhados")
+      .where("pacienteId","==",paciente.id)
+      .where("tipoFerramenta","==","entrevista")
+      .where("status","==","pendente")
+      .get()
+      .then(snap=>{
+        if(!snap.empty) setLink({id:snap.docs[0].id,...snap.docs[0].data()});
+      });
+  },[paciente?.id]);
+
+  async function gerarLink() {
+    setGerando(true);
+    try {
+      const token = Math.random().toString(36).substring(2,10).toUpperCase()+Math.random().toString(36).substring(2,10).toUpperCase();
+      const ref = await db.collection("clinica_links_partilhados").add({
+        pacienteId: paciente.id, pacienteNome: paciente.nome||"",
+        tipoFerramenta: "entrevista", token, status: "pendente",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setLink({id:ref.id, token, status:"pendente"});
+    } catch(e){ alert("Erro: "+e.message); }
+    setGerando(false);
+  }
+
+  function copiarLink() {
+    const url = `${BASE}/responder?token=${link.token}`;
+    navigator.clipboard.writeText(url);
+    setCopiado(true);
+    setTimeout(()=>setCopiado(false),2000);
+  }
+
+  function enviarWhatsApp() {
+    const url = `${BASE}/responder?token=${link.token}`;
+    const nome = paciente.nome?.split(" ")[0]||"paciente";
+    const msg = `Olá, ${nome}! 😊
+
+Sua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:
+
+🧠 *Entrevista Clínica Inicial*
+
+Acesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:
+${url}
+
+Qualquer dúvida, estou por aqui!
+_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone||"").replace(/\D/g,"")}&text=${encodeURIComponent(msg)}`,"_blank");
+  }
+
+  return (
+    <div>
+      <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)",marginBottom:4}}>Entrevista Clínica Inicial</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Instrumento de avaliação clínica inicial com perfil etário, escalas de observação e hipóteses diagnósticas DSM-5.</div>
+
+      <div style={{border:"1.5px solid",borderColor:link?"var(--purple)":"var(--gray-200)",borderRadius:12,padding:"14px 16px",background:link?"var(--purple-soft)":"white"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:link?12:0}}>
+          <div style={{fontSize:24}}>🧠</div>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,fontSize:13}}>Entrevista Clínica Inicial (DSM-5)</div>
+            <div style={{fontSize:11,color:"var(--text-muted)"}}>Instrumento de avaliação clínica inicial</div>
+          </div>
+          {link && <span style={{background:"#fef3c7",color:"#d97706",padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>⏱ Pendente</span>}
+          <button className="btn btn-outline" style={{padding:"6px 12px",fontSize:12,flexShrink:0}}
+            onClick={gerarLink} disabled={gerando}>
+            <Icon name="link" size={13}/>
+            {gerando?"Gerando...":link?"Novo Link":"Gerar Link"}
+          </button>
+        </div>
+
+        {link && (
+          <div style={{marginTop:4}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,background:"white",border:"1px solid var(--gray-200)",borderRadius:8,padding:"8px 12px",marginBottom:10}}>
+              <Icon name="link" size={13} style={{color:"var(--text-muted)",flexShrink:0}}/>
+              <span style={{fontSize:11,color:"var(--text-muted)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                {`https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/responder?token=${link.token}`}
+              </span>
+            </div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              <button className="btn btn-outline" style={{padding:"7px 14px",fontSize:12}} onClick={copiarLink}>
+                <Icon name={copiado?"check":"copy"} size={13}/>
+                {copiado?"Copiado!":"Copiar Link"}
+              </button>
+              <button className="btn btn-purple" style={{padding:"7px 14px",fontSize:12}} onClick={enviarWhatsApp}>
+                <Icon name="message-circle" size={13}/> Enviar pelo WhatsApp
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3562,13 +3694,9 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
 
 // Ferramentas disponíveis para link compartilhável
 const FERRAMENTAS_LINK = [
-  { id: "anamnese",    nome: "Anamnese — Marcos do Desenvolvimento", emoji: "📋", desc: "Formulário completo de anamnese" },
-  { id: "entrevista",  nome: "Entrevista Clínica Inicial (DSM-5)",   emoji: "🧠", desc: "Instrumento de avaliação clínica inicial" },
-  { id: "arvore",      nome: "Árvore da Decisão",                    emoji: "🌳", desc: "Técnica TCC para transformar preocupações" },
-  { id: "ansiedade",   nome: "Gestão da Ansiedade",                  emoji: "🎯", desc: "Tracking de estresse, humor e roda da vida" },
-  { id: "alimentacao", nome: "Rastreamento Emocional da Alimentação", emoji: "🍎", desc: "Relação entre emoções e comportamento alimentar" },
-  { id: "abc-record",  nome: "Registro ABC de Pensamentos",          emoji: "📝", desc: "Modelo de registro cognitivo TCC" },
-  { id: "relaxamento", nome: "Relaxamento Muscular Progressivo",     emoji: "💆", desc: "Técnica de Jacobson para tensão e ansiedade" },
+  { id: "anamnese",      nome: "Anamnese — Marcos do Desenvolvimento",        emoji: "📋", desc: "Formulário completo de anamnese" },
+  { id: "entrevista",    nome: "Entrevista Clínica Inicial (DSM-5)",           emoji: "🧠", desc: "Instrumento de avaliação clínica inicial" },
+  { id: "rastreamento",  nome: "Rastreamento Bipolar / Borderline",            emoji: "📊", desc: "Avaliação diferencial DSM-5 — paciente e familiares" },
 ];
 
 function gerarToken() {
@@ -3635,15 +3763,22 @@ function AbaLinksPartilhados({ paciente }) {
     setGerando(g => ({ ...g, [ferramenta.id]: false }));
   }
 
-  function copiarLink(token) {
-    const url = `${BASE_URL}/responder?token=${token}`;
+  function getLinkUrl(ferramenta, token) {
+    if(ferramenta.id === "rastreamento") {
+      return `${BASE_URL}/rastreamento/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    }
+    return `${BASE_URL}/responder?token=${token}`;
+  }
+
+  function copiarLink(token, ferramenta) {
+    const url = getLinkUrl(ferramenta, token);
     navigator.clipboard.writeText(url);
     setCopiado(c => ({ ...c, [token]: true }));
     setTimeout(() => setCopiado(c => ({ ...c, [token]: false })), 2000);
   }
 
   function enviarWhatsApp(ferramenta, token) {
-    const url = `${BASE_URL}/responder?token=${token}`;
+    const url = getLinkUrl(ferramenta, token);
     const nome = paciente.nome?.split(" ")[0] || "paciente";
     const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:\n\n📋 *${ferramenta.nome}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
     window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
@@ -3679,7 +3814,7 @@ function AbaLinksPartilhados({ paciente }) {
           {FERRAMENTAS_LINK.map(ferramenta => {
             const linkAtual = links[ferramenta.id];
             const statusCfg = STATUS_CONFIG[linkAtual?.status] || null;
-            const url = linkAtual ? `${BASE_URL}/responder?token=${linkAtual.token}` : null;
+            const url = linkAtual ? getLinkUrl(ferramenta, linkAtual.token) : null;
 
             return (
               <div key={ferramenta.id} style={{ border: "1.5px solid", borderColor: linkAtual ? "var(--purple)" : "var(--gray-200)",
@@ -3728,7 +3863,7 @@ function AbaLinksPartilhados({ paciente }) {
                     {/* Ações */}
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <button className="btn btn-outline" style={{ padding: "7px 14px", fontSize: 12 }}
-                        onClick={() => copiarLink(linkAtual.token)}>
+                        onClick={() => copiarLink(linkAtual.token, ferramenta)}>
                         <Icon name={copiado[linkAtual.token] ? "check" : "copy"} size={13} />
                         {copiado[linkAtual.token] ? "Copiado!" : "Copiar Link"}
                       </button>
