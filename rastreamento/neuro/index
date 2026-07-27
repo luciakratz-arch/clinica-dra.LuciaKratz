@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rastreamento Comportamental | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
+.card{background:white;border-radius:20px;padding:28px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 8px 40px rgba(123,0,196,0.12)}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:19px;color:#3d006a;margin:10px 0 4px;font-weight:700}
+.header p{font-size:13px;color:#6b7280}
+.welcome-box{background:#f5f3ff;border-radius:14px;padding:20px;margin-bottom:20px;font-size:13.5px;color:#4b5563;line-height:1.7}
+.welcome-box h2{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.welcome-box ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.progress-wrap{margin-bottom:22px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:5px}
+.progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
+.step-title{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:3px}
+.step-sub{font-size:12.5px;color:#6b7280;margin-bottom:18px;line-height:1.5;background:#f9fafb;border-left:3px solid #7B00C4;padding:8px 12px;border-radius:0 8px 8px 0}
+.fg{margin-bottom:16px}
+label.lbl{display:block;font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s;background:white}
+input:focus,select:focus,textarea:focus{border-color:#7B00C4}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.tipo-btn{background:white;border:2px solid #ede9fe;border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.tipo-btn:hover,.tipo-btn.sel{border-color:#7B00C4;background:#f5f0ff}
+.tipo-btn .ico{font-size:32px;margin-bottom:8px}
+.tipo-btn .t{font-size:14px;font-weight:700;color:#3d006a}
+.tipo-btn .d{font-size:11.5px;color:#6b7280;margin-top:4px}
+.pergunta-card{background:#f9fafb;border:1px solid #ede9fe;border-radius:14px;padding:18px;margin-bottom:16px}
+.perg-num{font-size:10px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.perg-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:14px;font-weight:500}
+.opcoes{display:flex;flex-direction:column;gap:8px}
+.opcao{display:flex;align-items:flex-start;gap:10px;background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13.5px;color:#374151;line-height:1.5}
+.opcao input[type=radio]{display:none}
+.opcao .letra{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9ca3af;transition:all .2s;margin-top:1px}
+.opcao.sel{border-color:#7B00C4;background:#f5f0ff}
+.opcao.sel .letra{background:#7B00C4;border-color:#7B00C4;color:white}
+.opcao:hover{border-color:#a78bfa}
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px}
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;top:8px;background:#f3e8ff;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:15px;line-height:1;z-index:1}
+textarea.has-mic{padding-right:44px}
+.nav{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
+.btn-back{background:#f3f4f6;color:#374151;flex:1}
+.btn-next{background:#7B00C4;color:white;flex:2;box-shadow:0 4px 14px rgba(123,0,196,0.35)}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.6;cursor:default}
+.btn-start{background:#7B00C4;color:white;width:100%;margin-top:16px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+.aviso-amarelo{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#92400e;line-height:1.6;margin-bottom:14px}
+.success{text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.success-msg{font-size:14px;color:#6b7280;line-height:1.7}
+@media(max-width:500px){.tipo-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="../../logo.png" alt="" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+    <h1>Rastreamento de Funcionamento e Comportamento</h1>
+    <p>Dra. Lucia Kratz &middot; Psicóloga &middot; CRP 09/20590</p>
+  </div>
+
+  <!-- TELA INICIAL -->
+  <div id="telaInicial">
+    <div class="welcome-box">
+      <h2>&#128203; Antes de começar, leia com atenção:</h2>
+      <ul>
+        <li>Este questionário leva entre <strong>10 e 15 minutos</strong> para ser respondido.</li>
+        <li>Não há respostas certas ou erradas — responda com <strong>honestidade e calma</strong>.</li>
+        <li>Se for familiar, responda sobre o <strong>comportamento da pessoa avaliada</strong>, não sobre você.</li>
+        <li>Você pode usar o botão &#127908; para <strong>falar em vez de digitar</strong> nos campos de texto.</li>
+        <li>Suas respostas são <strong>confidenciais</strong> e usadas apenas para fins clínicos.</li>
+      </ul>
+    </div>
+
+    <div class="sec">&#128100; Quem está respondendo?</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn" id="btnPaciente" onclick="selecionarTipo('paciente')">
+        <div class="ico">&#128587;</div>
+        <div class="t">O próprio paciente</div>
+        <div class="d">Você é a pessoa que está sendo avaliada</div>
+      </div>
+      <div class="tipo-btn" id="btnFamiliar" onclick="selecionarTipo('familiar')">
+        <div class="ico">&#128106;</div>
+        <div class="t">Familiar / pessoa próxima</div>
+        <div class="d">Você conhece bem a pessoa avaliada</div>
+      </div>
+    </div>
+
+    <div id="camposFamiliar" style="display:none">
+      <div class="fg">
+        <label class="lbl">Seu nome completo *</label>
+        <input id="nomeRespondente" type="text" placeholder="Seu nome"/>
+      </div>
+      <div class="fg">
+        <label class="lbl">Sua relação com o paciente *</label>
+        <select id="parentesco">
+          <option value="">Selecione o grau de parentesco</option>
+          <option>Mae</option>
+          <option>Pai</option>
+          <option>Conjuge / Companheiro(a)</option>
+          <option>Irmao / Irma</option>
+          <option>Filho(a)</option>
+          <option>Avo / Avo</option>
+          <option>Tio(a)</option>
+          <option>Amigo(a) proximo(a)</option>
+          <option>Outro familiar</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="iniciar()">Começar Questionário &rarr;</button>
+  </div>
+
+  <!-- TELA DO FORMULÁRIO -->
+  <div id="formArea" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="stepLabel">Etapa 1 de 5</span>
+        <span id="stepPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div id="stepContent"></div>
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">&#8592; Voltar</button>
+      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Próximo &rarr;</button>
+    </div>
+  </div>
+
+  <!-- TELA DE REVISÃO -->
+  <div id="revisaoArea" style="display:none">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:36px;margin-bottom:8px">&#128269;</div>
+      <div style="font-size:17px;font-weight:700;color:#3d006a;margin-bottom:4px">Revise suas respostas</div>
+      <div style="font-size:13px;color:#6b7280;line-height:1.6">Confira tudo antes de enviar. Você ainda pode voltar e corrigir.</div>
+    </div>
+    <div id="revisaoContent"></div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button class="btn btn-back" style="flex:1" onclick="voltarRevisao()">&#8592; Corrigir</button>
+      <button class="btn btn-next" style="flex:2" onclick="enviar()">&#10003; Confirmar e Enviar</button>
+    </div>
+  </div>
+
+  <!-- TELA DE SUCESSO -->
+  <div id="successArea" style="display:none">
+    <div class="success">
+      <div class="success-icon">&#129419;</div>
+      <div class="success-title">Respostas enviadas!</div>
+      <div class="success-msg">
+        Obrigado por responder com cuidado e honestidade.<br/>
+        Suas respostas foram registradas com segurança<br/>
+        e serao analisadas pela Dra. Lucia Kratz.<br/><br/>
+        <strong>Pode fechar esta janela.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial"};
+if(!firebase.apps.length)firebase.initializeApp(fc);
+const db=firebase.firestore();
+
+const urlParams = new URLSearchParams(window.location.search);
+const nomePaciente = urlParams.get("paciente") || "";
+const tokenParam = urlParams.get("token") || "";
+
+let tipoRespondente = "";
+let step = 1;
+let respostas = {};
+const TOTAL_STEPS = 5;
+
+function selecionarTipo(tipo){
+  tipoRespondente = tipo;
+  document.getElementById("btnPaciente").classList.toggle("sel", tipo==="paciente");
+  document.getElementById("btnFamiliar").classList.toggle("sel", tipo==="familiar");
+  document.getElementById("camposFamiliar").style.display = tipo==="familiar" ? "block" : "none";
+}
+
+function iniciar(){
+  if(!tipoRespondente){ alert("Por favor, selecione quem esta respondendo."); return; }
+  if(tipoRespondente==="familiar"){
+    if(!document.getElementById("nomeRespondente").value.trim()){ alert("Por favor, informe seu nome."); return; }
+    if(!document.getElementById("parentesco").value){ alert("Por favor, selecione sua relacao com o paciente."); return; }
+    respostas.nomeRespondente = document.getElementById("nomeRespondente").value.trim();
+    respostas.parentesco = document.getElementById("parentesco").value;
+  } else {
+    respostas.nomeRespondente = "Proprio paciente";
+    respostas.parentesco = "paciente";
+  }
+  respostas.tipoRespondente = tipoRespondente;
+  document.getElementById("telaInicial").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  renderStep();
+}
+
+const BLOCOS = [
+  {
+    titulo: "Bloco 1 - Atencao e Foco",
+    sub: "Observe como a pessoa lida com tarefas que exigem concentracao, organizacao e memoria no dia a dia.",
+    perguntas: [
+      { id:"p1", num:"1", texto:"A pessoa costuma falhar em prestar atencao em detalhes, cometendo erros por descuido em tarefas escolares, profissionais ou cotidianas?",
+        opcoes:[{letra:"A",texto:"Raramente ou nunca."},{letra:"B",texto:"Ocasionalmente, em momentos de muita exaustao."},{letra:"C",texto:"Frequentemente — deixa passar detalhes essenciais ou erra por desatencao de forma recorrente."}]},
+      { id:"p2", num:"2", texto:"Apresenta dificuldade persistente em manter o foco em tarefas longas, leituras ou conversas?",
+        opcoes:[{letra:"A",texto:"Consegue manter a atencao pelo tempo necessario."},{letra:"B",texto:"Distrai-se se o assunto for macante, mas se esforca."},{letra:"C",texto:"Frequentemente perde o foco com facilidade extrema, parecendo nao escutar quando falam diretamente."}]},
+      { id:"p3", num:"3", texto:"Inicia tarefas mas logo se perde ou abandona o que comecou antes de terminar?",
+        opcoes:[{letra:"A",texto:"Termina tudo o que comeca de forma organizada."},{letra:"B",texto:"As vezes acumula tarefas, mas da conta no prazo."},{letra:"C",texto:"Frequentemente nao segue instrucoes ate o fim, deixando obrigacoes incompletas."}]},
+      { id:"p4", num:"4", texto:"Apresenta grande dificuldade para organizar tarefas, gerenciar o tempo ou manter o espaco de trabalho em ordem?",
+        opcoes:[{letra:"A",texto:"E uma pessoa organizada e pontual."},{letra:"B",texto:"Tem momentos de desorganizacao sob estresse, mas se acha."},{letra:"C",texto:"Desorganizacao cronica severa: prazos perdidos, espacos caoticos, incapacidade de gerenciar rotinas."}]},
+      { id:"p5", num:"5", texto:"Evita ou procrastina de forma extrema atividades que exigem foco e esforco mental prolongado?",
+        opcoes:[{letra:"A",texto:"Envolve-se normalmente nas tarefas exigidas."},{letra:"B",texto:"Prefere as mais faceis, mas faz as dificeis quando precisa."},{letra:"C",texto:"Procrastina de forma extrema e evita ativamente qualquer atividade que exija esforco mental sustentado."}]},
+      { id:"p6", num:"6", texto:"Perde com frequencia itens essenciais para o dia a dia (chaves, celular, documentos, carteira)?",
+        opcoes:[{letra:"A",texto:"Nunca ou raramente perde coisas."},{letra:"B",texto:"Perde algo raramente."},{letra:"C",texto:"Perde coisas constantemente, gerando grande desgaste e perda de tempo procurando."}]},
+      { id:"p7", num:"7", texto:"E facilmente distraido(a) por estimulos externos como barulhos, movimentos ao redor ou pensamentos paralelos?",
+        opcoes:[{letra:"A",texto:"Concentra-se bem mesmo com barulho ao redor."},{letra:"B",texto:"Incomoda-se se o ambiente for muito caotico."},{letra:"C",texto:"Distrai-se por qualquer estimulo irrelevante do ambiente com facilidade extrema."}]},
+      { id:"p8", num:"8", texto:"Esquece compromissos, contas a pagar, recados importantes ou tarefas rotineiras com frequencia?",
+        opcoes:[{letra:"A",texto:"Tem boa memoria para compromissos."},{letra:"B",texto:"Esquece algo menor esporadicamente."},{letra:"C",texto:"Esquece com alta frequencia compromissos agendados, tarefas e obrigacoes basicas."}]}
+    ]
+  },
+  {
+    titulo: "Bloco 2 - Agitacao e Impulsividade",
+    sub: "Observe como a pessoa lida com a quietude, a espera e o controle dos proprios impulsos.",
+    perguntas: [
+      { id:"p9", num:"9", texto:"Remexe ou bate as maos ou os pes, ou se contorce na cadeira quando precisa ficar sentado(a)?",
+        opcoes:[{letra:"A",texto:"Fica sentado(a) com tranquilidade."},{letra:"B",texto:"Mexe as pernas levemente quando esta ansioso(a)."},{letra:"C",texto:"Incapacidade de ficar com o corpo parado; remexe-se ou balanca os pes constantemente."}]},
+      { id:"p10", num:"10", texto:"Levanta-se em situacoes em que se espera que permaneça sentado(a), como em reunioes ou refeicoes?",
+        opcoes:[{letra:"A",texto:"Permanece sentado(a) sem problemas."},{letra:"B",texto:"Sente leve alivio ao levantar, mas se controla."},{letra:"C",texto:"Sente forte necessidade fisica de se levantar e circular fora de hora."}]},
+      { id:"p11", num:"11", texto:"Sente-se frequentemente acelerado(a) ou com muita energia em situacoes que nao justificam isso?",
+        opcoes:[{letra:"A",texto:"Ritmo calmo e controlado."},{letra:"B",texto:"Ritmo acelerado apenas em epocas de pico de trabalho."},{letra:"C",texto:"Inquietacao interna cronica, como se estivesse sempre sob pressao ou com o acelerador travado."}]},
+      { id:"p12", num:"12", texto:"Fala excessivamente em situacoes sociais ou de trabalho, monopolizando conversas?",
+        opcoes:[{letra:"A",texto:"Fala na medida certa, respeitando o turno de fala."},{letra:"B",texto:"Fala bastante quando o assunto lhe interessa muito."},{letra:"C",texto:"Monopoliza conversas, fala sem parar e atropela o interlocutor."}]},
+      { id:"p13", num:"13", texto:"Responde a perguntas antes que elas tenham sido concluidas ou completa a frase dos outros?",
+        opcoes:[{letra:"A",texto:"Espera o outro terminar de falar educadamente."},{letra:"B",texto:"Ocorre raramente em momentos de pressa."},{letra:"C",texto:"Frequentemente atropela as perguntas ou completa as frases alheias antes do termino."}]},
+      { id:"p14", num:"14", texto:"Tem dificuldade em aguardar em filas, no transito ou em situacoes que exigem espera?",
+        opcoes:[{letra:"A",texto:"Aguarda pacientemente."},{letra:"B",texto:"Fica impaciente, mas se controla."},{letra:"C",texto:"Impaciencia extrema em filas ou turnos, irritando-se ou tentando burlar a espera."}]},
+      { id:"p15", num:"15", texto:"Interrompe ou se intromete em conversas, jogos ou atividades dos outros sem permissao?",
+        opcoes:[{letra:"A",texto:"Respeita o espaco e a atividade alheia."},{letra:"B",texto:"Da pitacos esporadicos, mas percebe logo."},{letra:"C",texto:"Entra em conversas alheias ou interrompe atividades de terceiros com frequencia."}]}
+    ]
+  },
+  {
+    titulo: "Bloco 3 - Comunicacao e Interacao Social",
+    sub: "Observe como a pessoa se relaciona com outras pessoas, como se comunica e como lida com rotinas e mudancas.",
+    perguntas: [
+      { id:"p16", num:"16", texto:"Tem dificuldade para manter uma conversa de forma natural e reciproca, ou para compartilhar interesses genuinamente?",
+        opcoes:[{letra:"A",texto:"Interage de forma natural e reciproca."},{letra:"B",texto:"Pode ser mais reservado(a), mas compreende a troca."},{letra:"C",texto:"Dificuldade marcante na reciprocidade; conversas parecem unilaterais, mecanicas ou distantes."}]},
+      { id:"p17", num:"17", texto:"Apresenta uso atipico de contato visual, expressao facial reduzida ou gestualidade limitada?",
+        opcoes:[{letra:"A",texto:"Contato visual e expressoes perfeitamente naturais."},{letra:"B",texto:"Um pouco contido(a) na expressao facial, mas funcional."},{letra:"C",texto:"Evita contato visual direto, expressividade facial muito rigida ou gestualidade incomum."}]},
+      { id:"p18", num:"18", texto:"Apresenta grande dificuldade para ajustar o comportamento a diferentes contextos sociais ou para fazer e manter amigos?",
+        opcoes:[{letra:"A",texto:"Relaciona-se com facilidade e mantem amigos de longa data."},{letra:"B",texto:"Tem poucos amigos, mas cultiva bons vinculos."},{letra:"C",texto:"Dificuldade cronica para engajar em amizades ou entender codigos sociais implicitos."}]},
+      { id:"p19", num:"19", texto:"Apresenta movimentos repetitivos (como balancar as maos, alinhar objetos) ou falas ecolalicas/repetitivas?",
+        opcoes:[{letra:"A",texto:"Nenhuma estereotipia motora presente."},{letra:"B",texto:"Movimentos leves de ansiedade em momentos isolados."},{letra:"C",texto:"Presenca marcante de movimentos repetitivos ou falas/estereotipias frequentes para autorregulacao."}]},
+      { id:"p20", num:"20", texto:"Sofre angustia severa diante de pequenas mudancas na rotina, imprevistos ou alteracoes no ambiente?",
+        opcoes:[{letra:"A",texto:"Adapta-se bem a mudancas de planos."},{letra:"B",texto:"Prefere a rotina, mas tolera imprevistos se avisado(a)."},{letra:"C",texto:"Rigidez extrema: qualquer alteracao imprevista gera desorganizacao emocional intensa ou crise."}]},
+      { id:"p21", num:"21", texto:"Possui interesses muito restritos e fixos, com intensidade ou foco incomuns (como memorizacao exaustiva de dados tecnicos especificos)?",
+        opcoes:[{letra:"A",texto:"Interesses comuns e variados."},{letra:"B",texto:"Hobbies bem definidos, mas sem exclusividade obsessiva."},{letra:"C",texto:"Hiperfoco profundo e restrito em topicos especificos que dominam grande parte de seu tempo."}]},
+      { id:"p22", num:"22", texto:"Demonstra reatividade incomum a estimulos sensoriais (sons altos, texturas de roupas, luzes ou odores)?",
+        opcoes:[{letra:"A",texto:"Sensibilidade sensorial dentro da normalidade."},{letra:"B",texto:"Incomoda-se com barulhos muito fortes eventuais."},{letra:"C",texto:"Hipersensibilidade acentuada a sons, luzes, texturas ou cheiros, exigindo adaptacoes constantes."}]}
+    ]
+  },
+  {
+    titulo: "Bloco 4 - Comportamento e Relacoes com Regras",
+    sub: "Observe como a pessoa lida com frustracao, autoridade, regras e conflitos no dia a dia.",
+    perguntas: [
+      { id:"p23", num:"23", texto:"Perde a paciencia com facilidade ou e frequentemente irritavel e facilmente ofendido(a)?",
+        opcoes:[{letra:"A",texto:"Bom controle emocional, nao se ofende com facilidade."},{letra:"B",texto:"Estressa-se com cargas pesadas, mas pondera."},{letra:"C",texto:"Humor cronicamente irritavel, susceptivel e zangado na maior parte do tempo."}]},
+      { id:"p24", num:"24", texto:"Discute ativamente com figuras de autoridade como pais, chefes, professores ou supervisores?",
+        opcoes:[{letra:"A",texto:"Respeita autoridades e cumpre diretrizes."},{letra:"B",texto:"Reclama de regras burocraticas, mas cumpre."},{letra:"C",texto:"Bate de frente sistematicamente, discute ordens e desafia autoridades de forma recorrente."}]},
+      { id:"p25", num:"25", texto:"Recusa-se ativamente a cumprir solicitacoes de autoridades ou regras fundamentais de convivencia?",
+        opcoes:[{letra:"A",texto:"Cumpre acordos e regras estabelecidas."},{letra:"B",texto:"Esquece regras menores ocasionalmente."},{letra:"C",texto:"Recusa-se de forma desafiadora a obedecer diretrizes ou acordos estabelecidos."}]},
+      { id:"p26", num:"26", texto:"Incomoda deliberadamente outras pessoas ou provoca o esgotamento e a irritacao alheia de forma recorrente?",
+        opcoes:[{letra:"A",texto:"Evita atritos e respeita o espaco alheio."},{letra:"B",texto:"Brinca ou provoca de forma leve em contextos especificos."},{letra:"C",texto:"Provoca intencionalmente o esgotamento ou a irritacao alheia de maneira recorrente."}]},
+      { id:"p27", num:"27", texto:"Culpa frequentemente os outros pelos proprios erros ou falhas, sem assumir responsabilidade?",
+        opcoes:[{letra:"A",texto:"Assume responsabilidade quando erra."},{letra:"B",texto:"Tenta justificar o erro antes de assumir, mas reconhece depois."},{letra:"C",texto:"Jamais assume culpa; culpa sistematicamente os outros por tudo o que da errado."}]},
+      { id:"p28", num:"28", texto:"Mostra-se rancoroso(a), vingativo(a) ou guarda ressentimentos profundos por longos periodos?",
+        opcoes:[{letra:"A",texto:"Perdoa e esquece desentendimentos facilmente."},{letra:"B",texto:"Demora a digerir magoas profundas, mas nao age por vinganca."},{letra:"C",texto:"Apresenta nitida tendencia a guardar rancor e buscar desforra por ofensas reais ou imaginadas."}]}
+    ]
+  },
+  {
+    titulo: "Observacoes Finais",
+    sub: "Se quiser, compartilhe qualquer observacao adicional sobre o comportamento ou a historia da pessoa avaliada.",
+    obs: true
+  }
+];
+
+function renderStep(){
+  const total = TOTAL_STEPS;
+  const pct = Math.round(step/total*100);
+  document.getElementById("stepLabel").textContent = "Etapa "+step+" de "+total;
+  document.getElementById("stepPct").textContent = pct+"%";
+  document.getElementById("progressFill").style.width = pct+"%";
+  document.getElementById("btnBack").style.display = step>1?"block":"none";
+  document.getElementById("btnNext").textContent = step===total ? "Revisar Respostas" : "Proximo →";
+
+  const bloco = BLOCOS[step-1];
+  let h = "";
+  h += "<div class='step-title'>"+bloco.titulo+"</div>";
+  h += "<div class='step-sub'>"+bloco.sub+"</div>";
+
+  if(bloco.obs){
+    h += "<div class='fg'><label class='lbl'>Quer acrescentar algo? <span style='font-weight:400;text-transform:none;color:#9ca3af'>(opcional)</span></label>";
+    h += "<textarea id='obsFinais' class='has-mic' placeholder='Fale ou escreva qualquer observacao que considera importante...' style='min-height:120px'>"+(respostas.obsFinais||"")+"</textarea></div>";
+    h += "<div class='aviso-amarelo'>Suas respostas sao confidenciais e serao analisadas exclusivamente pela Dra. Lucia Kratz para fins clinicos.</div>";
+  } else {
+    bloco.perguntas.forEach(p => {
+      h += "<div class='pergunta-card'>";
+      h += "<div class='perg-num'>Pergunta "+p.num+" de 28</div>";
+      h += "<div class='perg-texto'>"+p.texto+"</div>";
+      h += "<div class='opcoes' id='grp_"+p.id+"'>";
+      p.opcoes.forEach(o => {
+        const sel = respostas[p.id] === o.letra ? " sel" : "";
+        h += "<div class='opcao"+sel+"' data-pid='"+p.id+"' data-letra='"+o.letra+"' onclick='handleOpcao(this)'>";
+        h += "<input type='radio' name='"+p.id+"' value='"+o.letra+"'/>";
+        h += "<div class='letra'>"+o.letra+"</div>";
+        h += "<div>"+o.texto+"</div>";
+        h += "</div>";
+      });
+      h += "</div></div>";
+    });
+  }
+
+  document.getElementById("stepContent").innerHTML = h;
+  initMic();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function handleOpcao(el){ selecionarOpcao(el.dataset.pid, el.dataset.letra, el); }
+function selecionarOpcao(pergId, letra, el){
+  const grp = document.getElementById("grp_"+pergId);
+  grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel");
+  respostas[pergId] = letra;
+}
+
+function avancarStep(){
+  const bloco = BLOCOS[step-1];
+  if(!bloco.obs){
+    for(const p of bloco.perguntas){
+      if(!respostas[p.id]){
+        alert("Por favor, selecione uma opcao para a pergunta "+p.num+" antes de continuar.");
+        const el = document.getElementById("grp_"+p.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+        return;
+      }
+    }
+  } else {
+    const ta = document.getElementById("obsFinais");
+    if(ta) respostas.obsFinais = ta.value;
+  }
+  if(step < TOTAL_STEPS){ step++; renderStep(); }
+  else { mostrarRevisao(); }
+}
+
+function voltarStep(){
+  if(step>1){
+    if(BLOCOS[step-1].obs){ const ta=document.getElementById("obsFinais"); if(ta) respostas.obsFinais=ta.value; }
+    step--; renderStep();
+  }
+}
+
+const PERGUNTAS_REVISAO = [
+  {id:"p1", bloco:"Atencao e Foco", texto:"Falhas em detalhes / erros por descuido"},
+  {id:"p2", bloco:"Atencao e Foco", texto:"Dificuldade em manter foco em tarefas longas"},
+  {id:"p3", bloco:"Atencao e Foco", texto:"Abandona tarefas antes de terminar"},
+  {id:"p4", bloco:"Atencao e Foco", texto:"Desorganizacao cronica de tempo e espaco"},
+  {id:"p5", bloco:"Atencao e Foco", texto:"Evitacao de tarefas com esforco mental prolongado"},
+  {id:"p6", bloco:"Atencao e Foco", texto:"Perda frequente de objetos essenciais"},
+  {id:"p7", bloco:"Atencao e Foco", texto:"Distrabilidade por estimulos externos"},
+  {id:"p8", bloco:"Atencao e Foco", texto:"Esquecimentos de compromissos e rotinas"},
+  {id:"p9", bloco:"Agitacao e Impulsividade", texto:"Inquietacao motora (maos, pes, corpo)"},
+  {id:"p10", bloco:"Agitacao e Impulsividade", texto:"Dificuldade em permanecer sentado(a)"},
+  {id:"p11", bloco:"Agitacao e Impulsividade", texto:"Sensacao de aceleracao interna cronica"},
+  {id:"p12", bloco:"Agitacao e Impulsividade", texto:"Fala excessiva / monopoliza conversas"},
+  {id:"p13", bloco:"Agitacao e Impulsividade", texto:"Precipitacao de respostas / completa frases alheias"},
+  {id:"p14", bloco:"Agitacao e Impulsividade", texto:"Dificuldade para esperar / impaciencia extrema"},
+  {id:"p15", bloco:"Agitacao e Impulsividade", texto:"Interrupcao ou intrusao em atividades alheias"},
+  {id:"p16", bloco:"Comunicacao e Interacao Social", texto:"Dificuldade na reciprocidade social"},
+  {id:"p17", bloco:"Comunicacao e Interacao Social", texto:"Uso atipico de contato visual / expressao facial"},
+  {id:"p18", bloco:"Comunicacao e Interacao Social", texto:"Dificuldade em fazer e manter amigos"},
+  {id:"p19", bloco:"Comunicacao e Interacao Social", texto:"Movimentos ou falas repetitivas (stimming)"},
+  {id:"p20", bloco:"Comunicacao e Interacao Social", texto:"Angustia severa diante de mudancas de rotina"},
+  {id:"p21", bloco:"Comunicacao e Interacao Social", texto:"Interesses restritos e hiperfixados"},
+  {id:"p22", bloco:"Comunicacao e Interacao Social", texto:"Hiper ou hipossensibilidade sensorial"},
+  {id:"p23", bloco:"Comportamento e Regras", texto:"Humor irritavel e irascivel"},
+  {id:"p24", bloco:"Comportamento e Regras", texto:"Discussoes com figuras de autoridade"},
+  {id:"p25", bloco:"Comportamento e Regras", texto:"Desobediencia ativa e recusa de regras"},
+  {id:"p26", bloco:"Comportamento e Regras", texto:"Incomoda deliberadamente outras pessoas"},
+  {id:"p27", bloco:"Comportamento e Regras", texto:"Culpa os outros pelos proprios erros"},
+  {id:"p28", bloco:"Comportamento e Regras", texto:"Rancor e vindicta persistentes"},
+];
+
+const COR_LETRA = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
+
+function mostrarRevisao(){
+  const ta = document.getElementById("obsFinais");
+  if(ta) respostas.obsFinais = ta.value;
+
+  let h = "";
+  h += "<div style='background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:16px'>";
+  h += "<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px'>Quem esta respondendo</div>";
+  h += "<div style='font-size:14px;font-weight:600;color:#1f2937'>";
+  h += respostas.tipoRespondente==="paciente" ? "Proprio paciente" : (respostas.nomeRespondente||"Familiar")+" - "+(respostas.parentesco||"");
+  h += "</div></div>";
+
+  let blocoAtual = "";
+  PERGUNTAS_REVISAO.forEach(p => {
+    if(p.bloco !== blocoAtual){
+      if(blocoAtual) h += "</div>";
+      blocoAtual = p.bloco;
+      h += "<div style='margin-bottom:12px'>";
+      h += "<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:8px'>"+p.bloco+"</div>";
+    }
+    const letra = respostas[p.id] || "-";
+    const cor = COR_LETRA[letra] || "#6b7280";
+    h += "<div style='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6'>";
+    h += "<div style='width:26px;height:26px;min-width:26px;border-radius:50%;background:"+(letra!=="-"?cor+"22":"#f3f4f6")+";border:2px solid "+(letra!=="-"?cor:"#e5e7eb")+";display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:"+(letra!=="-"?cor:"#9ca3af")+"'>"+letra+"</div>";
+    h += "<div style='font-size:13px;color:#374151;line-height:1.4'>"+p.texto+"</div>";
+    h += "</div>";
+  });
+  if(blocoAtual) h += "</div>";
+
+  if(respostas.obsFinais && respostas.obsFinais.trim()){
+    h += "<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-top:4px'>";
+    h += "<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:6px'>Observacoes livres</div>";
+    h += "<div style='font-size:13px;color:#374151;line-height:1.6'>"+respostas.obsFinais+"</div></div>";
+  }
+
+  document.getElementById("revisaoContent").innerHTML = h;
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("revisaoArea").style.display = "block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function voltarRevisao(){
+  document.getElementById("revisaoArea").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  step = TOTAL_STEPS; renderStep();
+  const ta = document.getElementById("obsFinais");
+  if(ta && respostas.obsFinais) ta.value = respostas.obsFinais;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function enviar(){
+  const btn = document.querySelector("#revisaoArea .btn-next");
+  btn.disabled = true; btn.textContent = "Enviando...";
+  try{
+    const doc = {
+      pacienteNome: nomePaciente || "",
+      token: tokenParam || "",
+      tipoRespondente: respostas.tipoRespondente || "",
+      nomeRespondente: respostas.nomeRespondente || "",
+      parentesco: respostas.parentesco || "",
+      p1:respostas.p1||"", p2:respostas.p2||"", p3:respostas.p3||"", p4:respostas.p4||"",
+      p5:respostas.p5||"", p6:respostas.p6||"", p7:respostas.p7||"", p8:respostas.p8||"",
+      p9:respostas.p9||"", p10:respostas.p10||"", p11:respostas.p11||"", p12:respostas.p12||"",
+      p13:respostas.p13||"", p14:respostas.p14||"", p15:respostas.p15||"",
+      p16:respostas.p16||"", p17:respostas.p17||"", p18:respostas.p18||"", p19:respostas.p19||"",
+      p20:respostas.p20||"", p21:respostas.p21||"", p22:respostas.p22||"",
+      p23:respostas.p23||"", p24:respostas.p24||"", p25:respostas.p25||"",
+      p26:respostas.p26||"", p27:respostas.p27||"", p28:respostas.p28||"",
+      obsFinais: respostas.obsFinais || "",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await db.collection("clinica_rastreamento_neuro").add(doc);
+    await db.collection("nr1map_emails").add({
+      to:"luciakratz@gmail.com",
+      message:{
+        subject:"Rastreamento Comportamental — "+(nomePaciente||"Sem nome")+" ("+(respostas.tipoRespondente==="paciente"?"Proprio paciente":respostas.parentesco)+")",
+        html:"<h2>Novo rastreamento recebido</h2><p><b>Paciente:</b> "+(nomePaciente||"-")+"</p><p><b>Respondido por:</b> "+respostas.nomeRespondente+" ("+respostas.parentesco+")</p><p><b>Data:</b> "+new Date().toLocaleDateString("pt-BR")+"</p>"
+      },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById("revisaoArea").style.display="none";
+    document.getElementById("successArea").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){
+    alert("Erro ao enviar. Tente novamente.\n"+e.message);
+    btn.disabled=false; btn.textContent="Confirmar e Enviar";
+  }
+}
+
+function initMic(){
+  if(typeof SpeechRecognition==="undefined"&&typeof webkitSpeechRecognition==="undefined") return;
+  const SR=typeof SpeechRecognition!=="undefined"?SpeechRecognition:webkitSpeechRecognition;
+  document.querySelectorAll("textarea.has-mic").forEach(ta=>{
+    if(ta.dataset.micDone) return;
+    ta.dataset.micDone="1";
+    const wrap=document.createElement("div"); wrap.className="mic-wrap";
+    ta.parentNode.insertBefore(wrap,ta); wrap.appendChild(ta);
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="mic-btn";btn.title="Falar em vez de digitar";btn.textContent="&#127908;";
+    let rec=null;
+    btn.onclick=()=>{
+      if(rec){rec.stop();rec=null;btn.textContent="&#127908;";return;}
+      rec=new SR();rec.lang="pt-BR";rec.continuous=true;rec.interimResults=false;
+      rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)ta.value+=(ta.value?" ":"")+e.results[i][0].transcript;};
+      rec.onend=()=>{rec=null;btn.textContent="&#127908;";};
+      rec.start();btn.textContent="&#128308;";
+    };
+    wrap.appendChild(btn);
+  });
+}
+</script>
+</body>
+</html>
