@@ -2415,6 +2415,15 @@ function AbaQuestionarios({ paciente }) {
     </div>
   );
 
+  if(sub==="alimentar") return (
+    <div>
+      <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
+        <Icon name="arrow-left" size={15}/> Voltar para Questionários
+      </button>
+      <AbaRastreamentoAlimentar paciente={paciente}/>
+    </div>
+  );
+
   if(sub==="neuro") return (
     <div>
       <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
@@ -2490,6 +2499,21 @@ function AbaQuestionarios({ paciente }) {
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
             <span style={{background:"#eff6ff",color:"#2563eb",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
               📊 Ver rastreamento →
+            </span>
+          </div>
+        </div>
+
+        {/* Card Alimentar */}
+        <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
+          onClick={()=>setSub("alimentar")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor="var(--gray-200)"}>
+          <div style={{fontSize:32,marginBottom:10}}>🍎</div>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--text-dark)",marginBottom:4}}>Hábitos Alimentares</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginBottom:14}}>Rastreamento de padrões e comportamentos alimentares — avaliação diferencial DSM-5.</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{background:"#f0fdf4",color:"#16a34a",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
+              🍎 Ver rastreamento →
             </span>
           </div>
         </div>
@@ -4074,6 +4098,337 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
   );
 }
 
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO: RASTREAMENTO ALIMENTAR — AbaRastreamentoAlimentar
+//  Coleção: clinica_rastreamento_alimentar
+// ═══════════════════════════════════════════════════════════════════
+
+const PERGUNTAS_ALIMENTAR = [
+  {id:"p1",  eixo:"Anorexia",  texto:"Restrição persistente / peso abaixo do esperado"},
+  {id:"p2",  eixo:"Anorexia",  texto:"Medo intenso de engordar"},
+  {id:"p3",  eixo:"Anorexia",  texto:"Distorção da imagem corporal"},
+  {id:"p4",  eixo:"Anorexia",  texto:"Padrão de controle de peso (últimos 3 meses)"},
+  {id:"p5",  eixo:"Bulimia/TCA", texto:"Episódios de ingestão muito acima do normal"},
+  {id:"p6",  eixo:"Bulimia/TCA", texto:"Perda de controle durante os episódios"},
+  {id:"p7",  eixo:"Bulimia/TCA", texto:"Frequência dos episódios"},
+  {id:"p8",  eixo:"Bulimia/TCA", texto:"Uso de métodos compensatórios após ingestão excessiva"},
+  {id:"p9",  eixo:"TCA Puro",  texto:"Padrão de ingestão rápida, secreta ou exagerada"},
+  {id:"p10", eixo:"TCA Puro",  texto:"Culpa intensa sem comportamentos compensatórios"},
+];
+
+function calcularEscoresAlimentar(doc) {
+  const p = id => ({A:0,B:1,C:2}[doc[id]]||0);
+  return {
+    anorexia: ["p1","p2","p3","p4"].reduce((s,id)=>s+p(id),0),
+    bulimia:  ["p5","p6","p7","p8"].reduce((s,id)=>s+p(id),0),
+    tca:      ["p9","p10"].reduce((s,id)=>s+p(id),0),
+  };
+}
+
+function laudoAlimentar(escores, doc) {
+  const {anorexia, bulimia, tca} = escores;
+  const pAn = Math.round(anorexia/8*100);
+  const pBu = Math.round(bulimia/8*100);
+  const pTc = Math.round(tca/4*100);
+
+  let hipotese = [];
+  let criterios = [];
+  let atencao = [];
+
+  if(pAn>=50){
+    const subtipo = doc?.p4==="C" ? "Subtipo Compulsão/Purgativo" : "Subtipo Restritivo";
+    hipotese.push("Anorexia Nervosa — "+subtipo);
+    criterios.push({label:"Anorexia Nervosa (DSM-5 F50.0)",atende:true,obs:"Escores elevados nos três critérios nucleares: restrição (p1), medo de engordar (p2) e distorção da imagem corporal (p3). Subtipo: "+subtipo+"."});
+    atencao.push("Avaliar IMC atual e velocidade de perda de peso — risco clínico de desnutrição grave.");
+    atencao.push("Solicitar exames laboratoriais urgentes: eletrólitos, hemograma, função cardíaca (ECG) e densidade óssea.");
+    if(doc?.p4==="C") atencao.push("Padrão purgativo confirmado — investigar lesões esofágicas, erosão dentária e hipocalemia.");
+  } else {
+    criterios.push({label:"Anorexia Nervosa",atende:false,obs:"Escores abaixo do limiar — sem os três critérios nucleares simultâneos."});
+  }
+
+  if(pBu>=50){
+    const temPurgacao = doc?.p8==="C";
+    if(temPurgacao){
+      hipotese.push("Bulimia Nervosa");
+      criterios.push({label:"Bulimia Nervosa (DSM-5 F50.2)",atende:true,obs:"Compulsão recorrente (p5/p6), frequência ≥1x/semana por 3 meses (p7) e comportamentos compensatórios (p8) confirmados."});
+      atencao.push("Investigar desequilíbrio eletrolítico (hipocalemia, hiponatremia) — risco cardíaco.");
+      atencao.push("Avaliar erosão dentária, calosas nos nós dos dedos (sinal de Russell) e lesões esofágicas.");
+    } else if(pTc>=50){
+      hipotese.push("Transtorno de Compulsão Alimentar (TCA)");
+      criterios.push({label:"TCA — Compulsão sem Purgação (DSM-5 F50.8)",atende:true,obs:"Compulsão recorrente com sofrimento intenso e ausência de comportamentos compensatórios — perfil clássico de TCA."});
+      atencao.push("Avaliar sobrepeso/obesidade como consequência do TCA e impacto metabólico.");
+      atencao.push("Rastrear depressão e ansiedade associadas — alta comorbidade com TCA.");
+    }
+  } else if(pTc>=50 && pBu<50){
+    hipotese.push("Transtorno de Compulsão Alimentar (TCA) leve");
+    criterios.push({label:"TCA (traços)",atende:null,obs:"Padrão de compulsão com culpa presente, mas frequência abaixo do limiar diagnóstico pleno."});
+    atencao.push("Monitorar frequência dos episódios — se aumentar para ≥1x/semana por 3 meses, revisar diagnóstico.");
+  }
+
+  if(hipotese.length===0){
+    if(doc?.p4==="B"){
+      hipotese.push("ARFID ou restrição alimentar subliminar — investigar");
+      criterios.push({label:"ARFID (DSM-5 F50.82)",atende:null,obs:"Restrição presente sem distorção de imagem ou medo de engordar — investigar seletividade sensorial ou medo de engasgo."});
+    } else {
+      hipotese.push("Sem hipótese diagnóstica definida pelos escores — avaliação clínica aprofundada indicada.");
+      criterios.push({label:"Transtornos Alimentares",atende:false,obs:"Escores abaixo do limiar para todos os diagnósticos avaliados."});
+    }
+  }
+
+  return {hipotese:hipotese.join(" / "), criterios, atencao, pAn, pBu, pTc};
+}
+
+function AbaRastreamentoAlimentar({ paciente }) {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selecionado, setSelecionado] = useState(null);
+
+  useEffect(()=>{
+    if(!paciente?.nome) return;
+    db.collection("clinica_rastreamento_alimentar")
+      .where("pacienteNome","==",paciente.nome)
+      .get()
+      .then(snap=>{
+        const lista = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        setDocs(lista);
+        setLoading(false);
+      })
+      .catch(()=>setLoading(false));
+  },[paciente?.nome]);
+
+  function copiarLink(){
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/alimentar/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! "+url));
+  }
+
+  function enviarWhatsApp(){
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/alimentar/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    const msg = "Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico para você preencher.\n\n🍎 *Questionário Clínico*\nResponda com calma e honestidade — leva cerca de 5 a 10 minutos.\n\n"+url+"\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_";
+    window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  }
+
+  function gerarLaudoAlimentar(){
+    if(docs.length===0){alert("Nenhuma resposta para gerar laudo.");return;}
+    const pacNome = paciente.nome||"Paciente";
+    const data = new Date().toLocaleDateString("pt-BR");
+    const escoresPorDoc = docs.map(d=>({...d,escores:calcularEscoresAlimentar(d)}));
+    const n = docs.length;
+    const media = {
+      anorexia: escoresPorDoc.reduce((s,d)=>s+d.escores.anorexia,0)/n,
+      bulimia:  escoresPorDoc.reduce((s,d)=>s+d.escores.bulimia,0)/n,
+      tca:      escoresPorDoc.reduce((s,d)=>s+d.escores.tca,0)/n,
+    };
+    const laudo = laudoAlimentar(media, docs[0]);
+    const COR = {A:"#16a34a",B:"#d97706",C:"#dc2626"};
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Laudo Rastreamento Alimentar — ${pacNome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.6}
+h1{font-size:20px;color:#3d006a;margin-bottom:4px}
+h2{font-size:14px;color:#7B00C4;margin:20px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px}
+h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
+.header{border-bottom:2px solid #7B00C4;padding-bottom:16px;margin-bottom:20px}
+.sub{font-size:12px;color:#6b7280;margin-top:2px}
+.barra-bg{background:#f3f4f6;border-radius:20px;height:10px;overflow:hidden;margin-top:3px}
+.hipotese{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 18px;margin:12px 0}
+.criterio{border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+.badge-sim{background:#fef2f2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.badge-nao{background:#f0fdf4;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.badge-inv{background:#fffbeb;color:#d97706;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.alerta{background:#fef2f2;border-left:3px solid #dc2626;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12px}
+.atencao-item{background:#fff7ed;border-left:3px solid #f97316;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12px}
+.resp-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.resp-table th{background:#f5f3ff;padding:6px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #ede9fe}
+.resp-table td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+.resp-table tr:nth-child(even) td{background:#fafafa}
+.rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+.assinatura{text-align:center;margin-top:40px}
+.assinatura img{height:60px;opacity:.9}
+.assinatura p{font-size:12px;color:#374151;margin-top:6px}
+@media print{body{padding:16px}.no-print{display:none}}
+</style></head><body>
+<div class="no-print" style="margin-bottom:20px">
+  <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">Imprimir / Salvar PDF</button>
+</div>
+<div class="header">
+  <h1>Laudo de Rastreamento — Hábitos Alimentares</h1>
+  <div class="sub">Paciente: <strong>${pacNome}</strong> · Data: ${data} · Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Respondentes: ${docs.length} (${docs.map(d=>d.tipoRespondente==="paciente"?"próprio paciente":d.parentesco||"familiar").join(", ")})</div>
+</div>
+
+<h2>I. Perfil Diagnóstico por Categoria DSM-5</h2>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Anorexia Nervosa</strong> (restrição, medo, distorção)</span><span style="color:#dc2626;font-weight:700">${laudo.pAn}%</span></div><div class="barra-bg"><div style="width:${laudo.pAn}%;background:#dc2626;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Bulimia Nervosa</strong> (compulsão + compensação)</span><span style="color:#7c3aed;font-weight:700">${laudo.pBu}%</span></div><div class="barra-bg"><div style="width:${laudo.pBu}%;background:#7c3aed;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TCA — Compulsão sem Purgação</strong></span><span style="color:#d97706;font-weight:700">${laudo.pTc}%</span></div><div class="barra-bg"><div style="width:${laudo.pTc}%;background:#d97706;height:100%;border-radius:20px"></div></div></div>
+
+<h2>II. Hipótese Diagnóstica</h2>
+<div class="hipotese"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Hipótese principal</div><div style="font-size:15px;font-weight:700;color:#3d006a">${laudo.hipotese}</div></div>
+${laudo.criterios.map(c=>`<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende===true?"badge-sim":c.atende===false?"badge-nao":"badge-inv"}">${c.atende===true?"✓ Critérios presentes":c.atende===false?"✗ Não atende":"⚠ Investigar"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
+
+<h2>III. Pontos de Atenção e Alertas Clínicos</h2>
+${laudo.atencao.length===0?"<p style='color:#6b7280;font-size:12px'>Nenhum alerta crítico identificado pelos escores.</p>":laudo.atencao.map(a=>`<div class="atencao-item">⚠ ${a}</div>`).join("")}
+
+<h2>IV. Respostas por Respondente</h2>
+${escoresPorDoc.map(d=>`
+<h3>${d.tipoRespondente==="paciente"?"Próprio paciente":"Familiar: "+(d.nomeRespondente||"")+" ("+(d.parentesco||"—")+")"}</h3>
+<table class="resp-table"><thead><tr><th>#</th><th>Item</th><th>Eixo</th><th>Resp.</th></tr></thead><tbody>
+${PERGUNTAS_ALIMENTAR.map(p=>`<tr><td>${p.id.replace("p","")}</td><td>${p.texto}</td><td>${p.eixo}</td><td style="font-weight:700;color:${COR[d[p.id]]||"#6b7280"}">${d[p.id]||"—"}</td></tr>`).join("")}
+${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspan="2">${d.obsFinais}</td></tr>`:""}
+</tbody></table>`).join("")}
+
+<div class="assinatura">
+  <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura%20Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
+  <p><strong>Dra. Lucia Kratz</strong><br/>Psicóloga · CRP 09/20590<br/>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</p>
+</div>
+<div class="rodape">Documento gerado em ${data} · Uso exclusivo para fins clínicos · Confidencial · LGPD</div>
+</body></html>`;
+
+    const w = window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
+  }
+
+  if(loading) return <div style={{padding:40,textAlign:"center"}}><Spinner/></div>;
+
+  return (
+    <div>
+      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:20,flexWrap:"wrap",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)"}}>Hábitos Alimentares</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{docs.length} respondente{docs.length!==1?"s":""} encontrado{docs.length!==1?"s":""}</div>
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px"}} onClick={copiarLink}>
+            <Icon name="link" size={13}/> Copiar Link
+          </button>
+          <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px",color:"#16a34a",borderColor:"#16a34a"}} onClick={enviarWhatsApp}>
+            <Icon name="message-circle" size={13}/> WhatsApp
+          </button>
+          {docs.length>0 && (
+            <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}} onClick={gerarLaudoAlimentar}>
+              <Icon name="file-text" size={13}/> Gerar Laudo PDF
+            </button>
+          )}
+        </div>
+      </div>
+
+      {docs.length===0 && (
+        <div style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
+          <div style={{fontSize:40,marginBottom:12}}>🍎</div>
+          <div style={{fontWeight:600,marginBottom:6}}>Nenhuma resposta ainda</div>
+          <div style={{fontSize:13,marginBottom:16}}>Envie o link para o paciente e os familiares responderem.</div>
+          <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="btn btn-ghost" onClick={copiarLink}><Icon name="link" size={14}/> Copiar Link</button>
+            <button className="btn btn-purple" onClick={enviarWhatsApp}><Icon name="message-circle" size={14}/> Enviar pelo WhatsApp</button>
+          </div>
+        </div>
+      )}
+
+      {docs.length>0 && (()=>{
+        const escoresPorDoc = docs.map(d=>({...d,escores:calcularEscoresAlimentar(d)}));
+        const n = docs.length;
+        const media = {
+          anorexia: escoresPorDoc.reduce((s,d)=>s+d.escores.anorexia,0)/n,
+          bulimia:  escoresPorDoc.reduce((s,d)=>s+d.escores.bulimia,0)/n,
+          tca:      escoresPorDoc.reduce((s,d)=>s+d.escores.tca,0)/n,
+        };
+        const laudo = laudoAlimentar(media, docs[0]);
+        return (
+          <div>
+            <div style={{background:"#f5f3ff",border:"1px solid #c4b5fd",borderRadius:12,padding:16,marginBottom:16}}>
+              <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--purple)",marginBottom:4}}>Hipótese diagnóstica provável</div>
+              <div style={{fontSize:15,fontWeight:700,color:"#3d006a",lineHeight:1.4}}>{laudo.hipotese}</div>
+            </div>
+
+            <div style={{background:"var(--gray-50)",border:"1px solid var(--gray-200)",borderRadius:12,padding:16,marginBottom:16}}>
+              <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>Escores por categoria DSM-5</div>
+              <BarraEscore label="Anorexia Nervosa"              valor={media.anorexia} max={8} cor="#dc2626"/>
+              <BarraEscore label="Bulimia Nervosa"               valor={media.bulimia}  max={8} cor="#7c3aed"/>
+              <BarraEscore label="TCA — Compulsão sem Purgação"  valor={media.tca}      max={4} cor="#d97706"/>
+            </div>
+
+            <div style={{marginBottom:16}}>
+              <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Análise DSM-5</div>
+              {laudo.criterios.map((c,i)=>(
+                <div key={i} style={{border:"1px solid var(--gray-200)",borderRadius:10,padding:"10px 14px",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                    <span style={{fontWeight:600,fontSize:13}}>{c.label}</span>
+                    <CorBadge atende={c.atende}/>
+                  </div>
+                  <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5}}>{c.obs}</div>
+                </div>
+              ))}
+            </div>
+
+            {laudo.atencao.length>0 && (
+              <div style={{marginBottom:16}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>⚠ Pontos de atenção</div>
+                {laudo.atencao.map((a,i)=>(
+                  <div key={i} style={{background:"#fff7ed",borderLeft:"3px solid #f97316",padding:"8px 12px",marginBottom:6,borderRadius:"0 8px 8px 0",fontSize:12,lineHeight:1.5}}>{a}</div>
+                ))}
+              </div>
+            )}
+
+            <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Respondentes</div>
+            {escoresPorDoc.map((d,i)=>(
+              <div key={i} style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:14,marginBottom:10,cursor:"pointer",background:selecionado===i?"#f5f3ff":"white"}}
+                onClick={()=>setSelecionado(selecionado===i?null:i)}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:13}}>
+                      {d.tipoRespondente==="paciente"?"🙋 Próprio paciente":"👨‍👩‍👧 "+(d.nomeRespondente||"Familiar")+" · "+(d.parentesco||"")}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                      {d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"Data não disponível"}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                    {[
+                      {label:"AN "+Math.round(d.escores.anorexia/8*100)+"%", cor:"#dc2626", bg:"#fef2f2"},
+                      {label:"BN "+Math.round(d.escores.bulimia/8*100)+"%",  cor:"#7c3aed", bg:"#ede9fe"},
+                      {label:"TCA "+Math.round(d.escores.tca/4*100)+"%",     cor:"#d97706", bg:"#fffbeb"},
+                    ].map((b,bi)=>(
+                      <span key={bi} style={{background:b.bg,color:b.cor,padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:600}}>{b.label}</span>
+                    ))}
+                  </div>
+                </div>
+                {selecionado===i && (
+                  <div style={{marginTop:14,borderTop:"1px solid var(--gray-200)",paddingTop:12}}>
+                    {PERGUNTAS_ALIMENTAR.map(p=>(
+                      <div key={p.id} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8,fontSize:12}}>
+                        <span style={{
+                          minWidth:22,height:22,borderRadius:"50%",
+                          background:d[p.id]==="C"?"#fef2f2":d[p.id]==="B"?"#fffbeb":"#f0fdf4",
+                          color:d[p.id]==="C"?"#dc2626":d[p.id]==="B"?"#d97706":"#16a34a",
+                          display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:11
+                        }}>{d[p.id]||"—"}</span>
+                        <div>
+                          <div style={{color:"var(--text-muted)",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{p.eixo}</div>
+                          <div style={{color:"var(--text-dark)",lineHeight:1.4}}>{p.texto}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {d.obsFinais && (
+                      <div style={{background:"var(--gray-50)",border:"1px solid var(--gray-200)",borderRadius:8,padding:10,marginTop:8}}>
+                        <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Observações</div>
+                        <div style={{fontSize:12,color:"var(--text-dark)",lineHeight:1.6}}>{d.obsFinais}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
 //  MÓDULO 2: LINKS COMPARTILHÁVEIS — AbaLinksPartilhados
 //  Coleção: clinica_links_partilhados
 //  Inserir: antes da função PerfilPaciente em admin/app.js
@@ -4085,6 +4440,7 @@ const FERRAMENTAS_LINK = [
   { id: "entrevista",    nome: "Entrevista Clínica Inicial (DSM-5)",           emoji: "🧠", desc: "Instrumento de avaliação clínica inicial" },
   { id: "rastreamento",  nome: "Rastreamento Bipolar / Borderline",            emoji: "📊", desc: "Avaliação diferencial DSM-5 — paciente e familiares" },
   { id: "neuro",         nome: "Rastreamento Comportamental",                  emoji: "🧩", desc: "Avaliação de funcionamento e comportamento" },
+  { id: "alimentar",     nome: "Hábitos Alimentares",                          emoji: "🍎", desc: "Rastreamento de padrões alimentares" },
 ];
 
 function gerarToken() {
@@ -4158,6 +4514,9 @@ function AbaLinksPartilhados({ paciente }) {
     if(ferramenta.id === "neuro") {
       return `${BASE_URL}/rastreamento/neuro/?paciente=${encodeURIComponent(paciente.nome||"")}`;
     }
+    if(ferramenta.id === "alimentar") {
+      return `${BASE_URL}/rastreamento/alimentar/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    }
     return `${BASE_URL}/responder?token=${token}`;
   }
 
@@ -4171,7 +4530,7 @@ function AbaLinksPartilhados({ paciente }) {
   function enviarWhatsApp(ferramenta, token) {
     const url = getLinkUrl(ferramenta, token);
     const nome = paciente.nome?.split(" ")[0] || "paciente";
-    const isRastreio = ferramenta.id==="rastreamento" || ferramenta.id==="neuro";
+    const isRastreio = ferramenta.id==="rastreamento" || ferramenta.id==="neuro" || ferramenta.id==="alimentar";
     const nomeForm = isRastreio ? "Questionário Clínico" : ferramenta.nome;
     const saudacao = isRastreio ? "Olá! 😊" : `Olá, ${nome}! 😊`;
     const msg = `${saudacao}\n\nSua psicóloga Dra. Lucia Kratz preparou um formulário para você preencher:\n\n📋 *${nomeForm}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
