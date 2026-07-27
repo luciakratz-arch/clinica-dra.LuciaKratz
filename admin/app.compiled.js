@@ -5001,6 +5001,10 @@ function AbaQuestionarios({
 }) {
   const [sub, setSub] = useState(null); // null | "anamnese" | "rastreamento"
 
+  function abrirEntrevista() {
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/entrevista/?paciente=${encodeURIComponent(paciente.nome || "")}`;
+    window.open(url, "_blank");
+  }
   if (sub === "anamnese") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
     onClick: () => setSub(null),
     style: {
@@ -5020,6 +5024,27 @@ function AbaQuestionarios({
     name: "arrow-left",
     size: 15
   }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaAnamnese, {
+    paciente: paciente
+  }));
+  if (sub === "entrevista") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(null),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaEntrevistaClinica, {
     paciente: paciente
   }));
   if (sub === "rastreamento") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
@@ -5061,7 +5086,7 @@ function AbaQuestionarios({
   }, "Selecione um questionário para visualizar ou enviar ao paciente."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "1fr 1fr",
+      gridTemplateColumns: "1fr 1fr 1fr",
       gap: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -5119,6 +5144,52 @@ function AbaQuestionarios({
       cursor: "pointer",
       transition: "all .2s"
     },
+    onClick: () => setSub("entrevista"),
+    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
+    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 10
+    }
+  }, "🧠"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Entrevista Clínica Inicial"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      lineHeight: 1.5,
+      marginBottom: 14
+    }
+  }, "Instrumento de avaliação clínica inicial com perfil etário, escalas de observação e hipóteses diagnósticas DSM-5."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#f0fdf4",
+      color: "#16a34a",
+      padding: "3px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "🧠 Ver entrevista →"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid var(--gray-200)",
+      borderRadius: 14,
+      padding: 20,
+      background: "white",
+      cursor: "pointer",
+      transition: "all .2s"
+    },
     onClick: () => setSub("rastreamento"),
     onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
     onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
@@ -5157,6 +5228,195 @@ function AbaQuestionarios({
       fontWeight: 600
     }
   }, "📊 Ver rastreamento →")))));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Entrevista Clínica Inicial — sub-tela de Questionários
+// ═══════════════════════════════════════════════════════════════════
+function AbaEntrevistaClinica({
+  paciente
+}) {
+  const [link, setLink] = useState(null);
+  const [gerando, setGerando] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+  useEffect(() => {
+    db.collection("clinica_links_partilhados").where("pacienteId", "==", paciente.id).where("tipoFerramenta", "==", "entrevista").where("status", "==", "pendente").get().then(snap => {
+      if (!snap.empty) setLink({
+        id: snap.docs[0].id,
+        ...snap.docs[0].data()
+      });
+    });
+  }, [paciente?.id]);
+  async function gerarLink() {
+    setGerando(true);
+    try {
+      const token = Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
+      const ref = await db.collection("clinica_links_partilhados").add({
+        pacienteId: paciente.id,
+        pacienteNome: paciente.nome || "",
+        tipoFerramenta: "entrevista",
+        token,
+        status: "pendente",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setLink({
+        id: ref.id,
+        token,
+        status: "pendente"
+      });
+    } catch (e) {
+      alert("Erro: " + e.message);
+    }
+    setGerando(false);
+  }
+  function copiarLink() {
+    const url = `${BASE}/responder?token=${link.token}`;
+    navigator.clipboard.writeText(url);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  }
+  function enviarWhatsApp() {
+    const url = `${BASE}/responder?token=${link.token}`;
+    const nome = paciente.nome?.split(" ")[0] || "paciente";
+    const msg = `Olá, ${nome}! 😊
+
+Sua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:
+
+🧠 *Entrevista Clínica Inicial*
+
+Acesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:
+${url}
+
+Qualquer dúvida, estou por aqui!
+_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
+  }
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Entrevista Clínica Inicial"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      marginBottom: 20
+    }
+  }, "Instrumento de avaliação clínica inicial com perfil etário, escalas de observação e hipóteses diagnósticas DSM-5."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1.5px solid",
+      borderColor: link ? "var(--purple)" : "var(--gray-200)",
+      borderRadius: 12,
+      padding: "14px 16px",
+      background: link ? "var(--purple-soft)" : "white"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: link ? 12 : 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24
+    }
+  }, "🧠"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13
+    }
+  }, "Entrevista Clínica Inicial (DSM-5)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, "Instrumento de avaliação clínica inicial")), link && /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#fef3c7",
+      color: "#d97706",
+      padding: "4px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "⏱ Pendente"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      padding: "6px 12px",
+      fontSize: 12,
+      flexShrink: 0
+    },
+    onClick: gerarLink,
+    disabled: gerando
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), gerando ? "Gerando..." : link ? "Novo Link" : "Gerar Link")), link && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      background: "white",
+      border: "1px solid var(--gray-200)",
+      borderRadius: 8,
+      padding: "8px 12px",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13,
+    style: {
+      color: "var(--text-muted)",
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)",
+      flex: 1,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    }
+  }, `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/responder?token=${link.token}`)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      padding: "7px 14px",
+      fontSize: 12
+    },
+    onClick: copiarLink
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: copiado ? "check" : "copy",
+    size: 13
+  }), copiado ? "Copiado!" : "Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      padding: "7px 14px",
+      fontSize: 12
+    },
+    onClick: enviarWhatsApp
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 13
+  }), " Enviar pelo WhatsApp")))));
 }
 function AbaAnamnese({
   paciente
@@ -7375,7 +7635,9 @@ function AbaLinksPartilhados({
   function enviarWhatsApp(ferramenta, token) {
     const url = getLinkUrl(ferramenta, token);
     const nome = paciente.nome?.split(" ")[0] || "paciente";
-    const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:\n\n📋 *${ferramenta.nome}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    const nomeForm = ferramenta.id === "rastreamento" ? "Questionário Clínico" : ferramenta.nome;
+    const saudacao = ferramenta.id === "rastreamento" ? "Olá! 😊" : `Olá, ${nome}! 😊`;
+    const msg = `${saudacao}\n\nSua psicóloga Dra. Lucia Kratz preparou um formulário para você preencher:\n\n📋 *${nomeForm}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
     window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
   }
   const fmtDataHora = seconds => {
