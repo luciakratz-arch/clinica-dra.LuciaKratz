@@ -4992,6 +4992,172 @@ function gerarPDFAnamnese(paciente, anamnese, LABELS, SKIP) {
   </body></html>`);
   w.document.close();
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO: QUESTIONÁRIOS — agrupa Anamnese + Rastreamento
+// ═══════════════════════════════════════════════════════════════════
+function AbaQuestionarios({
+  paciente
+}) {
+  const [sub, setSub] = useState(null); // null | "anamnese" | "rastreamento"
+
+  if (sub === "anamnese") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(null),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaAnamnese, {
+    paciente: paciente
+  }));
+  if (sub === "rastreamento") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(null),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaRastreamento, {
+    paciente: paciente
+  }));
+
+  // Tela de cards
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Questionários Clínicos"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      marginBottom: 20
+    }
+  }, "Selecione um questionário para visualizar ou enviar ao paciente."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid var(--gray-200)",
+      borderRadius: 14,
+      padding: 20,
+      background: "white",
+      cursor: "pointer",
+      transition: "all .2s"
+    },
+    onClick: () => setSub("anamnese"),
+    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
+    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 10
+    }
+  }, "📋"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Anamnese"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      lineHeight: 1.5,
+      marginBottom: 14
+    }
+  }, "Formulário completo de anamnese — marcos do desenvolvimento, histórico clínico e familiar."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "var(--purple-light-bg)",
+      color: "var(--purple)",
+      padding: "3px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "📋 Ver anamnese →"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid var(--gray-200)",
+      borderRadius: 14,
+      padding: 20,
+      background: "white",
+      cursor: "pointer",
+      transition: "all .2s"
+    },
+    onClick: () => setSub("rastreamento"),
+    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
+    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 10
+    }
+  }, "📊"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Rastreamento Bipolar / Borderline"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      lineHeight: 1.5,
+      marginBottom: 14
+    }
+  }, "Avaliação diferencial DSM-5 — aplicado ao paciente e familiares, com laudo comparativo."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#eff6ff",
+      color: "#2563eb",
+      padding: "3px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "📊 Ver rastreamento →")))));
+}
 function AbaAnamnese({
   paciente
 }) {
@@ -6603,6 +6769,12 @@ function AbaRastreamento({
     const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/?paciente=${encodeURIComponent(paciente.nome || "")}`;
     navigator.clipboard.writeText(url).then(() => alert("✓ Link copiado! " + url));
   }
+  function enviarWhatsApp() {
+    const nome = paciente.nome || "paciente";
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/?paciente=${encodeURIComponent(nome)}`;
+    const msg = "Olá! 😊\n\nA Dra. Lucia Kratz preparou um questionário clínico para você responder sobre *" + nome + "*.\n\n📊 *Rastreamento Clínico*\nResponda com calma e honestidade — leva cerca de 5 a 10 minutos.\n\nAcesse pelo link abaixo:\n" + url + "\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_";
+    window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+  }
   function gerarLaudo() {
     if (docs.length === 0) {
       alert("Nenhuma resposta para gerar laudo.");
@@ -6765,7 +6937,19 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 13
-  }), " Copiar Link"), docs.length > 0 && /*#__PURE__*/React.createElement("button", {
+  }), " Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      padding: "7px 14px",
+      color: "#16a34a",
+      borderColor: "#16a34a"
+    },
+    onClick: enviarWhatsApp
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 13
+  }), " WhatsApp"), docs.length > 0 && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       fontSize: 12,
@@ -6796,13 +6980,26 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
       fontSize: 13,
       marginBottom: 16
     }
-  }, "Envie o link do rastreamento para o paciente e os familiares."), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
+  }, "Envie o link do rastreamento para o paciente e os familiares."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      justifyContent: "center",
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
     onClick: copiarLink
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 14
-  }), " Copiar Link do Rastreamento")), docs.length > 0 && (() => {
+  }), " Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: enviarWhatsApp
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 14
+  }), " Enviar pelo WhatsApp"))), docs.length > 0 && (() => {
     const escoresPorDoc = docs.map(d => ({
       ...d,
       escores: calcularEscores(d)
@@ -7458,13 +7655,9 @@ function PerfilPaciente({
     label: "Saúde Ocupacional",
     icon: "briefcase"
   }, {
-    id: "anamnese",
-    label: "Anamnese",
-    icon: "clipboard"
-  }, {
-    id: "rastreamento",
-    label: "Rastreamento",
-    icon: "activity"
+    id: "questionarios",
+    label: "Questionários",
+    icon: "clipboard-list"
   }, {
     id: "links",
     label: "Links Partilhados",
@@ -7569,9 +7762,7 @@ function PerfilPaciente({
     pacientes: pacientes
   }), aba === "nr1" && /*#__PURE__*/React.createElement(AbaOcupacional, {
     paciente: paciente
-  }), aba === "anamnese" && /*#__PURE__*/React.createElement(AbaAnamnese, {
-    paciente: paciente
-  }), aba === "rastreamento" && /*#__PURE__*/React.createElement(AbaRastreamento, {
+  }), aba === "questionarios" && /*#__PURE__*/React.createElement(AbaQuestionarios, {
     paciente: paciente
   }), aba === "links" && /*#__PURE__*/React.createElement(AbaLinksPartilhados, {
     paciente: paciente
