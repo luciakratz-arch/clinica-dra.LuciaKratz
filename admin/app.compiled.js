@@ -7276,30 +7276,10 @@ const FERRAMENTAS_LINK = [{
   emoji: "🧠",
   desc: "Instrumento de avaliação clínica inicial"
 }, {
-  id: "arvore",
-  nome: "Árvore da Decisão",
-  emoji: "🌳",
-  desc: "Técnica TCC para transformar preocupações"
-}, {
-  id: "ansiedade",
-  nome: "Gestão da Ansiedade",
-  emoji: "🎯",
-  desc: "Tracking de estresse, humor e roda da vida"
-}, {
-  id: "alimentacao",
-  nome: "Rastreamento Emocional da Alimentação",
-  emoji: "🍎",
-  desc: "Relação entre emoções e comportamento alimentar"
-}, {
-  id: "abc-record",
-  nome: "Registro ABC de Pensamentos",
-  emoji: "📝",
-  desc: "Modelo de registro cognitivo TCC"
-}, {
-  id: "relaxamento",
-  nome: "Relaxamento Muscular Progressivo",
-  emoji: "💆",
-  desc: "Técnica de Jacobson para tensão e ansiedade"
+  id: "rastreamento",
+  nome: "Rastreamento Bipolar / Borderline",
+  emoji: "📊",
+  desc: "Avaliação diferencial DSM-5 — paciente e familiares"
 }];
 function gerarToken() {
   return Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -7374,8 +7354,14 @@ function AbaLinksPartilhados({
       [ferramenta.id]: false
     }));
   }
-  function copiarLink(token) {
-    const url = `${BASE_URL}/responder?token=${token}`;
+  function getLinkUrl(ferramenta, token) {
+    if (ferramenta.id === "rastreamento") {
+      return `${BASE_URL}/rastreamento/?paciente=${encodeURIComponent(paciente.nome || "")}`;
+    }
+    return `${BASE_URL}/responder?token=${token}`;
+  }
+  function copiarLink(token, ferramenta) {
+    const url = getLinkUrl(ferramenta, token);
     navigator.clipboard.writeText(url);
     setCopiado(c => ({
       ...c,
@@ -7387,7 +7373,7 @@ function AbaLinksPartilhados({
     })), 2000);
   }
   function enviarWhatsApp(ferramenta, token) {
-    const url = `${BASE_URL}/responder?token=${token}`;
+    const url = getLinkUrl(ferramenta, token);
     const nome = paciente.nome?.split(" ")[0] || "paciente";
     const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:\n\n📋 *${ferramenta.nome}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
     window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
@@ -7466,7 +7452,7 @@ function AbaLinksPartilhados({
   }, FERRAMENTAS_LINK.map(ferramenta => {
     const linkAtual = links[ferramenta.id];
     const statusCfg = STATUS_CONFIG[linkAtual?.status] || null;
-    const url = linkAtual ? `${BASE_URL}/responder?token=${linkAtual.token}` : null;
+    const url = linkAtual ? getLinkUrl(ferramenta, linkAtual.token) : null;
     return /*#__PURE__*/React.createElement("div", {
       key: ferramenta.id,
       style: {
@@ -7574,7 +7560,7 @@ function AbaLinksPartilhados({
         padding: "7px 14px",
         fontSize: 12
       },
-      onClick: () => copiarLink(linkAtual.token)
+      onClick: () => copiarLink(linkAtual.token, ferramenta)
     }, /*#__PURE__*/React.createElement(Icon, {
       name: copiado[linkAtual.token] ? "check" : "copy",
       size: 13
