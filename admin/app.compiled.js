@@ -5026,6 +5026,27 @@ function AbaQuestionarios({
   }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaAnamnese, {
     paciente: paciente
   }));
+  if (sub === "neuro") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(null),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaRastreamentoNeuro, {
+    paciente: paciente
+  }));
   if (sub === "entrevista") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
     onClick: () => setSub(null),
     style: {
@@ -5086,7 +5107,7 @@ function AbaQuestionarios({
   }, "Selecione um questionário para visualizar ou enviar ao paciente."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "1fr 1fr 1fr",
+      gridTemplateColumns: "1fr 1fr",
       gap: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -5227,7 +5248,53 @@ function AbaQuestionarios({
       fontSize: 11,
       fontWeight: 600
     }
-  }, "📊 Ver rastreamento →")))));
+  }, "📊 Ver rastreamento →"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid var(--gray-200)",
+      borderRadius: 14,
+      padding: 20,
+      background: "white",
+      cursor: "pointer",
+      transition: "all .2s"
+    },
+    onClick: () => setSub("neuro"),
+    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
+    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 32,
+      marginBottom: 10
+    }
+  }, "🧩"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Funcionamento e Comportamento"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      lineHeight: 1.5,
+      marginBottom: 14
+    }
+  }, "Rastreamento de atenção, agitação, interação social e comportamento — avaliação diferencial DSM-5."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#fdf4ff",
+      color: "#9333ea",
+      padding: "3px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "🧩 Ver rastreamento →")))));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -7519,6 +7586,750 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
   })());
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO: RASTREAMENTO NEURO — AbaRastreamentoNeuro
+//  Coleção: clinica_rastreamento_neuro
+// ═══════════════════════════════════════════════════════════════════
+
+const PERGUNTAS_NEURO = [{
+  id: "p1",
+  eixo: "TDAH Inatenção",
+  texto: "Falhas em detalhes / erros por descuido"
+}, {
+  id: "p2",
+  eixo: "TDAH Inatenção",
+  texto: "Dificuldade em manter foco em tarefas longas"
+}, {
+  id: "p3",
+  eixo: "TDAH Inatenção",
+  texto: "Abandona tarefas antes de terminar"
+}, {
+  id: "p4",
+  eixo: "TDAH Inatenção",
+  texto: "Desorganização crônica de tempo e espaço"
+}, {
+  id: "p5",
+  eixo: "TDAH Inatenção",
+  texto: "Evitação de tarefas com esforço mental prolongado"
+}, {
+  id: "p6",
+  eixo: "TDAH Inatenção",
+  texto: "Perda frequente de objetos essenciais"
+}, {
+  id: "p7",
+  eixo: "TDAH Inatenção",
+  texto: "Distrabilidade por estímulos externos"
+}, {
+  id: "p8",
+  eixo: "TDAH Inatenção",
+  texto: "Esquecimentos de compromissos e rotinas"
+}, {
+  id: "p9",
+  eixo: "TDAH Hiperatividade",
+  texto: "Inquietação motora (mãos, pés, corpo)"
+}, {
+  id: "p10",
+  eixo: "TDAH Hiperatividade",
+  texto: "Dificuldade em permanecer sentado(a)"
+}, {
+  id: "p11",
+  eixo: "TDAH Hiperatividade",
+  texto: "Sensação de aceleração interna crônica"
+}, {
+  id: "p12",
+  eixo: "TDAH Hiperatividade",
+  texto: "Fala excessiva / monopoliza conversas"
+}, {
+  id: "p13",
+  eixo: "TDAH Hiperatividade",
+  texto: "Precipitação de respostas / completa frases alheias"
+}, {
+  id: "p14",
+  eixo: "TDAH Hiperatividade",
+  texto: "Dificuldade para esperar / impaciência extrema"
+}, {
+  id: "p15",
+  eixo: "TDAH Hiperatividade",
+  texto: "Interrupção ou intrusão em atividades alheias"
+}, {
+  id: "p16",
+  eixo: "TEA",
+  texto: "Dificuldade na reciprocidade social"
+}, {
+  id: "p17",
+  eixo: "TEA",
+  texto: "Uso atípico de contato visual / expressão facial"
+}, {
+  id: "p18",
+  eixo: "TEA",
+  texto: "Dificuldade em fazer e manter amigos"
+}, {
+  id: "p19",
+  eixo: "TEA",
+  texto: "Movimentos ou falas repetitivas (stimming)"
+}, {
+  id: "p20",
+  eixo: "TEA",
+  texto: "Angústia severa diante de mudanças de rotina"
+}, {
+  id: "p21",
+  eixo: "TEA",
+  texto: "Interesses restritos e hiperfixados"
+}, {
+  id: "p22",
+  eixo: "TEA",
+  texto: "Hiper ou hipossensibilidade sensorial"
+}, {
+  id: "p23",
+  eixo: "TOD",
+  texto: "Humor irritável e irascível"
+}, {
+  id: "p24",
+  eixo: "TOD",
+  texto: "Discussões com figuras de autoridade"
+}, {
+  id: "p25",
+  eixo: "TOD",
+  texto: "Desobediência ativa e recusa de regras"
+}, {
+  id: "p26",
+  eixo: "TOD",
+  texto: "Incomoda deliberadamente outras pessoas"
+}, {
+  id: "p27",
+  eixo: "TOD",
+  texto: "Culpa os outros pelos próprios erros"
+}, {
+  id: "p28",
+  eixo: "TOD",
+  texto: "Rancor e vingança persistentes"
+}];
+function calcularEscoresNeuro(doc) {
+  const pontuar = id => ({
+    A: 0,
+    B: 1,
+    C: 2
+  })[doc[id]] || 0;
+  const ids = (a, b) => Array.from({
+    length: b - a + 1
+  }, (_, i) => "p" + (a + i));
+  return {
+    tdahIn: ids(1, 8).reduce((s, id) => s + pontuar(id), 0),
+    tdahHi: ids(9, 15).reduce((s, id) => s + pontuar(id), 0),
+    tea: ids(16, 22).reduce((s, id) => s + pontuar(id), 0),
+    tod: ids(23, 28).reduce((s, id) => s + pontuar(id), 0)
+  };
+}
+function laudoNeuro(escores) {
+  const {
+    tdahIn,
+    tdahHi,
+    tea,
+    tod
+  } = escores;
+  const pIn = Math.round(tdahIn / 16 * 100);
+  const pHi = Math.round(tdahHi / 14 * 100);
+  const pTea = Math.round(tea / 14 * 100);
+  const pTod = Math.round(tod / 12 * 100);
+  const nivel = pct => pct >= 75 ? "Severo" : pct >= 50 ? "Moderado" : pct >= 25 ? "Leve" : "Subliminar";
+  let hipotese = [];
+  let criterios = [];
+  let atencao = [];
+  if (pIn >= 50 || pHi >= 50) {
+    const subtipo = pIn >= 50 && pHi >= 50 ? "Apresentação Combinada" : pIn >= 50 ? "Predominantemente Desatento" : "Predominantemente Hiperativo/Impulsivo";
+    hipotese.push("TDAH — " + subtipo);
+    criterios.push({
+      label: "TDAH (" + subtipo + ")",
+      atende: pIn >= 50 || pHi >= 50,
+      obs: "Inatenção: " + nivel(pIn) + " (" + pIn + "%) · Hiperatividade: " + nivel(pHi) + " (" + pHi + "%). Verificar início antes dos 12 anos e prejuízo em múltiplos contextos (DSM-5 Critério C)."
+    });
+    atencao.push("Confirmar início dos sintomas antes dos 12 anos de idade (critério obrigatório DSM-5).");
+    atencao.push("Verificar se os sintomas ocorrem em pelo menos 2 contextos (escola/trabalho, casa, social).");
+  } else {
+    criterios.push({
+      label: "TDAH",
+      atende: false,
+      obs: "Escores abaixo do limiar clínico para ambos os subtipos."
+    });
+  }
+  if (pTea >= 50) {
+    hipotese.push("TEA — Transtorno do Espectro Autista");
+    criterios.push({
+      label: "TEA (DSM-5 F84.0)",
+      atende: true,
+      obs: "Escore " + nivel(pTea) + " (" + pTea + "%). Verificar se déficits em comunicação social e padrões restritos estão presentes desde o período do desenvolvimento precoce."
+    });
+    atencao.push("Investigar histórico de desenvolvimento precoce — sinais de TEA devem estar presentes desde a infância.");
+    atencao.push("Diferenciar hiperfoco do TEA (restrito e intenso) da desatenção seletiva do TDAH.");
+    if (pIn >= 40) atencao.push("Alta sobreposição TDAH + TEA detectada — avaliar comorbidade (presente em ~50% dos casos de TEA).");
+  } else {
+    criterios.push({
+      label: "TEA",
+      atende: false,
+      obs: "Escores abaixo do limiar — traços presentes mas insuficientes para indicação clínica de TEA."
+    });
+  }
+  if (pTod >= 50) {
+    hipotese.push("TOD — Transtorno Opositivo-Desafiador");
+    criterios.push({
+      label: "TOD (DSM-5 F91.3)",
+      atende: true,
+      obs: "Escore " + nivel(pTod) + " (" + pTod + "%). Avaliar se o padrão é persistente por ≥6 meses e presente com pelo menos uma pessoa que não seja irmão."
+    });
+    atencao.push("Diferenciar se a irritabilidade e oposição decorrem de desregulação emocional do TDAH ou de TOD independente.");
+    atencao.push("Verificar duração ≥6 meses e prejuízo em pelo menos um contexto (DSM-5 Critério B).");
+  } else {
+    criterios.push({
+      label: "TOD",
+      atende: false,
+      obs: "Escores abaixo do limiar clínico."
+    });
+  }
+  if (hipotese.length === 0) hipotese.push("Sem hipótese diagnóstica definida pelos escores — avaliação clínica aprofundada indicada.");
+  return {
+    hipotese: hipotese.join(" + "),
+    criterios,
+    atencao,
+    pIn,
+    pHi,
+    pTea,
+    pTod,
+    nivel
+  };
+}
+function BarraEscoreNeuro({
+  label,
+  valor,
+  max,
+  cor
+}) {
+  const pct = Math.min(100, Math.round(valor / max * 100));
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: 12,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      color: "#374151"
+    }
+  }, label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: cor,
+      fontWeight: 700
+    }
+  }, pct, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f3f4f6",
+      borderRadius: 20,
+      height: 8,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: pct + "%",
+      background: cor,
+      height: "100%",
+      borderRadius: 20,
+      transition: "width .5s"
+    }
+  })));
+}
+function AbaRastreamentoNeuro({
+  paciente
+}) {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selecionado, setSelecionado] = useState(null);
+  useEffect(() => {
+    if (!paciente?.nome) return;
+    db.collection("clinica_rastreamento_neuro").where("pacienteNome", "==", paciente.nome).get().then(snap => {
+      const lista = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setDocs(lista);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [paciente?.nome]);
+  function copiarLink() {
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/neuro/?paciente=${encodeURIComponent(paciente.nome || "")}`;
+    navigator.clipboard.writeText(url).then(() => alert("✓ Link copiado! " + url));
+  }
+  function enviarWhatsApp() {
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/neuro/?paciente=${encodeURIComponent(paciente.nome || "")}`;
+    const msg = "Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico para você preencher.\n\n🧩 *Questionário Clínico*\nResponda com calma e honestidade — leva cerca de 10 a 15 minutos.\n\n" + url + "\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_";
+    window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+  }
+  function gerarLaudoNeuro() {
+    if (docs.length === 0) {
+      alert("Nenhuma resposta para gerar laudo.");
+      return;
+    }
+    const pacNome = paciente.nome || "Paciente";
+    const data = new Date().toLocaleDateString("pt-BR");
+    const escoresPorDoc = docs.map(d => ({
+      ...d,
+      escores: calcularEscoresNeuro(d)
+    }));
+    const n = docs.length;
+    const media = {
+      tdahIn: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahIn, 0) / n * 10) / 10,
+      tdahHi: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahHi, 0) / n * 10) / 10,
+      tea: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tea, 0) / n * 10) / 10,
+      tod: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tod, 0) / n * 10) / 10
+    };
+    const laudo = laudoNeuro(media);
+    const COR = {
+      A: "#16a34a",
+      B: "#d97706",
+      C: "#dc2626"
+    };
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Laudo Rastreamento Comportamental — ${pacNome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.6}
+h1{font-size:20px;color:#3d006a;margin-bottom:4px}
+h2{font-size:14px;color:#7B00C4;margin:20px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px}
+h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
+.header{border-bottom:2px solid #7B00C4;padding-bottom:16px;margin-bottom:20px}
+.sub{font-size:12px;color:#6b7280;margin-top:2px}
+.barra-bg{background:#f3f4f6;border-radius:20px;height:10px;overflow:hidden;margin-top:3px}
+.hipotese{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 18px;margin:12px 0}
+.criterio{border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+.badge-sim{background:#fef2f2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.badge-nao{background:#f0fdf4;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.atencao-item{background:#fff7ed;border-left:3px solid #f97316;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12px}
+.resp-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.resp-table th{background:#f5f3ff;padding:6px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #ede9fe}
+.resp-table td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+.resp-table tr:nth-child(even) td{background:#fafafa}
+.rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+.assinatura{text-align:center;margin-top:40px}
+.assinatura img{height:60px;opacity:.9}
+.assinatura p{font-size:12px;color:#374151;margin-top:6px}
+@media print{body{padding:16px}.no-print{display:none}}
+</style></head><body>
+<div class="no-print" style="margin-bottom:20px">
+  <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>
+</div>
+<div class="header">
+  <h1>Laudo de Rastreamento — Funcionamento e Comportamento</h1>
+  <div class="sub">Paciente: <strong>${pacNome}</strong> · Data: ${data} · Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Respondentes: ${docs.length} (${docs.map(d => d.tipoRespondente === "paciente" ? "próprio paciente" : d.parentesco || "familiar").join(", ")})</div>
+</div>
+
+<h2>I. Escores por Eixo DSM-5 (média entre respondentes)</h2>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TDAH — Inatenção</strong> (8 itens)</span><span style="color:#7c3aed;font-weight:700">${laudo.nivel(laudo.pIn)} (${laudo.pIn}%)</span></div><div class="barra-bg"><div style="width:${laudo.pIn}%;background:#7c3aed;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TDAH — Hiperatividade/Impulsividade</strong> (7 itens)</span><span style="color:#dc2626;font-weight:700">${laudo.nivel(laudo.pHi)} (${laudo.pHi}%)</span></div><div class="barra-bg"><div style="width:${laudo.pHi}%;background:#dc2626;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TEA — Espectro Autista</strong> (7 itens)</span><span style="color:#2563eb;font-weight:700">${laudo.nivel(laudo.pTea)} (${laudo.pTea}%)</span></div><div class="barra-bg"><div style="width:${laudo.pTea}%;background:#2563eb;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TOD — Transtorno Opositivo-Desafiador</strong> (6 itens)</span><span style="color:#d97706;font-weight:700">${laudo.nivel(laudo.pTod)} (${laudo.pTod}%)</span></div><div class="barra-bg"><div style="width:${laudo.pTod}%;background:#d97706;height:100%;border-radius:20px"></div></div></div>
+
+<h2>II. Hipótese Diagnóstica</h2>
+<div class="hipotese"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Hipótese principal</div><div style="font-size:15px;font-weight:700;color:#3d006a">${laudo.hipotese}</div></div>
+${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende ? "badge-sim" : "badge-nao"}">${c.atende ? "✓ Critérios presentes" : "✗ Não atende"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
+
+<h2>III. Pontos de Atenção para a Entrevista Clínica</h2>
+${laudo.atencao.length === 0 ? "<p style='color:#6b7280;font-size:12px'>Nenhum ponto crítico identificado pelos escores.</p>" : laudo.atencao.map(a => `<div class="atencao-item">⚠ ${a}</div>`).join("")}
+
+<h2>IV. Respostas por Respondente</h2>
+${escoresPorDoc.map(d => `
+<h3>${d.tipoRespondente === "paciente" ? "Próprio paciente" : "Familiar: " + (d.nomeRespondente || "") + " (" + (d.parentesco || "—") + ")"}</h3>
+<table class="resp-table"><thead><tr><th>#</th><th>Item</th><th>Eixo</th><th>Resp.</th></tr></thead><tbody>
+${PERGUNTAS_NEURO.map(p => `<tr><td>${p.id.replace("p", "")}</td><td>${p.texto}</td><td>${p.eixo}</td><td style="font-weight:700;color:${COR[d[p.id]] || "#6b7280"}">${d[p.id] || "—"}</td></tr>`).join("")}
+${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td colspan="2">${d.obsFinais}</td></tr>` : ""}
+</tbody></table>`).join("")}
+
+<div class="assinatura">
+  <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura%20Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
+  <p><strong>Dra. Lucia Kratz</strong><br/>Psicóloga · CRP 09/20590<br/>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</p>
+</div>
+<div class="rodape">Documento gerado em ${data} · Uso exclusivo para fins clínicos · Confidencial · LGPD</div>
+</body></html>`;
+    const w = window.open("", "_blank");
+    w.document.write(html);
+    w.document.close();
+  }
+  if (loading) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 40,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Spinner, null));
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      alignItems: "center",
+      marginBottom: 20,
+      flexWrap: "wrap",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      color: "var(--text-dark)"
+    }
+  }, "Funcionamento e Comportamento"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      marginTop: 2
+    }
+  }, docs.length, " respondente", docs.length !== 1 ? "s" : "", " encontrado", docs.length !== 1 ? "s" : "")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      padding: "7px 14px"
+    },
+    onClick: copiarLink
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      padding: "7px 14px",
+      color: "#16a34a",
+      borderColor: "#16a34a"
+    },
+    onClick: enviarWhatsApp
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 13
+  }), " WhatsApp"), docs.length > 0 && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      fontSize: 12,
+      padding: "7px 14px"
+    },
+    onClick: gerarLaudoNeuro
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "file-text",
+    size: 13
+  }), " Gerar Laudo PDF"))), docs.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: 40,
+      color: "var(--text-muted)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "🧩"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      marginBottom: 6
+    }
+  }, "Nenhuma resposta ainda"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 16
+    }
+  }, "Envie o link para o paciente e os familiares responderem."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      justifyContent: "center",
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: copiarLink
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 14
+  }), " Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: enviarWhatsApp
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 14
+  }), " Enviar pelo WhatsApp"))), docs.length > 0 && (() => {
+    const escoresPorDoc = docs.map(d => ({
+      ...d,
+      escores: calcularEscoresNeuro(d)
+    }));
+    const n = docs.length;
+    const media = {
+      tdahIn: escoresPorDoc.reduce((s, d) => s + d.escores.tdahIn, 0) / n,
+      tdahHi: escoresPorDoc.reduce((s, d) => s + d.escores.tdahHi, 0) / n,
+      tea: escoresPorDoc.reduce((s, d) => s + d.escores.tea, 0) / n,
+      tod: escoresPorDoc.reduce((s, d) => s + d.escores.tod, 0) / n
+    };
+    const laudo = laudoNeuro(media);
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#f5f3ff",
+        border: "1px solid #c4b5fd",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+        color: "var(--purple)",
+        marginBottom: 4
+      }
+    }, "Hipótese diagnóstica provável"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 15,
+        fontWeight: 700,
+        color: "#3d006a",
+        lineHeight: 1.4
+      }
+    }, laudo.hipotese)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "var(--gray-50)",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13,
+        marginBottom: 12
+      }
+    }, "Escores médios por eixo DSM-5"), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
+      label: "TDAH — Inatenção",
+      valor: media.tdahIn,
+      max: 16,
+      cor: "#7c3aed"
+    }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
+      label: "TDAH — Hiperatividade/Impuls.",
+      valor: media.tdahHi,
+      max: 14,
+      cor: "#dc2626"
+    }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
+      label: "TEA — Espectro Autista",
+      valor: media.tea,
+      max: 14,
+      cor: "#2563eb"
+    }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
+      label: "TOD — Opositivo-Desafiador",
+      valor: media.tod,
+      max: 12,
+      cor: "#d97706"
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13,
+        marginBottom: 10
+      }
+    }, "Análise DSM-5"), laudo.criterios.map((c, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        border: "1px solid var(--gray-200)",
+        borderRadius: 10,
+        padding: "10px 14px",
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 4,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13
+      }
+    }, c.label), /*#__PURE__*/React.createElement(CorBadge, {
+      atende: c.atende === true ? true : c.atende === false ? false : null
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--text-muted)",
+        lineHeight: 1.5
+      }
+    }, c.obs)))), laudo.atencao.length > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13,
+        marginBottom: 8
+      }
+    }, "⚠ Pontos de atenção para a entrevista"), laudo.atencao.map((a, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        background: "#fff7ed",
+        borderLeft: "3px solid #f97316",
+        padding: "8px 12px",
+        marginBottom: 6,
+        borderRadius: "0 8px 8px 0",
+        fontSize: 12,
+        lineHeight: 1.5
+      }
+    }, a))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13,
+        marginBottom: 10
+      }
+    }, "Respondentes"), escoresPorDoc.map((d, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        border: "1px solid var(--gray-200)",
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 10,
+        cursor: "pointer",
+        background: selecionado === i ? "#f5f3ff" : "white"
+      },
+      onClick: () => setSelecionado(selecionado === i ? null : i)
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13
+      }
+    }, d.tipoRespondente === "paciente" ? "🙋 Próprio paciente" : "👨‍👩‍👧 " + (d.nomeRespondente || "Familiar") + " · " + (d.parentesco || "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)",
+        marginTop: 2
+      }
+    }, d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "Data não disponível")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 4,
+        flexWrap: "wrap"
+      }
+    }, [{
+      label: "In " + Math.round(d.escores.tdahIn / 16 * 100) + "%",
+      cor: "#7c3aed",
+      bg: "#ede9fe"
+    }, {
+      label: "Hi " + Math.round(d.escores.tdahHi / 14 * 100) + "%",
+      cor: "#dc2626",
+      bg: "#fef2f2"
+    }, {
+      label: "TEA " + Math.round(d.escores.tea / 14 * 100) + "%",
+      cor: "#2563eb",
+      bg: "#eff6ff"
+    }, {
+      label: "TOD " + Math.round(d.escores.tod / 12 * 100) + "%",
+      cor: "#d97706",
+      bg: "#fffbeb"
+    }].map((b, bi) => /*#__PURE__*/React.createElement("span", {
+      key: bi,
+      style: {
+        background: b.bg,
+        color: b.cor,
+        padding: "2px 8px",
+        borderRadius: 20,
+        fontSize: 11,
+        fontWeight: 600
+      }
+    }, b.label)))), selecionado === i && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 14,
+        borderTop: "1px solid var(--gray-200)",
+        paddingTop: 12
+      }
+    }, PERGUNTAS_NEURO.map(p => /*#__PURE__*/React.createElement("div", {
+      key: p.id,
+      style: {
+        display: "flex",
+        gap: 10,
+        alignItems: "flex-start",
+        marginBottom: 8,
+        fontSize: 12
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        minWidth: 22,
+        height: 22,
+        borderRadius: "50%",
+        background: d[p.id] === "C" ? "#fef2f2" : d[p.id] === "B" ? "#fffbeb" : "#f0fdf4",
+        color: d[p.id] === "C" ? "#dc2626" : d[p.id] === "B" ? "#d97706" : "#16a34a",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 700,
+        fontSize: 11
+      }
+    }, d[p.id] || "—"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: "var(--text-muted)",
+        fontSize: 10,
+        fontWeight: 600,
+        textTransform: "uppercase",
+        letterSpacing: .5
+      }
+    }, p.eixo), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: "var(--text-dark)",
+        lineHeight: 1.4
+      }
+    }, p.texto)))), d.obsFinais && /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "var(--gray-50)",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 8,
+        padding: 10,
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: "var(--text-muted)",
+        textTransform: "uppercase",
+        letterSpacing: .5,
+        marginBottom: 4
+      }
+    }, "Observações"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "var(--text-dark)",
+        lineHeight: 1.6
+      }
+    }, d.obsFinais))))));
+  })());
+}
+
 //  MÓDULO 2: LINKS COMPARTILHÁVEIS — AbaLinksPartilhados
 //  Coleção: clinica_links_partilhados
 //  Inserir: antes da função PerfilPaciente em admin/app.js
@@ -7540,6 +8351,11 @@ const FERRAMENTAS_LINK = [{
   nome: "Rastreamento Bipolar / Borderline",
   emoji: "📊",
   desc: "Avaliação diferencial DSM-5 — paciente e familiares"
+}, {
+  id: "neuro",
+  nome: "Rastreamento Comportamental",
+  emoji: "🧩",
+  desc: "Avaliação de funcionamento e comportamento"
 }];
 function gerarToken() {
   return Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -7618,6 +8434,9 @@ function AbaLinksPartilhados({
     if (ferramenta.id === "rastreamento") {
       return `${BASE_URL}/rastreamento/?paciente=${encodeURIComponent(paciente.nome || "")}`;
     }
+    if (ferramenta.id === "neuro") {
+      return `${BASE_URL}/rastreamento/neuro/?paciente=${encodeURIComponent(paciente.nome || "")}`;
+    }
     return `${BASE_URL}/responder?token=${token}`;
   }
   function copiarLink(token, ferramenta) {
@@ -7635,8 +8454,9 @@ function AbaLinksPartilhados({
   function enviarWhatsApp(ferramenta, token) {
     const url = getLinkUrl(ferramenta, token);
     const nome = paciente.nome?.split(" ")[0] || "paciente";
-    const nomeForm = ferramenta.id === "rastreamento" ? "Questionário Clínico" : ferramenta.nome;
-    const saudacao = ferramenta.id === "rastreamento" ? "Olá! 😊" : `Olá, ${nome}! 😊`;
+    const isRastreio = ferramenta.id === "rastreamento" || ferramenta.id === "neuro";
+    const nomeForm = isRastreio ? "Questionário Clínico" : ferramenta.nome;
+    const saudacao = isRastreio ? "Olá! 😊" : `Olá, ${nome}! 😊`;
     const msg = `${saudacao}\n\nSua psicóloga Dra. Lucia Kratz preparou um formulário para você preencher:\n\n📋 *${nomeForm}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
     window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
   }
