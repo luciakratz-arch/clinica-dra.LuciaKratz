@@ -2394,6 +2394,73 @@ function gerarPDFAnamnese(paciente, anamnese, LABELS, SKIP){
   w.document.close();
 }
 
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO: QUESTIONÁRIOS — agrupa Anamnese + Rastreamento
+// ═══════════════════════════════════════════════════════════════════
+function AbaQuestionarios({ paciente }) {
+  const [sub, setSub] = useState(null); // null | "anamnese" | "rastreamento"
+
+  if(sub==="anamnese") return (
+    <div>
+      <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
+        <Icon name="arrow-left" size={15}/> Voltar para Questionários
+      </button>
+      <AbaAnamnese paciente={paciente}/>
+    </div>
+  );
+
+  if(sub==="rastreamento") return (
+    <div>
+      <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
+        <Icon name="arrow-left" size={15}/> Voltar para Questionários
+      </button>
+      <AbaRastreamento paciente={paciente}/>
+    </div>
+  );
+
+  // Tela de cards
+  return (
+    <div>
+      <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)",marginBottom:4}}>Questionários Clínicos</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>Selecione um questionário para visualizar ou enviar ao paciente.</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+
+        {/* Card Anamnese */}
+        <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
+          onClick={()=>setSub("anamnese")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor="var(--gray-200)"}>
+          <div style={{fontSize:32,marginBottom:10}}>📋</div>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--text-dark)",marginBottom:4}}>Anamnese</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginBottom:14}}>Formulário completo de anamnese — marcos do desenvolvimento, histórico clínico e familiar.</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{background:"var(--purple-light-bg)",color:"var(--purple)",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
+              📋 Ver anamnese →
+            </span>
+          </div>
+        </div>
+
+        {/* Card Rastreamento */}
+        <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
+          onClick={()=>setSub("rastreamento")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor="var(--gray-200)"}>
+          <div style={{fontSize:32,marginBottom:10}}>📊</div>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--text-dark)",marginBottom:4}}>Rastreamento Bipolar / Borderline</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginBottom:14}}>Avaliação diferencial DSM-5 — aplicado ao paciente e familiares, com laudo comparativo.</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{background:"#eff6ff",color:"#2563eb",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
+              📊 Ver rastreamento →
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 function AbaAnamnese({paciente}){
   const [anamnese, setAnamnese] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -3221,6 +3288,13 @@ function AbaRastreamento({ paciente }) {
     navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! "+url));
   }
 
+  function enviarWhatsApp() {
+    const nome = paciente.nome || "paciente";
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/?paciente=${encodeURIComponent(nome)}`;
+    const msg = "Olá! 😊\n\nA Dra. Lucia Kratz preparou um questionário clínico para você responder sobre *"+nome+"*.\n\n📊 *Rastreamento Clínico*\nResponda com calma e honestidade — leva cerca de 5 a 10 minutos.\n\nAcesse pelo link abaixo:\n"+url+"\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_";
+    window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  }
+
   function gerarLaudo() {
     if(docs.length===0){alert("Nenhuma resposta para gerar laudo.");return;}
     const pacNome = paciente.nome || "Paciente";
@@ -3347,6 +3421,9 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
           <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px"}} onClick={copiarLink}>
             <Icon name="link" size={13}/> Copiar Link
           </button>
+          <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px",color:"#16a34a",borderColor:"#16a34a"}} onClick={enviarWhatsApp}>
+            <Icon name="message-circle" size={13}/> WhatsApp
+          </button>
           {docs.length>0 && (
             <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}} onClick={gerarLaudo}>
               <Icon name="file-text" size={13}/> Gerar Laudo PDF
@@ -3361,7 +3438,10 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
           <div style={{fontSize:40,marginBottom:12}}>📊</div>
           <div style={{fontWeight:600,marginBottom:6}}>Nenhuma resposta ainda</div>
           <div style={{fontSize:13,marginBottom:16}}>Envie o link do rastreamento para o paciente e os familiares.</div>
-          <button className="btn btn-purple" onClick={copiarLink}><Icon name="link" size={14}/> Copiar Link do Rastreamento</button>
+          <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="btn btn-ghost" onClick={copiarLink}><Icon name="link" size={14}/> Copiar Link</button>
+            <button className="btn btn-purple" onClick={enviarWhatsApp}><Icon name="message-circle" size={14}/> Enviar pelo WhatsApp</button>
+          </div>
         </div>
       )}
 
@@ -3691,8 +3771,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
       {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
       {id:"casal",    label:"Terapia de Casal",icon:"heart"},
       {id:"nr1",      label:"Saúde Ocupacional",   icon:"briefcase"},
-      {id:"anamnese",      label:"Anamnese",             icon:"clipboard"},
-      {id:"rastreamento",  label:"Rastreamento",          icon:"activity"},
+      {id:"questionarios", label:"Questionários",        icon:"clipboard-list"},
       {id:"links",         label:"Links Partilhados",   icon:"link"},
     ]:[]),
   ];
@@ -3723,8 +3802,7 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
       {aba==="casal"      &&<AbaCasal       paciente={paciente} pacientes={pacientes}/>}
       {aba==="nr1"        &&<AbaOcupacional paciente={paciente}/>}
-      {aba==="anamnese"     &&<AbaAnamnese paciente={paciente}/>}
-      {aba==="rastreamento" &&<AbaRastreamento paciente={paciente}/>}
+      {aba==="questionarios"&&<AbaQuestionarios paciente={paciente}/>}
       {aba==="links"        &&<AbaLinksPartilhados paciente={paciente}/>}
     </div>
   );
