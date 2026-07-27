@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rastreamento de Saude Sexual | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
+.card{background:white;border-radius:20px;padding:28px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 8px 40px rgba(123,0,196,0.12)}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:19px;color:#3d006a;margin:10px 0 4px;font-weight:700}
+.header p{font-size:13px;color:#6b7280}
+.welcome-box{background:#f5f3ff;border-radius:14px;padding:20px;margin-bottom:20px;font-size:13.5px;color:#4b5563;line-height:1.7}
+.welcome-box h2{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.welcome-box ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.progress-wrap{margin-bottom:22px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:5px}
+.progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
+.step-title{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:3px}
+.step-sub{font-size:12.5px;color:#6b7280;margin-bottom:18px;line-height:1.5;background:#f9fafb;border-left:3px solid #7B00C4;padding:8px 12px;border-radius:0 8px 8px 0}
+.fg{margin-bottom:16px}
+label.lbl{display:block;font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s;background:white}
+input:focus,select:focus,textarea:focus{border-color:#7B00C4}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+.pergunta-card{background:#f9fafb;border:1px solid #ede9fe;border-radius:14px;padding:18px;margin-bottom:16px}
+.perg-num{font-size:10px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.perg-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:14px;font-weight:500}
+.opcoes{display:flex;flex-direction:column;gap:8px}
+.opcao{display:flex;align-items:flex-start;gap:10px;background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13.5px;color:#374151;line-height:1.5}
+.opcao input[type=radio]{display:none}
+.opcao .letra{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9ca3af;transition:all .2s;margin-top:1px}
+.opcao.sel{border-color:#7B00C4;background:#f5f0ff}
+.opcao.sel .letra{background:#7B00C4;border-color:#7B00C4;color:white}
+.opcao:hover{border-color:#a78bfa}
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px}
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;top:8px;background:#f3e8ff;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:15px;line-height:1;z-index:1}
+textarea.has-mic{padding-right:44px}
+.nav{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
+.btn-back{background:#f3f4f6;color:#374151;flex:1}
+.btn-next{background:#7B00C4;color:white;flex:2;box-shadow:0 4px 14px rgba(123,0,196,0.35)}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.6;cursor:default}
+.btn-start{background:#7B00C4;color:white;width:100%;margin-top:16px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+.aviso-amarelo{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#92400e;line-height:1.6;margin-bottom:14px}
+.aviso-privado{background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#065f46;line-height:1.6;margin-bottom:20px}
+.success{text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.success-msg{font-size:14px;color:#6b7280;line-height:1.7}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="../../logo.png" alt="" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+    <h1>Rastreamento de Saude Sexual</h1>
+    <p>Dra. Lucia Kratz &middot; Psicologa &middot; CRP 09/20590</p>
+  </div>
+
+  <div id="telaInicial">
+    <div class="aviso-privado">
+      &#128274; <strong>Privacidade total:</strong> Suas respostas sao completamente confidenciais e serao lidas apenas pela Dra. Lucia Kratz. Nenhuma outra pessoa tera acesso a este questionario.
+    </div>
+    <div class="welcome-box">
+      <h2>&#128203; Antes de comecar, leia com atencao:</h2>
+      <ul>
+        <li>Este questionario leva entre <strong>5 e 10 minutos</strong> para ser respondido.</li>
+        <li>Responda com <strong>honestidade</strong> — nao ha respostas certas ou erradas.</li>
+        <li>As perguntas abordam aspectos intimos da saude — sinta-se a vontade para responder no seu ritmo.</li>
+        <li>Voce pode usar o botao &#127908; para <strong>falar em vez de digitar</strong> nos campos de texto.</li>
+        <li>Suas respostas sao <strong>confidenciais</strong> e usadas exclusivamente para fins clinicos.</li>
+      </ul>
+    </div>
+    <button class="btn-start" onclick="iniciar()">Comecar Questionario &rarr;</button>
+  </div>
+
+  <div id="formArea" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="stepLabel">Etapa 1 de 4</span>
+        <span id="stepPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div id="stepContent"></div>
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">&#8592; Voltar</button>
+      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Proximo &rarr;</button>
+    </div>
+  </div>
+
+  <div id="revisaoArea" style="display:none">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:36px;margin-bottom:8px">&#128269;</div>
+      <div style="font-size:17px;font-weight:700;color:#3d006a;margin-bottom:4px">Revise suas respostas</div>
+      <div style="font-size:13px;color:#6b7280;line-height:1.6">Confira tudo antes de enviar. Voce ainda pode voltar e corrigir.</div>
+    </div>
+    <div id="revisaoContent"></div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button class="btn btn-back" style="flex:1" onclick="voltarRevisao()">&#8592; Corrigir</button>
+      <button class="btn btn-next" style="flex:2" onclick="enviar()">&#10003; Confirmar e Enviar</button>
+    </div>
+  </div>
+
+  <div id="successArea" style="display:none">
+    <div class="success">
+      <div class="success-icon">&#129419;</div>
+      <div class="success-title">Respostas enviadas!</div>
+      <div class="success-msg">
+        Obrigado por responder com honestidade.<br/>
+        Suas respostas foram registradas com seguranca<br/>
+        e serao analisadas com total sigilo pela Dra. Lucia Kratz.<br/><br/>
+        <strong>Pode fechar esta janela.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial"};
+if(!firebase.apps.length)firebase.initializeApp(fc);
+const db=firebase.firestore();
+
+const urlParams=new URLSearchParams(window.location.search);
+const nomePaciente=urlParams.get("paciente")||"";
+
+let step=1;
+let respostas={tipoRespondente:"paciente",nomeRespondente:"Proprio paciente",parentesco:"paciente"};
+const TOTAL_STEPS=4;
+
+function iniciar(){
+  document.getElementById("telaInicial").style.display="none";
+  document.getElementById("formArea").style.display="block";
+  renderStep();
+}
+
+const BLOCOS=[
+  {
+    titulo:"Bloco 1 - Desejo e Interesse",
+    sub:"Responda sobre como voce percebe seu interesse e desejo pela vida sexual nos ultimos meses.",
+    perguntas:[
+      {id:"p1",num:"1",texto:"Voce percebe uma ausencia ou reducao significativa do desejo por atividade sexual ou de fantasias sexuais, de forma persistente ha 6 meses ou mais?",
+        opcoes:[{letra:"A",texto:"Mantenho um nivel de desejo adequado e estavel para minha realidade."},{letra:"B",texto:"Percebo quedas pontuais de desejo associadas a estresse, cansaco ou momentos dificeis na relacao."},{letra:"C",texto:"Ausencia cronica e marcante de desejo ou fantasias sexuais por 6 meses ou mais, causando sofrimento real."}]},
+      {id:"p2",num:"2",texto:"Voce sente repulsa, aversao ou evita ativamente qualquer situacao de contato sexual ou intimo?",
+        opcoes:[{letra:"A",texto:"Nao ha qualquer aversao ao toque ou contato intimo."},{letra:"B",texto:"Em momentos de cansaco extremo, prefiro caricia sem ato sexual, mas sem repulsa."},{letra:"C",texto:"Sinto repulsa ativa ou evito de forma intensa qualquer aproximacao de cunho sexual."}]}
+    ]
+  },
+  {
+    titulo:"Bloco 2 - Resposta Fisica e Orgasmo",
+    sub:"Responda sobre o que acontece com seu corpo durante a atividade sexual.",
+    perguntas:[
+      {id:"p3",num:"3",texto:"Voce tem dificuldade persistente para obter ou manter a resposta fisica de excitacao durante a atividade sexual (lubrificacao, erecao) de forma adequada?",
+        opcoes:[{letra:"A",texto:"A resposta fisica de excitacao ocorre normalmente quando ha estimulo e intencao."},{letra:"B",texto:"Ocorre ocasionalmente por ansiedade ou cansaco, mas nao e um padrao."},{letra:"C",texto:"Dificuldade cronica e recorrente para atingir ou sustentar a resposta fisica ate o fim da relacao."}]},
+      {id:"p4",num:"4",texto:"Voce experimenta atraso acentuado, pouca frequencia ou ausencia total de orgasmo, mesmo apos estimulacao adequada?",
+        opcoes:[{letra:"A",texto:"Atinjo o orgasmo de forma satisfatoria e regular quando estimulado(a)."},{letra:"B",texto:"Ocorre variacao esporadica no tempo dependendo do contexto."},{letra:"C",texto:"Ausencia ou grande dificuldade persistente de atingir o orgasmo, gerando frustacao e sofrimento."}]},
+      {id:"p5",num:"5",texto:"(Para homens) A ejaculacao ocorre de forma muito rapida, antes ou logo apos o inicio da relacao, sem que voce consiga controlar?",
+        opcoes:[{letra:"A",texto:"Consigo controlar o momento da ejaculacao adequadamente."},{letra:"B",texto:"Ocorre de forma mais rapida raramente, em momentos de alta excitacao."},{letra:"C",texto:"Padrao persistente de ejaculacao rapida e involuntaria sem controle."}]},
+      {id:"p6",num:"6",texto:"(Para homens) Ha um atraso muito grande ou impossibilidade de ejacular durante a relacao sexual?",
+        opcoes:[{letra:"A",texto:"Tempo ejaculatorio normal e satisfatorio."},{letra:"B",texto:"Variacao esporadica no tempo ejaculatorio."},{letra:"C",texto:"Atraso extremo ou incapacidade de ejacular durante a relacao, gerando grande desgaste."}]}
+    ]
+  },
+  {
+    titulo:"Bloco 3 - Dor e Desconforto",
+    sub:"Responda sobre eventuais dores ou desconfortos fisicos relacionados a atividade sexual.",
+    perguntas:[
+      {id:"p7",num:"7",texto:"Voce sente dor fisica genital ou pelvica durante ou ao tentar ter relacao sexual com penetracao?",
+        opcoes:[{letra:"A",texto:"Nenhuma dor ou desconforto durante as relacoes."},{letra:"B",texto:"Desconforto leve e pontual resolvido com lubrificacao ou ajustes."},{letra:"C",texto:"Dor genital ou pelvica acentuada, recorrente e significativa associada a penetracao."}]},
+      {id:"p8",num:"8",texto:"(Para mulheres) Voce percebe uma contracao ou aperto involuntario dos musculos vaginais ao tentar a penetracao, acompanhado de medo ou ansiedade intensa?",
+        opcoes:[{letra:"A",texto:"Musculatura relaxada e sem medo ou tensao associada."},{letra:"B",texto:"Tensao leve inicial por inexperiencia ou pressa que cede logo."},{letra:"C",texto:"Contracao involuntaria severa da musculatura e medo intenso da penetracao."}]}
+    ]
+  },
+  {
+    titulo:"Bloco 4 - Contexto e Duracao",
+    sub:"Responda sobre ha quanto tempo isso acontece e em que situacoes.",
+    perguntas:[
+      {id:"p9",num:"9",texto:"Os sintomas ou dificuldades que voce descreveu persistem ha 6 meses ou mais e causam sofrimento real na sua vida ou nos seus relacionamentos?",
+        opcoes:[{letra:"A",texto:"Nao preenchem o criterio de 6 meses ou nao causam sofrimento real."},{letra:"B",texto:"Tenho duvida sobre a constancia ou duracao do que sinto."},{letra:"C",texto:"Sim, persistem ha mais de 6 meses e causam forte sofrimento pessoal ou nas relacoes."}]},
+      {id:"p10",num:"10",texto:"As dificuldades ocorrem em todas as situacoes ou apenas com determinados parceiros ou contextos especificos?",
+        opcoes:[{letra:"A",texto:"Nao se aplica — sem disfuncao."},{letra:"B",texto:"Ocorre apenas em situacoes ou com parceiros especificos (por exemplo, com alguem novo)."},{letra:"C",texto:"Ocorre em todas as situacoes, independentemente do parceiro ou contexto."}]},
+      {id:"p11",num:"11",texto:"Voce associa as dificuldades a algum desses fatores?",
+        opcoes:[{letra:"A",texto:"Problemas fisicos ou hormonais ja investigados por medico."},{letra:"B",texto:"Inicio ou mudanca de medicamentos (como antidepressivos, anticoncepcionais ou outros)."},{letra:"C",texto:"Ansiedade, pensamentos negativos sobre o proprio corpo ou desempenho, traumas ou conflitos no relacionamento."}]}
+    ]
+  }
+];
+
+function renderStep(){
+  const total=TOTAL_STEPS;
+  const pct=Math.round(step/total*100);
+  document.getElementById("stepLabel").textContent="Etapa "+step+" de "+total;
+  document.getElementById("stepPct").textContent=pct+"%";
+  document.getElementById("progressFill").style.width=pct+"%";
+  document.getElementById("btnBack").style.display=step>1?"block":"none";
+  document.getElementById("btnNext").textContent=step===total?"Revisar Respostas":"Proximo →";
+  const bloco=BLOCOS[step-1];
+  let h="";
+  h+="<div class='step-title'>"+bloco.titulo+"</div>";
+  h+="<div class='step-sub'>"+bloco.sub+"</div>";
+  bloco.perguntas.forEach(p=>{
+    h+="<div class='pergunta-card'>";
+    h+="<div class='perg-num'>Pergunta "+p.num+" de 11</div>";
+    h+="<div class='perg-texto'>"+p.texto+"</div>";
+    h+="<div class='opcoes' id='grp_"+p.id+"'>";
+    p.opcoes.forEach(o=>{
+      const sel=respostas[p.id]===o.letra?" sel":"";
+      h+="<div class='opcao"+sel+"' data-pid='"+p.id+"' data-letra='"+o.letra+"' onclick='handleOpcao(this)'>";
+      h+="<input type='radio' name='"+p.id+"' value='"+o.letra+"'/>";
+      h+="<div class='letra'>"+o.letra+"</div>";
+      h+="<div>"+o.texto+"</div>";
+      h+="</div>";
+    });
+    h+="</div></div>";
+  });
+  document.getElementById("stepContent").innerHTML=h;
+  initMic();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function handleOpcao(el){selecionarOpcao(el.dataset.pid,el.dataset.letra,el);}
+function selecionarOpcao(pergId,letra,el){
+  const grp=document.getElementById("grp_"+pergId);
+  grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel");
+  respostas[pergId]=letra;
+}
+
+function avancarStep(){
+  const bloco=BLOCOS[step-1];
+  for(const p of bloco.perguntas){
+    if(!respostas[p.id]){
+      alert("Por favor, selecione uma opcao para a pergunta "+p.num+" antes de continuar.");
+      const el=document.getElementById("grp_"+p.id);
+      if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+      return;
+    }
+  }
+  if(step<TOTAL_STEPS){step++;renderStep();}
+  else{mostrarRevisao();}
+}
+
+function voltarStep(){
+  if(step>1){step--;renderStep();}
+}
+
+const PERGUNTAS_REVISAO=[
+  {id:"p1", bloco:"Desejo e Interesse",texto:"Ausencia ou reducao persistente de desejo sexual"},
+  {id:"p2", bloco:"Desejo e Interesse",texto:"Repulsa ou aversao ativa ao contato sexual"},
+  {id:"p3", bloco:"Resposta Fisica e Orgasmo",texto:"Dificuldade na resposta fisica de excitacao"},
+  {id:"p4", bloco:"Resposta Fisica e Orgasmo",texto:"Atraso ou ausencia de orgasmo"},
+  {id:"p5", bloco:"Resposta Fisica e Orgasmo",texto:"Ejaculacao rapida e involuntaria (homens)"},
+  {id:"p6", bloco:"Resposta Fisica e Orgasmo",texto:"Atraso ou ausencia de ejaculacao (homens)"},
+  {id:"p7", bloco:"Dor e Desconforto",texto:"Dor genital ou pelvica durante penetracao"},
+  {id:"p8", bloco:"Dor e Desconforto",texto:"Contracao involuntaria e medo da penetracao (mulheres)"},
+  {id:"p9", bloco:"Contexto e Duracao",texto:"Persistencia ha 6+ meses com sofrimento clinico"},
+  {id:"p10",bloco:"Contexto e Duracao",texto:"Generalizado vs. situacional"},
+  {id:"p11",bloco:"Contexto e Duracao",texto:"Fator etiologico associado"},
+];
+
+const COR_LETRA={A:"#16a34a",B:"#d97706",C:"#dc2626"};
+
+function mostrarRevisao(){
+  let h="";
+  h+="<div style='background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:16px'>";
+  h+="<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px'>Respondente</div>";
+  h+="<div style='font-size:14px;font-weight:600;color:#1f2937'>Proprio paciente &middot; Confidencial</div></div>";
+  let blocoAtual="";
+  PERGUNTAS_REVISAO.forEach(p=>{
+    if(p.bloco!==blocoAtual){
+      if(blocoAtual) h+="</div>";
+      blocoAtual=p.bloco;
+      h+="<div style='margin-bottom:12px'>";
+      h+="<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:8px'>"+p.bloco+"</div>";
+    }
+    const letra=respostas[p.id]||"-";
+    const cor=COR_LETRA[letra]||"#6b7280";
+    h+="<div style='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6'>";
+    h+="<div style='width:26px;height:26px;min-width:26px;border-radius:50%;background:"+(letra!=="-"?cor+"22":"#f3f4f6")+";border:2px solid "+(letra!=="-"?cor:"#e5e7eb")+";display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:"+(letra!=="-"?cor:"#9ca3af")+"'>"+letra+"</div>";
+    h+="<div style='font-size:13px;color:#374151;line-height:1.4'>"+p.texto+"</div>";
+    h+="</div>";
+  });
+  if(blocoAtual) h+="</div>";
+  document.getElementById("revisaoContent").innerHTML=h;
+  document.getElementById("formArea").style.display="none";
+  document.getElementById("revisaoArea").style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function voltarRevisao(){
+  document.getElementById("revisaoArea").style.display="none";
+  document.getElementById("formArea").style.display="block";
+  step=TOTAL_STEPS;renderStep();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function enviar(){
+  const btn=document.querySelector("#revisaoArea .btn-next");
+  btn.disabled=true;btn.textContent="Enviando...";
+  try{
+    await db.collection("clinica_rastreamento_sexual").add({
+      pacienteNome:nomePaciente||"",
+      tipoRespondente:"paciente",
+      p1:respostas.p1||"",p2:respostas.p2||"",p3:respostas.p3||"",
+      p4:respostas.p4||"",p5:respostas.p5||"",p6:respostas.p6||"",
+      p7:respostas.p7||"",p8:respostas.p8||"",p9:respostas.p9||"",
+      p10:respostas.p10||"",p11:respostas.p11||"",
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection("nr1map_emails").add({
+      to:"luciakratz@gmail.com",
+      message:{
+        subject:"Rastreamento Sexual — "+(nomePaciente||"Sem nome"),
+        html:"<h2>Novo rastreamento de saude sexual recebido</h2><p><b>Paciente:</b> "+(nomePaciente||"-")+"</p><p><b>Data:</b> "+new Date().toLocaleDateString("pt-BR")+"</p>"
+      },
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById("revisaoArea").style.display="none";
+    document.getElementById("successArea").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){
+    alert("Erro ao enviar. Tente novamente.\n"+e.message);
+    btn.disabled=false;btn.textContent="Confirmar e Enviar";
+  }
+}
+
+function initMic(){
+  if(typeof SpeechRecognition==="undefined"&&typeof webkitSpeechRecognition==="undefined") return;
+  const SR=typeof SpeechRecognition!=="undefined"?SpeechRecognition:webkitSpeechRecognition;
+  document.querySelectorAll("textarea.has-mic").forEach(ta=>{
+    if(ta.dataset.micDone) return;
+    ta.dataset.micDone="1";
+    const wrap=document.createElement("div");wrap.className="mic-wrap";
+    ta.parentNode.insertBefore(wrap,ta);wrap.appendChild(ta);
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="mic-btn";btn.title="Falar em vez de digitar";btn.textContent="&#127908;";
+    let rec=null;
+    btn.onclick=()=>{
+      if(rec){rec.stop();rec=null;btn.textContent="&#127908;";return;}
+      rec=new SR();rec.lang="pt-BR";rec.continuous=true;rec.interimResults=false;
+      rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)ta.value+=(ta.value?" ":"")+e.results[i][0].transcript;};
+      rec.onend=()=>{rec=null;btn.textContent="&#127908;";};
+      rec.start();btn.textContent="&#128308;";
+    };
+    wrap.appendChild(btn);
+  });
+}
+</script>
+</body>
+</html>
