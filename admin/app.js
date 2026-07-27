@@ -3780,7 +3780,9 @@ function AbaLinksPartilhados({ paciente }) {
   function enviarWhatsApp(ferramenta, token) {
     const url = getLinkUrl(ferramenta, token);
     const nome = paciente.nome?.split(" ")[0] || "paciente";
-    const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou um formulário para você preencher:\n\n📋 *${ferramenta.nome}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    const nomeForm = ferramenta.id==="rastreamento" ? "Questionário Clínico" : ferramenta.nome;
+    const saudacao = ferramenta.id==="rastreamento" ? "Olá! 😊" : `Olá, ${nome}! 😊`;
+    const msg = `${saudacao}\n\nSua psicóloga Dra. Lucia Kratz preparou um formulário para você preencher:\n\n📋 *${nomeForm}*\n\nAcesse pelo link abaixo e responda com calma — suas respostas vão direto para o prontuário:\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
     window.open(`https://api.whatsapp.com/send?phone=55${(paciente.telefone || "").replace(/\D/g, "")}&text=${encodeURIComponent(msg)}`, "_blank");
   }
 
