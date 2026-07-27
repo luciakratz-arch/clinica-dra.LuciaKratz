@@ -3074,6 +3074,407 @@ function AbaOcupacional({ paciente }) {
 
 
 // ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO: RASTREAMENTO BIPOLAR/BORDERLINE — AbaRastreamento
+//  Coleção: clinica_rastreamento_bipolar
+// ═══════════════════════════════════════════════════════════════════
+
+const PERGUNTAS_RASTREAMENTO = [
+  { id:"p1",  bloco:"Eixo Bipolar · Energia",    texto:"Energia muito acima do normal / fases de aceleração" },
+  { id:"p2",  bloco:"Eixo Bipolar · Energia",    texto:"Padrão de sono e fala durante os momentos de agitação" },
+  { id:"p3",  bloco:"Eixo Bipolar · Energia",    texto:"Autoconfiança exagerada ou riscos incomuns" },
+  { id:"p4",  bloco:"Eixo Bipolar · Depressão",  texto:"Tristeza profunda ou perda de interesse prolongada" },
+  { id:"p5",  bloco:"Eixo Bipolar · Depressão",  texto:"Disposição física, sono, apetite nas fases de baixa" },
+  { id:"p6",  bloco:"Eixo Bipolar · Depressão",  texto:"Desesperança, culpa excessiva ou ideação suicida" },
+  { id:"p7",  bloco:"Eixo Borderline",           texto:"Reação ao abandono real ou imaginado" },
+  { id:"p8",  bloco:"Eixo Borderline",           texto:"Relações intensas e instáveis ao longo do tempo" },
+  { id:"p9",  bloco:"Eixo Borderline",           texto:"Instabilidade de identidade, objetivos ou autoimagem" },
+  { id:"p10", bloco:"Eixo Borderline",           texto:"Comportamentos impulsivos no dia a dia" },
+  { id:"p11", bloco:"Eixo Borderline",           texto:"Automutilação ou tentativas de autoextermínio" },
+  { id:"p12", bloco:"Eixo Borderline",           texto:"Oscilação rápida de humor (horas / dias)" },
+  { id:"p13", bloco:"Eixo Borderline",           texto:"Vazio interior persistente ou tédio crônico" },
+  { id:"p14", bloco:"Eixo Borderline",           texto:"Manejo da raiva e da frustração" },
+  { id:"p15", bloco:"Eixo Borderline",           texto:"Dissociação ou paranoia sob estresse extremo" },
+];
+
+// Pontuação: A=0, B=1, C=2, D=3
+function pontuarResposta(letra) {
+  return { A:0, B:1, C:2, D:3 }[letra] || 0;
+}
+
+function calcularEscores(doc) {
+  const bipolarMania  = ["p1","p2","p3"].reduce((s,k)=>s+pontuarResposta(doc[k]),0);
+  const bipolarDep    = ["p4","p5","p6"].reduce((s,k)=>s+pontuarResposta(doc[k]),0);
+  const borderline    = ["p7","p8","p9","p10","p11","p12","p13","p14","p15"].reduce((s,k)=>s+pontuarResposta(doc[k]),0);
+  return { bipolarMania, bipolarDep, borderline };
+}
+
+function laudoDSM5(escores) {
+  const { bipolarMania, bipolarDep, borderline } = escores;
+  const maxMania   = 8;  // 3 perguntas × max 2-3
+  const maxDep     = 6;
+  const maxBorder  = 18; // 9 perguntas × max 2
+  const pctMania   = bipolarMania  / maxMania   * 100;
+  const pctDep     = bipolarDep    / maxDep     * 100;
+  const pctBorder  = borderline    / maxBorder  * 100;
+
+  let hipotese = "";
+  let criterios = [];
+  let atencao = [];
+
+  // Mania / Hipomania
+  if(pctMania >= 75) {
+    hipotese = "Transtorno Bipolar Tipo I (episódio maníaco com comprometimento grave)";
+    criterios.push({ label:"TB Tipo I", atende:true, obs:"Escores de mania/hipomania elevados (≥75%). Verificar duração ≥7 dias e comprometimento funcional (Critério A do DSM-5)." });
+    atencao.push("Confirmar duração exata dos episódios de aceleração (≥7 dias = mania; 4–6 dias = hipomania).");
+    atencao.push("Checar se houve internação ou prejuízo grave — diferencial TB I vs TB II.");
+  } else if(pctMania >= 45) {
+    hipotese = "Transtorno Bipolar Tipo II (hipomania + depressão) — verificar";
+    criterios.push({ label:"TB Tipo II", atende:true, obs:"Indícios moderados de hipomania (45–74%). Confirmar ausência de episódio maníaco pleno." });
+    atencao.push("Investigar se os episódios de aceleração duraram 4–6 dias sem internação (perfil Tipo II).");
+  } else if(pctMania >= 20 && pctDep >= 30) {
+    hipotese = "Ciclotimia ou Transtorno Depressivo com características mistas — investigar";
+    criterios.push({ label:"Ciclotimia", atende:null, obs:"Flutuações leves de humor sem critério pleno para mania ou depressão maior." });
+    atencao.push("Mapear se as oscilações são crônicas (≥2 anos em adultos) para confirmar Ciclotimia (DSM-5 301.13).");
+  } else {
+    criterios.push({ label:"TB Tipo I", atende:false, obs:"Escores de energia/aceleração abaixo do limiar clínico." });
+    criterios.push({ label:"TB Tipo II", atende:false, obs:"Sem indícios consistentes de hipomania." });
+  }
+
+  // Depressão
+  if(pctDep >= 60) {
+    criterios.push({ label:"Episódio Depressivo Maior", atende:true, obs:"Escores depressivos elevados. Avaliar ≥5 critérios por ≥2 semanas (DSM-5 Critério A)." });
+    atencao.push("Verificar presença de ideação suicida ativa (p6=C) — acionar protocolo de segurança se necessário.");
+  } else if(pctDep >= 30) {
+    criterios.push({ label:"Depressão leve/moderada", atende:null, obs:"Indícios moderados. Não preenche critérios plenos — monitorar." });
+  } else {
+    criterios.push({ label:"Episódio Depressivo Maior", atende:false, obs:"Escores abaixo do limiar." });
+  }
+
+  // Borderline
+  if(pctBorder >= 70) {
+    if(!hipotese) hipotese = "Transtorno da Personalidade Borderline (TPB)";
+    else hipotese += " com forte sobreposição de TPB";
+    criterios.push({ label:"TPB (DSM-5 301.83)", atende:true, obs:"Escores elevados em ≥5 dos 9 critérios DSM-5 para TPB (escore ≥70%)." });
+    atencao.push("Diferenciar oscilação de humor rápida (horas) do Borderline vs episódios longos do TB (dias/semanas).");
+    atencao.push("Investigar história de automutilação, vazio crônico e instabilidade de identidade como critérios centrais do TPB.");
+  } else if(pctBorder >= 40) {
+    criterios.push({ label:"TPB (traços)", atende:null, obs:"Traços limítrofes moderados. Não preenche critérios plenos — avaliar longitudinalmente." });
+    atencao.push("Checar se oscilações emocionais são reativas a estressores interpessoais (perfil Borderline) ou autônomas (perfil Bipolar).");
+  } else {
+    criterios.push({ label:"TPB", atende:false, obs:"Escores abaixo do limiar de critérios borderline." });
+  }
+
+  // Comorbidade
+  if(pctMania >= 45 && pctBorder >= 55) {
+    atencao.push("Alta probabilidade de COMORBIDADE TB + TPB — padrão encontrado em até 20% dos casos. Priorizar diagnóstico longitudinal.");
+  }
+
+  if(!hipotese) hipotese = "Sem hipótese diagnóstica definida pelos escores — avaliação clínica aprofundada indicada.";
+
+  return { hipotese, criterios, atencao, pctMania, pctDep, pctBorder };
+}
+
+function CorBadge({ atende }) {
+  if(atende === true)  return <span style={{background:"#fef2f2",color:"#dc2626",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>✓ Critérios presentes</span>;
+  if(atende === false) return <span style={{background:"#f0fdf4",color:"#16a34a",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>✗ Não atende</span>;
+  return <span style={{background:"#fffbeb",color:"#d97706",padding:"2px 10px",borderRadius:20,fontSize:11,fontWeight:700}}>⚠ Investigar</span>;
+}
+
+function BarraEscore({ label, valor, max, cor }) {
+  const pct = Math.min(100, Math.round(valor / max * 100));
+  return (
+    <div style={{marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+        <span style={{fontWeight:600,color:"#374151"}}>{label}</span>
+        <span style={{color:cor,fontWeight:700}}>{pct}%</span>
+      </div>
+      <div style={{background:"#f3f4f6",borderRadius:20,height:8,overflow:"hidden"}}>
+        <div style={{width:pct+"%",background:cor,height:"100%",borderRadius:20,transition:"width .5s"}}/>
+      </div>
+    </div>
+  );
+}
+
+function AbaRastreamento({ paciente }) {
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selecionado, setSelecionado] = useState(null);
+
+  useEffect(()=>{
+    if(!paciente?.nome) return;
+    db.collection("clinica_rastreamento_bipolar")
+      .where("pacienteNome","==",paciente.nome)
+      .get()
+      .then(snap=>{
+        const lista = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        setDocs(lista);
+        setLoading(false);
+      })
+      .catch(()=>setLoading(false));
+  },[paciente?.nome]);
+
+  function copiarLink() {
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado! "+url));
+  }
+
+  function gerarLaudo() {
+    if(docs.length===0){alert("Nenhuma resposta para gerar laudo.");return;}
+    const pacNome = paciente.nome || "Paciente";
+    const data = new Date().toLocaleDateString("pt-BR");
+
+    // Calcular escores por respondente
+    const escoresPorDoc = docs.map(d=>({ ...d, escores: calcularEscores(d) }));
+    // Escores médios
+    const mediaEscores = {
+      bipolarMania: Math.round(escoresPorDoc.reduce((s,d)=>s+d.escores.bipolarMania,0)/escoresPorDoc.length*10)/10,
+      bipolarDep:   Math.round(escoresPorDoc.reduce((s,d)=>s+d.escores.bipolarDep,0)/escoresPorDoc.length*10)/10,
+      borderline:   Math.round(escoresPorDoc.reduce((s,d)=>s+d.escores.borderline,0)/escoresPorDoc.length*10)/10,
+    };
+    const laudo = laudoDSM5(mediaEscores);
+
+    const LETRA_COR = { A:"#16a34a", B:"#d97706", C:"#dc2626", D:"#7f1d1d" };
+
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Laudo Rastreamento — ${pacNome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.6}
+h1{font-size:20px;color:#3d006a;margin-bottom:4px}
+h2{font-size:14px;color:#7B00C4;margin:20px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px}
+h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
+.header{border-bottom:2px solid #7B00C4;padding-bottom:16px;margin-bottom:20px}
+.sub{font-size:12px;color:#6b7280;margin-top:2px}
+.barra-wrap{margin-bottom:10px}
+.barra-bg{background:#f3f4f6;border-radius:20px;height:10px;overflow:hidden;margin-top:3px}
+.hipotese{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 18px;margin:12px 0}
+.hipotese .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px}
+.hipotese .valor{font-size:15px;font-weight:700;color:#3d006a}
+.criterio{border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+.criterio .nome{font-weight:700;font-size:13px;margin-bottom:4px}
+.badge-sim{background:#fef2f2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.badge-nao{background:#f0fdf4;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.badge-inv{background:#fffbeb;color:#d97706;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.atencao-item{background:#fff7ed;border-left:3px solid #f97316;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12px}
+.resp-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.resp-table th{background:#f5f3ff;padding:6px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #ede9fe}
+.resp-table td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+.resp-table tr:nth-child(even) td{background:#fafafa}
+.letra{font-weight:700;font-size:13px}
+.rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+.assinatura{text-align:center;margin-top:40px}
+.assinatura img{height:60px;opacity:.9}
+.assinatura p{font-size:12px;color:#374151;margin-top:6px}
+@media print{body{padding:16px}.no-print{display:none}}
+</style></head><body>
+<div class="no-print" style="margin-bottom:20px">
+  <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>
+</div>
+<div class="header">
+  <h1>Laudo Analítico de Rastreamento Clínico</h1>
+  <div class="sub">Paciente: <strong>${pacNome}</strong> · Data: ${data} · Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Respondentes: ${docs.length} (${docs.map(d=>d.tipoRespondente==="paciente"?"próprio paciente":d.parentesco||"familiar").join(", ")})</div>
+</div>
+
+<h2>I. Escores por Eixo (média entre respondentes)</h2>
+<div class="barra-wrap">
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Mania/Hipomania</strong></span><span style="color:#dc2626;font-weight:700">${Math.round(mediaEscores.bipolarMania/8*100)}%</span></div>
+  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarMania/8*100)}%;background:#dc2626;height:100%;border-radius:20px"></div></div>
+</div>
+<div class="barra-wrap">
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Depressão</strong></span><span style="color:#7c3aed;font-weight:700">${Math.round(mediaEscores.bipolarDep/6*100)}%</span></div>
+  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarDep/6*100)}%;background:#7c3aed;height:100%;border-radius:20px"></div></div>
+</div>
+<div class="barra-wrap">
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Borderline (TPB)</strong></span><span style="color:#2563eb;font-weight:700">${Math.round(mediaEscores.borderline/18*100)}%</span></div>
+  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.borderline/18*100)}%;background:#2563eb;height:100%;border-radius:20px"></div></div>
+</div>
+
+<h2>II. Hipótese Diagnóstica Provável</h2>
+<div class="hipotese">
+  <div class="label">Hipótese principal</div>
+  <div class="valor">${laudo.hipotese}</div>
+</div>
+
+<h3>Análise por Critério DSM-5</h3>
+${laudo.criterios.map(c=>`
+<div class="criterio">
+  <div class="nome">${c.label} &nbsp; <span class="${c.atende===true?"badge-sim":c.atende===false?"badge-nao":"badge-inv"}">${c.atende===true?"✓ Critérios presentes":c.atende===false?"✗ Não atende":"⚠ Investigar"}</span></div>
+  <div style="font-size:12px;color:#4b5563;margin-top:4px">${c.obs}</div>
+</div>`).join("")}
+
+<h2>III. Pontos de Atenção para a Entrevista Clínica</h2>
+${laudo.atencao.length===0?"<p style='color:#6b7280;font-size:12px'>Nenhum ponto de atenção crítico identificado pelos escores.</p>":laudo.atencao.map(a=>`<div class="atencao-item">⚠ ${a}</div>`).join("")}
+
+<h2>IV. Respostas por Respondente</h2>
+${escoresPorDoc.map(d=>`
+<h3>${d.tipoRespondente==="paciente"?"🧑 Próprio paciente":"👨‍👩‍👧 "+( d.nomeRespondente||"Familiar")+" ("+( d.parentesco||"—")+")"}</h3>
+<table class="resp-table">
+<thead><tr><th>#</th><th>Pergunta</th><th>Bloco</th><th>Resp.</th></tr></thead>
+<tbody>
+${PERGUNTAS_RASTREAMENTO.map(p=>`
+<tr><td>${p.id.replace("p","")}</td><td>${p.texto}</td><td>${p.bloco}</td>
+<td><span class="letra" style="color:${LETRA_COR[d[p.id]]||"#6b7280"}">${d[p.id]||"—"}</span></td></tr>`).join("")}
+${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td colspan="2">${d.obsFinais}</td></tr>`:""}
+</tbody></table>`).join("")}
+
+<div class="assinatura">
+  <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
+  <p><strong>Dra. Lucia Kratz</strong><br/>Psicóloga · CRP 09/20590<br/>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</p>
+</div>
+<div class="rodape">Documento gerado em ${data} · Uso exclusivo para fins clínicos · Confidencial · LGPD</div>
+</body></html>`;
+
+    const w = window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
+  }
+
+  if(loading) return <div style={{padding:40,textAlign:"center"}}><Spinner/></div>;
+
+  return (
+    <div>
+      {/* Cabeçalho com botões */}
+      <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:20,flexWrap:"wrap",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)"}}>Rastreamento Bipolar / Borderline</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginTop:2}}>{docs.length} respondente{docs.length!==1?"s":""} encontrado{docs.length!==1?"s":""}</div>
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <button className="btn btn-ghost" style={{fontSize:12,padding:"7px 14px"}} onClick={copiarLink}>
+            <Icon name="link" size={13}/> Copiar Link
+          </button>
+          {docs.length>0 && (
+            <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}} onClick={gerarLaudo}>
+              <Icon name="file-text" size={13}/> Gerar Laudo PDF
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Sem respostas */}
+      {docs.length===0 && (
+        <div style={{textAlign:"center",padding:40,color:"var(--text-muted)"}}>
+          <div style={{fontSize:40,marginBottom:12}}>📊</div>
+          <div style={{fontWeight:600,marginBottom:6}}>Nenhuma resposta ainda</div>
+          <div style={{fontSize:13,marginBottom:16}}>Envie o link do rastreamento para o paciente e os familiares.</div>
+          <button className="btn btn-purple" onClick={copiarLink}><Icon name="link" size={14}/> Copiar Link do Rastreamento</button>
+        </div>
+      )}
+
+      {/* Escores gerais */}
+      {docs.length>0 && (()=>{
+        const escoresPorDoc = docs.map(d=>({...d,escores:calcularEscores(d)}));
+        const media = {
+          bipolarMania: escoresPorDoc.reduce((s,d)=>s+d.escores.bipolarMania,0)/docs.length,
+          bipolarDep:   escoresPorDoc.reduce((s,d)=>s+d.escores.bipolarDep,0)/docs.length,
+          borderline:   escoresPorDoc.reduce((s,d)=>s+d.escores.borderline,0)/docs.length,
+        };
+        const laudo = laudoDSM5(media);
+        return (
+          <div>
+            {/* Hipótese */}
+            <div style={{background:"#f5f3ff",border:"1px solid #c4b5fd",borderRadius:12,padding:16,marginBottom:16}}>
+              <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--purple)",marginBottom:4}}>Hipótese diagnóstica provável</div>
+              <div style={{fontSize:15,fontWeight:700,color:"#3d006a",lineHeight:1.4}}>{laudo.hipotese}</div>
+            </div>
+
+            {/* Barras de escore */}
+            <div style={{background:"var(--gray-50)",border:"1px solid var(--gray-200)",borderRadius:12,padding:16,marginBottom:16}}>
+              <div style={{fontWeight:600,fontSize:13,marginBottom:12}}>Escores médios por eixo</div>
+              <BarraEscore label="Eixo Bipolar · Mania/Hipomania" valor={media.bipolarMania} max={8}  cor="#dc2626"/>
+              <BarraEscore label="Eixo Bipolar · Depressão"       valor={media.bipolarDep}   max={6}  cor="#7c3aed"/>
+              <BarraEscore label="Eixo Borderline (TPB)"          valor={media.borderline}   max={18} cor="#2563eb"/>
+            </div>
+
+            {/* Critérios DSM-5 */}
+            <div style={{marginBottom:16}}>
+              <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Análise DSM-5</div>
+              {laudo.criterios.map((c,i)=>(
+                <div key={i} style={{border:"1px solid var(--gray-200)",borderRadius:10,padding:"10px 14px",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                    <span style={{fontWeight:600,fontSize:13}}>{c.label}</span>
+                    <CorBadge atende={c.atende}/>
+                  </div>
+                  <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5}}>{c.obs}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pontos de atenção */}
+            {laudo.atencao.length>0 && (
+              <div style={{marginBottom:16}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>⚠ Pontos de atenção para a entrevista</div>
+                {laudo.atencao.map((a,i)=>(
+                  <div key={i} style={{background:"#fff7ed",borderLeft:"3px solid #f97316",padding:"8px 12px",marginBottom:6,borderRadius:"0 8px 8px 0",fontSize:12,lineHeight:1.5}}>{a}</div>
+                ))}
+              </div>
+            )}
+
+            {/* Respondentes */}
+            <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Respondentes</div>
+            {escoresPorDoc.map((d,i)=>(
+              <div key={i} style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:14,marginBottom:10,cursor:"pointer",background:selecionado===i?"#f5f3ff":"white"}}
+                onClick={()=>setSelecionado(selecionado===i?null:i)}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:13}}>
+                      {d.tipoRespondente==="paciente"?"🧑 Próprio paciente":"👨‍👩‍👧 "+(d.nomeRespondente||"Familiar")+" · "+(d.parentesco||"Familiar")}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                      {d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||"Data não disponível"}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <span style={{background:"#fef2f2",color:"#dc2626",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:600}}>
+                      Mania {Math.round(d.escores.bipolarMania/8*100)}%
+                    </span>
+                    <span style={{background:"#ede9fe",color:"#7c3aed",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:600}}>
+                      Dep {Math.round(d.escores.bipolarDep/6*100)}%
+                    </span>
+                    <span style={{background:"#eff6ff",color:"#2563eb",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:600}}>
+                      TPB {Math.round(d.escores.borderline/18*100)}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Detalhes expandidos */}
+                {selecionado===i && (
+                  <div style={{marginTop:14,borderTop:"1px solid var(--gray-200)",paddingTop:12}}>
+                    {PERGUNTAS_RASTREAMENTO.map(p=>(
+                      <div key={p.id} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8,fontSize:12}}>
+                        <span style={{
+                          minWidth:22,height:22,borderRadius:"50%",
+                          background:d[p.id]==="C"||d[p.id]==="D"?"#fef2f2":d[p.id]==="B"?"#fffbeb":"#f0fdf4",
+                          color:d[p.id]==="C"||d[p.id]==="D"?"#dc2626":d[p.id]==="B"?"#d97706":"#16a34a",
+                          display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:11
+                        }}>{d[p.id]||"—"}</span>
+                        <div>
+                          <div style={{color:"var(--text-muted)",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:.5}}>{p.bloco}</div>
+                          <div style={{color:"var(--text-dark)",lineHeight:1.4}}>{p.texto}</div>
+                        </div>
+                      </div>
+                    ))}
+                    {d.obsFinais && (
+                      <div style={{background:"var(--gray-50)",border:"1px solid var(--gray-200)",borderRadius:8,padding:10,marginTop:8}}>
+                        <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Observações livres</div>
+                        <div style={{fontSize:12,color:"var(--text-dark)",lineHeight:1.6}}>{d.obsFinais}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
 //  MÓDULO 2: LINKS COMPARTILHÁVEIS — AbaLinksPartilhados
 //  Coleção: clinica_links_partilhados
 //  Inserir: antes da função PerfilPaciente em admin/app.js
@@ -3290,8 +3691,9 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
       {id:"evolucao", label:"Evolucao",        icon:"trending-up"},
       {id:"casal",    label:"Terapia de Casal",icon:"heart"},
       {id:"nr1",      label:"Saúde Ocupacional",   icon:"briefcase"},
-      {id:"anamnese", label:"Anamnese",             icon:"clipboard"},
-      {id:"links",    label:"Links Partilhados",   icon:"link"},
+      {id:"anamnese",      label:"Anamnese",             icon:"clipboard"},
+      {id:"rastreamento",  label:"Rastreamento",          icon:"activity"},
+      {id:"links",         label:"Links Partilhados",   icon:"link"},
     ]:[]),
   ];
   return (
@@ -3321,8 +3723,9 @@ function PerfilPaciente({ paciente, onVoltar, pacientes, user, abaInicial }) {
       {aba==="evolucao"   &&<AbaEvolucao    paciente={paciente}/>}
       {aba==="casal"      &&<AbaCasal       paciente={paciente} pacientes={pacientes}/>}
       {aba==="nr1"        &&<AbaOcupacional paciente={paciente}/>}
-      {aba==="anamnese"   &&<AbaAnamnese paciente={paciente}/>}
-      {aba==="links"      &&<AbaLinksPartilhados paciente={paciente}/>}
+      {aba==="anamnese"     &&<AbaAnamnese paciente={paciente}/>}
+      {aba==="rastreamento" &&<AbaRastreamento paciente={paciente}/>}
+      {aba==="links"        &&<AbaLinksPartilhados paciente={paciente}/>}
     </div>
   );
 }
