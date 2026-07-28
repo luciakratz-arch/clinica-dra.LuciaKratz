@@ -651,11 +651,37 @@ function DashboardAdmin({ user, onVerEvolucao }) {
   const [sessoes, setSessoes]           = useState([]);
   const [atividades, setAtividades]     = useState({});
   const [loadingAtiv, setLoadingAtiv]   = useState(true);
+  const [rastreamentos, setRastreamentos] = useState([]);
 
   useEffect(()=>{
     const u1=db.collection("clinica_lancamentos").onSnapshot(s=>setLancClinica(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const u2=db.collection("clinica_financeiro_pessoal").onSnapshot(s=>setLancPessoal(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const u3=db.collection("clinica_sessoes").onSnapshot(s=>setSessoes(s.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
+
+    // Buscar rastreamentos recentes (últimos 7 dias) de todas as coleções
+    const limite7 = new Date();
+    limite7.setDate(limite7.getDate()-7);
+    const COLS_RAST = [
+      {col:"clinica_rastreamento_bipolar",  label:"Bipolar / Borderline",        emoji:"📊"},
+      {col:"clinica_rastreamento_neuro",    label:"Funcionamento e Comportamento",emoji:"🧩"},
+      {col:"clinica_rastreamento_alimentar",label:"Hábitos Alimentares",          emoji:"🍎"},
+      {col:"clinica_rastreamento_sexual",   label:"Saúde Sexual",                 emoji:"🌸"},
+    ];
+    Promise.all(COLS_RAST.map(({col,label,emoji})=>
+      db.collection(col).get().then(snap=>
+        snap.docs.map(d=>({id:d.id,...d.data(),_tipo:label,_emoji:emoji}))
+      ).catch(()=>[])
+    )).then(resultados=>{
+      const todos = resultados.flat()
+        .filter(d=>{
+          const ts = d.createdAt?.toDate?.();
+          return ts && ts >= limite7;
+        })
+        .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))
+        .slice(0,10);
+      setRastreamentos(todos);
+    });
+
     return()=>{u1();u2();u3();};
   },[]);
 
@@ -807,6 +833,40 @@ function DashboardAdmin({ user, onVerEvolucao }) {
           </div>
         )}
       </div>
+
+      {/* Rastreamentos Recentes */}
+      {rastreamentos.length>0 && (
+        <div className="card" style={{marginBottom:24}}>
+          <div style={{fontWeight:700,fontSize:16,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
+            <Icon name="clipboard-list" size={18}/> Rastreamentos Recebidos
+          </div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Respondidos nos últimos 7 dias</div>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {rastreamentos.map(r=>{
+              const ts = r.createdAt?.toDate?.();
+              const agora = new Date();
+              const diff = ts ? Math.round((agora-ts)/1000/60) : null;
+              const tempo = diff===null?"":diff<60?`há ${diff} min`:diff<1440?`há ${Math.round(diff/60)}h`:`há ${Math.round(diff/1440)} dia${Math.round(diff/1440)>1?"s":""}`;
+              const respondente = r.tipoRespondente==="paciente"?"Próprio paciente":(r.parentesco||r.nomeRespondente||"Familiar");
+              return (
+                <div key={r.id} style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:"12px 16px",background:"var(--gray-50)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
+                    <div style={{fontSize:28,flexShrink:0}}>{r._emoji}</div>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontWeight:600,fontSize:14,marginBottom:2}}>{r.pacienteNome||"Paciente"}</div>
+                      <div style={{fontSize:12,color:"var(--text-muted)"}}>{r._tipo} · {respondente}</div>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{tempo}</div>
+                    </div>
+                  </div>
+                  <span style={{background:"var(--purple-soft)",color:"var(--purple)",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600,flexShrink:0}}>
+                    Novo ✓
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Resumo Financeiro Integrado */}
       <div className="card" style={{marginBottom:24}}>
