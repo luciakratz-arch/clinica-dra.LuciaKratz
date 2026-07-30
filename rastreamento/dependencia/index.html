@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rastreamento de Dependência Química e Substâncias | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
+.card{background:white;border-radius:20px;padding:28px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 8px 40px rgba(123,0,196,0.12)}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:19px;color:#3d006a;margin:10px 0 4px;font-weight:700}
+.header p{font-size:13px;color:#6b7280}
+.header .paciente-tag{display:inline-block;background:#f3e8ff;color:#7B00C4;font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;margin-top:8px}
+
+.welcome-box{background:#f5f3ff;border-radius:14px;padding:20px;margin-bottom:20px;font-size:13.5px;color:#4b5563;line-height:1.7}
+.welcome-box h2{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.welcome-box ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+
+/* Progress */
+.progress-wrap{margin-bottom:22px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:5px}
+.progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
+.step-title{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:3px}
+.step-sub{font-size:12.5px;color:#6b7280;margin-bottom:18px;line-height:1.5;background:#f9fafb;border-left:3px solid #7B00C4;padding:8px 12px;border-radius:0 8px 8px 0}
+
+/* Form */
+.fg{margin-bottom:16px}
+label.lbl{display:block;font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s;background:white}
+input:focus,select:focus,textarea:focus{border-color:#7B00C4}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Identificação — tipo respondente */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.tipo-btn{background:white;border:2px solid #ede9fe;border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.tipo-btn:hover,.tipo-btn.sel{border-color:#7B00C4;background:#f5f0ff}
+.tipo-btn .ico{font-size:32px;margin-bottom:8px}
+.tipo-btn .t{font-size:14px;font-weight:700;color:#3d006a}
+.tipo-btn .d{font-size:11.5px;color:#6b7280;margin-top:4px}
+
+/* Pergunta card */
+.pergunta-card{background:#f9fafb;border:1px solid #ede9fe;border-radius:14px;padding:18px;margin-bottom:16px}
+.perg-num{font-size:10px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.perg-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:14px;font-weight:500}
+.opcoes{display:flex;flex-direction:column;gap:8px}
+.opcao{display:flex;align-items:flex-start;gap:10px;background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13.5px;color:#374151;line-height:1.5}
+.opcao input[type=radio]{display:none}
+.opcao .letra{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9ca3af;transition:all .2s;margin-top:1px}
+.opcao.sel{border-color:#7B00C4;background:#f5f0ff}
+.opcao.sel .letra{background:#7B00C4;border-color:#7B00C4;color:white}
+.opcao:hover{border-color:#a78bfa}
+
+/* Secção label */
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px;display:flex;align-items:center;gap:8px}
+
+/* Mic */
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;top:8px;background:#f3e8ff;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:15px;line-height:1;z-index:1}
+textarea.has-mic{padding-right:44px}
+
+/* Nav */
+.nav{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
+.btn-back{background:#f3f4f6;color:#374151;flex:1}
+.btn-next{background:#7B00C4;color:white;flex:2;box-shadow:0 4px 14px rgba(123,0,196,0.35)}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.6;cursor:default}
+.btn-start{background:#7B00C4;color:white;width:100%;margin-top:16px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+
+/* Aviso */
+.aviso-amarelo{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#92400e;line-height:1.6;margin-bottom:14px}
+.aviso-vermelho{background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#7f1d1d;line-height:1.6;margin-top:8px}
+
+/* Success */
+.success{text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.success-msg{font-size:14px;color:#6b7280;line-height:1.7}
+
+@media(max-width:500px){.grid,.tipo-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="../logo.png" alt="" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+    <h1>Rastreamento de Dependência Química e Substâncias</h1>
+    <p>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</p>
+    <div class="paciente-tag" id="tagPaciente" style="display:none"></div>
+  </div>
+
+  <!-- TELA INICIAL -->
+  <div id="telaInicial">
+    <div class="welcome-box">
+      <h2>📋 Antes de começar, leia com atenção:</h2>
+      <ul>
+        <li>Este questionário leva entre <strong>8 e 12 minutos</strong> para ser respondido.</li>
+        <li>Não há respostas certas ou erradas — responda com <strong>honestidade e calma</strong>.</li>
+        <li>Se for familiar, responda sobre o <strong>comportamento da pessoa avaliada</strong>, não sobre você.</li>
+        <li>Você pode usar o botão 🎤 para <strong>falar em vez de digitar</strong> nos campos de texto.</li>
+        <li>Suas respostas são <strong>confidenciais</strong> e usadas apenas para fins clínicos.</li>
+      </ul>
+    </div>
+
+    <div class="sec">👤 Quem está respondendo?</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn" id="btnPaciente" onclick="selecionarTipo('paciente')">
+        <div class="ico">🙋</div>
+        <div class="t">O próprio paciente</div>
+        <div class="d">Você é a pessoa que está sendo avaliada</div>
+      </div>
+      <div class="tipo-btn" id="btnFamiliar" onclick="selecionarTipo('familiar')">
+        <div class="ico">👨‍👩‍👧</div>
+        <div class="t">Familiar / pessoa próxima</div>
+        <div class="d">Você conhece bem a pessoa avaliada</div>
+      </div>
+    </div>
+
+    <div id="camposFamiliar" style="display:none">
+      <div class="fg">
+        <label class="lbl">Seu nome completo *</label>
+        <input id="nomeRespondente" type="text" placeholder="Seu nome"/>
+      </div>
+      <div class="fg">
+        <label class="lbl">Sua relação com o paciente *</label>
+        <select id="parentesco">
+          <option value="">Selecione o grau de parentesco</option>
+          <option>Mãe</option>
+          <option>Pai</option>
+          <option>Cônjuge / Companheiro(a)</option>
+          <option>Irmão / Irmã</option>
+          <option>Filho(a)</option>
+          <option>Avô / Avó</option>
+          <option>Tio(a)</option>
+          <option>Amigo(a) próximo(a)</option>
+          <option>Outro familiar</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="aviso-vermelho">⚠️ Este é um instrumento clínico sensível. As informações prestadas são sigilosas e serão analisadas exclusivamente pela Dra. Lucia Kratz. Responda com total honestidade — isso é fundamental para um cuidado adequado.</div>
+
+    <button class="btn-start" onclick="iniciar()">Começar Questionário →</button>
+  </div>
+
+  <!-- TELA DO FORMULÁRIO -->
+  <div id="formArea" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="stepLabel">Etapa 1 de 5</span>
+        <span id="stepPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div id="stepContent"></div>
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">← Voltar</button>
+      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- TELA DE REVISÃO -->
+  <div id="revisaoArea" style="display:none">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:36px;margin-bottom:8px">🔍</div>
+      <div style="font-size:17px;font-weight:700;color:#3d006a;margin-bottom:4px">Revise suas respostas</div>
+      <div style="font-size:13px;color:#6b7280;line-height:1.6">Confira tudo antes de enviar. Você ainda pode voltar e corrigir.</div>
+    </div>
+    <div id="revisaoContent"></div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button class="btn btn-back" style="flex:1" onclick="voltarRevisao()">← Corrigir</button>
+      <button class="btn btn-next" style="flex:2" onclick="enviar()">✓ Confirmar e Enviar</button>
+    </div>
+  </div>
+
+  <!-- TELA DE SUCESSO -->
+  <div id="successArea" style="display:none">
+    <div class="success">
+      <div class="success-icon">🦋</div>
+      <div class="success-title">Respostas enviadas!</div>
+      <div class="success-msg">
+        Obrigado por responder com cuidado e honestidade.<br/>
+        Suas respostas foram registradas com segurança<br/>
+        e serão analisadas pela Dra. Lucia Kratz.<br/><br/>
+        <strong>Pode fechar esta janela.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial"};
+if(!firebase.apps.length)firebase.initializeApp(fc);
+const db=firebase.firestore();
+
+// Parâmetros da URL
+const urlParams = new URLSearchParams(window.location.search);
+const nomePaciente = urlParams.get("paciente") || "";
+const tokenParam = urlParams.get("token") || "";
+
+let tipoRespondente = "";
+let step = 1;
+let respostas = {};
+const TOTAL_STEPS = 5;
+
+// ═══════════════════════════════════
+// SELEÇÃO DE TIPO
+// ═══════════════════════════════════
+function selecionarTipo(tipo){
+  tipoRespondente = tipo;
+  document.getElementById("btnPaciente").classList.toggle("sel", tipo==="paciente");
+  document.getElementById("btnFamiliar").classList.toggle("sel", tipo==="familiar");
+  document.getElementById("camposFamiliar").style.display = tipo==="familiar" ? "block" : "none";
+}
+
+function iniciar(){
+  if(!tipoRespondente){ alert("Por favor, selecione quem está respondendo."); return; }
+  if(tipoRespondente==="familiar"){
+    if(!document.getElementById("nomeRespondente").value.trim()){ alert("Por favor, informe seu nome."); return; }
+    if(!document.getElementById("parentesco").value){ alert("Por favor, selecione sua relação com o paciente."); return; }
+    respostas.nomeRespondente = document.getElementById("nomeRespondente").value.trim();
+    respostas.parentesco = document.getElementById("parentesco").value;
+  } else {
+    respostas.nomeRespondente = nomePaciente || "Próprio paciente";
+    respostas.parentesco = "paciente";
+  }
+  respostas.tipoRespondente = tipoRespondente;
+  document.getElementById("telaInicial").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  renderStep();
+}
+
+// ═══════════════════════════════════
+// PERGUNTAS — 11 CRITÉRIOS DSM-5
+// ═══════════════════════════════════
+const BLOCOS = [
+  {
+    titulo: "Módulo A · Controle Prejudicado (Parte 1)",
+    sub: "Avalie o padrão de consumo da substância — quantidade, tempo e tentativas de parar.",
+    perguntas: [
+      {
+        id: "p1",
+        num: "1",
+        texto: "A substância é consumida em maiores quantidades ou por um período muito maior do que o inicialmente planejado?",
+        opcoes: [
+          {letra:"A", texto:"Nunca consome além do planejado."},
+          {letra:"B", texto:"Ocasionalmente estende o consumo em festas ou comemorações, sem perda de controle habitual."},
+          {letra:"C", texto:"Frequentemente perde o controle da quantidade ou do tempo, consumindo muito mais do que pretendia."}
+        ]
+      },
+      {
+        id: "p2",
+        num: "2",
+        texto: "Há um desejo persistente de cortar ou controlar o uso da substância, acompanhado de tentativas infrutíferas de reduzir ou cessar o consumo?",
+        opcoes: [
+          {letra:"A", texto:"Não sente necessidade de controlar nem tenta parar, pois o uso é ocasional e controlado."},
+          {letra:"B", texto:"Já pensou em diminuir por vaidade ou saúde, conseguindo fazê-lo quando quis."},
+          {letra:"C", texto:"Desejo constante de parar, mas todas as tentativas de redução ou abstinência sozinho(a) falham."}
+        ]
+      },
+      {
+        id: "p3",
+        num: "3",
+        texto: "É gasto muito tempo em atividades necessárias para obter a substância, usá-la ou se recuperar de seus efeitos (ressacas prolongadas, busca constante)?",
+        opcoes: [
+          {letra:"A", texto:"O uso não interfere no tempo livre ou nas atividades cotidianas."},
+          {letra:"B", texto:"Ocorre gasto de tempo pontual em finais de semana ou eventos específicos."},
+          {letra:"C", texto:"Grande parte do dia ou da rotina é ocupada pela obtenção, consumo ou recuperação dos efeitos da substância."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Módulo A · Controle Prejudicado (Parte 2) + Módulo B · Prejuízo Social",
+    sub: "Fissura (craving) e os impactos do uso nas obrigações e nos relacionamentos.",
+    perguntas: [
+      {
+        id: "p4",
+        num: "4",
+        texto: "Há presença de fissura — desejo imperioso ou ânsia intensa (craving) de usar a substância, muitas vezes desencadeado por estímulos ambientais ou locais associados ao uso?",
+        opcoes: [
+          {letra:"A", texto:"Não experimenta desejo incontrolável ou fissura."},
+          {letra:"B", texto:"Lembra da substância com saudosismo ocasional, mas sem urgência física."},
+          {letra:"C", texto:"Fissura intensa e recorrente, gerando urgência física e mental incontrolável pelo uso."}
+        ]
+      },
+      {
+        id: "p5",
+        num: "5",
+        texto: "O uso recorrente da substância resulta em falha no cumprimento de obrigações importantes no trabalho, na escola ou em casa (faltas frequentes, queda de rendimento, negligência familiar)?",
+        opcoes: [
+          {letra:"A", texto:"Cumpre todas as obrigações profissionais e familiares normalmente."},
+          {letra:"B", texto:"Houve quedas leves de rendimento em fases de estresse isoladas."},
+          {letra:"C", texto:"Prejuízo crônico e recorrente nas obrigações de trabalho, estudos ou cuidados com a casa e família devido ao uso."}
+        ]
+      },
+      {
+        id: "p6",
+        num: "6",
+        texto: "O consumo continua apesar de problemas sociais ou interpessoais causados ou exacerbados pelos efeitos da substância (brigas conjugais, discussões familiares, afastamento de amigos)?",
+        opcoes: [
+          {letra:"A", texto:"O uso não gera conflitos interpessoais."},
+          {letra:"B", texto:"Houve alertas leves de familiares, mas que foram contornados rapidamente."},
+          {letra:"C", texto:"Conflitos graves, repetitivos e rupturas de relacionamentos importantes causados diretamente pelo comportamento sob o efeito ou pela busca da substância."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Módulo B · Prejuízo Social (cont.) + Módulo C · Uso de Risco",
+    sub: "Abandono de atividades importantes e exposição a situações de risco físico.",
+    perguntas: [
+      {
+        id: "p7",
+        num: "7",
+        texto: "Importantes atividades sociais, profissionais ou de lazer são abandonadas ou reduzidas por causa do uso da substância?",
+        opcoes: [
+          {letra:"A", texto:"Mantém todos os hobbies, lazeres e compromissos sociais de sempre."},
+          {letra:"B", texto:"Reduziu levemente a frequência a alguns eventos por cansaço."},
+          {letra:"C", texto:"Abandonou completamente esportes, hobbies, lazeres e convívios sociais que antes eram prazerosos para priorizar o uso."}
+        ]
+      },
+      {
+        id: "p8",
+        num: "8",
+        texto: "Há uso recorrente da substância em situações em que isso representa perigo físico (como dirigir veículos, operar máquinas perigosas ou transitar em locais de alto risco sob efeito)?",
+        opcoes: [
+          {letra:"A", texto:"Nunca se coloca em risco físico por causa da substância."},
+          {letra:"B", texto:"Ocorreu de forma isolada no passado, sem incidentes maiores."},
+          {letra:"C", texto:"Padrão recorrente e perigoso de dirigir alcoolizado(a)/drogado(a) ou se expor a riscos extremos sob efeito."}
+        ]
+      },
+      {
+        id: "p9",
+        num: "9",
+        texto: "O uso da substância é mantido apesar do conhecimento de ter um problema físico ou psicológico persistente ou recorrente que provavelmente foi causado ou exacerbado pela substância (ex: gastrite grave, crises de pânico, hipertensão, danos hepáticos)?",
+        opcoes: [
+          {letra:"A", texto:"Sem problemas de saúde relacionados ao uso."},
+          {letra:"B", texto:"Alertas médicos genéricos recebidos, mas sem diagnóstico fechado."},
+          {letra:"C", texto:"Continuação irredutível do consumo mesmo após diagnósticos médicos graves ou piora óbvia da saúde física e mental decorrentes da substância."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Módulo D · Critérios Farmacológicos",
+    sub: "Tolerância e síndrome de abstinência — sinais de dependência física estabelecida.",
+    perguntas: [
+      {
+        id: "p10",
+        num: "10",
+        texto: "Há necessidade de quantidades crescentes da substância para alcançar a intoxicação ou o efeito desejado, ou efeito substancialmente menor com o uso contínuo da mesma quantidade?",
+        opcoes: [
+          {letra:"A", texto:"A reação à substância permanece estável ao longo do tempo."},
+          {letra:"B", texto:"Percebeu que tolera um pouco mais do que no início, sem grandes mudanças."},
+          {letra:"C", texto:"Tolerância acentuada: precisa de doses progressivamente muito maiores para sentir o mesmo efeito anterior."}
+        ]
+      },
+      {
+        id: "p11",
+        num: "11",
+        texto: "Há presença de síndrome de abstinência característica ao parar o uso (sintomas físicos e psicológicos desconfortáveis), ou o uso da substância para aliviar ou evitar os sintomas de abstinência?",
+        opcoes: [
+          {letra:"A", texto:"Nunca apresentou sintomas físicos ou psicológicos desagradáveis ao ficar sem a substância."},
+          {letra:"B", texto:"Apresenta apenas leves incômodos ou ressaca comum."},
+          {letra:"C", texto:"Síndrome de abstinência evidente (tremores, sudorese, insônia severa, ansiedade extrema, náuseas) ou uso contínuo justamente para evitar passar mal."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Observações Finais",
+    sub: "Se quiser, compartilhe qualquer informação adicional sobre o histórico de uso ou situações que considera importantes.",
+    obs: true
+  }
+];
+
+// ═══════════════════════════════════
+// RENDER
+// ═══════════════════════════════════
+function renderStep(){
+  const total = TOTAL_STEPS;
+  const pct = Math.round(step/total*100);
+  document.getElementById("stepLabel").textContent = "Etapa "+step+" de "+total;
+  document.getElementById("stepPct").textContent = pct+"%";
+  document.getElementById("progressFill").style.width = pct+"%";
+  document.getElementById("btnBack").style.display = step>1?"block":"none";
+  document.getElementById("btnNext").textContent = step===total ? "✓ Revisar Respostas" : "Próximo →";
+
+  const bloco = BLOCOS[step-1];
+  let h = '';
+  h += '<div class="step-title">'+bloco.titulo+'</div>';
+  h += '<div class="step-sub">'+bloco.sub+'</div>';
+
+  if(bloco.obs){
+    h += '<div class="fg">';
+    h += '<label class="lbl">Quer acrescentar algo? <span style="font-weight:400;text-transform:none;color:#9ca3af">(opcional)</span></label>';
+    h += '<textarea id="obsFinais" class="has-mic" placeholder="Fale ou escreva qualquer observação que considera importante — histórico de uso, substâncias utilizadas, tentativas anteriores de tratamento, situações relevantes..." style="min-height:120px">'+(respostas.obsFinais||'')+'</textarea>';
+    h += '</div>';
+    h += '<div class="aviso-amarelo">🔒 Suas respostas são confidenciais e serão analisadas exclusivamente pela Dra. Lucia Kratz para fins clínicos.</div>';
+  } else {
+    bloco.perguntas.forEach(p => {
+      h += '<div class="pergunta-card">';
+      h += '<div class="perg-num">Critério '+p.num+' de 11</div>';
+      h += '<div class="perg-texto">'+p.texto+'</div>';
+      h += '<div class="opcoes" id="grp_'+p.id+'">';
+      p.opcoes.forEach(o => {
+        const sel = respostas[p.id] === o.letra ? ' sel' : '';
+        h += '<div class="opcao'+sel+'" data-pid="'+p.id+'" data-letra="'+o.letra+'" onclick="selecionarOpcao(this)">';
+        h += '<input type="radio" name="'+p.id+'" value="'+o.letra+'"/>';
+        h += '<div class="letra">'+o.letra+'</div>';
+        h += '<div>'+o.texto+'</div>';
+        h += '</div>';
+      });
+      h += '</div></div>';
+    });
+  }
+
+  document.getElementById("stepContent").innerHTML = h;
+  initMic();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function selecionarOpcao(el){
+  const pergId = el.dataset.pid;
+  const letra = el.dataset.letra;
+  const grp = document.getElementById("grp_"+pergId);
+  grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel");
+  respostas[pergId] = letra;
+}
+
+// ═══════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════
+function avancarStep(){
+  const bloco = BLOCOS[step-1];
+  if(!bloco.obs){
+    for(const p of bloco.perguntas){
+      if(!respostas[p.id]){
+        alert("Por favor, selecione uma opção para o critério "+p.num+" antes de continuar.");
+        const el = document.getElementById("grp_"+p.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+        return;
+      }
+    }
+  } else {
+    const ta = document.getElementById("obsFinais");
+    if(ta) respostas.obsFinais = ta.value;
+  }
+
+  if(step < TOTAL_STEPS){
+    step++;
+    renderStep();
+  } else {
+    mostrarRevisao();
+  }
+}
+
+function voltarStep(){
+  if(step>1){
+    if(BLOCOS[step-1].obs){
+      const ta = document.getElementById("obsFinais");
+      if(ta) respostas.obsFinais = ta.value;
+    }
+    step--;
+    renderStep();
+  }
+}
+
+// ═══════════════════════════════════
+// REVISÃO
+// ═══════════════════════════════════
+const COR_LETRA = { A:"#16a34a", B:"#d97706", C:"#dc2626" };
+
+const PERGUNTAS_REVISAO = [
+  { id:"p1",  bloco:"Módulo A — Controle Prejudicado",    texto:"Consumo em maiores quantidades ou por mais tempo do que o pretendido" },
+  { id:"p2",  bloco:"Módulo A — Controle Prejudicado",    texto:"Desejo persistente ou esforços infrutíferos para controlar o uso" },
+  { id:"p3",  bloco:"Módulo A — Controle Prejudicado",    texto:"Despendimento excessivo de tempo com a substância" },
+  { id:"p4",  bloco:"Módulo A — Controle Prejudicado",    texto:"Fissura (craving) — desejo imperioso de usar" },
+  { id:"p5",  bloco:"Módulo B — Prejuízo Social",         texto:"Falha no cumprimento de obrigações importantes" },
+  { id:"p6",  bloco:"Módulo B — Prejuízo Social",         texto:"Uso contínuo apesar de problemas sociais ou interpessoais" },
+  { id:"p7",  bloco:"Módulo B — Prejuízo Social",         texto:"Abandono de atividades importantes por causa do uso" },
+  { id:"p8",  bloco:"Módulo C — Uso de Risco",            texto:"Uso em situações de perigo físico" },
+  { id:"p9",  bloco:"Módulo C — Uso de Risco",            texto:"Uso contínuo apesar de problemas físicos ou psicológicos" },
+  { id:"p10", bloco:"Módulo D — Critérios Farmacológicos", texto:"Tolerância — necessidade de doses crescentes" },
+  { id:"p11", bloco:"Módulo D — Critérios Farmacológicos", texto:"Abstinência — síndrome ao parar ou uso para evitar mal-estar" },
+];
+
+function mostrarRevisao() {
+  const ta = document.getElementById("obsFinais");
+  if(ta) respostas.obsFinais = ta.value;
+
+  let h = "";
+
+  // Respondente
+  h += '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+  h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Quem está respondendo</div>';
+  h += '<div style="font-size:14px;font-weight:600;color:#1f2937">';
+  h += respostas.tipoRespondente==="paciente" ? "🧑 Próprio paciente" : "👨‍👩‍👧 " + (respostas.nomeRespondente||"Familiar") + " · " + (respostas.parentesco||"");
+  h += "</div></div>";
+
+  // Perguntas agrupadas por módulo
+  let blocoAtual = "";
+  PERGUNTAS_REVISAO.forEach(p => {
+    if(p.bloco !== blocoAtual) {
+      if(blocoAtual) h += "</div>";
+      blocoAtual = p.bloco;
+      h += '<div style="margin-bottom:12px">';
+      h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:8px">'+p.bloco+'</div>';
+    }
+    const letra = respostas[p.id] || "—";
+    const cor = COR_LETRA[letra] || "#6b7280";
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">';
+    h += '<div style="width:26px;height:26px;min-width:26px;border-radius:50%;background:'+(letra!=="—"?cor+"22":"#f3f4f6")+';border:2px solid '+(letra!=="—"?cor:"#e5e7eb")+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+(letra!=="—"?cor:"#9ca3af")+'">'+letra+'</div>';
+    h += '<div style="font-size:13px;color:#374151;line-height:1.4">'+p.texto+'</div>';
+    h += '</div>';
+  });
+  if(blocoAtual) h += "</div>";
+
+  // Obs finais
+  if(respostas.obsFinais && respostas.obsFinais.trim()) {
+    h += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-top:4px">';
+    h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:6px">Observações livres</div>';
+    h += '<div style="font-size:13px;color:#374151;line-height:1.6">'+respostas.obsFinais+'</div>';
+    h += '</div>';
+  }
+
+  document.getElementById("revisaoContent").innerHTML = h;
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("revisaoArea").style.display = "block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function voltarRevisao() {
+  document.getElementById("revisaoArea").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  step = TOTAL_STEPS;
+  renderStep();
+  const ta = document.getElementById("obsFinais");
+  if(ta && respostas.obsFinais) ta.value = respostas.obsFinais;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ═══════════════════════════════════
+// ENVIO
+// ═══════════════════════════════════
+async function enviar(){
+  const btn = document.querySelector("#revisaoArea .btn-next");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+  try{
+    const doc = {
+      pacienteNome: nomePaciente || "",
+      token: tokenParam || "",
+      tipoRespondente: respostas.tipoRespondente || "",
+      nomeRespondente: respostas.nomeRespondente || "",
+      parentesco: respostas.parentesco || "",
+      p1: respostas.p1||"", p2: respostas.p2||"", p3: respostas.p3||"",
+      p4: respostas.p4||"", p5: respostas.p5||"", p6: respostas.p6||"",
+      p7: respostas.p7||"", p8: respostas.p8||"", p9: respostas.p9||"",
+      p10: respostas.p10||"", p11: respostas.p11||"",
+      obsFinais: respostas.obsFinais||"",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("clinica_rastreamento_dependencia").add(doc);
+
+    await db.collection("nr1map_emails").add({
+      to: "luciakratz@gmail.com",
+      message:{
+        subject: "🔔 Rastreamento de Dependência Química — " + (nomePaciente||"Sem nome") + " (" + (respostas.tipoRespondente==="paciente"?"Próprio paciente":respostas.parentesco) + ")",
+        html: "<h2>Novo rastreamento recebido</h2><p><b>Instrumento:</b> Dependência Química e Substâncias (DSM-5)</p><p><b>Paciente:</b> "+(nomePaciente||"—")+"</p><p><b>Respondido por:</b> "+respostas.nomeRespondente+" ("+respostas.parentesco+")</p><p><b>Data:</b> "+new Date().toLocaleDateString("pt-BR")+"</p>"
+      },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById("revisaoArea").style.display="none";
+    document.getElementById("successArea").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){
+    alert("Erro ao enviar. Tente novamente.\n"+e.message);
+    btn.disabled=false;
+    btn.textContent="✓ Confirmar e Enviar";
+  }
+}
+
+// ═══════════════════════════════════
+// MICROFONE
+// ═══════════════════════════════════
+function initMic(){
+  if(typeof SpeechRecognition==="undefined"&&typeof webkitSpeechRecognition==="undefined") return;
+  const SR=typeof SpeechRecognition!=="undefined"?SpeechRecognition:webkitSpeechRecognition;
+  document.querySelectorAll("textarea.has-mic").forEach(ta=>{
+    if(ta.dataset.micDone) return;
+    ta.dataset.micDone="1";
+    const wrap=document.createElement("div");
+    wrap.className="mic-wrap";
+    ta.parentNode.insertBefore(wrap,ta);
+    wrap.appendChild(ta);
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="mic-btn";btn.title="Falar em vez de digitar";btn.textContent="🎤";
+    let rec=null;
+    btn.onclick=()=>{
+      if(rec){rec.stop();rec=null;btn.textContent="🎤";return;}
+      rec=new SR();rec.lang="pt-BR";rec.continuous=true;rec.interimResults=false;
+      rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)ta.value+=(ta.value?" ":"")+e.results[i][0].transcript;};
+      rec.onend=()=>{rec=null;btn.textContent="🎤";};
+      rec.start();btn.textContent="🔴";
+    };
+    wrap.appendChild(btn);
+  });
+}
+</script>
+</body>
+</html>
