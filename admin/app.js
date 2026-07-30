@@ -2502,6 +2502,24 @@ function AbaQuestionarios({ paciente }) {
     </div>
   );
 
+  if(sub==="dependencia") return (
+    <div>
+      <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
+        <Icon name="arrow-left" size={15}/> Voltar para Questionários
+      </button>
+      <AbaRastreamentoDependencia paciente={paciente}/>
+    </div>
+  );
+
+  if(sub==="jogos") return (
+    <div>
+      <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
+        <Icon name="arrow-left" size={15}/> Voltar para Questionários
+      </button>
+      <AbaRastreamentoJogos paciente={paciente}/>
+    </div>
+  );
+
   if(sub==="entrevista") return (
     <div>
       <button onClick={()=>setSub(null)} style={{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",color:"var(--purple)",fontWeight:600,fontSize:13,cursor:"pointer",marginBottom:20,padding:0}}>
@@ -2617,7 +2635,407 @@ function AbaQuestionarios({ paciente }) {
           </div>
         </div>
 
+        {/* Card Dependência Química */}
+        <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
+          onClick={()=>setSub("dependencia")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor="var(--gray-200)"}>
+          <div style={{fontSize:32,marginBottom:10}}>💊</div>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--text-dark)",marginBottom:4}}>Dependência Química e Substâncias</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginBottom:14}}>Rastreamento dos 11 critérios DSM-5 para Transtornos por Uso de Substâncias — paciente e familiares.</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{background:"#fef3c7",color:"#b45309",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
+              💊 Ver rastreamento →
+            </span>
+          </div>
+        </div>
+
+        {/* Card Jogos e Apostas */}
+        <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:20,background:"white",cursor:"pointer",transition:"all .2s"}}
+          onClick={()=>setSub("jogos")}
+          onMouseEnter={e=>e.currentTarget.style.borderColor="#7B00C4"}
+          onMouseLeave={e=>e.currentTarget.style.borderColor="var(--gray-200)"}>
+          <div style={{fontSize:32,marginBottom:10}}>🎮</div>
+          <div style={{fontWeight:700,fontSize:14,color:"var(--text-dark)",marginBottom:4}}>Dependência de Jogos e Apostas</div>
+          <div style={{fontSize:12,color:"var(--text-muted)",lineHeight:1.5,marginBottom:14}}>Rastreamento de Gaming / Gambling Disorder — DSM-5 / CID-11 — paciente e familiares.</div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <span style={{background:"#ecfdf5",color:"#047857",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:600}}>
+              🎮 Ver rastreamento →
+            </span>
+          </div>
+        </div>
+
       </div>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  Rastreamento Dependência Química — sub-tela de Questionários
+//  Coleção: clinica_rastreamento_dependencia
+// ═══════════════════════════════════════════════════════════════════
+
+const PERGUNTAS_DEPENDENCIA = [
+  {id:"p1",  modulo:"Módulo A — Controle Prejudicado", texto:"Consumo em maiores quantidades ou por mais tempo do que o pretendido"},
+  {id:"p2",  modulo:"Módulo A — Controle Prejudicado", texto:"Desejo persistente ou esforços infrutíferos para controlar o uso"},
+  {id:"p3",  modulo:"Módulo A — Controle Prejudicado", texto:"Despendimento excessivo de tempo com a substância"},
+  {id:"p4",  modulo:"Módulo A — Controle Prejudicado", texto:"Fissura (craving) — desejo imperioso de usar"},
+  {id:"p5",  modulo:"Módulo B — Prejuízo Social",      texto:"Falha no cumprimento de obrigações importantes"},
+  {id:"p6",  modulo:"Módulo B — Prejuízo Social",      texto:"Uso contínuo apesar de problemas sociais ou interpessoais"},
+  {id:"p7",  modulo:"Módulo B — Prejuízo Social",      texto:"Abandono de atividades importantes por causa do uso"},
+  {id:"p8",  modulo:"Módulo C — Uso de Risco",         texto:"Uso em situações de perigo físico"},
+  {id:"p9",  modulo:"Módulo C — Uso de Risco",         texto:"Uso contínuo apesar de problemas físicos ou psicológicos"},
+  {id:"p10", modulo:"Módulo D — Farmacológico",        texto:"Tolerância — necessidade de doses crescentes"},
+  {id:"p11", modulo:"Módulo D — Farmacológico",        texto:"Abstinência — síndrome ao parar ou uso para evitar mal-estar"},
+];
+
+function AbaRastreamentoDependencia({ paciente }) {
+  const [docs, setDocs] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selecionado, setSelecionado] = React.useState(null);
+  const COR = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
+
+  React.useEffect(()=>{
+    if(!paciente?.nome) return;
+    db.collection("clinica_rastreamento_dependencia")
+      .where("pacienteNome","==",paciente.nome)
+      .get()
+      .then(snap=>{
+        const lista = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        setDocs(lista);
+        setLoading(false);
+      })
+      .catch(()=>setLoading(false));
+  },[paciente?.nome]);
+
+  function copiarLink(){
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/dependencia/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado!\n"+url));
+  }
+
+  function enviarWhatsApp(){
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/dependencia/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    const msg = `Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico para você preencher.\n\n💊 *Rastreamento de Dependência Química e Substâncias*\nResponda com calma e honestidade — leva cerca de 8 a 12 minutos.\n\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  }
+
+  function calcularCriterios(doc){
+    const C = PERGUNTAS_DEPENDENCIA.filter(p=>doc[p.id]==="C").length;
+    const B = PERGUNTAS_DEPENDENCIA.filter(p=>doc[p.id]==="B").length;
+    const total = C + B;
+    let gravidade = "—";
+    if(total>=6) gravidade="⚠ Grave (6+ critérios)";
+    else if(total>=4) gravidade="⚡ Moderada (4-5 critérios)";
+    else if(total>=2) gravidade="🟡 Leve (2-3 critérios)";
+    else gravidade="✅ Abaixo do limiar diagnóstico";
+    return {C, B, total, gravidade};
+  }
+
+  function gerarLaudo(){
+    if(docs.length===0){alert("Nenhuma resposta para gerar laudo.");return;}
+    const pacNome = paciente.nome||"Paciente";
+    const data = new Date().toLocaleDateString("pt-BR");
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Laudo Rastreamento Dependência Química — ${pacNome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.6}
+h1{font-size:20px;color:#3d006a;margin-bottom:4px}
+h2{font-size:14px;color:#7B00C4;margin:20px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px}
+h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
+.header{border-bottom:2px solid #7B00C4;padding-bottom:16px;margin-bottom:20px}
+.sub{font-size:12px;color:#6b7280;margin-top:2px}
+.gravidade{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 18px;margin:12px 0;font-size:15px;font-weight:700;color:#3d006a}
+.resp-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.resp-table th{background:#f5f3ff;padding:6px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #ede9fe}
+.resp-table td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+.resp-table tr:nth-child(even) td{background:#fafafa}
+.assinatura{text-align:center;margin-top:40px}
+.assinatura img{height:60px;opacity:.9}
+.assinatura p{font-size:12px;color:#374151;margin-top:6px}
+.rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+@media print{body{padding:16px}.no-print{display:none}}
+</style></head><body>
+<div class="no-print" style="margin-bottom:20px">
+  <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">Imprimir / Salvar PDF</button>
+</div>
+<div class="header">
+  <h1>Laudo de Rastreamento — Dependência Química e Substâncias</h1>
+  <div class="sub">Paciente: <strong>${pacNome}</strong> · Data: ${data} · Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Respondentes: ${docs.length} (${docs.map(d=>d.tipoRespondente==="paciente"?"próprio paciente":d.parentesco||"familiar").join(", ")})</div>
+</div>
+${docs.map(doc=>{
+  const cr = calcularCriterios(doc);
+  return `
+<h2>Respondente: ${doc.tipoRespondente==="paciente"?"Próprio paciente":(doc.nomeRespondente||"Familiar")+" ("+( doc.parentesco||"—")+")"}</h2>
+<div class="gravidade">Critérios preenchidos: ${cr.total}/11 &nbsp;·&nbsp; ${cr.gravidade}</div>
+<p style="font-size:12px;color:#4b5563;margin-bottom:10px">Respostas C (critério pleno): <strong>${cr.C}</strong> &nbsp;|&nbsp; Respostas B (parcial/subclínico): <strong>${cr.B}</strong></p>
+<table class="resp-table"><thead><tr><th>#</th><th>Critério</th><th>Módulo</th><th>Resp.</th></tr></thead><tbody>
+${PERGUNTAS_DEPENDENCIA.map(p=>`<tr><td>${p.id.replace("p","")}</td><td>${p.texto}</td><td>${p.modulo}</td><td style="font-weight:700;color:${COR[doc[p.id]]||"#6b7280"}">${doc[p.id]||"—"}</td></tr>`).join("")}
+${doc.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspan="2">${doc.obsFinais}</td></tr>`:""}
+</tbody></table>`;
+}).join("")}
+<div class="assinatura">
+  <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura%20Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
+  <p><strong>Dra. Lucia Kratz</strong><br/>Psicóloga · CRP 09/20590<br/>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</p>
+</div>
+<div class="rodape">Documento gerado em ${data} · Uso exclusivo para fins clínicos · Confidencial · LGPD</div>
+</body></html>`;
+    const w = window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
+  }
+
+  if(loading) return React.createElement("div",{style:{padding:40,textAlign:"center"}},React.createElement(Spinner,null));
+
+  return (
+    <div>
+      <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)",marginBottom:4}}>Rastreamento de Dependência Química e Substâncias</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>11 critérios DSM-5 · Instrumento aplicado ao paciente e/ou familiares</div>
+
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+        <button onClick={copiarLink} style={{display:"flex",alignItems:"center",gap:6,background:"var(--purple-light-bg)",color:"var(--purple)",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <Icon name="link" size={14}/> Copiar Link
+        </button>
+        <button onClick={enviarWhatsApp} style={{display:"flex",alignItems:"center",gap:6,background:"#dcfce7",color:"#15803d",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <Icon name="message-circle" size={14}/> Enviar via WhatsApp
+        </button>
+        {docs.length>0&&<button onClick={gerarLaudo} style={{display:"flex",alignItems:"center",gap:6,background:"#fef3c7",color:"#b45309",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <Icon name="file-text" size={14}/> Gerar Laudo PDF
+        </button>}
+      </div>
+
+      {docs.length===0 ? (
+        <div style={{background:"#f9fafb",border:"1px dashed #d1d5db",borderRadius:12,padding:32,textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma resposta recebida ainda.<br/>Copie o link acima e envie ao paciente ou familiar.
+        </div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {docs.map(doc=>{
+            const cr = calcularCriterios(doc);
+            const isOpen = selecionado===doc.id;
+            const corGrav = cr.total>=6?"#dc2626":cr.total>=4?"#d97706":cr.total>=2?"#b45309":"#16a34a";
+            return (
+              <div key={doc.id} style={{border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden"}}>
+                <div onClick={()=>setSelecionado(isOpen?null:doc.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",cursor:"pointer",background:isOpen?"#f5f3ff":"white"}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:13,color:"var(--text-dark)"}}>
+                      {doc.tipoRespondente==="paciente"?"🧑 Próprio paciente":"👨‍👩‍👧 "+(doc.nomeRespondente||"Familiar")+" · "+(doc.parentesco||"")}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                      {doc.createdAt?.seconds ? new Date(doc.createdAt.seconds*1000).toLocaleDateString("pt-BR") : "—"}
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:700,fontSize:12,color:corGrav}}>{cr.gravidade}</div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{cr.total} critérios / 11</div>
+                  </div>
+                </div>
+                {isOpen&&(
+                  <div style={{borderTop:"1px solid #e5e7eb",padding:16}}>
+                    {PERGUNTAS_DEPENDENCIA.map(p=>(
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"1px solid #f3f4f6"}}>
+                        <div style={{width:24,height:24,minWidth:24,borderRadius:"50%",background:doc[p.id]?COR[doc[p.id]]+"22":"#f3f4f6",border:"2px solid "+(doc[p.id]?COR[doc[p.id]]:"#e5e7eb"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:doc[p.id]?COR[doc[p.id]]:"#9ca3af"}}>
+                          {doc[p.id]||"—"}
+                        </div>
+                        <div style={{fontSize:12,color:"#374151",flex:1}}>{p.texto}</div>
+                        <div style={{fontSize:10,color:"#9ca3af",whiteSpace:"nowrap"}}>{p.modulo.split("—")[0].trim()}</div>
+                      </div>
+                    ))}
+                    {doc.obsFinais&&<div style={{marginTop:12,background:"#f9fafb",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#4b5563"}}><strong>Observações:</strong> {doc.obsFinais}</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  Rastreamento Jogos e Apostas — sub-tela de Questionários
+//  Coleção: clinica_rastreamento_jogos
+// ═══════════════════════════════════════════════════════════════════
+
+const PERGUNTAS_JOGOS = [
+  {id:"p1", modulo:"Módulo A — Preocupação/Abstinência",  texto:"Preocupação mental excessiva com jogos"},
+  {id:"p2", modulo:"Módulo A — Preocupação/Abstinência",  texto:"Sintomas de abstinência ao parar (irritabilidade, ansiedade)"},
+  {id:"p3", modulo:"Módulo B — Tolerância/Controle",      texto:"Tolerância — necessidade crescente de tempo ou dinheiro"},
+  {id:"p4", modulo:"Módulo B — Tolerância/Controle",      texto:"Tentativas infrutíferas de controlar ou cessar o jogo"},
+  {id:"p5", modulo:"Módulo B — Tolerância/Controle",      texto:"Abandono de outros hobbies e atividades sociais"},
+  {id:"p6", modulo:"Módulo C — Consequências",            texto:"Continuidade apesar de problemas graves"},
+  {id:"p7", modulo:"Módulo C — Consequências",            texto:"Ocultação e mentiras sobre a extensão do hábito"},
+  {id:"p8", modulo:"Módulo C — Consequências",            texto:"Uso do jogo como fuga de problemas emocionais"},
+  {id:"p9", modulo:"Módulo D — Prejuízo Funcional",       texto:"Perda ou risco severo de emprego, estudos ou relacionamentos"},
+];
+
+function AbaRastreamentoJogos({ paciente }) {
+  const [docs, setDocs] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selecionado, setSelecionado] = React.useState(null);
+  const COR = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
+
+  React.useEffect(()=>{
+    if(!paciente?.nome) return;
+    db.collection("clinica_rastreamento_jogos")
+      .where("pacienteNome","==",paciente.nome)
+      .get()
+      .then(snap=>{
+        const lista = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        setDocs(lista);
+        setLoading(false);
+      })
+      .catch(()=>setLoading(false));
+  },[paciente?.nome]);
+
+  function copiarLink(){
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/jogos/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    navigator.clipboard.writeText(url).then(()=>alert("✓ Link copiado!\n"+url));
+  }
+
+  function enviarWhatsApp(){
+    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/jogos/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    const msg = `Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico para você preencher.\n\n🎮 *Rastreamento de Dependência de Jogos e Apostas*\nResponda com calma e honestidade — leva cerca de 5 a 10 minutos.\n\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+  }
+
+  function calcularCriterios(doc){
+    const C = PERGUNTAS_JOGOS.filter(p=>doc[p.id]==="C").length;
+    const B = PERGUNTAS_JOGOS.filter(p=>doc[p.id]==="B").length;
+    const total = C + B;
+    let gravidade = "—";
+    if(total>=6) gravidade="⚠ Grave (6+ critérios)";
+    else if(total>=4) gravidade="⚡ Moderada (4-5 critérios)";
+    else if(total>=2) gravidade="🟡 Leve (2-3 critérios)";
+    else gravidade="✅ Abaixo do limiar diagnóstico";
+    return {C, B, total, gravidade};
+  }
+
+  function gerarLaudo(){
+    if(docs.length===0){alert("Nenhuma resposta para gerar laudo.");return;}
+    const pacNome = paciente.nome||"Paciente";
+    const data = new Date().toLocaleDateString("pt-BR");
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Laudo Rastreamento Jogos e Apostas — ${pacNome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.6}
+h1{font-size:20px;color:#3d006a;margin-bottom:4px}
+h2{font-size:14px;color:#7B00C4;margin:20px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px}
+h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
+.header{border-bottom:2px solid #7B00C4;padding-bottom:16px;margin-bottom:20px}
+.sub{font-size:12px;color:#6b7280;margin-top:2px}
+.gravidade{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 18px;margin:12px 0;font-size:15px;font-weight:700;color:#3d006a}
+.resp-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
+.resp-table th{background:#f5f3ff;padding:6px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #ede9fe}
+.resp-table td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+.resp-table tr:nth-child(even) td{background:#fafafa}
+.assinatura{text-align:center;margin-top:40px}
+.assinatura img{height:60px;opacity:.9}
+.assinatura p{font-size:12px;color:#374151;margin-top:6px}
+.rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+@media print{body{padding:16px}.no-print{display:none}}
+</style></head><body>
+<div class="no-print" style="margin-bottom:20px">
+  <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">Imprimir / Salvar PDF</button>
+</div>
+<div class="header">
+  <h1>Laudo de Rastreamento — Dependência de Jogos e Apostas</h1>
+  <div class="sub">Paciente: <strong>${pacNome}</strong> · Data: ${data} · Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Respondentes: ${docs.length} (${docs.map(d=>d.tipoRespondente==="paciente"?"próprio paciente":d.parentesco||"familiar").join(", ")})</div>
+</div>
+${docs.map(doc=>{
+  const cr = calcularCriterios(doc);
+  return `
+<h2>Respondente: ${doc.tipoRespondente==="paciente"?"Próprio paciente":(doc.nomeRespondente||"Familiar")+" ("+(doc.parentesco||"—")+")"}</h2>
+<div class="gravidade">Critérios preenchidos: ${cr.total}/9 &nbsp;·&nbsp; ${cr.gravidade}</div>
+<p style="font-size:12px;color:#4b5563;margin-bottom:10px">Respostas C (critério pleno): <strong>${cr.C}</strong> &nbsp;|&nbsp; Respostas B (parcial/subclínico): <strong>${cr.B}</strong></p>
+<table class="resp-table"><thead><tr><th>#</th><th>Critério</th><th>Módulo</th><th>Resp.</th></tr></thead><tbody>
+${PERGUNTAS_JOGOS.map(p=>`<tr><td>${p.id.replace("p","")}</td><td>${p.texto}</td><td>${p.modulo}</td><td style="font-weight:700;color:${COR[doc[p.id]]||"#6b7280"}">${doc[p.id]||"—"}</td></tr>`).join("")}
+${doc.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspan="2">${doc.obsFinais}</td></tr>`:""}
+</tbody></table>`;
+}).join("")}
+<div class="assinatura">
+  <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura%20Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
+  <p><strong>Dra. Lucia Kratz</strong><br/>Psicóloga · CRP 09/20590<br/>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</p>
+</div>
+<div class="rodape">Documento gerado em ${data} · Uso exclusivo para fins clínicos · Confidencial · LGPD</div>
+</body></html>`;
+    const w = window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
+  }
+
+  if(loading) return React.createElement("div",{style:{padding:40,textAlign:"center"}},React.createElement(Spinner,null));
+
+  return (
+    <div>
+      <div style={{fontWeight:700,fontSize:15,color:"var(--text-dark)",marginBottom:4}}>Rastreamento de Dependência de Jogos e Apostas</div>
+      <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:20}}>9 critérios DSM-5 / CID-11 · Instrumento aplicado ao paciente e/ou familiares</div>
+
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
+        <button onClick={copiarLink} style={{display:"flex",alignItems:"center",gap:6,background:"var(--purple-light-bg)",color:"var(--purple)",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <Icon name="link" size={14}/> Copiar Link
+        </button>
+        <button onClick={enviarWhatsApp} style={{display:"flex",alignItems:"center",gap:6,background:"#dcfce7",color:"#15803d",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <Icon name="message-circle" size={14}/> Enviar via WhatsApp
+        </button>
+        {docs.length>0&&<button onClick={gerarLaudo} style={{display:"flex",alignItems:"center",gap:6,background:"#ecfdf5",color:"#047857",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,fontWeight:600,cursor:"pointer"}}>
+          <Icon name="file-text" size={14}/> Gerar Laudo PDF
+        </button>}
+      </div>
+
+      {docs.length===0 ? (
+        <div style={{background:"#f9fafb",border:"1px dashed #d1d5db",borderRadius:12,padding:32,textAlign:"center",color:"var(--text-muted)",fontSize:13}}>
+          Nenhuma resposta recebida ainda.<br/>Copie o link acima e envie ao paciente ou familiar.
+        </div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {docs.map(doc=>{
+            const cr = calcularCriterios(doc);
+            const isOpen = selecionado===doc.id;
+            const corGrav = cr.total>=6?"#dc2626":cr.total>=4?"#d97706":cr.total>=2?"#b45309":"#16a34a";
+            return (
+              <div key={doc.id} style={{border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden"}}>
+                <div onClick={()=>setSelecionado(isOpen?null:doc.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",cursor:"pointer",background:isOpen?"#f5f3ff":"white"}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:13,color:"var(--text-dark)"}}>
+                      {doc.tipoRespondente==="paciente"?"🧑 Próprio paciente":"👨‍👩‍👧 "+(doc.nomeRespondente||"Familiar")+" · "+(doc.parentesco||"")}
+                    </div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                      {doc.createdAt?.seconds ? new Date(doc.createdAt.seconds*1000).toLocaleDateString("pt-BR") : "—"}
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:700,fontSize:12,color:corGrav}}>{cr.gravidade}</div>
+                    <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>{cr.total} critérios / 9</div>
+                  </div>
+                </div>
+                {isOpen&&(
+                  <div style={{borderTop:"1px solid #e5e7eb",padding:16}}>
+                    {PERGUNTAS_JOGOS.map(p=>(
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"6px 0",borderBottom:"1px solid #f3f4f6"}}>
+                        <div style={{width:24,height:24,minWidth:24,borderRadius:"50%",background:doc[p.id]?COR[doc[p.id]]+"22":"#f3f4f6",border:"2px solid "+(doc[p.id]?COR[doc[p.id]]:"#e5e7eb"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:doc[p.id]?COR[doc[p.id]]:"#9ca3af"}}>
+                          {doc[p.id]||"—"}
+                        </div>
+                        <div style={{fontSize:12,color:"#374151",flex:1}}>{p.texto}</div>
+                        <div style={{fontSize:10,color:"#9ca3af",whiteSpace:"nowrap"}}>{p.modulo.split("—")[0].trim()}</div>
+                      </div>
+                    ))}
+                    {doc.obsFinais&&<div style={{marginTop:12,background:"#f9fafb",borderRadius:8,padding:"10px 12px",fontSize:12,color:"#4b5563"}}><strong>Observações:</strong> {doc.obsFinais}</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -4840,6 +5258,8 @@ const FERRAMENTAS_LINK = [
   { id: "neuro",         nome: "Rastreamento Comportamental",                  emoji: "🧩", desc: "Avaliação de funcionamento e comportamento" },
   { id: "alimentar",     nome: "Hábitos Alimentares",                          emoji: "🍎", desc: "Rastreamento de padrões alimentares" },
   { id: "sexual",        nome: "Saúde Sexual",                                 emoji: "🌸", desc: "Rastreamento confidencial de saúde sexual" },
+  { id: "dependencia",   nome: "Dependência Química e Substâncias",            emoji: "💊", desc: "11 critérios DSM-5 — paciente e familiares" },
+  { id: "jogos",         nome: "Dependência de Jogos e Apostas",               emoji: "🎮", desc: "Gaming / Gambling Disorder — DSM-5/CID-11" },
 ];
 
 function gerarToken() {
@@ -4918,6 +5338,12 @@ function AbaLinksPartilhados({ paciente }) {
     }
     if(ferramenta.id === "sexual") {
       return `${BASE_URL}/rastreamento/sexual/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    }
+    if(ferramenta.id === "dependencia") {
+      return `${BASE_URL}/rastreamento/dependencia/?paciente=${encodeURIComponent(paciente.nome||"")}`;
+    }
+    if(ferramenta.id === "jogos") {
+      return `${BASE_URL}/rastreamento/jogos/?paciente=${encodeURIComponent(paciente.nome||"")}`;
     }
     return `${BASE_URL}/responder?token=${token}`;
   }
