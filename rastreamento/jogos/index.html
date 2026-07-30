@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rastreamento de Jogos e Apostas | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
+.card{background:white;border-radius:20px;padding:28px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 8px 40px rgba(123,0,196,0.12)}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:19px;color:#3d006a;margin:10px 0 4px;font-weight:700}
+.header p{font-size:13px;color:#6b7280}
+.header .paciente-tag{display:inline-block;background:#f3e8ff;color:#7B00C4;font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;margin-top:8px}
+
+.welcome-box{background:#f5f3ff;border-radius:14px;padding:20px;margin-bottom:20px;font-size:13.5px;color:#4b5563;line-height:1.7}
+.welcome-box h2{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.welcome-box ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+
+.progress-wrap{margin-bottom:22px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:5px}
+.progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
+.step-title{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:3px}
+.step-sub{font-size:12.5px;color:#6b7280;margin-bottom:18px;line-height:1.5;background:#f9fafb;border-left:3px solid #7B00C4;padding:8px 12px;border-radius:0 8px 8px 0}
+
+.fg{margin-bottom:16px}
+label.lbl{display:block;font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s;background:white}
+input:focus,select:focus,textarea:focus{border-color:#7B00C4}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.tipo-btn{background:white;border:2px solid #ede9fe;border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.tipo-btn:hover,.tipo-btn.sel{border-color:#7B00C4;background:#f5f0ff}
+.tipo-btn .ico{font-size:32px;margin-bottom:8px}
+.tipo-btn .t{font-size:14px;font-weight:700;color:#3d006a}
+.tipo-btn .d{font-size:11.5px;color:#6b7280;margin-top:4px}
+
+.pergunta-card{background:#f9fafb;border:1px solid #ede9fe;border-radius:14px;padding:18px;margin-bottom:16px}
+.perg-num{font-size:10px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.perg-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:14px;font-weight:500}
+.opcoes{display:flex;flex-direction:column;gap:8px}
+.opcao{display:flex;align-items:flex-start;gap:10px;background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13.5px;color:#374151;line-height:1.5}
+.opcao input[type=radio]{display:none}
+.opcao .letra{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9ca3af;transition:all .2s;margin-top:1px}
+.opcao.sel{border-color:#7B00C4;background:#f5f0ff}
+.opcao.sel .letra{background:#7B00C4;border-color:#7B00C4;color:white}
+.opcao:hover{border-color:#a78bfa}
+
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px;display:flex;align-items:center;gap:8px}
+
+.mic-wrap{position:relative}
+.mic-btn{position:absolute;right:8px;top:8px;background:#f3e8ff;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:15px;line-height:1;z-index:1}
+textarea.has-mic{padding-right:44px}
+
+.nav{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
+.btn-back{background:#f3f4f6;color:#374151;flex:1}
+.btn-next{background:#7B00C4;color:white;flex:2;box-shadow:0 4px 14px rgba(123,0,196,0.35)}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.6;cursor:default}
+.btn-start{background:#7B00C4;color:white;width:100%;margin-top:16px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+
+.aviso-amarelo{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#92400e;line-height:1.6;margin-bottom:14px}
+.aviso-vermelho{background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#7f1d1d;line-height:1.6;margin-top:8px}
+
+.success{text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.success-msg{font-size:14px;color:#6b7280;line-height:1.7}
+
+@media(max-width:500px){.tipo-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <img src="../logo.png" alt="" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+    <h1>Rastreamento de Dependência de Jogos e Apostas</h1>
+    <p>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</p>
+    <div class="paciente-tag" id="tagPaciente" style="display:none"></div>
+  </div>
+
+  <!-- TELA INICIAL -->
+  <div id="telaInicial">
+    <div class="welcome-box">
+      <h2>📋 Antes de começar, leia com atenção:</h2>
+      <ul>
+        <li>Este questionário leva entre <strong>5 e 10 minutos</strong> para ser respondido.</li>
+        <li>Não há respostas certas ou erradas — responda com <strong>honestidade e calma</strong>.</li>
+        <li>Se for familiar, responda sobre o <strong>comportamento da pessoa avaliada</strong>, não sobre você.</li>
+        <li>Você pode usar o botão 🎤 para <strong>falar em vez de digitar</strong> nos campos de texto.</li>
+        <li>Suas respostas são <strong>confidenciais</strong> e usadas apenas para fins clínicos.</li>
+      </ul>
+    </div>
+
+    <div class="sec">👤 Quem está respondendo?</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn" id="btnPaciente" onclick="selecionarTipo('paciente')">
+        <div class="ico">🙋</div>
+        <div class="t">O próprio paciente</div>
+        <div class="d">Você é a pessoa que está sendo avaliada</div>
+      </div>
+      <div class="tipo-btn" id="btnFamiliar" onclick="selecionarTipo('familiar')">
+        <div class="ico">👨‍👩‍👧</div>
+        <div class="t">Familiar / pessoa próxima</div>
+        <div class="d">Você conhece bem a pessoa avaliada</div>
+      </div>
+    </div>
+
+    <div id="camposFamiliar" style="display:none">
+      <div class="fg">
+        <label class="lbl">Seu nome completo *</label>
+        <input id="nomeRespondente" type="text" placeholder="Seu nome"/>
+      </div>
+      <div class="fg">
+        <label class="lbl">Sua relação com o paciente *</label>
+        <select id="parentesco">
+          <option value="">Selecione o grau de parentesco</option>
+          <option>Mãe</option>
+          <option>Pai</option>
+          <option>Cônjuge / Companheiro(a)</option>
+          <option>Irmão / Irmã</option>
+          <option>Filho(a)</option>
+          <option>Avô / Avó</option>
+          <option>Tio(a)</option>
+          <option>Amigo(a) próximo(a)</option>
+          <option>Outro familiar</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="aviso-vermelho">⚠️ Este é um instrumento clínico sensível. As informações prestadas são sigilosas e serão analisadas exclusivamente pela Dra. Lucia Kratz. Responda com total honestidade — isso é fundamental para um cuidado adequado.</div>
+
+    <button class="btn-start" onclick="iniciar()">Começar Questionário →</button>
+  </div>
+
+  <!-- TELA DO FORMULÁRIO -->
+  <div id="formArea" style="display:none">
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span id="stepLabel">Etapa 1 de 4</span>
+        <span id="stepPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+    <div id="stepContent"></div>
+    <div class="nav">
+      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">← Voltar</button>
+      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Próximo →</button>
+    </div>
+  </div>
+
+  <!-- TELA DE REVISÃO -->
+  <div id="revisaoArea" style="display:none">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:36px;margin-bottom:8px">🔍</div>
+      <div style="font-size:17px;font-weight:700;color:#3d006a;margin-bottom:4px">Revise suas respostas</div>
+      <div style="font-size:13px;color:#6b7280;line-height:1.6">Confira tudo antes de enviar. Você ainda pode voltar e corrigir.</div>
+    </div>
+    <div id="revisaoContent"></div>
+    <div style="display:flex;gap:10px;margin-top:24px">
+      <button class="btn btn-back" style="flex:1" onclick="voltarRevisao()">← Corrigir</button>
+      <button class="btn btn-next" style="flex:2" onclick="enviar()">✓ Confirmar e Enviar</button>
+    </div>
+  </div>
+
+  <!-- TELA DE SUCESSO -->
+  <div id="successArea" style="display:none">
+    <div class="success">
+      <div class="success-icon">🦋</div>
+      <div class="success-title">Respostas enviadas!</div>
+      <div class="success-msg">
+        Obrigado por responder com cuidado e honestidade.<br/>
+        Suas respostas foram registradas com segurança<br/>
+        e serão analisadas pela Dra. Lucia Kratz.<br/><br/>
+        <strong>Pode fechar esta janela.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial"};
+if(!firebase.apps.length)firebase.initializeApp(fc);
+const db=firebase.firestore();
+
+const urlParams = new URLSearchParams(window.location.search);
+const nomePaciente = urlParams.get("paciente") || "";
+const tokenParam = urlParams.get("token") || "";
+
+let tipoRespondente = "";
+let step = 1;
+let respostas = {};
+const TOTAL_STEPS = 4;
+
+function selecionarTipo(tipo){
+  tipoRespondente = tipo;
+  document.getElementById("btnPaciente").classList.toggle("sel", tipo==="paciente");
+  document.getElementById("btnFamiliar").classList.toggle("sel", tipo==="familiar");
+  document.getElementById("camposFamiliar").style.display = tipo==="familiar" ? "block" : "none";
+}
+
+function iniciar(){
+  if(!tipoRespondente){ alert("Por favor, selecione quem está respondendo."); return; }
+  if(tipoRespondente==="familiar"){
+    if(!document.getElementById("nomeRespondente").value.trim()){ alert("Por favor, informe seu nome."); return; }
+    if(!document.getElementById("parentesco").value){ alert("Por favor, selecione sua relação com o paciente."); return; }
+    respostas.nomeRespondente = document.getElementById("nomeRespondente").value.trim();
+    respostas.parentesco = document.getElementById("parentesco").value;
+  } else {
+    respostas.nomeRespondente = nomePaciente || "Próprio paciente";
+    respostas.parentesco = "paciente";
+  }
+  respostas.tipoRespondente = tipoRespondente;
+  document.getElementById("telaInicial").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  renderStep();
+}
+
+// ═══════════════════════════════════
+// PERGUNTAS — 9 CRITÉRIOS DSM-5/CID-11
+// ═══════════════════════════════════
+const BLOCOS = [
+  {
+    titulo: "Módulo A · Preocupação Excessiva e Abstinência",
+    sub: "Avalie o quanto os jogos ou apostas ocupam a mente da pessoa e o que acontece quando ela não pode jogar.",
+    perguntas: [
+      {
+        id: "p1",
+        num: "1",
+        texto: "A pessoa passa grande parte do tempo pensando em jogos anteriores, planejando a próxima sessão ou fantasiando sobre jogar — a ponto de o jogo se tornar a atividade dominante na vida diária?",
+        opcoes: [
+          {letra:"A", texto:"Não pensa em jogos fora dos momentos em que decide jogar esporadicamente."},
+          {letra:"B", texto:"Lembra de partidas recentes com entusiasmo, mas sem que isso ocupe a mente de forma obsessiva."},
+          {letra:"C", texto:"Preocupação mental constante e intrusiva com jogos o dia todo, mesmo quando deveria estar focada em trabalho, estudos ou conversas."}
+        ]
+      },
+      {
+        id: "p2",
+        num: "2",
+        texto: "Quando o acesso aos jogos é cortado, limitado ou impedido, a pessoa manifesta sintomas como irritabilidade intensa, ansiedade, tédio profundo, tristeza ou agitação?",
+        opcoes: [
+          {letra:"A", texto:"Fica offline tranquilamente sem qualquer alteração de humor ou incômodo."},
+          {letra:"B", texto:"Sente um leve tédio passageiro, mas distrai-se facilmente com outras coisas."},
+          {letra:"C", texto:"Apresenta alterações severas de humor, irritabilidade desproporcional, ataques de raiva, ansiedade aguda ou desespero quando é forçada a parar de jogar."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Módulo B · Tolerância e Perda de Controle",
+    sub: "Avalie se há necessidade crescente de jogar mais e se tentativas de parar falharam.",
+    perguntas: [
+      {
+        id: "p3",
+        num: "3",
+        texto: "Há necessidade evidente de gastar quantidades crescentes de tempo jogando, de investir mais dinheiro em apostas, ou de buscar jogos cada vez mais intensos para alcançar a mesma excitação ou satisfação?",
+        opcoes: [
+          {letra:"A", texto:"O tempo dedicado aos jogos permanece estável e moderado ao longo do tempo."},
+          {letra:"B", texto:"Joga um pouco mais em períodos de férias ou fins de semana, sem padrão progressivo."},
+          {letra:"C", texto:"Tolerância nítida: o tempo ou dinheiro investido aumentam progressivamente porque o nível anterior já não gera a mesma excitação."}
+        ]
+      },
+      {
+        id: "p4",
+        num: "4",
+        texto: "A pessoa já tentou várias vezes reduzir o tempo de jogo ou parar completamente, mas falhou sistematicamente, voltando ao hábito logo em seguida?",
+        opcoes: [
+          {letra:"A", texto:"Nunca tentou parar porque joga apenas quando quer e controla perfeitamente o limite."},
+          {letra:"B", texto:"Já pensou em jogar menos e conseguiu reduzir quando quis."},
+          {letra:"C", texto:"Tentativas frustradas e repetidas de controlar o vício; faz promessas de parar que são quebradas em pouco tempo."}
+        ]
+      },
+      {
+        id: "p5",
+        num: "5",
+        texto: "Houve abandono marcante de outros hobbies, interesses de lazer, esportes ou atividades sociais que antes eram prazerosas, restringindo-se quase exclusivamente ao universo dos jogos?",
+        opcoes: [
+          {letra:"A", texto:"Mantém uma vida equilibrada com diversos hobbies, esportes e saídas sociais."},
+          {letra:"B", texto:"Reduziu um pouco os passeios em semanas de provas ou picos de trabalho, sem prejuízo real."},
+          {letra:"C", texto:"Abandono quase absoluto de qualquer outra fonte de lazer; o tempo livre é 100% dedicado aos jogos."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Módulo C · Consequências Psicossociais e Financeiras",
+    sub: "Avalie o impacto do hábito na vida real — mentiras, fugas emocionais e prejuízos acumulados.",
+    perguntas: [
+      {
+        id: "p6",
+        num: "6",
+        texto: "O hábito de jogar continua de forma irredutível mesmo com plena consciência de que está gerando problemas graves (queda no rendimento, dívidas impagáveis por apostas, rupturas em relacionamentos)?",
+        opcoes: [
+          {letra:"A", texto:"O jogo nunca causou nenhum tipo de prejuízo ou conflito na vida."},
+          {letra:"B", texto:"Recebeu avisos leves de familiares sobre o tempo de tela, ajustando o comportamento rapidamente."},
+          {letra:"C", texto:"Continuidade obstinada do jogo mesmo após demissões, reprovações, colapsos financeiros severos ou ameaças reais de término de relacionamento."}
+        ]
+      },
+      {
+        id: "p7",
+        num: "7",
+        texto: "A pessoa mente, esconde ou omite de familiares, cônjuge ou terapeuta a real quantidade de horas gastas jogando ou o volume de dinheiro perdido com apostas?",
+        opcoes: [
+          {letra:"A", texto:"Joga de forma transparente e aberta, sem precisar esconder nada de ninguém."},
+          {letra:"B", texto:"Prefere não dar detalhes de partidas para não parecer bobagem, mas sem mentir sobre a vida."},
+          {letra:"C", texto:"Mentiras frequentes e elaboradas para encobrir o tempo gasto ou os prejuízos financeiros gerados por apostas."}
+        ]
+      },
+      {
+        id: "p8",
+        num: "8",
+        texto: "Os jogos são utilizados de maneira recorrente como mecanismo principal de fuga ou alívio diante de sentimentos negativos (ansiedade, culpa, depressão, solidão, estresse ou frustrações)?",
+        opcoes: [
+          {letra:"A", texto:"Joga puramente por diversão ou entretenimento pontual, sem relação com o humor."},
+          {letra:"B", texto:"Usa os jogos para relaxar após um dia cansativo, mantendo o controle emocional."},
+          {letra:"C", texto:"Dependência emocional do jogo: é a única ferramenta que encontra para desligar a mente de problemas, tristezas ou angústias profundas."}
+        ]
+      }
+    ]
+  },
+  {
+    titulo: "Módulo D · Prejuízo Funcional Global + Observações",
+    sub: "Avalie o impacto estrutural na vida e registre qualquer observação adicional.",
+    perguntas: [
+      {
+        id: "p9",
+        num: "9",
+        texto: "O comportamento de jogo causou prejuízo acentuado ou perda real de oportunidades significativas de trabalho, carreira acadêmica, relacionamentos afetivos importantes ou amizades de longa data?",
+        opcoes: [
+          {letra:"A", texto:"Vida funcional preservada, sem impactos negativos nas esferas vitais."},
+          {letra:"B", texto:"Pequenos atritos pontuais por falta de atenção momentânea, resolvidos com facilidade."},
+          {letra:"C", texto:"Prejuízos graves e estruturais consolidados (perda de emprego, abandono escolar, divórcio ou isolamento social severo)."}
+        ]
+      }
+    ],
+    obs: true
+  }
+];
+
+// ═══════════════════════════════════
+// RENDER
+// ═══════════════════════════════════
+function renderStep(){
+  const pct = Math.round(step/TOTAL_STEPS*100);
+  document.getElementById("stepLabel").textContent = "Etapa "+step+" de "+TOTAL_STEPS;
+  document.getElementById("stepPct").textContent = pct+"%";
+  document.getElementById("progressFill").style.width = pct+"%";
+  document.getElementById("btnBack").style.display = step>1?"block":"none";
+  document.getElementById("btnNext").textContent = step===TOTAL_STEPS ? "✓ Revisar Respostas" : "Próximo →";
+
+  const bloco = BLOCOS[step-1];
+  let h = '';
+  h += '<div class="step-title">'+bloco.titulo+'</div>';
+  h += '<div class="step-sub">'+bloco.sub+'</div>';
+
+  bloco.perguntas.forEach(p => {
+    h += '<div class="pergunta-card">';
+    h += '<div class="perg-num">Critério '+p.num+' de 9</div>';
+    h += '<div class="perg-texto">'+p.texto+'</div>';
+    h += '<div class="opcoes" id="grp_'+p.id+'">';
+    p.opcoes.forEach(o => {
+      const sel = respostas[p.id] === o.letra ? ' sel' : '';
+      h += '<div class="opcao'+sel+'" data-pid="'+p.id+'" data-letra="'+o.letra+'" onclick="selecionarOpcao(this)">';
+      h += '<input type="radio" name="'+p.id+'" value="'+o.letra+'"/>';
+      h += '<div class="letra">'+o.letra+'</div>';
+      h += '<div>'+o.texto+'</div>';
+      h += '</div>';
+    });
+    h += '</div></div>';
+  });
+
+  if(bloco.obs){
+    h += '<div class="fg" style="margin-top:8px">';
+    h += '<label class="lbl">Observações adicionais <span style="font-weight:400;text-transform:none;color:#9ca3af">(opcional)</span></label>';
+    h += '<textarea id="obsFinais" class="has-mic" placeholder="Fale ou escreva qualquer observação importante — tipo de jogo envolvido (games online, apostas esportivas, tigrinho/cassino), valor de dívidas, tempo diário de uso, tentativas anteriores de tratamento..." style="min-height:120px">'+(respostas.obsFinais||'')+'</textarea>';
+    h += '</div>';
+    h += '<div class="aviso-amarelo">🔒 Suas respostas são confidenciais e serão analisadas exclusivamente pela Dra. Lucia Kratz para fins clínicos.</div>';
+  }
+
+  document.getElementById("stepContent").innerHTML = h;
+  initMic();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function selecionarOpcao(el){
+  const pergId = el.dataset.pid;
+  const letra = el.dataset.letra;
+  const grp = document.getElementById("grp_"+pergId);
+  grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
+  el.classList.add("sel");
+  respostas[pergId] = letra;
+}
+
+// ═══════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════
+function avancarStep(){
+  const bloco = BLOCOS[step-1];
+  for(const p of bloco.perguntas){
+    if(!respostas[p.id]){
+      alert("Por favor, selecione uma opção para o critério "+p.num+" antes de continuar.");
+      const el = document.getElementById("grp_"+p.id);
+      if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+      return;
+    }
+  }
+  if(bloco.obs){
+    const ta = document.getElementById("obsFinais");
+    if(ta) respostas.obsFinais = ta.value;
+  }
+  if(step < TOTAL_STEPS){
+    step++;
+    renderStep();
+  } else {
+    // Salvar obs antes de revisar
+    const ta = document.getElementById("obsFinais");
+    if(ta) respostas.obsFinais = ta.value;
+    mostrarRevisao();
+  }
+}
+
+function voltarStep(){
+  if(step>1){
+    const ta = document.getElementById("obsFinais");
+    if(ta) respostas.obsFinais = ta.value;
+    step--;
+    renderStep();
+  }
+}
+
+// ═══════════════════════════════════
+// REVISÃO
+// ═══════════════════════════════════
+const COR_LETRA = { A:"#16a34a", B:"#d97706", C:"#dc2626" };
+
+const PERGUNTAS_REVISAO = [
+  { id:"p1", bloco:"Módulo A — Preocupação e Abstinência",             texto:"Preocupação mental excessiva com jogos" },
+  { id:"p2", bloco:"Módulo A — Preocupação e Abstinência",             texto:"Sintomas de abstinência ao parar (irritabilidade, ansiedade)" },
+  { id:"p3", bloco:"Módulo B — Tolerância e Perda de Controle",        texto:"Tolerância — necessidade crescente de tempo ou dinheiro" },
+  { id:"p4", bloco:"Módulo B — Tolerância e Perda de Controle",        texto:"Tentativas infrutíferas de controlar ou cessar o jogo" },
+  { id:"p5", bloco:"Módulo B — Tolerância e Perda de Controle",        texto:"Abandono de outros hobbies e atividades sociais" },
+  { id:"p6", bloco:"Módulo C — Consequências Psicossociais",           texto:"Continuidade apesar de problemas graves" },
+  { id:"p7", bloco:"Módulo C — Consequências Psicossociais",           texto:"Ocultação e mentiras sobre a extensão do hábito" },
+  { id:"p8", bloco:"Módulo C — Consequências Psicossociais",           texto:"Uso do jogo como fuga de problemas emocionais" },
+  { id:"p9", bloco:"Módulo D — Prejuízo Funcional Global",             texto:"Perda ou risco severo de emprego, estudos ou relacionamentos" },
+];
+
+function mostrarRevisao(){
+  let h = "";
+
+  h += '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+  h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Quem está respondendo</div>';
+  h += '<div style="font-size:14px;font-weight:600;color:#1f2937">';
+  h += respostas.tipoRespondente==="paciente" ? "🧑 Próprio paciente" : "👨‍👩‍👧 "+(respostas.nomeRespondente||"Familiar")+" · "+(respostas.parentesco||"");
+  h += "</div></div>";
+
+  let blocoAtual = "";
+  PERGUNTAS_REVISAO.forEach(p => {
+    if(p.bloco !== blocoAtual){
+      if(blocoAtual) h += "</div>";
+      blocoAtual = p.bloco;
+      h += '<div style="margin-bottom:12px">';
+      h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:8px">'+p.bloco+'</div>';
+    }
+    const letra = respostas[p.id] || "—";
+    const cor = COR_LETRA[letra] || "#6b7280";
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">';
+    h += '<div style="width:26px;height:26px;min-width:26px;border-radius:50%;background:'+(letra!=="—"?cor+"22":"#f3f4f6")+';border:2px solid '+(letra!=="—"?cor:"#e5e7eb")+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+(letra!=="—"?cor:"#9ca3af")+'">'+letra+'</div>';
+    h += '<div style="font-size:13px;color:#374151;line-height:1.4">'+p.texto+'</div>';
+    h += '</div>';
+  });
+  if(blocoAtual) h += "</div>";
+
+  if(respostas.obsFinais && respostas.obsFinais.trim()){
+    h += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-top:4px">';
+    h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:6px">Observações livres</div>';
+    h += '<div style="font-size:13px;color:#374151;line-height:1.6">'+respostas.obsFinais+'</div>';
+    h += '</div>';
+  }
+
+  document.getElementById("revisaoContent").innerHTML = h;
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("revisaoArea").style.display = "block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function voltarRevisao(){
+  document.getElementById("revisaoArea").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  step = TOTAL_STEPS;
+  renderStep();
+  const ta = document.getElementById("obsFinais");
+  if(ta && respostas.obsFinais) ta.value = respostas.obsFinais;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ═══════════════════════════════════
+// ENVIO
+// ═══════════════════════════════════
+async function enviar(){
+  const btn = document.querySelector("#revisaoArea .btn-next");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+  try{
+    const doc = {
+      pacienteNome: nomePaciente || "",
+      token: tokenParam || "",
+      tipoRespondente: respostas.tipoRespondente || "",
+      nomeRespondente: respostas.nomeRespondente || "",
+      parentesco: respostas.parentesco || "",
+      p1: respostas.p1||"", p2: respostas.p2||"", p3: respostas.p3||"",
+      p4: respostas.p4||"", p5: respostas.p5||"", p6: respostas.p6||"",
+      p7: respostas.p7||"", p8: respostas.p8||"", p9: respostas.p9||"",
+      obsFinais: respostas.obsFinais||"",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("clinica_rastreamento_jogos").add(doc);
+
+    await db.collection("nr1map_emails").add({
+      to: "luciakratz@gmail.com",
+      message:{
+        subject: "🔔 Rastreamento de Jogos e Apostas — "+(nomePaciente||"Sem nome")+" ("+(respostas.tipoRespondente==="paciente"?"Próprio paciente":respostas.parentesco)+")",
+        html: "<h2>Novo rastreamento recebido</h2><p><b>Instrumento:</b> Dependência de Jogos e Apostas (DSM-5/CID-11)</p><p><b>Paciente:</b> "+(nomePaciente||"—")+"</p><p><b>Respondido por:</b> "+respostas.nomeRespondente+" ("+respostas.parentesco+")</p><p><b>Data:</b> "+new Date().toLocaleDateString("pt-BR")+"</p>"
+      },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById("revisaoArea").style.display="none";
+    document.getElementById("successArea").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){
+    alert("Erro ao enviar. Tente novamente.\n"+e.message);
+    btn.disabled=false;
+    btn.textContent="✓ Confirmar e Enviar";
+  }
+}
+
+// ═══════════════════════════════════
+// MICROFONE
+// ═══════════════════════════════════
+function initMic(){
+  if(typeof SpeechRecognition==="undefined"&&typeof webkitSpeechRecognition==="undefined") return;
+  const SR=typeof SpeechRecognition!=="undefined"?SpeechRecognition:webkitSpeechRecognition;
+  document.querySelectorAll("textarea.has-mic").forEach(ta=>{
+    if(ta.dataset.micDone) return;
+    ta.dataset.micDone="1";
+    const wrap=document.createElement("div");
+    wrap.className="mic-wrap";
+    ta.parentNode.insertBefore(wrap,ta);
+    wrap.appendChild(ta);
+    const btn=document.createElement("button");
+    btn.type="button";btn.className="mic-btn";btn.title="Falar em vez de digitar";btn.textContent="🎤";
+    let rec=null;
+    btn.onclick=()=>{
+      if(rec){rec.stop();rec=null;btn.textContent="🎤";return;}
+      rec=new SR();rec.lang="pt-BR";rec.continuous=true;rec.interimResults=false;
+      rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)ta.value+=(ta.value?" ":"")+e.results[i][0].transcript;};
+      rec.onend=()=>{rec=null;btn.textContent="🎤";};
+      rec.start();btn.textContent="🔴";
+    };
+    wrap.appendChild(btn);
+  });
+}
+</script>
+</body>
+</html>
