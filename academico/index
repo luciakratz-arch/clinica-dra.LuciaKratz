@@ -174,12 +174,82 @@ tr:hover td{background:#faf5ff}
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
-<div id="login-view" class="login-wrap">
-  <div class="login-card">
+<!-- ===== SELEÇÃO DE PERFIL ===== -->
+<div id="selecao-view" class="login-wrap">
+  <div class="login-card" style="max-width:500px">
     <div class="logo-name">🦋 Dra. Lucia Kratz</div>
-    <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora · Psicoterapia Breve</div>
-    <div class="login-title">Portal Acadêmico</div>
+    <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora</div>
+    <div class="login-title" style="margin-top:20px">Olá! Quem é você?</div>
+    <div class="login-sub" style="margin-bottom:24px">Selecione seu perfil para acessar a área correta.</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <button onclick="mostrarTelaSupervisionando()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border:1.5px solid #e5e7eb;border-radius:14px;background:#fff;cursor:pointer;text-align:left;transition:all .2s;width:100%" onmouseover="this.style.borderColor='#7B00C4'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎓</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:2px">Aluno de Supervisão Clínica</div>
+          <div style="font-size:13px;color:#6b7280">Portal de supervisão — ferramentas e atendimentos</div>
+        </div>
+        <div style="color:#9ca3af;font-size:20px">›</div>
+      </button>
+
+      <button onclick="mostrarTelaPsicoterapia()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border:1.5px solid #e5e7eb;border-radius:14px;background:#fff;cursor:pointer;text-align:left;transition:all .2s;width:100%" onmouseover="this.style.borderColor='#7B00C4'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📚</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:2px">Aluno de Psicoterapia Breve</div>
+          <div style="font-size:13px;color:#6b7280">Disciplina do 9º Período · Fichas, casos e avaliações</div>
+        </div>
+        <div style="color:#9ca3af;font-size:20px">›</div>
+      </button>
+
+      <button onclick="window.location.href='../admin/'" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border:1.5px solid #e5e7eb;border-radius:14px;background:#fff;cursor:pointer;text-align:left;transition:all .2s;width:100%" onmouseover="this.style.borderColor='#7B00C4'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👩‍🏫</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:2px">Sou a Professora</div>
+          <div style="font-size:13px;color:#6b7280">Área administrativa completa</div>
+        </div>
+        <div style="color:#9ca3af;font-size:20px">›</div>
+      </button>
+
+    </div>
+    <div style="text-align:center;margin-top:24px;font-size:12px;color:#9ca3af">
+      Plataforma protegida · Dra. Lucia Kratz · CRP 09/20590<br/>
+      <a href="../" style="color:#7B00C4;text-decoration:none;font-weight:500">← Voltar ao site</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN SUPERVISÃO ===== -->
+<div id="supervisao-view" class="login-wrap hidden">
+  <div class="login-card">
+    <button onclick="voltarSelecao()" style="background:none;border:none;cursor:pointer;font-size:13px;color:#6b7280;font-family:'Inter',sans-serif;margin-bottom:20px;padding:0;display:flex;align-items:center;gap:6px">← Voltar</button>
+    <div class="logo-name">🎓 Supervisão Clínica</div>
+    <div class="logo-sub">Portal de supervisão — ferramentas e atendimentos</div>
+    <div class="login-title" style="margin-top:16px">Entrar</div>
+    <div class="login-sub">Nome (autocomplete) + matrícula como senha</div>
+    <div id="sup-erro" class="erro-box hidden"></div>
+    <div class="fg">
+      <label class="lbl">Seu Nome</label>
+      <input class="inp" id="sup-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="buscarNomeSupervisao(this.value)"/>
+      <div id="sup-ac" class="autocomplete-list hidden"></div>
+    </div>
+    <div class="fg">
+      <label class="lbl">Matrícula (Senha)</label>
+      <input class="inp" id="sup-senha" type="password" placeholder="Número de matrícula ou 1234"/>
+    </div>
+    <button class="btn-primary" onclick="fazerLoginSupervisao()">Entrar</button>
+    <div style="background:#f3e8ff;color:#5a0090;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:14px;line-height:1.5">
+      💡 Se não tem matrícula cadastrada, use a senha <strong>1234</strong>.
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN PSICOTERAPIA BREVE ===== -->
+<div id="login-view" class="login-wrap hidden">
+  <div class="login-card">
+    <button onclick="voltarSelecao()" style="background:none;border:none;cursor:pointer;font-size:13px;color:#6b7280;font-family:'Inter',sans-serif;margin-bottom:20px;padding:0;display:flex;align-items:center;gap:6px">← Voltar</button>
+    <div class="logo-name">📚 Psicoterapia Breve</div>
+    <div class="logo-sub">Disciplina do 9º Período · Dra. Lucia Kratz</div>
+    <div class="login-title" style="margin-top:16px">Entrar</div>
     <div class="login-sub">Disciplina de Psicoterapia Breve — 9º Período<br/>Digite seu nome para entrar</div>
     <div id="login-erro" class="erro-box hidden"></div>
     <div class="fg">
@@ -647,6 +717,102 @@ tr:hover td{background:#faf5ff}
 </div>
 
 <script>
+// ===== NAVEGAÇÃO ENTRE TELAS =====
+let alunosSupervisionados = [];
+let alunoSupSelecionado = null;
+
+function mostrarTelaSupervisionando(){
+  document.getElementById('selecao-view').classList.add('hidden');
+  document.getElementById('supervisao-view').classList.remove('hidden');
+  carregarAlunosSupervisionados();
+  setTimeout(()=>document.getElementById('sup-nome').focus(),100);
+}
+
+function mostrarTelaPsicoterapia(){
+  document.getElementById('selecao-view').classList.add('hidden');
+  document.getElementById('login-view').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('inp-nome').focus(),100);
+}
+
+function voltarSelecao(){
+  document.getElementById('supervisao-view').classList.add('hidden');
+  document.getElementById('login-view').classList.add('hidden');
+  document.getElementById('selecao-view').classList.remove('hidden');
+  document.getElementById('sup-nome').value='';
+  document.getElementById('sup-senha').value='';
+  document.getElementById('sup-erro').classList.add('hidden');
+  document.getElementById('sup-ac').classList.add('hidden');
+  alunoSupSelecionado = null;
+}
+
+async function carregarAlunosSupervisionados(){
+  if(alunosSupervisionados.length > 0) return;
+  try{
+    const snap = await db.collection('clinica_alunos').get();
+    alunosSupervisionados = snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){}
+}
+
+function buscarNomeSupervisao(val){
+  const list = document.getElementById('sup-ac');
+  alunoSupSelecionado = null;
+  if(val.length < 3){ list.classList.add('hidden'); return; }
+  const lower = val.toLowerCase();
+  const res = alunosSupervisionados.filter(a=>(a.nome||'').toLowerCase().includes(lower) && a.status!=='inativo');
+  if(res.length===0){ list.classList.add('hidden'); return; }
+  list.innerHTML = res.slice(0,8).map(a=>
+    `<div class="autocomplete-item" onclick="selecionarAlunoSup('${a.id}')">${a.nome}${a.matricula?' <span style="color:#9ca3af;font-size:12px">— '+a.matricula+'</span>':''}</div>`
+  ).join('');
+  list.classList.remove('hidden');
+}
+
+function selecionarAlunoSup(id){
+  const aluno = alunosSupervisionados.find(a=>a.id===id);
+  if(!aluno) return;
+  alunoSupSelecionado = aluno;
+  document.getElementById('sup-nome').value = aluno.nome;
+  document.getElementById('sup-ac').classList.add('hidden');
+  document.getElementById('sup-senha').focus();
+}
+
+async function fazerLoginSupervisao(){
+  const nomeDigitado = document.getElementById('sup-nome').value.trim();
+  const senha = document.getElementById('sup-senha').value.trim();
+  const erro = document.getElementById('sup-erro');
+  erro.classList.add('hidden');
+
+  if(!nomeDigitado){ erro.textContent='Digite seu nome.'; erro.classList.remove('hidden'); return; }
+  if(!senha){ erro.textContent='Digite sua matrícula ou senha.'; erro.classList.remove('hidden'); return; }
+
+  if(!alunoSupSelecionado){
+    const lower = nomeDigitado.toLowerCase();
+    alunoSupSelecionado = alunosSupervisionados.find(a=>(a.nome||'').toLowerCase()===lower);
+  }
+  if(!alunoSupSelecionado){
+    try{
+      const snap = await db.collection('clinica_alunos').get();
+      const lower = nomeDigitado.toLowerCase();
+      const doc = snap.docs.find(d=>(d.data().nome||'').toLowerCase()===lower);
+      if(doc) alunoSupSelecionado = {id:doc.id,...doc.data()};
+    }catch(e){}
+  }
+  if(!alunoSupSelecionado){ erro.textContent='Aluno não encontrado.'; erro.classList.remove('hidden'); return; }
+  if(alunoSupSelecionado.status==='pendente'){ erro.textContent='Conta pendente de aprovação.'; erro.classList.remove('hidden'); return; }
+
+  const senhaValida = alunoSupSelecionado.matricula || alunoSupSelecionado.senha || '1234';
+  if(senha !== senhaValida && senha !== (alunoSupSelecionado.senha||'1234') && senha !== '1234'){
+    erro.textContent='Matrícula ou senha incorreta.'; erro.classList.remove('hidden'); return;
+  }
+  // Redireciona para o portal clínico
+  window.location.href = '../clinica/?aluno=' + alunoSupSelecionado.id;
+}
+
+// Fecha autocomplete supervisão ao clicar fora
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#sup-nome') && !e.target.closest('#sup-ac'))
+    document.getElementById('sup-ac')?.classList.add('hidden');
+});
+
 // ===== FIREBASE =====
 const firebaseConfig = {
   apiKey: "AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",
