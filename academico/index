@@ -201,6 +201,15 @@ tr:hover td{background:#faf5ff}
         <div style="color:#9ca3af;font-size:20px">›</div>
       </button>
 
+      <button onclick="mostrarTelaProfessora()" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border:1.5px solid #e5e7eb;border-radius:14px;background:#fff;cursor:pointer;text-align:left;transition:all .2s;width:100%" onmouseover="this.style.borderColor='#7B00C4'" onmouseout="this.style.borderColor='#e5e7eb'">
+        <div style="width:44px;height:44px;border-radius:12px;background:#f3e8ff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">👩‍🏫</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:2px">Sou a Professora</div>
+          <div style="font-size:13px;color:#6b7280">Acesso ao painel completo da disciplina</div>
+        </div>
+        <div style="color:#9ca3af;font-size:20px">›</div>
+      </button>
+
 
 
     </div>
@@ -233,6 +242,23 @@ tr:hover td{background:#faf5ff}
     <div style="background:#f3e8ff;color:#5a0090;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:14px;line-height:1.5">
       💡 Se não tem matrícula cadastrada, use a senha <strong>1234</strong>.
     </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN PROFESSORA ===== -->
+<div id="professora-view" class="login-wrap hidden">
+  <div class="login-card">
+    <button onclick="voltarSelecao()" style="background:none;border:none;cursor:pointer;font-size:13px;color:#6b7280;font-family:'Inter',sans-serif;margin-bottom:20px;padding:0;display:flex;align-items:center;gap:6px">← Voltar</button>
+    <div class="logo-name">👩‍🏫 Professora</div>
+    <div class="logo-sub">Painel completo da disciplina</div>
+    <div class="login-title" style="margin-top:16px">Acesso Restrito</div>
+    <div class="login-sub">Digite sua senha para continuar</div>
+    <div id="prof-erro" class="erro-box hidden"></div>
+    <div class="fg">
+      <label class="lbl">Senha</label>
+      <input class="inp" id="prof-senha" type="password" placeholder="••••" onkeydown="if(event.key==='Enter') fazerLoginProfessora()"/>
+    </div>
+    <button class="btn-primary" onclick="fazerLoginProfessora()">Entrar</button>
   </div>
 </div>
 
@@ -714,6 +740,24 @@ tr:hover td{background:#faf5ff}
 let alunosSupervisionados = [];
 let alunoSupSelecionado = null;
 
+function mostrarTelaProfessora(){
+  document.getElementById('selecao-view').classList.add('hidden');
+  document.getElementById('professora-view').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('prof-senha').focus(),100);
+}
+
+function fazerLoginProfessora(){
+  const senha = document.getElementById('prof-senha').value;
+  const erro = document.getElementById('prof-erro');
+  erro.classList.add('hidden');
+  if(senha !== '1234'){ erro.textContent='Senha incorreta.'; erro.classList.remove('hidden'); return; }
+  // Login ok — esconde telas de login e abre app como professora
+  document.getElementById('professora-view').classList.add('hidden');
+  perfil = 'prof';
+  usuarioAtual = {nome:'Dra. Lucia Kratz', matricula:'PROF', role:'prof'};
+  iniciarApp();
+}
+
 function mostrarTelaSupervisionando(){
   document.getElementById('selecao-view').classList.add('hidden');
   document.getElementById('supervisao-view').classList.remove('hidden');
@@ -730,6 +774,7 @@ function mostrarTelaPsicoterapia(){
 function voltarSelecao(){
   document.getElementById('supervisao-view').classList.add('hidden');
   document.getElementById('login-view').classList.add('hidden');
+  document.getElementById('prof-view').classList.add('hidden');
   document.getElementById('selecao-view').classList.remove('hidden');
   document.getElementById('sup-nome').value='';
   document.getElementById('sup-senha').value='';
@@ -798,6 +843,22 @@ async function fazerLoginSupervisao(){
   }
   // Redireciona para o portal clínico
   window.location.href = '../clinica/?aluno=' + alunoSupSelecionado.id;
+}
+
+function mostrarTelaProfessora(){
+  document.getElementById('selecao-view').classList.add('hidden');
+  document.getElementById('prof-view').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('prof-senha').focus(),100);
+}
+
+function fazerLoginProfessora(){
+  const senha = document.getElementById('prof-senha').value.trim();
+  const erro = document.getElementById('prof-erro');
+  erro.classList.add('hidden');
+  if(senha !== '1234'){ erro.textContent='Senha incorreta.'; erro.classList.remove('hidden'); return; }
+  usuarioAtual = {nome:'Dra. Lucia Kratz', matricula:'PROF', role:'prof'};
+  perfil = 'prof';
+  iniciarApp();
 }
 
 // Fecha autocomplete supervisão ao clicar fora
@@ -1454,6 +1515,23 @@ window.addEventListener('DOMContentLoaded', ()=>{
     // mostra login direto
   }
 });
+
+<!-- ===== LOGIN PROFESSORA ===== -->
+<div id="prof-view" class="login-wrap hidden">
+  <div class="login-card">
+    <button onclick="voltarSelecao()" style="background:none;border:none;cursor:pointer;font-size:13px;color:#6b7280;font-family:'Inter',sans-serif;margin-bottom:20px;padding:0;display:flex;align-items:center;gap:6px">← Voltar</button>
+    <div class="logo-name">👩‍🏫 Área da Professora</div>
+    <div class="logo-sub">Painel completo da disciplina</div>
+    <div class="login-title" style="margin-top:16px">Entrar</div>
+    <div class="login-sub">Digite sua senha para acessar</div>
+    <div id="prof-erro" class="erro-box hidden"></div>
+    <div class="fg">
+      <label class="lbl">Senha</label>
+      <input class="inp" id="prof-senha" type="password" placeholder="Digite sua senha"/>
+    </div>
+    <button class="btn-primary" onclick="fazerLoginProfessora()">Entrar</button>
+  </div>
+</div>
 </script>
 </body>
 </html>
