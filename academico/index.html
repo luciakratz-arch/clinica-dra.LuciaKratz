@@ -845,23 +845,6 @@ async function fazerLoginSupervisao(){
   window.location.href = '../clinica/?aluno=' + alunoSupSelecionado.id;
 }
 
-function mostrarTelaProfessora(){
-  document.getElementById('selecao-view').classList.add('hidden');
-  document.getElementById('prof-view').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('prof-senha').focus(),100);
-}
-
-function fazerLoginProfessora(){
-  const senha = document.getElementById('prof-senha').value.trim();
-  const erro = document.getElementById('prof-erro');
-  erro.classList.add('hidden');
-  if(senha !== '1234'){ erro.textContent='Senha incorreta.'; erro.classList.remove('hidden'); return; }
-  usuarioAtual = {nome:'Dra. Lucia Kratz', matricula:'PROF', role:'prof'};
-  perfil = 'prof';
-  iniciarApp();
-}
-
-// Fecha autocomplete supervisão ao clicar fora
 document.addEventListener('click', e=>{
   if(!e.target.closest('#sup-nome') && !e.target.closest('#sup-ac'))
     document.getElementById('sup-ac')?.classList.add('hidden');
