@@ -10,607 +10,487 @@
 :root{--roxo:#7B00C4;--roxo-dark:#5a0090;--roxo-light:#f3e8ff;--text:#1f2937;--text-light:#6b7280;--border:#e5e7eb;--white:#fff;--green:#16a34a;--red:#dc2626}
 body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;color:var(--text)}
 .hidden{display:none!important}
-/* LOGIN / SELEÇÃO */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 .login-card{background:var(--white);border-radius:24px;padding:36px;width:100%;max-width:480px;box-shadow:0 8px 48px rgba(123,0,196,.14)}
 .logo-name{font-family:'Dancing Script',cursive;font-size:32px;color:var(--roxo);font-weight:700;text-align:center}
 .logo-sub{font-size:12px;color:var(--text-light);text-align:center;margin-top:2px}
-.login-title{font-size:20px;font-weight:700;color:#3d006a;text-align:center;margin:18px 0 4px}
-.login-sub{font-size:13px;color:var(--text-light);text-align:center;margin-bottom:24px;line-height:1.6}
-.profile-card{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1.5px solid var(--border);border-radius:12px;background:var(--white);cursor:pointer;text-align:left;width:100%;margin-bottom:10px;transition:border-color .2s}
-.profile-card:hover{border-color:var(--roxo)}
-.profile-icon{width:42px;height:42px;border-radius:10px;background:var(--roxo-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.profile-name{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
-.profile-desc{font-size:12px;color:var(--text-light)}
-.profile-arrow{color:var(--text-light);font-size:18px;margin-left:auto}
-.back-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);font-family:'Inter',sans-serif;margin-bottom:20px;padding:0;display:flex;align-items:center;gap:6px}
+.login-title{font-size:20px;font-weight:700;color:#3d006a;text-align:center;margin:16px 0 4px}
+.login-sub{font-size:13px;color:var(--text-light);text-align:center;margin-bottom:22px;line-height:1.6}
+.pcard{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1.5px solid var(--border);border-radius:12px;background:var(--white);cursor:pointer;text-align:left;width:100%;margin-bottom:10px;transition:border-color .2s;font-family:'Inter',sans-serif}
+.pcard:hover{border-color:var(--roxo)}
+.picon{width:42px;height:42px;border-radius:10px;background:var(--roxo-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pname{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
+.pdesc{font-size:12px;color:var(--text-light)}
+.parr{color:var(--text-light);font-size:18px;margin-left:auto}
+.back-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);font-family:'Inter',sans-serif;margin-bottom:18px;padding:0;display:flex;align-items:center;gap:5px}
 .back-btn:hover{color:var(--roxo)}
 .lbl{display:block;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
 .inp{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
 .inp:focus{border-color:var(--roxo)}
 .fg{margin-bottom:14px;position:relative}
-.btn-primary{width:100%;padding:13px;background:var(--roxo);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
-.btn-primary:hover{opacity:.88}
-.btn-primary:disabled{opacity:.5;cursor:default}
-.erro-box{background:#fee2e2;color:var(--red);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;font-weight:500}
-.info-hint{background:var(--roxo-light);color:var(--roxo-dark);border-radius:8px;padding:10px 13px;font-size:12px;margin-top:12px;line-height:1.5}
-.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--roxo);border-radius:9px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:3px}
-.ac-item{padding:10px 13px;cursor:pointer;font-size:14px;color:var(--text);transition:background .15s}
-.ac-item:hover{background:var(--roxo-light)}
-/* APP */
+.btn-p{width:100%;padding:13px;background:var(--roxo);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
+.btn-p:hover{opacity:.88}
+.erro{background:#fee2e2;color:var(--red);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;font-weight:500;display:none}
+.hint{background:var(--roxo-light);color:var(--roxo-dark);border-radius:8px;padding:10px 13px;font-size:12px;margin-top:12px;line-height:1.5}
+.aclist{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--roxo);border-radius:9px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
+.acitem{padding:10px 13px;cursor:pointer;font-size:14px;color:var(--text)}
+.acitem:hover{background:var(--roxo-light)}
 .app{display:flex;min-height:100vh}
 .sidebar{width:230px;background:#3d006a;color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
-.sb-logo{padding:22px 18px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo{padding:20px 18px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
 .sb-logoname{font-family:'Dancing Script',cursive;font-size:20px;color:#e9d5ff}
 .sb-logosub{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
 .sb-user{padding:10px 18px;font-size:12px;color:rgba(255,255,255,.65);border-bottom:1px solid rgba(255,255,255,.08)}
 .sb-user strong{color:#fff;display:block;font-size:13px}
 .sb-nav{padding:10px 0;flex:1}
-.nav-item{display:flex;align-items:center;gap:9px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.72);cursor:pointer;transition:background .15s;border-left:3px solid transparent}
-.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
-.nav-item.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:#c084fc}
+.ni{display:flex;align-items:center;gap:9px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.72);cursor:pointer;transition:background .15s;border-left:3px solid transparent}
+.ni:hover{background:rgba(255,255,255,.08);color:#fff}
+.ni.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:#c084fc}
 .sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1)}
-.btn-logout{width:100%;padding:8px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
-.btn-logout:hover{background:rgba(255,255,255,.2)}
+.btn-lo{width:100%;padding:8px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-lo:hover{background:rgba(255,255,255,.2)}
 .main{margin-left:230px;flex:1;padding:28px}
-/* CARDS */
-.page-title{font-size:20px;font-weight:700;color:#3d006a;margin-bottom:2px}
-.page-sub{font-size:13px;color:var(--text-light);margin-bottom:20px}
+.pt{font-size:20px;font-weight:700;color:#3d006a;margin-bottom:2px}
+.ps{font-size:13px;color:var(--text-light);margin-bottom:18px}
 .card{background:var(--white);border-radius:14px;padding:20px;box-shadow:0 2px 14px rgba(123,0,196,.07);margin-bottom:16px}
-.card-title{font-size:13px;font-weight:700;color:#3d006a;margin-bottom:12px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-.stat-val{font-size:28px;font-weight:800;color:var(--roxo)}
-.stat-lbl{font-size:12px;color:var(--text-light)}
-/* TABLE */
-.tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+.ct{font-size:13px;font-weight:700;color:#3d006a;margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.sv{font-size:28px;font-weight:800;color:var(--roxo)}
+.sl{font-size:12px;color:var(--text-light)}
+.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{background:#f9fafb;padding:9px 13px;text-align:left;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
 td{padding:9px 13px;border-bottom:1px solid #f3f4f6}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#faf5ff}
-/* BADGES */
 .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.badge-ok{background:#dcfce7;color:#16a34a}
-.badge-no{background:#fee2e2;color:#dc2626}
-.badge-roxo{background:#f3e8ff;color:#7B00C4}
-.badge-blue{background:#dbeafe;color:#1d4ed8}
-.badge-pend{background:#fef3c7;color:#92400e}
-/* BTNS */
+.bok{background:#dcfce7;color:#16a34a}
+.bno{background:#fee2e2;color:#dc2626}
+.brx{background:#f3e8ff;color:#7B00C4}
+.bbl{background:#dbeafe;color:#1d4ed8}
 .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:none;transition:opacity .2s}
 .btn:hover{opacity:.85}
-.btn-sm{padding:5px 11px;font-size:12px}
-.btn-roxo{background:var(--roxo);color:#fff}
-.btn-outline{background:transparent;border:1.5px solid var(--roxo);color:var(--roxo)}
-.btn-gray{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}
-.btn-red{background:var(--red);color:#fff}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-/* FORM */
+.bsm{padding:5px 11px;font-size:12px}
+.broxo{background:var(--roxo);color:#fff}
+.bout{background:transparent;border:1.5px solid var(--roxo);color:var(--roxo)}
+.bgray{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}
+.bred{background:var(--red);color:#fff}
+.brow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .fg2{margin-bottom:13px}
 .fg2 label{display:block;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 .fg2 input,.fg2 select,.fg2 textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
 .fg2 input:focus,.fg2 select:focus,.fg2 textarea:focus{border-color:var(--roxo)}
 .fg2 textarea{resize:vertical;min-height:70px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-/* PROGRESS */
-.prog-bar{height:7px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:5px}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--roxo),#c084fc);border-radius:10px;transition:width .4s}
-/* ALERT */
-.alert{border-radius:9px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:9px;line-height:1.5}
-.alert-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
-/* RATING */
-.rating-row{display:flex;gap:10px;margin-bottom:14px}
-.rating-opt{flex:1;border:2px solid var(--border);border-radius:9px;padding:10px;text-align:center;cursor:pointer;transition:all .15s;font-size:13px}
-.rating-opt:hover,.rating-opt.selected{border-color:var(--roxo);background:var(--roxo-light)}
-.rating-opt.selected{font-weight:700}
-/* NOTA */
-.nota-inp{width:75px;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;text-align:center;outline:none}
-.nota-inp:focus{border-color:var(--roxo)}
-/* CASO */
-.caso-card{border:1.5px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;transition:border-color .2s}
-.caso-card:hover{border-color:#c084fc}
-.caso-segredo{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 13px;font-size:12px;color:#991b1b;margin-top:10px}
-/* SECTION */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pb{height:7px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:5px}
+.pf{height:100%;background:linear-gradient(90deg,var(--roxo),#c084fc);border-radius:10px;transition:width .4s}
+.alert{border-radius:9px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:9px;line-height:1.5;background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.rrow{display:flex;gap:10px;margin-bottom:14px}
+.ropt{flex:1;border:2px solid var(--border);border-radius:9px;padding:10px;text-align:center;cursor:pointer;font-size:13px}
+.ropt:hover,.ropt.sel{border-color:var(--roxo);background:var(--roxo-light)}
+.ropt.sel{font-weight:700}
+.ni-inp{width:75px;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;text-align:center;outline:none}
+.ni-inp:focus{border-color:var(--roxo)}
+.cc{border:1.5px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px}
+.cseg{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 13px;font-size:12px;color:#991b1b;margin-top:10px}
 .sec{display:none}
 .sec.active{display:block}
-.search-inp{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;width:240px}
-.search-inp:focus{border-color:var(--roxo)}
-@media(max-width:768px){.main{margin-left:0;padding:14px}.sidebar{display:none}.grid2,.grid3{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+.si{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;width:240px}
+.si:focus{border-color:var(--roxo)}
 </style>
 </head>
 <body>
 
-<!-- ========== TELA SELEÇÃO ========== -->
-<div id="v-selecao" class="login-wrap">
+<div id="v-sel" class="login-wrap">
   <div class="login-card">
     <div class="logo-name">🦋 Dra. Lucia Kratz</div>
     <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora · Psicoterapia Breve</div>
     <div class="login-title">Olá! Quem é você?</div>
     <div class="login-sub">Selecione seu perfil para acessar a área correta.</div>
-    <button class="profile-card" onclick="irParaTela('v-supervisao')">
-      <div class="profile-icon">🎓</div>
-      <div><div class="profile-name">Aluno de Supervisão Clínica</div><div class="profile-desc">Portal de supervisão — ferramentas e atendimentos</div></div>
-      <div class="profile-arrow">›</div>
+    <button class="pcard" onclick="mostrar('v-sup')">
+      <div class="picon">🎓</div>
+      <div><div class="pname">Aluno de Supervisão Clínica</div><div class="pdesc">Portal de supervisão — ferramentas e atendimentos</div></div>
+      <div class="parr">›</div>
     </button>
-    <button class="profile-card" onclick="irParaTela('v-psico')">
-      <div class="profile-icon">📚</div>
-      <div><div class="profile-name">Aluno de Psicoterapia Breve</div><div class="profile-desc">Disciplina do 9º Período · Fichas, casos e avaliações</div></div>
-      <div class="profile-arrow">›</div>
+    <button class="pcard" onclick="mostrar('v-psico')">
+      <div class="picon">📚</div>
+      <div><div class="pname">Aluno de Psicoterapia Breve</div><div class="pdesc">Disciplina do 9º Período · Fichas, casos e avaliações</div></div>
+      <div class="parr">›</div>
     </button>
-    <button class="profile-card" onclick="irParaTela('v-prof')">
-      <div class="profile-icon">👩‍🏫</div>
-      <div><div class="profile-name">Sou a Professora</div><div class="profile-desc">Acesso ao painel completo da disciplina</div></div>
-      <div class="profile-arrow">›</div>
+    <button class="pcard" onclick="mostrar('v-prof')">
+      <div class="picon">👩‍🏫</div>
+      <div><div class="pname">Sou a Professora</div><div class="pdesc">Acesso ao painel completo da disciplina</div></div>
+      <div class="parr">›</div>
     </button>
-    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-light)">
+    <div style="text-align:center;margin-top:18px;font-size:12px;color:var(--text-light)">
       <a href="../" style="color:var(--roxo);text-decoration:none;font-weight:500">← Voltar ao site</a>
     </div>
   </div>
 </div>
 
-<!-- ========== TELA LOGIN SUPERVISÃO ========== -->
-<div id="v-supervisao" class="login-wrap hidden">
+<div id="v-sup" class="login-wrap hidden">
   <div class="login-card">
-    <button class="back-btn" onclick="irParaTela('v-selecao')">← Voltar</button>
+    <button class="back-btn" onclick="mostrar('v-sel')">← Voltar</button>
     <div class="logo-name">🎓 Supervisão Clínica</div>
     <div class="logo-sub">Portal de supervisão — Dra. Lucia Kratz</div>
     <div class="login-title">Entrar</div>
     <div class="login-sub">Digite seu nome e matrícula</div>
-    <div id="sup-erro" class="erro-box hidden"></div>
+    <div id="sup-erro" class="erro"></div>
     <div class="fg">
       <label class="lbl">Seu Nome</label>
-      <input class="inp" id="sup-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="buscarNomeSup(this.value)"/>
-      <div id="sup-ac" class="ac-list hidden"></div>
+      <input class="inp" id="sup-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acSup(this.value)"/>
+      <div id="sup-ac" class="aclist"></div>
     </div>
     <div class="fg">
       <label class="lbl">Matrícula (Senha)</label>
-      <input class="inp" id="sup-senha" type="password" placeholder="Número de matrícula ou 1234" onkeydown="if(event.key==='Enter')loginSup()"/>
+      <input class="inp" id="sup-senha" type="password" placeholder="Matrícula ou 1234" onkeydown="if(event.key==='Enter')loginSup()"/>
     </div>
-    <button class="btn-primary" onclick="loginSup()">Entrar</button>
-    <div class="info-hint">💡 Se não tem matrícula, use a senha <strong>1234</strong>.</div>
+    <button class="btn-p" onclick="loginSup()">Entrar</button>
+    <div class="hint">💡 Se não tem matrícula, use a senha <strong>1234</strong>.</div>
   </div>
 </div>
 
-<!-- ========== TELA LOGIN PSICOTERAPIA BREVE ========== -->
 <div id="v-psico" class="login-wrap hidden">
   <div class="login-card">
-    <button class="back-btn" onclick="irParaTela('v-selecao')">← Voltar</button>
+    <button class="back-btn" onclick="mostrar('v-sel')">← Voltar</button>
     <div class="logo-name">📚 Psicoterapia Breve</div>
     <div class="logo-sub">Disciplina do 9º Período · Dra. Lucia Kratz</div>
     <div class="login-title">Entrar</div>
     <div class="login-sub">Digite seu nome e matrícula</div>
-    <div id="psico-erro" class="erro-box hidden"></div>
+    <div id="psico-erro" class="erro"></div>
     <div class="fg">
       <label class="lbl">Seu Nome</label>
-      <input class="inp" id="psico-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="buscarNomePsico(this.value)"/>
-      <div id="psico-ac" class="ac-list hidden"></div>
+      <input class="inp" id="psico-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acPsico(this.value)"/>
+      <div id="psico-ac" class="aclist"></div>
     </div>
     <div class="fg">
       <label class="lbl">Matrícula (Senha)</label>
       <input class="inp" id="psico-senha" type="password" placeholder="Número de matrícula" onkeydown="if(event.key==='Enter')loginPsico()"/>
     </div>
-    <button class="btn-primary" onclick="loginPsico()">Entrar</button>
+    <button class="btn-p" onclick="loginPsico()">Entrar</button>
   </div>
 </div>
 
-<!-- ========== TELA LOGIN PROFESSORA ========== -->
 <div id="v-prof" class="login-wrap hidden">
   <div class="login-card">
-    <button class="back-btn" onclick="irParaTela('v-selecao')">← Voltar</button>
+    <button class="back-btn" onclick="mostrar('v-sel')">← Voltar</button>
     <div class="logo-name">👩‍🏫 Área da Professora</div>
     <div class="logo-sub">Painel completo da disciplina</div>
     <div class="login-title">Acesso Restrito</div>
     <div class="login-sub">Digite sua senha para continuar</div>
-    <div id="prof-erro" class="erro-box hidden"></div>
+    <div id="prof-erro" class="erro"></div>
     <div class="fg">
       <label class="lbl">Senha</label>
       <input class="inp" id="prof-senha" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')loginProf()"/>
     </div>
-    <button class="btn-primary" onclick="loginProf()">Entrar</button>
+    <button class="btn-p" onclick="loginProf()">Entrar</button>
   </div>
 </div>
 
-<!-- ========== APP ========== -->
 <div id="v-app" class="app hidden">
   <aside class="sidebar">
-    <div class="sb-logo">
-      <div class="sb-logoname">🦋 Dra. Lucia Kratz</div>
-      <div class="sb-logosub">Psicoterapia Breve</div>
-    </div>
-    <div class="sb-user"><strong id="sb-nome">—</strong><span id="sb-perfil">—</span></div>
-    <nav class="sb-nav" id="nav-aluno">
-      <div class="nav-item active" onclick="irSec('painel')">🏠 Meu Painel</div>
-      <div class="nav-item" onclick="irSec('ficha-n1')">📋 Ficha N1</div>
-      <div class="nav-item" onclick="irSec('microaval')">⭐ Microavaliação N2</div>
-      <div class="nav-item" onclick="irSec('meu-espaco')">📊 Meu Espaço</div>
+    <div class="sb-logo"><div class="sb-logoname">🦋 Dra. Lucia Kratz</div><div class="sb-logosub">Psicoterapia Breve</div></div>
+    <div class="sb-user"><strong id="sb-nome">—</strong><span id="sb-perf">—</span></div>
+    <nav class="sb-nav" id="nav-al">
+      <div class="ni active" onclick="irSec('painel')">🏠 Meu Painel</div>
+      <div class="ni" onclick="irSec('ficha')">📋 Ficha N1</div>
+      <div class="ni" onclick="irSec('micro')">⭐ Microavaliação N2</div>
+      <div class="ni" onclick="irSec('espaco')">📊 Meu Espaço</div>
     </nav>
-    <nav class="sb-nav hidden" id="nav-prof">
-      <div class="nav-item active" onclick="irSec('adm-painel')">🏠 Painel</div>
-      <div class="nav-item" onclick="irSec('adm-alunos')">👥 Alunos & Grupos</div>
-      <div class="nav-item" onclick="irSec('adm-casos')">📁 Caderno de Casos</div>
-      <div class="nav-item" onclick="irSec('adm-disparo')">🚀 Disparo ao Vivo</div>
-      <div class="nav-item" onclick="irSec('adm-notas')">📝 Lançar Notas</div>
-      <div class="nav-item" onclick="irSec('adm-pauta')">📊 Pauta Geral</div>
-      <div class="nav-item" onclick="irSec('adm-links')">🔗 Links Rápidos</div>
+    <nav class="sb-nav hidden" id="nav-pr">
+      <div class="ni active" onclick="irSec('adm-pai')">🏠 Painel</div>
+      <div class="ni" onclick="irSec('adm-al')">👥 Alunos</div>
+      <div class="ni" onclick="irSec('adm-cas')">📁 Casos</div>
+      <div class="ni" onclick="irSec('adm-dis')">🚀 Disparo</div>
+      <div class="ni" onclick="irSec('adm-not')">📝 Notas</div>
+      <div class="ni" onclick="irSec('adm-pau')">📊 Pauta</div>
+      <div class="ni" onclick="irSec('adm-lnk')">🔗 Links</div>
     </nav>
-    <div class="sb-footer"><button class="btn-logout" onclick="logout()">↩ Sair</button></div>
+    <div class="sb-footer"><button class="btn-lo" onclick="sair()">↩ Sair</button></div>
   </aside>
   <main class="main">
-
-    <!-- ALUNO: PAINEL -->
     <div id="sec-painel" class="sec active">
-      <div class="page-title">Olá, <span id="painel-nome">—</span> 👋</div>
-      <div class="page-sub">Psicoterapia Breve · 9º Período</div>
-      <div class="grid3" style="margin-bottom:16px">
-        <div class="card"><div class="stat-val" id="p-n1">—</div><div class="stat-lbl">Nota N1</div><div class="prog-bar"><div class="prog-fill" id="pp-n1" style="width:0%"></div></div></div>
-        <div class="card"><div class="stat-val" id="p-n2">—</div><div class="stat-lbl">Nota N2 (parcial)</div><div class="prog-bar"><div class="prog-fill" id="pp-n2" style="width:0%"></div></div></div>
-        <div class="card"><div class="stat-val" id="p-med">—</div><div class="stat-lbl">Média Final</div><div class="prog-bar"><div class="prog-fill" id="pp-med" style="width:0%"></div></div></div>
+      <div class="pt">Olá, <span id="p-nome">—</span> 👋</div><div class="ps">Psicoterapia Breve · 9º Período</div>
+      <div class="g3" style="margin-bottom:16px">
+        <div class="card"><div class="sv" id="p-n1">—</div><div class="sl">Nota N1</div><div class="pb"><div class="pf" id="pp-n1" style="width:0%"></div></div></div>
+        <div class="card"><div class="sv" id="p-n2">—</div><div class="sl">Nota N2</div><div class="pb"><div class="pf" id="pp-n2" style="width:0%"></div></div></div>
+        <div class="card"><div class="sv" id="p-med">—</div><div class="sl">Média</div><div class="pb"><div class="pf" id="pp-med" style="width:0%"></div></div></div>
       </div>
-      <div class="grid2">
-        <div class="card"><div class="card-title">📋 Meus Grupos</div>
+      <div class="g2">
+        <div class="card"><div class="ct">📋 Meus Grupos</div>
           <table><tbody>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N1:</td><td><span class="badge badge-roxo" id="p-grp1">—</span></td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Caso N1:</td><td id="p-caso1" style="font-size:13px">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N2:</td><td><span class="badge badge-blue" id="p-grp2">—</span></td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Caso N2:</td><td id="p-caso2" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N1:</td><td><span class="badge brx" id="p-g1">—</span></td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Caso N1:</td><td id="p-c1" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N2:</td><td><span class="badge bbl" id="p-g2">—</span></td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Caso N2:</td><td id="p-c2" style="font-size:13px">—</td></tr>
           </tbody></table>
         </div>
-        <div class="card"><div class="card-title">📅 Atividades</div><div id="p-ativ" style="font-size:13px;color:var(--green)">✅ Nenhuma atividade pendente.</div></div>
+        <div class="card"><div class="ct">📅 Atividades</div><div id="p-at" style="font-size:13px;color:var(--green)">✅ Sem pendências.</div></div>
       </div>
     </div>
-
-    <!-- ALUNO: FICHA N1 -->
-    <div id="sec-ficha-n1" class="sec">
-      <div class="page-title">📋 Ficha de Avaliação Clínica — N1</div>
-      <div class="page-sub">Raciocínio Diagnóstico em Psicoterapia Breve</div>
+    <div id="sec-ficha" class="sec">
+      <div class="pt">📋 Ficha de Avaliação Clínica — N1</div><div class="ps">Raciocínio Diagnóstico em Psicoterapia Breve</div>
       <div class="card">
-        <div class="form-row" style="margin-bottom:13px">
-          <div class="fg2"><label>Paciente Simulado</label><input id="fn1-pac" placeholder="Nome do paciente"/></div>
-          <div class="fg2"><label>Caso Nº</label><input id="fn1-caso" placeholder="Ex: 3"/></div>
-        </div>
-        <div class="form-row" style="margin-bottom:13px">
-          <div class="fg2"><label>Contexto</label><input id="fn1-ctx" placeholder="UTI, CAIS, CRAS..."/></div>
-          <div class="fg2"><label>Modalidade</label><select id="fn1-mod"><option>Individual</option><option>Grupo</option></select></div>
-        </div>
-        <div class="fg2"><label>1. Queixa Principal & Demanda Institucional</label><textarea id="fn1-q1" placeholder="Em palavras do paciente..."></textarea></div>
-        <div class="fg2"><label>2. Sinais Observados (linguagem corporal, afeto)</label><textarea id="fn1-q2"></textarea></div>
-        <div class="fg2"><label>3. Sintomas Relatados (queixas subjetivas)</label><textarea id="fn1-q3"></textarea></div>
-        <div class="fg2"><label>4. Hipótese Diagnóstica Principal (DSM-5-TR)</label><textarea id="fn1-q4"></textarea></div>
-        <div class="fg2"><label>5. Diagnóstico Diferencial & Fatores Institucionais</label><textarea id="fn1-q5"></textarea></div>
-        <div class="fg2"><label>6. Delimitação do Foco para Psicoterapia Breve</label><textarea id="fn1-q6"></textarea></div>
-        <div class="fg2"><label>7. Estratégias Focais, Manejo de Crise e Encaminhamentos</label><textarea id="fn1-q7"></textarea></div>
-        <div class="btn-row"><button class="btn btn-roxo" onclick="salvarFichaN1()">💾 Salvar Ficha</button><span id="fn1-st" style="font-size:13px;color:var(--green)"></span></div>
+        <div class="frow" style="margin-bottom:13px"><div class="fg2"><label>Paciente Simulado</label><input id="f1-pac" placeholder="Nome"/></div><div class="fg2"><label>Caso Nº</label><input id="f1-cas" placeholder="Ex: 3"/></div></div>
+        <div class="frow" style="margin-bottom:13px"><div class="fg2"><label>Contexto</label><input id="f1-ctx" placeholder="UTI, CAIS, CRAS..."/></div><div class="fg2"><label>Modalidade</label><select id="f1-mod"><option>Individual</option><option>Grupo</option></select></div></div>
+        <div class="fg2"><label>1. Queixa Principal & Demanda</label><textarea id="f1-q1"></textarea></div>
+        <div class="fg2"><label>2. Sinais Observados</label><textarea id="f1-q2"></textarea></div>
+        <div class="fg2"><label>3. Sintomas Relatados</label><textarea id="f1-q3"></textarea></div>
+        <div class="fg2"><label>4. Hipótese Diagnóstica (DSM-5-TR)</label><textarea id="f1-q4"></textarea></div>
+        <div class="fg2"><label>5. Diagnóstico Diferencial</label><textarea id="f1-q5"></textarea></div>
+        <div class="fg2"><label>6. Foco para Psicoterapia Breve</label><textarea id="f1-q6"></textarea></div>
+        <div class="fg2"><label>7. Estratégias e Encaminhamentos</label><textarea id="f1-q7"></textarea></div>
+        <div class="brow"><button class="btn broxo" onclick="salvarF1()">💾 Salvar</button><span id="f1-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
       </div>
     </div>
-
-    <!-- ALUNO: MICROAVAL -->
-    <div id="sec-microaval" class="sec">
-      <div class="page-title">⭐ Microavaliação da Plateia — N2</div>
-      <div class="page-sub">0,5 pt por encontro, até 2,0 pt</div>
-      <div class="alert alert-warn"><span>⏳</span><div id="micro-aviso">Aguardando disparo da professora.</div></div>
-      <div id="micro-lista"></div>
+    <div id="sec-micro" class="sec">
+      <div class="pt">⭐ Microavaliação da Plateia — N2</div><div class="ps">0,5 pt por encontro, até 2,0 pt</div>
+      <div class="alert">⏳ <span id="micro-av">Aguardando disparo da professora.</span></div>
+      <div id="micro-lst"></div>
     </div>
-
-    <!-- ALUNO: MEU ESPAÇO -->
-    <div id="sec-meu-espaco" class="sec">
-      <div class="page-title">📊 Meu Espaço</div>
-      <div class="page-sub">Histórico de avaliações e notas parciais</div>
-      <div class="alert alert-warn"><span>⚠️</span><div><strong>Atenção:</strong> Nota parcial proporcional às atividades liberadas até o momento. O resultado final será consolidado ao longo do semestre.</div></div>
-      <div class="grid2">
-        <div class="card"><div class="card-title">👤 Meus Dados</div>
+    <div id="sec-espaco" class="sec">
+      <div class="pt">📊 Meu Espaço</div><div class="ps">Histórico de avaliações</div>
+      <div class="alert">⚠️ <div><strong>Atenção:</strong> Nota parcial proporcional às atividades liberadas até o momento.</div></div>
+      <div class="g2">
+        <div class="card"><div class="ct">👤 Meus Dados</div>
           <table><tbody>
-            <tr><td style="color:var(--text-light);font-size:12px;width:110px;padding:5px 0">Nome:</td><td id="me-nome" style="font-size:13px;font-weight:600">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Matrícula:</td><td id="me-mat" style="font-size:13px">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N1:</td><td id="me-grp1" style="font-size:13px">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N2:</td><td id="me-grp2" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;width:100px;padding:5px 0">Nome:</td><td id="me-nm" style="font-size:13px;font-weight:600">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Matrícula:</td><td id="me-mt" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N1:</td><td id="me-g1" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N2:</td><td id="me-g2" style="font-size:13px">—</td></tr>
           </tbody></table>
         </div>
-        <div class="card"><div class="card-title">📈 Notas</div>
+        <div class="card"><div class="ct">📈 Notas</div>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">N1 (10,0)</span><strong id="me-n1">—</strong></div><div class="prog-bar"><div class="prog-fill" id="mep-n1" style="width:0%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">Seminário N2 (6,0)</span><strong id="me-sem">—</strong></div><div class="prog-bar"><div class="prog-fill" id="mep-sem" style="width:0%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">Plateia N2 (2,0)</span><strong id="me-plat">—</strong></div><div class="prog-bar"><div class="prog-fill" id="mep-plat" style="width:0%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">ESA N2 (2,0)</span><strong id="me-esa">—</strong></div><div class="prog-bar"><div class="prog-fill" id="mep-esa" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">N1 (10,0)</span><strong id="me-n1">—</strong></div><div class="pb"><div class="pf" id="mep-n1" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">Seminário (6,0)</span><strong id="me-sm">—</strong></div><div class="pb"><div class="pf" id="mep-sm" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">Plateia (2,0)</span><strong id="me-pl">—</strong></div><div class="pb"><div class="pf" id="mep-pl" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">ESA (2,0)</span><strong id="me-es">—</strong></div><div class="pb"><div class="pf" id="mep-es" style="width:0%"></div></div></div>
           </div>
         </div>
       </div>
-      <div class="card"><div class="card-title">📅 Histórico</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Atividade</th><th>Grupo</th><th>Status</th></tr></thead><tbody id="me-hist"></tbody></table></div>
-      </div>
     </div>
-
-    <!-- PROF: PAINEL -->
-    <div id="sec-adm-painel" class="sec">
-      <div class="page-title">Painel da Professora</div>
-      <div class="page-sub">Psicoterapia Breve — Visão Geral</div>
-      <div class="grid3" style="margin-bottom:16px">
-        <div class="card"><div class="stat-val" id="adm-nalunos">0</div><div class="stat-lbl">Alunos</div></div>
-        <div class="card"><div class="stat-val" id="adm-ndisp">0</div><div class="stat-lbl">Disparos</div></div>
-        <div class="card"><div class="stat-val" id="adm-nfichas">0</div><div class="stat-lbl">Fichas</div></div>
+    <div id="sec-adm-pai" class="sec">
+      <div class="pt">Painel da Professora</div><div class="ps">Psicoterapia Breve — Visão Geral</div>
+      <div class="g3" style="margin-bottom:16px">
+        <div class="card"><div class="sv" id="a-nal">0</div><div class="sl">Alunos</div></div>
+        <div class="card"><div class="sv" id="a-ndi">0</div><div class="sl">Disparos</div></div>
+        <div class="card"><div class="sv" id="a-nfi">0</div><div class="sl">Fichas</div></div>
       </div>
-      <div class="grid2">
-        <div class="card"><div class="card-title">🚦 Etapas</div>
+      <div class="g2">
+        <div class="card"><div class="ct">🚦 Etapas</div>
           <div style="display:flex;flex-direction:column;gap:12px;font-size:13px">
-            <div style="display:flex;justify-content:space-between;align-items:center">N1 — Atendimento Simulado<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tog-n1" onchange="toggleEtapa('n1',this.checked)" style="accent-color:var(--roxo);width:16px;height:16px"/><span id="lbl-n1">Desabilitada</span></label></div>
-            <div style="display:flex;justify-content:space-between;align-items:center">N2 — Seminários Práticos<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tog-n2" onchange="toggleEtapa('n2',this.checked)" style="accent-color:var(--roxo);width:16px;height:16px"/><span id="lbl-n2">Desabilitada</span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">N1 — Atendimento<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tog-n1" onchange="togEt('n1',this.checked)" style="accent-color:var(--roxo)"/><span id="lbl-n1">Desabilitada</span></label></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">N2 — Seminários<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tog-n2" onchange="togEt('n2',this.checked)" style="accent-color:var(--roxo)"/><span id="lbl-n2">Desabilitada</span></label></div>
           </div>
         </div>
-        <div class="card"><div class="card-title">⚡ Acesso Rápido</div>
-          <div class="btn-row">
-            <button class="btn btn-roxo btn-sm" onclick="irSec('adm-disparo')">🚀 Disparo</button>
-            <button class="btn btn-outline btn-sm" onclick="irSec('adm-pauta')">📊 Pauta</button>
-            <button class="btn btn-gray btn-sm" onclick="irSec('adm-casos')">📁 Casos</button>
-            <button class="btn btn-gray btn-sm" onclick="window.open('https://github.com/luciakratz-arch/clinica-dra.LuciaKratz','_blank')">📁 GitHub</button>
+        <div class="card"><div class="ct">⚡ Rápido</div>
+          <div class="brow">
+            <button class="btn broxo bsm" onclick="irSec('adm-dis')">🚀 Disparo</button>
+            <button class="btn bout bsm" onclick="irSec('adm-pau')">📊 Pauta</button>
+            <button class="btn bgray bsm" onclick="irSec('adm-cas')">📁 Casos</button>
+            <button class="btn bgray bsm" onclick="window.open('https://github.com/luciakratz-arch/clinica-dra.LuciaKratz','_blank')">📁 GitHub</button>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- PROF: ALUNOS -->
-    <div id="sec-adm-alunos" class="sec">
-      <div class="page-title">👥 Alunos & Grupos</div>
-      <div class="page-sub">Gerencie a turma</div>
+    <div id="sec-adm-al" class="sec">
+      <div class="pt">👥 Alunos</div><div class="ps">Gerencie a turma</div>
       <div class="card" style="margin-bottom:16px">
-        <div class="card-title">➕ Cadastrar Aluno</div>
-        <div class="form-row"><div class="fg2"><label>Nome *</label><input id="al-nome" placeholder="Nome completo"/></div><div class="fg2"><label>Matrícula *</label><input id="al-mat" placeholder="Matrícula (será a senha)"/></div></div>
-        <div class="form-row"><div class="fg2"><label>Grupo N1</label><input id="al-grp1" placeholder="Ex: Grupo 3"/></div><div class="fg2"><label>Caso N1</label><input id="al-caso1" placeholder="Ex: Caso 5 — Roberto"/></div></div>
-        <div class="form-row"><div class="fg2"><label>Grupo N2</label><input id="al-grp2" placeholder="Ex: Grupo 3"/></div><div class="fg2"><label>Caso N2</label><input id="al-caso2" placeholder="Ex: Caso 5 — Roberto"/></div></div>
-        <div class="btn-row"><button class="btn btn-roxo" onclick="salvarAluno()">Salvar</button><span id="al-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+        <div class="ct">➕ Cadastrar</div>
+        <div class="frow"><div class="fg2"><label>Nome *</label><input id="al-nm" placeholder="Nome completo"/></div><div class="fg2"><label>Matrícula *</label><input id="al-mt" placeholder="Matrícula (senha)"/></div></div>
+        <div class="frow"><div class="fg2"><label>Grupo N1</label><input id="al-g1"/></div><div class="fg2"><label>Caso N1</label><input id="al-c1"/></div></div>
+        <div class="frow"><div class="fg2"><label>Grupo N2</label><input id="al-g2"/></div><div class="fg2"><label>Caso N2</label><input id="al-c2"/></div></div>
+        <div class="brow"><button class="btn broxo" onclick="salvarAl()">Salvar</button><span id="al-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
       </div>
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="card-title" style="margin-bottom:0">📋 Turma</div>
-          <input class="search-inp" placeholder="🔍 Buscar..." oninput="filtrarAlunos(this.value)"/>
-        </div>
-        <div class="tbl-wrap"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>Grupo N1</th><th>Caso N1</th><th>Grupo N2</th><th>Caso N2</th><th></th></tr></thead><tbody id="tbl-alunos"></tbody></table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="ct" style="margin-bottom:0">📋 Turma</div><input class="si" placeholder="🔍 Buscar..." oninput="filtAl(this.value)"/></div>
+        <div class="tw"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>Grp N1</th><th>Caso N1</th><th>Grp N2</th><th>Caso N2</th><th></th></tr></thead><tbody id="tb-al"></tbody></table></div>
       </div>
     </div>
-
-    <!-- PROF: CASOS -->
-    <div id="sec-adm-casos" class="sec">
-      <div class="page-title">📁 Caderno de Casos Clínicos</div>
-      <div class="page-sub">Exclusivo da professora — segredos em vermelho</div>
-      <div class="btn-row" style="margin-bottom:16px">
-        <button class="btn btn-roxo" onclick="window.print()">🖨️ Imprimir</button>
-        <button class="btn btn-outline" onclick="novoCaso()">➕ Novo Caso</button>
-      </div>
-      <div id="casos-lista"></div>
+    <div id="sec-adm-cas" class="sec">
+      <div class="pt">📁 Caderno de Casos</div><div class="ps">Exclusivo da professora</div>
+      <div class="brow" style="margin-bottom:16px"><button class="btn broxo" onclick="window.print()">🖨️ Imprimir</button><button class="btn bout" onclick="novoCaso()">➕ Novo</button></div>
+      <div id="cas-lst"></div>
     </div>
-
-    <!-- PROF: DISPARO -->
-    <div id="sec-adm-disparo" class="sec">
-      <div class="page-title">🚀 Disparo ao Vivo</div>
-      <div class="page-sub">Libere atividades em tempo real</div>
+    <div id="sec-adm-dis" class="sec">
+      <div class="pt">🚀 Disparo ao Vivo</div><div class="ps">Libere atividades em tempo real</div>
       <div class="card" style="margin-bottom:16px">
-        <div class="card-title">⚙️ Configurar</div>
-        <div class="form-row"><div class="fg2"><label>Data da Aula</label><input type="date" id="disp-data"/></div><div class="fg2"><label>Tipo</label><select id="disp-tipo"><option value="ficha_n1">📋 Ficha N1</option><option value="microaval">⭐ Microavaliação N2</option></select></div></div>
-        <div class="form-row"><div class="fg2"><label>Grupo Apresentador</label><input id="disp-grupo" placeholder="Ex: Grupo 3"/></div><div class="fg2"><label>Caso</label><select id="disp-caso"><option value="">Selecione...</option><option value="1">Caso 1 — Marcos, 34 anos</option><option value="2">Caso 2 — Helena, 42 anos</option><option value="3">Caso 3 — Lucas, 23 anos</option><option value="4">Caso 4 — Carla, 29 anos</option><option value="5">Caso 5 — Roberto, 50 anos</option><option value="6">Caso 6 — Vanessa, 38 anos</option><option value="7">Caso 7 — Juliana, 27 anos</option><option value="8">Caso 8 — Thiago, 31 anos</option><option value="9">Caso 9 — Camila, 35 anos</option><option value="10">Caso 10 — Gabriel, 26 anos</option></select></div></div>
-        <div style="border:2px dashed #c084fc;border-radius:12px;padding:20px;text-align:center">
-          <div style="font-size:36px;margin-bottom:8px">🚀</div>
-          <div style="font-size:15px;font-weight:700;color:#3d006a;margin-bottom:4px">Pronto para disparar!</div>
-          <div style="font-size:13px;color:var(--text-light);margin-bottom:14px">Confirme os dados acima e clique para liberar.</div>
-          <button class="btn btn-roxo" onclick="disparar()">🚀 Disparar para a Turma</button>
-        </div>
+        <div class="ct">⚙️ Configurar</div>
+        <div class="frow"><div class="fg2"><label>Data</label><input type="date" id="dis-dt"/></div><div class="fg2"><label>Tipo</label><select id="dis-tp"><option value="ficha_n1">📋 Ficha N1</option><option value="microaval">⭐ Microavaliação N2</option></select></div></div>
+        <div class="frow"><div class="fg2"><label>Grupo</label><input id="dis-gr" placeholder="Ex: Grupo 3"/></div><div class="fg2"><label>Caso</label><select id="dis-cs"><option value="">Selecione...</option><option value="1">Caso 1 — Marcos, 34 anos</option><option value="2">Caso 2 — Helena, 42 anos</option><option value="3">Caso 3 — Lucas, 23 anos</option><option value="4">Caso 4 — Carla, 29 anos</option><option value="5">Caso 5 — Roberto, 50 anos</option><option value="6">Caso 6 — Vanessa, 38 anos</option><option value="7">Caso 7 — Juliana, 27 anos</option><option value="8">Caso 8 — Thiago, 31 anos</option><option value="9">Caso 9 — Camila, 35 anos</option><option value="10">Caso 10 — Gabriel, 26 anos</option></select></div></div>
+        <div style="border:2px dashed #c084fc;border-radius:12px;padding:20px;text-align:center"><div style="font-size:36px;margin-bottom:8px">🚀</div><div style="font-size:15px;font-weight:700;color:#3d006a;margin-bottom:12px">Pronto para disparar!</div><button class="btn broxo" onclick="disparar()">🚀 Disparar para a Turma</button></div>
       </div>
-      <div class="card"><div class="card-title">📅 Histórico de Disparos</div><div class="tbl-wrap"><table><thead><tr><th>Data</th><th>Tipo</th><th>Caso</th><th>Grupo</th></tr></thead><tbody id="tbl-disp"></tbody></table></div></div>
+      <div class="card"><div class="ct">📅 Histórico</div><div class="tw"><table><thead><tr><th>Data</th><th>Tipo</th><th>Caso</th><th>Grupo</th></tr></thead><tbody id="tb-dis"></tbody></table></div></div>
     </div>
-
-    <!-- PROF: NOTAS -->
-    <div id="sec-adm-notas" class="sec">
-      <div class="page-title">📝 Lançar Notas</div>
-      <div class="page-sub">Selecione um aluno e lance as notas</div>
+    <div id="sec-adm-not" class="sec">
+      <div class="pt">📝 Lançar Notas</div><div class="ps">Selecione um aluno</div>
       <div class="card" style="margin-bottom:16px">
-        <div class="card-title">🔍 Selecionar Aluno</div>
-        <div class="form-row">
-          <div class="fg2" style="position:relative"><label>Nome do Aluno</label><input class="inp" id="nota-busca" placeholder="Digite o nome..." oninput="buscarAlunoNota(this.value)" autocomplete="off"/><div id="nota-ac" class="ac-list hidden"></div></div>
-          <div class="fg2"><label>Selecionado</label><input id="nota-sel" disabled placeholder="—" style="background:#f9fafb;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;width:100%;font-size:13px"/></div>
+        <div class="ct">🔍 Aluno</div>
+        <div class="frow">
+          <div class="fg2" style="position:relative"><label>Nome</label><input class="inp" id="not-bk" placeholder="Digite o nome..." oninput="acNota(this.value)" autocomplete="off"/><div id="not-ac" class="aclist"></div></div>
+          <div class="fg2"><label>Selecionado</label><input id="not-sl" disabled placeholder="—" style="background:#f9fafb;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;width:100%;font-size:13px"/></div>
         </div>
       </div>
-      <div id="nota-form" class="hidden">
-        <div class="grid2">
-          <div class="card"><div class="card-title">📋 N1 (0–10)</div><div class="fg2"><label>Nota N1</label><input class="nota-inp" type="number" id="n-n1" min="0" max="10" step="0.5"/></div><div class="fg2"><label>Observações</label><textarea id="n-n1-obs" style="border:1.5px solid var(--border);border-radius:8px;padding:9px;width:100%;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;min-height:60px" placeholder="Feedback..."></textarea></div></div>
-          <div class="card"><div class="card-title">🎓 ESA N2 (0–2)</div><div class="fg2"><label>Nota ESA</label><input class="nota-inp" type="number" id="n-esa" min="0" max="2" step="0.5"/></div></div>
+      <div id="not-fm" style="display:none">
+        <div class="g2">
+          <div class="card"><div class="ct">📋 N1 (0–10)</div><div class="fg2"><label>Nota N1</label><input class="ni-inp" type="number" id="n-n1" min="0" max="10" step="0.5"/></div></div>
+          <div class="card"><div class="ct">🎓 ESA (0–2)</div><div class="fg2"><label>Nota ESA</label><input class="ni-inp" type="number" id="n-es" min="0" max="2" step="0.5"/></div></div>
         </div>
-        <div class="card" style="margin-bottom:16px"><div class="card-title">🎤 Seminário N2 (0–6)</div>
-          <div class="form-row">
-            <div class="fg2"><label>Raciocínio Clínico (0–1,5)</label><input class="nota-inp" type="number" id="n-rac" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
-            <div class="fg2"><label>Coerência Metodológica (0–1,5)</label><input class="nota-inp" type="number" id="n-coe" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
-            <div class="fg2"><label>Qualidade Planejamento (0–1,5)</label><input class="nota-inp" type="number" id="n-qual" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
-            <div class="fg2"><label>Dinâmica & Clareza (0–1,5)</label><input class="nota-inp" type="number" id="n-din" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+        <div class="card" style="margin-bottom:16px"><div class="ct">🎤 Seminário N2 (0–6)</div>
+          <div class="frow">
+            <div class="fg2"><label>Raciocínio (0–1,5)</label><input class="ni-inp" type="number" id="n-rc" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+            <div class="fg2"><label>Coerência (0–1,5)</label><input class="ni-inp" type="number" id="n-co" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+            <div class="fg2"><label>Qualidade (0–1,5)</label><input class="ni-inp" type="number" id="n-ql" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+            <div class="fg2"><label>Dinâmica (0–1,5)</label><input class="ni-inp" type="number" id="n-dn" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
           </div>
-          <div style="font-size:13px;color:var(--text-light)">Subtotal: <strong id="sem-total">0,0</strong> / 6,0</div>
+          <div style="font-size:13px;color:var(--text-light)">Subtotal: <strong id="sem-tot">0,0</strong> / 6,0</div>
         </div>
-        <div class="btn-row"><button class="btn btn-roxo" onclick="salvarNotas()">💾 Salvar Notas</button><span id="nota-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+        <div class="brow"><button class="btn broxo" onclick="salvarNotas()">💾 Salvar</button><span id="not-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
       </div>
     </div>
-
-    <!-- PROF: PAUTA -->
-    <div id="sec-adm-pauta" class="sec">
-      <div class="page-title">📊 Pauta Geral</div>
-      <div class="page-sub">Consolidado N1 e N2 de toda a turma</div>
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <input class="search-inp" placeholder="🔍 Nome ou matrícula..." oninput="filtrarPauta(this.value)"/>
-        <button class="btn btn-gray btn-sm" onclick="exportCSV()">📥 Exportar CSV</button>
-      </div>
-      <div class="tbl-wrap"><table><thead><tr><th>Matrícula</th><th>Nome</th><th>Grp N1</th><th>N1</th><th>Grp N2</th><th>Seminário</th><th>Plateia</th><th>ESA</th><th>Total N2</th><th>Média</th><th>Status</th></tr></thead><tbody id="tbl-pauta"></tbody></table></div>
+    <div id="sec-adm-pau" class="sec">
+      <div class="pt">📊 Pauta Geral</div><div class="ps">Consolidado N1 e N2</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"><input class="si" placeholder="🔍 Nome ou matrícula..." oninput="filtPau(this.value)"/><button class="btn bgray bsm" onclick="exportCSV()">📥 CSV</button></div>
+      <div class="tw"><table><thead><tr><th>Matrícula</th><th>Nome</th><th>Grp N1</th><th>N1</th><th>Grp N2</th><th>Sem</th><th>Plateia</th><th>ESA</th><th>N2</th><th>Média</th><th>Status</th></tr></thead><tbody id="tb-pau"></tbody></table></div>
     </div>
-
-    <!-- PROF: LINKS -->
-    <div id="sec-adm-links" class="sec">
-      <div class="page-title">🔗 Links Rápidos</div>
-      <div class="page-sub">Gere links para enviar no WhatsApp da turma</div>
-      <div class="grid2">
-        <div class="card"><div class="card-title">📊 Consulta de Histórico Individual</div>
-          <div style="font-size:13px;color:var(--text-light);margin-bottom:14px;line-height:1.6">Aluno abre o link, digita o nome e acessa suas notas.</div>
-          <div class="btn-row"><button class="btn btn-roxo" onclick="copiarLink()">🔗 Copiar Link</button><button class="btn btn-outline" onclick="enviarWhats()">📱 WhatsApp</button></div>
-          <div id="link-preview" style="margin-top:10px;font-size:11px;color:var(--text-light);word-break:break-all"></div>
-        </div>
+    <div id="sec-adm-lnk" class="sec">
+      <div class="pt">🔗 Links Rápidos</div><div class="ps">WhatsApp da turma</div>
+      <div class="card"><div class="ct">📊 Link de Consulta de Notas</div>
+        <div style="font-size:13px;color:var(--text-light);margin-bottom:14px">Aluno abre o link e consulta suas notas.</div>
+        <div class="brow"><button class="btn broxo" onclick="copiarLnk()">🔗 Copiar</button><button class="btn bout" onclick="watsLnk()">📱 WhatsApp</button></div>
+        <div id="lnk-pv" style="margin-top:10px;font-size:11px;color:var(--text-light);word-break:break-all"></div>
       </div>
     </div>
-
   </main>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-// ===== FIREBASE =====
-const firebaseConfig = {
-  apiKey: "AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",
-  authDomain: "entrevista-inicial.firebaseapp.com",
-  projectId: "entrevista-inicial",
-  storageBucket: "entrevista-inicial.appspot.com",
-  messagingSenderId: "799817939377",
-  appId: "1:799817939377:web:6ed277e08f4e59d12bb3b0"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+firebase.initializeApp({
+  apiKey:"AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.appspot.com",
+  messagingSenderId:"799817939377",
+  appId:"1:799817939377:web:6ed277e08f4e59d12bb3b0"
+});
+var db = firebase.firestore();
 
-
-window.addEventListener("load", function() {
-
-// ===== DADOS =====
-const CASOS = [
-  {num:1,nome:"Marcos, 34 anos",ctx:"Plantão Psicológico Universitário",eixo:"Ansiedade de Desempenho e Crise de Adaptação",diag:"Transtorno de Adaptação com Ansiedade (F43.22)",foco:"Manejo da ansiedade, flexibilização de crenças de hiperexigência.",sinais:"Inquietação motora, discurso acelerado, checar celular discretamente.",sintomas:"Não estou dormindo mais de 4 horas. Sinto aperto no peito no trabalho.",segredo:"Sente culpa por achar que é uma fraude após promoção recente. Pensa em pedir demissão diariamente por medo de decepcionar o pai."},
-  {num:2,nome:"Helena, 42 anos",ctx:"Hospital Geral — Internação Longa",eixo:"Luto Complicado e Impacto da Doença Crônica",diag:"Reação de Ajustamento com Humor Depressivo (F43.21)",foco:"Resgate da autoeficácia, elaboração das perdas.",sinais:"Fala pausada, hipofonia, choro contido, manipulação do lençol.",sintomas:"Estou internada há 3 semanas e sinto um vazio enorme.",segredo:"Sente alívio por estar longe do marido abusivo durante a internação, vivenciando luto do fim do casamento."},
-  {num:3,nome:"Lucas, 23 anos",ctx:"Pronto-Atendimento / CAIS",eixo:"Somatização e Crise Aguda de Angústia",diag:"Transtorno de Sintomas Somáticos (F45.1)",foco:"Acolhimento da dor somática, psicoeducação e vínculo.",sinais:"Mão no abdômen, irritação ao ser atendido, esquiva emocional.",sintomas:"Estou com dores no estômago. Os exames deram normais e me mandaram pra você.",segredo:"Tem pavor de morar sozinho e fracassar, mas não pode demonstrar fraqueza para os pais."},
-  {num:4,nome:"Carla, 29 anos",ctx:"UTI Humanizada",eixo:"Ansiedade Severa em Ambiente Crítico",diag:"Transtorno de Estresse Agudo (F43.0)",foco:"Descatastrofização, regulação respiratória.",sinais:"Olhar esquivo a cada bip, mãos trêmulas, postura encolhida.",sintomas:"O barulho dos aparelhos me sufoca. Sinto que vou morrer aqui.",segredo:"Vivenciou trauma prévio de erro médico na família em UTI, gerando pavor paralisante."},
-  {num:5,nome:"Roberto, 50 anos",ctx:"CAPS / Psicorreabilitação",eixo:"Crise da Meia-Idade e Síndrome do Ninho Vazio",diag:"Distimia (F34.1) em contexto de aposentadoria",foco:"Ativação comportamental, ressignificação de papéis.",sinais:"Expressão apática, gestos lentos, sentado ao fundo da roda.",sintomas:"Meus filhos saíram. Me aposentei. Sinto que minha vida perdeu o sentido.",segredo:"Guarda sonho de abrir ateliê de marcenaria, mas tem vergonha por medo de parecer imprudente."},
-  {num:6,nome:"Vanessa, 38 anos",ctx:"Ambulatório de Crise",eixo:"Transtorno de Pânico com Agorafobia",diag:"Transtorno de Pânico com Agorafobia (F41.0)",foco:"Psicoeducação sobre pânico, respiração diafragmática, exposição gradual.",sinais:"Taquicardia relatada, esquiva de locais abertos, choro fácil.",sintomas:"Tenho crises onde meu coração dispara e sinto que vou desmaiar.",segredo:"Teve ataque de pânico no casamento da irmã e ficou no banheiro o evento inteiro. Nunca contou."},
-  {num:7,nome:"Juliana, 27 anos",ctx:"CRAS",eixo:"Relacionamento Abusivo / Baixa Autoestima",diag:"Problema de Relacionamento (Z63.0) com sintomas ansiosos",foco:"Fortalecimento do julgamento da realidade, rede de proteção.",sinais:"Voz baixa, respostas vagas sobre o parceiro, rubor facial.",sintomas:"Meu marido às vezes perde o controle, mas é porque ele é estressado.",segredo:"Já foi à delegacia duas vezes mas voltou atrás porque o parceiro ameaçou tirar a guarda das filhas."},
-  {num:8,nome:"Thiago, 31 anos",ctx:"Ambulatório de Ortopedia",eixo:"Estresse Pós-Traumático por Acidente de Trânsito",diag:"TEPT Agudo (F43.10)",foco:"Grounding, processamento cognitivo da culpa.",sinais:"Sobressalto fácil, hipervigilância, pesadelos relatados.",sintomas:"Não consigo mais dirigir. Qualquer freada me faz reviver tudo.",segredo:"A esposa fraturou costelas no mesmo acidente. Acredita ser culpa por ter passado no sinal amarelo."},
-  {num:9,nome:"Camila, 35 anos",ctx:"Saúde Ocupacional",eixo:"Perfeccionismo Disfuncional e Burnout",diag:"TAG com Padrão Perfeccionista (F41.1)",foco:"Flexibilização de regras rígidas, delegação, prevenção de afastamento.",sinais:"Fala acelerada, lista na mão, autocrítica explícita.",sintomas:"Trabalho 12h por dia e ainda sinto que não entrego o suficiente.",segredo:"Toma ansiolítico sem prescrição há 6 meses comprado pela internet para não parecer fraca."},
-  {num:10,nome:"Gabriel, 26 anos",ctx:"Orientação Profissional Universitária",eixo:"Paralisia por Análise na Tomada de Decisão",diag:"Problema Ocupacional (Z56.9) com sintomas ansiosos",foco:"Matriz de decisão, aceitação da incerteza, valores centrais.",sinais:"Planilhas na mochila, discurso circular sobre prós e contras.",sintomas:"Tenho 4 propostas de emprego e já recusei 3. Essa nova também não parece certa.",segredo:"O pai quer que assuma o negócio da família, mas ele sonha em ser músico e nunca teve coragem de dizer."}
+var ALUNOS = [
+  {id:"m1",nome:"Ana Clara Mendonça",matricula:"2021001",grupoN1:"Grupo 1",casoN1:"Caso 1",grupoN2:"Grupo 1",casoN2:"Caso 1",notaN1:8.5,notaSem:5.0,notaESA:1.5},
+  {id:"m2",nome:"Bruno Henrique Tavares",matricula:"2021002",grupoN1:"Grupo 1",casoN1:"Caso 1",grupoN2:"Grupo 1",casoN2:"Caso 1",notaN1:7.0,notaSem:4.5,notaESA:2.0},
+  {id:"m3",nome:"Camila Rodrigues Lima",matricula:"2021003",grupoN1:"Grupo 2",casoN1:"Caso 3",grupoN2:"Grupo 2",casoN2:"Caso 3",notaN1:9.0,notaSem:5.5,notaESA:1.5},
+  {id:"m4",nome:"Daniel Ferreira Costa",matricula:"2021004",grupoN1:"Grupo 2",casoN1:"Caso 3",grupoN2:"Grupo 2",casoN2:"Caso 3",notaN1:6.5,notaSem:4.0,notaESA:1.0},
+  {id:"m5",nome:"Eduarda Santos Pires",matricula:"2021005",grupoN1:"Grupo 3",casoN1:"Caso 5",grupoN2:"Grupo 3",casoN2:"Caso 5",notaN1:8.0,notaSem:5.0,notaESA:2.0},
+  {id:"m6",nome:"Felipe Alves Nascimento",matricula:"2021006",grupoN1:"Grupo 3",casoN1:"Caso 5",grupoN2:"Grupo 3",casoN2:"Caso 5",notaN1:7.5,notaSem:4.5,notaESA:1.5},
+  {id:"m7",nome:"Gabriela Melo Vieira",matricula:"2021007",grupoN1:"Grupo 4",casoN1:"Caso 7",grupoN2:"Grupo 4",casoN2:"Caso 7",notaN1:9.5,notaSem:6.0,notaESA:2.0},
+  {id:"m8",nome:"Hugo Carvalho Dias",matricula:"2021008",grupoN1:"Grupo 4",casoN1:"Caso 7",grupoN2:"Grupo 4",casoN2:"Caso 7",notaN1:8.0,notaSem:5.5,notaESA:1.5},
+  {id:"m9",nome:"Isabela Torres Moreira",matricula:"2021009",grupoN1:"Grupo 5",casoN1:"Caso 9",grupoN2:"Grupo 5",casoN2:"Caso 9",notaN1:7.0,notaSem:4.0,notaESA:1.0},
+  {id:"m10",nome:"João Pedro Ribeiro",matricula:"2021010",grupoN1:"Grupo 5",casoN1:"Caso 9",grupoN2:"Grupo 5",casoN2:"Caso 9",notaN1:6.0,notaSem:3.5,notaESA:1.5}
+];
+var CASOS = [
+  {n:1,nm:"Marcos, 34 anos",cx:"Plantão Psicológico",ei:"Ansiedade de Desempenho",di:"Transtorno de Adaptação com Ansiedade (F43.22)",fo:"Manejo da ansiedade, flexibilização de crenças.",si:"Inquietação motora, discurso acelerado.",sy:"Não estou dormindo mais de 4 horas.",sg:"Sente culpa por se achar fraude após promoção."},
+  {n:2,nm:"Helena, 42 anos",cx:"Hospital Geral",ei:"Luto e Doença Crônica",di:"Ajustamento com Humor Depressivo (F43.21)",fo:"Resgate da autoeficácia, elaboração das perdas.",si:"Fala pausada, choro contido.",sy:"Estou internada há semanas e sinto um vazio.",sg:"Sente alívio por estar longe do marido abusivo."},
+  {n:3,nm:"Lucas, 23 anos",cx:"CAIS / Emergência",ei:"Somatização e Angústia",di:"Transtorno de Sintomas Somáticos (F45.1)",fo:"Acolhimento, psicoeducação e vínculo.",si:"Mão no abdômen, irritação, esquiva.",sy:"Dores no estômago, exames normais.",sg:"Pavor de morar sozinho, não pode demonstrar fraqueza."},
+  {n:4,nm:"Carla, 29 anos",cx:"UTI Humanizada",ei:"Ansiedade em Ambiente Crítico",di:"Estresse Agudo (F43.0)",fo:"Descatastrofização, regulação respiratória.",si:"Mãos trêmulas, postura encolhida.",sy:"O barulho me sufoca, sinto que vou morrer.",sg:"Trauma prévio de erro médico na família em UTI."},
+  {n:5,nm:"Roberto, 50 anos",cx:"CAPS",ei:"Crise da Meia-Idade",di:"Distimia (F34.1)",fo:"Ativação comportamental, ressignificação.",si:"Apático, sentado ao fundo da roda.",sy:"Me aposentei. Sinto que perdi o sentido.",sg:"Sonha em abrir ateliê de marcenaria, mas tem vergonha."},
+  {n:6,nm:"Vanessa, 38 anos",cx:"Ambulatório de Crise",ei:"Transtorno de Pânico",di:"Pânico com Agorafobia (F41.0)",fo:"Psicoeducação, respiração, exposição gradual.",si:"Esquiva de locais abertos, choro fácil.",sy:"Meu coração dispara e sinto que vou desmaiar.",sg:"Ataque de pânico no casamento da irmã, nunca contou."},
+  {n:7,nm:"Juliana, 27 anos",cx:"CRAS",ei:"Relacionamento Abusivo",di:"Problema de Relacionamento (Z63.0)",fo:"Fortalecimento da percepção de realidade.",si:"Voz baixa, respostas vagas sobre o parceiro.",sy:"Meu marido perde o controle às vezes.",sg:"Foi à delegacia duas vezes mas desistiu do registro."},
+  {n:8,nm:"Thiago, 31 anos",cx:"Ortopedia",ei:"TEPT pós-acidente",di:"TEPT Agudo (F43.10)",fo:"Grounding, processamento da culpa.",si:"Sobressalto fácil, hipervigilância.",sy:"Não consigo mais dirigir.",sg:"Acredita ser culpado pela fratura da esposa no acidente."},
+  {n:9,nm:"Camila, 35 anos",cx:"Saúde Ocupacional",ei:"Perfeccionismo e Burnout",di:"TAG Perfeccionista (F41.1)",fo:"Flexibilização de regras rígidas.",si:"Fala acelerada, autocrítica explícita.",sy:"Trabalho 12h e ainda sinto que não entrego o suficiente.",sg:"Toma ansiolítico sem prescrição há 6 meses."},
+  {n:10,nm:"Gabriel, 26 anos",cx:"Orientação Profissional",ei:"Paralisia por Análise",di:"Problema Ocupacional (Z56.9)",fo:"Matriz de decisão, aceitação da incerteza.",si:"Planilhas na mochila, discurso circular.",sy:"Tenho 4 propostas e já recusei 3.",sg:"Sonha ser músico mas nunca teve coragem de contar ao pai."}
 ];
 
-const ALUNOS_MOCK = [
-  {id:"m1",nome:"Ana Clara Mendonça",matricula:"2021001",grupoN1:"Grupo 1",casoN1:"Caso 1 — Marcos",grupoN2:"Grupo 1",casoN2:"Caso 1 — Marcos",notaN1:8.5,notaSem:5.0,notaESA:1.5},
-  {id:"m2",nome:"Bruno Henrique Tavares",matricula:"2021002",grupoN1:"Grupo 1",casoN1:"Caso 1 — Marcos",grupoN2:"Grupo 1",casoN2:"Caso 1 — Marcos",notaN1:7.0,notaSem:4.5,notaESA:2.0},
-  {id:"m3",nome:"Camila Rodrigues Lima",matricula:"2021003",grupoN1:"Grupo 2",casoN1:"Caso 3 — Lucas",grupoN2:"Grupo 2",casoN2:"Caso 3 — Lucas",notaN1:9.0,notaSem:5.5,notaESA:1.5},
-  {id:"m4",nome:"Daniel Ferreira Costa",matricula:"2021004",grupoN1:"Grupo 2",casoN1:"Caso 3 — Lucas",grupoN2:"Grupo 2",casoN2:"Caso 3 — Lucas",notaN1:6.5,notaSem:4.0,notaESA:1.0},
-  {id:"m5",nome:"Eduarda Santos Pires",matricula:"2021005",grupoN1:"Grupo 3",casoN1:"Caso 5 — Roberto",grupoN2:"Grupo 3",casoN2:"Caso 5 — Roberto",notaN1:8.0,notaSem:5.0,notaESA:2.0},
-  {id:"m6",nome:"Felipe Alves Nascimento",matricula:"2021006",grupoN1:"Grupo 3",casoN1:"Caso 5 — Roberto",grupoN2:"Grupo 3",casoN2:"Caso 5 — Roberto",notaN1:7.5,notaSem:4.5,notaESA:1.5},
-  {id:"m7",nome:"Gabriela Melo Vieira",matricula:"2021007",grupoN1:"Grupo 4",casoN1:"Caso 7 — Juliana",grupoN2:"Grupo 4",casoN2:"Caso 7 — Juliana",notaN1:9.5,notaSem:6.0,notaESA:2.0},
-  {id:"m8",nome:"Hugo Carvalho Dias",matricula:"2021008",grupoN1:"Grupo 4",casoN1:"Caso 7 — Juliana",grupoN2:"Grupo 4",casoN2:"Caso 7 — Juliana",notaN1:8.0,notaSem:5.5,notaESA:1.5},
-  {id:"m9",nome:"Isabela Torres Moreira",matricula:"2021009",grupoN1:"Grupo 5",casoN1:"Caso 9 — Camila",grupoN2:"Grupo 5",casoN2:"Caso 9 — Camila",notaN1:7.0,notaSem:4.0,notaESA:1.0},
-  {id:"m10",nome:"João Pedro Ribeiro",matricula:"2021010",grupoN1:"Grupo 5",casoN1:"Caso 9 — Camila",grupoN2:"Grupo 5",casoN2:"Caso 9 — Camila",notaN1:6.0,notaSem:3.5,notaESA:1.5}
-];
+var usuario = null;
+var perfil = null;
+var disparos = [];
+var alunosFil = ALUNOS.slice();
+var supCache = [];
+var supSel = null;
+var psicSel = null;
+var notaSel = null;
+var ratVals = {};
 
-// ===== ESTADO =====
-let usuario = null;
-let perfilAtual = null;
-let todosAlunos = [...ALUNOS_MOCK];
-let disparos = [];
-let alunoNotaSel = null;
-let alunosSupCache = [];
-
-// ===== NAVEGAÇÃO TELAS LOGIN =====
-var TELAS = ['v-selecao','v-supervisao','v-psico','v-prof'];
-
-function irParaTela(id) {
-  TELAS.forEach(t => {
-    var el = document.getElementById(t);
+// ===== TELAS =====
+function mostrar(id) {
+  var ids = ['v-sel','v-sup','v-psico','v-prof','v-app'];
+  for (var i=0;i<ids.length;i++) {
+    var el = document.getElementById(ids[i]);
     if (el) el.classList.add('hidden');
-  });
+  }
   var alvo = document.getElementById(id);
   if (alvo) alvo.classList.remove('hidden');
 }
 
 // ===== LOGIN SUPERVISÃO =====
-async function carregarAlunosSup() {
-  if (alunosSupCache.length > 0) return;
-  try {
-    var snap = await db.collection('clinica_alunos').get();
-    alunosSupCache = snap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
-  } catch(e) { alunosSupCache = []; }
-}
-
-document.getElementById('v-supervisao').addEventListener('animationend', carregarAlunosSup);
-
-function buscarNomeSup(val) {
+function acSup(val) {
   var list = document.getElementById('sup-ac');
-  if (val.length < 3) { list.classList.add('hidden'); return; }
-  carregarAlunosSup();
-  var lower = val.toLowerCase();
-  var res = alunosSupCache.filter(function(a) { return (a.nome||'').toLowerCase().indexOf(lower) >= 0 && a.status !== 'inativo'; });
-  if (res.length === 0) { list.classList.add('hidden'); return; }
-  list.innerHTML = res.slice(0,8).map(function(a) {
-    return '<div class="ac-item" onclick="selSup(\''+a.id+'\')">'+a.nome+(a.matricula?' <span style="color:#9ca3af;font-size:12px">— '+a.matricula+'</span>':'')+'</div>';
-  }).join('');
-  list.classList.remove('hidden');
-}
-
-var supSel = null;
-function selSup(id) {
-  supSel = alunosSupCache.find(function(a) { return a.id === id; });
-  if (supSel) {
-    document.getElementById('sup-nome').value = supSel.nome;
-    document.getElementById('sup-ac').classList.add('hidden');
-    document.getElementById('sup-senha').focus();
+  supSel = null;
+  if (val.length < 3) { list.style.display='none'; return; }
+  if (supCache.length === 0) {
+    db.collection('clinica_alunos').get().then(function(snap) {
+      supCache = snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+      acSup(val);
+    }).catch(function(){});
+    return;
   }
+  var lower = val.toLowerCase();
+  var res = supCache.filter(function(a){return (a.nome||'').toLowerCase().indexOf(lower)>=0 && a.status!=='inativo';});
+  if (!res.length) { list.style.display='none'; return; }
+  list.innerHTML = res.slice(0,8).map(function(a){
+    return '<div class="acitem" onclick="selSup(\''+a.id+'\')">'+a.nome+(a.matricula?' — '+a.matricula:'')+'</div>';
+  }).join('');
+  list.style.display='block';
 }
-
-async function loginSup() {
+function selSup(id) {
+  supSel = supCache.find(function(a){return a.id===id;});
+  if (supSel) { document.getElementById('sup-nome').value=supSel.nome; document.getElementById('sup-ac').style.display='none'; document.getElementById('sup-senha').focus(); }
+}
+function loginSup() {
   var nome = document.getElementById('sup-nome').value.trim();
   var senha = document.getElementById('sup-senha').value.trim();
   var erro = document.getElementById('sup-erro');
-  erro.classList.add('hidden');
-  if (!nome) { erro.textContent='Digite seu nome.'; erro.classList.remove('hidden'); return; }
-  if (!senha) { erro.textContent='Digite a matrícula.'; erro.classList.remove('hidden'); return; }
-  await carregarAlunosSup();
-  if (!supSel) {
-    var lower = nome.toLowerCase();
-    supSel = alunosSupCache.find(function(a) { return (a.nome||'').toLowerCase() === lower; });
-  }
-  if (!supSel) { erro.textContent='Aluno não encontrado.'; erro.classList.remove('hidden'); return; }
-  if (supSel.status === 'pendente') { erro.textContent='Conta pendente de aprovação.'; erro.classList.remove('hidden'); return; }
-  var senhaOk = supSel.matricula || supSel.senha || '1234';
-  if (senha !== senhaOk && senha !== (supSel.senha||'1234') && senha !== '1234') {
-    erro.textContent='Matrícula ou senha incorreta.'; erro.classList.remove('hidden'); return;
-  }
-  window.location.href = '../clinica/?aluno=' + supSel.id;
+  erro.style.display='none';
+  if (!nome||!senha) { erro.textContent='Preencha nome e matrícula.'; erro.style.display='block'; return; }
+  if (!supSel) { var l=nome.toLowerCase(); supSel=supCache.find(function(a){return (a.nome||'').toLowerCase()===l;}); }
+  if (!supSel) { erro.textContent='Aluno não encontrado.'; erro.style.display='block'; return; }
+  if (supSel.status==='pendente') { erro.textContent='Conta pendente de aprovação.'; erro.style.display='block'; return; }
+  var ok = supSel.matricula||supSel.senha||'1234';
+  if (senha!==ok && senha!==(supSel.senha||'1234') && senha!=='1234') { erro.textContent='Matrícula ou senha incorreta.'; erro.style.display='block'; return; }
+  window.location.href='../clinica/?aluno='+supSel.id;
 }
 
-// ===== LOGIN PSICOTERAPIA BREVE =====
-function buscarNomePsico(val) {
+// ===== LOGIN PSICOTERAPIA =====
+function acPsico(val) {
   var list = document.getElementById('psico-ac');
-  if (val.length < 3) { list.classList.add('hidden'); return; }
+  psicSel = null;
+  if (val.length<3) { list.style.display='none'; return; }
   var lower = val.toLowerCase();
-  var res = todosAlunos.filter(function(a) { return (a.nome||'').toLowerCase().indexOf(lower) >= 0; });
-  if (res.length === 0) { list.classList.add('hidden'); return; }
-  list.innerHTML = res.slice(0,8).map(function(a) {
-    return '<div class="ac-item" onclick="selPsico(\''+a.id+'\')">'+a.nome+' <span style="color:#9ca3af;font-size:12px">— '+a.matricula+'</span></div>';
+  var res = ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(lower)>=0;});
+  if (!res.length) { list.style.display='none'; return; }
+  list.innerHTML = res.slice(0,8).map(function(a){
+    return '<div class="acitem" onclick="selPsico(\''+a.id+'\')">'+a.nome+' — '+a.matricula+'</div>';
   }).join('');
-  list.classList.remove('hidden');
+  list.style.display='block';
 }
-
-var psicSel = null;
 function selPsico(id) {
-  psicSel = todosAlunos.find(function(a) { return a.id === id; });
-  if (psicSel) {
-    document.getElementById('psico-nome').value = psicSel.nome;
-    document.getElementById('psico-ac').classList.add('hidden');
-    document.getElementById('psico-senha').focus();
-  }
+  psicSel = ALUNOS.find(function(a){return a.id===id;});
+  if (psicSel) { document.getElementById('psico-nome').value=psicSel.nome; document.getElementById('psico-ac').style.display='none'; document.getElementById('psico-senha').focus(); }
 }
-
 function loginPsico() {
   var nome = document.getElementById('psico-nome').value.trim();
   var senha = document.getElementById('psico-senha').value.trim();
   var erro = document.getElementById('psico-erro');
-  erro.classList.add('hidden');
-  if (!nome) { erro.textContent='Digite seu nome.'; erro.classList.remove('hidden'); return; }
-  if (!senha) { erro.textContent='Digite a matrícula.'; erro.classList.remove('hidden'); return; }
-  if (!psicSel) {
-    var lower = nome.toLowerCase();
-    psicSel = todosAlunos.find(function(a) { return (a.nome||'').toLowerCase() === lower; });
-  }
-  if (!psicSel) { erro.textContent='Aluno não encontrado.'; erro.classList.remove('hidden'); return; }
-  if (senha !== psicSel.matricula && senha !== '1234') {
-    erro.textContent='Matrícula incorreta.'; erro.classList.remove('hidden'); return;
-  }
-  usuario = Object.assign({role:'aluno'}, psicSel);
-  perfilAtual = 'aluno';
+  erro.style.display='none';
+  if (!nome||!senha) { erro.textContent='Preencha nome e matrícula.'; erro.style.display='block'; return; }
+  if (!psicSel) { var l=nome.toLowerCase(); psicSel=ALUNOS.find(function(a){return a.nome.toLowerCase()===l;}); }
+  if (!psicSel) { erro.textContent='Aluno não encontrado.'; erro.style.display='block'; return; }
+  if (senha!==psicSel.matricula && senha!=='1234') { erro.textContent='Matrícula incorreta.'; erro.style.display='block'; return; }
+  usuario = Object.assign({role:'aluno'},psicSel);
+  perfil = 'aluno';
   iniciarApp();
 }
 
@@ -618,437 +498,281 @@ function loginPsico() {
 function loginProf() {
   var senha = document.getElementById('prof-senha').value;
   var erro = document.getElementById('prof-erro');
-  erro.classList.add('hidden');
-  if (senha !== '1234') { erro.textContent='Senha incorreta.'; erro.classList.remove('hidden'); return; }
-  usuario = {nome:'Dra. Lucia Kratz', matricula:'PROF', role:'prof'};
-  perfilAtual = 'prof';
+  erro.style.display='none';
+  if (senha!=='1234') { erro.textContent='Senha incorreta.'; erro.style.display='block'; return; }
+  usuario = {nome:'Dra. Lucia Kratz',matricula:'PROF',role:'prof'};
+  perfil = 'prof';
   iniciarApp();
 }
 
 // ===== INICIAR APP =====
 function iniciarApp() {
-  TELAS.forEach(function(t) {
-    var el = document.getElementById(t);
-    if (el) el.classList.add('hidden');
-  });
-  document.getElementById('v-app').classList.remove('hidden');
+  mostrar('v-app');
   document.getElementById('sb-nome').textContent = usuario.nome;
-  document.getElementById('sb-perfil').textContent = perfilAtual === 'prof' ? 'Professora' : 'Aluno(a)';
-
-  if (perfilAtual === 'prof') {
-    document.getElementById('nav-aluno').classList.add('hidden');
-    document.getElementById('nav-prof').classList.remove('hidden');
-    irSec('adm-painel');
-    carregarAdmPainel();
-    renderTabelaAlunos();
-    renderPauta();
-    carregarDisparos();
+  document.getElementById('sb-perf').textContent = perfil==='prof'?'Professora':'Aluno(a)';
+  if (perfil==='prof') {
+    document.getElementById('nav-al').classList.add('hidden');
+    document.getElementById('nav-pr').classList.remove('hidden');
+    irSec('adm-pai');
+    carregarAdm();
+    carregarDisp();
+    renderAl();
+    renderPau();
   } else {
     irSec('painel');
-    carregarPainelAluno();
+    carregarPainel();
   }
 }
 
-function logout() {
-  usuario = null; perfilAtual = null; psicSel = null; supSel = null;
-  document.getElementById('v-app').classList.add('hidden');
+function sair() {
+  usuario=null; perfil=null; psicSel=null; supSel=null;
   document.getElementById('psico-nome').value='';
   document.getElementById('psico-senha').value='';
   document.getElementById('sup-nome').value='';
   document.getElementById('sup-senha').value='';
   document.getElementById('prof-senha').value='';
-  irParaTela('v-selecao');
+  mostrar('v-sel');
 }
 
 // ===== NAVEGAÇÃO SEÇÕES =====
 function irSec(sec) {
-  document.querySelectorAll('.sec').forEach(function(s) { s.classList.remove('active'); });
+  var secs = document.querySelectorAll('.sec');
+  for (var i=0;i<secs.length;i++) secs[i].classList.remove('active');
   var el = document.getElementById('sec-'+sec);
   if (el) el.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-  var nav = document.querySelector('.nav-item[onclick="irSec(\''+sec+'\')"]');
+  var nis = document.querySelectorAll('.ni');
+  for (var j=0;j<nis.length;j++) nis[j].classList.remove('active');
+  var nav = document.querySelector('.ni[onclick="irSec(\''+sec+'\')"]');
   if (nav) nav.classList.add('active');
-  if (sec==='adm-casos') renderCasos();
-  if (sec==='adm-pauta') renderPauta();
-  if (sec==='adm-alunos') renderTabelaAlunos();
-  if (sec==='meu-espaco') carregarMeuEspaco();
-  if (sec==='microaval') carregarMicroaval();
+  if (sec==='adm-cas') renderCas();
+  if (sec==='adm-pau') renderPau();
+  if (sec==='adm-al') renderAl();
+  if (sec==='espaco') carregarEspaco();
+  if (sec==='micro') carregarMicro();
 }
 
-// ===== ALUNO: PAINEL =====
-function carregarPainelAluno() {
-  var a = usuario;
-  document.getElementById('painel-nome').textContent = a.nome.split(' ')[0];
-  document.getElementById('p-grp1').textContent = a.grupoN1||'—';
-  document.getElementById('p-grp2').textContent = a.grupoN2||'—';
-  document.getElementById('p-caso1').textContent = a.casoN1||'—';
-  document.getElementById('p-caso2').textContent = a.casoN2||'—';
-  var n1 = a.notaN1||0, sem = a.notaSem||0, esa = a.notaESA||0;
-  var plat = calcPlat(a), n2 = Math.min(10, sem+plat+esa);
-  var med = ((n1+n2)/2).toFixed(1);
-  document.getElementById('p-n1').textContent = n1.toFixed(1);
-  document.getElementById('p-n2').textContent = n2.toFixed(1);
-  document.getElementById('p-med').textContent = med;
-  document.getElementById('pp-n1').style.width = (n1*10)+'%';
-  document.getElementById('pp-n2').style.width = (n2*10)+'%';
-  document.getElementById('pp-med').style.width = (parseFloat(med)*10)+'%';
-}
-
+// ===== ALUNO PAINEL =====
 function calcPlat(a) {
-  var fichas = (a.fichasPlateia||[]).length;
-  var tot = disparos.filter(function(d) { return d.tipo==='microaval'; }).length;
-  if (tot===0) return 0;
-  return Math.min(2.0, (fichas/tot)*2.0);
+  var f=(a.fichasPlateia||[]).length;
+  var t=disparos.filter(function(d){return d.tipo==='microaval';}).length;
+  return t===0?0:Math.min(2,f/t*2);
 }
-
-// ===== ALUNO: MEU ESPAÇO =====
-function carregarMeuEspaco() {
-  var a = usuario;
-  document.getElementById('me-nome').textContent = a.nome;
-  document.getElementById('me-mat').textContent = a.matricula;
-  document.getElementById('me-grp1').textContent = a.grupoN1||'—';
-  document.getElementById('me-grp2').textContent = a.grupoN2||'—';
-  var n1=a.notaN1||0, sem=a.notaSem||0, esa=a.notaESA||0, plat=calcPlat(a);
-  document.getElementById('me-n1').textContent = n1.toFixed(1)+'/10';
-  document.getElementById('me-sem').textContent = sem.toFixed(1)+'/6';
-  document.getElementById('me-plat').textContent = plat.toFixed(1)+'/2';
-  document.getElementById('me-esa').textContent = esa.toFixed(1)+'/2';
-  document.getElementById('mep-n1').style.width=(n1*10)+'%';
-  document.getElementById('mep-sem').style.width=(sem/6*100)+'%';
-  document.getElementById('mep-plat').style.width=(plat/2*100)+'%';
-  document.getElementById('mep-esa').style.width=(esa/2*100)+'%';
-  var hist = document.getElementById('me-hist');
-  hist.innerHTML='<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-light)">Nenhuma atividade registrada.</td></tr>';
+function carregarPainel() {
+  var a=usuario;
+  document.getElementById('p-nome').textContent=a.nome.split(' ')[0];
+  document.getElementById('p-g1').textContent=a.grupoN1||'—';
+  document.getElementById('p-g2').textContent=a.grupoN2||'—';
+  document.getElementById('p-c1').textContent=a.casoN1||'—';
+  document.getElementById('p-c2').textContent=a.casoN2||'—';
+  var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);
+  document.getElementById('p-n1').textContent=n1.toFixed(1);
+  document.getElementById('p-n2').textContent=n2.toFixed(1);
+  document.getElementById('p-med').textContent=med;
+  document.getElementById('pp-n1').style.width=n1*10+'%';
+  document.getElementById('pp-n2').style.width=n2*10+'%';
+  document.getElementById('pp-med').style.width=parseFloat(med)*10+'%';
 }
-
-// ===== ALUNO: MICROAVAL =====
-function carregarMicroaval() {
-  var lista = document.getElementById('micro-lista');
-  var disp = disparos.filter(function(d) { return d.tipo==='microaval'; });
-  if (disp.length===0) { lista.innerHTML=''; return; }
-  document.getElementById('micro-aviso').textContent='Microavaliações disponíveis:';
-  lista.innerHTML = disp.map(function(d,i) {
-    return '<div class="card"><div class="card-title">⭐ '+d.data+' · '+d.caso+'</div>'+
-      '<div class="rating-row">'+
-      '<div class="rating-opt" onclick="selRat(this,'+i+',\'gostei\')"><div style="font-size:20px">👍</div>Gostei</div>'+
-      '<div class="rating-opt" onclick="selRat(this,'+i+',\'melhorar\')"><div style="font-size:20px">💡</div>Pode Melhorar</div>'+
-      '<div class="rating-opt" onclick="selRat(this,'+i+',\'nao\')"><div style="font-size:20px">👎</div>Não Gostei</div>'+
+function carregarEspaco() {
+  var a=usuario;
+  document.getElementById('me-nm').textContent=a.nome;
+  document.getElementById('me-mt').textContent=a.matricula;
+  document.getElementById('me-g1').textContent=a.grupoN1||'—';
+  document.getElementById('me-g2').textContent=a.grupoN2||'—';
+  var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a);
+  document.getElementById('me-n1').textContent=n1.toFixed(1)+'/10';
+  document.getElementById('me-sm').textContent=sem.toFixed(1)+'/6';
+  document.getElementById('me-pl').textContent=plat.toFixed(1)+'/2';
+  document.getElementById('me-es').textContent=esa.toFixed(1)+'/2';
+  document.getElementById('mep-n1').style.width=n1*10+'%';
+  document.getElementById('mep-sm').style.width=sem/6*100+'%';
+  document.getElementById('mep-pl').style.width=plat/2*100+'%';
+  document.getElementById('mep-es').style.width=esa/2*100+'%';
+}
+function carregarMicro() {
+  var lst=document.getElementById('micro-lst');
+  var d=disparos.filter(function(x){return x.tipo==='microaval';});
+  if (!d.length) { lst.innerHTML=''; return; }
+  lst.innerHTML=d.map(function(x,i){
+    return '<div class="card"><div class="ct">⭐ '+x.data+' · '+x.caso+'</div>'+
+      '<div class="rrow">'+
+      '<div class="ropt" onclick="selRat(this,'+i+',\'gostei\')"><div style="font-size:20px">👍</div>Gostei</div>'+
+      '<div class="ropt" onclick="selRat(this,'+i+',\'melhorar\')"><div style="font-size:20px">💡</div>Pode Melhorar</div>'+
+      '<div class="ropt" onclick="selRat(this,'+i+',\'nao\')"><div style="font-size:20px">👎</div>Não Gostei</div>'+
       '</div>'+
-      '<div class="fg2"><label>Observação Construtiva</label><textarea id="mo-'+i+'" placeholder="Seu comentário..."></textarea></div>'+
-      '<button class="btn btn-roxo" onclick="salvarMicro('+i+',\''+d.id+'\')">💾 Entregar</button>'+
-      '<span id="mst-'+i+'" style="font-size:13px;color:var(--green);margin-left:10px"></span>'+
-      '</div>';
+      '<div class="fg2"><label>Observação</label><textarea id="mo-'+i+'"></textarea></div>'+
+      '<button class="btn broxo" onclick="salvarMicro('+i+',\''+x.id+'\')">💾 Entregar</button>'+
+      '<span id="mst-'+i+'" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>';
   }).join('');
 }
-
-var ratVals = {};
-function selRat(el, i, val) {
-  ratVals[i] = val;
-  var row = el.parentNode;
-  row.querySelectorAll('.rating-opt').forEach(function(o) { o.classList.remove('selected'); });
-  el.classList.add('selected');
+function selRat(el,i,v) {
+  ratVals[i]=v;
+  var row=el.parentNode;
+  var opts=row.querySelectorAll('.ropt');
+  for(var j=0;j<opts.length;j++) opts[j].classList.remove('sel');
+  el.classList.add('sel');
+}
+function salvarMicro(i,dispId) {
+  if (!ratVals[i]) { alert('Selecione 👍 💡 ou 👎'); return; }
+  db.collection('acad_microaval').add({alunoNome:usuario.nome,disparoId:dispId,rating:ratVals[i],obs:document.getElementById('mo-'+i).value,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){document.getElementById('mst-'+i).textContent='✅ Entregue!';})
+  .catch(function(){alert('Erro ao salvar.');});
+}
+function salvarF1() {
+  db.collection('acad_fichas_n1').add({alunoNome:usuario.nome,paciente:document.getElementById('f1-pac').value,caso:document.getElementById('f1-cas').value,q1:document.getElementById('f1-q1').value,q2:document.getElementById('f1-q2').value,q3:document.getElementById('f1-q3').value,q4:document.getElementById('f1-q4').value,q5:document.getElementById('f1-q5').value,q6:document.getElementById('f1-q6').value,q7:document.getElementById('f1-q7').value,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){document.getElementById('f1-st').textContent='✅ Salva!';})
+  .catch(function(){document.getElementById('f1-st').textContent='❌ Erro.';});
 }
 
-async function salvarMicro(i, dispId) {
-  if (!ratVals[i]) { alert('Selecione 👍 💡 ou 👎 antes de entregar.'); return; }
-  try {
-    await db.collection('acad_microaval').add({
-      alunoId: usuario.id||usuario.matricula, alunoNome: usuario.nome,
-      disparoId: dispId, rating: ratVals[i],
-      obs: document.getElementById('mo-'+i).value,
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('mst-'+i).textContent='✅ Entregue!';
-  } catch(e) { alert('Erro ao salvar.'); }
-}
-
-// ===== ALUNO: FICHA N1 =====
-async function salvarFichaN1() {
-  try {
-    await db.collection('acad_fichas_n1').add({
-      alunoId: usuario.id||usuario.matricula, alunoNome: usuario.nome,
-      paciente: document.getElementById('fn1-pac').value,
-      caso: document.getElementById('fn1-caso').value,
-      ctx: document.getElementById('fn1-ctx').value,
-      mod: document.getElementById('fn1-mod').value,
-      q1: document.getElementById('fn1-q1').value,
-      q2: document.getElementById('fn1-q2').value,
-      q3: document.getElementById('fn1-q3').value,
-      q4: document.getElementById('fn1-q4').value,
-      q5: document.getElementById('fn1-q5').value,
-      q6: document.getElementById('fn1-q6').value,
-      q7: document.getElementById('fn1-q7').value,
-      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('fn1-st').textContent='✅ Ficha salva!';
-  } catch(e) { document.getElementById('fn1-st').textContent='❌ Erro ao salvar.'; }
-}
-
-// ===== PROF: PAINEL =====
-function carregarAdmPainel() {
-  document.getElementById('adm-nalunos').textContent = todosAlunos.length;
-  document.getElementById('adm-ndisp').textContent = disparos.length;
-  db.collection('acad_fichas_n1').get().then(function(s) {
-    document.getElementById('adm-nfichas').textContent = s.size;
-  }).catch(function(){});
-  db.collection('acad_config').doc('etapas').get().then(function(d) {
-    if (d.exists) {
-      var data = d.data();
-      document.getElementById('tog-n1').checked = !!data.n1;
-      document.getElementById('lbl-n1').textContent = data.n1?'Habilitada':'Desabilitada';
-      document.getElementById('tog-n2').checked = !!data.n2;
-      document.getElementById('lbl-n2').textContent = data.n2?'Habilitada':'Desabilitada';
-    }
+// ===== PROF ADM =====
+function carregarAdm() {
+  document.getElementById('a-nal').textContent=ALUNOS.length;
+  document.getElementById('a-ndi').textContent=disparos.length;
+  db.collection('acad_fichas_n1').get().then(function(s){document.getElementById('a-nfi').textContent=s.size;}).catch(function(){});
+  db.collection('acad_config').doc('etapas').get().then(function(d){
+    if(d.exists){var dt=d.data();document.getElementById('tog-n1').checked=!!dt.n1;document.getElementById('lbl-n1').textContent=dt.n1?'Habilitada':'Desabilitada';document.getElementById('tog-n2').checked=!!dt.n2;document.getElementById('lbl-n2').textContent=dt.n2?'Habilitada':'Desabilitada';}
   }).catch(function(){});
 }
-
-async function toggleEtapa(et, val) {
-  document.getElementById('lbl-'+et).textContent = val?'Habilitada':'Desabilitada';
-  try { await db.collection('acad_config').doc('etapas').set({[et]:val},{merge:true}); } catch(e){}
+function togEt(et,val) {
+  document.getElementById('lbl-'+et).textContent=val?'Habilitada':'Desabilitada';
+  db.collection('acad_config').doc('etapas').set({[et]:val},{merge:true}).catch(function(){});
 }
-
-// ===== PROF: ALUNOS =====
-var alunosFil = [...ALUNOS_MOCK];
-function renderTabelaAlunos(lista) {
-  var src = lista||alunosFil;
-  var tbody = document.getElementById('tbl-alunos');
-  if (!tbody) return;
-  if (src.length===0) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text-light)">Nenhum aluno.</td></tr>'; return; }
-  tbody.innerHTML = src.map(function(a) {
-    return '<tr><td style="font-weight:600">'+a.nome+'</td><td><span class="badge badge-roxo">'+a.matricula+'</span></td><td>'+(a.grupoN1||'—')+'</td><td style="font-size:12px">'+(a.casoN1||'—')+'</td><td>'+(a.grupoN2||'—')+'</td><td style="font-size:12px">'+(a.casoN2||'—')+'</td><td><button class="btn btn-red btn-sm" onclick="remAluno(\''+( a.id||a.matricula)+'\')">✕</button></td></tr>';
-  }).join('');
+function renderAl(lista) {
+  var src=lista||alunosFil;
+  var tb=document.getElementById('tb-al');
+  if(!tb) return;
+  if(!src.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text-light)">Nenhum aluno.</td></tr>';return;}
+  tb.innerHTML=src.map(function(a){return '<tr><td style="font-weight:600">'+a.nome+'</td><td><span class="badge brx">'+a.matricula+'</span></td><td>'+(a.grupoN1||'—')+'</td><td style="font-size:12px">'+(a.casoN1||'—')+'</td><td>'+(a.grupoN2||'—')+'</td><td style="font-size:12px">'+(a.casoN2||'—')+'</td><td><button class="btn bred bsm" onclick="remAl(\''+a.id+'\')">✕</button></td></tr>';}).join('');
 }
-
-function filtrarAlunos(val) {
-  var lower = val.toLowerCase();
-  alunosFil = todosAlunos.filter(function(a) { return a.nome.toLowerCase().indexOf(lower)>=0||a.matricula.indexOf(lower)>=0; });
-  renderTabelaAlunos(alunosFil);
+function filtAl(v) {
+  var l=v.toLowerCase();
+  alunosFil=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0;});
+  renderAl(alunosFil);
 }
-
-async function salvarAluno() {
-  var nome = document.getElementById('al-nome').value.trim();
-  var mat = document.getElementById('al-mat').value.trim();
-  if (!nome||!mat) { alert('Nome e matrícula obrigatórios.'); return; }
-  var novo = {id:'fb_'+Date.now(),nome,matricula:mat,grupoN1:document.getElementById('al-grp1').value.trim(),casoN1:document.getElementById('al-caso1').value.trim(),grupoN2:document.getElementById('al-grp2').value.trim(),casoN2:document.getElementById('al-caso2').value.trim(),notaN1:0,notaSem:0,notaESA:0};
-  todosAlunos.push(novo); alunosFil=[...todosAlunos]; renderTabelaAlunos();
-  try { await db.collection('acad_alunos').add(Object.assign({},novo,{criadoEm:firebase.firestore.FieldValue.serverTimestamp()})); } catch(e){}
+function salvarAl() {
+  var nm=document.getElementById('al-nm').value.trim(),mt=document.getElementById('al-mt').value.trim();
+  if(!nm||!mt){alert('Nome e matrícula obrigatórios.');return;}
+  var novo={id:'f'+Date.now(),nome:nm,matricula:mt,grupoN1:document.getElementById('al-g1').value.trim(),casoN1:document.getElementById('al-c1').value.trim(),grupoN2:document.getElementById('al-g2').value.trim(),casoN2:document.getElementById('al-c2').value.trim(),notaN1:0,notaSem:0,notaESA:0};
+  ALUNOS.push(novo);alunosFil=ALUNOS.slice();renderAl();
+  db.collection('acad_alunos').add(Object.assign({},novo,{criadoEm:firebase.firestore.FieldValue.serverTimestamp()})).catch(function(){});
   document.getElementById('al-st').textContent='✅ Salvo!';
-  ['al-nome','al-mat','al-grp1','al-caso1','al-grp2','al-caso2'].forEach(function(id){document.getElementById(id).value='';});
+  ['al-nm','al-mt','al-g1','al-c1','al-g2','al-c2'].forEach(function(id){document.getElementById(id).value='';});
   setTimeout(function(){document.getElementById('al-st').textContent='';},3000);
 }
-
-function remAluno(id) {
-  if(!confirm('Remover?')) return;
-  todosAlunos=todosAlunos.filter(function(a){return (a.id||a.matricula)!==id;});
-  alunosFil=[...todosAlunos]; renderTabelaAlunos();
+function remAl(id) {
+  if(!confirm('Remover?'))return;
+  var idx=ALUNOS.findIndex(function(a){return a.id===id;});
+  if(idx>=0)ALUNOS.splice(idx,1);
+  alunosFil=ALUNOS.slice();renderAl();
 }
-
-// ===== PROF: CASOS =====
-var casosExp = {};
-function renderCasos() {
-  var container = document.getElementById('casos-lista');
-  container.innerHTML = CASOS.map(function(c) {
-    return '<div class="caso-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
-      '<div><span class="badge badge-roxo" style="margin-bottom:6px">Caso #'+c.num+'</span>'+
-      '<div style="font-size:15px;font-weight:700;color:#3d006a;margin-top:4px">'+c.nome+'</div>'+
-      '<div style="font-size:12px;color:var(--text-light)">'+c.ctx+'</div>'+
-      '<div style="font-size:12px;color:var(--roxo);font-style:italic">'+c.eixo+'</div></div>'+
-      '<button onclick="togCaso('+c.num+')" id="btn-c'+c.num+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div>'+
-      '<div id="cb-'+c.num+'" style="display:none;margin-top:12px">'+
-      '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Diagnóstico</div><div style="font-size:13px;margin-bottom:8px">'+c.diag+'</div>'+
-      '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Foco Terapêutico</div><div style="font-size:13px;margin-bottom:8px">'+c.foco+'</div>'+
-      '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Sinais (Ator)</div><div style="font-size:13px;margin-bottom:8px">'+c.sinais+'</div>'+
-      '<div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Sintomas Relatados</div><div style="font-size:13px;margin-bottom:8px">'+c.sintomas+'</div>'+
-      '<div class="caso-segredo">🔒 <strong>SEGREDO — Revelar sob boa aliança:</strong><br/>'+c.segredo+'</div>'+
-      '</div></div>';
+function renderCas() {
+  document.getElementById('cas-lst').innerHTML=CASOS.map(function(c){
+    return '<div class="cc"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><span class="badge brx">Caso #'+c.n+'</span><div style="font-size:15px;font-weight:700;color:#3d006a;margin-top:6px">'+c.nm+'</div><div style="font-size:12px;color:var(--text-light)">'+c.cx+' · '+c.ei+'</div></div><button onclick="togCas('+c.n+')" id="btn-c'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div><div id="cb-'+c.n+'" style="display:none;margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Diagnóstico</div><div style="font-size:13px;margin-bottom:8px">'+c.di+'</div><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Foco</div><div style="font-size:13px;margin-bottom:8px">'+c.fo+'</div><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Sinais</div><div style="font-size:13px;margin-bottom:8px">'+c.si+'</div><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Sintomas</div><div style="font-size:13px;margin-bottom:8px">'+c.sy+'</div><div class="cseg">🔒 <strong>SEGREDO:</strong> '+c.sg+'</div></div></div>';
   }).join('');
 }
-
-function togCaso(num) {
-  var b = document.getElementById('cb-'+num);
-  var btn = document.getElementById('btn-c'+num);
-  var aberto = b.style.display!=='none';
-  b.style.display = aberto?'none':'block';
-  btn.textContent = aberto?'▼ Ver':'▲ Fechar';
+function togCas(n) {
+  var b=document.getElementById('cb-'+n),btn=document.getElementById('btn-c'+n),ab=b.style.display!=='none';
+  b.style.display=ab?'none':'block';btn.textContent=ab?'▼ Ver':'▲ Fechar';
 }
-
 function novoCaso() {
-  var nome = prompt('Nome e idade:'); if(!nome) return;
-  var ctx = prompt('Contexto:'); if(!ctx) return;
-  var segredo = prompt('Segredo oculto:');
-  CASOS.push({num:CASOS.length+1,nome,ctx,eixo:'—',diag:'A definir',foco:'—',sinais:'—',sintomas:'—',segredo:segredo||'—'});
-  renderCasos();
+  var nm=prompt('Nome e idade:');if(!nm)return;
+  var cx=prompt('Contexto:');if(!cx)return;
+  var sg=prompt('Segredo:');
+  CASOS.push({n:CASOS.length+1,nm:nm,cx:cx,ei:'—',di:'A definir',fo:'—',si:'—',sy:'—',sg:sg||'—'});
+  renderCas();
 }
-
-// ===== PROF: DISPARO =====
-async function carregarDisparos() {
-  try {
-    var snap = await db.collection('acad_disparos').get();
-    disparos = snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    disparos.sort(function(a,b){return (b.criadoEm&&b.criadoEm.seconds||0)-(a.criadoEm&&a.criadoEm.seconds||0);});
-  } catch(e) { disparos=[]; }
-  renderDisparos();
+function carregarDisp() {
+  db.collection('acad_disparos').get().then(function(snap){
+    disparos=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    disparos.sort(function(a,b){return(b.criadoEm&&b.criadoEm.seconds||0)-(a.criadoEm&&a.criadoEm.seconds||0);});
+    renderDisp();
+  }).catch(function(){disparos=[];renderDisp();});
 }
-
-async function disparar() {
-  var data = document.getElementById('disp-data').value;
-  var tipo = document.getElementById('disp-tipo').value;
-  var grupo = document.getElementById('disp-grupo').value.trim();
-  var sel = document.getElementById('disp-caso');
-  var caso = sel.options[sel.selectedIndex].text;
-  if(!data||!grupo||!sel.value) { alert('Preencha data, grupo e caso.'); return; }
-  try {
-    var ref = await db.collection('acad_disparos').add({data,tipo,grupo,caso,criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
-    disparos.unshift({id:ref.id,data,tipo,grupo,caso});
-    document.getElementById('adm-ndisp').textContent=disparos.length;
-    renderDisparos();
-    alert('✅ Atividade disparada!');
-  } catch(e) { alert('Erro ao disparar.'); }
+function disparar() {
+  var dt=document.getElementById('dis-dt').value,tp=document.getElementById('dis-tp').value,gr=document.getElementById('dis-gr').value.trim();
+  var sel=document.getElementById('dis-cs');var cs=sel.options[sel.selectedIndex].text;
+  if(!dt||!gr||!sel.value){alert('Preencha data, grupo e caso.');return;}
+  db.collection('acad_disparos').add({data:dt,tipo:tp,grupo:gr,caso:cs,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(ref){disparos.unshift({id:ref.id,data:dt,tipo:tp,grupo:gr,caso:cs});document.getElementById('a-ndi').textContent=disparos.length;renderDisp();alert('✅ Disparado!');})
+  .catch(function(){alert('Erro ao disparar.');});
 }
-
-function renderDisparos() {
-  var tbody = document.getElementById('tbl-disp');
-  if (!tbody) return;
-  if (disparos.length===0) { tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-light)">Nenhum disparo.</td></tr>'; return; }
-  tbody.innerHTML = disparos.map(function(d) {
-    return '<tr><td>'+(d.data||'—')+'</td><td><span class="badge '+(d.tipo==='microaval'?'badge-blue':'badge-roxo')+'">'+(d.tipo==='microaval'?'⭐ Microaval':'📋 Ficha N1')+'</span></td><td style="font-size:12px">'+(d.caso||'—')+'</td><td>'+(d.grupo||'—')+'</td></tr>';
-  }).join('');
+function renderDisp() {
+  var tb=document.getElementById('tb-dis');
+  if(!tb)return;
+  if(!disparos.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-light)">Nenhum disparo.</td></tr>';return;}
+  tb.innerHTML=disparos.map(function(d){return '<tr><td>'+(d.data||'—')+'</td><td><span class="badge '+(d.tipo==='microaval'?'bbl':'brx')+'">'+(d.tipo==='microaval'?'⭐ Microaval':'📋 Ficha N1')+'</span></td><td style="font-size:12px">'+(d.caso||'—')+'</td><td>'+(d.grupo||'—')+'</td></tr>';}).join('');
 }
-
-// ===== PROF: NOTAS =====
-function buscarAlunoNota(val) {
-  var ac = document.getElementById('nota-ac');
-  if (val.length<2) { ac.classList.add('hidden'); return; }
-  var lower = val.toLowerCase();
-  var res = todosAlunos.filter(function(a){return a.nome.toLowerCase().indexOf(lower)>=0;});
-  if (res.length===0) { ac.classList.add('hidden'); return; }
-  ac.innerHTML = res.slice(0,8).map(function(a){
-    return '<div class="ac-item" onclick="selAlunoNota(\''+a.id+'\')">'+a.nome+' — '+a.matricula+'</div>';
-  }).join('');
-  ac.classList.remove('hidden');
+function acNota(v) {
+  var ac=document.getElementById('not-ac');
+  if(v.length<2){ac.style.display='none';return;}
+  var l=v.toLowerCase(),res=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0;});
+  if(!res.length){ac.style.display='none';return;}
+  ac.innerHTML=res.slice(0,8).map(function(a){return '<div class="acitem" onclick="selNota(\''+a.id+'\')">'+a.nome+' — '+a.matricula+'</div>';}).join('');
+  ac.style.display='block';
 }
-
-function selAlunoNota(id) {
-  alunoNotaSel = todosAlunos.find(function(a){return a.id===id;});
-  if (!alunoNotaSel) return;
-  document.getElementById('nota-busca').value = alunoNotaSel.nome;
-  document.getElementById('nota-sel').value = alunoNotaSel.nome;
-  document.getElementById('nota-ac').classList.add('hidden');
-  document.getElementById('nota-form').classList.remove('hidden');
-  document.getElementById('n-n1').value = alunoNotaSel.notaN1||0;
-  document.getElementById('n-esa').value = alunoNotaSel.notaESA||0;
-  var s4 = (alunoNotaSel.notaSem||0)/4;
-  document.getElementById('n-rac').value = Math.min(1.5,s4).toFixed(1);
-  document.getElementById('n-coe').value = Math.min(1.5,s4).toFixed(1);
-  document.getElementById('n-qual').value = Math.min(1.5,s4).toFixed(1);
-  document.getElementById('n-din').value = Math.min(1.5,s4).toFixed(1);
+function selNota(id) {
+  notaSel=ALUNOS.find(function(a){return a.id===id;});
+  if(!notaSel)return;
+  document.getElementById('not-bk').value=notaSel.nome;
+  document.getElementById('not-sl').value=notaSel.nome;
+  document.getElementById('not-ac').style.display='none';
+  document.getElementById('not-fm').style.display='block';
+  document.getElementById('n-n1').value=notaSel.notaN1||0;
+  document.getElementById('n-es').value=notaSel.notaESA||0;
+  var s4=(notaSel.notaSem||0)/4;
+  ['n-rc','n-co','n-ql','n-dn'].forEach(function(id){document.getElementById(id).value=Math.min(1.5,s4).toFixed(1);});
   updSem();
 }
-
 function updSem() {
-  var t = ['n-rac','n-coe','n-qual','n-din'].reduce(function(s,id){return s+(parseFloat(document.getElementById(id).value)||0);},0);
-  document.getElementById('sem-total').textContent = t.toFixed(1);
+  var t=['n-rc','n-co','n-ql','n-dn'].reduce(function(s,id){return s+(parseFloat(document.getElementById(id).value)||0);},0);
+  document.getElementById('sem-tot').textContent=t.toFixed(1);
 }
-
-async function salvarNotas() {
-  if (!alunoNotaSel) { alert('Selecione um aluno.'); return; }
-  var n1=parseFloat(document.getElementById('n-n1').value)||0;
-  var esa=parseFloat(document.getElementById('n-esa').value)||0;
-  var rac=parseFloat(document.getElementById('n-rac').value)||0;
-  var coe=parseFloat(document.getElementById('n-coe').value)||0;
-  var qual=parseFloat(document.getElementById('n-qual').value)||0;
-  var din=parseFloat(document.getElementById('n-din').value)||0;
-  var sem=rac+coe+qual+din;
-  var idx=todosAlunos.findIndex(function(a){return a.id===alunoNotaSel.id;});
-  if(idx>=0){todosAlunos[idx].notaN1=n1;todosAlunos[idx].notaSem=sem;todosAlunos[idx].notaESA=esa;}
-  try {
-    await db.collection('acad_notas').doc(alunoNotaSel.id).set({notaN1:n1,notaSem:sem,notaESA:esa,rac,coe,qual,din,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
-    document.getElementById('nota-st').textContent='✅ Salvo!';
-    renderPauta();
-    setTimeout(function(){document.getElementById('nota-st').textContent='';},3000);
-  } catch(e) { document.getElementById('nota-st').textContent='❌ Erro.'; }
+function salvarNotas() {
+  if(!notaSel){alert('Selecione um aluno.');return;}
+  var n1=parseFloat(document.getElementById('n-n1').value)||0,esa=parseFloat(document.getElementById('n-es').value)||0;
+  var sem=['n-rc','n-co','n-ql','n-dn'].reduce(function(s,id){return s+(parseFloat(document.getElementById(id).value)||0);},0);
+  var idx=ALUNOS.findIndex(function(a){return a.id===notaSel.id;});
+  if(idx>=0){ALUNOS[idx].notaN1=n1;ALUNOS[idx].notaSem=sem;ALUNOS[idx].notaESA=esa;}
+  db.collection('acad_notas').doc(notaSel.id).set({notaN1:n1,notaSem:sem,notaESA:esa,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){document.getElementById('not-st').textContent='✅ Salvo!';renderPau();setTimeout(function(){document.getElementById('not-st').textContent='';},3000);})
+  .catch(function(){document.getElementById('not-st').textContent='❌ Erro.';});
 }
-
-// ===== PROF: PAUTA =====
-function renderPauta() {
-  var tbody = document.getElementById('tbl-pauta');
-  if (!tbody) return;
-  renderLinhasPauta(todosAlunos);
+function renderPau() {
+  filtPau('');
 }
-
-function filtrarPauta(val) {
-  var lower = val.toLowerCase();
-  renderLinhasPauta(todosAlunos.filter(function(a){return a.nome.toLowerCase().indexOf(lower)>=0||a.matricula.indexOf(lower)>=0;}));
-}
-
-function renderLinhasPauta(lista) {
-  var tbody = document.getElementById('tbl-pauta');
-  if (!tbody) return;
-  tbody.innerHTML = lista.map(function(a) {
-    var n1=a.notaN1||0, sem=a.notaSem||0, esa=a.notaESA||0, plat=calcPlat(a);
-    var n2=Math.min(10,sem+plat+esa), med=((n1+n2)/2);
-    var aprov=med>=6;
-    return '<tr>'+
-      '<td><span class="badge badge-roxo">'+a.matricula+'</span></td>'+
-      '<td style="font-weight:600">'+a.nome+'</td>'+
-      '<td style="font-size:12px">'+(a.grupoN1||'—')+'</td>'+
-      '<td style="font-weight:600;color:'+(n1>=6?'var(--green)':'var(--red)')+'">'+n1.toFixed(1)+'</td>'+
-      '<td style="font-size:12px">'+(a.grupoN2||'—')+'</td>'+
-      '<td>'+sem.toFixed(1)+'</td><td>'+plat.toFixed(1)+'</td><td>'+esa.toFixed(1)+'</td>'+
-      '<td style="font-weight:600;color:'+(n2>=6?'var(--green)':'var(--red)')+'">'+n2.toFixed(1)+'</td>'+
-      '<td style="font-size:18px;font-weight:800;color:'+(aprov?'var(--green)':'var(--red)')+'">'+med.toFixed(1)+'</td>'+
-      '<td><span class="badge '+(aprov?'badge-ok':'badge-no')+'">'+(aprov?'Aprovado':'Em risco')+'</span></td>'+
-      '</tr>';
+function filtPau(v) {
+  var l=v.toLowerCase();
+  var lst=v?ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0;}):ALUNOS;
+  var tb=document.getElementById('tb-pau');if(!tb)return;
+  tb.innerHTML=lst.map(function(a){
+    var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=(n1+n2)/2,ap=med>=6;
+    return '<tr><td><span class="badge brx">'+a.matricula+'</span></td><td style="font-weight:600">'+a.nome+'</td><td style="font-size:12px">'+(a.grupoN1||'—')+'</td><td style="font-weight:600;color:'+(n1>=6?'var(--green)':'var(--red)')+'">'+n1.toFixed(1)+'</td><td style="font-size:12px">'+(a.grupoN2||'—')+'</td><td>'+sem.toFixed(1)+'</td><td>'+plat.toFixed(1)+'</td><td>'+esa.toFixed(1)+'</td><td style="font-weight:600;color:'+(n2>=6?'var(--green)':'var(--red)')+'">'+n2.toFixed(1)+'</td><td style="font-size:18px;font-weight:800;color:'+(ap?'var(--green)':'var(--red)')+'">'+med.toFixed(1)+'</td><td><span class="badge '+(ap?'bok':'bno')+'">'+(ap?'Aprovado':'Em risco')+'</span></td></tr>';
   }).join('');
 }
-
 function exportCSV() {
-  var header='Matricula,Nome,Grupo N1,N1,Grupo N2,Seminario,Plateia,ESA,Total N2,Media\n';
-  var rows=todosAlunos.map(function(a){
-    var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);
-    return a.matricula+','+a.nome+','+(a.grupoN1||'')+','+n1+','+(a.grupoN2||'')+','+sem+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1)+','+med;
-  }).join('\n');
-  var blob=new Blob([header+rows],{type:'text/csv;charset=utf-8;'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');a.href=url;a.download='pauta.csv';a.click();
+  var h='Matricula,Nome,N1,Seminario,Plateia,ESA,N2,Media\n';
+  var r=ALUNOS.map(function(a){var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);return a.matricula+','+a.nome+','+n1+','+sem+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1)+','+med;}).join('\n');
+  var blob=new Blob([h+r],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='pauta.csv';a.click();
+}
+function copiarLnk() {
+  var url=window.location.href.split('?')[0];
+  navigator.clipboard.writeText(url).then(function(){document.getElementById('lnk-pv').textContent='✅ Copiado: '+url;});
+}
+function watsLnk() {
+  var url=encodeURIComponent(window.location.href.split('?')[0]);
+  window.open('https://api.whatsapp.com/send?text='+encodeURIComponent('📊 Psicoterapia Breve — Consulte suas notas: ')+url,'_blank');
 }
 
-// ===== PROF: LINKS =====
-function copiarLink() {
-  var url = window.location.href.split('?')[0];
-  navigator.clipboard.writeText(url).then(function(){
-    document.getElementById('link-preview').textContent='✅ Copiado: '+url;
-  });
-}
-function enviarWhats() {
-  var url = encodeURIComponent(window.location.href.split('?')[0]);
-  var msg = encodeURIComponent('📊 *Psicoterapia Breve — Consulte suas notas:*\n');
-  window.open('https://api.whatsapp.com/send?text='+msg+url,'_blank');
-}
-
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', function() {
-  var hoje = new Date().toISOString().split('T')[0];
-  var dataEl = document.getElementById('disp-data');
-  if (dataEl) dataEl.value = hoje;
-  document.addEventListener('click', function(e) {
-    if (!e.target.closest('#sup-nome') && !e.target.closest('#sup-ac')) {
-      var ac = document.getElementById('sup-ac');
-      if (ac) ac.classList.add('hidden');
-    }
-    if (!e.target.closest('#psico-nome') && !e.target.closest('#psico-ac')) {
-      var ac2 = document.getElementById('psico-ac');
-      if (ac2) ac2.classList.add('hidden');
-    }
-    if (!e.target.closest('#nota-busca') && !e.target.closest('#nota-ac')) {
-      var ac3 = document.getElementById('nota-ac');
-      if (ac3) ac3.classList.add('hidden');
-    }
-  });
+// ===== FECHA AUTOCOMPLETE =====
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#sup-nome')&&!e.target.closest('#sup-ac')){var a=document.getElementById('sup-ac');if(a)a.style.display='none';}
+  if(!e.target.closest('#psico-nome')&&!e.target.closest('#psico-ac')){var b=document.getElementById('psico-ac');if(b)b.style.display='none';}
+  if(!e.target.closest('#not-bk')&&!e.target.closest('#not-ac')){var c=document.getElementById('not-ac');if(c)c.style.display='none';}
 });
 
-});
+// DATA PADRÃO
+var hoje=new Date().toISOString().split('T')[0];
+var dtEl=document.getElementById('dis-dt');
+if(dtEl) dtEl.value=hoje;
 </script>
 </body>
 </html>
