@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Psicoterapia Breve — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --roxo:#7B00C4;--roxo-dark:#5a0090;--roxo-light:#f3e8ff;--roxo-mid:#ede9fe;
+  --text:#1f2937;--text-light:#6b7280;--border:#e5e7eb;--white:#fff;
+  --green:#16a34a;--red:#dc2626;--amber:#d97706;--blue:#2563eb;
+}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;color:var(--text)}
+
+/* ===== LOGIN ===== */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-card{background:var(--white);border-radius:24px;padding:40px;width:100%;max-width:460px;box-shadow:0 8px 48px rgba(123,0,196,.14)}
+.logo-name{font-family:'Dancing Script',cursive;font-size:34px;color:var(--roxo);font-weight:700;text-align:center}
+.logo-sub{font-size:12px;color:var(--text-light);text-align:center;margin-top:2px;margin-bottom:8px}
+.login-title{font-size:18px;font-weight:700;color:#3d006a;text-align:center;margin:18px 0 4px}
+.login-sub{font-size:13px;color:var(--text-light);text-align:center;margin-bottom:28px;line-height:1.6}
+.fg{margin-bottom:16px;position:relative}
+label.lbl{display:block;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+input.inp{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+input.inp:focus{border-color:var(--roxo)}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--roxo);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:4px}
+.autocomplete-item{padding:10px 14px;cursor:pointer;font-size:14px;color:var(--text);transition:background .15s}
+.autocomplete-item:hover{background:var(--roxo-light)}
+.btn-primary{width:100%;padding:14px;background:var(--roxo);color:var(--white);border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px;transition:opacity .2s}
+.btn-primary:hover{opacity:.88}
+.btn-primary:disabled{opacity:.5;cursor:default}
+.erro-box{background:#fee2e2;color:var(--red);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:500}
+.badge-prof{display:inline-block;background:#7B00C4;color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 10px;letter-spacing:.5px;margin-left:8px;vertical-align:middle}
+
+/* ===== APP SHELL ===== */
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#3d006a;color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
+.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo .logo-name{font-size:22px;color:#e9d5ff;text-align:left}
+.sidebar-logo .logo-sub{font-size:10px;color:rgba(255,255,255,.55);text-align:left}
+.sidebar-user{padding:12px 20px;font-size:12px;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-user strong{color:#fff;display:block;font-size:13px}
+nav.sidebar-nav{padding:12px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:14px;font-weight:500;color:rgba(255,255,255,.75);cursor:pointer;transition:background .15s;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:#c084fc}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.btn-logout{width:100%;padding:9px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:background .2s}
+.btn-logout:hover{background:rgba(255,255,255,.2)}
+.main{margin-left:240px;flex:1;padding:32px;min-height:100vh;background:transparent}
+
+/* ===== CARDS / LAYOUT ===== */
+.page-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text-light);margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.card{background:var(--white);border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.07)}
+.card-title{font-size:14px;font-weight:700;color:#3d006a;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.stat-val{font-size:32px;font-weight:800;color:var(--roxo)}
+.stat-lbl{font-size:12px;color:var(--text-light);margin-top:2px}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+/* ===== BUTTONS ===== */
+.btn{padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:none;transition:opacity .2s}
+.btn:hover{opacity:.85}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px}
+.btn-roxo{background:var(--roxo);color:#fff}
+.btn-outline{background:transparent;border:1.5px solid var(--roxo);color:var(--roxo)}
+.btn-green{background:#16a34a;color:#fff}
+.btn-red{background:#dc2626;color:#fff}
+.btn-gray{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ===== TABLE ===== */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f9fafb;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid #f3f4f6;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#faf5ff}
+
+/* ===== BADGES ===== */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-ok{background:#dcfce7;color:#16a34a}
+.badge-pend{background:#fef3c7;color:#92400e}
+.badge-no{background:#fee2e2;color:#dc2626}
+.badge-roxo{background:#f3e8ff;color:#7B00C4}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+
+/* ===== FORM ELEMENTS ===== */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--roxo)}
+.form-group textarea{resize:vertical;min-height:80px}
+
+/* ===== CASO CARD ===== */
+.caso-card{background:var(--white);border-radius:14px;border:1.5px solid var(--border);padding:20px;margin-bottom:14px;transition:border-color .2s}
+.caso-card:hover{border-color:#c084fc}
+.caso-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.caso-num{background:var(--roxo);color:#fff;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700}
+.caso-nome{font-size:15px;font-weight:700;color:#3d006a}
+.caso-ctx{font-size:12px;color:var(--text-light);margin-bottom:8px}
+.caso-segredo{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:12px;color:#991b1b;margin-top:10px}
+.caso-body{font-size:13px;color:var(--text);line-height:1.6}
+.caso-section{margin-top:10px}
+.caso-section-title{font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.toggle-btn{background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600;padding:0;font-family:'Inter',sans-serif}
+
+/* ===== AVALIAÇÃO ===== */
+.eval-form{background:#f9fafb;border-radius:12px;padding:20px;margin-top:16px}
+.rating-row{display:flex;gap:10px;margin-bottom:16px}
+.rating-opt{flex:1;border:2px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .15s;font-size:13px}
+.rating-opt:hover{border-color:var(--roxo);background:var(--roxo-light)}
+.rating-opt.selected{border-color:var(--roxo);background:var(--roxo-light);font-weight:700}
+.stars{font-size:20px}
+
+/* ===== NOTA ===== */
+.nota-display{font-size:28px;font-weight:800;color:var(--roxo)}
+.nota-max{font-size:14px;color:var(--text-light);font-weight:400}
+.progress-bar{height:8px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--roxo),#c084fc);border-radius:10px;transition:width .4s}
+
+/* ===== ALERT ===== */
+.alert{border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;line-height:1.5}
+.alert-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.alert-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* ===== FICHA N1 ===== */
+.ficha-field{margin-bottom:16px}
+.ficha-field label{font-size:12px;font-weight:700;color:#3d006a;margin-bottom:6px;display:block}
+.ficha-field textarea{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;min-height:70px;transition:border-color .2s}
+.ficha-field textarea:focus{border-color:var(--roxo)}
+
+/* ===== DISPARO ===== */
+.disparo-card{border:2px dashed #c084fc;border-radius:14px;padding:24px;text-align:center;margin-bottom:20px}
+.disparo-icon{font-size:40px;margin-bottom:8px}
+.disparo-title{font-size:16px;font-weight:700;color:#3d006a;margin-bottom:4px}
+.disparo-sub{font-size:13px;color:var(--text-light)}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap}
+  .main{margin-left:0;padding:16px}
+  .app{flex-direction:column}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .rating-row{flex-direction:column}
+}
+
+/* ===== HIDDEN ===== */
+.hidden{display:none!important}
+.section{display:none}
+.section.active{display:block}
+
+/* ===== INPUT SEARCH ===== */
+.search-input{padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;width:260px}
+.search-input:focus{border-color:var(--roxo)}
+
+/* ===== NOTA INPUT ===== */
+.nota-inp{width:80px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;text-align:center;outline:none}
+.nota-inp:focus{border-color:var(--roxo)}
+
+/* ===== TAG ===== */
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-right:4px}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <div class="logo-name">🦋 Dra. Lucia Kratz</div>
+    <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora · Psicoterapia Breve</div>
+    <div class="login-title">Portal Acadêmico</div>
+    <div class="login-sub">Disciplina de Psicoterapia Breve — 9º Período<br/>Digite seu nome para entrar</div>
+    <div id="login-erro" class="erro-box hidden"></div>
+    <div class="fg">
+      <label class="lbl">Seu Nome</label>
+      <input class="inp" id="inp-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="buscarNome(this.value)"/>
+      <div id="ac-list" class="autocomplete-list hidden"></div>
+    </div>
+    <div class="fg">
+      <label class="lbl">Matrícula (Senha)</label>
+      <input class="inp" id="inp-mat" type="password" placeholder="Número de matrícula"/>
+    </div>
+    <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text-light)">
+      Não tem acesso? Solicite à Profª. Dra. Lucia Kratz
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-view" class="app hidden">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">🦋 Dra. Lucia Kratz</div>
+      <div class="logo-sub">Psicoterapia Breve</div>
+    </div>
+    <div class="sidebar-user">
+      <strong id="sb-nome">—</strong>
+      <span id="sb-mat">—</span>
+    </div>
+    <nav class="sidebar-nav" id="nav-aluno">
+      <div class="nav-item active" onclick="irPara('painel')"><span class="icon">🏠</span>Meu Painel</div>
+      <div class="nav-item" onclick="irPara('ficha-n1')"><span class="icon">📋</span>Ficha N1</div>
+      <div class="nav-item" onclick="irPara('microaval')"><span class="icon">⭐</span>Microavaliação N2</div>
+      <div class="nav-item" onclick="irPara('meu-espaco')"><span class="icon">📊</span>Meu Espaço</div>
+    </nav>
+    <nav class="sidebar-nav hidden" id="nav-prof">
+      <div class="nav-item active" onclick="irPara('adm-painel')"><span class="icon">🏠</span>Painel</div>
+      <div class="nav-item" onclick="irPara('adm-alunos')"><span class="icon">👥</span>Alunos & Grupos</div>
+      <div class="nav-item" onclick="irPara('adm-casos')"><span class="icon">📁</span>Caderno de Casos</div>
+      <div class="nav-item" onclick="irPara('adm-disparo')"><span class="icon">🚀</span>Disparo ao Vivo</div>
+      <div class="nav-item" onclick="irPara('adm-notas')"><span class="icon">📝</span>Lançar Notas</div>
+      <div class="nav-item" onclick="irPara('adm-pauta')"><span class="icon">📊</span>Pauta Geral</div>
+      <div class="nav-item" onclick="irPara('adm-links')"><span class="icon">🔗</span>Links Rápidos</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ===== ALUNO: PAINEL ===== -->
+    <div id="sec-painel" class="section active">
+      <div class="page-title">Olá, <span id="painel-nome">—</span> 👋</div>
+      <div class="page-sub">Disciplina de Psicoterapia Breve · 9º Período</div>
+      <div class="grid-3" style="margin-bottom:20px">
+        <div class="card">
+          <div class="stat-val" id="painel-n1">—</div>
+          <div class="stat-lbl">Nota N1</div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-n1" style="width:0%"></div></div>
+        </div>
+        <div class="card">
+          <div class="stat-val" id="painel-n2">—</div>
+          <div class="stat-lbl">Nota N2 (parcial)</div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-n2" style="width:0%"></div></div>
+        </div>
+        <div class="card">
+          <div class="stat-val" id="painel-media">—</div>
+          <div class="stat-lbl">Média Final</div>
+          <div class="progress-bar"><div class="progress-fill" id="prog-media" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📋 Meus Grupos</div>
+          <table style="width:100%"><tbody>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Grupo N1:</td><td><span class="badge badge-roxo" id="painel-grp1">—</span></td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Caso N1:</td><td id="painel-caso1" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Grupo N2:</td><td><span class="badge badge-blue" id="painel-grp2">—</span></td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Caso N2:</td><td id="painel-caso2" style="font-size:13px">—</td></tr>
+          </tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 Atividades Pendentes</div>
+          <div id="painel-atividades" style="font-size:13px;color:var(--text-light)">Carregando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ALUNO: FICHA N1 ===== -->
+    <div id="sec-ficha-n1" class="section">
+      <div class="page-title">📋 Ficha de Avaliação Clínica — N1</div>
+      <div class="page-sub">Raciocínio Diagnóstico em Psicoterapia Breve</div>
+      <div id="ficha-n1-bloq" class="alert alert-warn hidden">
+        <span class="alert-icon">⏳</span>
+        <div>Esta ficha ainda não foi liberada pela professora. Aguarde o disparo ao vivo em sala.</div>
+      </div>
+      <div id="ficha-n1-form" class="card">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Paciente Simulado</label>
+            <input id="fn1-paciente" placeholder="Nome do paciente simulado"/>
+          </div>
+          <div class="form-group">
+            <label>Caso Nº</label>
+            <input id="fn1-caso" placeholder="Ex: 3"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Contexto da Intervenção</label>
+            <input id="fn1-ctx" placeholder="Ex: UTI, CAIS, Plantão, CRAS..."/>
+          </div>
+          <div class="form-group">
+            <label>Modalidade</label>
+            <select id="fn1-modal"><option>Individual</option><option>Grupo</option></select>
+          </div>
+        </div>
+        <div class="ficha-field">
+          <label>1. Queixa Principal & Demanda Institucional (em palavras do paciente)</label>
+          <textarea id="fn1-q1" placeholder="Registre a queixa principal..."></textarea>
+        </div>
+        <div class="ficha-field">
+          <label>2. Mapeamento Semiológico: Sinais Observados (linguagem corporal, afeto)</label>
+          <textarea id="fn1-q2" placeholder="Descreva os sinais observados..."></textarea>
+        </div>
+        <div class="ficha-field">
+          <label>3. Mapeamento Semiológico: Sintomas Relatados (queixas subjetivas)</label>
+          <textarea id="fn1-q3" placeholder="Liste os sintomas relatados..."></textarea>
+        </div>
+        <div class="ficha-field">
+          <label>4. Hipótese Diagnóstica Principal (DSM-5-TR)</label>
+          <textarea id="fn1-q4" placeholder="Ex: Transtorno de Adaptação com Ansiedade (F43.22)..."></textarea>
+        </div>
+        <div class="ficha-field">
+          <label>5. Diagnóstico Diferencial & Fatores do Contexto Institucional</label>
+          <textarea id="fn1-q5" placeholder="Discuta os diferenciais..."></textarea>
+        </div>
+        <div class="ficha-field">
+          <label>6. Delimitação do Foco para Psicoterapia Breve</label>
+          <textarea id="fn1-q6" placeholder="Objetivo circunscrito ao contexto..."></textarea>
+        </div>
+        <div class="ficha-field">
+          <label>7. Proposta de Estratégias Focais, Manejo de Crise e Encaminhamentos</label>
+          <textarea id="fn1-q7" placeholder="Descreva as estratégias..."></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-roxo" onclick="salvarFichaN1()">💾 Salvar Ficha</button>
+          <span id="fn1-status" style="font-size:13px;color:var(--green);align-self:center"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ALUNO: MICROAVALIAÇÃO N2 ===== -->
+    <div id="sec-microaval" class="section">
+      <div class="page-title">⭐ Microavaliação da Plateia — N2</div>
+      <div class="page-sub">Participação ativa vale 0,5 pt por encontro (até 2,0 pt)</div>
+      <div id="micro-bloq" class="alert alert-warn hidden">
+        <span class="alert-icon">⏳</span>
+        <div>Nenhuma microavaliação foi disparada ainda. Aguarde o disparo ao vivo pela professora.</div>
+      </div>
+      <div id="micro-lista"></div>
+    </div>
+
+    <!-- ===== ALUNO: MEU ESPAÇO ===== -->
+    <div id="sec-meu-espaco" class="section">
+      <div class="page-title">📊 Meu Espaço — Histórico de Avaliações</div>
+      <div class="page-sub">Acompanhe seu desempenho em tempo real</div>
+      <div class="alert alert-warn">
+        <span class="alert-icon">⚠️</span>
+        <div><strong>Atenção:</strong> A nota parcial de atividades exibida neste painel é proporcional ao total de atividades liberadas pela professora até o momento. O resultado final varia e será consolidado conforme novas atividades forem disparadas durante o semestre.</div>
+      </div>
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-title">👤 Meus Dados</div>
+          <table><tbody>
+            <tr><td style="color:var(--text-light);font-size:12px;width:120px;padding:6px 0">Nome:</td><td id="me-nome" style="font-size:13px;font-weight:600">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Matrícula:</td><td id="me-mat" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Grupo N1:</td><td id="me-grp1" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--text-light);font-size:12px;padding:6px 0">Grupo N2:</td><td id="me-grp2" style="font-size:13px">—</td></tr>
+          </tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 Resumo de Notas</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-light)">N1 — Atendimento Simulado</span><strong id="me-n1">—</strong></div><div class="progress-bar"><div class="progress-fill" id="me-prog-n1" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-light)">N2 — Seminário (6,0)</span><strong id="me-n2sem">—</strong></div><div class="progress-bar"><div class="progress-fill" id="me-prog-n2sem" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-light)">N2 — Plateia (2,0)</span><strong id="me-n2plat">—</strong></div><div class="progress-bar"><div class="progress-fill" id="me-prog-n2plat" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text-light)">N2 — ESA (2,0)</span><strong id="me-n2esa">—</strong></div><div class="progress-bar"><div class="progress-fill" id="me-prog-n2esa" style="width:0%"></div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📅 Histórico de Atividades</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Atividade</th><th>Grupo Avaliado</th><th>Status</th></tr></thead>
+            <tbody id="me-hist"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROF: PAINEL ===== -->
+    <div id="sec-adm-painel" class="section">
+      <div class="page-title">Painel da Professora <span class="badge-prof">ADM</span></div>
+      <div class="page-sub">Disciplina de Psicoterapia Breve — Visão Geral</div>
+      <div class="grid-3" style="margin-bottom:20px">
+        <div class="card">
+          <div class="stat-val" id="adm-total-alunos">0</div>
+          <div class="stat-lbl">Alunos Cadastrados</div>
+        </div>
+        <div class="card">
+          <div class="stat-val" id="adm-total-disparos">0</div>
+          <div class="stat-lbl">Atividades Disparadas</div>
+        </div>
+        <div class="card">
+          <div class="stat-val" id="adm-total-fichas">0</div>
+          <div class="stat-lbl">Fichas Recebidas</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🚦 Status das Etapas</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span>N1 — Atendimento com Paciente Simulado</span>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="toggle-n1" onchange="toggleEtapa('n1',this.checked)" style="accent-color:var(--roxo);width:16px;height:16px"/>
+                <span id="lbl-n1">Desabilitada</span>
+              </label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span>N2 — Seminários Práticos</span>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="toggle-n2" onchange="toggleEtapa('n2',this.checked)" style="accent-color:var(--roxo);width:16px;height:16px"/>
+                <span id="lbl-n2">Desabilitada</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ Acesso Rápido</div>
+          <div class="btn-row">
+            <button class="btn btn-roxo btn-sm" onclick="irPara('adm-disparo')">🚀 Disparo ao Vivo</button>
+            <button class="btn btn-outline btn-sm" onclick="irPara('adm-pauta')">📊 Ver Pauta</button>
+            <button class="btn btn-gray btn-sm" onclick="irPara('adm-casos')">📁 Casos Clínicos</button>
+            <button class="btn btn-gray btn-sm" onclick="window.open('https://github.com/luciakratz-arch/clinica-dra.LuciaKratz','_blank')">📁 GitHub</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROF: ALUNOS ===== -->
+    <div id="sec-adm-alunos" class="section">
+      <div class="page-title">👥 Alunos & Grupos</div>
+      <div class="page-sub">Gerencie a turma e a composição dos grupos N1 e N2</div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">➕ Cadastrar Aluno</div>
+        <div class="form-row">
+          <div class="form-group"><label>Nome Completo *</label><input id="al-nome" placeholder="Nome completo do aluno"/></div>
+          <div class="form-group"><label>Matrícula *</label><input id="al-mat" placeholder="Número de matrícula (será a senha)"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Grupo N1</label><input id="al-grp1" placeholder="Ex: Grupo 3"/></div>
+          <div class="form-group"><label>Caso N1</label><input id="al-caso1" placeholder="Ex: Caso 5 — Marcos"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Grupo N2</label><input id="al-grp2" placeholder="Ex: Grupo 3"/></div>
+          <div class="form-group"><label>Caso N2</label><input id="al-caso2" placeholder="Ex: Caso 5 — Marcos"/></div>
+        </div>
+        <button class="btn btn-roxo" onclick="salvarAluno()">Salvar Aluno</button>
+        <span id="al-status" style="font-size:13px;color:var(--green);margin-left:12px"></span>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:0">📋 Turma Cadastrada</div>
+          <input class="search-input" placeholder="🔍 Buscar aluno..." oninput="filtrarAlunos(this.value)"/>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Matrícula</th><th>Grupo N1</th><th>Caso N1</th><th>Grupo N2</th><th>Caso N2</th><th>Ações</th></tr></thead>
+            <tbody id="tbl-alunos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROF: CASOS ===== -->
+    <div id="sec-adm-casos" class="section">
+      <div class="page-title">📁 Caderno de Casos Clínicos</div>
+      <div class="page-sub">Visão exclusiva da professora — inclui segredos ocultos em vermelho</div>
+      <div class="btn-row" style="margin-bottom:20px">
+        <button class="btn btn-roxo" onclick="window.print()">🖨️ Imprimir / PDF</button>
+        <button class="btn btn-outline" onclick="abrirNovoCaso()">➕ Cadastrar Novo Caso</button>
+      </div>
+      <div id="casos-lista"></div>
+    </div>
+
+    <!-- ===== PROF: DISPARO ===== -->
+    <div id="sec-adm-disparo" class="section">
+      <div class="page-title">🚀 Central de Disparo ao Vivo</div>
+      <div class="page-sub">Libere atividades para a turma em tempo real durante a aula</div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">⚙️ Configurar Disparo</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data da Aula</label>
+            <input type="date" id="disp-data"/>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Atividade</label>
+            <select id="disp-tipo">
+              <option value="ficha_n1">📋 Ficha N1 — Avaliação Clínica (Grupo Terapeuta)</option>
+              <option value="microaval">⭐ Microavaliação N2 — Plateia</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Grupo Apresentador</label>
+            <input id="disp-grupo" placeholder="Ex: Grupo 3"/>
+          </div>
+          <div class="form-group">
+            <label>Caso Apresentado</label>
+            <select id="disp-caso">
+              <option value="">Selecione o caso...</option>
+              <option value="1">Caso 1 — Marcos, 34 anos (Plantão Psicológico)</option>
+              <option value="2">Caso 2 — Helena, 42 anos (Hospital Geral)</option>
+              <option value="3">Caso 3 — Lucas, 23 anos (CAIS / Emergência)</option>
+              <option value="4">Caso 4 — Carla, 29 anos (UTI Humanizada)</option>
+              <option value="5">Caso 5 — Roberto, 50 anos (CAPS / Reabilitação)</option>
+              <option value="6">Caso 6 — Vanessa, 38 anos (Ambulatório de Crise)</option>
+              <option value="7">Caso 7 — Juliana, 27 anos (CRAS)</option>
+              <option value="8">Caso 8 — Thiago, 31 anos (Ortopedia / TEPT)</option>
+              <option value="9">Caso 9 — Camila, 35 anos (Saúde Ocupacional)</option>
+              <option value="10">Caso 10 — Gabriel, 26 anos (Orientação Profissional)</option>
+            </select>
+          </div>
+        </div>
+        <div class="disparo-card">
+          <div class="disparo-icon">🚀</div>
+          <div class="disparo-title">Pronto para disparar!</div>
+          <div class="disparo-sub" style="margin-bottom:16px">Confirme os dados acima e clique para liberar a atividade para a turma agora.</div>
+          <button class="btn btn-roxo" onclick="disparar()">🚀 Disparar Atividade para a Turma</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📅 Histórico de Disparos</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Atividade</th><th>Caso</th><th>Grupo</th><th>Respostas</th></tr></thead>
+            <tbody id="tbl-disparos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROF: NOTAS ===== -->
+    <div id="sec-adm-notas" class="section">
+      <div class="page-title">📝 Lançamento de Notas</div>
+      <div class="page-sub">Lance as notas de cada aluno por etapa</div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">🎯 Selecionar Aluno</div>
+        <div class="form-row">
+          <div class="form-group" style="position:relative">
+            <label>Buscar Aluno</label>
+            <input class="inp" id="nota-busca" placeholder="Digite o nome..." oninput="buscarAlunoNotas(this.value)" autocomplete="off"/>
+            <div id="nota-ac" class="autocomplete-list hidden"></div>
+          </div>
+          <div class="form-group">
+            <label>Aluno Selecionado</label>
+            <input id="nota-sel-nome" disabled placeholder="—" style="background:#f9fafb"/>
+          </div>
+        </div>
+      </div>
+      <div id="nota-form" class="hidden">
+        <div class="grid-2" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-title">📋 N1 — Atendimento Simulado (0–10)</div>
+            <div class="form-group">
+              <label>Nota N1 (0,0 a 10,0)</label>
+              <input class="nota-inp" type="number" id="nota-n1" min="0" max="10" step="0.5" placeholder="0"/>
+            </div>
+            <div class="form-group">
+              <label>Observações</label>
+              <textarea id="nota-n1-obs" placeholder="Feedback para o aluno..."></textarea>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🎓 N2 — ESA (0–2)</div>
+            <div class="form-group">
+              <label>Nota ESA (0,0 a 2,0)</label>
+              <input class="nota-inp" type="number" id="nota-esa" min="0" max="2" step="0.5" placeholder="0"/>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">🎤 N2 — Seminário & Trabalho Escrito (0–6)</div>
+          <div class="grid-2">
+            <div class="form-group"><label>Raciocínio Clínico e Foco (0–1,5)</label><input class="nota-inp" type="number" id="nota-rac" min="0" max="1.5" step="0.5" placeholder="0"/></div>
+            <div class="form-group"><label>Coerência Metodológica / Ego (0–1,5)</label><input class="nota-inp" type="number" id="nota-coe" min="0" max="1.5" step="0.5" placeholder="0"/></div>
+            <div class="form-group"><label>Qualidade do Planejamento 1–15 sessões (0–1,5)</label><input class="nota-inp" type="number" id="nota-qual" min="0" max="1.5" step="0.5" placeholder="0"/></div>
+            <div class="form-group"><label>Dinâmica e Clareza na Apresentação (0–1,5)</label><input class="nota-inp" type="number" id="nota-din" min="0" max="1.5" step="0.5" placeholder="0"/></div>
+          </div>
+          <div style="font-size:13px;color:var(--text-light);margin-top:4px">Subtotal Seminário: <strong id="nota-sem-total">0,0</strong> / 6,0</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-roxo" onclick="salvarNotas()">💾 Salvar Notas</button>
+          <span id="nota-status" style="font-size:13px;color:var(--green);align-self:center"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROF: PAUTA ===== -->
+    <div id="sec-adm-pauta" class="section">
+      <div class="page-title">📊 Pauta Geral Consolidada</div>
+      <div class="page-sub">Visão completa de notas N1 e N2 de toda a turma</div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+        <input class="search-input" placeholder="🔍 Buscar por nome ou matrícula..." oninput="filtrarPauta(this.value)"/>
+        <button class="btn btn-gray btn-sm" onclick="exportarPauta()">📥 Exportar CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Matrícula</th><th>Nome</th><th>Grupo N1</th>
+            <th>N1 (10)</th><th>Grupo N2</th>
+            <th>Seminário (6)</th><th>Plateia (2)</th><th>ESA (2)</th>
+            <th>Total N2 (10)</th><th>Média</th><th>Status</th>
+          </tr></thead>
+          <tbody id="tbl-pauta"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PROF: LINKS ===== -->
+    <div id="sec-adm-links" class="section">
+      <div class="page-title">🔗 Links Rápidos</div>
+      <div class="page-sub">Gere e copie links para enviar no WhatsApp da turma</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">👥 Link de Formação de Grupos</div>
+          <div style="font-size:13px;color:var(--text-light);margin-bottom:16px;line-height:1.6">Envie para o representante de cada grupo. Ao abrir o link, o aluno monta o grupo selecionando os integrantes da turma para N1 e N2.</div>
+          <div class="btn-row">
+            <button class="btn btn-roxo" onclick="copiarLink('grupos')">🔗 Copiar Link</button>
+            <button class="btn btn-outline" onclick="abrirWhatsApp('grupos')">📱 Enviar no WhatsApp</button>
+          </div>
+          <div id="link-grupos-preview" style="margin-top:12px;font-size:11px;color:var(--text-light);word-break:break-all"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Link de Consulta ao Histórico Individual</div>
+          <div style="font-size:13px;color:var(--text-light);margin-bottom:16px;line-height:1.6">Envie no grupo geral da turma. O aluno digita o nome, confirma com a matrícula e acessa seu histórico completo de notas.</div>
+          <div class="btn-row">
+            <button class="btn btn-roxo" onclick="copiarLink('historico')">🔗 Copiar Link</button>
+            <button class="btn btn-outline" onclick="abrirWhatsApp('historico')">📱 Enviar no WhatsApp</button>
+          </div>
+          <div id="link-historico-preview" style="margin-top:12px;font-size:11px;color:var(--text-light);word-break:break-all"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",
+  authDomain: "entrevista-inicial.firebaseapp.com",
+  projectId: "entrevista-inicial",
+  storageBucket: "entrevista-inicial.appspot.com",
+  messagingSenderId: "799817939377",
+  appId: "1:799817939377:web:6ed277e08f4e59d12bb3b0"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ===== DADOS MOCKADOS =====
+const PROF_MAT = "PROF2024";
+
+const ALUNOS_MOCK = [
+  {id:"m1", nome:"Ana Clara Mendonça", matricula:"2021001", grupoN1:"Grupo 1", casoN1:"Caso 1 — Marcos", grupoN2:"Grupo 1", casoN2:"Caso 1 — Marcos", notaN1:8.5, notaSeminario:5.0, notaESA:1.5},
+  {id:"m2", nome:"Bruno Henrique Tavares", matricula:"2021002", grupoN1:"Grupo 1", casoN1:"Caso 1 — Marcos", grupoN2:"Grupo 1", casoN2:"Caso 1 — Marcos", notaN1:7.0, notaSeminario:4.5, notaESA:2.0},
+  {id:"m3", nome:"Camila Rodrigues Lima", matricula:"2021003", grupoN1:"Grupo 2", casoN1:"Caso 3 — Lucas", grupoN2:"Grupo 2", casoN2:"Caso 3 — Lucas", notaN1:9.0, notaSeminario:5.5, notaESA:1.5},
+  {id:"m4", nome:"Daniel Ferreira Costa", matricula:"2021004", grupoN1:"Grupo 2", casoN1:"Caso 3 — Lucas", grupoN2:"Grupo 2", casoN2:"Caso 3 — Lucas", notaN1:6.5, notaSeminario:4.0, notaESA:1.0},
+  {id:"m5", nome:"Eduarda Santos Pires", matricula:"2021005", grupoN1:"Grupo 3", casoN1:"Caso 5 — Roberto", grupoN2:"Grupo 3", casoN2:"Caso 5 — Roberto", notaN1:8.0, notaSeminario:5.0, notaESA:2.0},
+  {id:"m6", nome:"Felipe Alves Nascimento", matricula:"2021006", grupoN1:"Grupo 3", casoN1:"Caso 5 — Roberto", grupoN2:"Grupo 3", casoN2:"Caso 5 — Roberto", notaN1:7.5, notaSeminario:4.5, notaESA:1.5},
+  {id:"m7", nome:"Gabriela Melo Vieira", matricula:"2021007", grupoN1:"Grupo 4", casoN1:"Caso 7 — Juliana", grupoN2:"Grupo 4", casoN2:"Caso 7 — Juliana", notaN1:9.5, notaSeminario:6.0, notaESA:2.0},
+  {id:"m8", nome:"Hugo Carvalho Dias", matricula:"2021008", grupoN1:"Grupo 4", casoN1:"Caso 7 — Juliana", grupoN2:"Grupo 4", casoN2:"Caso 7 — Juliana", notaN1:8.0, notaSeminario:5.5, notaESA:1.5},
+  {id:"m9", nome:"Isabela Torres Moreira", matricula:"2021009", grupoN1:"Grupo 5", casoN1:"Caso 9 — Camila", grupoN2:"Grupo 5", casoN2:"Caso 9 — Camila", notaN1:7.0, notaSeminario:4.0, notaESA:1.0},
+  {id:"m10", nome:"João Pedro Ribeiro", matricula:"2021010", grupoN1:"Grupo 5", casoN1:"Caso 9 — Camila", grupoN2:"Grupo 5", casoN2:"Caso 9 — Camila", notaN1:6.0, notaSeminario:3.5, notaESA:1.5},
+];
+
+const CASOS = [
+  {num:1, nome:"Marcos, 34 anos", ctx:"Plantão Psicológico Universitário / Clínica-Escola", eixo:"Ansiedade de Desempenho e Crise de Adaptação Ocupacional", diag:"Transtorno de Adaptação com Ansiedade (DSM-5-TR: F43.22) / Diferencial: TAG e Síndrome de Burnout", foco:"Manejo da ansiedade de desempenho, flexibilização de crenças de hiperexigência e limites vida-trabalho.", sinais:"Sentar na ponta da cadeira, inquietação motora, checar celular discretamente, discurso acelerado e tenso.", sintomas:`"Vim ao Plantão porque não estou dormindo mais de 4 horas por noite, acordo de madrugada com o coração disparado." / "Sinto um aperto constante no peito no trabalho."`, segredo:"Sente culpa devastadora e medo de ser uma fraude após a recente promoção. Pensa em pedir demissão diariamente, mas teme decepcionar o pai, que o considera o 'orgulho da família'.", crenca:"Desamparo + Desvalor: \"Não vou dar conta\", \"Sou uma fraude\""},
+  {num:2, nome:"Helena, 42 anos", ctx:"Hospital Geral — Enfermaria de Internação Longa", eixo:"Luto Complicado e Impacto Emocional da Doença Crônica", diag:"Reação de Ajustamento com Humor Depressivo (F43.21) + Luto Relacional", foco:"Resgate da autoeficácia no leito, elaboração das perdas e enfrentamento ativo.", sinais:"Postura deitada/semi-sentada, fala pausada, hipofonia, choro contido, manipulação do lençol.", sintomas:`"Estou internada há 3 semanas e sinto um vazio enorme; perdi o controle da minha vida."`, segredo:"Sente vergonha e culpa por sentir alívio ao estar longe do marido abusivo durante a internação, vivenciando o luto do fim do casamento concomitantemente à doença física.", crenca:"Desvalor + Desamor: \"Fui descartada\", \"Não sirvo para mais nada\""},
+  {num:3, nome:"Lucas, 23 anos", ctx:"Pronto-Atendimento / CAIS — Emergência Psiquiátrica", eixo:"Somatização e Crise Aguda de Angústia em Pronto-Socorro", diag:"Transtorno de Sintomas Somáticos (F45.1) em Emergência / Crise de Ajustamento", foco:"Acolhimento da dor somática sem negação, psicoeducação e vinculação para encaminhamento.", sinais:"Mão pressionando o abdômen, irritação ao ser atendido pela psicologia, intelectualização e esquiva emocional.", sintomas:`"Estou com dores fortes no estômago; os médicos disseram que os exames deram normais e me mandaram pra você, isso é um erro!"`, segredo:"Tem pavor de morar sozinho e fracassar financeiramente, mas sente que não pode demonstrar fraqueza diante dos pais que investiram na sua carreira.", crenca:"Desamparo: \"Não consigo lidar sozinho com as mudanças\", \"Vou fracassar financeiramente\""},
+  {num:4, nome:"Carla, 29 anos", ctx:"UTI Humanizada — Paciente Semi-crítico", eixo:"Ansiedade Severa e Sensação de Perda de Controle em Ambiente Crítico", diag:"Transtorno de Estresse Agudo / Fobia de Ambiente Hospitalar (F43.0) em UTI", foco:"Descatastrofização dos estímulos da UTI, regulação respiratória e comunicação com a equipe.", sinais:"Olhar esquivo a cada bip, mãos trêmulas, respiração curta, postura encolhida.", sintomas:`"O barulho desses aparelhos me sufoca; sinto que vou morrer aqui dentro."`, segredo:"Vivenciou um trauma prévio de erro médico na família em uma UTI no passado, o que gera pavor paralisante da equipe médica atual.", crenca:"Desamparo: \"Estou totalmente vulnerável e sem controle\""},
+  {num:5, nome:"Roberto, 50 anos", ctx:"CAPS / Ambulatório de Psicorreabilitação e Grupo de PB", eixo:"Crise da Meia-Idade, Síndrome do Ninho Vazio e Ativação em Grupo", diag:"Distimia / Transtorno Depressivo Persistente (F34.1) em Contexto de Aposentadoria", foco:"Ativação comportamental em grupo, ressignificação de papéis sociais na pós-aposentadoria.", sinais:"Expressão apática, gestos lentos, sentado ao fundo da roda, suspiros frequentes.", sintomas:`"Meus filhos saíram de casa, me aposentei e agora sinto que minha vida perdeu o sentido."`, segredo:"Guarda o sonho antigo de abrir um ateliê de marcenaria, mas tem vergonha de assumir esse desejo por medo de ser visto como imprudente na sua idade.", crenca:"Desvalor: \"Não tenho mais utilidade\", \"Minha vida perdeu o valor\""},
+  {num:6, nome:"Vanessa, 38 anos", ctx:"Centro de Atenção Psicológica de Urgência / Ambulatório de Crise", eixo:"Transtorno de Pânico com Agorafobia Focal", diag:"Transtorno de Pânico com Agorafobia (DSM-5-TR: F41.0)", foco:"Psicoeducação sobre ciclo do pânico, respiração diafragmática e exposição gradual.", sinais:"Taquicardia relatada, esquiva de locais abertos, hipervigilância corporal, choro fácil.", sintomas:`"Tenho crises onde meu coração dispara e sinto que vou desmaiar no meio da rua."`, segredo:"Já teve um ataque de pânico no casamento da irmã e passou o evento inteiro sentada no banheiro. Nunca contou a ninguém por vergonha.", crenca:"Desamparo: \"Estou prestes a ter um AVC\", \"Sou incapaz de me proteger\""},
+  {num:7, nome:"Juliana, 27 anos", ctx:"CRAS / Apoio Psicológico Breve", eixo:"Relacionamento Abusivo / Baixa Autoestima e Vulnerabilidade Social", diag:"Problema de Relacionamento (Z63.0) com Sintomas Ansiosos e Risco Social", foco:"Fortalecimento do julgamento da realidade, articulação da rede de proteção e autonomia.", sinais:"Voz baixa, respostas vagas ao perguntar sobre o parceiro, desviar o olhar, rubor facial.", sintomas:`"Meu marido às vezes perde o controle, mas eu sei que é porque ele é estressado no trabalho."`, segredo:"Já foi à delegacia duas vezes mas voltou atrás no registro porque o parceiro ameaçou tirar a guarda das filhas.", crenca:"Desamor + Desvalor: \"Sem ele eu não sou nada\", \"A culpa do abuso é minha\""},
+  {num:8, nome:"Thiago, 31 anos", ctx:"Ambulatório Hospitalar de Ortopedia e Traumatologia", eixo:"Estresse Pós-Traumático Reativo a Acidente de Trânsito", diag:"TEPT — Subtipo Agudo (F43.10) em Reabilitação Física", foco:"Grounding, processamento cognitivo da culpa irracional e resgate da percepção de controle.", sinais:"Sobressalto fácil, hipervigilância, pesadelos relatados, evitação de assunto do acidente.", sintomas:`"Não consigo mais dirigir; qualquer freada brusca me faz reviver tudo de novo."`, segredo:"Sua esposa fraturou três costelas no mesmo acidente e ele acredita que foi culpa dele por ter passado no sinal amarelo.", crenca:"Desamparo + Desvalor: \"O mundo é perigoso\", \"Eu falhei ao proteger minha esposa\""},
+  {num:9, nome:"Camila, 35 anos", ctx:"Serviço de Saúde Ocupacional / Medicina do Trabalho", eixo:"Perfeccionismo Disfuncional, Sobrecarga e Prevenção de Burnout", diag:"TAG com Padrão Perfeccionista (F41.1) em Contexto Ocupacional", foco:"Flexibilização de regras rígidas, delegação de tarefas e prevenção de afastamento.", sinais:"Fala acelerada, lista de afazeres na mão, dificuldade de pausas, autocrítica explícita.", sintomas:`"Trabalho 12h por dia e ainda sinto que não entreguei o suficiente. Não consigo desligar."`, segredo:"Toma ansiolítico sem prescrição médica há 6 meses, comprado pela internet, sem contar a ninguém para não parecer \"fraca\".", crenca:"Desvalor: \"Só tenho valor se for perfeita\", \"Errar é inaceitável\""},
+  {num:10, nome:"Gabriel, 26 anos", ctx:"Serviço de Orientação Profissional e Aconselhamento Universitário", eixo:"Dificuldade na Tomada de Decisão e Paralisia por Análise", diag:"Problema Ocupacional / Transição de Carreira com Sintomas Ansiosos (Z56.9)", foco:"Matriz de decisão, aceitação da incerteza e identificação de valores centrais.", sinais:"Planilhas comparativas de cursos na mochila, discurso circular sobre prós e contras, riso nervoso.", sintomas:`"Tenho 4 propostas de emprego e já recusei 3. Mas essa nova também não parece certa."`, segredo:"O pai quer que ele assuma o negócio da família, mas ele sonha em ser músico e nunca teve coragem de dizer isso em casa.", crenca:"Desamparo: \"Escolher errado destruirá meu futuro\""},
+];
+
+// ===== ESTADO GLOBAL =====
+let usuarioAtual = null;
+let perfil = null; // 'aluno' ou 'prof'
+let todosAlunos = [...ALUNOS_MOCK];
+let disparos = [];
+let secaoAtual = '';
+let alunoNotaId = null;
+
+// ===== LOGIN =====
+function buscarNome(val){
+  const list = document.getElementById('ac-list');
+  if(val.length < 3){ list.classList.add('hidden'); return; }
+  const lower = val.toLowerCase();
+  const res = todosAlunos.filter(a => a.nome.toLowerCase().includes(lower));
+  if(res.length === 0){ list.classList.add('hidden'); return; }
+  list.innerHTML = res.slice(0,8).map(a =>
+    `<div class="autocomplete-item" onclick="selecionarNome('${a.nome}','${a.matricula}')">${a.nome} <span style="color:var(--text-light);font-size:12px">— ${a.matricula}</span></div>`
+  ).join('');
+  list.classList.remove('hidden');
+}
+
+function selecionarNome(nome, mat){
+  document.getElementById('inp-nome').value = nome;
+  document.getElementById('ac-list').classList.add('hidden');
+  document.getElementById('inp-mat').focus();
+}
+
+async function fazerLogin(){
+  const nome = document.getElementById('inp-nome').value.trim();
+  const mat = document.getElementById('inp-mat').value.trim();
+  const erro = document.getElementById('login-erro');
+  erro.classList.add('hidden');
+
+  if(!nome || !mat){ erro.textContent='Preencha nome e matrícula.'; erro.classList.remove('hidden'); return; }
+
+  // Verifica professora
+  if(mat === PROF_MAT){
+    usuarioAtual = {nome:'Dra. Lucia Kratz', matricula: PROF_MAT, role:'prof'};
+    perfil = 'prof';
+    iniciarApp();
+    return;
+  }
+
+  // Busca aluno local (mock) ou no Firebase
+  let aluno = todosAlunos.find(a => a.nome.toLowerCase() === nome.toLowerCase() && a.matricula === mat);
+
+  if(!aluno){
+    // tenta firebase
+    try{
+      const snap = await db.collection('acad_alunos').where('matricula','==',mat).get();
+      const doc = snap.docs.find(d => d.data().nome.toLowerCase() === nome.toLowerCase());
+      if(doc){ aluno = {...doc.data(), id: doc.id}; }
+    }catch(e){}
+  }
+
+  if(!aluno){ erro.textContent='Nome ou matrícula incorretos.'; erro.classList.remove('hidden'); return; }
+
+  usuarioAtual = {...aluno, role:'aluno'};
+  perfil = 'aluno';
+  iniciarApp();
+}
+
+function iniciarApp(){
+  document.getElementById('login-view').classList.add('hidden');
+  document.getElementById('app-view').classList.remove('hidden');
+  document.getElementById('sb-nome').textContent = usuarioAtual.nome;
+  document.getElementById('sb-mat').textContent = usuarioAtual.matricula;
+
+  if(perfil === 'prof'){
+    document.getElementById('nav-aluno').classList.add('hidden');
+    document.getElementById('nav-prof').classList.remove('hidden');
+    irPara('adm-painel');
+    carregarAdmPainel();
+    carregarDisparos();
+    renderizarTabelaAlunos();
+    renderizarPauta();
+  } else {
+    irPara('painel');
+    carregarPainelAluno();
+  }
+}
+
+function fazerLogout(){
+  usuarioAtual = null; perfil = null;
+  document.getElementById('app-view').classList.add('hidden');
+  document.getElementById('login-view').classList.remove('hidden');
+  document.getElementById('inp-nome').value='';
+  document.getElementById('inp-mat').value='';
+}
+
+// ===== NAVEGAÇÃO =====
+function irPara(sec){
+  secaoAtual = sec;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('sec-'+sec);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[onclick="irPara('${sec}')"]`);
+  if(navEl) navEl.classList.add('active');
+
+  // lazy load
+  if(sec==='adm-casos') renderizarCasos();
+  if(sec==='adm-pauta') renderizarPauta();
+  if(sec==='adm-alunos') renderizarTabelaAlunos();
+  if(sec==='adm-disparo') carregarDisparos();
+  if(sec==='meu-espaco') carregarMeuEspaco();
+  if(sec==='microaval') carregarMicroaval();
+}
+
+// ===== ALUNO: PAINEL =====
+function carregarPainelAluno(){
+  const a = usuarioAtual;
+  document.getElementById('painel-nome').textContent = a.nome.split(' ')[0];
+  document.getElementById('painel-grp1').textContent = a.grupoN1 || '—';
+  document.getElementById('painel-grp2').textContent = a.grupoN2 || '—';
+  document.getElementById('painel-caso1').textContent = a.casoN1 || '—';
+  document.getElementById('painel-caso2').textContent = a.casoN2 || '—';
+
+  const n1 = a.notaN1 || 0;
+  const sem = a.notaSeminario || 0;
+  const esa = a.notaESA || 0;
+  const plat = calcPlateia(a);
+  const n2 = Math.min(10, sem + plat + esa);
+  const media = ((n1 + n2) / 2).toFixed(1);
+
+  document.getElementById('painel-n1').textContent = n1.toFixed(1);
+  document.getElementById('painel-n2').textContent = n2.toFixed(1);
+  document.getElementById('painel-media').textContent = media;
+  document.getElementById('prog-n1').style.width = (n1*10)+'%';
+  document.getElementById('prog-n2').style.width = (n2*10)+'%';
+  document.getElementById('prog-media').style.width = (parseFloat(media)*10)+'%';
+
+  const pendEl = document.getElementById('painel-atividades');
+  pendEl.innerHTML = '<span style="color:var(--green);font-weight:600">✅ Nenhuma atividade pendente no momento.</span>';
+}
+
+function calcPlateia(aluno){
+  const fichas = (aluno.fichasPlateia || []).length;
+  const totalDisp = disparos.filter(d => d.tipo==='microaval').length;
+  if(totalDisp === 0) return 0;
+  return Math.min(2.0, (fichas / totalDisp) * 2.0);
+}
+
+// ===== ALUNO: MEU ESPAÇO =====
+function carregarMeuEspaco(){
+  const a = usuarioAtual;
+  document.getElementById('me-nome').textContent = a.nome;
+  document.getElementById('me-mat').textContent = a.matricula;
+  document.getElementById('me-grp1').textContent = a.grupoN1 || '—';
+  document.getElementById('me-grp2').textContent = a.grupoN2 || '—';
+
+  const n1 = a.notaN1 || 0;
+  const sem = a.notaSeminario || 0;
+  const esa = a.notaESA || 0;
+  const plat = calcPlateia(a);
+
+  document.getElementById('me-n1').textContent = n1.toFixed(1)+' / 10';
+  document.getElementById('me-n2sem').textContent = sem.toFixed(1)+' / 6';
+  document.getElementById('me-n2plat').textContent = plat.toFixed(1)+' / 2';
+  document.getElementById('me-n2esa').textContent = esa.toFixed(1)+' / 2';
+  document.getElementById('me-prog-n1').style.width = (n1*10)+'%';
+  document.getElementById('me-prog-n2sem').style.width = (sem/6*100)+'%';
+  document.getElementById('me-prog-n2plat').style.width = (plat/2*100)+'%';
+  document.getElementById('me-prog-n2esa').style.width = (esa/2*100)+'%';
+
+  // histórico
+  const hist = document.getElementById('me-hist');
+  const atv = a.atividades || [];
+  if(atv.length === 0){
+    hist.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:20px">Nenhuma atividade registrada ainda.</td></tr>';
+  } else {
+    hist.innerHTML = atv.map(at => `
+      <tr>
+        <td>${at.data}</td>
+        <td>${at.tipo}</td>
+        <td>${at.grupo||'—'}</td>
+        <td><span class="badge ${at.feito?'badge-ok':'badge-no'}">${at.feito?'✅ Feito':'❌ Não feito'}</span></td>
+      </tr>`).join('');
+  }
+}
+
+// ===== ALUNO: MICROAVAL =====
+function carregarMicroaval(){
+  const container = document.getElementById('micro-lista');
+  const disp = disparos.filter(d => d.tipo==='microaval');
+  if(disp.length === 0){
+    document.getElementById('micro-bloq').classList.remove('hidden');
+    container.innerHTML='';
+    return;
+  }
+  document.getElementById('micro-bloq').classList.add('hidden');
+  container.innerHTML = disp.map((d,i) => `
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">⭐ Microavaliação — ${d.data} · ${d.caso}</div>
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:16px">Grupo Apresentador: <strong>${d.grupo}</strong> · vale 0,5 pt</div>
+      <div class="rating-row">
+        <div class="rating-opt" onclick="selecionarRating(this,'micro-${i}','gostei')"><div class="stars">👍</div><div>Gostei</div><div style="font-size:11px;color:var(--text-light)">Foco em TCC bem delimitado</div></div>
+        <div class="rating-opt" onclick="selecionarRating(this,'micro-${i}','melhorar')"><div class="stars">💡</div><div>Pode Melhorar</div><div style="font-size:11px;color:var(--text-light)">Proposta válida, pontos a ajustar</div></div>
+        <div class="rating-opt" onclick="selecionarRating(this,'micro-${i}','nao')"><div class="stars">👎</div><div>Não Gostei</div><div style="font-size:11px;color:var(--text-light)">Faltou clareza no foco ou no planejamento</div></div>
+      </div>
+      <div class="ficha-field" style="margin-top:12px">
+        <label>1. O Foco Terapêutico e o alinhamento com a TCC ficaram claros?</label>
+        <textarea id="micro-${i}-q1" placeholder="Sua resposta..."></textarea>
+      </div>
+      <div class="ficha-field">
+        <label>2. Observação Construtiva / Destaque do Planejamento Clínico</label>
+        <textarea id="micro-${i}-q2" placeholder="Escreva sua observação..."></textarea>
+      </div>
+      <div class="ficha-field">
+        <label>3. Pergunta ou Ponto de Dúvida sobre o Manejo das Sessões</label>
+        <textarea id="micro-${i}-q3" placeholder="Sua pergunta..."></textarea>
+      </div>
+      <button class="btn btn-roxo" onclick="salvarMicro(${i},'${d.id}')">💾 Entregar Microavaliação</button>
+      <span id="micro-${i}-status" style="font-size:13px;color:var(--green);margin-left:12px"></span>
+    </div>`).join('');
+}
+
+function selecionarRating(el, grupo, val){
+  document.querySelectorAll(`[onclick*="'${grupo}'"]`).forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  el.dataset.val = val;
+}
+
+async function salvarMicro(i, dispId){
+  const rating = document.querySelector(`.rating-opt.selected[onclick*="'micro-${i}'"]`);
+  if(!rating){ alert('Selecione uma avaliação (👍 💡 👎) antes de entregar.'); return; }
+  const dados = {
+    alunoId: usuarioAtual.id || usuarioAtual.matricula,
+    alunoNome: usuarioAtual.nome,
+    disparoId: dispId,
+    rating: rating.dataset.val,
+    q1: document.getElementById(`micro-${i}-q1`).value,
+    q2: document.getElementById(`micro-${i}-q2`).value,
+    q3: document.getElementById(`micro-${i}-q3`).value,
+    criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    await db.collection('acad_microaval').add(dados);
+    document.getElementById(`micro-${i}-status`).textContent = '✅ Microavaliação entregue!';
+  }catch(e){ alert('Erro ao salvar. Tente novamente.'); }
+}
+
+// ===== ALUNO: FICHA N1 =====
+async function salvarFichaN1(){
+  const dados = {
+    alunoId: usuarioAtual.id || usuarioAtual.matricula,
+    alunoNome: usuarioAtual.nome,
+    paciente: document.getElementById('fn1-paciente').value,
+    caso: document.getElementById('fn1-caso').value,
+    ctx: document.getElementById('fn1-ctx').value,
+    modalidade: document.getElementById('fn1-modal').value,
+    q1: document.getElementById('fn1-q1').value,
+    q2: document.getElementById('fn1-q2').value,
+    q3: document.getElementById('fn1-q3').value,
+    q4: document.getElementById('fn1-q4').value,
+    q5: document.getElementById('fn1-q5').value,
+    q6: document.getElementById('fn1-q6').value,
+    q7: document.getElementById('fn1-q7').value,
+    criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  try{
+    await db.collection('acad_fichas_n1').add(dados);
+    document.getElementById('fn1-status').textContent = '✅ Ficha salva com sucesso!';
+  }catch(e){ document.getElementById('fn1-status').textContent = '❌ Erro ao salvar.'; }
+}
+
+// ===== PROF: PAINEL ADM =====
+function carregarAdmPainel(){
+  document.getElementById('adm-total-alunos').textContent = todosAlunos.length;
+  document.getElementById('adm-total-disparos').textContent = disparos.length;
+
+  db.collection('acad_fichas_n1').get().then(s => {
+    document.getElementById('adm-total-fichas').textContent = s.size;
+  }).catch(()=>{});
+
+  db.collection('acad_config').doc('etapas').get().then(d => {
+    if(d.exists){
+      const data = d.data();
+      document.getElementById('toggle-n1').checked = !!data.n1;
+      document.getElementById('lbl-n1').textContent = data.n1 ? 'Habilitada' : 'Desabilitada';
+      document.getElementById('toggle-n2').checked = !!data.n2;
+      document.getElementById('lbl-n2').textContent = data.n2 ? 'Habilitada' : 'Desabilitada';
+    }
+  }).catch(()=>{});
+}
+
+async function toggleEtapa(etapa, val){
+  document.getElementById('lbl-'+etapa).textContent = val ? 'Habilitada' : 'Desabilitada';
+  try{
+    await db.collection('acad_config').doc('etapas').set({[etapa]: val}, {merge:true});
+  }catch(e){}
+}
+
+// ===== PROF: ALUNOS =====
+let tabelaFiltrada = [...ALUNOS_MOCK];
+function renderizarTabelaAlunos(lista){
+  const tbody = document.getElementById('tbl-alunos');
+  const src = lista || tabelaFiltrada;
+  if(src.length === 0){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-light)">Nenhum aluno encontrado.</td></tr>'; return; }
+  tbody.innerHTML = src.map(a => `
+    <tr>
+      <td style="font-weight:600">${a.nome}</td>
+      <td><span class="badge badge-roxo">${a.matricula}</span></td>
+      <td>${a.grupoN1||'—'}</td>
+      <td style="font-size:12px">${a.casoN1||'—'}</td>
+      <td>${a.grupoN2||'—'}</td>
+      <td style="font-size:12px">${a.casoN2||'—'}</td>
+      <td><button class="btn btn-red btn-sm" onclick="removerAluno('${a.id||a.matricula}')">Remover</button></td>
+    </tr>`).join('');
+}
+
+function filtrarAlunos(val){
+  const lower = val.toLowerCase();
+  tabelaFiltrada = todosAlunos.filter(a => a.nome.toLowerCase().includes(lower) || a.matricula.includes(lower));
+  renderizarTabelaAlunos(tabelaFiltrada);
+}
+
+async function salvarAluno(){
+  const nome = document.getElementById('al-nome').value.trim();
+  const mat = document.getElementById('al-mat').value.trim();
+  if(!nome || !mat){ alert('Nome e matrícula são obrigatórios.'); return; }
+  const novoAluno = {
+    id: 'fb_'+Date.now(), nome, matricula:mat,
+    grupoN1: document.getElementById('al-grp1').value.trim(),
+    casoN1: document.getElementById('al-caso1').value.trim(),
+    grupoN2: document.getElementById('al-grp2').value.trim(),
+    casoN2: document.getElementById('al-caso2').value.trim(),
+    notaN1:0, notaSeminario:0, notaESA:0
+  };
+  todosAlunos.push(novoAluno);
+  tabelaFiltrada = [...todosAlunos];
+  renderizarTabelaAlunos();
+  try{ await db.collection('acad_alunos').add({...novoAluno, criadoEm: firebase.firestore.FieldValue.serverTimestamp()}); }catch(e){}
+  document.getElementById('al-status').textContent = '✅ Aluno salvo!';
+  ['al-nome','al-mat','al-grp1','al-caso1','al-grp2','al-caso2'].forEach(id => document.getElementById(id).value='');
+  setTimeout(()=>document.getElementById('al-status').textContent='', 3000);
+}
+
+function removerAluno(id){
+  if(!confirm('Remover este aluno?')) return;
+  todosAlunos = todosAlunos.filter(a => (a.id||a.matricula) !== id);
+  tabelaFiltrada = [...todosAlunos];
+  renderizarTabelaAlunos();
+}
+
+// ===== PROF: CASOS =====
+let casosExpandidos = {};
+function renderizarCasos(){
+  const container = document.getElementById('casos-lista');
+  container.innerHTML = CASOS.map(c => `
+    <div class="caso-card">
+      <div class="caso-header">
+        <div>
+          <span class="caso-num">Caso #${c.num}</span>
+          <div class="caso-nome" style="margin-top:6px">${c.nome}</div>
+          <div class="caso-ctx">🏥 ${c.ctx}</div>
+          <div style="font-size:12px;color:var(--roxo);font-style:italic">${c.eixo}</div>
+        </div>
+        <button class="toggle-btn" onclick="toggleCaso(${c.num})" id="btn-caso-${c.num}">▼ Ver detalhes</button>
+      </div>
+      <div id="caso-body-${c.num}" style="display:none">
+        <div class="caso-section">
+          <div class="caso-section-title">📋 Diagnóstico</div>
+          <div class="caso-body">${c.diag}</div>
+        </div>
+        <div class="caso-section">
+          <div class="caso-section-title">🧠 Crença Central (TCC)</div>
+          <div class="caso-body">${c.crenca}</div>
+        </div>
+        <div class="caso-section">
+          <div class="caso-section-title">🎯 Foco Terapêutico</div>
+          <div class="caso-body">${c.foco}</div>
+        </div>
+        <div class="caso-section">
+          <div class="caso-section-title">🕴️ Sinais a Demonstrar (Ator)</div>
+          <div class="caso-body">${c.sinais}</div>
+        </div>
+        <div class="caso-section">
+          <div class="caso-section-title">💬 Sintomas a Relatar</div>
+          <div class="caso-body">${c.sintomas}</div>
+        </div>
+        <div class="caso-segredo">
+          🔒 <strong>SEGREDO — Revelar apenas sob boa aliança terapêutica:</strong><br/>
+          ${c.segredo}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleCaso(num){
+  const body = document.getElementById(`caso-body-${num}`);
+  const btn = document.getElementById(`btn-caso-${num}`);
+  const aberto = body.style.display !== 'none';
+  body.style.display = aberto ? 'none' : 'block';
+  btn.textContent = aberto ? '▼ Ver detalhes' : '▲ Fechar';
+}
+
+function abrirNovoCaso(){
+  const nome = prompt('Nome e idade do paciente (ex: Maria, 45 anos):');
+  if(!nome) return;
+  const ctx = prompt('Contexto institucional:');
+  const eixo = prompt('Eixo temático:');
+  const segredo = prompt('Segredo / Informação Oculta (em vermelho):');
+  if(!nome||!ctx) return;
+  CASOS.push({num:CASOS.length+1, nome, ctx, eixo:eixo||'—', diag:'A preencher', crenca:'A definir', foco:'A definir', sinais:'A definir', sintomas:'A definir', segredo:segredo||'—'});
+  renderizarCasos();
+}
+
+// ===== PROF: DISPARO =====
+async function carregarDisparos(){
+  try{
+    const snap = await db.collection('acad_disparos').orderBy && 
+      db.collection('acad_disparos').get();
+    if(snap){ 
+      disparos = snap.docs.map(d => ({id:d.id,...d.data()}));
+      disparos.sort((a,b)=> (b.criadoEm?.seconds||0)-(a.criadoEm?.seconds||0));
+    }
+  }catch(e){ disparos = []; }
+  renderizarDisparos();
+}
+
+async function disparar(){
+  const data = document.getElementById('disp-data').value;
+  const tipo = document.getElementById('disp-tipo').value;
+  const grupo = document.getElementById('disp-grupo').value.trim();
+  const casoVal = document.getElementById('disp-caso').value;
+  const casoTxt = document.getElementById('disp-caso').options[document.getElementById('disp-caso').selectedIndex].text;
+  if(!data||!grupo||!casoVal){ alert('Preencha data, grupo e caso antes de disparar.'); return; }
+
+  const novo = {data, tipo, grupo, caso:casoTxt, respostas:0, criadoEm: firebase.firestore.FieldValue.serverTimestamp()};
+  try{
+    const ref = await db.collection('acad_disparos').add(novo);
+    disparos.unshift({...novo, id:ref.id});
+    document.getElementById('adm-total-disparos').textContent = disparos.length;
+    renderizarDisparos();
+    alert('✅ Atividade disparada para a turma!');
+  }catch(e){ alert('Erro ao disparar. Tente novamente.'); }
+}
+
+function renderizarDisparos(){
+  const tbody = document.getElementById('tbl-disparos');
+  if(!tbody) return;
+  if(disparos.length === 0){ tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-light)">Nenhum disparo realizado ainda.</td></tr>'; return; }
+  tbody.innerHTML = disparos.map(d => `
+    <tr>
+      <td>${d.data||'—'}</td>
+      <td><span class="badge ${d.tipo==='microaval'?'badge-blue':'badge-roxo'}">${d.tipo==='microaval'?'⭐ Microavaliação N2':'📋 Ficha N1'}</span></td>
+      <td style="font-size:12px">${d.caso||'—'}</td>
+      <td>${d.grupo||'—'}</td>
+      <td style="font-weight:600">${d.respostas||0}</td>
+    </tr>`).join('');
+}
+
+// ===== PROF: NOTAS =====
+function buscarAlunoNotas(val){
+  const ac = document.getElementById('nota-ac');
+  if(val.length < 2){ ac.classList.add('hidden'); return; }
+  const lower = val.toLowerCase();
+  const res = todosAlunos.filter(a => a.nome.toLowerCase().includes(lower));
+  if(res.length === 0){ ac.classList.add('hidden'); return; }
+  ac.innerHTML = res.slice(0,8).map(a =>
+    `<div class="autocomplete-item" onclick="selecionarAlunoNota('${a.id||a.matricula}','${a.nome}')">${a.nome} — ${a.matricula}</div>`
+  ).join('');
+  ac.classList.remove('hidden');
+}
+
+function selecionarAlunoNota(id, nome){
+  alunoNotaId = id;
+  document.getElementById('nota-busca').value = nome;
+  document.getElementById('nota-sel-nome').value = nome;
+  document.getElementById('nota-ac').classList.add('hidden');
+  document.getElementById('nota-form').classList.remove('hidden');
+
+  const aluno = todosAlunos.find(a => (a.id||a.matricula) === id);
+  if(aluno){
+    document.getElementById('nota-n1').value = aluno.notaN1 || 0;
+    document.getElementById('nota-esa').value = aluno.notaESA || 0;
+    const sem = aluno.notaSeminario || 0;
+    document.getElementById('nota-rac').value = Math.min(1.5, sem/4);
+    document.getElementById('nota-coe').value = Math.min(1.5, sem/4);
+    document.getElementById('nota-qual').value = Math.min(1.5, sem/4);
+    document.getElementById('nota-din').value = Math.min(1.5, sem/4);
+    atualizarTotalSem();
+  }
+}
+
+function atualizarTotalSem(){
+  const rac = parseFloat(document.getElementById('nota-rac').value)||0;
+  const coe = parseFloat(document.getElementById('nota-coe').value)||0;
+  const qual = parseFloat(document.getElementById('nota-qual').value)||0;
+  const din = parseFloat(document.getElementById('nota-din').value)||0;
+  document.getElementById('nota-sem-total').textContent = (rac+coe+qual+din).toFixed(1);
+}
+['nota-rac','nota-coe','nota-qual','nota-din'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', atualizarTotalSem);
+});
+
+async function salvarNotas(){
+  if(!alunoNotaId){ alert('Selecione um aluno.'); return; }
+  const n1 = parseFloat(document.getElementById('nota-n1').value)||0;
+  const esa = parseFloat(document.getElementById('nota-esa').value)||0;
+  const rac = parseFloat(document.getElementById('nota-rac').value)||0;
+  const coe = parseFloat(document.getElementById('nota-coe').value)||0;
+  const qual = parseFloat(document.getElementById('nota-qual').value)||0;
+  const din = parseFloat(document.getElementById('nota-din').value)||0;
+  const sem = rac+coe+qual+din;
+
+  const idx = todosAlunos.findIndex(a => (a.id||a.matricula) === alunoNotaId);
+  if(idx >= 0){ todosAlunos[idx].notaN1 = n1; todosAlunos[idx].notaSeminario = sem; todosAlunos[idx].notaESA = esa; }
+
+  try{
+    await db.collection('acad_notas').doc(alunoNotaId).set({
+      alunoId:alunoNotaId, notaN1:n1, notaSeminario:sem, notaESA:esa,
+      notaRac:rac, notaCoe:coe, notaQual:qual, notaDin:din,
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('nota-status').textContent = '✅ Notas salvas!';
+    renderizarPauta();
+    setTimeout(()=>document.getElementById('nota-status').textContent='', 3000);
+  }catch(e){ document.getElementById('nota-status').textContent='❌ Erro ao salvar.'; }
+}
+
+// ===== PROF: PAUTA =====
+let pautaFiltrada = [];
+function renderizarPauta(){
+  pautaFiltrada = [...todosAlunos];
+  renderizarLinhasPauta(pautaFiltrada);
+}
+function filtrarPauta(val){
+  const lower = val.toLowerCase();
+  const fil = todosAlunos.filter(a => a.nome.toLowerCase().includes(lower) || a.matricula.includes(lower));
+  renderizarLinhasPauta(fil);
+}
+function renderizarLinhasPauta(lista){
+  const tbody = document.getElementById('tbl-pauta');
+  if(!tbody) return;
+  tbody.innerHTML = lista.map(a => {
+    const n1 = a.notaN1 || 0;
+    const sem = a.notaSeminario || 0;
+    const esa = a.notaESA || 0;
+    const plat = calcPlateia(a);
+    const n2 = Math.min(10, sem+plat+esa);
+    const media = ((n1+n2)/2);
+    const aprov = media >= 6;
+    return `<tr>
+      <td><span class="badge badge-roxo">${a.matricula}</span></td>
+      <td style="font-weight:600">${a.nome}</td>
+      <td style="font-size:12px">${a.grupoN1||'—'}</td>
+      <td style="font-weight:600;color:${n1>=6?'var(--green)':'var(--red)'}">${n1.toFixed(1)}</td>
+      <td style="font-size:12px">${a.grupoN2||'—'}</td>
+      <td>${sem.toFixed(1)}</td>
+      <td>${plat.toFixed(1)}</td>
+      <td>${esa.toFixed(1)}</td>
+      <td style="font-weight:600;color:${n2>=6?'var(--green)':'var(--red)'}">${n2.toFixed(1)}</td>
+      <td style="font-size:18px;font-weight:800;color:${aprov?'var(--green)':'var(--red)'}">${media.toFixed(1)}</td>
+      <td><span class="badge ${aprov?'badge-ok':'badge-no'}">${aprov?'Aprovado':'Em risco'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function exportarPauta(){
+  const header = 'Matrícula,Nome,Grupo N1,N1,Grupo N2,Seminário,Plateia,ESA,Total N2,Média\n';
+  const rows = todosAlunos.map(a => {
+    const n1=a.notaN1||0, sem=a.notaSeminario||0, esa=a.notaESA||0, plat=calcPlateia(a);
+    const n2=Math.min(10,sem+plat+esa), media=((n1+n2)/2).toFixed(1);
+    return `${a.matricula},${a.nome},${a.grupoN1||''},${n1},${a.grupoN2||''},${sem},${plat.toFixed(1)},${esa},${n2.toFixed(1)},${media}`;
+  }).join('\n');
+  const blob = new Blob([header+rows], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='pauta_psicoterapia_breve.csv'; a.click();
+}
+
+// ===== PROF: LINKS =====
+function copiarLink(tipo){
+  const base = window.location.href.split('?')[0];
+  const url = tipo === 'grupos' ? base+'?acao=grupos' : base+'?acao=historico';
+  navigator.clipboard.writeText(url).then(()=>{
+    document.getElementById(`link-${tipo}-preview`).textContent = '✅ Copiado: '+url;
+  });
+}
+function abrirWhatsApp(tipo){
+  const base = window.location.href.split('?')[0];
+  const url = encodeURIComponent(tipo==='grupos'?base+'?acao=grupos':base+'?acao=historico');
+  const msg = tipo==='grupos'
+    ? encodeURIComponent('📋 *Psicoterapia Breve — Formação de Grupos*\nAcesse o link abaixo para cadastrar os integrantes do seu grupo:\n')
+    : encodeURIComponent('📊 *Psicoterapia Breve — Consulta de Notas*\nAcesse o link abaixo para ver seu histórico individual:\n');
+  window.open(`https://api.whatsapp.com/send?text=${msg}${url}`, '_blank');
+}
+
+// ===== AUTO INPUT LISTENERS (notas) =====
+window.addEventListener('DOMContentLoaded', ()=>{
+  // data padrão hoje
+  const hoje = new Date().toISOString().split('T')[0];
+  const dataEl = document.getElementById('disp-data');
+  if(dataEl) dataEl.value = hoje;
+
+  ['nota-rac','nota-coe','nota-qual','nota-din'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', atualizarTotalSem);
+  });
+
+  // URL params
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('acao')==='historico'){
+    // mostra login direto
+  }
+});
+</script>
+</body>
+</html>
