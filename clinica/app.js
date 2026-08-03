@@ -2955,7 +2955,6 @@ function Login({ onLogin }) {
 
   const perfis = [
     { id:"paciente", nome:"Sou Paciente", desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
-    { id:"aluno",    nome:"Sou Aluno",    desc:"Portal de supervisão clínica", icon:"graduation-cap" },
   ];
 
   async function handleLoginPaciente(e) {
@@ -3010,7 +3009,7 @@ function Login({ onLogin }) {
         <div className="login-crp">Psicóloga Doutora · CRP 09/20590</div>
         <div className="login-left-btns">
           {perfis.map(p=>(
-            <button key={p.id} onClick={()=>{setEtapa(p.id);setErro("");setNome("");setEmail("");setSenha("");}}>
+            <button key={p.id} onClick={()=>{ if(p.id==="psicoterapia"){ window.location.href="../academico/"; return; } setEtapa(p.id);setErro("");setNome("");setEmail("");setSenha("");}}>
               {p.nome.replace("Sou ","")}
             </button>
           ))}
@@ -3026,7 +3025,7 @@ function Login({ onLogin }) {
             </div>
             <div className="profile-cards">
               {perfis.map(p=>(
-                <button key={p.id} className="profile-card" onClick={()=>{setEtapa(p.id);setErro("");}}>
+                <button key={p.id} className="profile-card" onClick={()=>{ if(p.id==="psicoterapia"){ window.location.href="../academico/"; return; } setEtapa(p.id);setErro("");}}>
                   <div className="profile-card-icon"><Icon name={p.icon} size={22}/></div>
                   <div className="profile-card-text">
                     <div className="profile-card-name">{p.nome}</div>
