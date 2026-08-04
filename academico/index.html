@@ -7,563 +7,721 @@
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--roxo:#7B00C4;--roxo-dark:#5a0090;--roxo-light:#f3e8ff;--text:#1f2937;--text-light:#6b7280;--border:#e5e7eb;--white:#fff;--green:#16a34a;--red:#dc2626}
+:root{--roxo:#7B00C4;--roxo-dark:#5a0090;--roxo-light:#f3e8ff;--text:#1f2937;--tl:#6b7280;--border:#e5e7eb;--white:#fff;--green:#16a34a;--red:#dc2626}
 body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;color:var(--text)}
 .hidden{display:none!important}
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.login-card{background:var(--white);border-radius:24px;padding:36px;width:100%;max-width:480px;box-shadow:0 8px 48px rgba(123,0,196,.14)}
-.logo-name{font-family:'Dancing Script',cursive;font-size:32px;color:var(--roxo);font-weight:700;text-align:center}
-.logo-sub{font-size:12px;color:var(--text-light);text-align:center;margin-top:2px}
-.login-title{font-size:20px;font-weight:700;color:#3d006a;text-align:center;margin:16px 0 4px}
-.login-sub{font-size:13px;color:var(--text-light);text-align:center;margin-bottom:22px;line-height:1.6}
-.pcard{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1.5px solid var(--border);border-radius:12px;background:var(--white);cursor:pointer;text-align:left;width:100%;margin-bottom:10px;transition:border-color .2s;font-family:'Inter',sans-serif}
-.pcard:hover{border-color:var(--roxo)}
-.picon{width:42px;height:42px;border-radius:10px;background:var(--roxo-light);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.pname{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
-.pdesc{font-size:12px;color:var(--text-light)}
-.parr{color:var(--text-light);font-size:18px;margin-left:auto}
-.back-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text-light);font-family:'Inter',sans-serif;margin-bottom:18px;padding:0;display:flex;align-items:center;gap:5px}
-.back-btn:hover{color:var(--roxo)}
-.lbl{display:block;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.lw{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.lc{background:#fff;border-radius:24px;padding:36px;width:100%;max-width:480px;box-shadow:0 8px 48px rgba(123,0,196,.14)}
+.dn{font-family:'Dancing Script',cursive;font-size:32px;color:var(--roxo);font-weight:700;text-align:center}
+.ds{font-size:12px;color:var(--tl);text-align:center;margin-top:2px}
+.lt{font-size:20px;font-weight:700;color:#3d006a;text-align:center;margin:16px 0 4px}
+.ls{font-size:13px;color:var(--tl);text-align:center;margin-bottom:22px;line-height:1.6}
+.pc{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1.5px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:left;width:100%;margin-bottom:10px;transition:border-color .2s;font-family:'Inter',sans-serif}
+.pc:hover{border-color:var(--roxo)}
+.pi{width:44px;height:44px;border-radius:10px;background:var(--roxo-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pn{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
+.pd{font-size:12px;color:var(--tl)}
+.pa{color:var(--tl);font-size:18px;margin-left:auto}
+.bb{background:none;border:none;cursor:pointer;font-size:13px;color:var(--tl);font-family:'Inter',sans-serif;margin-bottom:18px;padding:0}
+.bb:hover{color:var(--roxo)}
+.lbl{display:block;font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
 .inp{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
 .inp:focus{border-color:var(--roxo)}
 .fg{margin-bottom:14px;position:relative}
-.btn-p{width:100%;padding:13px;background:var(--roxo);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
-.btn-p:hover{opacity:.88}
-.erro{background:#fee2e2;color:var(--red);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;font-weight:500;display:none}
-.hint{background:var(--roxo-light);color:var(--roxo-dark);border-radius:8px;padding:10px 13px;font-size:12px;margin-top:12px;line-height:1.5}
-.aclist{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--roxo);border-radius:9px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
-.acitem{padding:10px 13px;cursor:pointer;font-size:14px;color:var(--text)}
-.acitem:hover{background:var(--roxo-light)}
+.bp{width:100%;padding:13px;background:var(--roxo);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
+.bp:hover{opacity:.88}
+.er{background:#fee2e2;color:var(--red);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;font-weight:500;display:none}
+.ht{background:var(--roxo-light);color:var(--roxo-dark);border-radius:8px;padding:10px 13px;font-size:12px;margin-top:12px;line-height:1.5}
+.acl{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--roxo);border-radius:9px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
+.aci{padding:10px 13px;cursor:pointer;font-size:14px;color:var(--text)}
+.aci:hover{background:var(--roxo-light)}
 .app{display:flex;min-height:100vh}
-.sidebar{width:230px;background:#3d006a;color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
-.sb-logo{padding:20px 18px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
-.sb-logoname{font-family:'Dancing Script',cursive;font-size:20px;color:#e9d5ff}
-.sb-logosub{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
-.sb-user{padding:10px 18px;font-size:12px;color:rgba(255,255,255,.65);border-bottom:1px solid rgba(255,255,255,.08)}
-.sb-user strong{color:#fff;display:block;font-size:13px}
-.sb-nav{padding:10px 0;flex:1}
-.ni{display:flex;align-items:center;gap:9px;padding:10px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,.72);cursor:pointer;transition:background .15s;border-left:3px solid transparent}
+.sb{width:220px;background:#3d006a;color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
+.sbl{padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sbln{font-family:'Dancing Script',cursive;font-size:19px;color:#e9d5ff}
+.sbls{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
+.sbu{padding:10px 16px;font-size:12px;color:rgba(255,255,255,.65);border-bottom:1px solid rgba(255,255,255,.08)}
+.sbu strong{color:#fff;display:block;font-size:13px}
+.sbn{padding:10px 0;flex:1}
+.ni{display:flex;align-items:center;gap:9px;padding:10px 16px;font-size:13px;font-weight:500;color:rgba(255,255,255,.72);cursor:pointer;transition:background .15s;border-left:3px solid transparent}
 .ni:hover{background:rgba(255,255,255,.08);color:#fff}
 .ni.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:#c084fc}
-.sb-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1)}
-.btn-lo{width:100%;padding:8px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
-.btn-lo:hover{background:rgba(255,255,255,.2)}
-.main{margin-left:230px;flex:1;padding:28px}
+.sbf{padding:14px 16px;border-top:1px solid rgba(255,255,255,.1)}
+.blo{width:100%;padding:8px;background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.blo:hover{background:rgba(255,255,255,.2)}
+.mn{margin-left:220px;flex:1;padding:28px;min-height:100vh}
 .pt{font-size:20px;font-weight:700;color:#3d006a;margin-bottom:2px}
-.ps{font-size:13px;color:var(--text-light);margin-bottom:18px}
-.card{background:var(--white);border-radius:14px;padding:20px;box-shadow:0 2px 14px rgba(123,0,196,.07);margin-bottom:16px}
+.ps{font-size:13px;color:var(--tl);margin-bottom:18px}
+.cd{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 14px rgba(123,0,196,.07);margin-bottom:16px}
 .ct{font-size:13px;font-weight:700;color:#3d006a;margin-bottom:12px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 .sv{font-size:28px;font-weight:800;color:var(--roxo)}
-.sl{font-size:12px;color:var(--text-light)}
+.sl{font-size:12px;color:var(--tl)}
 .tw{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#f9fafb;padding:9px 13px;text-align:left;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
-td{padding:9px 13px;border-bottom:1px solid #f3f4f6}
+th{background:#f9fafb;padding:9px 13px;text-align:left;font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+td{padding:9px 13px;border-bottom:1px solid #f3f4f6;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#faf5ff}
-.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.bdg{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
 .bok{background:#dcfce7;color:#16a34a}
 .bno{background:#fee2e2;color:#dc2626}
 .brx{background:#f3e8ff;color:#7B00C4}
 .bbl{background:#dbeafe;color:#1d4ed8}
+.bam{background:#fef3c7;color:#92400e}
 .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:none;transition:opacity .2s}
 .btn:hover{opacity:.85}
 .bsm{padding:5px 11px;font-size:12px}
-.broxo{background:var(--roxo);color:#fff}
+.brxo{background:var(--roxo);color:#fff}
 .bout{background:transparent;border:1.5px solid var(--roxo);color:var(--roxo)}
-.bgray{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}
-.bred{background:var(--red);color:#fff}
+.bgr{background:#f3f4f6;color:var(--text);border:1px solid var(--border)}
+.brd{background:var(--red);color:#fff}
+.bgn{background:#16a34a;color:#fff}
 .brow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.fg2{margin-bottom:13px}
-.fg2 label{display:block;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.fg2 input,.fg2 select,.fg2 textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
-.fg2 input:focus,.fg2 select:focus,.fg2 textarea:focus{border-color:var(--roxo)}
-.fg2 textarea{resize:vertical;min-height:70px}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.f2{margin-bottom:13px}
+.f2 label{display:block;font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.f2 input,.f2 select,.f2 textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+.f2 input:focus,.f2 select:focus,.f2 textarea:focus{border-color:var(--roxo)}
+.f2 textarea{resize:vertical;min-height:80px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .pb{height:7px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:5px}
 .pf{height:100%;background:linear-gradient(90deg,var(--roxo),#c084fc);border-radius:10px;transition:width .4s}
-.alert{border-radius:9px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:9px;line-height:1.5;background:#fffbeb;border:1px solid #fde68a;color:#92400e}
-.rrow{display:flex;gap:10px;margin-bottom:14px}
-.ropt{flex:1;border:2px solid var(--border);border-radius:9px;padding:10px;text-align:center;cursor:pointer;font-size:13px}
-.ropt:hover,.ropt.sel{border-color:var(--roxo);background:var(--roxo-light)}
-.ropt.sel{font-weight:700}
-.ni-inp{width:75px;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;text-align:center;outline:none}
-.ni-inp:focus{border-color:var(--roxo)}
-.cc{border:1.5px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px}
+.alt{border-radius:9px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:9px;line-height:1.5}
+.aw{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.ai{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+.ag{background:#f0fdf4;border:1px solid #86efac;color:#166534}
+.ro{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.roo{flex:1;min-width:100px;border:2px solid var(--border);border-radius:9px;padding:12px;text-align:center;cursor:pointer;font-size:13px;transition:all .15s}
+.roo:hover,.roo.sel{border-color:var(--roxo);background:var(--roxo-light)}
+.roo.sel{font-weight:700}
+.ni2{width:75px;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:'Inter',sans-serif;text-align:center;outline:none}
+.ni2:focus{border-color:var(--roxo)}
+.cc{border:1.5px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;transition:border-color .2s}
+.cc:hover{border-color:#c084fc}
 .cseg{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:10px 13px;font-size:12px;color:#991b1b;margin-top:10px}
+.cori{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 13px;font-size:12px;color:#92400e;margin-top:8px}
 .sec{display:none}
 .sec.active{display:block}
-.si{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;width:240px}
+.si{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
 .si:focus{border-color:var(--roxo)}
+.qr-box{border:2px dashed #c084fc;border-radius:16px;padding:28px;text-align:center;background:#faf5ff;margin-top:16px}
+.qr-img{width:220px;height:220px;border-radius:12px;margin:12px auto;display:block}
+.qr-code{font-family:monospace;font-size:22px;font-weight:900;color:var(--roxo);letter-spacing:6px;margin:10px 0}
+.grp-card{border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.grp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.grp-title{font-size:14px;font-weight:700;color:#3d006a}
+.grp-tag{background:var(--roxo-light);color:var(--roxo);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;display:inline-block;margin:2px}
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab{padding:10px 20px;font-size:14px;font-weight:600;color:var(--tl);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:var(--roxo);border-bottom-color:var(--roxo)}
+.tab-c{display:none}
+.tab-c.active{display:block}
+@media(max-width:768px){.mn{margin-left:0;padding:14px}.sb{display:none}.g2,.g3,.fr{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div id="v-sel" class="login-wrap">
-  <div class="login-card">
-    <div class="logo-name">🦋 Dra. Lucia Kratz</div>
-    <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora · Psicoterapia Breve</div>
-    <div class="login-title">Olá! Quem é você?</div>
-    <div class="login-sub">Selecione seu perfil para acessar a área correta.</div>
-    <button class="pcard" onclick="mostrar('v-sup')">
-      <div class="picon">🎓</div>
-      <div><div class="pname">Aluno de Supervisão Clínica</div><div class="pdesc">Portal de supervisão — ferramentas e atendimentos</div></div>
-      <div class="parr">›</div>
-    </button>
-    <button class="pcard" onclick="mostrar('v-psico')">
-      <div class="picon">📚</div>
-      <div><div class="pname">Aluno de Psicoterapia Breve</div><div class="pdesc">Disciplina do 9º Período · Fichas, casos e avaliações</div></div>
-      <div class="parr">›</div>
-    </button>
-    <button class="pcard" onclick="mostrar('v-prof')">
-      <div class="picon">👩‍🏫</div>
-      <div><div class="pname">Sou a Professora</div><div class="pdesc">Acesso ao painel completo da disciplina</div></div>
-      <div class="parr">›</div>
-    </button>
-    <div style="text-align:center;margin-top:18px;font-size:12px;color:var(--text-light)">
+<!-- SELEÇÃO -->
+<div id="v-sel" class="lw">
+  <div class="lc">
+    <div class="dn">🦋 Dra. Lucia Kratz</div>
+    <div class="ds">CRP 09/20590 · Psicóloga Doutora · Psicoterapia Breve</div>
+    <div class="lt">Olá! Quem é você?</div>
+    <div class="ls">Selecione seu perfil para acessar</div>
+    <button class="pc" onclick="mostrar('v-sup')"><div class="pi">🎓</div><div><div class="pn">Aluno de Supervisão Clínica</div><div class="pd">Portal de supervisão — ferramentas e atendimentos</div></div><div class="pa">›</div></button>
+    <button class="pc" onclick="mostrar('v-psico')"><div class="pi">📚</div><div><div class="pn">Aluno de Psicoterapia Breve</div><div class="pd">Disciplina do 9º Período</div></div><div class="pa">›</div></button>
+    <button class="pc" onclick="mostrar('v-prof')"><div class="pi">👩‍🏫</div><div><div class="pn">Sou a Professora</div><div class="pd">Painel completo da disciplina</div></div><div class="pa">›</div></button>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--tl)">
       <a href="../" style="color:var(--roxo);text-decoration:none;font-weight:500">← Voltar ao site</a>
+      &nbsp;·&nbsp;
+      <a id="lnk-cad-a" href="#" onclick="mostrar('v-cad');return false" style="color:var(--roxo);text-decoration:none;font-weight:500">📝 Auto-cadastro</a>
     </div>
   </div>
 </div>
 
-<div id="v-sup" class="login-wrap hidden">
-  <div class="login-card">
-    <button class="back-btn" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="logo-name">🎓 Supervisão Clínica</div>
-    <div class="logo-sub">Portal de supervisão — Dra. Lucia Kratz</div>
-    <div class="login-title">Entrar</div>
-    <div class="login-sub">Digite seu nome e matrícula</div>
-    <div id="sup-erro" class="erro"></div>
-    <div class="fg">
-      <label class="lbl">Seu Nome</label>
-      <input class="inp" id="sup-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acSup(this.value)"/>
-      <div id="sup-ac" class="aclist"></div>
-    </div>
-    <div class="fg">
-      <label class="lbl">Matrícula (Senha)</label>
-      <input class="inp" id="sup-senha" type="password" placeholder="Matrícula ou 1234" onkeydown="if(event.key==='Enter')loginSup()"/>
-    </div>
-    <button class="btn-p" onclick="loginSup()">Entrar</button>
-    <div class="hint">💡 Se não tem matrícula, use a senha <strong>1234</strong>.</div>
+<!-- LOGIN SUPERVISÃO -->
+<div id="v-sup" class="lw hidden">
+  <div class="lc">
+    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="dn">🎓 Supervisão Clínica</div>
+    <div class="lt">Entrar</div>
+    <div id="sup-er" class="er"></div>
+    <div class="fg"><label class="lbl">Seu Nome</label><input class="inp" id="sup-nm" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acSup(this.value)"/><div id="sup-ac" class="acl"></div></div>
+    <div class="fg"><label class="lbl">Matrícula (Senha)</label><input class="inp" id="sup-sn" type="password" placeholder="Matrícula ou 1234" onkeydown="if(event.key==='Enter')loginSup()"/></div>
+    <button class="bp" onclick="loginSup()">Entrar</button>
+    <div class="ht">💡 Sem matrícula? Use <strong>1234</strong>.</div>
   </div>
 </div>
 
-<div id="v-psico" class="login-wrap hidden">
-  <div class="login-card">
-    <button class="back-btn" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="logo-name">📚 Psicoterapia Breve</div>
-    <div class="logo-sub">Disciplina do 9º Período · Dra. Lucia Kratz</div>
-    <div class="login-title">Entrar</div>
-    <div class="login-sub">Digite seu nome e matrícula</div>
-    <div id="psico-erro" class="erro"></div>
-    <div class="fg">
-      <label class="lbl">Seu Nome</label>
-      <input class="inp" id="psico-nome" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acPsico(this.value)"/>
-      <div id="psico-ac" class="aclist"></div>
-    </div>
-    <div class="fg">
-      <label class="lbl">Matrícula (Senha)</label>
-      <input class="inp" id="psico-senha" type="password" placeholder="Número de matrícula" onkeydown="if(event.key==='Enter')loginPsico()"/>
-    </div>
-    <button class="btn-p" onclick="loginPsico()">Entrar</button>
+<!-- LOGIN PSICOTERAPIA -->
+<div id="v-psico" class="lw hidden">
+  <div class="lc">
+    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="dn">📚 Psicoterapia Breve</div>
+    <div class="ds">9º Período · Dra. Lucia Kratz</div>
+    <div class="lt">Entrar</div>
+    <div id="psico-er" class="er"></div>
+    <div class="fg"><label class="lbl">Seu Nome</label><input class="inp" id="psico-nm" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acPsico(this.value)"/><div id="psico-ac" class="acl"></div></div>
+    <div class="fg"><label class="lbl">Matrícula (Senha)</label><input class="inp" id="psico-sn" type="password" placeholder="Número de matrícula" onkeydown="if(event.key==='Enter')loginPsico()"/></div>
+    <button class="bp" onclick="loginPsico()">Entrar</button>
   </div>
 </div>
 
-<div id="v-prof" class="login-wrap hidden">
-  <div class="login-card">
-    <button class="back-btn" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="logo-name">👩‍🏫 Área da Professora</div>
-    <div class="logo-sub">Painel completo da disciplina</div>
-    <div class="login-title">Acesso Restrito</div>
-    <div class="login-sub">Digite sua senha para continuar</div>
-    <div id="prof-erro" class="erro"></div>
-    <div class="fg">
-      <label class="lbl">Senha</label>
-      <input class="inp" id="prof-senha" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')loginProf()"/>
-    </div>
-    <button class="btn-p" onclick="loginProf()">Entrar</button>
+<!-- LOGIN PROFESSORA -->
+<div id="v-prof" class="lw hidden">
+  <div class="lc">
+    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="dn">👩‍🏫 Área da Professora</div>
+    <div class="lt">Acesso Restrito</div>
+    <div id="prof-er" class="er"></div>
+    <div class="fg"><label class="lbl">Senha</label><input class="inp" id="prof-sn" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')loginProf()"/></div>
+    <button class="bp" onclick="loginProf()">Entrar</button>
   </div>
 </div>
 
+<!-- AUTO-CADASTRO -->
+<div id="v-cad" class="lw hidden">
+  <div class="lc">
+    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="dn">📝 Auto-Cadastro</div>
+    <div class="lt">Solicitar Acesso</div>
+    <div class="ls">Preencha seus dados. A professora aprovará seu acesso.</div>
+    <div id="cad-er" class="er"></div>
+    <div class="fg"><label class="lbl">Nome Completo *</label><input class="inp" id="cad-nm" placeholder="Seu nome completo"/></div>
+    <div class="fg"><label class="lbl">Matrícula *</label><input class="inp" id="cad-mt" placeholder="Número de matrícula"/></div>
+    <div class="fg"><label class="lbl">E-mail</label><input class="inp" id="cad-em" type="email" placeholder="seu@email.com"/></div>
+    <button class="bp" onclick="autoCadastro()" id="cad-btn">Solicitar Acesso</button>
+    <div id="cad-ok" class="ag alt hidden">✅ Enviado! Aguarde aprovação da professora.</div>
+  </div>
+</div>
+
+<!-- FORM VIA QR -->
+<div id="v-qr" class="lw hidden">
+  <div class="lc" style="max-width:540px">
+    <div class="dn">🦋 Psicoterapia Breve</div>
+    <div id="qr-tit" class="lt">Carregando...</div>
+    <div id="qr-sub" class="ls"></div>
+    <div id="qr-er" class="er"></div>
+    <div id="qr-frm"></div>
+  </div>
+</div>
+
+<!-- APP -->
 <div id="v-app" class="app hidden">
-  <aside class="sidebar">
-    <div class="sb-logo"><div class="sb-logoname">🦋 Dra. Lucia Kratz</div><div class="sb-logosub">Psicoterapia Breve</div></div>
-    <div class="sb-user"><strong id="sb-nome">—</strong><span id="sb-perf">—</span></div>
-    <nav class="sb-nav" id="nav-al">
+  <aside class="sb">
+    <div class="sbl"><div class="sbln">🦋 Dra. Lucia Kratz</div><div class="sbls">Psicoterapia Breve</div></div>
+    <div class="sbu"><strong id="sb-nm">—</strong><span id="sb-pf">—</span></div>
+    <nav class="sbn" id="nav-al">
       <div class="ni active" onclick="irSec('painel')">🏠 Meu Painel</div>
       <div class="ni" onclick="irSec('ficha')">📋 Ficha N1</div>
-      <div class="ni" onclick="irSec('micro')">⭐ Microavaliação N2</div>
+      <div class="ni" onclick="irSec('micro')">⭐ Microaval. N2</div>
       <div class="ni" onclick="irSec('espaco')">📊 Meu Espaço</div>
     </nav>
-    <nav class="sb-nav hidden" id="nav-pr">
+    <nav class="sbn hidden" id="nav-pr">
       <div class="ni active" onclick="irSec('adm-pai')">🏠 Painel</div>
       <div class="ni" onclick="irSec('adm-al')">👥 Alunos</div>
+      <div class="ni" onclick="irSec('adm-grp')">🗂️ Grupos</div>
       <div class="ni" onclick="irSec('adm-cas')">📁 Casos</div>
-      <div class="ni" onclick="irSec('adm-dis')">🚀 Disparo</div>
+      <div class="ni" onclick="irSec('adm-dis')">🚀 Disparo / QR</div>
       <div class="ni" onclick="irSec('adm-not')">📝 Notas</div>
       <div class="ni" onclick="irSec('adm-pau')">📊 Pauta</div>
-      <div class="ni" onclick="irSec('adm-lnk')">🔗 Links</div>
     </nav>
-    <div class="sb-footer"><button class="btn-lo" onclick="sair()">↩ Sair</button></div>
+    <div class="sbf"><button class="blo" onclick="sair()">↩ Sair</button></div>
   </aside>
-  <main class="main">
+  <main class="mn">
+
+    <!-- ALUNO: PAINEL -->
     <div id="sec-painel" class="sec active">
-      <div class="pt">Olá, <span id="p-nome">—</span> 👋</div><div class="ps">Psicoterapia Breve · 9º Período</div>
+      <div class="pt">Olá, <span id="p-nm">—</span> 👋</div>
+      <div class="ps">Psicoterapia Breve · 9º Período · Profª. Dra. Lucia Kratz</div>
       <div class="g3" style="margin-bottom:16px">
-        <div class="card"><div class="sv" id="p-n1">—</div><div class="sl">Nota N1</div><div class="pb"><div class="pf" id="pp-n1" style="width:0%"></div></div></div>
-        <div class="card"><div class="sv" id="p-n2">—</div><div class="sl">Nota N2</div><div class="pb"><div class="pf" id="pp-n2" style="width:0%"></div></div></div>
-        <div class="card"><div class="sv" id="p-med">—</div><div class="sl">Média</div><div class="pb"><div class="pf" id="pp-med" style="width:0%"></div></div></div>
+        <div class="cd"><div class="sv" id="p-n1">—</div><div class="sl">Nota N1</div><div class="pb"><div class="pf" id="pp-n1" style="width:0%"></div></div></div>
+        <div class="cd"><div class="sv" id="p-n2">—</div><div class="sl">Nota N2</div><div class="pb"><div class="pf" id="pp-n2" style="width:0%"></div></div></div>
+        <div class="cd"><div class="sv" id="p-med">—</div><div class="sl">Média</div><div class="pb"><div class="pf" id="pp-med" style="width:0%"></div></div></div>
       </div>
       <div class="g2">
-        <div class="card"><div class="ct">📋 Meus Grupos</div>
+        <div class="cd"><div class="ct">📋 Meus Grupos</div>
           <table><tbody>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N1:</td><td><span class="badge brx" id="p-g1">—</span></td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Caso N1:</td><td id="p-c1" style="font-size:13px">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N2:</td><td><span class="badge bbl" id="p-g2">—</span></td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Caso N2:</td><td id="p-c2" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;width:90px;padding:5px 0">Grupo N1:</td><td><span class="bdg brx" id="p-g1">—</span></td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Caso N1:</td><td id="p-c1" style="font-size:12px">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Grupo N2:</td><td><span class="bdg bbl" id="p-g2">—</span></td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Caso N2:</td><td id="p-c2" style="font-size:12px">—</td></tr>
           </tbody></table>
         </div>
-        <div class="card"><div class="ct">📅 Atividades</div><div id="p-at" style="font-size:13px;color:var(--green)">✅ Sem pendências.</div></div>
+        <div class="cd"><div class="ct">📅 Atividades</div><div id="p-at" style="font-size:13px;color:var(--green)">✅ Nenhuma pendência.</div></div>
       </div>
     </div>
+
+    <!-- ALUNO: FICHA N1 -->
     <div id="sec-ficha" class="sec">
-      <div class="pt">📋 Ficha de Avaliação Clínica — N1</div><div class="ps">Raciocínio Diagnóstico em Psicoterapia Breve</div>
-      <div class="card">
-        <div class="frow" style="margin-bottom:13px"><div class="fg2"><label>Paciente Simulado</label><input id="f1-pac" placeholder="Nome"/></div><div class="fg2"><label>Caso Nº</label><input id="f1-cas" placeholder="Ex: 3"/></div></div>
-        <div class="frow" style="margin-bottom:13px"><div class="fg2"><label>Contexto</label><input id="f1-ctx" placeholder="UTI, CAIS, CRAS..."/></div><div class="fg2"><label>Modalidade</label><select id="f1-mod"><option>Individual</option><option>Grupo</option></select></div></div>
-        <div class="fg2"><label>1. Queixa Principal & Demanda</label><textarea id="f1-q1"></textarea></div>
-        <div class="fg2"><label>2. Sinais Observados</label><textarea id="f1-q2"></textarea></div>
-        <div class="fg2"><label>3. Sintomas Relatados</label><textarea id="f1-q3"></textarea></div>
-        <div class="fg2"><label>4. Hipótese Diagnóstica (DSM-5-TR)</label><textarea id="f1-q4"></textarea></div>
-        <div class="fg2"><label>5. Diagnóstico Diferencial</label><textarea id="f1-q5"></textarea></div>
-        <div class="fg2"><label>6. Foco para Psicoterapia Breve</label><textarea id="f1-q6"></textarea></div>
-        <div class="fg2"><label>7. Estratégias e Encaminhamentos</label><textarea id="f1-q7"></textarea></div>
-        <div class="brow"><button class="btn broxo" onclick="salvarF1()">💾 Salvar</button><span id="f1-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+      <div class="pt">📋 Ficha de Avaliação Clínica — N1</div>
+      <div class="ps">Raciocínio Diagnóstico em Psicoterapia Breve</div>
+      <div class="cd">
+        <div class="alt ai">ℹ️ Esta ficha é liberada via QR Code em sala. Preencha e salve — ficará no seu painel.</div>
+        <div class="fr" style="margin-bottom:13px">
+          <div class="f2"><label>Paciente Simulado</label><input id="f1-pac" placeholder="Nome do paciente"/></div>
+          <div class="f2"><label>Caso</label><select id="f1-cas"><option value="">Selecione...</option></select></div>
+        </div>
+        <div class="fr" style="margin-bottom:13px">
+          <div class="f2"><label>Contexto Institucional</label><input id="f1-ctx" placeholder="UTI, CAIS, CRAS..."/></div>
+          <div class="f2"><label>Modalidade</label><select id="f1-mod"><option>Individual</option><option>Grupo</option></select></div>
+        </div>
+        <div class="f2"><label>1. Queixa Principal & Demanda Institucional (em palavras do paciente)</label><textarea id="f1-q1"></textarea></div>
+        <div class="f2"><label>2. Mapeamento Semiológico: Sinais Observados</label><textarea id="f1-q2"></textarea></div>
+        <div class="f2"><label>3. Mapeamento Semiológico: Sintomas Relatados</label><textarea id="f1-q3"></textarea></div>
+        <div class="f2"><label>4. Hipótese Diagnóstica Principal (DSM-5-TR)</label><textarea id="f1-q4"></textarea></div>
+        <div class="f2"><label>5. Diagnóstico Diferencial & Fatores do Contexto</label><textarea id="f1-q5"></textarea></div>
+        <div class="f2"><label>6. Delimitação do Foco para Psicoterapia Breve</label><textarea id="f1-q6"></textarea></div>
+        <div class="f2"><label>7. Estratégias Focais, Manejo de Crise e Encaminhamentos</label><textarea id="f1-q7"></textarea></div>
+        <div class="brow"><button class="btn brxo" onclick="salvarF1()">💾 Salvar Ficha</button><button class="btn bgr" onclick="pdfF1()">📄 PDF</button><span id="f1-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
       </div>
+      <div class="cd"><div class="ct">📁 Minhas Fichas Salvas</div><div id="f1-hist" style="font-size:13px;color:var(--tl)">Nenhuma ficha ainda.</div></div>
     </div>
+
+    <!-- ALUNO: MICRO N2 -->
     <div id="sec-micro" class="sec">
-      <div class="pt">⭐ Microavaliação da Plateia — N2</div><div class="ps">0,5 pt por encontro, até 2,0 pt</div>
-      <div class="alert">⏳ <span id="micro-av">Aguardando disparo da professora.</span></div>
+      <div class="pt">⭐ Microavaliação da Plateia — N2</div>
+      <div class="ps">0,5 pt por encontro, até 2,0 pt total</div>
+      <div class="alt aw">⚠️ Escaneie o QR Code exibido pela professora em sala para acessar o formulário.</div>
       <div id="micro-lst"></div>
     </div>
+
+    <!-- ALUNO: ESPAÇO -->
     <div id="sec-espaco" class="sec">
-      <div class="pt">📊 Meu Espaço</div><div class="ps">Histórico de avaliações</div>
-      <div class="alert">⚠️ <div><strong>Atenção:</strong> Nota parcial proporcional às atividades liberadas até o momento.</div></div>
+      <div class="pt">📊 Meu Espaço</div>
+      <div class="ps">Histórico de avaliações e notas</div>
+      <div class="alt aw">⚠️ <div><strong>Atenção:</strong> Nota parcial proporcional às atividades liberadas até o momento.</div></div>
       <div class="g2">
-        <div class="card"><div class="ct">👤 Meus Dados</div>
+        <div class="cd"><div class="ct">👤 Meus Dados</div>
           <table><tbody>
-            <tr><td style="color:var(--text-light);font-size:12px;width:100px;padding:5px 0">Nome:</td><td id="me-nm" style="font-size:13px;font-weight:600">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Matrícula:</td><td id="me-mt" style="font-size:13px">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N1:</td><td id="me-g1" style="font-size:13px">—</td></tr>
-            <tr><td style="color:var(--text-light);font-size:12px;padding:5px 0">Grupo N2:</td><td id="me-g2" style="font-size:13px">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;width:100px;padding:5px 0">Nome:</td><td id="me-nm" style="font-size:13px;font-weight:600">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Matrícula:</td><td id="me-mt">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Grupo N1:</td><td id="me-g1">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Caso N1:</td><td id="me-c1" style="font-size:12px">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Grupo N2:</td><td id="me-g2">—</td></tr>
+            <tr><td style="color:var(--tl);font-size:12px;padding:5px 0">Caso N2:</td><td id="me-c2" style="font-size:12px">—</td></tr>
           </tbody></table>
         </div>
-        <div class="card"><div class="ct">📈 Notas</div>
+        <div class="cd"><div class="ct">📈 Notas</div>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">N1 (10,0)</span><strong id="me-n1">—</strong></div><div class="pb"><div class="pf" id="mep-n1" style="width:0%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">Seminário (6,0)</span><strong id="me-sm">—</strong></div><div class="pb"><div class="pf" id="mep-sm" style="width:0%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">Plateia (2,0)</span><strong id="me-pl">—</strong></div><div class="pb"><div class="pf" id="mep-pl" style="width:0%"></div></div></div>
-            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--text-light)">ESA (2,0)</span><strong id="me-es">—</strong></div><div class="pb"><div class="pf" id="mep-es" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--tl)">N1 (10,0)</span><strong id="me-n1">—</strong></div><div class="pb"><div class="pf" id="mep-n1" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--tl)">Seminário N2 (6,0)</span><strong id="me-sm">—</strong></div><div class="pb"><div class="pf" id="mep-sm" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--tl)">Plateia N2 (2,0)</span><strong id="me-pl">—</strong></div><div class="pb"><div class="pf" id="mep-pl" style="width:0%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:var(--tl)">ESA N2 (2,0)</span><strong id="me-es">—</strong></div><div class="pb"><div class="pf" id="mep-es" style="width:0%"></div></div></div>
           </div>
         </div>
       </div>
+      <div class="cd"><div class="ct">📁 Minhas Fichas N1</div><div id="me-f1" style="font-size:13px;color:var(--tl)">Carregando...</div></div>
+      <div class="cd"><div class="ct">⭐ Minhas Microavaliações N2</div><div id="me-f2" style="font-size:13px;color:var(--tl)">Carregando...</div></div>
     </div>
+
+    <!-- PROF: PAINEL -->
     <div id="sec-adm-pai" class="sec">
       <div class="pt">Painel da Professora</div><div class="ps">Psicoterapia Breve — Visão Geral</div>
       <div class="g3" style="margin-bottom:16px">
-        <div class="card"><div class="sv" id="a-nal">0</div><div class="sl">Alunos</div></div>
-        <div class="card"><div class="sv" id="a-ndi">0</div><div class="sl">Disparos</div></div>
-        <div class="card"><div class="sv" id="a-nfi">0</div><div class="sl">Fichas</div></div>
+        <div class="cd"><div class="sv" id="a-nal">0</div><div class="sl">Alunos Ativos</div></div>
+        <div class="cd"><div class="sv" id="a-ngp">0</div><div class="sl">Grupos</div></div>
+        <div class="cd"><div class="sv" id="a-nfi">0</div><div class="sl">Fichas Recebidas</div></div>
       </div>
       <div class="g2">
-        <div class="card"><div class="ct">🚦 Etapas</div>
+        <div class="cd"><div class="ct">🚦 Etapas</div>
           <div style="display:flex;flex-direction:column;gap:12px;font-size:13px">
             <div style="display:flex;justify-content:space-between;align-items:center">N1 — Atendimento<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tog-n1" onchange="togEt('n1',this.checked)" style="accent-color:var(--roxo)"/><span id="lbl-n1">Desabilitada</span></label></div>
             <div style="display:flex;justify-content:space-between;align-items:center">N2 — Seminários<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tog-n2" onchange="togEt('n2',this.checked)" style="accent-color:var(--roxo)"/><span id="lbl-n2">Desabilitada</span></label></div>
           </div>
         </div>
-        <div class="card"><div class="ct">⚡ Rápido</div>
+        <div class="cd"><div class="ct">⚡ Rápido</div>
           <div class="brow">
-            <button class="btn broxo bsm" onclick="irSec('adm-dis')">🚀 Disparo</button>
+            <button class="btn brxo bsm" onclick="irSec('adm-dis')">🚀 QR Code</button>
             <button class="btn bout bsm" onclick="irSec('adm-pau')">📊 Pauta</button>
-            <button class="btn bgray bsm" onclick="irSec('adm-cas')">📁 Casos</button>
-            <button class="btn bgray bsm" onclick="window.open('https://github.com/luciakratz-arch/clinica-dra.LuciaKratz','_blank')">📁 GitHub</button>
+            <button class="btn bgr bsm" onclick="irSec('adm-grp')">🗂️ Grupos</button>
+            <button class="btn bgr bsm" onclick="exportExcel('geral')">📥 Excel</button>
           </div>
         </div>
       </div>
+      <div class="cd"><div class="ct">⏳ Pendentes de Aprovação</div><div id="pai-pend">Verificando...</div></div>
     </div>
+
+    <!-- PROF: ALUNOS -->
     <div id="sec-adm-al" class="sec">
       <div class="pt">👥 Alunos</div><div class="ps">Gerencie a turma</div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="ct">➕ Cadastrar</div>
-        <div class="frow"><div class="fg2"><label>Nome *</label><input id="al-nm" placeholder="Nome completo"/></div><div class="fg2"><label>Matrícula *</label><input id="al-mt" placeholder="Matrícula (senha)"/></div></div>
-        <div class="frow"><div class="fg2"><label>Grupo N1</label><input id="al-g1"/></div><div class="fg2"><label>Caso N1</label><input id="al-c1"/></div></div>
-        <div class="frow"><div class="fg2"><label>Grupo N2</label><input id="al-g2"/></div><div class="fg2"><label>Caso N2</label><input id="al-c2"/></div></div>
-        <div class="brow"><button class="btn broxo" onclick="salvarAl()">Salvar</button><span id="al-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+      <div class="tabs">
+        <div class="tab active" onclick="abaAl('cadastro',this)">➕ Cadastrar</div>
+        <div class="tab" onclick="abaAl('lista',this)">📋 Turma</div>
+        <div class="tab" onclick="abaAl('pendentes',this)">⏳ Pendentes</div>
       </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="ct" style="margin-bottom:0">📋 Turma</div><input class="si" placeholder="🔍 Buscar..." oninput="filtAl(this.value)"/></div>
-        <div class="tw"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>Grp N1</th><th>Caso N1</th><th>Grp N2</th><th>Caso N2</th><th></th></tr></thead><tbody id="tb-al"></tbody></table></div>
+      <div id="tab-al-cadastro" class="tab-c active">
+        <div class="cd">
+          <div class="alt ai">💡 Link de auto-cadastro: <strong id="lnk-cad-txt" style="color:var(--roxo);font-size:11px"></strong> <button class="btn bgr bsm" onclick="copiarLnkCad()">Copiar</button></div>
+          <div class="fr"><div class="f2"><label>Nome *</label><input id="al-nm" placeholder="Nome completo"/></div><div class="f2"><label>Matrícula *</label><input id="al-mt" placeholder="Matrícula (será a senha)"/></div></div>
+          <div class="fr"><div class="f2"><label>E-mail</label><input id="al-em" type="email" placeholder="email@exemplo.com"/></div><div class="f2"><label>Status</label><select id="al-st2"><option value="ativo">Ativo</option><option value="pendente">Pendente</option></select></div></div>
+          <div class="brow"><button class="btn brxo" onclick="salvarAl()">Salvar</button><span id="al-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+        </div>
+      </div>
+      <div id="tab-al-lista" class="tab-c">
+        <div class="cd">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="ct" style="margin-bottom:0">Turma (<span id="al-count">0</span>)</div>
+            <input class="si" placeholder="🔍 Buscar..." oninput="filtAl(this.value)" style="width:200px"/>
+          </div>
+          <div class="tw"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>Grupo N1</th><th>Grupo N2</th><th>Status</th><th></th></tr></thead><tbody id="tb-al"></tbody></table></div>
+        </div>
+      </div>
+      <div id="tab-al-pendentes" class="tab-c">
+        <div class="cd"><div class="ct">⏳ Aguardando Aprovação</div><div id="tb-pend">Carregando...</div></div>
       </div>
     </div>
+
+    <!-- PROF: GRUPOS -->
+    <div id="sec-adm-grp" class="sec">
+      <div class="pt">🗂️ Grupos</div><div class="ps">Monte grupos e atribua casos N1 e N2</div>
+      <div class="tabs">
+        <div class="tab active" onclick="abaGrp('n1',this)">📋 Grupos N1</div>
+        <div class="tab" onclick="abaGrp('n2',this)">🎤 Grupos N2</div>
+      </div>
+      <div id="tab-grp-n1" class="tab-c active">
+        <div class="cd">
+          <div class="ct">➕ Criar / Editar Grupo N1</div>
+          <div class="fr">
+            <div class="f2"><label>Nome do Grupo</label><input id="grp1-nm" placeholder="Ex: Grupo 1"/></div>
+            <div class="f2"><label>Caso Atribuído</label><select id="grp1-cas"><option value="">Selecione...</option></select></div>
+          </div>
+          <div class="f2"><label>Membros (marque os alunos)</label><div id="grp1-mbs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:40px;background:#f9fafb;border-radius:8px;padding:10px;border:1.5px solid var(--border)"></div></div>
+          <div class="brow"><button class="btn brxo" onclick="salvarGrp('n1')">💾 Salvar Grupo N1</button><span id="grp1-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+        </div>
+        <div id="grps-n1-lst"></div>
+      </div>
+      <div id="tab-grp-n2" class="tab-c">
+        <div class="cd">
+          <div class="ct">➕ Criar / Editar Grupo N2</div>
+          <div class="fr">
+            <div class="f2"><label>Nome do Grupo</label><input id="grp2-nm" placeholder="Ex: Grupo 1"/></div>
+            <div class="f2"><label>Caso Atribuído</label><select id="grp2-cas"><option value="">Selecione...</option></select></div>
+          </div>
+          <div class="f2"><label>Membros</label><div id="grp2-mbs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:40px;background:#f9fafb;border-radius:8px;padding:10px;border:1.5px solid var(--border)"></div></div>
+          <div class="brow"><button class="btn brxo" onclick="salvarGrp('n2')">💾 Salvar Grupo N2</button><span id="grp2-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+        </div>
+        <div id="grps-n2-lst"></div>
+      </div>
+    </div>
+
+    <!-- PROF: CASOS -->
     <div id="sec-adm-cas" class="sec">
       <div class="pt">📁 Caderno de Casos</div><div class="ps">Exclusivo da professora</div>
-      <div class="brow" style="margin-bottom:16px"><button class="btn broxo" onclick="window.print()">🖨️ Imprimir</button><button class="btn bout" onclick="novoCaso()">➕ Novo</button></div>
-      <div id="cas-lst"></div>
-    </div>
-    <div id="sec-adm-dis" class="sec">
-      <div class="pt">🚀 Disparo ao Vivo</div><div class="ps">Libere atividades em tempo real</div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="ct">⚙️ Configurar</div>
-        <div class="frow"><div class="fg2"><label>Data</label><input type="date" id="dis-dt"/></div><div class="fg2"><label>Tipo</label><select id="dis-tp"><option value="ficha_n1">📋 Ficha N1</option><option value="microaval">⭐ Microavaliação N2</option></select></div></div>
-        <div class="frow"><div class="fg2"><label>Grupo</label><input id="dis-gr" placeholder="Ex: Grupo 3"/></div><div class="fg2"><label>Caso</label><select id="dis-cs"><option value="">Selecione...</option><option value="1">Caso 1 — Marcos, 34 anos</option><option value="2">Caso 2 — Helena, 42 anos</option><option value="3">Caso 3 — Lucas, 23 anos</option><option value="4">Caso 4 — Carla, 29 anos</option><option value="5">Caso 5 — Roberto, 50 anos</option><option value="6">Caso 6 — Vanessa, 38 anos</option><option value="7">Caso 7 — Juliana, 27 anos</option><option value="8">Caso 8 — Thiago, 31 anos</option><option value="9">Caso 9 — Camila, 35 anos</option><option value="10">Caso 10 — Gabriel, 26 anos</option></select></div></div>
-        <div style="border:2px dashed #c084fc;border-radius:12px;padding:20px;text-align:center"><div style="font-size:36px;margin-bottom:8px">🚀</div><div style="font-size:15px;font-weight:700;color:#3d006a;margin-bottom:12px">Pronto para disparar!</div><button class="btn broxo" onclick="disparar()">🚀 Disparar para a Turma</button></div>
+      <div class="tabs">
+        <div class="tab active" onclick="abaCas('n1',this)">📋 Casos N1 — Atendimento</div>
+        <div class="tab" onclick="abaCas('n2',this)">🎤 Casos N2 — Seminário</div>
       </div>
-      <div class="card"><div class="ct">📅 Histórico</div><div class="tw"><table><thead><tr><th>Data</th><th>Tipo</th><th>Caso</th><th>Grupo</th></tr></thead><tbody id="tb-dis"></tbody></table></div></div>
+      <div id="tab-cas-n1" class="tab-c active">
+        <div class="brow" style="margin-bottom:16px"><button class="btn brxo" onclick="window.print()">🖨️ Imprimir</button></div>
+        <div id="cas-n1-lst"></div>
+      </div>
+      <div id="tab-cas-n2" class="tab-c">
+        <div class="brow" style="margin-bottom:16px"><button class="btn brxo" onclick="window.print()">🖨️ Imprimir</button></div>
+        <div id="cas-n2-lst"></div>
+      </div>
     </div>
+
+    <!-- PROF: DISPARO QR -->
+    <div id="sec-adm-dis" class="sec">
+      <div class="pt">🚀 Disparo / QR Code</div><div class="ps">Gere o QR — alunos escaneiam e preenchem</div>
+      <div class="tabs">
+        <div class="tab active" onclick="abaDisp('n1',this)">📋 Ficha N1</div>
+        <div class="tab" onclick="abaDisp('n2',this)">⭐ Microavaliação N2</div>
+      </div>
+      <div id="tab-dis-n1" class="tab-c active">
+        <div class="cd">
+          <div class="ct">⚙️ Configurar — N1</div>
+          <div class="fr">
+            <div class="f2"><label>Data</label><input type="date" id="dis1-dt"/></div>
+            <div class="f2"><label>Grupo</label><select id="dis1-grp"><option value="">Selecione o grupo...</option></select></div>
+          </div>
+          <div class="f2"><label>Validade</label><select id="dis1-val"><option value="2">2 horas</option><option value="4">4 horas</option><option value="24" selected>24 horas</option><option value="48">48 horas</option></select></div>
+          <button class="btn brxo" onclick="gerarQR('n1')">🚀 Gerar QR Code</button>
+        </div>
+        <div id="qr1-box" class="hidden">
+          <div class="qr-box">
+            <div style="font-size:16px;font-weight:700;color:#3d006a">📋 Ficha N1 — <span id="qr1-grp"></span></div>
+            <div style="font-size:12px;color:var(--tl);margin:4px 0 8px">Válido até: <span id="qr1-val"></span></div>
+            <img id="qr1-img" class="qr-img" src="" alt="QR"/>
+            <div class="qr-code" id="qr1-cod"></div>
+            <div class="brow" style="justify-content:center;margin-top:12px">
+              <button class="btn brxo" onclick="baixarQR('qr1-img','qr_n1')">📥 Baixar</button>
+              <button class="btn bout" onclick="copiarQRLink('n1')">🔗 Link</button>
+              <button class="btn brd" onclick="encerrarQR('n1')">⏹ Encerrar</button>
+            </div>
+          </div>
+        </div>
+        <div class="cd" style="margin-top:16px"><div class="ct">📥 Fichas N1 Recebidas</div><div class="tw"><table><thead><tr><th>Aluno</th><th>Data</th><th>Caso</th><th>Status</th></tr></thead><tbody id="tb-f1r"></tbody></table></div></div>
+      </div>
+      <div id="tab-dis-n2" class="tab-c">
+        <div class="cd">
+          <div class="ct">⚙️ Configurar — N2</div>
+          <div class="fr">
+            <div class="f2"><label>Data</label><input type="date" id="dis2-dt"/></div>
+            <div class="f2"><label>Grupo Apresentador</label><select id="dis2-grp"><option value="">Selecione o grupo...</option></select></div>
+          </div>
+          <div class="f2"><label>Validade</label><select id="dis2-val"><option value="2">2 horas</option><option value="4">4 horas</option><option value="24" selected>24 horas</option></select></div>
+          <button class="btn brxo" onclick="gerarQR('n2')">🚀 Gerar QR Code</button>
+        </div>
+        <div id="qr2-box" class="hidden">
+          <div class="qr-box">
+            <div style="font-size:16px;font-weight:700;color:#3d006a">⭐ Microaval. N2 — <span id="qr2-grp"></span></div>
+            <div style="font-size:12px;color:var(--tl);margin:4px 0 8px">Válido até: <span id="qr2-val"></span></div>
+            <img id="qr2-img" class="qr-img" src="" alt="QR"/>
+            <div class="qr-code" id="qr2-cod"></div>
+            <div class="brow" style="justify-content:center;margin-top:12px">
+              <button class="btn brxo" onclick="baixarQR('qr2-img','qr_n2')">📥 Baixar</button>
+              <button class="btn bout" onclick="copiarQRLink('n2')">🔗 Link</button>
+              <button class="btn brd" onclick="encerrarQR('n2')">⏹ Encerrar</button>
+            </div>
+          </div>
+        </div>
+        <div class="cd" style="margin-top:16px"><div class="ct">⭐ Microavaliações Recebidas</div><div class="tw"><table><thead><tr><th>Aluno</th><th>Data</th><th>Grupo</th><th>Rating</th></tr></thead><tbody id="tb-f2r"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- PROF: NOTAS -->
     <div id="sec-adm-not" class="sec">
-      <div class="pt">📝 Lançar Notas</div><div class="ps">Selecione um aluno</div>
-      <div class="card" style="margin-bottom:16px">
-        <div class="ct">🔍 Aluno</div>
-        <div class="frow">
-          <div class="fg2" style="position:relative"><label>Nome</label><input class="inp" id="not-bk" placeholder="Digite o nome..." oninput="acNota(this.value)" autocomplete="off"/><div id="not-ac" class="aclist"></div></div>
-          <div class="fg2"><label>Selecionado</label><input id="not-sl" disabled placeholder="—" style="background:#f9fafb;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;width:100%;font-size:13px"/></div>
+      <div class="pt">📝 Lançar Notas</div><div class="ps">Notas individuais (N1/ESA) e de grupo (Seminário N2)</div>
+      <div class="cd" style="margin-bottom:16px">
+        <div class="ct">🔍 Selecionar Aluno</div>
+        <div class="fr">
+          <div class="f2" style="position:relative"><label>Nome</label><input class="inp" id="not-bk" placeholder="Digite o nome..." oninput="acNota(this.value)" autocomplete="off"/><div id="not-ac" class="acl"></div></div>
+          <div class="f2"><label>Selecionado</label><input id="not-sl" disabled placeholder="—" style="background:#f9fafb;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;width:100%;font-size:13px"/></div>
         </div>
       </div>
       <div id="not-fm" style="display:none">
         <div class="g2">
-          <div class="card"><div class="ct">📋 N1 (0–10)</div><div class="fg2"><label>Nota N1</label><input class="ni-inp" type="number" id="n-n1" min="0" max="10" step="0.5"/></div></div>
-          <div class="card"><div class="ct">🎓 ESA (0–2)</div><div class="fg2"><label>Nota ESA</label><input class="ni-inp" type="number" id="n-es" min="0" max="2" step="0.5"/></div></div>
+          <div class="cd"><div class="ct">📋 N1 Individual (0–10)</div><div class="f2"><label>Nota N1</label><input class="ni2" type="number" id="n-n1" min="0" max="10" step="0.5"/></div><div class="f2"><label>Observações</label><textarea id="n-obs" style="border:1.5px solid var(--border);border-radius:8px;padding:9px;width:100%;font-size:13px;font-family:Inter,sans-serif;resize:vertical;min-height:60px"></textarea></div></div>
+          <div class="cd"><div class="ct">🎓 ESA Individual (0–2)</div><div class="f2"><label>Nota ESA</label><input class="ni2" type="number" id="n-es" min="0" max="2" step="0.5"/></div></div>
         </div>
-        <div class="card" style="margin-bottom:16px"><div class="ct">🎤 Seminário N2 (0–6)</div>
-          <div class="frow">
-            <div class="fg2"><label>Raciocínio (0–1,5)</label><input class="ni-inp" type="number" id="n-rc" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
-            <div class="fg2"><label>Coerência (0–1,5)</label><input class="ni-inp" type="number" id="n-co" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
-            <div class="fg2"><label>Qualidade (0–1,5)</label><input class="ni-inp" type="number" id="n-ql" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
-            <div class="fg2"><label>Dinâmica (0–1,5)</label><input class="ni-inp" type="number" id="n-dn" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+        <div class="cd" style="margin-bottom:16px">
+          <div class="ct">🎤 Seminário N2 — Nota do Grupo: <span id="sem-grp-nm" style="color:var(--roxo)"></span></div>
+          <div class="alt ai">ℹ️ Esta nota é aplicada a todos os membros do grupo N2.</div>
+          <div class="fr">
+            <div class="f2"><label>Raciocínio Clínico (0–1,5)</label><input class="ni2" type="number" id="n-rc" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+            <div class="f2"><label>Coerência Metodológica (0–1,5)</label><input class="ni2" type="number" id="n-co" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+            <div class="f2"><label>Qualidade Planejamento (0–1,5)</label><input class="ni2" type="number" id="n-ql" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
+            <div class="f2"><label>Dinâmica & Clareza (0–1,5)</label><input class="ni2" type="number" id="n-dn" min="0" max="1.5" step="0.5" oninput="updSem()"/></div>
           </div>
-          <div style="font-size:13px;color:var(--text-light)">Subtotal: <strong id="sem-tot">0,0</strong> / 6,0</div>
+          <div style="font-size:13px;color:var(--tl)">Subtotal Seminário: <strong id="sem-tot">0,0</strong> / 6,0</div>
         </div>
-        <div class="brow"><button class="btn broxo" onclick="salvarNotas()">💾 Salvar</button><span id="not-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
+        <div class="brow"><button class="btn brxo" onclick="salvarNotas()">💾 Salvar Notas</button><span id="not-st" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>
       </div>
     </div>
+
+    <!-- PROF: PAUTA -->
     <div id="sec-adm-pau" class="sec">
       <div class="pt">📊 Pauta Geral</div><div class="ps">Consolidado N1 e N2</div>
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"><input class="si" placeholder="🔍 Nome ou matrícula..." oninput="filtPau(this.value)"/><button class="btn bgray bsm" onclick="exportCSV()">📥 CSV</button></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <input class="si" placeholder="🔍 Nome ou matrícula..." oninput="filtPau(this.value)" style="width:240px"/>
+        <button class="btn bgr bsm" onclick="exportExcel('n1')">📥 Excel N1</button>
+        <button class="btn bgr bsm" onclick="exportExcel('n2')">📥 Excel N2</button>
+        <button class="btn bgr bsm" onclick="exportExcel('geral')">📥 Excel Geral</button>
+      </div>
       <div class="tw"><table><thead><tr><th>Matrícula</th><th>Nome</th><th>Grp N1</th><th>N1</th><th>Grp N2</th><th>Sem</th><th>Plateia</th><th>ESA</th><th>N2</th><th>Média</th><th>Status</th></tr></thead><tbody id="tb-pau"></tbody></table></div>
     </div>
-    <div id="sec-adm-lnk" class="sec">
-      <div class="pt">🔗 Links Rápidos</div><div class="ps">WhatsApp da turma</div>
-      <div class="card"><div class="ct">📊 Link de Consulta de Notas</div>
-        <div style="font-size:13px;color:var(--text-light);margin-bottom:14px">Aluno abre o link e consulta suas notas.</div>
-        <div class="brow"><button class="btn broxo" onclick="copiarLnk()">🔗 Copiar</button><button class="btn bout" onclick="watsLnk()">📱 WhatsApp</button></div>
-        <div id="lnk-pv" style="margin-top:10px;font-size:11px;color:var(--text-light);word-break:break-all"></div>
-      </div>
-    </div>
+
   </main>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-firebase.initializeApp({
-  apiKey:"AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",
-  authDomain:"entrevista-inicial.firebaseapp.com",
-  projectId:"entrevista-inicial",
-  storageBucket:"entrevista-inicial.appspot.com",
-  messagingSenderId:"799817939377",
-  appId:"1:799817939377:web:6ed277e08f4e59d12bb3b0"
-});
-var db = firebase.firestore();
+firebase.initializeApp({apiKey:"AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.appspot.com",messagingSenderId:"799817939377",appId:"1:799817939377:web:6ed277e08f4e59d12bb3b0"});
+var db=firebase.firestore();
 
-var ALUNOS = [
-  {id:"m1",nome:"Ana Clara Mendonça",matricula:"2021001",grupoN1:"Grupo 1",casoN1:"Caso 1",grupoN2:"Grupo 1",casoN2:"Caso 1",notaN1:8.5,notaSem:5.0,notaESA:1.5},
-  {id:"m2",nome:"Bruno Henrique Tavares",matricula:"2021002",grupoN1:"Grupo 1",casoN1:"Caso 1",grupoN2:"Grupo 1",casoN2:"Caso 1",notaN1:7.0,notaSem:4.5,notaESA:2.0},
-  {id:"m3",nome:"Camila Rodrigues Lima",matricula:"2021003",grupoN1:"Grupo 2",casoN1:"Caso 3",grupoN2:"Grupo 2",casoN2:"Caso 3",notaN1:9.0,notaSem:5.5,notaESA:1.5},
-  {id:"m4",nome:"Daniel Ferreira Costa",matricula:"2021004",grupoN1:"Grupo 2",casoN1:"Caso 3",grupoN2:"Grupo 2",casoN2:"Caso 3",notaN1:6.5,notaSem:4.0,notaESA:1.0},
-  {id:"m5",nome:"Eduarda Santos Pires",matricula:"2021005",grupoN1:"Grupo 3",casoN1:"Caso 5",grupoN2:"Grupo 3",casoN2:"Caso 5",notaN1:8.0,notaSem:5.0,notaESA:2.0},
-  {id:"m6",nome:"Felipe Alves Nascimento",matricula:"2021006",grupoN1:"Grupo 3",casoN1:"Caso 5",grupoN2:"Grupo 3",casoN2:"Caso 5",notaN1:7.5,notaSem:4.5,notaESA:1.5},
-  {id:"m7",nome:"Gabriela Melo Vieira",matricula:"2021007",grupoN1:"Grupo 4",casoN1:"Caso 7",grupoN2:"Grupo 4",casoN2:"Caso 7",notaN1:9.5,notaSem:6.0,notaESA:2.0},
-  {id:"m8",nome:"Hugo Carvalho Dias",matricula:"2021008",grupoN1:"Grupo 4",casoN1:"Caso 7",grupoN2:"Grupo 4",casoN2:"Caso 7",notaN1:8.0,notaSem:5.5,notaESA:1.5},
-  {id:"m9",nome:"Isabela Torres Moreira",matricula:"2021009",grupoN1:"Grupo 5",casoN1:"Caso 9",grupoN2:"Grupo 5",casoN2:"Caso 9",notaN1:7.0,notaSem:4.0,notaESA:1.0},
-  {id:"m10",nome:"João Pedro Ribeiro",matricula:"2021010",grupoN1:"Grupo 5",casoN1:"Caso 9",grupoN2:"Grupo 5",casoN2:"Caso 9",notaN1:6.0,notaSem:3.5,notaESA:1.5}
-];
-var CASOS = [
-  {n:1,nm:"Marcos, 34 anos",cx:"Plantão Psicológico",ei:"Ansiedade de Desempenho",di:"Transtorno de Adaptação com Ansiedade (F43.22)",fo:"Manejo da ansiedade, flexibilização de crenças.",si:"Inquietação motora, discurso acelerado.",sy:"Não estou dormindo mais de 4 horas.",sg:"Sente culpa por se achar fraude após promoção."},
-  {n:2,nm:"Helena, 42 anos",cx:"Hospital Geral",ei:"Luto e Doença Crônica",di:"Ajustamento com Humor Depressivo (F43.21)",fo:"Resgate da autoeficácia, elaboração das perdas.",si:"Fala pausada, choro contido.",sy:"Estou internada há semanas e sinto um vazio.",sg:"Sente alívio por estar longe do marido abusivo."},
-  {n:3,nm:"Lucas, 23 anos",cx:"CAIS / Emergência",ei:"Somatização e Angústia",di:"Transtorno de Sintomas Somáticos (F45.1)",fo:"Acolhimento, psicoeducação e vínculo.",si:"Mão no abdômen, irritação, esquiva.",sy:"Dores no estômago, exames normais.",sg:"Pavor de morar sozinho, não pode demonstrar fraqueza."},
-  {n:4,nm:"Carla, 29 anos",cx:"UTI Humanizada",ei:"Ansiedade em Ambiente Crítico",di:"Estresse Agudo (F43.0)",fo:"Descatastrofização, regulação respiratória.",si:"Mãos trêmulas, postura encolhida.",sy:"O barulho me sufoca, sinto que vou morrer.",sg:"Trauma prévio de erro médico na família em UTI."},
-  {n:5,nm:"Roberto, 50 anos",cx:"CAPS",ei:"Crise da Meia-Idade",di:"Distimia (F34.1)",fo:"Ativação comportamental, ressignificação.",si:"Apático, sentado ao fundo da roda.",sy:"Me aposentei. Sinto que perdi o sentido.",sg:"Sonha em abrir ateliê de marcenaria, mas tem vergonha."},
-  {n:6,nm:"Vanessa, 38 anos",cx:"Ambulatório de Crise",ei:"Transtorno de Pânico",di:"Pânico com Agorafobia (F41.0)",fo:"Psicoeducação, respiração, exposição gradual.",si:"Esquiva de locais abertos, choro fácil.",sy:"Meu coração dispara e sinto que vou desmaiar.",sg:"Ataque de pânico no casamento da irmã, nunca contou."},
-  {n:7,nm:"Juliana, 27 anos",cx:"CRAS",ei:"Relacionamento Abusivo",di:"Problema de Relacionamento (Z63.0)",fo:"Fortalecimento da percepção de realidade.",si:"Voz baixa, respostas vagas sobre o parceiro.",sy:"Meu marido perde o controle às vezes.",sg:"Foi à delegacia duas vezes mas desistiu do registro."},
-  {n:8,nm:"Thiago, 31 anos",cx:"Ortopedia",ei:"TEPT pós-acidente",di:"TEPT Agudo (F43.10)",fo:"Grounding, processamento da culpa.",si:"Sobressalto fácil, hipervigilância.",sy:"Não consigo mais dirigir.",sg:"Acredita ser culpado pela fratura da esposa no acidente."},
-  {n:9,nm:"Camila, 35 anos",cx:"Saúde Ocupacional",ei:"Perfeccionismo e Burnout",di:"TAG Perfeccionista (F41.1)",fo:"Flexibilização de regras rígidas.",si:"Fala acelerada, autocrítica explícita.",sy:"Trabalho 12h e ainda sinto que não entrego o suficiente.",sg:"Toma ansiolítico sem prescrição há 6 meses."},
-  {n:10,nm:"Gabriel, 26 anos",cx:"Orientação Profissional",ei:"Paralisia por Análise",di:"Problema Ocupacional (Z56.9)",fo:"Matriz de decisão, aceitação da incerteza.",si:"Planilhas na mochila, discurso circular.",sy:"Tenho 4 propostas e já recusei 3.",sg:"Sonha ser músico mas nunca teve coragem de contar ao pai."}
+var CASOS_N1=[
+{n:1,nm:"Marcos, 34 anos",cx:"Plantão Psicológico Universitário",ei:"Ansiedade de Desempenho e Crise de Adaptação",ori:"Leia a ficha com antecedência. Ajuste postura ao local. SEGREDO: não revele de início — guarde para quando o terapeuta demonstrar empatia real.",di:"Transtorno de Adaptação com Ansiedade (F43.22) | Diferencial: TAG e Burnout",fo:"Manejo da ansiedade, flexibilização de crenças de hiperexigência e limites vida-trabalho.",si:"Ponta da cadeira, inquietação motora, checar celular, discurso acelerado.",sy:'"Não estou dormindo mais de 4 horas. Acordo com o coração disparado. Aperto no peito no trabalho."',sg:"Sente culpa devastadora — medo de ser fraude após promoção. Pensa em pedir demissão mas teme decepcionar o pai.",cr:"Desamparo + Desvalor: Não vou dar conta / Sou uma fraude"},
+{n:2,nm:"Helena, 42 anos",cx:"Hospital Geral - Enfermaria de Internação Longa",ei:"Luto Complicado e Impacto Emocional da Doença Crônica",ori:"Fale devagar, com hipofonia. Postura deitada/semi-sentada. Choro contido. SEGREDO: não revele o alívio com a separação logo de início.",di:"Reação de Ajustamento com Humor Depressivo (F43.21) + Luto Relacional",fo:"Resgate da autoeficácia no leito, elaboração das perdas.",si:"Fala pausada, hipofonia, choro contido, manipulação do lençol.",sy:'"Estou internada há 3 semanas e sinto um vazio enorme. Perdi o controle da minha vida."',sg:"Sente alívio por estar longe do marido abusivo — vivenciando luto do casamento junto à doença.",cr:"Desvalor + Desamor: Fui descartada / Não sirvo para mais nada"},
+{n:3,nm:"Lucas, 23 anos",cx:"Pronto-Atendimento / CAIS",ei:"Somatização e Crise Aguda de Angústia",ori:"Demonstre irritação ao ser atendido. Intelectualize. Esquive-se de emoções. Só se abra com vínculo real.",di:"Transtorno de Sintomas Somáticos (F45.1) / Crise de Ajustamento",fo:"Acolhimento da dor somática, psicoeducação e vínculo para encaminhamento.",si:"Mão no abdômen, irritação, intelectualização e esquiva emocional.",sy:'"Dores no estômago. Exames normais e me mandaram pra você — isso é um erro!"',sg:"Pavor de morar sozinho e fracassar. Não pode demonstrar fraqueza diante dos pais.",cr:"Desamparo: Não consigo lidar sozinho com as mudanças"},
+{n:4,nm:"Carla, 29 anos",cx:"UTI Humanizada",ei:"Ansiedade Severa em Ambiente Crítico",ori:"Fique tensa a cada bip. Respire curto. Postura encolhida. Mãos trêmulas. Olhar esquivo.",di:"Transtorno de Estresse Agudo (F43.0) em UTI",fo:"Descatastrofização, regulação respiratória e comunicação com equipe.",si:"Olhar esquivo a cada bip, mãos trêmulas, respiração curta, postura encolhida.",sy:'"O barulho desses aparelhos me sufoca. Sinto que vou morrer aqui dentro."',sg:"Trauma prévio de erro médico na família em UTI — gera pavor paralisante.",cr:"Desamparo: Estou totalmente vulnerável e sem controle"},
+{n:5,nm:"Roberto, 50 anos",cx:"CAPS / Psicorreabilitação",ei:"Crise da Meia-Idade e Síndrome do Ninho Vazio",ori:"Expressão apática. Gestos lentos. Sente-se ao fundo da roda. Suspiros frequentes.",di:"Distimia / Transtorno Depressivo Persistente (F34.1)",fo:"Ativação comportamental, ressignificação de papéis sociais.",si:"Apático, gestos lentos, sentado ao fundo da roda, suspiros.",sy:'"Filhos saíram. Me aposentei. Minha vida perdeu o sentido."',sg:"Sonha em abrir ateliê de marcenaria mas tem vergonha de parecer imprudente.",cr:"Desvalor: Não tenho mais utilidade / Minha vida perdeu o valor"},
+{n:6,nm:"Vanessa, 38 anos",cx:"Ambulatório de Crise",ei:"Transtorno de Pânico com Agorafobia",ori:"Relate sintomas físicos com frequência. Hipervigilância corporal. Evite falar sobre locais abertos.",di:"Transtorno de Pânico com Agorafobia (F41.0)",fo:"Psicoeducação sobre pânico, respiração diafragmática, exposição gradual.",si:"Taquicardia relatada, esquiva de locais abertos, choro fácil.",sy:'"Meu coração dispara e sinto que vou desmaiar no meio da rua."',sg:"Ataque de pânico no casamento da irmã — ficou no banheiro o evento todo. Nunca contou.",cr:"Desamparo: Estou prestes a ter um AVC / Sou incapaz de me proteger"},
+{n:7,nm:"Juliana, 27 anos",cx:"CRAS",ei:"Relacionamento Abusivo e Baixa Autoestima",ori:"Voz baixa. Respostas vagas sobre o parceiro. Minimize a violência. Só se abra com cuidado.",di:"Problema de Relacionamento (Z63.0) com sintomas ansiosos",fo:"Fortalecimento da percepção de realidade, rede de proteção e autonomia.",si:"Voz baixa, respostas vagas, desviar o olhar, rubor facial.",sy:'"Meu marido às vezes perde o controle, mas é porque ele é estressado."',sg:"Foi à delegacia duas vezes mas desistiu — parceiro ameaçou tirar guarda das filhas.",cr:"Desamor + Desvalor: Sem ele não sou nada / A culpa é minha"},
+{n:8,nm:"Thiago, 31 anos",cx:"Ambulatório de Ortopedia",ei:"TEPT pós-Acidente de Trânsito",ori:"Sobressalto fácil. Evite o assunto do acidente. Relate pesadelos. Fique em alerta com barulhos.",di:"TEPT Agudo (F43.10) em Reabilitação",fo:"Grounding, processamento cognitivo da culpa e resgate do controle.",si:"Sobressalto fácil, hipervigilância, pesadelos, evitação do tema.",sy:'"Não consigo mais dirigir. Qualquer freada me faz reviver tudo."',sg:"Esposa fraturou costelas no acidente. Acredita que foi culpa por ter passado no sinal amarelo.",cr:"Desamparo + Desvalor: O mundo é perigoso / Falhei ao proteger minha esposa"},
+{n:9,nm:"Camila, 35 anos",cx:"Saúde Ocupacional",ei:"Perfeccionismo Disfuncional e Prevenção de Burnout",ori:"Fale rápido. Lista na mão. Critique-se abertamente. Dificuldade de pausas.",di:"TAG com Padrão Perfeccionista (F41.1)",fo:"Flexibilização de regras rígidas, delegação e prevenção de afastamento.",si:"Fala acelerada, lista de afazeres, autocrítica explícita.",sy:'"Trabalho 12h e ainda sinto que não entrego o suficiente. Não consigo desligar."',sg:"Toma ansiolítico sem prescrição há 6 meses para não parecer fraca.",cr:"Desvalor: Só tenho valor se for perfeita / Errar é inaceitável"},
+{n:10,nm:"Gabriel, 26 anos",cx:"Orientação Profissional",ei:"Paralisia por Análise na Tomada de Decisão",ori:"Planilhas comparativas na mochila. Discurso circular. Riso nervoso. Evite decidir.",di:"Problema Ocupacional (Z56.9) com sintomas ansiosos",fo:"Matriz de decisão, aceitação da incerteza, identificação de valores.",si:"Planilhas na mochila, discurso circular sobre prós e contras.",sy:'"Tenho 4 propostas de emprego e já recusei 3. Essa nova também não parece certa."',sg:"Pai quer que assuma o negócio da família. Sonha ser músico e nunca teve coragem de dizer.",cr:"Desamparo: Escolher errado destruirá meu futuro"}
 ];
 
-var usuario = null;
-var perfil = null;
-var disparos = [];
-var alunosFil = ALUNOS.slice();
-var supCache = [];
-var supSel = null;
-var psicSel = null;
-var notaSel = null;
-var ratVals = {};
+var ESTRUTURA_N2=["1. Identificação e Queixa Principal: Sintetizar a demanda e o gatilho da crise.","2. Formulação Diagnóstica e Crenças Centrais (TCC): Classificação DSM-5-TR e mapeamento das crenças (Desamor, Desvalor ou Desamparo).","3. Avaliação da Força do Ego: Recursos internos de enfrentamento, tolerância à frustração, autoeficácia e aliança terapêutica.","4. Definição do Foco Terapêutico: Recorte cirúrgico prioritário para a intervenção breve no contexto.","5. Plano TCC Breve (1–15 Sessões): Fase 1 (1–3): Acolhimento, contrato, aliança e psicoeducação; Fase 2 (intermediárias): Técnicas ativas da TCC; Fase 3 (finais): Prevenção de recaídas, alta e encaminhamentos."];
+var CRITERIOS_N2=["Raciocínio Clínico e Foco (1,5 pt): Clareza entre queixa, Crenças Centrais e foco delimitado.","Coerência Metodológica (1,5 pt): Adequação das técnicas TCC e Força do Ego ao horizonte de 15 sessões.","Qualidade do Planejamento (1,5 pt): Detalhamento progressivo da acolhida à alta.","Dinâmica da Apresentação (1,5 pt): Segurança técnica, domínio TCC, síntese e condução do debate."];
+var CASOS_N2=CASOS_N1.map(function(c){return Object.assign({},c,{estrutura:ESTRUTURA_N2,criterios:CRITERIOS_N2});});
 
-// ===== TELAS =====
-function mostrar(id) {
-  var ids = ['v-sel','v-sup','v-psico','v-prof','v-app'];
-  for (var i=0;i<ids.length;i++) {
-    var el = document.getElementById(ids[i]);
-    if (el) el.classList.add('hidden');
-  }
-  var alvo = document.getElementById(id);
-  if (alvo) alvo.classList.remove('hidden');
+var ALUNOS=[
+{id:"m1",nome:"Ana Clara Mendonça",matricula:"2021001",email:"",notaN1:8.5,notaSem:5.0,notaESA:1.5,status:"ativo"},
+{id:"m2",nome:"Bruno Henrique Tavares",matricula:"2021002",email:"",notaN1:7.0,notaSem:4.5,notaESA:2.0,status:"ativo"},
+{id:"m3",nome:"Camila Rodrigues Lima",matricula:"2021003",email:"",notaN1:9.0,notaSem:5.5,notaESA:1.5,status:"ativo"},
+{id:"m4",nome:"Daniel Ferreira Costa",matricula:"2021004",email:"",notaN1:6.5,notaSem:4.0,notaESA:1.0,status:"ativo"},
+{id:"m5",nome:"Eduarda Santos Pires",matricula:"2021005",email:"",notaN1:8.0,notaSem:5.0,notaESA:2.0,status:"ativo"},
+{id:"m6",nome:"Felipe Alves Nascimento",matricula:"2021006",email:"",notaN1:7.5,notaSem:4.5,notaESA:1.5,status:"ativo"},
+{id:"m7",nome:"Gabriela Melo Vieira",matricula:"2021007",email:"",notaN1:9.5,notaSem:6.0,notaESA:2.0,status:"ativo"},
+{id:"m8",nome:"Hugo Carvalho Dias",matricula:"2021008",email:"",notaN1:8.0,notaSem:5.5,notaESA:1.5,status:"ativo"},
+{id:"m9",nome:"Isabela Torres Moreira",matricula:"2021009",email:"",notaN1:7.0,notaSem:4.0,notaESA:1.0,status:"ativo"},
+{id:"m10",nome:"João Pedro Ribeiro",matricula:"2021010",email:"",notaN1:6.0,notaSem:3.5,notaESA:1.5,status:"ativo"}
+];
+var GRUPOS={n1:[],n2:[]};
+var SESSOES_QR={n1:null,n2:null};
+var usuario=null,perfil=null,alunosFil=ALUNOS.slice();
+var supCache=[],supSel=null,psicSel=null,notaSel=null,ratVals={};
+var _qrSel=null,_qrRat=null;
+
+// URL PARAMS
+var urlParams=new URLSearchParams(window.location.search);
+if(urlParams.get('cadastro')==='1'){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-cad').classList.remove('hidden');}
+var qrParam=urlParams.get('qr');
+if(qrParam){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-qr').classList.remove('hidden');carregarFormQR(qrParam);}
+
+// TELAS
+function mostrar(id){
+  ['v-sel','v-sup','v-psico','v-prof','v-cad','v-qr','v-app'].forEach(function(i){var e=document.getElementById(i);if(e)e.classList.add('hidden');});
+  var a=document.getElementById(id);if(a)a.classList.remove('hidden');
 }
 
-// ===== LOGIN SUPERVISÃO =====
-function acSup(val) {
-  var list = document.getElementById('sup-ac');
-  supSel = null;
-  if (val.length < 3) { list.style.display='none'; return; }
-  if (supCache.length === 0) {
-    db.collection('clinica_alunos').get().then(function(snap) {
-      supCache = snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-      acSup(val);
-    }).catch(function(){});
-    return;
-  }
-  var lower = val.toLowerCase();
-  var res = supCache.filter(function(a){return (a.nome||'').toLowerCase().indexOf(lower)>=0 && a.status!=='inativo';});
-  if (!res.length) { list.style.display='none'; return; }
-  list.innerHTML = res.slice(0,8).map(function(a){
-    return '<div class="acitem" onclick="selSup(\''+a.id+'\')">'+a.nome+(a.matricula?' — '+a.matricula:'')+'</div>';
-  }).join('');
+// LOGIN SUPERVISÃO
+function acSup(val){
+  var list=document.getElementById('sup-ac');supSel=null;
+  if(val.length<3){list.style.display='none';return;}
+  if(!supCache.length){db.collection('clinica_alunos').get().then(function(s){supCache=s.docs.map(function(d){return Object.assign({id:d.id},d.data());});acSup(val);}).catch(function(){});return;}
+  var r=supCache.filter(function(a){return(a.nome||'').toLowerCase().indexOf(val.toLowerCase())>=0&&a.status!=='inativo';});
+  if(!r.length){list.style.display='none';return;}
+  list.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selSup(''+a.id+'')">'+a.nome+(a.matricula?' — '+a.matricula:'')+'</div>';}).join('');
   list.style.display='block';
 }
-function selSup(id) {
-  supSel = supCache.find(function(a){return a.id===id;});
-  if (supSel) { document.getElementById('sup-nome').value=supSel.nome; document.getElementById('sup-ac').style.display='none'; document.getElementById('sup-senha').focus(); }
-}
-function loginSup() {
-  var nome = document.getElementById('sup-nome').value.trim();
-  var senha = document.getElementById('sup-senha').value.trim();
-  var erro = document.getElementById('sup-erro');
-  erro.style.display='none';
-  if (!nome||!senha) { erro.textContent='Preencha nome e matrícula.'; erro.style.display='block'; return; }
-  if (!supSel) { var l=nome.toLowerCase(); supSel=supCache.find(function(a){return (a.nome||'').toLowerCase()===l;}); }
-  if (!supSel) { erro.textContent='Aluno não encontrado.'; erro.style.display='block'; return; }
-  if (supSel.status==='pendente') { erro.textContent='Conta pendente de aprovação.'; erro.style.display='block'; return; }
-  var ok = supSel.matricula||supSel.senha||'1234';
-  if (senha!==ok && senha!==(supSel.senha||'1234') && senha!=='1234') { erro.textContent='Matrícula ou senha incorreta.'; erro.style.display='block'; return; }
+function selSup(id){supSel=supCache.find(function(a){return a.id===id;});if(supSel){document.getElementById('sup-nm').value=supSel.nome;document.getElementById('sup-ac').style.display='none';document.getElementById('sup-sn').focus();}}
+function loginSup(){
+  var nm=document.getElementById('sup-nm').value.trim(),sn=document.getElementById('sup-sn').value.trim(),er=document.getElementById('sup-er');
+  er.style.display='none';
+  if(!nm||!sn){er.textContent='Preencha nome e matrícula.';er.style.display='block';return;}
+  if(!supSel){var l=nm.toLowerCase();supSel=supCache.find(function(a){return(a.nome||'').toLowerCase()===l;});}
+  if(!supSel){er.textContent='Aluno não encontrado.';er.style.display='block';return;}
+  if(supSel.status==='pendente'){er.textContent='Conta pendente de aprovação.';er.style.display='block';return;}
+  var ok=supSel.matricula||supSel.senha||'1234';
+  if(sn!==ok&&sn!=='1234'){er.textContent='Matrícula ou senha incorreta.';er.style.display='block';return;}
   window.location.href='../clinica/?aluno='+supSel.id;
 }
 
-// ===== LOGIN PSICOTERAPIA =====
-function acPsico(val) {
-  var list = document.getElementById('psico-ac');
-  psicSel = null;
-  if (val.length<3) { list.style.display='none'; return; }
-  var lower = val.toLowerCase();
-  var res = ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(lower)>=0;});
-  if (!res.length) { list.style.display='none'; return; }
-  list.innerHTML = res.slice(0,8).map(function(a){
-    return '<div class="acitem" onclick="selPsico(\''+a.id+'\')">'+a.nome+' — '+a.matricula+'</div>';
-  }).join('');
+// LOGIN PSICOTERAPIA
+function acPsico(val){
+  var list=document.getElementById('psico-ac');psicSel=null;
+  if(val.length<3){list.style.display='none';return;}
+  var r=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(val.toLowerCase())>=0&&a.status==='ativo';});
+  if(!r.length){list.style.display='none';return;}
+  list.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selPsico(''+a.id+'')">'+a.nome+' — '+a.matricula+'</div>';}).join('');
   list.style.display='block';
 }
-function selPsico(id) {
-  psicSel = ALUNOS.find(function(a){return a.id===id;});
-  if (psicSel) { document.getElementById('psico-nome').value=psicSel.nome; document.getElementById('psico-ac').style.display='none'; document.getElementById('psico-senha').focus(); }
-}
-function loginPsico() {
-  var nome = document.getElementById('psico-nome').value.trim();
-  var senha = document.getElementById('psico-senha').value.trim();
-  var erro = document.getElementById('psico-erro');
-  erro.style.display='none';
-  if (!nome||!senha) { erro.textContent='Preencha nome e matrícula.'; erro.style.display='block'; return; }
-  if (!psicSel) { var l=nome.toLowerCase(); psicSel=ALUNOS.find(function(a){return a.nome.toLowerCase()===l;}); }
-  if (!psicSel) { erro.textContent='Aluno não encontrado.'; erro.style.display='block'; return; }
-  if (senha!==psicSel.matricula && senha!=='1234') { erro.textContent='Matrícula incorreta.'; erro.style.display='block'; return; }
-  usuario = Object.assign({role:'aluno'},psicSel);
-  perfil = 'aluno';
-  iniciarApp();
+function selPsico(id){psicSel=ALUNOS.find(function(a){return a.id===id;});if(psicSel){document.getElementById('psico-nm').value=psicSel.nome;document.getElementById('psico-ac').style.display='none';document.getElementById('psico-sn').focus();}}
+function loginPsico(){
+  var nm=document.getElementById('psico-nm').value.trim(),sn=document.getElementById('psico-sn').value.trim(),er=document.getElementById('psico-er');
+  er.style.display='none';
+  if(!nm||!sn){er.textContent='Preencha nome e matrícula.';er.style.display='block';return;}
+  if(!psicSel){var l=nm.toLowerCase();psicSel=ALUNOS.find(function(a){return a.nome.toLowerCase()===l;});}
+  if(!psicSel){er.textContent='Aluno não encontrado.';er.style.display='block';return;}
+  if(sn!==psicSel.matricula&&sn!=='1234'){er.textContent='Matrícula incorreta.';er.style.display='block';return;}
+  usuario=Object.assign({role:'aluno'},psicSel);perfil='aluno';iniciarApp();
 }
 
-// ===== LOGIN PROFESSORA =====
-function loginProf() {
-  var senha = document.getElementById('prof-senha').value;
-  var erro = document.getElementById('prof-erro');
-  erro.style.display='none';
-  if (senha!=='1234') { erro.textContent='Senha incorreta.'; erro.style.display='block'; return; }
-  usuario = {nome:'Dra. Lucia Kratz',matricula:'PROF',role:'prof'};
-  perfil = 'prof';
-  iniciarApp();
+// LOGIN PROFESSORA
+function loginProf(){
+  var sn=document.getElementById('prof-sn').value,er=document.getElementById('prof-er');
+  er.style.display='none';
+  if(sn!=='1234'){er.textContent='Senha incorreta.';er.style.display='block';return;}
+  usuario={nome:'Dra. Lucia Kratz',matricula:'PROF',role:'prof'};perfil='prof';iniciarApp();
 }
 
-// ===== INICIAR APP =====
-function iniciarApp() {
+// AUTO-CADASTRO
+function autoCadastro(){
+  var nm=document.getElementById('cad-nm').value.trim(),mt=document.getElementById('cad-mt').value.trim(),em=document.getElementById('cad-em').value.trim();
+  var er=document.getElementById('cad-er');er.style.display='none';
+  if(!nm||!mt){er.textContent='Nome e matrícula obrigatórios.';er.style.display='block';return;}
+  document.getElementById('cad-btn').disabled=true;
+  db.collection('acad_alunos').add({nome:nm,matricula:mt,email:em,status:'pendente',origemCadastro:'auto-cadastro',criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){document.getElementById('cad-ok').classList.remove('hidden');document.getElementById('cad-btn').style.display='none';ALUNOS.push({id:'ac_'+Date.now(),nome:nm,matricula:mt,email:em,notaN1:0,notaSem:0,notaESA:0,status:'pendente'});})
+  .catch(function(){er.textContent='Erro ao salvar.';er.style.display='block';document.getElementById('cad-btn').disabled=false;});
+}
+function copiarLnkCad(){
+  var url=window.location.href.split('?')[0]+'?cadastro=1';
+  navigator.clipboard.writeText(url).then(function(){alert('✅ Link copiado!');});
+}
+
+// INICIAR APP
+function iniciarApp(){
   mostrar('v-app');
-  document.getElementById('sb-nome').textContent = usuario.nome;
-  document.getElementById('sb-perf').textContent = perfil==='prof'?'Professora':'Aluno(a)';
-  if (perfil==='prof') {
+  document.getElementById('sb-nm').textContent=usuario.nome;
+  document.getElementById('sb-pf').textContent=perfil==='prof'?'Professora':'Aluno(a)';
+  popularSelectCasos();
+  var hoje=new Date().toISOString().split('T')[0];
+  ['dis1-dt','dis2-dt'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=hoje;});
+  var lnk=document.getElementById('lnk-cad-txt');if(lnk)lnk.textContent=window.location.href.split('?')[0]+'?cadastro=1';
+  if(perfil==='prof'){
     document.getElementById('nav-al').classList.add('hidden');
     document.getElementById('nav-pr').classList.remove('hidden');
     irSec('adm-pai');
-    carregarAdm();
-    carregarDisp();
-    renderAl();
-    renderPau();
+    carregarAdmPai();carregarGruposFirebase();renderTbAl();
+    carregarFichasRecebidas();carregarSessoesAtivas();
   } else {
-    irSec('painel');
-    carregarPainel();
+    irSec('painel');carregarPainel();carregarFichasAluno();
   }
 }
 
-function sair() {
-  usuario=null; perfil=null; psicSel=null; supSel=null;
-  document.getElementById('psico-nome').value='';
-  document.getElementById('psico-senha').value='';
-  document.getElementById('sup-nome').value='';
-  document.getElementById('sup-senha').value='';
-  document.getElementById('prof-senha').value='';
+function sair(){
+  usuario=null;perfil=null;psicSel=null;supSel=null;
+  ['psico-nm','psico-sn','sup-nm','sup-sn','prof-sn'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   mostrar('v-sel');
 }
 
-// ===== NAVEGAÇÃO SEÇÕES =====
-function irSec(sec) {
-  var secs = document.querySelectorAll('.sec');
-  for (var i=0;i<secs.length;i++) secs[i].classList.remove('active');
-  var el = document.getElementById('sec-'+sec);
-  if (el) el.classList.add('active');
-  var nis = document.querySelectorAll('.ni');
-  for (var j=0;j<nis.length;j++) nis[j].classList.remove('active');
-  var nav = document.querySelector('.ni[onclick="irSec(\''+sec+'\')"]');
-  if (nav) nav.classList.add('active');
-  if (sec==='adm-cas') renderCas();
-  if (sec==='adm-pau') renderPau();
-  if (sec==='adm-al') renderAl();
-  if (sec==='espaco') carregarEspaco();
-  if (sec==='micro') carregarMicro();
+function popularSelectCasos(){
+  var opts=CASOS_N1.map(function(c){return '<option value="'+c.n+'">Caso '+c.n+' — '+c.nm+'</option>';}).join('');
+  ['f1-cas','grp1-cas','grp2-cas'].forEach(function(id){var e=document.getElementById(id);if(e)e.innerHTML='<option value="">Selecione...</option>'+opts;});
+  popularSelectGrupos();
 }
 
-// ===== ALUNO PAINEL =====
-function calcPlat(a) {
-  var f=(a.fichasPlateia||[]).length;
-  var t=disparos.filter(function(d){return d.tipo==='microaval';}).length;
-  return t===0?0:Math.min(2,f/t*2);
+// NAVEGAÇÃO
+function irSec(sec){
+  document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('active');});
+  var el=document.getElementById('sec-'+sec);if(el)el.classList.add('active');
+  document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active');});
+  var nav=document.querySelector('.ni[onclick="irSec(''+sec+'')"]');if(nav)nav.classList.add('active');
+  if(sec==='adm-cas')renderCasos();
+  if(sec==='adm-pau')renderPau('');
+  if(sec==='adm-al'){renderTbAl();carregarPendentes();}
+  if(sec==='adm-grp'){renderMembros('n1');renderMembros('n2');renderGrupos();}
+  if(sec==='espaco')carregarEspaco();
+  if(sec==='micro')carregarMicro();
 }
-function carregarPainel() {
+
+// TABS
+function abaAl(t,el){
+  document.querySelectorAll('#sec-adm-al .tab').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('#sec-adm-al .tab-c').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('tab-al-'+t).classList.add('active');if(el)el.classList.add('active');
+  if(t==='pendentes')carregarPendentes();
+}
+function abaGrp(t,el){
+  document.querySelectorAll('#sec-adm-grp .tab').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('#sec-adm-grp .tab-c').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('tab-grp-'+t).classList.add('active');if(el)el.classList.add('active');
+  renderGrupos();
+}
+function abaCas(t,el){
+  document.querySelectorAll('#sec-adm-cas .tab').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('#sec-adm-cas .tab-c').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('tab-cas-'+t).classList.add('active');if(el)el.classList.add('active');
+  renderCasos();
+}
+function abaDisp(t,el){
+  document.querySelectorAll('#sec-adm-dis .tab').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('#sec-adm-dis .tab-c').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('tab-dis-'+t).classList.add('active');if(el)el.classList.add('active');
+}
+
+// ALUNO: PAINEL
+function calcPlat(a){return Math.min(2,(a.fichasPlateia||[]).length*0.5);}
+function carregarPainel(){
   var a=usuario;
-  document.getElementById('p-nome').textContent=a.nome.split(' ')[0];
-  document.getElementById('p-g1').textContent=a.grupoN1||'—';
-  document.getElementById('p-g2').textContent=a.grupoN2||'—';
-  document.getElementById('p-c1').textContent=a.casoN1||'—';
-  document.getElementById('p-c2').textContent=a.casoN2||'—';
+  document.getElementById('p-nm').textContent=a.nome.split(' ')[0];
   var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);
   document.getElementById('p-n1').textContent=n1.toFixed(1);
   document.getElementById('p-n2').textContent=n2.toFixed(1);
@@ -571,13 +729,27 @@ function carregarPainel() {
   document.getElementById('pp-n1').style.width=n1*10+'%';
   document.getElementById('pp-n2').style.width=n2*10+'%';
   document.getElementById('pp-med').style.width=parseFloat(med)*10+'%';
+  // Busca grupo no Firebase
+  db.collection('acad_grupos').get().then(function(snap){
+    snap.docs.forEach(function(d){
+      var g=Object.assign({id:d.id},d.data());
+      if(g.membros&&g.membros.indexOf(usuario.id)>=0){
+        var c=(g.tipo==='n1'?CASOS_N1:CASOS_N2).find(function(x){return x.n==g.casoNum;});
+        if(g.tipo==='n1'){document.getElementById('p-g1').textContent=g.nome;document.getElementById('p-c1').textContent=c?'Caso '+c.n+' — '+c.nm:'—';}
+        else{document.getElementById('p-g2').textContent=g.nome;document.getElementById('p-c2').textContent=c?'Caso '+c.n+' — '+c.nm:'—';}
+      }
+    });
+  }).catch(function(){});
+  // Busca nota no Firebase
+  db.collection('acad_notas').doc(usuario.id).get().then(function(d){
+    if(d.exists){var dt=d.data();usuario.notaN1=dt.notaN1||0;usuario.notaSem=dt.notaSem||0;usuario.notaESA=dt.notaESA||0;carregarPainel();}
+  }).catch(function(){});
 }
-function carregarEspaco() {
+
+function carregarEspaco(){
   var a=usuario;
   document.getElementById('me-nm').textContent=a.nome;
   document.getElementById('me-mt').textContent=a.matricula;
-  document.getElementById('me-g1').textContent=a.grupoN1||'—';
-  document.getElementById('me-g2').textContent=a.grupoN2||'—';
   var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a);
   document.getElementById('me-n1').textContent=n1.toFixed(1)+'/10';
   document.getElementById('me-sm').textContent=sem.toFixed(1)+'/6';
@@ -587,192 +759,494 @@ function carregarEspaco() {
   document.getElementById('mep-sm').style.width=sem/6*100+'%';
   document.getElementById('mep-pl').style.width=plat/2*100+'%';
   document.getElementById('mep-es').style.width=esa/2*100+'%';
-}
-function carregarMicro() {
-  var lst=document.getElementById('micro-lst');
-  var d=disparos.filter(function(x){return x.tipo==='microaval';});
-  if (!d.length) { lst.innerHTML=''; return; }
-  lst.innerHTML=d.map(function(x,i){
-    return '<div class="card"><div class="ct">⭐ '+x.data+' · '+x.caso+'</div>'+
-      '<div class="rrow">'+
-      '<div class="ropt" onclick="selRat(this,'+i+',\'gostei\')"><div style="font-size:20px">👍</div>Gostei</div>'+
-      '<div class="ropt" onclick="selRat(this,'+i+',\'melhorar\')"><div style="font-size:20px">💡</div>Pode Melhorar</div>'+
-      '<div class="ropt" onclick="selRat(this,'+i+',\'nao\')"><div style="font-size:20px">👎</div>Não Gostei</div>'+
-      '</div>'+
-      '<div class="fg2"><label>Observação</label><textarea id="mo-'+i+'"></textarea></div>'+
-      '<button class="btn broxo" onclick="salvarMicro('+i+',\''+x.id+'\')">💾 Entregar</button>'+
-      '<span id="mst-'+i+'" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>';
-  }).join('');
-}
-function selRat(el,i,v) {
-  ratVals[i]=v;
-  var row=el.parentNode;
-  var opts=row.querySelectorAll('.ropt');
-  for(var j=0;j<opts.length;j++) opts[j].classList.remove('sel');
-  el.classList.add('sel');
-}
-function salvarMicro(i,dispId) {
-  if (!ratVals[i]) { alert('Selecione 👍 💡 ou 👎'); return; }
-  db.collection('acad_microaval').add({alunoNome:usuario.nome,disparoId:dispId,rating:ratVals[i],obs:document.getElementById('mo-'+i).value,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){document.getElementById('mst-'+i).textContent='✅ Entregue!';})
-  .catch(function(){alert('Erro ao salvar.');});
-}
-function salvarF1() {
-  db.collection('acad_fichas_n1').add({alunoNome:usuario.nome,paciente:document.getElementById('f1-pac').value,caso:document.getElementById('f1-cas').value,q1:document.getElementById('f1-q1').value,q2:document.getElementById('f1-q2').value,q3:document.getElementById('f1-q3').value,q4:document.getElementById('f1-q4').value,q5:document.getElementById('f1-q5').value,q6:document.getElementById('f1-q6').value,q7:document.getElementById('f1-q7').value,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){document.getElementById('f1-st').textContent='✅ Salva!';})
-  .catch(function(){document.getElementById('f1-st').textContent='❌ Erro.';});
+  db.collection('acad_grupos').get().then(function(snap){
+    snap.docs.forEach(function(d){
+      var g=Object.assign({id:d.id},d.data());
+      if(g.membros&&g.membros.indexOf(usuario.id)>=0){
+        var c=(g.tipo==='n1'?CASOS_N1:CASOS_N2).find(function(x){return x.n==g.casoNum;});
+        if(g.tipo==='n1'){document.getElementById('me-g1').textContent=g.nome;document.getElementById('me-c1').textContent=c?'Caso '+c.n+' — '+c.nm:'—';}
+        else{document.getElementById('me-g2').textContent=g.nome;document.getElementById('me-c2').textContent=c?'Caso '+c.n+' — '+c.nm:'—';}
+      }
+    });
+  }).catch(function(){});
+  carregarFichasAluno();
 }
 
-// ===== PROF ADM =====
-function carregarAdm() {
-  document.getElementById('a-nal').textContent=ALUNOS.length;
-  document.getElementById('a-ndi').textContent=disparos.length;
-  db.collection('acad_fichas_n1').get().then(function(s){document.getElementById('a-nfi').textContent=s.size;}).catch(function(){});
-  db.collection('acad_config').doc('etapas').get().then(function(d){
-    if(d.exists){var dt=d.data();document.getElementById('tog-n1').checked=!!dt.n1;document.getElementById('lbl-n1').textContent=dt.n1?'Habilitada':'Desabilitada';document.getElementById('tog-n2').checked=!!dt.n2;document.getElementById('lbl-n2').textContent=dt.n2?'Habilitada':'Desabilitada';}
+function carregarFichasAluno(){
+  var aid=usuario.id||usuario.matricula;
+  db.collection('acad_fichas_n1').where('alunoId','==',aid).get().then(function(snap){
+    var el=document.getElementById('me-f1');if(!el)return;
+    if(!snap.size){el.textContent='Nenhuma ficha N1 salva.';return;}
+    el.innerHTML='<div class="tw"><table><thead><tr><th>Data</th><th>Caso</th><th>PDF</th></tr></thead><tbody>'+snap.docs.map(function(d){var dt=d.data();return '<tr><td>'+(dt.criadoEm&&dt.criadoEm.toDate?dt.criadoEm.toDate().toLocaleDateString('pt-BR'):'—')+'</td><td>'+(dt.caso||'—')+'</td><td><button class="btn bgr bsm" onclick="pdfFichaId(''+d.id+'')">📄 PDF</button></td></tr>';}).join('')+'</tbody></table></div>';
+    // Atualiza também em sec-ficha
+    var el2=document.getElementById('f1-hist');
+    if(el2)el2.innerHTML=el.innerHTML;
+  }).catch(function(){});
+  db.collection('acad_microaval').where('alunoId','==',aid).get().then(function(snap){
+    var el=document.getElementById('me-f2');if(!el)return;
+    if(!snap.size){el.textContent='Nenhuma microavaliação enviada.';return;}
+    el.innerHTML='<div class="tw"><table><thead><tr><th>Data</th><th>Grupo</th><th>Rating</th></tr></thead><tbody>'+snap.docs.map(function(d){var dt=d.data();var r=dt.rating==='gostei'?'👍 Gostei':dt.rating==='melhorar'?'💡 Melhorar':'👎 Não gostei';return '<tr><td>'+(dt.criadoEm&&dt.criadoEm.toDate?dt.criadoEm.toDate().toLocaleDateString('pt-BR'):'—')+'</td><td>'+(dt.grupoApresentador||'—')+'</td><td>'+r+'</td></tr>';}).join('')+'</tbody></table></div>';
   }).catch(function(){});
 }
-function togEt(et,val) {
-  document.getElementById('lbl-'+et).textContent=val?'Habilitada':'Desabilitada';
-  db.collection('acad_config').doc('etapas').set({[et]:val},{merge:true}).catch(function(){});
+
+// ALUNO: FICHA N1
+function salvarF1(){
+  var cas=document.getElementById('f1-cas').value;
+  var casoObj=CASOS_N1.find(function(c){return c.n==cas;});
+  var aid=usuario.id||usuario.matricula;
+  db.collection('acad_fichas_n1').add({
+    alunoId:aid,alunoNome:usuario.nome,
+    caso:casoObj?'Caso '+casoObj.n+' — '+casoObj.nm:cas,
+    paciente:document.getElementById('f1-pac').value,
+    ctx:document.getElementById('f1-ctx').value,
+    mod:document.getElementById('f1-mod').value,
+    q1:document.getElementById('f1-q1').value,q2:document.getElementById('f1-q2').value,
+    q3:document.getElementById('f1-q3').value,q4:document.getElementById('f1-q4').value,
+    q5:document.getElementById('f1-q5').value,q6:document.getElementById('f1-q6').value,
+    q7:document.getElementById('f1-q7').value,
+    disciplina:'Psicoterapia Breve',professora:'Dra. Lucia Kratz',
+    criadoEm:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function(){
+    document.getElementById('f1-st').textContent='✅ Ficha salva!';
+    carregarFichasAluno();
+    setTimeout(function(){document.getElementById('f1-st').textContent='';},3000);
+  }).catch(function(){document.getElementById('f1-st').textContent='❌ Erro ao salvar.';});
 }
-function renderAl(lista) {
-  var src=lista||alunosFil;
-  var tb=document.getElementById('tb-al');
-  if(!tb) return;
-  if(!src.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text-light)">Nenhum aluno.</td></tr>';return;}
-  tb.innerHTML=src.map(function(a){return '<tr><td style="font-weight:600">'+a.nome+'</td><td><span class="badge brx">'+a.matricula+'</span></td><td>'+(a.grupoN1||'—')+'</td><td style="font-size:12px">'+(a.casoN1||'—')+'</td><td>'+(a.grupoN2||'—')+'</td><td style="font-size:12px">'+(a.casoN2||'—')+'</td><td><button class="btn bred bsm" onclick="remAl(\''+a.id+'\')">✕</button></td></tr>';}).join('');
+
+function pdfF1(){
+  var cas=document.getElementById('f1-cas').value;
+  var casoObj=CASOS_N1.find(function(c){return c.n==cas;});
+  gerarPDFF1({alunoNome:usuario.nome,matricula:usuario.matricula,caso:casoObj?'Caso '+casoObj.n+' — '+casoObj.nm:cas,ctx:document.getElementById('f1-ctx').value,q1:document.getElementById('f1-q1').value,q2:document.getElementById('f1-q2').value,q3:document.getElementById('f1-q3').value,q4:document.getElementById('f1-q4').value,q5:document.getElementById('f1-q5').value,q6:document.getElementById('f1-q6').value,q7:document.getElementById('f1-q7').value});
 }
-function filtAl(v) {
-  var l=v.toLowerCase();
-  alunosFil=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0;});
-  renderAl(alunosFil);
+
+function pdfFichaId(id){
+  db.collection('acad_fichas_n1').doc(id).get().then(function(d){if(d.exists)gerarPDFF1(d.data());});
 }
-function salvarAl() {
-  var nm=document.getElementById('al-nm').value.trim(),mt=document.getElementById('al-mt').value.trim();
-  if(!nm||!mt){alert('Nome e matrícula obrigatórios.');return;}
-  var novo={id:'f'+Date.now(),nome:nm,matricula:mt,grupoN1:document.getElementById('al-g1').value.trim(),casoN1:document.getElementById('al-c1').value.trim(),grupoN2:document.getElementById('al-g2').value.trim(),casoN2:document.getElementById('al-c2').value.trim(),notaN1:0,notaSem:0,notaESA:0};
-  ALUNOS.push(novo);alunosFil=ALUNOS.slice();renderAl();
-  db.collection('acad_alunos').add(Object.assign({},novo,{criadoEm:firebase.firestore.FieldValue.serverTimestamp()})).catch(function(){});
-  document.getElementById('al-st').textContent='✅ Salvo!';
-  ['al-nm','al-mt','al-g1','al-c1','al-g2','al-c2'].forEach(function(id){document.getElementById(id).value='';});
-  setTimeout(function(){document.getElementById('al-st').textContent='';},3000);
+
+function gerarPDFF1(dt){
+  var qs=['Queixa Principal & Demanda Institucional','Sinais Observados','Sintomas Relatados','Hipótese Diagnóstica (DSM-5-TR)','Diagnóstico Diferencial','Foco para Psicoterapia Breve','Estratégias e Encaminhamentos'];
+  var html='<html><head><meta charset="UTF-8"><title>Ficha N1</title><style>body{font-family:Arial,sans-serif;padding:30px;max-width:800px;margin:0 auto;font-size:13px}h1{color:#7B00C4;font-size:16px;margin-bottom:4px}h2{font-size:12px;color:#3d006a;margin-top:16px;border-bottom:1px solid #ddd;padding-bottom:3px}.v{padding:8px;background:#f9fafb;border-radius:6px;margin-top:3px;min-height:40px}.lbl{font-weight:bold;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin-top:12px;display:block}</style></head><body>';
+  html+='<h1>FICHA DE AVALIAÇÃO CLÍNICA & RACIOCÍNIO DIAGNÓSTICO — N1</h1>';
+  html+='<p style="font-size:11px;color:#555">Psicoterapia Breve | Profª. Dra. Lucia Kratz | CRP 09/20590 | Data: '+new Date().toLocaleDateString('pt-BR')+'</p>';
+  html+='<span class="lbl">Aluno:</span><div class="v">'+( dt.alunoNome||'—')+'</div>';
+  html+='<span class="lbl">Matrícula:</span><div class="v">'+(dt.matricula||'—')+'</div>';
+  html+='<span class="lbl">Caso:</span><div class="v">'+(dt.caso||'—')+'</div>';
+  html+='<span class="lbl">Contexto:</span><div class="v">'+(dt.ctx||'—')+'</div>';
+  for(var i=1;i<=7;i++){html+='<h2>'+i+'. '+qs[i-1]+'</h2><div class="v">'+(dt['q'+i]||'—')+'</div>';}
+  html+='</body></html>';
+  var w=window.open('','_blank');w.document.write(html);w.document.close();w.print();
 }
-function remAl(id) {
-  if(!confirm('Remover?'))return;
-  var idx=ALUNOS.findIndex(function(a){return a.id===id;});
-  if(idx>=0)ALUNOS.splice(idx,1);
-  alunosFil=ALUNOS.slice();renderAl();
+
+// ALUNO: MICRO
+function carregarMicro(){
+  var lst=document.getElementById('micro-lst');
+  db.collection('acad_sessoes').where('tipo','==','n2').get().then(function(snap){
+    var now=Date.now()/1000;
+    var ativas=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());}).filter(function(s){return s.expiraEm&&s.expiraEm.seconds>now;});
+    if(!ativas.length){lst.innerHTML='<div class="alt aw">⚠️ Nenhuma microavaliação ativa. Escaneie o QR exibido pela professora.</div>';return;}
+    lst.innerHTML=ativas.map(function(s){
+      return '<div class="cd"><div class="ct">⭐ Microavaliação — '+s.grupoNome+' · '+(s.data||'')+'</div>'+
+        '<div class="ro">'+
+        ['gostei','melhorar','nao'].map(function(v,i){var em=['👍','💡','👎'][i];var lb=['Gostei','Pode Melhorar','Não Gostei'][i];return '<div class="roo" onclick="selRat(this,''+s.id+'',''+v+'')"><div style="font-size:22px">'+em+'</div>'+lb+'</div>';}).join('')+
+        '</div>'+
+        '<div class="f2"><label>1. O Foco e alinhamento com a TCC ficaram claros?</label><textarea id="mq1-'+s.id+'"></textarea></div>'+
+        '<div class="f2"><label>2. Observação Construtiva / Destaque do Planejamento</label><textarea id="mq2-'+s.id+'"></textarea></div>'+
+        '<div class="f2"><label>3. Pergunta ou Ponto de Dúvida</label><textarea id="mq3-'+s.id+'"></textarea></div>'+
+        '<button class="btn brxo" onclick="salvarMicro(''+s.id+'',''+s.grupoNome+'')">💾 Entregar (+0,5pt)</button>'+
+        '<span id="mst-'+s.id+'" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>';
+    }).join('');
+  }).catch(function(){lst.innerHTML='<div class="alt aw">⚠️ Erro ao carregar. Tente novamente.</div>';});
 }
-function renderCas() {
-  document.getElementById('cas-lst').innerHTML=CASOS.map(function(c){
-    return '<div class="cc"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><span class="badge brx">Caso #'+c.n+'</span><div style="font-size:15px;font-weight:700;color:#3d006a;margin-top:6px">'+c.nm+'</div><div style="font-size:12px;color:var(--text-light)">'+c.cx+' · '+c.ei+'</div></div><button onclick="togCas('+c.n+')" id="btn-c'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div><div id="cb-'+c.n+'" style="display:none;margin-top:12px"><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Diagnóstico</div><div style="font-size:13px;margin-bottom:8px">'+c.di+'</div><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Foco</div><div style="font-size:13px;margin-bottom:8px">'+c.fo+'</div><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Sinais</div><div style="font-size:13px;margin-bottom:8px">'+c.si+'</div><div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;margin-bottom:3px">Sintomas</div><div style="font-size:13px;margin-bottom:8px">'+c.sy+'</div><div class="cseg">🔒 <strong>SEGREDO:</strong> '+c.sg+'</div></div></div>';
+
+function selRat(el,sid,v){
+  ratVals[sid]=v;
+  el.parentNode.querySelectorAll('.roo').forEach(function(o){o.classList.remove('sel');});
+  el.classList.add('sel');
+}
+
+function salvarMicro(sid,grp){
+  if(!ratVals[sid]){alert('Selecione 👍 💡 ou 👎');return;}
+  db.collection('acad_microaval').add({alunoId:usuario.id||usuario.matricula,alunoNome:usuario.nome,sessaoId:sid,grupoApresentador:grp,rating:ratVals[sid],q1:document.getElementById('mq1-'+sid).value,q2:document.getElementById('mq2-'+sid).value,q3:document.getElementById('mq3-'+sid).value,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(){document.getElementById('mst-'+sid).textContent='✅ Entregue! +0,5pt';})
+  .catch(function(){alert('Erro ao enviar.');});
+}
+
+// PROF: PAINEL
+function carregarAdmPai(){
+  document.getElementById('a-nal').textContent=ALUNOS.filter(function(a){return a.status==='ativo';}).length;
+  document.getElementById('a-ngp').textContent=GRUPOS.n1.length+GRUPOS.n2.length;
+  db.collection('acad_fichas_n1').get().then(function(s){document.getElementById('a-nfi').textContent=s.size;}).catch(function(){});
+  db.collection('acad_config').doc('etapas').get().then(function(d){if(d.exists){var dt=d.data();document.getElementById('tog-n1').checked=!!dt.n1;document.getElementById('lbl-n1').textContent=dt.n1?'Habilitada':'Desabilitada';document.getElementById('tog-n2').checked=!!dt.n2;document.getElementById('lbl-n2').textContent=dt.n2?'Habilitada':'Desabilitada';}}).catch(function(){});
+  carregarPendentes();
+}
+function togEt(et,v){document.getElementById('lbl-'+et).textContent=v?'Habilitada':'Desabilitada';db.collection('acad_config').doc('etapas').set({[et]:v},{merge:true}).catch(function(){});}
+
+function carregarPendentes(){
+  db.collection('acad_alunos').where('status','==','pendente').get().then(function(snap){
+    var el1=document.getElementById('pai-pend'),el2=document.getElementById('tb-pend');
+    if(!snap.size){if(el1)el1.innerHTML='<span style="color:var(--green)">✅ Nenhuma pendência.</span>';if(el2)el2.textContent='Nenhuma pendência.';return;}
+    var html='<div class="tw"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th></th></tr></thead><tbody>'+snap.docs.map(function(d){var dt=d.data();return '<tr><td style="font-weight:600">'+dt.nome+'</td><td>'+dt.matricula+'</td><td>'+(dt.email||'—')+'</td><td><button class="btn bgn bsm" onclick="aprovarAluno(''+d.id+'',''+dt.nome+'',''+dt.matricula+'')">✓ Aprovar</button></td></tr>';}).join('')+'</tbody></table></div>';
+    if(el1)el1.innerHTML='<span class="bdg bam">'+snap.size+' pendente(s)</span><br/><br/>'+html;
+    if(el2)el2.innerHTML=html;
+  }).catch(function(){});
+}
+function aprovarAluno(id,nome,mat){
+  db.collection('acad_alunos').doc(id).update({status:'ativo'}).then(function(){
+    var idx=ALUNOS.findIndex(function(a){return a.id===id;});
+    if(idx>=0)ALUNOS[idx].status='ativo';else ALUNOS.push({id:id,nome:nome,matricula:mat,notaN1:0,notaSem:0,notaESA:0,status:'ativo'});
+    alert('✅ '+nome+' aprovado!');carregarPendentes();renderTbAl();
+  }).catch(function(){alert('Erro ao aprovar.');});
+}
+
+// PROF: ALUNOS
+function renderTbAl(lista){
+  var src=(lista||alunosFil).filter(function(a){return a.status==='ativo';});
+  document.getElementById('al-count').textContent=src.length;
+  var tb=document.getElementById('tb-al');if(!tb)return;
+  if(!src.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--tl)">Nenhum aluno ativo.</td></tr>';return;}
+  tb.innerHTML=src.map(function(a){
+    var g1=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});
+    var g2=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});
+    return '<tr><td style="font-weight:600">'+a.nome+'</td><td><span class="bdg brx">'+a.matricula+'</span></td><td style="font-size:12px">'+(g1?g1.nome:'—')+'</td><td style="font-size:12px">'+(g2?g2.nome:'—')+'</td><td><span class="bdg bok">ativo</span></td><td><button class="btn brd bsm" onclick="remAl(''+a.id+'')">✕</button></td></tr>';
   }).join('');
 }
-function togCas(n) {
-  var b=document.getElementById('cb-'+n),btn=document.getElementById('btn-c'+n),ab=b.style.display!=='none';
-  b.style.display=ab?'none':'block';btn.textContent=ab?'▼ Ver':'▲ Fechar';
+function filtAl(v){var l=v.toLowerCase();alunosFil=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0;});renderTbAl(alunosFil);}
+function salvarAl(){
+  var nm=document.getElementById('al-nm').value.trim(),mt=document.getElementById('al-mt').value.trim();
+  if(!nm||!mt){alert('Nome e matrícula obrigatórios.');return;}
+  var novo={id:'f'+Date.now(),nome:nm,matricula:mt,email:document.getElementById('al-em').value.trim(),notaN1:0,notaSem:0,notaESA:0,status:document.getElementById('al-st2').value};
+  ALUNOS.push(novo);alunosFil=ALUNOS.slice();renderTbAl();
+  db.collection('acad_alunos').add(Object.assign({},novo,{criadoEm:firebase.firestore.FieldValue.serverTimestamp()})).catch(function(){});
+  document.getElementById('al-st').textContent='✅ Salvo!';
+  ['al-nm','al-mt','al-em'].forEach(function(id){document.getElementById(id).value='';});
+  setTimeout(function(){document.getElementById('al-st').textContent='';},3000);
 }
-function novoCaso() {
-  var nm=prompt('Nome e idade:');if(!nm)return;
-  var cx=prompt('Contexto:');if(!cx)return;
-  var sg=prompt('Segredo:');
-  CASOS.push({n:CASOS.length+1,nm:nm,cx:cx,ei:'—',di:'A definir',fo:'—',si:'—',sy:'—',sg:sg||'—'});
-  renderCas();
+function remAl(id){if(!confirm('Remover?'))return;var idx=ALUNOS.findIndex(function(a){return a.id===id;});if(idx>=0)ALUNOS.splice(idx,1);alunosFil=ALUNOS.slice();renderTbAl();}
+
+// PROF: GRUPOS
+function carregarGruposFirebase(){
+  db.collection('acad_grupos').get().then(function(snap){
+    GRUPOS={n1:[],n2:[]};
+    snap.docs.forEach(function(d){var g=Object.assign({id:d.id},d.data());if(g.tipo==='n1')GRUPOS.n1.push(g);else if(g.tipo==='n2')GRUPOS.n2.push(g);});
+    renderGrupos();popularSelectGrupos();renderTbAl();
+    document.getElementById('a-ngp').textContent=GRUPOS.n1.length+GRUPOS.n2.length;
+  }).catch(function(){});
 }
-function carregarDisp() {
-  db.collection('acad_disparos').get().then(function(snap){
-    disparos=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-    disparos.sort(function(a,b){return(b.criadoEm&&b.criadoEm.seconds||0)-(a.criadoEm&&a.criadoEm.seconds||0);});
-    renderDisp();
-  }).catch(function(){disparos=[];renderDisp();});
+function popularSelectGrupos(){
+  var s1=document.getElementById('dis1-grp'),s2=document.getElementById('dis2-grp');
+  if(s1)s1.innerHTML='<option value="">Selecione o grupo...</option>'+GRUPOS.n1.map(function(g){return '<option value="'+g.id+'">'+g.nome+'</option>';}).join('');
+  if(s2)s2.innerHTML='<option value="">Selecione o grupo...</option>'+GRUPOS.n2.map(function(g){return '<option value="'+g.id+'">'+g.nome+'</option>';}).join('');
 }
-function disparar() {
-  var dt=document.getElementById('dis-dt').value,tp=document.getElementById('dis-tp').value,gr=document.getElementById('dis-gr').value.trim();
-  var sel=document.getElementById('dis-cs');var cs=sel.options[sel.selectedIndex].text;
-  if(!dt||!gr||!sel.value){alert('Preencha data, grupo e caso.');return;}
-  db.collection('acad_disparos').add({data:dt,tipo:tp,grupo:gr,caso:cs,criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(ref){disparos.unshift({id:ref.id,data:dt,tipo:tp,grupo:gr,caso:cs});document.getElementById('a-ndi').textContent=disparos.length;renderDisp();alert('✅ Disparado!');})
-  .catch(function(){alert('Erro ao disparar.');});
+function renderMembros(tipo){
+  var el=document.getElementById('grp'+(tipo==='n1'?'1':'2')+'-mbs');if(!el)return;
+  var ativos=ALUNOS.filter(function(a){return a.status==='ativo';});
+  el.innerHTML=ativos.map(function(a){return '<label style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;background:#fff"><input type="checkbox" value="'+a.id+'" style="accent-color:var(--roxo)"/> '+a.nome.split(' ').slice(0,2).join(' ')+'</label>';}).join('');
 }
-function renderDisp() {
-  var tb=document.getElementById('tb-dis');
-  if(!tb)return;
-  if(!disparos.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--text-light)">Nenhum disparo.</td></tr>';return;}
-  tb.innerHTML=disparos.map(function(d){return '<tr><td>'+(d.data||'—')+'</td><td><span class="badge '+(d.tipo==='microaval'?'bbl':'brx')+'">'+(d.tipo==='microaval'?'⭐ Microaval':'📋 Ficha N1')+'</span></td><td style="font-size:12px">'+(d.caso||'—')+'</td><td>'+(d.grupo||'—')+'</td></tr>';}).join('');
+function renderGrupos(){
+  ['n1','n2'].forEach(function(tipo){
+    var lst=document.getElementById('grps-'+tipo+'-lst');if(!lst)return;
+    var grps=GRUPOS[tipo];
+    if(!grps.length){lst.innerHTML='<div class="alt aw" style="margin-top:12px">Nenhum grupo ainda.</div>';return;}
+    lst.innerHTML=grps.map(function(g){
+      var c=(tipo==='n1'?CASOS_N1:CASOS_N2).find(function(x){return x.n==g.casoNum;});
+      var mbs=(g.membros||[]).map(function(mid){var a=ALUNOS.find(function(x){return x.id===mid;});return a?'<span class="grp-tag">'+a.nome.split(' ').slice(0,2).join(' ')+'</span>':'';}).join('');
+      return '<div class="grp-card"><div class="grp-header"><div class="grp-title">'+g.nome+' <span class="bdg bam" style="font-size:10px;margin-left:6px">'+(c?'Caso '+c.n:'—')+'</span></div><div class="brow"><button class="btn bgr bsm" onclick="editarGrp(''+tipo+'',''+g.id+'')">✏️</button><button class="btn brd bsm" onclick="remGrp(''+g.id+'')">✕</button></div></div>'+
+        '<div style="font-size:12px;color:var(--tl);margin-bottom:8px">Caso: '+(c?c.nm:'Não atribuído')+'</div>'+
+        '<div>'+mbs+'</div></div>';
+    }).join('');
+  });
 }
-function acNota(v) {
-  var ac=document.getElementById('not-ac');
-  if(v.length<2){ac.style.display='none';return;}
-  var l=v.toLowerCase(),res=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0;});
-  if(!res.length){ac.style.display='none';return;}
-  ac.innerHTML=res.slice(0,8).map(function(a){return '<div class="acitem" onclick="selNota(\''+a.id+'\')">'+a.nome+' — '+a.matricula+'</div>';}).join('');
+function salvarGrp(tipo){
+  var sfx=tipo==='n1'?'1':'2';
+  var nm=document.getElementById('grp'+sfx+'-nm').value.trim();
+  var cas=document.getElementById('grp'+sfx+'-cas').value;
+  if(!nm||!cas){alert('Preencha nome e caso.');return;}
+  var cbs=document.querySelectorAll('#grp'+sfx+'-mbs input[type="checkbox"]:checked');
+  var membros=[];cbs.forEach(function(cb){membros.push(cb.value);});
+  if(!membros.length){alert('Selecione pelo menos um membro.');return;}
+  var dados={nome:nm,tipo:tipo,casoNum:parseInt(cas),membros:membros,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()};
+  db.collection('acad_grupos').add(dados).then(function(ref){
+    GRUPOS[tipo].push(Object.assign({id:ref.id},dados));
+    renderGrupos();popularSelectGrupos();renderTbAl();
+    document.getElementById('grp'+sfx+'-st').textContent='✅ Salvo!';
+    document.getElementById('grp'+sfx+'-nm').value='';
+    document.getElementById('grp'+sfx+'-cas').value='';
+    document.querySelectorAll('#grp'+sfx+'-mbs input').forEach(function(cb){cb.checked=false;});
+    setTimeout(function(){document.getElementById('grp'+sfx+'-st').textContent='';},3000);
+  }).catch(function(){alert('Erro ao salvar grupo.');});
+}
+function editarGrp(tipo,id){
+  var g=GRUPOS[tipo].find(function(x){return x.id===id;});if(!g)return;
+  var sfx=tipo==='n1'?'1':'2';
+  document.getElementById('grp'+sfx+'-nm').value=g.nome;
+  document.getElementById('grp'+sfx+'-cas').value=g.casoNum;
+  renderMembros(tipo);
+  setTimeout(function(){(g.membros||[]).forEach(function(mid){var cb=document.querySelector('#grp'+sfx+'-mbs input[value="'+mid+'"]');if(cb)cb.checked=true;});},150);
+  db.collection('acad_grupos').doc(id).delete().then(function(){var idx=GRUPOS[tipo].findIndex(function(x){return x.id===id;});if(idx>=0)GRUPOS[tipo].splice(idx,1);renderGrupos();}).catch(function(){});
+}
+function remGrp(id){
+  if(!confirm('Remover grupo?'))return;
+  db.collection('acad_grupos').doc(id).delete().then(function(){GRUPOS.n1=GRUPOS.n1.filter(function(g){return g.id!==id;});GRUPOS.n2=GRUPOS.n2.filter(function(g){return g.id!==id;});renderGrupos();popularSelectGrupos();renderTbAl();}).catch(function(){alert('Erro.');});
+}
+
+// PROF: CASOS
+function renderCasos(){
+  var l1=document.getElementById('cas-n1-lst');
+  if(l1)l1.innerHTML=CASOS_N1.map(function(c){
+    return '<div class="cc"><div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+      '<div><span class="bdg brx">Caso #'+c.n+' — N1</span><div style="font-size:15px;font-weight:700;color:#3d006a;margin:6px 0 2px">'+c.nm+'</div><div style="font-size:12px;color:var(--tl)">'+c.cx+' · '+c.ei+'</div></div>'+
+      '<button onclick="togCas('n1-'+c.n+'')" id="btn-n1-'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div>'+
+      '<div id="cb-n1-'+c.n+'" style="display:none;margin-top:12px">'+
+      '<div class="cori">📌 <strong>Orientações para o Aluno-Ator:</strong><br/>'+c.ori+'</div>'+
+      ['Diagnóstico','Foco Terapêutico','Sinais a Demonstrar','Sintomas a Relatar','Crenças Centrais'].map(function(t,i){var v=[c.di,c.fo,c.si,c.sy,c.cr][i];return '<div style="font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;margin:10px 0 3px">'+t+'</div><div style="font-size:13px;margin-bottom:8px">'+v+'</div>';}).join('')+
+      '<div class="cseg">🔒 <strong>SEGREDO — Revelar apenas sob boa aliança terapêutica:</strong><br/>'+c.sg+'</div>'+
+      '</div></div>';
+  }).join('');
+  var l2=document.getElementById('cas-n2-lst');
+  if(l2)l2.innerHTML=CASOS_N2.map(function(c){
+    return '<div class="cc"><div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+      '<div><span class="bdg bbl">Caso #'+c.n+' — N2</span><div style="font-size:15px;font-weight:700;color:#3d006a;margin:6px 0 2px">'+c.nm+'</div><div style="font-size:12px;color:var(--tl)">'+c.cx+' · '+c.ei+'</div></div>'+
+      '<button onclick="togCas('n2-'+c.n+'')" id="btn-n2-'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div>'+
+      '<div id="cb-n2-'+c.n+'" style="display:none;margin-top:12px">'+
+      '<div style="font-size:13px;font-weight:700;color:#3d006a;margin-bottom:8px">📋 Estrutura do Trabalho Escrito + Seminário</div>'+
+      c.estrutura.map(function(e){return '<div style="font-size:13px;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--roxo-light)">'+e+'</div>';}).join('')+
+      '<div style="font-size:13px;font-weight:700;color:#3d006a;margin:14px 0 8px">🎤 Critérios (6,0 pt)</div>'+
+      c.criterios.map(function(e){return '<div style="font-size:13px;margin-bottom:6px;padding-left:8px;border-left:3px solid #bfdbfe">'+e+'</div>';}).join('')+
+      '</div></div>';
+  }).join('');
+}
+function togCas(id){var b=document.getElementById('cb-'+id),btn=document.getElementById('btn-'+id);if(!b||!btn)return;var ab=b.style.display!=='none';b.style.display=ab?'none':'block';btn.textContent=ab?'▼ Ver':'▲ Fechar';}
+
+// QR CODE
+function gerarQR(tipo){
+  var sfx=tipo==='n1'?'1':'2';
+  var grpId=document.getElementById('dis'+sfx+'-grp').value;
+  var dt=document.getElementById('dis'+sfx+'-dt').value;
+  var val=parseInt(document.getElementById('dis'+sfx+'-val').value);
+  if(!grpId||!dt){alert('Selecione data e grupo.');return;}
+  var grp=GRUPOS[tipo].find(function(g){return g.id===grpId;});
+  if(!grp){alert('Grupo não encontrado.');return;}
+  var expira=new Date(Date.now()+val*60*60*1000);
+  db.collection('acad_sessoes').add({tipo:tipo,grupoId:grpId,grupoNome:grp.nome,casoNum:grp.casoNum,data:dt,expiraEm:firebase.firestore.Timestamp.fromDate(expira),criadoEm:firebase.firestore.FieldValue.serverTimestamp()})
+  .then(function(ref){
+    var url=window.location.href.split('?')[0]+'?qr='+ref.id;
+    var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURIComponent(url);
+    document.getElementById('qr'+sfx+'-img').src=qrUrl;
+    document.getElementById('qr'+sfx+'-grp').textContent=grp.nome;
+    document.getElementById('qr'+sfx+'-val').textContent=expira.toLocaleString('pt-BR');
+    document.getElementById('qr'+sfx+'-cod').textContent=ref.id.substring(0,8).toUpperCase();
+    document.getElementById('qr'+sfx+'-box').classList.remove('hidden');
+    SESSOES_QR[tipo]={id:ref.id,url:url};
+  }).catch(function(){alert('Erro ao gerar QR.');});
+}
+function baixarQR(imgId,nome){var img=document.getElementById(imgId);var a=document.createElement('a');a.href=img.src;a.download=nome+'.png';a.click();}
+function copiarQRLink(tipo){if(SESSOES_QR[tipo])navigator.clipboard.writeText(SESSOES_QR[tipo].url).then(function(){alert('✅ Link copiado!');});}
+function encerrarQR(tipo){
+  if(!SESSOES_QR[tipo]||!confirm('Encerrar QR?'))return;
+  db.collection('acad_sessoes').doc(SESSOES_QR[tipo].id).update({expiraEm:firebase.firestore.Timestamp.fromDate(new Date(0))})
+  .then(function(){document.getElementById('qr'+(tipo==='n1'?'1':'2')+'-box').classList.add('hidden');SESSOES_QR[tipo]=null;});
+}
+function carregarSessoesAtivas(){
+  var now=Date.now()/1000;
+  db.collection('acad_sessoes').get().then(function(snap){
+    snap.docs.forEach(function(d){
+      var s=Object.assign({id:d.id},d.data());
+      if(s.expiraEm&&s.expiraEm.seconds>now){
+        var url=window.location.href.split('?')[0]+'?qr='+s.id;
+        var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=250x250&data='+encodeURIComponent(url);
+        var sfx=s.tipo==='n1'?'1':'2';
+        var box=document.getElementById('qr'+sfx+'-box');
+        if(box&&box.classList.contains('hidden')){
+          document.getElementById('qr'+sfx+'-img').src=qrUrl;
+          document.getElementById('qr'+sfx+'-grp').textContent=s.grupoNome||'—';
+          document.getElementById('qr'+sfx+'-val').textContent=s.expiraEm.toDate?s.expiraEm.toDate().toLocaleString('pt-BR'):'—';
+          document.getElementById('qr'+sfx+'-cod').textContent=s.id.substring(0,8).toUpperCase();
+          box.classList.remove('hidden');
+          SESSOES_QR[s.tipo]={id:s.id,url:url};
+        }
+      }
+    });
+  }).catch(function(){});
+}
+function carregarFichasRecebidas(){
+  db.collection('acad_fichas_n1').get().then(function(snap){
+    var tb=document.getElementById('tb-f1r');if(!tb)return;
+    if(!snap.size){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--tl)">Nenhuma ficha.</td></tr>';return;}
+    tb.innerHTML=snap.docs.map(function(d){var dt=d.data();return '<tr><td style="font-weight:600">'+(dt.alunoNome||'—')+'</td><td>'+(dt.criadoEm&&dt.criadoEm.toDate?dt.criadoEm.toDate().toLocaleDateString('pt-BR'):'—')+'</td><td style="font-size:12px">'+(dt.caso||'—')+'</td><td><span class="bdg bok">Recebida</span></td></tr>';}).join('');
+  }).catch(function(){});
+  db.collection('acad_microaval').get().then(function(snap){
+    var tb=document.getElementById('tb-f2r');if(!tb)return;
+    if(!snap.size){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--tl)">Nenhuma microaval.</td></tr>';return;}
+    tb.innerHTML=snap.docs.map(function(d){var dt=d.data();var r=dt.rating==='gostei'?'👍':dt.rating==='melhorar'?'💡':'👎';return '<tr><td style="font-weight:600">'+(dt.alunoNome||'—')+'</td><td>'+(dt.criadoEm&&dt.criadoEm.toDate?dt.criadoEm.toDate().toLocaleDateString('pt-BR'):'—')+'</td><td>'+(dt.grupoApresentador||'—')+'</td><td>'+r+'</td></tr>';}).join('');
+  }).catch(function(){});
+}
+
+// FORM VIA QR
+function carregarFormQR(sessaoId){
+  db.collection('acad_sessoes').doc(sessaoId).get().then(function(doc){
+    if(!doc.exists){document.getElementById('qr-tit').textContent='QR Inválido';document.getElementById('qr-sub').textContent='Sessão não encontrada.';return;}
+    var s=doc.data();
+    if(s.expiraEm&&s.expiraEm.seconds<Date.now()/1000){document.getElementById('qr-tit').textContent='QR Expirado';document.getElementById('qr-sub').textContent='Esta sessão já encerrou.';return;}
+    var tipo=s.tipo,grpNome=s.grupoNome||'—',casoNum=s.casoNum;
+    var caso=(tipo==='n1'?CASOS_N1:CASOS_N2).find(function(c){return c.n==casoNum;});
+    document.getElementById('qr-tit').textContent=tipo==='n1'?'📋 Ficha de Avaliação Clínica — N1':'⭐ Microavaliação da Plateia — N2';
+    document.getElementById('qr-sub').textContent=(tipo==='n1'?'Grupo: ':'Avalie o grupo: ')+grpNome+(caso?' · Caso '+caso.n+' — '+caso.nm:'');
+    // Carrega alunos
+    var todos=ALUNOS.slice();
+    db.collection('acad_alunos').where('status','==','ativo').get().then(function(snap){
+      snap.docs.forEach(function(d){var dt=Object.assign({id:d.id},d.data());if(!todos.find(function(x){return x.matricula===dt.matricula;}))todos.push(dt);});
+      window._qrAlunos=todos;
+    }).catch(function(){window._qrAlunos=todos;});
+    window._qrAlunos=todos;
+    var frm=document.getElementById('qr-frm');
+    var alSel='<div class="fg"><label class="lbl">Seu Nome *</label><input class="inp" id="qrfm-nm" placeholder="Digite seu nome..." autocomplete="off" oninput="acQR(this.value)"/><div id="qrfm-ac" class="acl"></div></div>';
+    if(tipo==='n1'){
+      frm.innerHTML=alSel+
+        '<div class="fg"><label class="lbl">Paciente Simulado</label><input class="inp" id="qrfm-pac" value="'+(caso?caso.nm:'')+'"/></div>'+
+        ['1. Queixa Principal & Demanda Institucional','2. Sinais Observados','3. Sintomas Relatados','4. Hipótese Diagnóstica (DSM-5-TR)','5. Diagnóstico Diferencial','6. Foco para Psicoterapia Breve','7. Estratégias e Encaminhamentos'].map(function(q,i){return '<div class="fg"><label class="lbl">'+q+'</label><textarea class="inp" id="qrfm-q'+(i+1)+'" style="resize:vertical;min-height:70px"></textarea></div>';}).join('')+
+        '<button class="bp" style="margin-top:8px" onclick="enviarFormQR('n1',''+sessaoId+'',''+grpNome+'',' +(casoNum||0)+')">💾 Enviar Ficha N1</button>'+
+        '<div id="qrfm-ok" class="ag alt hidden" style="margin-top:12px">✅ Ficha enviada! Disponível no seu painel.</div>';
+    } else {
+      frm.innerHTML=alSel+
+        '<div class="fg"><label class="lbl">Avaliação Geral</label><div class="ro">'+
+        ['gostei','melhorar','nao'].map(function(v,i){return '<div class="roo" onclick="selQRRat(this,''+v+'')"><div style="font-size:22px">'+['👍','💡','👎'][i]+'</div>'+['Gostei','Pode Melhorar','Não Gostei'][i]+'</div>';}).join('')+'</div></div>'+
+        ['1. O Foco e alinhamento com a TCC ficaram claros?','2. Observação Construtiva / Destaque do Planejamento','3. Pergunta ou Ponto de Dúvida'].map(function(q,i){return '<div class="fg"><label class="lbl">'+q+'</label><textarea class="inp" id="qrfm-mq'+(i+1)+'" style="resize:vertical;min-height:70px"></textarea></div>';}).join('')+
+        '<button class="bp" style="margin-top:8px" onclick="enviarFormQR('n2',''+sessaoId+'',''+grpNome+'','+(casoNum||0)+')">💾 Enviar Microavaliação</button>'+
+        '<div id="qrfm-ok" class="ag alt hidden" style="margin-top:12px">✅ Microavaliação enviada! +0,5pt registrado.</div>';
+    }
+  }).catch(function(){document.getElementById('qr-tit').textContent='Erro ao carregar';});
+}
+
+function acQR(val){
+  var list=document.getElementById('qrfm-ac');_qrSel=null;
+  if(val.length<3){list.style.display='none';return;}
+  var alunos=window._qrAlunos||ALUNOS;
+  var r=alunos.filter(function(a){return(a.nome||'').toLowerCase().indexOf(val.toLowerCase())>=0;});
+  if(!r.length){list.style.display='none';return;}
+  list.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selQRAl(''+a.id+'',''+a.nome.replace(/'/g,"\'")+'')">' +a.nome+(a.matricula?' — '+a.matricula:'')+'</div>';}).join('');
+  list.style.display='block';
+}
+function selQRAl(id,nome){_qrSel={id:id,nome:nome};document.getElementById('qrfm-nm').value=nome;document.getElementById('qrfm-ac').style.display='none';}
+function selQRRat(el,v){_qrRat=v;document.querySelectorAll('#qr-frm .roo').forEach(function(o){o.classList.remove('sel');});el.classList.add('sel');}
+function enviarFormQR(tipo,sessaoId,grpNome,casoNum){
+  var nm=document.getElementById('qrfm-nm').value.trim();
+  var er=document.getElementById('qr-er');er.style.display='none';
+  if(!nm){er.textContent='Informe seu nome.';er.style.display='block';return;}
+  if(!_qrSel){er.textContent='Selecione seu nome na lista.';er.style.display='block';return;}
+  if(tipo==='n2'&&!_qrRat){er.textContent='Selecione 👍 💡 ou 👎.';er.style.display='block';return;}
+  var base={alunoId:_qrSel.id,alunoNome:_qrSel.nome,sessaoId:sessaoId,grupoApresentador:grpNome,casoNum:casoNum,disciplina:'Psicoterapia Breve',professora:'Dra. Lucia Kratz',criadoEm:firebase.firestore.FieldValue.serverTimestamp()};
+  var extra=tipo==='n1'?{paciente:document.getElementById('qrfm-pac').value,caso:'Caso '+casoNum,q1:document.getElementById('qrfm-q1').value,q2:document.getElementById('qrfm-q2').value,q3:document.getElementById('qrfm-q3').value,q4:document.getElementById('qrfm-q4').value,q5:document.getElementById('qrfm-q5').value,q6:document.getElementById('qrfm-q6').value,q7:document.getElementById('qrfm-q7').value}:{rating:_qrRat,q1:document.getElementById('qrfm-mq1').value,q2:document.getElementById('qrfm-mq2').value,q3:document.getElementById('qrfm-mq3').value};
+  db.collection(tipo==='n1'?'acad_fichas_n1':'acad_microaval').add(Object.assign({},base,extra))
+  .then(function(){document.getElementById('qrfm-ok').classList.remove('hidden');document.querySelector('#qr-frm .bp').style.display='none';})
+  .catch(function(){er.textContent='Erro ao enviar. Tente novamente.';er.style.display='block';});
+}
+
+// NOTAS
+function acNota(v){
+  var ac=document.getElementById('not-ac');if(v.length<2){ac.style.display='none';return;}
+  var l=v.toLowerCase(),r=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0&&a.status==='ativo';});
+  if(!r.length){ac.style.display='none';return;}
+  ac.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selNota(''+a.id+'')">'+a.nome+' — '+a.matricula+'</div>';}).join('');
   ac.style.display='block';
 }
-function selNota(id) {
-  notaSel=ALUNOS.find(function(a){return a.id===id;});
-  if(!notaSel)return;
+function selNota(id){
+  notaSel=ALUNOS.find(function(a){return a.id===id;});if(!notaSel)return;
   document.getElementById('not-bk').value=notaSel.nome;
   document.getElementById('not-sl').value=notaSel.nome;
   document.getElementById('not-ac').style.display='none';
   document.getElementById('not-fm').style.display='block';
   document.getElementById('n-n1').value=notaSel.notaN1||0;
   document.getElementById('n-es').value=notaSel.notaESA||0;
+  var grp=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(id)>=0;});
+  document.getElementById('sem-grp-nm').textContent=grp?grp.nome:'Grupo não atribuído';
   var s4=(notaSel.notaSem||0)/4;
-  ['n-rc','n-co','n-ql','n-dn'].forEach(function(id){document.getElementById(id).value=Math.min(1.5,s4).toFixed(1);});
+  ['n-rc','n-co','n-ql','n-dn'].forEach(function(i){document.getElementById(i).value=Math.min(1.5,s4).toFixed(1);});
   updSem();
+  db.collection('acad_notas').doc(id).get().then(function(d){
+    if(d.exists){var dt=d.data();document.getElementById('n-n1').value=dt.notaN1||0;document.getElementById('n-es').value=dt.notaESA||0;var s4=(dt.notaSem||0)/4;['n-rc','n-co','n-ql','n-dn'].forEach(function(i){document.getElementById(i).value=Math.min(1.5,s4).toFixed(1);});updSem();}
+  }).catch(function(){});
 }
-function updSem() {
-  var t=['n-rc','n-co','n-ql','n-dn'].reduce(function(s,id){return s+(parseFloat(document.getElementById(id).value)||0);},0);
-  document.getElementById('sem-tot').textContent=t.toFixed(1);
-}
-function salvarNotas() {
+function updSem(){var t=['n-rc','n-co','n-ql','n-dn'].reduce(function(s,i){return s+(parseFloat(document.getElementById(i).value)||0);},0);document.getElementById('sem-tot').textContent=t.toFixed(1);}
+function salvarNotas(){
   if(!notaSel){alert('Selecione um aluno.');return;}
   var n1=parseFloat(document.getElementById('n-n1').value)||0,esa=parseFloat(document.getElementById('n-es').value)||0;
-  var sem=['n-rc','n-co','n-ql','n-dn'].reduce(function(s,id){return s+(parseFloat(document.getElementById(id).value)||0);},0);
-  var idx=ALUNOS.findIndex(function(a){return a.id===notaSel.id;});
-  if(idx>=0){ALUNOS[idx].notaN1=n1;ALUNOS[idx].notaSem=sem;ALUNOS[idx].notaESA=esa;}
-  db.collection('acad_notas').doc(notaSel.id).set({notaN1:n1,notaSem:sem,notaESA:esa,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){document.getElementById('not-st').textContent='✅ Salvo!';renderPau();setTimeout(function(){document.getElementById('not-st').textContent='';},3000);})
-  .catch(function(){document.getElementById('not-st').textContent='❌ Erro.';});
+  var sem=['n-rc','n-co','n-ql','n-dn'].reduce(function(s,i){return s+(parseFloat(document.getElementById(i).value)||0);},0);
+  // Nota do seminário vai para todo o grupo N2
+  var grp=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(notaSel.id)>=0;});
+  var idsGrp=grp?grp.membros:[notaSel.id];
+  // N1 e ESA: individual
+  db.collection('acad_notas').doc(notaSel.id).set({notaN1:n1,notaSem:sem,notaESA:esa,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+  .then(function(){
+    // Seminário para todos do grupo
+    if(grp&&grp.membros.length>1){
+      grp.membros.forEach(function(mid){if(mid!==notaSel.id)db.collection('acad_notas').doc(mid).set({notaSem:sem,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(function(){});});
+    }
+    var idx=ALUNOS.findIndex(function(a){return a.id===notaSel.id;});
+    if(idx>=0){ALUNOS[idx].notaN1=n1;ALUNOS[idx].notaSem=sem;ALUNOS[idx].notaESA=esa;}
+    document.getElementById('not-st').textContent=grp?'✅ Salvo para todo o '+grp.nome+'!':'✅ Salvo!';
+    renderPau('');
+    setTimeout(function(){document.getElementById('not-st').textContent='';},3000);
+  }).catch(function(){document.getElementById('not-st').textContent='❌ Erro.';});
 }
-function renderPau() {
-  filtPau('');
-}
-function filtPau(v) {
-  var l=v.toLowerCase();
-  var lst=v?ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0;}):ALUNOS;
+
+// PAUTA
+function renderPau(v){
+  var l=(v||'').toLowerCase();
+  var lst=l?ALUNOS.filter(function(a){return(a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0)&&a.status==='ativo';}):ALUNOS.filter(function(a){return a.status==='ativo';});
   var tb=document.getElementById('tb-pau');if(!tb)return;
+  // Busca notas do Firebase antes de renderizar
+  db.collection('acad_notas').get().then(function(snap){
+    snap.docs.forEach(function(d){var idx=ALUNOS.findIndex(function(a){return a.id===d.id;});if(idx>=0){var dt=d.data();ALUNOS[idx].notaN1=dt.notaN1||ALUNOS[idx].notaN1;ALUNOS[idx].notaSem=dt.notaSem||ALUNOS[idx].notaSem;ALUNOS[idx].notaESA=dt.notaESA||ALUNOS[idx].notaESA;}});
+    renderLinhasPauta(lst,tb);
+  }).catch(function(){renderLinhasPauta(lst,tb);});
+}
+function filtPau(v){renderPau(v);}
+function renderLinhasPauta(lst,tb){
   tb.innerHTML=lst.map(function(a){
+    var g1=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});
+    var g2=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});
     var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=(n1+n2)/2,ap=med>=6;
-    return '<tr><td><span class="badge brx">'+a.matricula+'</span></td><td style="font-weight:600">'+a.nome+'</td><td style="font-size:12px">'+(a.grupoN1||'—')+'</td><td style="font-weight:600;color:'+(n1>=6?'var(--green)':'var(--red)')+'">'+n1.toFixed(1)+'</td><td style="font-size:12px">'+(a.grupoN2||'—')+'</td><td>'+sem.toFixed(1)+'</td><td>'+plat.toFixed(1)+'</td><td>'+esa.toFixed(1)+'</td><td style="font-weight:600;color:'+(n2>=6?'var(--green)':'var(--red)')+'">'+n2.toFixed(1)+'</td><td style="font-size:18px;font-weight:800;color:'+(ap?'var(--green)':'var(--red)')+'">'+med.toFixed(1)+'</td><td><span class="badge '+(ap?'bok':'bno')+'">'+(ap?'Aprovado':'Em risco')+'</span></td></tr>';
+    return '<tr><td><span class="bdg brx">'+a.matricula+'</span></td><td style="font-weight:600">'+a.nome+'</td>'+
+      '<td style="font-size:12px">'+(g1?g1.nome:'—')+'</td>'+
+      '<td style="font-weight:600;color:'+(n1>=6?'var(--green)':'var(--red)')+'">'+n1.toFixed(1)+'</td>'+
+      '<td style="font-size:12px">'+(g2?g2.nome:'—')+'</td>'+
+      '<td>'+sem.toFixed(1)+'</td><td>'+plat.toFixed(1)+'</td><td>'+esa.toFixed(1)+'</td>'+
+      '<td style="font-weight:600;color:'+(n2>=6?'var(--green)':'var(--red)')+'">'+n2.toFixed(1)+'</td>'+
+      '<td style="font-size:18px;font-weight:800;color:'+(ap?'var(--green)':'var(--red)')+'">'+med.toFixed(1)+'</td>'+
+      '<td><span class="bdg '+(ap?'bok':'bno')+'">'+(ap?'Aprovado':'Em risco')+'</span></td></tr>';
   }).join('');
 }
-function exportCSV() {
-  var h='Matricula,Nome,N1,Seminario,Plateia,ESA,N2,Media\n';
-  var r=ALUNOS.map(function(a){var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);return a.matricula+','+a.nome+','+n1+','+sem+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1)+','+med;}).join('\n');
-  var blob=new Blob([h+r],{type:'text/csv;charset=utf-8;'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='pauta.csv';a.click();
-}
-function copiarLnk() {
-  var url=window.location.href.split('?')[0];
-  navigator.clipboard.writeText(url).then(function(){document.getElementById('lnk-pv').textContent='✅ Copiado: '+url;});
-}
-function watsLnk() {
-  var url=encodeURIComponent(window.location.href.split('?')[0]);
-  window.open('https://api.whatsapp.com/send?text='+encodeURIComponent('📊 Psicoterapia Breve — Consulte suas notas: ')+url,'_blank');
+
+// EXPORT
+function exportExcel(tipo){
+  var rows=[],header='';
+  var ativ=ALUNOS.filter(function(a){return a.status==='ativo';});
+  if(tipo==='n1'){
+    header='Matrícula,Nome,Grupo N1,Caso N1,Nota N1
+';
+    rows=ativ.map(function(a){var g=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var c=g?CASOS_N1.find(function(x){return x.n==g.casoNum;}):null;return a.matricula+',"'+a.nome+'",'+(g?g.nome:'')+','+(c?'Caso '+c.n+' — '+c.nm:'')+','+(a.notaN1||0);});
+  } else if(tipo==='n2'){
+    header='Matrícula,Nome,Grupo N2,Caso N2,Seminário (6),Plateia (2),ESA (2),Total N2
+';
+    rows=ativ.map(function(a){var g=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var c=g?CASOS_N2.find(function(x){return x.n==g.casoNum;}):null;var sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa);return a.matricula+',"'+a.nome+'",'+(g?g.nome:'')+','+(c?'Caso '+c.n+' — '+c.nm:'')+','+sem.toFixed(1)+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1);});
+  } else {
+    header='Matrícula,Nome,Grupo N1,N1,Grupo N2,Seminário,Plateia,ESA,Total N2,Média,Status
+';
+    rows=ativ.map(function(a){var g1=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var g2=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);return a.matricula+',"'+a.nome+'",'+(g1?g1.nome:'')+','+n1+','+(g2?g2.nome:'')+','+sem+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1)+','+med+','+(parseFloat(med)>=6?'Aprovado':'Em risco');});
+  }
+  var csv='﻿'+header+rows.join('
+');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='psicoterapia_breve_'+tipo+'.csv';a.click();
 }
 
-// ===== FECHA AUTOCOMPLETE =====
+// FECHA AUTOCOMPLETE
 document.addEventListener('click',function(e){
-  if(!e.target.closest('#sup-nome')&&!e.target.closest('#sup-ac')){var a=document.getElementById('sup-ac');if(a)a.style.display='none';}
-  if(!e.target.closest('#psico-nome')&&!e.target.closest('#psico-ac')){var b=document.getElementById('psico-ac');if(b)b.style.display='none';}
-  if(!e.target.closest('#not-bk')&&!e.target.closest('#not-ac')){var c=document.getElementById('not-ac');if(c)c.style.display='none';}
+  [['#sup-nm','#sup-ac'],['#psico-nm','#psico-ac'],['#not-bk','#not-ac'],['#qrfm-nm','#qrfm-ac']].forEach(function(pair){
+    if(!e.target.closest(pair[0])&&!e.target.closest(pair[1])){var el=document.querySelector(pair[1]);if(el)el.style.display='none';}
+  });
 });
-
-// DATA PADRÃO
-var hoje=new Date().toISOString().split('T')[0];
-var dtEl=document.getElementById('dis-dt');
-if(dtEl) dtEl.value=hoje;
 </script>
 </body>
 </html>
