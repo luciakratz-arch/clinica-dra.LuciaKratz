@@ -1595,6 +1595,7 @@ function FerramentaPortal({ recurso, user }){
   if(typeof FerramentaMentalLoad!=="undefined"&&k==="carga-mental")              return <FerramentaMentalLoad user={user}/>;
   if(typeof FerramentaConflictCycle!=="undefined"&&k==="ciclo-conflito")         return <FerramentaConflictCycle user={user}/>;
   if(typeof FerramentaActiveListening!=="undefined"&&k==="escuta-ativa")         return <FerramentaActiveListening user={user}/>;
+  if(k==="mural-habilidades")    return <FerramentaMuralHabilidades user={user}/>;
   if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
   if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
   // ── Fábulas com campo "paginas" (array) ──────────────────────────
@@ -4963,6 +4964,440 @@ function App() {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ── Mural de Habilidades (Skills) e Micromomentos Positivos ─────────────────
+// formularioKey: "mural-habilidades"  |  categoria: macro_habitos
+// Coleções Firestore: clinica_mural_habilidades, clinica_mural_config
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FerramentaMuralHabilidades({ user }) {
+
+  const SKILLS_BIBLIOTECA = [
+    { id:"escuta_ativa",        nome:"Escuta Ativa",              tipo:"soft", emoji:"👂", desc:"Prestar atenção plena ao outro sem interromper ou julgar." },
+    { id:"empatia",             nome:"Empatia",                   tipo:"soft", emoji:"💜", desc:"Compreender e se conectar com os sentimentos de outras pessoas." },
+    { id:"regulacao_emocional", nome:"Regulação Emocional",       tipo:"soft", emoji:"🌊", desc:"Reconhecer e manejar emoções intensas de forma saudável." },
+    { id:"comunicacao",         nome:"Comunicação Assertiva",     tipo:"soft", emoji:"💬", desc:"Expressar pensamentos e necessidades de forma clara e respeitosa." },
+    { id:"tolerancia_frustracao",nome:"Tolerância à Frustração",  tipo:"soft", emoji:"🧱", desc:"Lidar com situações difíceis sem perder o equilíbrio emocional." },
+    { id:"flexibilidade",       nome:"Flexibilidade Cognitiva",   tipo:"soft", emoji:"🔄", desc:"Adaptar pensamentos e comportamentos diante de novas situações." },
+    { id:"autocuidado",         nome:"Autocuidado",               tipo:"soft", emoji:"🌸", desc:"Priorizar saúde física, mental e emocional no dia a dia." },
+    { id:"autoconhecimento",    nome:"Autoconhecimento",          tipo:"soft", emoji:"🪞", desc:"Identificar padrões, valores, limites e potencialidades pessoais." },
+    { id:"gratidao",            nome:"Gratidão",                  tipo:"soft", emoji:"🙏", desc:"Reconhecer e valorizar aspectos positivos da própria vida." },
+    { id:"presenca",            nome:"Presença Plena",            tipo:"soft", emoji:"🧘", desc:"Engajar-se plenamente no momento presente sem julgamentos." },
+    { id:"estabelecer_limites", nome:"Estabelecer Limites",       tipo:"soft", emoji:"🚧", desc:"Comunicar e manter fronteiras saudáveis nos relacionamentos." },
+    { id:"resolucao_conflitos", nome:"Resolução de Conflitos",    tipo:"soft", emoji:"🤝", desc:"Encontrar soluções que respeitam as necessidades de todos os lados." },
+    { id:"pensamento_critico",  nome:"Pensamento Crítico",        tipo:"soft", emoji:"🧠", desc:"Analisar informações e situações com reflexão antes de agir." },
+    { id:"persistencia",        nome:"Persistência",              tipo:"soft", emoji:"🎯", desc:"Continuar diante das dificuldades sem desistir dos objetivos." },
+    { id:"criatividade",        nome:"Criatividade",              tipo:"soft", emoji:"✨", desc:"Gerar novas ideias e soluções diante dos desafios." },
+    { id:"organizacao",         nome:"Organização",               tipo:"hard", emoji:"📋", desc:"Estruturar tarefas, espaços e rotinas de forma eficiente." },
+    { id:"gestao_tempo",        nome:"Gestão do Tempo",           tipo:"hard", emoji:"⏱️", desc:"Priorizar atividades e cumprir compromissos dentro dos prazos." },
+    { id:"planejamento",        nome:"Planejamento",              tipo:"hard", emoji:"🗺️", desc:"Definir metas claras e criar um caminho estruturado para alcançá-las." },
+    { id:"foco",                nome:"Foco e Concentração",       tipo:"hard", emoji:"🔆", desc:"Manter atenção sustentada em tarefas importantes com menos distrações." },
+    { id:"tomada_decisao",      nome:"Tomada de Decisão",         tipo:"hard", emoji:"⚖️", desc:"Escolher caminhos com base em análise cuidadosa de opções e consequências." },
+  ];
+
+  const COR_SATISF = [
+    { min:0,  max:3,  cor:"#dc2626", bg:"#fef2f2", label:"Desafiador" },
+    { min:4,  max:6,  cor:"#d97706", bg:"#fffbeb", label:"Em desenvolvimento" },
+    { min:7,  max:8,  cor:"#059669", bg:"#f0fdf4", label:"Satisfatório" },
+    { min:9,  max:10, cor:"#7B00C4", bg:"#f5eeff", label:"Excelente" },
+  ];
+
+  function corPorSatisf(media) {
+    return COR_SATISF.find(f => media >= f.min && media <= f.max) || COR_SATISF[1];
+  }
+
+  const [tela, setTela]           = React.useState("mural");
+  const [registros, setRegistros] = React.useState([]);
+  const [ativas, setAtivas]       = React.useState([]);
+  const [loading, setLoading]     = React.useState(true);
+  const [expandido, setExpandido] = React.useState(null);
+  const [modal, setModal]         = React.useState(false);
+  const [formReg, setFormReg]     = React.useState({ skillId:"", descricao:"", satisfacao:7 });
+  const [salvando, setSalvando]   = React.useState(false);
+  const [msgSalvo, setMsgSalvo]   = React.useState("");
+
+  React.useEffect(() => {
+    if (!user?.id) return;
+    const u1 = db.collection("clinica_mural_habilidades")
+      .where("pacienteId", "==", user.id)
+      .onSnapshot(snap => {
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setRegistros(docs);
+        setLoading(false);
+      }, () => setLoading(false));
+    const u2 = db.collection("clinica_mural_config").doc(user.id)
+      .onSnapshot(snap => {
+        if (snap.exists && snap.data().skillsAtivas) setAtivas(snap.data().skillsAtivas);
+      }, () => {});
+    return () => { u1(); u2(); };
+  }, [user?.id]);
+
+  async function salvarConfig(novasAtivas) {
+    setAtivas(novasAtivas);
+    await db.collection("clinica_mural_config").doc(user.id).set(
+      { skillsAtivas: novasAtivas, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+  }
+
+  function toggleSkill(id) {
+    salvarConfig(ativas.includes(id) ? ativas.filter(a => a !== id) : [...ativas, id]);
+  }
+
+  async function salvarRegistro() {
+    if (!formReg.skillId) { alert("Selecione uma habilidade."); return; }
+    setSalvando(true);
+    try {
+      const skill = SKILLS_BIBLIOTECA.find(s => s.id === formReg.skillId);
+      await db.collection("clinica_mural_habilidades").add({
+        pacienteId: user.id, pacienteNome: user.nome || "",
+        skillId: formReg.skillId, skillNome: skill?.nome || formReg.skillId,
+        skillEmoji: skill?.emoji || "⭐",
+        descricao: formReg.descricao.trim(),
+        satisfacao: Number(formReg.satisfacao),
+        data: new Date().toLocaleDateString("pt-BR"),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      if (typeof registrarUsoRecurso === "function") {
+        registrarUsoRecurso(user,
+          { titulo: "Mural de Habilidades", formularioKey: "mural-habilidades" },
+          "salvou", { detalhe: `Skill: ${skill?.nome || formReg.skillId}` }
+        );
+      }
+      setModal(false);
+      setFormReg({ skillId: "", descricao: "", satisfacao: 7 });
+      setMsgSalvo("✓ Micromoimento registrado!");
+      setTimeout(() => setMsgSalvo(""), 2800);
+    } catch(e) { alert("Erro ao salvar: " + e.message); }
+    setSalvando(false);
+  }
+
+  function metricas(skillId) {
+    const regs = registros.filter(r => r.skillId === skillId);
+    if (regs.length === 0) return { count: 0, media: 0, ultimos: [] };
+    const media = regs.reduce((a, r) => a + (r.satisfacao || 0), 0) / regs.length;
+    return { count: regs.length, media: Math.round(media * 10) / 10, ultimos: regs.slice(0, 5) };
+  }
+
+  function tamanhoCard(count) {
+    if (count === 0) return { minH: 110, fs: 13, emFz: 28 };
+    if (count <= 2)  return { minH: 120, fs: 14, emFz: 32 };
+    if (count <= 5)  return { minH: 135, fs: 15, emFz: 36 };
+    if (count <= 10) return { minH: 150, fs: 16, emFz: 40 };
+    return              { minH: 170, fs: 17, emFz: 46 };
+  }
+
+  const skillsAtivas = SKILLS_BIBLIOTECA.filter(s => ativas.includes(s.id));
+
+  // ── TELA CONFIG ──
+  if (tela === "config") {
+    const soft = SKILLS_BIBLIOTECA.filter(s => s.tipo === "soft");
+    const hard = SKILLS_BIBLIOTECA.filter(s => s.tipo === "hard");
+    function GrupoSkill({ titulo, cor, lista }) {
+      return (
+        <div style={{ marginBottom:24 }}>
+          <div style={{ fontWeight:700, fontSize:13, color:cor, marginBottom:12,
+            textTransform:"uppercase", letterSpacing:0.4 }}>{titulo}</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {lista.map(s => {
+              const ativa = ativas.includes(s.id);
+              return (
+                <div key={s.id} onClick={() => toggleSkill(s.id)}
+                  style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px",
+                    borderRadius:12, border:"1.5px solid", cursor:"pointer",
+                    borderColor: ativa ? "#7B00C4" : "#e5e7eb",
+                    background: ativa ? "#f5eeff" : "white", transition:"all .15s" }}>
+                  <span style={{ fontSize:22, flexShrink:0 }}>{s.emoji}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:600, fontSize:14, color: ativa ? "#7B00C4" : "#1f2937" }}>{s.nome}</div>
+                    <div style={{ fontSize:11.5, color:"#6b7280", marginTop:2, lineHeight:1.4 }}>{s.desc}</div>
+                  </div>
+                  <div style={{ width:22, height:22, borderRadius:"50%", flexShrink:0,
+                    border:"2px solid", borderColor: ativa ? "#7B00C4" : "#d1d5db",
+                    background: ativa ? "#7B00C4" : "white",
+                    display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    {ativa && <span style={{ color:"white", fontSize:12, fontWeight:800 }}>✓</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div>
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+          <button onClick={() => setTela("mural")}
+            style={{ background:"#f5eeff", border:"none", borderRadius:10, padding:"8px 14px",
+              cursor:"pointer", color:"#7B00C4", fontWeight:700, fontSize:13,
+              display:"flex", alignItems:"center", gap:6, fontFamily:"inherit" }}>
+            ← Voltar ao Mural
+          </button>
+          <div>
+            <div style={{ fontWeight:700, fontSize:16 }}>Configurar Habilidades</div>
+            <div style={{ fontSize:12, color:"#6b7280" }}>Escolha quais habilidades aparecem no seu mural</div>
+          </div>
+        </div>
+        <div style={{ background:"linear-gradient(135deg,#f5eeff,#ede0fa)", borderRadius:14,
+          padding:"16px 20px", marginBottom:24, border:"1px solid #e9d5ff" }}>
+          <div style={{ fontWeight:700, fontSize:14, color:"#7B00C4", marginBottom:6 }}>🌱 O que são Skills?</div>
+          <div style={{ fontSize:13, color:"#374151", lineHeight:1.7 }}>
+            <strong>Soft Skills</strong> são habilidades socioemocionais — como empatia, comunicação e regulação emocional. São capacidades que impactam diretamente seus relacionamentos e bem-estar.<br/>
+            <strong>Hard Skills</strong> são habilidades práticas e comportamentais — como organização, planejamento e foco. São competências que você pode observar e treinar no dia a dia.<br/>
+            <span style={{ color:"#7B00C4" }}>Ative apenas as skills que fazem sentido para o seu momento terapêutico.</span>
+          </div>
+        </div>
+        {ativas.length > 0 && (
+          <div style={{ background:"#f0fdf4", border:"1px solid #86efac", borderRadius:10,
+            padding:"10px 14px", marginBottom:20, fontSize:13, fontWeight:600, color:"#065f46" }}>
+            ✓ {ativas.length} habilidade{ativas.length !== 1 ? "s" : ""} ativa{ativas.length !== 1 ? "s" : ""} no seu radar
+          </div>
+        )}
+        <GrupoSkill titulo="💜 Soft Skills — Socioemocionais" cor="#7B00C4" lista={soft} />
+        <GrupoSkill titulo="⚙️ Hard Skills — Comportamentais e Práticas" cor="#059669" lista={hard} />
+      </div>
+    );
+  }
+
+  // ── TELA MURAL ──
+  return (
+    <div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start",
+        marginBottom:20, flexWrap:"wrap", gap:10 }}>
+        <div>
+          <div style={{ fontWeight:700, fontSize:18, color:"#1f2937" }}>🌟 Mural de Habilidades</div>
+          <div style={{ fontSize:13, color:"#6b7280", marginTop:3 }}>
+            Registre como você usou suas habilidades e veja seu crescimento
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          <button onClick={() => setTela("config")}
+            style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px",
+              borderRadius:10, border:"1.5px solid #e9d5ff", background:"white",
+              color:"#7B00C4", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+            ⚙️ Configurar Skills
+          </button>
+          {skillsAtivas.length > 0 && (
+            <button onClick={() => setModal(true)}
+              style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px",
+                borderRadius:10, border:"none", background:"#7B00C4",
+                color:"white", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
+              ✚ Registrar Uso
+            </button>
+          )}
+        </div>
+      </div>
+
+      {msgSalvo && (
+        <div style={{ background:"#d1fae5", border:"1px solid #6ee7b7", borderRadius:10,
+          padding:"10px 16px", marginBottom:16, fontSize:13, fontWeight:600, color:"#065f46" }}>
+          {msgSalvo}
+        </div>
+      )}
+
+      {loading && <div style={{ textAlign:"center", padding:48, color:"#9ca3af" }}>Carregando...</div>}
+
+      {!loading && skillsAtivas.length === 0 && (
+        <div style={{ textAlign:"center", padding:48, background:"white", borderRadius:16,
+          border:"1.5px dashed #e9d5ff" }}>
+          <div style={{ fontSize:40, marginBottom:12 }}>🌱</div>
+          <div style={{ fontWeight:700, fontSize:16, color:"#7B00C4", marginBottom:8 }}>
+            Seu mural está vazio
+          </div>
+          <div style={{ fontSize:14, color:"#6b7280", marginBottom:20, lineHeight:1.6 }}>
+            Configure quais habilidades você quer ter no seu radar.<br/>
+            Elas vão aparecer aqui e crescer conforme você as registrar.
+          </div>
+          <button onClick={() => setTela("config")}
+            style={{ padding:"10px 24px", borderRadius:10, border:"none",
+              background:"#7B00C4", color:"white", fontSize:14, fontWeight:700,
+              cursor:"pointer", fontFamily:"inherit" }}>
+            ⚙️ Configurar Skills
+          </button>
+        </div>
+      )}
+
+      {!loading && skillsAtivas.length > 0 && (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))", gap:12, marginBottom:24 }}>
+          {skillsAtivas.map(skill => {
+            const m = metricas(skill.id);
+            const cor = corPorSatisf(m.media);
+            const tam = tamanhoCard(m.count);
+            const aberto = expandido === skill.id;
+            return (
+              <div key={skill.id}>
+                <div onClick={() => setExpandido(aberto ? null : skill.id)}
+                  style={{ borderRadius:14, border:"1.5px solid",
+                    borderColor: m.count > 0 ? cor.cor + "60" : "#e5e7eb",
+                    background: m.count > 0 ? cor.bg : "#fafafa",
+                    padding:"14px 12px", cursor:"pointer", minHeight:tam.minH,
+                    display:"flex", flexDirection:"column", alignItems:"center",
+                    justifyContent:"center", gap:6, transition:"all .2s",
+                    boxShadow: m.count > 0 ? `0 2px 12px ${cor.cor}20` : "none",
+                    position:"relative" }}>
+                  {m.count > 0 && (
+                    <div style={{ position:"absolute", top:8, right:8,
+                      background:cor.cor, color:"white", borderRadius:20,
+                      fontSize:10, fontWeight:800, padding:"2px 7px" }}>
+                      ×{m.count}
+                    </div>
+                  )}
+                  <div style={{ fontSize:tam.emFz }}>{skill.emoji}</div>
+                  <div style={{ fontWeight:700, fontSize:tam.fs, textAlign:"center",
+                    color: m.count > 0 ? cor.cor : "#6b7280", lineHeight:1.3 }}>
+                    {skill.nome}
+                  </div>
+                  {m.count > 0 && (
+                    <div style={{ width:"100%" }}>
+                      <div style={{ height:5, borderRadius:10, background:"#e5e7eb", overflow:"hidden", marginTop:4 }}>
+                        <div style={{ height:"100%", borderRadius:10,
+                          width:(m.media/10*100)+"%", background:cor.cor, transition:"width .5s" }} />
+                      </div>
+                      <div style={{ fontSize:10, color:cor.cor, fontWeight:600, textAlign:"center", marginTop:3 }}>
+                        {cor.label} · {m.media}/10
+                      </div>
+                    </div>
+                  )}
+                  {m.count === 0 && (
+                    <div style={{ fontSize:11, color:"#9ca3af", textAlign:"center" }}>Nenhum registro ainda</div>
+                  )}
+                  <div style={{ fontSize:10, color: m.count > 0 ? cor.cor : "#d1d5db", marginTop:2 }}>
+                    {aberto ? "▲ fechar" : "▼ histórico"}
+                  </div>
+                </div>
+                {aberto && (
+                  <div style={{ background:"white", borderRadius:"0 0 14px 14px",
+                    border:"1.5px solid", borderColor:cor.cor+"40", borderTop:"none", padding:"12px 14px" }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"#7B00C4", marginBottom:10 }}>📅 Últimos registros</div>
+                    {m.ultimos.length === 0 ? (
+                      <div style={{ fontSize:12, color:"#9ca3af" }}>Nenhum registro ainda.</div>
+                    ) : m.ultimos.map(r => (
+                      <div key={r.id} style={{ padding:"8px 10px", borderRadius:8, background:"#fafafa",
+                        border:"1px solid #f3f4f6", marginBottom:6 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+                          marginBottom: r.descricao ? 4 : 0 }}>
+                          <span style={{ fontSize:11, color:"#6b7280" }}>{r.data}</span>
+                          <span style={{ fontSize:11, fontWeight:700, color:corPorSatisf(r.satisfacao).cor }}>
+                            {r.satisfacao}/10
+                          </span>
+                        </div>
+                        {r.descricao && (
+                          <div style={{ fontSize:12, color:"#374151", lineHeight:1.5 }}>{r.descricao}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && registros.length > 0 && (
+        <div style={{ background:"linear-gradient(135deg,#f5eeff,white)", borderRadius:14,
+          padding:"14px 18px", border:"1px solid #e9d5ff" }}>
+          <div style={{ fontWeight:700, fontSize:13, color:"#7B00C4", marginBottom:10 }}>📊 Panorama Geral</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))", gap:10 }}>
+            {[
+              { label:"Total de registros", valor:registros.length, cor:"#7B00C4" },
+              { label:"Habilidades ativas", valor:skillsAtivas.length, cor:"#059669" },
+              { label:"Satisfação média",
+                valor: registros.length
+                  ? (registros.reduce((a,r)=>a+(r.satisfacao||0),0)/registros.length).toFixed(1)+"/10"
+                  : "—",
+                cor:"#d97706" },
+            ].map(({label,valor,cor})=>(
+              <div key={label} style={{ textAlign:"center", padding:10, background:"white",
+                borderRadius:10, border:"1px solid #f3f4f6" }}>
+                <div style={{ fontSize:20, fontWeight:800, color }}>{valor}</div>
+                <div style={{ fontSize:10, color:"#6b7280", marginTop:2 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {modal && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)",
+          display:"flex", alignItems:"center", justifyContent:"center", zIndex:500, padding:20 }}
+          onClick={() => setModal(false)}>
+          <div style={{ background:"white", borderRadius:18, padding:28, width:"100%",
+            maxWidth:460, maxHeight:"90vh", overflowY:"auto" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+              <div style={{ fontWeight:700, fontSize:17, color:"#7B00C4" }}>✚ Registrar Uso de Habilidade</div>
+              <button onClick={() => setModal(false)}
+                style={{ background:"none", border:"none", cursor:"pointer", fontSize:20, color:"#9ca3af" }}>✕</button>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", marginBottom:8,
+                textTransform:"uppercase", letterSpacing:0.4 }}>Qual habilidade você usou?</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>
+                {skillsAtivas.map(s => (
+                  <button key={s.id} onClick={() => setFormReg(f=>({...f, skillId:s.id}))}
+                    style={{ padding:"7px 12px", borderRadius:20, border:"1.5px solid",
+                      cursor:"pointer", fontSize:13, fontFamily:"inherit",
+                      fontWeight: formReg.skillId===s.id ? 700 : 400,
+                      borderColor: formReg.skillId===s.id ? "#7B00C4" : "#e5e7eb",
+                      background: formReg.skillId===s.id ? "#f5eeff" : "white",
+                      color: formReg.skillId===s.id ? "#7B00C4" : "#6b7280" }}>
+                    {s.emoji} {s.nome}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#6b7280", marginBottom:8,
+                textTransform:"uppercase", letterSpacing:0.4 }}>Como você usou? (opcional)</div>
+              <textarea value={formReg.descricao}
+                onChange={e => setFormReg(f=>({...f, descricao:e.target.value}))}
+                placeholder="Ex: Consegui ouvir minha colega sem interromper durante uma reunião difícil..."
+                rows={3}
+                style={{ width:"100%", borderRadius:10, border:"1.5px solid #e5e7eb",
+                  padding:"10px 12px", fontSize:13, fontFamily:"inherit",
+                  resize:"vertical", outline:"none", lineHeight:1.5 }} />
+            </div>
+            <div style={{ marginBottom:24 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                <div style={{ fontSize:12, fontWeight:700, color:"#6b7280",
+                  textTransform:"uppercase", letterSpacing:0.4 }}>Nível de satisfação</div>
+                <div style={{ fontSize:16, fontWeight:800, color:corPorSatisf(formReg.satisfacao).cor }}>
+                  {formReg.satisfacao}/10
+                </div>
+              </div>
+              <input type="range" min={1} max={10} step={1} value={formReg.satisfacao}
+                onChange={e => setFormReg(f=>({...f, satisfacao:Number(e.target.value)}))}
+                style={{ width:"100%", accentColor:"#7B00C4" }} />
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"#9ca3af", marginTop:4 }}>
+                <span>Muito difícil</span>
+                <span style={{ color:corPorSatisf(formReg.satisfacao).cor, fontWeight:700 }}>
+                  {corPorSatisf(formReg.satisfacao).label}
+                </span>
+                <span>Excelente</span>
+              </div>
+            </div>
+            <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
+              <button onClick={() => setModal(false)}
+                style={{ padding:"10px 18px", borderRadius:10, border:"1px solid #e5e7eb",
+                  background:"white", color:"#6b7280", cursor:"pointer", fontSize:14, fontFamily:"inherit" }}>
+                Cancelar
+              </button>
+              <button onClick={salvarRegistro} disabled={salvando}
+                style={{ padding:"10px 20px", borderRadius:10, border:"none",
+                  background:"#7B00C4", color:"white", fontWeight:700,
+                  fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>
+                {salvando ? "Salvando..." : "Salvar micromoimento"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
