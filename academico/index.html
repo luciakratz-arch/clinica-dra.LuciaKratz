@@ -117,6 +117,17 @@ tr:hover td{background:#faf5ff}
 .tab.active{color:var(--roxo);border-bottom-color:var(--roxo)}
 .tab-c{display:none}
 .tab-c.active{display:block}
+.upload-area{border:2px dashed #c084fc;border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:#faf5ff}
+.upload-area:hover,.upload-area.drag{border-color:var(--roxo);background:#f3e8ff}
+.upload-area input[type=file]{display:none}
+.sem-card{border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.sem-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sem-title{font-size:15px;font-weight:700;color:#3d006a}
+.turma-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;background:#f9fafb;margin-bottom:6px;font-size:13px}
+.aluno-preview{display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;border:1px solid var(--border);margin-bottom:4px;font-size:13px}
+.aluno-preview:hover{background:#faf5ff}
+.badge-ativa{background:#dcfce7;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-inativa{background:#fee2e2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
 @media(max-width:768px){.mn{margin-left:0;padding:14px}.sb{display:none}.g2,.g3,.fr{grid-template-columns:1fr}}
 </style>
 </head>
@@ -226,6 +237,7 @@ tr:hover td{background:#faf5ff}
       <div class="ni" onclick="irSec('adm-dis')">🚀 Disparo / QR</div>
       <div class="ni" onclick="irSec('adm-not')">📝 Notas</div>
       <div class="ni" onclick="irSec('adm-pau')">📊 Pauta</div>
+      <div class="ni" onclick="irSec('adm-sem')">🎓 Semestres & Turmas</div>
     </nav>
     <div class="sbf"><button class="blo" onclick="sair()">↩ Sair</button></div>
   </aside>
@@ -524,6 +536,102 @@ tr:hover td{background:#faf5ff}
       <div class="tw"><table><thead><tr><th>Matrícula</th><th>Nome</th><th>Grp N1</th><th>N1</th><th>Grp N2</th><th>Sem</th><th>Plateia</th><th>ESA</th><th>N2</th><th>Média</th><th>Status</th></tr></thead><tbody id="tb-pau"></tbody></table></div>
     </div>
 
+
+    <!-- PROF: SEMESTRES & TURMAS -->
+    <div id="sec-adm-sem" class="sec">
+      <div class="pt">🎓 Semestres & Turmas</div>
+      <div class="ps">Gerencie semestres, turmas e importe alunos via PDF da ATA</div>
+
+      <!-- CRIAR SEMESTRE -->
+      <div class="cd" style="margin-bottom:16px">
+        <div class="ct">➕ Novo Semestre</div>
+        <div class="fr">
+          <div class="f2">
+            <label>Semestre *</label>
+            <select id="sem-ano">
+              <option value="2026/2">2026/2</option>
+              <option value="2027/1">2027/1</option>
+              <option value="2027/2">2027/2</option>
+              <option value="2028/1">2028/1</option>
+              <option value="2028/2">2028/2</option>
+            </select>
+          </div>
+          <div class="f2">
+            <label>Label (opcional)</label>
+            <input id="sem-label" placeholder="Ex: Turma A, Turma B..."/>
+          </div>
+        </div>
+        <div class="fr">
+          <div class="f2">
+            <label>Código da Turma</label>
+            <input id="sem-cod" placeholder="Ex: PSIP901N222"/>
+          </div>
+          <div class="f2">
+            <label>Turno</label>
+            <select id="sem-turno">
+              <option>Noturno</option>
+              <option>Matutino</option>
+              <option>Vespertino</option>
+              <option>Integral</option>
+            </select>
+          </div>
+        </div>
+        <div class="brow">
+          <button class="btn brxo" onclick="criarSemestre()">Criar Semestre</button>
+          <span id="sem-st" style="font-size:13px;color:var(--green);margin-left:10px"></span>
+        </div>
+      </div>
+
+      <!-- LISTA DE SEMESTRES -->
+      <div id="sem-lista"></div>
+
+      <!-- MODAL IMPORT PDF -->
+      <div id="modal-import" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center">
+        <div style="background:#fff;border-radius:20px;padding:32px;width:90%;max-width:620px;max-height:90vh;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <div style="font-size:18px;font-weight:700;color:#3d006a">📄 Importar Alunos via PDF</div>
+            <button onclick="fecharModal()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--tl)">✕</button>
+          </div>
+          <div style="font-size:13px;color:var(--tl);margin-bottom:16px">
+            Turma: <strong id="modal-turma-nm">—</strong>
+          </div>
+
+          <!-- Upload -->
+          <div id="upload-step">
+            <div class="upload-area" onclick="document.getElementById('pdf-input').click()" id="upload-area">
+              <div style="font-size:40px;margin-bottom:8px">📄</div>
+              <div style="font-size:15px;font-weight:700;color:#3d006a;margin-bottom:4px">Arraste o PDF da ATA aqui</div>
+              <div style="font-size:13px;color:var(--tl)">ou clique para selecionar</div>
+              <input type="file" id="pdf-input" accept=".pdf" onchange="processarPDF(this.files[0])"/>
+            </div>
+            <div id="upload-progress" style="display:none;margin-top:16px;text-align:center">
+              <div style="font-size:14px;color:var(--roxo);font-weight:600" id="upload-msg">🔍 Analisando PDF com IA...</div>
+              <div style="margin-top:12px;height:6px;background:#e5e7eb;border-radius:10px;overflow:hidden">
+                <div id="prog-bar" style="height:100%;background:linear-gradient(90deg,var(--roxo),#c084fc);border-radius:10px;width:0%;transition:width .5s"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview dos alunos extraídos -->
+          <div id="preview-step" style="display:none">
+            <div class="alt ag" style="margin-bottom:16px">
+              ✅ <strong id="preview-count">0</strong> alunos encontrados no PDF. Revise e confirme.
+            </div>
+            <div style="font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;justify-content:space-between">
+              <span>Matrícula</span><span>Nome</span><span style="width:30px"></span>
+            </div>
+            <div id="alunos-preview" style="max-height:300px;overflow-y:auto"></div>
+            <div class="brow" style="margin-top:16px">
+              <button class="btn brxo" onclick="confirmarImport()">✅ Importar <span id="import-count">0</span> Alunos</button>
+              <button class="btn bgr" onclick="voltarUpload()">← Voltar</button>
+              <span id="import-st" style="font-size:13px;color:var(--green);margin-left:10px"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
   </main>
 </div>
 
@@ -691,6 +799,7 @@ function irSec(sec){
   document.querySelectorAll('.ni').forEach(function(n){var oc=n.getAttribute('onclick')||'';if(oc.indexOf(sec)>=0)n.classList.add('active');});
   if(sec==='adm-cas')renderCasos();
   if(sec==='adm-pau')renderPau('');
+  if(sec==='adm-sem'){carregarSemestres();}
   if(sec==='adm-al'){renderTbAl();carregarPendentes();}
   if(sec==='adm-grp'){renderMembros('n1');renderMembros('n2');renderGrupos();}
   if(sec==='espaco')carregarEspaco();
@@ -1250,6 +1359,330 @@ function exportExcel(tipo){
   var qrParam=urlParams.get('qr');
   if(qrParam){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-qr').classList.remove('hidden');carregarFormQR(qrParam);}
 })();
+
+
+// ===== SEMESTRES & TURMAS =====
+var _semestres = [];
+var _turmaImportId = null;
+var _alunosExtraidos = [];
+
+function carregarSemestres() {
+  db.collection('acad_semestres').get().then(function(snap) {
+    _semestres = snap.docs.map(function(d) { return Object.assign({id:d.id}, d.data()); });
+    _semestres.sort(function(a,b){ return (b.semestre||'').localeCompare(a.semestre||''); });
+    renderSemestres();
+  }).catch(function(){ renderSemestres(); });
+}
+
+function criarSemestre() {
+  var ano = document.getElementById('sem-ano').value;
+  var label = document.getElementById('sem-label').value.trim();
+  var cod = document.getElementById('sem-cod').value.trim();
+  var turno = document.getElementById('sem-turno').value;
+  if (!cod) { alert('Informe o código da turma.'); return; }
+  var dados = {
+    semestre: ano, label: label, codigo: cod, turno: turno,
+    status: 'ativa', criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('acad_semestres').add(dados).then(function(ref) {
+    _semestres.unshift(Object.assign({id:ref.id}, dados));
+    renderSemestres();
+    document.getElementById('sem-st').textContent = '✅ Semestre criado!';
+    document.getElementById('sem-cod').value = '';
+    document.getElementById('sem-label').value = '';
+    setTimeout(function(){ document.getElementById('sem-st').textContent=''; }, 3000);
+  }).catch(function(){ alert('Erro ao criar semestre.'); });
+}
+
+function renderSemestres() {
+  var lst = document.getElementById('sem-lista');
+  if (!lst) return;
+  if (!_semestres.length) {
+    lst.innerHTML = '<div class="alt aw">Nenhum semestre cadastrado ainda. Crie o primeiro acima.</div>';
+    return;
+  }
+  lst.innerHTML = _semestres.map(function(s, si) {
+    var ativa = s.status === 'ativa';
+    return '<div class="sem-card">' +
+      '<div class="sem-header">' +
+        '<div>' +
+          '<div class="sem-title">📅 ' + s.semestre + (s.label?' · '+s.label:'') + '</div>' +
+          '<div style="font-size:12px;color:var(--tl)">' + s.codigo + ' · ' + (s.turno||'') + '</div>' +
+        '</div>' +
+        '<div class="brow">' +
+          '<span class="' + (ativa?'badge-ativa':'badge-inativa') + '">' + (ativa?'Ativa':'Encerrada') + '</span>' +
+          (ativa ? '<button class="btn bgr bsm" onclick="_importPDF(' + si + ')">📄 Importar ATA</button>' : '') +
+          (ativa ? '<button class="btn brd bsm" onclick="_encerrarSem(' + JSON.stringify(s.id) + ')">⏹ Encerrar</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div id="alunos-sem-' + si + '" style="margin-top:8px">' +
+        '<div style="font-size:12px;color:var(--tl)">Carregando alunos...</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  // Carrega alunos de cada semestre
+  _semestres.forEach(function(s, si) {
+    carregarAlunosSem(s.id, si);
+  });
+}
+
+function carregarAlunosSem(semId, idx) {
+  db.collection('acad_alunos').where('semestresId', '==', semId).get().then(function(snap) {
+    var el = document.getElementById('alunos-sem-' + idx);
+    if (!el) return;
+    if (!snap.size) {
+      el.innerHTML = '<div style="font-size:12px;color:var(--tl);padding:8px 0">Nenhum aluno importado ainda. Use o botão "Importar ATA".</div>';
+      return;
+    }
+    el.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--tl);margin-bottom:6px">' + snap.size + ' alunos</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:4px">' +
+      snap.docs.slice(0,10).map(function(d) {
+        var dt = d.data();
+        return '<span class="bdg brx" style="font-size:11px">' + dt.nome.split(' ')[0] + '</span>';
+      }).join('') +
+      (snap.size > 10 ? '<span class="bdg bgr" style="font-size:11px">+' + (snap.size-10) + '</span>' : '') +
+      '</div>';
+  }).catch(function(){
+    var el = document.getElementById('alunos-sem-' + idx);
+    if (el) el.innerHTML = '<div style="font-size:12px;color:var(--tl)">—</div>';
+  });
+}
+
+function _importPDF(si) {
+  var s = _semestres[si];
+  _turmaImportId = s.id;
+  document.getElementById('modal-turma-nm').textContent = s.semestre + (s.label?' · '+s.label:'') + ' · ' + s.codigo;
+  document.getElementById('modal-import').style.display = 'flex';
+  voltarUpload();
+}
+
+function fecharModal() {
+  document.getElementById('modal-import').style.display = 'none';
+  _turmaImportId = null;
+  _alunosExtraidos = [];
+}
+
+function voltarUpload() {
+  document.getElementById('upload-step').style.display = 'block';
+  document.getElementById('preview-step').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('pdf-input').value = '';
+}
+
+function _encerrarSem(id) {
+  if (!confirm('Encerrar este semestre? Todos os alunos ficarão inativos e não conseguirão logar.')) return;
+  db.collection('acad_semestres').doc(id).update({status:'encerrada'}).then(function() {
+    // Inativa todos os alunos do semestre
+    db.collection('acad_alunos').where('semestresId','==',id).get().then(function(snap) {
+      var batch = db.batch();
+      snap.docs.forEach(function(d) { batch.update(d.ref, {status:'inativo'}); });
+      return batch.commit();
+    }).then(function() {
+      alert('✅ Semestre encerrado. Alunos inativados.');
+      carregarSemestres();
+      // Atualiza lista geral de alunos
+      var idx = ALUNOS.findIndex(function(a){ return a.semestresId === id; });
+      ALUNOS.forEach(function(a){ if(a.semestresId===id) a.status='inativo'; });
+    });
+  }).catch(function(){ alert('Erro ao encerrar.'); });
+}
+
+// ===== PROCESSAMENTO PDF COM CLAUDE API =====
+function processarPDF(file) {
+  if (!file) return;
+  document.getElementById('upload-step').querySelector('.upload-area').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'block';
+  var progBar = document.getElementById('prog-bar');
+  var msg = document.getElementById('upload-msg');
+  
+  // Progresso visual
+  var prog = 0;
+  var interval = setInterval(function() {
+    prog = Math.min(prog + 8, 85);
+    progBar.style.width = prog + '%';
+    if (prog < 30) msg.textContent = '📄 Lendo o PDF...';
+    else if (prog < 60) msg.textContent = '🔍 Analisando com IA...';
+    else msg.textContent = '📋 Extraindo lista de alunos...';
+  }, 400);
+
+  // Lê o PDF como base64
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var base64 = e.target.result.split(',')[1];
+    
+    // Chama Claude API
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+            },
+            {
+              type: 'text',
+              text: 'Este é um PDF de ATA de alunos de uma faculdade. Extraia SOMENTE a lista de alunos no formato JSON. Retorne APENAS um array JSON sem nenhum texto antes ou depois, assim: [{"matricula":"53500","nome":"ALAN ROBERTO SANTOS SILVA"},{"matricula":"53948","nome":"ALANA SOARES FORTUNA DORNELES"}]. Inclua todos os alunos com matrícula numérica e nome em maiúsculas. Não inclua cabeçalhos, totais ou outros dados.'
+            }
+          ]
+        }]
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      clearInterval(interval);
+      progBar.style.width = '100%';
+      var texto = data.content && data.content[0] && data.content[0].text;
+      if (!texto) throw new Error('Resposta vazia da API');
+      // Limpa e parseia o JSON
+      var clean = texto.replace(/```json|```/g,'').trim();
+      _alunosExtraidos = JSON.parse(clean);
+      mostrarPreview();
+    })
+    .catch(function(err) {
+      clearInterval(interval);
+      progBar.style.width = '0%';
+      document.getElementById('upload-step').querySelector('.upload-area').style.display = 'block';
+      document.getElementById('upload-progress').style.display = 'none';
+      msg.textContent = '❌ Erro ao processar. Tente novamente.';
+      console.error(err);
+      alert('Erro ao processar PDF: ' + err.message);
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function mostrarPreview() {
+  document.getElementById('upload-step').style.display = 'none';
+  document.getElementById('preview-step').style.display = 'block';
+  document.getElementById('preview-count').textContent = _alunosExtraidos.length;
+  document.getElementById('import-count').textContent = _alunosExtraidos.length;
+  
+  var container = document.getElementById('alunos-preview');
+  container.innerHTML = _alunosExtraidos.map(function(a, i) {
+    return '<div class="aluno-preview">' +
+      '<span class="bdg brx" style="font-size:11px;flex-shrink:0">' + a.matricula + '</span>' +
+      '<span style="flex:1;margin:0 10px;font-weight:500">' + a.nome + '</span>' +
+      '<button onclick="_removerAlunoPrev(' + i + ')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:14px">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function _removerAlunoPrev(i) {
+  _alunosExtraidos.splice(i, 1);
+  mostrarPreview();
+}
+
+function confirmarImport() {
+  if (!_turmaImportId || !_alunosExtraidos.length) return;
+  var btn = document.querySelector('#preview-step .btn.brxo');
+  if (btn) btn.disabled = true;
+  document.getElementById('import-st').textContent = 'Salvando...';
+  
+  var batch = db.batch();
+  _alunosExtraidos.forEach(function(a) {
+    var ref = db.collection('acad_alunos').doc();
+    batch.set(ref, {
+      nome: a.nome,
+      matricula: String(a.matricula),
+      semestresId: _turmaImportId,
+      status: 'ativo',
+      notaN1: 0, notaSem: 0, notaESA: 0,
+      origemCadastro: 'pdf-ata',
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Adiciona também ao array local ALUNOS
+    ALUNOS.push({
+      id: ref.id, nome: a.nome, matricula: String(a.matricula),
+      semestresId: _turmaImportId, status: 'ativo',
+      notaN1: 0, notaSem: 0, notaESA: 0
+    });
+  });
+  
+  batch.commit().then(function() {
+    document.getElementById('import-st').textContent = '✅ ' + _alunosExtraidos.length + ' alunos importados!';
+    fecharModal();
+    carregarSemestres();
+    renderTbAl();
+    // Atualiza autocomplete
+    alunosFil = ALUNOS.slice();
+  }).catch(function(err) {
+    document.getElementById('import-st').textContent = '❌ Erro ao salvar.';
+    if (btn) btn.disabled = false;
+    console.error(err);
+  });
+}
+
+// Login de aluno filtra por semestre ativo
+var _loginPsicoOrig = loginPsico;
+function loginPsico() {
+  // Verifica se aluno tem semestre ativo
+  var nm = document.getElementById('psico-nm').value.trim();
+  var sn = document.getElementById('psico-sn').value.trim();
+  var er = document.getElementById('psico-er');
+  er.style.display = 'none';
+  if (!nm || !sn) { er.textContent='Preencha nome e matrícula.'; er.style.display='block'; return; }
+  // Busca no Firebase por matrícula (semestre ativo)
+  db.collection('acad_alunos').where('matricula','==',sn).where('status','==','ativo').get().then(function(snap) {
+    if (!snap.size) {
+      // Fallback: busca nos alunos mock
+      var mock = ALUNOS.find(function(a){ return a.matricula===sn && a.status==='ativo'; });
+      if (!mock) {
+        er.textContent = 'Aluno não encontrado ou semestre encerrado.';
+        er.style.display = 'block';
+        return;
+      }
+      psicSel = mock;
+      _finalizarLoginPsico();
+      return;
+    }
+    // Verifica nome
+    var doc = snap.docs.find(function(d) {
+      return d.data().nome.toLowerCase() === nm.toLowerCase();
+    });
+    if (!doc) {
+      er.textContent = 'Nome ou matrícula incorretos.';
+      er.style.display = 'block';
+      return;
+    }
+    psicSel = Object.assign({id:doc.id}, doc.data());
+    _finalizarLoginPsico();
+  }).catch(function() {
+    // Fallback local
+    if (!psicSel) {
+      var l = nm.toLowerCase();
+      psicSel = ALUNOS.find(function(a){ return a.nome.toLowerCase()===l && a.matricula===sn; });
+    }
+    if (!psicSel) { er.textContent='Aluno não encontrado.'; er.style.display='block'; return; }
+    _finalizarLoginPsico();
+  });
+}
+
+function _finalizarLoginPsico() {
+  if (!psicSel) return;
+  usuario = Object.assign({role:'aluno'}, psicSel);
+  perfil = 'aluno';
+  iniciarApp();
+}
+
+// Drag and drop no upload
+document.addEventListener('DOMContentLoaded', function() {
+  var area = document.getElementById('upload-area');
+  if (!area) return;
+  area.addEventListener('dragover', function(e) { e.preventDefault(); area.classList.add('drag'); });
+  area.addEventListener('dragleave', function() { area.classList.remove('drag'); });
+  area.addEventListener('drop', function(e) {
+    e.preventDefault();
+    area.classList.remove('drag');
+    var f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') processarPDF(f);
+    else alert('Por favor selecione um arquivo PDF.');
+  });
+});
 
 // FECHA AUTOCOMPLETE
 document.addEventListener('click',function(e){
