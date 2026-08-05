@@ -410,6 +410,7 @@ function RecursosTerapeuticos({ user }) {
     "empilhamento-habitos":       "macro_habitos",
     "ritual-noturno":             "macro_habitos",
     "mapa-bateria":               "macro_habitos",
+    "mural-habilidades":          "macro_habitos",
     "regra-5-minutos":            "macro_habitos",
     "3-mapas-financeiros":        "macro_casais",
     "ciclo-conflito":             "macro_relacionamentos",
