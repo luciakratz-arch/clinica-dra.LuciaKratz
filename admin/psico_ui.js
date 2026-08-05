@@ -594,7 +594,7 @@ function RecursosTerapeuticos({ user }) {
           {MACROCATEGORIAS.map(m=>{
             const subIds = new Set(m.subs.map(s=>s.id));
             const legadoIds = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([,mid])=>mid===m.id).map(([lid])=>lid));
-            const n = recursos.filter(r=>r.categoria===m.id||subIds.has(r.categoria)||legadoIds.has(r.categoria)).length;
+            const n = recursos.filter(r=>r.categoria===m.id||subIds.has(r.categoria)||legadoIds.has(r.categoria)||legadoIds.has(r.formularioKey)).length;
             const ativo = filtroCateg===m.id;
             return (
               <button key={m.id} onClick={()=>setFiltroCateg(filtroCateg===m.id?"todos":m.id)}
