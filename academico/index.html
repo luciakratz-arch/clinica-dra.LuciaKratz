@@ -529,7 +529,18 @@ tr:hover td{background:#faf5ff}
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
+<script>var _microAtivas=[],_tbAlList=[],_qrSessaoId='',_qrGrpNome='',_qrCasoNum=0;
+function _selI(t,i){if(t===0&&window._acSup&&window._acSup[i])selSup(window._acSup[i].id);else if(t===1&&window._acPsico&&window._acPsico[i])selPsico(window._acPsico[i].id);else if(t===2&&window._acNota&&window._acNota[i])selNota(window._acNota[i].id);else if(t===3&&window._acQR&&window._acQR[i]){var a=window._acQR[i];selQRAl(a.id,a.nome);}}
+function _selRat(el,si,ri){var rm=['gostei','melhorar','nao'];var s=_microAtivas[si];if(s)ratVals[s.id]=rm[ri];el.parentNode.querySelectorAll('.roo').forEach(function(o){o.classList.remove('sel');});el.classList.add('sel');}
+function _selQRRat(el,i){var rm=['gostei','melhorar','nao'];_qrRat=rm[i];document.querySelectorAll('#qr-frm .roo').forEach(function(o){o.classList.remove('sel');});el.classList.add('sel');}
+function _salvarMicro(i){var s=_microAtivas[i];if(s)salvarMicro(s.id,s.grupoNome);}
+function _pdfFicha(i){if(window._fichasSnap&&window._fichasSnap.docs[i])gerarPDFF1(window._fichasSnap.docs[i].data());}
+function _aprovI(i){if(window._pendSnap&&window._pendSnap.docs[i]){var dt=window._pendSnap.docs[i].data();aprovarAluno(window._pendSnap.docs[i].id,dt.nome,dt.matricula);}}
+function _remAlI(i){if(_tbAlList[i])remAl(_tbAlList[i].id);}
+function _editGrpI(tipo,i){var grps=GRUPOS[tipo];if(grps&&grps[i])editarGrp(tipo,grps[i].id);}
+function _remGrpI(id){remGrp(id);}
+function _enviarQR(t){enviarFormQR(t===1?'n1':'n2',_qrSessaoId,_qrGrpNome,_qrCasoNum);}
+
 firebase.initializeApp({apiKey:"AIzaSyBn1mro8Kk1qmGIhQ19gBYbfQR4MkM7IU8",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.appspot.com",messagingSenderId:"799817939377",appId:"1:799817939377:web:6ed277e08f4e59d12bb3b0"});
 var db=firebase.firestore();
 
@@ -568,12 +579,6 @@ var usuario=null,perfil=null,alunosFil=ALUNOS.slice();
 var supCache=[],supSel=null,psicSel=null,notaSel=null,ratVals={};
 var _qrSel=null,_qrRat=null;
 
-// URL PARAMS
-var urlParams=new URLSearchParams(window.location.search);
-if(urlParams.get('cadastro')==='1'){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-cad').classList.remove('hidden');}
-var qrParam=urlParams.get('qr');
-if(qrParam){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-qr').classList.remove('hidden');carregarFormQR(qrParam);}
-
 // TELAS
 function mostrar(id){
   ['v-sel','v-sup','v-psico','v-prof','v-cad','v-qr','v-app'].forEach(function(i){var e=document.getElementById(i);if(e)e.classList.add('hidden');});
@@ -587,7 +592,7 @@ function acSup(val){
   if(!supCache.length){db.collection('clinica_alunos').get().then(function(s){supCache=s.docs.map(function(d){return Object.assign({id:d.id},d.data());});acSup(val);}).catch(function(){});return;}
   var r=supCache.filter(function(a){return(a.nome||'').toLowerCase().indexOf(val.toLowerCase())>=0&&a.status!=='inativo';});
   if(!r.length){list.style.display='none';return;}
-  list.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selSup(''+a.id+'')">'+a.nome+(a.matricula?' — '+a.matricula:'')+'</div>';}).join('');
+  window._acSup=r.slice(0,8);list.innerHTML=window._acSup.map(function(a,i){return '<div class="aci" onclick="_selI(0,'+i+')">'+ a.nome+(a.matricula?' - '+a.matricula:'')+'</div>';}).join('');
   list.style.display='block';
 }
 function selSup(id){supSel=supCache.find(function(a){return a.id===id;});if(supSel){document.getElementById('sup-nm').value=supSel.nome;document.getElementById('sup-ac').style.display='none';document.getElementById('sup-sn').focus();}}
@@ -609,7 +614,7 @@ function acPsico(val){
   if(val.length<3){list.style.display='none';return;}
   var r=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(val.toLowerCase())>=0&&a.status==='ativo';});
   if(!r.length){list.style.display='none';return;}
-  list.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selPsico(''+a.id+'')">'+a.nome+' — '+a.matricula+'</div>';}).join('');
+  window._acPsico=r.slice(0,8);list.innerHTML=window._acPsico.map(function(a,i){return '<div class="aci" onclick="_selI(1,'+i+')">'+ a.nome+' - '+a.matricula+'</div>';}).join('');
   list.style.display='block';
 }
 function selPsico(id){psicSel=ALUNOS.find(function(a){return a.id===id;});if(psicSel){document.getElementById('psico-nm').value=psicSel.nome;document.getElementById('psico-ac').style.display='none';document.getElementById('psico-sn').focus();}}
@@ -683,7 +688,7 @@ function irSec(sec){
   document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('active');});
   var el=document.getElementById('sec-'+sec);if(el)el.classList.add('active');
   document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active');});
-  var nav=document.querySelector('.ni[onclick="irSec(''+sec+'')"]');if(nav)nav.classList.add('active');
+  document.querySelectorAll('.ni').forEach(function(n){var oc=n.getAttribute('onclick')||'';if(oc.indexOf(sec)>=0)n.classList.add('active');});
   if(sec==='adm-cas')renderCasos();
   if(sec==='adm-pau')renderPau('');
   if(sec==='adm-al'){renderTbAl();carregarPendentes();}
@@ -777,7 +782,7 @@ function carregarFichasAluno(){
   db.collection('acad_fichas_n1').where('alunoId','==',aid).get().then(function(snap){
     var el=document.getElementById('me-f1');if(!el)return;
     if(!snap.size){el.textContent='Nenhuma ficha N1 salva.';return;}
-    el.innerHTML='<div class="tw"><table><thead><tr><th>Data</th><th>Caso</th><th>PDF</th></tr></thead><tbody>'+snap.docs.map(function(d){var dt=d.data();return '<tr><td>'+(dt.criadoEm&&dt.criadoEm.toDate?dt.criadoEm.toDate().toLocaleDateString('pt-BR'):'—')+'</td><td>'+(dt.caso||'—')+'</td><td><button class="btn bgr bsm" onclick="pdfFichaId(''+d.id+'')">📄 PDF</button></td></tr>';}).join('')+'</tbody></table></div>';
+    window._fichasSnap=snap;el.innerHTML='<div class="tw"><table><thead><tr><th>Data</th><th>Caso</th><th>PDF</th></tr></thead><tbody>'+snap.docs.map(function(d,i){var dt=d.data();return '<tr><td>'+(dt.criadoEm&&dt.criadoEm.toDate?dt.criadoEm.toDate().toLocaleDateString('pt-BR'):'-')+'</td><td>'+(dt.caso||'-')+'</td><td><button class="btn bgr bsm" onclick="_pdfFicha('+i+')">PDF</button></td></tr>';}).join('')+'</tbody></table></div>';
     // Atualiza também em sec-ficha
     var el2=document.getElementById('f1-hist');
     if(el2)el2.innerHTML=el.innerHTML;
@@ -844,15 +849,15 @@ function carregarMicro(){
     var now=Date.now()/1000;
     var ativas=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());}).filter(function(s){return s.expiraEm&&s.expiraEm.seconds>now;});
     if(!ativas.length){lst.innerHTML='<div class="alt aw">⚠️ Nenhuma microavaliação ativa. Escaneie o QR exibido pela professora.</div>';return;}
-    lst.innerHTML=ativas.map(function(s){
+    _microAtivas=ativas;lst.innerHTML=ativas.map(function(s,i){
       return '<div class="cd"><div class="ct">⭐ Microavaliação — '+s.grupoNome+' · '+(s.data||'')+'</div>'+
         '<div class="ro">'+
-        ['gostei','melhorar','nao'].map(function(v,i){var em=['👍','💡','👎'][i];var lb=['Gostei','Pode Melhorar','Não Gostei'][i];return '<div class="roo" onclick="selRat(this,''+s.id+'',''+v+'')"><div style="font-size:22px">'+em+'</div>'+lb+'</div>';}).join('')+
+        ['gostei','melhorar','nao'].map(function(v,i2){var em=['👍','💡','👎'][i2];var lb=['Gostei','Pode Melhorar','Não Gostei'][i2];return '<div class="roo" onclick="_selRat(this,'+i+','+i2+')"><div style="font-size:22px">'+em+'</div>'+lb+'</div>';}).join('')+
         '</div>'+
         '<div class="f2"><label>1. O Foco e alinhamento com a TCC ficaram claros?</label><textarea id="mq1-'+s.id+'"></textarea></div>'+
         '<div class="f2"><label>2. Observação Construtiva / Destaque do Planejamento</label><textarea id="mq2-'+s.id+'"></textarea></div>'+
         '<div class="f2"><label>3. Pergunta ou Ponto de Dúvida</label><textarea id="mq3-'+s.id+'"></textarea></div>'+
-        '<button class="btn brxo" onclick="salvarMicro(''+s.id+'',''+s.grupoNome+'')">💾 Entregar (+0,5pt)</button>'+
+        '<button class="btn brxo" onclick="_salvarMicro('+i+')">Entregar (+0,5pt)</button>'+
         '<span id="mst-'+s.id+'" style="font-size:13px;color:var(--green);margin-left:10px"></span></div>';
     }).join('');
   }).catch(function(){lst.innerHTML='<div class="alt aw">⚠️ Erro ao carregar. Tente novamente.</div>';});
@@ -885,7 +890,7 @@ function carregarPendentes(){
   db.collection('acad_alunos').where('status','==','pendente').get().then(function(snap){
     var el1=document.getElementById('pai-pend'),el2=document.getElementById('tb-pend');
     if(!snap.size){if(el1)el1.innerHTML='<span style="color:var(--green)">✅ Nenhuma pendência.</span>';if(el2)el2.textContent='Nenhuma pendência.';return;}
-    var html='<div class="tw"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>E-mail</th><th></th></tr></thead><tbody>'+snap.docs.map(function(d){var dt=d.data();return '<tr><td style="font-weight:600">'+dt.nome+'</td><td>'+dt.matricula+'</td><td>'+(dt.email||'—')+'</td><td><button class="btn bgn bsm" onclick="aprovarAluno(''+d.id+'',''+dt.nome+'',''+dt.matricula+'')">✓ Aprovar</button></td></tr>';}).join('')+'</tbody></table></div>';
+    window._pendSnap=snap;var html='<div class="tw"><table><thead><tr><th>Nome</th><th>Matricula</th><th></th></tr></thead><tbody>'+snap.docs.map(function(d,i){var dt=d.data();return '<tr><td style="font-weight:600">'+dt.nome+'</td><td>'+dt.matricula+'</td><td><button class="btn bgn bsm" onclick="_aprovI('+i+')">Aprovar</button></td></tr>';}).join('')+'</tbody></table></div>';
     if(el1)el1.innerHTML='<span class="bdg bam">'+snap.size+' pendente(s)</span><br/><br/>'+html;
     if(el2)el2.innerHTML=html;
   }).catch(function(){});
@@ -904,10 +909,10 @@ function renderTbAl(lista){
   document.getElementById('al-count').textContent=src.length;
   var tb=document.getElementById('tb-al');if(!tb)return;
   if(!src.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--tl)">Nenhum aluno ativo.</td></tr>';return;}
-  tb.innerHTML=src.map(function(a){
+  _tbAlList=src;tb.innerHTML=src.map(function(a,idx){
     var g1=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});
     var g2=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});
-    return '<tr><td style="font-weight:600">'+a.nome+'</td><td><span class="bdg brx">'+a.matricula+'</span></td><td style="font-size:12px">'+(g1?g1.nome:'—')+'</td><td style="font-size:12px">'+(g2?g2.nome:'—')+'</td><td><span class="bdg bok">ativo</span></td><td><button class="btn brd bsm" onclick="remAl(''+a.id+'')">✕</button></td></tr>';
+    return '<tr><td style="font-weight:600">'+a.nome+'</td><td><span class="bdg brx">'+a.matricula+'</span></td><td style="font-size:12px">'+(g1?g1.nome:'-')+'</td><td style="font-size:12px">'+(g2?g2.nome:'-')+'</td><td><span class="bdg bok">ativo</span></td><td><button class="btn brd bsm" onclick="_remAlI('+idx+')">x</button></td></tr>';
   }).join('');
 }
 function filtAl(v){var l=v.toLowerCase();alunosFil=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0||a.matricula.indexOf(l)>=0;});renderTbAl(alunosFil);}
@@ -947,10 +952,10 @@ function renderGrupos(){
     var lst=document.getElementById('grps-'+tipo+'-lst');if(!lst)return;
     var grps=GRUPOS[tipo];
     if(!grps.length){lst.innerHTML='<div class="alt aw" style="margin-top:12px">Nenhum grupo ainda.</div>';return;}
-    lst.innerHTML=grps.map(function(g){
+    lst.innerHTML=grps.map(function(g,gIdx){
       var c=(tipo==='n1'?CASOS_N1:CASOS_N2).find(function(x){return x.n==g.casoNum;});
       var mbs=(g.membros||[]).map(function(mid){var a=ALUNOS.find(function(x){return x.id===mid;});return a?'<span class="grp-tag">'+a.nome.split(' ').slice(0,2).join(' ')+'</span>':'';}).join('');
-      return '<div class="grp-card"><div class="grp-header"><div class="grp-title">'+g.nome+' <span class="bdg bam" style="font-size:10px;margin-left:6px">'+(c?'Caso '+c.n:'—')+'</span></div><div class="brow"><button class="btn bgr bsm" onclick="editarGrp(''+tipo+'',''+g.id+'')">✏️</button><button class="btn brd bsm" onclick="remGrp(''+g.id+'')">✕</button></div></div>'+
+      return '<div class="grp-card"><div class="grp-header"><div class="grp-title">'+g.nome+'</div><div class="brow"><button class="btn bgr bsm" onclick="_editGrpI('+JSON.stringify(tipo)+','+gIdx+')">Ed</button><button class="btn brd bsm" onclick="_remGrpI('+JSON.stringify(g.id)+')">x</button></div></div><div style="font-size:12px;color:var(--tl);margin-bottom:8px">Caso: '+(c?c.nm:'-')+'</div><div>'+mbs+'</div></div>';
         '<div style="font-size:12px;color:var(--tl);margin-bottom:8px">Caso: '+(c?c.nm:'Não atribuído')+'</div>'+
         '<div>'+mbs+'</div></div>';
     }).join('');
@@ -995,7 +1000,7 @@ function renderCasos(){
   if(l1)l1.innerHTML=CASOS_N1.map(function(c){
     return '<div class="cc"><div style="display:flex;justify-content:space-between;align-items:flex-start">'+
       '<div><span class="bdg brx">Caso #'+c.n+' — N1</span><div style="font-size:15px;font-weight:700;color:#3d006a;margin:6px 0 2px">'+c.nm+'</div><div style="font-size:12px;color:var(--tl)">'+c.cx+' · '+c.ei+'</div></div>'+
-      '<button onclick="togCas('n1-'+c.n+'')" id="btn-n1-'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div>'+
+      '<button onclick="togCas('+JSON.stringify('n1-'+c.n)+')" id="btn-n1-'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">Ver</button></div>'+
       '<div id="cb-n1-'+c.n+'" style="display:none;margin-top:12px">'+
       '<div class="cori">📌 <strong>Orientações para o Aluno-Ator:</strong><br/>'+c.ori+'</div>'+
       ['Diagnóstico','Foco Terapêutico','Sinais a Demonstrar','Sintomas a Relatar','Crenças Centrais'].map(function(t,i){var v=[c.di,c.fo,c.si,c.sy,c.cr][i];return '<div style="font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;margin:10px 0 3px">'+t+'</div><div style="font-size:13px;margin-bottom:8px">'+v+'</div>';}).join('')+
@@ -1006,7 +1011,7 @@ function renderCasos(){
   if(l2)l2.innerHTML=CASOS_N2.map(function(c){
     return '<div class="cc"><div style="display:flex;justify-content:space-between;align-items:flex-start">'+
       '<div><span class="bdg bbl">Caso #'+c.n+' — N2</span><div style="font-size:15px;font-weight:700;color:#3d006a;margin:6px 0 2px">'+c.nm+'</div><div style="font-size:12px;color:var(--tl)">'+c.cx+' · '+c.ei+'</div></div>'+
-      '<button onclick="togCas('n2-'+c.n+'')" id="btn-n2-'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">▼ Ver</button></div>'+
+      '<button onclick="togCas('+JSON.stringify('n2-'+c.n)+')" id="btn-n2-'+c.n+'" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--roxo);font-weight:600">Ver</button></div>'+
       '<div id="cb-n2-'+c.n+'" style="display:none;margin-top:12px">'+
       '<div style="font-size:13px;font-weight:700;color:#3d006a;margin-bottom:8px">📋 Estrutura do Trabalho Escrito + Seminário</div>'+
       c.estrutura.map(function(e){return '<div style="font-size:13px;margin-bottom:6px;padding-left:8px;border-left:3px solid var(--roxo-light)">'+e+'</div>';}).join('')+
@@ -1098,20 +1103,21 @@ function carregarFormQR(sessaoId){
       window._qrAlunos=todos;
     }).catch(function(){window._qrAlunos=todos;});
     window._qrAlunos=todos;
+    _qrSessaoId=sessaoId;_qrGrpNome=grpNome;_qrCasoNum=casoNum;
     var frm=document.getElementById('qr-frm');
     var alSel='<div class="fg"><label class="lbl">Seu Nome *</label><input class="inp" id="qrfm-nm" placeholder="Digite seu nome..." autocomplete="off" oninput="acQR(this.value)"/><div id="qrfm-ac" class="acl"></div></div>';
     if(tipo==='n1'){
       frm.innerHTML=alSel+
         '<div class="fg"><label class="lbl">Paciente Simulado</label><input class="inp" id="qrfm-pac" value="'+(caso?caso.nm:'')+'"/></div>'+
         ['1. Queixa Principal & Demanda Institucional','2. Sinais Observados','3. Sintomas Relatados','4. Hipótese Diagnóstica (DSM-5-TR)','5. Diagnóstico Diferencial','6. Foco para Psicoterapia Breve','7. Estratégias e Encaminhamentos'].map(function(q,i){return '<div class="fg"><label class="lbl">'+q+'</label><textarea class="inp" id="qrfm-q'+(i+1)+'" style="resize:vertical;min-height:70px"></textarea></div>';}).join('')+
-        '<button class="bp" style="margin-top:8px" onclick="enviarFormQR('n1',''+sessaoId+'',''+grpNome+'',' +(casoNum||0)+')">💾 Enviar Ficha N1</button>'+
+        '<button class="bp" style="margin-top:8px" onclick="_enviarQR(1)">Enviar Ficha N1</button>'+
         '<div id="qrfm-ok" class="ag alt hidden" style="margin-top:12px">✅ Ficha enviada! Disponível no seu painel.</div>';
     } else {
       frm.innerHTML=alSel+
         '<div class="fg"><label class="lbl">Avaliação Geral</label><div class="ro">'+
-        ['gostei','melhorar','nao'].map(function(v,i){return '<div class="roo" onclick="selQRRat(this,''+v+'')"><div style="font-size:22px">'+['👍','💡','👎'][i]+'</div>'+['Gostei','Pode Melhorar','Não Gostei'][i]+'</div>';}).join('')+'</div></div>'+
+        ['gostei','melhorar','nao'].map(function(v,vi){return '<div class="roo" onclick="_selQRRat(this,'+vi+')"><div style="font-size:22px">'+['👍','💡','👎'][vi]+'</div>'+['Gostei','Pode Melhorar','Não Gostei'][vi]+'</div>';}).join('')+'</div></div>'+
         ['1. O Foco e alinhamento com a TCC ficaram claros?','2. Observação Construtiva / Destaque do Planejamento','3. Pergunta ou Ponto de Dúvida'].map(function(q,i){return '<div class="fg"><label class="lbl">'+q+'</label><textarea class="inp" id="qrfm-mq'+(i+1)+'" style="resize:vertical;min-height:70px"></textarea></div>';}).join('')+
-        '<button class="bp" style="margin-top:8px" onclick="enviarFormQR('n2',''+sessaoId+'',''+grpNome+'','+(casoNum||0)+')">💾 Enviar Microavaliação</button>'+
+        '<button class="bp" style="margin-top:8px" onclick="_enviarQR(2)">Enviar Microavaliacao</button>'+
         '<div id="qrfm-ok" class="ag alt hidden" style="margin-top:12px">✅ Microavaliação enviada! +0,5pt registrado.</div>';
     }
   }).catch(function(){document.getElementById('qr-tit').textContent='Erro ao carregar';});
@@ -1123,7 +1129,7 @@ function acQR(val){
   var alunos=window._qrAlunos||ALUNOS;
   var r=alunos.filter(function(a){return(a.nome||'').toLowerCase().indexOf(val.toLowerCase())>=0;});
   if(!r.length){list.style.display='none';return;}
-  list.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selQRAl(''+a.id+'',''+a.nome.replace(/'/g,"\'")+'')">' +a.nome+(a.matricula?' — '+a.matricula:'')+'</div>';}).join('');
+  window._acQR=(window._qrAlunos||ALUNOS).filter(function(a){return(a.nome||'').toLowerCase().indexOf(val.toLowerCase())>=0;}).slice(0,8);list.innerHTML=window._acQR.map(function(a,i){return '<div class="aci" onclick="_selI(3,'+i+')">'+ a.nome+(a.matricula?' - '+a.matricula:'')+'</div>';}).join('');
   list.style.display='block';
 }
 function selQRAl(id,nome){_qrSel={id:id,nome:nome};document.getElementById('qrfm-nm').value=nome;document.getElementById('qrfm-ac').style.display='none';}
@@ -1146,7 +1152,7 @@ function acNota(v){
   var ac=document.getElementById('not-ac');if(v.length<2){ac.style.display='none';return;}
   var l=v.toLowerCase(),r=ALUNOS.filter(function(a){return a.nome.toLowerCase().indexOf(l)>=0&&a.status==='ativo';});
   if(!r.length){ac.style.display='none';return;}
-  ac.innerHTML=r.slice(0,8).map(function(a){return '<div class="aci" onclick="selNota(''+a.id+'')">'+a.nome+' — '+a.matricula+'</div>';}).join('');
+  window._acNota=r.slice(0,8);ac.innerHTML=window._acNota.map(function(a,i){return '<div class="aci" onclick="_selI(2,'+i+')">'+ a.nome+' - '+a.matricula+'</div>';}).join('');
   ac.style.display='block';
 }
 function selNota(id){
@@ -1222,24 +1228,28 @@ function exportExcel(tipo){
   var rows=[],header='';
   var ativ=ALUNOS.filter(function(a){return a.status==='ativo';});
   if(tipo==='n1'){
-    header='Matrícula,Nome,Grupo N1,Caso N1,Nota N1
-';
+    header='Matrícula,Nome,Grupo N1,Caso N1,Nota N1';
     rows=ativ.map(function(a){var g=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var c=g?CASOS_N1.find(function(x){return x.n==g.casoNum;}):null;return a.matricula+',"'+a.nome+'",'+(g?g.nome:'')+','+(c?'Caso '+c.n+' — '+c.nm:'')+','+(a.notaN1||0);});
   } else if(tipo==='n2'){
-    header='Matrícula,Nome,Grupo N2,Caso N2,Seminário (6),Plateia (2),ESA (2),Total N2
-';
+    header='Matrícula,Nome,Grupo N2,Caso N2,Seminário (6),Plateia (2),ESA (2),Total N2';
     rows=ativ.map(function(a){var g=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var c=g?CASOS_N2.find(function(x){return x.n==g.casoNum;}):null;var sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa);return a.matricula+',"'+a.nome+'",'+(g?g.nome:'')+','+(c?'Caso '+c.n+' — '+c.nm:'')+','+sem.toFixed(1)+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1);});
   } else {
-    header='Matrícula,Nome,Grupo N1,N1,Grupo N2,Seminário,Plateia,ESA,Total N2,Média,Status
-';
+    header='Matrícula,Nome,Grupo N1,N1,Grupo N2,Seminário,Plateia,ESA,Total N2,Média,Status';
     rows=ativ.map(function(a){var g1=GRUPOS.n1.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var g2=GRUPOS.n2.find(function(g){return g.membros&&g.membros.indexOf(a.id)>=0;});var n1=a.notaN1||0,sem=a.notaSem||0,esa=a.notaESA||0,plat=calcPlat(a),n2=Math.min(10,sem+plat+esa),med=((n1+n2)/2).toFixed(1);return a.matricula+',"'+a.nome+'",'+(g1?g1.nome:'')+','+n1+','+(g2?g2.nome:'')+','+sem+','+plat.toFixed(1)+','+esa+','+n2.toFixed(1)+','+med+','+(parseFloat(med)>=6?'Aprovado':'Em risco');});
   }
-  var csv='﻿'+header+rows.join('
-');
+  var csv='﻿'+header+rows.join('');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   var url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='psicoterapia_breve_'+tipo+'.csv';a.click();
 }
+
+// URL PARAMS - executado após todas as funções estarem definidas
+(function(){
+  var urlParams=new URLSearchParams(window.location.search);
+  if(urlParams.get('cadastro')==='1'){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-cad').classList.remove('hidden');}
+  var qrParam=urlParams.get('qr');
+  if(qrParam){document.getElementById('v-sel').classList.add('hidden');document.getElementById('v-qr').classList.remove('hidden');carregarFormQR(qrParam);}
+})();
 
 // FECHA AUTOCOMPLETE
 document.addEventListener('click',function(e){
