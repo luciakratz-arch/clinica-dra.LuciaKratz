@@ -1,6 +1,3 @@
-const { useState, useEffect, useCallback, useRef, useMemo } = React;
-const db = firebase.firestore();
-
 function VitrineProdutos() {
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading]   = useState(true);
