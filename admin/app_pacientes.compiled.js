@@ -1,11 +1,3 @@
-const {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo
-} = React;
-const db = firebase.firestore();
 function DashboardAdmin({
   user,
   onVerEvolucao
