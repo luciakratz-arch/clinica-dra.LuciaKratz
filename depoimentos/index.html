@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Depoimentos — Dra. Lucia Kratz</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --purple: #7B00C4;
+      --purple-light: #f5f0ff;
+      --purple-mid: #5a0090;
+      --gray-50: #f9fafb;
+      --gray-400: #9ca3af;
+      --gray-700: #374151;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gray-50);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    .header {
+      background: white;
+      border-bottom: 1px solid #ede9f6;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 8px rgba(123,0,196,.07);
+    }
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .header-name {
+      font-family: 'Dancing Script', cursive;
+      font-size: 22px;
+      color: var(--purple);
+      line-height: 1;
+    }
+    .header-crp {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+    .header-btn {
+      background: var(--purple);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-btn:hover { opacity: 0.9; }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 48px 24px 32px;
+    }
+    .hero-label {
+      display: inline-block;
+      background: var(--purple-light);
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .hero-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .hero-sub {
+      font-size: 15px;
+      color: #6b7280;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* CARROSSEL */
+    .carousel-wrap {
+      position: relative;
+      padding: 0 20px;
+      max-width: 1100px;
+      margin: 0 auto 40px;
+    }
+    #carrossel-dep {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 8px 4px 16px;
+      scrollbar-width: none;
+    }
+    #carrossel-dep::-webkit-scrollbar { display: none; }
+
+    .dep-card {
+      min-width: 300px;
+      max-width: 300px;
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 16px rgba(123,0,196,.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .dep-stars { color: var(--purple); font-size: 20px; letter-spacing: 2px; }
+    .dep-nome { font-weight: 700; font-size: 15px; }
+    .dep-cargo { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+    .dep-texto { font-size: 14px; color: var(--gray-700); line-height: 1.7; flex: 1; }
+    .dep-resposta {
+      background: var(--purple-light);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--purple-mid);
+      line-height: 1.6;
+    }
+    .dep-resposta-autor {
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dep-resposta-autor img {
+      width: 24px; height: 24px;
+      border-radius: 50%; object-fit: cover;
+    }
+
+    /* BOTÕES NAVEGAR */
+    .btn-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: white;
+      border: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,.15);
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .btn-nav-prev { left: -4px; }
+    .btn-nav-next { right: -4px; }
+
+    /* GRID ESTÁTICO (depoimentos fixos) */
+    /* os cards são iguais, só o layout muda em mobile */
+    @media (max-width: 640px) {
+      .dep-card { min-width: calc(100vw - 72px); max-width: calc(100vw - 72px); }
+      .hero-title { font-size: 22px; }
+      .btn-nav-prev { left: -2px; }
+      .btn-nav-next { right: -2px; }
+    }
+
+    /* FOOTER */
+    .footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid #ede9f6;
+      background: white;
+    }
+    .footer-note {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .footer-btn {
+      background: white;
+      color: var(--purple);
+      border: 2px solid var(--purple);
+      border-radius: 20px;
+      padding: 9px 22px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      text-decoration: none;
+    }
+    .footer-btn:hover { background: var(--purple-light); }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <img src="../foto.jpeg" onerror="this.style.display='none'" alt="Lucia Kratz"/>
+    <div>
+      <div class="header-name">Lucia Kratz</div>
+      <div class="header-crp">Psicóloga · CRP 09/20590</div>
+    </div>
+  </div>
+  <a href="https://wa.me/5562999999999" class="header-btn" target="_blank">
+    💬 Agendar consulta
+  </a>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Depoimentos</div>
+  <h1 class="hero-title">O que dizem sobre o atendimento</h1>
+  <p class="hero-sub">Histórias reais de transformação e cuidado.</p>
+</div>
+
+<!-- CARROSSEL -->
+<div class="carousel-wrap">
+  <div id="carrossel-dep">
+
+    <!-- D.P.G.D. -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">D.P.G.D.</div>
+        <div class="dep-cargo">23/04/2026</div>
+      </div>
+      <p class="dep-texto">"De longe a melhor profissional do ramo. Humana, atenciosa e muito experiente. Uma grande referência no que faz. Mudou minha vida, me resgatou e salvou."</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Muito obrigada pelas suas palavras tão generosas e emocionantes. Fico profundamente tocada em saber que meu trabalho pôde contribuir de forma tão significativa para sua vida. É uma honra acompanhar sua trajetória.
+      </div>
+    </div>
+
+    <!-- Vanessa -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">Vanessa</div>
+        <div class="dep-cargo">27/03/2026</div>
+      </div>
+      <p class="dep-texto">"A Dra. Lúcia é de uma maestria enorme! Com uma frase ela conseguiu virar a chave da minha mente cheia de medo, restrita e limitada. Ela traz luz onde havia escuridão."</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Fico feliz em poder te ajudar e contribuir com sua jornada pessoal e profissional!
+      </div>
+    </div>
+
+    <!-- AMR -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">AMR</div>
+        <div class="dep-cargo">27/03/2026</div>
+      </div>
+      <p class="dep-texto">"Tive uma excelente experiência, ótimo atendimento."</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Agradeço muito seu feedback!
+      </div>
+    </div>
+
+    <!-- E.M. -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">E.M.</div>
+        <div class="dep-cargo">27/03/2026</div>
+      </div>
+      <p class="dep-texto">"É uma pessoa muito empática e atenciosa, uma boa profissional."</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Agradeço muito seu feedback!
+      </div>
+    </div>
+
+    <!-- Marilha Cumha -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">Marilha Cumha</div>
+        <div class="dep-cargo">Empresária Bobys</div>
+      </div>
+      <p class="dep-texto">"Esse processo trouxe para mim uma confiança muito grande e também despertou-me um mundo novo, de oportunidades e que está na minha mão. Basta acreditar e agir com inteligência e serenidade."</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Que presente receber esse retorno, Marilha! Ver você ressignificar seus medos e agir com confiança é exatamente o que move meu trabalho. Continue acreditando no seu potencial — ele é imenso! 💜
+      </div>
+    </div>
+
+    <!-- Flávio Sabugo -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">Flávio Sabugo</div>
+        <div class="dep-cargo">Profissional Certificado Google Adwords</div>
+      </div>
+      <p class="dep-texto">"Seja através de suas aulas, processos de coaching ou consultorias empresariais, se engaja e entrega sempre mais do que o esperado! Indico a Lúcia Kratz para executivos e empresas que buscam a excelência!"</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Flávio, sua generosidade em compartilhar essa experiência significa muito! É muito gratificante trabalhar com profissionais comprometidos com a excelência como você. Obrigada pela confiança e pela indicação! 🙏
+      </div>
+    </div>
+
+    <!-- Lidiana Nascimento -->
+    <div class="dep-card">
+      <div class="dep-stars">★★★★★</div>
+      <div>
+        <div class="dep-nome">Lidiana Nascimento</div>
+        <div class="dep-cargo">Designer de Unhas / Empresária</div>
+      </div>
+      <p class="dep-texto">"Meu relacionamento com meu marido melhorou muito. Obrigada!"</p>
+      <div class="dep-resposta">
+        <div class="dep-resposta-autor">
+          <img src="../foto.jpeg" onerror="this.style.display='none'" alt=""/> Lucia Kratz
+        </div>
+        Fico tão feliz em saber disso, Lidiana! Ver uma relação se transformar e se fortalecer é uma das maiores alegrias do meu trabalho. Obrigada pela confiança em mim! 💜
+      </div>
+    </div>
+
+  </div><!-- fim carrossel-dep -->
+
+  <button class="btn-nav btn-nav-prev" onclick="scrollDep(-1)">‹</button>
+  <button class="btn-nav btn-nav-next" onclick="scrollDep(1)">›</button>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p class="footer-note">
+    Esta página é de acesso restrito e foi compartilhada diretamente pela Dra. Lucia Kratz.<br/>
+    Não divulgue publicamente.
+  </p>
+  <a href="https://wa.me/5562999999999" class="footer-btn" target="_blank">
+    💬 Quero agendar uma consulta
+  </a>
+</footer>
+
+<script>
+function scrollDep(dir) {
+  document.getElementById('carrossel-dep').scrollLeft += dir * 320;
+}
+</script>
+
+<!-- Firebase: carrega depoimentos adicionais do Firestore (aprovados) -->
+<script src="../depoimentos.js"></script>
+
+</body>
+</html>
