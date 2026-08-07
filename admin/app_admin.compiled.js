@@ -1,11 +1,3 @@
-const {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo
-} = React;
-const db = firebase.firestore();
 function Alunos() {
   const [alunos, setAlunos] = useState([]);
   const [loading, setLoading] = useState(true);
