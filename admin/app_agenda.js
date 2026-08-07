@@ -1,6 +1,3 @@
-const { useState, useEffect, useCallback, useRef, useMemo } = React;
-const db = firebase.firestore();
-
 function Agenda() {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [sessoesPacientes, setSessoesPacientes] = useState([]);
