@@ -1,6 +1,3 @@
-const { useState, useEffect, useCallback, useRef, useMemo } = React;
-const db = firebase.firestore();
-
 function DashboardAdmin({ user, onVerEvolucao }) {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   // Disponibilizar lista de pacientes para o feed resolver nomes ausentes
