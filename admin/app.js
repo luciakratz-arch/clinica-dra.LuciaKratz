@@ -6568,6 +6568,14 @@ function Depoimentos() {
             onClick={()=>{ navigator.clipboard.writeText("https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/feedback/"); alert("Link copiado!"); }}>
             <Icon name="copy" size={14}/> Copiar link
           </button>
+          <a href="../depoimentos/" target="_blank"
+            style={{display:"inline-flex",alignItems:"center",gap:6,padding:"9px 16px",borderRadius:10,background:"var(--purple-soft)",color:"var(--purple)",fontSize:13,fontWeight:600,textDecoration:"none"}}>
+            <Icon name="star" size={14}/> Página depoimentos
+          </a>
+          <button className="btn btn-ghost" style={{fontSize:13}}
+            onClick={()=>{ navigator.clipboard.writeText("https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/depoimentos/"); alert("Link copiado!"); }}>
+            <Icon name="link" size={14}/> Copiar link
+          </button>
         </div>
       </div>
 
