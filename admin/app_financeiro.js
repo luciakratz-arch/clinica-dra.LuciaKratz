@@ -1,6 +1,3 @@
-const { useState, useEffect, useCallback, useRef, useMemo } = React;
-const db = firebase.firestore();
-
 function FinanceiroClinica({ user }) {
   const { data:pacientes } = useCollection("clinica_pacientes","nome");
   const [lancamentos, setLancamentos] = useState([]);
