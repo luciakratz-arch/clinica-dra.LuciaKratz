@@ -1299,21 +1299,19 @@ function FerramentaGestaoAnsiedade({user}){
   const TECNICAS=[{id:"resp",label:"Respiração Relaxada",desc:"Inspirar → Pausar → Expirar por 2 min"},{id:"visao",label:"Visão Periférica",desc:"Mover os olhos da direita para a esquerda"},{id:"musc",label:"Relaxamento Muscular",desc:"Contrair músculos 5s e relaxar com suspiro"}];
   const ATIVIDADES=[{id:"caminhada",label:"🚶 Caminhada"},{id:"meditacao",label:"🧘 Meditação"},{id:"diario",label:"📓 Diário"},{id:"musica",label:"🎵 Música"},{id:"alongamento",label:"🤸 Alongamento"},{id:"agua",label:"💧 Hidratação"}];
   const PERGUNTAS=["Qual situação está me deixando ansioso(a)?","Qual é o meu pensamento ansioso?","Tenho provas reais de que é 100% verdadeiro?","Quais evidências indicam que pode NÃO ser verdadeiro?","Qual a probabilidade real de que o pior aconteça?","O que eu diria a um amigo com esse mesmo pensamento?","Existe uma forma mais útil de ver essa situação?","Preocupar-me está me ajudando ou me machucando?"];
-  const AREAS=[{id:"interior",label:"Cuidado Interior"},{id:"familiar",label:"Vida Familiar"},{id:"carreira",label:"Carreira"},{id:"social",label:"Vida Social"},{id:"qualidade",label:"Qualidade de Vida"},{id:"saudavel",label:"Vida Saudável"},{id:"financeiro",label:"Financeiro"},{id:"espiritualidade",label:"Espiritualidade"}];
   const DESC={1:"Em paz.",2:"Otimista.",3:"Calmo.",4:"Confortável.",5:"Neutro.",6:"Estressando.",7:"Estressado.",8:"Irritado.",9:"Tenso.",10:"Em pânico."};
   const [aba,setAba]=React.useState(0);
   const [stress,setStress]=React.useState(5);
   const [nota,setNota]=React.useState("");
   const [track,setTrack]=React.useState({});
   const [resp,setResp]=React.useState(Array(8).fill(""));
-  const [roda,setRoda]=React.useState({});
   const [log,setLog]=React.useState([]);
   const [msg,setMsg]=React.useState("");
   const sc=stress<=3?"#059669":stress<=5?"#d97706":stress<=7?"#f97316":"#dc2626";
   return(
     <div>
       <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #e5e7eb",overflowX:"auto"}}>
-        {["😰 Estresse","✅ Tracking","🧠 Pensamentos","🎯 Roda da Vida"].map((n,i)=>
+        {["😰 Estresse","✅ Tracking","🧠 Pensamentos"].map((n,i)=>
           <button key={i} onClick={()=>setAba(i)} style={{padding:"8px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,fontWeight:aba===i?700:400,color:aba===i?"var(--purple)":"#6b7280",borderBottom:aba===i?"2px solid var(--purple)":"2px solid transparent",whiteSpace:"nowrap",fontFamily:"var(--font-body)"}}>{n}</button>
         )}
       </div>
@@ -1387,36 +1385,138 @@ function FerramentaGestaoAnsiedade({user}){
           setResp(Array(8).fill(""));setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
         }}>{msg||"Salvar respostas"}</button>
       </div>}
-      {aba===3&&<div>
-        <div style={{fontSize:13,color:"#6b7280",marginBottom:14}}>Avalie cada área de 0 a 10. O gráfico atualiza em tempo real.</div>
-        {AREAS.map(a=><div key={a.id} style={{marginBottom:10}}>
-          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{fontWeight:600}}>{a.label}</span><span style={{fontWeight:700,color:"var(--purple)"}}>{roda[a.id]||0}/10</span></div>
-          <input type="range" min={0} max={10} value={roda[a.id]||0} onChange={e=>setRoda(r=>({...r,[a.id]:+e.target.value}))} style={{width:"100%",accentColor:"var(--purple)"}}/>
-        </div>)}
-        <div style={{display:"flex",justifyContent:"center",margin:"16px 0"}}>
-          <canvas id="rodaChart" width="260" height="260" ref={el=>{
-            if(!el||typeof Chart==="undefined")return;
-            const vals=AREAS.map(a=>roda[a.id]||0);
-            const labels=AREAS.map(a=>a.label);
-            if(el._chart)el._chart.destroy();
-            el._chart=new Chart(el,{type:"radar",data:{labels,datasets:[{data:vals,backgroundColor:"rgba(123,0,196,0.15)",borderColor:"#7B00C4",borderWidth:2,pointBackgroundColor:"#7B00C4",pointRadius:4}]},options:{scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9}},pointLabels:{font:{size:10}}}},plugins:{legend:{display:false}}}});
-          }}/>
+
+    </div>
+  );
+}
+
+// ── Roda da Vida Integral ────────────────────────────────────────────────────
+function FerramentaRodaVidaIntegral({user}){
+  const INFO_REC = {titulo:"Roda da Vida Integral", formularioKey:"roda-vida-integral"};
+  const AREAS=[
+    {id:"saude",      label:"Saúde"},
+    {id:"carreira",   label:"Carreira"},
+    {id:"financeiro", label:"Finanças"},
+    {id:"familia",    label:"Família"},
+    {id:"social",     label:"Relacionamentos"},
+    {id:"espirito",   label:"Espiritualidade"},
+    {id:"lazer",      label:"Lazer"},
+    {id:"pessoal",    label:"Desenv. Pessoal"},
+  ];
+  const [vals,setVals]=React.useState({});
+  const [msg,setMsg]=React.useState("");
+  const [historico,setHistorico]=React.useState([]);
+
+  React.useEffect(()=>{
+    if(!user?.id) return;
+    db.collection("clinica_gestao_ansiedade")
+      .where("pacienteId","==",user.id)
+      .where("tipo","==","roda")
+      .get().then(snap=>{
+        const docs=snap.docs.map(d=>d.data()).sort((a,b)=>b.createdAt?.seconds-a.createdAt?.seconds);
+        if(docs.length>0){
+          const ultimo=docs[0];
+          const v={};
+          (ultimo.areas||[]).forEach(a=>{
+            const found=AREAS.find(x=>x.label===a.area);
+            if(found) v[found.id]=a.valor;
+          });
+          setVals(v);
+        }
+        setHistorico(docs.slice(0,5));
+      }).catch(()=>{});
+  },[user?.id]);
+
+  function RadarSVG({valores}){
+    const n=AREAS.length;
+    const cx=140,cy=140,r=110;
+    const grades=[2,4,6,8,10].map(g=>{
+      const pts=AREAS.map((_,i)=>{
+        const ang=(i/n)*2*Math.PI-Math.PI/2;
+        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
+      }).join(" ");
+      return <polygon key={g} points={pts} fill="none" stroke="#e5e7eb" strokeWidth={g===10?"1":"0.5"}/>;
+    });
+    const eixos=AREAS.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const pts=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[a.id]||0)/10;
+      return [cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)].join(",");
+    }).join(" ");
+    const pontos=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[a.id]||0)/10;
+      return {x:cx+r*v*Math.cos(ang),y:cy+r*v*Math.sin(ang),val:valores[a.id]||0};
+    });
+    const labels=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const lx=cx+(r+22)*Math.cos(ang);
+      const ly=cy+(r+22)*Math.sin(ang);
+      return <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#6b7280" fontWeight="600">{a.label}</text>;
+    });
+    return(
+      <svg width="280" height="280" viewBox="0 0 280 280">
+        {grades}{eixos}
+        <polygon points={pts} fill="rgba(123,0,196,0.15)" stroke="#7B00C4" strokeWidth="2"/>
+        {pontos.map((p,i)=>(
+          <circle key={i} cx={p.x} cy={p.y} r="4" fill="#7B00C4"/>
+        ))}
+        {labels}
+      </svg>
+    );
+  }
+
+  async function salvar(){
+    if(!user?.id) return;
+    try{
+      await db.collection("clinica_gestao_ansiedade").add({
+        pacienteId:user.id, pacienteNome:user.nome||"", tipo:"roda",
+        areas:AREAS.map(a=>({area:a.label,valor:vals[a.id]||0})),
+        data:new Date().toLocaleDateString("pt-BR"),
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Roda da Vida ("+AREAS.map(a=>`${a.label}: ${vals[a.id]||0}`).join(", ")+")"});
+      setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2500);
+    }catch(e){setMsg("Erro ao salvar.");}
+  }
+
+  return(
+    <div>
+      <div style={{fontSize:13,color:"#6b7280",marginBottom:16,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>
+        Avalie sua satisfação em cada área de <strong>0 a 10</strong>. O gráfico atualiza em tempo real conforme você move os controles.
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+        {AREAS.map(a=>(
+          <div key={a.id}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+              <span style={{fontWeight:600}}>{a.label}</span>
+              <span style={{fontWeight:700,color:"var(--purple)",minWidth:32,textAlign:"right"}}>{vals[a.id]||0}/10</span>
+            </div>
+            <input type="range" min={0} max={10} step={1} value={vals[a.id]||0}
+              onChange={e=>setVals(v=>({...v,[a.id]:+e.target.value}))}
+              style={{width:"100%",accentColor:"var(--purple)"}}/>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"center",margin:"8px 0 16px"}}>
+        <RadarSVG valores={vals}/>
+      </div>
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>
+        {msg||"💾 Salvar Roda da Vida"}
+      </button>
+      {historico.length>1&&(
+        <div style={{marginTop:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:8}}>Histórico</div>
+          {historico.slice(1,4).map((h,i)=>(
+            <div key={i} style={{fontSize:11,color:"#6b7280",padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4}}>
+              {h.data} — {(h.areas||[]).map(a=>`${a.area}: ${a.valor}`).join(" · ")}
+            </div>
+          ))}
         </div>
-        <button className="btn btn-purple" style={{width:"100%"}} onClick={async()=>{
-          if(user&&user.id){
-            try{
-              await db.collection("clinica_gestao_ansiedade").add({
-                pacienteId:user.id, pacienteNome:user.nome||"", tipo:"roda",
-                areas: AREAS.map(a=>({area:a.label, valor:roda[a.id]||0})),
-                data:new Date().toLocaleDateString("pt-BR"),
-                createdAt:firebase.firestore.FieldValue.serverTimestamp()
-              });
-              registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Roda da Vida ("+AREAS.map(a=>`${a.label}: ${roda[a.id]||0}`).join(", ")+")"});
-            }catch(e){}
-          }
-          setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2000);
-        }}>{msg||"Salvar Roda da Vida"}</button>
-      </div>}
+      )}
     </div>
   );
 }
@@ -1596,6 +1696,7 @@ function FerramentaPortal({ recurso, user }){
   if(typeof FerramentaConflictCycle!=="undefined"&&k==="ciclo-conflito")         return <FerramentaConflictCycle user={user}/>;
   if(typeof FerramentaActiveListening!=="undefined"&&k==="escuta-ativa")         return <FerramentaActiveListening user={user}/>;
   if(k==="mural-habilidades")    return <FerramentaMuralHabilidades user={user}/>;
+  if(k==="roda-vida-integral")   return <FerramentaRodaVidaIntegral user={user}/>;
   if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
   if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
   // ── Fábulas com campo "paginas" (array) ──────────────────────────
