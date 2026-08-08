@@ -3754,11 +3754,108 @@ function FerramentaSelfCompassion({ user }){
   );
 }
 
+// ── Roda da Vida Integral (Admin Preview) ────────────────────────────────────
+function FerramentaRodaVidaIntegral({user}){
+  const AREAS=[
+    {id:"saude",      label:"Saúde"},
+    {id:"carreira",   label:"Carreira"},
+    {id:"financeiro", label:"Finanças"},
+    {id:"familia",    label:"Família"},
+    {id:"social",     label:"Relacionamentos"},
+    {id:"espirito",   label:"Espiritualidade"},
+    {id:"lazer",      label:"Lazer"},
+    {id:"pessoal",    label:"Desenv. Pessoal"},
+  ];
+  const [vals,setVals]=useState({});
+  const [msg,setMsg]=useState("");
+
+  function RadarSVG({valores}){
+    const n=AREAS.length;
+    const cx=140,cy=140,r=110;
+    const grades=[2,4,6,8,10].map(g=>{
+      const pts=AREAS.map((_,i)=>{
+        const ang=(i/n)*2*Math.PI-Math.PI/2;
+        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
+      }).join(" ");
+      return <polygon key={g} points={pts} fill="none" stroke="#e5e7eb" strokeWidth={g===10?"1":"0.5"}/>;
+    });
+    const eixos=AREAS.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const pts=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[a.id]||0)/10;
+      return [cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)].join(",");
+    }).join(" ");
+    const pontos=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[a.id]||0)/10;
+      return {x:cx+r*v*Math.cos(ang),y:cy+r*v*Math.sin(ang)};
+    });
+    const labels=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const lx=cx+(r+22)*Math.cos(ang);
+      const ly=cy+(r+22)*Math.sin(ang);
+      return <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#6b7280" fontWeight="600">{a.label}</text>;
+    });
+    return(
+      <svg width="280" height="280" viewBox="0 0 280 280">
+        {grades}{eixos}
+        <polygon points={pts} fill="rgba(123,0,196,0.15)" stroke="#7B00C4" strokeWidth="2"/>
+        {pontos.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="4" fill="#7B00C4"/>)}
+        {labels}
+      </svg>
+    );
+  }
+
+  async function salvar(){
+    if(!user?.id) return;
+    try{
+      await db.collection("clinica_gestao_ansiedade").add({
+        pacienteId:user.id, pacienteNome:user.nome||"", tipo:"roda",
+        areas:AREAS.map(a=>({area:a.label,valor:vals[a.id]||0})),
+        data:new Date().toLocaleDateString("pt-BR"),
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2500);
+    }catch(e){setMsg("Erro ao salvar.");}
+  }
+
+  return(
+    <div>
+      <div style={{fontSize:13,color:"#6b7280",marginBottom:16,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>
+        Avalie sua satisfação em cada área de <strong>0 a 10</strong>. O gráfico atualiza em tempo real.
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+        {AREAS.map(a=>(
+          <div key={a.id}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+              <span style={{fontWeight:600}}>{a.label}</span>
+              <span style={{fontWeight:700,color:"var(--purple)"}}>{vals[a.id]||0}/10</span>
+            </div>
+            <input type="range" min={0} max={10} step={1} value={vals[a.id]||0}
+              onChange={e=>setVals(v=>({...v,[a.id]:+e.target.value}))}
+              style={{width:"100%",accentColor:"var(--purple)"}}/>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"center",margin:"8px 0 16px"}}>
+        <RadarSVG valores={vals}/>
+      </div>
+      <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>
+        {msg||"💾 Salvar Roda da Vida"}
+      </button>
+    </div>
+  );
+}
+
 function ModalVisualizarFerramenta({recurso,onClose,user}){
   function renderFerramenta(){
     const k=recurso.formularioKey;
     if(k==="breathing-478")      return <FerramentaRespiracao/>;
     if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
+    if(k==="roda-vida-integral")  return <FerramentaRodaVidaIntegral user={user}/>;
     if(k==="decision-tree")      return <FerramentaArvore/>;
     if(k==="abc-record")         return <FerramentaABC/>;
     if(k==="anxiety-management") return <FerramentaGestaoAnsiedade/>;
