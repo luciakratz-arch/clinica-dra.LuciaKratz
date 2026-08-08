@@ -10521,30 +10521,43 @@ function FerramentaRodaVidaIntegral({
 }) {
   const AREAS = [{
     id: "saude",
-    label: "Saúde"
+    label: "🌱 Saúde",
+    desc: "Energia, sono, alimentação, exercício e ausência de dor crônica. Como está sua vitalidade no dia a dia?"
   }, {
     id: "carreira",
-    label: "Carreira"
+    label: "💼 Carreira",
+    desc: "Satisfação profissional, propósito, crescimento e sentido no trabalho. Você acorda motivada para trabalhar?"
   }, {
     id: "financeiro",
-    label: "Finanças"
+    label: "💰 Finanças",
+    desc: "Estabilidade, segurança e relação saudável com o dinheiro. Você se sente tranquila financeiramente?"
   }, {
     id: "familia",
-    label: "Família"
+    label: "👨‍👩‍👧 Família",
+    desc: "Ligação com família de origem, amizades significativas e redes de apoio."
   }, {
     id: "social",
-    label: "Relacionamentos"
+    label: "❤️ Relacionamentos",
+    desc: "Qualidade das relações íntimas, afeto, conexão e reciprocidade."
   }, {
     id: "espirito",
-    label: "Espiritualidade"
+    label: "🙏 Espiritualidade",
+    desc: "Ligação com algo maior, valores, propósito de vida e fé."
   }, {
     id: "lazer",
-    label: "Lazer"
+    label: "🎉 Lazer",
+    desc: "Tempo para atividades que dão alegria, descanso genuíno e prazer."
   }, {
     id: "pessoal",
-    label: "Desenv. Pessoal"
+    label: "🌟 Desenv. Pessoal",
+    desc: "Aprendizado, autoconhecimento, crescimento e realização pessoal."
   }];
   const [vals, setVals] = useState({});
+  const [reflexoes, setReflexoes] = useState({
+    carro: "",
+    mudanca: "",
+    redonda: ""
+  });
   const [msg, setMsg] = useState("");
   function RadarSVG({
     valores
@@ -10595,6 +10608,7 @@ function FerramentaRodaVidaIntegral({
       const ang = i / n * 2 * Math.PI - Math.PI / 2;
       const lx = cx + (r + 22) * Math.cos(ang);
       const ly = cy + (r + 22) * Math.sin(ang);
+      const labelCurto = a.label.replace(/^[^\s]+\s/, "");
       return /*#__PURE__*/React.createElement("text", {
         key: i,
         x: lx,
@@ -10604,7 +10618,7 @@ function FerramentaRodaVidaIntegral({
         fontSize: "9",
         fill: "#6b7280",
         fontWeight: "600"
-      }, a.label);
+      }, labelCurto);
     });
     return /*#__PURE__*/React.createElement("svg", {
       width: "280",
@@ -10634,6 +10648,7 @@ function FerramentaRodaVidaIntegral({
           area: a.label,
           valor: vals[a.id] || 0
         })),
+        reflexoes,
         data: new Date().toLocaleDateString("pt-BR"),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -10645,23 +10660,66 @@ function FerramentaRodaVidaIntegral({
   }
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      color: "#6b7280",
-      marginBottom: 16,
       background: "#f9f5ff",
-      padding: "10px 12px",
-      borderRadius: 8
+      border: "1px solid #e9d5ff",
+      borderRadius: 10,
+      padding: "14px 16px",
+      marginBottom: 20
     }
-  }, "Avalie sua satisfação em cada área de ", /*#__PURE__*/React.createElement("strong", null, "0 a 10"), ". O gráfico atualiza em tempo real."), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13,
+      color: "var(--purple)",
+      marginBottom: 6
+    }
+  }, "🎯 Como fazer esta avaliação"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#3d006a",
+      lineHeight: 1.7,
+      margin: 0
+    }
+  }, "Analise cada área da sua vida listada abaixo. Leia a descrição de cada uma e indique seu nível de ", /*#__PURE__*/React.createElement("strong", null, "satisfação"), " — lembrando que satisfação é ", /*#__PURE__*/React.createElement("strong", null, "qualidade"), ", não quantidade. Não se trata de ter muito ou pouco, mas de como você se ", /*#__PURE__*/React.createElement("em", null, "sente"), " em relação a essa área."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
+      padding: "8px 12px",
+      background: "white",
+      borderRadius: 8,
+      fontSize: 12,
+      color: "#6b7280",
+      borderLeft: "3px solid var(--purple)"
+    }
+  }, "🔵 ", /*#__PURE__*/React.createElement("strong", null, "Quanto maior e mais redonda a roda"), ", melhor você está distribuindo sua energia pela vida. Uma roda irregular indica desequilíbrio — não necessariamente infelicidade, mas áreas que merecem atenção.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
-      gap: 10,
-      marginBottom: 16
+      gap: 16,
+      marginBottom: 20
     }
   }, AREAS.map(a => /*#__PURE__*/React.createElement("div", {
-    key: a.id
+    key: a.id,
+    style: {
+      background: "white",
+      border: "1px solid var(--gray-100)",
+      borderRadius: 10,
+      padding: "12px 14px"
+    }
   }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: "var(--purple)",
+      marginBottom: 4
+    }
+  }, a.label), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "#6b7280",
+      lineHeight: 1.6,
+      marginBottom: 10
+    }
+  }, a.desc), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -10670,9 +10728,9 @@ function FerramentaRodaVidaIntegral({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontWeight: 600
+      color: "#9ca3af"
     }
-  }, a.label), /*#__PURE__*/React.createElement("span", {
+  }, "0 = muito insatisfeita · 10 = plenamente satisfeita"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: 700,
       color: "var(--purple)"
@@ -10695,11 +10753,76 @@ function FerramentaRodaVidaIntegral({
     style: {
       display: "flex",
       justifyContent: "center",
-      margin: "8px 0 16px"
+      margin: "8px 0 20px"
     }
   }, /*#__PURE__*/React.createElement(RadarSVG, {
     valores: vals
-  })), /*#__PURE__*/React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13,
+      color: "var(--purple)",
+      marginBottom: 12
+    }
+  }, "💭 Reflexões"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "#374151",
+      display: "block",
+      marginBottom: 6
+    }
+  }, "Se essa roda fosse o carro da sua vida, como ele estaria andando?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    value: reflexoes.carro,
+    onChange: v => setReflexoes(r => ({
+      ...r,
+      carro: v
+    })),
+    placeholder: "Descreva como imagina esse carro em movimento...",
+    rows: 3
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "#374151",
+      display: "block",
+      marginBottom: 6
+    }
+  }, "O que você poderia mudar um pouco nessa roda?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    value: reflexoes.mudanca,
+    onChange: v => setReflexoes(r => ({
+      ...r,
+      mudanca: v
+    })),
+    placeholder: "Pequenas mudanças que fariam diferença...",
+    rows: 3
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "#374151",
+      display: "block",
+      marginBottom: 6
+    }
+  }, "O que melhoraria toda essa roda para que ela ficasse mais redonda?"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    value: reflexoes.redonda,
+    onChange: v => setReflexoes(r => ({
+      ...r,
+      redonda: v
+    })),
+    placeholder: "O que tornaria sua vida mais equilibrada e satisfatória...",
+    rows: 3
+  })))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       width: "100%"
