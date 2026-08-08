@@ -3757,16 +3757,17 @@ function FerramentaSelfCompassion({ user }){
 // ── Roda da Vida Integral (Admin Preview) ────────────────────────────────────
 function FerramentaRodaVidaIntegral({user}){
   const AREAS=[
-    {id:"saude",      label:"Saúde"},
-    {id:"carreira",   label:"Carreira"},
-    {id:"financeiro", label:"Finanças"},
-    {id:"familia",    label:"Família"},
-    {id:"social",     label:"Relacionamentos"},
-    {id:"espirito",   label:"Espiritualidade"},
-    {id:"lazer",      label:"Lazer"},
-    {id:"pessoal",    label:"Desenv. Pessoal"},
+    {id:"saude",      label:"🌱 Saúde",          desc:"Energia, sono, alimentação, exercício e ausência de dor crônica. Como está sua vitalidade no dia a dia?"},
+    {id:"carreira",   label:"💼 Carreira",        desc:"Satisfação profissional, propósito, crescimento e sentido no trabalho. Você acorda motivada para trabalhar?"},
+    {id:"financeiro", label:"💰 Finanças",        desc:"Estabilidade, segurança e relação saudável com o dinheiro. Você se sente tranquila financeiramente?"},
+    {id:"familia",    label:"👨‍👩‍👧 Família",          desc:"Ligação com família de origem, amizades significativas e redes de apoio."},
+    {id:"social",     label:"❤️ Relacionamentos", desc:"Qualidade das relações íntimas, afeto, conexão e reciprocidade."},
+    {id:"espirito",   label:"🙏 Espiritualidade", desc:"Ligação com algo maior, valores, propósito de vida e fé."},
+    {id:"lazer",      label:"🎉 Lazer",           desc:"Tempo para atividades que dão alegria, descanso genuíno e prazer."},
+    {id:"pessoal",    label:"🌟 Desenv. Pessoal", desc:"Aprendizado, autoconhecimento, crescimento e realização pessoal."},
   ];
   const [vals,setVals]=useState({});
+  const [reflexoes,setReflexoes]=useState({carro:"",mudanca:"",redonda:""});
   const [msg,setMsg]=useState("");
 
   function RadarSVG({valores}){
@@ -3797,7 +3798,8 @@ function FerramentaRodaVidaIntegral({user}){
       const ang=(i/n)*2*Math.PI-Math.PI/2;
       const lx=cx+(r+22)*Math.cos(ang);
       const ly=cy+(r+22)*Math.sin(ang);
-      return <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#6b7280" fontWeight="600">{a.label}</text>;
+      const labelCurto=a.label.replace(/^[^\s]+\s/,"");
+      return <text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#6b7280" fontWeight="600">{labelCurto}</text>;
     });
     return(
       <svg width="280" height="280" viewBox="0 0 280 280">
@@ -3815,6 +3817,7 @@ function FerramentaRodaVidaIntegral({user}){
       await db.collection("clinica_gestao_ansiedade").add({
         pacienteId:user.id, pacienteNome:user.nome||"", tipo:"roda",
         areas:AREAS.map(a=>({area:a.label,valor:vals[a.id]||0})),
+        reflexoes,
         data:new Date().toLocaleDateString("pt-BR"),
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -3824,14 +3827,25 @@ function FerramentaRodaVidaIntegral({user}){
 
   return(
     <div>
-      <div style={{fontSize:13,color:"#6b7280",marginBottom:16,background:"#f9f5ff",padding:"10px 12px",borderRadius:8}}>
-        Avalie sua satisfação em cada área de <strong>0 a 10</strong>. O gráfico atualiza em tempo real.
+      {/* Instrução inicial */}
+      <div style={{background:"#f9f5ff",border:"1px solid #e9d5ff",borderRadius:10,padding:"14px 16px",marginBottom:20}}>
+        <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:6}}>🎯 Como fazer esta avaliação</div>
+        <p style={{fontSize:13,color:"#3d006a",lineHeight:1.7,margin:0}}>
+          Analise cada área da sua vida listada abaixo. Leia a descrição de cada uma e indique seu nível de <strong>satisfação</strong> — lembrando que satisfação é <strong>qualidade</strong>, não quantidade. Não se trata de ter muito ou pouco, mas de como você se <em>sente</em> em relação a essa área.
+        </p>
+        <div style={{marginTop:10,padding:"8px 12px",background:"white",borderRadius:8,fontSize:12,color:"#6b7280",borderLeft:"3px solid var(--purple)"}}>
+          🔵 <strong>Quanto maior e mais redonda a roda</strong>, melhor você está distribuindo sua energia pela vida. Uma roda irregular indica desequilíbrio — não necessariamente infelicidade, mas áreas que merecem atenção.
+        </div>
       </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+
+      {/* Áreas com descrição + slider */}
+      <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:20}}>
         {AREAS.map(a=>(
-          <div key={a.id}>
+          <div key={a.id} style={{background:"white",border:"1px solid var(--gray-100)",borderRadius:10,padding:"12px 14px"}}>
+            <div style={{fontWeight:700,fontSize:14,color:"var(--purple)",marginBottom:4}}>{a.label}</div>
+            <div style={{fontSize:12,color:"#6b7280",lineHeight:1.6,marginBottom:10}}>{a.desc}</div>
             <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
-              <span style={{fontWeight:600}}>{a.label}</span>
+              <span style={{color:"#9ca3af"}}>0 = muito insatisfeita · 10 = plenamente satisfeita</span>
               <span style={{fontWeight:700,color:"var(--purple)"}}>{vals[a.id]||0}/10</span>
             </div>
             <input type="range" min={0} max={10} step={1} value={vals[a.id]||0}
@@ -3840,9 +3854,31 @@ function FerramentaRodaVidaIntegral({user}){
           </div>
         ))}
       </div>
-      <div style={{display:"flex",justifyContent:"center",margin:"8px 0 16px"}}>
+
+      {/* Gráfico radar */}
+      <div style={{display:"flex",justifyContent:"center",margin:"8px 0 20px"}}>
         <RadarSVG valores={vals}/>
       </div>
+
+      {/* Reflexões */}
+      <div style={{marginBottom:20}}>
+        <div style={{fontWeight:700,fontSize:13,color:"var(--purple)",marginBottom:12}}>💭 Reflexões</div>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div>
+            <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>Se essa roda fosse o carro da sua vida, como ele estaria andando?</label>
+            <TextAreaVoz value={reflexoes.carro} onChange={v=>setReflexoes(r=>({...r,carro:v}))} placeholder="Descreva como imagina esse carro em movimento..." rows={3}/>
+          </div>
+          <div>
+            <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>O que você poderia mudar um pouco nessa roda?</label>
+            <TextAreaVoz value={reflexoes.mudanca} onChange={v=>setReflexoes(r=>({...r,mudanca:v}))} placeholder="Pequenas mudanças que fariam diferença..." rows={3}/>
+          </div>
+          <div>
+            <label style={{fontSize:13,fontWeight:600,color:"#374151",display:"block",marginBottom:6}}>O que melhoraria toda essa roda para que ela ficasse mais redonda?</label>
+            <TextAreaVoz value={reflexoes.redonda} onChange={v=>setReflexoes(r=>({...r,redonda:v}))} placeholder="O que tornaria sua vida mais equilibrada e satisfatória..." rows={3}/>
+          </div>
+        </div>
+      </div>
+
       <button className="btn btn-purple" style={{width:"100%"}} onClick={salvar}>
         {msg||"💾 Salvar Roda da Vida"}
       </button>
