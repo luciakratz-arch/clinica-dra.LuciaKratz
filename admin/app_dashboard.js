@@ -602,16 +602,19 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const totalAno = sessPac.filter(s=>s.data?.startsWith(anoAtual+"")&&s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
 
   async function atualizarSessao(id, campos){ await db.collection("clinica_sessoes").doc(id).update(campos); }
-  async function remarcarSessao(s, novaData){
+  async function remarcarSessao(s, novaData, motivo, novaHora){
     if(!novaData) return;
     try {
-      await db.collection("clinica_sessoes").doc(s.id).update({
+      const campos = {
         data: novaData,
         status: "remarcado",
         remarcada: true,
         dataRemarcada: novaData,
         dataOriginal: s.dataOriginal||s.data,
-      });
+        motivoRemarcacao: motivo||"remarcacao",
+      };
+      if(novaHora) campos.hora = novaHora;
+      await db.collection("clinica_sessoes").doc(s.id).update(campos);
     } catch(e){
       console.error("Erro ao remarcar sessão:", e);
       alert("Erro ao remarcar: "+e.message);
@@ -861,9 +864,15 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                             </select>
                             {(s.status==="cancelado"||s.status==="remarcado")&&(
                               <div style={{marginTop:3}}>
-                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data (sem mov. financeira):</div>
-                                <input type="date" defaultValue={s.dataRemarcada||""} onBlur={e=>{if(e.target.value)remarcarSessao(s,e.target.value,s._motivoRemarc||"remarcacao");}}
-                                  style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:105}}/>
+                                <div style={{fontSize:9,color:"#0891b2",marginBottom:2}}>Nova data e horário:</div>
+                                <div style={{display:"flex",gap:4,marginBottom:2}}>
+                                  <input type="date" id={"data_rem_"+s.id} defaultValue={s.dataRemarcada||""}
+                                    onBlur={e=>{const h=document.getElementById("hora_rem_"+s.id)?.value||null;if(e.target.value)remarcarSessao(s,e.target.value,s.motivoRemarcacao||"remarcacao",h);}}
+                                    style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:105}}/>
+                                  <input type="time" id={"hora_rem_"+s.id} defaultValue={s.hora||""}
+                                    onBlur={e=>{const d=document.getElementById("data_rem_"+s.id)?.value||null;if(d&&e.target.value)remarcarSessao(s,d,s.motivoRemarcacao||"remarcacao",e.target.value);}}
+                                    style={{fontSize:10,border:"1px solid #0891b2",borderRadius:3,padding:"1px 4px",color:"#0891b2",width:76}}/>
+                                </div>
                                 <select defaultValue={s.motivoRemarcacao||"remarcacao"} onChange={e=>atualizarSessao(s.id,{motivoRemarcacao:e.target.value})}
                                   style={{fontSize:9,marginTop:2,border:"1px solid #cbd5e1",borderRadius:3,padding:"1px 3px",width:105,color:"#374151",cursor:"pointer"}}>
                                   <option value="remarcacao">🔄 Remarcação</option>
@@ -946,4 +955,3 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
     </div>
   );
 }
-
