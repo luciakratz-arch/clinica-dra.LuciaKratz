@@ -1573,16 +1573,19 @@ function RelatorioFrequencia({
   async function atualizarSessao(id, campos) {
     await db.collection("clinica_sessoes").doc(id).update(campos);
   }
-  async function remarcarSessao(s, novaData) {
+  async function remarcarSessao(s, novaData, motivo, novaHora) {
     if (!novaData) return;
     try {
-      await db.collection("clinica_sessoes").doc(s.id).update({
+      const campos = {
         data: novaData,
         status: "remarcado",
         remarcada: true,
         dataRemarcada: novaData,
-        dataOriginal: s.dataOriginal || s.data
-      });
+        dataOriginal: s.dataOriginal || s.data,
+        motivoRemarcacao: motivo || "remarcacao"
+      };
+      if (novaHora) campos.hora = novaHora;
+      await db.collection("clinica_sessoes").doc(s.id).update(campos);
     } catch (e) {
       console.error("Erro ao remarcar sessão:", e);
       alert("Erro ao remarcar: " + e.message);
@@ -2132,11 +2135,19 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
           color: "#0891b2",
           marginBottom: 2
         }
-      }, "Nova data (sem mov. financeira):"), /*#__PURE__*/React.createElement("input", {
+      }, "Nova data e horário:"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 4,
+          marginBottom: 2
+        }
+      }, /*#__PURE__*/React.createElement("input", {
         type: "date",
+        id: "data_rem_" + s.id,
         defaultValue: s.dataRemarcada || "",
         onBlur: e => {
-          if (e.target.value) remarcarSessao(s, e.target.value, s._motivoRemarc || "remarcacao");
+          const h = document.getElementById("hora_rem_" + s.id)?.value || null;
+          if (e.target.value) remarcarSessao(s, e.target.value, s.motivoRemarcacao || "remarcacao", h);
         },
         style: {
           fontSize: 10,
@@ -2146,7 +2157,23 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
           color: "#0891b2",
           width: 105
         }
-      }), /*#__PURE__*/React.createElement("select", {
+      }), /*#__PURE__*/React.createElement("input", {
+        type: "time",
+        id: "hora_rem_" + s.id,
+        defaultValue: s.hora || "",
+        onBlur: e => {
+          const d = document.getElementById("data_rem_" + s.id)?.value || null;
+          if (d && e.target.value) remarcarSessao(s, d, s.motivoRemarcacao || "remarcacao", e.target.value);
+        },
+        style: {
+          fontSize: 10,
+          border: "1px solid #0891b2",
+          borderRadius: 3,
+          padding: "1px 4px",
+          color: "#0891b2",
+          width: 76
+        }
+      })), /*#__PURE__*/React.createElement("select", {
         defaultValue: s.motivoRemarcacao || "remarcacao",
         onChange: e => atualizarSessao(s.id, {
           motivoRemarcacao: e.target.value
