@@ -1,8 +1,3 @@
-// financeiro.js — Módulo Financeiro da Clínica Dra. Lucia Kratz
-// CRP 09/20590 · Simples Nacional · Fator R
-// Depende de: firebase (db), React, Icon, fmtDataHora, dispararNotificacao
-// Carregar APÓS app.js no index.html
-
 function FinanceiroClinica({
   user
 }) {
@@ -14,7 +9,6 @@ function FinanceiroClinica({
   const [sessoes, setSessoes] = useState([]);
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0, 7));
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear() + "");
-  const [filtroCentro, setFiltroCentro] = useState(user?.tipo === "secretaria" ? "clinica" : "todos");
   const [periodoCard, setPeriodoCard] = useState("mes");
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -22,6 +16,90 @@ function FinanceiroClinica({
   const [pacoteSelecionado, setPacoteSelecionado] = useState(null);
   const [modalExcluir, setModalExcluir] = useState(null);
   const [modalExcluirLanc, setModalExcluirLanc] = useState(null);
+  const CATS_DESPESA_CLINICA = ["Aluguel", "Condomínio", "Energia / Água", "Telefone / Internet", "Salário Secretária", "Contador / Impostos", "Marketing", "Equipamentos", "Materiais", "Ferramentas de IA", "Cursos e Capacitação", "Musicoterapia", "Manutenção", "Outros"];
+  const FORMAS_PAG_CLINICA = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Depósito", "Transferência", "Outro"];
+  const [modalDespesa, setModalDespesa] = useState(false);
+  const [formDespesa, setFormDespesa] = useState({
+    descricao: "",
+    categoria: "",
+    valor: "",
+    data: new Date().toISOString().slice(0, 10),
+    formaPag: "PIX",
+    status: "pago",
+    obs: "",
+    parcelas: "1"
+  });
+  const [editandoDespesa, setEditandoDespesa] = useState(null);
+  async function salvarDespesaClinica() {
+    if (!formDespesa.valor || !formDespesa.data) {
+      alert("Preencha valor e data.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const val = parseFloat(formDespesa.valor);
+      const nParc = parseInt(formDespesa.parcelas) || 1;
+      const base = {
+        tipo: "despesa",
+        tipo_lancamento: "despesa",
+        categoria: formDespesa.categoria || "Outros",
+        descricao: formDespesa.descricao || formDespesa.categoria || "Despesa",
+        formaPag: formDespesa.formaPag,
+        status: formDespesa.status,
+        obs: formDespesa.obs || "",
+        centroCusto: "🏥 Clínica",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (editandoDespesa) {
+        await db.collection("clinica_lancamentos").doc(editandoDespesa).update({
+          ...base,
+          valor: val,
+          data: formDespesa.data
+        });
+      } else if (nParc > 1) {
+        const batch = db.batch();
+        const [ano, mes, dia] = formDespesa.data.split("-").map(Number);
+        for (let i = 0; i < nParc; i++) {
+          let m = mes + i,
+            a = ano;
+          while (m > 12) {
+            m -= 12;
+            a++;
+          }
+          const dp = `${a}-${String(m).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+          batch.set(db.collection("clinica_lancamentos").doc(), {
+            ...base,
+            valor: val,
+            data: dp,
+            parcela: `${i + 1}/${nParc}`,
+            descricao: (formDespesa.descricao || formDespesa.categoria || "Despesa") + ` (${i + 1}/${nParc})`
+          });
+        }
+        await batch.commit();
+      } else {
+        await db.collection("clinica_lancamentos").add({
+          ...base,
+          valor: val,
+          data: formDespesa.data
+        });
+      }
+      setModalDespesa(false);
+      setEditandoDespesa(null);
+      setFormDespesa({
+        descricao: "",
+        categoria: "",
+        valor: "",
+        data: new Date().toISOString().slice(0, 10),
+        formaPag: "PIX",
+        status: "pago",
+        obs: "",
+        parcelas: "1"
+      });
+    } catch (e) {
+      alert("Erro: " + e.message);
+    }
+    setSalvando(false);
+  }
   const [aba, setAba] = useState("lancamentos");
   const [buscaPac, setBuscaPac] = useState("");
   const FORMAS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Depósito", "Transferência", "Outro"];
@@ -35,63 +113,6 @@ function FinanceiroClinica({
     5: "Sex",
     6: "Sáb"
   };
-
-  // ── Centros de Custo — dinâmicos (Firebase) com fallback padrão ──
-  const CENTROS_PADRAO = [{
-    id: "clinica",
-    label: "🏥 Clínica",
-    cor: "#7B00C4",
-    bg: "#f5f3ff",
-    fixo: true
-  }, {
-    id: "onix",
-    label: "🎵 Ônix Brasil",
-    cor: "#0891b2",
-    bg: "#e0f2fe",
-    fixo: true
-  }, {
-    id: "flamboyant",
-    label: "🎶 Flamboyant",
-    cor: "#ec4899",
-    bg: "#fdf2f8",
-    fixo: true
-  }, {
-    id: "estrelas",
-    label: "⭐ Estrelas do Cerrado",
-    cor: "#d97706",
-    bg: "#fef3c7",
-    fixo: true
-  }, {
-    id: "cultural",
-    label: "🌱 Projetos Culturais",
-    cor: "#16a34a",
-    bg: "#dcfce7",
-    fixo: true
-  }, {
-    id: "cursos",
-    label: "📚 Consultorias & Cursos",
-    cor: "#0891b2",
-    bg: "#eff6ff",
-    fixo: true
-  }, {
-    id: "admin",
-    label: "🏢 Administrativo",
-    cor: "#6b7280",
-    bg: "#f3f4f6",
-    fixo: true
-  }];
-  const [centrosCustom, setCentrosCustom] = useState([]);
-  const [modalCentro, setModalCentro] = useState(false);
-  const [formCentro, setFormCentro] = useState({
-    label: "",
-    cor: "#7B00C4",
-    bg: "#f5f3ff"
-  });
-  const [editCentroId, setEditCentroId] = useState(null);
-  const CENTROS = [...CENTROS_PADRAO, ...centrosCustom];
-  // Secretária vê apenas Clínica — filtro travado
-  const isPsicologa = user?.tipo === "psicologa";
-  const centrosVisiveis = isPsicologa ? CENTROS : CENTROS.filter(c => c.id === "clinica");
   const [formAvulso, setFormAvulso] = useState({
     pacienteId: "",
     tipo: "Consulta",
@@ -99,13 +120,8 @@ function FinanceiroClinica({
     data: new Date().toISOString().slice(0, 10),
     formaPag: "PIX",
     status: "pendente",
-    obs: "",
-    centroCusto: "clinica"
+    obs: ""
   });
-  // ── Painel Fiscal ────────────────────────────────────────────────────
-  const [proLabore, setProLabore] = useState(1518);
-  const [modalNF, setModalNF] = useState(null); // {lancId, linkAtual}
-  const [linkNF, setLinkNF] = useState("");
   // Estado dedicado para edição de despesas
   const CATS_DESPESA = ["Aluguel", "Condomínio", "Marketing", "Salários", "Investimentos", "Musicoterapia", "Ferramentas de IA", "Telefone/Internet", "Contador", "Impostos", "Outros"];
   const [formDespesaEdit, setFormDespesaEdit] = useState({
@@ -119,6 +135,7 @@ function FinanceiroClinica({
   });
   // ── Painel de higienização ────────────
   const [modalAuditoria, setModalAuditoria] = useState(false);
+  const [filtroTipo, setFiltroTipo] = useState("tudo"); // "tudo" | "receita" | "despesa"
   const [auditLog, setAuditLog] = useState([]);
   const [auditando, setAuditando] = useState(false);
   const [formPacote, setFormPacote] = useState({
@@ -143,16 +160,6 @@ function FinanceiroClinica({
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
-  useEffect(() => {
-    const unsub = db.collection("clinica_centros_custo").onSnapshot(snap => {
-      setCentrosCustom(snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        fixo: false
-      })));
-    }, () => {});
-    return () => unsub();
-  }, []);
   useEffect(() => {
     const u1 = db.collection("clinica_lancamentos").onSnapshot(s => {
       const docs = s.docs.map(d => ({
@@ -211,8 +218,7 @@ function FinanceiroClinica({
   // Cards do topo — mês atual do ano selecionado, fixo
   const mesCards = anoFiltro + "-" + new Date().toISOString().slice(5, 7);
   const lancMesCards = lancamentos.filter(l => l.data?.startsWith(mesCards));
-  const lancMesBruto = lancamentos.filter(l => l.data?.startsWith(mesFiltroEfetivo));
-  const lancMes = filtroCentro === "todos" ? lancMesBruto : lancMesBruto.filter(l => (l.centroCusto || "clinica") === filtroCentro);
+  const lancMes = lancamentos.filter(l => l.data?.startsWith(mesFiltroEfetivo));
   const lancAno = lancamentos.filter(l => l.data?.startsWith(anoFiltro));
   const lancPeriodo = periodoCard === "mes" ? lancMesCards : lancAno;
 
@@ -264,7 +270,6 @@ function FinanceiroClinica({
         // UPDATE cirúrgico — nunca gera novo INSERT
         await db.collection("clinica_lancamentos").doc(editando).update({
           ...dados,
-          centroCusto: formAvulso.centroCusto || "clinica",
           _editadoEm: firebase.firestore.FieldValue.serverTimestamp()
         });
       } else {
@@ -308,18 +313,18 @@ function FinanceiroClinica({
   function abrirEditar(l) {
     // ── ETAPA 2: bifurca entre receita e despesa
     if (l.tipo_lancamento === "despesa") {
-      setFormDespesaEdit({
-        descricao: l.descricao || l.tipo || "",
+      setFormDespesa({
+        descricao: l.descricao || "",
         categoria: l.categoria || "",
         valor: l.valor + "",
         data: l.data || "",
-        formaPag: l.formaPag || "",
+        formaPag: l.formaPag || "PIX",
         status: l.status || "pago",
         obs: l.obs || "",
-        centroCusto: l.centroCusto || "admin"
+        parcelas: "1"
       });
-      setEditando(l.id);
-      setModal("editar-despesa");
+      setEditandoDespesa(l.id);
+      setModalDespesa(true);
     } else {
       setFormAvulso({
         pacienteId: l.pacienteId || "",
@@ -330,8 +335,7 @@ function FinanceiroClinica({
         status: l.status || "pendente",
         obs: l.obs || "",
         categoria: l.categoria || "",
-        descricao: l.descricao || "",
-        centroCusto: l.centroCusto || "clinica"
+        descricao: l.descricao || ""
       });
       setEditando(l.id);
       setModal("avulso");
@@ -365,7 +369,6 @@ function FinanceiroClinica({
       await db.collection("clinica_lancamentos").doc(editando).update({
         descricao: formDespesaEdit.descricao,
         categoria: formDespesaEdit.categoria,
-        centroCusto: formDespesaEdit.centroCusto || "admin",
         valor: parseFloat(formDespesaEdit.valor),
         data: formDespesaEdit.data,
         formaPag: formDespesaEdit.formaPag,
@@ -455,11 +458,26 @@ function FinanceiroClinica({
         pagamentosExtras: extras,
         totalSessoes: pacote.totalSessoes,
         valorSessao: pacote.valorSessao,
-        centroCusto: pacote.centroCusto || "clinica",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
     await batch.commit();
+
+    // ── GATILHO ÚNICO + TRAVA DUPLA DE COMISSÃO ──
+    // Regra 1: Só dispara se o pacote estava estritamente "pendente" antes desta chamada
+    // Regra 2: ID derivado (COM_pacoteId) garante idempotência — retry nunca duplica
+    const eraPendente = (pacote.statusPag || "pendente") !== "recebido";
+    if (eraPendente) {
+      // Detecta se é primeira venda ou recorrente para este paciente
+      const tipoVendaDetectado = lancamentos.some(l => l.pacienteId === pacote.pacienteId && l.pacoteId !== pacoteId && l.status === "recebido") ? "recorrente" : "primeira";
+      await registrarComissao({
+        tipo: "Pacote",
+        valor: valorPagoFinal,
+        pacienteNome: pacote.pacienteNome || pacientes.find(p => p.id === pacote.pacienteId)?.nome || "",
+        tipoVenda: tipoVendaDetectado,
+        pacoteId
+      });
+    }
   }
 
   // Geração de datas recorrentes
@@ -493,26 +511,40 @@ function FinanceiroClinica({
     tipoVenda,
     pacoteId = null
   }) {
-    const cfg = typeof getConfigFin === "function" ? await getConfigFin() : {
-      percPrimeira: 10,
-      percRecorrente: 5
-    };
+    // ── TRAVA DE IDEMPOTÊNCIA: ID do documento = "COM_" + pacoteId ──
+    // Se o gatilho rodar mais de uma vez (erro de rede, retry), o Firestore
+    // fará um UPDATE (merge) e nunca um INSERT duplicado.
+    if (!pacoteId) {
+      console.warn("[registrarComissao] Chamada sem pacoteId — abortando para evitar registro órfão.");
+      return;
+    }
+    const cfg = await getConfigFin();
     const percNum = tipoVenda === "primeira" ? parseFloat(cfg.percPrimeira) || 10 : parseFloat(cfg.percRecorrente) || 5;
     const perc = percNum / 100;
     const valorComissao = parseFloat((valor * perc).toFixed(2));
     const hoje = new Date();
     const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
-    await db.collection("clinica_comissoes").add({
+    // ID derivado do pacote → idempotente
+    const docId = "COM_" + pacoteId;
+    await db.collection("vendas_secretaria").doc(docId).set({
       tipo,
       tipoVenda,
-      perc: percNum,
+      perc: perc * 100,
       valorBase: valor,
       valorComissao,
       pacienteNome,
       mesRef,
-      pacoteId: pacoteId || null,
+      pacoteId,
       status: "pendente",
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {
+      merge: true
+    });
+    // Se não existia → cria com createdAt; se já existia → atualiza sem criar novo
+    await db.collection("vendas_secretaria").doc(docId).set({
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {
+      merge: true
     });
   }
   async function salvarPacote(tipoVenda) {
@@ -537,187 +569,257 @@ function FinanceiroClinica({
       return;
     }
     const eParceria = (formPacote.tipoAtendimento || "particular") === "parceria";
-    if (eParceria && !formPacote.parceiraId) {
-      alert("Selecione a parceira para a venda em parceria.");
+    if (eParceria && (formPacote.parceirosList || []).length === 0) {
+      alert("Adicione ao menos um parceiro para a venda em parceria.");
       return;
     }
     setSalvando(true);
-    const pac = pacientes.find(p => p.id === pacienteId);
-    const total = parseInt(totalSessoes) || 1;
-    const vSessao = parseFloat(valorSessao) || 0;
-    const vTotal = vSessao * total;
-    const datas = gerarDatas(dataInicio, recorrencia, total, diasSemana);
-    const parcSel = eParceria ? parceiras.find(p => p.id === formPacote.parceiraId) : null;
-    const percParc = eParceria ? parseFloat(formPacote.percParceiro) || 70 : 0;
+    try {
+      const pac = pacientes.find(p => p.id === pacienteId);
+      const total = parseInt(totalSessoes) || 1;
+      const vSessao = parseFloat(valorSessao) || 0;
+      const vTotal = vSessao * total;
+      const datas = gerarDatas(dataInicio, recorrencia, total, diasSemana);
+      const parceirosList = eParceria ? formPacote.parceirosList || [] : [];
+      // compatibilidade legada: parceiraId/percParceiro mantidos para o primeiro parceiro se existir
+      const parcSel = eParceria && parceirosList.length > 0 ? parceiras.find(p => p.id === parceirosList[0].parceiraId) : null;
+      const percParc = 0;
 
-    // Cria pacote
-    const pacRef = await db.collection("clinica_pacotes").add({
-      pacienteId,
-      pacienteNome: pac?.nome || "",
-      totalSessoes: total,
-      valorSessao: vSessao,
-      valorTotal: vTotal,
-      recorrencia,
-      dataInicio,
-      horario,
-      modalidade: formPacote.modalidade || "on-line",
-      diasSemana: diasSemana || [],
-      horariosPorDia: horariosPorDia || {},
-      obs,
-      tipoAtendimento: formPacote.tipoAtendimento || "particular",
-      parceiraId: eParceria ? formPacote.parceiraId : null,
-      parceiraNome: eParceria ? parcSel?.nome || "" : null,
-      percParceiro: eParceria ? percParc : null,
-      statusPag: formPacote.statusPag || "pendente",
-      formaPag: formPacote.formaPag || "",
-      dataPagamento: formPacote.dataPagamento || "",
-      pagamentosExtras: formPacote.pagamentosExtras || [],
-      status: "ativo",
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Cria lançamento financeiro do pacote
-    const mesInicioPacote = new Date(dataInicio + "T00:00:00").toLocaleDateString("pt-BR", {
-      month: "long",
-      year: "numeric"
-    });
-    const nomePacote = `Pacote ${total} Sessões`;
-    const descricaoLanc = `${pac?.nome || "Paciente"} — ${nomePacote} — ${mesInicioPacote.charAt(0).toUpperCase() + mesInicioPacote.slice(1)}`;
-    await db.collection("clinica_lancamentos").add({
-      tipo_lancamento: "pacote",
-      pacoteId: pacRef.id,
-      pacienteId,
-      pacienteNome: pac?.nome || "",
-      tipo: descricaoLanc,
-      descricao: descricaoLanc,
-      valor: vTotal,
-      data: dataInicio,
-      formaPag: formPacote.formaPag || "",
-      status: formPacote.statusPag || "pendente",
-      dataPagamento: formPacote.dataPagamento || "",
-      pagamentosExtras: formPacote.pagamentosExtras || [],
-      obs,
-      totalSessoes: total,
-      valorSessao: vSessao,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Registra comissão da secretária
-    if (tipoVenda) await registrarComissao({
-      tipo: "Pacote",
-      valor: vTotal,
-      pacienteNome: pac?.nome || "",
-      tipoVenda,
-      pacoteId: pacRef.id
-    });
-
-    // Registra repasse da parceira (venda em parceria)
-    if (eParceria && parcSel) {
-      const vParceira = parseFloat((vTotal * percParc / 100).toFixed(2));
-      const mesRefParc = new Date().toISOString().slice(0, 7);
-      await db.collection("clinica_comissoes").add({
-        tipo: "Parceria — Repasse",
-        tipoVenda: null,
-        perc: percParc,
-        valorBase: vTotal,
-        valorComissao: vParceira,
-        pacienteNome: pac?.nome || "",
-        responsavel: parcSel.nome || "Parceira",
-        parceiraId: parcSel.id,
-        mesRef: mesRefParc,
-        pacoteId: pacRef.id,
-        status: "pendente",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-
-    // Cria sessões na agenda
-    const jaPago = (formPacote.statusPag || "pendente") === "recebido";
-    const batch = db.batch();
-    datas.forEach((data, i) => {
-      const ref = db.collection("clinica_sessoes").doc();
-      const dia = new Date(data + "T00:00:00").getDay().toString();
-      const horaDia = (horariosPorDia || {})[dia] || horario;
-      batch.set(ref, {
+      // Cria pacote
+      const pacRef = await db.collection("clinica_pacotes").add({
         pacienteId,
         pacienteNome: pac?.nome || "",
-        data,
-        hora: horaDia,
-        duracao: "50",
-        tipo: "Psicoterapia",
-        status: "agendado",
-        numSessao: i + 1,
-        pacoteId: pacRef.id,
+        totalSessoes: total,
         valorSessao: vSessao,
-        pagamento: jaPago ? "pago" : "pendente",
-        valorPago: jaPago ? vSessao : 0,
-        formaPagamento: formPacote.formaPag || "",
-        dataPagamento: jaPago ? formPacote.dataPagamento || new Date().toISOString().slice(0, 10) : "",
-        obs: "",
+        valorTotal: vTotal,
+        recorrencia,
+        dataInicio,
+        horario,
+        modalidade: formPacote.modalidade || "on-line",
+        diasSemana: diasSemana || [],
+        horariosPorDia: horariosPorDia || {},
+        obs,
+        tipoAtendimento: formPacote.tipoAtendimento || "particular",
+        parceirosList: eParceria ? parceirosList : [],
+        parceiraId: eParceria && parceirosList[0] ? parceirosList[0].parceiraId || null : null,
+        parceiraNome: eParceria && parceirosList[0] ? parceirosList[0].nome || null : null,
+        percParceiro: null,
+        statusPag: formPacote.statusPag || "pendente",
+        formaPag: formPacote.formaPag || "",
+        dataPagamento: formPacote.dataPagamento || "",
+        pagamentosExtras: formPacote.pagamentosExtras || [],
+        status: "ativo",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-    });
-    await batch.commit();
-    // Social: lança comissão estagiária automaticamente
-    if ((formPacote.tipoAtendimento || "particular") === "social") {
-      const hoje = new Date().toISOString().slice(0, 10);
-      const mesRef = hoje.slice(0, 7);
-      const vSupervisao = parseFloat(formPacote.valorSupervisaoSocial || 40);
-      const vEstagiaria = parseFloat(formPacote.valorEstagiariaSocial || 20);
-      const snapEst = await db.collection("clinica_parceiras").where("tipo", "==", "estagiaria").limit(1).get();
-      const nomeEst = !snapEst.empty ? snapEst.docs[0].data().nome : "Estagiária";
-      const batchSoc = db.batch();
-      batchSoc.set(db.collection("clinica_lancamentos").doc(), {
-        tipo_lancamento: "social",
-        tipo: `${pac?.nome || ""} — Projeto Social`,
-        descricao: `${pac?.nome || ""} — Projeto Social`,
+
+      // Cria lançamento financeiro do pacote
+      const mesInicioPacote = new Date(dataInicio + "T00:00:00").toLocaleDateString("pt-BR", {
+        month: "long",
+        year: "numeric"
+      });
+      const nomePacote = `Pacote ${total} Sessões`;
+      const descricaoLanc = `${pac?.nome || "Paciente"} — ${nomePacote} — ${mesInicioPacote.charAt(0).toUpperCase() + mesInicioPacote.slice(1)}`;
+      await db.collection("clinica_lancamentos").add({
+        tipo_lancamento: "pacote",
+        pacoteId: pacRef.id,
+        pacienteId,
         pacienteNome: pac?.nome || "",
-        valor: vSupervisao,
+        tipo: descricaoLanc,
+        descricao: descricaoLanc,
+        valor: vTotal,
         data: dataInicio,
-        mesRef,
-        formaPag: formPacote.formaPag || "PIX",
+        formaPag: formPacote.formaPag || "",
         status: formPacote.statusPag || "pendente",
-        origem: "pacote-social",
+        dataPagamento: formPacote.dataPagamento || "",
+        pagamentosExtras: formPacote.pagamentosExtras || [],
+        obs,
+        totalSessoes: total,
+        valorSessao: vSessao,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      batchSoc.set(db.collection("clinica_comissoes").doc(), {
-        tipo: "Social — Estagiária",
-        tipoVenda: "primeira",
-        perc: 0,
-        valorBase: vSupervisao,
-        valorComissao: vEstagiaria,
-        pacienteNome: pac?.nome || "",
-        responsavel: nomeEst,
-        mesRef,
-        status: "pendente",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+
+      // Registra comissão da secretária APENAS se o pagamento já entrou no caixa
+      // Se pendente, o gatilho será disparado exclusivamente em marcarPacotePago()
+      const pagoImediato = (formPacote.statusPag || "pendente") === "recebido";
+      if (tipoVenda && pagoImediato) {
+        await registrarComissao({
+          tipo: "Pacote",
+          valor: vTotal,
+          pacienteNome: pac?.nome || "",
+          tipoVenda,
+          pacoteId: pacRef.id
+        });
+      }
+
+      // Registra repasses dos parceiros → clinica_lancamentos como despesa
+      if (eParceria && parceirosList.length > 0) {
+        const hoje = new Date().toISOString().slice(0, 10);
+        for (const pr of parceirosList) {
+          const vRep = pr.tipoValor === "fixo" ? parseFloat(pr.valor || 0) : parseFloat((vTotal * (parseFloat(pr.perc) || 0) / 100).toFixed(2));
+          if (!vRep || vRep <= 0) continue;
+          const nomeParc = pr.nome || parceiras.find(x => x.id === pr.parceiraId)?.nome || "Parceiro";
+          await db.collection("clinica_lancamentos").add({
+            tipo_lancamento: "despesa",
+            tipo: `Repasse parceria — ${nomeParc}`,
+            descricao: `Repasse ${nomeParc} — ${pac?.nome || ""} — pacote ${total} sessões`,
+            categoria: "Repasse Parceria",
+            valor: vRep,
+            data: hoje,
+            formaPag: "",
+            status: "pendente",
+            pacoteId: pacRef.id,
+            pacienteNome: pac?.nome || "",
+            parceiroNome: nomeParc,
+            parceiraId: pr.parceiraId || "",
+            obs: `Pacote de ${total} sessões — ${pac?.nome || ""}`,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+
+      // ── E-MAIL AUTOMÁTICO via extensão ext-firestore-send-email ──────
+      // Só envia se o paciente tiver e-mail cadastrado
+      const emailPaciente = pac?.email || pac?.emailPaciente || "";
+      if (emailPaciente) {
+        const dataFmtEmail = new Date(dataInicio + "T12:00:00").toLocaleDateString("pt-BR", {
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          year: "numeric"
+        });
+        await db.collection("nr1map_emails").add({
+          to: emailPaciente,
+          message: {
+            subject: `✅ Seu pacote de sessões foi confirmado — Dra. Lucia Kratz`,
+            html: `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0ff;margin:0;padding:20px;}
+.c{max-width:600px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;}
+.h{background:linear-gradient(135deg,#7B00C4,#5a0090);padding:32px;color:white;text-align:center;}
+.b{padding:28px;}.box{background:#f5f0ff;border-radius:12px;padding:18px;border-left:4px solid #7B00C4;margin-bottom:20px;}
+.row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;}
+.label{color:#6b7280;}.val{font-weight:600;color:#111827;}
+.btn{display:inline-block;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;margin:4px;}
+.f{background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;border-top:1px solid #f3f4f6;}
+</style></head><body><div class="c">
+<div class="h"><div style="font-size:28px;margin-bottom:8px">🦋</div>
+<h1 style="margin:0;font-size:22px">Dra. Lucia Kratz</h1>
+<p style="margin:8px 0 0;opacity:.85;font-size:13px">CRP 09/20590 · Psicóloga Doutora</p></div>
+<div class="b">
+<p style="font-size:16px;color:#374151;line-height:1.6">Olá, <strong>${pac?.nome || "Paciente"}</strong>! 💜<br><br>
+Seu pacote de sessões de psicoterapia foi confirmado com sucesso.</p>
+<div class="box"><h3 style="margin:0 0 12px;color:#7B00C4;font-size:14px">📋 Detalhes do pacote</h3>
+<div class="row"><span class="label">Início</span><span class="val">${dataFmtEmail}</span></div>
+<div class="row"><span class="label">Total de sessões</span><span class="val">${total} sessão(ões)</span></div>
+${horario ? `<div class="row"><span class="label">Horário</span><span class="val">${horario}</span></div>` : ""}
+<div class="row"><span class="label">Recorrência</span><span class="val">${recorrencia || "A combinar"}</span></div>
+<div class="row"><span class="label">Valor total</span><span class="val">R$ ${vTotal.toFixed(2).replace(".", ",")}</span></div>
+</div>
+<div style="background:#f0fdf4;border-radius:12px;padding:16px;border-left:4px solid #059669;margin-bottom:20px;font-size:13px;color:#065f46;line-height:1.6">
+💡 Para reagendar ou tirar dúvidas, entre em contato pelo WhatsApp da clínica.
+</div>
+<div style="text-align:center;margin:20px 0">
+<a href="https://wa.me/5562994644950" class="btn" style="background:#25D366;color:white">💬 WhatsApp da Clínica</a>
+<a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica" class="btn" style="background:#7B00C4;color:white">🌐 Acessar Portal</a>
+</div></div>
+<div class="f"><p>Este e-mail foi enviado automaticamente pelo sistema da Dra. Lucia Kratz.</p>
+<p>Goiânia, GO · CRP 09/20590</p></div></div></body></html>`
+          }
+        });
+      }
+      // ─────────────────────────────────────────────────────────────────
+
+      // Cria sessões na agenda
+      const jaPago = (formPacote.statusPag || "pendente") === "recebido";
+      const batch = db.batch();
+      datas.forEach((data, i) => {
+        const ref = db.collection("clinica_sessoes").doc();
+        const dia = new Date(data + "T00:00:00").getDay().toString();
+        const horaDia = (horariosPorDia || {})[dia] || horario;
+        batch.set(ref, {
+          pacienteId,
+          pacienteNome: pac?.nome || "",
+          data,
+          hora: horaDia,
+          duracao: "50",
+          tipo: "Psicoterapia",
+          status: "agendado",
+          numSessao: i + 1,
+          pacoteId: pacRef.id,
+          valorSessao: vSessao,
+          pagamento: jaPago ? "pago" : "pendente",
+          valorPago: jaPago ? vSessao : 0,
+          formaPagamento: formPacote.formaPag || "",
+          dataPagamento: jaPago ? formPacote.dataPagamento || new Date().toISOString().slice(0, 10) : "",
+          obs: "",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
       });
-      await batchSoc.commit();
+      await batch.commit();
+      // Social: lança comissão estagiária automaticamente
+      if ((formPacote.tipoAtendimento || "particular") === "social") {
+        const hoje = new Date().toISOString().slice(0, 10);
+        const mesRef = hoje.slice(0, 7);
+        const vSupervisao = parseFloat(formPacote.valorSupervisaoSocial || 40);
+        const vEstagiaria = parseFloat(formPacote.valorEstagiariaSocial || 20);
+        const snapEst = await db.collection("clinica_parceiras").where("tipo", "==", "estagiaria").limit(1).get();
+        const nomeEst = !snapEst.empty ? snapEst.docs[0].data().nome : "Estagiária";
+        const batchSoc = db.batch();
+        batchSoc.set(db.collection("clinica_lancamentos").doc(), {
+          tipo_lancamento: "social",
+          tipo: `${pac?.nome || ""} — Projeto Social`,
+          descricao: `${pac?.nome || ""} — Projeto Social`,
+          pacienteNome: pac?.nome || "",
+          valor: vSupervisao,
+          data: dataInicio,
+          mesRef,
+          formaPag: formPacote.formaPag || "PIX",
+          status: formPacote.statusPag || "pendente",
+          origem: "pacote-social",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        batchSoc.set(db.collection("repasses_parcerias").doc(), {
+          tipo: "Social — Estagiária",
+          tipoVenda: "primeira",
+          perc: 0,
+          valorBase: vSupervisao,
+          valorComissao: vEstagiaria,
+          pacienteNome: pac?.nome || "",
+          responsavel: nomeEst,
+          mesRef,
+          status: "pendente",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await batchSoc.commit();
+      }
+      setModal(false);
+      setFormPacote({
+        pacienteId: "",
+        totalSessoes: "",
+        valorSessao: "",
+        recorrencia: "Semanal (1x/semana)",
+        dataInicio: "",
+        horario: "09:00",
+        modalidade: "on-line",
+        diasSemana: [],
+        horariosPorDia: {},
+        statusPag: "pendente",
+        formaPag: "",
+        dataPagamento: "",
+        pagamentosExtras: [],
+        obs: "",
+        tipoAtendimento: "particular",
+        valorSupervisaoSocial: "40",
+        valorEstagiariaSocial: "20",
+        parceiraId: "",
+        percParceiro: "70"
+      });
+      alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
+    } catch (e) {
+      console.error("Erro ao criar pacote:", e);
+      alert("⚠️ Erro ao criar pacote: " + e.message + "\n\nVerifique se o pacote e as sessões foram criados corretamente na aba Pacotes & Sessões e na Agenda antes de tentar novamente.");
+    } finally {
+      setSalvando(false);
     }
-    setModal(false);
-    setFormPacote({
-      pacienteId: "",
-      totalSessoes: "",
-      valorSessao: "",
-      recorrencia: "Semanal (1x/semana)",
-      dataInicio: "",
-      horario: "09:00",
-      modalidade: "on-line",
-      diasSemana: [],
-      horariosPorDia: {},
-      statusPag: "pendente",
-      formaPag: "",
-      dataPagamento: "",
-      pagamentosExtras: [],
-      obs: "",
-      tipoAtendimento: "particular",
-      valorSupervisaoSocial: "40",
-      valorEstagiariaSocial: "20",
-      parceiraId: "",
-      percParceiro: "70"
-    });
-    setSalvando(false);
-    alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
   async function atualizarSessao(id, campos) {
     await db.collection("clinica_sessoes").doc(id).update(campos);
@@ -807,8 +909,7 @@ function FinanceiroClinica({
           formaPag: pacoteAlvo.formaPag || "",
           dataPagamento: pacoteAlvo.dataPagamento || "",
           pagamentosExtras: pacoteAlvo.pagamentosExtras || [],
-          obs: pacoteAlvo.obs || "",
-          centroCusto: pacoteAlvo.centroCusto || "clinica"
+          obs: pacoteAlvo.obs || ""
         });
         setPacoteSelecionado(null);
       }
@@ -827,12 +928,47 @@ function FinanceiroClinica({
   }
 
   // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
-  async function salvarEdicaoPacote() {
+  async function recalcularDatasPacote() {
+    if (!modalEditarPacote) return;
+    const f = formEdicaoPacote;
+    if (!f.dataInicio) {
+      alert("Defina a data de início antes de recalcular.");
+      return;
+    }
+    if (!confirm("Isso vai REESCREVER as datas de todas as sessões deste pacote a partir da nova data de início, mantendo a recorrência atual.\n\nSessões já realizadas ou pagas também terão a data alterada. Confirma?")) return;
+    setSalvandoEdicao(true);
+    try {
+      const snapSess = await db.collection("clinica_sessoes").where("pacoteId", "==", modalEditarPacote.id).get();
+      const sessDoPacote = snapSess.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })).sort((a, b) => (a.numSessao || 0) - (b.numSessao || 0) || (a.data || "").localeCompare(b.data || ""));
+      const total = sessDoPacote.length || parseInt(f.totalSessoes) || 1;
+      const diasSemana = modalEditarPacote.diasSemana || [];
+      const novasDatas = gerarDatas(f.dataInicio, f.recorrencia, total, diasSemana);
+      const batch = db.batch();
+      sessDoPacote.forEach((s, idx) => {
+        if (novasDatas[idx]) {
+          batch.update(db.collection("clinica_sessoes").doc(s.id), {
+            data: novasDatas[idx]
+          });
+        }
+      });
+      await batch.commit();
+      alert(`✓ ${novasDatas.length} sessão(ões) realinhada(s) a partir de ${new Date(f.dataInicio + "T00:00:00").toLocaleDateString("pt-BR")}.`);
+    } catch (e) {
+      console.error("Erro recalcularDatasPacote:", e);
+      alert("Erro ao recalcular datas: " + e.message);
+    }
+    setSalvandoEdicao(false);
+  }
+  async function salvarEdicaoPacote(tipoVenda) {
     if (!modalEditarPacote) return;
     setSalvandoEdicao(true);
     try {
       const f = formEdicaoPacote;
       const jaPago = (f.statusPag || "pendente") === "recebido";
+      const eraPendente = (modalEditarPacote.statusPag || "pendente") !== "recebido";
       const novoTotalSessoes = parseInt(f.totalSessoes) || modalEditarPacote.totalSessoes;
       const novoValorSessao = parseFloat(f.valorSessao) || modalEditarPacote.valorSessao;
       const novoValorTotal = novoTotalSessoes * novoValorSessao;
@@ -849,7 +985,6 @@ function FinanceiroClinica({
         totalSessoes: novoTotalSessoes,
         valorSessao: novoValorSessao,
         valorTotal: novoValorTotal,
-        centroCusto: f.centroCusto || "clinica",
         recorrencia: f.recorrencia,
         dataInicio: f.dataInicio,
         horario: f.horario,
@@ -923,6 +1058,18 @@ function FinanceiroClinica({
         });
         await batch.commit();
       }
+
+      // ── COMISSÃO: só dispara se estava pendente, agora recebido e tipoVenda informado ──
+      if (jaPago && eraPendente && tipoVenda) {
+        const pacNome = pacientes.find(p => p.id === modalEditarPacote.pacienteId)?.nome || modalEditarPacote.pacienteNome || "";
+        await registrarComissao({
+          tipo: "Pacote",
+          valor: novoValorTotal,
+          pacienteNome: pacNome,
+          tipoVenda,
+          pacoteId: modalEditarPacote.id
+        });
+      }
       alert("✓ Pacote atualizado! Sessões e financeiro sincronizados.");
       setModalEditarPacote(null);
     } catch (e) {
@@ -966,216 +1113,7 @@ function FinanceiroClinica({
     setAuditLog(log);
     setAuditando(false);
   }
-  return /*#__PURE__*/React.createElement("div", null, modalAuditoria && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 700,
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 480
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      margin: 0,
-      color: "#b45309"
-    }
-  }, "🔧 Higienização — Maio/2026"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalAuditoria(false),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      fontSize: 20
-    }
-  }, "✕")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "#6b7280",
-      marginBottom: 20,
-      lineHeight: 1.6
-    }
-  }, "Esta operação irá:", /*#__PURE__*/React.createElement("br", null), "• Deletar ", /*#__PURE__*/React.createElement("b", null, "lançamentos de sessão órfãos"), " — sessões de pacote que geraram lançamento próprio indevido", /*#__PURE__*/React.createElement("br", null), "• Remover duplicatas de ", /*#__PURE__*/React.createElement("b", null, "Ronei"), " e ", /*#__PURE__*/React.createElement("b", null, "Heitor"), /*#__PURE__*/React.createElement("br", null), "• Categorizar ", /*#__PURE__*/React.createElement("b", null, "lançamentos Sem Nome"), " como \"Despesas Administrativas/Clínica\""), auditLog.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f0fdf4",
-      border: "1px solid #86efac",
-      borderRadius: 8,
-      padding: 14,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 12,
-      color: "#166534",
-      marginBottom: 6
-    }
-  }, "✅ Resultado:"), auditLog.map((l, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      fontSize: 12,
-      color: "#374151",
-      marginBottom: 2
-    }
-  }, "• ", l))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModalAuditoria(false)
-  }, "Fechar"), auditLog.length === 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      background: "#b45309"
-    },
-    onClick: executarHigienizacao,
-    disabled: auditando
-  }, auditando ? "Executando..." : "⚡ Executar Higienização")))), modalNF && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 600,
-      padding: 20
-    },
-    onClick: () => setModalNF(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 460
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 700,
-      color: "#16a34a"
-    }
-  }, "🧾 Nota Fiscal"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalNF(null),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      fontSize: 20,
-      color: "#9ca3af"
-    }
-  }, "✕")), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Link da Nota Fiscal"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    placeholder: "https://...",
-    value: linkNF,
-    onChange: e => setLinkNF(e.target.value),
-    style: {
-      fontFamily: "monospace",
-      fontSize: 12
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#9ca3af",
-      marginTop: 4
-    }
-  }, "Cole o link do portal da prefeitura, PDF ou Drive")), modalNF.linkAtual && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("a", {
-    href: modalNF.linkAtual,
-    target: "_blank",
-    rel: "noopener noreferrer",
-    style: {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 6,
-      background: "#f0fdf4",
-      border: "1px solid #86efac",
-      borderRadius: 8,
-      padding: "8px 14px",
-      color: "#16a34a",
-      fontSize: 12,
-      fontWeight: 600,
-      textDecoration: "none"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "external-link",
-    size: 13
-  }), " Abrir NF atual")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
-    }
-  }, modalNF.linkAtual && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      color: "#dc2626"
-    },
-    onClick: async () => {
-      await db.collection("clinica_lancamentos").doc(modalNF.lancId).update({
-        linkNF: ""
-      });
-      setModalNF(null);
-    }
-  }, "🗑️ Remover NF"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModalNF(null)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: async () => {
-      if (!linkNF.trim()) {
-        alert("Cole o link da NF.");
-        return;
-      }
-      await db.collection("clinica_lancamentos").doc(modalNF.lancId).update({
-        linkNF: linkNF.trim()
-      });
-      setModalNF(null);
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "save",
-    size: 14
-  }), " Salvar")))), modalEditarPacote && /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, modalEditarPacote && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -1262,7 +1200,35 @@ function FinanceiroClinica({
       ...formEdicaoPacote,
       dataInicio: e.target.value
     })
-  })), /*#__PURE__*/React.createElement("div", {
+  }), formEdicaoPacote.dataInicio !== modalEditarPacote.dataInicio && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6,
+      fontSize: 11,
+      color: "#d97706",
+      background: "#fffbeb",
+      border: "1px solid #fde68a",
+      borderRadius: 8,
+      padding: "6px 10px",
+      lineHeight: 1.5
+    }
+  }, "⚠️ Mudar a data de início ", /*#__PURE__*/React.createElement("strong", null, "não move"), " as sessões já criadas — elas continuam nas datas originais. Use o botão abaixo se quiser realinhar todas as sessões a partir desta nova data.", /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    onClick: recalcularDatasPacote,
+    disabled: salvandoEdicao,
+    style: {
+      display: "block",
+      marginTop: 8,
+      background: "#f59e0b",
+      color: "white",
+      border: "none",
+      borderRadius: 8,
+      padding: "6px 12px",
+      fontSize: 11,
+      fontWeight: 700,
+      cursor: "pointer",
+      fontFamily: "var(--font-body)"
+    }
+  }, "🔄 Recalcular datas das sessões"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
@@ -1510,39 +1476,6 @@ function FinanceiroClinica({
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Centro de Custo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      flexWrap: "wrap"
-    }
-  }, CENTROS.map(c => /*#__PURE__*/React.createElement("button", {
-    key: c.id,
-    type: "button",
-    onClick: () => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      centroCusto: c.id
-    }),
-    style: {
-      padding: "6px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      cursor: "pointer",
-      fontSize: 12,
-      fontWeight: (formEdicaoPacote.centroCusto || "clinica") === c.id ? 700 : 400,
-      fontFamily: "inherit",
-      borderColor: (formEdicaoPacote.centroCusto || "clinica") === c.id ? c.cor : "#e5e7eb",
-      background: (formEdicaoPacote.centroCusto || "clinica") === c.id ? c.bg : "white",
-      color: (formEdicaoPacote.centroCusto || "clinica") === c.id ? c.cor : "#6b7280",
-      transition: "all .15s"
-    }
-  }, c.label)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
   }, "Observações"), /*#__PURE__*/React.createElement("textarea", {
     className: "form-input",
     rows: 2,
@@ -1557,14 +1490,39 @@ function FinanceiroClinica({
       display: "flex",
       gap: 10,
       justifyContent: "flex-end",
-      marginTop: 20
+      marginTop: 20,
+      flexWrap: "wrap"
     }
   }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     onClick: () => setModalEditarPacote(null)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+  }, "Cancelar"), (formEdicaoPacote.statusPag || "pendente") === "recebido" && (modalEditarPacote.statusPag || "pendente") !== "recebido" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      border: "1px solid #e5e7eb",
+      color: "#6b7280",
+      fontSize: 13
+    },
+    onClick: () => salvarEdicaoPacote(null),
+    disabled: salvandoEdicao,
+    title: "Salvar sem registrar comissão"
+  }, salvandoEdicao ? "Salvando..." : "📋 Sem comissão"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
-    onClick: salvarEdicaoPacote,
+    onClick: () => salvarEdicaoPacote("primeira"),
+    disabled: salvandoEdicao,
+    title: "10% de comissão"
+  }, salvandoEdicao ? "Salvando..." : "✨ Primeira Venda"), /*#__PURE__*/React.createElement("button", {
+    className: "btn",
+    style: {
+      background: "#0891b2",
+      color: "white"
+    },
+    onClick: () => salvarEdicaoPacote("recorrente"),
+    disabled: salvandoEdicao,
+    title: "5% de comissão"
+  }, salvandoEdicao ? "Salvando..." : "🔄 Venda Recorrente")) : /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: () => salvarEdicaoPacote(null),
     disabled: salvandoEdicao
   }, salvandoEdicao ? "Salvando..." : "💾 Salvar alterações")))), /*#__PURE__*/React.createElement("div", {
     className: "page-header",
@@ -1577,13 +1535,50 @@ function FinanceiroClinica({
     className: "page-title"
   }, "Financeiro da Clínica"), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, "Lançamentos, pacotes e controle de sessões")), /*#__PURE__*/React.createElement("button", {
+  }, "Lançamentos, pacotes e controle de sessões")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      color: "#dc2626",
+      border: "1px solid #fca5a5",
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    },
+    onClick: () => {
+      setModalDespesa(true);
+      setEditandoDespesa(null);
+      setFormDespesa({
+        descricao: "",
+        categoria: "",
+        valor: "",
+        data: new Date().toISOString().slice(0, 10),
+        formaPag: "PIX",
+        status: "pago",
+        obs: "",
+        parcelas: "1"
+      });
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "minus-circle",
+    size: 16
+  }), " Nova Despesa"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6
+    },
     onClick: () => setModal("escolha")
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }), " Novo Lançamento")), /*#__PURE__*/React.createElement("div", {
+  }), " Novo Lançamento"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -1763,7 +1758,7 @@ function FinanceiroClinica({
       scrollbarWidth: "none",
       flexShrink: 0
     }
-  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"], ["fiscal", "Fiscal 🧾", "bar-chart-2"]].map(([id, lbl, ic]) => /*#__PURE__*/React.createElement("button", {
+  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"], ["comissoes", "Comissões", "percent"]].map(([id, lbl, ic]) => /*#__PURE__*/React.createElement("button", {
     key: id,
     onClick: () => setAba(id),
     style: {
@@ -1784,33 +1779,35 @@ function FinanceiroClinica({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: ic,
     size: 15
-  }), lbl)), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setAuditLog([]);
-      setModalAuditoria(true);
-    },
+  }), lbl)), (() => {
+    return null;
+  })()), aba === "lancamentos" && /*#__PURE__*/React.createElement("div", null, aba === "lancamentos" && /*#__PURE__*/React.createElement("div", {
     style: {
-      marginLeft: "auto",
-      padding: "10px 14px",
-      border: "none",
-      background: "none",
-      cursor: "pointer",
-      fontSize: 12,
-      color: "#b45309",
-      borderBottom: "2px solid transparent",
-      fontWeight: 500,
-      fontFamily: "var(--font-body)",
-      marginBottom: -1,
       display: "flex",
-      alignItems: "center",
-      gap: 5,
-      flexShrink: 0
-    },
-    title: "Higienizar duplicatas e lançamentos sem nome — Maio/2026"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "tool",
-    size: 13
-  }), "🔧 Higienizar")), aba === "lancamentos" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      gap: 6,
+      marginBottom: 16,
+      background: "var(--gray-50)",
+      padding: 6,
+      borderRadius: 12,
+      width: "fit-content"
+    }
+  }, [["tudo", "📊 Tudo"], ["receita", "💰 Receitas"], ["despesa", "💸 Despesas"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setFiltroTipo(v),
+    style: {
+      padding: "8px 16px",
+      borderRadius: 8,
+      border: "none",
+      cursor: "pointer",
+      fontFamily: "var(--font-body)",
+      fontSize: 13,
+      fontWeight: 600,
+      background: filtroTipo === v ? "white" : "transparent",
+      color: filtroTipo === v ? v === "receita" ? "#059669" : v === "despesa" ? "#dc2626" : "#7B00C4" : "#6b7280",
+      boxShadow: filtroTipo === v ? "0 1px 4px rgba(0,0,0,.1)" : "none",
+      transition: ".15s"
+    }
+  }, l))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
@@ -1899,57 +1896,7 @@ function FinanceiroClinica({
       fontSize: 16,
       fontWeight: 700
     }
-  }, "›")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 14,
-      flexWrap: "wrap",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      flexShrink: 0
-    }
-  }, "Centro:"), (isPsicologa ? [{
-    id: "todos",
-    label: "Todos",
-    cor: "#7B00C4",
-    bg: "#f5f3ff"
-  }, ...centrosVisiveis] : centrosVisiveis).map(c => /*#__PURE__*/React.createElement("button", {
-    key: c.id,
-    onClick: () => isPsicologa && setFiltroCentro(c.id),
-    style: {
-      padding: "4px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      cursor: isPsicologa ? "pointer" : "default",
-      fontSize: 11,
-      fontWeight: filtroCentro === c.id ? 700 : 400,
-      fontFamily: "inherit",
-      borderColor: filtroCentro === c.id ? c.cor : "#e5e7eb",
-      background: filtroCentro === c.id ? c.bg : "white",
-      color: filtroCentro === c.id ? c.cor : "#6b7280",
-      transition: "all .15s"
-    }
-  }, c.label)), isPsicologa && /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalCentro(true),
-    style: {
-      padding: "4px 10px",
-      borderRadius: 20,
-      border: "1.5px dashed #e5e7eb",
-      cursor: "pointer",
-      fontSize: 11,
-      color: "#9ca3af",
-      background: "white",
-      fontFamily: "inherit",
-      marginLeft: 4
-    },
-    title: "Gerenciar centros de custo"
-  }, "+ Centro")), lancMes.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "›")), lancMes.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
@@ -1967,11 +1914,147 @@ function FinanceiroClinica({
     month: "long",
     year: "numeric"
   }))) : (() => {
-    const receitas = lancMes.filter(l => l.tipo_lancamento !== "despesa");
-    const despesas = lancMes.filter(l => l.tipo_lancamento === "despesa");
+    const receitasTodas = lancMes.filter(l => l.tipo_lancamento !== "despesa").sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+    const despesasTodas = lancMes.filter(l => l.tipo_lancamento === "despesa").sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+    const receitas = filtroTipo === "despesa" ? [] : receitasTodas;
+    const despesas = filtroTipo === "receita" ? [] : despesasTodas;
+    const totalRecFiltro = receitasTodas.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+    const totalDespFiltro = despesasTodas.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
     const totalRec = calcReceitas(lancMes);
     const totalDesp = calcDespesas(lancMes);
     const saldo = totalRec - totalDesp;
+
+    // Cards de saldo dinâmicos por filtroTipo
+    const cardsSaldo = filtroTipo === "tudo" ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(3,1fr)",
+        gap: 12,
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "white",
+        borderRadius: 12,
+        padding: "14px 18px",
+        border: "1px solid #e5e7eb"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#6b7280",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        marginBottom: 4
+      }
+    }, "Total Receitas"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        fontWeight: 800,
+        color: "#059669"
+      }
+    }, totalRecFiltro.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "white",
+        borderRadius: 12,
+        padding: "14px 18px",
+        border: "1px solid #e5e7eb"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#6b7280",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        marginBottom: 4
+      }
+    }, "Total Despesas"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        fontWeight: 800,
+        color: "#dc2626"
+      }
+    }, totalDespFiltro.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    }))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#f5f0ff",
+        borderRadius: 12,
+        padding: "14px 18px",
+        border: "2px solid #7B00C4"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#7B00C4",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        marginBottom: 4
+      }
+    }, "Saldo Líquido"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 20,
+        fontWeight: 800,
+        color: totalRecFiltro - totalDespFiltro >= 0 ? "#7B00C4" : "#dc2626"
+      }
+    }, (totalRecFiltro - totalDespFiltro).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    })))) : filtroTipo === "receita" ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#f0fdf4",
+        borderRadius: 12,
+        padding: "14px 18px",
+        border: "1px solid #6ee7b7",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#15803d",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        marginBottom: 4
+      }
+    }, "Total Receitas do Mês"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 24,
+        fontWeight: 800,
+        color: "#059669"
+      }
+    }, totalRecFiltro.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    }))) : /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#fef2f2",
+        borderRadius: 12,
+        padding: "14px 18px",
+        border: "1px solid #fca5a5",
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "#b91c1c",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        marginBottom: 4
+      }
+    }, "Total Despesas do Mês"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 24,
+        fontWeight: 800,
+        color: "#dc2626"
+      }
+    }, totalDespFiltro.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    })));
     function TabelaLanc({
       itens,
       titulo,
@@ -2101,19 +2184,7 @@ function FinanceiroClinica({
             fontSize: 10,
             fontWeight: 600
           }
-        }, "💳 ", (l.pagamentosExtras || []).length, "x forma", (l.pagamentosExtras || []).length > 1 ? "s" : ""), l.centroCusto && (() => {
-          const c = CENTROS.find(x => x.id === l.centroCusto);
-          return c ? /*#__PURE__*/React.createElement("span", {
-            style: {
-              background: c.bg,
-              color: c.cor,
-              borderRadius: 20,
-              padding: "1px 6px",
-              fontSize: 10,
-              fontWeight: 600
-            }
-          }, c.label) : null;
-        })())), /*#__PURE__*/React.createElement("td", {
+        }, "💳 ", (l.pagamentosExtras || []).length, "x forma", (l.pagamentosExtras || []).length > 1 ? "s" : ""))), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "8px 14px",
             fontSize: 12,
@@ -2160,8 +2231,7 @@ function FinanceiroClinica({
         }, /*#__PURE__*/React.createElement("div", {
           style: {
             display: "flex",
-            gap: 4,
-            alignItems: "center"
+            gap: 4
           }
         }, l.tipo_lancamento === "pacote" ? /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
@@ -2188,33 +2258,7 @@ function FinanceiroClinica({
         }, /*#__PURE__*/React.createElement(Icon, {
           name: "pencil",
           size: 12
-        })), l.tipo_lancamento !== "despesa" && /*#__PURE__*/React.createElement("button", {
-          title: l.linkNF ? "Ver Nota Fiscal — clique para editar" : "Cadastrar Nota Fiscal",
-          onClick: () => {
-            setModalNF({
-              lancId: l.id,
-              linkAtual: l.linkNF || ""
-            });
-            setLinkNF(l.linkNF || "");
-          },
-          style: {
-            padding: "4px 8px",
-            borderRadius: 6,
-            border: "1px solid",
-            cursor: "pointer",
-            borderColor: l.linkNF ? "#16a34a" : "#d1d5db",
-            background: l.linkNF ? "#dcfce7" : "#f9fafb",
-            color: l.linkNF ? "#16a34a" : "#9ca3af",
-            fontSize: 11,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            gap: 3
-          }
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "file-text",
-          size: 11
-        }), l.linkNF ? "✅" : "NF"), /*#__PURE__*/React.createElement("button", {
+        })), /*#__PURE__*/React.createElement("button", {
           className: "btn btn-ghost",
           style: {
             padding: "4px 8px",
@@ -2228,7 +2272,7 @@ function FinanceiroClinica({
         })))));
       }))));
     }
-    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(TabelaLanc, {
+    return /*#__PURE__*/React.createElement("div", null, cardsSaldo, /*#__PURE__*/React.createElement(TabelaLanc, {
       itens: receitas,
       titulo: "💰 Receitas",
       corHeader: "#059669",
@@ -2395,11 +2439,15 @@ function FinanceiroClinica({
       padding: "12px 16px"
     },
     onClick: async () => {
-      const chave = modalExcluirLanc.descricaoRecorrente || modalExcluirLanc.tipo;
+      if (!modalExcluirLanc.pacoteId) {
+        alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");
+        return;
+      }
+      if (!confirm("Excluir este e todos os lançamentos futuros deste pacote?")) return;
       const snap = await db.collection("clinica_lancamentos").get();
       const futuros = snap.docs.filter(d => {
         const dd = d.data();
-        return (dd.descricaoRecorrente === chave || dd.tipo === chave) && dd.data >= modalExcluirLanc.data;
+        return dd.pacoteId === modalExcluirLanc.pacoteId && dd.data >= modalExcluirLanc.data;
       });
       const b = db.batch();
       futuros.forEach(d => b.delete(d.ref));
@@ -2417,7 +2465,7 @@ function FinanceiroClinica({
       fontSize: 11,
       color: "#6b7280"
     }
-  }, "Remove \"", modalExcluirLanc.tipo, "\" a partir de ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
+  }, "Remove lançamentos deste pacote a partir de ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
     month: "long"
   }))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
@@ -2427,12 +2475,13 @@ function FinanceiroClinica({
       padding: "12px 16px"
     },
     onClick: async () => {
-      const chave = modalExcluirLanc.descricaoRecorrente || modalExcluirLanc.tipo;
+      if (!modalExcluirLanc.pacoteId) {
+        alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");
+        return;
+      }
+      if (!confirm("Excluir TODOS os lançamentos deste pacote no ano inteiro?")) return;
       const snap = await db.collection("clinica_lancamentos").get();
-      const todos = snap.docs.filter(d => {
-        const dd = d.data();
-        return dd.descricaoRecorrente === chave || dd.tipo === chave;
-      });
+      const todos = snap.docs.filter(d => d.data().pacoteId === modalExcluirLanc.pacoteId);
       const b = db.batch();
       todos.forEach(d => b.delete(d.ref));
       await b.commit();
@@ -2449,13 +2498,200 @@ function FinanceiroClinica({
       fontSize: 11,
       color: "#6b7280"
     }
-  }, "Remove todos os meses de \"", modalExcluirLanc.tipo, "\""))), /*#__PURE__*/React.createElement("button", {
+  }, "Remove todos os lançamentos deste pacote"))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       width: "100%"
     },
     onClick: () => setModalExcluirLanc(null)
-  }, "Cancelar")))), aba === "pacotes" && /*#__PURE__*/React.createElement("div", null, pacotes.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Cancelar")))), aba === "pacotes" && /*#__PURE__*/React.createElement("div", null, (() => {
+    const hoje = new Date().toISOString().slice(0, 10);
+    // Sessões pendentes = data PASSADA + status "agendado" + vinculada a pacote ativo
+    // Exclui: falta, realizado, cancelado, remarcado, futuras, sessões sem pacote
+    const pacoteIdsAtivos = new Set(pacotes.filter(p => p.status !== "inativo").map(p => p.id));
+    const sessoesPendentes = sessoes.filter(s => s.data < hoje && s.status === "agendado" && s.pacienteId && s.pacoteId && pacoteIdsAtivos.has(s.pacoteId));
+    // Pacotes com pagamento pendente (não 100% pago)
+    const pacotesPendPag = pacotes.filter(p => {
+      const sessPac = sessoes.filter(s => s.pacoteId === p.id);
+      const pagas = sessPac.filter(s => s.pagamento === "pago").length;
+      return p.status !== "inativo" && pagas < (p.totalSessoes || 0);
+    });
+    if (sessoesPendentes.length === 0 && pacotesPendPag.length === 0) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        marginBottom: 20
+      }
+    }, sessoesPendentes.length > 0 && (() => {
+      function AvisoSessoes({
+        lista,
+        pacientes
+      }) {
+        const [expandido, setExpandido] = React.useState(false);
+        const visiveis = expandido ? lista : lista.slice(0, 5);
+        const extras = lista.length - 5;
+        return /*#__PURE__*/React.createElement("div", {
+          style: {
+            background: "#fef3c7",
+            border: "1px solid #f59e0b",
+            borderRadius: 12,
+            padding: "14px 18px"
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            color: "#92400e",
+            marginBottom: 4
+          }
+        }, "⚠️ ", lista.length, " sessão(ões) passada(s) sem status final"), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            color: "#78350f",
+            marginBottom: 8
+          }
+        }, "Sessões que já ocorreram e ainda estão como \"Agendado\". Marque como ", /*#__PURE__*/React.createElement("strong", null, "Realizada"), ", ", /*#__PURE__*/React.createElement("strong", null, "Cancelada"), " ou ", /*#__PURE__*/React.createElement("strong", null, "Remarcada"), "."), /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 6,
+            alignItems: "center"
+          }
+        }, visiveis.map(s => {
+          const nome = pacientes.find(p => p.id === s.pacienteId)?.nome || "—";
+          return /*#__PURE__*/React.createElement("span", {
+            key: s.id,
+            style: {
+              background: "#fde68a",
+              borderRadius: 20,
+              padding: "2px 10px",
+              fontSize: 11,
+              color: "#78350f",
+              fontWeight: 600
+            }
+          }, nome.split(" ")[0], " · ", new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short"
+          }));
+        }), !expandido && extras > 0 && /*#__PURE__*/React.createElement("button", {
+          onClick: () => setExpandido(true),
+          style: {
+            background: "#f59e0b",
+            color: "white",
+            border: "none",
+            borderRadius: 20,
+            padding: "2px 12px",
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "var(--font-body)"
+          }
+        }, "+", extras, " mais ▾"), expandido && /*#__PURE__*/React.createElement("button", {
+          onClick: () => setExpandido(false),
+          style: {
+            background: "none",
+            color: "#92400e",
+            border: "1px solid #f59e0b",
+            borderRadius: 20,
+            padding: "2px 10px",
+            fontSize: 11,
+            cursor: "pointer",
+            fontFamily: "var(--font-body)"
+          }
+        }, "▴ recolher")));
+      }
+      return /*#__PURE__*/React.createElement(AvisoSessoes, {
+        lista: sessoesPendentes,
+        pacientes: pacientes
+      });
+    })(), pacotesPendPag.length > 0 && (() => {
+      function AvisoPacotes({
+        lista,
+        pacientes,
+        sessoes
+      }) {
+        const [expandidoPac, setExpandidoPac] = React.useState(false);
+        const visiveis = expandidoPac ? lista : lista.slice(0, 5);
+        const extras = lista.length - 5;
+        return /*#__PURE__*/React.createElement("div", {
+          style: {
+            background: "#fff7ed",
+            border: "1px solid #fb923c",
+            borderRadius: 12,
+            padding: "14px 18px"
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            color: "#c2410c",
+            marginBottom: 4
+          }
+        }, "💰 ", lista.length, " pacote(s) com pagamento em aberto"), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            color: "#9a3412",
+            marginBottom: 8
+          }
+        }, "Pacotes ativos com sessões ainda não marcadas como pagas."), /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 6,
+            alignItems: "center"
+          }
+        }, visiveis.map(p => {
+          const nome = pacientes.find(pac => pac.id === p.pacienteId)?.nome || "—";
+          const sessPac = sessoes.filter(s => s.pacoteId === p.id);
+          const pagas = sessPac.filter(s => s.pagamento === "pago").length;
+          const total = p.totalSessoes || 0;
+          return /*#__PURE__*/React.createElement("span", {
+            key: p.id,
+            style: {
+              background: "#fed7aa",
+              borderRadius: 20,
+              padding: "2px 10px",
+              fontSize: 11,
+              color: "#9a3412",
+              fontWeight: 600
+            }
+          }, nome.split(" ")[0], " · ", pagas, "/", total, " pagas");
+        }), !expandidoPac && pacotesPendPag.length > 5 && /*#__PURE__*/React.createElement("button", {
+          onClick: () => setExpandidoPac(true),
+          style: {
+            background: "#ea580c",
+            color: "white",
+            border: "none",
+            borderRadius: 20,
+            padding: "2px 12px",
+            fontSize: 11,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: "var(--font-body)"
+          }
+        }, "+", pacotesPendPag.length - 5, " mais ▾"), expandidoPac && /*#__PURE__*/React.createElement("button", {
+          onClick: () => setExpandidoPac(false),
+          style: {
+            background: "none",
+            color: "#c2410c",
+            border: "1px solid #fb923c",
+            borderRadius: 20,
+            padding: "2px 10px",
+            fontSize: 11,
+            cursor: "pointer",
+            fontFamily: "var(--font-body)"
+          }
+        }, "▴ recolher")));
+      }
+      return /*#__PURE__*/React.createElement(AvisoPacotes, {
+        lista: pacotesPendPag,
+        pacientes: pacientes,
+        sessoes: sessoes
+      });
+    })());
+  })(), pacotes.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       textAlign: "center",
@@ -2476,13 +2712,18 @@ function FinanceiroClinica({
     },
     onClick: () => setModal("pacote")
   }, "+ Criar Pacote")) : (() => {
-    // Agrupar pacotes por paciente
+    // Agrupar pacotes por paciente — ordem alfabética
     const pacientesComPacote = [...new Set(pacotes.map(p => p.pacienteId))];
-    const pacientesVisiveis = buscaPac.trim() ? pacientesComPacote.filter(id => {
+    const pacientesVisiveisBruto = buscaPac.trim() ? pacientesComPacote.filter(id => {
       const pac = pacientes.find(p => p.id === id);
-      const inicial = (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const inicial = (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
       return inicial === buscaPac;
     }) : pacientesComPacote;
+    const pacientesVisiveis = pacientesVisiveisBruto.sort((a, b) => {
+      const nA = (pacientes.find(p => p.id === a)?.nome || "").toLowerCase();
+      const nB = (pacientes.find(p => p.id === b)?.nome || "").toLowerCase();
+      return nA.localeCompare(nB, "pt-BR");
+    });
     return /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
@@ -2533,9 +2774,9 @@ function FinanceiroClinica({
     })(), pacientesVisiveis.map(pacId => {
       const pac = pacientes.find(p => p.id === pacId);
       const pacotesDoPac = pacotes.filter(p => p.pacienteId === pacId).sort((a, b) => {
-        const ta = a.createdAt?.seconds || 0;
-        const tb = b.createdAt?.seconds || 0;
-        return tb - ta;
+        const da = a.dataInicio || a.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
+        const db2 = b.dataInicio || b.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
+        return db2.localeCompare(da);
       });
       return /*#__PURE__*/React.createElement("div", {
         key: pacId
@@ -2756,6 +2997,113 @@ function FinanceiroClinica({
           style: {
             fontSize: 12,
             padding: "6px 12px",
+            color: "#059669",
+            border: "1px solid #6ee7b7"
+          },
+          onClick: e => {
+            e.stopPropagation();
+            const pac = pacientes.find(x => x.id === pacId);
+            const sessPac = sessoes.filter(s => s.pacoteId === p.id).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+            const statusLabel = {
+              agendado: "Agendado",
+              confirmado: "Confirmado",
+              realizado: "✓ Realizado",
+              cancelado: "Cancelado",
+              falta: "Falta"
+            };
+            const statusColor = {
+              agendado: "#7B00C4",
+              confirmado: "#059669",
+              realizado: "#0891b2",
+              cancelado: "#dc2626",
+              falta: "#d97706"
+            };
+            const totalValor = sessPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
+            const totalPago = sessPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
+            const sessMeses = {};
+            sessPac.forEach(s => {
+              const m = (s.data || "").slice(0, 7);
+              if (!sessMeses[m]) sessMeses[m] = [];
+              sessMeses[m].push(s);
+            });
+            const fmtM = m => {
+              const [y, mo] = m.split("-");
+              return new Date(y, mo - 1, 1).toLocaleDateString("pt-BR", {
+                month: "long",
+                year: "numeric"
+              });
+            };
+            const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Resumo — ${pac?.nome || ""}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:32px;max-width:680px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:22px}
+.logo{font-family:Georgia,serif;font-size:24px;color:#7B00C4;font-weight:700}.sub{font-size:10px;color:#6b7280;margin-top:3px}
+.box{background:#f5f0ff;border-radius:12px;padding:14px 18px;margin-bottom:20px;border-left:5px solid #7B00C4}
+.nome{font-size:20px;font-weight:700;margin-bottom:8px}.meta{display:flex;gap:20px;flex-wrap:wrap}
+.mi label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block;margin-bottom:1px}.mi span{font-size:13px;font-weight:600}
+.mes{font-size:13px;font-weight:700;color:#7B00C4;padding:7px 0;border-bottom:1px solid #e5e7eb;margin:18px 0 8px}
+table{width:100%;border-collapse:collapse;font-size:12px}th{background:#7B00C4;color:white;padding:6px 10px;text-align:left;font-size:11px}
+td{padding:6px 10px;border-bottom:1px solid #f3f4f6}tr:nth-child(even) td{background:#fafafa}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:white;display:inline-block}
+.totais{margin-top:20px;background:#f9fafb;border-radius:10px;padding:12px 18px;display:flex;gap:24px;flex-wrap:wrap}
+.ti label{font-size:10px;text-transform:uppercase;color:#6b7280;font-weight:600;display:block}.ti span{font-size:17px;font-weight:800}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+@media print{body{padding:16px}@page{margin:1.5cm}}</style></head><body>
+<div class="header"><div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação · Goiânia, GO</div></div>
+<div style="font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })}</div></div>
+<div class="box"><div class="nome">${pac?.nome || "—"}</div>
+<div class="meta">
+<div class="mi"><label>Início</label><span>${p.dataInicio ? new Date(p.dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
+<div class="mi"><label>Horário</label><span>${p.horario || "—"}</span></div>
+<div class="mi"><label>Recorrência</label><span>${p.recorrencia || "—"}</span></div>
+<div class="mi"><label>Sessões</label><span>${sessPac.length}</span></div>
+</div></div>
+${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, sess]) => `
+<div class="mes">${fmtM(mes).charAt(0).toUpperCase() + fmtM(mes).slice(1)} — ${sess.length} sessão(ões)</div>
+<table><thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
+<tbody>${sess.map((s, i) => `<tr><td style="font-weight:700;color:#7B00C4">${s.numSessao || i + 1}</td>
+<td>${s.data ? new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR", {
+              weekday: "short",
+              day: "2-digit",
+              month: "2-digit"
+            }) : ""}</td>
+<td>${s.hora || "—"}</td><td>${s.tipo || "Psicoterapia"}</td>
+<td><span class="badge" style="background:${statusColor[s.status] || "#7B00C4"}">${statusLabel[s.status] || s.status || "—"}</span></td>
+<td>R$ ${(parseFloat(s.valorSessao) || 0).toFixed(2).replace(".", ",")}</td></tr>`).join("")}
+</tbody></table>`).join("")}
+<div class="totais">
+<div class="ti"><label>Total do pacote</label><span>R$ ${totalValor.toFixed(2).replace(".", ",")}</span></div>
+<div class="ti"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".", ",")}</span></div>
+<div class="ti"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor - totalPago).toFixed(2).replace(".", ",")}</span></div>
+</div>
+${p.dataPagamento || p.dataRecebimento ? `<div style="margin-top:14px;background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:18px">✅</span><div><div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#065f46;letter-spacing:.5px">Data de Pagamento</div><div style="font-size:16px;font-weight:800;color:#059669">${new Date((p.dataPagamento || p.dataRecebimento) + "T00:00:00").toLocaleDateString("pt-BR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric"
+            })}</div></div></div>` : ""}
+${sessPac.some(s => s.dataPagamento || s.dataRecebimento) ? `<div style="margin-top:10px;font-size:11px;color:#6b7280;font-weight:600">Pagamentos por sessão:</div><table style="margin-top:4px;font-size:11px"><tbody>${sessPac.filter(s => s.dataPagamento || s.dataRecebimento).map(s => `<tr><td style="padding:3px 10px 3px 0;color:#374151">Sessão ${s.numSessao || ""} — ${s.data ? new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR") : ""}:</td><td style="color:#059669;font-weight:700">pago em ${new Date((s.dataPagamento || s.dataRecebimento) + "T00:00:00").toLocaleDateString("pt-BR")}</td></tr>`).join("")}</tbody></table>` : ""}
+<div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit"
+            })} · Clínica Dra. Lucia Kratz</div>
+</body></html>`;
+            const w = window.open("", "_blank");
+            w.document.write(html);
+            w.document.close();
+            setTimeout(() => w.print(), 800);
+          }
+        }, /*#__PURE__*/React.createElement(Icon, {
+          name: "file-text",
+          size: 13
+        }), " PDF"), /*#__PURE__*/React.createElement("button", {
+          className: "btn btn-ghost",
+          style: {
+            fontSize: 12,
+            padding: "6px 12px",
             color: "#dc2626",
             marginLeft: "auto"
           },
@@ -2779,338 +3127,7 @@ function FinanceiroClinica({
         }), " Excluir")));
       })));
     }));
-  })()), aba === "acompanhamento" && /*#__PURE__*/React.createElement("div", null, (() => {
-    const ano = anoFiltro || new Date().getFullYear().toString();
-
-    // Receitas e despesas por centro no ano
-    const recPorCentro = {};
-    const despPorCentro = {};
-    const recPorMes = {}; // mes -> total receita
-    const despPorMes = {}; // mes -> total despesa
-
-    lancamentos.filter(l => (l.data || "").startsWith(ano)).forEach(l => {
-      const v = parseFloat(l.valor) || 0;
-      const c = l.centroCusto || "clinica";
-      const mes = (l.data || "").slice(0, 7);
-      const isDesp = l.tipo_lancamento === "despesa";
-      if (isDesp) {
-        despPorCentro[c] = (despPorCentro[c] || 0) + v;
-        despPorMes[mes] = (despPorMes[mes] || 0) + v;
-      } else {
-        recPorCentro[c] = (recPorCentro[c] || 0) + v;
-        recPorMes[mes] = (recPorMes[mes] || 0) + v;
-      }
-    });
-    const totalRec = Object.values(recPorCentro).reduce((a, v) => a + v, 0);
-    const totalDesp = Object.values(despPorCentro).reduce((a, v) => a + v, 0);
-    const lucro = totalRec - totalDesp;
-
-    // Meses do ano ordenados
-    const meses = Array.from({
-      length: 12
-    }, (_, i) => `${ano}-${String(i + 1).padStart(2, "0")}`);
-    const maxBar = Math.max(...meses.map(m => Math.max(recPorMes[m] || 0, despPorMes[m] || 0)), 1);
-    const fmt = v => v.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    });
-    const MESES_LABEL = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginBottom: 28
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "repeat(3,1fr)",
-        gap: 12,
-        marginBottom: 20
-      }
-    }, [{
-      label: "Receitas",
-      valor: totalRec,
-      cor: "#059669",
-      bg: "#f0fdf4"
-    }, {
-      label: "Despesas",
-      valor: totalDesp,
-      cor: "#dc2626",
-      bg: "#fef2f2"
-    }, {
-      label: lucro >= 0 ? "Lucro" : "Prejuízo",
-      valor: Math.abs(lucro),
-      cor: lucro >= 0 ? "#7B00C4" : "#dc2626",
-      bg: lucro >= 0 ? "#f5f3ff" : "#fef2f2"
-    }].map(({
-      label,
-      valor,
-      cor,
-      bg
-    }) => /*#__PURE__*/React.createElement("div", {
-      key: label,
-      style: {
-        background: bg,
-        border: `1.5px solid ${cor}22`,
-        borderRadius: 12,
-        padding: "14px 18px",
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 20,
-        fontWeight: 800,
-        color: cor
-      }
-    }, fmt(valor)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "#6b7280",
-        marginTop: 2
-      }
-    }, label, " ", ano)))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 16,
-        marginBottom: 20
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: "16px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 13,
-        marginBottom: 14,
-        color: "#374151"
-      }
-    }, "📊 Receitas vs Despesas — ", ano), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "flex-end",
-        gap: 4,
-        height: 120
-      }
-    }, meses.map((m, i) => {
-      const r = recPorMes[m] || 0;
-      const d = despPorMes[m] || 0;
-      const hr = Math.round(r / maxBar * 110);
-      const hd = Math.round(d / maxBar * 110);
-      return /*#__PURE__*/React.createElement("div", {
-        key: m,
-        style: {
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 1
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "flex-end",
-          gap: 1,
-          height: 110
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        title: `Receita: ${fmt(r)}`,
-        style: {
-          width: 8,
-          height: hr || 2,
-          background: "#059669",
-          borderRadius: "2px 2px 0 0",
-          cursor: "pointer"
-        }
-      }), /*#__PURE__*/React.createElement("div", {
-        title: `Despesa: ${fmt(d)}`,
-        style: {
-          width: 8,
-          height: hd || 2,
-          background: "#dc2626",
-          borderRadius: "2px 2px 0 0",
-          cursor: "pointer"
-        }
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 9,
-          color: "#9ca3af",
-          marginTop: 2
-        }
-      }, MESES_LABEL[i]));
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 12,
-        marginTop: 8,
-        justifyContent: "center"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 10,
-        color: "#6b7280",
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 10,
-        height: 10,
-        background: "#059669",
-        borderRadius: 2,
-        display: "inline-block"
-      }
-    }), "Receita"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 10,
-        color: "#6b7280",
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 10,
-        height: 10,
-        background: "#dc2626",
-        borderRadius: 2,
-        display: "inline-block"
-      }
-    }), "Despesa"))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: "16px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 13,
-        marginBottom: 14,
-        color: "#374151"
-      }
-    }, "🏷️ Receitas por Centro de Custo"), totalRec === 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center",
-        color: "#9ca3af",
-        fontSize: 12,
-        padding: "20px 0"
-      }
-    }, "Nenhuma receita em ", ano), CENTROS.filter(c => recPorCentro[c.id] > 0).sort((a, b) => (recPorCentro[b.id] || 0) - (recPorCentro[a.id] || 0)).map(c => {
-      const v = recPorCentro[c.id] || 0;
-      const pct = totalRec > 0 ? Math.round(v / totalRec * 100) : 0;
-      return /*#__PURE__*/React.createElement("div", {
-        key: c.id,
-        style: {
-          marginBottom: 8
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 3
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 11,
-          fontWeight: 600,
-          color: c.cor
-        }
-      }, c.label), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 11,
-          color: "#6b7280"
-        }
-      }, fmt(v), " · ", pct, "%")), /*#__PURE__*/React.createElement("div", {
-        style: {
-          height: 6,
-          background: "#f3f4f6",
-          borderRadius: 20,
-          overflow: "hidden"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          width: pct + "%",
-          height: "100%",
-          background: c.cor,
-          borderRadius: 20,
-          transition: "width .4s"
-        }
-      })));
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: "16px",
-        marginBottom: 20
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 13,
-        marginBottom: 14,
-        color: "#374151"
-      }
-    }, "🏷️ Despesas por Centro de Custo"), totalDesp === 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center",
-        color: "#9ca3af",
-        fontSize: 12,
-        padding: "8px 0"
-      }
-    }, "Nenhuma despesa em ", ano), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
-        gap: 10
-      }
-    }, CENTROS.filter(c => despPorCentro[c.id] > 0).sort((a, b) => (despPorCentro[b.id] || 0) - (despPorCentro[a.id] || 0)).map(c => {
-      const v = despPorCentro[c.id] || 0;
-      const rec = recPorCentro[c.id] || 0;
-      const luc = rec - v;
-      return /*#__PURE__*/React.createElement("div", {
-        key: c.id,
-        style: {
-          background: c.bg,
-          border: `1.5px solid ${c.cor}33`,
-          borderRadius: 10,
-          padding: "12px 14px"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontWeight: 700,
-          fontSize: 12,
-          color: c.cor,
-          marginBottom: 6
-        }
-      }, c.label), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: "#374151"
-        }
-      }, "💰 Rec: ", /*#__PURE__*/React.createElement("b", null, fmt(rec))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: "#374151"
-        }
-      }, "💸 Desp: ", /*#__PURE__*/React.createElement("b", null, fmt(v))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 12,
-          fontWeight: 700,
-          color: luc >= 0 ? "#059669" : "#dc2626",
-          marginTop: 4,
-          borderTop: `1px solid ${c.cor}22`,
-          paddingTop: 4
-        }
-      }, luc >= 0 ? "✅" : "❌", " ", fmt(Math.abs(luc))));
-    }))));
-  })(), /*#__PURE__*/React.createElement("div", {
+  })()), aba === "acompanhamento" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
@@ -3266,437 +3283,9 @@ function FinanceiroClinica({
         color: "var(--text-muted)"
       }
     }))));
-  })), aba === "fiscal" && (() => {
-    // Apenas lançamentos COM nota fiscal emitida (linkNF preenchido)
-    const lancMesTodos = lancamentos.filter(l => l.tipo_lancamento !== "despesa" && (l.data || "").startsWith(mesFiltro));
-    const lancMes = lancMesTodos.filter(l => l.linkNF && l.linkNF.trim() !== "");
-
-    // Classificar por tipo de CNAE
-    const CNAE_PSICO = ["psicologia", "psicanálise", "psicanálise", "terapia ocupacional", "psicoterapia", "atendimento psicológico", "sessão", "consulta"];
-    const CNAE_OUTROS = ["musicoterapia", "música", "treinamento", "ensino", "produção musical", "neurofeedback", "coral", "artístico", "cultural", "assessoria", "desenvolvimento humano"];
-    const CNAE_ALERTA = ["consultoria", "gestão empresarial"]; // Anexo V — alíquota maior
-
-    function classificar(l) {
-      const desc = (l.descricao || l.tipo || l.categoria || "").toLowerCase();
-      if (CNAE_ALERTA.some(k => desc.includes(k))) return "alerta";
-      if (CNAE_PSICO.some(k => desc.includes(k))) return "psico";
-      return "outros";
-    }
-    const totalPsico = lancMes.filter(l => classificar(l) === "psico").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const totalOutros = lancMes.filter(l => classificar(l) === "outros").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const totalAlerta = lancMes.filter(l => classificar(l) === "alerta").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const totalNF = totalPsico + totalOutros + totalAlerta;
-    const TETO_PSICO = 5750;
-    const TETO_OUTROS = 9250;
-    const TETO_TOTAL = 15000;
-    const fatorR = totalNF > 0 ? proLabore / totalNF * 100 : 100;
-    const fatorROk = fatorR >= 28;
-    const pctPsico = Math.round(totalPsico / TETO_PSICO * 100);
-    const pctOutros = Math.round(totalOutros / TETO_OUTROS * 100);
-    const pctTotal = Math.round(totalNF / TETO_TOTAL * 100);
-    function Barra({
-      pct,
-      cor
-    }) {
-      const c = pct >= 100 ? "#dc2626" : pct >= 85 ? "#d97706" : cor;
-      return /*#__PURE__*/React.createElement("div", {
-        style: {
-          height: 8,
-          borderRadius: 20,
-          background: "#f3f4f6",
-          overflow: "hidden",
-          marginTop: 6
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          width: Math.min(pct, 100) + "%",
-          height: "100%",
-          background: c,
-          borderRadius: 20,
-          transition: "width .4s"
-        }
-      }));
-    }
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        maxWidth: 720
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 20
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
-      style: {
-        fontFamily: "var(--font-display)",
-        fontSize: 18,
-        fontWeight: 700,
-        margin: 0
-      }
-    }, "🧾 Painel Fiscal"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, "Simples Nacional · Fator R · Mês: ", new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
-      month: "long",
-      year: "numeric"
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)"
-      }
-    }, "Pró-labore Paulo:"), /*#__PURE__*/React.createElement("input", {
-      type: "number",
-      value: proLabore,
-      onChange: e => setProLabore(parseFloat(e.target.value) || 0),
-      style: {
-        width: 90,
-        padding: "4px 8px",
-        border: "1px solid #e5e7eb",
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 600,
-        color: "#7B00C4",
-        textAlign: "right"
-      }
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: fatorROk ? "#f0fdf4" : "#fef2f2",
-        border: "1.5px solid",
-        borderColor: fatorROk ? "#86efac" : "#fca5a5",
-        borderRadius: 12,
-        padding: "16px 20px",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 14,
-        color: fatorROk ? "#16a34a" : "#dc2626"
-      }
-    }, fatorROk ? "✅" : "🔴", " Fator R: ", fatorR.toFixed(1), "%"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "#6b7280",
-        marginTop: 2
-      }
-    }, "Pró-labore (R$ ", proLabore.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).replace("R$", "").trim(), ") ÷ Faturamento NF do mês")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 22,
-        fontWeight: 800,
-        color: fatorROk ? "#16a34a" : "#dc2626"
-      }
-    }, fatorROk ? "6%" : "⚠️ 15,5%"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "#6b7280"
-      }
-    }, "Alíquota estimada"))), !fatorROk && /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 12,
-        background: "#fef2f2",
-        borderRadius: 8,
-        padding: "10px 14px",
-        fontSize: 12,
-        color: "#dc2626",
-        fontWeight: 500
-      }
-    }, "⚠️ Fator R abaixo de 28% — ", /*#__PURE__*/React.createElement("strong", null, "Avisar contabilidade para revisar pró-labore do Paulo"), " para manter Anexo III (6%).", /*#__PURE__*/React.createElement("br", null), "Pró-labore mínimo necessário: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", (totalNF * 0.28).toLocaleString("pt-BR", {
-      minimumFractionDigits: 2
-    })))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 12,
-        marginBottom: 16
-      }
-    }, [{
-      label: "Psicologia / Saúde Mental",
-      total: totalPsico,
-      teto: TETO_PSICO,
-      pct: pctPsico,
-      cor: "#7B00C4",
-      desc: "CNAE 86.50-0/03 · Fator R"
-    }, {
-      label: "Outras Atividades",
-      total: totalOutros,
-      teto: TETO_OUTROS,
-      pct: pctOutros,
-      cor: "#0891b2",
-      desc: "Musicoterapia, Treinamento, Produção Musical"
-    }].map(({
-      label,
-      total,
-      teto,
-      pct,
-      cor,
-      desc
-    }) => /*#__PURE__*/React.createElement("div", {
-      key: label,
-      style: {
-        background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: "16px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#374151",
-        marginBottom: 4
-      }
-    }, label), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#9ca3af",
-        marginBottom: 8
-      }
-    }, desc), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "baseline"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 20,
-        fontWeight: 800,
-        color: pct >= 100 ? "#dc2626" : pct >= 85 ? "#d97706" : cor
-      }
-    }, total.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: "#9ca3af"
-      }
-    }, "/ R$ ", teto.toLocaleString("pt-BR"))), /*#__PURE__*/React.createElement(Barra, {
-      pct: pct,
-      cor: cor
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: pct >= 100 ? "#dc2626" : pct >= 85 ? "#d97706" : "#6b7280",
-        marginTop: 4,
-        fontWeight: pct >= 85 ? 600 : 400
-      }
-    }, pct >= 100 ? "🔴 Limite atingido — revisar com contabilidade" : pct >= 85 ? "🟡 " + Math.round(teto - total).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }) + " restante — atenção" : "✅ " + Math.round(teto - total).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }) + " restante")))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        border: "1.5px solid",
-        borderColor: pctTotal >= 100 ? "#fca5a5" : pctTotal >= 85 ? "#fcd34d" : "#e5e7eb",
-        borderRadius: 12,
-        padding: "16px 20px",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 14,
-        color: "#111827"
-      }
-    }, "Total NF emitida no mês"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#9ca3af",
-        marginTop: 2
-      }
-    }, "Teto mensal: R$ 15.000 (média)")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 24,
-        fontWeight: 800,
-        color: pctTotal >= 100 ? "#dc2626" : pctTotal >= 85 ? "#d97706" : "#059669"
-      }
-    }, totalNF.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#9ca3af"
-      }
-    }, pctTotal, "% do teto"))), /*#__PURE__*/React.createElement(Barra, {
-      pct: pctTotal,
-      cor: "#059669"
-    })), totalAlerta > 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "#fef3c7",
-        border: "1.5px solid #fcd34d",
-        borderRadius: 12,
-        padding: "14px 18px",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 13,
-        color: "#92400e",
-        marginBottom: 4
-      }
-    }, "⚠️ Atenção — Lançamentos em atividade de Consultoria"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "#92400e"
-      }
-    }, "R$ ", totalAlerta.toLocaleString("pt-BR", {
-      minimumFractionDigits: 2
-    }), " em consultoria/gestão empresarial (CNAE 70.20-4/00).", /*#__PURE__*/React.createElement("br", null), "Essa atividade é tributada pelo ", /*#__PURE__*/React.createElement("strong", null, "Anexo V (alíquota maior)"), ", independente do Fator R. Confirmar com contador se há segregação de receitas.")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: "12px 16px",
-        background: "#f9fafb",
-        borderBottom: "1px solid #e5e7eb",
-        display: "flex",
-        justifyContent: "space-between"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 600,
-        fontSize: 13
-      }
-    }, "Lançamentos de receita — ", new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
-      month: "long"
-    })), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "#6b7280"
-      }
-    }, lancMes.length, " com NF · ", lancMesTodos.length, " total")), lancMesTodos.length === 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: 24,
-        textAlign: "center",
-        color: "#9ca3af",
-        fontSize: 13
-      }
-    }, "Nenhum lançamento de receita neste mês."), lancMesTodos.map(l => {
-      const cls = classificar(l);
-      const cfgCls = cls === "alerta" ? {
-        c: "#92400e",
-        bg: "#fef3c7",
-        label: "⚠️ Consultoria"
-      } : cls === "psico" ? {
-        c: "#7B00C4",
-        bg: "#f5f3ff",
-        label: "🧠 Psico"
-      } : {
-        c: "#0891b2",
-        bg: "#e0f2fe",
-        label: "🎵 Outros"
-      };
-      const temNF = l.linkNF && l.linkNF.trim() !== "";
-      return /*#__PURE__*/React.createElement("div", {
-        key: l.id,
-        style: {
-          padding: "10px 16px",
-          borderBottom: "1px solid #f3f4f6",
-          display: "flex",
-          alignItems: "center",
-          gap: 12
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 10,
-          fontWeight: 700,
-          color: cfgCls.c,
-          background: cfgCls.bg,
-          borderRadius: 20,
-          padding: "2px 8px",
-          flexShrink: 0
-        }
-      }, cfgCls.label), /*#__PURE__*/React.createElement("div", {
-        style: {
-          flex: 1,
-          fontSize: 12
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontWeight: 500
-        }
-      }, l.descricao || l.tipo || l.pacienteNome || "—"), /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "#9ca3af",
-          marginLeft: 8
-        }
-      }, l.data ? new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR") : "—")), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontWeight: 700,
-          fontSize: 13,
-          color: "#059669",
-          flexShrink: 0
-        }
-      }, (parseFloat(l.valor) || 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      })), /*#__PURE__*/React.createElement("button", {
-        onClick: () => {
-          setModalNF({
-            lancId: l.id,
-            linkAtual: l.linkNF || ""
-          });
-          setLinkNF(l.linkNF || "");
-        },
-        title: l.linkNF ? "NF emitida — clique para ver/editar" : "NF não cadastrada",
-        style: {
-          padding: "3px 8px",
-          borderRadius: 6,
-          border: "1px solid",
-          cursor: "pointer",
-          fontSize: 10,
-          fontWeight: 600,
-          borderColor: l.linkNF ? "#16a34a" : "#d1d5db",
-          background: l.linkNF ? "#dcfce7" : "#f9fafb",
-          color: l.linkNF ? "#16a34a" : "#9ca3af"
-        }
-      }, l.linkNF ? "✅ NF" : "⬜ NF"));
-    })));
-  })(), modalCentro && /*#__PURE__*/React.createElement("div", {
+  })), aba === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
+    user: user
+  }), modalDespesa && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -3704,25 +3293,19 @@ function FinanceiroClinica({
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      zIndex: 700,
+      zIndex: 500,
       padding: 20
     },
-    onClick: () => {
-      setModalCentro(false);
-      setEditCentroId(null);
-      setFormCentro({
-        label: "",
-        cor: "#7B00C4",
-        bg: "#f5f3ff"
-      });
-    }
+    onClick: () => setModalDespesa(false)
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
       padding: 28,
       width: "100%",
-      maxWidth: 500
+      maxWidth: 500,
+      maxHeight: "90vh",
+      overflowY: "auto"
     },
     onClick: e => e.stopPropagation()
   }, /*#__PURE__*/React.createElement("div", {
@@ -3735,187 +3318,184 @@ function FinanceiroClinica({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 700,
-      color: "#7B00C4"
+      fontSize: 20,
+      fontWeight: 600
     }
-  }, "🏷️ Centros de Custo"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModalCentro(false);
-      setEditCentroId(null);
-    },
+  }, editandoDespesa ? "Editar" : "Nova", " Despesa — Clínica"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModalDespesa(false),
     style: {
       background: "none",
       border: "none",
-      cursor: "pointer",
-      fontSize: 20,
-      color: "#9ca3af"
+      cursor: "pointer"
     }
-  }, "✕")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 20
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#9ca3af",
-      marginBottom: 8,
-      textTransform: "uppercase",
-      letterSpacing: ".5px"
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 12
     }
-  }, "Padrão (não editável)"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: formDespesa.categoria,
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      categoria: e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Selecionar..."), CATS_DESPESA_CLINICA.map(cat => /*#__PURE__*/React.createElement("option", {
+    key: cat
+  }, cat)))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: formDespesa.descricao,
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      descricao: e.target.value
+    }),
+    placeholder: "Ex: Equipamento Neurofeedback"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Valor (R$)"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    value: formDespesa.valor,
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      valor: e.target.value
+    }),
+    placeholder: "0,00"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Data"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "date",
+    value: formDespesa.data,
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      data: e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: formDespesa.formaPag,
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      formaPag: e.target.value
+    })
+  }, FORMAS_PAG_CLINICA.map(f => /*#__PURE__*/React.createElement("option", {
+    key: f
+  }, f)))), !editandoDespesa && /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Parcelas"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      flexWrap: "wrap",
-      gap: 6,
-      marginBottom: 16
-    }
-  }, CENTROS_PADRAO.map(c => /*#__PURE__*/React.createElement("span", {
-    key: c.id,
-    style: {
-      padding: "4px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      borderColor: c.cor,
-      background: c.bg,
-      color: c.cor,
-      fontSize: 12,
-      fontWeight: 600
-    }
-  }, c.label))), centrosCustom.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#9ca3af",
-      marginBottom: 8,
-      textTransform: "uppercase",
-      letterSpacing: ".5px"
-    }
-  }, "Personalizados"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 6,
-      marginBottom: 16
-    }
-  }, centrosCustom.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.id,
-    style: {
-      display: "flex",
-      alignItems: "center",
       gap: 8,
-      padding: "8px 12px",
-      border: "1px solid #e5e7eb",
-      borderRadius: 8
+      alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    min: "1",
+    max: "60",
+    value: formDespesa.parcelas,
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      parcelas: e.target.value
+    }),
     style: {
-      width: 14,
-      height: 14,
-      borderRadius: "50%",
-      background: c.cor,
-      flexShrink: 0,
-      display: "inline-block"
+      width: 80
     }
   }), /*#__PURE__*/React.createElement("span", {
     style: {
-      flex: 1,
-      fontSize: 13,
-      fontWeight: 500
-    }
-  }, c.label), /*#__PURE__*/React.createElement("button", {
-    onClick: async () => {
-      if (confirm("Excluir centro '" + c.label + "'?")) await db.collection("clinica_centros_custo").doc(c.id).delete();
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "#dc2626",
-      fontSize: 16,
-      padding: "0 4px"
-    }
-  }, "🗑️"))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderTop: "1px solid #e5e7eb",
-      paddingTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
       fontSize: 12,
+      color: "var(--text-muted)"
+    }
+  }, "= ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "var(--purple)"
+    }
+  }, "R$ ", ((parseFloat(formDespesa.valor) || 0) * (parseInt(formDespesa.parcelas) || 1)).toFixed(2).replace(".", ","))))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "1/-1"
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Status"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, cor]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    type: "button",
+    onClick: () => setFormDespesa({
+      ...formDespesa,
+      status: v
+    }),
+    style: {
+      flex: 1,
+      padding: 10,
+      borderRadius: 10,
+      border: "1.5px solid",
+      borderColor: formDespesa.status === v ? cor : "#e5e7eb",
+      background: formDespesa.status === v ? cor + "15" : "white",
+      color: formDespesa.status === v ? cor : "#6b7280",
       fontWeight: 600,
-      color: "#374151",
-      marginBottom: 10
-    }
-  }, "Adicionar novo centro"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr auto auto",
-      gap: 8,
-      alignItems: "end"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      display: "block",
-      marginBottom: 4
-    }
-  }, "Nome"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    placeholder: "Ex: Projeto XYZ",
-    value: formCentro.label,
-    onChange: e => setFormCentro({
-      ...formCentro,
-      label: e.target.value
-    }),
-    style: {
-      fontSize: 13
-    }
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      display: "block",
-      marginBottom: 4
-    }
-  }, "Cor"), /*#__PURE__*/React.createElement("input", {
-    type: "color",
-    value: formCentro.cor,
-    onChange: e => setFormCentro({
-      ...formCentro,
-      cor: e.target.value,
-      bg: e.target.value + "22"
-    }),
-    style: {
-      width: 40,
-      height: 36,
-      border: "1px solid #e5e7eb",
-      borderRadius: 6,
       cursor: "pointer",
-      padding: 2
+      fontSize: 13,
+      fontFamily: "var(--font-body)"
     }
-  })), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
+  }, l)))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
     style: {
-      height: 36,
-      padding: "0 16px",
-      fontSize: 13
-    },
-    onClick: async () => {
-      if (!formCentro.label.trim()) return;
-      const id = formCentro.label.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 20) + "_" + Date.now().toString().slice(-4);
-      await db.collection("clinica_centros_custo").doc(id).set({
-        id,
-        label: formCentro.label.trim(),
-        cor: formCentro.cor,
-        bg: formCentro.cor + "22",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      setFormCentro({
-        label: "",
-        cor: "#7B00C4",
-        bg: "#f5f3ff"
-      });
+      gridColumn: "1/-1"
     }
-  }, "+ Criar"))))), modal === "escolha" && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Observações"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: formDespesa.obs || "",
+    onChange: e => setFormDespesa({
+      ...formDespesa,
+      obs: e.target.value
+    }),
+    placeholder: "Opcional..."
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      justifyContent: "flex-end",
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: () => setModalDespesa(false)
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: salvarDespesaClinica,
+    disabled: salvando
+  }, salvando ? "Salvando..." : editandoDespesa ? "Salvar" : "Lançar")))), modal === "escolha" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -3950,7 +3530,7 @@ function FinanceiroClinica({
       color: "#6b7280",
       marginBottom: 24
     }
-  }, "Escolha o tipo de lançamento:"), /*#__PURE__*/React.createElement("div", {
+  }, "Selecione o tipo:"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3986,37 +3566,7 @@ function FinanceiroClinica({
       lineHeight: 1.5,
       marginTop: 2
     }
-  }, "Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas"))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      width: "100%",
-      padding: "20px 20px",
-      fontSize: 13,
-      display: "flex",
-      alignItems: "center",
-      gap: 16,
-      textAlign: "left"
-    },
-    onClick: () => setModal("avulso")
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 32,
-      flexShrink: 0
-    }
-  }, "💲"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "#059669"
-    }
-  }, "Lançamento Avulso"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      lineHeight: 1.5,
-      marginTop: 2
-    }
-  }, "Sessão única, avaliação, neuromodulação ou outro serviço isolado")))), /*#__PURE__*/React.createElement("button", {
+  }, "Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas")))), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       width: "100%",
@@ -4197,39 +3747,6 @@ function FinanceiroClinica({
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Centro de Custo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      flexWrap: "wrap"
-    }
-  }, CENTROS.map(c => /*#__PURE__*/React.createElement("button", {
-    key: c.id,
-    type: "button",
-    onClick: () => setFormAvulso({
-      ...formAvulso,
-      centroCusto: c.id
-    }),
-    style: {
-      padding: "6px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      cursor: "pointer",
-      fontSize: 12,
-      fontWeight: (formAvulso.centroCusto || "clinica") === c.id ? 700 : 400,
-      fontFamily: "inherit",
-      borderColor: (formAvulso.centroCusto || "clinica") === c.id ? c.cor : "#e5e7eb",
-      background: (formAvulso.centroCusto || "clinica") === c.id ? c.bg : "white",
-      color: (formAvulso.centroCusto || "clinica") === c.id ? c.cor : "#6b7280",
-      transition: "all .15s"
-    }
-  }, c.label)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
   }, "Observações"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     placeholder: "Opcional...",
@@ -4250,7 +3767,27 @@ function FinanceiroClinica({
       setModal(false);
       setEditando(null);
     }
-  }, "Cancelar"), editando ? /*#__PURE__*/React.createElement("button", {
+  }, "Cancelar"), editando && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      border: "1px solid #fecaca",
+      color: "#dc2626",
+      fontSize: 12
+    },
+    title: "Este lançamento é uma despesa, não uma receita",
+    onClick: () => {
+      setFormDespesaEdit({
+        descricao: formAvulso.descricao || formAvulso.tipo || "",
+        categoria: formAvulso.categoria || "",
+        valor: formAvulso.valor + "",
+        data: formAvulso.data || "",
+        formaPag: formAvulso.formaPag || "",
+        status: formAvulso.status === "recebido" ? "pago" : formAvulso.status || "pago",
+        obs: formAvulso.obs || ""
+      });
+      setModal("editar-despesa");
+    }
+  }, "🔁 Marcar como Despesa"), editando ? /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => salvarAvulso(null),
     disabled: salvando
@@ -4443,39 +3980,6 @@ function FinanceiroClinica({
       fontFamily: "var(--font-body)"
     }
   }, l)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Centro de Custo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      flexWrap: "wrap"
-    }
-  }, CENTROS.map(c => /*#__PURE__*/React.createElement("button", {
-    key: c.id,
-    type: "button",
-    onClick: () => setFormDespesaEdit({
-      ...formDespesaEdit,
-      centroCusto: c.id
-    }),
-    style: {
-      padding: "6px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      cursor: "pointer",
-      fontSize: 12,
-      fontWeight: (formDespesaEdit.centroCusto || "admin") === c.id ? 700 : 400,
-      fontFamily: "inherit",
-      borderColor: (formDespesaEdit.centroCusto || "admin") === c.id ? c.cor : "#e5e7eb",
-      background: (formDespesaEdit.centroCusto || "admin") === c.id ? c.bg : "white",
-      color: (formDespesaEdit.centroCusto || "admin") === c.id ? c.cor : "#6b7280",
-      transition: "all .15s"
-    }
-  }, c.label)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
       gridColumn: "1/-1"
@@ -4854,94 +4358,257 @@ function FinanceiroClinica({
       style: {
         background: "#f9fafb"
       }
-    })), (formPacote.tipoAtendimento || "particular") === "parceria" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Parceira"), /*#__PURE__*/React.createElement("select", {
-      className: "form-input",
-      value: formPacote.parceiraId || "",
-      onChange: e => {
-        const p = parceiras.find(x => x.id === e.target.value);
-        setFormPacote({
-          ...formPacote,
-          parceiraId: e.target.value,
-          percParceiro: p && p.percentual ? String(p.percentual) : formPacote.percParceiro || "70"
-        });
-      }
-    }, /*#__PURE__*/React.createElement("option", {
-      value: ""
-    }, "Selecione a parceira..."), parceiras.filter(p => p.tipo !== "estagiaria").map(p => /*#__PURE__*/React.createElement("option", {
-      key: p.id,
-      value: p.id
-    }, p.nome))), parceiras.filter(p => p.tipo !== "estagiaria").length === 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#b45309",
-        marginTop: 3
-      }
-    }, "Nenhuma parceira cadastrada — cadastre na tela Comissões.")), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "% do Parceiro"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "number",
-      min: "0",
-      max: "100",
-      value: formPacote.percParceiro || "70",
-      onChange: e => setFormPacote({
-        ...formPacote,
-        percParceiro: e.target.value
-      })
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 3
-      }
-    }, "Editável — padrão 70%")), formPacote.valorSessao && formPacote.totalSessoes && (() => {
+    })), (formPacote.tipoAtendimento || "particular") === "parceria" && (() => {
       const tot = (parseFloat(formPacote.valorSessao) || 0) * (parseInt(formPacote.totalSessoes) || 0);
-      const pp = parseFloat(formPacote.percParceiro) || 0;
-      const vParc = tot * pp / 100;
+      const parceiros = formPacote.parceirosList || [];
+      const totalRepasses = parceiros.reduce((a, p) => {
+        const v = p.tipoValor === "fixo" ? parseFloat(p.valor) || 0 : tot * (parseFloat(p.perc) || 0) / 100;
+        return a + v;
+      }, 0);
+      const liquidoClinica = tot - totalRepasses;
       return /*#__PURE__*/React.createElement("div", {
         style: {
-          gridColumn: "1/-1",
-          background: "#fffbeb",
-          border: "1px solid #fde68a",
-          borderRadius: 10,
-          padding: "10px 14px",
-          fontSize: 13
+          gridColumn: "1/-1"
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          fontWeight: 700,
-          color: "#b45309",
-          marginBottom: 6
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8
         }
-      }, "🤝 Cálculo da parceria"), /*#__PURE__*/React.createElement("div", {
+      }, /*#__PURE__*/React.createElement("label", {
+        className: "form-label",
+        style: {
+          margin: 0
+        }
+      }, "🤝 Parceiros e Repasses"), /*#__PURE__*/React.createElement("button", {
+        type: "button",
+        style: {
+          fontSize: 12,
+          color: "#b45309",
+          background: "#fffbeb",
+          border: "1px solid #fde68a",
+          borderRadius: 6,
+          padding: "4px 12px",
+          cursor: "pointer",
+          fontWeight: 600
+        },
+        onClick: () => setFormPacote({
+          ...formPacote,
+          parceirosList: [...(formPacote.parceirosList || []), {
+            nome: "",
+            parceiraId: "",
+            tipoValor: "fixo",
+            valor: "",
+            perc: ""
+          }]
+        })
+      }, "+ Adicionar parceiro")), parceiros.length === 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-muted)",
+          fontStyle: "italic",
+          padding: "6px 0"
+        }
+      }, "Clique em \"+ Adicionar parceiro\" para registrar cada pessoa e seu repasse."), parceiros.map((p, i) => {
+        const vCalc = p.tipoValor === "fixo" ? parseFloat(p.valor) || 0 : tot * (parseFloat(p.perc) || 0) / 100;
+        return /*#__PURE__*/React.createElement("div", {
+          key: i,
+          style: {
+            background: "#fffbeb",
+            border: "1px solid #fde68a",
+            borderRadius: 10,
+            padding: "10px 12px",
+            marginBottom: 8
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            gap: 8,
+            marginBottom: 8,
+            alignItems: "center"
+          }
+        }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("select", {
+          className: "form-input",
+          style: {
+            fontSize: 12,
+            marginBottom: 4
+          },
+          value: p.parceiraId || "",
+          onChange: e => {
+            const pc = parceiras.find(x => x.id === e.target.value);
+            const lista = [...(formPacote.parceirosList || [])];
+            lista[i] = {
+              ...lista[i],
+              parceiraId: e.target.value,
+              nome: pc?.nome || lista[i].nome,
+              perc: pc?.percentual ? String(pc.percentual) : lista[i].perc
+            };
+            setFormPacote({
+              ...formPacote,
+              parceirosList: lista
+            });
+          }
+        }, /*#__PURE__*/React.createElement("option", {
+          value: ""
+        }, "— Do cadastro (opcional) —"), parceiras.map(pc => /*#__PURE__*/React.createElement("option", {
+          key: pc.id,
+          value: pc.id
+        }, pc.nome))), /*#__PURE__*/React.createElement("input", {
+          className: "form-input",
+          style: {
+            fontSize: 12
+          },
+          placeholder: "Nome do parceiro",
+          value: p.nome || "",
+          onChange: e => {
+            const lista = [...(formPacote.parceirosList || [])];
+            lista[i] = {
+              ...lista[i],
+              nome: e.target.value
+            };
+            setFormPacote({
+              ...formPacote,
+              parceirosList: lista
+            });
+          }
+        })), /*#__PURE__*/React.createElement("button", {
+          type: "button",
+          style: {
+            color: "#dc2626",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 18,
+            padding: "0 4px"
+          },
+          onClick: () => {
+            const lista = [...(formPacote.parceirosList || [])];
+            lista.splice(i, 1);
+            setFormPacote({
+              ...formPacote,
+              parceirosList: lista
+            });
+          }
+        }, "✕")), /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "auto 1fr",
+            gap: 8,
+            alignItems: "center"
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            gap: 4
+          }
+        }, [["fixo", "R$ fixo"], ["perc", "% do total"]].map(([tv, tl]) => /*#__PURE__*/React.createElement("button", {
+          key: tv,
+          type: "button",
+          onClick: () => {
+            const lista = [...(formPacote.parceirosList || [])];
+            lista[i] = {
+              ...lista[i],
+              tipoValor: tv
+            };
+            setFormPacote({
+              ...formPacote,
+              parceirosList: lista
+            });
+          },
+          style: {
+            padding: "5px 10px",
+            borderRadius: 6,
+            border: "1.5px solid",
+            cursor: "pointer",
+            fontSize: 11,
+            fontWeight: 600,
+            fontFamily: "var(--font-body)",
+            borderColor: p.tipoValor === tv ? "#b45309" : "#e5e7eb",
+            background: p.tipoValor === tv ? "#fffbeb" : "white",
+            color: p.tipoValor === tv ? "#b45309" : "#6b7280"
+          }
+        }, tl))), /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            gap: 8,
+            alignItems: "center"
+          }
+        }, p.tipoValor === "fixo" ? /*#__PURE__*/React.createElement("input", {
+          className: "form-input",
+          style: {
+            fontSize: 12
+          },
+          type: "number",
+          placeholder: "Valor R$",
+          value: p.valor || "",
+          onChange: e => {
+            const lista = [...(formPacote.parceirosList || [])];
+            lista[i] = {
+              ...lista[i],
+              valor: e.target.value
+            };
+            setFormPacote({
+              ...formPacote,
+              parceirosList: lista
+            });
+          }
+        }) : /*#__PURE__*/React.createElement("input", {
+          className: "form-input",
+          style: {
+            fontSize: 12
+          },
+          type: "number",
+          placeholder: "%",
+          min: "0",
+          max: "100",
+          value: p.perc || "",
+          onChange: e => {
+            const lista = [...(formPacote.parceirosList || [])];
+            lista[i] = {
+              ...lista[i],
+              perc: e.target.value
+            };
+            setFormPacote({
+              ...formPacote,
+              parceirosList: lista
+            });
+          }
+        }), vCalc > 0 && /*#__PURE__*/React.createElement("span", {
+          style: {
+            fontSize: 12,
+            color: "#b45309",
+            fontWeight: 700,
+            whiteSpace: "nowrap"
+          }
+        }, "= R$ ", vCalc.toFixed(2).replace(".", ",")))));
+      }), tot > 0 && parceiros.length > 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          background: "#f0fdf4",
+          border: "1px solid #86efac",
+          borderRadius: 10,
+          padding: "10px 14px",
+          fontSize: 13,
+          marginTop: 4
+        }
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           flexWrap: "wrap",
-          gap: "6px 18px",
-          color: "#374151"
+          gap: "6px 20px"
         }
-      }, /*#__PURE__*/React.createElement("span", null, "Total: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", tot.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", null, "Repasse parceira (", pp, "%): ", /*#__PURE__*/React.createElement("strong", {
+      }, /*#__PURE__*/React.createElement("span", null, "💰 Total recebido: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", tot.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", {
         style: {
           color: "#b45309"
         }
-      }, "R$ ", vParc.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", null, "Clínica antes da comissão: ", /*#__PURE__*/React.createElement("strong", {
+      }, "↗ Total repasses: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", totalRepasses.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", {
         style: {
           color: "#059669"
         }
-      }, "R$ ", (tot - vParc).toFixed(2).replace(".", ",")))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: "#92400e",
-          marginTop: 6
-        }
-      }, "A comissão da secretária (sobre o total) é definida no botão de salvar abaixo."));
-    })())), /*#__PURE__*/React.createElement("div", {
+      }, "🏥 Líquido clínica: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", liquidoClinica.toFixed(2).replace(".", ","))))));
+    })()), /*#__PURE__*/React.createElement("div", {
       className: "form-group",
       style: {
         gridColumn: "1/-1"
@@ -5193,36 +4860,955 @@ function FinanceiroClinica({
     }, "🔁 Venda Recorrente"))));
   })());
 }
-function FinanceiroPessoal({
-  somenteLeitura = false
+
+// ───────────────────────────────────────────────────────────
+// PAINEL GERAL — Dashboard consolidado (Pessoal + Clínica, todos os CCs)
+// ───────────────────────────────────────────────────────────
+function PainelGeral({
+  lancamentos,
+  lancClinica,
+  anoFiltro,
+  setAnoFiltro,
+  anos,
+  fmt,
+  mesLabel
+}) {
+  const CORES_CC = {
+    "🏥 Clínica": "#7B00C4",
+    "🎵 Ônix Brasil": "#0891b2",
+    "🎶 Flamboyant": "#db2777",
+    "⭐ Estrelas": "#d97706",
+    "🌱 Projetos Culturais": "#059669",
+    "📚 Consultorias & Cursos": "#2563eb",
+    "🏢 Administrativo": "#6b7280",
+    "🏠 Pessoal": "#dc2626",
+    "—": "#9ca3af"
+  };
+  const CORES_CAT = ["#7B00C4", "#0891b2", "#db2777", "#d97706", "#059669", "#2563eb", "#dc2626", "#6b7280", "#9333ea", "#16a34a", "#ea580c", "#0284c7"];
+
+  // Normaliza lançamentos de ambas as origens em um formato único
+  const normPessoal = lancamentos.map(l => ({
+    tipo: l.tipo === "receita" ? "receita" : "despesa",
+    valor: parseFloat(l.valor) || 0,
+    data: l.data || "",
+    categoria: l.categoria || "Outros",
+    centroCusto: l.centroCusto || "🏠 Pessoal",
+    status: l.status || "pago"
+  }));
+  const normClinica = lancClinica.map(l => ({
+    tipo: l.tipo_lancamento === "despesa" || l.tipo === "despesa" ? "despesa" : "receita",
+    valor: parseFloat(l.valor) || 0,
+    data: l.data || "",
+    categoria: l.categoria || l.tipo || "Outros",
+    centroCusto: l.centroCusto || "🏥 Clínica",
+    status: l.status || "pago"
+  }));
+  const todos = [...normPessoal, ...normClinica];
+  const pagos = t => t.status === "pago" || t.status === "recebido";
+  const doAno = todos.filter(l => l.data?.startsWith(anoFiltro) && pagos(l));
+
+  // Resumo por Centro de Custo
+  const ccMap = {};
+  doAno.forEach(l => {
+    const cc = l.centroCusto || "—";
+    if (!ccMap[cc]) ccMap[cc] = {
+      receita: 0,
+      despesa: 0
+    };
+    ccMap[cc][l.tipo] += l.valor;
+  });
+  const ccs = Object.entries(ccMap).map(([cc, v]) => ({
+    cc,
+    ...v,
+    saldo: v.receita - v.despesa
+  })).sort((a, b) => b.despesa - a.despesa);
+  const totalReceita = doAno.filter(l => l.tipo === "receita").reduce((a, l) => a + l.valor, 0);
+  const totalDespesa = doAno.filter(l => l.tipo === "despesa").reduce((a, l) => a + l.valor, 0);
+  const saldoConsolidado = totalReceita - totalDespesa;
+  const margem = totalReceita > 0 ? saldoConsolidado / totalReceita * 100 : 0;
+
+  // Comparativo com mês anterior
+  const hoje = new Date();
+  const mesAtualStr = hoje.toISOString().slice(0, 7);
+  const mesAnteriorDate = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+  const mesAnteriorStr = mesAnteriorDate.toISOString().slice(0, 7);
+  const saldoMesAtual = (() => {
+    const l = todos.filter(x => x.data?.startsWith(mesAtualStr) && pagos(x));
+    return l.filter(x => x.tipo === "receita").reduce((a, x) => a + x.valor, 0) - l.filter(x => x.tipo === "despesa").reduce((a, x) => a + x.valor, 0);
+  })();
+  const saldoMesAnterior = (() => {
+    const l = todos.filter(x => x.data?.startsWith(mesAnteriorStr) && pagos(x));
+    return l.filter(x => x.tipo === "receita").reduce((a, x) => a + x.valor, 0) - l.filter(x => x.tipo === "despesa").reduce((a, x) => a + x.valor, 0);
+  })();
+  const variacaoMes = saldoMesAnterior !== 0 ? (saldoMesAtual - saldoMesAnterior) / Math.abs(saldoMesAnterior) * 100 : saldoMesAtual > 0 ? 100 : 0;
+
+  // Despesas pendentes
+  const pendentes = todos.filter(l => l.status === "pendente" && l.data?.startsWith(anoFiltro));
+  const totalPendente = pendentes.reduce((a, l) => a + l.valor, 0);
+
+  // Top 5 maiores despesas do mês atual
+  const despesasMesAtual = todos.filter(l => l.tipo === "despesa" && l.data?.startsWith(mesAtualStr) && pagos(l)).sort((a, b) => b.valor - a.valor).slice(0, 5);
+
+  // Evolução últimos 12 meses (saldo total)
+  const meses12 = Array.from({
+    length: 12
+  }, (_, i) => {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - 11 + i, 1);
+    return d.toISOString().slice(0, 7);
+  });
+  const evolucao = meses12.map(m => {
+    const l = todos.filter(x => x.data?.startsWith(m) && pagos(x));
+    const rec = l.filter(x => x.tipo === "receita").reduce((a, x) => a + x.valor, 0);
+    const desp = l.filter(x => x.tipo === "despesa").reduce((a, x) => a + x.valor, 0);
+    return {
+      mes: m,
+      saldo: rec - desp,
+      receita: rec,
+      despesa: desp
+    };
+  });
+
+  // Despesas por categoria (geral, todos os CCs)
+  const catMap = {};
+  doAno.filter(l => l.tipo === "despesa").forEach(l => {
+    catMap[l.categoria] = (catMap[l.categoria] || 0) + l.valor;
+  });
+  const categorias = Object.entries(catMap).map(([cat, v]) => ({
+    cat,
+    valor: v
+  })).sort((a, b) => b.valor - a.valor);
+  const maxDespCC = Math.max(1, ...ccs.map(c => Math.max(c.receita, c.despesa)));
+  const maxEvol = Math.max(1, ...evolucao.map(e => Math.max(Math.abs(e.saldo), e.receita, e.despesa)));
+
+  // Donut SVG — despesas por CC
+  function Donut() {
+    const total = ccs.reduce((a, c) => a + c.despesa, 0);
+    if (total <= 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        color: "var(--text-muted)",
+        padding: 20,
+        fontSize: 13
+      }
+    }, "Sem despesas no período.");
+    let acc = 0;
+    const r = 70,
+      cx = 90,
+      cy = 90,
+      circ = 2 * Math.PI * r;
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 20,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "180",
+      height: "180",
+      viewBox: "0 0 180 180"
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: cx,
+      cy: cy,
+      r: r,
+      fill: "none",
+      stroke: "#f3f4f6",
+      strokeWidth: "22"
+    }), ccs.filter(c => c.despesa > 0).map((c, i) => {
+      const frac = c.despesa / total;
+      const dash = frac * circ;
+      const offset = circ - acc;
+      const el = /*#__PURE__*/React.createElement("circle", {
+        key: c.cc,
+        cx: cx,
+        cy: cy,
+        r: r,
+        fill: "none",
+        stroke: CORES_CC[c.cc] || CORES_CAT[i % CORES_CAT.length],
+        strokeWidth: "22",
+        strokeDasharray: `${dash} ${circ - dash}`,
+        strokeDashoffset: offset,
+        transform: `rotate(-90 ${cx} ${cy})`
+      });
+      acc += dash;
+      return el;
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: cy - 4,
+      textAnchor: "middle",
+      fontSize: "13",
+      fontWeight: "700",
+      fill: "#111827"
+    }, fmt(total)), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: cy + 14,
+      textAnchor: "middle",
+      fontSize: "10",
+      fill: "#6b7280"
+    }, "despesas ", anoFiltro)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        flex: 1,
+        minWidth: 160
+      }
+    }, ccs.filter(c => c.despesa > 0).sort((a, b) => b.despesa - a.despesa).map((c, i) => /*#__PURE__*/React.createElement("div", {
+      key: c.cc,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 10,
+        height: 10,
+        borderRadius: 3,
+        background: CORES_CC[c.cc] || CORES_CAT[i % CORES_CAT.length],
+        flexShrink: 0
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, c.cc), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700
+      }
+    }, fmt(c.despesa)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: "var(--text-muted)",
+        width: 42,
+        textAlign: "right"
+      }
+    }, (c.despesa / total * 100).toFixed(0), "%")))));
+  }
+
+  // Barras — receita vs despesa por CC
+  function BarrasCC() {
+    if (ccs.length === 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        color: "var(--text-muted)",
+        padding: 20,
+        fontSize: 13
+      }
+    }, "Sem dados no período.");
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 14
+      }
+    }, ccs.map(c => /*#__PURE__*/React.createElement("div", {
+      key: c.cc
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 12,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600
+      }
+    }, c.cc), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: c.saldo >= 0 ? "#059669" : "#dc2626",
+        fontWeight: 700
+      }
+    }, fmt(c.saldo))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 3
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 60,
+        fontSize: 10,
+        color: "#059669"
+      }
+    }, "Receita"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        background: "#f3f4f6",
+        borderRadius: 4,
+        height: 10,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: `${c.receita / maxDespCC * 100}%`,
+        height: "100%",
+        background: "#10b981",
+        borderRadius: 4
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 80,
+        fontSize: 11,
+        textAlign: "right"
+      }
+    }, fmt(c.receita))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 60,
+        fontSize: 10,
+        color: "#dc2626"
+      }
+    }, "Despesa"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        background: "#f3f4f6",
+        borderRadius: 4,
+        height: 10,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: `${c.despesa / maxDespCC * 100}%`,
+        height: "100%",
+        background: "#ef4444",
+        borderRadius: 4
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 80,
+        fontSize: 11,
+        textAlign: "right"
+      }
+    }, fmt(c.despesa)))))));
+  }
+
+  // Linha — evolução do saldo (12 meses)
+  function LinhaEvolucao() {
+    const w = 600,
+      h = 160,
+      pad = 30;
+    const pontos = evolucao.map((e, i) => {
+      const x = pad + i / (evolucao.length - 1) * (w - 2 * pad);
+      const yZero = h / 2;
+      const scale = (h / 2 - 10) / maxEvol;
+      const y = yZero - e.saldo * scale;
+      return {
+        x,
+        y,
+        ...e
+      };
+    });
+    const path = pontos.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        overflowX: "auto"
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: w,
+      height: h,
+      viewBox: `0 0 ${w} ${h}`,
+      style: {
+        minWidth: 500
+      }
+    }, /*#__PURE__*/React.createElement("line", {
+      x1: pad,
+      y1: h / 2,
+      x2: w - pad,
+      y2: h / 2,
+      stroke: "#e5e7eb",
+      strokeWidth: "1"
+    }), /*#__PURE__*/React.createElement("path", {
+      d: path,
+      fill: "none",
+      stroke: "#7B00C4",
+      strokeWidth: "2.5"
+    }), pontos.map((p, i) => /*#__PURE__*/React.createElement("g", {
+      key: i
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: "3.5",
+      fill: p.saldo >= 0 ? "#059669" : "#dc2626"
+    }), /*#__PURE__*/React.createElement("text", {
+      x: p.x,
+      y: h - 6,
+      textAnchor: "middle",
+      fontSize: "9",
+      fill: "#9ca3af"
+    }, mesLabel(p.mes))))));
+  }
+
+  // Barras — despesas por categoria (geral)
+  function BarrasCategorias() {
+    const top = categorias.slice(0, 10);
+    const max = Math.max(1, ...top.map(c => c.valor));
+    if (top.length === 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        color: "var(--text-muted)",
+        padding: 20,
+        fontSize: 13
+      }
+    }, "Sem despesas no período.");
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 8
+      }
+    }, top.map((c, i) => /*#__PURE__*/React.createElement("div", {
+      key: c.cat,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 130,
+        fontSize: 12,
+        flexShrink: 0,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      }
+    }, c.cat), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        background: "#f3f4f6",
+        borderRadius: 4,
+        height: 14,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: `${c.valor / max * 100}%`,
+        height: "100%",
+        background: CORES_CAT[i % CORES_CAT.length],
+        borderRadius: 4
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 90,
+        fontSize: 12,
+        fontWeight: 700,
+        textAlign: "right"
+      }
+    }, fmt(c.valor)))));
+  }
+
+  // ── Plano de Contas — agrupamento por categoria real ──
+  const PLANO_CONTAS = {
+    "Marketing / Tráfego Pago": ["Marketing", "Tráfego Pago", "Publicidade", "Redes Sociais", "Google Ads"],
+    "Ferramentas Digitais": ["Ferramentas de IA", "Software", "Assinaturas", "ElevenLabs", "Tecnologia", "Internet", "Telefone / Internet"],
+    "Ocupação / Aluguel": ["Aluguel", "Condomínio", "Sublocação", "Energia / Água", "Manutenção", "IPTU"],
+    "Repasses / Comissões": ["Salário Secretária", "Repasse", "Comissão", "Parceria", "Estagiária"],
+    "Educação / Capacitação": ["Cursos e Capacitação", "Educação", "Livros", "Supervisão", "Desenvolvimento Pessoal"],
+    "Saúde / Bem-estar": ["Saúde", "Plano de Saúde", "Medicamentos", "Consultas"],
+    "Gastos Domésticos": ["Moradia", "Alimentação", "Transporte", "Vestuário", "Lazer / Entretenimento", "Lazer", "Saneago", "Seguro", "Consórcio"],
+    "Outros": []
+  };
+  function mapearPlano(cat) {
+    if (!cat) return "Outros";
+    const c = cat.trim();
+    for (const [grupo, cats] of Object.entries(PLANO_CONTAS)) {
+      if (cats.some(k => c.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(c.toLowerCase()))) return grupo;
+    }
+    return "Outros";
+  }
+  const CORES_PLANO = ["#7B00C4", "#0891b2", "#db2777", "#d97706", "#059669", "#2563eb", "#dc2626", "#9ca3af"];
+  const planoMap = {};
+  doAno.filter(l => l.tipo === "despesa").forEach(l => {
+    const grupo = mapearPlano(l.categoria);
+    planoMap[grupo] = (planoMap[grupo] || 0) + l.valor;
+  });
+  const planoData = Object.entries(planoMap).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a).map(([cat, valor], i) => ({
+    cat,
+    valor,
+    cor: CORES_PLANO[i % CORES_PLANO.length]
+  }));
+  function DonutPlano() {
+    const total = planoData.reduce((a, p) => a + p.valor, 0);
+    if (total <= 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        color: "var(--text-muted)",
+        padding: 20,
+        fontSize: 13
+      }
+    }, "Sem despesas no período.");
+    let acc = 0;
+    const r = 70,
+      cx = 90,
+      cy = 90,
+      circ = 2 * Math.PI * r;
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 20,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("svg", {
+      width: "180",
+      height: "180",
+      viewBox: "0 0 180 180"
+    }, /*#__PURE__*/React.createElement("circle", {
+      cx: cx,
+      cy: cy,
+      r: r,
+      fill: "none",
+      stroke: "#f3f4f6",
+      strokeWidth: "22"
+    }), planoData.map((p, i) => {
+      const frac = p.valor / total;
+      const dash = frac * circ;
+      const offset = circ - acc;
+      const el = /*#__PURE__*/React.createElement("circle", {
+        key: p.cat,
+        cx: cx,
+        cy: cy,
+        r: r,
+        fill: "none",
+        stroke: p.cor,
+        strokeWidth: "22",
+        strokeDasharray: `${dash} ${circ - dash}`,
+        strokeDashoffset: offset,
+        transform: `rotate(-90 ${cx} ${cy})`
+      });
+      acc += dash;
+      return el;
+    }), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: cy - 4,
+      textAnchor: "middle",
+      fontSize: "12",
+      fontWeight: "700",
+      fill: "#111827"
+    }, fmt(total)), /*#__PURE__*/React.createElement("text", {
+      x: cx,
+      y: cy + 14,
+      textAnchor: "middle",
+      fontSize: "10",
+      fill: "#6b7280"
+    }, "despesas ", anoFiltro)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 5,
+        flex: 1,
+        minWidth: 180
+      }
+    }, planoData.map(p => /*#__PURE__*/React.createElement("div", {
+      key: p.cat,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 10,
+        height: 10,
+        borderRadius: 3,
+        background: p.cor,
+        flexShrink: 0
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        lineHeight: 1.3
+      }
+    }, p.cat), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        flexShrink: 0
+      }
+    }, fmt(p.valor)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: "var(--text-muted)",
+        width: 38,
+        textAlign: "right",
+        flexShrink: 0
+      }
+    }, (p.valor / total * 100).toFixed(0), "%")))));
+  }
+  function BarrasPlano() {
+    if (planoData.length === 0) return /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "center",
+        color: "var(--text-muted)",
+        padding: 20,
+        fontSize: 13
+      }
+    }, "Sem dados.");
+    const max = Math.max(1, ...planoData.map(p => p.valor));
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 10
+      }
+    }, planoData.map(p => /*#__PURE__*/React.createElement("div", {
+      key: p.cat
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 12,
+        marginBottom: 3
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600
+      }
+    }, p.cat), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 700,
+        color: p.cor
+      }
+    }, fmt(p.valor))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "#f3f4f6",
+        borderRadius: 6,
+        height: 12,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: `${p.valor / max * 100}%`,
+        height: "100%",
+        background: p.cor,
+        borderRadius: 6,
+        transition: ".4s"
+      }
+    })))));
+  }
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 18,
+      alignItems: "center",
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      flexShrink: 0
+    }
+  }, "Ano:"), anos.map(a => /*#__PURE__*/React.createElement("button", {
+    key: a,
+    onClick: () => setAnoFiltro(a),
+    style: {
+      padding: "5px 16px",
+      borderRadius: 20,
+      border: "1.5px solid",
+      borderColor: anoFiltro === a ? "var(--purple)" : "#e5e7eb",
+      background: anoFiltro === a ? "var(--purple)" : "white",
+      color: anoFiltro === a ? "white" : "#6b7280",
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, a))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+      gap: 12,
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: saldoConsolidado >= 0 ? "#d1fae5" : "#fee2e2",
+      borderRadius: 12,
+      padding: "14px 16px",
+      border: "1.5px solid",
+      borderColor: saldoConsolidado >= 0 ? "#6ee7b7" : "#fca5a5"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: saldoConsolidado >= 0 ? "#059669" : "#dc2626",
+      marginBottom: 4
+    }
+  }, "Saldo Consolidado (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 800,
+      color: saldoConsolidado >= 0 ? "#059669" : "#dc2626"
+    }
+  }, fmt(saldoConsolidado)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280",
+      marginTop: 2
+    }
+  }, "+", fmt(totalReceita), " / -", fmt(totalDespesa))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f0f9ff",
+      borderRadius: 12,
+      padding: "14px 16px",
+      border: "1.5px solid #93c5fd"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#2563eb",
+      marginBottom: 4
+    }
+  }, "Margem"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 800,
+      color: "#2563eb"
+    }
+  }, margem.toFixed(1), "%"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280",
+      marginTop: 2
+    }
+  }, "(receita - despesa) / receita")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: variacaoMes >= 0 ? "#f0fdf4" : "#fef2f2",
+      borderRadius: 12,
+      padding: "14px 16px",
+      border: "1.5px solid",
+      borderColor: variacaoMes >= 0 ? "#86efac" : "#fca5a5"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: variacaoMes >= 0 ? "#059669" : "#dc2626",
+      marginBottom: 4
+    }
+  }, "Vs. mês anterior"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 800,
+      color: variacaoMes >= 0 ? "#059669" : "#dc2626"
+    }
+  }, variacaoMes >= 0 ? "▲" : "▼", " ", Math.abs(variacaoMes).toFixed(0), "%"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280",
+      marginTop: 2
+    }
+  }, fmt(saldoMesAnterior), " → ", fmt(saldoMesAtual))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fffbeb",
+      borderRadius: 12,
+      padding: "14px 16px",
+      border: "1.5px solid #fcd34d"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#d97706",
+      marginBottom: 4
+    }
+  }, "Pendentes (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 800,
+      color: "#d97706"
+    }
+  }, fmt(totalPendente)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280",
+      marginTop: 2
+    }
+  }, pendentes.length, " lançamento(s)"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+      gap: 16,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "🥧 Despesas por Centro de Custo"), /*#__PURE__*/React.createElement(Donut, null)), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "📊 Receita vs Despesa por CC"), /*#__PURE__*/React.createElement(BarrasCC, null))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+      gap: 16,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "🎯 Despesas por Plano de Contas"), /*#__PURE__*/React.createElement(DonutPlano, null)), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "📉 Distribuição por Grupo (", anoFiltro, ")"), /*#__PURE__*/React.createElement(BarrasPlano, null))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "📈 Evolução do Saldo — últimos 12 meses"), /*#__PURE__*/React.createElement(LinhaEvolucao, null)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+      gap: 16,
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "🏷️ Maiores Categorias de Despesa (", anoFiltro, ")"), /*#__PURE__*/React.createElement(BarrasCategorias, null)), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 14
+    }
+  }, "🔝 Top 5 Maiores Despesas — ", mesLabel(mesAtualStr)), despesasMesAtual.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      color: "var(--text-muted)",
+      padding: 20,
+      fontSize: 13
+    }
+  }, "Sem despesas neste mês.") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, despesasMesAtual.map((d, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "8px 0",
+      borderBottom: i < despesasMesAtual.length - 1 ? "1px solid var(--gray-100)" : "none"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 24,
+      height: 24,
+      borderRadius: "50%",
+      background: "#fee2e2",
+      color: "#dc2626",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 11,
+      fontWeight: 700,
+      flexShrink: 0
+    }
+  }, i + 1), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13
+    }
+  }, d.categoria), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, d.centroCusto, " · ", d.data)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: "#dc2626"
+    }
+  }, fmt(d.valor))))))));
+}
+
+// ═══════════════════════════════════════════════════════
+// FINANCEIRO PESSOAL & EMPRESA — componente unificado por tipo
+// ═══════════════════════════════════════════════════════
+
+// Componente base reutilizável para Pessoal e Empresa
+function FinanceiroBase({
+  titulo,
+  subtitulo,
+  colLanc,
+  colRecorr,
+  corAcento = "#7B00C4",
+  user
 }) {
   const [lancamentos, setLancamentos] = useState([]);
   const [recorrentes, setRecorrentes] = useState([]);
-  const [categorias, setCategorias] = useState([]);
   const [anoFiltro, setAnoFiltro] = useState(new Date().getFullYear() + "");
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0, 7));
+  const [filtroTipo, setFiltroTipo] = useState("tudo");
   const [modal, setModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
-  const [novaCategoria, setNovaCategoria] = useState({
-    nome: "",
-    tipo: "despesa"
-  });
-  const [modalBaixa, setModalBaixa] = useState(null); // recorrente para dar baixa
+  const [modalBaixa, setModalBaixa] = useState(null);
+  const [modalMover, setModalMover] = useState(null); // {lanc, isRecorrente}
+  const [movendoId, setMovendoId] = useState(null);
   const [formBaixa, setFormBaixa] = useState({
     valor: "",
     data: new Date().toISOString().slice(0, 10),
     formaPag: "PIX",
     modo: "este"
   });
-  const mesAtual = new Date().toISOString().slice(0, 7);
-  const CATS_RECEITA_DEFAULT = ["Salário/Pró-labore", "Consultoria", "Aluguel Recebido", "Investimentos", "Dividendos", "Freelance", "Outros"];
-  const CATS_DESPESA_DEFAULT = ["Aluguel", "Condomínio", "Alimentação", "Saúde", "Educação", "Transporte", "Lazer", "Assinaturas", "Cartão de Crédito", "Empréstimo/Financiamento", "Contador", "Impostos", "Marketing", "Ferramentas de IA", "Telefone/Internet", "Energia/Água", "Vestuário", "Viagem", "Outros"];
-  const FORMAS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Depósito", "Transferência", "Débito Automático", "Outro"];
-  const RECORR = ["Mensal", "Semanal", "Quinzenal", "Bimestral", "Trimestral", "Semestral", "Anual"];
-  const catsReceita = [...CATS_RECEITA_DEFAULT, ...categorias.filter(c => c.tipo === "receita").map(c => c.nome)];
-  const catsDespesa = [...CATS_DESPESA_DEFAULT, ...categorias.filter(c => c.tipo === "despesa").map(c => c.nome)];
-  const [formAvulso, setFormAvulso] = useState({
+  const [formLanc, setFormLanc] = useState({
     tipo: "despesa",
     categoria: "",
     descricao: "",
@@ -5230,7 +5816,8 @@ function FinanceiroPessoal({
     data: new Date().toISOString().slice(0, 10),
     formaPag: "PIX",
     status: "pago",
-    obs: ""
+    obs: "",
+    parcelas: "1"
   });
   const [formRecorr, setFormRecorr] = useState({
     tipo: "despesa",
@@ -5240,10 +5827,35 @@ function FinanceiroPessoal({
     recorrencia: "Mensal",
     diaVencimento: "10",
     mesInicio: new Date().toISOString().slice(0, 7),
-    ativo: true
+    ativo: true,
+    indeterminado: true,
+    totalParcelas: ""
   });
+  const [abaModal, setAbaModal] = useState("avulso");
+  const FORMAS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Depósito", "Transferência", "Débito Automático", "Outro"];
+  const RECORRS = ["Mensal", "Semanal", "Quinzenal", "Bimestral", "Trimestral", "Semestral", "Anual"];
+  const CATS_REC_PES = ["Pró-labore", "Salário CLT", "Professora CLT", "Rendimento de Investimentos", "Dividendos", "Aluguel Recebido", "Freelance", "Outros"];
+  const CATS_DES_PES = ["Moradia", "Aluguel", "IPTU", "Saneago", "Energia / Água", "Condomínio", "Alimentação", "Supermercado", "Saúde", "Plano de Saúde", "Transporte", "Combustível", "Lazer", "Vestuário", "Viagem", "Aporte em Investimentos", "Seguro", "Outros"];
+  const CATS_REC_EMP = ["Venda de Infoproduto", "Consultoria", "Curso Ministrado", "Palestra", "Licença", "Outros"];
+  const CATS_DES_EMP = ["Marketing / Tráfego Pago", "Ferramentas de IA", "ElevenLabs", "Designer / Freelancer", "Equipamentos Digitais", "Cursos / Treinamentos", "Ônix Brasil", "Contador", "Impostos", "Assinaturas", "Outros"];
+  const isPessoal = colLanc === "clinica_financeiro_pessoal";
+  const catsRec = isPessoal ? CATS_REC_PES : CATS_REC_EMP;
+  const catsDes = isPessoal ? CATS_DES_PES : CATS_DES_EMP;
+  const DESTINOS = [{
+    col: "clinica_financeiro_pessoal",
+    colRec: "clinica_fin_pessoal_recorrentes",
+    label: "💼 Financeiro Pessoal"
+  }, {
+    col: "clinica_financeiro_empresa",
+    colRec: "clinica_fin_empresa_recorrentes",
+    label: "🏢 Financeiro Empresa"
+  }, {
+    col: "clinica_lancamentos",
+    colRec: null,
+    label: "🏥 Financeiro Clínica"
+  }].filter(d => d.col !== colLanc);
   useEffect(() => {
-    const u1 = db.collection("clinica_financeiro_pessoal").onSnapshot(s => {
+    const u1 = db.collection(colLanc).onSnapshot(s => {
       const docs = s.docs.map(d => ({
         id: d.id,
         ...d.data()
@@ -5251,7 +5863,7 @@ function FinanceiroPessoal({
       docs.sort((a, b) => (b.data || "").localeCompare(a.data || ""));
       setLancamentos(docs);
     }, () => {});
-    const u2 = db.collection("clinica_fin_pessoal_recorrentes").onSnapshot(s => {
+    const u2 = db.collection(colRecorr).onSnapshot(s => {
       const docs = s.docs.map(d => ({
         id: d.id,
         ...d.data()
@@ -5259,26 +5871,19 @@ function FinanceiroPessoal({
       docs.sort((a, b) => (b.createdAt?.toDate?.() ?? new Date(0)) - (a.createdAt?.toDate?.() ?? new Date(0)));
       setRecorrentes(docs);
     }, () => {});
-    const u3 = db.collection("clinica_fin_pessoal_categorias").onSnapshot(s => setCategorias(s.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }))), () => {});
     return () => {
       u1();
       u2();
-      u3();
     };
-  }, []);
+  }, [colLanc, colRecorr]);
+  const mesAtual = new Date().toISOString().slice(0, 7);
   const anoAtualNum = new Date().getFullYear();
   const anosExist = [...new Set(lancamentos.map(l => l.data?.slice(0, 4)).filter(Boolean))].map(Number);
-  const anosSet = new Set([...anosExist, anoAtualNum - 1, anoAtualNum, anoAtualNum + 1]);
-  const anos = [...anosSet].sort().map(String);
+  const anos = [...new Set([...anosExist, anoAtualNum - 1, anoAtualNum, anoAtualNum + 1])].sort().map(String);
   const mesesDisp = Array.from({
     length: 12
   }, (_, i) => `${anoFiltro}-${String(i + 1).padStart(2, "0")}`);
   const mesFiltroEfetivo = mesFiltro.startsWith(anoFiltro) ? mesFiltro : mesAtual.startsWith(anoFiltro) ? mesAtual : anoFiltro + "-01";
-  const lancMes = lancamentos.filter(l => l.data?.startsWith(mesFiltroEfetivo));
-  const lancAno = lancamentos.filter(l => l.data?.startsWith(anoFiltro));
   function fmt(v) {
     return (v || 0).toLocaleString("pt-BR", {
       style: "currency",
@@ -5294,295 +5899,324 @@ function FinanceiroPessoal({
       return m;
     }
   }
+  const lancMes = lancamentos.filter(l => l.data?.startsWith(mesFiltroEfetivo));
+  const lancAno = lancamentos.filter(l => l.data?.startsWith(anoFiltro));
   function calcRec(l) {
     return l.filter(x => x.tipo === "receita" && (x.status === "pago" || x.status === "recebido")).reduce((a, x) => a + (parseFloat(x.valor) || 0), 0);
   }
-  function calcDesp(l) {
+  function calcDes(l) {
     return l.filter(x => x.tipo === "despesa" && (x.status === "pago" || x.status === "recebido")).reduce((a, x) => a + (parseFloat(x.valor) || 0), 0);
   }
   const recMes = calcRec(lancMes),
-    despMes = calcDesp(lancMes),
-    saldoMes = recMes - despMes;
+    desMes = calcDes(lancMes),
+    saldoMes = recMes - desMes;
   const recAno = calcRec(lancAno),
-    despAno = calcDesp(lancAno);
+    desAno = calcDes(lancAno);
   const pendMes = lancMes.filter(l => l.status === "pendente").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-  const corTipo = t => t === "receita" ? "#059669" : "#dc2626";
-  const bgTipo = t => t === "receita" ? "#d1fae5" : "#fee2e2";
 
-  // Recorrentes ativos com baixa já registrada neste mês
+  // Recorrentes ativos sem baixa neste mês
   const recorrAtivos = recorrentes.filter(r => r.ativo !== false);
   function jaDeuBaixaMes(r) {
     return lancamentos.some(l => l.recorrenteId === r.id && l.data?.startsWith(mesFiltroEfetivo));
   }
-  async function salvarAvulso() {
-    if (!formAvulso.valor || !formAvulso.data) {
-      alert("Valor e data obrigatórios.");
-      return;
-    }
-    setSalvando(true);
-    const dados = {
-      ...formAvulso,
-      valor: parseFloat(formAvulso.valor),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if (editando) {
-      await db.collection("clinica_financeiro_pessoal").doc(editando).update(dados);
-    } else {
-      await db.collection("clinica_financeiro_pessoal").add(dados);
-    }
-    setModal(false);
-    setEditando(null);
-    setFormAvulso({
-      tipo: "despesa",
+
+  // Lista unificada: lançamentos do mês + recorrentes sem baixa
+  const recSemBaixa = recorrAtivos.filter(r => !jaDeuBaixaMes(r)).map(r => ({
+    _virtual: true,
+    id: r.id,
+    tipo: r.tipo,
+    categoria: r.categoria,
+    descricao: r.descricao,
+    valor: r.valorPrevisto,
+    data: `${mesFiltroEfetivo}-${String(r.diaVencimento || 10).padStart(2, "0")}`,
+    status: "pendente",
+    recorrenteId: r.id,
+    _recObj: r
+  }));
+  const listaUnif = [...lancMes, ...recSemBaixa].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+  const receitas = filtroTipo === "despesa" ? [] : listaUnif.filter(l => l.tipo === "receita");
+  const despesas = filtroTipo === "receita" ? [] : listaUnif.filter(l => l.tipo === "despesa");
+  function abrirNovo(tipo) {
+    setFormLanc({
+      tipo,
       categoria: "",
       descricao: "",
       valor: "",
       data: new Date().toISOString().slice(0, 10),
       formaPag: "PIX",
       status: "pago",
-      obs: ""
+      obs: "",
+      parcelas: "1"
     });
+    setEditando(null);
+    setAbaModal("avulso");
+    setModal("lanc");
+  }
+  async function salvarLanc() {
+    if (!formLanc.valor || !formLanc.data) {
+      alert("Valor e data obrigatórios.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const val = parseFloat(formLanc.valor);
+      const nParc = parseInt(formLanc.parcelas) || 1;
+      const base = {
+        tipo: formLanc.tipo,
+        tipo_lancamento: formLanc.tipo === "despesa" ? "despesa" : "receita",
+        categoria: formLanc.categoria || "Outros",
+        descricao: formLanc.descricao || formLanc.categoria || "Lançamento",
+        formaPag: formLanc.formaPag,
+        status: formLanc.status,
+        obs: formLanc.obs || "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (editando) {
+        await db.collection(colLanc).doc(editando).update({
+          ...base,
+          valor: val,
+          data: formLanc.data
+        });
+      } else if (nParc > 1) {
+        const batch = db.batch();
+        const [a, m, d] = formLanc.data.split("-").map(Number);
+        for (let i = 0; i < nParc; i++) {
+          let mm = m + i,
+            aa = a;
+          while (mm > 12) {
+            mm -= 12;
+            aa++;
+          }
+          const dp = `${aa}-${String(mm).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          batch.set(db.collection(colLanc).doc(), {
+            ...base,
+            valor: val,
+            data: dp,
+            parcela: `${i + 1}/${nParc}`,
+            descricao: (formLanc.descricao || formLanc.categoria || "Lançamento") + ` (${i + 1}/${nParc})`
+          });
+        }
+        await batch.commit();
+      } else {
+        await db.collection(colLanc).add({
+          ...base,
+          valor: val,
+          data: formLanc.data
+        });
+      }
+      setModal(false);
+      setEditando(null);
+    } catch (e) {
+      alert("Erro: " + e.message);
+    }
     setSalvando(false);
   }
-  async function salvarRecorrente() {
+  async function salvarRecorr() {
     if (!formRecorr.categoria || !formRecorr.valorPrevisto) {
       alert("Categoria e valor obrigatórios.");
       return;
     }
     setSalvando(true);
-    const dados = {
-      ...formRecorr,
-      valorPrevisto: parseFloat(formRecorr.valorPrevisto),
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    if (editando) {
-      await db.collection("clinica_fin_pessoal_recorrentes").doc(editando).update(dados);
-    } else {
-      await db.collection("clinica_fin_pessoal_recorrentes").add(dados);
+    try {
+      const dados = {
+        ...formRecorr,
+        valorPrevisto: parseFloat(formRecorr.valorPrevisto),
+        totalParcelas: formRecorr.indeterminado ? 0 : parseInt(formRecorr.totalParcelas) || 0,
+        indeterminado: !!formRecorr.indeterminado,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if (editando) {
+        await db.collection(colRecorr).doc(editando).update(dados);
+      } else {
+        await db.collection(colRecorr).add(dados);
+      }
+      setModal(false);
+      setEditando(null);
+    } catch (e) {
+      alert("Erro: " + e.message);
     }
-    setModal(false);
-    setEditando(null);
-    setFormRecorr({
-      tipo: "despesa",
-      categoria: "",
-      descricao: "",
-      valorPrevisto: "",
-      recorrencia: "Mensal",
-      diaVencimento: "10",
-      mesInicio: new Date().toISOString().slice(0, 7),
-      ativo: true
-    });
     setSalvando(false);
   }
-
-  // Dar baixa — este mês ou este e os próximos (até dez)
-  async function confirmarBaixa() {
-    if (!formBaixa.valor) {
-      alert("Digite o valor.");
+  async function darBaixa() {
+    if (!formBaixa.valor || !formBaixa.data) {
+      alert("Valor e data obrigatórios.");
       return;
     }
     setSalvando(true);
-    const r = modalBaixa;
-    const batch = db.batch();
-    if (formBaixa.modo === "este") {
-      // Só este mês
-      const dia = r.diaVencimento || "10";
-      const data = `${mesFiltroEfetivo}-${String(dia).padStart(2, "0")}`;
-      const ref = db.collection("clinica_financeiro_pessoal").doc();
-      batch.set(ref, {
-        tipo: r.tipo,
-        categoria: r.categoria,
-        descricao: r.descricao || r.categoria,
+    try {
+      const r = modalBaixa;
+      await db.collection(colLanc).add({
+        tipo: r.tipo || "despesa",
+        tipo_lancamento: (r.tipo || "despesa") === "despesa" ? "despesa" : "receita",
+        categoria: r.categoria || "",
+        descricao: r.descricao || r.categoria || "",
         valor: parseFloat(formBaixa.valor),
-        data,
-        formaPag: formBaixa.formaPag,
+        data: formBaixa.data,
+        formaPag: formBaixa.formaPag || "PIX",
         status: "pago",
         recorrenteId: r.id,
-        obs: "",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-    } else {
-      // Este e os próximos até dezembro do ano atual
-      const [anoMes, mesMes] = mesFiltroEfetivo.split("-").map(Number);
-      for (let m = mesMes; m <= 12; m++) {
-        const mesStr = `${anoMes}-${String(m).padStart(2, "0")}`;
-        const dia = r.diaVencimento || "10";
-        const data = `${mesStr}-${String(dia).padStart(2, "0")}`;
-        // Não duplicar se já existe baixa neste mês
-        const jaExiste = lancamentos.some(l => l.recorrenteId === r.id && l.data?.startsWith(mesStr));
-        if (!jaExiste) {
-          const ref = db.collection("clinica_financeiro_pessoal").doc();
-          batch.set(ref, {
-            tipo: r.tipo,
-            categoria: r.categoria,
-            descricao: r.descricao || r.categoria,
-            valor: parseFloat(formBaixa.valor),
-            data,
-            formaPag: formBaixa.formaPag,
-            status: "pago",
-            recorrenteId: r.id,
-            obs: "Baixa automática — série",
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        }
-      }
+      setModalBaixa(null);
+    } catch (e) {
+      alert("Erro ao dar baixa: " + e.message);
+    } finally {
+      setSalvando(false);
     }
-    await batch.commit();
-    setModalBaixa(null);
-    setFormBaixa({
-      valor: "",
-      data: new Date().toISOString().slice(0, 10),
-      formaPag: "PIX",
-      modo: "este"
-    });
-    setSalvando(false);
   }
   async function excluir(id) {
-    if (!confirm("Excluir lançamento?")) return;
-    await db.collection("clinica_financeiro_pessoal").doc(id).delete();
-  }
-  async function excluirRec(id) {
-    if (!confirm("Excluir recorrente?")) return;
-    await db.collection("clinica_fin_pessoal_recorrentes").doc(id).delete();
-  }
-  async function salvarCategoria() {
-    if (!novaCategoria.nome.trim()) {
-      alert("Digite o nome.");
-      return;
+    if (!confirm("Excluir este lançamento?")) return;
+    try {
+      await db.collection(colLanc).doc(id).delete();
+    } catch (e) {
+      alert("Erro ao excluir: " + e.message);
     }
-    await db.collection("clinica_fin_pessoal_categorias").add({
-      ...novaCategoria,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    setNovaCategoria({
-      nome: "",
-      tipo: "despesa"
-    });
   }
-  async function excluirCategoria(id) {
-    if (!confirm("Excluir?")) return;
-    await db.collection("clinica_fin_pessoal_categorias").doc(id).delete();
+  async function moverLancamento(lanc, destino, modoRecorr) {
+    setMovendoId(lanc.id);
+    try {
+      let dados = null;
+
+      // Se é virtual (sem baixa), não tem doc em colLanc — usar os dados do próprio objeto
+      if (lanc._virtual) {
+        const {
+          _virtual,
+          _recObj,
+          ...rest
+        } = lanc;
+        dados = {
+          ...rest
+        };
+        // Para virtual, só mover o recorrente — não há lançamento real para mover
+        if (destino.colRec && _recObj?.id) {
+          const rSnap = await db.collection(colRecorr).doc(_recObj.id).get();
+          if (rSnap.exists) {
+            await db.collection(destino.colRec).add(rSnap.data());
+            await db.collection(colRecorr).doc(_recObj.id).delete();
+          }
+        }
+        setModalMover(null);
+        setMovendoId(null);
+        return;
+      }
+
+      // Lançamento real — buscar do Firestore
+      const snap = await db.collection(colLanc).doc(lanc.id).get();
+      if (!snap.exists) {
+        alert("Lançamento não encontrado.");
+        setMovendoId(null);
+        return;
+      }
+      dados = snap.data();
+
+      // Gravar no destino
+      if (destino.col === "clinica_lancamentos") {
+        await db.collection("clinica_lancamentos").add({
+          ...dados,
+          tipo_lancamento: dados.tipo === "despesa" ? "despesa" : dados.tipo_lancamento || "avulso"
+        });
+      } else {
+        await db.collection(destino.col).add({
+          ...dados
+        });
+      }
+      await db.collection(colLanc).doc(lanc.id).delete();
+
+      // Mover recorrente vinculado se pedido
+      if (lanc.recorrenteId && destino.colRec && modoRecorr === "todos") {
+        const rSnap = await db.collection(colRecorr).doc(lanc.recorrenteId).get();
+        if (rSnap.exists) {
+          await db.collection(destino.colRec).add(rSnap.data());
+          await db.collection(colRecorr).doc(lanc.recorrenteId).delete();
+        }
+      }
+      setModalMover(null);
+    } catch (e) {
+      alert("Erro ao mover: " + e.message);
+    } finally {
+      setMovendoId(null);
+    }
   }
+  const corRec = "#059669";
+  const corDes = "#dc2626";
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginBottom: 20,
-      flexWrap: "wrap",
-      gap: 12
-    }
+    className: "page-header"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-title"
-  }, "Financeiro Pessoal"), /*#__PURE__*/React.createElement("div", {
+  }, titulo), /*#__PURE__*/React.createElement("div", {
     className: "page-subtitle"
-  }, somenteLeitura ? "Visualização — Paulo Sergio" : "Gestão financeira pessoal e familiar")), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
+  }, subtitulo)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
       flexWrap: "wrap"
     }
   }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModal("categoria")
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "tag",
-    size: 15
-  }), " Categorias"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    onClick: () => {
-      setModal("recorrente");
-      setEditando(null);
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "repeat",
-    size: 15
-  }), " + Recorrente"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => {
-      setModal("avulso");
-      setEditando(null);
+    onClick: () => abrirNovo("receita"),
+    className: "btn",
+    style: {
+      background: "none",
+      border: `1px solid ${corRec}`,
+      color: corRec,
+      borderRadius: 8,
+      padding: "8px 16px",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      fontFamily: "var(--font-body)"
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
-    size: 15
-  }), " + Lançamento"))), /*#__PURE__*/React.createElement("div", {
+    size: 14
+  }), " Nova Receita"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => abrirNovo("despesa"),
+    className: "btn btn-purple",
     style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 14,
-      alignItems: "center",
-      flexWrap: "wrap"
+      padding: "8px 16px",
+      fontSize: 13
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      flexShrink: 0
-    }
-  }, "Ano:"), anos.map(a => /*#__PURE__*/React.createElement("button", {
-    key: a,
-    onClick: () => {
-      setAnoFiltro(a);
-      setMesFiltro(a === String(anoAtualNum) ? mesAtual : a + "-01");
-    },
-    style: {
-      padding: "5px 16px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      borderColor: anoFiltro === a ? "var(--purple)" : "#e5e7eb",
-      background: anoFiltro === a ? "var(--purple)" : "white",
-      color: anoFiltro === a ? "white" : "#6b7280",
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: "pointer"
-    }
-  }, a, a === String(anoAtualNum) && /*#__PURE__*/React.createElement("span", {
-    style: {
-      marginLeft: 3,
-      fontSize: 9
-    }
-  }, "●")))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 14
+  }), " Nova Despesa"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
-      gap: 12,
-      marginBottom: 20
+      gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+      gap: 16,
+      marginBottom: 24
     }
   }, /*#__PURE__*/React.createElement("div", {
+    className: "card",
     style: {
-      background: saldoMes >= 0 ? "#d1fae5" : "#fee2e2",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid",
-      borderColor: saldoMes >= 0 ? "#6ee7b7" : "#fca5a5"
+      padding: 20,
+      background: saldoMes >= 0 ? "#f0fdf4" : "#fef2f2",
+      border: `1px solid ${saldoMes >= 0 ? "#86efac" : "#fca5a5"}`
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
-      color: saldoMes >= 0 ? "#059669" : "#dc2626",
+      color: saldoMes >= 0 ? corRec : corDes,
       marginBottom: 4
     }
   }, "Saldo (", mesLabel(mesFiltroEfetivo), ")"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: saldoMes >= 0 ? "#059669" : "#dc2626"
+      fontSize: 24,
+      fontWeight: 700,
+      color: saldoMes >= 0 ? corRec : corDes
     }
   }, fmt(saldoMes)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: "#6b7280",
-      marginTop: 2
+      color: "var(--text-muted)",
+      marginTop: 4
     }
-  }, "+", fmt(recMes), " / -", fmt(despMes))), /*#__PURE__*/React.createElement("div", {
+  }, "+", fmt(recMes), " / -", fmt(desMes))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
     style: {
+      padding: 20,
       background: "#fffbeb",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid #fcd34d"
+      border: "1px solid #fde68a"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5591,327 +6225,412 @@ function FinanceiroPessoal({
       color: "#d97706",
       marginBottom: 4
     }
-  }, "Pendente"), /*#__PURE__*/React.createElement("div", {
+  }, "Pendente (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 20,
-      fontWeight: 800,
+      fontSize: 24,
+      fontWeight: 700,
       color: "#d97706"
     }
   }, fmt(pendMes))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
     style: {
-      background: "#f0fdf4",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid #86efac"
+      padding: 20
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
-      color: "#059669",
+      color: corRec,
       marginBottom: 4
     }
   }, "Receitas (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "#059669"
+      fontSize: 24,
+      fontWeight: 700,
+      color: corRec
     }
   }, fmt(recAno))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
     style: {
-      background: "#fef2f2",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid #fca5a5"
+      padding: 20
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
-      color: "#dc2626",
+      color: corDes,
       marginBottom: 4
     }
   }, "Despesas (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "#dc2626"
+      fontSize: 24,
+      fontWeight: 700,
+      color: corDes
     }
-  }, fmt(despAno)))), /*#__PURE__*/React.createElement("div", {
+  }, fmt(desAno)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 4,
-      marginBottom: 24,
-      overflowX: "auto",
-      paddingBottom: 4
+      gap: 8,
+      marginBottom: 16,
+      alignItems: "center"
     }
-  }, mesesDisp.map(m => /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      fontWeight: 600
+    }
+  }, "Ano:"), anos.map(a => /*#__PURE__*/React.createElement("button", {
+    key: a,
+    onClick: () => setAnoFiltro(a),
+    style: {
+      padding: "4px 14px",
+      borderRadius: 20,
+      border: "none",
+      background: anoFiltro === a ? "var(--purple)" : "var(--gray-100)",
+      color: anoFiltro === a ? "white" : "var(--gray-600)",
+      fontWeight: anoFiltro === a ? 700 : 400,
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)"
+    }
+  }, a))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 16,
+      background: "var(--gray-50)",
+      padding: 6,
+      borderRadius: 12,
+      width: "fit-content"
+    }
+  }, [["tudo", "📊 Tudo"], ["receita", "💰 Receitas"], ["despesa", "💸 Despesas"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setFiltroTipo(v),
+    style: {
+      padding: "6px 16px",
+      borderRadius: 8,
+      border: "none",
+      background: filtroTipo === v ? "white" : "transparent",
+      color: filtroTipo === v ? v === "receita" ? corRec : v === "despesa" ? corDes : "var(--purple)" : "#6b7280",
+      fontWeight: filtroTipo === v ? 700 : 500,
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)",
+      boxShadow: filtroTipo === v ? "0 1px 4px rgba(0,0,0,.1)" : "none",
+      transition: ".15s"
+    }
+  }, l))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 20,
+      overflowX: "auto",
+      scrollbarWidth: "none"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const idx = mesesDisp.indexOf(mesFiltroEfetivo);
+      if (idx > 0) setMesFiltro(mesesDisp[idx - 1]);
+    },
+    style: {
+      background: "var(--purple)",
+      color: "white",
+      border: "none",
+      borderRadius: "50%",
+      width: 28,
+      height: 28,
+      cursor: "pointer",
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-left",
+    size: 14
+  })), mesesDisp.map(m => /*#__PURE__*/React.createElement("button", {
     key: m,
     onClick: () => setMesFiltro(m),
     style: {
       padding: "5px 14px",
       borderRadius: 20,
-      border: "1.5px solid",
-      borderColor: mesFiltroEfetivo === m ? "var(--purple)" : "#e5e7eb",
-      background: mesFiltroEfetivo === m ? "var(--purple)" : "white",
-      color: mesFiltroEfetivo === m ? "white" : "#6b7280",
-      fontSize: 12,
-      fontWeight: mesFiltroEfetivo === m ? 700 : 400,
+      border: "none",
+      background: m === mesFiltroEfetivo ? "var(--purple)" : "var(--gray-100)",
+      color: m === mesFiltroEfetivo ? "white" : "var(--gray-600)",
+      fontWeight: m === mesFiltroEfetivo ? 700 : 400,
       cursor: "pointer",
-      flexShrink: 0
+      fontSize: 13,
+      flexShrink: 0,
+      fontFamily: "var(--font-body)"
     }
-  }, mesLabel(m)))), recorrAtivos.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, mesLabel(m))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const idx = mesesDisp.indexOf(mesFiltroEfetivo);
+      if (idx < mesesDisp.length - 1) setMesFiltro(mesesDisp[idx + 1]);
+    },
+    style: {
+      background: "var(--purple)",
+      color: "white",
+      border: "none",
+      borderRadius: "50%",
+      width: 28,
+      height: 28,
+      cursor: "pointer",
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-right",
+    size: 14
+  }))), filtroTipo !== "despesa" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 20px",
+      background: "#f0fdf4",
+      border: "1px solid #86efac",
+      borderRadius: 12,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: corRec,
+      fontWeight: 600
+    }
+  }, "TOTAL RECEITAS DO MÊS "), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 700,
+      color: corRec,
+      marginLeft: 8
+    }
+  }, fmt(recMes))), filtroTipo !== "receita" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "12px 20px",
+      background: "#fef2f2",
+      border: "1px solid #fca5a5",
+      borderRadius: 12,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      color: corDes,
+      fontWeight: 600
+    }
+  }, "TOTAL DESPESAS DO MÊS "), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18,
+      fontWeight: 700,
+      color: corDes,
+      marginLeft: 8
+    }
+  }, fmt(desMes))), receitas.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 24
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
       fontWeight: 700,
       fontSize: 14,
-      marginBottom: 10,
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      color: "var(--text-muted)"
+      color: corRec
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "repeat",
-    size: 15
-  }), " Recorrentes — ", mesLabel(mesFiltroEfetivo)), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 0
-    }
-  }, recorrAtivos.map(r => {
-    const baixaDone = jaDeuBaixaMes(r);
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "12px 16px",
-        borderBottom: "1px solid var(--gray-100)"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 36,
-        height: 36,
-        borderRadius: 8,
-        background: bgTipo(r.tipo),
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: r.tipo === "receita" ? "trending-up" : "trending-down",
-      size: 16
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600,
-        fontSize: 14
-      }
-    }, r.descricao || r.categoria), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)"
-      }
-    }, r.categoria, " · vence dia ", r.diaVencimento, " · ", r.recorrencia)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        color: corTipo(r.tipo),
-        marginRight: 8
-      }
-    }, fmt(parseFloat(r.valorPrevisto) || 0)), baixaDone ? /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "#d1fae5",
-        color: "#065f46",
-        fontSize: 11,
-        fontWeight: 600,
-        padding: "3px 10px",
-        borderRadius: 20
-      }
-    }, "✓ Pago") : !somenteLeitura && /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-purple",
-      style: {
-        fontSize: 12,
-        padding: "6px 14px"
-      },
-      onClick: () => {
-        setModalBaixa(r);
-        setFormBaixa({
-          valor: r.valorPrevisto || "",
-          data: `${mesFiltroEfetivo}-${String(r.diaVencimento || 10).padStart(2, "0")}`,
-          formaPag: "PIX",
-          modo: "este"
-        });
-      }
-    }, "Dar baixa"), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 4
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-ghost",
-      style: {
-        padding: "4px 8px"
-      },
-      onClick: () => {
-        setFormRecorr({
-          tipo: r.tipo,
-          categoria: r.categoria,
-          descricao: r.descricao || "",
-          valorPrevisto: r.valorPrevisto + "",
-          recorrencia: r.recorrencia,
-          diaVencimento: r.diaVencimento,
-          mesInicio: r.mesInicio || mesAtual,
-          ativo: r.ativo
-        });
-        setEditando(r.id);
-        setModal("recorrente");
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "pencil",
-      size: 13
-    })), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-ghost",
-      style: {
-        padding: "4px 8px",
-        color: "var(--danger)"
-      },
-      onClick: () => excluirRec(r.id)
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "trash-2",
-      size: 13
-    }))));
-  }))), /*#__PURE__*/React.createElement("div", null, lancMes.filter(l => l.tipo === "receita").length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, "🟢 Receitas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
-      color: "#059669",
-      display: "flex",
-      alignItems: "center",
-      gap: 6
+      color: corRec
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trending-up",
-    size: 16
-  }), " Receitas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      color: "#059669"
-    }
-  }, fmt(recMes))), /*#__PURE__*/React.createElement("div", {
+  }, fmt(calcRec(receitas)))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
-      padding: 0
+      padding: 0,
+      overflow: "hidden"
     }
-  }, lancMes.filter(l => l.tipo === "receita").map(l => /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse"
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "var(--gray-50)"
+    }
+  }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/React.createElement("th", {
+    key: h,
+    style: {
+      padding: "10px 14px",
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      textAlign: "left",
+      borderBottom: "1px solid var(--gray-200)"
+    }
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, receitas.map((l, i) => /*#__PURE__*/React.createElement("tr", {
     key: l.id,
     style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      padding: "12px 16px",
-      borderBottom: "1px solid var(--gray-100)"
+      borderBottom: "1px solid var(--gray-100)",
+      background: i % 2 === 0 ? "white" : "var(--gray-50)"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("td", {
     style: {
-      width: 36,
-      height: 36,
-      borderRadius: 8,
-      background: "#d1fae5",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0
+      padding: "10px 14px",
+      fontSize: 13,
+      color: "var(--text-muted)",
+      whiteSpace: "nowrap"
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrow-down-left",
-    size: 16
-  })), /*#__PURE__*/React.createElement("div", {
+  }, l.data, l._virtual && /*#__PURE__*/React.createElement("span", {
     style: {
-      flex: 1
+      fontSize: 10,
+      background: "#fef3c7",
+      color: "#b45309",
+      padding: "1px 6px",
+      borderRadius: 20,
+      fontWeight: 600,
+      marginLeft: 6
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, "sem baixa")), /*#__PURE__*/React.createElement("td", {
     style: {
-      fontWeight: 500,
-      fontSize: 14
+      padding: "10px 14px",
+      fontSize: 13,
+      fontWeight: 500
     }
-  }, l.descricao || l.categoria), /*#__PURE__*/React.createElement("div", {
+  }, l.descricao || l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
     style: {
+      padding: "10px 14px",
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, l.categoria, " · ", l.data, l.formaPag ? " · " + l.formaPag : "")), /*#__PURE__*/React.createElement("div", {
+  }, l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
     style: {
-      fontWeight: 700,
-      color: "#059669"
+      padding: "10px 14px",
+      fontSize: 12,
+      color: "var(--text-muted)"
     }
-  }, fmt(parseFloat(l.valor) || 0)), /*#__PURE__*/React.createElement("span", {
+  }, l.formaPag || "—"), /*#__PURE__*/React.createElement("td", {
     style: {
+      padding: "10px 14px",
+      fontSize: 13,
+      fontWeight: 700,
+      color: corRec,
+      whiteSpace: "nowrap"
+    }
+  }, fmt(l.valor)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "3px 10px",
+      borderRadius: 20,
+      fontWeight: 600,
+      background: l.status === "pago" || l.status === "recebido" ? "#d1fae5" : "#fef3c7",
+      color: l.status === "pago" || l.status === "recebido" ? "#065f46" : "#b45309"
+    }
+  }, l.status === "pago" || l.status === "recebido" ? "✓ Recebido" : "Pendente")), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 4,
+      flexWrap: "wrap",
+      alignItems: "center"
+    }
+  }, l._virtual && /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setModalBaixa(l._recObj);
+      setFormBaixa({
+        valor: l.valor + "",
+        data: new Date().toISOString().slice(0, 10),
+        formaPag: "PIX",
+        modo: "este"
+      });
+    },
+    style: {
+      fontSize: 11,
       background: "#d1fae5",
       color: "#065f46",
-      fontSize: 11,
-      fontWeight: 600,
-      padding: "2px 8px",
-      borderRadius: 20
+      border: "none",
+      borderRadius: 6,
+      padding: "3px 8px",
+      cursor: "pointer",
+      fontWeight: 600
     }
-  }, "✓ Recebido"), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 4
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "4px 8px"
-    },
+  }, "Dar baixa"), !l._virtual && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     onClick: () => {
-      setFormAvulso({
+      setFormLanc({
         tipo: l.tipo,
         categoria: l.categoria || "",
         descricao: l.descricao || "",
         valor: l.valor + "",
         data: l.data,
         formaPag: l.formaPag || "PIX",
-        status: l.status,
-        obs: l.obs || ""
+        status: l.status || "pago",
+        obs: l.obs || "",
+        parcelas: "1"
       });
       setEditando(l.id);
-      setModal("avulso");
-    }
+      setAbaModal("avulso");
+      setModal("lanc");
+    },
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "var(--purple)",
+      padding: "3px 6px"
+    },
+    title: "Editar"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
   })), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
+    onClick: () => excluir(l.id),
     style: {
-      padding: "4px 8px",
-      color: "var(--danger)"
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626",
+      padding: "3px 6px"
     },
-    onClick: () => excluir(l.id)
+    title: "Excluir"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))))))), lancMes.filter(l => l.tipo === "despesa").length > 0 && /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModalMover({
+      lanc: l._virtual ? {
+        ...l,
+        id: l._recObj.id
+      } : l,
+      isRecorrente: true
+    }),
+    title: "Mover para outro financeiro",
     style: {
-      marginBottom: 20
+      background: "#f3f0ff",
+      border: "none",
+      cursor: "pointer",
+      color: "#7B00C4",
+      padding: "3px 8px",
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "↗ Mover"))))))))), despesas.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 24
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5923,246 +6642,263 @@ function FinanceiroPessoal({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
-      color: "#dc2626",
-      display: "flex",
-      alignItems: "center",
-      gap: 6
+      fontSize: 14,
+      color: corDes
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trending-down",
-    size: 16
-  }), " Despesas"), /*#__PURE__*/React.createElement("div", {
+  }, "🔴 Despesas"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
-      color: "#dc2626"
+      color: corDes
     }
-  }, fmt(despMes))), /*#__PURE__*/React.createElement("div", {
+  }, fmt(calcDes(despesas)))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
-      padding: 0
+      padding: 0,
+      overflow: "hidden"
     }
-  }, lancMes.filter(l => l.tipo === "despesa").map(l => /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse"
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "var(--gray-50)"
+    }
+  }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/React.createElement("th", {
+    key: h,
+    style: {
+      padding: "10px 14px",
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      textAlign: "left",
+      borderBottom: "1px solid var(--gray-200)"
+    }
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, despesas.map((l, i) => /*#__PURE__*/React.createElement("tr", {
     key: l.id,
     style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      padding: "12px 16px",
-      borderBottom: "1px solid var(--gray-100)"
+      borderBottom: "1px solid var(--gray-100)",
+      background: i % 2 === 0 ? "white" : "var(--gray-50)"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("td", {
     style: {
-      width: 36,
-      height: 36,
-      borderRadius: 8,
-      background: "#fee2e2",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0
+      padding: "10px 14px",
+      fontSize: 13,
+      color: "var(--text-muted)",
+      whiteSpace: "nowrap"
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrow-up-right",
-    size: 16
-  })), /*#__PURE__*/React.createElement("div", {
+  }, l.data, l._virtual && /*#__PURE__*/React.createElement("span", {
     style: {
-      flex: 1
+      fontSize: 10,
+      background: "#fef3c7",
+      color: "#b45309",
+      padding: "1px 6px",
+      borderRadius: 20,
+      fontWeight: 600,
+      marginLeft: 6
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, "sem baixa")), /*#__PURE__*/React.createElement("td", {
     style: {
-      fontWeight: 500,
-      fontSize: 14
+      padding: "10px 14px",
+      fontSize: 13,
+      fontWeight: 500
     }
-  }, l.descricao || l.categoria), /*#__PURE__*/React.createElement("div", {
+  }, l.descricao || l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
     style: {
+      padding: "10px 14px",
       fontSize: 12,
       color: "var(--text-muted)"
     }
-  }, l.categoria, " · ", l.data, l.formaPag ? " · " + l.formaPag : "")), /*#__PURE__*/React.createElement("div", {
+  }, l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
     style: {
+      padding: "10px 14px",
+      fontSize: 12,
+      color: "var(--text-muted)"
+    }
+  }, l.formaPag || "—"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "10px 14px",
+      fontSize: 13,
       fontWeight: 700,
-      color: "#dc2626"
+      color: corDes,
+      whiteSpace: "nowrap"
     }
-  }, fmt(parseFloat(l.valor) || 0)), /*#__PURE__*/React.createElement("span", {
+  }, fmt(l.valor)), /*#__PURE__*/React.createElement("td", {
     style: {
-      background: l.status === "pago" ? "#d1fae5" : "#fef3c7",
-      color: l.status === "pago" ? "#065f46" : "#92400e",
-      fontSize: 11,
-      fontWeight: 600,
-      padding: "2px 8px",
-      borderRadius: 20
+      padding: "10px 14px"
     }
-  }, l.status === "pago" ? "✓ Pago" : "Pendente"), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      padding: "3px 10px",
+      borderRadius: 20,
+      fontWeight: 600,
+      background: l.status === "pago" ? "#d1fae5" : "#fef3c7",
+      color: l.status === "pago" ? "#065f46" : "#b45309"
+    }
+  }, l.status === "pago" ? "✓ Pago" : "Pendente")), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "10px 14px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 4
+      gap: 4,
+      flexWrap: "wrap",
+      alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "4px 8px"
-    },
+  }, l._virtual && /*#__PURE__*/React.createElement("button", {
     onClick: () => {
-      setFormAvulso({
+      setModalBaixa(l._recObj);
+      setFormBaixa({
+        valor: l.valor + "",
+        data: new Date().toISOString().slice(0, 10),
+        formaPag: "PIX",
+        modo: "este"
+      });
+    },
+    style: {
+      fontSize: 11,
+      background: "#d1fae5",
+      color: "#065f46",
+      border: "none",
+      borderRadius: 6,
+      padding: "3px 8px",
+      cursor: "pointer",
+      fontWeight: 600
+    }
+  }, "Dar baixa"), !l._virtual && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setFormLanc({
         tipo: l.tipo,
         categoria: l.categoria || "",
         descricao: l.descricao || "",
         valor: l.valor + "",
         data: l.data,
         formaPag: l.formaPag || "PIX",
-        status: l.status,
-        obs: l.obs || ""
+        status: l.status || "pago",
+        obs: l.obs || "",
+        parcelas: "1"
       });
       setEditando(l.id);
-      setModal("avulso");
-    }
+      setAbaModal("avulso");
+      setModal("lanc");
+    },
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "var(--purple)",
+      padding: "3px 6px"
+    },
+    title: "Editar"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
   })), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
+    onClick: () => excluir(l.id),
     style: {
-      padding: "4px 8px",
-      color: "var(--danger)"
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626",
+      padding: "3px 6px"
     },
-    onClick: () => excluir(l.id)
+    title: "Excluir"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))))))), lancMes.length === 0 && recorrAtivos.length === 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
+  }))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModalMover({
+      lanc: l._virtual ? {
+        ...l,
+        id: l._recObj.id
+      } : l,
+      isRecorrente: true
+    }),
+    title: "Mover para outro financeiro",
+    style: {
+      background: "#f3f0ff",
+      border: "none",
+      cursor: "pointer",
+      color: "#7B00C4",
+      padding: "3px 8px",
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: 600
+    }
+  }, "↗ Mover"))))))))), receitas.length === 0 && despesas.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: 40,
-      color: "var(--text-muted)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "wallet",
-    size: 40
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      fontWeight: 500
-    }
-  }, "Nenhum lançamento em ", mesLabel(mesFiltroEfetivo)), !somenteLeitura && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      marginTop: 6
-    }
-  }, "Use \"+ Lançamento\" ou \"+ Recorrente\" acima."))), modalBaixa && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModalBaixa(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 460
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 600,
-      marginBottom: 4
-    }
-  }, "Dar baixa — ", modalBaixa.descricao || modalBaixa.categoria), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
       color: "var(--text-muted)",
-      marginBottom: 20
+      fontSize: 14
     }
-  }, "Previsto: ", fmt(parseFloat(modalBaixa.valorPrevisto) || 0)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor Real (R$)"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    value: formBaixa.valor,
-    onChange: e => setFormBaixa({
-      ...formBaixa,
-      valor: e.target.value
-    }),
-    autoFocus: true
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formBaixa.formaPag,
-    onChange: e => setFormBaixa({
-      ...formBaixa,
-      formaPag: e.target.value
-    })
-  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
-  }, f))))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Aplicar para"), /*#__PURE__*/React.createElement("div", {
+  }, "Nenhum lançamento em ", mesLabel(mesFiltroEfetivo), " de ", anoFiltro, "."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8
+      gap: 16,
+      alignItems: "center",
+      justifyContent: "flex-end",
+      padding: "16px 0",
+      borderTop: "1px solid var(--gray-200)",
+      flexWrap: "wrap"
     }
-  }, [["este", "Só este mês", "#7B00C4"], ["proximos", "Este e os próximos (até dez.)", "#0891b2"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    type: "button",
-    onClick: () => setFormBaixa({
-      ...formBaixa,
-      modo: v
-    }),
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      flex: 1,
-      padding: "10px 8px",
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formBaixa.modo === v ? c : "#e5e7eb",
-      background: formBaixa.modo === v ? c + "15" : "white",
-      color: formBaixa.modo === v ? c : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 12,
-      fontFamily: "var(--font-body)",
       textAlign: "center"
     }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
+      fontSize: 11,
+      color: "var(--text-muted)"
     }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModalBaixa(null)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: confirmarBaixa,
-    disabled: salvando
-  }, salvando ? "Salvando..." : "Confirmar Baixa")))), modal === "avulso" && /*#__PURE__*/React.createElement("div", {
+  }, "Receitas"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: corRec
+    }
+  }, fmt(recMes))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      color: "var(--text-muted)"
+    }
+  }, "—"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, "Despesas"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: corDes
+    }
+  }, fmt(desMes))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      color: "var(--text-muted)"
+    }
+  }, "="), /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, "Saldo do Mês"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 18,
+      color: saldoMes >= 0 ? corRec : corDes
+    }
+  }, fmt(saldoMes)))), modal === "lanc" && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -6173,14 +6909,17 @@ function FinanceiroPessoal({
       zIndex: 500,
       padding: 20
     },
-    onClick: () => setModal(false)
+    onClick: () => {
+      setModal(false);
+      setEditando(null);
+    }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
       padding: 28,
       width: "100%",
-      maxWidth: 500,
+      maxWidth: 520,
       maxHeight: "90vh",
       overflowY: "auto"
     },
@@ -6190,7 +6929,7 @@ function FinanceiroPessoal({
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 20
+      marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6211,7 +6950,31 @@ function FinanceiroPessoal({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "x",
     size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
+  }))), !editando && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 16,
+      background: "var(--gray-50)",
+      padding: 4,
+      borderRadius: 10
+    }
+  }, [["avulso", "💰 Avulso"], ["recorrente", "🔁 Recorrente"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setAbaModal(v),
+    style: {
+      flex: 1,
+      padding: "7px",
+      border: "none",
+      borderRadius: 8,
+      background: abaModal === v ? "white" : "transparent",
+      color: abaModal === v ? "var(--purple)" : "#6b7280",
+      fontWeight: abaModal === v ? 700 : 500,
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)"
+    }
+  }, l))), abaModal === "avulso" ? /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -6220,76 +6983,67 @@ function FinanceiroPessoal({
   }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
-      gridColumn: "1/-1"
+      gridColumn: "span 2"
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["receita", "↓ Receita", "#059669"], ["despesa", "↑ Despesa", "#dc2626"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    type: "button",
-    onClick: () => setFormAvulso({
-      ...formAvulso,
-      tipo: v,
+  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: formLanc.tipo,
+    onChange: e => setFormLanc({
+      ...formLanc,
+      tipo: e.target.value,
       categoria: ""
-    }),
-    style: {
-      flex: 1,
-      padding: 10,
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formAvulso.tipo === v ? c : "#e5e7eb",
-      background: formAvulso.tipo === v ? c + "15" : "white",
-      color: formAvulso.tipo === v ? c : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "receita"
+  }, "Receita"), /*#__PURE__*/React.createElement("option", {
+    value: "despesa"
+  }, "Despesa"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
   }, "Categoria"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
-    value: formAvulso.categoria,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
+    value: formLanc.categoria,
+    onChange: e => setFormLanc({
+      ...formLanc,
       categoria: e.target.value
     })
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), (formAvulso.tipo === "receita" ? catsReceita : catsDespesa).map(c => /*#__PURE__*/React.createElement("option", {
-    key: c
+  }, "Selecionar..."), (formLanc.tipo === "receita" ? catsRec : catsDes).map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
   }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formAvulso.descricao,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
-      descricao: e.target.value
-    }),
-    placeholder: "Ex: Conta de luz"
-  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
   }, "Valor (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
-    value: formAvulso.valor,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
+    step: "0.01",
+    value: formLanc.valor,
+    onChange: e => setFormLanc({
+      ...formLanc,
       valor: e.target.value
     }),
     placeholder: "0,00"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "span 2"
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: formLanc.descricao,
+    onChange: e => setFormLanc({
+      ...formLanc,
+      descricao: e.target.value
+    }),
+    placeholder: "Descrição opcional"
   })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
@@ -6297,138 +7051,113 @@ function FinanceiroPessoal({
   }, "Data"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "date",
-    value: formAvulso.data,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
+    value: formLanc.data,
+    onChange: e => setFormLanc({
+      ...formLanc,
       data: e.target.value
     })
   })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
+  }, "Forma Pag."), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
-    value: formAvulso.formaPag,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
+    value: formLanc.formaPag,
+    onChange: e => setFormLanc({
+      ...formLanc,
       formaPag: e.target.value
     })
   }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
+    key: f,
+    value: f
   }, f)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
+    className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["pago", formAvulso.tipo === "receita" ? "✓ Recebido" : "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    type: "button",
-    onClick: () => setFormAvulso({
-      ...formAvulso,
-      status: v
-    }),
-    style: {
-      flex: 1,
-      padding: 10,
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formAvulso.status === v ? c : "#e5e7eb",
-      background: formAvulso.status === v ? c + "15" : "white",
-      color: formAvulso.status === v ? c : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Observações"), /*#__PURE__*/React.createElement("input", {
+  }, "Status"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
-    value: formAvulso.obs || "",
-    onChange: e => setFormAvulso({
-      ...formAvulso,
+    value: formLanc.status,
+    onChange: e => setFormLanc({
+      ...formLanc,
+      status: e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "pago"
+  }, "✓ Pago / Recebido"), /*#__PURE__*/React.createElement("option", {
+    value: "pendente"
+  }, "Pendente"))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Parcelas"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    min: "1",
+    max: "48",
+    value: formLanc.parcelas,
+    onChange: e => setFormLanc({
+      ...formLanc,
+      parcelas: e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "span 2"
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Observação"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: formLanc.obs,
+    onChange: e => setFormLanc({
+      ...formLanc,
       obs: e.target.value
     }),
-    placeholder: "Opcional..."
-  }))), /*#__PURE__*/React.createElement("div", {
+    placeholder: "Opcional"
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
+      gridColumn: "span 2",
       display: "flex",
-      gap: 10,
-      justifyContent: "flex-end",
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvarAvulso,
-    disabled: salvando
-  }, salvando ? "Salvando..." : editando ? "Salvar" : "Lançar")))), modal === "recorrente" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModal(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 500,
-      maxHeight: "90vh",
-      overflowY: "auto"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
+      gap: 8,
       justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
+      alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
-    }
-  }, editando ? "Editar" : "Novo", " Lançamento Recorrente"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
+  }, editando && /*#__PURE__*/React.createElement("button", {
+    onClick: async () => {
+      if (confirm("Excluir este lançamento?")) {
+        await excluir(editando);
+        setModal(false);
+        setEditando(null);
+      }
     },
     style: {
       background: "none",
-      border: "none",
-      cursor: "pointer"
+      border: "1px solid #dc2626",
+      color: "#dc2626",
+      borderRadius: 8,
+      padding: "7px 14px",
+      cursor: "pointer",
+      fontSize: 13,
+      fontWeight: 600,
+      fontFamily: "var(--font-body)"
     }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
+  }, "🗑️ Excluir"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginLeft: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setModal(false);
+      setEditando(null);
+    },
+    className: "btn btn-ghost"
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    onClick: salvarLanc,
+    disabled: salvando,
+    className: "btn btn-purple"
+  }, salvando ? "Salvando..." : "Salvar")))) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -6437,37 +7166,23 @@ function FinanceiroPessoal({
   }, /*#__PURE__*/React.createElement("div", {
     className: "form-group",
     style: {
-      gridColumn: "1/-1"
+      gridColumn: "span 2"
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Tipo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["receita", "↓ Receita", "#059669"], ["despesa", "↑ Despesa", "#dc2626"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    type: "button",
-    onClick: () => setFormRecorr({
+  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: formRecorr.tipo,
+    onChange: e => setFormRecorr({
       ...formRecorr,
-      tipo: v,
+      tipo: e.target.value,
       categoria: ""
-    }),
-    style: {
-      flex: 1,
-      padding: 10,
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formRecorr.tipo === v ? c : "#e5e7eb",
-      background: formRecorr.tipo === v ? c + "15" : "white",
-      color: formRecorr.tipo === v ? c : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: "receita"
+  }, "Receita"), /*#__PURE__*/React.createElement("option", {
+    value: "despesa"
+  }, "Despesa"))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
@@ -6480,33 +7195,38 @@ function FinanceiroPessoal({
     })
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Selecionar..."), (formRecorr.tipo === "receita" ? catsReceita : catsDespesa).map(c => /*#__PURE__*/React.createElement("option", {
-    key: c
+  }, "Selecionar..."), (formRecorr.tipo === "receita" ? catsRec : catsDes).map(c => /*#__PURE__*/React.createElement("option", {
+    key: c,
+    value: c
   }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formRecorr.descricao || "",
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      descricao: e.target.value
-    }),
-    placeholder: "Ex: Aluguel ap. 302"
-  })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
   }, "Valor Previsto (R$)"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
+    step: "0.01",
     value: formRecorr.valorPrevisto,
     onChange: e => setFormRecorr({
       ...formRecorr,
       valorPrevisto: e.target.value
     }),
     placeholder: "0,00"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      gridColumn: "span 2"
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: formRecorr.descricao,
+    onChange: e => setFormRecorr({
+      ...formRecorr,
+      descricao: e.target.value
+    }),
+    placeholder: "Ex: Aluguel apartamento"
   })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
@@ -6518,13 +7238,14 @@ function FinanceiroPessoal({
       ...formRecorr,
       recorrencia: e.target.value
     })
-  }, RECORR.map(r => /*#__PURE__*/React.createElement("option", {
-    key: r
+  }, RECORRS.map(r => /*#__PURE__*/React.createElement("option", {
+    key: r,
+    value: r
   }, r)))), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Dia de Vencimento"), /*#__PURE__*/React.createElement("input", {
+  }, "Dia vencimento"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     type: "number",
     min: "1",
@@ -6533,8 +7254,7 @@ function FinanceiroPessoal({
     onChange: e => setFormRecorr({
       ...formRecorr,
       diaVencimento: e.target.value
-    }),
-    placeholder: "10"
+    })
   })), /*#__PURE__*/React.createElement("div", {
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
@@ -6551,847 +7271,962 @@ function FinanceiroPessoal({
     className: "form-group"
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("select", {
+  }, "Duração"), /*#__PURE__*/React.createElement("select", {
     className: "form-input",
-    value: formRecorr.ativo ? "ativo" : "inativo",
+    value: formRecorr.indeterminado ? "ind" : "det",
     onChange: e => setFormRecorr({
       ...formRecorr,
-      ativo: e.target.value === "ativo"
+      indeterminado: e.target.value === "ind"
     })
   }, /*#__PURE__*/React.createElement("option", {
-    value: "ativo"
-  }, "Ativo"), /*#__PURE__*/React.createElement("option", {
-    value: "inativo"
-  }, "Inativo")))), /*#__PURE__*/React.createElement("div", {
+    value: "ind"
+  }, "Indeterminado"), /*#__PURE__*/React.createElement("option", {
+    value: "det"
+  }, "Número fixo de meses"))), !formRecorr.indeterminado && /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Qtd meses"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    min: "1",
+    value: formRecorr.totalParcelas,
+    onChange: e => setFormRecorr({
+      ...formRecorr,
+      totalParcelas: e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      gridColumn: "span 2",
+      display: "flex",
+      gap: 8,
+      justifyContent: "flex-end"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setModal(false);
+      setEditando(null);
+    },
+    className: "btn btn-ghost"
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    onClick: salvarRecorr,
+    disabled: salvando,
+    className: "btn btn-purple"
+  }, salvando ? "Salvando..." : "Salvar"))))), modalBaixa && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.4)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 600,
+      padding: 20
+    },
+    onClick: () => setModalBaixa(null)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 16,
+      padding: 28,
+      width: "100%",
+      maxWidth: 400
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "var(--font-display)",
+      fontSize: 18,
+      fontWeight: 600,
+      marginBottom: 16
+    }
+  }, "Dar baixa — ", modalBaixa.descricao || modalBaixa.categoria), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Valor pago"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "number",
+    step: "0.01",
+    value: formBaixa.valor,
+    onChange: e => setFormBaixa({
+      ...formBaixa,
+      valor: e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Data"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    type: "date",
+    value: formBaixa.data,
+    onChange: e => setFormBaixa({
+      ...formBaixa,
+      data: e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Forma Pag."), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: formBaixa.formaPag,
+    onChange: e => setFormBaixa({
+      ...formBaixa,
+      formaPag: e.target.value
+    })
+  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
+    key: f,
+    value: f
+  }, f)))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 10,
+      gap: 8,
       justifyContent: "flex-end",
       marginTop: 16
     }
   }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
+    onClick: () => setModalBaixa(null),
+    className: "btn btn-ghost"
   }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvarRecorrente,
-    disabled: salvando
-  }, salvando ? "Salvando..." : editando ? "Salvar" : "Cadastrar")))), modal === "categoria" && /*#__PURE__*/React.createElement("div", {
+    onClick: darBaixa,
+    disabled: salvando,
+    className: "btn btn-purple"
+  }, salvando ? "Salvando..." : "Confirmar baixa")))), modalMover && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
-      background: "rgba(0,0,0,0.4)",
+      background: "rgba(0,0,0,0.5)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      zIndex: 500,
+      zIndex: 700,
       padding: 20
     },
-    onClick: () => setModal(false)
+    onClick: () => setModalMover(null)
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       borderRadius: 16,
       padding: 28,
       width: "100%",
-      maxWidth: 480,
-      maxHeight: "90vh",
-      overflowY: "auto"
+      maxWidth: 420
     },
     onClick: e => e.stopPropagation()
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
       fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
+      fontSize: 18,
+      fontWeight: 600,
+      marginBottom: 8
     }
-  }, "Gerenciar Categorias"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModal(false),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    style: {
-      width: 120,
-      flexShrink: 0
-    },
-    value: novaCategoria.tipo,
-    onChange: e => setNovaCategoria({
-      ...novaCategoria,
-      tipo: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "receita"
-  }, "Receita"), /*#__PURE__*/React.createElement("option", {
-    value: "despesa"
-  }, "Despesa")), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    style: {
-      flex: 1
-    },
-    value: novaCategoria.nome,
-    onChange: e => setNovaCategoria({
-      ...novaCategoria,
-      nome: e.target.value
-    }),
-    placeholder: "Nova categoria...",
-    onKeyDown: e => e.key === "Enter" && salvarCategoria()
-  }), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvarCategoria
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 16
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 6
-    }
-  }, categorias.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "↗ Mover lançamento"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
-      textAlign: "center",
-      padding: 20
+      marginBottom: 20
     }
-  }, "Nenhuma categoria personalizada ainda."), categorias.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.id,
+  }, /*#__PURE__*/React.createElement("strong", null, modalMover.lanc.descricao || modalMover.lanc.categoria), " — ", fmt(modalMover.lanc.valor), /*#__PURE__*/React.createElement("br", null), "Para onde deseja mover?"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      alignItems: "center",
+      flexDirection: "column",
       gap: 10,
-      padding: "10px 14px",
-      borderRadius: 10,
-      background: c.tipo === "receita" ? "#f0fdf4" : "#fef2f2",
-      border: "1px solid",
-      borderColor: c.tipo === "receita" ? "#86efac" : "#fca5a5"
+      marginBottom: 20
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, DESTINOS.map(dest => /*#__PURE__*/React.createElement("div", {
+    key: dest.col
+  }, modalMover.isRecorrente && dest.colRec ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => moverLancamento(modalMover.lanc, dest, "este"),
+    disabled: !!movendoId,
+    style: {
+      flex: 1,
+      padding: "10px",
+      border: "1px solid #e5e7eb",
+      borderRadius: 10,
+      background: "white",
+      cursor: "pointer",
+      fontSize: 13,
+      fontWeight: 600,
+      fontFamily: "var(--font-body)"
+    }
+  }, movendoId === modalMover.lanc.id ? "Movendo..." : dest.label + " (só este)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => moverLancamento(modalMover.lanc, dest, "todos"),
+    disabled: !!movendoId,
+    style: {
+      flex: 1,
+      padding: "10px",
+      border: "2px solid var(--purple)",
+      borderRadius: 10,
+      background: "#f3f0ff",
+      cursor: "pointer",
+      fontSize: 13,
+      fontWeight: 700,
+      color: "var(--purple)",
+      fontFamily: "var(--font-body)"
+    }
+  }, dest.label + " + recorrente")) : /*#__PURE__*/React.createElement("button", {
+    onClick: () => moverLancamento(modalMover.lanc, dest, "este"),
+    disabled: !!movendoId,
+    style: {
+      width: "100%",
+      padding: "12px",
+      border: "1px solid #e5e7eb",
+      borderRadius: 10,
+      background: "white",
+      cursor: "pointer",
+      fontSize: 14,
+      fontWeight: 600,
+      fontFamily: "var(--font-body)",
+      textAlign: "left"
+    }
+  }, movendoId === modalMover.lanc.id ? "Movendo..." : dest.label)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid #fee2e2",
+      paddingTop: 14,
+      marginTop: 4,
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "#dc2626",
+      marginBottom: 2
+    }
+  }, "🗑️ Excluir"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: async () => {
+      if (confirm("Excluir só este lançamento?")) {
+        await excluir(modalMover.lanc.id);
+        setModalMover(null);
+      }
+    },
+    disabled: !!movendoId,
+    style: {
+      flex: 1,
+      padding: "9px",
+      border: "1px solid #fca5a5",
+      borderRadius: 10,
+      background: "#fef2f2",
+      cursor: "pointer",
+      fontSize: 13,
+      fontWeight: 600,
+      color: "#dc2626",
+      fontFamily: "var(--font-body)"
+    }
+  }, "Excluir só este"), modalMover.isRecorrente && modalMover.lanc.recorrenteId && /*#__PURE__*/React.createElement("button", {
+    onClick: async () => {
+      if (confirm("Excluir este e desativar o recorrente?")) {
+        await excluir(modalMover.lanc.id);
+        await db.collection(colRecorr).doc(modalMover.lanc.recorrenteId).update({
+          ativo: false
+        });
+        setModalMover(null);
+      }
+    },
+    disabled: !!movendoId,
+    style: {
+      flex: 1,
+      padding: "9px",
+      border: "2px solid #dc2626",
+      borderRadius: 10,
+      background: "#fef2f2",
+      cursor: "pointer",
+      fontSize: 13,
+      fontWeight: 700,
+      color: "#dc2626",
+      fontFamily: "var(--font-body)"
+    }
+  }, "Excluir + desativar recorrente"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModalMover(null),
+    className: "btn btn-ghost",
+    style: {
+      width: "100%",
+      marginTop: 8
+    }
+  }, "Cancelar"))));
+}
+function FinanceiroPessoal({
+  somenteLeitura = false
+}) {
+  return /*#__PURE__*/React.createElement(FinanceiroBase, {
+    titulo: "Financeiro Pessoal",
+    subtitulo: "Receitas e despesas pessoais — moradia, saúde, alimentação, investimentos",
+    colLanc: "clinica_financeiro_pessoal",
+    colRecorr: "clinica_fin_pessoal_recorrentes"
+  });
+}
+function FinanceiroEmpresa({
+  somenteLeitura = false
+}) {
+  return /*#__PURE__*/React.createElement(FinanceiroBase, {
+    titulo: "Financeiro Empresa",
+    subtitulo: "Negócio digital — Ônix Brasil, infoprodutos, marketing, ferramentas, treinamentos",
+    colLanc: "clinica_financeiro_empresa",
+    colRecorr: "clinica_fin_empresa_recorrentes"
+  });
+}
+function PainelGeralFinanceiro() {
+  const [dados, setDados] = useState({
+    clinica: [],
+    pessoal: [],
+    empresa: []
+  });
+  const [ano, setAno] = useState(new Date().getFullYear() + "");
+  const [mesSel, setMesSel] = useState(new Date().toISOString().slice(0, 7));
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let d = {
+      clinica: [],
+      pessoal: [],
+      empresa: []
+    };
+    let count = 0;
+    function check() {
+      count++;
+      if (count === 3) {
+        setDados({
+          ...d
+        });
+        setLoading(false);
+      }
+    }
+    db.collection("clinica_lancamentos").onSnapshot(s => {
+      d.clinica = s.docs.map(x => ({
+        id: x.id,
+        ...x.data()
+      }));
+      check();
+    }, () => check());
+    db.collection("clinica_financeiro_pessoal").onSnapshot(s => {
+      d.pessoal = s.docs.map(x => ({
+        id: x.id,
+        ...x.data()
+      }));
+      check();
+    }, () => check());
+    db.collection("clinica_financeiro_empresa").onSnapshot(s => {
+      d.empresa = s.docs.map(x => ({
+        id: x.id,
+        ...x.data()
+      }));
+      check();
+    }, () => check());
+  }, []);
+  function fmt(v) {
+    return (v || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+  }
+  function mesLabel(m, longo) {
+    try {
+      return new Date(m + "-02").toLocaleDateString("pt-BR", {
+        month: longo ? "long" : "short"
+      });
+    } catch (e) {
+      return m;
+    }
+  }
+  function isRec(l) {
+    return l.tipo !== "despesa" && l.tipo_lancamento !== "despesa";
+  }
+  function isDes(l) {
+    return l.tipo === "despesa" || l.tipo_lancamento === "despesa";
+  }
+  function isPago(l) {
+    return l.status === "pago" || l.status === "recebido";
+  }
+  const anoAtual = new Date().getFullYear();
+  const mesAtual = new Date().toISOString().slice(0, 7);
+  const anosDisp = [...new Set([...dados.clinica, ...dados.pessoal, ...dados.empresa].map(l => l.data?.slice(0, 4)).filter(Boolean).map(Number))];
+  const anos = [...new Set([...anosDisp, anoAtual - 1, anoAtual, anoAtual + 1])].sort().map(String);
+  const mesesAno = Array.from({
+    length: 12
+  }, (_, i) => `${ano}-${String(i + 1).padStart(2, "0")}`);
+  const todas = [...dados.clinica, ...dados.pessoal, ...dados.empresa];
+  function calcPeriodo(lista, prefixo) {
+    const l = lista.filter(x => x.data?.startsWith(prefixo));
+    return {
+      rec: l.filter(x => isRec(x) && isPago(x)).reduce((a, x) => a + (parseFloat(x.valor) || 0), 0),
+      des: l.filter(x => isDes(x) && isPago(x)).reduce((a, x) => a + (parseFloat(x.valor) || 0), 0),
+      pend: l.filter(x => x.status === "pendente").reduce((a, x) => a + (parseFloat(x.valor) || 0), 0)
+    };
+  }
+
+  // Anual
+  const aCl = calcPeriodo(dados.clinica, ano),
+    aPs = calcPeriodo(dados.pessoal, ano),
+    aEm = calcPeriodo(dados.empresa, ano);
+  const totalRec = aCl.rec + aPs.rec + aEm.rec,
+    totalDes = aCl.des + aPs.des + aEm.des,
+    totalSaldo = totalRec - totalDes;
+  const totalPend = aCl.pend + aPs.pend + aEm.pend;
+
+  // Mês selecionado
+  const mCl = calcPeriodo(dados.clinica, mesSel),
+    mPs = calcPeriodo(dados.pessoal, mesSel),
+    mEm = calcPeriodo(dados.empresa, mesSel);
+  const mesRec = mCl.rec + mPs.rec + mEm.rec,
+    mesDes = mCl.des + mPs.des + mEm.des,
+    mesSaldo = mesRec - mesDes;
+
+  // Gráfico por mês
+  const grafico = mesesAno.map(m => {
+    const rec = todas.filter(l => l.data?.startsWith(m) && isRec(l) && isPago(l)).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+    const des = todas.filter(l => l.data?.startsWith(m) && isDes(l) && isPago(l)).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+    return {
+      mes: m,
+      rec,
+      des,
+      saldo: rec - des
+    };
+  });
+  const maxVal = Math.max(...grafico.map(g => Math.max(g.rec, g.des)), 1);
+  const altBar = 160;
+  if (loading) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: 60
+    }
+  }, /*#__PURE__*/React.createElement(Spinner, null), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12,
+      color: "var(--text-muted)"
+    }
+  }, "Carregando..."));
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "page-header"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "page-title"
+  }, "Painel Geral"), /*#__PURE__*/React.createElement("div", {
+    className: "page-subtitle"
+  }, "Consolidado — Clínica + Pessoal + Empresa")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap"
+    }
+  }, anos.map(a => /*#__PURE__*/React.createElement("button", {
+    key: a,
+    onClick: () => {
+      setAno(a);
+      setMesSel(a === ano ? mesSel : a + "-01");
+    },
+    style: {
+      padding: "6px 14px",
+      borderRadius: 20,
+      border: "none",
+      background: ano === a ? "var(--purple)" : "var(--gray-100)",
+      color: ano === a ? "white" : "var(--gray-600)",
+      fontWeight: ano === a ? 700 : 400,
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)"
+    }
+  }, a)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 8,
+      fontSize: 11,
+      fontWeight: 700,
+      color: "var(--text-muted)",
+      textTransform: "uppercase",
+      letterSpacing: 1
+    }
+  }, "Acumulado ", ano), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+      gap: 12,
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 18,
+      background: totalSaldo >= 0 ? "#f0fdf4" : "#fef2f2",
+      border: `1px solid ${totalSaldo >= 0 ? "#86efac" : "#fca5a5"}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       fontWeight: 600,
-      color: c.tipo === "receita" ? "#059669" : "#dc2626",
-      background: "white",
-      padding: "2px 8px",
-      borderRadius: 10
+      color: totalSaldo >= 0 ? "#059669" : "#dc2626",
+      marginBottom: 4
     }
-  }, c.tipo), /*#__PURE__*/React.createElement("span", {
+  }, "Saldo Total"), /*#__PURE__*/React.createElement("div", {
     style: {
-      flex: 1,
+      fontSize: 20,
+      fontWeight: 700,
+      color: totalSaldo >= 0 ? "#059669" : "#dc2626"
+    }
+  }, fmt(totalSaldo)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: "var(--text-muted)",
+      marginTop: 4
+    }
+  }, "+", fmt(totalRec), " / -", fmt(totalDes))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#059669",
+      marginBottom: 4
+    }
+  }, "Receitas ", ano), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#059669"
+    }
+  }, fmt(totalRec))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#dc2626",
+      marginBottom: 4
+    }
+  }, "Despesas ", ano), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#dc2626"
+    }
+  }, fmt(totalDes))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 18,
+      background: "#fffbeb",
+      border: "1px solid #fde68a"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "#d97706",
+      marginBottom: 4
+    }
+  }, "Pendente ", ano), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#d97706"
+    }
+  }, fmt(totalPend)))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 20,
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 4
+    }
+  }, "📊 Receitas vs Despesas — ", ano), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      marginBottom: 16
+    }
+  }, "Clique em um mês para ver o detalhamento abaixo"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-end",
+      gap: 4,
+      overflowX: "auto",
+      paddingBottom: 8
+    }
+  }, grafico.map(g => {
+    const hRec = maxVal > 0 ? g.rec / maxVal * altBar : 0;
+    const hDes = maxVal > 0 ? g.des / maxVal * altBar : 0;
+    const sel = g.mes === mesSel;
+    const temDados = g.rec > 0 || g.des > 0;
+    return /*#__PURE__*/React.createElement("div", {
+      key: g.mes,
+      onClick: () => setMesSel(g.mes),
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 4,
+        minWidth: 52,
+        flex: 1,
+        cursor: "pointer",
+        padding: "6px 4px",
+        borderRadius: 8,
+        background: sel ? "#f3f0ff" : "transparent",
+        border: sel ? "2px solid var(--purple)" : "2px solid transparent",
+        transition: ".15s"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "flex-end",
+        gap: 3,
+        height: altBar
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      title: `Receitas: ${fmt(g.rec)}`,
+      style: {
+        width: 18,
+        height: Math.max(hRec, 2),
+        background: "#059669",
+        borderRadius: "4px 4px 0 0",
+        opacity: temDados ? 1 : 0.15
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      title: `Despesas: ${fmt(g.des)}`,
+      style: {
+        width: 18,
+        height: Math.max(hDes, 2),
+        background: "#dc2626",
+        borderRadius: "4px 4px 0 0",
+        opacity: temDados ? 1 : 0.15
+      }
+    })), temDados && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 9,
+        fontWeight: 700,
+        color: g.saldo >= 0 ? "#059669" : "#dc2626",
+        whiteSpace: "nowrap"
+      }
+    }, g.saldo >= 0 ? "+" : "", fmt(g.saldo).replace("R$", "").trim()), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: sel ? "var(--purple)" : "var(--text-muted)",
+        fontWeight: sel ? 700 : 400
+      }
+    }, mesLabel(g.mes)));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 16,
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 12,
+      height: 12,
+      background: "#059669",
+      borderRadius: 3
+    }
+  }), " Receitas"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 12,
+      height: 12,
+      background: "#dc2626",
+      borderRadius: 3
+    }
+  }), " Despesas"))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 0,
+      overflow: "hidden",
+      marginBottom: 24,
+      border: "2px solid var(--purple)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 20px",
+      borderBottom: "1px solid var(--gray-100)",
+      fontWeight: 700,
+      fontSize: 14,
+      background: "#f3f0ff",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "📅 ", mesLabel(mesSel, true).charAt(0).toUpperCase() + mesLabel(mesSel, true).slice(1), " de ", mesSel.slice(0, 4)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const idx = mesesAno.indexOf(mesSel);
+      if (idx > 0) setMesSel(mesesAno[idx - 1]);
+    },
+    style: {
+      background: "var(--purple)",
+      color: "white",
+      border: "none",
+      borderRadius: "50%",
+      width: 26,
+      height: 26,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-left",
+    size: 13
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const idx = mesesAno.indexOf(mesSel);
+      if (idx < mesesAno.length - 1) setMesSel(mesesAno[idx + 1]);
+    },
+    style: {
+      background: "var(--purple)",
+      color: "white",
+      border: "none",
+      borderRadius: "50%",
+      width: 26,
+      height: 26,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "chevron-right",
+    size: 13
+  })))), /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse"
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "var(--gray-50)"
+    }
+  }, ["Financeiro", "Receitas", "Despesas", "Saldo"].map(h => /*#__PURE__*/React.createElement("th", {
+    key: h,
+    style: {
+      padding: "10px 20px",
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      textAlign: "left",
+      borderBottom: "1px solid var(--gray-200)"
+    }
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [{
+    label: "🏥 Clínica",
+    rec: mCl.rec,
+    des: mCl.des
+  }, {
+    label: "🏠 Pessoal",
+    rec: mPs.rec,
+    des: mPs.des
+  }, {
+    label: "🏢 Empresa",
+    rec: mEm.rec,
+    des: mEm.des
+  }].map((row, i) => {
+    const saldo = row.rec - row.des;
+    return /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      style: {
+        borderBottom: "1px solid var(--gray-100)"
+      }
+    }, /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        fontWeight: 600,
+        fontSize: 14
+      }
+    }, row.label), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        color: "#059669",
+        fontWeight: 700
+      }
+    }, fmt(row.rec)), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        color: "#dc2626",
+        fontWeight: 700
+      }
+    }, fmt(row.des)), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        color: saldo >= 0 ? "#059669" : "#dc2626",
+        fontWeight: 700,
+        fontSize: 15
+      }
+    }, fmt(saldo)));
+  }), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "#f3f0ff",
+      borderTop: "2px solid var(--purple)"
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      fontWeight: 700,
       fontSize: 14
     }
-  }, c.nome), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
+  }, "TOTAL DO MÊS"), /*#__PURE__*/React.createElement("td", {
     style: {
-      padding: "4px 8px",
-      color: "var(--danger)"
-    },
-    onClick: () => excluirCategoria(c.id)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 13
-  }))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      padding: 12,
-      background: "var(--gray-50)",
-      borderRadius: 10,
-      fontSize: 12,
-      color: "var(--text-muted)"
+      padding: "12px 20px",
+      color: "#059669",
+      fontWeight: 700,
+      fontSize: 15
     }
-  }, "As categorias padrão já estão inclusas (Aluguel, Contador, Impostos, etc.). Aqui você adiciona categorias extras."))));
+  }, fmt(mesRec)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      color: "#dc2626",
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, fmt(mesDes)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      color: mesSaldo >= 0 ? "#059669" : "#dc2626",
+      fontWeight: 700,
+      fontSize: 16
+    }
+  }, fmt(mesSaldo)))))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 0,
+      overflow: "hidden",
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 20px",
+      borderBottom: "1px solid var(--gray-100)",
+      fontWeight: 700,
+      fontSize: 14
+    }
+  }, "📋 Resumo Anual — ", ano), /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse"
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "var(--gray-50)"
+    }
+  }, ["Financeiro", "Receitas", "Despesas", "Saldo"].map(h => /*#__PURE__*/React.createElement("th", {
+    key: h,
+    style: {
+      padding: "10px 20px",
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      textAlign: "left",
+      borderBottom: "1px solid var(--gray-200)"
+    }
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [{
+    label: "🏥 Clínica",
+    rec: aCl.rec,
+    des: aCl.des
+  }, {
+    label: "🏠 Pessoal",
+    rec: aPs.rec,
+    des: aPs.des
+  }, {
+    label: "🏢 Empresa",
+    rec: aEm.rec,
+    des: aEm.des
+  }].map((row, i) => {
+    const saldo = row.rec - row.des;
+    return /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      style: {
+        borderBottom: "1px solid var(--gray-100)"
+      }
+    }, /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        fontWeight: 600,
+        fontSize: 14
+      }
+    }, row.label), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        color: "#059669",
+        fontWeight: 700
+      }
+    }, fmt(row.rec)), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        color: "#dc2626",
+        fontWeight: 700
+      }
+    }, fmt(row.des)), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "12px 20px",
+        color: saldo >= 0 ? "#059669" : "#dc2626",
+        fontWeight: 700,
+        fontSize: 15
+      }
+    }, fmt(saldo)));
+  }), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "var(--gray-50)",
+      borderTop: "2px solid var(--gray-200)"
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      fontWeight: 700,
+      fontSize: 14
+    }
+  }, "TOTAL"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      color: "#059669",
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, fmt(totalRec)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      color: "#dc2626",
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, fmt(totalDes)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "12px 20px",
+      color: totalSaldo >= 0 ? "#059669" : "#dc2626",
+      fontWeight: 700,
+      fontSize: 16
+    }
+  }, fmt(totalSaldo)))))));
 }
-
 // ═══════════════════════════════════════════════════════
 // ALUNOS EM SUPERVISÃO
 // ═══════════════════════════════════════════════════════
-function Alunos() {
-  const [alunos, setAlunos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState("ativo");
-  const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({
-    nome: "",
-    email: "",
-    telefone: "",
-    instituicao: "",
-    semestre: "",
-    senha: "",
-    obs: ""
-  });
-  const [salvando, setSalvando] = useState(false);
-  const [detalhe, setDetalhe] = useState(null);
-  const [editando, setEditando] = useState(null);
-  useEffect(() => {
-    const unsub = db.collection("clinica_alunos").onSnapshot(snap => {
-      setAlunos(snap.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      })));
-      setLoading(false);
-    }, () => setLoading(false));
-    return unsub;
-  }, []);
-  const filtrados = alunos.filter(a => {
-    const fOk = filtro === "todos" || a.status === filtro;
-    const bOk = !busca || a.nome?.toLowerCase().includes(busca.toLowerCase()) || a.email?.toLowerCase().includes(busca.toLowerCase());
-    return fOk && bOk;
-  });
-  async function salvar() {
-    if (!form.nome || !form.email) {
-      alert("Nome e e-mail obrigatorios.");
-      return;
-    }
-    if (!editando && !form.senha) {
-      alert("Senha obrigatoria para novo aluno.");
-      return;
-    }
-    setSalvando(true);
-    if (editando) {
-      const {
-        senha,
-        ...dados
-      } = form;
-      await db.collection("clinica_alunos").doc(editando).update(dados);
-    } else {
-      await db.collection("clinica_alunos").add({
-        ...form,
-        status: "ativo",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    setModal(false);
-    setForm({
-      nome: "",
-      email: "",
-      telefone: "",
-      instituicao: "",
-      semestre: "",
-      senha: "",
-      obs: ""
-    });
-    setEditando(null);
-    setSalvando(false);
-  }
-  async function excluir(id) {
-    if (!confirm("Remover aluno?")) return;
-    await db.collection("clinica_alunos").doc(id).delete();
-  }
-  function abrirEditar(a) {
-    setForm({
-      nome: a.nome || "",
-      email: a.email || "",
-      telefone: a.telefone || "",
-      instituicao: a.instituicao || "",
-      semestre: a.semestre || "",
-      senha: "",
-      obs: a.obs || ""
-    });
-    setEditando(a.id);
-    setModal(true);
-  }
-  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-header",
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-title"
-  }, "Alunos em Supervisao"), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle"
-  }, alunos.filter(a => a.status === "ativo").length, " aluno(s) cadastrado(s)")), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => {
-      setForm({
-        nome: "",
-        email: "",
-        telefone: "",
-        instituicao: "",
-        semestre: "",
-        senha: "",
-        obs: ""
-      });
-      setEditando(null);
-      setModal(true);
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "user-plus",
-    size: 16
-  }), " Cadastrar Aluno")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 12,
-      marginBottom: 20,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    style: {
-      flex: 1,
-      minWidth: 200
-    },
-    placeholder: "Buscar por nome ou e-mail...",
-    value: busca,
-    onChange: e => setBusca(e.target.value)
-  }), [["todos", "Todos"], ["ativo", "Ativos"], ["inativo", "Inativos"]].map(([f, l]) => /*#__PURE__*/React.createElement("button", {
-    key: f,
-    className: "btn " + (filtro === f ? "btn-purple" : "btn-ghost"),
-    onClick: () => setFiltro(f)
-  }, l))), filtrados.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      textAlign: "center",
-      padding: 48,
-      color: "var(--text-muted)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "graduation-cap",
-    size: 40
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12
-    }
-  }, busca ? "Nenhum aluno encontrado." : "Nenhum aluno cadastrado ainda.")) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, filtrados.map(a => /*#__PURE__*/React.createElement("div", {
-    key: a.id,
-    className: "card",
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
-      padding: "14px 20px"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 42,
-      height: 42,
-      borderRadius: "50%",
-      background: "var(--purple-soft)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontWeight: 700,
-      color: "var(--purple)",
-      flexShrink: 0,
-      fontSize: 16
-    }
-  }, (a.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 600
-    }
-  }, a.nome), /*#__PURE__*/React.createElement("span", {
-    className: "badge " + (a.status === "ativo" ? "badge-green" : "badge-gray")
-  }, a.status === "ativo" ? "Ativo" : "Inativo")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      display: "flex",
-      gap: 12,
-      marginTop: 2,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "✉ ", a.email), a.instituicao && /*#__PURE__*/React.createElement("span", null, "🏛 ", a.instituicao, a.semestre ? " · " + a.semestre : ""), /*#__PURE__*/React.createElement("span", null, "👤 ", a.pacientesVinculados || 0, " paciente(s)"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 12,
-      color: "var(--purple)",
-      padding: "6px 12px"
-    },
-    onClick: () => setDetalhe(a)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "eye",
-    size: 13
-  }), " Ver"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "6px 10px"
-    },
-    onClick: () => abrirEditar(a)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "pencil",
-    size: 13
-  })), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "6px 10px",
-      color: "var(--danger)"
-    },
-    onClick: () => excluir(a.id)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 13
-  })))))), modal && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModal(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 520,
-      maxHeight: "90vh",
-      overflowY: "auto"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600,
-      marginBottom: 20
-    }
-  }, editando ? "Editar Aluno" : "Cadastrar Novo Aluno"), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "NOME COMPLETO *"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.nome,
-    onChange: e => setForm({
-      ...form,
-      nome: e.target.value
-    }),
-    placeholder: "Nome do aluno",
-    autoFocus: true
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 14,
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "E-MAIL *"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "email",
-    value: form.email,
-    onChange: e => setForm({
-      ...form,
-      email: e.target.value
-    }),
-    placeholder: "aluno@email.com",
-    disabled: !!editando
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "TELEFONE"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.telefone,
-    onChange: e => setForm({
-      ...form,
-      telefone: e.target.value
-    }),
-    placeholder: "(00) 9 0000-0000"
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 14,
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "INSTITUIÇÃO"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.instituicao,
-    onChange: e => setForm({
-      ...form,
-      instituicao: e.target.value
-    }),
-    placeholder: "Nome da faculdade"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "SEMESTRE"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.semestre,
-    onChange: e => setForm({
-      ...form,
-      semestre: e.target.value
-    }),
-    placeholder: "Ex: 8º semestre"
-  }))), !editando && /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "SENHA DE ACESSO *"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "password",
-    value: form.senha,
-    onChange: e => setForm({
-      ...form,
-      senha: e.target.value
-    }),
-    placeholder: "Senha para o aluno acessar o portal"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "OBSERVAÇÕES"), /*#__PURE__*/React.createElement(TextAreaVoz, {
-    className: "form-input",
-    rows: 2,
-    value: form.obs,
-    onChange: e => setForm({
-      ...form,
-      obs: e.target.value
-    }),
-    placeholder: "Notas sobre o aluno..."
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModal(false)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvar,
-    disabled: salvando
-  }, salvando ? "Salvando..." : editando ? "Salvar" : "Cadastrar aluno")))), detalhe && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "flex-end",
-      justifyContent: "flex-end",
-      zIndex: 500
-    },
-    onClick: () => setDetalhe(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      width: "100%",
-      maxWidth: 480,
-      height: "100%",
-      overflowY: "auto",
-      padding: 28
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "graduation-cap",
-    size: 20
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600,
-      flex: 1
-    }
-  }, detalhe.nome), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setDetalhe(null),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "var(--gray-400)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "badge " + (detalhe.status === "ativo" ? "badge-green" : "badge-gray")
-  }, detalhe.status === "ativo" ? "Ativo" : "Inativo"), detalhe.instituicao && /*#__PURE__*/React.createElement("span", {
-    className: "badge badge-purple"
-  }, detalhe.instituicao)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 16,
-      fontSize: 14
-    }
-  }, detalhe.email && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, "E-mail"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 500
-    }
-  }, detalhe.email)), detalhe.telefone && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, "Telefone"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 500
-    }
-  }, detalhe.telefone)), detalhe.instituicao && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, "Instituicao"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 500
-    }
-  }, detalhe.instituicao)), detalhe.semestre && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, "Semestre"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 500
-    }
-  }, detalhe.semestre))), detalhe.obs && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      padding: 12,
-      background: "var(--gray-50)",
-      borderRadius: 8,
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, detalhe.obs))));
-}
-
-// ═══════════════════════════════════════════════════════
-// TERAPIA DE CASAIS
-// ═══════════════════════════════════════════════════════
-// ── Botão de Emergência ──
-function BotaoEmergenciaAdmin({
-  casalId,
-  nomeCasal
-}) {
-  const [palavra, setPalavra] = useState("");
-  const [palavraSalva, setPalavraSalva] = useState("");
-  const [acionamentos, setAcionamentos] = useState([]);
-  const [salvando, setSalvando] = useState(false);
-  const [salvo, setSalvo] = useState(false);
-  useEffect(() => {
-    if (!casalId) return;
-    db.collection("clinica_casais").doc(casalId).get().then(d => {
-      if (d.exists && d.data().palavraEmergencia) {
-        setPalavraSalva(d.data().palavraEmergencia);
-        setPalavra(d.data().palavraEmergencia);
-      }
-    });
-    db.collection("clinica_emergencia").where("casalId", "==", casalId).orderBy("createdAt", "desc").limit(5).onSnapshot(s => setAcionamentos(s.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }))), () => {});
-  }, [casalId]);
-  async function salvar() {
-    if (!palavra.trim()) {
-      alert("Digite a palavra de emergência.");
-      return;
-    }
-    setSalvando(true);
-    try {
-      await db.collection("clinica_casais").doc(casalId).update({
-        palavraEmergencia: palavra.trim().toUpperCase()
-      });
-      setPalavraSalva(palavra.trim().toUpperCase());
-      setSalvo(true);
-      setTimeout(() => setSalvo(false), 3000);
-    } catch (e) {
-      alert("Erro ao salvar.");
-    }
-    setSalvando(false);
-  }
-  function fmtDH(ts) {
-    if (!ts?.toDate) return "—";
-    const d = ts.toDate();
-    return d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  }
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#fff5f5",
-      border: "2px solid #fecaca",
-      borderRadius: 12,
-      padding: 16,
-      marginTop: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 20
-    }
-  }, "🔴"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "#dc2626"
-    }
-  }, "Botão de Emergência")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#6b7280",
-      marginBottom: 12,
-      lineHeight: 1.6
-    }
-  }, "Defina a palavra-código que o casal usará para acionar o tempo de pausa durante conflitos."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: palavraSalva ? 12 : 0
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: palavra,
-    onChange: e => setPalavra(e.target.value.toUpperCase()),
-    placeholder: "Ex: PAUSA, RESPIRA, CAFÉ...",
-    style: {
-      flex: 1,
-      fontWeight: 700,
-      letterSpacing: 2,
-      fontSize: 14,
-      textTransform: "uppercase"
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvar,
-    disabled: salvando,
-    style: {
-      whiteSpace: "nowrap"
-    }
-  }, salvando ? "..." : salvo ? "✓ Salvo!" : "Salvar")), palavraSalva && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#7B00C4",
-      borderRadius: 10,
-      padding: "10px 16px",
-      textAlign: "center",
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "rgba(255,255,255,0.7)",
-      marginBottom: 4
-    }
-  }, "Palavra ativa para ", nomeCasal), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 22,
-      fontWeight: 700,
-      color: "white",
-      letterSpacing: 4
-    }
-  }, palavraSalva)), acionamentos.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#dc2626",
-      marginBottom: 6
-    }
-  }, "ÚLTIMOS ACIONAMENTOS"), acionamentos.map(a => /*#__PURE__*/React.createElement("div", {
-    key: a.id,
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      fontSize: 12,
-      padding: "5px 0",
-      borderBottom: "1px solid #fecaca"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#6b7280"
-    }
-  }, fmtDH(a.createdAt)), /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#dc2626",
-      fontWeight: 600
-    }
-  }, "⏱ ", a.horas, "h de pausa · por ", a.acionadoPor || "—")))));
-}
