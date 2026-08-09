@@ -57,7 +57,7 @@ function FinanceiroClinica({ user }) {
   const [modalAuditoria, setModalAuditoria] = useState(false);
   const [auditLog, setAuditLog] = useState([]);
   const [auditando, setAuditando] = useState(false);
-  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",modalidade:"on-line",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",parceiraId:"",percParceiro:"70"});
+  const [formPacote, setFormPacote] = useState({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",parceiraId:"",percParceiro:"70"});
   const [parceiras, setParceiras] = useState([]);
   const [modalEditarPacote, setModalEditarPacote] = useState(null); // {pacote}
   const [formEdicaoPacote, setFormEdicaoPacote] = useState({});
@@ -358,7 +358,7 @@ function FinanceiroClinica({ user }) {
     // Cria pacote
     const pacRef=await db.collection("clinica_pacotes").add({
       pacienteId,pacienteNome:pac?.nome||"",totalSessoes:total,valorSessao:vSessao,valorTotal:vTotal,
-      recorrencia,dataInicio,horario,modalidade:formPacote.modalidade||"on-line",diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
+      recorrencia,dataInicio,horario,diasSemana:diasSemana||[],horariosPorDia:horariosPorDia||{},obs,
       tipoAtendimento:formPacote.tipoAtendimento||"particular",
       parceiraId:eParceria?formPacote.parceiraId:null,
       parceiraNome:eParceria?(parcSel?.nome||""):null,
@@ -460,7 +460,7 @@ function FinanceiroClinica({ user }) {
       await batchSoc.commit();
     }
 
-    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",modalidade:"on-line",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});setSalvando(false);
+    setModal(false);setFormPacote({pacienteId:"",totalSessoes:"",valorSessao:"",recorrencia:"Semanal (1x/semana)",dataInicio:"",horario:"09:00",diasSemana:[],horariosPorDia:{},statusPag:"pendente",formaPag:"",dataPagamento:"",pagamentosExtras:[],obs:"",tipoAtendimento:"particular",valorSupervisaoSocial:"40",valorEstagiariaSocial:"20",parceiraId:"",percParceiro:"70"});setSalvando(false);
     alert(`✅ Pacote criado! ${datas.length} sessões geradas na agenda.`);
   }
 
@@ -547,7 +547,6 @@ function FinanceiroClinica({ user }) {
           recorrencia: pacoteAlvo.recorrencia||"Semanal (1x/semana)",
           dataInicio: pacoteAlvo.dataInicio||"",
           horario: pacoteAlvo.horario||"09:00",
-          modalidade: pacoteAlvo.modalidade||"on-line",
           statusPag: pacoteAlvo.statusPag||"pendente",
           formaPag: pacoteAlvo.formaPag||"",
           dataPagamento: pacoteAlvo.dataPagamento||"",
@@ -600,7 +599,6 @@ function FinanceiroClinica({ user }) {
         recorrencia: f.recorrencia,
         dataInicio: f.dataInicio,
         horario: f.horario,
-        modalidade: f.modalidade||"on-line",
         statusPag: f.statusPag,
         formaPag: f.formaPag||"",
         dataPagamento: dataPagFinal,
@@ -652,7 +650,6 @@ function FinanceiroClinica({ user }) {
             const campos = {
               valorSessao: novoValorSessao,
               hora: f.horario||s.hora||"",
-        modalidade: f.modalidade||s.modalidade||"on-line",
               recorrencia: f.recorrencia||s.recorrencia||"",
             };
             if(jaPago){
@@ -810,13 +807,6 @@ function FinanceiroClinica({ user }) {
               </div>
               <div className="form-group"><label className="form-label">Horário</label>
                 <input className="form-input" type="time" value={formEdicaoPacote.horario||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,horario:e.target.value})}/>
-              </div>
-              <div className="form-group"><label className="form-label">Modalidade</label>
-                <select className="form-input" value={formEdicaoPacote.modalidade||"on-line"} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,modalidade:e.target.value})}>
-                  <option value="on-line">💻 On-line</option>
-                  <option value="presencial">🏥 Presencial</option>
-                  <option value="híbrido">🔄 Híbrido</option>
-                </select>
               </div>
               <div className="form-group"><label className="form-label">Recorrência</label>
                 <select className="form-input" value={formEdicaoPacote.recorrencia||""} onChange={e=>setFormEdicaoPacote({...formEdicaoPacote,recorrencia:e.target.value})}>
@@ -2053,13 +2043,6 @@ function FinanceiroClinica({ user }) {
                 </div>
                 <div className="form-group"><label className="form-label">Horário {needDias?"(padrão)":""}</label>
                   <input className="form-input" type="time" value={formPacote.horario} onChange={e=>setFormPacote({...formPacote,horario:e.target.value})}/>
-                </div>
-                <div className="form-group"><label className="form-label">Modalidade</label>
-                  <select className="form-input" value={formPacote.modalidade||"on-line"} onChange={e=>setFormPacote({...formPacote,modalidade:e.target.value})}>
-                    <option value="on-line">💻 On-line</option>
-                    <option value="presencial">🏥 Presencial</option>
-                    <option value="híbrido">🔄 Híbrido</option>
-                  </select>
                 </div>
                 {/* Toggle Particular / Social / Parceria */}
                 <div className="form-group" style={{gridColumn:"1/-1"}}>
