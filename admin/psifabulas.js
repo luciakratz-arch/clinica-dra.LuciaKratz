@@ -3888,7 +3888,32 @@ function FerramentaRodaVidaIntegral({user}){
 
 function ModalVisualizarFerramenta({recurso,onClose,user}){
   function renderFerramenta(){
-    const k=recurso.formularioKey;
+    // Mapa de aliases: keys em português (Firestore) → keys em inglês (componentes)
+    const ALIAS={
+      "regra-5-minutos":         "five-minute-rule",
+      "ritual-noturno":          "sleep-ritual",
+      "empilhamento-habitos":    "habit-stacking",
+      "mapa-bateria":            "energy-map",
+      "escada-polivagal":        "polyvagal-ladder",
+      "aterramento-5-sentidos":  "grounding-5senses",
+      "diario-corpo-mente":      "body-mind-journal",
+      "mapa-intimidade":         "intimacy-map",
+      "3-mapas-financeiros":     "financial-three-maps",
+      "mapa-diferenciacao":      "differentiation-map",
+      "mapa-triangulacao":       "triangulation-map",
+      "diario-parentalidade":    "compassionate-parenting-journal",
+      "registro-cnv":            "cnv-record",
+      "mapa-limites":            "limits-map",
+      "carga-mental":            "mental-load-inventory",
+      "ciclo-conflito":          "conflict-cycle-map",
+      "escuta-ativa":            "active-listening",
+      "diario-autocompaixao":    "self-compassion-journal",
+      "ativacao-comportamental": "behavioral-activation",
+      "pausa-estrategica":       "strategic-pause",
+      "kit-sos-tipp":            "tipp-sos",
+      "analise-cadeia":          "chain-analysis",
+    };
+    const k=ALIAS[recurso.formularioKey]||recurso.formularioKey;
     if(k==="breathing-478")      return <FerramentaRespiracao/>;
     if(k==="muscle-relaxation")  return <FerramentaRelaxamento/>;
     if(k==="roda-vida-integral")  return <FerramentaRodaVidaIntegral user={user}/>;
