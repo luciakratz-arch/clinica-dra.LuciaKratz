@@ -1071,14 +1071,23 @@ function AbaEvolucao({ paciente }) {
                     </div>
                     {expandido&&(
                       <div style={{padding:"12px 14px",background:"white",borderTop:"1px solid var(--gray-100)"}}>
-                        {reflexaoVinc&&reflexaoVinc.respostas?(
-                          (reflexaoVinc.respostas||[]).map((resp,i)=>(
-                            <div key={i} style={{marginBottom:i<reflexaoVinc.respostas.length-1?12:0}}>
-                              {reflexaoVinc.perguntas&&<div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:4}}>{reflexaoVinc.perguntas[i]||`Reflexão ${i+1}`}</div>}
-                              <div style={{fontSize:13,color:resp?"#1f2937":"#9ca3af",lineHeight:1.65,paddingLeft:12,borderLeft:"3px solid #e9d5ff"}}>{resp||"— sem resposta —"}</div>
-                            </div>
-                          ))
-                        ):a.detalhe?(
+                        {reflexaoVinc?(()=>{
+                          // Suporta formato {registros:[{pergunta,resposta}]} (fábulas/psicoeducações)
+                          // e formato legado {perguntas:[], respostas:[]}
+                          const itens = reflexaoVinc.registros
+                            ? reflexaoVinc.registros
+                            : (reflexaoVinc.respostas||[]).map((r,i)=>({pergunta:(reflexaoVinc.perguntas||[])[i]||`Reflexão ${i+1}`,resposta:r}));
+                          return itens.length>0?(
+                            itens.map((item,i)=>(
+                              <div key={i} style={{marginBottom:i<itens.length-1?12:0}}>
+                                <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:4}}>{item.pergunta||`Reflexão ${i+1}`}</div>
+                                <div style={{fontSize:13,color:item.resposta?"#1f2937":"#9ca3af",lineHeight:1.65,paddingLeft:12,borderLeft:"3px solid #e9d5ff"}}>{item.resposta||"— sem resposta —"}</div>
+                              </div>
+                            ))
+                          ):a.detalhe?(
+                            <div style={{fontSize:13,color:"#1f2937",lineHeight:1.65,paddingLeft:12,borderLeft:"3px solid #e9d5ff"}}>{a.detalhe}</div>
+                          ):null;
+                        })():a.detalhe?(
                           <div style={{fontSize:13,color:"#1f2937",lineHeight:1.65,paddingLeft:12,borderLeft:"3px solid #e9d5ff"}}>{a.detalhe}</div>
                         ):null}
                       </div>
@@ -1531,5 +1540,3 @@ function gerarPDFAnamnese(paciente, anamnese, LABELS, SKIP){
   </body></html>`);
   w.document.close();
 }
-
-
