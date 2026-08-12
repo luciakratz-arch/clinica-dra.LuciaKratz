@@ -15,6 +15,12 @@ function DashboardAdmin({
   const [atividades, setAtividades] = useState({});
   const [loadingAtiv, setLoadingAtiv] = useState(true);
   const [rastreamentos, setRastreamentos] = useState([]);
+  const [ultimaVisita] = useState(() => {
+    const v = localStorage.getItem("dashboard_ultima_visita");
+    const agora = new Date().toISOString();
+    localStorage.setItem("dashboard_ultima_visita", agora);
+    return v ? new Date(v) : new Date(0);
+  });
   useEffect(() => {
     const u1 = db.collection("clinica_lancamentos").onSnapshot(s => setLancClinica(s.docs.map(d => ({
       id: d.id,
@@ -129,12 +135,16 @@ function DashboardAdmin({
           if (!pacId) return;
           if (!agrupado[pacId]) agrupado[pacId] = {
             nome: pacNome,
-            itens: {}
+            itens: {},
+            ultimaAtividade: null
           };
           if (!agrupado[pacId].itens[label]) agrupado[pacId].itens[label] = 0;
           agrupado[pacId].itens[label]++;
-          // Se nome ainda vazio, guardar para resolver depois com a lista de pacientes
           if (pacNome && !agrupado[pacId].nome) agrupado[pacId].nome = pacNome;
+          // Registrar data mais recente de atividade
+          let dataAtiv = doc[campoData];
+          if (dataAtiv?.toDate) dataAtiv = dataAtiv.toDate().toISOString();
+          if (dataAtiv && (!agrupado[pacId].ultimaAtividade || dataAtiv > agrupado[pacId].ultimaAtividade)) agrupado[pacId].ultimaAtividade = dataAtiv;
         });
         pending--;
         if (pending === 0) {
@@ -312,90 +322,124 @@ function DashboardAdmin({
       flexDirection: "column",
       gap: 10
     }
-  }, pacAtivos.map(([pacId, info]) => /*#__PURE__*/React.createElement("div", {
-    key: pacId,
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 12,
-      padding: "14px 18px",
-      background: "var(--gray-50)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      flex: 1,
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 36,
-      height: 36,
-      borderRadius: "50%",
-      background: "var(--purple-soft)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "var(--font-display)",
-      fontWeight: 700,
-      color: "var(--purple)",
-      fontSize: 14,
-      flexShrink: 0
-    }
-  }, (info.nome || "?").charAt(0).toUpperCase()), /*#__PURE__*/React.createElement("div", {
-    style: {
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 14,
-      marginBottom: 4
-    }
-  }, info.nome || "Paciente"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 6
-    }
-  }, Object.entries(info.itens).map(([label, count]) => /*#__PURE__*/React.createElement("span", {
-    key: label,
-    style: {
-      fontSize: 12,
-      background: "white",
-      border: "1px solid var(--gray-200)",
-      borderRadius: 20,
-      padding: "2px 10px",
-      color: "var(--text-muted)"
-    }
-  }, label, " ", count > 1 ? `(${count})` : ""))))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => onVerEvolucao && onVerEvolucao(pacId),
-    style: {
-      background: "var(--purple)",
-      color: "white",
-      border: "none",
-      borderRadius: 8,
-      padding: "7px 16px",
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-      fontFamily: "var(--font-body)",
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trending-up",
-    size: 13
-  }), " Ver Evolução"))))), rastreamentos.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, pacAtivos.map(([pacId, info]) => {
+    const maisRecente = info.ultimaAtividade ? new Date(info.ultimaAtividade) : new Date(0);
+    const isNovo = maisRecente > ultimaVisita;
+    return /*#__PURE__*/React.createElement("div", {
+      key: pacId,
+      style: {
+        border: isNovo ? "1.5px solid var(--purple)" : "1px solid var(--gray-200)",
+        borderRadius: 12,
+        padding: "14px 18px",
+        background: isNovo ? "var(--purple-soft)" : "var(--gray-50)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "relative",
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 36,
+        height: 36,
+        borderRadius: "50%",
+        background: "var(--purple-soft)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "var(--font-display)",
+        fontWeight: 700,
+        color: "var(--purple)",
+        fontSize: 14
+      }
+    }, (info.nome || "?").charAt(0).toUpperCase()), isNovo && /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "absolute",
+        top: -2,
+        right: -2,
+        width: 10,
+        height: 10,
+        borderRadius: "50%",
+        background: "var(--purple)",
+        border: "2px solid white"
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 600,
+        fontSize: 14
+      }
+    }, info.nome || "Paciente"), isNovo && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        background: "var(--purple)",
+        color: "white",
+        borderRadius: 20,
+        padding: "1px 8px",
+        fontWeight: 600
+      }
+    }, "NOVO")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 6
+      }
+    }, Object.entries(info.itens).map(([label, count]) => /*#__PURE__*/React.createElement("span", {
+      key: label,
+      style: {
+        fontSize: 12,
+        background: "white",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 20,
+        padding: "2px 10px",
+        color: "var(--text-muted)"
+      }
+    }, label, " ", count > 1 ? `(${count})` : ""))))), /*#__PURE__*/React.createElement("button", {
+      onClick: () => onVerEvolucao && onVerEvolucao(pacId),
+      style: {
+        background: "var(--purple)",
+        color: "white",
+        border: "none",
+        borderRadius: 8,
+        padding: "7px 16px",
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        fontFamily: "var(--font-body)",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "trending-up",
+      size: 13
+    }), " Ver Evolução"));
+  }))), rastreamentos.length > 0 && /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
       marginBottom: 24
