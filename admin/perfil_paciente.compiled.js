@@ -2367,27 +2367,43 @@ function AbaEvolucao({
           background: "white",
           borderTop: "1px solid var(--gray-100)"
         }
-      }, reflexaoVinc && reflexaoVinc.respostas ? (reflexaoVinc.respostas || []).map((resp, i) => /*#__PURE__*/React.createElement("div", {
-        key: i,
-        style: {
-          marginBottom: i < reflexaoVinc.respostas.length - 1 ? 12 : 0
-        }
-      }, reflexaoVinc.perguntas && /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 12,
-          fontWeight: 600,
-          color: "var(--purple)",
-          marginBottom: 4
-        }
-      }, reflexaoVinc.perguntas[i] || `Reflexão ${i + 1}`), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 13,
-          color: resp ? "#1f2937" : "#9ca3af",
-          lineHeight: 1.65,
-          paddingLeft: 12,
-          borderLeft: "3px solid #e9d5ff"
-        }
-      }, resp || "— sem resposta —"))) : a.detalhe ? /*#__PURE__*/React.createElement("div", {
+      }, reflexaoVinc ? (() => {
+        // Suporta formato {registros:[{pergunta,resposta}]} (fábulas/psicoeducações)
+        // e formato legado {perguntas:[], respostas:[]}
+        const itens = reflexaoVinc.registros ? reflexaoVinc.registros : (reflexaoVinc.respostas || []).map((r, i) => ({
+          pergunta: (reflexaoVinc.perguntas || [])[i] || `Reflexão ${i + 1}`,
+          resposta: r
+        }));
+        return itens.length > 0 ? itens.map((item, i) => /*#__PURE__*/React.createElement("div", {
+          key: i,
+          style: {
+            marginBottom: i < itens.length - 1 ? 12 : 0
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--purple)",
+            marginBottom: 4
+          }
+        }, item.pergunta || `Reflexão ${i + 1}`), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 13,
+            color: item.resposta ? "#1f2937" : "#9ca3af",
+            lineHeight: 1.65,
+            paddingLeft: 12,
+            borderLeft: "3px solid #e9d5ff"
+          }
+        }, item.resposta || "— sem resposta —"))) : a.detalhe ? /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: 13,
+            color: "#1f2937",
+            lineHeight: 1.65,
+            paddingLeft: 12,
+            borderLeft: "3px solid #e9d5ff"
+          }
+        }, a.detalhe) : null;
+      })() : a.detalhe ? /*#__PURE__*/React.createElement("div", {
         style: {
           fontSize: 13,
           color: "#1f2937",
