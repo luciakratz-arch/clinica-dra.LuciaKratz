@@ -3047,6 +3047,124 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, 
 }
 
 // ─── LOGIN ────────────────────────────────────────────────
+// ─── HOOK: PWA Install Prompt ────────────────────────────
+function useInstallPWA() {
+  const [deferredPrompt, setDeferred] = React.useState(null);
+  const [instalado,      setInstalado] = React.useState(false);
+  const [isIOS, setIsIOS] = React.useState(false);
+  const [showIOSModal, setShowIOSModal] = React.useState(false);
+
+  React.useEffect(() => {
+    // Detecta iOS (Safari não dispara beforeinstallprompt)
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(ios);
+
+    // Detecta se já está instalado como PWA (standalone)
+    const standalone = window.matchMedia("(display-mode: standalone)").matches
+                    || window.navigator.standalone === true;
+    if (standalone) { setInstalado(true); return; }
+
+    // Captura o prompt nativo (Android/Chrome)
+    const handler = (e) => { e.preventDefault(); setDeferred(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setInstalado(true));
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  async function solicitarInstalacao() {
+    if (isIOS) { setShowIOSModal(true); return; }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") setInstalado(true);
+    setDeferred(null);
+  }
+
+  // Botão visível quando: não instalado + (tem prompt nativo OU é iOS)
+  const mostrarBotao = !instalado && (!!deferredPrompt || isIOS);
+
+  return { mostrarBotao, solicitarInstalacao, showIOSModal, setShowIOSModal, isIOS };
+}
+
+// ─── MODAL: Instrução para iOS ───────────────────────────
+function ModalInstalacaoIOS({ onClose }) {
+  const overlay = {
+    position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", zIndex:9999,
+    display:"flex", alignItems:"flex-end", justifyContent:"center",
+    backdropFilter:"blur(4px)", WebkitBackdropFilter:"blur(4px)",
+    animation:"fadeIn .2s ease"
+  };
+  const sheet = {
+    background:"white", borderRadius:"20px 20px 0 0", padding:"28px 24px 40px",
+    width:"100%", maxWidth:480,
+    animation:"slideUp .3s cubic-bezier(.32,1.1,.58,1)"
+  };
+  const step = {
+    display:"flex", alignItems:"flex-start", gap:14, marginBottom:20
+  };
+  const num = {
+    width:32, height:32, borderRadius:"50%",
+    background:"var(--purple-soft)", color:"var(--purple)",
+    fontWeight:700, fontSize:14, display:"flex", alignItems:"center",
+    justifyContent:"center", flexShrink:0, marginTop:1
+  };
+  const txt = { fontSize:14, color:"#374151", lineHeight:1.6 };
+  const strong = { color:"#111827", fontWeight:600 };
+
+  return (
+    <div style={overlay} onClick={onClose}>
+      <div style={sheet} onClick={e=>e.stopPropagation()}>
+        {/* Handle */}
+        <div style={{width:40,height:4,background:"#e5e7eb",borderRadius:2,margin:"0 auto 24px"}}/>
+
+        {/* Título */}
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:24}}>
+          <span style={{fontSize:32}}>📱</span>
+          <div>
+            <div style={{fontWeight:700,fontSize:17,color:"#111827"}}>Instalar no iPhone</div>
+            <div style={{fontSize:13,color:"#6b7280",marginTop:2}}>Adicione à tela inicial em 3 passos</div>
+          </div>
+        </div>
+
+        {/* Passos */}
+        <div style={step}>
+          <div style={num}>1</div>
+          <div style={txt}>
+            Toque no ícone de <strong style={strong}>compartilhar</strong>{" "}
+            <span style={{display:"inline-block",background:"#f3f4f6",borderRadius:6,padding:"2px 6px",fontSize:18,lineHeight:1}}>⬆️</span>{" "}
+            na barra inferior do Safari
+          </div>
+        </div>
+        <div style={step}>
+          <div style={num}>2</div>
+          <div style={txt}>
+            Role para baixo e toque em{" "}
+            <strong style={strong}>"Adicionar à Tela de Início"</strong>
+          </div>
+        </div>
+        <div style={step}>
+          <div style={{...num, background:"#f0fdf4", color:"#16a34a"}}>✓</div>
+          <div style={txt}>
+            Toque em <strong style={strong}>Adicionar</strong> e o ícone aparece na sua tela inicial!
+          </div>
+        </div>
+
+        {/* Dica Safari */}
+        <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:10,padding:"12px 14px",fontSize:13,color:"#92400e",marginTop:4,marginBottom:24,lineHeight:1.5}}>
+          ⚠️ Precisa estar no <strong>Safari</strong>. Se estiver no Chrome ou outro navegador, copie o link e abra no Safari.
+        </div>
+
+        <button onClick={onClose}
+          style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
+            background:"var(--purple)",color:"white",fontWeight:700,fontSize:15,
+            cursor:"pointer",fontFamily:"inherit"}}>
+          Entendido
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Login({ onLogin }) {
   const [etapa, setEtapa]     = React.useState("perfil");
   const [nome, setNome]       = React.useState("");
@@ -3054,6 +3172,8 @@ function Login({ onLogin }) {
   const [senha, setSenha]     = React.useState("");
   const [erro, setErro]       = React.useState("");
   const [loading, setLoading] = React.useState(false);
+
+  const { mostrarBotao, solicitarInstalacao, showIOSModal, setShowIOSModal, isIOS } = useInstallPWA();
 
   const perfis = [
     { id:"paciente", nome:"Sou Paciente", desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
@@ -3102,6 +3222,7 @@ function Login({ onLogin }) {
 
   return (
     <div className="login-page">
+      {showIOSModal && <ModalInstalacaoIOS onClose={()=>setShowIOSModal(false)}/>}
       <div className="login-left">
         <div className="login-logo">
           <img src={LOGO_URL} alt="Lucia Kratz" style={{width:140,height:140,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>
@@ -3116,6 +3237,22 @@ function Login({ onLogin }) {
             </button>
           ))}
         </div>
+        {mostrarBotao && (
+          <button onClick={solicitarInstalacao}
+            style={{
+              marginTop:16, display:"flex", alignItems:"center", gap:8,
+              background:"rgba(255,255,255,0.15)", border:"1.5px solid rgba(255,255,255,0.4)",
+              borderRadius:12, padding:"10px 18px", color:"white",
+              fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit",
+              backdropFilter:"blur(4px)", transition:"all .2s"
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.25)";}}
+            onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.15)";}}
+          >
+            <span style={{fontSize:16}}>📲</span>
+            {isIOS ? "Instalar no iPhone" : "Instalar App"}
+          </button>
+        )}
       </div>
 
       <div className="login-right">
