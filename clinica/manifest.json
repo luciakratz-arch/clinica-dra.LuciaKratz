@@ -1,22 +1,22 @@
 {
   "name": "Dra. Lucia Kratz",
   "short_name": "Dra. Lucia",
-  "description": "Meu espaço terapêutico — Portal do Paciente",
-  "start_url": "./",
+  "description": "Portal da Paciente — Dra. Lucia Kratz",
+  "start_url": "/clinica-dra.LuciaKratz/clinica/",
+  "scope": "/clinica-dra.LuciaKratz/clinica/",
   "display": "standalone",
   "background_color": "#7B00C4",
   "theme_color": "#7B00C4",
   "orientation": "portrait",
-  "lang": "pt-BR",
   "icons": [
     {
-      "src": "../logo-transparente.png",
+      "src": "logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "../logo-transparente.png",
+      "src": "logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
