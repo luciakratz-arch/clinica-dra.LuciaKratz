@@ -978,51 +978,57 @@ function fecharMenuMob(){
       <span style="font-size:32px;">📱</span>
       <div>
         <div style="font-weight:700;font-size:17px;color:#111827;">Instalar no iPhone</div>
-        <div style="font-size:13px;color:#6b7280;margin-top:2px;">Adicione à tela inicial em 3 passos</div>
+        <div style="font-size:13px;color:#6b7280;margin-top:2px;">Siga os passos no Safari para adicionar à tela inicial</div>
       </div>
     </div>
     <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;">
       <div style="width:32px;height:32px;border-radius:50%;background:#ede0fa;color:#7B00C4;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
-      <div style="font-size:14px;color:#374151;line-height:1.6;">Toque no icone de <strong>compartilhar</strong> <span style="display:inline-block;background:#f3f4f6;border-radius:6px;padding:2px 6px;font-size:18px;line-height:1;">&#x2B06;&#xFE0F;</span> na barra inferior do Safari</div>
+      <div style="font-size:14px;color:#374151;line-height:1.6;">Toque no botão <strong>Abrir no Safari</strong> abaixo — ou copie o link e cole no Safari</div>
     </div>
     <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;">
       <div style="width:32px;height:32px;border-radius:50%;background:#ede0fa;color:#7B00C4;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
-      <div style="font-size:14px;color:#374151;line-height:1.6;">Role para baixo e toque em <strong>"Adicionar a Tela de Inicio"</strong></div>
+      <div style="font-size:14px;color:#374151;line-height:1.6;">No Safari, toque no ícone de <strong>compartilhar</strong> &#x2B06;&#xFE0F; na barra inferior e escolha <strong>"Adicionar à Tela de Início"</strong></div>
     </div>
-    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:20px;">
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:24px;">
       <div style="width:32px;height:32px;border-radius:50%;background:#f0fdf4;color:#16a34a;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">&#10003;</div>
-      <div style="font-size:14px;color:#374151;line-height:1.6;">Toque em <strong>Adicionar</strong> e o icone aparece na sua tela inicial!</div>
+      <div style="font-size:14px;color:#374151;line-height:1.6;">Toque em <strong>Adicionar</strong> — pronto, o ícone aparece na tela inicial!</div>
     </div>
-    <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;font-size:13px;color:#92400e;margin-bottom:24px;line-height:1.5;">
-      Precisa estar no <strong>Safari</strong>. Se estiver no Chrome, copie o link e abra no Safari.
+    <div style="display:flex;gap:10px;">
+      <button onclick="fecharModalIOS()" style="flex:1;padding:14px;border-radius:12px;border:1.5px solid #e5e7eb;background:white;color:#374151;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;">Fechar</button>
+      <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/" style="flex:2;padding:14px;border-radius:12px;border:none;background:#7B00C4;color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;">
+        🧭 Abrir no Safari
+      </a>
     </div>
-    <button onclick="fecharModalIOS()" style="width:100%;padding:14px;border-radius:12px;border:none;background:#7B00C4;color:white;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;">Entendido</button>
   </div>
 </div>
 
 <script>
 (function() {
-  var deferredPrompt = null;
+  var URL_APP = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/";
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-  var isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  var deferredPrompt = null;
 
-  if (isStandalone) {
-    var btn = document.getElementById("btn-instalar-app");
-    if (btn) {
-      btn.style.background = "#16a34a";
-      btn.style.boxShadow = "0 4px 16px rgba(22,163,74,0.3)";
-      document.getElementById("btn-instalar-label").textContent = "App Instalado";
-      btn.disabled = true;
-      btn.style.cursor = "default";
+  // Botão chama esta função
+  window.acionarInstalacaoApp = function() {
+    if (deferredPrompt) {
+      // Android/Chrome: prompt nativo capturado — instala direto
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result) {
+        if (result.outcome === "accepted") deferredPrompt = null;
+      });
+    } else if (isIOS) {
+      // iPhone: mostra modal com instrução
+      document.getElementById("modal-ios-pwa").style.display = "flex";
+    } else {
+      // Fallback: vai para o portal onde o Chrome oferece instalação
+      window.location.href = URL_APP;
     }
-    return;
-  }
+  };
 
+  // Captura o prompt nativo (Android/Chrome) — dentro do scope da raiz
   window.addEventListener("beforeinstallprompt", function(e) {
     e.preventDefault();
     deferredPrompt = e;
-    var lbl = document.getElementById("btn-instalar-label");
-    if (lbl) lbl.textContent = "Instalar App Agora";
   });
 
   window.addEventListener("appinstalled", function() {
@@ -1030,25 +1036,10 @@ function fecharMenuMob(){
     var btn = document.getElementById("btn-instalar-app");
     if (btn) {
       btn.style.background = "#16a34a";
-      btn.style.boxShadow = "0 4px 16px rgba(22,163,74,0.3)";
-      document.getElementById("btn-instalar-label").textContent = "App Instalado!";
+      document.getElementById("btn-instalar-label").textContent = "✓ App Instalado!";
       btn.disabled = true;
-      btn.style.cursor = "default";
     }
   });
-
-  window.acionarInstalacaoApp = function() {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(function(result) {
-        if (result.outcome === "accepted") deferredPrompt = null;
-      });
-    } else if (isIOS) {
-      document.getElementById("modal-ios-pwa").style.display = "flex";
-    } else {
-      window.open("./instalar-app.html", "_blank");
-    }
-  };
 
   window.fecharModalIOS = function() {
     document.getElementById("modal-ios-pwa").style.display = "none";
