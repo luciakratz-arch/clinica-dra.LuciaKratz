@@ -2981,6 +2981,23 @@ function BotaoNotificacao({ permissao, ativar }) {
   );
 }
 
+// ─── BOTÃO INSTALAR PWA (sidebar) ───────────────────────
+function BotaoInstalarPWA() {
+  const { mostrarBotao, solicitarInstalacao, showIOSModal, setShowIOSModal, isIOS } = useInstallPWA();
+  if (!mostrarBotao) return null;
+  return (
+    <>
+      {showIOSModal && <ModalInstalacaoIOS onClose={()=>setShowIOSModal(false)}/>}
+      <button className="nav-item" onClick={solicitarInstalacao}
+        style={{color:"rgba(255,255,255,0.9)",background:"rgba(255,255,255,0.12)",
+          border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,marginBottom:4}}>
+        <Icon name="smartphone" size={18}/>
+        {isIOS ? "Instalar no iPhone" : "Instalar App"}
+      </button>
+    </>
+  );
+}
+
 function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, nav:navProp }) {
   const eCasal = modo === "casal";
   const navBase = user.tipo === "aluno" ? NAV_ALUNO : eCasal ? NAV_CASAL : NAV_INDIVIDUAL;
@@ -3038,6 +3055,7 @@ function Sidebar({ user, tab, setTab, onLogout, modo, onTrocarModo, notifProps, 
         <a href={SITE_URL} className="nav-item" style={{color:"rgba(255,255,255,0.6)",textDecoration:"none"}}>
           <Icon name="arrow-left" size={18}/> Voltar ao site
         </a>
+        <BotaoInstalarPWA/>
         <button className="nav-item nav-item-danger" onClick={onLogout}>
           <Icon name="log-out" size={18}/> Sair
         </button>
