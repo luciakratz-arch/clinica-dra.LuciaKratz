@@ -1,8 +1,8 @@
 {
   "name": "Dra. Lucia Kratz",
   "short_name": "Dra. Lucia",
-  "description": "Psicóloga • CRP 09/20590 • Goiânia, GO",
-  "start_url": "/clinica-dra.LuciaKratz/",
+  "description": "Portal da Paciente — Dra. Lucia Kratz",
+  "start_url": "/clinica-dra.LuciaKratz/clinica/",
   "scope": "/clinica-dra.LuciaKratz/",
   "display": "standalone",
   "background_color": "#7B00C4",
