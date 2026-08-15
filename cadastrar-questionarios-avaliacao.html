@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Cadastrar Questionarios — Avaliacao e Anamnese</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:system-ui,sans-serif;max-width:640px;margin:40px auto;padding:24px;background:#f9f5ff;}
+    h1{color:#6366f1;font-size:20px;margin-bottom:6px;}
+    p{color:#555;font-size:14px;line-height:1.6;margin-bottom:16px;}
+    .card{background:white;border-radius:14px;padding:20px;border:1px solid #e0e7ff;margin-bottom:16px;}
+    .tag{display:inline-block;background:#e0e7ff;color:#6366f1;font-size:11px;font-weight:700;border-radius:20px;padding:2px 10px;margin-bottom:8px;}
+    .nome{font-weight:700;font-size:14px;color:#111;margin-bottom:4px;}
+    .desc{font-size:13px;color:#6b7280;margin-bottom:8px;}
+    .key{font-size:12px;color:#9ca3af;font-family:monospace;background:#f9fafb;padding:3px 8px;border-radius:6px;}
+    .btn{width:100%;background:#6366f1;color:white;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;}
+    #log{margin-top:16px;background:white;border-radius:12px;padding:16px;font-size:13px;line-height:2;border:1px solid #e0e7ff;}
+    .ok{color:#16a34a;} .err{color:#dc2626;} .skip{color:#d97706;}
+  </style>
+</head>
+<body>
+<h1>Cadastrar Questionarios de Avaliacao</h1>
+<p>Cadastra os 6 questionarios de rastreamento como ferramentas em <strong>Avaliacao e Anamnese</strong>. Verifica duplicatas automaticamente.</p>
+
+<div class="card">
+  <div class="tag">AVALIACAO E ANAMNESE</div>
+  <div class="nome">Rastreamento Bipolar / Borderline</div>
+  <div class="desc">Avaliacao diferencial DSM-5 com laudo comparativo.</div>
+  <div class="key">rastreamento-bipolar</div>
+</div>
+<div class="card">
+  <div class="tag">AVALIACAO E ANAMNESE</div>
+  <div class="nome">Saude Sexual</div>
+  <div class="desc">Rastreamento confidencial de saude sexual.</div>
+  <div class="key">rastreamento-sexual</div>
+</div>
+<div class="card">
+  <div class="tag">AVALIACAO E ANAMNESE</div>
+  <div class="nome">Habitos Alimentares</div>
+  <div class="desc">Rastreamento de padroes alimentares DSM-5.</div>
+  <div class="key">rastreamento-alimentar</div>
+</div>
+<div class="card">
+  <div class="tag">AVALIACAO E ANAMNESE</div>
+  <div class="nome">Funcionamento e Comportamento</div>
+  <div class="desc">Rastreamento de atencao, agitacao e interacao social DSM-5.</div>
+  <div class="key">rastreamento-neuro</div>
+</div>
+<div class="card">
+  <div class="tag">AVALIACAO E ANAMNESE</div>
+  <div class="nome">Dependencia Quimica e Substancias</div>
+  <div class="desc">Rastreamento dos 11 criterios DSM-5 para uso de substancias.</div>
+  <div class="key">rastreamento-dependencia</div>
+</div>
+<div class="card">
+  <div class="tag">AVALIACAO E ANAMNESE</div>
+  <div class="nome">Dependencia de Jogos e Apostas</div>
+  <div class="desc">Rastreamento Gaming / Gambling Disorder DSM-5 / CID-11.</div>
+  <div class="key">rastreamento-jogos</div>
+</div>
+
+<button class="btn" id="btn" onclick="cadastrar()">Cadastrar todos no Firestore</button>
+<div id="log" style="display:none;"></div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+const db = firebase.firestore();
+
+const QUESTIONARIOS = [
+  {titulo:"Rastreamento Bipolar / Borderline",descricao:"Avaliacao diferencial DSM-5 aplicado ao paciente e familiares, com laudo comparativo.",categoria:"macro_aval",tipo:"interativa",formularioKey:"rastreamento-bipolar",emoji:"📊"},
+  {titulo:"Saude Sexual",descricao:"Rastreamento confidencial de saude sexual respondido apenas pelo proprio paciente.",categoria:"macro_aval",tipo:"interativa",formularioKey:"rastreamento-sexual",emoji:"🌸"},
+  {titulo:"Habitos Alimentares",descricao:"Rastreamento de padroes e comportamentos alimentares avaliacao diferencial DSM-5.",categoria:"macro_aval",tipo:"interativa",formularioKey:"rastreamento-alimentar",emoji:"🍎"},
+  {titulo:"Funcionamento e Comportamento",descricao:"Rastreamento de atencao, agitacao, interacao social e comportamento avaliacao diferencial DSM-5.",categoria:"macro_aval",tipo:"interativa",formularioKey:"rastreamento-neuro",emoji:"🧩"},
+  {titulo:"Dependencia Quimica e Substancias",descricao:"Rastreamento dos 11 criterios DSM-5 para Transtornos por Uso de Substancias paciente e familiares.",categoria:"macro_aval",tipo:"interativa",formularioKey:"rastreamento-dependencia",emoji:"💊"},
+  {titulo:"Dependencia de Jogos e Apostas",descricao:"Rastreamento de Gaming e Gambling Disorder DSM-5 e CID-11 paciente e familiares.",categoria:"macro_aval",tipo:"interativa",formularioKey:"rastreamento-jogos",emoji:"🎮"},
+];
+
+async function cadastrar() {
+  const btn = document.getElementById("btn");
+  const log = document.getElementById("log");
+  btn.disabled = true;
+  btn.textContent = "Cadastrando...";
+  log.style.display = "block";
+  log.innerHTML = "<strong>Iniciando cadastro...</strong><br/>";
+  let criados=0, pulados=0, erros=0;
+
+  for (const q of QUESTIONARIOS) {
+    try {
+      const existe = await db.collection("clinica_recursos").where("formularioKey","==",q.formularioKey).get();
+      if (!existe.empty) {
+        log.innerHTML += '<span class="skip">Ja existe: '+q.titulo+'</span><br/>';
+        pulados++; continue;
+      }
+      await db.collection("clinica_recursos").add({...q, criadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+      log.innerHTML += '<span class="ok">Criado: '+q.titulo+'</span><br/>';
+      criados++;
+    } catch(e) {
+      log.innerHTML += '<span class="err">Erro em '+q.titulo+': '+e.message+'</span><br/>';
+      erros++;
+    }
+  }
+  log.innerHTML += '<br/><strong>Concluido: '+criados+' criados, '+pulados+' ja existiam, '+erros+' erros</strong>';
+  btn.textContent = "Concluido!";
+}
+</script>
+</body>
+</html>
