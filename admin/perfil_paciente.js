@@ -16,10 +16,10 @@ function AbaPerfil({ paciente, pacientes }) {
     alert("Senha redefinida para 1234.");
   }
 
-  const msgAcesso = "Ola, "+paciente.nome+"! Butterfly\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink: "+SITE_URL+"/clinica/\n\nEmail: "+paciente.email+"\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590";
+  const msgAcesso = "Ola, "+paciente.nome+"! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink: "+SITE_URL+"/clinica/\n\nNome de acesso: "+paciente.nome+"\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590";
 
   function copiarMsg() {
-    const msg = "Ola, "+paciente.nome+"!\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink de acesso: "+SITE_URL+"/clinica/\n\nEmail: "+paciente.email+"\nSenha: 1234\n\nAo entrar pela primeira vez, recomendo trocar a senha em Minha Conta.\n\nQualquer duvida, estou a disposicao!\nDra. Lucia Kratz - CRP 09/20590";
+    const msg = "Ola, "+paciente.nome+"! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink de acesso: "+SITE_URL+"/clinica/\n\nNome de acesso: "+paciente.nome+"\nSenha: 1234\n\nAo entrar, pesquise seu nome no campo e use a senha acima.\n\nQualquer duvida, estou a disposicao!\nDra. Lucia Kratz - CRP 09/20590";
     navigator.clipboard.writeText(msg);
     setCopiado(true);
     setTimeout(()=>setCopiado(false),2000);
@@ -95,7 +95,7 @@ function AbaPerfil({ paciente, pacientes }) {
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><Icon name="key" size={18}/><div style={{fontWeight:600}}>Credenciais de Acesso</div></div>
         <p style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>Copie o texto abaixo e envie para o paciente. A senha padrao e <strong>1234</strong>.</p>
         <div style={{background:"var(--gray-50)",border:"1px solid var(--gray-200)",borderRadius:10,padding:16,fontSize:13,lineHeight:1.8,color:"var(--text-muted)"}}>
-          {"Ola, "+paciente.nome+"!\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\nLink: "+SITE_URL+"/clinica/\nEmail: "+paciente.email+"\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"}
+          {"Ola, "+paciente.nome+"! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\nLink: "+SITE_URL+"/clinica/\nNome de acesso: "+paciente.nome+"\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"}
         </div>
         <div style={{display:"flex",gap:10,marginTop:12}}>
           <button className="btn btn-outline" onClick={copiarMsg}><Icon name="copy" size={15}/> {copiado?"Copiado!":"Copiar mensagem"}</button>
