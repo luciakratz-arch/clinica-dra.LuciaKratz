@@ -413,6 +413,7 @@ function RecursosTerapeuticos({ user }) {
     "escada-polivagal":           "macro_habitos",
     "diario-corpo-mente":         "macro_habitos",
     "roda-vida-integral":         "macro_habitos",
+    "diagnostico-macroatividades":  "macro_habitos",
     "empilhamento-habitos":       "macro_habitos",
     "ritual-noturno":             "macro_habitos",
     "mapa-bateria":               "macro_habitos",
