@@ -351,6 +351,12 @@ function AbaModulos({ paciente }) {
     "Inventário de Carga Mental": "macro_relacionamentos",
     "Árvore da Decisão": "macro_ansiedade",
     "Diagnóstico de Macroatividades x Desgastes": "macro_habitos",
+    "Rastreamento Bipolar / Borderline": "macro_aval",
+    "Saude Sexual": "macro_aval",
+    "Habitos Alimentares": "macro_aval",
+    "Funcionamento e Comportamento": "macro_aval",
+    "Dependencia Quimica e Substancias": "macro_aval",
+    "Dependencia de Jogos e Apostas": "macro_aval",
   };
 
   function agruparPorMacro(ferramentas) {
