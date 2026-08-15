@@ -424,8 +424,8 @@ const MACROCATEGORIAS = [{
   }]
 }, {
   id: "macro_habitos",
-  icone: "🌱",
-  label: "Hábitos e Autocuidado",
+  icone: "🌿",
+  label: "Corpo, Saúde e Autocuidado",
   cor: "#16a34a",
   bg: "#dcfce7",
   subs: [{
@@ -443,6 +443,21 @@ const MACROCATEGORIAS = [{
   }, {
     id: "praticas_autocuidado",
     label: "Práticas de Autocuidado"
+  }, {
+    id: "alimentacao",
+    label: "Alimentação Emocional e Compulsão"
+  }, {
+    id: "autoimagem",
+    label: "Autoimagem e Aceitação Corporal"
+  }, {
+    id: "nervovago",
+    label: "Regulação do Sistema Nervoso (Nervo Vago)"
+  }, {
+    id: "sintomas_fisicos",
+    label: "Sintomas Físicos da Ansiedade"
+  }, {
+    id: "saude_mental",
+    label: "Integração Saúde Física e Mental"
   }]
 }, {
   id: "macro_relacionamentos",
@@ -487,28 +502,6 @@ const MACROCATEGORIAS = [{
   }, {
     id: "traicao",
     label: "Traição e Reconexão Conjugal"
-  }]
-}, {
-  id: "macro_corpo",
-  icone: "🏃",
-  label: "Corpo, Saúde e Conexão Somática",
-  cor: "#059669",
-  bg: "#d1fae5",
-  subs: [{
-    id: "alimentacao",
-    label: "Alimentação Emocional e Compulsão"
-  }, {
-    id: "autoimagem",
-    label: "Autoimagem e Aceitação Corporal"
-  }, {
-    id: "nervovago",
-    label: "Regulação do Sistema Nervoso (Nervo Vago)"
-  }, {
-    id: "sintomas_fisicos",
-    label: "Sintomas Físicos da Ansiedade"
-  }, {
-    id: "saude_mental",
-    label: "Integração Saúde Física e Mental"
   }]
 }, {
   id: "macro_compulsao",
