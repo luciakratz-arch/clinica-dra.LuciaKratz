@@ -681,7 +681,38 @@ function RecursosTerapeuticos({ user }) {
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
                     <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                     </div>
-                    {r.formularioKey==="anamnese"&&(
+                    {(r.formularioKey==="anamnese"||["rastreamento-bipolar","rastreamento-sexual","rastreamento-alimentar","rastreamento-neuro","rastreamento-dependencia","rastreamento-jogos"].includes(r.formularioKey))&&(
+                      <button className="btn btn-ghost" style={{fontSize:12,width:"100%",color:"#059669",border:"1px solid #059669",marginTop:6}} onClick={()=>{
+                        const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/";
+                        const LINKS = {
+                          "anamnese": BASE+"anamnese-publica/",
+                          "rastreamento-bipolar": BASE+"rastreamento/",
+                          "rastreamento-sexual": BASE+"rastreamento/sexual/",
+                          "rastreamento-alimentar": BASE+"rastreamento/alimentar/",
+                          "rastreamento-neuro": BASE+"rastreamento/neuro/",
+                          "rastreamento-dependencia": BASE+"rastreamento/dependencia/",
+                          "rastreamento-jogos": BASE+"rastreamento/jogos/",
+                        };
+                        const NOMES = {
+                          "anamnese": "Anamnese",
+                          "rastreamento-bipolar": "Rastreamento Bipolar / Borderline",
+                          "rastreamento-sexual": "Rastreamento de Saúde Sexual",
+                          "rastreamento-alimentar": "Rastreamento de Hábitos Alimentares",
+                          "rastreamento-neuro": "Rastreamento de Funcionamento e Comportamento",
+                          "rastreamento-dependencia": "Rastreamento de Dependência Química",
+                          "rastreamento-jogos": "Rastreamento de Jogos e Apostas",
+                        };
+                        const link = LINKS[r.formularioKey]||BASE;
+                        const nome = NOMES[r.formularioKey]||r.titulo;
+                        const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de *"+nome+"* para você preencher.\n\n⏱️ Leva entre 5 e 15 minutos.\n\n💡 Dicas:\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n\n👇 *Acesse pelo link abaixo:*\n"+link+"\n\nQualquer dúvida, pode responder aqui. 💜";
+                        navigator.clipboard.writeText(msg).then(()=>{
+                          alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
+                        }).catch(()=>{
+                          window.prompt("Copie a mensagem abaixo:", msg);
+                        });
+                      }}><Icon name="link" size={13}/> 🔗 Copiar Mensagem</button>
+                    )}
+                    {false&&r.formularioKey==="anamnese"&&(
                       <button className="btn btn-ghost" style={{fontSize:12,width:"100%",color:"#059669",border:"1px solid #059669",marginTop:6}} onClick={()=>{
                         const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
                         const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\n📋 *O que é isso?*\nSão perguntas sobre seu histórico de saúde e desenvolvimento — informações importantes para o atendimento.\n\n⏱️ *Quanto tempo leva?*\nEntre 10 e 20 minutos.\n\n💡 *Dicas:*\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n• Tenha em mãos informações sobre a infância, se possível\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
