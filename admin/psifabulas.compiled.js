@@ -569,7 +569,749 @@ const FERRAMENTAS_INTERATIVAS = [{
 }, {
   key: "diario-terapeutico",
   label: "Diário Terapêutico"
+}, {
+  key: "diagnostico-macroatividades",
+  label: "Diagnóstico de Macroatividades x Desgastes"
 }];
+
+// ═══════════════════════════════════════════════════════
+// DIAGNÓSTICO DE MACROATIVIDADES x DESGASTES
+// ═══════════════════════════════════════════════════════
+function FerramentaDiagnosticoMacro({
+  user
+}) {
+  const ETAPAS = ["intro", "cadastro", "classificacao", "resumo"];
+  const [etapa, setEtapa] = React.useState("intro");
+  const [atividades, setAtividades] = React.useState([{
+    nome: "Trabalho focado",
+    horas: "",
+    minutos: "",
+    esforco: 3,
+    importancia: 3
+  }, {
+    nome: "Reuniões",
+    horas: "",
+    minutos: "",
+    esforco: 3,
+    importancia: 3
+  }, {
+    nome: "Cuidados Pessoais",
+    horas: "",
+    minutos: "",
+    esforco: 2,
+    importancia: 4
+  }]);
+  const [novaAtiv, setNovaAtiv] = React.useState("");
+  const [salvando, setSalvando] = React.useState(false);
+  const [salvo, setSalvo] = React.useState(false);
+  const COR = "#16a34a";
+  const BG = "#f0fdf4";
+  function addAtividade(nome) {
+    if (!nome.trim()) return;
+    setAtividades(a => [...a, {
+      nome: nome.trim(),
+      horas: "",
+      minutos: "",
+      esforco: 3,
+      importancia: 3
+    }]);
+    setNovaAtiv("");
+  }
+  function updateAtiv(i, campo, valor) {
+    setAtividades(a => a.map((x, idx) => idx === i ? {
+      ...x,
+      [campo]: valor
+    } : x));
+  }
+  function removerAtiv(i) {
+    setAtividades(a => a.filter((_, idx) => idx !== i));
+  }
+  function calcTotal(a) {
+    const h = parseInt(a.horas || 0);
+    const m = parseInt(a.minutos || 0);
+    return h * 60 + m;
+  }
+  function quadrante(a) {
+    const min = calcTotal(a);
+    const tempoAlto = min >= 90;
+    const esforcoAlto = a.esforco >= 4;
+    const importBaixa = a.importancia <= 2;
+    if ((tempoAlto || esforcoAlto) && importBaixa) return "critico";
+    if (esforcoAlto && !importBaixa) return "investimento";
+    if (!esforcoAlto && a.importancia >= 4) return "eficiente";
+    return "neutro";
+  }
+  const QUAD = {
+    critico: {
+      label: "⚠️ Crítico",
+      cor: "#dc2626",
+      bg: "#fef2f2",
+      desc: "Alto esforço/tempo, baixa importância — revisar ou delegar"
+    },
+    investimento: {
+      label: "💪 Investimento",
+      cor: "#d97706",
+      bg: "#fffbeb",
+      desc: "Alto esforço, mas importante — vale o custo"
+    },
+    eficiente: {
+      label: "✅ Eficiente",
+      cor: "#16a34a",
+      bg: "#f0fdf4",
+      desc: "Alta importância com baixo esforço — ótimo equilíbrio"
+    },
+    neutro: {
+      label: "⚪ Neutro",
+      cor: "#6b7280",
+      bg: "#f9fafb",
+      desc: "Atividade de rotina — monitorar"
+    }
+  };
+  async function salvar() {
+    if (!user?.id) return;
+    setSalvando(true);
+    try {
+      const dados = {
+        pacienteId: user.id,
+        pacienteNome: user.nome,
+        ferramenta: "diagnostico-macroatividades",
+        data: new Date().toISOString().slice(0, 10),
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        atividades: atividades.map(a => ({
+          nome: a.nome,
+          tempoMinutos: calcTotal(a),
+          esforco: a.esforco,
+          importancia: a.importancia,
+          quadrante: quadrante(a)
+        })),
+        resumo: {
+          totalAtividades: atividades.length,
+          criticas: atividades.filter(a => quadrante(a) === "critico").length,
+          totalMinutos: atividades.reduce((s, a) => s + calcTotal(a), 0)
+        }
+      };
+      await db.collection("clinica_gestao_ansiedade").add(dados);
+      setSalvo(true);
+    } catch (e) {
+      console.error(e);
+    }
+    setSalvando(false);
+  }
+  const totalMin = atividades.reduce((s, a) => s + calcTotal(a), 0);
+  const criticas = atividades.filter(a => quadrante(a) === "critico");
+
+  // ── INTRO ──
+  if (etapa === "intro") return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: BG,
+      borderRadius: 14,
+      padding: "20px 18px",
+      marginBottom: 18,
+      borderLeft: `4px solid ${COR}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 16,
+      color: COR,
+      marginBottom: 8
+    }
+  }, "🗂️ O que são Macroatividades?"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 14,
+      color: "#374151",
+      lineHeight: 1.7,
+      margin: 0
+    }
+  }, "Macroatividades são os ", /*#__PURE__*/React.createElement("strong", null, "grandes blocos de tempo"), " que compõem seu dia — categorias amplas como \"Trabalho\", \"Reuniões\" ou \"Cuidados Pessoais\". Aqui você vai mapear quanto tempo e energia cada uma consome, e descobrir quais realmente merecem esse custo.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: "16px 18px",
+      marginBottom: 18
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14,
+      marginBottom: 10,
+      color: "#374151"
+    }
+  }, "📋 Como funciona:"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280",
+      lineHeight: 1.8
+    }
+  }, /*#__PURE__*/React.createElement("div", null, "1️⃣ ", /*#__PURE__*/React.createElement("strong", null, "Cadastre"), " suas principais atividades do dia"), /*#__PURE__*/React.createElement("div", null, "2️⃣ ", /*#__PURE__*/React.createElement("strong", null, "Classifique"), " tempo, esforço mental e importância"), /*#__PURE__*/React.createElement("div", null, "3️⃣ ", /*#__PURE__*/React.createElement("strong", null, "Veja"), " o diagnóstico automático e reflexões"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEtapa("cadastro"),
+    className: "btn btn-purple",
+    style: {
+      width: "100%",
+      padding: 14,
+      fontSize: 15
+    }
+  }, "🚀 Começar mapeamento"));
+
+  // ── CADASTRO ──
+  if (etapa === "cadastro") return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      marginBottom: 4
+    }
+  }, "📋 Suas Macroatividades"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280",
+      marginBottom: 16
+    }
+  }, "Quais são os grandes blocos que compõem seu dia? Pode editar os nomes sugeridos."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      marginBottom: 16
+    }
+  }, atividades.map((a, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      background: "white",
+      border: "1px solid #e5e7eb",
+      borderRadius: 10,
+      padding: "10px 12px"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: a.nome,
+    onChange: e => updateAtiv(i, "nome", e.target.value),
+    style: {
+      flex: 1,
+      border: "none",
+      outline: "none",
+      fontSize: 14,
+      fontFamily: "inherit",
+      color: "#111827"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removerAtiv(i),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626",
+      fontSize: 16,
+      padding: "2px 6px"
+    }
+  }, "✕")))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280",
+      marginBottom: 8,
+      fontWeight: 600
+    }
+  }, "➕ Sugestões rápidas:"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 8,
+      marginBottom: 12
+    }
+  }, ["Tarefas Domésticas", "Exercícios", "Lazer / Descanso", "Deslocamentos", "Redes Sociais"].map(s => /*#__PURE__*/React.createElement("button", {
+    key: s,
+    onClick: () => addAtividade(s),
+    style: {
+      background: "#f3f4f6",
+      border: "1px solid #e5e7eb",
+      borderRadius: 20,
+      padding: "6px 14px",
+      fontSize: 13,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      color: "#374151"
+    }
+  }, "+ ", s))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: novaAtiv,
+    onChange: e => setNovaAtiv(e.target.value),
+    onKeyDown: e => e.key === "Enter" && addAtividade(novaAtiv),
+    placeholder: "Escreva outra atividade...",
+    style: {
+      flex: 1,
+      border: "1px solid #e5e7eb",
+      borderRadius: 10,
+      padding: "10px 14px",
+      fontSize: 14,
+      fontFamily: "inherit",
+      outline: "none"
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => addAtividade(novaAtiv),
+    className: "btn btn-purple",
+    style: {
+      padding: "10px 16px"
+    }
+  }, "➕ Adicionar"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEtapa("classificacao"),
+    className: "btn btn-purple",
+    style: {
+      width: "100%",
+      padding: 14,
+      fontSize: 15
+    },
+    disabled: atividades.length === 0
+  }, "Classificar atividades →"));
+
+  // ── CLASSIFICAÇÃO ──
+  if (etapa === "classificacao") return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      marginBottom: 4
+    }
+  }, "⏱️ Classificação"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280",
+      marginBottom: 16
+    }
+  }, "Para cada atividade, indique tempo gasto, esforço mental e importância."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 16
+    }
+  }, atividades.map((a, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      background: "white",
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: "14px 16px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14,
+      color: "#111827",
+      marginBottom: 12
+    }
+  }, "📌 ", a.nome), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "#6b7280",
+      marginBottom: 6
+    }
+  }, "⏰ Tempo gasto (por dia):"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    max: "24",
+    value: a.horas,
+    onChange: e => updateAtiv(i, "horas", e.target.value),
+    placeholder: "0",
+    style: {
+      width: 60,
+      border: "1px solid #e5e7eb",
+      borderRadius: 8,
+      padding: "8px 10px",
+      fontSize: 14,
+      fontFamily: "inherit",
+      textAlign: "center"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280"
+    }
+  }, "h"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    min: "0",
+    max: "59",
+    value: a.minutos,
+    onChange: e => updateAtiv(i, "minutos", e.target.value),
+    placeholder: "0",
+    style: {
+      width: 60,
+      border: "1px solid #e5e7eb",
+      borderRadius: 8,
+      padding: "8px 10px",
+      fontSize: 14,
+      fontFamily: "inherit",
+      textAlign: "center"
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280"
+    }
+  }, "min"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "#6b7280",
+      marginBottom: 6
+    }
+  }, "🧠 Esforço mental: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "#111827"
+    }
+  }, ["", "Muito baixo", "Baixo", "Médio", "Alto", "Muito alto"][a.esforco])), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "5",
+    value: a.esforco,
+    onChange: e => updateAtiv(i, "esforco", +e.target.value),
+    style: {
+      width: "100%",
+      accentColor: COR
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: 11,
+      color: "#9ca3af"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "Muito baixo"), /*#__PURE__*/React.createElement("span", null, "Muito alto"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: "#6b7280",
+      marginBottom: 6
+    }
+  }, "⭐ Importância real: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: "#111827"
+    }
+  }, ["", "Irrelevante", "Pouco importante", "Moderada", "Importante", "Essencial"][a.importancia])), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: "1",
+    max: "5",
+    value: a.importancia,
+    onChange: e => updateAtiv(i, "importancia", +e.target.value),
+    style: {
+      width: "100%",
+      accentColor: "#d97706"
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: 11,
+      color: "#9ca3af"
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "Irrelevante"), /*#__PURE__*/React.createElement("span", null, "Essencial")))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEtapa("cadastro"),
+    className: "btn btn-ghost",
+    style: {
+      flex: 1,
+      padding: 12
+    }
+  }, "← Voltar"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEtapa("resumo"),
+    className: "btn btn-purple",
+    style: {
+      flex: 2,
+      padding: 12,
+      fontSize: 15
+    }
+  }, "Ver diagnóstico →")));
+
+  // ── RESUMO ──
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 4px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      marginBottom: 4
+    }
+  }, "📊 Diagnóstico de Macroatividades"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280",
+      marginBottom: 16
+    }
+  }, "Veja como seu tempo e energia estão distribuídos."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10,
+      marginBottom: 20
+    }
+  }, atividades.map((a, i) => {
+    const q = quadrante(a);
+    const qi = QUAD[q];
+    const min = calcTotal(a);
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        background: qi.bg,
+        border: `1.5px solid ${qi.cor}30`,
+        borderRadius: 12,
+        padding: "12px 16px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 14
+      }
+    }, a.nome), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 11,
+        fontWeight: 700,
+        color: qi.cor,
+        background: "white",
+        borderRadius: 20,
+        padding: "3px 10px",
+        border: `1px solid ${qi.cor}40`,
+        whiteSpace: "nowrap"
+      }
+    }, qi.label)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: "#6b7280",
+        marginTop: 6,
+        display: "flex",
+        gap: 16,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "⏰ ", Math.floor(min / 60), "h ", min % 60, "min"), /*#__PURE__*/React.createElement("span", null, "🧠 Esforço: ", ["", "Muito baixo", "Baixo", "Médio", "Alto", "Muito alto"][a.esforco]), /*#__PURE__*/React.createElement("span", null, "⭐ Importância: ", ["", "Irrelevante", "Pouco", "Moderada", "Importante", "Essencial"][a.importancia])), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        color: qi.cor,
+        marginTop: 4,
+        fontStyle: "italic"
+      }
+    }, qi.desc));
+  })), criticas.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fef2f2",
+      border: "1.5px solid #dc2626",
+      borderRadius: 12,
+      padding: "14px 16px",
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      color: "#dc2626",
+      marginBottom: 8
+    }
+  }, "⚠️ Atenção — Atividades Críticas"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "#374151",
+      marginBottom: 12,
+      lineHeight: 1.6
+    }
+  }, criticas.length === 1 ? "A atividade abaixo consome" : `As ${criticas.length} atividades abaixo consomem`, " muito tempo/esforço mas têm baixa importância. Considere:"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 6,
+      marginBottom: 12
+    }
+  }, criticas.map((a, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      fontSize: 13,
+      fontWeight: 600,
+      color: "#dc2626"
+    }
+  }, "• ", a.nome))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8
+    }
+  }, ["🤝 Posso delegar ou pedir ajuda com isso?", "⏱️ Existe uma forma de fazer em menos tempo?", "❌ O que aconteceria se eu simplesmente parasse de fazer?", "🔄 Isso está alinhado com o que é realmente importante para mim agora?"].map((q, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      background: "white",
+      borderRadius: 8,
+      padding: "10px 12px",
+      fontSize: 13,
+      color: "#374151",
+      borderLeft: "3px solid #dc2626"
+    }
+  }, q)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: "14px 16px",
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14,
+      marginBottom: 10
+    }
+  }, "📈 Resumo do Seu Dia"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 12,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f9fafb",
+      borderRadius: 10,
+      padding: "10px 16px",
+      textAlign: "center",
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#111827"
+    }
+  }, Math.floor(totalMin / 60), "h ", totalMin % 60, "min"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280"
+    }
+  }, "Total mapeado")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#fef2f2",
+      borderRadius: 10,
+      padding: "10px 16px",
+      textAlign: "center",
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#dc2626"
+    }
+  }, criticas.length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280"
+    }
+  }, "Atividades críticas")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f0fdf4",
+      borderRadius: 10,
+      padding: "10px 16px",
+      textAlign: "center",
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: "#16a34a"
+    }
+  }, atividades.filter(a => quadrante(a) === "eficiente").length), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "#6b7280"
+    }
+  }, "Eficientes")))), salvo ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f0fdf4",
+      border: "1px solid #16a34a",
+      borderRadius: 12,
+      padding: 16,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 24,
+      marginBottom: 4
+    }
+  }, "✅"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      color: "#16a34a"
+    }
+  }, "Diagnóstico salvo com sucesso!"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "#6b7280",
+      marginTop: 4
+    }
+  }, "Sua psicóloga poderá ver este resultado no painel.")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setEtapa("classificacao"),
+    className: "btn btn-ghost",
+    style: {
+      flex: 1,
+      padding: 12
+    }
+  }, "← Revisar"), /*#__PURE__*/React.createElement("button", {
+    onClick: salvar,
+    disabled: salvando,
+    className: "btn btn-purple",
+    style: {
+      flex: 2,
+      padding: 12,
+      fontSize: 15
+    }
+  }, salvando ? "Salvando..." : "💾 Salvar diagnóstico")));
+}
 
 // ═══════════════════════════════════════════════════════
 // FERRAMENTAS INTERATIVAS — MODAL VISUALIZAR
@@ -10976,6 +11718,11 @@ function ModalVisualizarFerramenta({
       user: user
     });
     if (k === "self-compassion-journal") return /*#__PURE__*/React.createElement(FerramentaSelfCompassion, {
+      user: user
+    });
+
+    // macro_habitos — Diagnóstico de Macroatividades
+    if (k === "diagnostico-macroatividades") return /*#__PURE__*/React.createElement(FerramentaDiagnosticoMacro, {
       user: user
     });
 
