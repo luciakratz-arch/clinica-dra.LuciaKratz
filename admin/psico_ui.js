@@ -395,6 +395,7 @@ function RecursosTerapeuticos({ user }) {
     "compulsao_sexual":  "macro_compulsao",
     "compulsao":         "macro_compulsao",
     "macro_compulsao":   "macro_compulsao",
+    "macro_corpo":        "macro_habitos",
     // formularioKey → macro
     "breathing-478":              "macro_habitos",
     "muscle-relaxation":          "macro_habitos",
@@ -662,11 +663,14 @@ function RecursosTerapeuticos({ user }) {
                   </div>
                   <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>{r.descricao}</p>
                   {r.formularioKey&&<span style={{fontSize:11,color:"var(--gray-400)",background:"var(--gray-50)",borderRadius:6,padding:"2px 8px",display:"inline-block",width:"fit-content"}}>{r.formularioKey}</span>}
-                  <div style={{display:"flex",gap:8,borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
+                  <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
+                    <div style={{display:"flex",gap:8}}>
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1,color:"var(--purple)"}} onClick={()=>setVisualizando(r)}><Icon name="eye" size={13}/> Visualizar</button>
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
+                    <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
+                    </div>
                     {r.formularioKey==="anamnese"&&(
-                      <button className="btn btn-ghost" style={{fontSize:12,width:"100%",color:"#059669",border:"1px solid #059669",marginTop:4}} onClick={()=>{
+                      <button className="btn btn-ghost" style={{fontSize:12,width:"100%",color:"#059669",border:"1px solid #059669",marginTop:6}} onClick={()=>{
                         const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
                         const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\n📋 *O que é isso?*\nSão perguntas sobre seu histórico de saúde e desenvolvimento — informações importantes para o atendimento.\n\n⏱️ *Quanto tempo leva?*\nEntre 10 e 20 minutos.\n\n💡 *Dicas:*\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n• Tenha em mãos informações sobre a infância, se possível\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
                         navigator.clipboard.writeText(msg).then(()=>{
@@ -676,7 +680,6 @@ function RecursosTerapeuticos({ user }) {
                         });
                       }}><Icon name="link" size={13}/> 🔗 Copiar Mensagem</button>
                     )}
-                    <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                   </div>
                 </div>
               ))}
