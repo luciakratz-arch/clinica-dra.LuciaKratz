@@ -26,20 +26,20 @@ function PsicoPreocupacao({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE9"), /*#__PURE__*/React.createElement("div", {
+  }, "🧩"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Voc\xEA preocupa com o que pode \u2014 ou com o que n\xE3o pode controlar?"), /*#__PURE__*/React.createElement("div", {
+  }, "Você preocupa com o que pode — ou com o que não pode controlar?"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Aprender a separar as preocupa\xE7\xF5es muda sua rela\xE7\xE3o com a ansiedade.")), /*#__PURE__*/React.createElement("div", {
+  }, "Aprender a separar as preocupações muda sua relação com a ansiedade.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -59,13 +59,13 @@ function PsicoPreocupacao({
       fontSize: 13,
       marginBottom: 6
     }
-  }, "\u2705 Produtiva"), /*#__PURE__*/React.createElement("div", {
+  }, "✅ Produtiva"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Existe uma a\xE7\xE3o concreta que posso fazer agora para resolver. A energia vai para a solu\xE7\xE3o.")), /*#__PURE__*/React.createElement("div", {
+  }, "Existe uma ação concreta que posso fazer agora para resolver. A energia vai para a solução.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       padding: "16px 18px",
@@ -78,13 +78,13 @@ function PsicoPreocupacao({
       fontSize: 13,
       marginBottom: 6
     }
-  }, "\u26A0\uFE0F Improdutiva"), /*#__PURE__*/React.createElement("div", {
+  }, "⚠️ Improdutiva"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "O problema est\xE1 fora do meu controle ou no futuro. Ruminar s\xF3 gasta energia sem resolver nada."))), /*#__PURE__*/React.createElement("div", {
+  }, "O problema está fora do meu controle ou no futuro. Ruminar só gasta energia sem resolver nada."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#7B00C4",
       padding: "14px 20px",
@@ -126,7 +126,7 @@ function PsicoPreocupacao({
       fontSize: 12,
       fontWeight: 500
     }
-  }, "SIM \u2192 Aja agora"), /*#__PURE__*/React.createElement("div", {
+  }, "SIM → Aja agora"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 11,
@@ -146,13 +146,13 @@ function PsicoPreocupacao({
       fontSize: 12,
       fontWeight: 500
     }
-  }, "N\xC3O \u2192 Solte conscientemente"), /*#__PURE__*/React.createElement("div", {
+  }, "NÃO → Solte conscientemente"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 11,
       marginTop: 2
     }
-  }, "Escreva: \"Isso est\xE1 fora do meu controle\"")))), /*#__PURE__*/React.createElement("div", {
+  }, "Escreva: \"Isso está fora do meu controle\"")))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "14px 20px",
@@ -165,13 +165,13 @@ function PsicoPreocupacao({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83C\uDFAF Na pr\xE1tica"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Na prática"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Liste suas 3 preocupa\xE7\xF5es do momento. Para cada uma: existe uma a\xE7\xE3o concreta que voc\xEA pode fazer hoje? Se sim, fa\xE7a. Se n\xE3o, pratique soltar conscientemente.")), /*#__PURE__*/React.createElement("div", {
+  }, "Liste suas 3 preocupações do momento. Para cada uma: existe uma ação concreta que você pode fazer hoje? Se sim, faça. Se não, pratique soltar conscientemente.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -191,14 +191,14 @@ function PsicoPreocupacao({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "De cada 10 preocupa\xE7\xF5es, 8 est\xE3o fora do nosso controle. Quanto de energia voc\xEA investe nessas 8? \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "De cada 10 preocupações, 8 estão fora do nosso controle. Quanto de energia você investe nessas 8? 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoPiorCenario({
   cat
@@ -222,20 +222,20 @@ function PsicoPiorCenario({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u26C8\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, "⛈️"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Voc\xEA vive imaginando o pior?"), /*#__PURE__*/React.createElement("div", {
+  }, "Você vive imaginando o pior?"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Catastrofizar \xE9 um h\xE1bito mental \u2014 e h\xE1bitos podem ser mudados.")), /*#__PURE__*/React.createElement("div", {
+  }, "Catastrofizar é um hábito mental — e hábitos podem ser mudados.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -248,13 +248,13 @@ function PsicoPiorCenario({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "O que \xE9 catastrofizar?"), /*#__PURE__*/React.createElement("div", {
+  }, "O que é catastrofizar?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "\xC9 o h\xE1bito de imaginar o pior resultado poss\xEDvel como o mais prov\xE1vel. A mente entra em modo de amea\xE7a \u2014 mesmo quando n\xE3o h\xE1 perigo real \u2014 e a ansiedade dispara.")), /*#__PURE__*/React.createElement("div", {
+  }, "É o hábito de imaginar o pior resultado possível como o mais provável. A mente entra em modo de ameaça — mesmo quando não há perigo real — e a ansiedade dispara.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#7B00C4",
       padding: "16px 20px",
@@ -267,7 +267,7 @@ function PsicoPiorCenario({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "O tri\xE2ngulo da catastrofiza\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "O triângulo da catastrofização"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8,
@@ -362,14 +362,14 @@ function PsicoPiorCenario({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Da \xFAltima vez que voc\xEA imaginou o pior \u2014 o que realmente aconteceu? Sua mente provavelmente superestimou o perigo. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Da última vez que você imaginou o pior — o que realmente aconteceu? Sua mente provavelmente superestimou o perigo. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoEustresse({
   cat
@@ -393,20 +393,20 @@ function PsicoEustresse({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
+  }, "⚡"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Nem todo estresse \xE9 seu inimigo"), /*#__PURE__*/React.createElement("div", {
+  }, "Nem todo estresse é seu inimigo"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Aprender a diferenci\xE1-los muda como voc\xEA responde \xE0s press\xF5es da vida.")), /*#__PURE__*/React.createElement("div", {
+  }, "Aprender a diferenciá-los muda como você responde às pressões da vida.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -426,14 +426,14 @@ function PsicoEustresse({
       fontSize: 14,
       marginBottom: 8
     }
-  }, "Eustresse \u2705"), /*#__PURE__*/React.createElement("div", {
+  }, "Eustresse ✅"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6,
       marginBottom: 10
     }
-  }, "O estresse que impulsiona. Gera energia, foco e motiva\xE7\xE3o para superar desafios."), /*#__PURE__*/React.createElement("div", {
+  }, "O estresse que impulsiona. Gera energia, foco e motivação para superar desafios."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
@@ -461,14 +461,14 @@ function PsicoEustresse({
       fontSize: 14,
       marginBottom: 8
     }
-  }, "Distresse \u26A0\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, "Distresse ⚠️"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6,
       marginBottom: 10
     }
-  }, "O estresse que adoece. Quando a press\xE3o ultrapassa a capacidade e se torna cr\xF4nica."), /*#__PURE__*/React.createElement("div", {
+  }, "O estresse que adoece. Quando a pressão ultrapassa a capacidade e se torna crônica."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
@@ -496,7 +496,7 @@ function PsicoEustresse({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "A diferen\xE7a est\xE1 em 2 fatores:"), /*#__PURE__*/React.createElement("div", {
+  }, "A diferença está em 2 fatores:"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10
@@ -515,13 +515,13 @@ function PsicoEustresse({
       fontWeight: 500,
       marginBottom: 3
     }
-  }, "\u23F1\uFE0F Dura\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "⏱️ Duração"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 11,
       lineHeight: 1.4
     }
-  }, "Tempor\xE1rio = eustresse. Cr\xF4nico = distresse.")), /*#__PURE__*/React.createElement("div", {
+  }, "Temporário = eustresse. Crônico = distresse.")), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       background: "rgba(255,255,255,0.12)",
@@ -535,7 +535,7 @@ function PsicoEustresse({
       fontWeight: 500,
       marginBottom: 3
     }
-  }, "\uD83C\uDFAE Percep\xE7\xE3o de controle"), /*#__PURE__*/React.createElement("div", {
+  }, "🎮 Percepção de controle"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 11,
@@ -554,13 +554,13 @@ function PsicoEustresse({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83C\uDFAF Na pr\xE1tica"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Na prática"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Hoje, identifique um estressor e pergunte: ", /*#__PURE__*/React.createElement("em", null, "\"Isso me desafia ou me paralisa?\""), " Se desafia, use a energia. Se paralisa, \xE9 sinal de que precisa de pausa ou ajuda.")), /*#__PURE__*/React.createElement("div", {
+  }, "Hoje, identifique um estressor e pergunte: ", /*#__PURE__*/React.createElement("em", null, "\"Isso me desafia ou me paralisa?\""), " Se desafia, use a energia. Se paralisa, é sinal de que precisa de pausa ou ajuda.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -580,14 +580,14 @@ function PsicoEustresse({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "O estresse que voc\xEA sente agora \u2014 est\xE1 te impulsionando ou te adoecendo? Essa resposta \xE9 o primeiro passo para cuidar de voc\xEA. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "O estresse que você sente agora — está te impulsionando ou te adoecendo? Essa resposta é o primeiro passo para cuidar de você. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoCicloAnsiedade({
   cat
@@ -611,20 +611,20 @@ function PsicoCicloAnsiedade({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83C\uDF00"), /*#__PURE__*/React.createElement("div", {
+  }, "🌀"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Evitar o que teme s\xF3 faz o medo crescer"), /*#__PURE__*/React.createElement("div", {
+  }, "Evitar o que teme só faz o medo crescer"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Entender o ciclo da ansiedade \xE9 o primeiro passo para quebr\xE1-lo.")), /*#__PURE__*/React.createElement("div", {
+  }, "Entender o ciclo da ansiedade é o primeiro passo para quebrá-lo.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -733,7 +733,7 @@ function PsicoCicloAnsiedade({
       fontWeight: 500,
       padding: "4px 0"
     }
-  }, "\u21A9\uFE0F Volta para o passo 1 \u2014 o ciclo se repete e se fortalece"))), /*#__PURE__*/React.createElement("div", {
+  }, "↩️ Volta para o passo 1 — o ciclo se repete e se fortalece"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#7B00C4",
       padding: "14px 20px",
@@ -800,14 +800,14 @@ function PsicoCicloAnsiedade({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "O que voc\xEA tem evitado por ansiedade? Cada vez que evita, o medo ganha poder. Cada vez que enfrenta \u2014 mesmo com medo \u2014 voc\xEA retoma o controle. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "O que você tem evitado por ansiedade? Cada vez que evita, o medo ganha poder. Cada vez que enfrenta — mesmo com medo — você retoma o controle. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoDesmontarAnsiedade({
   cat
@@ -831,20 +831,20 @@ function PsicoDesmontarAnsiedade({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE0"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Voc\xEA pode desmontar o circuito cerebral da ansiedade"), /*#__PURE__*/React.createElement("div", {
+  }, "Você pode desmontar o circuito cerebral da ansiedade"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "4 passos para retomar o comando da sua pr\xF3pria vida.")), /*#__PURE__*/React.createElement("div", {
+  }, "4 passos para retomar o comando da sua própria vida.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -967,14 +967,14 @@ function PsicoDesmontarAnsiedade({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Em qual dos 4 passos voc\xEA sente que precisa trabalhar mais? A consci\xEAncia sobre o pr\xF3prio processo ansioso j\xE1 \xE9, em si, um ato de cura. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Em qual dos 4 passos você sente que precisa trabalhar mais? A consciência sobre o próprio processo ansioso já é, em si, um ato de cura. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1003,20 +1003,20 @@ function PsicoModeloABC({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD3A"), /*#__PURE__*/React.createElement("div", {
+  }, "🔺"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O que realmente gera suas emo\xE7\xF5es?"), /*#__PURE__*/React.createElement("div", {
+  }, "O que realmente gera suas emoções?"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "N\xE3o \xE9 o evento \u2014 \xE9 o que voc\xEA acredita sobre ele.")), /*#__PURE__*/React.createElement("div", {
+  }, "Não é o evento — é o que você acredita sobre ele.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -1124,7 +1124,7 @@ function PsicoModeloABC({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Exemplo pr\xE1tico"), /*#__PURE__*/React.createElement("div", {
+  }, "Exemplo prático"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -1143,7 +1143,7 @@ function PsicoModeloABC({
       fontWeight: 500,
       marginBottom: 4
     }
-  }, "Situa\xE7\xE3o A (mesmo evento)"), /*#__PURE__*/React.createElement("div", {
+  }, "Situação A (mesmo evento)"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 11,
@@ -1162,7 +1162,7 @@ function PsicoModeloABC({
       fontWeight: 500,
       marginBottom: 4
     }
-  }, "Situa\xE7\xE3o A (mesmo evento)"), /*#__PURE__*/React.createElement("div", {
+  }, "Situação A (mesmo evento)"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 11,
@@ -1187,7 +1187,7 @@ function PsicoModeloABC({
       color: "#fde68a",
       fontSize: 11
     }
-  }, "C: Tristeza, desmotiva\xE7\xE3o")), /*#__PURE__*/React.createElement("div", {
+  }, "C: Tristeza, desmotivação")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "rgba(34,197,94,0.2)",
       borderRadius: 10,
@@ -1206,7 +1206,7 @@ function PsicoModeloABC({
       color: "#86efac",
       fontSize: 11
     }
-  }, "C: Motiva\xE7\xE3o, foco"))), /*#__PURE__*/React.createElement("div", {
+  }, "C: Motivação, foco"))), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 12,
@@ -1214,7 +1214,7 @@ function PsicoModeloABC({
       textAlign: "center",
       fontStyle: "italic"
     }
-  }, "Mesmo A \u2014 B diferente \u2014 C completamente diferente")), /*#__PURE__*/React.createElement("div", {
+  }, "Mesmo A — B diferente — C completamente diferente")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "14px 20px",
@@ -1227,13 +1227,13 @@ function PsicoModeloABC({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83C\uDFAF Na pr\xE1tica"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Na prática"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Pense em uma situa\xE7\xE3o que te deixou mal. Escreva o A (fato), o B (o que voc\xEA acreditou) e o C (emo\xE7\xE3o). Agora invente um B diferente \u2014 o que mudaria?")), /*#__PURE__*/React.createElement("div", {
+  }, "Pense em uma situação que te deixou mal. Escreva o A (fato), o B (o que você acreditou) e o C (emoção). Agora invente um B diferente — o que mudaria?")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -1253,14 +1253,14 @@ function PsicoModeloABC({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Voc\xEA n\xE3o pode controlar tudo que acontece (A), mas pode trabalhar suas cren\xE7as (B) \u2014 e isso muda tudo no que voc\xEA sente (C). \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Você não pode controlar tudo que acontece (A), mas pode trabalhar suas crenças (B) — e isso muda tudo no que você sente (C). 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoPensamentos({
   cat
@@ -1284,7 +1284,7 @@ function PsicoPensamentos({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDCAD"), /*#__PURE__*/React.createElement("div", {
+  }, "💭"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
@@ -1297,7 +1297,7 @@ function PsicoPensamentos({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "N\xE3o s\xE3o as coisas em si \u2014 \xE9 o que voc\xEA acredita sobre elas.")), /*#__PURE__*/React.createElement("div", {
+  }, "Não são as coisas em si — é o que você acredita sobre elas.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -1341,7 +1341,7 @@ function PsicoPensamentos({
       fontSize: 18,
       fontWeight: 700
     }
-  }, "\u2192"))))), /*#__PURE__*/React.createElement("div", {
+  }, "→"))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#7B00C4",
       padding: "16px 20px",
@@ -1354,7 +1354,7 @@ function PsicoPensamentos({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "O mesmo evento \u2014 perspectivas diferentes"), /*#__PURE__*/React.createElement("div", {
+  }, "O mesmo evento — perspectivas diferentes"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -1395,7 +1395,7 @@ function PsicoPensamentos({
       color: "#d9b3f5",
       fontSize: 11
     }
-  }, "\u2192 ", e))))), /*#__PURE__*/React.createElement("div", {
+  }, "→ ", e))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "14px 20px",
@@ -1408,13 +1408,13 @@ function PsicoPensamentos({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83C\uDFAF Na pr\xE1tica"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Na prática"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Hoje, quando notar uma emo\xE7\xE3o forte, pergunte: \"Que pensamento veio antes disso?\" Escreva num papel. S\xF3 observar j\xE1 come\xE7a a mudar tudo.")), /*#__PURE__*/React.createElement("div", {
+  }, "Hoje, quando notar uma emoção forte, pergunte: \"Que pensamento veio antes disso?\" Escreva num papel. Só observar já começa a mudar tudo.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -1434,14 +1434,14 @@ function PsicoPensamentos({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Que hist\xF3ria sua mente conta sobre voc\xEA quando as coisas d\xE3o errado? Essa hist\xF3ria \xE9 um fato \u2014 ou uma interpreta\xE7\xE3o? \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Que história sua mente conta sobre você quando as coisas dão errado? Essa história é um fato — ou uma interpretação? 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoPizzaResponsabilidade({
   cat
@@ -1525,7 +1525,7 @@ function PsicoPizzaResponsabilidade({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83C\uDF55"), /*#__PURE__*/React.createElement("div", {
+  }, "🍕"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
@@ -1538,7 +1538,7 @@ function PsicoPizzaResponsabilidade({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Toda situa\xE7\xE3o tem 3 fatias iguais de 33,33%: o outro, o ambiente e voc\xEA.")), /*#__PURE__*/React.createElement("div", {
+  }, "Toda situação tem 3 fatias iguais de 33,33%: o outro, o ambiente e você.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "20px",
@@ -1638,13 +1638,13 @@ function PsicoPizzaResponsabilidade({
       color: "#dc2626",
       marginBottom: 4
     }
-  }, "\uD83D\uDE14 Autoculpa t\xF3xica"), /*#__PURE__*/React.createElement("div", {
+  }, "😔 Autoculpa tóxica"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#7f1d1d",
       lineHeight: 1.4
     }
-  }, "Assume 100% e carrega o peso dos outros dois ter\xE7os que n\xE3o s\xE3o seus.")), /*#__PURE__*/React.createElement("div", {
+  }, "Assume 100% e carrega o peso dos outros dois terços que não são seus.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff7ed",
       borderRadius: 8,
@@ -1658,7 +1658,7 @@ function PsicoPizzaResponsabilidade({
       color: "#c2410c",
       marginBottom: 4
     }
-  }, "\uD83D\uDE24 Vitimiza\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "😤 Vitimização"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: "#7c2d12",
@@ -1677,7 +1677,7 @@ function PsicoPizzaResponsabilidade({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\uD83C\uDFAF Exerc\xEDcio \u2014 avalie uma situa\xE7\xE3o dif\xEDcil"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Exercício — avalie uma situação difícil"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -1699,7 +1699,7 @@ function PsicoPizzaResponsabilidade({
       background: "white",
       borderRadius: 10,
       padding: "14px 16px",
-      border: `2px solid ${FATIAS[passo].cor}30`
+      border: "2px solid " + FATIAS[passo].cor + "30"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1744,7 +1744,7 @@ function PsicoPizzaResponsabilidade({
       minHeight: 80,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${FATIAS[passo].cor}50`,
+      border: "1px solid " + FATIAS[passo].cor + "50",
       fontSize: 12,
       fontFamily: "inherit",
       resize: "vertical",
@@ -1771,7 +1771,7 @@ function PsicoPizzaResponsabilidade({
       fontFamily: "inherit",
       opacity: passo === 0 ? 0.4 : 1
     }
-  }, "\u2190 Anterior"), passo < 2 ? /*#__PURE__*/React.createElement("button", {
+  }, "← Anterior"), passo < 2 ? /*#__PURE__*/React.createElement("button", {
     onClick: () => setPasso(passo + 1),
     style: {
       padding: "7px 16px",
@@ -1784,7 +1784,7 @@ function PsicoPizzaResponsabilidade({
       fontWeight: 600,
       fontFamily: "inherit"
     }
-  }, "Pr\xF3ximo \u2192") : /*#__PURE__*/React.createElement("button", {
+  }, "Próximo →") : /*#__PURE__*/React.createElement("button", {
     onClick: () => setPasso(0),
     style: {
       padding: "7px 16px",
@@ -1797,7 +1797,7 @@ function PsicoPizzaResponsabilidade({
       fontWeight: 600,
       fontFamily: "inherit"
     }
-  }, "Recome\xE7ar \uD83D\uDD04"))), /*#__PURE__*/React.createElement("div", {
+  }, "Recomeçar 🔄"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -1811,20 +1811,20 @@ function PsicoPizzaResponsabilidade({
       fontWeight: 600,
       marginBottom: 6
     }
-  }, "\uD83D\uDC9C Reflex\xE3o final"), /*#__PURE__*/React.createElement("div", {
+  }, "💜 Reflexão final"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#3d006a",
       lineHeight: 1.7
     }
-  }, "Depois de avaliar o outro e o ambiente, olhe para a sua fatia com honestidade:", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Voc\xEA est\xE1 fazendo os seus 33,33%?"), /*#__PURE__*/React.createElement("br", null), "N\xE3o 100% \u2014 s\xF3 a sua parte. E isso j\xE1 \xE9 o suficiente para come\xE7ar a mudar.")), /*#__PURE__*/React.createElement("div", {
+  }, "Depois de avaliar o outro e o ambiente, olhe para a sua fatia com honestidade:", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Você está fazendo os seus 33,33%?"), /*#__PURE__*/React.createElement("br", null), "Não 100% — só a sua parte. E isso já é o suficiente para começar a mudar.")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoFatosInterpretacoes({
   cat
@@ -1848,20 +1848,20 @@ function PsicoFatosInterpretacoes({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD0D"), /*#__PURE__*/React.createElement("div", {
+  }, "🔍"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Voc\xEA acredita em tudo que sua mente diz?"), /*#__PURE__*/React.createElement("div", {
+  }, "Você acredita em tudo que sua mente diz?"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Separar fatos de interpreta\xE7\xF5es \xE9 uma das habilidades mais poderosas da TCC.")), /*#__PURE__*/React.createElement("div", {
+  }, "Separar fatos de interpretações é uma das habilidades mais poderosas da TCC.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -1874,7 +1874,7 @@ function PsicoFatosInterpretacoes({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Qual \xE9 a diferen\xE7a?"), /*#__PURE__*/React.createElement("div", {
+  }, "Qual é a diferença?"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -1894,13 +1894,13 @@ function PsicoFatosInterpretacoes({
       fontWeight: 600,
       marginBottom: 6
     }
-  }, "\uD83D\uDCCC Fato"), /*#__PURE__*/React.createElement("div", {
+  }, "📌 Fato"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#5a0090",
       fontSize: 11,
       lineHeight: 1.5
     }
-  }, "O que aconteceu objetivamente. Pode ser verificado. Qualquer pessoa que estivesse l\xE1 veria a mesma coisa.")), /*#__PURE__*/React.createElement("div", {
+  }, "O que aconteceu objetivamente. Pode ser verificado. Qualquer pessoa que estivesse lá veria a mesma coisa.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff7ed",
       borderRadius: 10,
@@ -1914,13 +1914,13 @@ function PsicoFatosInterpretacoes({
       fontWeight: 600,
       marginBottom: 6
     }
-  }, "\uD83E\uDDE0 Interpreta\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠 Interpretação"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#7c2d12",
       fontSize: 11,
       lineHeight: 1.5
     }
-  }, "O significado que sua mente atribui ao fato. Depende da sua hist\xF3ria, cren\xE7as e estado emocional.")))), /*#__PURE__*/React.createElement("div", {
+  }, "O significado que sua mente atribui ao fato. Depende da sua história, crenças e estado emocional.")))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#7B00C4",
       padding: "16px 20px",
@@ -1979,7 +1979,7 @@ function PsicoFatosInterpretacoes({
       color: "#fde68a",
       fontWeight: 500
     }
-  }, "Interpreta\xE7\xE3o:"), " ", i))))), /*#__PURE__*/React.createElement("div", {
+  }, "Interpretação:"), " ", i))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "14px 20px",
@@ -1992,13 +1992,13 @@ function PsicoFatosInterpretacoes({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83C\uDFAF Na pr\xE1tica"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Na prática"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Pegue uma situa\xE7\xE3o que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOC\xCA acrescentou com sua interpreta\xE7\xE3o? Escreva os dois lados.")), /*#__PURE__*/React.createElement("div", {
+  }, "Pegue uma situação que te incomodou hoje. Separe: o que REALMENTE aconteceu? E o que VOCÊ acrescentou com sua interpretação? Escreva os dois lados.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -2018,14 +2018,14 @@ function PsicoFatosInterpretacoes({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Quantas vezes sua mente criou uma hist\xF3ria sobre algu\xE9m \u2014 e voc\xEA sofreu por algo que nunca aconteceu de verdade? \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Quantas vezes sua mente criou uma história sobre alguém — e você sofreu por algo que nunca aconteceu de verdade? 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoSempreNunca({
   cat
@@ -2049,20 +2049,20 @@ function PsicoSempreNunca({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u221E"), /*#__PURE__*/React.createElement("div", {
+  }, "∞"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\"Eu SEMPRE fa\xE7o isso errado\" \u2014 isso \xE9 verdade?"), /*#__PURE__*/React.createElement("div", {
+  }, "\"Eu SEMPRE faço isso errado\" — isso é verdade?"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "A supergeneraliza\xE7\xE3o transforma eventos pontuais em verdades permanentes.")), /*#__PURE__*/React.createElement("div", {
+  }, "A supergeneralização transforma eventos pontuais em verdades permanentes.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -2075,14 +2075,14 @@ function PsicoSempreNunca({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "O que \xE9 supergeneraliza\xE7\xE3o?"), /*#__PURE__*/React.createElement("div", {
+  }, "O que é supergeneralização?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6,
       marginBottom: 12
     }
-  }, "\xC9 quando transformamos um evento espec\xEDfico em uma regra geral sobre n\xF3s, os outros ou o mundo. Uma experi\xEAncia ruim vira uma \"verdade eterna\"."), /*#__PURE__*/React.createElement("div", {
+  }, "É quando transformamos um evento específico em uma regra geral sobre nós, os outros ou o mundo. Uma experiência ruim vira uma \"verdade eterna\"."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -2123,7 +2123,7 @@ function PsicoSempreNunca({
       fontWeight: 700,
       fontSize: 14
     }
-  }, "\u2192"), /*#__PURE__*/React.createElement("span", {
+  }, "→"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: "#F97316",
@@ -2143,7 +2143,7 @@ function PsicoSempreNunca({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Como quebrar a generaliza\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "Como quebrar a generalização"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -2183,7 +2183,7 @@ function PsicoSempreNunca({
       color: "#86efac",
       fontWeight: 700
     }
-  }, "\u2192"), /*#__PURE__*/React.createElement("span", {
+  }, "→"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 11,
       color: "#86efac",
@@ -2202,13 +2202,13 @@ function PsicoSempreNunca({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83C\uDFAF Na pr\xE1tica"), /*#__PURE__*/React.createElement("div", {
+  }, "🎯 Na prática"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Quando notar um \"sempre\" ou \"nunca\" no seu pensamento, troque por: \"desta vez\", \"\xE0s vezes\", \"com frequ\xEAncia\". Observe como a frase \u2014 e a emo\xE7\xE3o \u2014 mudam completamente.")), /*#__PURE__*/React.createElement("div", {
+  }, "Quando notar um \"sempre\" ou \"nunca\" no seu pensamento, troque por: \"desta vez\", \"às vezes\", \"com frequência\". Observe como a frase — e a emoção — mudam completamente.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       borderRadius: "0 0 12px 12px",
@@ -2228,14 +2228,14 @@ function PsicoSempreNunca({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Que \"verdades permanentes\" voc\xEA carrega sobre si mesmo que na verdade foram apenas momentos passageiros? \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Que \"verdades permanentes\" você carrega sobre si mesmo que na verdade foram apenas momentos passageiros? 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function Psico7Distorcoes({
   cat
@@ -2295,20 +2295,20 @@ function Psico7Distorcoes({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE9"), /*#__PURE__*/React.createElement("div", {
+  }, "🧩"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Sua mente te engana \u2014 e voc\xEA nem percebe"), /*#__PURE__*/React.createElement("div", {
+  }, "Sua mente te engana — e você nem percebe"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "As 7 distor\xE7\xF5es de pensamento mais comuns que afetam como voc\xEA sente e age.")), /*#__PURE__*/React.createElement("div", {
+  }, "As 7 distorções de pensamento mais comuns que afetam como você sente e age.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "14px 20px",
@@ -2320,7 +2320,7 @@ function Psico7Distorcoes({
       color: "#5a0090",
       lineHeight: 1.6
     }
-  }, "Distor\xE7\xF5es cognitivas s\xE3o padr\xF5es de pensamento que levam a conclus\xF5es imprecisas e negativas. Eles se repetem na nossa mente, afetando nossa interpreta\xE7\xE3o da realidade, nossos sentimentos e nossas rea\xE7\xF5es.")), /*#__PURE__*/React.createElement("div", {
+  }, "Distorções cognitivas são padrões de pensamento que levam a conclusões imprecisas e negativas. Eles se repetem na nossa mente, afetando nossa interpretação da realidade, nossos sentimentos e nossas reações.")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -2401,14 +2401,14 @@ function Psico7Distorcoes({
       fontSize: 12,
       lineHeight: 1.6
     }
-  }, "Qual dessas distor\xE7\xF5es aparece mais nos seus pensamentos? Reconhecer o padr\xE3o \xE9 o primeiro passo para mudar a narrativa interna. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Qual dessas distorções aparece mais nos seus pensamentos? Reconhecer o padrão é o primeiro passo para mudar a narrativa interna. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 
 // Mapa legado → macro para fábulas
@@ -2437,14 +2437,23 @@ const FAB_LEGADO_MACRO = {
   "tcc": "macro_ansiedade",
   "relacionamentos": "macro_relacionamentos",
   "casais": "macro_casais",
-  "corpo": "macro_corpo",
+  "corpo": "macro_habitos",
+  "alimentacao": "macro_habitos",
+  "saude_mental": "macro_habitos",
+  "compulsao_ciclo": "macro_compulsao",
+  "compulsao_habitos": "macro_compulsao",
+  "compulsao_emocional": "macro_compulsao",
+  "compulsao_vinculos": "macro_compulsao",
+  "compulsao_aval": "macro_compulsao",
+  "compulsao": "macro_compulsao",
   // já migradas
   "macro_ansiedade": "macro_ansiedade",
   "macro_humor": "macro_humor",
   "macro_habitos": "macro_habitos",
   "macro_relacionamentos": "macro_relacionamentos",
   "macro_casais": "macro_casais",
-  "macro_corpo": "macro_corpo"
+  "macro_corpo": "macro_habitos",
+  "macro_compulsao": "macro_compulsao"
 };
 
 // Mapa de visualizações
@@ -2496,7 +2505,7 @@ function PsicoVisualBase({
       fontSize: 13,
       opacity: 0.85
     }
-  }, "Leitura e reflex\xE3o conclu\xEDdas \uD83D\uDC9C")), respostas.some(r => r.trim().length > 0) && /*#__PURE__*/React.createElement("div", {
+  }, "Leitura e reflexão concluídas 💜")), respostas.some(r => r.trim().length > 0) && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
       border: "1px solid var(--gray-200)",
@@ -2511,7 +2520,7 @@ function PsicoVisualBase({
       color: cor,
       marginBottom: 12
     }
-  }, "Suas reflex\xF5es"), perguntas.map((p, i) => respostas[i].trim() && /*#__PURE__*/React.createElement("div", {
+  }, "Suas reflexões"), perguntas.map((p, i) => respostas[i].trim() && /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 12,
@@ -2553,7 +2562,7 @@ function PsicoVisualBase({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Rever conte\xFAdo"));
+  }, "Rever conteúdo"));
 
   // ── Reflexão ────────────────────────────────────────────────────
   if (fase === "reflexao") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -2605,7 +2614,7 @@ function PsicoVisualBase({
       textTransform: "uppercase",
       letterSpacing: "0.5px"
     }
-  }, "Reflex\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "Reflexão"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       color: "white",
@@ -2667,7 +2676,7 @@ function PsicoVisualBase({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2190 Voltar"), /*#__PURE__*/React.createElement("button", {
+  }, "← Voltar"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       if (secao < total - 1) {
         setSecao(secao + 1);
@@ -2721,7 +2730,7 @@ function PsicoVisualBase({
     }
   }, secao + 1, "/", total)), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: `linear-gradient(135deg,${cor},${cor}dd)`,
+      background: "linear-gradient(135deg," + cor + "," + cor + "dd)",
       borderRadius: 12,
       padding: "16px",
       marginBottom: 16,
@@ -2949,7 +2958,7 @@ function PsicoVisualBase({
       fontSize: 13,
       fontFamily: "inherit"
     }
-  }, "\u2190"), /*#__PURE__*/React.createElement("button", {
+  }, "←"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setFase("reflexao"),
     style: {
       flex: 2,
@@ -2963,7 +2972,7 @@ function PsicoVisualBase({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "Refletir sobre isso \u270F\uFE0F")));
+  }, "Refletir sobre isso ✏️")));
 }
 
 // ── PILOTO: O Alarme Falso do Cérebro ────────────────────────────
@@ -2998,20 +3007,20 @@ function PsicoAlarme({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE0"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O seu c\xE9rebro tem um alarme \u2014 e ele dispara mais do que deveria"), /*#__PURE__*/React.createElement("div", {
+  }, "O seu cérebro tem um alarme — e ele dispara mais do que deveria"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "A am\xEDgdala n\xE3o distingue um le\xE3o de uma apresenta\xE7\xE3o no trabalho.")), /*#__PURE__*/React.createElement("div", {
+  }, "A amígdala não distingue um leão de uma apresentação no trabalho.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -3024,19 +3033,19 @@ function PsicoAlarme({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "\uD83D\uDD14 O que \xE9 a am\xEDgdala?"), /*#__PURE__*/React.createElement("div", {
+  }, "🔔 O que é a amígdala?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.7
     }
-  }, "\xC9 uma estrutura cerebral antiga, r\xE1pida e poderosa cuja fun\xE7\xE3o \xE9 simples: manter voc\xEA vivo. Quando percebe qualquer sinal de perigo, dispara o alarme antes mesmo que voc\xEA pense conscientemente sobre o que est\xE1 acontecendo."), /*#__PURE__*/React.createElement("div", {
+  }, "É uma estrutura cerebral antiga, rápida e poderosa cuja função é simples: manter você vivo. Quando percebe qualquer sinal de perigo, dispara o alarme antes mesmo que você pense conscientemente sobre o que está acontecendo."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3045,7 +3054,7 @@ function PsicoAlarme({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "O problema? Ela n\xE3o distingue um le\xE3o de uma cr\xEDtica no trabalho."))), /*#__PURE__*/React.createElement("div", {
+  }, "O problema? Ela não distingue um leão de uma crítica no trabalho."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -3058,7 +3067,7 @@ function PsicoAlarme({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "\u26A1 Quando o alarme dispara, em milissegundos..."), /*#__PURE__*/React.createElement("div", {
+  }, "⚡ Quando o alarme dispara, em milissegundos..."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3128,7 +3137,7 @@ function PsicoAlarme({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "\u2696\uFE0F Para o que foi criado vs. o que dispara hoje"), /*#__PURE__*/React.createElement("div", {
+  }, "⚖️ Para o que foi criado vs. o que dispara hoje"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -3147,14 +3156,14 @@ function PsicoAlarme({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83E\uDD81 Para o que foi criado"), ["Predadores reais", "Ameaças físicas", "Perigos de vida ou morte", "Soluções físicas imediatas"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "🦁 Para o que foi criado"), ["Predadores reais", "Ameaças físicas", "Perigos de vida ou morte", "Soluções físicas imediatas"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#7f1d1d",
       marginBottom: 3
     }
-  }, "\u2022 ", i))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fef3c7",
       borderRadius: 10,
@@ -3167,14 +3176,14 @@ function PsicoAlarme({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83D\uDCE7 Para o que dispara hoje"), ["E-mails não respondidos", "Conflitos no trabalho", "Incerteza sobre o futuro", "Críticas e julgamentos"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "📧 Para o que dispara hoje"), ["E-mails não respondidos", "Conflitos no trabalho", "Incerteza sobre o futuro", "Críticas e julgamentos"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#78350f",
       marginBottom: 3
     }
-  }, "\u2022 ", i))))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       padding: "14px 20px",
@@ -3187,17 +3196,17 @@ function PsicoAlarme({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83D\uDCA1 O insight que muda tudo"), /*#__PURE__*/React.createElement("div", {
+  }, "💡 O insight que muda tudo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#3d006a",
       lineHeight: 1.7
     }
-  }, "A ansiedade n\xE3o \xE9 fraqueza. \xC9 um sistema de prote\xE7\xE3o disparando fora do contexto certo. Quando voc\xEA entende isso, muda a rela\xE7\xE3o com os sintomas \u2014 em vez de lutar contra o alarme com p\xE2nico, come\xE7a a reconhec\xEA-lo: ", /*#__PURE__*/React.createElement("em", null, "\"Meu sistema de seguran\xE7a est\xE1 ativo. O que est\xE1 interpretando como amea\xE7a?\""))), /*#__PURE__*/React.createElement("div", {
+  }, "A ansiedade não é fraqueza. É um sistema de proteção disparando fora do contexto certo. Quando você entende isso, muda a relação com os sintomas — em vez de lutar contra o alarme com pânico, começa a reconhecê-lo: ", /*#__PURE__*/React.createElement("em", null, "\"Meu sistema de segurança está ativo. O que está interpretando como ameaça?\""))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3206,7 +3215,7 @@ function PsicoAlarme({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -3245,13 +3254,13 @@ function PsicoAlarme({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -3277,14 +3286,14 @@ function PsicoAlarme({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 
 // ── macro_ansiedade: novos componentes ───────────────────────────────────────
@@ -3320,20 +3329,20 @@ function PsicoPensamentosSaoEventos({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDCAD"), /*#__PURE__*/React.createElement("div", {
+  }, "💭"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Voc\xEA n\xE3o \xE9 seus pensamentos \u2014 voc\xEA \xE9 quem os observa"), /*#__PURE__*/React.createElement("div", {
+  }, "Você não é seus pensamentos — você é quem os observa"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Pensar algo n\xE3o torna aquilo verdade. Pensamentos s\xE3o eventos mentais, como nuvens passando.")), /*#__PURE__*/React.createElement("div", {
+  }, "Pensar algo não torna aquilo verdade. Pensamentos são eventos mentais, como nuvens passando.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -3346,19 +3355,19 @@ function PsicoPensamentosSaoEventos({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "\uD83C\uDF0A O que \xE9 um pensamento?"), /*#__PURE__*/React.createElement("div", {
+  }, "🌊 O que é um pensamento?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.7
     }
-  }, "A nossa mente produz cerca de 60.000 pensamentos por dia. A maioria passa sem ser notada. O problema come\xE7a quando acreditamos que todo pensamento \xE9 verdade \u2014 como se pensar algo fosse prova de que \xE9 real."), /*#__PURE__*/React.createElement("div", {
+  }, "A nossa mente produz cerca de 60.000 pensamentos por dia. A maioria passa sem ser notada. O problema começa quando acreditamos que todo pensamento é verdade — como se pensar algo fosse prova de que é real."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3367,7 +3376,7 @@ function PsicoPensamentosSaoEventos({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Pensar \"Sou um fracasso\" n\xE3o me torna um fracasso. \xC9 apenas um evento mental, como uma nuvem passando."))), /*#__PURE__*/React.createElement("div", {
+  }, "Pensar \"Sou um fracasso\" não me torna um fracasso. É apenas um evento mental, como uma nuvem passando."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -3380,7 +3389,7 @@ function PsicoPensamentosSaoEventos({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "\u2696\uFE0F Facto vs. interpreta\xE7\xE3o \u2014 a diferen\xE7a que muda tudo"), /*#__PURE__*/React.createElement("div", {
+  }, "⚖️ Facto vs. interpretação — a diferença que muda tudo"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -3399,7 +3408,7 @@ function PsicoPensamentosSaoEventos({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83D\uDCCC Facto"), ["Ela não respondeu minha mensagem", "A reunião foi adiada", "Cometi um erro no relatório", "Fiquei em silêncio na reunião"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "📌 Facto"), ["Ela não respondeu minha mensagem", "A reunião foi adiada", "Cometi um erro no relatório", "Fiquei em silêncio na reunião"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
@@ -3421,7 +3430,7 @@ function PsicoPensamentosSaoEventos({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83D\uDD2E Interpreta\xE7\xE3o"), ["Ela está com raiva de mim", "Não valorizam meu trabalho", "Sou incompetente", "As pessoas me julgaram"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "🔮 Interpretação"), ["Ela está com raiva de mim", "Não valorizam meu trabalho", "Sou incompetente", "As pessoas me julgaram"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
@@ -3443,7 +3452,7 @@ function PsicoPensamentosSaoEventos({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "\uD83E\uDDD8 Defus\xE3o cognitiva \u2014 criar dist\xE2ncia do pensamento"), [{
+  }, "🧘 Defusão cognitiva — criar distância do pensamento"), [{
     e: "👁️",
     t: "Nomeie o pensamento",
     d: "Em vez de 'Sou um fracasso', diga: 'Estou tendo o pensamento de que sou um fracasso'"
@@ -3506,17 +3515,17 @@ function PsicoPensamentosSaoEventos({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83D\uDCA1 A virada"), /*#__PURE__*/React.createElement("div", {
+  }, "💡 A virada"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#3d006a",
       lineHeight: 1.7
     }
-  }, "Voc\xEA n\xE3o \xE9 seus pensamentos. Voc\xEA \xE9 quem os observa. Essa distin\xE7\xE3o simples \xE9 a base de toda mudan\xE7a cognitiva. Quando voc\xEA observa um pensamento em vez de ser ele, recupera o poder de escolher como reagir. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Você não é seus pensamentos. Você é quem os observa. Essa distinção simples é a base de toda mudança cognitiva. Quando você observa um pensamento em vez de ser ele, recupera o poder de escolher como reagir. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3525,7 +3534,7 @@ function PsicoPensamentosSaoEventos({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -3564,13 +3573,13 @@ function PsicoPensamentosSaoEventos({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -3596,14 +3605,14 @@ function PsicoPensamentosSaoEventos({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoCurvaPanico({
   cat
@@ -3636,20 +3645,20 @@ function PsicoCurvaPanico({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDCC8"), /*#__PURE__*/React.createElement("div", {
+  }, "📈"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f3e6ff",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O p\xE2nico atinge o pico \u2014 e desce naturalmente"), /*#__PURE__*/React.createElement("div", {
+  }, "O pânico atinge o pico — e desce naturalmente"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d9b3f5",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "O maior medo de quem passa por p\xE2nico \xE9 que n\xE3o vai parar. A neuroci\xEAncia mostra que sempre para.")), /*#__PURE__*/React.createElement("div", {
+  }, "O maior medo de quem passa por pânico é que não vai parar. A neurociência mostra que sempre para.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f0ff",
       padding: "16px 20px",
@@ -3662,19 +3671,19 @@ function PsicoCurvaPanico({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE0 O que a neuroci\xEAncia diz"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠 O que a neurociência diz"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#5a0090",
       lineHeight: 1.7
     }
-  }, "Um dos maiores medos de quem experiencia ataques de p\xE2nico \xE9 acreditar que vai continuar a crescer indefinidamente \u2014 que o cora\xE7\xE3o vai continuar a acelerar at\xE9 parar, que o descontrolo vai aumentar at\xE9 \xE0 loucura."), /*#__PURE__*/React.createElement("div", {
+  }, "Um dos maiores medos de quem experiencia ataques de pânico é acreditar que vai continuar a crescer indefinidamente — que o coração vai continuar a acelerar até parar, que o descontrolo vai aumentar até à loucura."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3683,7 +3692,7 @@ function PsicoCurvaPanico({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Isso n\xE3o acontece. O p\xE2nico segue sempre uma curva previs\xEDvel \u2014 e o seu corpo sabe como descer."))), /*#__PURE__*/React.createElement("div", {
+  }, "Isso não acontece. O pânico segue sempre uma curva previsível — e o seu corpo sabe como descer."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -3696,7 +3705,7 @@ function PsicoCurvaPanico({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "\uD83D\uDCCA As 3 fases da curva"), /*#__PURE__*/React.createElement("div", {
+  }, "📊 As 3 fases da curva"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -3791,7 +3800,7 @@ function PsicoCurvaPanico({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "\u26A0\uFE0F O que alimenta o ciclo \u2014 e o que quebra"), /*#__PURE__*/React.createElement("div", {
+  }, "⚠️ O que alimenta o ciclo — e o que quebra"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -3810,14 +3819,14 @@ function PsicoCurvaPanico({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83D\uDD01 Alimenta o p\xE2nico"), ["'Não vai parar'", "Lutar contra os sintomas", "Fugir da situação", "Checar o coração com medo", "Respiração hiperventilada"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "🔁 Alimenta o pânico"), ["'Não vai parar'", "Lutar contra os sintomas", "Fugir da situação", "Checar o coração com medo", "Respiração hiperventilada"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#7f1d1d",
       marginBottom: 3
     }
-  }, "\u2022 ", i))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#dcfce7",
       borderRadius: 10,
@@ -3830,14 +3839,14 @@ function PsicoCurvaPanico({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\u2705 Quebra o ciclo"), ["'Já passou antes, vai passar'", "Observar sem lutar", "Permanecer e atravessar", "Respiração lenta e profunda", "Nomear o que está sentindo"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "✅ Quebra o ciclo"), ["'Já passou antes, vai passar'", "Observar sem lutar", "Permanecer e atravessar", "Respiração lenta e profunda", "Nomear o que está sentindo"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#14532d",
       marginBottom: 3
     }
-  }, "\u2022 ", i))))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3e6ff",
       padding: "14px 20px",
@@ -3850,17 +3859,17 @@ function PsicoCurvaPanico({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83D\uDCA1 A frase que muda tudo"), /*#__PURE__*/React.createElement("div", {
+  }, "💡 A frase que muda tudo"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#3d006a",
       lineHeight: 1.7
     }
-  }, "Quando o p\xE2nico aparece, o c\xE9rebro grita ", /*#__PURE__*/React.createElement("em", null, "\"isso n\xE3o vai parar\""), ". Mas o seu hist\xF3rico prova o contr\xE1rio: ", /*#__PURE__*/React.createElement("strong", null, "sempre parou"), ". Saber disso n\xE3o elimina o medo \u2014 mas cria uma \xE2ncora de realidade no momento mais dif\xEDcil. A curva sempre desce. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "Quando o pânico aparece, o cérebro grita ", /*#__PURE__*/React.createElement("em", null, "\"isso não vai parar\""), ". Mas o seu histórico prova o contrário: ", /*#__PURE__*/React.createElement("strong", null, "sempre parou"), ". Saber disso não elimina o medo — mas cria uma âncora de realidade no momento mais difícil. A curva sempre desce. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3869,7 +3878,7 @@ function PsicoCurvaPanico({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -3908,13 +3917,13 @@ function PsicoCurvaPanico({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -3940,14 +3949,14 @@ function PsicoCurvaPanico({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoEustresseV2({
   cat
@@ -3956,7 +3965,7 @@ function PsicoEustresseV2({
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
     titulo: "Eustresse vs. distresse",
-    emoji: "\u26A1",
+    emoji: "⚡",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4025,7 +4034,7 @@ function PsicoCicloAnsiedadeV2({
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
     titulo: "O ciclo da ansiedade",
-    emoji: "\uD83C\uDF00",
+    emoji: "🌀",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4105,8 +4114,8 @@ function PsicoPreocupacaoV2({
   const COR = "#7B00C4";
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
-    titulo: "Preocupa\xE7\xE3o produtiva vs. improdutiva",
-    emoji: "\uD83C\uDF9B\uFE0F",
+    titulo: "Preocupação produtiva vs. improdutiva",
+    emoji: "🎛️",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4174,8 +4183,8 @@ function PsicoPiorCenarioV2({
   const COR = "#7B00C4";
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
-    titulo: "A armadilha do pior cen\xE1rio",
-    emoji: "\u26C8\uFE0F",
+    titulo: "A armadilha do pior cenário",
+    emoji: "⛈️",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4249,8 +4258,8 @@ function PsicoModeloABCV2({
   const COR = "#7B00C4";
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
-    titulo: "O modelo ABC na pr\xE1tica",
-    emoji: "\uD83D\uDD3A",
+    titulo: "O modelo ABC na prática",
+    emoji: "🔺",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4325,7 +4334,7 @@ function PsicoPensamentosV2({
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
     titulo: "O poder dos pensamentos",
-    emoji: "\uD83D\uDCAD",
+    emoji: "💭",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4400,7 +4409,7 @@ function PsicoPizzaV2({
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
     titulo: "A pizza da responsabilidade",
-    emoji: "\uD83C\uDF55",
+    emoji: "🍕",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4476,8 +4485,8 @@ function PsicoFatosV2({
   const COR = "#7B00C4";
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
-    titulo: "Fatos vs. interpreta\xE7\xF5es",
-    emoji: "\uD83D\uDD0D",
+    titulo: "Fatos vs. interpretações",
+    emoji: "🔍",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4546,7 +4555,7 @@ function PsicoSempreNuncaV2({
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
     titulo: "O perigo do sempre e nunca",
-    emoji: "\u221E",
+    emoji: "∞",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4627,7 +4636,7 @@ function PsicoDesmontarV2({
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
     titulo: "Desmontar o Circuito Cerebral da Ansiedade",
-    emoji: "\uD83E\uDDE0",
+    emoji: "🧠",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4707,8 +4716,8 @@ function Psico7DistorcoesV2({
   const COR = "#7B00C4";
   const BG = "#f3e6ff";
   return /*#__PURE__*/React.createElement(PsicoVisualBase, {
-    titulo: "7 Distor\xE7\xF5es de Pensamento",
-    emoji: "\uD83E\uDDE9",
+    titulo: "7 Distorções de Pensamento",
+    emoji: "🧩",
     cor: COR,
     bg: BG,
     secoes: [{
@@ -4828,7 +4837,7 @@ function PsicoDiscutirDinheiro({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDCB0"), /*#__PURE__*/React.createElement("div", {
+  }, "💰"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff7ed",
       fontSize: 16,
@@ -4841,7 +4850,7 @@ function PsicoDiscutirDinheiro({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Quase nunca \xE9 sobre o dinheiro em si \u2014 \xE9 sobre o que ele representa.")), /*#__PURE__*/React.createElement("div", {
+  }, "Quase nunca é sobre o dinheiro em si — é sobre o que ele representa.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff7ed",
       padding: "16px 20px",
@@ -4854,19 +4863,19 @@ function PsicoDiscutirDinheiro({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "O dinheiro como campo de batalha simb\xF3lico"), /*#__PURE__*/React.createElement("div", {
+  }, "O dinheiro como campo de batalha simbólico"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#92400e",
       lineHeight: 1.7
     }
-  }, "Casais brigam sobre dinheiro com uma intensidade que vai muito al\xE9m dos n\xFAmeros. A conta que n\xE3o foi paga, o gasto que n\xE3o foi consultado \u2014 raramente s\xE3o sobre o valor em si. S\xE3o sobre ", /*#__PURE__*/React.createElement("strong", null, "controle, seguran\xE7a, respeito e poder"), "."), /*#__PURE__*/React.createElement("div", {
+  }, "Casais brigam sobre dinheiro com uma intensidade que vai muito além dos números. A conta que não foi paga, o gasto que não foi consultado — raramente são sobre o valor em si. São sobre ", /*#__PURE__*/React.createElement("strong", null, "controle, segurança, respeito e poder"), "."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
       padding: "10px 14px",
       marginTop: 10,
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -4874,7 +4883,7 @@ function PsicoDiscutirDinheiro({
       color: "#78350f",
       fontStyle: "italic"
     }
-  }, "Quando a briga \xE9 sobre dinheiro, a pergunta real \xE9: \"Voc\xEA me respeita? Voc\xEA me protege? Voc\xEA me v\xEA?\""))), /*#__PURE__*/React.createElement("div", {
+  }, "Quando a briga é sobre dinheiro, a pergunta real é: \"Você me respeita? Você me protege? Você me vê?\""))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -4943,7 +4952,7 @@ function PsicoDiscutirDinheiro({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "De onde v\xEAm as cren\xE7as sobre dinheiro?"), [{
+  }, "De onde vêm as crenças sobre dinheiro?"), [{
     e: "👨‍👩‍👧",
     t: "Família de origem",
     d: "Quem controlava o dinheiro em casa? Era tabu? Havia escassez ou abundância?"
@@ -5053,17 +5062,17 @@ function PsicoDiscutirDinheiro({
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "\uD83D\uDCA1 Para lembrar"), /*#__PURE__*/React.createElement("div", {
+  }, "💡 Para lembrar"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#78350f",
       lineHeight: 1.7
     }
-  }, "O dinheiro n\xE3o divide casais \u2014 a falta de conversa honesta sobre o que ele ", /*#__PURE__*/React.createElement("em", null, "representa"), " \xE9 que divide. Quando dois parceiros conseguem falar sobre o medo por tr\xE1s das contas, a conversa financeira deixa de ser uma batalha e se torna um ato de intimidade. \uD83D\uDC9C")), /*#__PURE__*/React.createElement("div", {
+  }, "O dinheiro não divide casais — a falta de conversa honesta sobre o que ele ", /*#__PURE__*/React.createElement("em", null, "representa"), " é que divide. Quando dois parceiros conseguem falar sobre o medo por trás das contas, a conversa financeira deixa de ser uma batalha e se torna um ato de intimidade. 💜")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5072,7 +5081,7 @@ function PsicoDiscutirDinheiro({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -5111,13 +5120,13 @@ function PsicoDiscutirDinheiro({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -5143,14 +5152,14 @@ function PsicoDiscutirDinheiro({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoFusaoCasal({
   cat
@@ -5183,20 +5192,20 @@ function PsicoFusaoCasal({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD17"), /*#__PURE__*/React.createElement("div", {
+  }, "🔗"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff0f6",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Amor ou fus\xE3o?"), /*#__PURE__*/React.createElement("div", {
+  }, "Amor ou fusão?"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fce7f3",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Voc\xEA n\xE3o pode amar bem algu\xE9m se perdeu a si mesmo.")), /*#__PURE__*/React.createElement("div", {
+  }, "Você não pode amar bem alguém se perdeu a si mesmo.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff0f6",
       padding: "16px 20px",
@@ -5209,19 +5218,19 @@ function PsicoFusaoCasal({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "O que \xE9 fus\xE3o?"), /*#__PURE__*/React.createElement("div", {
+  }, "O que é fusão?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "No in\xEDcio, a fus\xE3o parece amor profundo: querer estar sempre juntos, pensar no outro o tempo todo, abrir m\xE3o das pr\xF3prias prefer\xEAncias. Mas com o tempo, o que parecia intimidade se torna sufocamento \u2014 e o que parecia cuidado se torna depend\xEAncia."), /*#__PURE__*/React.createElement("div", {
+  }, "No início, a fusão parece amor profundo: querer estar sempre juntos, pensar no outro o tempo todo, abrir mão das próprias preferências. Mas com o tempo, o que parecia intimidade se torna sufocamento — e o que parecia cuidado se torna dependência."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
       padding: "10px 14px",
       marginTop: 10,
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5229,7 +5238,7 @@ function PsicoFusaoCasal({
       color: "#831843",
       fontStyle: "italic"
     }
-  }, "O amor saud\xE1vel acontece entre dois inteiros \u2014 n\xE3o entre duas metades."))), /*#__PURE__*/React.createElement("div", {
+  }, "O amor saudável acontece entre dois inteiros — não entre duas metades."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -5242,7 +5251,7 @@ function PsicoFusaoCasal({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Fus\xE3o vs. Intimidade"), /*#__PURE__*/React.createElement("div", {
+  }, "Fusão vs. Intimidade"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -5360,11 +5369,11 @@ function PsicoFusaoCasal({
       fontSize: 12,
       lineHeight: 1.7
     }
-  }, "\uD83E\uDD8B ", /*#__PURE__*/React.createElement("em", null, "Um relacionamento saud\xE1vel \xE9 como dois rios que correm lado a lado \u2014 pr\xF3ximos, mas com suas pr\xF3prias margens. Quando correm paralelos, cada um mant\xE9m sua for\xE7a \u2014 e juntos, criam algo maior."))), /*#__PURE__*/React.createElement("div", {
+  }, "🦋 ", /*#__PURE__*/React.createElement("em", null, "Um relacionamento saudável é como dois rios que correm lado a lado — próximos, mas com suas próprias margens. Quando correm paralelos, cada um mantém sua força — e juntos, criam algo maior."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5373,7 +5382,7 @@ function PsicoFusaoCasal({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -5412,13 +5421,13 @@ function PsicoFusaoCasal({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -5444,14 +5453,14 @@ function PsicoFusaoCasal({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoTriangulacao({
   cat
@@ -5484,20 +5493,20 @@ function PsicoTriangulacao({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD3A"), /*#__PURE__*/React.createElement("div", {
+  }, "🔺"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#e0f2fe",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O tri\xE2ngulo invis\xEDvel"), /*#__PURE__*/React.createElement("div", {
+  }, "O triângulo invisível"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#bae6fd",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Por que envolvemos terceiros para evitar conversas dif\xEDceis.")), /*#__PURE__*/React.createElement("div", {
+  }, "Por que envolvemos terceiros para evitar conversas difíceis.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0f9ff",
       padding: "16px 20px",
@@ -5510,19 +5519,19 @@ function PsicoTriangulacao({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "O que \xE9 triangula\xE7\xE3o?"), /*#__PURE__*/React.createElement("div", {
+  }, "O que é triangulação?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#0c4a6e",
       lineHeight: 1.7
     }
-  }, "Quando um conflito fica tenso demais, a mente busca uma sa\xEDda: envolver uma terceira pessoa \u2014 um filho, um amigo, a sogra. Qualquer um que alivie a tens\xE3o direta. Mas isso impede que o conflito real seja resolvido."), /*#__PURE__*/React.createElement("div", {
+  }, "Quando um conflito fica tenso demais, a mente busca uma saída: envolver uma terceira pessoa — um filho, um amigo, a sogra. Qualquer um que alivie a tensão direta. Mas isso impede que o conflito real seja resolvido."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
       padding: "10px 14px",
       marginTop: 10,
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5530,7 +5539,7 @@ function PsicoTriangulacao({
       color: "#0c4a6e",
       fontStyle: "italic"
     }
-  }, "A triangula\xE7\xE3o alivia a tens\xE3o imediata mas enterra o problema \u2014 at\xE9 ele explodir de outra forma."))), /*#__PURE__*/React.createElement("div", {
+  }, "A triangulação alivia a tensão imediata mas enterra o problema — até ele explodir de outra forma."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -5543,7 +5552,7 @@ function PsicoTriangulacao({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Formas comuns de triangula\xE7\xE3o"), [{
+  }, "Formas comuns de triangulação"), [{
     e: "👶",
     t: "Usar os filhos",
     d: "Passar recados, fazer a criança escolher lados, desabafar sobre o cônjuge"
@@ -5605,7 +5614,7 @@ function PsicoTriangulacao({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Como sair do tri\xE2ngulo"), [{
+  }, "Como sair do triângulo"), [{
     e: "🎯",
     t: "Identifique o que evita",
     d: "Medo de rejeição, conflito direto, vulnerabilidade — nomeie o que a triangulação serve para esconder"
@@ -5663,11 +5672,11 @@ function PsicoTriangulacao({
       fontSize: 12,
       lineHeight: 1.7
     }
-  }, "\uD83D\uDCAC ", /*#__PURE__*/React.createElement("em", null, "Toda triangula\xE7\xE3o \xE9 um pedido de conversa que ainda n\xE3o teve coragem de acontecer. O que voc\xEA precisa dizer diretamente ao seu parceiro(a) que ainda n\xE3o disse?"))), /*#__PURE__*/React.createElement("div", {
+  }, "💬 ", /*#__PURE__*/React.createElement("em", null, "Toda triangulação é um pedido de conversa que ainda não teve coragem de acontecer. O que você precisa dizer diretamente ao seu parceiro(a) que ainda não disse?"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5676,7 +5685,7 @@ function PsicoTriangulacao({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -5715,13 +5724,13 @@ function PsicoTriangulacao({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -5747,14 +5756,14 @@ function PsicoTriangulacao({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoPaisPerfeitos({
   cat
@@ -5787,20 +5796,20 @@ function PsicoPaisPerfeitos({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67"), /*#__PURE__*/React.createElement("div", {
+  }, "👨‍👩‍👧"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff0f6",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O mito do pai/m\xE3e perfeito"), /*#__PURE__*/React.createElement("div", {
+  }, "O mito do pai/mãe perfeito"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fce7f3",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Nunca houve tantas informa\xE7\xF5es sobre parentalidade \u2014 e tanta culpa.")), /*#__PURE__*/React.createElement("div", {
+  }, "Nunca houve tantas informações sobre parentalidade — e tanta culpa.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff0f6",
       padding: "16px 20px",
@@ -5813,19 +5822,19 @@ function PsicoPaisPerfeitos({
       fontWeight: 500,
       marginBottom: 8
     }
-  }, "O ideal imposs\xEDvel"), /*#__PURE__*/React.createElement("div", {
+  }, "O ideal impossível"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "O excesso de informa\xE7\xE3o criou um ideal imposs\xEDvel: o pai/m\xE3e perfeitamente presente, paciente, estimulante, gentil e realizado. Quem n\xE3o alcan\xE7a esse ideal sente que est\xE1 falhando \u2014 e esse sentimento ", /*#__PURE__*/React.createElement("strong", null, "adoece"), "."), /*#__PURE__*/React.createElement("div", {
+  }, "O excesso de informação criou um ideal impossível: o pai/mãe perfeitamente presente, paciente, estimulante, gentil e realizado. Quem não alcança esse ideal sente que está falhando — e esse sentimento ", /*#__PURE__*/React.createElement("strong", null, "adoece"), "."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
       padding: "10px 14px",
       marginTop: 10,
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5833,7 +5842,7 @@ function PsicoPaisPerfeitos({
       color: "#831843",
       fontStyle: "italic"
     }
-  }, "O perfeccionismo parental n\xE3o protege os filhos \u2014 mas adoece os pais e, indiretamente, as crian\xE7as."))), /*#__PURE__*/React.createElement("div", {
+  }, "O perfeccionismo parental não protege os filhos — mas adoece os pais e, indiretamente, as crianças."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -5908,7 +5917,7 @@ function PsicoPaisPerfeitos({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "O que as crian\xE7as realmente precisam"), [{
+  }, "O que as crianças realmente precisam"), [{
     e: "🔄",
     t: "Reparação, não perfeição",
     d: "O que forma o apego seguro não é nunca errar — é reparar quando erra. 'Me desculpe, errei'"
@@ -5970,11 +5979,11 @@ function PsicoPaisPerfeitos({
       fontSize: 12,
       lineHeight: 1.7
     }
-  }, "\uD83D\uDC9B ", /*#__PURE__*/React.createElement("em", null, "Winnicott estava certo: 'suficientemente bom(a)' \xE9 exatamente o que uma crian\xE7a precisa para crescer segura. Voc\xEA n\xE3o precisa ser perfeito(a) para ser o(a) pai/m\xE3e que seu filho(a) precisa."))), /*#__PURE__*/React.createElement("div", {
+  }, "💛 ", /*#__PURE__*/React.createElement("em", null, "Winnicott estava certo: 'suficientemente bom(a)' é exatamente o que uma criança precisa para crescer segura. Você não precisa ser perfeito(a) para ser o(a) pai/mãe que seu filho(a) precisa."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5983,7 +5992,7 @@ function PsicoPaisPerfeitos({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -6022,13 +6031,13 @@ function PsicoPaisPerfeitos({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -6054,14 +6063,14 @@ function PsicoPaisPerfeitos({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoDesejoAdormece({
   cat
@@ -6094,14 +6103,14 @@ function PsicoDesejoAdormece({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD25"), /*#__PURE__*/React.createElement("div", {
+  }, "🔥"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff0f6",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O desejo n\xE3o desaparece \u2014 adormece"), /*#__PURE__*/React.createElement("div", {
+  }, "O desejo não desaparece — adormece"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fce7f3",
       fontSize: 13,
@@ -6126,13 +6135,13 @@ function PsicoDesejoAdormece({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "Em quase todos os relacionamentos longos, chega um momento em que o desejo sexual diminui. Isso \xE9 t\xE3o comum que pesquisadores o consideram quase universal. Mas culturalmente tratamos como sinal de que algo est\xE1 errado \u2014 quando quase sempre sinaliza algo que precisa de aten\xE7\xE3o, n\xE3o o fim."), /*#__PURE__*/React.createElement("div", {
+  }, "Em quase todos os relacionamentos longos, chega um momento em que o desejo sexual diminui. Isso é tão comum que pesquisadores o consideram quase universal. Mas culturalmente tratamos como sinal de que algo está errado — quando quase sempre sinaliza algo que precisa de atenção, não o fim."), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
       padding: "10px 14px",
       marginTop: 10,
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6140,7 +6149,7 @@ function PsicoDesejoAdormece({
       color: "#831843",
       fontStyle: "italic"
     }
-  }, "A queda do desejo raramente significa falta de amor. Quase sempre sinaliza algo que precisa de aten\xE7\xE3o."))), /*#__PURE__*/React.createElement("div", {
+  }, "A queda do desejo raramente significa falta de amor. Quase sempre sinaliza algo que precisa de atenção."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -6277,11 +6286,11 @@ function PsicoDesejoAdormece({
       fontSize: 12,
       lineHeight: 1.7
     }
-  }, "\uD83D\uDC9B ", /*#__PURE__*/React.createElement("em", null, "O desejo n\xE3o some \u2014 ele vai para onde h\xE1 espa\xE7o, cuidado e conex\xE3o emocional. Em casais que mant\xEAm o desejo ao longo do tempo, o denominador comum \xE9 a disposi\xE7\xE3o de continuar se escolhendo ativamente."))), /*#__PURE__*/React.createElement("div", {
+  }, "💛 ", /*#__PURE__*/React.createElement("em", null, "O desejo não some — ele vai para onde há espaço, cuidado e conexão emocional. Em casais que mantêm o desejo ao longo do tempo, o denominador comum é a disposição de continuar se escolhendo ativamente."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6290,7 +6299,7 @@ function PsicoDesejoAdormece({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -6329,13 +6338,13 @@ function PsicoDesejoAdormece({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -6361,14 +6370,14 @@ function PsicoDesejoAdormece({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 
 // ── macro_relacionamentos ─────────────────────────────────────────────────────
@@ -6404,14 +6413,14 @@ function PsicoOuvirCompetencia({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDC42"), /*#__PURE__*/React.createElement("div", {
+  }, "👂"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff7ed",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Ouvir e uma competencia \u2014 e a maioria de nos nao aprendeu"), /*#__PURE__*/React.createElement("div", {
+  }, "Ouvir e uma competencia — e a maioria de nos nao aprendeu"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fed7aa",
       fontSize: 13,
@@ -6436,13 +6445,13 @@ function PsicoOuvirCompetencia({
       color: "#92400e",
       lineHeight: 1.7
     }
-  }, "A maioria das pessoas nao ouve para entender \u2014 ouve para responder. Enquanto o outro fala, ja estamos formulando nossa resposta, julgando, comparando com nossa experiencia. A escuta real exige suspender tudo isso."), /*#__PURE__*/React.createElement("div", {
+  }, "A maioria das pessoas nao ouve para entender — ouve para responder. Enquanto o outro fala, ja estamos formulando nossa resposta, julgando, comparando com nossa experiencia. A escuta real exige suspender tudo isso."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6598,7 +6607,7 @@ function PsicoOuvirCompetencia({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6607,7 +6616,7 @@ function PsicoOuvirCompetencia({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -6652,7 +6661,7 @@ function PsicoOuvirCompetencia({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -6678,14 +6687,14 @@ function PsicoOuvirCompetencia({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoPalavrasFerem({
   cat
@@ -6718,7 +6727,7 @@ function PsicoPalavrasFerem({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDCAC"), /*#__PURE__*/React.createElement("div", {
+  }, "💬"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff7ed",
       fontSize: 16,
@@ -6750,13 +6759,13 @@ function PsicoPalavrasFerem({
       color: "#92400e",
       lineHeight: 1.7
     }
-  }, "Quando nos sentimos ameacados emocionalmente, a amigdala sequestra o cortex pre-frontal \u2014 a parte responsavel pela empatia, raciocinio e escolha das palavras. O que sai e reativo, nao refletido."), /*#__PURE__*/React.createElement("div", {
+  }, "Quando nos sentimos ameacados emocionalmente, a amigdala sequestra o cortex pre-frontal — a parte responsavel pela empatia, raciocinio e escolha das palavras. O que sai e reativo, nao refletido."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6765,7 +6774,7 @@ function PsicoPalavrasFerem({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Nao e falta de carater \u2014 e neurobiologia. Mas entender isso nao nos isenta de aprender a fazer diferente."))), /*#__PURE__*/React.createElement("div", {
+  }, "Nao e falta de carater — e neurobiologia. Mas entender isso nao nos isenta de aprender a fazer diferente."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -6820,7 +6829,7 @@ function PsicoPalavrasFerem({
       color: "#86efac",
       fontWeight: 700
     }
-  }, "\u2192"), /*#__PURE__*/React.createElement("div", {
+  }, "→"), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       fontSize: 11,
@@ -6893,7 +6902,7 @@ function PsicoPalavrasFerem({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6902,7 +6911,7 @@ function PsicoPalavrasFerem({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -6947,7 +6956,7 @@ function PsicoPalavrasFerem({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -6973,14 +6982,14 @@ function PsicoPalavrasFerem({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoTangoConflito({
   cat
@@ -7013,7 +7022,7 @@ function PsicoTangoConflito({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD04"), /*#__PURE__*/React.createElement("div", {
+  }, "🔄"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff7ed",
       fontSize: 16,
@@ -7026,7 +7035,7 @@ function PsicoTangoConflito({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Os ciclos de acusacao e defesa se formam \u2014 e e possivel criar pontos de saida.")), /*#__PURE__*/React.createElement("div", {
+  }, "Os ciclos de acusacao e defesa se formam — e e possivel criar pontos de saida.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff7ed",
       padding: "16px 20px",
@@ -7045,13 +7054,13 @@ function PsicoTangoConflito({
       color: "#92400e",
       lineHeight: 1.7
     }
-  }, "Conflitos relacionais raramente sao sobre o conteudo da discussao. Sao padroes que se repetem: um ataca, o outro defende ou recua, o primeiro escala, o segundo fecha. Um tango que nenhum dos dois ensaiou conscientemente \u2014 mas que ambos sabem dancar."), /*#__PURE__*/React.createElement("div", {
+  }, "Conflitos relacionais raramente sao sobre o conteudo da discussao. Sao padroes que se repetem: um ataca, o outro defende ou recua, o primeiro escala, o segundo fecha. Um tango que nenhum dos dois ensaiou conscientemente — mas que ambos sabem dancar."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7206,7 +7215,7 @@ function PsicoTangoConflito({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7215,7 +7224,7 @@ function PsicoTangoConflito({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -7260,7 +7269,7 @@ function PsicoTangoConflito({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -7286,14 +7295,14 @@ function PsicoTangoConflito({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoLimitesPortas({
   cat
@@ -7326,14 +7335,14 @@ function PsicoLimitesPortas({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDEAA"), /*#__PURE__*/React.createElement("div", {
+  }, "🚪"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff7ed",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "Limites nao sao muros \u2014 sao portas com chave"), /*#__PURE__*/React.createElement("div", {
+  }, "Limites nao sao muros — sao portas com chave"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fed7aa",
       fontSize: 13,
@@ -7358,13 +7367,13 @@ function PsicoLimitesPortas({
       color: "#92400e",
       lineHeight: 1.7
     }
-  }, "Um limite nao e uma parede para manter as pessoas longe. E uma porta com chave \u2014 voce decide quem entra, quando entra, e em que condicoes. Limites saudaveis protegem sua energia, sua identidade e seus valores sem isolar voce do mundo."), /*#__PURE__*/React.createElement("div", {
+  }, "Um limite nao e uma parede para manter as pessoas longe. E uma porta com chave — voce decide quem entra, quando entra, e em que condicoes. Limites saudaveis protegem sua energia, sua identidade e seus valores sem isolar voce do mundo."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7412,7 +7421,7 @@ function PsicoLimitesPortas({
       color: "#fde8d8",
       marginBottom: 3
     }
-  }, "\u2022 ", i))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "rgba(255,255,255,0.15)",
       borderRadius: 10,
@@ -7432,7 +7441,7 @@ function PsicoLimitesPortas({
       color: "#bbf7d0",
       marginBottom: 3
     }
-  }, "\u2022 ", i))))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff7ed",
       padding: "16px 20px",
@@ -7499,7 +7508,7 @@ function PsicoLimitesPortas({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7508,7 +7517,7 @@ function PsicoLimitesPortas({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -7553,7 +7562,7 @@ function PsicoLimitesPortas({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -7579,14 +7588,14 @@ function PsicoLimitesPortas({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoCargaMental({
   cat
@@ -7619,14 +7628,14 @@ function PsicoCargaMental({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE9"), /*#__PURE__*/React.createElement("div", {
+  }, "🧩"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fff7ed",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "A carga que nao se ve \u2014 o que e a carga mental"), /*#__PURE__*/React.createElement("div", {
+  }, "A carga que nao se ve — o que e a carga mental"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fed7aa",
       fontSize: 13,
@@ -7651,13 +7660,13 @@ function PsicoCargaMental({
       color: "#92400e",
       lineHeight: 1.7
     }
-  }, "Carga mental e o trabalho cognitivo e emocional invisivel de antecipar, lembrar, planejar e coordenar tudo que precisa ser feito. Quem a carrega nao so faz as tarefas \u2014 gerencia a existencia delas. E esse gerenciamento e o que esgota."), /*#__PURE__*/React.createElement("div", {
+  }, "Carga mental e o trabalho cognitivo e emocional invisivel de antecipar, lembrar, planejar e coordenar tudo que precisa ser feito. Quem a carrega nao so faz as tarefas — gerencia a existencia delas. E esse gerenciamento e o que esgota."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7666,7 +7675,7 @@ function PsicoCargaMental({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Nao e so fazer \u2014 e lembrar que precisa ser feito, quando, como, por quem. Isso tem peso."))), /*#__PURE__*/React.createElement("div", {
+  }, "Nao e so fazer — e lembrar que precisa ser feito, quando, como, por quem. Isso tem peso."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -7803,7 +7812,7 @@ function PsicoCargaMental({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7812,7 +7821,7 @@ function PsicoCargaMental({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -7857,7 +7866,7 @@ function PsicoCargaMental({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -7883,14 +7892,14 @@ function PsicoCargaMental({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 
 // ── macro_corpo ───────────────────────────────────────────────────────────────
@@ -7926,7 +7935,7 @@ function PsicoVisaoIntegral({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u2B55"), /*#__PURE__*/React.createElement("div", {
+  }, "⭕"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f0fdf4",
       fontSize: 16,
@@ -7939,7 +7948,7 @@ function PsicoVisaoIntegral({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "As dimensoes de vida se influenciam mutuamente \u2014 o diagnostico precisa ser sistemico.")), /*#__PURE__*/React.createElement("div", {
+  }, "As dimensoes de vida se influenciam mutuamente — o diagnostico precisa ser sistemico.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -7958,13 +7967,13 @@ function PsicoVisaoIntegral({
       color: "#14532d",
       lineHeight: 1.7
     }
-  }, "Tratar apenas o sintoma e como apagar a luz de aviso no painel do carro sem verificar o motor. A saude integral reconhece que corpo, mente, emocoes, relacoes e proposito estao interligados \u2014 o que acontece em uma area afeta todas as outras."), /*#__PURE__*/React.createElement("div", {
+  }, "Tratar apenas o sintoma e como apagar a luz de aviso no painel do carro sem verificar o motor. A saude integral reconhece que corpo, mente, emocoes, relacoes e proposito estao interligados — o que acontece em uma area afeta todas as outras."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8111,7 +8120,7 @@ function PsicoVisaoIntegral({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8120,7 +8129,7 @@ function PsicoVisaoIntegral({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -8165,7 +8174,7 @@ function PsicoVisaoIntegral({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -8191,14 +8200,14 @@ function PsicoVisaoIntegral({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoEscadaSeguranca({
   cat
@@ -8231,7 +8240,7 @@ function PsicoEscadaSeguranca({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDEC"), /*#__PURE__*/React.createElement("div", {
+  }, "🧬"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f0fdf4",
       fontSize: 16,
@@ -8244,7 +8253,7 @@ function PsicoEscadaSeguranca({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "A Teoria Polivagal \u2014 os tres estados do sistema nervoso e como regula-los.")), /*#__PURE__*/React.createElement("div", {
+  }, "A Teoria Polivagal — os tres estados do sistema nervoso e como regula-los.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -8263,7 +8272,7 @@ function PsicoEscadaSeguranca({
       color: "#14532d",
       lineHeight: 1.7
     }
-  }, "Desenvolvida pelo Dr. Stephen Porges, a Teoria Polivagal explica que o sistema nervoso autonomo tem tres estados hierarquicos de resposta ao ambiente. O corpo avalia constantemente o nivel de seguranca \u2014 processo chamado neurocep\xE7\xE3o \u2014 e ativa o estado correspondente, sem consultar a mente consciente.")), /*#__PURE__*/React.createElement("div", {
+  }, "Desenvolvida pelo Dr. Stephen Porges, a Teoria Polivagal explica que o sistema nervoso autonomo tem tres estados hierarquicos de resposta ao ambiente. O corpo avalia constantemente o nivel de seguranca — processo chamado neurocepção — e ativa o estado correspondente, sem consultar a mente consciente.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -8414,7 +8423,7 @@ function PsicoEscadaSeguranca({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8423,7 +8432,7 @@ function PsicoEscadaSeguranca({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -8468,7 +8477,7 @@ function PsicoEscadaSeguranca({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -8494,14 +8503,14 @@ function PsicoEscadaSeguranca({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoCorpoNaoMente({
   cat
@@ -8534,20 +8543,20 @@ function PsicoCorpoNaoMente({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDEC0"), /*#__PURE__*/React.createElement("div", {
+  }, "🫀"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f0fdf4",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O corpo nao mente \u2014 a linguagem fisica das emocoes nao expressas"), /*#__PURE__*/React.createElement("div", {
+  }, "O corpo nao mente — a linguagem fisica das emocoes nao expressas"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#bbf7d0",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "A neurobiologia da somatizacao \u2014 por que os sintomas fisicos sao frequentemente mensagens emocionais.")), /*#__PURE__*/React.createElement("div", {
+  }, "A neurobiologia da somatizacao — por que os sintomas fisicos sao frequentemente mensagens emocionais.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -8566,13 +8575,13 @@ function PsicoCorpoNaoMente({
       color: "#14532d",
       lineHeight: 1.7
     }
-  }, "Somatizacao e quando o corpo expressa atraves de sintomas fisicos o que a mente nao consegue ou nao permite processar emocionalmente. Nao e fingimento \u2014 e neurobiologia. O sistema nervoso registra tudo, e quando as emocoes nao encontram saida consciente, elas encontram saida pelo corpo."), /*#__PURE__*/React.createElement("div", {
+  }, "Somatizacao e quando o corpo expressa atraves de sintomas fisicos o que a mente nao consegue ou nao permite processar emocionalmente. Nao e fingimento — e neurobiologia. O sistema nervoso registra tudo, e quando as emocoes nao encontram saida consciente, elas encontram saida pelo corpo."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8718,7 +8727,7 @@ function PsicoCorpoNaoMente({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8727,7 +8736,7 @@ function PsicoCorpoNaoMente({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -8772,7 +8781,7 @@ function PsicoCorpoNaoMente({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -8798,14 +8807,14 @@ function PsicoCorpoNaoMente({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoCienciaPresenca({
   cat
@@ -8838,7 +8847,7 @@ function PsicoCienciaPresenca({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDD8"), /*#__PURE__*/React.createElement("div", {
+  }, "🧘"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#f0fdf4",
       fontSize: 16,
@@ -8851,7 +8860,7 @@ function PsicoCienciaPresenca({
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "A mente vagua 47% do tempo \u2014 e esse custo e fisico, emocional e relacional.")), /*#__PURE__*/React.createElement("div", {
+  }, "A mente vagua 47% do tempo — e esse custo e fisico, emocional e relacional.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -8870,13 +8879,13 @@ function PsicoCienciaPresenca({
       color: "#14532d",
       lineHeight: 1.7
     }
-  }, "Uma pesquisa de Harvard com 2.250 pessoas mostrou que a mente vagueia em 47% do tempo \u2014 independente do que a pessoa esta fazendo. Os participantes eram menos felizes quando a mente estava em outro lugar, mesmo que o pensamento fosse positivo. A presenca, por si so, gera bem-estar."), /*#__PURE__*/React.createElement("div", {
+  }, "Uma pesquisa de Harvard com 2.250 pessoas mostrou que a mente vagueia em 47% do tempo — independente do que a pessoa esta fazendo. Os participantes eram menos felizes quando a mente estava em outro lugar, mesmo que o pensamento fosse positivo. A presenca, por si so, gera bem-estar."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9018,7 +9027,7 @@ function PsicoCienciaPresenca({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9027,7 +9036,7 @@ function PsicoCienciaPresenca({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexoes"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -9072,7 +9081,7 @@ function PsicoCienciaPresenca({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -9098,14 +9107,14 @@ function PsicoCienciaPresenca({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 
 // ── macro_habitos ─────────────────────────────────────────────────────────────
@@ -9141,7 +9150,7 @@ function PsicoCicloAlivioFalso({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD01"), /*#__PURE__*/React.createElement("div", {
+  }, "🔁"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -9153,7 +9162,7 @@ function PsicoCicloAlivioFalso({
       color: "#a7f3d0",
       fontSize: 13
     }
-  }, "Por que adiar nos acalma na hora \u2014 mas gera uma avalanche de ansiedade depois.")), /*#__PURE__*/React.createElement("div", {
+  }, "Por que adiar nos acalma na hora — mas gera uma avalanche de ansiedade depois.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -9172,13 +9181,13 @@ function PsicoCicloAlivioFalso({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "Alivio falso e qualquer comportamento que reduz a ansiedade no curto prazo, mas que aumenta o problema no longo prazo. A procrastinacao e o exemplo classico: adiar a tarefa alivia imediatamente \u2014 mas a tarefa continua la, e a culpa e a ansiedade crescem."), /*#__PURE__*/React.createElement("div", {
+  }, "Alivio falso e qualquer comportamento que reduz a ansiedade no curto prazo, mas que aumenta o problema no longo prazo. A procrastinacao e o exemplo classico: adiar a tarefa alivia imediatamente — mas a tarefa continua la, e a culpa e a ansiedade crescem."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9187,7 +9196,7 @@ function PsicoCicloAlivioFalso({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "O problema nao desaparece \u2014 ele cobra juros."))), /*#__PURE__*/React.createElement("div", {
+  }, "O problema nao desaparece — ele cobra juros."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -9324,7 +9333,7 @@ function PsicoCicloAlivioFalso({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9378,7 +9387,7 @@ function PsicoCicloAlivioFalso({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -9398,14 +9407,14 @@ function PsicoCicloAlivioFalso({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoLimpezaNoturna({
   cat
@@ -9438,7 +9447,7 @@ function PsicoLimpezaNoturna({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83C\uDF19"), /*#__PURE__*/React.createElement("div", {
+  }, "🌙"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -9469,13 +9478,13 @@ function PsicoLimpezaNoturna({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "Durante o sono profundo, o cerebro ativa o sistema glinfatico \u2014 uma rede de canais que literalmente lava as toxinas acumuladas ao longo do dia. Privacao de sono nao e apenas cansaco: e toxinas acumuladas no cerebro."), /*#__PURE__*/React.createElement("div", {
+  }, "Durante o sono profundo, o cerebro ativa o sistema glinfatico — uma rede de canais que literalmente lava as toxinas acumuladas ao longo do dia. Privacao de sono nao e apenas cansaco: e toxinas acumuladas no cerebro."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9484,7 +9493,7 @@ function PsicoLimpezaNoturna({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Dormir bem nao e preguica \u2014 e manutencao essencial do cerebro."))), /*#__PURE__*/React.createElement("div", {
+  }, "Dormir bem nao e preguica — e manutencao essencial do cerebro."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -9616,7 +9625,7 @@ function PsicoLimpezaNoturna({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9670,7 +9679,7 @@ function PsicoLimpezaNoturna({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -9690,14 +9699,14 @@ function PsicoLimpezaNoturna({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoRegra5Minutos({
   cat
@@ -9730,7 +9739,7 @@ function PsicoRegra5Minutos({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u23F1\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, "⏱️"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -9767,7 +9776,7 @@ function PsicoRegra5Minutos({
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9776,7 +9785,7 @@ function PsicoRegra5Minutos({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "A motivacao nao vem antes da acao \u2014 vem depois. Comece, e o humor muda."))), /*#__PURE__*/React.createElement("div", {
+  }, "A motivacao nao vem antes da acao — vem depois. Comece, e o humor muda."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -9913,7 +9922,7 @@ function PsicoRegra5Minutos({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -9967,7 +9976,7 @@ function PsicoRegra5Minutos({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -9987,14 +9996,14 @@ function PsicoRegra5Minutos({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoSinaisDesgaste({
   cat
@@ -10027,7 +10036,7 @@ function PsicoSinaisDesgaste({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD0B"), /*#__PURE__*/React.createElement("div", {
+  }, "🔋"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -10058,13 +10067,13 @@ function PsicoSinaisDesgaste({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "O desgaste emocional raramente aparece de repente. Ele se instala aos poucos, com sinais que frequentemente normalizamos. A cultura da produtividade ensinou a tratar o cansaco como fraqueza \u2014 e muitos so param quando o corpo para compulsoriamente."), /*#__PURE__*/React.createElement("div", {
+  }, "O desgaste emocional raramente aparece de repente. Ele se instala aos poucos, com sinais que frequentemente normalizamos. A cultura da produtividade ensinou a tratar o cansaco como fraqueza — e muitos so param quando o corpo para compulsoriamente."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10073,7 +10082,7 @@ function PsicoSinaisDesgaste({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Se voce nao criar espaco para descansar, o seu corpo vai criar \u2014 geralmente na pior hora."))), /*#__PURE__*/React.createElement("div", {
+  }, "Se voce nao criar espaco para descansar, o seu corpo vai criar — geralmente na pior hora."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -10198,7 +10207,7 @@ function PsicoSinaisDesgaste({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10252,7 +10261,7 @@ function PsicoSinaisDesgaste({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -10272,14 +10281,14 @@ function PsicoSinaisDesgaste({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoAgirantesVontade({
   cat
@@ -10312,7 +10321,7 @@ function PsicoAgirantesVontade({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDE80"), /*#__PURE__*/React.createElement("div", {
+  }, "🚀"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -10324,7 +10333,7 @@ function PsicoAgirantesVontade({
       color: "#a7f3d0",
       fontSize: 13
     }
-  }, "O principio pratico: fazer algo para gerar motivacao \u2014 nao o contrario.")), /*#__PURE__*/React.createElement("div", {
+  }, "O principio pratico: fazer algo para gerar motivacao — nao o contrario.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -10343,13 +10352,13 @@ function PsicoAgirantesVontade({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "A maioria das pessoas espera sentir vontade para agir. Mas a neurociencia mostra o oposto: a motivacao e consequencia da acao, nao sua causa. O sistema dopaminergico e ativado pelo progresso \u2014 e o progresso so existe se voce comecar, com ou sem vontade."), /*#__PURE__*/React.createElement("div", {
+  }, "A maioria das pessoas espera sentir vontade para agir. Mas a neurociencia mostra o oposto: a motivacao e consequencia da acao, nao sua causa. O sistema dopaminergico e ativado pelo progresso — e o progresso so existe se voce comecar, com ou sem vontade."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10467,7 +10476,7 @@ function PsicoAgirantesVontade({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10521,7 +10530,7 @@ function PsicoAgirantesVontade({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -10541,14 +10550,14 @@ function PsicoAgirantesVontade({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoMitoBateriaInfinita({
   cat
@@ -10581,7 +10590,7 @@ function PsicoMitoBateriaInfinita({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD0B"), /*#__PURE__*/React.createElement("div", {
+  }, "🔋"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -10612,13 +10621,13 @@ function PsicoMitoBateriaInfinita({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "A cultura moderna trata os seres humanos como maquinas com bateria infinita. Mas o sistema nervoso tem limites fisicos e quimicos reais. Cortisol, noradrenalina, serotonina \u2014 todos se esgotam. Quando os recursos neurobiologicos acabam, o desempenho cai e a irritabilidade aumenta."), /*#__PURE__*/React.createElement("div", {
+  }, "A cultura moderna trata os seres humanos como maquinas com bateria infinita. Mas o sistema nervoso tem limites fisicos e quimicos reais. Cortisol, noradrenalina, serotonina — todos se esgotam. Quando os recursos neurobiologicos acabam, o desempenho cai e a irritabilidade aumenta."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10759,7 +10768,7 @@ function PsicoMitoBateriaInfinita({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10813,7 +10822,7 @@ function PsicoMitoBateriaInfinita({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -10833,14 +10842,14 @@ function PsicoMitoBateriaInfinita({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoPoder1Porcento({
   cat
@@ -10873,7 +10882,7 @@ function PsicoPoder1Porcento({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDCC8"), /*#__PURE__*/React.createElement("div", {
+  }, "📈"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -10904,7 +10913,7 @@ function PsicoPoder1Porcento({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "Melhorar 1% por dia durante um ano resulta em 37 vezes melhor. Piorar 1% por dia resulta em quase zero. O impacto dos habitos e invisivel no curto prazo \u2014 e inevitavel no longo prazo."), /*#__PURE__*/React.createElement("div", {
+  }, "Melhorar 1% por dia durante um ano resulta em 37 vezes melhor. Piorar 1% por dia resulta em quase zero. O impacto dos habitos e invisivel no curto prazo — e inevitavel no longo prazo."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -11075,7 +11084,7 @@ function PsicoPoder1Porcento({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -11129,7 +11138,7 @@ function PsicoPoder1Porcento({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -11149,14 +11158,14 @@ function PsicoPoder1Porcento({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoDiarioPequenasVitorias({
   cat
@@ -11189,7 +11198,7 @@ function PsicoDiarioPequenasVitorias({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83C\uDFC6"), /*#__PURE__*/React.createElement("div", {
+  }, "🏆"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ecfdf5",
       fontSize: 16,
@@ -11220,13 +11229,13 @@ function PsicoDiarioPequenasVitorias({
       color: "#065f46",
       lineHeight: 1.7
     }
-  }, "O cerebro humano tem vies de negatividade \u2014 registra ameacas e fracassos com muito mais intensidade do que sucessos. Isso foi util na savana. Na vida moderna, significa que acabamos o dia lembrando do que nao fizemos e esquecendo o que fizemos."), /*#__PURE__*/React.createElement("div", {
+  }, "O cerebro humano tem vies de negatividade — registra ameacas e fracassos com muito mais intensidade do que sucessos. Isso foi util na savana. Na vida moderna, significa que acabamos o dia lembrando do que nao fizemos e esquecendo o que fizemos."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -11367,7 +11376,7 @@ function PsicoDiarioPequenasVitorias({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -11421,7 +11430,7 @@ function PsicoDiarioPequenasVitorias({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -11441,14 +11450,14 @@ function PsicoDiarioPequenasVitorias({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 
 // ── macro_humor ───────────────────────────────────────────────────────────────
@@ -11484,7 +11493,7 @@ function PsicoParaQueServemEmocoes({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u2764\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, "❤️"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -11496,7 +11505,7 @@ function PsicoParaQueServemEmocoes({
       color: "#fbcfe8",
       fontSize: 13
     }
-  }, "Nao ha emocoes erradas \u2014 todas sao mensageiras com uma funcao vital.")), /*#__PURE__*/React.createElement("div", {
+  }, "Nao ha emocoes erradas — todas sao mensageiras com uma funcao vital.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -11515,13 +11524,13 @@ function PsicoParaQueServemEmocoes({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "As emocoes nao sao defeitos do sistema nervoso \u2014 sao o sistema de navegacao mais sofisticado que existe. Cada emocao carrega uma mensagem sobre o que e importante para voce, o que esta ameacado, o que precisa de atencao. Suprimir emocoes e como desligar os indicadores do painel do carro."), /*#__PURE__*/React.createElement("div", {
+  }, "As emocoes nao sao defeitos do sistema nervoso — sao o sistema de navegacao mais sofisticado que existe. Cada emocao carrega uma mensagem sobre o que e importante para voce, o que esta ameacado, o que precisa de atencao. Suprimir emocoes e como desligar os indicadores do painel do carro."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -11666,7 +11675,7 @@ function PsicoParaQueServemEmocoes({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -11720,7 +11729,7 @@ function PsicoParaQueServemEmocoes({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -11740,14 +11749,14 @@ function PsicoParaQueServemEmocoes({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoAutocompaixao({
   cat
@@ -11780,7 +11789,7 @@ function PsicoAutocompaixao({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDD17"), /*#__PURE__*/React.createElement("div", {
+  }, "🤗"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -11792,7 +11801,7 @@ function PsicoAutocompaixao({
       color: "#fbcfe8",
       fontSize: 13
     }
-  }, "Como ser menos critico consigo mesmo \u2014 sem baixar o padrao.")), /*#__PURE__*/React.createElement("div", {
+  }, "Como ser menos critico consigo mesmo — sem baixar o padrao.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -11817,7 +11826,7 @@ function PsicoAutocompaixao({
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -11826,7 +11835,7 @@ function PsicoAutocompaixao({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "A critica severa nao motiva \u2014 paralisa. A autocompaixao libera energia para mudar."))), /*#__PURE__*/React.createElement("div", {
+  }, "A critica severa nao motiva — paralisa. A autocompaixao libera energia para mudar."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -11973,7 +11982,7 @@ function PsicoAutocompaixao({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12027,7 +12036,7 @@ function PsicoAutocompaixao({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -12047,14 +12056,14 @@ function PsicoAutocompaixao({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoAcaoGeraMotivacao({
   cat
@@ -12087,7 +12096,7 @@ function PsicoAcaoGeraMotivacao({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
+  }, "⚡"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -12099,7 +12108,7 @@ function PsicoAcaoGeraMotivacao({
       color: "#fbcfe8",
       fontSize: 13
     }
-  }, "Por que esperar ter vontade so agrava o desanimo \u2014 e como inverter o ciclo.")), /*#__PURE__*/React.createElement("div", {
+  }, "Por que esperar ter vontade so agrava o desanimo — e como inverter o ciclo.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -12118,13 +12127,13 @@ function PsicoAcaoGeraMotivacao({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "Quando estamos desanimados, esperamos sentir vontade para agir. Mas a neurociencia mostra que essa sequencia esta invertida: a motivacao nao precede a acao \u2014 ela e produzida por ela. A dopamina e liberada pelo progresso, nao pela antecipacao."), /*#__PURE__*/React.createElement("div", {
+  }, "Quando estamos desanimados, esperamos sentir vontade para agir. Mas a neurociencia mostra que essa sequencia esta invertida: a motivacao nao precede a acao — ela e produzida por ela. A dopamina e liberada pelo progresso, nao pela antecipacao."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12274,7 +12283,7 @@ function PsicoAcaoGeraMotivacao({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12328,7 +12337,7 @@ function PsicoAcaoGeraMotivacao({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -12348,14 +12357,14 @@ function PsicoAcaoGeraMotivacao({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoCerebroSequestrado({
   cat
@@ -12388,7 +12397,7 @@ function PsicoCerebroSequestrado({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE0"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -12400,7 +12409,7 @@ function PsicoCerebroSequestrado({
       color: "#fbcfe8",
       fontSize: 13
     }
-  }, "O sequestro da amigdala \u2014 por que dizemos o que nao queremos na raiva.")), /*#__PURE__*/React.createElement("div", {
+  }, "O sequestro da amigdala — por que dizemos o que nao queremos na raiva.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -12419,13 +12428,13 @@ function PsicoCerebroSequestrado({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "Quando a amigdala percebe uma ameaca, ela literalmente sequestra o cortex pre-frontal \u2014 responsavel pela razao, empatia e controle de impulsos. Em milissegundos, voce perde acesso ao seu melhor julgamento e age a partir do instinto de sobrevivencia."), /*#__PURE__*/React.createElement("div", {
+  }, "Quando a amigdala percebe uma ameaca, ela literalmente sequestra o cortex pre-frontal — responsavel pela razao, empatia e controle de impulsos. Em milissegundos, voce perde acesso ao seu melhor julgamento e age a partir do instinto de sobrevivencia."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12434,7 +12443,7 @@ function PsicoCerebroSequestrado({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Nao e fraqueza de carater \u2014 e neurobiologia. Mas e possivel treinar a pausa."))), /*#__PURE__*/React.createElement("div", {
+  }, "Nao e fraqueza de carater — e neurobiologia. Mas e possivel treinar a pausa."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -12562,7 +12571,7 @@ function PsicoCerebroSequestrado({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12616,7 +12625,7 @@ function PsicoCerebroSequestrado({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -12636,14 +12645,14 @@ function PsicoCerebroSequestrado({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoFiltroNegativo({
   cat
@@ -12676,7 +12685,7 @@ function PsicoFiltroNegativo({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD26"), /*#__PURE__*/React.createElement("div", {
+  }, "🔦"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -12707,13 +12716,13 @@ function PsicoFiltroNegativo({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "O cerebro humano e biologicamente programado para dar mais peso a experiencias negativas \u2014 uma heranca evolutiva. Na vida moderna, esse mecanismo faz com que uma critica dure dias na memoria enquanto 10 elogios desaparecem em horas."), /*#__PURE__*/React.createElement("div", {
+  }, "O cerebro humano e biologicamente programado para dar mais peso a experiencias negativas — uma heranca evolutiva. Na vida moderna, esse mecanismo faz com que uma critica dure dias na memoria enquanto 10 elogios desaparecem em horas."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12850,7 +12859,7 @@ function PsicoFiltroNegativo({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -12904,7 +12913,7 @@ function PsicoFiltroNegativo({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -12924,14 +12933,14 @@ function PsicoFiltroNegativo({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoJuizInternoTreinador({
   cat
@@ -12964,7 +12973,7 @@ function PsicoJuizInternoTreinador({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u2696\uFE0F"), /*#__PURE__*/React.createElement("div", {
+  }, "⚖️"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -12995,7 +13004,7 @@ function PsicoJuizInternoTreinador({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "Todos temos duas vozes internas: o Juiz \u2014 que condena, humilha e generaliza \u2014 e o Treinador \u2014 que avalia com honestidade, aponta o que melhorar e encoraja. A diferenca nao e o nivel de exigencia. E a intencao: o Juiz quer punir; o Treinador quer crescimento.")), /*#__PURE__*/React.createElement("div", {
+  }, "Todos temos duas vozes internas: o Juiz — que condena, humilha e generaliza — e o Treinador — que avalia com honestidade, aponta o que melhorar e encoraja. A diferenca nao e o nivel de exigencia. E a intencao: o Juiz quer punir; o Treinador quer crescimento.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -13008,7 +13017,7 @@ function PsicoJuizInternoTreinador({
       fontWeight: 500,
       marginBottom: 10
     }
-  }, "Juiz vs. Treinador \u2014 na pratica"), [{
+  }, "Juiz vs. Treinador — na pratica"), [{
     j: "Que idiota, voce errou de novo",
     t: "Esse erro mostra onde precisa praticar mais"
   }, {
@@ -13136,7 +13145,7 @@ function PsicoJuizInternoTreinador({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13190,7 +13199,7 @@ function PsicoJuizInternoTreinador({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -13210,14 +13219,14 @@ function PsicoJuizInternoTreinador({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoRodaEmocoes({
   cat
@@ -13250,7 +13259,7 @@ function PsicoRodaEmocoes({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83C\uDFA8"), /*#__PURE__*/React.createElement("div", {
+  }, "🎨"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -13281,13 +13290,13 @@ function PsicoRodaEmocoes({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "Pesquisas de neurociencia mostram que nomear uma emocao com precisao reduz sua intensidade \u2014 processo chamado affect labeling. Quanto mais preciso voce e ao nomear o que sente, mais controle tem sobre isso."), /*#__PURE__*/React.createElement("div", {
+  }, "Pesquisas de neurociencia mostram que nomear uma emocao com precisao reduz sua intensidade — processo chamado affect labeling. Quanto mais preciso voce e ao nomear o que sente, mais controle tem sobre isso."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13296,7 +13305,7 @@ function PsicoRodaEmocoes({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "Granularidade emocional \u2014 vocabulario emocional rico \u2014 e preditor de saude mental."))), /*#__PURE__*/React.createElement("div", {
+  }, "Granularidade emocional — vocabulario emocional rico — e preditor de saude mental."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -13351,7 +13360,7 @@ function PsicoRodaEmocoes({
       color: "#fbcfe8",
       marginBottom: 2
     }
-  }, "\u2022 ", n)))))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", n)))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -13418,7 +13427,7 @@ function PsicoRodaEmocoes({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13472,7 +13481,7 @@ function PsicoRodaEmocoes({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -13492,14 +13501,14 @@ function PsicoRodaEmocoes({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoSurfarOndaEmocao({
   cat
@@ -13532,7 +13541,7 @@ function PsicoSurfarOndaEmocao({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83C\uDFC4"), /*#__PURE__*/React.createElement("div", {
+  }, "🏄"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fdf2f8",
       fontSize: 16,
@@ -13544,7 +13553,7 @@ function PsicoSurfarOndaEmocao({
       color: "#fbcfe8",
       fontSize: 13
     }
-  }, "Como a emocao intensa tem um pico e desce naturalmente \u2014 se nao lutarmos contra ela.")), /*#__PURE__*/React.createElement("div", {
+  }, "Como a emocao intensa tem um pico e desce naturalmente — se nao lutarmos contra ela.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -13563,13 +13572,13 @@ function PsicoSurfarOndaEmocao({
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "Emocoes sao como ondas: sobem, atingem um pico e descem naturalmente \u2014 se nao interferirmos. O problema e que a maioria das pessoas tenta resistir a onda ou e arrastada por ela. Surfar e diferente: voce se move com a onda, sem ser controlado por ela e sem fugir dela."), /*#__PURE__*/React.createElement("div", {
+  }, "Emocoes sao como ondas: sobem, atingem um pico e descem naturalmente — se nao interferirmos. O problema e que a maioria das pessoas tenta resistir a onda ou e arrastada por ela. Surfar e diferente: voce se move com a onda, sem ser controlado por ela e sem fugir dela."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: `3px solid ${COR}`
+      borderLeft: "3px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13617,7 +13626,7 @@ function PsicoSurfarOndaEmocao({
       color: "#fde8d8",
       marginBottom: 3
     }
-  }, "\u2022 ", i))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "rgba(255,255,255,0.15)",
       borderRadius: 10,
@@ -13637,7 +13646,7 @@ function PsicoSurfarOndaEmocao({
       color: "#bbf7d0",
       marginBottom: 3
     }
-  }, "\u2022 ", i))))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fdf2f8",
       padding: "16px 20px",
@@ -13704,7 +13713,7 @@ function PsicoSurfarOndaEmocao({
     style: {
       background: BG,
       padding: "16px 20px",
-      borderTop: `2px solid ${COR}`
+      borderTop: "2px solid " + COR
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13758,7 +13767,7 @@ function PsicoSurfarOndaEmocao({
       minHeight: 70,
       padding: "8px 10px",
       borderRadius: 8,
-      border: `1px solid ${COR}50`,
+      border: "1px solid " + COR + "50",
       fontSize: 13,
       fontFamily: "inherit",
       resize: "vertical",
@@ -13778,14 +13787,14 @@ function PsicoSurfarOndaEmocao({
       fontWeight: 700,
       fontFamily: "inherit"
     }
-  }, "\uD83D\uDCF2 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexoes pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888780",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psicologa \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicologa · CRP 09/20590"));
 }
 function PsicoSurfandoOndaEmocao({
   cat
@@ -13796,8 +13805,8 @@ function PsicoSurfandoOndaEmocao({
 }
 
 // ═══════════════════════════════════════════════════════
-// COMPULSÃO SEXUAL — Psicoeducação Visual (formato correto)
-// Página única · JSX direto · sem navegação por seções
+// COMPULSÃO SEXUAL — Psicoeducação Visual
+// Formato: página única · JSX direto · sem navegação por seções
 // ═══════════════════════════════════════════════════════
 
 function PsicoCicloGatilho({
@@ -13809,9 +13818,8 @@ function PsicoCicloGatilho({
   const PERGUNTAS = ["Em qual etapa do ciclo você se percebe mais claramente?", "Qual emoção costuma ser o gatilho mais frequente?", "Que estratégia poderia usar para interromper o ciclo antes do ato?"];
   function enviarWhatsApp() {
     const tel = (cat && cat.telefone || "").replace(/\D/g, "");
-    const linhas = PERGUNTAS.map((p, i) => i + 1 + ". " + p + "\nR: " + (respostas[i] || "—")).join("\n\n");
-    const texto = "Reflexões — Ciclo do Gatilho:\n\n" + linhas;
-    window.open("https://wa.me/55" + tel + "?text=" + encodeURIComponent(texto), "_blank");
+    const texto = `Reflexões — O Ciclo do Gatilho:\n\n${PERGUNTAS.map((p, i) => `${i + 1}. ${p}\nR: ${respostas[i] || "—"}`).join("\n\n")}`;
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, "_blank");
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13832,20 +13840,20 @@ function PsicoCicloGatilho({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD04"), /*#__PURE__*/React.createElement("div", {
+  }, "🔄"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#ede9fe",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "O comportamento compulsivo raramente come\xE7a com desejo"), /*#__PURE__*/React.createElement("div", {
+  }, "O comportamento compulsivo raramente começa com desejo"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#c4b5fd",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "Come\xE7a com um estado emocional desconfort\xE1vel \u2014 e segue um ciclo previs\xEDvel.")), /*#__PURE__*/React.createElement("div", {
+  }, "Começa com um estado emocional desconfortável — e segue um ciclo previsível.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f9f5ff",
       padding: "16px 20px",
@@ -13858,13 +13866,13 @@ function PsicoCicloGatilho({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE0 Por que o ciclo se repete?"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠 Por que o ciclo se repete?"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#4c1d95",
       lineHeight: 1.7
     }
-  }, "O que mant\xE9m o ciclo n\xE3o \xE9 fraqueza moral \u2014 \xE9 neurobiologia. O c\xE9rebro aprendeu que esse comportamento resolve aquele estado emocional rapidamente. E o que funciona rapidamente, o c\xE9rebro repete."), /*#__PURE__*/React.createElement("div", {
+  }, "O que mantém o ciclo não é fraqueza moral — é neurobiologia. O cérebro aprendeu que esse comportamento resolve aquele estado emocional rapidamente. E o que funciona rapidamente, o cérebro repete."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
@@ -13879,7 +13887,7 @@ function PsicoCicloGatilho({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "N\xE3o \xE9 falta de vontade. \xC9 um padr\xE3o neurol\xF3gico aprendido \u2014 e padr\xF5es aprendidos podem ser desaprendidos."))), /*#__PURE__*/React.createElement("div", {
+  }, "Não é falta de vontade. É um padrão neurológico aprendido — e padrões aprendidos podem ser desaprendidos."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -13892,7 +13900,7 @@ function PsicoCicloGatilho({
       fontWeight: 600,
       marginBottom: 10
     }
-  }, "\u26A1 As 5 etapas do ciclo"), [{
+  }, "⚡ As 5 etapas do ciclo"), [{
     e: "⚡",
     t: "1. Gatilho",
     d: "Estresse, solidão, tédio, ansiedade. O desconforto começa."
@@ -13958,54 +13966,54 @@ function PsicoCicloGatilho({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\uD83C\uDFAF Onde posso intervir?"), [{
-    p: "No gatilho",
-    a: "Identificar e nomear a emoção antes que vire fissura",
-    c: "#059669",
-    b: "#d1fae5"
+  }, "🎯 Onde posso intervir?"), [{
+    ponto: "No gatilho",
+    acao: "Identificar e nomear a emoção antes que vire fissura",
+    cor: "#059669",
+    bg: "#d1fae5"
   }, {
-    p: "Na fissura",
-    a: "Usar técnicas de regulação emocional",
-    c: "#0891b2",
-    b: "#e0f2fe"
+    ponto: "Na fissura",
+    acao: "Usar técnicas de regulação emocional",
+    cor: "#0891b2",
+    bg: "#e0f2fe"
   }, {
-    p: "No ritual",
-    a: "Criar barreiras de estímulo — dificultar o acesso",
-    c: "#d97706",
-    b: "#fef3c7"
+    ponto: "No ritual",
+    acao: "Criar barreiras de estímulo — dificultar o acesso",
+    cor: "#d97706",
+    bg: "#fef3c7"
   }, {
-    p: "Após o ato",
-    a: "Praticar autocompaixão em vez de vergonha",
-    c: "#7c3aed",
-    b: "#ede9fe"
+    ponto: "Após o ato",
+    acao: "Praticar autocompaixão em vez de vergonha",
+    cor: "#7c3aed",
+    bg: "#ede9fe"
   }].map(({
-    p,
-    a,
-    c,
-    b
+    ponto,
+    acao,
+    cor,
+    bg
   }) => /*#__PURE__*/React.createElement("div", {
-    key: p,
+    key: ponto,
     style: {
-      background: b,
+      background: bg,
       borderRadius: 8,
       padding: "10px 14px",
-      borderLeft: "3px solid " + c,
+      borderLeft: "3px solid " + cor,
       marginBottom: 6
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      color: c,
+      color: cor,
       fontSize: 12,
       fontWeight: 700,
       marginBottom: 2
     }
-  }, p), /*#__PURE__*/React.createElement("div", {
+  }, ponto), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#374151",
       lineHeight: 1.5
     }
-  }, a)))), /*#__PURE__*/React.createElement("div", {
+  }, acao)))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
@@ -14018,7 +14026,7 @@ function PsicoCicloGatilho({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -14057,7 +14065,7 @@ function PsicoCicloGatilho({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -14089,14 +14097,14 @@ function PsicoCicloGatilho({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoDopaminaAlivio({
   cat
@@ -14107,9 +14115,8 @@ function PsicoDopaminaAlivio({
   const PERGUNTAS = ["Quando cede ao comportamento, é mais por prazer ou por alívio de algo difícil?", "Quais emoções você mais tenta aliviar com o comportamento?", "Que outras formas de alívio poderiam funcionar nesses momentos?"];
   function enviarWhatsApp() {
     const tel = (cat && cat.telefone || "").replace(/\D/g, "");
-    const linhas = PERGUNTAS.map((p, i) => i + 1 + ". " + p + "\nR: " + (respostas[i] || "—")).join("\n\n");
-    const texto = "Reflexões — Dopamina e Alívio:\n\n" + linhas;
-    window.open("https://wa.me/55" + tel + "?text=" + encodeURIComponent(texto), "_blank");
+    const texto = `Reflexões — Reflexão:\n\n${PERGUNTAS.map((p, i) => `${i + 1}. ${p}\nR: ${respostas[i] || "—"}`).join("\n\n")}`;
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, "_blank");
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -14130,20 +14137,20 @@ function PsicoDopaminaAlivio({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
+  }, "⚡"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fce7f3",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "N\xE3o \xE9 sobre prazer \u2014 \xE9 sobre al\xEDvio"), /*#__PURE__*/React.createElement("div", {
+  }, "Não é sobre prazer — é sobre alívio"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#fbcfe8",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "O c\xE9rebro busca o comportamento como anestesia emocional para t\xE9dio, solid\xE3o ou estresse.")), /*#__PURE__*/React.createElement("div", {
+  }, "O cérebro busca o comportamento como anestesia emocional para tédio, solidão ou estresse.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#fff0f6",
       padding: "16px 20px",
@@ -14156,13 +14163,13 @@ function PsicoDopaminaAlivio({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\uD83E\uDDE0 O que a dopamina realmente faz"), /*#__PURE__*/React.createElement("div", {
+  }, "🧠 O que a dopamina realmente faz"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#831843",
       lineHeight: 1.7
     }
-  }, "A dopamina n\xE3o \xE9 o neurotransmissor do prazer \u2014 \xE9 o da ", /*#__PURE__*/React.createElement("strong", null, "antecipa\xE7\xE3o e do al\xEDvio da tens\xE3o"), ". O maior pico acontece ", /*#__PURE__*/React.createElement("em", null, "antes"), " do comportamento, na fase de busca. Isso explica por que a experi\xEAncia real frequentemente decepciona \u2014 mas a busca continua."), /*#__PURE__*/React.createElement("div", {
+  }, "A dopamina não é o neurotransmissor do prazer — é o da ", /*#__PURE__*/React.createElement("strong", null, "antecipação e do alívio da tensão"), ". O maior pico acontece ", /*#__PURE__*/React.createElement("em", null, "antes"), " do comportamento, na fase de busca. Isso explica por que a experiência real frequentemente decepciona — mas a busca continua."), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: BG,
@@ -14177,7 +14184,7 @@ function PsicoDopaminaAlivio({
       fontStyle: "italic",
       fontWeight: 500
     }
-  }, "\xC9 como usar analg\xE9sico para uma infec\xE7\xE3o \u2014 alivia a dor, mas a infec\xE7\xE3o continua."))), /*#__PURE__*/React.createElement("div", {
+  }, "É como usar analgésico para uma infecção — alivia a dor, mas a infecção continua."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: COR,
       padding: "16px 20px",
@@ -14190,7 +14197,7 @@ function PsicoDopaminaAlivio({
       fontWeight: 600,
       marginBottom: 10
     }
-  }, "\uD83D\uDC8A Estados que criam \"press\xE3o interna\""), [{
+  }, "💊 Estados que criam \"pressão interna\""), [{
     e: "😰",
     t: "Estresse",
     d: "O cérebro busca o alívio mais rápido do seu arquivo de soluções."
@@ -14252,7 +14259,7 @@ function PsicoDopaminaAlivio({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\uD83D\uDCA1 Analg\xE9sico vs. compuls\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, "💡 Analgésico vs. compulsão"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -14271,14 +14278,14 @@ function PsicoDopaminaAlivio({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83D\uDC8A Analg\xE9sico"), ["Alivia rapidamente", "Não trata a causa", "Precisa de mais dose", "Dependência crescente"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "💊 Analgésico"), ["Alivia rapidamente", "Não trata a causa", "Precisa de mais dose", "Dependência crescente"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#7f1d1d",
       marginBottom: 3
     }
-  }, "• " + i))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       borderRadius: 10,
@@ -14291,14 +14298,14 @@ function PsicoDopaminaAlivio({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\uD83D\uDD12 Compuls\xE3o"), ["Alivia a emoção rapidamente", "Não resolve o estado", "Precisa de mais intensidade", "O ciclo se aprofunda"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "🔒 Compulsão"), ["Alivia a emoção rapidamente", "Não resolve o estado", "Precisa de mais intensidade", "O ciclo se aprofunda"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#831843",
       marginBottom: 3
     }
-  }, "• " + i))))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
@@ -14311,7 +14318,7 @@ function PsicoDopaminaAlivio({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -14350,7 +14357,7 @@ function PsicoDopaminaAlivio({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -14382,14 +14389,14 @@ function PsicoDopaminaAlivio({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoSubstituicaoHabitos({
   cat
@@ -14400,9 +14407,8 @@ function PsicoSubstituicaoHabitos({
   const PERGUNTAS = ["Quais são os horários e contextos de maior vulnerabilidade para você?", "Que barreira de estímulo seria mais viável implementar agora?", "Qual substituto comportamental tem mais chance de funcionar na sua fissura?"];
   function enviarWhatsApp() {
     const tel = (cat && cat.telefone || "").replace(/\D/g, "");
-    const linhas = PERGUNTAS.map((p, i) => i + 1 + ". " + p + "\nR: " + (respostas[i] || "—")).join("\n\n");
-    const texto = "Reflexões — Substituição de Hábitos:\n\n" + linhas;
-    window.open("https://wa.me/55" + tel + "?text=" + encodeURIComponent(texto), "_blank");
+    const texto = `Reflexões — Reflexão:\n\n${PERGUNTAS.map((p, i) => `${i + 1}. ${p}\nR: ${respostas[i] || "—"}`).join("\n\n")}`;
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, "_blank");
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -14423,20 +14429,20 @@ function PsicoSubstituicaoHabitos({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDD27"), /*#__PURE__*/React.createElement("div", {
+  }, "🔧"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#d1fae5",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "N\xE3o \xE9 poss\xEDvel simplesmente \"n\xE3o fazer\""), /*#__PURE__*/React.createElement("div", {
+  }, "Não é possível simplesmente \"não fazer\""), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#a7f3d0",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "O c\xE9rebro precisa de algo no lugar. E o ambiente precisa ser modificado.")), /*#__PURE__*/React.createElement("div", {
+  }, "O cérebro precisa de algo no lugar. E o ambiente precisa ser modificado.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0fdf4",
       padding: "16px 20px",
@@ -14449,7 +14455,7 @@ function PsicoSubstituicaoHabitos({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\uD83D\uDEE1\uFE0F Controle de est\xEDmulos na pr\xE1tica"), [{
+  }, "🛡️ Controle de estímulos na prática"), [{
     e: "📱",
     t: "Filtros de conteúdo",
     d: "Bloqueadores com senha gerenciada por pessoa de confiança."
@@ -14464,7 +14470,7 @@ function PsicoSubstituicaoHabitos({
   }, {
     e: "🛏️",
     t: "Gestão do quarto",
-    d: "Não usar dispositivos no quarto antes de dormir."
+    d: "Não usar dispositivos no quarto, especialmente antes de dormir."
   }].map(({
     e,
     t,
@@ -14511,16 +14517,16 @@ function PsicoSubstituicaoHabitos({
       fontWeight: 600,
       marginBottom: 10
     }
-  }, "\u26A1 Substitui\xE7\xF5es que funcionam"), /*#__PURE__*/React.createElement("div", {
+  }, "⚡ Substituições que funcionam"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: "#a7f3d0",
       marginBottom: 10
     }
-  }, "A substitui\xE7\xE3o n\xE3o precisa ser prazerosa \u2014 precisa ser acess\xEDvel no momento da fissura."), [{
+  }, "A substituição não precisa ser prazerosa de imediato — precisa ser acessível no momento da fissura."), [{
     e: "🏃",
     t: "Exercício físico intenso",
-    d: "Libera dopamina e endorfina no pico da fissura."
+    d: "Libera dopamina e endorfina — especialmente eficaz no pico da fissura."
   }, {
     e: "👥",
     t: "Contato social real",
@@ -14528,7 +14534,7 @@ function PsicoSubstituicaoHabitos({
   }, {
     e: "🎵",
     t: "Música, arte, criação",
-    d: "Estimulação alternativa que não alimenta o ciclo."
+    d: "Fontes alternativas de estimulação que não alimentam o ciclo."
   }, {
     e: "🚿",
     t: "Banho frio breve",
@@ -14579,7 +14585,7 @@ function PsicoSubstituicaoHabitos({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -14618,7 +14624,7 @@ function PsicoSubstituicaoHabitos({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -14650,14 +14656,14 @@ function PsicoSubstituicaoHabitos({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 function PsicoImpactoVinculos({
   cat
@@ -14668,9 +14674,8 @@ function PsicoImpactoVinculos({
   const PERGUNTAS = ["Em que relacionamento o segredo está criando mais distância?", "O que você deixou de compartilhar com pessoas próximas por causa da vergonha?", "O que significaria ter uma relação mais autêntica — mesmo sem revelar tudo agora?"];
   function enviarWhatsApp() {
     const tel = (cat && cat.telefone || "").replace(/\D/g, "");
-    const linhas = PERGUNTAS.map((p, i) => i + 1 + ". " + p + "\nR: " + (respostas[i] || "—")).join("\n\n");
-    const texto = "Reflexões — Impacto nos Vínculos:\n\n" + linhas;
-    window.open("https://wa.me/55" + tel + "?text=" + encodeURIComponent(texto), "_blank");
+    const texto = `Reflexões — Reflexão:\n\n${PERGUNTAS.map((p, i) => `${i + 1}. ${p}\nR: ${respostas[i] || "—"}`).join("\n\n")}`;
+    window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, "_blank");
   }
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -14691,20 +14696,20 @@ function PsicoImpactoVinculos({
       fontSize: 40,
       marginBottom: 8
     }
-  }, "\uD83D\uDC94"), /*#__PURE__*/React.createElement("div", {
+  }, "💔"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#e0f2fe",
       fontSize: 16,
       fontWeight: 500,
       marginBottom: 6
     }
-  }, "A compuls\xE3o sexual vive bem no segredo"), /*#__PURE__*/React.createElement("div", {
+  }, "A compulsão sexual vive bem no segredo"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: "#bae6fd",
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, "E o segredo cobra um pre\xE7o nas rela\xE7\xF5es \u2014 mesmo quando n\xE3o \xE9 descoberto.")), /*#__PURE__*/React.createElement("div", {
+  }, "E o segredo cobra um preço nas relações — mesmo quando o comportamento não é descoberto.")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f0f9ff",
       padding: "16px 20px",
@@ -14717,10 +14722,10 @@ function PsicoImpactoVinculos({
       fontWeight: 600,
       marginBottom: 8
     }
-  }, "\uD83D\uDD12 Como o segredo afeta os v\xEDnculos"), [{
+  }, "🔒 Como o segredo afeta os vínculos"), [{
     e: "🌫️",
     t: "Distanciamento emocional",
-    d: "Parte da energia está sempre em outro lugar, reduzindo a presença real."
+    d: "Parte da energia está sempre 'em outro lugar', reduzindo a presença real."
   }, {
     e: "🚪",
     t: "Intimidade substituída",
@@ -14779,7 +14784,7 @@ function PsicoImpactoVinculos({
       fontWeight: 600,
       marginBottom: 10
     }
-  }, "\uD83D\uDCA1 Uma distin\xE7\xE3o importante"), /*#__PURE__*/React.createElement("div", {
+  }, "💡 Uma distinção importante"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
@@ -14798,14 +14803,14 @@ function PsicoImpactoVinculos({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\u274C O que N\xC3O \xE9"), ["Falta de amor", "Falta de comprometimento", "Defeito de caráter", "Escolha consciente"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "❌ O que NÃO é"), ["Falta de amor", "Falta de comprometimento", "Defeito de caráter", "Escolha consciente"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#e0f2fe",
       marginBottom: 3
     }
-  }, "• " + i))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "rgba(255,255,255,0.15)",
       borderRadius: 10,
@@ -14818,14 +14823,14 @@ function PsicoImpactoVinculos({
       fontSize: 12,
       marginBottom: 6
     }
-  }, "\u2713 O que realmente \xE9"), ["Padrão de regulação emocional", "Aprendizado neurológico", "Resposta a estados difíceis", "Algo tratável"].map(i => /*#__PURE__*/React.createElement("div", {
+  }, "✓ O que realmente é"), ["Padrão de regulação emocional", "Aprendizado neurológico", "Resposta a estados difíceis", "Algo tratável"].map(i => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       fontSize: 11,
       color: "#e0f2fe",
       marginBottom: 3
     }
-  }, "• " + i)))), /*#__PURE__*/React.createElement("div", {
+  }, "• ", i)))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       background: "rgba(255,255,255,0.12)",
@@ -14838,7 +14843,7 @@ function PsicoImpactoVinculos({
       color: "#e0f2fe",
       lineHeight: 1.6
     }
-  }, "Compreender n\xE3o \xE9 justificar \u2014 \xE9 o que torna a mudan\xE7a poss\xEDvel. A vergonha n\xE3o pode bloquear o processo terap\xEAutico."))), /*#__PURE__*/React.createElement("div", {
+  }, "Compreender não é justificar — é o que torna a mudança possível. E é o que permite que a vergonha não bloqueie o processo terapêutico."))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: BG,
       padding: "16px 20px",
@@ -14851,7 +14856,7 @@ function PsicoImpactoVinculos({
       fontWeight: 600,
       marginBottom: 12
     }
-  }, "\u270F\uFE0F Suas reflex\xF5es"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+  }, "✏️ Suas reflexões"), PERGUNTAS.map((p, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 14
@@ -14890,7 +14895,7 @@ function PsicoImpactoVinculos({
       r[i] = e.target.value;
       setRespostas(r);
     },
-    placeholder: "Escreva sua reflex\xE3o...",
+    placeholder: "Escreva sua reflexão...",
     style: {
       width: "100%",
       minHeight: 70,
@@ -14922,14 +14927,14 @@ function PsicoImpactoVinculos({
       justifyContent: "center",
       gap: 8
     }
-  }, "\uD83D\uDCF2 Enviar reflex\xF5es pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
+  }, "📲 Enviar reflexões pelo WhatsApp")), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       fontSize: 11,
       color: "#888",
       marginTop: 8
     }
-  }, "Dra. Lucia Kratz \xB7 Psic\xF3loga \xB7 CRP 09/20590"));
+  }, "Dra. Lucia Kratz · Psicóloga · CRP 09/20590"));
 }
 const PSICO_VISUAIS = {
   // macro_compulsao
@@ -15409,7 +15414,7 @@ function AbaPsicoeducacao() {
       fontSize: 13,
       color: "var(--text-muted)"
     }
-  }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeduca\xE7\xE3o"), /*#__PURE__*/React.createElement("div", {
+  }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeducação"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
@@ -15744,7 +15749,7 @@ function AbaPsicoeducacao() {
       fontSize: 22,
       color: "var(--text-muted)"
     }
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
+  }, "×")), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "20px 24px",
       display: "flex",
@@ -15782,14 +15787,14 @@ function AbaPsicoeducacao() {
       display: "block",
       marginBottom: 6
     }
-  }, "T\xEDtulo *"), /*#__PURE__*/React.createElement("input", {
+  }, "Título *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.titulo,
     onChange: e => setForm(f => ({
       ...f,
       titulo: e.target.value
     })),
-    placeholder: "Ex: O que \xE9 ansiedade?"
+    placeholder: "Ex: O que é ansiedade?"
   }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontWeight: 600,
@@ -15817,7 +15822,7 @@ function AbaPsicoeducacao() {
       display: "block",
       marginBottom: 6
     }
-  }, "Descri\xE7\xE3o breve"), /*#__PURE__*/React.createElement("input", {
+  }, "Descrição breve"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
     value: form.descricao,
     onChange: e => setForm(f => ({
@@ -15832,7 +15837,7 @@ function AbaPsicoeducacao() {
       display: "block",
       marginBottom: 6
     }
-  }, "Conte\xFAdo completo"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+  }, "Conteúdo completo"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 6,
     value: form.conteudo,
