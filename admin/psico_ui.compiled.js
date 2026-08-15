@@ -846,6 +846,7 @@ function RecursosTerapeuticos({
     "compulsao_sexual": "macro_compulsao",
     "compulsao": "macro_compulsao",
     "macro_compulsao": "macro_compulsao",
+    "macro_corpo": "macro_habitos",
     // formularioKey → macro
     "breathing-478": "macro_habitos",
     "muscle-relaxation": "macro_habitos",
@@ -1367,10 +1368,13 @@ function RecursosTerapeuticos({
     }
   }, r.formularioKey), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      gap: 8,
       borderTop: "1px solid var(--gray-100)",
       paddingTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
     }
   }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
@@ -1393,14 +1397,24 @@ function RecursosTerapeuticos({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "pencil",
     size: 13
-  }), " Editar"), r.formularioKey === "anamnese" && /*#__PURE__*/React.createElement("button", {
+  }), " Editar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      padding: "6px 10px",
+      color: "var(--danger)"
+    },
+    onClick: () => excluir(r.id)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "trash-2",
+    size: 13
+  }))), r.formularioKey === "anamnese" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
       width: "100%",
       color: "#059669",
       border: "1px solid #059669",
-      marginTop: 4
+      marginTop: 6
     },
     onClick: () => {
       const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
@@ -1414,17 +1428,7 @@ function RecursosTerapeuticos({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "link",
     size: 13
-  }), " 🔗 Copiar Mensagem"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "6px 10px",
-      color: "var(--danger)"
-    },
-    onClick: () => excluir(r.id)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 13
-  }))))))))), modal && /*#__PURE__*/React.createElement("div", {
+  }), " 🔗 Copiar Mensagem")))))))), modal && /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
