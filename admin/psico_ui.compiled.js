@@ -847,6 +847,11 @@ function RecursosTerapeuticos({
     "compulsao": "macro_compulsao",
     "macro_compulsao": "macro_compulsao",
     "macro_corpo": "macro_habitos",
+    "compulsao_ciclo": "macro_compulsao",
+    "compulsao_habitos": "macro_compulsao",
+    "compulsao_emocional": "macro_compulsao",
+    "compulsao_vinculos": "macro_compulsao",
+    "compulsao_aval": "macro_compulsao",
     // formularioKey → macro
     "breathing-478": "macro_habitos",
     "muscle-relaxation": "macro_habitos",
