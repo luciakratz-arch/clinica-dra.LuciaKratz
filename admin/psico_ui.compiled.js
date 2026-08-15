@@ -1419,7 +1419,48 @@ function RecursosTerapeuticos({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))), r.formularioKey === "anamnese" && /*#__PURE__*/React.createElement("button", {
+  }))), (r.formularioKey === "anamnese" || ["rastreamento-bipolar", "rastreamento-sexual", "rastreamento-alimentar", "rastreamento-neuro", "rastreamento-dependencia", "rastreamento-jogos"].includes(r.formularioKey)) && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      width: "100%",
+      color: "#059669",
+      border: "1px solid #059669",
+      marginTop: 6
+    },
+    onClick: () => {
+      const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/";
+      const LINKS = {
+        "anamnese": BASE + "anamnese-publica/",
+        "rastreamento-bipolar": BASE + "rastreamento/",
+        "rastreamento-sexual": BASE + "rastreamento/sexual/",
+        "rastreamento-alimentar": BASE + "rastreamento/alimentar/",
+        "rastreamento-neuro": BASE + "rastreamento/neuro/",
+        "rastreamento-dependencia": BASE + "rastreamento/dependencia/",
+        "rastreamento-jogos": BASE + "rastreamento/jogos/"
+      };
+      const NOMES = {
+        "anamnese": "Anamnese",
+        "rastreamento-bipolar": "Rastreamento Bipolar / Borderline",
+        "rastreamento-sexual": "Rastreamento de Saúde Sexual",
+        "rastreamento-alimentar": "Rastreamento de Hábitos Alimentares",
+        "rastreamento-neuro": "Rastreamento de Funcionamento e Comportamento",
+        "rastreamento-dependencia": "Rastreamento de Dependência Química",
+        "rastreamento-jogos": "Rastreamento de Jogos e Apostas"
+      };
+      const link = LINKS[r.formularioKey] || BASE;
+      const nome = NOMES[r.formularioKey] || r.titulo;
+      const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de *" + nome + "* para você preencher.\n\n⏱️ Leva entre 5 e 15 minutos.\n\n💡 Dicas:\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
+      navigator.clipboard.writeText(msg).then(() => {
+        alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
+      }).catch(() => {
+        window.prompt("Copie a mensagem abaixo:", msg);
+      });
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " 🔗 Copiar Mensagem"), false && r.formularioKey === "anamnese" && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
