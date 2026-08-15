@@ -270,6 +270,42 @@ const FERRAMENTAS_INTERATIVAS = [
 
 
 // ═══════════════════════════════════════════════════════
+// REDIRECIONADOR DE RASTREAMENTOS — abre link externo
+// ═══════════════════════════════════════════════════════
+function RedirecionarRastreamento({ tipo, paciente }) {
+  const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/";
+  const LINKS = {
+    bipolar:    BASE + "?paciente=",
+    sexual:     BASE + "sexual/?paciente=",
+    alimentar:  BASE + "alimentar/?paciente=",
+    neuro:      BASE + "neuro/?paciente=",
+    dependencia:BASE + "dependencia/?paciente=",
+    jogos:      BASE + "jogos/?paciente=",
+  };
+  const INFO = {
+    bipolar:    {emoji:"📊", titulo:"Rastreamento Bipolar / Borderline", desc:"Avaliacao diferencial DSM-5 com laudo comparativo."},
+    sexual:     {emoji:"🌸", titulo:"Saude Sexual", desc:"Rastreamento confidencial respondido pelo proprio paciente."},
+    alimentar:  {emoji:"🍎", titulo:"Habitos Alimentares", desc:"Rastreamento de padroes alimentares DSM-5."},
+    neuro:      {emoji:"🧩", titulo:"Funcionamento e Comportamento", desc:"Rastreamento de atencao e interacao social DSM-5."},
+    dependencia:{emoji:"💊", titulo:"Dependencia Quimica e Substancias", desc:"Rastreamento dos 11 criterios DSM-5."},
+    jogos:      {emoji:"🎮", titulo:"Dependencia de Jogos e Apostas", desc:"Rastreamento Gaming / Gambling Disorder DSM-5."},
+  };
+  const info = INFO[tipo] || {emoji:"📋", titulo:"Rastreamento", desc:""};
+  const url = (LINKS[tipo]||BASE) + encodeURIComponent(paciente?.nome||"");
+  return (
+    <div style={{textAlign:"center",padding:"30px 20px"}}>
+      <div style={{fontSize:48,marginBottom:12}}>{info.emoji}</div>
+      <div style={{fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,marginBottom:8}}>{info.titulo}</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:24,lineHeight:1.7,maxWidth:360,margin:"0 auto 24px"}}>{info.desc}</p>
+      <a href={url} target="_blank" className="btn btn-purple"
+        style={{textDecoration:"none",display:"inline-flex",alignItems:"center",gap:8,padding:"12px 24px"}}>
+        {info.emoji} Abrir Questionario
+      </a>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
 // DIAGNÓSTICO DE MACROATIVIDADES x DESGASTES
 // ═══════════════════════════════════════════════════════
 function FerramentaDiagnosticoMacro({ user }) {
@@ -4267,6 +4303,13 @@ function ModalVisualizarFerramenta({recurso,onClose,user}){
     if(k==="strategic-pause")     return <FerramentaStrategicPause user={user}/>;
     if(k==="self-compassion-journal") return <FerramentaSelfCompassion user={user}/>;
 
+    // macro_aval — Questionários de Rastreamento
+    if(k==="rastreamento-bipolar")    return <RedirecionarRastreamento tipo="bipolar" paciente={user}/>;
+    if(k==="rastreamento-sexual")     return <RedirecionarRastreamento tipo="sexual" paciente={user}/>;
+    if(k==="rastreamento-alimentar")  return <RedirecionarRastreamento tipo="alimentar" paciente={user}/>;
+    if(k==="rastreamento-neuro")      return <RedirecionarRastreamento tipo="neuro" paciente={user}/>;
+    if(k==="rastreamento-dependencia")return <RedirecionarRastreamento tipo="dependencia" paciente={user}/>;
+    if(k==="rastreamento-jogos")      return <RedirecionarRastreamento tipo="jogos" paciente={user}/>;
     // macro_habitos — Diagnóstico de Macroatividades
     if(k==="diagnostico-macroatividades") return <FerramentaDiagnosticoMacro user={user}/>;
 
