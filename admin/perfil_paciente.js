@@ -286,10 +286,14 @@ function AbaModulos({ paciente }) {
     relacionamentos:"macro_relacionamentos",
     conflitos_casal:"macro_casais", sexualidade:"macro_casais",
     parentalidade:"macro_casais", conflitos_familia:"macro_casais", traicao:"macro_casais",
-    alimentacao:"macro_corpo", autoimagem:"macro_corpo", nervovago:"macro_corpo",
-    sintomas_fisicos:"macro_corpo", saude_mental:"macro_corpo", corpo:"macro_corpo",
+    alimentacao:"macro_habitos", autoimagem:"macro_habitos", nervovago:"macro_habitos",
+    sintomas_fisicos:"macro_habitos", saude_mental:"macro_habitos", corpo:"macro_habitos",
     musicoterapia:"macro_musico",
     avaliacao:"macro_aval",
+    macro_corpo:"macro_habitos", macro_habitos:"macro_habitos",
+    compulsao_ciclo:"macro_compulsao", compulsao_habitos:"macro_compulsao",
+    compulsao_emocional:"macro_compulsao", compulsao_vinculos:"macro_compulsao",
+    compulsao_aval:"macro_compulsao", compulsao:"macro_compulsao", macro_compulsao:"macro_compulsao",
     // Fábulas (mod2) — por tema
     resiliencia:"macro_habitos", esperanca:"macro_humor", autoconfianca:"macro_humor",
     autoconhecimento:"macro_ansiedade", perspectiva:"macro_habitos",
@@ -309,10 +313,10 @@ function AbaModulos({ paciente }) {
   const MACRO_INFO = {
     macro_ansiedade:      {icone:"🧠", label:"Ansiedade e Controle dos Pensamentos", cor:"#7B00C4", bg:"#f3e6ff"},
     macro_humor:          {icone:"❤️", label:"Humor e Regulação Emocional",          cor:"#db2777", bg:"#fce7f3"},
-    macro_habitos:        {icone:"🌱", label:"Hábitos e Autocuidado",                cor:"#16a34a", bg:"#dcfce7"},
+    macro_habitos:        {icone:"🌿", label:"Corpo, Saúde e Autocuidado",           cor:"#16a34a", bg:"#dcfce7"},
     macro_relacionamentos:{icone:"🤝", label:"Conflitos Interpessoais e Relacionamentos", cor:"#0891b2", bg:"#e0f2fe"},
     macro_casais:         {icone:"💑", label:"Casais, Família e Parentalidade",      cor:"#d97706", bg:"#fef3c7"},
-    macro_corpo:          {icone:"🏃", label:"Corpo, Saúde e Conexão Somática",      cor:"#059669", bg:"#d1fae5"},
+    macro_compulsao:      {icone:"🔒", label:"Compulsão Sexual",                     cor:"#7c3aed", bg:"#ede9fe"},
     macro_musico:         {icone:"🎵", label:"Musicoterapia",                        cor:"#7B00C4", bg:"#f3e6ff"},
     macro_aval:           {icone:"📋", label:"Avaliação e Anamnese",                 cor:"#6366f1", bg:"#e0e7ff"},
     _outros:              {icone:"🔧", label:"Outros",                               cor:"#6b7280", bg:"#f3f4f6"},
@@ -320,16 +324,16 @@ function AbaModulos({ paciente }) {
 
   // Mapa nome da ferramenta → macro (para itens com categoria "outro")
   const NOME_PARA_MACRO = {
-    "Mapa de Intensidade": "macro_corpo",
+    "Mapa de Intensidade": "macro_habitos",
     "Mapa de Intimidade": "macro_casais",
     "Roda da Vida Integral": "macro_habitos",
     "Protocolo dos 3 Mapas": "macro_relacionamentos",
     "Diário de Parentalidade Compassiva": "macro_casais",
     "Diário de Autocompaixão": "macro_humor",
     "Plano de Ativação Comportamental": "macro_humor",
-    "Prática de Presença": "macro_corpo",
+    "Prática de Presença": "macro_habitos",
     "Empilhamento de Hábitos": "macro_habitos",
-    "Protocolo de Regulação Nervosa": "macro_corpo",
+    "Protocolo de Regulação Nervosa": "macro_habitos",
     "Mapeamento do Ciclo de Conflito": "macro_relacionamentos",
     "Análise em Cadeia": "macro_ansiedade",
     "Registo CNV": "macro_relacionamentos",
@@ -341,11 +345,12 @@ function AbaModulos({ paciente }) {
     "Pausa Estratégica": "macro_humor",
     "Mapa da Bateria": "macro_habitos",
     "Mapa de Diferenciação": "macro_relacionamentos",
-    "Diário Corpo-Mente": "macro_corpo",
+    "Diário Corpo-Mente": "macro_habitos",
     "Escuta Ativa": "macro_relacionamentos",
     "Regra dos 5 Minutos": "macro_habitos",
     "Inventário de Carga Mental": "macro_relacionamentos",
     "Árvore da Decisão": "macro_ansiedade",
+    "Diagnóstico de Macroatividades x Desgastes": "macro_habitos",
   };
 
   function agruparPorMacro(ferramentas) {
