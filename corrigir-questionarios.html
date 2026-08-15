@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Corrigir categoria dos questionarios</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    body{font-family:system-ui;max-width:600px;margin:60px auto;padding:24px;background:#f9f5ff;}
+    h1{color:#6366f1;font-size:20px;margin-bottom:16px;}
+    .btn{width:100%;background:#6366f1;color:white;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .btn:disabled{opacity:0.5;}
+    #log{margin-top:16px;background:white;border-radius:12px;padding:16px;font-size:13px;line-height:2;border:1px solid #e0e7ff;display:none;}
+    .ok{color:#16a34a;} .skip{color:#d97706;} .err{color:#dc2626;}
+  </style>
+</head>
+<body>
+<h1>Corrigir categoria dos questionarios de rastreamento</h1>
+<p>Atualiza a categoria de <code>macro_aval</code> para <code>avaliacao</code> nos 6 questionarios.</p>
+<button class="btn" id="btn" onclick="corrigir()">Corrigir agora</button>
+<div id="log"></div>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+const db = firebase.firestore();
+const KEYS = ["rastreamento-bipolar","rastreamento-sexual","rastreamento-alimentar","rastreamento-neuro","rastreamento-dependencia","rastreamento-jogos"];
+
+async function corrigir() {
+  const btn = document.getElementById("btn");
+  const log = document.getElementById("log");
+  btn.disabled = true;
+  log.style.display = "block";
+  log.innerHTML = "<strong>Iniciando...</strong><br/>";
+  let ok=0, skip=0, err=0;
+  for (const key of KEYS) {
+    try {
+      const snap = await db.collection("clinica_recursos").where("formularioKey","==",key).get();
+      if (snap.empty) {
+        log.innerHTML += '<span class="skip">Nao encontrado: '+key+'</span><br/>';
+        skip++; continue;
+      }
+      for (const doc of snap.docs) {
+        await doc.ref.update({categoria: "avaliacao"});
+        log.innerHTML += '<span class="ok">Corrigido: '+key+'</span><br/>';
+        ok++;
+      }
+    } catch(e) {
+      log.innerHTML += '<span class="err">Erro '+key+': '+e.message+'</span><br/>';
+      err++;
+    }
+  }
+  log.innerHTML += '<br/><strong>Concluido: '+ok+' corrigidos, '+skip+' nao encontrados, '+err+' erros</strong>';
+  btn.textContent = "Concluido!";
+}
+</script>
+</body>
+</html>
