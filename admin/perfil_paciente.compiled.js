@@ -23,9 +23,9 @@ function AbaPerfil({
     });
     alert("Senha redefinida para 1234.");
   }
-  const msgAcesso = "Ola, " + paciente.nome + "! Butterfly\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink: " + SITE_URL + "/clinica/\n\nEmail: " + paciente.email + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590";
+  const msgAcesso = "Ola, " + paciente.nome + "! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink: " + SITE_URL + "/clinica/\n\nNome de acesso: " + paciente.nome + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590";
   function copiarMsg() {
-    const msg = "Ola, " + paciente.nome + "!\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink de acesso: " + SITE_URL + "/clinica/\n\nEmail: " + paciente.email + "\nSenha: 1234\n\nAo entrar pela primeira vez, recomendo trocar a senha em Minha Conta.\n\nQualquer duvida, estou a disposicao!\nDra. Lucia Kratz - CRP 09/20590";
+    const msg = "Ola, " + paciente.nome + "! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n\nLink de acesso: " + SITE_URL + "/clinica/\n\nNome de acesso: " + paciente.nome + "\nSenha: 1234\n\nAo entrar, pesquise seu nome no campo e use a senha acima.\n\nQualquer duvida, estou a disposicao!\nDra. Lucia Kratz - CRP 09/20590";
     navigator.clipboard.writeText(msg);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
@@ -252,7 +252,7 @@ function AbaPerfil({
       lineHeight: 1.8,
       color: "var(--text-muted)"
     }
-  }, "Ola, " + paciente.nome + "!\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\nLink: " + SITE_URL + "/clinica/\nEmail: " + paciente.email + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"), /*#__PURE__*/React.createElement("div", {
+  }, "Ola, " + paciente.nome + "! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\nLink: " + SITE_URL + "/clinica/\nNome de acesso: " + paciente.nome + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 10,
