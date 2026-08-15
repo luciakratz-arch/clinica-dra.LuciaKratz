@@ -669,11 +669,16 @@ const FAB_LEGADO_MACRO = {
   "tcc":"macro_ansiedade",
   "relacionamentos":"macro_relacionamentos",
   "casais":"macro_casais",
-  "corpo":"macro_corpo",
+  "corpo":"macro_habitos",
+  "alimentacao":"macro_habitos", "saude_mental":"macro_habitos",
+  "compulsao_ciclo":"macro_compulsao", "compulsao_habitos":"macro_compulsao",
+  "compulsao_emocional":"macro_compulsao", "compulsao_vinculos":"macro_compulsao",
+  "compulsao_aval":"macro_compulsao", "compulsao":"macro_compulsao",
   // já migradas
   "macro_ansiedade":"macro_ansiedade","macro_humor":"macro_humor",
   "macro_habitos":"macro_habitos","macro_relacionamentos":"macro_relacionamentos",
-  "macro_casais":"macro_casais","macro_corpo":"macro_corpo",
+  "macro_casais":"macro_casais","macro_corpo":"macro_habitos",
+  "macro_compulsao":"macro_compulsao",
 };
 
 // Mapa de visualizações
