@@ -636,14 +636,23 @@ function AbaModulos({
     parentalidade: "macro_casais",
     conflitos_familia: "macro_casais",
     traicao: "macro_casais",
-    alimentacao: "macro_corpo",
-    autoimagem: "macro_corpo",
-    nervovago: "macro_corpo",
-    sintomas_fisicos: "macro_corpo",
-    saude_mental: "macro_corpo",
-    corpo: "macro_corpo",
+    alimentacao: "macro_habitos",
+    autoimagem: "macro_habitos",
+    nervovago: "macro_habitos",
+    sintomas_fisicos: "macro_habitos",
+    saude_mental: "macro_habitos",
+    corpo: "macro_habitos",
     musicoterapia: "macro_musico",
     avaliacao: "macro_aval",
+    macro_corpo: "macro_habitos",
+    macro_habitos: "macro_habitos",
+    compulsao_ciclo: "macro_compulsao",
+    compulsao_habitos: "macro_compulsao",
+    compulsao_emocional: "macro_compulsao",
+    compulsao_vinculos: "macro_compulsao",
+    compulsao_aval: "macro_compulsao",
+    compulsao: "macro_compulsao",
+    macro_compulsao: "macro_compulsao",
     // Fábulas (mod2) — por tema
     resiliencia: "macro_habitos",
     esperanca: "macro_humor",
@@ -685,8 +694,8 @@ function AbaModulos({
       bg: "#fce7f3"
     },
     macro_habitos: {
-      icone: "🌱",
-      label: "Hábitos e Autocuidado",
+      icone: "🌿",
+      label: "Corpo, Saúde e Autocuidado",
       cor: "#16a34a",
       bg: "#dcfce7"
     },
@@ -702,11 +711,11 @@ function AbaModulos({
       cor: "#d97706",
       bg: "#fef3c7"
     },
-    macro_corpo: {
-      icone: "🏃",
-      label: "Corpo, Saúde e Conexão Somática",
-      cor: "#059669",
-      bg: "#d1fae5"
+    macro_compulsao: {
+      icone: "🔒",
+      label: "Compulsão Sexual",
+      cor: "#7c3aed",
+      bg: "#ede9fe"
     },
     macro_musico: {
       icone: "🎵",
@@ -730,16 +739,16 @@ function AbaModulos({
 
   // Mapa nome da ferramenta → macro (para itens com categoria "outro")
   const NOME_PARA_MACRO = {
-    "Mapa de Intensidade": "macro_corpo",
+    "Mapa de Intensidade": "macro_habitos",
     "Mapa de Intimidade": "macro_casais",
     "Roda da Vida Integral": "macro_habitos",
     "Protocolo dos 3 Mapas": "macro_relacionamentos",
     "Diário de Parentalidade Compassiva": "macro_casais",
     "Diário de Autocompaixão": "macro_humor",
     "Plano de Ativação Comportamental": "macro_humor",
-    "Prática de Presença": "macro_corpo",
+    "Prática de Presença": "macro_habitos",
     "Empilhamento de Hábitos": "macro_habitos",
-    "Protocolo de Regulação Nervosa": "macro_corpo",
+    "Protocolo de Regulação Nervosa": "macro_habitos",
     "Mapeamento do Ciclo de Conflito": "macro_relacionamentos",
     "Análise em Cadeia": "macro_ansiedade",
     "Registo CNV": "macro_relacionamentos",
@@ -751,11 +760,12 @@ function AbaModulos({
     "Pausa Estratégica": "macro_humor",
     "Mapa da Bateria": "macro_habitos",
     "Mapa de Diferenciação": "macro_relacionamentos",
-    "Diário Corpo-Mente": "macro_corpo",
+    "Diário Corpo-Mente": "macro_habitos",
     "Escuta Ativa": "macro_relacionamentos",
     "Regra dos 5 Minutos": "macro_habitos",
     "Inventário de Carga Mental": "macro_relacionamentos",
-    "Árvore da Decisão": "macro_ansiedade"
+    "Árvore da Decisão": "macro_ansiedade",
+    "Diagnóstico de Macroatividades x Desgastes": "macro_habitos"
   };
   function agruparPorMacro(ferramentas) {
     const grupos = {};
