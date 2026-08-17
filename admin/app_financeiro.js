@@ -1496,9 +1496,21 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                                   <div style={{width:10,height:10,borderRadius:"50%",background:isPago?"#22c55e":"#f59e0b",flexShrink:0,marginTop:2}}/>
                                   <div>
-                                    <div style={{fontWeight:700,fontSize:14,color:"#3d006a"}}>{p.obs||p.recorrencia||"Pacote"}</div>
+                                    <div style={{fontWeight:700,fontSize:14,color:"#3d006a"}}>
+                                      {(()=>{
+                                        // Título: "N sessões · período"
+                                        const sessPac = sessoes.filter(s=>s.pacoteId===p.id).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+                                        const primeira = sessPac[0]?.data;
+                                        const ultima   = sessPac[sessPac.length-1]?.data;
+                                        const fmt = d => d ? new Date(d+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}) : "—";
+                                        const periodo = primeira && ultima && primeira!==ultima
+                                          ? fmt(primeira)+" a "+fmt(ultima)
+                                          : primeira ? fmt(primeira) : dataStr;
+                                        return (p.totalSessoes||"?")+" sessões · "+periodo;
+                                      })()}
+                                    </div>
                                     <div style={{fontSize:11,color:"var(--text-muted)",marginTop:1}}>
-                                      {p.recorrencia}{p.horario&&<span> · 🕐 {p.horario}</span>} · {dataStr}
+                                      {p.recorrencia}{p.horario&&<span> · 🕐 {p.horario}</span>}
                                     </div>
                                   </div>
                                 </div>
