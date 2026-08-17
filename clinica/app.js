@@ -670,25 +670,73 @@ function NotaRelaxamento({ user, ferramenta, emoji, onRepetir }) {
 function FerramentaRespiracao({ user }){
   // Ciclo 4-7-8: inspirar 4s, segurar 7s, expirar 8s = 19s total
   const FASES = [
-    {label:"Inspire",   dur:4,  cor:"#7B00C4", instrucao:"Inspire pelo nariz lentamente..."},
-    {label:"Segure",    dur:7,  cor:"#0891b2", instrucao:"Segure o ar com calma..."},
-    {label:"Expire",    dur:8,  cor:"#059669", instrucao:"Expire completamente pela boca..."},
+    {label:"Inspire",   dur:4,  cor:"#7B00C4", instrucao:"Inspire pelo nariz lentamente...", voz:"Inspire"},
+    {label:"Segure",    dur:7,  cor:"#0891b2", instrucao:"Segure o ar com calma...",         voz:"Segure"},
+    {label:"Expire",    dur:8,  cor:"#059669", instrucao:"Expire completamente pela boca...",voz:"Expire"},
   ];
   const TOTAL_CICLOS = 4;
 
   const [ativo,      setAtivo]     = React.useState(false);
   const [concluido,  setConcluido] = React.useState(false);
   const [faseIdx,    setFaseIdx]   = React.useState(0);
-  const [progresso,  setProgresso] = React.useState(0); // 0-100 dentro da fase
+  const [progresso,  setProgresso] = React.useState(0);
   const [ciclo,      setCiclo]     = React.useState(1);
   const [tempoFase,  setTempoFase] = React.useState(0);
-  const timerRef = React.useRef(null);
+  const [musica,     setMusica]    = React.useState(true);
+  const timerRef  = React.useRef(null);
+  const audioRef  = React.useRef(null);
+  const faseAnterior = React.useRef(-1);
+
+  // Narração por voz
+  function falar(texto) {
+    if(!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = "pt-BR"; u.rate = 0.85; u.pitch = 1.0; u.volume = 0.9;
+    // Preferir voz feminina em português
+    const vozes = window.speechSynthesis.getVoices();
+    const ptVoz = vozes.find(v=>v.lang.startsWith("pt")&&v.name.toLowerCase().includes("fem"))
+                ||vozes.find(v=>v.lang.startsWith("pt"))
+                ||vozes[0];
+    if(ptVoz) u.voice = ptVoz;
+    window.speechSynthesis.speak(u);
+  }
+
+  // Música de fundo — tom binaureal relaxante (432hz) royalty-free
+  const MUSIC_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
   const fase = FASES[faseIdx];
   const durTotal = FASES.reduce((a,f)=>a+f.dur,0); // 19s
 
-  function iniciar(){ setAtivo(true); setConcluido(false); setFaseIdx(0); setProgresso(0); setCiclo(1); setTempoFase(0); }
-  function parar(){ clearInterval(timerRef.current); setAtivo(false); setFaseIdx(0); setProgresso(0); setCiclo(1); setTempoFase(0); }
+  function iniciar(){
+    setAtivo(true); setConcluido(false); setFaseIdx(0); setProgresso(0); setCiclo(1); setTempoFase(0);
+    faseAnterior.current = -1;
+    // Iniciar música
+    if(musica && audioRef.current){
+      audioRef.current.volume = 0.25;
+      audioRef.current.loop = true;
+      audioRef.current.play().catch(()=>{});
+    }
+    // Falar introdução após pequeno delay
+    setTimeout(()=>falar("Vamos começar. Inspire."), 600);
+  }
+
+  function parar(){
+    clearInterval(timerRef.current);
+    setAtivo(false); setFaseIdx(0); setProgresso(0); setCiclo(1); setTempoFase(0);
+    faseAnterior.current = -1;
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    if(audioRef.current){ audioRef.current.pause(); audioRef.current.currentTime=0; }
+  }
+
+  // Narrar quando muda de fase
+  React.useEffect(()=>{
+    if(!ativo) return;
+    if(faseAnterior.current !== faseIdx){
+      faseAnterior.current = faseIdx;
+      falar(FASES[faseIdx].voz);
+    }
+  },[ativo, faseIdx]);
 
   React.useEffect(()=>{
     if(!ativo) return;
@@ -697,14 +745,15 @@ function FerramentaRespiracao({ user }){
         const novot = t + 0.1;
         const durFase = FASES[faseIdx].dur;
         if(novot >= durFase){
-          // avança fase
           const proxFase = faseIdx + 1;
           if(proxFase >= FASES.length){
-            // fim do ciclo
             setCiclo(c=>{
               if(c >= TOTAL_CICLOS){
                 clearInterval(timerRef.current);
                 setAtivo(false); setConcluido(true);
+                window.speechSynthesis && window.speechSynthesis.cancel();
+                setTimeout(()=>falar("Prática concluída. Muito bem!"), 300);
+                if(audioRef.current){ audioRef.current.pause(); audioRef.current.currentTime=0; }
                 return c;
               }
               setFaseIdx(0); setProgresso(0);
@@ -765,6 +814,21 @@ function FerramentaRespiracao({ user }){
               💨
             </div>
           </div>
+          {/* Audio elemento oculto */}
+          <audio ref={audioRef} src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="none"/>
+
+          {/* Toggle música */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20}}>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>🎵 Música relaxante</span>
+            <button onClick={()=>setMusica(m=>!m)}
+              style={{padding:"4px 14px",borderRadius:20,border:"1px solid var(--purple)",
+                background:musica?"var(--purple)":"transparent",
+                color:musica?"white":"var(--purple)",
+                cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"inherit",transition:"all .2s"}}>
+              {musica?"Ativada":"Desativada"}
+            </button>
+          </div>
+
           <button onClick={iniciar}
             style={{padding:"14px 32px",borderRadius:12,border:"none",background:"var(--purple)",color:"white",cursor:"pointer",fontSize:15,fontWeight:700,fontFamily:"inherit"}}>
             ▶ Iniciar Prática
