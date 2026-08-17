@@ -2835,7 +2835,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
         }
       }, pacotesDoPac.map(p => {
         const sessPac = sessoes.filter(s => s.pacoteId === p.id);
-        const realizadas = sessPac.filter(s => s.status === "realizado").length;
+        const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "falta").length;
         const pagas = sessPac.filter(s => s.pagamento === "pago").length;
         const pct = Math.round(realizadas / (p.totalSessoes || 1) * 100);
         const lancsPac = lancamentos.filter(l => l.pacoteId === p.id);
@@ -2936,7 +2936,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
             color: "var(--text-muted)",
             marginBottom: 4
           }
-        }, /*#__PURE__*/React.createElement("span", null, realizadas, " realizadas de ", p.totalSessoes, " · ", pagas, " pagas"), /*#__PURE__*/React.createElement("span", {
+        }, /*#__PURE__*/React.createElement("span", null, realizadas, " concluídas de ", p.totalSessoes, " · ", pagas, " pagas"), /*#__PURE__*/React.createElement("span", {
           style: {
             fontWeight: 600,
             color: "var(--purple)"
@@ -3022,15 +3022,15 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
               agendado: "Agendado",
               confirmado: "Confirmado",
               realizado: "✓ Realizado",
-              cancelado: "Cancelado",
-              falta: "Falta"
+              falta: "Falta",
+              remarcado: "Remarcado"
             };
             const statusColor = {
               agendado: "#7B00C4",
               confirmado: "#059669",
               realizado: "#0891b2",
-              cancelado: "#dc2626",
-              falta: "#d97706"
+              falta: "#d97706",
+              remarcado: "#6366f1"
             };
             const totalValor = sessPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
             const totalPago = sessPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
@@ -3153,13 +3153,13 @@ ${sessPac.some(s => s.dataPagamento || s.dataRecebimento) ? `<div style="margin-
     if (pacotesPac.length === 0) return null;
     const totalSessoes = sessPac.length;
     // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
-    const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "remarcado").length;
+    const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "falta").length;
     const pagas = sessPac.filter(s => s.pagamento === "pago").length;
     // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
-    const pendentes = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "cancelado" && s.status !== "remarcado").length;
+    const pendentes = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "remarcado").length;
     const recebido = sessPac.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
     // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
-    const aReceber = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "cancelado" && s.status !== "remarcado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
+    const aReceber = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "remarcado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
     return /*#__PURE__*/React.createElement("div", {
       key: pac.id,
       className: "card",
