@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Corrigir sessao Heitor</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    body{font-family:system-ui;max-width:600px;margin:60px auto;padding:24px;background:#f9f5ff;}
+    h1{color:#7B00C4;font-size:20px;margin-bottom:8px;}
+    p{color:#555;font-size:14px;line-height:1.6;margin-bottom:16px;}
+    .card{background:white;border-radius:14px;padding:20px;border:1px solid #e9d5ff;margin-bottom:20px;}
+    .label{font-size:12px;color:#7B00C4;font-weight:700;margin-bottom:4px;}
+    .val{font-size:14px;color:#111;background:#f5f3ff;border-radius:8px;padding:8px 12px;margin-bottom:12px;}
+    .btn{width:100%;background:#7B00C4;color:white;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .btn:disabled{opacity:0.5;}
+    #log{margin-top:16px;background:white;border-radius:12px;padding:16px;font-size:13px;line-height:2;border:1px solid #e9d5ff;display:none;}
+    .ok{color:#16a34a;} .err{color:#dc2626;} .warn{color:#d97706;}
+  </style>
+</head>
+<body>
+<h1>Corrigir sessao faltante — Heitor Santos Siqueira</h1>
+<p>Este script busca o pacote do Heitor iniciado em 25/06/2026 e adiciona a sessao do dia 25/06 caso nao exista.</p>
+
+<div class="card">
+  <div class="label">Paciente</div>
+  <div class="val">Heitor Santos Siqueira</div>
+  <div class="label">Sessao a adicionar</div>
+  <div class="val">25/06/2026 — 14:00 — Presencial</div>
+  <div class="label">Numero da sessao</div>
+  <div class="val">1 (as existentes serao renumeradas para 2 e 3)</div>
+</div>
+
+<button class="btn" id="btn" onclick="corrigir()">Corrigir agora</button>
+<div id="log"></div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+const db = firebase.firestore();
+
+async function corrigir() {
+  const btn = document.getElementById("btn");
+  const log = document.getElementById("log");
+  btn.disabled = true;
+  log.style.display = "block";
+  log.innerHTML = "<strong>Buscando...</strong><br/>";
+
+  try {
+    // 1. Buscar paciente Heitor
+    const pacSnap = await db.collection("clinica_pacientes")
+      .where("nome","==","Heitor Santos Siqueira").get();
+
+    if (pacSnap.empty) {
+      log.innerHTML += '<span class="err">Paciente nao encontrado. Verifique o nome exato.</span>';
+      btn.disabled = false; return;
+    }
+    const paciente = {id: pacSnap.docs[0].id, ...pacSnap.docs[0].data()};
+    log.innerHTML += '<span class="ok">Paciente encontrado: ' + paciente.id + '</span><br/>';
+
+    // 2. Buscar pacote iniciado em 25/06/2026
+    const pacoteSnap = await db.collection("clinica_pacotes")
+      .where("pacienteId","==",paciente.id)
+      .where("dataInicio","==","2026-06-25").get();
+
+    if (pacoteSnap.empty) {
+      log.innerHTML += '<span class="err">Pacote com inicio em 25/06/2026 nao encontrado.</span>';
+      btn.disabled = false; return;
+    }
+    const pacote = {id: pacoteSnap.docs[0].id, ...pacoteSnap.docs[0].data()};
+    log.innerHTML += '<span class="ok">Pacote encontrado: ' + pacote.id + '</span><br/>';
+
+    // 3. Verificar se sessao do dia 25/06 ja existe
+    const sessSnap = await db.collection("clinica_sessoes")
+      .where("pacoteId","==",pacote.id)
+      .where("data","==","2026-06-25").get();
+
+    if (!sessSnap.empty) {
+      log.innerHTML += '<span class="warn">Sessao de 25/06 ja existe — nada a fazer.</span>';
+      btn.textContent = "Ja estava correto";
+      return;
+    }
+
+    // 4. Buscar sessoes existentes para renumerar
+    const sessoesSnap = await db.collection("clinica_sessoes")
+      .where("pacoteId","==",pacote.id).get();
+    const sessoes = sessoesSnap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+
+    log.innerHTML += '<span class="warn">Sessoes existentes: ' + sessoes.length + ' — renumerando...</span><br/>';
+
+    // 5. Renumerar sessoes existentes (+1 no numSessao)
+    const batch = db.batch();
+    sessoes.forEach((s, i) => {
+      batch.update(db.collection("clinica_sessoes").doc(s.id), { numSessao: i + 2 });
+    });
+
+    // 6. Adicionar sessao do dia 25/06 como numSessao=1
+    const novaSessao = {
+      pacienteId: paciente.id,
+      pacoteId: pacote.id,
+      data: "2026-06-25",
+      horario: pacote.horario || "14:00",
+      modalidade: pacote.modalidade || "on-line",
+      tipo: "Psicoterapia",
+      status: "realizado",
+      numSessao: 1,
+      valorSessao: pacote.valorSessao || 130,
+      valorPago: pacote.valorSessao || 130,
+      formaPagamento: pacote.formaPag || "PIX",
+      dataPagamento: "2026-07-07",
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    const novaRef = db.collection("clinica_sessoes").doc();
+    batch.set(novaRef, novaSessao);
+
+    await batch.commit();
+
+    log.innerHTML += '<span class="ok">Sessao 25/06 adicionada como sessao #1</span><br/>';
+    log.innerHTML += '<span class="ok">Sessoes anteriores renumeradas para #2 e #3</span><br/>';
+    log.innerHTML += '<br/><strong>Concluido! Feche esta pagina e verifique o pacote do Heitor.</strong>';
+    btn.textContent = "Concluido!";
+
+  } catch(e) {
+    log.innerHTML += '<span class="err">Erro: ' + e.message + '</span>';
+    btn.disabled = false;
+    btn.textContent = "Tentar novamente";
+  }
+}
+</script>
+</body>
+</html>
