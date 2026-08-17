@@ -1482,7 +1482,7 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                       <div style={{display:"flex",flexDirection:"column",gap:10}}>
                         {pacotesDoPac.map(p=>{
                           const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
-                          const realizadas=sessPac.filter(s=>s.status==="realizado").length;
+                          const realizadas=sessPac.filter(s=>s.status==="realizado"||s.status==="falta").length;
                           const pagas=sessPac.filter(s=>s.pagamento==="pago").length;
                           const pct=Math.round((realizadas/(p.totalSessoes||1))*100);
                           const lancsPac=lancamentos.filter(l=>l.pacoteId===p.id);
@@ -1527,7 +1527,7 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                               {/* Barra de progresso */}
                               <div style={{marginBottom:10}}>
                                 <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text-muted)",marginBottom:4}}>
-                                  <span>{realizadas} realizadas de {p.totalSessoes} · {pagas} pagas</span>
+                                  <span>{realizadas} concluídas de {p.totalSessoes} · {pagas} pagas</span>
                                   <span style={{fontWeight:600,color:"var(--purple)"}}>{pct}%</span>
                                 </div>
                                 <div style={{height:6,background:"#e8c8ff",borderRadius:10,overflow:"hidden"}}>
@@ -1558,8 +1558,8 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                                   onClick={e=>{e.stopPropagation();
                                     const pac = pacientes.find(x=>x.id===pacId);
                                     const sessPac = sessoes.filter(s=>s.pacoteId===p.id).sort((a,b)=>(a.data||"").localeCompare(b.data||""));
-                                    const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
-                                    const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+                                    const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",falta:"Falta",remarcado:"Remarcado"};
+                                    const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",falta:"#d97706",remarcado:"#6366f1"};
                                     const totalValor = sessPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
                                     const totalPago = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
                                     const sessMeses = {};
@@ -1656,13 +1656,13 @@ ${sessPac.some(s=>s.dataPagamento||s.dataRecebimento)?`<div style="margin-top:10
             if(pacotesPac.length===0) return null;
             const totalSessoes = sessPac.length;
             // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
-            const realizadas = sessPac.filter(s=>s.status==="realizado"||s.status==="remarcado").length;
+            const realizadas = sessPac.filter(s=>s.status==="realizado"||s.status==="falta").length;
             const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
             // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
-            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado"&&s.status!=="remarcado").length;
+            const pendentes = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="remarcado").length;
             const recebido = sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
             // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
-            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado"&&s.status!=="remarcado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
+            const aReceber = sessPac.filter(s=>s.pagamento!=="pago"&&s.status!=="remarcado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
             return(
               <div key={pac.id} className="card" style={{padding:"14px 20px",cursor:"pointer",marginBottom:10,transition:"box-shadow .15s"}}
                 onClick={()=>setPacoteSelecionado(pac.id)}
