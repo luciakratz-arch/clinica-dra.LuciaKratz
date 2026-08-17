@@ -1591,17 +1591,13 @@ function RelatorioFrequencia({
       l: "✓ Realizado",
       c: "#059669"
     },
-    cancelado: {
-      l: "Cancelado",
-      c: "#dc2626"
-    },
     falta: {
       l: "Falta",
       c: "#d97706"
     },
     remarcado: {
       l: "Remarcado",
-      c: "#0891b2"
+      c: "#6366f1"
     }
   };
   const porMes = sessPac.reduce((acc, s) => {
@@ -1784,15 +1780,15 @@ function RelatorioFrequencia({
         agendado: "Agendado",
         confirmado: "Confirmado",
         realizado: "✓ Realizado",
-        cancelado: "Cancelado",
-        falta: "Falta"
+        falta: "Falta",
+        remarcado: "Remarcado"
       };
       const statusColor = {
         agendado: "#7B00C4",
         confirmado: "#059669",
         realizado: "#0891b2",
-        cancelado: "#dc2626",
-        falta: "#d97706"
+        falta: "#d97706",
+        remarcado: "#6366f1"
       };
       const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>Resumo de Sessões — ${pac?.nome || ""}</title>
@@ -1938,7 +1934,7 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
     const sessFiltro = mesFiltro === "todos" ? sessPac : sessPac.filter(s => s.data?.startsWith(mesFiltro));
     const recFiltro = sessFiltro.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
     const pendFiltro = sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-    return [["Sessões", sessFiltro.length, "#7B00C4"], ["Realizadas", sessFiltro.filter(s => s.status === "realizado").length, "#059669"], ["Pagas", sessFiltro.filter(s => s.pagamento === "pago").length, "#059669"], ["Pendentes", sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").length, "#d97706"], ["Faltas", sessFiltro.filter(s => s.status === "falta").length, "#dc2626"], ["Recebido", recFiltro.toLocaleString("pt-BR", {
+    return [["Sessões", sessFiltro.length, "#7B00C4"], ["Realizadas", sessFiltro.filter(s => s.status === "realizado" || s.status === "falta").length, "#059669"], ["Pagas", sessFiltro.filter(s => s.pagamento === "pago").length, "#059669"], ["Pendentes", sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").length, "#d97706"], ["Faltas", sessFiltro.filter(s => s.status === "falta").length, "#dc2626"], ["Recebido", recFiltro.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL"
     }), "#059669"], ["A Receber", pendFiltro.toLocaleString("pt-BR", {
@@ -2237,6 +2233,8 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
       }, "🔄 Remarcação"), /*#__PURE__*/React.createElement("option", {
         value: "falta"
       }, "⚠️ Falta"), /*#__PURE__*/React.createElement("option", {
+        value: "remarcado"
+      }, "🔄 Remarcado"), /*#__PURE__*/React.createElement("option", {
         value: "compensacao"
       }, "✅ Compensação")))), /*#__PURE__*/React.createElement("td", {
         style: {
