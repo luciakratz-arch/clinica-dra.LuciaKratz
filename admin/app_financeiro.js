@@ -317,10 +317,13 @@ function FinanceiroClinica({ user }) {
       }
       return datas.slice(0,total);
     }
-    // 2x ou 3x por semana
+    // 2x ou 3x por semana — SEMPRE inclui dataInicio como 1ª sessão
     const dias=(diasSemana||[]).map(Number).sort();
     if(!dias.length) return [];
+    // Inclui dataInicio independente do dia da semana
+    datas.push(dataInicio);
     let atual=new Date(dataInicio+"T00:00:00");
+    atual.setDate(atual.getDate()+1); // começa a buscar DIA SEGUINTE ao início
     const fim=new Date(atual);fim.setFullYear(fim.getFullYear()+2);
     while(datas.length<total&&atual<fim){
       if(dias.includes(atual.getDay())) datas.push(atual.toISOString().split("T")[0]);
