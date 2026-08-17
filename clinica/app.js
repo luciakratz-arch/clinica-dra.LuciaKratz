@@ -1679,6 +1679,243 @@ function FerramentaTreino({user}){
 
 // ── Anamnese ────────────────────────────────────────────────────────────────
 function FerramentaPortal({ recurso, user }){
+
+// ═══════════════════════════════════════════════════════
+// DIAGNOSTICO DE MACROATIVIDADES x DESGASTES — Portal
+// ═══════════════════════════════════════════════════════
+function FerramentaDiagnosticoMacro({ user }) {
+  const [etapa, setEtapa] = React.useState("intro");
+  const [atividades, setAtividades] = React.useState([
+    {nome:"Trabalho focado", horas:"", minutos:"", esforco:3, importancia:3},
+    {nome:"Reuniões",         horas:"", minutos:"", esforco:3, importancia:3},
+    {nome:"Cuidados Pessoais",horas:"", minutos:"", esforco:2, importancia:4},
+  ]);
+  const [novaAtiv, setNovaAtiv] = React.useState("");
+  const [salvando, setSalvando] = React.useState(false);
+  const [salvo,    setSalvo]    = React.useState(false);
+
+  const COR = "#16a34a";
+  const BG  = "#f0fdf4";
+
+  function addAtividade(nome) {
+    if (!nome.trim()) return;
+    setAtividades(a => [...a, {nome:nome.trim(), horas:"", minutos:"", esforco:3, importancia:3}]);
+    setNovaAtiv("");
+  }
+  function updateAtiv(i, campo, valor) {
+    setAtividades(a => a.map((x, idx) => idx===i ? {...x, [campo]:valor} : x));
+  }
+  function removerAtiv(i) {
+    setAtividades(a => a.filter((_, idx) => idx!==i));
+  }
+  function calcTotal(a) {
+    return parseInt(a.horas||0)*60 + parseInt(a.minutos||0);
+  }
+  function quadrante(a) {
+    const min = calcTotal(a);
+    if ((min>=90||a.esforco>=4) && a.importancia<=2) return "critico";
+    if (a.esforco>=4 && a.importancia>2) return "investimento";
+    if (a.esforco<4 && a.importancia>=4) return "eficiente";
+    return "neutro";
+  }
+  const QUAD = {
+    critico:     {label:"⚠️ Crítico",    cor:"#dc2626", bg:"#fef2f2", desc:"Alto esforço/tempo, baixa importância — revisar ou delegar"},
+    investimento:{label:"💪 Investimento",cor:"#d97706", bg:"#fffbeb", desc:"Alto esforço, mas importante — vale o custo"},
+    eficiente:   {label:"✅ Eficiente",   cor:"#16a34a", bg:"#f0fdf4", desc:"Alta importância com baixo esforço — ótimo equilíbrio"},
+    neutro:      {label:"⚪ Neutro",      cor:"#6b7280", bg:"#f9fafb", desc:"Atividade de rotina — monitorar"},
+  };
+  const totalMin = atividades.reduce((s,a)=>s+calcTotal(a),0);
+  const criticas = atividades.filter(a=>quadrante(a)==="critico");
+
+  async function salvar() {
+    if (!user?.id) return;
+    setSalvando(true);
+    try {
+      await db.collection("clinica_gestao_ansiedade").add({
+        pacienteId: user.id,
+        pacienteNome: user.nome,
+        ferramenta: "diagnostico-macroatividades",
+        data: new Date().toISOString().slice(0,10),
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        atividades: atividades.map(a=>({
+          nome:a.nome, tempoMinutos:calcTotal(a),
+          esforco:a.esforco, importancia:a.importancia, quadrante:quadrante(a),
+        })),
+        resumo:{totalAtividades:atividades.length, criticas:criticas.length, totalMinutos:totalMin}
+      });
+      setSalvo(true);
+    } catch(e){console.error(e);}
+    setSalvando(false);
+  }
+
+  if(etapa==="intro") return (
+    <div style={{padding:"0 4px"}}>
+      <div style={{background:BG,borderRadius:14,padding:"20px 18px",marginBottom:18,borderLeft:`4px solid ${COR}`}}>
+        <div style={{fontWeight:700,fontSize:16,color:COR,marginBottom:8}}>🗂️ O que são Macroatividades?</div>
+        <p style={{fontSize:14,color:"#374151",lineHeight:1.7,margin:0}}>
+          Macroatividades são os <strong>grandes blocos de tempo</strong> que compõem seu dia. Aqui você vai mapear quanto tempo e energia cada uma consome, e descobrir quais realmente merecem esse custo.
+        </p>
+      </div>
+      <div style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px 18px",marginBottom:18}}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>📋 Como funciona:</div>
+        <div style={{fontSize:13,color:"#6b7280",lineHeight:1.8}}>
+          <div>1️⃣ <strong>Cadastre</strong> suas principais atividades do dia</div>
+          <div>2️⃣ <strong>Classifique</strong> tempo, esforço e importância</div>
+          <div>3️⃣ <strong>Veja</strong> o diagnóstico e reflexões</div>
+        </div>
+      </div>
+      <button onClick={()=>setEtapa("cadastro")} style={{width:"100%",padding:14,background:COR,color:"white",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+        🚀 Começar mapeamento
+      </button>
+    </div>
+  );
+
+  if(etapa==="cadastro") return (
+    <div style={{padding:"0 4px"}}>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>📋 Suas Macroatividades</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:16}}>Quais são os grandes blocos do seu dia? Edite os nomes sugeridos.</p>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+        {atividades.map((a,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:"white",border:"1px solid #e5e7eb",borderRadius:10,padding:"10px 12px"}}>
+            <input value={a.nome} onChange={e=>updateAtiv(i,"nome",e.target.value)} style={{flex:1,border:"none",outline:"none",fontSize:14,fontFamily:"inherit"}}/>
+            <button onClick={()=>removerAtiv(i)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:16,padding:"2px 6px"}}>✕</button>
+          </div>
+        ))}
+      </div>
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:13,color:"#6b7280",marginBottom:8,fontWeight:600}}>➕ Sugestões:</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+          {["Tarefas Domésticas","Exercícios","Lazer / Descanso","Deslocamentos","Redes Sociais"].map(s=>(
+            <button key={s} onClick={()=>addAtividade(s)} style={{background:"#f3f4f6",border:"1px solid #e5e7eb",borderRadius:20,padding:"6px 14px",fontSize:13,cursor:"pointer",fontFamily:"inherit",color:"#374151"}}>
+              + {s}
+            </button>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={novaAtiv} onChange={e=>setNovaAtiv(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&addAtividade(novaAtiv)}
+            placeholder="Escreva outra atividade..."
+            style={{flex:1,border:"1px solid #e5e7eb",borderRadius:10,padding:"10px 14px",fontSize:14,fontFamily:"inherit",outline:"none"}}/>
+          <button onClick={()=>addAtividade(novaAtiv)} style={{padding:"10px 16px",background:COR,color:"white",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontWeight:700}}>➕</button>
+        </div>
+      </div>
+      <button onClick={()=>setEtapa("classificacao")} disabled={atividades.length===0}
+        style={{width:"100%",padding:14,background:COR,color:"white",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>
+        Classificar atividades →
+      </button>
+    </div>
+  );
+
+  if(etapa==="classificacao") return (
+    <div style={{padding:"0 4px"}}>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>⏱️ Classificação</div>
+      <p style={{fontSize:13,color:"#6b7280",marginBottom:16}}>Tempo gasto, esforço mental e importância de cada atividade.</p>
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {atividades.map((a,i)=>(
+          <div key={i} style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 16px"}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:12}}>📌 {a.nome}</div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#6b7280",marginBottom:6}}>⏰ Tempo por dia:</div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <input type="number" min="0" max="24" value={a.horas} onChange={e=>updateAtiv(i,"horas",e.target.value)}
+                  placeholder="0" style={{width:60,border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 10px",fontSize:14,textAlign:"center",fontFamily:"inherit"}}/>
+                <span style={{fontSize:13,color:"#6b7280"}}>h</span>
+                <input type="number" min="0" max="59" value={a.minutos} onChange={e=>updateAtiv(i,"minutos",e.target.value)}
+                  placeholder="0" style={{width:60,border:"1px solid #e5e7eb",borderRadius:8,padding:"8px 10px",fontSize:14,textAlign:"center",fontFamily:"inherit"}}/>
+                <span style={{fontSize:13,color:"#6b7280"}}>min</span>
+              </div>
+            </div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#6b7280",marginBottom:6}}>🧠 Esforço mental: <strong style={{color:"#111"}}>{["","Muito baixo","Baixo","Médio","Alto","Muito alto"][a.esforco]}</strong></div>
+              <input type="range" min="1" max="5" value={a.esforco} onChange={e=>updateAtiv(i,"esforco",+e.target.value)} style={{width:"100%",accentColor:COR}}/>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#9ca3af"}}><span>Muito baixo</span><span>Muito alto</span></div>
+            </div>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#6b7280",marginBottom:6}}>⭐ Importância real: <strong style={{color:"#111"}}>{["","Irrelevante","Pouco","Moderada","Importante","Essencial"][a.importancia]}</strong></div>
+              <input type="range" min="1" max="5" value={a.importancia} onChange={e=>updateAtiv(i,"importancia",+e.target.value)} style={{width:"100%",accentColor:"#d97706"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#9ca3af"}}><span>Irrelevante</span><span>Essencial</span></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",gap:8,marginTop:20}}>
+        <button onClick={()=>setEtapa("cadastro")} style={{flex:1,padding:12,background:"white",border:"1px solid #e5e7eb",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontSize:14}}>← Voltar</button>
+        <button onClick={()=>setEtapa("resumo")} style={{flex:2,padding:12,background:COR,color:"white",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontSize:15,fontWeight:700}}>Ver diagnóstico →</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{padding:"0 4px"}}>
+      <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>📊 Diagnóstico</div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
+        {atividades.map((a,i)=>{
+          const q = quadrante(a); const qi = QUAD[q]; const min = calcTotal(a);
+          return (
+            <div key={i} style={{background:qi.bg,border:`1.5px solid ${qi.cor}30`,borderRadius:12,padding:"12px 16px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                <div style={{fontWeight:600,fontSize:14}}>{a.nome}</div>
+                <span style={{fontSize:11,fontWeight:700,color:qi.cor,background:"white",borderRadius:20,padding:"3px 10px",border:`1px solid ${qi.cor}40`,whiteSpace:"nowrap"}}>{qi.label}</span>
+              </div>
+              <div style={{fontSize:12,color:"#6b7280",marginTop:6,display:"flex",gap:16,flexWrap:"wrap"}}>
+                <span>⏰ {Math.floor(min/60)}h {min%60}min</span>
+                <span>🧠 {["","Muito baixo","Baixo","Médio","Alto","Muito alto"][a.esforco]}</span>
+                <span>⭐ {["","Irrelevante","Pouco","Moderada","Importante","Essencial"][a.importancia]}</span>
+              </div>
+              <div style={{fontSize:12,color:qi.cor,marginTop:4,fontStyle:"italic"}}>{qi.desc}</div>
+            </div>
+          );
+        })}
+      </div>
+      {criticas.length>0&&(
+        <div style={{background:"#fef2f2",border:"1.5px solid #dc2626",borderRadius:12,padding:"14px 16px",marginBottom:20}}>
+          <div style={{fontWeight:700,fontSize:14,color:"#dc2626",marginBottom:8}}>⚠️ Atividades Críticas</div>
+          <p style={{fontSize:13,color:"#374151",marginBottom:12,lineHeight:1.6}}>Consomem muito tempo/esforço mas têm baixa importância. Reflita:</p>
+          {[
+            "🤝 Posso delegar ou pedir ajuda?",
+            "⏱️ Existe forma de fazer em menos tempo?",
+            "❌ O que aconteceria se eu parasse de fazer?",
+            "🔄 Está alinhado com o que é realmente importante agora?",
+          ].map((q,i)=>(
+            <div key={i} style={{background:"white",borderRadius:8,padding:"10px 12px",fontSize:13,color:"#374151",borderLeft:"3px solid #dc2626",marginBottom:6}}>{q}</div>
+          ))}
+        </div>
+      )}
+      <div style={{background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"14px 16px",marginBottom:20}}>
+        <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>📈 Resumo</div>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <div style={{background:"#f9fafb",borderRadius:10,padding:"10px 16px",textAlign:"center",flex:1}}>
+            <div style={{fontSize:20,fontWeight:700}}>{Math.floor(totalMin/60)}h {totalMin%60}min</div>
+            <div style={{fontSize:11,color:"#6b7280"}}>Total mapeado</div>
+          </div>
+          <div style={{background:"#fef2f2",borderRadius:10,padding:"10px 16px",textAlign:"center",flex:1}}>
+            <div style={{fontSize:20,fontWeight:700,color:"#dc2626"}}>{criticas.length}</div>
+            <div style={{fontSize:11,color:"#6b7280"}}>Críticas</div>
+          </div>
+          <div style={{background:"#f0fdf4",borderRadius:10,padding:"10px 16px",textAlign:"center",flex:1}}>
+            <div style={{fontSize:20,fontWeight:700,color:"#16a34a"}}>{atividades.filter(a=>quadrante(a)==="eficiente").length}</div>
+            <div style={{fontSize:11,color:"#6b7280"}}>Eficientes</div>
+          </div>
+        </div>
+      </div>
+      {salvo ? (
+        <div style={{background:"#f0fdf4",border:"1px solid #16a34a",borderRadius:12,padding:16,textAlign:"center"}}>
+          <div style={{fontSize:24,marginBottom:4}}>✅</div>
+          <div style={{fontWeight:600,color:"#16a34a"}}>Diagnóstico salvo!</div>
+          <div style={{fontSize:13,color:"#6b7280",marginTop:4}}>Sua psicóloga poderá ver este resultado.</div>
+        </div>
+      ) : (
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setEtapa("classificacao")} style={{flex:1,padding:12,background:"white",border:"1px solid #e5e7eb",borderRadius:10,cursor:"pointer",fontFamily:"inherit"}}>← Revisar</button>
+          <button onClick={salvar} disabled={salvando} style={{flex:2,padding:12,background:COR,color:"white",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontSize:15,fontWeight:700}}>
+            {salvando?"Salvando...":"💾 Salvar diagnóstico"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
   const k = recurso?.formularioKey || "";
   if(k==="breathing-478")        return <FerramentaRespiracao user={user}/>;
   if(k==="muscle-relaxation")    return <FerramentaRelaxamento user={user}/>;
@@ -1696,6 +1933,7 @@ function FerramentaPortal({ recurso, user }){
   if(typeof FerramentaConflictCycle!=="undefined"&&k==="ciclo-conflito")         return <FerramentaConflictCycle user={user}/>;
   if(typeof FerramentaActiveListening!=="undefined"&&k==="escuta-ativa")         return <FerramentaActiveListening user={user}/>;
   if(k==="mural-habilidades")    return <FerramentaMuralHabilidades user={user}/>;
+  if(k==="diagnostico-macroatividades") return <FerramentaDiagnosticoMacro user={user}/>;
   if(k==="roda-vida-integral")   return <FerramentaRodaVidaIntegral user={user}/>;
   if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
   if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
