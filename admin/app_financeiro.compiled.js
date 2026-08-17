@@ -2883,13 +2883,24 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
             fontSize: 14,
             color: "#3d006a"
           }
-        }, p.obs || p.recorrencia || "Pacote"), /*#__PURE__*/React.createElement("div", {
+        }, (() => {
+          // Título: "N sessões · período"
+          const sessPac = sessoes.filter(s => s.pacoteId === p.id).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+          const primeira = sessPac[0]?.data;
+          const ultima = sessPac[sessPac.length - 1]?.data;
+          const fmt = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit"
+          }) : "—";
+          const periodo = primeira && ultima && primeira !== ultima ? fmt(primeira) + " a " + fmt(ultima) : primeira ? fmt(primeira) : dataStr;
+          return (p.totalSessoes || "?") + " sessões · " + periodo;
+        })()), /*#__PURE__*/React.createElement("div", {
           style: {
             fontSize: 11,
             color: "var(--text-muted)",
             marginTop: 1
           }
-        }, p.recorrencia, p.horario && /*#__PURE__*/React.createElement("span", null, " · 🕐 ", p.horario), " · ", dataStr))), /*#__PURE__*/React.createElement("div", {
+        }, p.recorrencia, p.horario && /*#__PURE__*/React.createElement("span", null, " · 🕐 ", p.horario)))), /*#__PURE__*/React.createElement("div", {
           style: {
             textAlign: "right"
           }
