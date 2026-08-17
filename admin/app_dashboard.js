@@ -604,9 +604,8 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
     agendado:  {l:"Agendado",   c:"#7B00C4"},
     confirmado:{l:"Confirmado", c:"#059669"},
     realizado: {l:"✓ Realizado",c:"#059669"},
-    cancelado: {l:"Cancelado",  c:"#dc2626"},
     falta:     {l:"Falta",      c:"#d97706"},
-    remarcado: {l:"Remarcado",  c:"#0891b2"},
+    remarcado: {l:"Remarcado",  c:"#6366f1"},
   };
 
   const porMes = sessPac.reduce((acc,s)=>{
@@ -711,8 +710,8 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
           const totalValor = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
           const fmtD = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}) : "—";
           const fmtM = m => { const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
-          const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",cancelado:"Cancelado",falta:"Falta"};
-          const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",cancelado:"#dc2626",falta:"#d97706"};
+          const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",falta:"Falta",remarcado:"Remarcado"};
+          const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",falta:"#d97706",remarcado:"#6366f1"};
           const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>Resumo de Sessões — ${pac?.nome||""}</title>
 <style>
@@ -801,7 +800,7 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
             const pendFiltro = sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
             return [
               ["Sessões",sessFiltro.length,"#7B00C4"],
-              ["Realizadas",sessFiltro.filter(s=>s.status==="realizado").length,"#059669"],
+              ["Realizadas",sessFiltro.filter(s=>s.status==="realizado"||s.status==="falta").length,"#059669"],
               ["Pagas",sessFiltro.filter(s=>s.pagamento==="pago").length,"#059669"],
               ["Pendentes",sessFiltro.filter(s=>s.pagamento!=="pago"&&s.status!=="cancelado").length,"#d97706"],
               ["Faltas",sessFiltro.filter(s=>s.status==="falta").length,"#dc2626"],
@@ -896,6 +895,7 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
                                   style={{fontSize:9,marginTop:2,border:"1px solid #cbd5e1",borderRadius:3,padding:"1px 3px",width:105,color:"#374151",cursor:"pointer"}}>
                                   <option value="remarcacao">🔄 Remarcação</option>
                                   <option value="falta">⚠️ Falta</option>
+                                  <option value="remarcado">🔄 Remarcado</option>
                                   <option value="compensacao">✅ Compensação</option>
                                 </select>
                               </div>
