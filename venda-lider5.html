@@ -379,10 +379,10 @@ nav {
 .btn-comprar {
   display:inline-block;
   background:linear-gradient(135deg,var(--dourado),#E8B84B);
-  color:#1E0A3C; font-size:1.15rem; font-weight:800;
-  padding:20px 56px; border-radius:50px; text-decoration:none;
-  box-shadow:0 8px 32px rgba(212,168,71,0.45);
-  transition:all 0.3s ease; letter-spacing:0.5px;
+  color:#1E0A3C; font-size:1rem; font-weight:700;
+  padding:14px 44px; border-radius:50px; text-decoration:none;
+  box-shadow:0 6px 24px rgba(212,168,71,0.4);
+  transition:all 0.3s ease; letter-spacing:0.3px;
 }
 .btn-comprar:hover { transform:translateY(-2px); box-shadow:0 14px 44px rgba(212,168,71,0.55); }
 .selos {
@@ -463,6 +463,13 @@ footer {
 
 
 
+
+
+.bonus-valor-wrap { margin-top:10px; display:flex; flex-direction:column; gap:3px; }
+.bonus-val-riscado { font-size:0.78rem; color:#9CA3AF; text-decoration:line-through; }
+.bonus-val-gratis { font-size:0.82rem; font-weight:700; color:var(--roxo); }
+.bonus-destaque .bonus-val-gratis { color:var(--dourado-claro) !important; }
+.bonus-destaque .bonus-val-riscado { color:rgba(255,255,255,0.35) !important; }
 
 /* PRICE BREAKDOWN */
 .incluso-texto { flex: 1; }
@@ -1077,6 +1084,10 @@ footer {
         <div>
           <h4>Vídeos Exclusivos por Capítulo</h4>
           <p>QR Codes ao longo do livro dão acesso a vídeos dos próprios autores aprofundando os conceitos. Leitura que não termina na última página.</p>
+          <div class="bonus-valor-wrap">
+            <span class="bonus-val-riscado">Valor: R$ 97,00</span>
+            <span class="bonus-val-gratis">✅ Incluso no livro</span>
+          </div>
         </div>
       </div>
       <div class="bonus-card">
@@ -1084,6 +1095,10 @@ footer {
         <div>
           <h4>Guia de Aplicação Prática</h4>
           <p>Ferramentas e exercícios para implementar imediatamente na sua equipe o que você aprender em cada capítulo do livro.</p>
+          <div class="bonus-valor-wrap">
+            <span class="bonus-val-riscado">Valor: R$ 47,00</span>
+            <span class="bonus-val-gratis">✅ Bônus exclusivo incluso</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1124,7 +1139,7 @@ footer {
           <span class="incluso-icon">🧭</span>
           <div class="incluso-texto">
             <strong>Teste de Perfil de Liderança</strong>
-            <span class="incluso-gratis">🔜 Em breve na plataforma</span>
+            <span class="incluso-gratis">✅ Disponível na plataforma</span>
           </div>
           <span class="incluso-preco-item riscado-preco">R$ 67,00</span>
         </div>
@@ -1133,7 +1148,7 @@ footer {
           <span class="incluso-icon">🗺️</span>
           <div class="incluso-texto">
             <strong>Guia de Aplicação Prática</strong>
-            <span class="incluso-gratis">🔜 Em breve — bônus exclusivo</span>
+            <span class="incluso-gratis">✅ Bônus exclusivo incluso</span>
           </div>
           <span class="incluso-preco-item riscado-preco">R$ 47,00</span>
         </div>
