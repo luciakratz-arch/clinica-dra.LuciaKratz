@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste de Perfil de Liderança — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --roxo: #6B21A8;
+  --roxo-escuro: #4C1D95;
+  --roxo-claro: #A855F7;
+  --roxo-suave: #EDE9FE;
+  --roxo-bg: #F5F3FF;
+  --dourado: #D4A847;
+  --dourado-claro: #F5D78E;
+  --texto: #1E1B2E;
+  --texto-medio: #4B4565;
+  --verde: #10B981;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:'Inter',sans-serif; color:var(--texto); background:var(--roxo-bg); min-height:100vh; }
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, #1E0A3C, #4C1D95);
+  padding: 40px 24px 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+header::after {
+  content:''; position:absolute; bottom:-30px; left:0; right:0;
+  height:60px; background:var(--roxo-bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.header-badge {
+  display:inline-block;
+  background:linear-gradient(90deg,var(--dourado),var(--dourado-claro));
+  color:#1E0A3C; font-size:11px; font-weight:700;
+  letter-spacing:3px; text-transform:uppercase;
+  padding:6px 18px; border-radius:20px; margin-bottom:20px;
+}
+header h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.8rem,5vw,3rem);
+  color:#fff; font-weight:900; margin-bottom:12px; line-height:1.2;
+}
+header h1 em { color:var(--dourado-claro); font-style:italic; }
+header p {
+  font-size:1.05rem; color:rgba(255,255,255,0.7);
+  max-width:560px; margin:0 auto; line-height:1.7;
+}
+.header-meta {
+  display:flex; justify-content:center; gap:24px;
+  margin-top:24px; flex-wrap:wrap;
+}
+.meta-item {
+  font-size:0.8rem; color:rgba(255,255,255,0.55);
+  display:flex; align-items:center; gap:6px;
+}
+
+/* PROGRESS */
+.progress-wrap {
+  max-width:680px; margin:48px auto 0;
+  padding:0 24px;
+}
+.progress-info {
+  display:flex; justify-content:space-between;
+  font-size:0.82rem; color:var(--texto-medio);
+  margin-bottom:8px; font-weight:500;
+}
+.progress-bar {
+  height:8px; background:#DDD6FE; border-radius:10px; overflow:hidden;
+}
+.progress-fill {
+  height:100%; border-radius:10px;
+  background:linear-gradient(90deg,var(--roxo),var(--roxo-claro));
+  transition:width 0.5s ease;
+  width:0%;
+}
+
+/* QUIZ */
+.quiz-wrap {
+  max-width:680px; margin:32px auto 60px;
+  padding:0 24px;
+}
+.question-card {
+  background:#fff;
+  border-radius:20px;
+  padding:36px 32px;
+  box-shadow:0 8px 40px rgba(107,33,168,0.12);
+  display:none;
+  animation: fadeIn 0.4s ease;
+}
+.question-card.active { display:block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+.q-number {
+  font-size:0.72rem; font-weight:700; letter-spacing:3px;
+  text-transform:uppercase; color:var(--roxo-claro); margin-bottom:12px;
+}
+.q-text {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.15rem,3vw,1.5rem);
+  font-weight:700; color:var(--texto); line-height:1.4;
+  margin-bottom:28px;
+}
+.q-context {
+  font-size:0.88rem; color:var(--texto-medio);
+  line-height:1.6; margin-bottom:28px; margin-top:-16px;
+  font-style:italic; padding:12px 16px;
+  background:var(--roxo-suave); border-radius:10px;
+  border-left:3px solid var(--roxo-claro);
+}
+.options { display:flex; flex-direction:column; gap:12px; }
+.option {
+  display:flex; align-items:flex-start; gap:14px;
+  padding:16px 18px; border-radius:14px;
+  border:2px solid #E9E3FF; cursor:pointer;
+  transition:all 0.25s ease; background:#fff;
+}
+.option:hover { border-color:var(--roxo-claro); background:var(--roxo-suave); }
+.option.selected { border-color:var(--roxo); background:var(--roxo-suave); }
+.option-letter {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  background:var(--roxo-suave); color:var(--roxo);
+  font-size:0.82rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.25s;
+}
+.option.selected .option-letter {
+  background:var(--roxo); color:#fff;
+}
+.option-text { font-size:0.93rem; color:var(--texto-medio); line-height:1.5; padding-top:4px; }
+.option.selected .option-text { color:var(--roxo-escuro); font-weight:500; }
+
+.nav-btns {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:28px; gap:12px;
+}
+.btn-back {
+  background:none; border:2px solid #DDD6FE; color:var(--texto-medio);
+  font-size:0.9rem; font-weight:600; padding:12px 24px; border-radius:50px;
+  cursor:pointer; transition:all 0.3s; font-family:'Inter',sans-serif;
+}
+.btn-back:hover { border-color:var(--roxo); color:var(--roxo); }
+.btn-next {
+  background:linear-gradient(135deg,var(--roxo),var(--roxo-claro));
+  border:none; color:#fff;
+  font-size:0.95rem; font-weight:700; padding:14px 36px; border-radius:50px;
+  cursor:pointer; transition:all 0.3s; font-family:'Inter',sans-serif;
+  box-shadow:0 6px 20px rgba(107,33,168,0.3);
+  opacity:0.4; pointer-events:none;
+}
+.btn-next.enabled { opacity:1; pointer-events:all; }
+.btn-next:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(107,33,168,0.4); }
+
+/* RESULTADO */
+.resultado-wrap {
+  max-width:720px; margin:32px auto 60px;
+  padding:0 24px; display:none;
+}
+.resultado-wrap.active { display:block; }
+.resultado-header {
+  background:linear-gradient(135deg,#1E0A3C,var(--roxo));
+  border-radius:20px 20px 0 0;
+  padding:40px 36px 32px;
+  text-align:center;
+}
+.resultado-header .tipo-badge {
+  display:inline-block;
+  background:linear-gradient(90deg,var(--dourado),var(--dourado-claro));
+  color:#1E0A3C; font-size:11px; font-weight:800;
+  letter-spacing:3px; text-transform:uppercase;
+  padding:6px 20px; border-radius:20px; margin-bottom:16px;
+}
+.resultado-header h2 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.6rem,4vw,2.4rem);
+  color:#fff; font-weight:900; line-height:1.2; margin-bottom:8px;
+}
+.resultado-header .tipo-sub {
+  font-size:1rem; color:rgba(255,255,255,0.65); font-style:italic;
+}
+.resultado-body {
+  background:#fff;
+  border-radius:0 0 20px 20px;
+  padding:36px;
+  box-shadow:0 20px 60px rgba(107,33,168,0.15);
+}
+.res-section { margin-bottom:28px; }
+.res-label {
+  font-size:0.72rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--roxo-claro); margin-bottom:12px;
+}
+.res-text { font-size:0.95rem; color:var(--texto-medio); line-height:1.75; }
+.res-tags { display:flex; flex-wrap:wrap; gap:8px; }
+.res-tag {
+  background:var(--roxo-suave); color:var(--roxo-escuro);
+  font-size:0.8rem; font-weight:600;
+  padding:6px 14px; border-radius:20px;
+  border:1px solid #DDD6FE;
+}
+.res-tag.desafio {
+  background:#FFF7ED; color:#92400E;
+  border-color:#FDE68A;
+}
+.divider { height:1px; background:#EDE9FE; margin:24px 0; }
+
+/* CTA 9SELF */
+.cta-9self {
+  background:linear-gradient(135deg,#1E0A3C,var(--roxo-escuro));
+  border-radius:20px; padding:36px 32px;
+  text-align:center; margin-top:24px;
+  position:relative; overflow:hidden;
+}
+.cta-9self::before {
+  content:''; position:absolute;
+  top:-60px; right:-60px; width:200px; height:200px;
+  background:radial-gradient(circle,rgba(212,168,71,0.15) 0%,transparent 70%);
+  border-radius:50%;
+}
+.desconto-badge {
+  display:inline-block;
+  background:linear-gradient(90deg,var(--dourado),var(--dourado-claro));
+  color:#1E0A3C; font-size:12px; font-weight:800;
+  letter-spacing:2px; text-transform:uppercase;
+  padding:6px 18px; border-radius:20px; margin-bottom:16px;
+}
+.cta-9self h3 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.3rem,3vw,1.8rem);
+  color:#fff; font-weight:700; margin-bottom:10px; line-height:1.3;
+}
+.cta-9self p {
+  font-size:0.9rem; color:rgba(255,255,255,0.7);
+  line-height:1.7; margin-bottom:24px; max-width:500px; margin-left:auto; margin-right:auto;
+}
+.btn-9self {
+  display:inline-block;
+  background:linear-gradient(135deg,var(--dourado),#E8B84B);
+  color:#1E0A3C; font-size:1rem; font-weight:800;
+  padding:16px 40px; border-radius:50px; text-decoration:none;
+  box-shadow:0 8px 28px rgba(212,168,71,0.4);
+  transition:all 0.3s;
+}
+.btn-9self:hover { transform:translateY(-2px); box-shadow:0 12px 36px rgba(212,168,71,0.5); }
+.cta-note {
+  font-size:0.75rem; color:rgba(255,255,255,0.4);
+  margin-top:14px;
+}
+
+/* COMPARTILHAR */
+.share-wrap {
+  text-align:center; margin-top:20px;
+}
+.btn-share {
+  display:inline-flex; align-items:center; gap:8px;
+  background:#25D366; color:#fff;
+  font-size:0.88rem; font-weight:700;
+  padding:12px 28px; border-radius:50px; text-decoration:none;
+  box-shadow:0 4px 16px rgba(37,211,102,0.35);
+  transition:all 0.3s; border:none; cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.btn-refazer {
+  display:inline-flex; align-items:center; gap:8px;
+  background:none; border:2px solid #DDD6FE; color:var(--roxo);
+  font-size:0.88rem; font-weight:600;
+  padding:11px 24px; border-radius:50px;
+  cursor:pointer; font-family:'Inter',sans-serif;
+  margin-left:12px; transition:all 0.3s;
+}
+.btn-refazer:hover { border-color:var(--roxo); background:var(--roxo-suave); }
+
+/* FOOTER */
+footer {
+  text-align:center; padding:32px 24px;
+  font-size:0.78rem; color:var(--texto-medio);
+  border-top:1px solid #DDD6FE;
+}
+
+@media(max-width:600px) {
+  .question-card, .resultado-body { padding:24px 20px; }
+  .resultado-header { padding:28px 20px; }
+  .cta-9self { padding:28px 20px; }
+  .nav-btns { flex-direction:column-reverse; }
+  .btn-back, .btn-next { width:100%; text-align:center; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">🧭 Bônus exclusivo — Líd@r 5.0</div>
+  <h1>Descubra seu <em>Perfil de Liderança</em></h1>
+  <p>9 perguntas baseadas no Eneagrama revelarão seu estilo predominante de liderança, seus pontos fortes e os desafios que você enfrenta como líder.</p>
+  <div class="header-meta">
+    <span class="meta-item">⏱️ 3 minutos</span>
+    <span class="meta-item">🎯 9 perguntas</span>
+    <span class="meta-item">📊 Resultado imediato</span>
+    <span class="meta-item">🔒 Sem cadastro</span>
+  </div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-info">
+    <span id="prog-label">Pergunta 1 de 9</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+</div>
+
+<div class="quiz-wrap">
+
+  <!-- Q1 -->
+  <div class="question-card active" data-q="0">
+    <div class="q-number">Pergunta 1 de 9</div>
+    <div class="q-text">Quando assume um projeto novo, qual é seu primeiro impulso como líder?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Estabelecer padrões claros de qualidade e garantir que tudo seja feito da forma certa desde o início.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Mapear os pontos fortes de cada pessoa do time e descobrir como motivar cada um individualmente.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Definir as metas e criar um plano de ação para conquistar resultados o mais rápido possível.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Buscar um propósito significativo para o projeto, algo que inspire e dê sentido ao trabalho de todos.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Pesquisar, analisar dados e planejar detalhadamente antes de dar qualquer passo.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Antecipar os possíveis problemas e riscos para criar estratégias que garantam segurança ao time.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Gerar entusiasmo, levantar possibilidades criativas e envolver a equipe com energia e inovação.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Assumir o controle, tomar decisões rápidas e ser direto sobre o que precisa ser feito.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Criar harmonia, ouvir todos os pontos de vista e garantir que ninguém fique de fora.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <div></div>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question-card" data-q="1">
+    <div class="q-number">Pergunta 2 de 9</div>
+    <div class="q-text">Quando um membro da sua equipe comete um erro, como você costuma reagir?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Mostro o que estava errado e como deveria ter sido feito, pois a excelência importa.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Primeiro entendo o que a pessoa estava sentindo e ofereço apoio emocional antes de qualquer correção.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Foco na solução imediata: o que fazemos agora para resolver e não perder o resultado?</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Exploro as causas mais profundas, pois os erros costumam revelar algo sobre o estado emocional da pessoa.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Analiso sistematicamente o que deu errado e crio um processo para que não aconteça de novo.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Verifico se havia uma falha nos protocolos e reforço os acordos de segurança do time.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Mantenho o clima leve, transformo o erro em aprendizado e já levanto novas possibilidades.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Sou direto: erro acontece, mas precisa ser assumido, corrigido e não repetido.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Prefiro conversar de forma tranquila, sem criar conflito, buscando uma saída que preserve o relacionamento.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question-card" data-q="2">
+    <div class="q-number">Pergunta 3 de 9</div>
+    <div class="q-text">O que mais te motiva como líder no dia a dia?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Ver o trabalho bem feito, com qualidade e sem erros.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Saber que fiz diferença na vida e no crescimento das pessoas que lidero.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Alcançar metas, superar desafios e ser reconhecido pelos resultados.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Criar algo único, com propósito genuíno, que deixe uma marca significativa.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Dominar o conhecimento do meu campo e tomar decisões altamente embasadas.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Construir um ambiente estável, confiável e onde as pessoas se sintam seguras.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Explorar novas ideias, variedade de projetos e um ambiente cheio de possibilidades.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Ter autonomia, impacto real e a liberdade de fazer as coisas acontecerem do meu jeito.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Manter a paz, ver a equipe em harmonia e todos trabalhando bem juntos.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question-card" data-q="3">
+    <div class="q-number">Pergunta 4 de 9</div>
+    <div class="q-text">Como você lida com conflitos dentro da sua equipe?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Estabeleço normas e regras claras para que o conflito seja resolvido de forma justa e correta.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Ouço todas as partes com empatia e trabalho para que todos se sintam valorizados e compreendidos.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Foco em resolver rápido para que o conflito não prejudique os resultados da equipe.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Busco a raiz emocional do conflito, pois acredito que há algo mais profundo por trás das brigas.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Analiso a situação com distância e objetividade antes de intervir com uma solução racional.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Avalio todos os riscos envolvidos e busco uma solução que preserve a segurança e a coesão do grupo.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Uso o humor e a leveza para aliviar a tensão e criar um espaço para novas perspectivas.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Enfrento diretamente, coloco os pontos na mesa e espero que as pessoas sejam honestas e diretas também.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Prefiro mediar e facilitar um acordo que preserve a harmonia e o bem-estar de todos.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="question-card" data-q="4">
+    <div class="q-number">Pergunta 5 de 9</div>
+    <div class="q-text">Como as pessoas da sua equipe costumam te descrever?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Exigente, criterioso(a), organizado(a) — alguém que preza pela qualidade acima de tudo.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Generoso(a), atencioso(a), alguém que sempre está disponível para ajudar e apoiar.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Eficiente, orientado(a) a resultados, dinâmico(a) e cheio(a) de energia.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Criativo(a), sensível, profundo(a) — alguém que traz significado ao trabalho.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Analítico(a), independente, especialista — alguém que sempre sabe o que está falando.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Leal, confiável, estratégico(a) — alguém que pensa nos riscos antes de agir.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Animado(a), criativo(a), cheio(a) de ideias — alguém que torna o ambiente mais leve.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Forte, direto(a), determinado(a) — alguém que faz as coisas acontecerem de verdade.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Tranquilo(a), acolhedor(a), diplomático(a) — alguém que mantém a paz no grupo.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="question-card" data-q="5">
+    <div class="q-number">Pergunta 6 de 9</div>
+    <div class="q-text">Qual é o seu maior desafio como líder — aquele que você mesmo(a) reconhece?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Ser excessivamente crítico(a) e impaciente quando as coisas não saem como planejei.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Dificuldade de dizer não e de reconhecer minhas próprias necessidades antes das dos outros.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Pouco tempo para relacionamentos — vivo focado(a) nos resultados e esqueço das pessoas.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Oscilações de humor e dificuldade de aceitar críticas sem me sentir profundamente afetado(a).</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Tendência ao isolamento e dificuldade de compartilhar informações e decisões com o time.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Excesso de análise que às vezes me paralisa diante de decisões importantes.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Falta de foco — começo muitas coisas ao mesmo tempo e tenho dificuldade de concluir.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Ser muito intenso(a) e direto(a), o que às vezes intimida as pessoas ao meu redor.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Evitar conflitos e ter dificuldade de me posicionar de forma clara e direta.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="question-card" data-q="6">
+    <div class="q-number">Pergunta 7 de 9</div>
+    <div class="q-text">Como você toma decisões importantes que afetam a equipe?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Avalio cuidadosamente o que é certo e correto, seguindo princípios e critérios claros.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Levo em conta o impacto emocional nas pessoas e busco a decisão que melhor atenda a todos.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Avalio o que traz o melhor resultado e tomo a decisão com agilidade e confiança.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Sigo minha intuição e meu senso de propósito — a decisão precisa fazer sentido emocionalmente.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Pesquiso, analiso todas as opções e só decido quando tenho dados suficientes para embasar a escolha.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Consulto pessoas de confiança, avalio os riscos e busco uma decisão que traga segurança a todos.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Gero várias opções criativas e escolho a que abre mais possibilidades para o futuro.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Decido com rapidez e firmeza — hesitação é fraqueza e a equipe precisa de direção clara.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Ouço todos os pontos de vista e busco uma decisão que funcione para o grupo como um todo.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="question-card" data-q="7">
+    <div class="q-number">Pergunta 8 de 9</div>
+    <div class="q-text">Como você inspira e engaja sua equipe?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Dou o exemplo — faço tudo com dedicação e espero que o time seja igualmente comprometido.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Me conecto com cada pessoa individualmente, entendendo o que as motiva e como posso apoiá-las.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Mostro o caminho para o sucesso, celebro conquistas e mantenho o time focado em superar metas.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Ajudo cada pessoa a encontrar significado e propósito no que faz, conectando o trabalho ao impacto real.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Compartilho conhecimento profundo e crio uma visão clara e bem fundamentada para onde estamos indo.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Construo lealdade sendo confiável, cumprindo o que prometo e protegendo o time nos momentos difíceis.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Contagio com entusiasmo, trago novas ideias e torno o ambiente mais animado e criativo.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Desafio o time a ir além dos limites, defendo-os quando necessário e inspiro pela força e determinação.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Crio um ambiente acolhedor onde todos se sentem ouvidos, valorizados e parte do todo.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="nextQuestion()">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="question-card" data-q="8">
+    <div class="q-number">Pergunta 9 de 9</div>
+    <div class="q-text">O que você mais valoriza em uma equipe de alto desempenho?</div>
+    <div class="options">
+      <div class="option" data-tipo="1" onclick="selectOption(this)">
+        <div class="option-letter">A</div>
+        <div class="option-text">Excelência e comprometimento com a qualidade em tudo que é entregue.</div>
+      </div>
+      <div class="option" data-tipo="2" onclick="selectOption(this)">
+        <div class="option-letter">B</div>
+        <div class="option-text">Relacionamentos sólidos, cuidado mútuo e um time que se apoia genuinamente.</div>
+      </div>
+      <div class="option" data-tipo="3" onclick="selectOption(this)">
+        <div class="option-letter">C</div>
+        <div class="option-text">Foco, agilidade e capacidade de superar metas com consistência.</div>
+      </div>
+      <div class="option" data-tipo="4" onclick="selectOption(this)">
+        <div class="option-letter">D</div>
+        <div class="option-text">Autenticidade, criatividade e um propósito compartilhado que dá sentido ao trabalho.</div>
+      </div>
+      <div class="option" data-tipo="5" onclick="selectOption(this)">
+        <div class="option-letter">E</div>
+        <div class="option-text">Competência técnica, clareza nos processos e decisões bem fundamentadas.</div>
+      </div>
+      <div class="option" data-tipo="6" onclick="selectOption(this)">
+        <div class="option-letter">F</div>
+        <div class="option-text">Lealdade, confiança mútua e uma estratégia sólida que protege o time dos riscos.</div>
+      </div>
+      <div class="option" data-tipo="7" onclick="selectOption(this)">
+        <div class="option-letter">G</div>
+        <div class="option-text">Criatividade, diversidade de ideias e um ambiente estimulante onde ninguém se entedia.</div>
+      </div>
+      <div class="option" data-tipo="8" onclick="selectOption(this)">
+        <div class="option-letter">H</div>
+        <div class="option-text">Autonomia, coragem para desafiar o status quo e capacidade de fazer acontecer mesmo sob pressão.</div>
+      </div>
+      <div class="option" data-tipo="9" onclick="selectOption(this)">
+        <div class="option-letter">I</div>
+        <div class="option-text">Harmonia, inclusão e um ambiente onde todos contribuem e ninguém é deixado para trás.</div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="prevQuestion()">← Voltar</button>
+      <button class="btn-next" onclick="calcularResultado()">Ver meu perfil 🎯</button>
+    </div>
+  </div>
+
+</div><!-- fim quiz-wrap -->
+
+<!-- RESULTADO -->
+<div class="resultado-wrap" id="resultado">
+  <div class="resultado-header">
+    <div class="tipo-badge" id="res-badge">Seu Perfil</div>
+    <h2 id="res-titulo">—</h2>
+    <div class="tipo-sub" id="res-subtitulo">—</div>
+  </div>
+  <div class="resultado-body">
+    <div class="res-section">
+      <div class="res-label">🎯 Seu paradigma de liderança</div>
+      <div class="res-text" id="res-paradigma">—</div>
+    </div>
+    <div class="divider"></div>
+    <div class="res-section">
+      <div class="res-label">✨ Seus pontos fortes como líder</div>
+      <div class="res-tags" id="res-forcas">—</div>
+    </div>
+    <div class="divider"></div>
+    <div class="res-section">
+      <div class="res-label">🔍 Seus desafios de liderança</div>
+      <div class="res-tags" id="res-desafios">—</div>
+    </div>
+    <div class="divider"></div>
+    <div class="res-section">
+      <div class="res-label">💡 Mensagem da Dra. Lucia Kratz</div>
+      <div class="res-text" id="res-mensagem">—</div>
+    </div>
+
+    <div class="cta-9self">
+      <div class="desconto-badge">🎁 Oferta exclusiva para você</div>
+      <h3>Aprofunde seu autoconhecimento com o <em style="color:var(--dourado-claro);font-style:italic;">9&Self</em></h3>
+      <p>Este teste revelou seu perfil predominante. O Mapeamento 9&Self vai muito além: análise completa do seu Eneagrama, relatório personalizado e orientações práticas para transformar sua liderança.</p>
+      <a class="btn-9self" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">
+        🔓 Acessar o 9&Self com desconto exclusivo
+      </a>
+      <div class="cta-note">Desconto especial para quem fez este teste · Checkout seguro via Hotmart</div>
+    </div>
+
+    <div class="share-wrap">
+      <a class="btn-share" id="btn-share-wa" href="#" target="_blank">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.406 16.568c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/></svg>
+        Compartilhar no WhatsApp
+      </a>
+      <button class="btn-refazer" onclick="refazer()">↩ Refazer o teste</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 Dra. Lucia Kratz · Teste de Perfil de Liderança baseado no Eneagrama</p>
+  <p style="margin-top:6px;"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-lider5.html" style="color:var(--roxo);text-decoration:none;">← Voltar para o Líd@r 5.0</a></p>
+</footer>
+
+<script>
+const PERFIS = {
+  1: {
+    badge: "Tipo 1 · O Perfeccionista",
+    titulo: "O Líder da Excelência",
+    subtitulo: "Paradigma: estabelecer padrões e inspirar qualidade",
+    paradigma: "Você lidera com o propósito de estabelecer metas claras e inspirar outros a atingirem a maior qualidade possível. Para você, fazer bem feito não é opcional — é o mínimo esperado.",
+    forcas: ["Busca da excelência","Lidera pelo exemplo","Organizado","Consistente","Honesto","Prático","Perceptivo"],
+    desafios: ["Excessivamente crítico","Defensivo a críticas","Focado demais nos detalhes","Controlador","Impaciente"],
+    mensagem: "Seu padrão de excelência é um dom raro — mas lembre-se: líderes que transformam equipes sabem quando o 'bom o suficiente' é melhor do que o 'perfeito tardio'. Usar o Feedback 5.0 do Líd@r 5.0 vai ajudá-lo a comunicar suas expectativas sem criar medo na equipe."
+  },
+  2: {
+    badge: "Tipo 2 · O Prestativo",
+    titulo: "O Líder Motivador",
+    subtitulo: "Paradigma: acessar os pontos fortes e motivar o time",
+    paradigma: "Você acessa os pontos fortes e fracos dos membros do time e os motiva, facilitando o alcance das metas organizacionais. Seu grande poder é saber o que cada pessoa precisa para dar o melhor de si.",
+    forcas: ["Motivação genuína","Empatia profunda","Generoso","Apoiador","Atento às necessidades","Desenvolve relações excelentes"],
+    desafios: ["Dificuldade de dizer não","Indireto","Não reconhece as próprias necessidades","Contemporizador"],
+    mensagem: "Sua empatia é sua maior força como líder — e também seu maior risco. Cuidar de todos sem se cuidar leva ao burnout. O Líd@r 5.0 traz ferramentas para você continuar sendo generoso sem se perder no processo."
+  },
+  3: {
+    badge: "Tipo 3 · O Realizador",
+    titulo: "O Líder de Resultados",
+    subtitulo: "Paradigma: criar ambiente que atinja resultados com clareza",
+    paradigma: "Você cria ambientes que atingem resultados porque as pessoas entendem a estrutura e as metas organizacionais. Eficiência e conquista são suas marcas registradas.",
+    forcas: ["Orientado ao sucesso","Alta energia","Otimista","Empreendedor","Confiante","Supera problemas"],
+    desafios: ["Competitivo","Esconde sentimentos","Pouco tempo para relacionamentos","Impaciente com emoções"],
+    mensagem: "Você entrega resultados como poucos. Mas os melhores líderes 5.0 sabem que pessoas motivadas entregam mais do que pessoas pressionadas. Aprender a equilibrar resultado com relacionamento é o seu próximo nível."
+  },
+  4: {
+    badge: "Tipo 4 · O Individualista",
+    titulo: "O Líder com Propósito",
+    subtitulo: "Paradigma: criar organizações com significado e propósito",
+    paradigma: "Você cria organizações que dão significado e propósito às pessoas, inspirando-as a fazer um trabalho excelente. Sua liderança é criativa, profunda e emocionalmente rica.",
+    forcas: ["Inspirador","Criativo","Intuitivo","Empático","Busca a excelência","Busca conexões interpessoais"],
+    desafios: ["Intenso","Oscilações de humor","Dificuldade com críticas","Retira-se de cena"],
+    mensagem: "Você traz algo que poucos líderes têm: a capacidade de fazer as pessoas sentirem que o que fazem importa. O desafio é manter consistência mesmo quando a inspiração oscila. O Líd@r 5.0 mostra como criar estrutura sem matar a criatividade."
+  },
+  5: {
+    badge: "Tipo 5 · O Investigador",
+    titulo: "O Líder Estratégico",
+    subtitulo: "Paradigma: desenvolver eficácia por meio de pesquisa e planejamento",
+    paradigma: "Você desenvolve organizações eficazes por meio de pesquisa, deliberação e planejamento, para que as pessoas trabalhem com uma missão comum. Você decide com embasamento.",
+    forcas: ["Analítico","Objetivo","Sistemático","Especialista","Planeja de forma abrangente","Excelente em crises"],
+    desafios: ["Reservado","Excessivamente independente","Pouco assertivo","Não compartilha informações","Teimoso"],
+    mensagem: "Seu domínio técnico e analítico é uma vantagem enorme. O ponto cego? Liderança é relacionamento — e líderes 5.0 aprendem a compartilhar o conhecimento ao invés de guardá-lo. Isso multiplica o impacto."
+  },
+  6: {
+    badge: "Tipo 6 · O Leal",
+    titulo: "O Líder Estratégico e Leal",
+    subtitulo: "Paradigma: resolver questões criando ambiente colaborativo",
+    paradigma: "Você resolve questões organizacionais desenvolvendo um ambiente criativo de resolução de problemas, no qual cada pessoa sente que é parte da situação.",
+    forcas: ["Leal","Responsável","Colaborador","Estratégico","Perseverante","Antecipa problemas"],
+    desafios: ["Preocupado","Imobilizado pelo excesso de análise","Defensivo","Não gosta de ambiguidade"],
+    mensagem: "Sua lealdade e capacidade estratégica criam times que confiam em você. O desafio é sair da análise paralela e agir — pois líderes 5.0 sabem que decisões imperfeitas tomadas em tempo hábil valem mais que decisões perfeitas tardias."
+  },
+  7: {
+    badge: "Tipo 7 · O Entusiasta",
+    titulo: "O Líder Inovador",
+    subtitulo: "Paradigma: criar soluções inovadoras e aproveitar oportunidades",
+    paradigma: "Você anima as pessoas e cria soluções inovadoras para que a organização aproveite novas e importantes oportunidades de negócios. Seu entusiasmo é contagiante.",
+    forcas: ["Imaginativo","Entusiástico","Curioso","Multitarefa","Alto-astral","Pensa rápido","Conecta ideias"],
+    desafios: ["Impulsivo","Dificuldade de foco","Começa mais do que termina","Evita dificuldades"],
+    mensagem: "Você transforma ambientes e contagia equipes com uma energia que poucos têm. Seu desafio é a consistência: aprender a fechar ciclos antes de abrir novos. Liderar com estrutura e entusiasmo ao mesmo tempo é a marca do líder 5.0."
+  },
+  8: {
+    badge: "Tipo 8 · O Desafiador",
+    titulo: "O Líder de Impacto",
+    subtitulo: "Paradigma: liderar com força, autonomia e proteção do time",
+    paradigma: "Você usa sua força e determinação para fazer as coisas acontecerem, proteger o time e desafiar o status quo. Sua presença é imediata e seu impacto, inegável.",
+    forcas: ["Determinado","Direto","Confiante","Protetor do time","Toma decisões rápidas","Alta energia"],
+    desafios: ["Pode intimidar","Pouco espaço para vulnerabilidade","Controlador","Dificuldade de delegar"],
+    mensagem: "Sua força move montanhas — mas os líderes 5.0 mais poderosos sabem que a vulnerabilidade não é fraqueza: é a porta de entrada para a confiança genuína. Quando você se permite ser humano, sua equipe se torna invencível."
+  },
+  9: {
+    badge: "Tipo 9 · O Pacificador",
+    titulo: "O Líder Harmonizador",
+    subtitulo: "Paradigma: criar harmonia e facilitar a resolução de conflitos",
+    paradigma: "Você harmoniza interações na equipe e facilita a resolução positiva de conflitos, garantindo que todos se sintam parte do processo e do resultado.",
+    forcas: ["Empático","Diplomático","Visão de múltiplos pontos de vista","Acolhedor","Cria ambiente seguro"],
+    desafios: ["Evita conflitos","Dificuldade de se posicionar","Passivo","Procrastina decisões difíceis"],
+    mensagem: "Sua capacidade de criar harmonia e fazer todos se sentirem ouvidos é um superpoder de liderança. O próximo nível é aprender a usar as Perguntas Poderosas do Líd@r 5.0 para se posicionar com clareza sem abrir mão da empatia."
+  }
+};
+
+let respostas = new Array(9).fill(null);
+let currentQ = 0;
+
+function selectOption(el) {
+  const card = el.closest('.question-card');
+  card.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  respostas[currentQ] = parseInt(el.dataset.tipo);
+  card.querySelector('.btn-next').classList.add('enabled');
+}
+
+function updateProgress() {
+  const pct = Math.round((currentQ / 9) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-label').textContent = `Pergunta ${currentQ + 1} de 9`;
+}
+
+function showQuestion(index) {
+  document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`[data-q="${index}"]`);
+  card.classList.add('active');
+  // restore selection if already answered
+  if (respostas[index] !== null) {
+    card.querySelectorAll('.option').forEach(o => {
+      if (parseInt(o.dataset.tipo) === respostas[index]) {
+        o.classList.add('selected');
+        card.querySelector('.btn-next').classList.add('enabled');
+      }
+    });
+  }
+  window.scrollTo({top: 0, behavior:'smooth'});
+  updateProgress();
+}
+
+function nextQuestion() {
+  if (respostas[currentQ] === null) return;
+  currentQ++;
+  showQuestion(currentQ);
+}
+
+function prevQuestion() {
+  if (currentQ === 0) return;
+  currentQ--;
+  showQuestion(currentQ);
+}
+
+function calcularResultado() {
+  if (respostas[8] === null) return;
+
+  // Count votes per tipo
+  const contagem = {};
+  respostas.forEach(r => { contagem[r] = (contagem[r] || 0) + 1; });
+  const tipoVencedor = Object.entries(contagem).sort((a,b) => b[1]-a[1])[0][0];
+  const perfil = PERFIS[tipoVencedor];
+
+  document.getElementById('res-badge').textContent = perfil.badge;
+  document.getElementById('res-titulo').textContent = perfil.titulo;
+  document.getElementById('res-subtitulo').textContent = perfil.subtitulo;
+  document.getElementById('res-paradigma').textContent = perfil.paradigma;
+  document.getElementById('res-mensagem').textContent = perfil.mensagem;
+
+  const forcasEl = document.getElementById('res-forcas');
+  forcasEl.innerHTML = perfil.forcas.map(f => `<span class="res-tag">${f}</span>`).join('');
+
+  const desafiosEl = document.getElementById('res-desafios');
+  desafiosEl.innerHTML = perfil.desafios.map(d => `<span class="res-tag desafio">${d}</span>`).join('');
+
+  const msg = encodeURIComponent(`Fiz o Teste de Perfil de Liderança da Dra. Lucia Kratz e descobri que sou o "${perfil.titulo}"! Faça você também: https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/teste-perfil-lideranca.html`);
+  document.getElementById('btn-share-wa').href = `https://wa.me/?text=${msg}`;
+
+  document.querySelector('.quiz-wrap').style.display = 'none';
+  document.querySelector('.progress-wrap').style.display = 'none';
+  document.getElementById('resultado').classList.add('active');
+  document.getElementById('progress-fill').style.width = '100%';
+  window.scrollTo({top: 0, behavior:'smooth'});
+}
+
+function refazer() {
+  respostas = new Array(9).fill(null);
+  currentQ = 0;
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  document.querySelectorAll('.btn-next').forEach(b => b.classList.remove('enabled'));
+  document.getElementById('resultado').classList.remove('active');
+  document.querySelector('.quiz-wrap').style.display = 'block';
+  document.querySelector('.progress-wrap').style.display = 'block';
+  showQuestion(0);
+}
+
+updateProgress();
+</script>
+</body>
+</html>
