@@ -246,6 +246,51 @@ footer {
 }
 .btn-voltar:hover { transform:translateY(-2px); }
 
+
+/* MIC BUTTON */
+.campo-wrap { position: relative; margin-bottom: 12px; }
+.campo-wrap .campo-linha,
+.campo-wrap .campo-texto { margin-bottom: 0; padding-right: 48px; }
+.btn-mic {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.3s;
+  font-size: 1rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.btn-mic:hover { background: rgba(255,255,255,0.3); }
+.btn-mic.ouvindo { background: #EF4444 !important; border-color: #EF4444; animation: pulsar 1s infinite; }
+@keyframes pulsar { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); } 50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
+
+/* textarea maior */
+.campo-texto {
+  min-height: 110px !important;
+  padding-bottom: 14px !important;
+}
+/* campos linha mais altos */
+.campo-linha {
+  height: 52px !important;
+  padding: 10px 48px 10px 8px !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+.campo-wrap.textarea-wrap .btn-mic {
+  top: 16px;
+  transform: none;
+}
+.mic-nao-suportado {
+  font-size:0.7rem; color:rgba(255,255,255,0.4);
+  text-align:center; margin-top:6px; display:none;
+}
+
 /* PRINT-FRIENDLY */
 @media print {
   .capa { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -699,6 +744,91 @@ footer {
   <p>© 2025 Dra. Lucia Kratz · Guia de Aplicação Prática — Líd@r 5.0</p>
   <p style="margin-top:6px;font-size:0.72rem;opacity:0.6;">Este material é de uso exclusivo de quem adquiriu o livro Líd@r 5.0 — Revolucionando a Liderança.</p>
 </footer>
+
+
+<script>
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micAtivo = null;
+let recognition = null;
+
+function iniciarMic(btn, campo) {
+  if (!SpeechRecognition) {
+    btn.title = 'Reconhecimento de voz não suportado neste navegador';
+    btn.style.opacity = '0.4';
+    return;
+  }
+  if (micAtivo && micAtivo !== btn) {
+    micAtivo.classList.remove('ouvindo');
+    micAtivo.textContent = '🎤';
+    if (recognition) recognition.stop();
+  }
+  if (btn.classList.contains('ouvindo')) {
+    btn.classList.remove('ouvindo');
+    btn.textContent = '🎤';
+    if (recognition) recognition.stop();
+    micAtivo = null;
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = (e) => {
+    const texto = e.results[0][0].transcript;
+    campo.value = campo.value ? campo.value + ' ' + texto : texto;
+    campo.dispatchEvent(new Event('input'));
+  };
+  recognition.onend = () => {
+    btn.classList.remove('ouvindo');
+    btn.textContent = '🎤';
+    micAtivo = null;
+  };
+  recognition.onerror = () => {
+    btn.classList.remove('ouvindo');
+    btn.textContent = '🎤';
+    micAtivo = null;
+  };
+  recognition.start();
+  btn.classList.add('ouvindo');
+  btn.textContent = '⏹';
+  micAtivo = btn;
+}
+
+// Envolve todos os campos em .campo-wrap e adiciona botão mic
+document.addEventListener('DOMContentLoaded', () => {
+  // campos linha dentro de .exercicio
+  document.querySelectorAll('.exercicio .campo-linha').forEach(campo => {
+    const wrap = document.createElement('div');
+    wrap.className = 'campo-wrap';
+    campo.parentNode.insertBefore(wrap, campo);
+    wrap.appendChild(campo);
+    const btn = document.createElement('button');
+    btn.className = 'btn-mic';
+    btn.type = 'button';
+    btn.textContent = '🎤';
+    btn.title = 'Clique para falar';
+    btn.onclick = () => iniciarMic(btn, campo);
+    wrap.appendChild(btn);
+  });
+
+  // textareas dentro de .exercicio
+  document.querySelectorAll('.exercicio .campo-texto').forEach(campo => {
+    const wrap = document.createElement('div');
+    wrap.className = 'campo-wrap textarea-wrap';
+    wrap.style.position = 'relative';
+    campo.parentNode.insertBefore(wrap, campo);
+    wrap.appendChild(campo);
+    campo.style.paddingRight = '48px';
+    const btn = document.createElement('button');
+    btn.className = 'btn-mic';
+    btn.type = 'button';
+    btn.textContent = '🎤';
+    btn.title = 'Clique para falar';
+    btn.onclick = () => iniciarMic(btn, campo);
+    wrap.appendChild(btn);
+  });
+});
+</script>
 
 </body>
 </html>
