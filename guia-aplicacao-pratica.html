@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Aplicação Prática — Líd@r 5.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --roxo: #6B21A8; --roxo-escuro: #4C1D95; --roxo-claro: #A855F7;
+  --roxo-suave: #EDE9FE; --roxo-bg: #F5F3FF;
+  --dourado: #D4A847; --dourado-claro: #F5D78E;
+  --texto: #1E1B2E; --texto-medio: #4B4565;
+  --verde: #10B981; --laranja: #F59E0B;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:'Inter',sans-serif; color:var(--texto); background:var(--roxo-bg); }
+
+/* CAPA */
+.capa {
+  background: linear-gradient(135deg, #1E0A3C, #4C1D95 50%, #6B21A8);
+  padding: 60px 32px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.capa::after {
+  content:''; position:absolute; bottom:-40px; left:0; right:0;
+  height:80px; background:var(--roxo-bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+.capa-badge {
+  display:inline-block;
+  background:linear-gradient(90deg,var(--dourado),var(--dourado-claro));
+  color:#1E0A3C; font-size:11px; font-weight:800;
+  letter-spacing:3px; text-transform:uppercase;
+  padding:6px 20px; border-radius:20px; margin-bottom:24px;
+}
+.capa h1 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2rem,6vw,3.5rem);
+  color:#fff; font-weight:900; line-height:1.15; margin-bottom:12px;
+}
+.capa h1 em { color:var(--dourado-claro); font-style:italic; }
+.capa-sub {
+  font-size:1.1rem; color:rgba(255,255,255,0.65);
+  max-width:600px; margin:0 auto 32px; line-height:1.7;
+}
+.capa-autora {
+  display:inline-flex; align-items:center; gap:12px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:50px; padding:10px 20px;
+  font-size:0.85rem; color:rgba(255,255,255,0.75);
+}
+.capa-autora strong { color:#fff; }
+
+/* ÍNDICE */
+.indice {
+  max-width:800px; margin:60px auto 0;
+  padding:0 24px;
+}
+.indice-card {
+  background:#fff; border-radius:16px; padding:24px 28px;
+  box-shadow:0 4px 24px rgba(107,33,168,0.1);
+  margin-bottom:8px;
+}
+.indice-titulo {
+  font-size:0.72rem; font-weight:700; letter-spacing:3px;
+  text-transform:uppercase; color:var(--roxo-claro);
+  margin-bottom:16px;
+}
+.indice-lista { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.indice-lista li a {
+  display:flex; align-items:center; gap:12px;
+  font-size:0.92rem; color:var(--texto-medio);
+  text-decoration:none; padding:8px 12px; border-radius:8px;
+  transition:all 0.2s;
+}
+.indice-lista li a:hover { background:var(--roxo-suave); color:var(--roxo); }
+.indice-num {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--roxo-suave); color:var(--roxo);
+  font-size:0.78rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+/* FERRAMENTA SECTION */
+.ferramenta {
+  max-width:800px; margin:48px auto;
+  padding:0 24px;
+}
+.ferramenta-header {
+  background:linear-gradient(135deg,var(--roxo-escuro),var(--roxo));
+  border-radius:20px 20px 0 0;
+  padding:32px 36px;
+  display:flex; align-items:center; gap:20px;
+}
+.ferr-emoji-grande { font-size:3rem; }
+.ferramenta-header h2 {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(1.4rem,3vw,2rem);
+  color:#fff; font-weight:700; line-height:1.2;
+}
+.ferramenta-header .ferr-cap {
+  font-size:0.75rem; color:rgba(255,255,255,0.5);
+  font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  margin-bottom:4px;
+}
+.ferramenta-body {
+  background:#fff;
+  border-radius:0 0 20px 20px;
+  padding:36px;
+  box-shadow:0 8px 40px rgba(107,33,168,0.12);
+}
+
+/* BLOCOS */
+.bloco { margin-bottom:32px; }
+.bloco-titulo {
+  font-size:0.72rem; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.bloco-titulo.roxo { color:var(--roxo-claro); }
+.bloco-titulo.verde { color:var(--verde); }
+.bloco-titulo.laranja { color:var(--laranja); }
+.bloco-titulo.dourado { color:var(--dourado); }
+.bloco-texto {
+  font-size:0.95rem; color:var(--texto-medio); line-height:1.8;
+  margin-bottom:12px;
+}
+.destaque-box {
+  background:var(--roxo-suave);
+  border-left:4px solid var(--roxo);
+  border-radius:0 12px 12px 0;
+  padding:16px 20px;
+  font-size:0.92rem; color:var(--roxo-escuro);
+  font-style:italic; line-height:1.7;
+  margin:16px 0;
+}
+.destaque-box.dourado-box {
+  background:#FFFBEB;
+  border-left-color:var(--dourado);
+  color:#92400E;
+}
+.destaque-box.verde-box {
+  background:#ECFDF5;
+  border-left-color:var(--verde);
+  color:#064E3B;
+}
+
+/* PASSO A PASSO */
+.passos { display:flex; flex-direction:column; gap:16px; margin-top:16px; }
+.passo {
+  display:flex; gap:16px; align-items:flex-start;
+  padding:16px 18px; border-radius:14px;
+  background:var(--roxo-bg); border:1px solid #DDD6FE;
+}
+.passo-num {
+  width:36px; height:36px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--roxo),var(--roxo-claro));
+  color:#fff; font-size:0.85rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.passo-conteudo strong { display:block; font-size:0.9rem; color:var(--texto); margin-bottom:4px; }
+.passo-conteudo p { font-size:0.85rem; color:var(--texto-medio); line-height:1.6; }
+
+/* CHECKLIST */
+.checklist { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+.checklist li {
+  display:flex; gap:12px; align-items:flex-start;
+  font-size:0.9rem; color:var(--texto-medio); line-height:1.6;
+}
+.check-icon { font-size:1.1rem; flex-shrink:0; margin-top:1px; }
+
+/* TABELA */
+.tabela-wrap { overflow-x:auto; margin:16px 0; }
+table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+th {
+  background:var(--roxo); color:#fff;
+  padding:12px 16px; text-align:left;
+  font-weight:600; font-size:0.8rem; letter-spacing:0.5px;
+}
+td {
+  padding:12px 16px; border-bottom:1px solid #EDE9FE;
+  color:var(--texto-medio); vertical-align:top;
+}
+tr:nth-child(even) td { background:var(--roxo-bg); }
+td strong { color:var(--texto); }
+
+/* EXERCÍCIO */
+.exercicio {
+  background:linear-gradient(135deg,#1E0A3C,var(--roxo-escuro));
+  border-radius:16px; padding:28px 28px;
+  margin:24px 0;
+}
+.exercicio-label {
+  font-size:0.7rem; font-weight:700; letter-spacing:3px;
+  text-transform:uppercase; color:var(--dourado-claro); margin-bottom:12px;
+}
+.exercicio h4 {
+  font-family:'Playfair Display',serif;
+  font-size:1.2rem; color:#fff; font-weight:700; margin-bottom:12px;
+}
+.exercicio p { font-size:0.88rem; color:rgba(255,255,255,0.72); line-height:1.7; margin-bottom:16px; }
+.campo-texto {
+  width:100%; min-height:80px; background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.2); border-radius:10px;
+  padding:14px; font-size:0.88rem; color:#fff; font-family:'Inter',sans-serif;
+  resize:vertical;
+}
+.campo-texto::placeholder { color:rgba(255,255,255,0.35); }
+.campo-linha {
+  width:100%; height:44px; background:rgba(255,255,255,0.08);
+  border:none; border-bottom:1px solid rgba(255,255,255,0.3);
+  padding:8px 4px; font-size:0.9rem; color:#fff; font-family:'Inter',sans-serif;
+  margin-bottom:12px;
+}
+.campo-linha::placeholder { color:rgba(255,255,255,0.35); }
+.campos-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* DIVISOR */
+.divisor {
+  max-width:800px; margin:12px auto;
+  padding:0 24px;
+  display:flex; align-items:center; gap:16px;
+}
+.divisor-linha { flex:1; height:1px; background:#DDD6FE; }
+.divisor-icone { font-size:1.4rem; color:var(--roxo-claro); }
+
+/* RODAPÉ */
+footer {
+  text-align:center; padding:40px 24px;
+  font-size:0.8rem; color:var(--texto-medio);
+  border-top:1px solid #DDD6FE;
+  margin-top:60px;
+}
+.btn-voltar {
+  display:inline-block;
+  background:linear-gradient(135deg,var(--roxo),var(--roxo-claro));
+  color:#fff; font-size:0.9rem; font-weight:700;
+  padding:13px 32px; border-radius:50px; text-decoration:none;
+  box-shadow:0 6px 20px rgba(107,33,168,0.3);
+  margin-bottom:16px; transition:all 0.3s;
+}
+.btn-voltar:hover { transform:translateY(-2px); }
+
+/* PRINT-FRIENDLY */
+@media print {
+  .capa { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .ferramenta-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  footer { display:none; }
+}
+
+@media(max-width:600px) {
+  .ferramenta-header { flex-direction:column; gap:12px; padding:24px; }
+  .ferramenta-body { padding:24px 20px; }
+  .campos-grid { grid-template-columns:1fr; }
+  .capa { padding:48px 20px 70px; }
+}
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<div class="capa">
+  <div class="capa-badge">🗺️ Bônus Exclusivo — Líd@r 5.0</div>
+  <h1>Guia de <em>Aplicação Prática</em></h1>
+  <p class="capa-sub">Ferramentas do livro transformadas em exercícios prontos para aplicar com sua equipe hoje. Imprima, preencha e lidere com mais resultado.</p>
+  <div class="capa-autora">
+    <span>✍️ Desenvolvido por</span>
+    <strong>Dra. Lucia Kratz · Phillipe Leão · Valquíria Duarte</strong>
+  </div>
+</div>
+
+<!-- ÍNDICE -->
+<div class="indice">
+  <div class="indice-card">
+    <div class="indice-titulo">📋 O que você vai praticar</div>
+    <ul class="indice-lista">
+      <li><a href="#ferr1">
+        <span class="indice-num">1</span>
+        Esvaziar a Xícara — Exercício de Abertura Mental
+      </a></li>
+      <li><a href="#ferr2">
+        <span class="indice-num">2</span>
+        Mapa das Gerações — Diagnóstico da sua Equipe
+      </a></li>
+      <li><a href="#ferr3">
+        <span class="indice-num">3</span>
+        Feedback 5.0 — O Método "Bolo de Chocolate"
+      </a></li>
+      <li><a href="#ferr4">
+        <span class="indice-num">4</span>
+        Perguntas Poderosas — Banco de Perguntas para Liderar
+      </a></li>
+      <li><a href="#ferr5">
+        <span class="indice-num">5</span>
+        Metas SMART — Planilha de Planejamento
+      </a></li>
+      <li><a href="#ferr6">
+        <span class="indice-num">6</span>
+        Ciclo PDCA — Plano de Melhoria Contínua
+      </a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== FERRAMENTA 1 ===== -->
+<div class="ferramenta" id="ferr1">
+  <div class="ferramenta-header">
+    <div class="ferr-emoji-grande">☕</div>
+    <div>
+      <div class="ferr-cap">Ferramenta 1 · Capítulo 1</div>
+      <h2>Esvaziar a Xícara</h2>
+    </div>
+  </div>
+  <div class="ferramenta-body">
+    <div class="bloco">
+      <div class="bloco-titulo roxo">💡 O conceito</div>
+      <p class="bloco-texto">O mestre e seu discípulo: para caber mais chá na xícara, ela precisa estar vazia. Assim é a nossa mente — quando cheia de certezas do passado, não há espaço para novas ideias. O Líder 5.0 precisa constantemente questionar suas próprias verdades para se manter atualizado com a realidade das novas gerações.</p>
+      <div class="destaque-box">
+        "É necessário ter permanentemente a nossa cabeça um pouco vazia para poder apreender as mudanças da realidade que nos cercam, sob o risco de nos divorciarmos da realidade."
+      </div>
+    </div>
+
+    <div class="bloco">
+      <div class="bloco-titulo laranja">✍️ Exercício de autoavaliação</div>
+      <p class="bloco-texto">Responda com honestidade. Não há resposta certa ou errada.</p>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Reflexão pessoal</div>
+      <h4>Quais são as suas "certezas" de liderança que podem estar te limitando?</h4>
+      <p>Pense em crenças que você carrega sobre como liderar, motivar ou dar feedback. Quais delas você ainda não questionou?</p>
+      <textarea class="campo-texto" placeholder="Ex: 'Acredito que feedback duro é necessário para gerar resultado...' | 'Penso que a geração Z é preguiçosa...'"></textarea>
+    </div>
+
+    <div class="exercicio" style="margin-top:16px;">
+      <div class="exercicio-label">📝 Ação imediata</div>
+      <h4>Nos próximos 7 dias, escolha UMA certeza para questionar:</h4>
+      <p>Escolha uma prática de liderança que você nunca questionou e pergunte à sua equipe o que eles pensam sobre ela.</p>
+      <input class="campo-linha" placeholder="A certeza que vou questionar esta semana:">
+      <input class="campo-linha" placeholder="Quando vou fazer isso (dia e hora):">
+      <input class="campo-linha" placeholder="Com quem vou conversar:">
+    </div>
+  </div>
+</div>
+
+<div class="divisor"><div class="divisor-linha"></div><div class="divisor-icone">⭐</div><div class="divisor-linha"></div></div>
+
+<!-- ===== FERRAMENTA 2 ===== -->
+<div class="ferramenta" id="ferr2">
+  <div class="ferramenta-header">
+    <div class="ferr-emoji-grande">👥</div>
+    <div>
+      <div class="ferr-cap">Ferramenta 2 · Capítulo 2</div>
+      <h2>Mapa das Gerações na sua Equipe</h2>
+    </div>
+  </div>
+  <div class="ferramenta-body">
+    <div class="bloco">
+      <div class="bloco-titulo roxo">💡 O conceito</div>
+      <p class="bloco-texto">Baby Boomers, X, Y, Z e Alpha convivem na mesma equipe com valores, expectativas e formas de trabalhar completamente diferentes. O Líder 5.0 entende essas diferenças como complementariedade, não como conflito.</p>
+    </div>
+
+    <div class="bloco">
+      <div class="bloco-titulo dourado">📊 Referência rápida das gerações</div>
+      <div class="tabela-wrap">
+        <table>
+          <tr><th>Geração</th><th>Nascidos</th><th>O que os motiva</th><th>Desafio para o líder</th></tr>
+          <tr><td><strong>Baby Boomer</strong></td><td>1945–1965</td><td>Estabilidade, experiência, status</td><td>Adaptar-se à tecnologia e às mudanças rápidas</td></tr>
+          <tr><td><strong>Geração X</strong></td><td>1965–1980</td><td>Equilíbrio vida-trabalho, segurança</td><td>Medo de ser substituído pelas gerações mais jovens</td></tr>
+          <tr><td><strong>Geração Y</strong></td><td>1980–2000</td><td>Desafios, propósito, feedback rápido</td><td>Impaciência, dificuldade com hierarquia</td></tr>
+          <tr><td><strong>Geração Z</strong></td><td>2000–2010</td><td>Autonomia, tecnologia, imediatismo</td><td>Dificuldade de foco e de relações interpessoais</td></tr>
+          <tr><td><strong>Alpha</strong></td><td>2010+</td><td>Hiperconexão, criatividade, personalização</td><td>Ainda em formação — requer mentoria próxima</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Diagnóstico da sua equipe</div>
+      <h4>Mapeie as gerações do seu time agora:</h4>
+      <p>Para cada membro da equipe, identifique a geração e seu principal motivador. Isso vai guiar a forma como você lidera cada pessoa.</p>
+      <div style="display:grid;gap:10px;margin-top:8px;">
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:8px;">
+          <input class="campo-linha" placeholder="Nome do colaborador">
+          <input class="campo-linha" placeholder="Geração">
+          <input class="campo-linha" placeholder="Motivador principal">
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:8px;">
+          <input class="campo-linha" placeholder="Nome do colaborador">
+          <input class="campo-linha" placeholder="Geração">
+          <input class="campo-linha" placeholder="Motivador principal">
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:8px;">
+          <input class="campo-linha" placeholder="Nome do colaborador">
+          <input class="campo-linha" placeholder="Geração">
+          <input class="campo-linha" placeholder="Motivador principal">
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:8px;">
+          <input class="campo-linha" placeholder="Nome do colaborador">
+          <input class="campo-linha" placeholder="Geração">
+          <input class="campo-linha" placeholder="Motivador principal">
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:8px;">
+          <input class="campo-linha" placeholder="Nome do colaborador">
+          <input class="campo-linha" placeholder="Geração">
+          <input class="campo-linha" placeholder="Motivador principal">
+        </div>
+      </div>
+    </div>
+
+    <div class="exercicio" style="margin-top:16px;">
+      <div class="exercicio-label">📝 Ação de integração</div>
+      <h4>Qual ação de integração geracional você vai promover este mês?</h4>
+      <textarea class="campo-texto" placeholder="Ex: Workshop onde cada geração apresenta sua visão sobre um desafio da empresa..."></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="divisor"><div class="divisor-linha"></div><div class="divisor-icone">⭐</div><div class="divisor-linha"></div></div>
+
+<!-- ===== FERRAMENTA 3 ===== -->
+<div class="ferramenta" id="ferr3">
+  <div class="ferramenta-header">
+    <div class="ferr-emoji-grande">🎂</div>
+    <div>
+      <div class="ferr-cap">Ferramenta 3 · Capítulo 2</div>
+      <h2>Feedback 5.0<br><small style="font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:400;opacity:0.7;">O Método "Bolo de Chocolate"</small></h2>
+    </div>
+  </div>
+  <div class="ferramenta-body">
+    <div class="bloco">
+      <div class="bloco-titulo roxo">💡 Por que o "Bolo de Chocolate"?</div>
+      <p class="bloco-texto">O feedback "sanduíche" (elogio-crítica-elogio) está ultrapassado porque as gerações Y, Z e Alpha identificam o padrão e ignoram a crítica. O Feedback 5.0 é focado exclusivamente no crescimento — como um bolo de chocolate: direto, rico e sem enrolação.</p>
+      <div class="destaque-box">
+        "Feedback não é uma opinião que expresse sentimento ou emoção, mas sim um retorno — uma informação que valida ou questiona um comportamento com base em fatos observáveis."
+      </div>
+      <p class="bloco-texto" style="margin-top:12px;">O feedback deve ser: <strong>educativo (nunca punitivo)</strong>, baseado em fatos concretos, próximo do momento que ocorreu, focado no comportamento (não na pessoa) e voltado para ação futura.</p>
+    </div>
+
+    <div class="bloco">
+      <div class="bloco-titulo verde">📋 O método em 5 passos</div>
+      <div class="passos">
+        <div class="passo">
+          <div class="passo-num">1</div>
+          <div class="passo-conteudo">
+            <strong>Escolha o local e o momento certo (Psicogeografia)</strong>
+            <p>Local privado, sem interrupções. Posicione-se ao lado (não de frente), crie rapport antes de começar. Olhe nos olhos. Nunca dê feedback em público.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num">2</div>
+          <div class="passo-conteudo">
+            <strong>Descreva o comportamento observável (fato)</strong>
+            <p>Fale sobre o que você VIU ou OUVIU — nunca sobre intenções ou personalidade. "Na reunião de terça, quando o cliente fez a pergunta, você respondeu de forma monossilábica." — não: "Você é grosso com clientes."</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num">3</div>
+          <div class="passo-conteudo">
+            <strong>Descreva o impacto do comportamento</strong>
+            <p>Mostre a consequência real — no time, no cliente, no resultado. "Isso gerou no cliente uma sensação de desatenção, e ele comentou comigo depois." Use "eu" ou "o cliente": "Eu percebi que..." evita acusações.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num">4</div>
+          <div class="passo-conteudo">
+            <strong>Ouça na Essência — crie espaço para o liderado falar</strong>
+            <p>Faça uma pergunta poderosa: "O que estava acontecendo com você naquele momento?" Escute sem interromper, sem julgar. O silêncio é uma ferramenta.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num">5</div>
+          <div class="passo-conteudo">
+            <strong>Defina juntos o comportamento preferível e a próxima ação</strong>
+            <p>Pergunte: "Como você faria diferente?" Defina uma ação SMART. Crie uma âncora positiva: um símbolo, uma frase ou um lembrete que o mantenha focado na mudança.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Prepare seu próximo feedback</div>
+      <h4>Use este roteiro antes de dar seu próximo feedback:</h4>
+      <input class="campo-linha" placeholder="Nome do colaborador:">
+      <input class="campo-linha" placeholder="Comportamento observado (fato específico — quando, o que):">
+      <input class="campo-linha" placeholder="Impacto que esse comportamento gerou:">
+      <input class="campo-linha" placeholder="Pergunta poderosa que vou fazer:">
+      <input class="campo-linha" placeholder="Comportamento preferível que vou propor:">
+      <input class="campo-linha" placeholder="Ação SMART acordada (o quê, quando, como medir):">
+    </div>
+  </div>
+</div>
+
+<div class="divisor"><div class="divisor-linha"></div><div class="divisor-icone">⭐</div><div class="divisor-linha"></div></div>
+
+<!-- ===== FERRAMENTA 4 ===== -->
+<div class="ferramenta" id="ferr4">
+  <div class="ferramenta-header">
+    <div class="ferr-emoji-grande">❓</div>
+    <div>
+      <div class="ferr-cap">Ferramenta 4 · Capítulo 2</div>
+      <h2>Perguntas Poderosas</h2>
+    </div>
+  </div>
+  <div class="ferramenta-body">
+    <div class="bloco">
+      <div class="bloco-titulo roxo">💡 O conceito</div>
+      <p class="bloco-texto">Perguntas são para o Líder 5.0 o que a bola é para o futebol: sem elas, o jogo não acontece. Perguntas poderosas devem: estimular a ação, gerar opções, criar comprometimento e propiciar autoconhecimento. A regra de ouro: use "como" e "o que" — NUNCA "por quê" (que gera defesa).</p>
+      <div class="destaque-box dourado-box">
+        ⚠️ Evite o "Por quê?" — ele coloca o liderado na defensiva. Substitua por "O que levou você a..." ou "Como chegou nessa decisão?"
+      </div>
+    </div>
+
+    <div class="bloco">
+      <div class="bloco-titulo verde">📋 Banco de Perguntas Poderosas</div>
+      <p class="bloco-texto" style="margin-bottom:16px;">Marque as que vai usar esta semana:</p>
+
+      <p style="font-size:0.8rem;font-weight:700;color:var(--roxo);letter-spacing:1px;margin-bottom:8px;">PARA INICIAR UMA CONVERSA</p>
+      <ul class="checklist">
+        <li><span class="check-icon">☐</span>"Qual mudança na sua vida profissional faria a maior diferença positiva agora?"</li>
+        <li><span class="check-icon">☐</span>"O que você gostaria de ter mais no seu trabalho?"</li>
+        <li><span class="check-icon">☐</span>"No que poderíamos trabalhar juntos agora que faria diferença real?"</li>
+        <li><span class="check-icon">☐</span>"O que você realmente quer alcançar nos próximos 3 meses?"</li>
+      </ul>
+
+      <p style="font-size:0.8rem;font-weight:700;color:var(--roxo);letter-spacing:1px;margin:20px 0 8px;">PARA RESOLVER PROBLEMAS</p>
+      <ul class="checklist">
+        <li><span class="check-icon">☐</span>"O que já fez para resolver essa situação?"</li>
+        <li><span class="check-icon">☐</span>"O que deixou de fazer que poderia ter mudado o resultado?"</li>
+        <li><span class="check-icon">☐</span>"Quais são as implicações positivas e negativas de cada caminho?"</li>
+        <li><span class="check-icon">☐</span>"Já passou por algo parecido em outro contexto? O que funcionou?"</li>
+        <li><span class="check-icon">☐</span>"O que acontecerá se não fizermos nada a respeito?"</li>
+      </ul>
+
+      <p style="font-size:0.8rem;font-weight:700;color:var(--roxo);letter-spacing:1px;margin:20px 0 8px;">PARA GERAR COMPROMETIMENTO</p>
+      <ul class="checklist">
+        <li><span class="check-icon">☐</span>"Qual é o primeiro passo que você vai dar e quando?"</li>
+        <li><span class="check-icon">☐</span>"Como você vai medir o seu progresso?"</li>
+        <li><span class="check-icon">☐</span>"O que pode te impedir de fazer isso? Como vai contornar?"</li>
+        <li><span class="check-icon">☐</span>"Quando você vai me dar um retorno sobre isso?"</li>
+      </ul>
+
+      <p style="font-size:0.8rem;font-weight:700;color:var(--roxo);letter-spacing:1px;margin:20px 0 8px;">PARA SITUAÇÕES TÍPICAS</p>
+      <div class="tabela-wrap">
+        <table>
+          <tr><th>O liderado diz...</th><th>Pergunta poderosa</th></tr>
+          <tr><td>"Eu não consigo"</td><td>"O que te impede? O que você precisa para conseguir?"</td></tr>
+          <tr><td>"Não tive tempo"</td><td>"Como você poderia organizar para fazer isso acontecer?"</td></tr>
+          <tr><td>"Todo mundo faz assim"</td><td>"Todo mundo quem? Já foi feito de forma diferente com bom resultado?"</td></tr>
+          <tr><td>"Há resistência ao processo"</td><td>"Quem está resistindo? Como está se manifestando essa resistência?"</td></tr>
+          <tr><td>"Vou tentar fazer"</td><td>"Quando exatamente você vai fazer isso?"</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Prática desta semana</div>
+      <h4>Escolha 3 perguntas para usar em reuniões esta semana:</h4>
+      <input class="campo-linha" placeholder="Pergunta 1 que vou usar:">
+      <input class="campo-linha" placeholder="Em qual situação / com quem:">
+      <input class="campo-linha" placeholder="Pergunta 2 que vou usar:">
+      <input class="campo-linha" placeholder="Em qual situação / com quem:">
+      <input class="campo-linha" placeholder="Pergunta 3 que vou usar:">
+      <input class="campo-linha" placeholder="Em qual situação / com quem:">
+    </div>
+  </div>
+</div>
+
+<div class="divisor"><div class="divisor-linha"></div><div class="divisor-icone">⭐</div><div class="divisor-linha"></div></div>
+
+<!-- ===== FERRAMENTA 5 ===== -->
+<div class="ferramenta" id="ferr5">
+  <div class="ferramenta-header">
+    <div class="ferr-emoji-grande">🎯</div>
+    <div>
+      <div class="ferr-cap">Ferramenta 5 · Capítulo 3</div>
+      <h2>Metas SMART para Líderes</h2>
+    </div>
+  </div>
+  <div class="ferramenta-body">
+    <div class="bloco">
+      <div class="bloco-titulo roxo">💡 O conceito</div>
+      <p class="bloco-texto">Perguntas poderosas geram respostas, respostas geram metas, e metas precisam ser SMART para serem realizadas. O Líder 5.0 usa esse método tanto para si quanto para orientar o desenvolvimento de sua equipe.</p>
+      <div class="tabela-wrap">
+        <table>
+          <tr><th>Letra</th><th>Critério</th><th>Pergunta de verificação</th></tr>
+          <tr><td><strong>S</strong></td><td>Specific (Específica)</td><td>Quem, o quê, onde, quando, por quê?</td></tr>
+          <tr><td><strong>M</strong></td><td>Measurable (Mensurável)</td><td>Quanto? Como saberei que atingi?</td></tr>
+          <tr><td><strong>A</strong></td><td>Attainable (Atingível)</td><td>É possível com os recursos que tenho?</td></tr>
+          <tr><td><strong>R</strong></td><td>Realistic (Realista)</td><td>Estou disposto e apto a trabalhar por isso?</td></tr>
+          <tr><td><strong>T</strong></td><td>Time-bound (Temporal)</td><td>Qual é o prazo? O que faço a cada semana?</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Defina uma meta SMART agora</div>
+      <h4>Escreva uma meta sua ou de um liderado e passe pelo filtro SMART:</h4>
+      <input class="campo-linha" placeholder="A meta em uma frase:">
+      <input class="campo-linha" placeholder="S — Específica: o quê exatamente, com quem, onde?">
+      <input class="campo-linha" placeholder="M — Mensurável: como vou medir o progresso?">
+      <input class="campo-linha" placeholder="A — Atingível: o que preciso para torná-la realidade?">
+      <input class="campo-linha" placeholder="R — Realista: por que é importante para mim/para o time?">
+      <input class="campo-linha" placeholder="T — Temporal: prazo final e marcos intermediários?">
+    </div>
+  </div>
+</div>
+
+<div class="divisor"><div class="divisor-linha"></div><div class="divisor-icone">⭐</div><div class="divisor-linha"></div></div>
+
+<!-- ===== FERRAMENTA 6 ===== -->
+<div class="ferramenta" id="ferr6">
+  <div class="ferramenta-header">
+    <div class="ferr-emoji-grande">🔄</div>
+    <div>
+      <div class="ferr-cap">Ferramenta 6 · Capítulo 3</div>
+      <h2>Ciclo PDCA — Liderança de Melhoria Contínua</h2>
+    </div>
+  </div>
+  <div class="ferramenta-body">
+    <div class="bloco">
+      <div class="bloco-titulo roxo">💡 O conceito</div>
+      <p class="bloco-texto">O PDCA (Plan-Do-Check-Act) é o ciclo de melhoria contínua aplicado à gestão de pessoas e processos. O Líder 5.0 usa o PDCA não apenas para processos, mas para desenvolver sua equipe semana a semana.</p>
+      <div class="destaque-box verde-box">
+        💡 O PDCA é cíclico — ao final do ACTION, você volta ao PLAN com mais informação. Cada ciclo torna a equipe mais eficaz.
+      </div>
+    </div>
+
+    <div class="bloco">
+      <div class="bloco-titulo verde">📋 O Ciclo em detalhe</div>
+      <div class="passos">
+        <div class="passo">
+          <div class="passo-num" style="background:linear-gradient(135deg,#1D4ED8,#3B82F6);">P</div>
+          <div class="passo-conteudo">
+            <strong>PLAN (Planejar) — O que vamos melhorar?</strong>
+            <p>Identifique o problema ou oportunidade. Defina a meta SMART. Analise as causas. Crie o plano de ação com responsáveis e prazos.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num" style="background:linear-gradient(135deg,#065F46,#10B981);">D</div>
+          <div class="passo-conteudo">
+            <strong>DO (Fazer) — Execute com sua equipe</strong>
+            <p>Implemente o plano. Treine e capacite a equipe. Documente o que está sendo feito. Comunique com clareza os papéis e responsabilidades.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num" style="background:linear-gradient(135deg,#92400E,#F59E0B);">C</div>
+          <div class="passo-conteudo">
+            <strong>CHECK (Conferir) — O que os resultados dizem?</strong>
+            <p>Compare os resultados com a meta definida. Analise os desvios — o que funcionou e o que não funcionou? Use dados, não opiniões.</p>
+          </div>
+        </div>
+        <div class="passo">
+          <div class="passo-num" style="background:linear-gradient(135deg,#6B21A8,#A855F7);">A</div>
+          <div class="passo-conteudo">
+            <strong>ACT (Agir) — Padronize ou corrija</strong>
+            <p>Se funcionou: padronize o processo e replique. Se não funcionou: identifique a causa raiz e ajuste o plano. Inicie um novo ciclo com o aprendizado acumulado.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Meu Ciclo PDCA desta semana</div>
+      <h4>Escolha UM processo ou comportamento de equipe para melhorar:</h4>
+      <input class="campo-linha" placeholder="PLAN — O que quero melhorar? (meta SMART):">
+      <input class="campo-linha" placeholder="PLAN — Qual é a causa raiz do problema atual?">
+      <input class="campo-linha" placeholder="DO — Que ação vou implementar? Com quem?">
+      <input class="campo-linha" placeholder="DO — Prazo para implementar:">
+      <input class="campo-linha" placeholder="CHECK — Como vou medir o resultado? (indicador):">
+      <input class="campo-linha" placeholder="CHECK — Data de avaliação:">
+      <input class="campo-linha" placeholder="ACT — O que farei se funcionar? O que farei se não funcionar?">
+    </div>
+
+    <div class="bloco" style="margin-top:28px;">
+      <div class="bloco-titulo dourado">🌟 Comprometimento final</div>
+      <div class="destaque-box">
+        "O Líder 5.0 não é quem sabe mais — é quem aprende mais rápido, adapta com mais agilidade e cuida com mais humanidade. Cada ciclo de PDCA é um passo em direção à sua melhor versão como líder."
+        <br><br>— Dra. Lucia Kratz, Phillipe Leão e Valquíria Duarte
+      </div>
+    </div>
+
+    <div class="exercicio">
+      <div class="exercicio-label">📝 Meu compromisso</div>
+      <h4>Escreva aqui o seu compromisso como Líder 5.0:</h4>
+      <textarea class="campo-texto" placeholder="Eu, _________________, me comprometo a aplicar as ferramentas do Líd@r 5.0 na minha liderança porque..."></textarea>
+      <input class="campo-linha" style="margin-top:16px;" placeholder="Data de hoje:">
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <a class="btn-voltar" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-lider5.html">← Voltar para a página do livro</a>
+  <p>© 2025 Dra. Lucia Kratz · Guia de Aplicação Prática — Líd@r 5.0</p>
+  <p style="margin-top:6px;font-size:0.72rem;opacity:0.6;">Este material é de uso exclusivo de quem adquiriu o livro Líd@r 5.0 — Revolucionando a Liderança.</p>
+</footer>
+
+</body>
+</html>
