@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia do Amor Saudável — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --preto:#06070E;--fundo:#090B16;--card:#0E1020;--card2:#111428;
+  --azul:#0A1640;--vm2:#B22020;--dourado:#BF9840;--ouro:#D4AF5A;
+  --branco:#EAE4D6;--cinza:#6E6E88;--cinza2:#9898B0;--verde:#0D6E3E;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--fundo);color:var(--branco);line-height:1.7;}
+header{background:linear-gradient(160deg,#06080F,#0A1030 60%,#070A18);padding:72px 24px 56px;text-align:center;border-bottom:1px solid rgba(191,152,64,0.1);}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:16px;display:block;}
+header h1{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--branco);font-weight:400;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza2);max-width:520px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:56px 24px;}
+.eyebrow{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.eyebrow::before{content:'';width:16px;height:1px;background:var(--ouro);}
+.sec-h{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:24px;}
+.sec{margin-bottom:48px;}
+.intro{font-size:0.95rem;color:var(--cinza2);line-height:1.8;margin-bottom:40px;padding:20px 24px;background:rgba(191,152,64,0.05);border-left:2px solid rgba(191,152,64,0.3);border-radius:0 4px 4px 0;}
+
+/* PILARES */
+.pilares{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:48px;}
+.pilar{background:var(--card);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:24px 22px;transition:border-color 0.25s;}
+.pilar:hover{border-color:rgba(191,152,64,0.2);}
+.pilar-icone{font-size:1.8rem;margin-bottom:12px;}
+.pilar h3{font-size:0.95rem;font-weight:600;color:var(--branco);margin-bottom:6px;}
+.pilar p{font-size:0.83rem;color:var(--cinza);line-height:1.65;}
+
+/* LINGUAGENS */
+.ling-lista{display:flex;flex-direction:column;gap:12px;}
+.ling{background:var(--card);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:20px 22px;display:grid;grid-template-columns:48px 1fr;gap:14px;align-items:start;}
+.ling-num{width:48px;height:48px;border-radius:50%;background:rgba(191,152,64,0.1);border:1px solid rgba(191,152,64,0.2);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--ouro);flex-shrink:0;}
+.ling h4{font-size:0.95rem;font-weight:600;color:var(--branco);margin-bottom:4px;}
+.ling p{font-size:0.83rem;color:var(--cinza);line-height:1.6;}
+.ling-exemplo{font-size:0.78rem;color:var(--ouro);margin-top:6px;font-style:italic;}
+
+/* SINAIS SAUDAVEL */
+.sinais-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sinal-s{background:var(--card2);border:1px solid rgba(13,110,62,0.2);border-left:2px solid var(--verde);border-radius:4px;padding:14px 16px;}
+.sinal-s p{font-size:0.85rem;color:var(--cinza2);line-height:1.55;}
+
+/* REFLEXAO */
+.reflexao{background:var(--card);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:28px;}
+.reflexao h3{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--branco);margin-bottom:16px;font-weight:400;}
+.perguntas{list-style:none;display:flex;flex-direction:column;gap:14px;}
+.perguntas li{padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.perguntas li:last-child{border-bottom:none;padding-bottom:0;}
+.pergunta-txt{font-size:0.9rem;color:var(--cinza2);margin-bottom:6px;}
+.resposta-campo{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:10px 12px;font-size:0.85rem;color:var(--branco);font-family:'DM Sans',sans-serif;resize:none;min-height:52px;transition:border-color 0.25s;}
+.resposta-campo:focus{outline:none;border-color:rgba(191,152,64,0.3);}
+
+/* CTA */
+.cta{background:linear-gradient(135deg,#070A1A,#0A0515);border:1px solid rgba(191,152,64,0.2);border-radius:6px;padding:36px 32px;text-align:center;margin-top:48px;}
+.cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
+.cta-h{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:10px;}
+.cta-p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:480px;margin-left:auto;margin-right:auto;}
+.btn-9self{display:inline-block;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:14px 40px;border-radius:4px;text-decoration:none;transition:all 0.25s;box-shadow:0 6px 24px rgba(191,152,64,0.3);}
+.btn-9self:hover{transform:translateY(-1px);box-shadow:0 10px 32px rgba(191,152,64,0.4);}
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid rgba(255,255,255,0.04);}
+@media(max-width:600px){.pilares,.sinais-grid{grid-template-columns:1fr;}.ling{grid-template-columns:36px 1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <span class="h-tag">Bônus exclusivo — Meu Companheiro é um Psicopata, Será?</span>
+  <h1>Guia do <em>Amor Saudável</em></h1>
+  <p>Como reconhecer, cultivar e construir vínculos genuínos — baseado em inteligência emocional e nas linguagens do amor.</p>
+</header>
+<div class="wrap">
+
+  <p class="intro">Reconhecer o que não é saudável é o primeiro passo. O segundo — e mais transformador — é aprender como o amor saudável se parece na prática. Este guia foi desenvolvido com base nos princípios do livro e na experiência clínica da Dra. Lucia Kratz.</p>
+
+  <div class="sec">
+    <div class="eyebrow">Os pilares</div>
+    <div class="sec-h">O que sustenta um amor saudável</div>
+    <div class="pilares">
+      <div class="pilar"><div class="pilar-icone">🤝</div><h3>Respeito mútuo</h3><p>As diferenças são aceitas, não usadas como armas. Cada um tem direito à sua opinião, ao seu espaço e às suas emoções.</p></div>
+      <div class="pilar"><div class="pilar-icone">💬</div><h3>Comunicação honesta</h3><p>É possível dizer o que sente e o que precisa — sem medo de retaliação ou punição. O silêncio não é usado como castigo.</p></div>
+      <div class="pilar"><div class="pilar-icone">🌱</div><h3>Crescimento individual</h3><p>Cada um cresce — e o crescimento do outro é celebrado, não ameaçado. Amizades, carreira e interesses pessoais são preservados.</p></div>
+      <div class="pilar"><div class="pilar-icone">🛡️</div><h3>Segurança emocional</h3><p>Você se sente segura para ser vulnerável. Erros são discutidos, não explorados. A intimidade é construída com cuidado.</p></div>
+      <div class="pilar"><div class="pilar-icone">⚖️</div><h3>Responsabilidade compartilhada</h3><p>Ambos assumem suas partes nos conflitos. Não há um eterno culpado nem um eterno salvador — há parceria.</p></div>
+      <div class="pilar"><div class="pilar-icone">❤️</div><h3>Afeto genuíno e constante</h3><p>O carinho não é usado como moeda de troca. Existe cuidado real — não apenas em momentos de reconciliação.</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">As 5 linguagens do amor</div>
+    <div class="sec-h">Como cada pessoa expressa e recebe amor</div>
+    <div class="ling-lista">
+      <div class="ling"><div class="ling-num">1</div><div><h4>Palavras de afirmação</h4><p>Expressões verbais de amor, elogios sinceros, encorajamento e reconhecimento. Pessoas com esta linguagem precisam ouvir "eu te amo", "você é incrível" e "estou orgulhoso de você".</p><div class="ling-exemplo">Exemplo prático: escreva uma mensagem espontânea valorizando algo que ela faz.</div></div></div>
+      <div class="ling"><div class="ling-num">2</div><div><h4>Tempo de qualidade</h4><p>Atenção total e presença real — sem celular, sem distração. O que importa não é a quantidade de tempo, mas a qualidade da conexão durante esse tempo.</p><div class="ling-exemplo">Exemplo prático: um jantar com celular virado, olhos nos olhos e conversa de verdade.</div></div></div>
+      <div class="ling"><div class="ling-num">3</div><div><h4>Receber presentes</h4><p>Não é materialismo — é o simbolismo do gesto. Um presente diz "eu pensei em você". Pode ser uma flor, um bilhete ou algo simples que demonstre consideração.</p><div class="ling-exemplo">Exemplo prático: trazer o café preferido dela sem motivo nenhum.</div></div></div>
+      <div class="ling"><div class="ling-num">4</div><div><h4>Atos de serviço</h4><p>Fazer algo prático para aliviar a vida do outro. Ajudar nas tarefas, resolver um problema, antecipar uma necessidade — esses gestos dizem "eu me importo com você".</p><div class="ling-exemplo">Exemplo prático: organizar algo que ela estava adiando sem que ela precise pedir.</div></div></div>
+      <div class="ling"><div class="ling-num">5</div><div><h4>Toque físico</h4><p>Abraços, carícias, toque no ombro, segurar a mão. O contato físico adequado e respeitoso comunica segurança, carinho e presença.</p><div class="ling-exemplo">Exemplo prático: um abraço longo sem motivo, só para demonstrar afeto.</div></div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">Reconheça</div>
+    <div class="sec-h">Sinais de que você está em um amor saudável</div>
+    <div class="sinais-grid">
+      <div class="sinal-s"><p>Você consegue dizer não sem sentir medo da reação dele</p></div>
+      <div class="sinal-s"><p>Suas amizades e família continuam presentes na sua vida</p></div>
+      <div class="sinal-s"><p>Os conflitos são resolvidos com diálogo, não com punição</p></div>
+      <div class="sinal-s"><p>Você se sente mais confiante e leve do que antes do relacionamento</p></div>
+      <div class="sinal-s"><p>Ele torce pelo seu crescimento pessoal e profissional</p></div>
+      <div class="sinal-s"><p>Você não precisa filtrar o que diz para evitar reações negativas</p></div>
+      <div class="sinal-s"><p>Os erros de ambos são assumidos — não apenas os seus</p></div>
+      <div class="sinal-s"><p>Você se sente em paz na maior parte do tempo</p></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <!-- CHECKLIST SAÚDE DO RELACIONAMENTO -->
+    <div class="reflexao">
+      <h3>Quão saudável é o seu relacionamento?</h3>
+      <p style="font-size:0.85rem;color:var(--cinza2);margin-bottom:20px;line-height:1.6;">Marque os itens que você reconhece no seu relacionamento atual. Ao final, veja sua pontuação de saúde.</p>
+      
+      <div class="check-saude-lista" id="checkSaude">
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Consigo dizer não sem sentir medo da reação dele</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Minhas amizades e família continuam presentes na minha vida</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Os conflitos são resolvidos com diálogo, sem punição ou silêncio prolongado</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Me sinto mais confiante desde que estou neste relacionamento</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Ele torce pelo meu crescimento pessoal e profissional</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Não preciso filtrar o que digo para evitar reações negativas</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Ambos assumem responsabilidade quando erram</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Me sinto em paz e segura na maior parte do tempo</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>O carinho e o afeto existem fora dos momentos de reconciliação</span>
+        </div>
+        <div class="cs-item" onclick="toggleCS(this)" data-pts="1">
+          <div class="cs-box"></div>
+          <span>Tenho liberdade para ter meus próprios interesses e momentos</span>
+        </div>
+      </div>
+
+      <div class="cs-resultado" id="csResultado" style="display:none;">
+        <div class="cs-barra-wrap">
+          <div class="cs-barra" id="csBarra"></div>
+        </div>
+        <div class="cs-pontos" id="csPontos"></div>
+        <div class="cs-msg" id="csMsg"></div>
+      </div>
+
+      <button class="btn-calcular" onclick="calcularSaude()">Ver minha pontuação de saúde</button>
+    </div>
+
+    <!-- REFLEXÃO COM MICROFONE -->
+    <div class="reflexao" style="margin-top:16px;">
+      <h3>Reflexão guiada</h3>
+      <p style="font-size:0.82rem;color:var(--cinza);margin-bottom:20px;">Responda com honestidade. Use o microfone 🎤 para falar em vez de digitar.</p>
+      <ul class="perguntas">
+        <li>
+          <div class="pergunta-txt">Qual é a linguagem do amor que mais ressoa com você?</div>
+          <div class="campo-mic-wrap">
+            <textarea class="resposta-campo" id="r1" placeholder="Escreva ou use o microfone..."></textarea>
+            <button class="btn-mic" onclick="mic(this,'r1')" title="Falar">🎤</button>
+          </div>
+        </li>
+        <li>
+          <div class="pergunta-txt">Como você expressava amor no passado — e como gostaria de ser amada?</div>
+          <div class="campo-mic-wrap">
+            <textarea class="resposta-campo" id="r2" placeholder="Escreva ou use o microfone..."></textarea>
+            <button class="btn-mic" onclick="mic(this,'r2')" title="Falar">🎤</button>
+          </div>
+        </li>
+        <li>
+          <div class="pergunta-txt">Quais características de um amor saudável você ainda não viveu?</div>
+          <div class="campo-mic-wrap">
+            <textarea class="resposta-campo" id="r3" placeholder="Escreva ou use o microfone..."></textarea>
+            <button class="btn-mic" onclick="mic(this,'r3')" title="Falar">🎤</button>
+          </div>
+        </li>
+        <li>
+          <div class="pergunta-txt">O que você quer que seja diferente no próximo relacionamento?</div>
+          <div class="campo-mic-wrap">
+            <textarea class="resposta-campo" id="r4" placeholder="Escreva ou use o microfone..."></textarea>
+            <button class="btn-mic" onclick="mic(this,'r4')" title="Falar">🎤</button>
+          </div>
+        </li>
+      </ul>
+      <button class="btn-enviar" onclick="enviarReflexao()">📲 Enviar respostas pelo WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="cta">
+    <span class="cta-tag">Aprofunde seu autoconhecimento</span>
+    <div class="cta-h">Descubra seu perfil afetivo com o 9&Self</div>
+    <p class="cta-p">Entender como você ama — e como você precisa ser amada — é o caminho para construir relações mais conscientes. O mapeamento 9&Self revela seu perfil de personalidade pelo Eneagrama e transforma esse autoconhecimento em prática.</p>
+    <a class="btn-9self" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">Conhecer o 9&Self →</a>
+  </div>
+
+</div>
+<footer>
+  <p>© 2023 Dra. Lucia Kratz & Dr. Carlos Azevedo · Meu Companheiro é um Psicopata, Será?</p>
+  <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-psicopata.html" style="color:var(--cinza);text-decoration:none">← Voltar para a página do livro</a></p>
+</footer>
+
+<script>
+// CHECKLIST SAÚDE
+function toggleCS(el) {
+  el.classList.toggle('ativo');
+}
+
+function calcularSaude() {
+  const items = document.querySelectorAll('.cs-item');
+  const marcados = document.querySelectorAll('.cs-item.ativo').length;
+  const pct = Math.round((marcados / items.length) * 100);
+  
+  let cor, msg;
+  if (pct >= 80) {
+    cor = '#10864C';
+    msg = '💚 Seu relacionamento apresenta bases muito saudáveis. Continue investindo na comunicação e no cuidado mútuo.';
+  } else if (pct >= 50) {
+    cor = '#BF9840';
+    msg = '⚠️ Seu relacionamento tem pontos positivos, mas alguns aspectos merecem atenção e conversa aberta com seu parceiro.';
+  } else {
+    cor = '#B22020';
+    msg = '🔴 Vários aspectos importantes estão ausentes. Considere buscar apoio profissional para entender melhor sua situação.';
+  }
+  
+  document.getElementById('csBarra').style.width = pct + '%';
+  document.getElementById('csBarra').style.background = cor;
+  document.getElementById('csPontos').textContent = marcados + ' de 10 itens presentes no seu relacionamento (' + pct + '%)';
+  document.getElementById('csPontos').style.color = cor;
+  document.getElementById('csMsg').textContent = msg;
+  document.getElementById('csResultado').style.display = 'block';
+  document.getElementById('csResultado').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// MICROFONE
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micAtivo = null, rec = null;
+
+function mic(btn, id) {
+  if (!SR) { alert('Reconhecimento de voz não suportado neste navegador.'); return; }
+  const campo = document.getElementById(id);
+  if (micAtivo && micAtivo !== btn) {
+    micAtivo.classList.remove('ouvindo');
+    micAtivo.textContent = '🎤';
+    if (rec) rec.stop();
+  }
+  if (btn.classList.contains('ouvindo')) {
+    btn.classList.remove('ouvindo'); btn.textContent = '🎤';
+    if (rec) rec.stop(); micAtivo = null; return;
+  }
+  rec = new SR();
+  rec.lang = 'pt-BR'; rec.continuous = false; rec.interimResults = false;
+  rec.onresult = e => {
+    const t = e.results[0][0].transcript;
+    campo.value = campo.value ? campo.value + ' ' + t : t;
+  };
+  rec.onend = () => { btn.classList.remove('ouvindo'); btn.textContent = '🎤'; micAtivo = null; };
+  rec.onerror = () => { btn.classList.remove('ouvindo'); btn.textContent = '🎤'; micAtivo = null; };
+  rec.start();
+  btn.classList.add('ouvindo'); btn.textContent = '⏹'; micAtivo = btn;
+}
+
+// ENVIAR POR WHATSAPP
+function enviarReflexao() {
+  const r1 = document.getElementById('r1').value || '(não respondida)';
+  const r2 = document.getElementById('r2').value || '(não respondida)';
+  const r3 = document.getElementById('r3').value || '(não respondida)';
+  const r4 = document.getElementById('r4').value || '(não respondida)';
+  const msg = 
+    'Olá Dra. Lucia! Fiz a reflexão guiada do Guia do Amor Saudável:\n\n' +
+    '1. Linguagem do amor: ' + r1 + '\n\n' +
+    '2. Como expressava amor: ' + r2 + '\n\n' +
+    '3. O que ainda não vivi: ' + r3 + '\n\n' +
+    '4. O que quero diferente: ' + r4;
+  window.open('https://wa.me/5562994644950?text=' + encodeURIComponent(msg), '_blank');
+}
+</script>
+</body>
+</html>

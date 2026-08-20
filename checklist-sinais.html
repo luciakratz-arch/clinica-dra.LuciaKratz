@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist dos 8 Sinais de Alerta — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --preto:#06070E;--fundo:#090B16;--card:#0E1020;--card2:#111428;
+  --azul:#0A1640;--vm:#9B1919;--vm2:#B22020;
+  --dourado:#BF9840;--ouro:#D4AF5A;
+  --branco:#EAE4D6;--cinza:#6E6E88;--cinza2:#9898B0;
+  --verde:#0D6E3E;--laranja:#C47A00;--vermelho:#9B1919;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--fundo);color:var(--branco);line-height:1.7;}
+
+header{
+  background:linear-gradient(160deg,#06080F,#0A1030 60%,#0D0A1A);
+  padding:72px 24px 56px; text-align:center;
+  border-bottom:1px solid rgba(191,152,64,0.1);
+}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:16px;display:block;}
+header h1{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--branco);font-weight:400;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza2);max-width:520px;margin:0 auto;}
+
+.wrap{max-width:720px;margin:0 auto;padding:56px 24px;}
+
+/* INTRO */
+.intro-box{
+  background:rgba(155,25,25,0.06);
+  border:1px solid rgba(155,25,25,0.2);
+  border-left:3px solid var(--vm2);
+  border-radius:4px;padding:20px 24px;
+  margin-bottom:40px;
+  font-size:0.88rem;color:var(--cinza2);line-height:1.7;
+}
+.intro-box strong{color:var(--branco);}
+
+/* COMO USAR */
+.como-usar{margin-bottom:40px;}
+.como-usar h2{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--branco);margin-bottom:16px;font-weight:400;}
+.instrucoes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.inst{background:var(--card);border:1px solid rgba(255,255,255,0.05);border-radius:4px;padding:16px;text-align:center;}
+.inst-num{font-family:'DM Serif Display',serif;font-size:1.8rem;color:var(--ouro);line-height:1;margin-bottom:6px;}
+.inst p{font-size:0.78rem;color:var(--cinza2);line-height:1.5;}
+
+/* CHECKLIST */
+.checklist-wrap{margin-bottom:40px;}
+.checklist-wrap h2{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--branco);margin-bottom:24px;font-weight:400;}
+
+.sinal-item{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:6px;padding:20px 22px;
+  margin-bottom:10px;
+  display:grid;grid-template-columns:auto 1fr auto;
+  gap:16px;align-items:start;
+  transition:border-color 0.25s;
+}
+.sinal-item:hover{border-color:rgba(191,152,64,0.2);}
+.sinal-check{
+  width:24px;height:24px;border:2px solid rgba(255,255,255,0.15);
+  border-radius:4px;flex-shrink:0;margin-top:2px;
+  cursor:pointer;transition:all 0.2s;
+  display:flex;align-items:center;justify-content:center;
+}
+.sinal-check.marcado{background:var(--verde);border-color:var(--verde);}
+.sinal-check.marcado::after{content:'✓';color:#fff;font-size:14px;font-weight:700;}
+.sinal-content{}
+.sinal-num-tag{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--vm2);margin-bottom:4px;display:block;}
+.sinal-titulo{font-size:0.95rem;font-weight:600;color:var(--branco);margin-bottom:4px;}
+.sinal-desc{font-size:0.82rem;color:var(--cinza);line-height:1.6;}
+.sinal-nivel{
+  font-size:0.7rem;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;padding:3px 10px;border-radius:20px;
+  white-space:nowrap;margin-top:2px;
+}
+.nivel-alto{background:rgba(155,25,25,0.2);color:#F08080;border:1px solid rgba(155,25,25,0.3);}
+.nivel-medio{background:rgba(196,122,0,0.2);color:#F0C060;border:1px solid rgba(196,122,0,0.3);}
+.nivel-obs{background:rgba(13,110,62,0.2);color:#6EE7A8;border:1px solid rgba(13,110,62,0.3);}
+
+/* RESULTADO */
+.resultado{
+  background:var(--card2);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:6px;padding:28px 26px;
+  margin-bottom:40px;
+}
+.resultado h3{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--branco);margin-bottom:16px;font-weight:400;}
+.resultado-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.res-zona{border-radius:4px;padding:14px 16px;text-align:center;}
+.zona-verde{background:rgba(13,110,62,0.15);border:1px solid rgba(13,110,62,0.3);}
+.zona-amarelo{background:rgba(196,122,0,0.15);border:1px solid rgba(196,122,0,0.3);}
+.zona-vermelho{background:rgba(155,25,25,0.15);border:1px solid rgba(155,25,25,0.3);}
+.res-zona-n{font-family:'DM Serif Display',serif;font-size:1.8rem;line-height:1;margin-bottom:4px;}
+.zona-verde .res-zona-n{color:#6EE7A8;}
+.zona-amarelo .res-zona-n{color:#F0C060;}
+.zona-vermelho .res-zona-n{color:#F08080;}
+.res-zona-l{font-size:0.72rem;color:var(--cinza2);}
+.contador{font-size:0.85rem;color:var(--cinza2);margin-top:14px;text-align:center;}
+.contador span{color:var(--ouro);font-weight:700;}
+
+/* CTA 9SELF */
+.cta-9self{
+  background:linear-gradient(135deg,#070A1A,#0A0515);
+  border:1px solid rgba(191,152,64,0.2);
+  border-radius:6px;padding:36px 32px;
+  text-align:center;margin-bottom:40px;
+}
+.cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
+.cta-h{font-family:'DM Serif Display',serif;font-size:1.6rem;color:var(--branco);font-weight:400;margin-bottom:10px;line-height:1.3;}
+.cta-p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto;}
+.btn-9self{
+  display:inline-block;
+  background:linear-gradient(135deg,var(--dourado),var(--ouro));
+  color:#06070E;font-size:0.95rem;font-weight:700;
+  padding:14px 40px;border-radius:4px;text-decoration:none;
+  transition:all 0.25s;letter-spacing:0.3px;
+  box-shadow:0 6px 24px rgba(191,152,64,0.3);
+}
+.btn-9self:hover{transform:translateY(-1px);box-shadow:0 10px 32px rgba(191,152,64,0.4);}
+.cta-nota{font-size:0.75rem;color:var(--cinza);margin-top:12px;}
+
+/* AVISO */
+.aviso{
+  font-size:0.78rem;color:var(--cinza);
+  text-align:center;line-height:1.6;
+  padding:16px;border-top:1px solid rgba(255,255,255,0.04);
+}
+
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid rgba(255,255,255,0.04);}
+
+@media(max-width:600px){
+  .instrucoes{grid-template-columns:1fr;}
+  .resultado-grid{grid-template-columns:1fr;}
+  .sinal-item{grid-template-columns:auto 1fr;}
+  .sinal-nivel{grid-column:2;justify-self:start;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="h-tag">Bônus exclusivo — Meu Companheiro é um Psicopata, Será?</span>
+  <h1>Checklist dos <em>8 Sinais de Alerta</em></h1>
+  <p>Avalie com clareza e objetividade os comportamentos do seu relacionamento — sem julgamento, com base científica.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="intro-box">
+    <strong>Como usar este checklist:</strong> Marque os comportamentos que você reconhece no seu relacionamento. Não existe resposta certa ou errada — o objetivo é trazer consciência, não criar culpa. Ao final, veja sua pontuação e o próximo passo recomendado.
+  </div>
+
+  <div class="como-usar">
+    <div class="instrucoes">
+      <div class="inst"><div class="inst-num">1</div><p>Leia cada sinal com calma e honestidade</p></div>
+      <div class="inst"><div class="inst-num">2</div><p>Marque os que você reconhece com frequência</p></div>
+      <div class="inst"><div class="inst-num">3</div><p>Veja o resultado e o próximo passo</p></div>
+    </div>
+  </div>
+
+  <div class="checklist-wrap">
+    <h2>Os 8 sinais — marque os que você reconhece</h2>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 01</span>
+        <div class="sinal-titulo">Ausência de culpa e responsabilidade</div>
+        <div class="sinal-desc">Ele nunca assume seus erros. Sempre encontra uma forma de te culpar — inclusive pelas próprias traições e comportamentos inadequados.</div>
+      </div>
+      <span class="sinal-nivel nivel-alto">Alto risco</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 02</span>
+        <div class="sinal-titulo">Narcisismo e desvalorização constante</div>
+        <div class="sinal-desc">Apenas a vontade e a opinião dele importam. Suas conquistas são minimizadas, suas emoções ignoradas. Ele precisa ser o centro de tudo.</div>
+      </div>
+      <span class="sinal-nivel nivel-alto">Alto risco</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 03</span>
+        <div class="sinal-titulo">Frieza emocional e falta de empatia</div>
+        <div class="sinal-desc">Demonstra pouco ou nenhum interesse genuíno pelo que você sente. Sua dor não parece afetá-lo. A empatia é seletiva ou inexistente.</div>
+      </div>
+      <span class="sinal-nivel nivel-medio">Atenção</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 04</span>
+        <div class="sinal-titulo">Desrespeito deliberado a limites e regras</div>
+        <div class="sinal-desc">Age como se as normas sociais e os acordos entre vocês não se aplicassem a ele. Viola seus limites de forma consciente e repetida.</div>
+      </div>
+      <span class="sinal-nivel nivel-alto">Alto risco</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 05</span>
+        <div class="sinal-titulo">Fuga de compromisso emocional</div>
+        <div class="sinal-desc">Evita vínculos profundos. O relacionamento permanece superficial mesmo após muito tempo. Há resistência a qualquer aprofundamento real.</div>
+      </div>
+      <span class="sinal-nivel nivel-obs">Observar</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 06</span>
+        <div class="sinal-titulo">Comportamento agressivo ou explosivo</div>
+        <div class="sinal-desc">Reage com agressividade verbal ou física quando contrariado. Você já sentiu medo de sua reação — mesmo que não tenha chegado a te machucar fisicamente.</div>
+      </div>
+      <span class="sinal-nivel nivel-alto">Alto risco</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 07</span>
+        <div class="sinal-titulo">Mentira frequente e compulsiva</div>
+        <div class="sinal-desc">Mente com naturalidade, mesmo sobre coisas sem importância. A desonestidade é estrutural — você nunca tem certeza se está ouvindo a verdade.</div>
+      </div>
+      <span class="sinal-nivel nivel-alto">Alto risco</span>
+    </div>
+
+    <div class="sinal-item">
+      <div class="sinal-check" onclick="marcar(this)"></div>
+      <div class="sinal-content">
+        <span class="sinal-num-tag">Sinal 08 + Atenção</span>
+        <div class="sinal-titulo">Charme calculado — duas faces distintas</div>
+        <div class="sinal-desc">Em público é simpático, charmoso e querido. Em casa é frio, agressivo ou indiferente. As pessoas ao redor não acreditariam se você contasse.</div>
+      </div>
+      <span class="sinal-nivel nivel-alto">Alto risco</span>
+    </div>
+
+  </div>
+
+  <div class="resultado">
+    <h3>Seu resultado</h3>
+    <div class="resultado-grid">
+      <div class="res-zona zona-verde">
+        <div class="res-zona-n">0–2</div>
+        <div class="res-zona-l">Zona verde — baixo risco</div>
+      </div>
+      <div class="res-zona zona-amarelo">
+        <div class="res-zona-n">3–5</div>
+        <div class="res-zona-l">Zona amarela — atenção</div>
+      </div>
+      <div class="res-zona zona-vermelho">
+        <div class="res-zona-n">6–8</div>
+        <div class="res-zona-l">Zona vermelha — alerta</div>
+      </div>
+    </div>
+    <div class="contador">Você marcou <span id="contagem">0</span> de 8 sinais</div>
+  </div>
+
+  <div class="cta-9self">
+    <span class="cta-tag">Próximo passo — autoconhecimento</span>
+    <div class="cta-h">Entenda <em style="color:var(--ouro);font-style:italic">seu próprio perfil</em> para construir relações mais saudáveis</div>
+    <p class="cta-p">Reconhecer os sinais no outro é o primeiro passo. O segundo — e mais transformador — é entender a si mesma. O mapeamento <strong style="color:var(--branco)">9&Self</strong> revela seu perfil de personalidade pelo Eneagrama e mostra como seus padrões influenciam suas escolhas afetivas.</p>
+    <a class="btn-9self" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">
+      Conhecer o 9&Self →
+    </a>
+    <div class="cta-nota">Mapeamento completo de personalidade via Eneagrama · Acesso imediato</div>
+  </div>
+
+  <div class="aviso">
+    ⚠ Este checklist é orientativo e não substitui avaliação clínica.<br>
+    Se estiver em situação de risco, ligue <strong>180</strong> (Central da Mulher) ou <strong>188</strong> (CVV).
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2023 Dra. Lucia Kratz & Dr. Carlos Azevedo · Meu Companheiro é um Psicopata, Será?</p>
+  <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-psicopata.html" style="color:var(--cinza);text-decoration:none">← Voltar para a página do livro</a></p>
+</footer>
+
+<script>
+let total = 0;
+function marcar(el) {
+  el.classList.toggle('marcado');
+  total = document.querySelectorAll('.sinal-check.marcado').length;
+  document.getElementById('contagem').textContent = total;
+}
+</script>
+</body>
+</html>

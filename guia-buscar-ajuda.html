@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Como Buscar Ajuda — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --preto:#06070E;--fundo:#090B16;--card:#0E1020;--card2:#111428;
+  --azul:#0A1640;--vm2:#B22020;--dourado:#BF9840;--ouro:#D4AF5A;
+  --branco:#EAE4D6;--cinza:#6E6E88;--cinza2:#9898B0;--verde:#0D6E3E;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--fundo);color:var(--branco);line-height:1.7;}
+header{background:linear-gradient(160deg,#06080F,#0A1030 60%,#0D0A1A);padding:72px 24px 56px;text-align:center;border-bottom:1px solid rgba(191,152,64,0.1);}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:16px;display:block;}
+header h1{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--branco);font-weight:400;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza2);max-width:520px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:56px 24px;}
+.eyebrow{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.eyebrow::before{content:'';width:16px;height:1px;background:var(--vm2);}
+.sec-h{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:24px;}
+.sec{margin-bottom:48px;}
+
+/* URGENCIA */
+.urgencia{background:rgba(155,25,25,0.1);border:1px solid rgba(155,25,25,0.3);border-left:3px solid var(--vm2);border-radius:4px;padding:20px 24px;margin-bottom:40px;}
+.urgencia h3{font-size:1rem;font-weight:600;color:var(--branco);margin-bottom:10px;}
+.urgencia p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;}
+.numeros{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;}
+.numero{background:var(--vm2);color:#fff;font-size:1rem;font-weight:700;padding:10px 20px;border-radius:4px;text-decoration:none;transition:background 0.25s;}
+.numero:hover{background:var(--vm2);opacity:0.85;}
+.numero small{display:block;font-size:0.68rem;font-weight:400;opacity:0.8;}
+
+/* PASSOS */
+.passos{display:flex;flex-direction:column;gap:12px;}
+.passo{background:var(--card);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:24px 22px;display:grid;grid-template-columns:44px 1fr;gap:16px;align-items:start;}
+.passo-n{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--azul),#0D1E52);border:1px solid rgba(191,152,64,0.2);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--ouro);flex-shrink:0;}
+.passo h3{font-size:0.95rem;font-weight:600;color:var(--branco);margin-bottom:6px;}
+.passo p{font-size:0.85rem;color:var(--cinza2);line-height:1.65;}
+.passo-dica{font-size:0.78rem;color:var(--ouro);margin-top:8px;font-style:italic;}
+
+/* REDES */
+.redes-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.rede{background:var(--card);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:20px;transition:border-color 0.25s;}
+.rede:hover{border-color:rgba(191,152,64,0.25);}
+.rede-icone{font-size:1.8rem;margin-bottom:10px;}
+.rede h4{font-size:0.9rem;font-weight:600;color:var(--branco);margin-bottom:4px;}
+.rede p{font-size:0.8rem;color:var(--cinza);line-height:1.55;}
+.rede-contato{font-size:0.82rem;color:var(--ouro);font-weight:600;margin-top:8px;}
+
+/* CHECKLIST PRONTO */
+.preparar{background:var(--card2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:28px;}
+.preparar h3{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--branco);margin-bottom:16px;font-weight:400;}
+.check-list{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.check-list li{display:flex;gap:12px;align-items:flex-start;font-size:0.88rem;color:var(--cinza2);line-height:1.6;}
+.check-list li::before{content:'—';color:var(--ouro);flex-shrink:0;margin-top:1px;}
+
+/* CTA */
+.cta{background:linear-gradient(135deg,#070A1A,#0A0515);border:1px solid rgba(191,152,64,0.2);border-radius:6px;padding:36px 32px;text-align:center;margin-top:48px;}
+.cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
+.cta-h{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:10px;}
+.cta-p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:480px;margin-left:auto;margin-right:auto;}
+.btn-wa{display:inline-flex;align-items:center;gap:10px;background:#25D366;color:#fff;font-size:0.95rem;font-weight:600;padding:14px 36px;border-radius:4px;text-decoration:none;transition:all 0.25s;}
+.btn-wa:hover{transform:translateY(-1px);}
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid rgba(255,255,255,0.04);}
+@media(max-width:600px){.redes-grid{grid-template-columns:1fr;}.passo{grid-template-columns:36px 1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <span class="h-tag">Bônus exclusivo — Meu Companheiro é um Psicopata, Será?</span>
+  <h1>Guia de <em>Como Buscar Ajuda</em></h1>
+  <p>Orientações práticas para dar os próximos passos com segurança — seja para pedir apoio, encontrar o profissional certo ou sair de uma situação de risco.</p>
+</header>
+<div class="wrap">
+
+  <div class="urgencia">
+    <h3>🔴 Se você estiver em situação de risco imediato</h3>
+    <p>Não espere. Se sentir que sua segurança física está ameaçada, acione agora um desses canais de ajuda — são gratuitos, sigilosos e funcionam 24 horas.</p>
+    <div class="numeros">
+      <a class="numero" href="tel:180">180 <small>Central da Mulher</small></a>
+      <a class="numero" href="tel:188">188 <small>CVV — Apoio emocional</small></a>
+      <a class="numero" href="tel:190">190 <small>Polícia Militar</small></a>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">Passo a passo</div>
+    <div class="sec-h">Como dar os próximos passos</div>
+    <div class="passos">
+      <div class="passo">
+        <div class="passo-n">1</div>
+        <div>
+          <h3>Reconheça o que está acontecendo</h3>
+          <p>Antes de qualquer ação, nomeie o que você está vivendo. Usar as palavras certas — comportamento abusivo, controle emocional, manipulação — ajuda a enxergar a situação com clareza e a tomar decisões mais conscientes.</p>
+          <div class="passo-dica">O livro "Meu Companheiro é um Psicopata, Será?" foi escrito exatamente para isso.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-n">2</div>
+        <div>
+          <h3>Fale com alguém de confiança</h3>
+          <p>Quebre o isolamento. Escolha uma pessoa — amiga, familiar, colega — que seja segura e empática. Não precisa ser uma conversa completa: começar a falar já é um passo enorme.</p>
+          <div class="passo-dica">Evite contar para pessoas muito próximas ao seu parceiro neste primeiro momento.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-n">3</div>
+        <div>
+          <h3>Busque apoio profissional</h3>
+          <p>Um psicólogo ou terapeuta especializado em relacionamentos vai te ajudar a processar o que viveu e a construir um caminho de saída seguro. Você não precisa resolver isso sozinha.</p>
+          <div class="passo-dica">Prefira profissionais com experiência em violência doméstica ou relacionamentos abusivos.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-n">4</div>
+        <div>
+          <h3>Documente os comportamentos</h3>
+          <p>Se a situação envolver agressões, guarde registros: prints de mensagens, fotos, datas e descrições de ocorrências. Isso pode ser importante caso você precise de medidas legais no futuro.</p>
+          <div class="passo-dica">Use um dispositivo que ele não acesse ou salve em nuvem com senha separada.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-n">5</div>
+        <div>
+          <h3>Construa um plano de segurança</h3>
+          <p>Se pensar em sair do relacionamento, planeje com antecedência: tenha documentos importantes acessíveis, um lugar seguro para onde ir, algum dinheiro separado e uma pessoa de confiança que saiba da situação.</p>
+          <div class="passo-dica">Sair de um relacionamento abusivo exige planejamento — não é fraqueza, é estratégia.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">Redes de apoio</div>
+    <div class="sec-h">Onde encontrar ajuda especializada</div>
+    <div class="redes-grid">
+      <div class="rede">
+        <div class="rede-icone">📞</div>
+        <h4>Central de Atendimento à Mulher</h4>
+        <p>Orientação, apoio emocional e encaminhamento para serviços de proteção em todo o Brasil.</p>
+        <div class="rede-contato">Ligue 180 — gratuito e sigiloso</div>
+      </div>
+      <div class="rede">
+        <div class="rede-icone">💙</div>
+        <h4>CVV — Centro de Valorização da Vida</h4>
+        <p>Apoio emocional para pessoas em sofrimento. Disponível 24h por dia, todos os dias.</p>
+        <div class="rede-contato">Ligue 188 ou acesse cvv.org.br</div>
+      </div>
+      <div class="rede">
+        <div class="rede-icone">🏛️</div>
+        <h4>Delegacia da Mulher (DEAM)</h4>
+        <p>Para registrar ocorrências de violência doméstica e solicitar medidas protetivas.</p>
+        <div class="rede-contato">Busque a unidade mais próxima de você</div>
+      </div>
+      <div class="rede">
+        <div class="rede-icone">🌐</div>
+        <h4>CREAS — Serviço Social</h4>
+        <p>Centro de Referência Especializado de Assistência Social — apoio gratuito em situações de vulnerabilidade.</p>
+        <div class="rede-contato">Busque o CREAS do seu município</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="preparar">
+      <h3>O que levar ao primeiro atendimento com um profissional</h3>
+      <ul class="check-list">
+        <li>Uma descrição dos comportamentos que mais te preocupam (pode ser escrita)</li>
+        <li>Há quanto tempo esses comportamentos acontecem</li>
+        <li>Se há histórico de agressões físicas ou ameaças</li>
+        <li>Como você se sente emocionalmente no dia a dia</li>
+        <li>O que você espera do atendimento — apoio, esclarecimento ou orientação para sair</li>
+        <li>Qualquer dúvida que você tenha sobre o que está vivendo</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cta">
+    <span class="cta-tag">Fale diretamente com a autora</span>
+    <div class="cta-h">A Dra. Lucia Kratz pode te orientar</div>
+    <p class="cta-p">Se quiser conversar sobre sua situação ou tirar dúvidas antes de dar o próximo passo, fale diretamente com a Dra. Lucia Kratz pelo WhatsApp — com sigilo e sem julgamento.</p>
+    <a class="btn-wa" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Li%20o%20livro%20e%20preciso%20de%20orientação." target="_blank">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.406 16.568c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/></svg>
+      Falar com a Dra. Lucia Kratz
+    </a>
+  </div>
+
+</div>
+<footer>
+  <p>© 2023 Dra. Lucia Kratz & Dr. Carlos Azevedo · Meu Companheiro é um Psicopata, Será?</p>
+  <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-psicopata.html" style="color:var(--cinza);text-decoration:none">← Voltar para a página do livro</a></p>
+</footer>
+</body>
+</html>
