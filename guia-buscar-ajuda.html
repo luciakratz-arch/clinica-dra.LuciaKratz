@@ -57,6 +57,59 @@ header p{font-size:0.95rem;color:var(--cinza2);max-width:520px;margin:0 auto;}
 .check-list li{display:flex;gap:12px;align-items:flex-start;font-size:0.88rem;color:var(--cinza2);line-height:1.6;}
 .check-list li::before{content:'—';color:var(--ouro);flex-shrink:0;margin-top:1px;}
 
+
+
+.form-info-disc {
+  font-size:0.78rem; color:var(--cinza);
+  background:rgba(201,150,10,0.06);
+  border:1px solid rgba(201,150,10,0.15);
+  border-radius:4px; padding:10px 14px;
+  margin-bottom:14px; line-height:1.5;
+}
+
+/* FORM QUALIFICAÇÃO */
+.form-qual { margin-top:20px; }
+.form-step { display:none; }
+.form-step.active { display:block; }
+.form-q {
+  font-family:'DM Serif Display',serif;
+  font-size:1.1rem; color:var(--branco);
+  font-weight:400; margin-bottom:16px; line-height:1.4;
+}
+.form-opts { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+.form-opt {
+  padding:13px 16px; border-radius:4px;
+  border:1px solid rgba(201,150,10,0.2);
+  background:rgba(255,255,255,0.04);
+  font-size:0.88rem; color:var(--cinza2);
+  cursor:pointer; transition:all 0.25s; text-align:left;
+}
+.form-opt:hover { border-color:rgba(201,150,10,0.4); background:rgba(201,150,10,0.06); }
+.form-opt.sel { border-color:var(--ouro); background:rgba(201,150,10,0.1); color:var(--branco); }
+.form-next {
+  display:block; width:100%; padding:13px;
+  background:linear-gradient(135deg,#9B7200,var(--ouro));
+  color:#06070E; font-size:0.9rem; font-weight:700;
+  border:none; border-radius:4px; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:all 0.25s;
+  opacity:0.4; pointer-events:none;
+}
+.form-next.on { opacity:1; pointer-events:all; }
+.form-next.on:hover { transform:translateY(-1px); }
+.form-info {
+  display:flex; justify-content:center; gap:8px; flex-wrap:wrap;
+  margin-top:14px; font-size:0.75rem; color:var(--cinza);
+}
+/* Progress dots */
+.form-progress {
+  display:flex; justify-content:center; gap:6px; margin-bottom:20px;
+}
+.form-dot {
+  width:8px; height:8px; border-radius:50%;
+  background:rgba(255,255,255,0.15); transition:background 0.3s;
+}
+.form-dot.ativo { background:var(--ouro); }
+
 /* CTA */
 .cta{background:linear-gradient(135deg,#070A1A,#0D0C08);border:1px solid rgba(191,152,64,0.2);border-radius:6px;padding:36px 32px;text-align:center;margin-top:48px;}
 .cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
@@ -178,14 +231,108 @@ footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);
     </div>
   </div>
 
-  <div class="cta">
-    <span class="cta-tag">Fale diretamente com a autora</span>
-    <div class="cta-h">A Dra. Lucia Kratz pode te orientar</div>
-    <p class="cta-p">Se quiser conversar sobre sua situação ou tirar dúvidas antes de dar o próximo passo, fale diretamente com a Dra. Lucia Kratz pelo WhatsApp — com sigilo e sem julgamento.</p>
-    <a class="btn-wa" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Li%20o%20livro%20e%20preciso%20de%20orientação." target="_blank">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.406 16.568c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/></svg>
-      Falar com a Dra. Lucia Kratz
-    </a>
+  <!-- FORMULÁRIO DE QUALIFICAÇÃO -->
+  <div class="cta" id="form-consulta">
+    <span class="cta-tag">Consulta particular — atendimento pago</span>
+    <div class="cta-h">Agende uma consulta com a Dra. Lucia Kratz</div>
+    <p class="cta-p">A Dra. Lucia Kratz oferece consultas particulares pagas para quem deseja orientação personalizada sobre sua situação. Responda 5 perguntas rápidas para que possamos entender melhor como ajudá-la.</p>
+
+    <div class="form-qual" id="formQual">
+      <div class="form-step active" data-step="1">
+        <div class="form-q">Como você descreveria sua situação atual?</div>
+        <div class="form-opts">
+          <div class="form-opt" onclick="selOpt(this)">Ainda estou no relacionamento e preciso de orientação</div>
+          <div class="form-opt" onclick="selOpt(this)">Saí recentemente e quero entender o que vivi</div>
+          <div class="form-opt" onclick="selOpt(this)">Estou em dúvida se devo sair ou ficar</div>
+          <div class="form-opt" onclick="selOpt(this)">Quero trabalhar minha autoestima e padrões afetivos</div>
+        </div>
+        <button class="form-next" onclick="nextStep(1)" disabled>Próxima →</button>
+      </div>
+
+      <div class="form-step" data-step="2">
+        <div class="form-q">Há quanto tempo você está nessa situação?</div>
+        <div class="form-opts">
+          <div class="form-opt" onclick="selOpt(this)">Menos de 6 meses</div>
+          <div class="form-opt" onclick="selOpt(this)">Entre 6 meses e 2 anos</div>
+          <div class="form-opt" onclick="selOpt(this)">Entre 2 e 5 anos</div>
+          <div class="form-opt" onclick="selOpt(this)">Mais de 5 anos</div>
+        </div>
+        <button class="form-next" onclick="nextStep(2)" disabled>Próxima →</button>
+      </div>
+
+      <div class="form-step" data-step="3">
+        <div class="form-q">Você já buscou ajuda profissional antes?</div>
+        <div class="form-opts">
+          <div class="form-opt" onclick="selOpt(this)">Não, esta seria minha primeira vez</div>
+          <div class="form-opt" onclick="selOpt(this)">Já fiz terapia mas parei</div>
+          <div class="form-opt" onclick="selOpt(this)">Faço terapia mas quero uma segunda opinião</div>
+          <div class="form-opt" onclick="selOpt(this)">Já fiz e sinto que preciso de algo diferente</div>
+        </div>
+        <button class="form-next" onclick="nextStep(3)" disabled>Próxima →</button>
+      </div>
+
+      <div class="form-step" data-step="4">
+        <div class="form-q">O que você espera de uma consulta?</div>
+        <div class="form-opts">
+          <div class="form-opt" onclick="selOpt(this)">Entender se o que vivo é realmente abusivo</div>
+          <div class="form-opt" onclick="selOpt(this)">Orientação para sair da situação com segurança</div>
+          <div class="form-opt" onclick="selOpt(this)">Trabalhar minha autoestima e independência emocional</div>
+          <div class="form-opt" onclick="selOpt(this)">Suporte para reconstruir minha vida após o relacionamento</div>
+        </div>
+        <button class="form-next" onclick="nextStep(4)" disabled>Próxima →</button>
+      </div>
+
+      <div class="form-step" data-step="5">
+        <div class="form-q">Você tem disponibilidade de investimento de R$ 150,00 para realizar essa consulta?</div>
+        <div class="form-info-disc">Este valor já é especial para leitores do livro — o valor regular da consulta é R$ 250,00.</div>
+        <div class="form-opts">
+          <div class="form-opt" data-inv="sim" onclick="selOpt(this)">Sim, tenho disponibilidade</div>
+          <div class="form-opt" data-inv="nao" onclick="selOpt(this)">Não no momento</div>
+        </div>
+        <button class="form-next" onclick="nextStep(5)" disabled>Próxima →</button>
+      </div>
+
+      <div class="form-step" data-step="6">
+        <div class="form-q">Como prefere realizar a consulta?</div>
+        <div class="form-opts">
+          <div class="form-opt" onclick="selOpt(this)">Online (videochamada)</div>
+          <div class="form-opt" onclick="selOpt(this)">Presencial em Goiânia</div>
+          <div class="form-opt" onclick="selOpt(this)">Sem preferência</div>
+        </div>
+        <button class="form-next" onclick="enviarForm()" disabled>Agendar pelo WhatsApp →</button>
+      </div>
+
+      <!-- RESPOSTA NEGATIVA -->
+      <div class="form-step" id="stepNao" data-step="nao">
+        <div class="form-q" style="text-align:center;">Tudo bem! 💛</div>
+        <p style="font-size:0.9rem;color:var(--cinza2);line-height:1.7;margin-bottom:24px;text-align:center;">
+          Agradecemos pela sua honestidade. A Dra. Lucia Kratz tem cursos, materiais e conteúdos que podem te ajudar neste momento — com muito mais acessibilidade.
+        </p>
+        <div class="form-q" style="font-size:1rem;">Você permite que a gente te envie materiais e cursos que a Doutora acredita que podem ser interessantes para você?</div>
+        <div class="form-opts">
+          <div class="form-opt" data-perm="sim" onclick="selOptNao(this)">Sim, pode me enviar!</div>
+          <div class="form-opt" data-perm="nao" onclick="selOptNao(this)">Não, obrigada</div>
+        </div>
+        <button class="form-next" id="btnNaoFinal" onclick="finalizarNao()" disabled>Finalizar</button>
+      </div>
+
+      <!-- OBRIGADA FINAL -->
+      <div class="form-step" id="stepObrigada" data-step="obrigada">
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:2rem;margin-bottom:16px;">✨</div>
+          <div class="form-q" style="text-align:center;">Obrigada!</div>
+          <p style="font-size:0.9rem;color:var(--cinza2);line-height:1.7;" id="msgObrigada"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-info">
+      <span>🔒 Sigilo total</span>
+      <span>·</span>
+      <span>Consulta particular paga</span>
+      <span>·</span>
+      <span>Online ou presencial</span>
+    </div>
   </div>
 
 </div>
@@ -193,5 +340,91 @@ footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);
   <p>© 2023 Dra. Lucia Kratz & Dr. Carlos Azevedo · Meu Companheiro é um Psicopata, Será?</p>
   <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-psicopata.html" style="color:var(--cinza);text-decoration:none">← Voltar para a página do livro</a></p>
 </footer>
+
+<script>
+var respostas = {};
+var stepAtual = 1;
+var permiteContato = false;
+
+function selOpt(el) {
+  var opts = el.closest('.form-opts').querySelectorAll('.form-opt');
+  opts.forEach(function(o){ o.classList.remove('sel'); });
+  el.classList.add('sel');
+  respostas['p' + stepAtual] = el.textContent.trim();
+  var btn = el.closest('.form-step').querySelector('.form-next');
+  btn.classList.add('on');
+  btn.disabled = false;
+}
+
+function selOptNao(el) {
+  var opts = el.closest('.form-opts').querySelectorAll('.form-opt');
+  opts.forEach(function(o){ o.classList.remove('sel'); });
+  el.classList.add('sel');
+  permiteContato = el.dataset.perm === 'sim';
+  var btn = document.getElementById('btnNaoFinal');
+  btn.classList.add('on');
+  btn.disabled = false;
+}
+
+function nextStep(atual) {
+  // Step 5 = investment question
+  if (atual === 5) {
+    var sel = document.querySelector('[data-step="5"] .form-opt.sel');
+    if (sel && sel.dataset.inv === 'nao') {
+      // Show "não" flow
+      var current = document.querySelector('[data-step="5"]');
+      current.classList.remove('active');
+      document.getElementById('stepNao').classList.add('active');
+      stepAtual = 'nao';
+      scroll();
+      return;
+    }
+  }
+  var current = document.querySelector('[data-step="' + atual + '"]');
+  var next = document.querySelector('[data-step="' + (atual+1) + '"]');
+  if (!next) return;
+  current.classList.remove('active');
+  next.classList.add('active');
+  stepAtual = atual + 1;
+  scroll();
+}
+
+function scroll() {
+  window.scrollTo({top: document.getElementById('form-consulta').offsetTop - 80, behavior:'smooth'});
+}
+
+function finalizarNao() {
+  document.getElementById('stepNao').classList.remove('active');
+  document.getElementById('stepObrigada').classList.add('active');
+  var msg = '';
+  if (permiteContato) {
+    msg = 'Anotamos seu interesse! Em breve você receberá pelo WhatsApp materiais e cursos selecionados pela Dra. Lucia Kratz. 💛';
+    // Send WA to Lucia with lead info
+    var waMsg = 'Nova lead para banco de dados:%0A' +
+      '1. Situação: ' + encodeURIComponent(respostas.p1 || '') + '%0A' +
+      '2. Tempo: ' + encodeURIComponent(respostas.p2 || '') + '%0A' +
+      '3. Terapia: ' + encodeURIComponent(respostas.p3 || '') + '%0A' +
+      '4. Objetivo: ' + encodeURIComponent(respostas.p4 || '') + '%0A' +
+      'Investimento: Não disponível no momento%0A' +
+      'Aceita receber materiais: SIM';
+    window.open('https://wa.me/5562994644950?text=' + waMsg, '_blank');
+  } else {
+    msg = 'Tudo bem! Quando você se sentir pronta, estaremos aqui. Cuide-se com carinho. 💛';
+  }
+  document.getElementById('msgObrigada').textContent = msg;
+  scroll();
+}
+
+function enviarForm() {
+  var msg = 'Olá Dra. Lucia! Li o livro "Meu Companheiro é um Psicopata, Será?" e gostaria de agendar uma consulta.%0A%0A';
+  msg += '1. Situação: ' + encodeURIComponent(respostas.p1 || '') + '%0A';
+  msg += '2. Tempo na situação: ' + encodeURIComponent(respostas.p2 || '') + '%0A';
+  msg += '3. Experiência com terapia: ' + encodeURIComponent(respostas.p3 || '') + '%0A';
+  msg += '4. O que espero: ' + encodeURIComponent(respostas.p4 || '') + '%0A';
+  msg += '5. Investimento: R$ 150,00 - SIM%0A';
+  msg += '6. Formato preferido: ' + encodeURIComponent(respostas.p6 || '');
+  window.open('https://wa.me/5562994644950?text=' + msg, '_blank');
+}
+</script>
 </body>
 </html>
