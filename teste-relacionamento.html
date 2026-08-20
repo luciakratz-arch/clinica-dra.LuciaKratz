@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teste: Meu Relacionamento é Saudável? — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+:root{
+  --preto:#06070E;
+  --fundo:#090B16;
+  --card:#0E1020;
+  --card2:#111428;
+  --azul:#0A1640;
+  --vm:#9B1919;
+  --vm2:#B22020;
+  --verde:#0D6E3E;
+  --verde2:#10864C;
+  --amarelo:#8B6E00;
+  --dourado:#BF9840;
+  --ouro:#D4AF5A;
+  --branco:#EAE4D6;
+  --cinza:#6E6E88;
+  --cinza2:#9898B0;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--fundo);color:var(--branco);overflow-x:hidden;line-height:1.7;}
+
+/* HEADER */
+header{
+  background:linear-gradient(160deg,#06080F 0%,#0A1030 60%,#0D0A1A 100%);
+  padding:80px 24px 60px;
+  text-align:center;
+  border-bottom:1px solid rgba(191,152,64,0.1);
+  position:relative;overflow:hidden;
+}
+header::after{
+  content:'';position:absolute;bottom:-30px;left:0;right:0;
+  height:60px;background:var(--fundo);
+  clip-path:ellipse(55% 100% at 50% 100%);
+}
+.h-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:9px;font-weight:600;letter-spacing:4px;
+  text-transform:uppercase;color:var(--cinza2);margin-bottom:20px;
+}
+.h-tag::before{content:'';width:16px;height:1px;background:var(--vm2);}
+header h1{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(1.8rem,5vw,3rem);
+  color:var(--branco);font-weight:400;margin-bottom:10px;line-height:1.2;
+}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{
+  font-size:1rem;color:var(--cinza2);
+  max-width:560px;margin:0 auto 28px;line-height:1.7;
+}
+.h-meta{
+  display:flex;justify-content:center;gap:28px;flex-wrap:wrap;
+  font-size:0.78rem;color:var(--cinza);
+}
+.h-meta span{display:flex;align-items:center;gap:6px;}
+
+/* PROGRESS */
+.prog-wrap{max-width:640px;margin:48px auto 0;padding:0 24px;}
+.prog-info{
+  display:flex;justify-content:space-between;
+  font-size:0.78rem;color:var(--cinza);margin-bottom:8px;
+}
+.prog-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;}
+.prog-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--vm2),var(--ouro));
+  border-radius:10px;transition:width 0.5s ease;width:0%;
+}
+
+/* QUIZ */
+.quiz-wrap{max-width:640px;margin:32px auto 60px;padding:0 24px;}
+.q-card{
+  background:var(--card);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:6px;padding:36px 32px;
+  display:none;animation:fadeUp 0.4s ease;
+}
+.q-card.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.q-num{
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--vm2);margin-bottom:14px;display:block;
+}
+.q-text{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(1.1rem,2.5vw,1.45rem);
+  color:var(--branco);font-weight:400;line-height:1.4;margin-bottom:8px;
+}
+.q-ctx{
+  font-size:0.82rem;color:var(--cinza);font-style:italic;
+  margin-bottom:24px;padding:10px 14px;
+  background:rgba(255,255,255,0.03);border-radius:4px;
+  border-left:2px solid rgba(155,25,25,0.4);
+}
+.opts{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 18px;border-radius:5px;
+  border:1px solid rgba(255,255,255,0.08);
+  cursor:pointer;transition:all 0.25s;background:var(--card2);
+}
+.opt:hover{border-color:rgba(191,152,64,0.3);background:#131528;}
+.opt.sel{border-color:var(--vm2);background:rgba(155,25,25,0.08);}
+.opt.sel .opt-dot{background:var(--vm2);border-color:var(--vm2);}
+.opt-dot{
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;
+  border:1px solid rgba(255,255,255,0.2);transition:all 0.25s;
+}
+.opt-txt{font-size:0.9rem;color:var(--cinza2);line-height:1.5;}
+.opt.sel .opt-txt{color:var(--branco);}
+
+.nav-btns{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px;}
+.btn-back{
+  background:none;border:1px solid rgba(255,255,255,0.1);
+  color:var(--cinza);font-size:0.85rem;font-weight:500;
+  padding:11px 22px;border-radius:4px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all 0.25s;
+}
+.btn-back:hover{border-color:rgba(255,255,255,0.2);color:var(--cinza2);}
+.btn-next{
+  background:var(--vm2);border:none;color:#fff;
+  font-size:0.9rem;font-weight:600;
+  padding:13px 32px;border-radius:4px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all 0.3s;opacity:0.35;pointer-events:none;
+}
+.btn-next.on{opacity:1;pointer-events:all;}
+.btn-next:hover{background:var(--vm);}
+
+/* RESULTADO */
+.res-wrap{max-width:680px;margin:32px auto 60px;padding:0 24px;display:none;}
+.res-wrap.active{display:block;}
+
+.res-top{
+  border-radius:6px 6px 0 0;
+  padding:40px 36px 32px;text-align:center;
+}
+.res-top.verde{background:linear-gradient(135deg,#042A18,#073D24);}
+.res-top.amarelo{background:linear-gradient(135deg,#1A1400,#2A2000);}
+.res-top.vermelho{background:linear-gradient(135deg,#1A0505,#2D0A0A);}
+
+.res-icone{font-size:3rem;margin-bottom:16px;}
+.res-tag{
+  display:inline-block;font-size:9px;letter-spacing:4px;
+  text-transform:uppercase;font-weight:700;
+  padding:5px 16px;border-radius:2px;margin-bottom:14px;
+}
+.res-tag.verde{background:rgba(16,134,76,0.3);color:#6EE7A8;border:1px solid rgba(16,134,76,0.4);}
+.res-tag.amarelo{background:rgba(191,152,64,0.2);color:var(--ouro);border:1px solid rgba(191,152,64,0.3);}
+.res-tag.vermelho{background:rgba(155,25,25,0.3);color:#F08080;border:1px solid rgba(155,25,25,0.4);}
+
+.res-titulo{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(1.6rem,4vw,2.4rem);
+  color:var(--branco);font-weight:400;margin-bottom:8px;line-height:1.2;
+}
+.res-sub{font-size:0.9rem;color:var(--cinza2);font-style:italic;}
+
+.res-body{
+  background:var(--card);
+  border-radius:0 0 6px 6px;
+  border:1px solid rgba(255,255,255,0.06);
+  border-top:none;padding:36px;
+  box-shadow:0 16px 60px rgba(0,0,0,0.4);
+}
+
+.res-sec{margin-bottom:24px;}
+.res-lbl{
+  font-size:9px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--cinza2);margin-bottom:12px;display:block;
+}
+.res-texto{font-size:0.92rem;color:var(--cinza2);line-height:1.8;}
+.res-texto strong{color:var(--branco);}
+
+.div{height:1px;background:rgba(255,255,255,0.06);margin:22px 0;}
+
+/* INDICADORES */
+.ind-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.ind{
+  padding:12px 16px;border-radius:4px;
+  border:1px solid rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.02);
+}
+.ind-label{font-size:0.75rem;color:var(--cinza);margin-bottom:4px;}
+.ind-bar-wrap{height:4px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;}
+.ind-bar{height:100%;border-radius:10px;}
+
+/* CTA */
+.res-cta{
+  background:linear-gradient(135deg,#0A0515,#070A1A);
+  border:1px solid rgba(191,152,64,0.2);
+  border-radius:6px;padding:32px 28px;
+  text-align:center;margin-top:24px;
+}
+.cta-tag{
+  font-size:8px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--ouro);margin-bottom:12px;display:block;
+}
+.cta-h{
+  font-family:'DM Serif Display',serif;
+  font-size:1.5rem;color:var(--branco);font-weight:400;
+  margin-bottom:10px;line-height:1.3;
+}
+.cta-p{font-size:0.85rem;color:var(--cinza);line-height:1.7;margin-bottom:22px;}
+.btn-cta{
+  display:inline-block;
+  background:var(--vm2);color:#fff;
+  font-size:0.9rem;font-weight:600;
+  padding:14px 36px;border-radius:4px;
+  text-decoration:none;margin-bottom:10px;
+  transition:all 0.25s;
+}
+.btn-cta:hover{background:var(--vm);transform:translateY(-1px);}
+.btn-wa{
+  display:block;
+  color:var(--cinza);font-size:0.78rem;
+  text-decoration:none;margin-top:10px;
+  transition:color 0.25s;
+}
+.btn-wa:hover{color:var(--cinza2);}
+
+/* SHARE */
+.share-wrap{text-align:center;margin-top:20px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;}
+.btn-share{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#25D366;color:#fff;
+  font-size:0.82rem;font-weight:600;
+  padding:11px 24px;border-radius:4px;
+  text-decoration:none;transition:all 0.25s;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;
+}
+.btn-refazer{
+  display:inline-flex;align-items:center;gap:6px;
+  background:none;border:1px solid rgba(255,255,255,0.12);
+  color:var(--cinza2);font-size:0.82rem;font-weight:500;
+  padding:10px 22px;border-radius:4px;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all 0.25s;
+}
+.btn-refazer:hover{border-color:var(--ouro);color:var(--ouro);}
+
+/* WA FLOAT */
+.wa{
+  position:fixed;bottom:24px;right:24px;z-index:500;
+  width:52px;height:52px;border-radius:50%;
+  background:#25D366;display:flex;align-items:center;justify-content:center;
+  text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,0.4);
+  transition:transform 0.3s;
+}
+.wa:hover{transform:scale(1.1);}
+
+/* FOOTER */
+footer{
+  text-align:center;padding:28px 24px;
+  font-size:0.76rem;color:var(--cinza);
+  border-top:1px solid rgba(255,255,255,0.04);
+}
+
+@media(max-width:600px){
+  .q-card,.res-body{padding:24px 18px;}
+  .res-top{padding:28px 18px;}
+  .ind-grid{grid-template-columns:1fr;}
+  .nav-btns{flex-direction:column-reverse;}
+  .btn-back,.btn-next{width:100%;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="h-tag">Dra. Lucia Kratz & Dr. Carlos Azevedo</div>
+  <h1>Meu relacionamento é<br><em>saudável</em> ou doentio?</h1>
+  <p>Responda 10 perguntas honestas sobre o seu relacionamento e descubra em qual zona você está — com base em evidências da psicologia clínica.</p>
+  <div class="h-meta">
+    <span>⏱ 4 minutos</span>
+    <span>❓ 10 perguntas</span>
+    <span>📊 Resultado imediato</span>
+    <span>🔒 Sem cadastro</span>
+  </div>
+</header>
+
+<div class="prog-wrap">
+  <div class="prog-info">
+    <span id="prog-label">Pergunta 1 de 10</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+</div>
+
+<div class="quiz-wrap">
+
+<!-- Q1 -->
+<div class="q-card active" data-q="0">
+  <span class="q-num">Pergunta 1 de 10</span>
+  <div class="q-text">Quando você discorda do seu parceiro, como costuma ser a reação dele?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Ele ouve com respeito, mesmo que não concorde, e conseguimos chegar a um entendimento.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Fica chateado, mas depois a situação se resolve sem grandes problemas.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Fica irritado e dificilmente reconhece que eu possa ter razão.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Fica agressivo, me culpa, me humilha ou simplesmente me ignora por dias.</div></div>
+  </div>
+  <div class="nav-btns"><div></div><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q2 -->
+<div class="q-card" data-q="1">
+  <span class="q-num">Pergunta 2 de 10</span>
+  <div class="q-text">Com que frequência você sente que precisa "andar na ponta dos pés" para não provocar o mau humor dele?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Raramente. Me sinto à vontade para ser eu mesma.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Em alguns momentos específicos, mas não é o padrão.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Com bastante frequência — prefiro evitar certos assuntos.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Quase sempre. Vivo com medo de causar uma reação negativa.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q3 -->
+<div class="q-card" data-q="2">
+  <span class="q-num">Pergunta 3 de 10</span>
+  <div class="q-text">Como você se sente em relação às suas amizades e família desde que está neste relacionamento?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Me relaciono normalmente. Meu parceiro até incentiva essas conexões.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Algumas amizades se afastaram naturalmente, mas não por pressão dele.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Me afastei de algumas pessoas porque ele não gosta ou cria clima quando saio.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Estou praticamente isolada. Ele controla com quem me relaciono.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q4 -->
+<div class="q-card" data-q="3">
+  <span class="q-num">Pergunta 4 de 10</span>
+  <div class="q-text">Quando algo dá errado no relacionamento ou na vida a dois, quem costuma ser responsabilizado?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Analisamos juntos o que aconteceu, sem precisar apontar culpados.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Cada um assume sua parte — às vezes com dificuldade, mas acontece.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Normalmente sou eu que acabo me desculpando, mesmo quando não fui eu.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Eu sou culpada por praticamente tudo. Ele nunca assume seus erros.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q5 -->
+<div class="q-card" data-q="4">
+  <span class="q-num">Pergunta 5 de 10</span>
+  <div class="q-text">Como ele se comporta em público (com amigos, família, estranhos) comparado a como se comporta com você em casa?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">É basicamente a mesma pessoa nos dois contextos.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">É um pouco mais reservado em casa, mas sem grandes diferenças.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Em público é charmoso e simpático — em casa é frio ou agressivo.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">São duas pessoas completamente diferentes. Ninguém acreditaria em mim se eu contasse.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q6 -->
+<div class="q-card" data-q="5">
+  <span class="q-num">Pergunta 6 de 10</span>
+  <div class="q-text">Você consegue expressar seus sentimentos, necessidades e opiniões livremente neste relacionamento?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Sim, me sinto segura para dizer o que penso e sinto.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Na maioria das vezes sim, mas alguns assuntos ainda são difíceis.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Filtro muito o que digo para evitar conflito ou rejeição.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Não. Aprendi que é mais seguro ficar calada.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q7 -->
+<div class="q-card" data-q="6">
+  <span class="q-num">Pergunta 7 de 10</span>
+  <div class="q-text">Como você descreveria os ciclos do relacionamento quando há um conflito grave?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Conversamos, resolvemos e seguimos em frente — sem acumular mágoa.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Leva um tempo, mas chegamos a uma resolução genuína.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Ele pede desculpa, melhora por um tempo e depois volta ao mesmo comportamento.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Existe um ciclo claro: tensão → explosão → lua de mel → tensão. Já reconheço o padrão.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q8 -->
+<div class="q-card" data-q="7">
+  <span class="q-num">Pergunta 8 de 10</span>
+  <div class="q-text">Como você se sente em relação à sua autoestima e imagem de si mesma desde que está com ele?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Me sinto valorizada e mais confiante. Ele me estimula a crescer.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Semelhante a antes — com altos e baixos normais.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Me sinto menos confiante e questiono mais minhas capacidades.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Me sinto diminuída, incompetente. Duvido muito de mim mesma.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q9 -->
+<div class="q-card" data-q="8">
+  <span class="q-num">Pergunta 9 de 10</span>
+  <div class="q-text">Você já sentiu medo físico do seu parceiro — mesmo que ele não tenha chegado a te agredir fisicamente?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Não. Nunca me senti fisicamente ameaçada por ele.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Em momentos de discussão muito intensa, mas passou.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Algumas vezes sim — a forma como ele reage me deixa com medo.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Sim, com frequência. Sinto que ele é capaz de me machucar.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="prox()">Próxima →</button></div>
+</div>
+
+<!-- Q10 -->
+<div class="q-card" data-q="9">
+  <span class="q-num">Pergunta 10 de 10</span>
+  <div class="q-text">Se você pudesse descrever como se sente na maior parte do tempo dentro deste relacionamento, qual frase mais se aproxima?</div>
+  <div class="opts">
+    <div class="opt" data-pts="0" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Me sinto amada, respeitada e em paz.</div></div>
+    <div class="opt" data-pts="1" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Feliz na maioria das vezes, mas com algumas preocupações.</div></div>
+    <div class="opt" data-pts="2" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Confusa, cansada e sem entender por que as coisas são tão difíceis.</div></div>
+    <div class="opt" data-pts="3" onclick="sel(this)"><div class="opt-dot"></div><div class="opt-txt">Presa, com medo e sem saber como sair dessa situação.</div></div>
+  </div>
+  <div class="nav-btns"><button class="btn-back" onclick="ant()">← Voltar</button><button class="btn-next" onclick="calcular()">Ver meu resultado 🔎</button></div>
+</div>
+
+</div><!-- fim quiz-wrap -->
+
+<!-- RESULTADO -->
+<div class="res-wrap" id="resultado">
+  <div class="res-top" id="res-top">
+    <div class="res-icone" id="res-icone"></div>
+    <div class="res-tag" id="res-tag"></div>
+    <div class="res-titulo" id="res-titulo"></div>
+    <div class="res-sub" id="res-sub"></div>
+  </div>
+  <div class="res-body">
+    <div class="res-sec">
+      <span class="res-lbl">O que isso significa</span>
+      <div class="res-texto" id="res-texto"></div>
+    </div>
+    <div class="div"></div>
+    <div class="res-sec">
+      <span class="res-lbl">Indicadores do seu relacionamento</span>
+      <div class="ind-grid" id="res-indicadores"></div>
+    </div>
+    <div class="div"></div>
+    <div class="res-sec">
+      <span class="res-lbl">Próximo passo recomendado</span>
+      <div class="res-texto" id="res-proximo"></div>
+    </div>
+    <div class="res-cta">
+      <span class="cta-tag" id="cta-tag"></span>
+      <div class="cta-h" id="cta-h"></div>
+      <p class="cta-p" id="cta-p"></p>
+      <a class="btn-cta" id="cta-btn" href="#" target="_blank"></a>
+      <a class="btn-wa" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Tenho%20interesse%20no%20curso%20Eneagrama%20no%20Amor%20em%20Tempos%20de%20Crise" target="_blank">Falar diretamente com a Dra. Lucia Kratz →</a>
+    </div>
+    <div class="share-wrap">
+      <a class="btn-share" id="btn-share" href="#" target="_blank">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.406 16.568c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/></svg>
+        Compartilhar resultado
+      </a>
+      <button class="btn-refazer" onclick="refazer()">↩ Refazer o teste</button>
+    </div>
+    <p style="text-align:center;font-size:0.72rem;color:var(--cinza);margin-top:20px;line-height:1.6;">⚠ Este teste é apenas orientativo e não substitui avaliação clínica. Se estiver em situação de risco, ligue <strong style="color:var(--branco)">180</strong> (Central da Mulher) ou <strong style="color:var(--branco)">188</strong> (CVV).</p>
+  </div>
+</div>
+
+<footer>
+  <p>© 2023 Dra. Lucia Kratz & Dr. Carlos Azevedo · Meu Companheiro é um Psicopata, Será?</p>
+  <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-psicopata.html" style="color:var(--cinza);text-decoration:none">← Voltar para a página do livro</a></p>
+</footer>
+
+<a class="wa" href="https://wa.me/5562994644950" target="_blank">
+  <svg viewBox="0 0 24 24" width="26" height="26"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.406 16.568c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/></svg>
+</a>
+
+<script>
+const RESULTADOS = {
+  verde: {
+    top: 'verde',
+    icone: '💚',
+    tag: 'Zona Verde — Relacionamento Saudável',
+    tagClass: 'verde',
+    titulo: 'Seu relacionamento apresenta bases saudáveis',
+    sub: 'Respeito mútuo, comunicação e autonomia estão presentes',
+    texto: `Com base nas suas respostas, seu relacionamento apresenta <strong>características predominantemente saudáveis</strong>: comunicação aberta, respeito nas diferenças, ausência de controle e preservação da sua autonomia emocional e social. Isso não significa que não existam desafios — todo relacionamento tem — mas a dinâmica geral é de parceria e respeito.`,
+    indicadores: [
+      {label:'Comunicação', pct:85, cor:'#10864C'},
+      {label:'Respeito mútuo', pct:88, cor:'#10864C'},
+      {label:'Autonomia', pct:80, cor:'#10864C'},
+      {label:'Segurança emocional', pct:82, cor:'#10864C'},
+    ],
+    proximo: `Continue investindo na comunicação, na individualidade dentro do relacionamento e nos acordos que vocês têm. <strong>Relacionamentos saudáveis precisam de cuidado contínuo</strong> — e aprender mais sobre psicologia relacional pode fortalecer ainda mais o que já funciona.`,
+    ctaTag: 'Próximo passo recomendado',
+    ctaH: 'Aprofunde seu autoconhecimento com o Eneagrama no Amor',
+    ctaP: 'O curso "Eneagrama no Amor em Tempos de Crise" vai te ajudar a entender os perfis relacionais — o seu e o do seu parceiro — e a construir vínculos ainda mais saudáveis e conscientes.',
+    ctaBtn: 'Conhecer o curso agora',
+    ctaHref: 'https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829',
+    share: 'Fiz o teste de relacionamento da Dra. Lucia Kratz e meu relacionamento está na zona saudável! Faça você também:'
+  },
+  amarelo: {
+    top: 'amarelo',
+    icone: '⚠️',
+    tag: 'Zona Amarela — Atenção Necessária',
+    tagClass: 'amarelo',
+    titulo: 'Existem padrões que merecem sua atenção',
+    sub: 'Alguns comportamentos podem estar afetando seu bem-estar',
+    texto: `Suas respostas revelam <strong>padrões que merecem atenção</strong>. Não é necessariamente um relacionamento abusivo, mas há comportamentos que podem estar comprometendo sua saúde emocional, sua autoestima ou sua liberdade. Muitas vezes esses padrões se normalizam com o tempo — e a gente deixa de perceber o quanto está se adaptando.`,
+    indicadores: [
+      {label:'Comunicação', pct:45, cor:'#BF9840'},
+      {label:'Respeito mútuo', pct:50, cor:'#BF9840'},
+      {label:'Autonomia', pct:40, cor:'#BF9840'},
+      {label:'Segurança emocional', pct:42, cor:'#BF9840'},
+    ],
+    proximo: `O próximo passo mais importante é <strong>buscar mais informação</strong> — e talvez conversar com alguém de confiança ou um profissional. Entender os padrões que você está vivendo é o primeiro passo para decidir conscientemente o que quer para sua vida.`,
+    ctaTag: 'Para você que está na zona de atenção',
+    ctaH: 'Entenda os padrões do seu relacionamento com o Eneagrama',
+    ctaP: 'O curso "Eneagrama no Amor em Tempos de Crise" vai te ajudar a identificar comportamentos relacionais com clareza — e tomar decisões mais conscientes sobre o que você quer para sua vida afetiva.',
+    ctaBtn: 'Quero entender meu relacionamento',
+    ctaHref: 'https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829',
+    share: 'Fiz o teste de relacionamento da Dra. Lucia Kratz. Meu relacionamento está na zona de atenção. Você conhece o seu? Faça também:'
+  },
+  vermelho: {
+    top: 'vermelho',
+    icone: '🔴',
+    tag: 'Zona Vermelha — Sinal de Alerta',
+    tagClass: 'vermelho',
+    titulo: 'Seu relacionamento apresenta padrões preocupantes',
+    sub: 'O que você está vivendo tem nome — e você não está sozinha',
+    texto: `Com base nas suas respostas, seu relacionamento apresenta <strong>padrões consistentes de comportamento abusivo ou controlador</strong>. Isso é sério — e o mais importante que você precisa saber agora é: <strong>você não está sozinha e isso não é culpa sua.</strong> Esses padrões têm nome, têm explicação e existem caminhos de saída.`,
+    indicadores: [
+      {label:'Comunicação', pct:18, cor:'#B22020'},
+      {label:'Respeito mútuo', pct:15, cor:'#B22020'},
+      {label:'Autonomia', pct:12, cor:'#B22020'},
+      {label:'Segurança emocional', pct:10, cor:'#B22020'},
+    ],
+    proximo: `<strong>Se estiver em risco imediato</strong>, ligue agora para o <strong>180</strong> (Central de Atendimento à Mulher) ou <strong>188</strong> (CVV). Se precisar de apoio para entender sua situação ou dar os próximos passos, fale com a Dra. Lucia Kratz diretamente pelo WhatsApp — com sigilo e sem julgamento.`,
+    ctaTag: 'Você merece apoio e clareza',
+    ctaH: 'Entenda o que está acontecendo — com ciência e sem julgamento',
+    ctaP: 'O curso "Eneagrama no Amor em Tempos de Crise" foi desenvolvido pela Dra. Lucia Kratz para ajudar você a compreender os padrões do seu relacionamento e encontrar o caminho para relações mais saudáveis.',
+    ctaBtn: 'Quero conhecer o curso',
+    ctaHref: 'https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829',
+    share: 'Fiz o teste de relacionamento da Dra. Lucia Kratz. Se você também se pergunta se está em um relacionamento saudável, faça o teste:'
+  }
+};
+
+let respostas = new Array(10).fill(null);
+let atual = 0;
+
+function sel(el) {
+  const card = el.closest('.q-card');
+  card.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  respostas[atual] = parseInt(el.dataset.pts);
+  card.querySelector('.btn-next').classList.add('on');
+}
+
+function atualizarProg() {
+  const pct = Math.round((atual / 10) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-label').textContent = `Pergunta ${atual + 1} de 10`;
+}
+
+function mostrarQ(idx) {
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`[data-q="${idx}"]`);
+  card.classList.add('active');
+  if (respostas[idx] !== null) {
+    card.querySelectorAll('.opt').forEach(o => {
+      if (parseInt(o.dataset.pts) === respostas[idx]) {
+        o.classList.add('sel');
+        card.querySelector('.btn-next').classList.add('on');
+      }
+    });
+  }
+  window.scrollTo({top: 0, behavior: 'smooth'});
+  atualizarProg();
+}
+
+function prox() {
+  if (respostas[atual] === null) return;
+  atual++;
+  mostrarQ(atual);
+}
+
+function ant() {
+  if (atual === 0) return;
+  atual--;
+  mostrarQ(atual);
+}
+
+function calcular() {
+  if (respostas[9] === null) return;
+  const total = respostas.reduce((a, b) => a + b, 0);
+  let zona;
+  if (total <= 8) zona = 'verde';
+  else if (total <= 18) zona = 'amarelo';
+  else zona = 'vermelho';
+
+  const r = RESULTADOS[zona];
+  const top = document.getElementById('res-top');
+  top.className = 'res-top ' + r.top;
+  document.getElementById('res-icone').textContent = r.icone;
+  const tag = document.getElementById('res-tag');
+  tag.textContent = r.tag;
+  tag.className = 'res-tag ' + r.tagClass;
+  document.getElementById('res-titulo').textContent = r.titulo;
+  document.getElementById('res-sub').textContent = r.sub;
+  document.getElementById('res-texto').innerHTML = r.texto;
+  document.getElementById('res-proximo').innerHTML = r.proximo;
+  document.getElementById('cta-tag').textContent = r.ctaTag;
+  document.getElementById('cta-h').textContent = r.ctaH;
+  document.getElementById('cta-p').textContent = r.ctaP;
+  const btn = document.getElementById('cta-btn');
+  btn.textContent = r.ctaBtn;
+  btn.href = r.ctaHref;
+
+  const indEl = document.getElementById('res-indicadores');
+  indEl.innerHTML = r.indicadores.map(i => `
+    <div class="ind">
+      <div class="ind-label">${i.label}</div>
+      <div class="ind-bar-wrap">
+        <div class="ind-bar" style="width:${i.pct}%;background:${i.cor}"></div>
+      </div>
+    </div>`).join('');
+
+  const shareMsg = encodeURIComponent(r.share + ' https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/teste-relacionamento.html');
+  document.getElementById('btn-share').href = `https://wa.me/?text=${shareMsg}`;
+
+  document.querySelector('.quiz-wrap').style.display = 'none';
+  document.querySelector('.prog-wrap').style.display = 'none';
+  document.getElementById('resultado').classList.add('active');
+  document.getElementById('prog-fill').style.width = '100%';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function refazer() {
+  respostas = new Array(10).fill(null);
+  atual = 0;
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+  document.querySelectorAll('.btn-next').forEach(b => b.classList.remove('on'));
+  document.getElementById('resultado').classList.remove('active');
+  document.querySelector('.quiz-wrap').style.display = 'block';
+  document.querySelector('.prog-wrap').style.display = 'block';
+  mostrarQ(0);
+}
+
+atualizarProg();
+</script>
+</body>
+</html>
