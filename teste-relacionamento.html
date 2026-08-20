@@ -13,9 +13,9 @@ html{scroll-behavior:smooth;}
   --fundo:#090B16;
   --card:#0E1020;
   --card2:#111428;
-  --azul:#0A1640;
-  --vm:#9B1919;
-  --vm2:#B22020;
+  --azul:#13120F;
+  --vm:#9B7200;
+  --vm2:#C9960A;
   --verde:#0D6E3E;
   --verde2:#10864C;
   --amarelo:#8B6E00;
@@ -45,7 +45,7 @@ header::after{
   font-size:9px;font-weight:600;letter-spacing:4px;
   text-transform:uppercase;color:var(--cinza2);margin-bottom:20px;
 }
-.h-tag::before{content:'';width:16px;height:1px;background:var(--vm2);}
+.h-tag::before{content:'';width:16px;height:1px;background:var(--ouro);}
 header h1{
   font-family:'DM Serif Display',serif;
   font-size:clamp(1.8rem,5vw,3rem);
@@ -71,7 +71,7 @@ header p{
 .prog-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;}
 .prog-fill{
   height:100%;
-  background:linear-gradient(90deg,var(--vm2),var(--ouro));
+  background:linear-gradient(90deg,var(--ouro),var(--ouro));
   border-radius:10px;transition:width 0.5s ease;width:0%;
 }
 
@@ -88,7 +88,7 @@ header p{
 
 .q-num{
   font-size:9px;letter-spacing:4px;text-transform:uppercase;
-  color:var(--vm2);margin-bottom:14px;display:block;
+  color:var(--ouro);margin-bottom:14px;display:block;
 }
 .q-text{
   font-family:'DM Serif Display',serif;
@@ -109,8 +109,8 @@ header p{
   cursor:pointer;transition:all 0.25s;background:var(--card2);
 }
 .opt:hover{border-color:rgba(191,152,64,0.3);background:#131528;}
-.opt.sel{border-color:var(--vm2);background:rgba(155,25,25,0.08);}
-.opt.sel .opt-dot{background:var(--vm2);border-color:var(--vm2);}
+.opt.sel{border-color:var(--ouro);background:rgba(155,25,25,0.08);}
+.opt.sel .opt-dot{background:var(--ouro);border-color:var(--ouro);}
 .opt-dot{
   width:18px;height:18px;border-radius:50%;flex-shrink:0;
   border:1px solid rgba(255,255,255,0.2);transition:all 0.25s;
@@ -127,14 +127,14 @@ header p{
 }
 .btn-back:hover{border-color:rgba(255,255,255,0.2);color:var(--cinza2);}
 .btn-next{
-  background:var(--vm2);border:none;color:#fff;
+  background:var(--ouro);border:none;color:#fff;
   font-size:0.9rem;font-weight:600;
   padding:13px 32px;border-radius:4px;
   cursor:pointer;font-family:'DM Sans',sans-serif;
   transition:all 0.3s;opacity:0.35;pointer-events:none;
 }
 .btn-next.on{opacity:1;pointer-events:all;}
-.btn-next:hover{background:var(--vm);}
+.btn-next:hover{background:var(--dourado);}
 
 /* RESULTADO */
 .res-wrap{max-width:680px;margin:32px auto 60px;padding:0 24px;display:none;}
@@ -146,7 +146,7 @@ header p{
 }
 .res-top.verde{background:linear-gradient(135deg,#042A18,#073D24);}
 .res-top.amarelo{background:linear-gradient(135deg,#1A1400,#2A2000);}
-.res-top.vermelho{background:linear-gradient(135deg,#1A0505,#2D0A0A);}
+.res-top.vermelho{background:linear-gradient(135deg,#141200,#1E1A00);}
 
 .res-icone{font-size:3rem;margin-bottom:16px;}
 .res-tag{
@@ -156,7 +156,7 @@ header p{
 }
 .res-tag.verde{background:rgba(16,134,76,0.3);color:#6EE7A8;border:1px solid rgba(16,134,76,0.4);}
 .res-tag.amarelo{background:rgba(191,152,64,0.2);color:var(--ouro);border:1px solid rgba(191,152,64,0.3);}
-.res-tag.vermelho{background:rgba(155,25,25,0.3);color:#F08080;border:1px solid rgba(155,25,25,0.4);}
+.res-tag.vermelho{background:rgba(201,150,10,0.25);color:#F08080;border:1px solid rgba(155,25,25,0.4);}
 
 .res-titulo{
   font-family:'DM Serif Display',serif;
@@ -196,7 +196,7 @@ header p{
 
 /* CTA */
 .res-cta{
-  background:linear-gradient(135deg,#0A0515,#070A1A);
+  background:linear-gradient(135deg,#0D0C08,#070A1A);
   border:1px solid rgba(191,152,64,0.2);
   border-radius:6px;padding:32px 28px;
   text-align:center;margin-top:24px;
@@ -213,13 +213,13 @@ header p{
 .cta-p{font-size:0.85rem;color:var(--cinza);line-height:1.7;margin-bottom:22px;}
 .btn-cta{
   display:inline-block;
-  background:var(--vm2);color:#fff;
+  background:var(--ouro);color:#fff;
   font-size:0.9rem;font-weight:600;
   padding:14px 36px;border-radius:4px;
   text-decoration:none;margin-bottom:10px;
   transition:all 0.25s;
 }
-.btn-cta:hover{background:var(--vm);transform:translateY(-1px);}
+.btn-cta:hover{background:var(--dourado);transform:translateY(-1px);}
 .btn-wa{
   display:block;
   color:var(--cinza);font-size:0.78rem;
@@ -534,10 +534,10 @@ const RESULTADOS = {
     sub: 'O que você está vivendo tem nome — e você não está sozinha',
     texto: `Com base nas suas respostas, seu relacionamento apresenta <strong>padrões consistentes de comportamento abusivo ou controlador</strong>. Isso é sério — e o mais importante que você precisa saber agora é: <strong>você não está sozinha e isso não é culpa sua.</strong> Esses padrões têm nome, têm explicação e existem caminhos de saída.`,
     indicadores: [
-      {label:'Comunicação', pct:18, cor:'#B22020'},
-      {label:'Respeito mútuo', pct:15, cor:'#B22020'},
-      {label:'Autonomia', pct:12, cor:'#B22020'},
-      {label:'Segurança emocional', pct:10, cor:'#B22020'},
+      {label:'Comunicação', pct:18, cor:'#C9960A'},
+      {label:'Respeito mútuo', pct:15, cor:'#C9960A'},
+      {label:'Autonomia', pct:12, cor:'#C9960A'},
+      {label:'Segurança emocional', pct:10, cor:'#C9960A'},
     ],
     proximo: `<strong>Se estiver em risco imediato</strong>, ligue agora para o <strong>180</strong> (Central de Atendimento à Mulher) ou <strong>188</strong> (CVV). Se precisar de apoio para entender sua situação ou dar os próximos passos, fale com a Dra. Lucia Kratz diretamente pelo WhatsApp — com sigilo e sem julgamento.`,
     ctaTag: 'Você merece apoio e clareza',
