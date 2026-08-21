@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa do Propósito de Vida — 9&Self | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0818;--card:#1A0F30;--roxo:#7C3AED;--roxo2:#6D28D9;--roxo-claro:#A78BFA;--ciano:#67E8F9;--branco:#F0E8FF;--cinza:#A394C0;--cinza2:#C4B8E0;--ouro:#E8B84B;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--branco);line-height:1.7;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 50% -5%,rgba(124,58,237,0.3),transparent);}
+header{position:relative;z-index:1;background:linear-gradient(160deg,#0D0818,#1A0F30 60%,#0D0818);padding:72px 24px 56px;text-align:center;border-bottom:1px solid rgba(232,184,75,0.15);}
+.logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:2rem;font-weight:600;background:linear-gradient(90deg,var(--ciano),#fff 50%,var(--roxo-claro));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px;}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:16px;display:block;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--branco);font-weight:600;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza2);max-width:560px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1;}
+.intro-box{background:rgba(232,184,75,0.05);border:1px solid rgba(232,184,75,0.2);border-left:3px solid var(--ouro);border-radius:6px;padding:20px 24px;margin-bottom:40px;font-size:0.9rem;color:var(--cinza2);line-height:1.7;}
+.intro-box strong{color:var(--branco);}
+.sec{margin-bottom:48px;}
+.sec-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:600;margin-bottom:6px;}
+.sec-h em{color:var(--ouro);font-style:italic;}
+.sec-sub{font-size:0.85rem;color:var(--cinza);margin-bottom:24px;line-height:1.6;}
+.ref-item{background:var(--card);border:1px solid rgba(232,184,75,0.1);border-radius:8px;padding:24px;margin-bottom:16px;}
+.ref-n{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--ouro);margin-bottom:6px;display:block;}
+.ref-q{font-size:0.95rem;font-weight:600;color:var(--branco);margin-bottom:14px;line-height:1.4;}
+.ref-hint{font-size:0.8rem;color:var(--cinza);font-style:italic;margin-bottom:12px;line-height:1.5;}
+.campo-wrap{position:relative;}
+textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(232,184,75,0.15);border-radius:6px;padding:12px 48px 12px 14px;font-size:0.88rem;color:var(--branco);font-family:'DM Sans',sans-serif;resize:none;min-height:72px;transition:border-color 0.25s;line-height:1.6;}
+textarea:focus{outline:none;border-color:rgba(232,184,75,0.4);}
+textarea::placeholder{color:var(--cinza);}
+.btn-mic{position:absolute;right:10px;top:10px;background:rgba(232,184,75,0.1);border:1px solid rgba(232,184,75,0.2);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all 0.25s;}
+.btn-mic:hover{background:rgba(232,184,75,0.2);border-color:var(--ouro);}
+.btn-mic.ouvindo{background:#EF4444;border-color:#EF4444;animation:pulsar 1s infinite;}
+@keyframes pulsar{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5);}50%{box-shadow:0 0 0 8px rgba(239,68,68,0);}}
+
+/* VALORES GRID */
+.valores-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.valor-chip{padding:10px 14px;border-radius:6px;background:rgba(232,184,75,0.06);border:1px solid rgba(232,184,75,0.15);cursor:pointer;font-size:0.85rem;color:var(--cinza2);transition:all 0.25s;text-align:center;}
+.valor-chip:hover{border-color:var(--ouro);color:var(--branco);}
+.valor-chip.sel{background:rgba(232,184,75,0.2);border-color:var(--ouro);color:var(--branco);font-weight:600;}
+
+/* PROPOSITO FINAL */
+.proposito-box{background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(232,184,75,0.08));border:1px solid rgba(232,184,75,0.25);border-radius:12px;padding:28px;margin-top:24px;}
+.proposito-box-h{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--ouro);margin-bottom:12px;font-weight:600;}
+
+#modalCad{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;}
+#modalCad.open{display:flex;}
+.modal-box{background:#1A0F30;border:1px solid rgba(232,184,75,0.2);border-radius:12px;padding:32px 28px;max-width:420px;width:100%;}
+.modal-h{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--branco);margin-bottom:8px;font-weight:600;}
+.modal-p{font-size:0.85rem;color:var(--cinza2);margin-bottom:20px;line-height:1.6;}
+.modal-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(232,184,75,0.2);border-radius:6px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.modal-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;}
+.modal-label input{margin-top:3px;accent-color:var(--roxo);width:16px;height:16px;flex-shrink:0;}
+.modal-label span{font-size:0.78rem;color:var(--cinza);line-height:1.5;}
+.btn-enviar{width:100%;background:linear-gradient(135deg,var(--roxo),var(--roxo2));color:#fff;font-size:0.95rem;font-weight:700;padding:13px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;}
+.btn-cancelar{width:100%;background:none;border:none;color:var(--cinza);font-size:0.82rem;cursor:pointer;padding:8px;font-family:'DM Sans',sans-serif;}
+.btn-salvar{display:block;width:100%;text-align:center;background:linear-gradient(135deg,#9B7200,var(--ouro));color:#0D0818;font-size:0.95rem;font-weight:700;padding:14px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:32px;transition:all 0.3s;box-shadow:0 6px 24px rgba(232,184,75,0.25);}
+.btn-salvar:hover{transform:translateY(-1px);}
+.aviso{font-size:0.75rem;color:var(--cinza);text-align:center;margin-top:20px;line-height:1.6;padding:12px;border-top:1px solid rgba(255,255,255,0.05);}
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid rgba(167,139,250,0.08);position:relative;z-index:1;}
+@media(max-width:600px){.valores-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">9&Self</div>
+  <span class="h-tag">Bônus 3 — Exclusivo para participantes do mapeamento</span>
+  <h1>Mapa do <em>Propósito de Vida</em></h1>
+  <p>O fechamento da sua jornada de autoconhecimento. Diante de tudo que você descobriu, o que realmente importa para você — e para onde você quer ir?</p>
+</header>
+
+<div class="wrap">
+  <div class="intro-box">
+    <strong>Como usar:</strong> Este é o último passo da sua jornada com o 9&Self. Use as reflexões do seu laudo e do plano de desenvolvimento para responder com profundidade. Não há respostas certas — há respostas honestas.
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="sec">
+    <h2 class="sec-h">Parte I — <em>Insights da Jornada</em></h2>
+    <p class="sec-sub">O que você aprendeu sobre si mesmo durante todo esse processo?</p>
+
+    <div class="ref-item">
+      <span class="ref-n">Insight 01</span>
+      <div class="ref-q">Qual foi a maior descoberta sobre você mesmo nessa jornada?</div>
+      <div class="ref-hint">Pode ser algo que você já suspeitava mas agora tem clareza, ou algo que te surpreendeu completamente.</div>
+      <div class="campo-wrap"><textarea id="i1" placeholder="Escreva ou use o microfone..."></textarea><button class="btn-mic" onclick="mic(this,'i1')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Insight 02</span>
+      <div class="ref-q">O que você quer parar de carregar? Qual crença, comportamento ou padrão você decide deixar para trás?</div>
+      <div class="campo-wrap"><textarea id="i2" placeholder="Escreva ou use o microfone..."></textarea><button class="btn-mic" onclick="mic(this,'i2')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Insight 03</span>
+      <div class="ref-q">O que você quer cultivar mais em você? Qual qualidade ou capacidade quer desenvolver?</div>
+      <div class="campo-wrap"><textarea id="i3" placeholder="Escreva ou use o microfone..."></textarea><button class="btn-mic" onclick="mic(this,'i3')">🎤</button></div>
+    </div>
+  </div>
+
+  <!-- VALORES -->
+  <div class="sec">
+    <h2 class="sec-h">Parte II — <em>Seus Valores</em></h2>
+    <p class="sec-sub">Valores são o que guia suas decisões quando você está sendo verdadeiramente você. Selecione os que mais ressoam e escreva os seus próprios.</p>
+
+    <div class="ref-item">
+      <span class="ref-n">Selecione os seus valores</span>
+      <div class="ref-q">Quais desses valores são fundamentais para você?</div>
+      <div class="valores-grid" id="valoresGrid">
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Liberdade</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Família</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Autenticidade</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Crescimento</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Segurança</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Amor</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Propósito</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Lealdade</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Criatividade</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Independência</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Saúde</div>
+        <div class="valor-chip" onclick="this.classList.toggle('sel')">Espiritualidade</div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="ref-q" style="font-size:0.88rem;margin-bottom:8px;">Outros valores seus que não estão aqui:</div>
+        <div class="campo-wrap"><textarea id="v1" placeholder="Ex: generosidade, coragem, simplicidade..." style="min-height:52px;"></textarea><button class="btn-mic" onclick="mic(this,'v1')">🎤</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPÓSITO -->
+  <div class="sec">
+    <h2 class="sec-h">Parte III — <em>Meu Propósito</em></h2>
+    <p class="sec-sub">O propósito não é uma frase bonita — é o que te move quando você está sendo quem você realmente é.</p>
+
+    <div class="ref-item">
+      <span class="ref-n">Propósito 01</span>
+      <div class="ref-q">Quando você se sente mais vivo e realizado — o que você está fazendo?</div>
+      <div class="ref-hint">Pense nos momentos em que o tempo voa, em que você sente que está no lugar certo, fazendo a coisa certa.</div>
+      <div class="campo-wrap"><textarea id="p1" placeholder="Escreva ou use o microfone..."></textarea><button class="btn-mic" onclick="mic(this,'p1')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Propósito 02</span>
+      <div class="ref-q">Qual impacto você quer ter na vida das pessoas ao seu redor — família, trabalho, comunidade?</div>
+      <div class="campo-wrap"><textarea id="p2" placeholder="Escreva ou use o microfone..."></textarea><button class="btn-mic" onclick="mic(this,'p2')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Propósito 03</span>
+      <div class="ref-q">Como o seu perfil do Eneagrama pode ser uma ferramenta para realizar esse propósito — e não um obstáculo?</div>
+      <div class="campo-wrap"><textarea id="p3" placeholder="Escreva ou use o microfone..."></textarea><button class="btn-mic" onclick="mic(this,'p3')">🎤</button></div>
+    </div>
+
+    <div class="proposito-box">
+      <div class="proposito-box-h">✨ Minha declaração de propósito</div>
+      <p style="font-size:0.85rem;color:var(--cinza2);margin-bottom:14px;line-height:1.6;">Com base em tudo que respondeu, escreva em uma frase o seu propósito de vida. Não precisa ser perfeito — precisa ser verdadeiro.</p>
+      <div class="campo-wrap"><textarea id="decl" placeholder='Ex: "Meu propósito é usar minha sensibilidade para criar conexões genuínas e ajudar pessoas a se conhecerem melhor..."' style="min-height:88px;border-color:rgba(232,184,75,0.3);"></textarea><button class="btn-mic" onclick="mic(this,'decl')">🎤</button></div>
+    </div>
+  </div>
+
+
+  <!-- CTA LIVRO PSICOPATA -->
+  <div style="background:linear-gradient(135deg,rgba(20,14,0,0.9),rgba(13,8,24,0.8));border:1px solid rgba(232,184,75,0.25);border-radius:12px;padding:32px 28px;margin-top:40px;text-align:center;">
+    <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:#E8B84B;margin-bottom:12px;">Para avaliar seus relacionamentos</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:600;margin-bottom:10px;line-height:1.3;font-style:italic;">Meu Companheiro é um Psicopata, Será?</div>
+    <p style="font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:8px;max-width:500px;margin-left:auto;margin-right:auto;">Diante do seu propósito de vida e dos seus valores, uma pergunta importante: o relacionamento que você está construindo — ou que viveu — está alinhado com quem você quer ser?</p>
+    <p style="font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:500px;margin-left:auto;margin-right:auto;">Este livro da Dra. Lucia Kratz ajuda você a identificar se está — ou esteve — em um relacionamento pouco saudável, com base científica e linguagem acessível.</p>
+    <a href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#9B7200,#E8B84B);color:#06070E;font-size:0.95rem;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 6px 24px rgba(232,184,75,0.25);margin-bottom:10px;">Conhecer o livro — R$ 29,90</a>
+    <div><a href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Li%20sobre%20o%20livro%20Meu%20Companheiro%20é%20um%20Psicopata%2C%20Será%3F%20e%20gostaria%20de%20saber%20mais." target="_blank" style="font-size:0.78rem;color:var(--cinza);text-decoration:none;">Tirar dúvidas pelo WhatsApp →</a></div>
+  </div>
+
+  <button class="btn-salvar" onclick="abrirModal()">✨ Receber meu Mapa do Propósito pelo WhatsApp</button>
+  <div class="aviso">⚠ Suas respostas são enviadas diretamente para você. A Dra. Lucia Kratz não as recebe automaticamente.</div>
+</div>
+
+<div id="modalCad">
+  <div class="modal-box">
+    <div class="modal-h">Receber pelo WhatsApp</div>
+    <p class="modal-p">Seu Mapa do Propósito chegará no seu WhatsApp — para guardar e revisitar sempre que precisar de clareza.</p>
+    <input class="modal-input" id="cadNome" type="text" placeholder="Seu nome">
+    <input class="modal-input" id="cadWa" type="tel" placeholder="Seu WhatsApp com DDD">
+    <label class="modal-label">
+      <input type="checkbox" id="cadConcordo">
+      <span>Concordo em receber meu mapa e eventualmente materiais da Dra. Lucia Kratz pelo WhatsApp.</span>
+    </label>
+    <button class="btn-enviar" onclick="enviar()">Enviar meu mapa →</button>
+    <button class="btn-cancelar" onclick="fechar()">Cancelar</button>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 Dra. Lucia Kratz · 9&Self — Mapeamento de Perfil Avançado</p>
+  <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-9self.html" style="color:var(--cinza);text-decoration:none">← Voltar para o 9&Self</a></p>
+</footer>
+
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micAtivo = null, rec = null;
+function mic(btn, id) {
+  if (!SR) { alert('Microfone não suportado.'); return; }
+  const campo = document.getElementById(id);
+  if (micAtivo && micAtivo !== btn) { micAtivo.classList.remove('ouvindo'); micAtivo.textContent = '🎤'; if(rec) rec.stop(); }
+  if (btn.classList.contains('ouvindo')) { btn.classList.remove('ouvindo'); btn.textContent = '🎤'; if(rec) rec.stop(); micAtivo = null; return; }
+  rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = false; rec.interimResults = false;
+  rec.onresult = e => { const t = e.results[0][0].transcript; campo.value = campo.value ? campo.value + ' ' + t : t; };
+  rec.onend = () => { btn.classList.remove('ouvindo'); btn.textContent = '🎤'; micAtivo = null; };
+  rec.start(); btn.classList.add('ouvindo'); btn.textContent = '⏹'; micAtivo = btn;
+}
+function abrirModal() { document.getElementById('modalCad').classList.add('open'); }
+function fechar() { document.getElementById('modalCad').classList.remove('open'); }
+function enviar() {
+  const nome = document.getElementById('cadNome').value.trim();
+  const wa = document.getElementById('cadWa').value.trim().replace(/\D/g,'');
+  const ok = document.getElementById('cadConcordo').checked;
+  if (!nome) { alert('Informe seu nome.'); return; }
+  if (!wa || wa.length < 10) { alert('WhatsApp inválido.'); return; }
+  if (!ok) { alert('Confirme o aceite.'); return; }
+  const valores = Array.from(document.querySelectorAll('.valor-chip.sel')).map(e=>e.textContent).join(', ');
+  const msg = 'Olá ' + nome + '! Aqui está seu Mapa do Propósito de Vida 9&Self ✨\n\n' +
+    '💡 INSIGHTS\n' +
+    'Maior descoberta: ' + (document.getElementById('i1').value||'—') + '\n' +
+    'O que deixo para trás: ' + (document.getElementById('i2').value||'—') + '\n' +
+    'O que quero cultivar: ' + (document.getElementById('i3').value||'—') + '\n\n' +
+    '❤️ MEUS VALORES\n' + (valores||'—') + '\n' +
+    'Outros: ' + (document.getElementById('v1').value||'—') + '\n\n' +
+    '🌟 PROPÓSITO\n' +
+    'Quando me sinto vivo: ' + (document.getElementById('p1').value||'—') + '\n' +
+    'Impacto que quero ter: ' + (document.getElementById('p2').value||'—') + '\n' +
+    'Como meu perfil me serve: ' + (document.getElementById('p3').value||'—') + '\n\n' +
+    '✨ MINHA DECLARAÇÃO DE PROPÓSITO:\n' + (document.getElementById('decl').value||'—');
+  window.open('https://wa.me/55' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  setTimeout(() => window.open('https://wa.me/5562994644950?text=' + encodeURIComponent('Nova lead Propósito 9&Self:\n' + nome + ' | ' + wa), '_blank'), 1500);
+  fechar();
+}
+</script>
+</body>
+</html>

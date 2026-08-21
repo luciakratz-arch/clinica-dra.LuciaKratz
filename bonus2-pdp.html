@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plano de Desenvolvimento Pessoal — 9&Self | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0D0818;--card:#1A0F30;--roxo:#7C3AED;--roxo2:#6D28D9;--roxo-claro:#A78BFA;--ciano:#67E8F9;--branco:#F0E8FF;--cinza:#A394C0;--cinza2:#C4B8E0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--branco);line-height:1.7;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 50% at 50% -5%,rgba(124,58,237,0.3),transparent);}
+header{position:relative;z-index:1;background:linear-gradient(160deg,#0D0818,#1A0F30 60%,#0D0818);padding:72px 24px 56px;text-align:center;border-bottom:1px solid rgba(103,232,249,0.1);}
+.logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:2rem;font-weight:600;background:linear-gradient(90deg,var(--ciano),#fff 50%,var(--roxo-claro));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px;}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ciano);margin-bottom:16px;display:block;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--branco);font-weight:600;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--roxo-claro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza2);max-width:560px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1;}
+.intro-box{background:rgba(103,232,249,0.05);border:1px solid rgba(103,232,249,0.2);border-left:3px solid var(--ciano);border-radius:6px;padding:20px 24px;margin-bottom:40px;font-size:0.9rem;color:var(--cinza2);line-height:1.7;}
+.intro-box strong{color:var(--branco);}
+.sec{margin-bottom:48px;}
+.sec-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:600;margin-bottom:6px;}
+.sec-h em{color:var(--ciano);font-style:italic;}
+.sec-sub{font-size:0.85rem;color:var(--cinza);margin-bottom:24px;line-height:1.6;}
+.ref-item{background:var(--card);border:1px solid rgba(167,139,250,0.1);border-radius:8px;padding:24px;margin-bottom:16px;}
+.ref-n{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--ciano);margin-bottom:6px;display:block;}
+.ref-q{font-size:0.95rem;font-weight:600;color:var(--branco);margin-bottom:14px;line-height:1.4;}
+.campo-wrap{position:relative;}
+textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(167,139,250,0.15);border-radius:6px;padding:12px 48px 12px 14px;font-size:0.88rem;color:var(--branco);font-family:'DM Sans',sans-serif;resize:none;min-height:72px;transition:border-color 0.25s;line-height:1.6;}
+textarea:focus{outline:none;border-color:rgba(103,232,249,0.4);}
+textarea::placeholder{color:var(--cinza);}
+.btn-mic{position:absolute;right:10px;top:10px;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.2);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all 0.25s;}
+.btn-mic:hover{background:rgba(103,232,249,0.15);border-color:var(--ciano);}
+.btn-mic.ouvindo{background:#EF4444;border-color:#EF4444;animation:pulsar 1s infinite;}
+@keyframes pulsar{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5);}50%{box-shadow:0 0 0 8px rgba(239,68,68,0);}}
+.escala{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.esc-opt{padding:7px 14px;border-radius:20px;font-size:0.78rem;font-weight:600;border:1px solid rgba(167,139,250,0.2);color:var(--cinza2);cursor:pointer;transition:all 0.25s;background:rgba(255,255,255,0.03);}
+.esc-opt:hover{border-color:var(--ciano);color:var(--ciano);}
+.esc-opt.sel{background:rgba(124,58,237,0.25);border-color:var(--roxo-claro);color:var(--branco);}
+.esc-label{font-size:0.78rem;color:var(--cinza);margin-bottom:8px;display:block;}
+/* PLANO 30/60/90 */
+.plano-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;}
+.plano-col{background:rgba(255,255,255,0.02);border:1px solid rgba(167,139,250,0.1);border-radius:8px;padding:16px;}
+.plano-col-h{font-size:9px;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:10px;display:block;}
+.p30{color:#67E8F9;}.p60{color:#A78BFA;}.p90{color:#E8B84B;}
+.plano-col textarea{min-height:88px;padding:10px 14px;}
+#modalCad{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;}
+#modalCad.open{display:flex;}
+.modal-box{background:#1A0F30;border:1px solid rgba(103,232,249,0.2);border-radius:12px;padding:32px 28px;max-width:420px;width:100%;}
+.modal-h{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--branco);margin-bottom:8px;font-weight:600;}
+.modal-p{font-size:0.85rem;color:var(--cinza2);margin-bottom:20px;line-height:1.6;}
+.modal-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(167,139,250,0.2);border-radius:6px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.modal-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;}
+.modal-label input{margin-top:3px;accent-color:var(--roxo);width:16px;height:16px;flex-shrink:0;}
+.modal-label span{font-size:0.78rem;color:var(--cinza);line-height:1.5;}
+.btn-enviar{width:100%;background:linear-gradient(135deg,var(--roxo),var(--roxo2));color:#fff;font-size:0.95rem;font-weight:700;padding:13px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px;}
+.btn-cancelar{width:100%;background:none;border:none;color:var(--cinza);font-size:0.82rem;cursor:pointer;padding:8px;font-family:'DM Sans',sans-serif;}
+.btn-salvar{display:block;width:100%;text-align:center;background:linear-gradient(135deg,var(--roxo),var(--roxo2));color:#fff;font-size:0.95rem;font-weight:700;padding:14px;border-radius:8px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:32px;transition:all 0.3s;box-shadow:0 6px 24px rgba(124,58,237,0.35);}
+.btn-salvar:hover{transform:translateY(-1px);}
+.aviso{font-size:0.75rem;color:var(--cinza);text-align:center;margin-top:20px;line-height:1.6;padding:12px;border-top:1px solid rgba(255,255,255,0.05);}
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid rgba(167,139,250,0.08);position:relative;z-index:1;}
+@media(max-width:600px){.plano-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">9&Self</div>
+  <span class="h-tag">Bônus 2 — Exclusivo para participantes do mapeamento</span>
+  <h1>Plano de <em>Desenvolvimento Pessoal</em></h1>
+  <p>Transforme os insights do seu laudo em ações concretas. Comece pela autoanálise e construa seu plano de 30, 60 e 90 dias.</p>
+</header>
+
+<div class="wrap">
+  <div class="intro-box">
+    <strong>Como usar:</strong> Primeiro faça a autoanálise com base no seu laudo. Depois construa seu plano de desenvolvimento em 3 etapas. Use o microfone para falar suas respostas. Ao final, receba tudo pelo WhatsApp.
+  </div>
+
+  <!-- AUTOANÁLISE -->
+  <div class="sec">
+    <h2 class="sec-h">Parte I — <em>Autoanálise</em></h2>
+    <p class="sec-sub">Com base no que você recebeu no laudo, responda com honestidade.</p>
+
+    <div class="ref-item">
+      <span class="ref-n">Autoanálise 01</span>
+      <div class="ref-q">Quais são os 3 pontos fortes do seu perfil que você quer potencializar?</div>
+      <div class="campo-wrap"><textarea id="a1" placeholder="Ex: foco, empatia, criatividade..."></textarea><button class="btn-mic" onclick="mic(this,'a1')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Autoanálise 02</span>
+      <div class="ref-q">Quais são os 3 pontos que mais te atrapalham e que você quer transformar?</div>
+      <div class="campo-wrap"><textarea id="a2" placeholder="Ex: procrastinação, dificuldade de dizer não..."></textarea><button class="btn-mic" onclick="mic(this,'a2')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Autoanálise 03</span>
+      <div class="ref-q">Qual é o comportamento que você quer mudar com mais urgência?</div>
+      <div class="campo-wrap"><textarea id="a3" placeholder="Seja específico..."></textarea><button class="btn-mic" onclick="mic(this,'a3')">🎤</button></div>
+      <div style="margin-top:14px;">
+        <span class="esc-label">Grau de dificuldade para mudar esse comportamento:</span>
+        <div class="escala" id="esc1">
+          <div class="esc-opt" onclick="selEsc(this,'esc1')">1 — Fácil</div>
+          <div class="esc-opt" onclick="selEsc(this,'esc1')">2</div>
+          <div class="esc-opt" onclick="selEsc(this,'esc1')">3</div>
+          <div class="esc-opt" onclick="selEsc(this,'esc1')">4</div>
+          <div class="esc-opt" onclick="selEsc(this,'esc1')">5 — Muito difícil</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Autoanálise 04</span>
+      <div class="ref-q">Qual seria o menor passo possível para começar a mudança ainda esta semana?</div>
+      <div class="campo-wrap"><textarea id="a4" placeholder="Algo pequeno e concreto que você pode fazer..."></textarea><button class="btn-mic" onclick="mic(this,'a4')">🎤</button></div>
+    </div>
+  </div>
+
+  <!-- PLANO 30/60/90 -->
+  <div class="sec">
+    <h2 class="sec-h">Parte II — <em>Plano 30 · 60 · 90 dias</em></h2>
+    <p class="sec-sub">Com base na sua autoanálise, defina ações concretas para cada etapa.</p>
+
+    <div class="ref-item">
+      <span class="ref-n">Minha meta principal</span>
+      <div class="ref-q">Em uma frase: qual é a grande transformação que você quer alcançar nos próximos 90 dias?</div>
+      <div class="campo-wrap"><textarea id="meta" placeholder="Ex: Aprender a dizer não sem culpa e estabelecer limites saudáveis..."></textarea><button class="btn-mic" onclick="mic(this,'meta')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">30 dias — Começar</span>
+      <div class="ref-q">Quais são suas 3 metas para os primeiros 30 dias?</div>
+      <div class="campo-wrap" style="margin-bottom:10px;"><textarea id="p30m1" placeholder="Meta 1..."></textarea><button class="btn-mic" onclick="mic(this,'p30m1')">🎤</button></div>
+      <div class="campo-wrap" style="margin-bottom:10px;"><textarea id="p30m2" placeholder="Meta 2..."></textarea><button class="btn-mic" onclick="mic(this,'p30m2')">🎤</button></div>
+      <div class="campo-wrap"><textarea id="p30m3" placeholder="Meta 3..."></textarea><button class="btn-mic" onclick="mic(this,'p30m3')">🎤</button></div>
+    </div>
+    <div class="ref-item">
+      <span class="ref-n">60 dias — Aprofundar</span>
+      <div class="ref-q">O que você vai consolidar nos próximos 60 dias?</div>
+      <div class="campo-wrap" style="margin-bottom:10px;"><textarea id="p60m1" placeholder="Meta 1..."></textarea><button class="btn-mic" onclick="mic(this,'p60m1')">🎤</button></div>
+      <div class="campo-wrap" style="margin-bottom:10px;"><textarea id="p60m2" placeholder="Meta 2..."></textarea><button class="btn-mic" onclick="mic(this,'p60m2')">🎤</button></div>
+      <div class="campo-wrap"><textarea id="p60m3" placeholder="Meta 3..."></textarea><button class="btn-mic" onclick="mic(this,'p60m3')">🎤</button></div>
+    </div>
+    <div class="ref-item">
+      <span class="ref-n">90 dias — Colher</span>
+      <div class="ref-q">O que você quer ter alcançado em 90 dias?</div>
+      <div class="campo-wrap" style="margin-bottom:10px;"><textarea id="p90m1" placeholder="Meta 1..."></textarea><button class="btn-mic" onclick="mic(this,'p90m1')">🎤</button></div>
+      <div class="campo-wrap" style="margin-bottom:10px;"><textarea id="p90m2" placeholder="Meta 2..."></textarea><button class="btn-mic" onclick="mic(this,'p90m2')">🎤</button></div>
+      <div class="campo-wrap"><textarea id="p90m3" placeholder="Meta 3..."></textarea><button class="btn-mic" onclick="mic(this,'p90m3')">🎤</button></div>
+    </div>
+
+    <div class="ref-item">
+      <span class="ref-n">Compromisso</span>
+      <div class="ref-q">O que você está comprometido a fazer diferente a partir de hoje?</div>
+      <div class="campo-wrap"><textarea id="comp" placeholder="Escreva como um compromisso consigo mesmo..."></textarea><button class="btn-mic" onclick="mic(this,'comp')">🎤</button></div>
+    </div>
+  </div>
+
+
+  <!-- CTA CURSO ENEAGRAMA -->
+  <div style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(13,8,24,0.8));border:1px solid rgba(167,139,250,0.25);border-radius:12px;padding:32px 28px;margin-top:40px;text-align:center;">
+    <div style="font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--roxo-claro);margin-bottom:12px;">Para quem tem o relacionamento como foco</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:600;margin-bottom:10px;line-height:1.3;">Eneagrama no Amor em Tempos de Crise</div>
+    <p style="font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:500px;margin-left:auto;margin-right:auto;">Se o seu plano de desenvolvimento inclui transformar seus relacionamentos, este curso pode ser um divisor de águas. Feito com base no Eneagrama — a mesma ferramenta do seu mapeamento — ele vai te ajudar a entender como você ama e como construir vínculos mais saudáveis e conscientes.</p>
+    <a href="https://pay.hotmart.com/R97548434J?off=1zqy0s6f&checkoutMode=10&bid=1783552607829" target="_blank" style="display:inline-block;background:linear-gradient(135deg,var(--roxo),var(--roxo2));color:#fff;font-size:0.95rem;font-weight:700;padding:14px 36px;border-radius:8px;text-decoration:none;box-shadow:0 6px 24px rgba(124,58,237,0.4);">Conhecer o curso →</a>
+    <div style="margin-top:10px;font-size:0.75rem;color:var(--cinza);">Curso da Dra. Lucia Kratz · Eneagrama aplicado ao amor · Acesso imediato</div>
+  </div>
+
+  <button class="btn-salvar" onclick="abrirModal()">📲 Receber meu plano pelo WhatsApp</button>
+  <div class="aviso">⚠ Suas respostas são enviadas diretamente para você. A Dra. Lucia Kratz não as recebe automaticamente.</div>
+</div>
+
+<div id="modalCad">
+  <div class="modal-box">
+    <div class="modal-h">Receber pelo WhatsApp</div>
+    <p class="modal-p">Seu plano completo chegará no seu WhatsApp para consultar sempre que precisar.</p>
+    <input class="modal-input" id="cadNome" type="text" placeholder="Seu nome">
+    <input class="modal-input" id="cadWa" type="tel" placeholder="Seu WhatsApp com DDD">
+    <label class="modal-label">
+      <input type="checkbox" id="cadConcordo">
+      <span>Concordo em receber meu plano e eventualmente materiais da Dra. Lucia Kratz pelo WhatsApp.</span>
+    </label>
+    <button class="btn-enviar" onclick="enviar()">Enviar meu plano →</button>
+    <button class="btn-cancelar" onclick="fechar()">Cancelar</button>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 Dra. Lucia Kratz · 9&Self — Mapeamento de Perfil Avançado</p>
+  <p style="margin-top:6px"><a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-9self.html" style="color:var(--cinza);text-decoration:none">← Voltar para o 9&Self</a></p>
+</footer>
+
+<script>
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micAtivo = null, rec = null;
+function mic(btn, id) {
+  if (!SR) { alert('Microfone não suportado.'); return; }
+  const campo = document.getElementById(id);
+  if (micAtivo && micAtivo !== btn) { micAtivo.classList.remove('ouvindo'); micAtivo.textContent = '🎤'; if(rec) rec.stop(); }
+  if (btn.classList.contains('ouvindo')) { btn.classList.remove('ouvindo'); btn.textContent = '🎤'; if(rec) rec.stop(); micAtivo = null; return; }
+  rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = false; rec.interimResults = false;
+  rec.onresult = e => { const t = e.results[0][0].transcript; campo.value = campo.value ? campo.value + ' ' + t : t; };
+  rec.onend = () => { btn.classList.remove('ouvindo'); btn.textContent = '🎤'; micAtivo = null; };
+  rec.start(); btn.classList.add('ouvindo'); btn.textContent = '⏹'; micAtivo = btn;
+}
+function selEsc(el, id) {
+  document.querySelectorAll('#' + id + ' .esc-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function abrirModal() { document.getElementById('modalCad').classList.add('open'); }
+function fechar() { document.getElementById('modalCad').classList.remove('open'); }
+function enviar() {
+  const nome = document.getElementById('cadNome').value.trim();
+  const wa = document.getElementById('cadWa').value.trim().replace(/\D/g,'');
+  const ok = document.getElementById('cadConcordo').checked;
+  if (!nome) { alert('Informe seu nome.'); return; }
+  if (!wa || wa.length < 10) { alert('WhatsApp inválido.'); return; }
+  if (!ok) { alert('Confirme o aceite.'); return; }
+  const esc = document.querySelector('#esc1 .esc-opt.sel');
+  const g = id => (document.getElementById(id)||{}).value||'—';
+  const msg = 'Olá ' + nome + '! Aqui está seu PDP 9&Self 💜\n\n' +
+    '📊 AUTOANÁLISE\n' +
+    'Pontos fortes: ' + g('a1') + '\n' +
+    'O que atrapalha: ' + g('a2') + '\n' +
+    'Mudança urgente: ' + g('a3') + '\n' +
+    'Dificuldade: ' + (esc?esc.textContent:'—') + '\n' +
+    'Primeiro passo: ' + g('a4') + '\n\n' +
+    '🎯 META PRINCIPAL: ' + g('meta') + '\n\n' +
+    '📅 30 DIAS:\nMeta 1: ' + g('p30m1') + '\nMeta 2: ' + g('p30m2') + '\nMeta 3: ' + g('p30m3') + '\n\n' +
+    '📅 60 DIAS:\nMeta 1: ' + g('p60m1') + '\nMeta 2: ' + g('p60m2') + '\nMeta 3: ' + g('p60m3') + '\n\n' +
+    '📅 90 DIAS:\nMeta 1: ' + g('p90m1') + '\nMeta 2: ' + g('p90m2') + '\nMeta 3: ' + g('p90m3') + '\n\n' +
+    '✊ Compromisso: ' + g('comp');
+  window.open('https://wa.me/55' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  setTimeout(() => window.open('https://wa.me/5562994644950?text=' + encodeURIComponent('Nova lead PDP 9&Self:\n' + nome + ' | ' + wa), '_blank'), 1500);
+  fechar();
+}
+</script>
+</body>
+</html>
