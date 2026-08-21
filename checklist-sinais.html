@@ -139,6 +139,10 @@ footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);
   .sinal-item{grid-template-columns:auto 1fr;}
   .sinal-nivel{grid-column:2;justify-self:start;}
 }
+
+#modalCadastro { display:none; }
+#modalCadastro.open { display:flex !important; }
+
 </style>
 </head>
 <body>
@@ -271,7 +275,7 @@ footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);
     <span class="cta-tag">Próximo passo — autoconhecimento</span>
     <div class="cta-h">Entenda <em style="color:var(--ouro);font-style:italic">seu próprio perfil</em> para construir relações mais saudáveis</div>
     <p class="cta-p">Reconhecer os sinais no outro é o primeiro passo. O segundo — e mais transformador — é entender a si mesma. O mapeamento <strong style="color:var(--branco)">9&Self</strong> revela seu perfil de personalidade pelo Eneagrama e mostra como seus padrões influenciam suas escolhas afetivas.</p>
-    <a class="btn-9self" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">
+    <a class="btn-9self" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-9self.html" target="_blank">
       Conhecer o 9&Self →
     </a>
     <div class="cta-nota">Mapeamento completo de personalidade via Eneagrama · Acesso imediato</div>
@@ -296,6 +300,74 @@ function marcar(el) {
   total = document.querySelectorAll('.sinal-check.marcado').length;
   document.getElementById('contagem').textContent = total;
 }
+
+var _resultadoTexto = '';
+var _tipoModal = '';
+
+function abrirModal(tipo) {
+  _tipoModal = tipo;
+  document.getElementById('modalCadastro').classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modalCadastro').classList.remove('open');
+}
+
+function enviarCadastro() {
+  var nome = document.getElementById('cadNome').value.trim();
+  var wa = document.getElementById('cadWa').value.trim().replace(/\D/g,'');
+  var concordo = document.getElementById('cadConcordo').checked;
+
+  if (!nome) { alert('Por favor, informe seu nome.'); return; }
+  if (!wa || wa.length < 10) { alert('Por favor, informe um WhatsApp válido com DDD.'); return; }
+  if (!concordo) { alert('Por favor, confirme o aceite para continuar.'); return; }
+
+  // Build message with result
+  var msg = 'Olá ' + nome + '! Aqui está o seu resultado do teste da Dra. Lucia Kratz 💛%0A%0A';
+  
+  if (_tipoModal === 'teste') {
+    var titulo = document.getElementById('res-titulo') ? document.getElementById('res-titulo').textContent : '';
+    var tag = document.getElementById('res-tag') ? document.getElementById('res-tag').textContent : '';
+    var proximo = document.getElementById('res-proximo') ? document.getElementById('res-proximo').textContent : '';
+    msg += tag + '%0A' + titulo + '%0A%0A' + proximo;
+  } else if (_tipoModal === 'checklist') {
+    var contagem = document.getElementById('contagem') ? document.getElementById('contagem').textContent : '0';
+    msg += 'Checklist dos 8 Sinais de Alerta%0AVocê marcou ' + contagem + ' de 8 sinais.%0A%0A';
+    msg += 'Acesse o guia completo: https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/guia-buscar-ajuda.html';
+  }
+
+  msg += '%0A%0AEste resultado foi enviado pela Dra. Lucia Kratz — autora do livro Meu Companheiro é um Psicopata, Será?';
+
+  // Send to person's own WhatsApp
+  var waUrl = 'https://wa.me/55' + wa + '?text=' + msg;
+  window.open(waUrl, '_blank');
+
+  // Also notify Lucia with lead
+  var leadMsg = '🔔 Nova lead cadastrada:%0ANome: ' + encodeURIComponent(nome) + '%0AWhatsApp: ' + wa + '%0ATipo: ' + _tipoModal + '%0AConcordou receber materiais: SIM';
+  setTimeout(function() {
+    window.open('https://wa.me/5562994644950?text=' + leadMsg, '_blank');
+  }, 1500);
+
+  fecharModal();
+}
+
 </script>
+
+<!-- MODAL CADASTRO -->
+<div id="modalCadastro" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#15161C;border:1px solid rgba(201,150,10,0.3);border-radius:8px;padding:32px 28px;max-width:420px;width:100%;">
+    <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:#F0EAD6;margin-bottom:8px;">Receba seu resultado no WhatsApp</div>
+    <p style="font-size:0.85rem;color:#9898B0;margin-bottom:20px;line-height:1.6;">Cadastre-se para receber seu resultado e materiais exclusivos da Dra. Lucia Kratz.</p>
+    <input id="cadNome" type="text" placeholder="Seu nome" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:#F0EAD6;font-family:inherit;margin-bottom:12px;">
+    <input id="cadWa" type="tel" placeholder="Seu WhatsApp (com DDD)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:#F0EAD6;font-family:inherit;margin-bottom:12px;">
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;">
+      <input type="checkbox" id="cadConcordo" style="margin-top:3px;accent-color:#C9960A;width:16px;height:16px;flex-shrink:0;">
+      <span style="font-size:0.78rem;color:#9898B0;line-height:1.5;">Concordo em receber meu resultado e materiais educativos da Dra. Lucia Kratz pelo WhatsApp. Pode cancelar a qualquer momento.</span>
+    </label>
+    <button onclick="enviarCadastro()" style="width:100%;background:linear-gradient(135deg,#9B7200,#E8B84B);color:#06070E;font-size:0.95rem;font-weight:700;padding:13px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;margin-bottom:10px;">Receber meu resultado →</button>
+    <button onclick="fecharModal()" style="width:100%;background:none;border:none;color:#6E6E88;font-size:0.82rem;cursor:pointer;padding:8px;font-family:inherit;">Cancelar</button>
+  </div>
+</div>
+
 </body>
 </html>
