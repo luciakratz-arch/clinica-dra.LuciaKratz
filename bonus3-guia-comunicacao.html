@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Comunicação para Casais — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --fundo:#faf3ea;--card:#fff;--card2:#f2e6d5;
+  --ouro:#b8863f;--dourado:#9a6f2a;
+  --branco:#2c1810;--cinza:#6b5c52;--cinza2:#8a7060;
+  --wine:#6b1f30;--wine-deep:#4a1521;--line:#e8ddd4;--green:#25D366;
+  --verde:#1a6b3a;
+}
+body{font-family:'Poppins',sans-serif;background:var(--fundo);color:var(--branco);line-height:1.7;-webkit-font-smoothing:antialiased;}
+header{background:linear-gradient(180deg,var(--card2) 0%,var(--fundo) 100%);padding:60px 24px 48px;text-align:center;border-bottom:1px solid var(--line);}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza);margin-bottom:16px;display:block;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--wine-deep);font-weight:600;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza);max-width:520px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:56px 24px;}
+.intro-box{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--ouro);border-radius:4px;padding:20px 24px;margin-bottom:40px;font-size:0.88rem;color:var(--cinza2);line-height:1.7;}
+.intro-box strong{color:var(--branco);}
+.eyebrow{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.eyebrow::before{content:'';width:16px;height:1px;background:var(--ouro);}
+.sec-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:20px;}
+.sec{margin-bottom:48px;}
+
+/* TÉCNICAS */
+.tecnica{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px;margin-bottom:14px;transition:border-color .2s;}
+.tecnica:hover{border-color:rgba(191,152,64,0.2);}
+.tec-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:14px;}
+.tec-num{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--ouro);line-height:1;flex-shrink:0;width:40px;}
+.tec-nome{font-size:1rem;font-weight:600;color:var(--branco);margin-bottom:3px;}
+.tec-tag{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--cinza2);}
+.tec-desc{font-size:0.87rem;color:var(--cinza2);line-height:1.7;margin-bottom:14px;}
+.tec-exemplo{background:var(--card2);border:1px solid var(--line);border-radius:4px;padding:14px 16px;font-size:0.82rem;color:var(--cinza2);line-height:1.65;}
+.tec-exemplo strong{color:var(--branco);}
+.tec-exemplo em{color:var(--ouro);}
+.expandir-btn{background:none;border:none;color:var(--ouro);font-size:0.8rem;cursor:pointer;padding:0;margin-top:10px;font-family:inherit;display:flex;align-items:center;gap:4px;}
+.expandir-content{display:none;margin-top:12px;font-size:0.82rem;color:var(--cinza2);line-height:1.7;background:rgba(191,152,64,0.04);border-radius:4px;padding:12px 14px;}
+.expandir-content.open{display:block;}
+
+/* FRASES */
+.frase{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
+.frase:hover{border-color:rgba(191,152,64,0.25);}
+.frase.copiada{border-color:rgba(13,110,62,0.4);}
+.frase-sit{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--ouro);margin-bottom:6px;}
+.frase-txt{font-size:0.88rem;color:var(--cinza2);line-height:1.6;font-style:italic;}
+.frase-acao{font-size:0.75rem;color:var(--cinza);margin-top:6px;}
+
+/* AUTORA */
+.autora{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:28px;display:grid;grid-template-columns:80px 1fr;gap:20px;align-items:center;margin-bottom:32px;}
+.autora-foto{width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(191,152,64,0.3);}
+.autora-nome{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--branco);font-weight:400;margin-bottom:3px;}
+.autora-cargo{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--ouro);margin-bottom:8px;}
+.autora-bio{font-size:0.8rem;color:var(--cinza2);line-height:1.6;}
+.diferenciais{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.dif{font-size:0.7rem;background:rgba(191,152,64,0.08);border:1px solid rgba(191,152,64,0.2);color:var(--ouro);padding:2px 9px;border-radius:20px;}
+
+/* CTA */
+.cta{background:linear-gradient(135deg,var(--wine-deep),var(--wine));border:1px solid rgba(184,134,63,0.2);border-radius:6px;padding:36px 32px;text-align:center;margin-bottom:32px;}
+.cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
+.cta-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:10px;}
+.cta-p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:480px;margin-left:auto;margin-right:auto;}
+.btn-gold{display:inline-block;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:14px 40px;border-radius:4px;text-decoration:none;transition:all .25s;box-shadow:0 6px 24px rgba(191,152,64,0.3);}
+.btn-gold:hover{transform:translateY(-1px);}
+.btn-receber{background:rgba(191,152,64,0.1);border:1px solid rgba(191,152,64,0.3);color:var(--ouro);font-size:0.88rem;font-weight:600;padding:12px 28px;border-radius:4px;cursor:pointer;font-family:inherit;width:100%;margin-top:20px;transition:all .2s;}
+.btn-receber:hover{background:rgba(191,152,64,0.18);}
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid var(--line);}
+#modalCad{display:none;}
+#modalCad.open{display:flex!important;}
+.btn-enviar{width:100%;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:13px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;margin-bottom:10px;}
+@media(max-width:600px){.autora{grid-template-columns:1fr;text-align:center;}.autora-foto{margin:0 auto;}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="h-tag">Bônus exclusivo — Eneagrama no Amor em Tempos de Crise</span>
+  <h1>Guia de <em>Comunicação</em> para Casais</h1>
+  <p>Técnicas da TCC e do Eneagrama para você se comunicar com clareza — mesmo quando a conversa é difícil.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="intro-box">
+    <strong>O que você vai encontrar aqui:</strong> Técnicas de comunicação consciente com base científica — aplicadas ao cotidiano do casal. Cada técnica inclui exemplos práticos e frases que você pode usar hoje. Ao final, receba o guia completo no WhatsApp.
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">Técnicas validadas</div>
+    <div class="sec-h">Como falar de forma que o outro consiga ouvir</div>
+
+    <div class="tecnica">
+      <div class="tec-header">
+        <div class="tec-num">I</div>
+        <div><div class="tec-nome">Comunicação Não-Violenta</div><div class="tec-tag">TCC · Conexão emocional</div></div>
+      </div>
+      <p class="tec-desc">Observar sem julgar, sentir sem culpar, pedir sem exigir. A CNV é a base para conversas que geram conexão em vez de defesa.</p>
+      <div class="tec-exemplo">
+        <strong>Em vez de:</strong> "Você nunca me escuta!"<br><br>
+        <strong>Diga:</strong> "Quando percebo que você olha pro celular enquanto falo, <em>me sinto invisível</em>. <em>Preciso</em> de momentos em que estejamos presentes um para o outro. <em>Você toparia</em> colocar o celular de lado por 20 minutos à noite?"
+      </div>
+      <button class="expandir-btn" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'▴ Ocultar estrutura':'▾ Ver estrutura completa';">▾ Ver estrutura completa</button>
+      <div class="expandir-content">
+        <strong>Os 4 passos:</strong><br>
+        1. <strong>Observação</strong> — Descreva o fato sem interpretação.<br>
+        2. <strong>Sentimento</strong> — Nomeie o que você sente.<br>
+        3. <strong>Necessidade</strong> — Identifique o que você precisa.<br>
+        4. <strong>Pedido</strong> — Faça um pedido concreto, não uma exigência.
+      </div>
+    </div>
+
+    <div class="tecnica">
+      <div class="tec-header">
+        <div class="tec-num">II</div>
+        <div><div class="tec-nome">Pausa Regulada</div><div class="tec-tag">TCC · Autorregulação emocional</div></div>
+      </div>
+      <p class="tec-desc">Quando a discussão esquenta, o cérebro entra em modo de sobrevivência — e não há comunicação possível nesse estado. A pausa interrompe esse ciclo.</p>
+      <div class="tec-exemplo">
+        <strong>Como aplicar:</strong> Quando sentir que a discussão está escalando, diga: <em>"Preciso de 20 minutos para me acalmar. Não estou fugindo — volto para continuar essa conversa."</em><br><br>
+        Use o tempo para respirar, andar ou qualquer atividade que regule o sistema nervoso. Depois volte.
+      </div>
+      <button class="expandir-btn" onclick="this.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.classList.contains('open')?'▴ Ocultar':'▾ Por que isso funciona';">▾ Por que isso funciona</button>
+      <div class="expandir-content">Durante conflitos intensos, o córtex pré-frontal — responsável pelo raciocínio — reduz sua atividade. A pausa de 20 minutos permite que o sistema nervoso volte ao equilíbrio. Depois disso, a conversa tem chances reais de chegar a algum lugar.</div>
+    </div>
+
+    <div class="tecnica">
+      <div class="tec-header">
+        <div class="tec-num">III</div>
+        <div><div class="tec-nome">Espelhamento Ativo</div><div class="tec-tag">Empatia · Escuta real</div></div>
+      </div>
+      <p class="tec-desc">A maioria das brigas é sobre querer ser compreendido, não sobre o tema da discussão. O espelhamento cria essa sensação de ser ouvido de verdade.</p>
+      <div class="tec-exemplo">
+        <em>Parceiro(a):</em> "Fico com raiva quando chego em casa e a casa está bagunçada."<br><br>
+        <em>Você:</em> "Então quando você chega e vê a casa bagunçada, fica com raiva — entendi certo?"<br><br>
+        Só após o outro confirmar que foi compreendido você expressa o seu lado.
+      </div>
+    </div>
+
+    <div class="tecnica">
+      <div class="tec-header">
+        <div class="tec-num">IV</div>
+        <div><div class="tec-nome">Reunião Semanal do Casal</div><div class="tec-tag">Estrutura · Prevenção de conflito</div></div>
+      </div>
+      <p class="tec-desc">Um espaço semanal estruturado para conversar sobre como foi a semana — antes que as tensões se acumulem.</p>
+      <div class="tec-exemplo">
+        <strong>Roteiro sugerido (30 min):</strong><br>
+        1. O que eu apreciei em você essa semana<br>
+        2. O que me pesou e como me senti<br>
+        3. Um pedido para a próxima semana<br>
+        4. Como podemos nos apoiar melhor
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">Use agora</div>
+    <div class="sec-h">Frases para momentos difíceis — clique para copiar</div>
+
+    <div class="frase" onclick="copiar(this)">
+      <div class="frase-sit">Quando precisa de espaço</div>
+      <div class="frase-txt">"Preciso de um momento para processar o que sinto. Não estou me afastando de você — estou me cuidando para conseguir conversar melhor."</div>
+      <div class="frase-acao">Clique para copiar</div>
+    </div>
+    <div class="frase" onclick="copiar(this)">
+      <div class="frase-sit">Quando quer retomar conversa difícil</div>
+      <div class="frase-txt">"Ainda estou pensando no que falamos e gostaria de continuar quando você estiver disponível. Isso importa pra mim."</div>
+      <div class="frase-acao">Clique para copiar</div>
+    </div>
+    <div class="frase" onclick="copiar(this)">
+      <div class="frase-sit">Quando quer pedir desculpas de verdade</div>
+      <div class="frase-txt">"Errei quando disse aquilo. Entendo que te magoei e não quero que você sinta isso por causa de mim. Me importo com você e quero fazer diferente."</div>
+      <div class="frase-acao">Clique para copiar</div>
+    </div>
+    <div class="frase" onclick="copiar(this)">
+      <div class="frase-sit">Quando sente que não está sendo ouvido(a)</div>
+      <div class="frase-txt">"Quero entender se estou me fazendo entender — você pode me dizer o que ouviu quando falei sobre isso?"</div>
+      <div class="frase-acao">Clique para copiar</div>
+    </div>
+    <div class="frase" onclick="copiar(this)">
+      <div class="frase-sit">Quando a situação está muito tensa</div>
+      <div class="frase-txt">"Neste momento estou sobrecarregado(a) e posso acabar dizendo algo que não quero. Vamos dar uma pausa de 20 minutos e voltar?"</div>
+      <div class="frase-acao">Clique para copiar</div>
+    </div>
+
+    <button class="btn-receber" onclick="document.getElementById('modalCad').classList.add('open')">📲 Receber o guia completo no WhatsApp</button>
+  </div>
+
+  <!-- AUTORA -->
+  <div class="autora">
+    <img class="autora-foto" src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/foto-dra-lucia.png" alt="Dra. Lucia Kratz" onerror="this.style.display='none'">
+    <div>
+      <div class="autora-nome">Dra. Lucia Kratz</div>
+      <div class="autora-cargo">CRP 09/20590 · Psicóloga · Goiânia, GO</div>
+      <div class="autora-bio">Doutora em Psicologia com especialização em TCC e Eneagrama aplicados aos relacionamentos. Atende presencialmente em Goiânia e online para todo o Brasil. Mais de 24 anos de experiência clínica.</div>
+      <div class="diferenciais"><span class="dif">TCC</span><span class="dif">Eneagrama</span><span class="dif">Neuropsicologia</span><span class="dif">Musicoterapia</span><span class="dif">Neuromodulação</span></div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <span class="cta-tag">Quer aplicar com apoio especializado?</span>
+    <div class="cta-h">Atendimento clínico com a Dra. Lucia</div>
+    <p class="cta-p">Presencial em Goiânia ou online para todo o Brasil — individual ou para casais. TCC, Eneagrama e abordagem genuinamente humana. Participantes do curso têm condições especiais.</p>
+    <a class="btn-gold" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Fiz%20o%20curso%20Eneagrama%20no%20Amor%20e%20gostaria%20de%20agendar%20uma%20consulta." target="_blank">Agendar consulta →</a>
+    <div style="margin-top:12px;font-size:0.75rem;color:var(--cinza);">(62) 9464-4950 · Goiânia, GO · Online</div>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2025 Dra. Lucia Kratz · CRP 09/20590 · Eneagrama no Amor em Tempos de Crise</p>
+</footer>
+
+<!-- MODAL -->
+<div id="modalCad" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border:1px solid rgba(201,150,10,0.3);border-radius:8px;padding:32px 28px;max-width:420px;width:100%;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#F0EAD6;margin-bottom:8px;">Receber o guia no WhatsApp</div>
+    <p style="font-size:0.85rem;color:var(--cinza);margin-bottom:20px;line-height:1.6;">Preencha seus dados e o guia completo chega na hora — para guardar e usar sempre que precisar.</p>
+    <input id="cadNome" type="text" placeholder="Seu nome" style="width:100%;background:var(--card2);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:inherit;margin-bottom:12px;">
+    <input id="cadWa" type="tel" placeholder="Seu WhatsApp com DDD" style="width:100%;background:var(--card2);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:inherit;margin-bottom:12px;">
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;">
+      <input type="checkbox" id="cadConcordo" style="margin-top:3px;accent-color:#C9960A;width:16px;height:16px;flex-shrink:0;">
+      <span style="font-size:0.78rem;color:var(--cinza);line-height:1.5;">Concordo em receber o guia e materiais da Dra. Lucia Kratz pelo WhatsApp, conforme a <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/politica-privacidade.html" style="color:#C9960A;" target="_blank">Política de Privacidade</a>.</span>
+    </label>
+    <button class="btn-enviar" onclick="enviar()">Receber meu guia →</button>
+    <button onclick="document.getElementById('modalCad').classList.remove('open')" style="width:100%;background:none;border:none;color:#6E6E88;font-size:0.82rem;cursor:pointer;padding:8px;font-family:inherit;">Cancelar</button>
+  </div>
+</div>
+
+<script>
+function copiar(el) {
+  var txt = el.querySelector('.frase-txt').textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    el.classList.add('copiada');
+    el.querySelector('.frase-acao').textContent = '✓ Copiado!';
+    setTimeout(function(){el.classList.remove('copiada');el.querySelector('.frase-acao').textContent='Clique para copiar';},2500);
+  }).catch(function(){ alert('Copie manualmente: ' + txt); });
+}
+
+function enviar() {
+  var nome = document.getElementById('cadNome').value.trim();
+  var wa = document.getElementById('cadWa').value.trim().replace(/\D/g,'');
+  var ok = document.getElementById('cadConcordo').checked;
+  if (!nome) { alert('Informe seu nome.'); return; }
+  if (!wa || wa.length < 10) { alert('Informe um WhatsApp válido com DDD.'); return; }
+  if (!ok) { alert('Confirme o aceite para continuar.'); return; }
+
+  var msg = 'Olá ' + nome + '! 💬 Seu Guia de Comunicação para Casais — Dra. Lucia Kratz\n\n'
+    + '4 técnicas que transformam a comunicação:\n\n'
+    + 'I. Comunicação Não-Violenta — Observar sem julgar, sentir sem culpar, pedir sem exigir.\n\n'
+    + 'II. Pausa Regulada — Quando a tensão sobe, 20 minutos de pausa antes de continuar.\n\n'
+    + 'III. Espelhamento Ativo — Refletir o que o outro disse antes de responder.\n\n'
+    + 'IV. Reunião Semanal — Um espaço fixo semanal para cuidar da relação.\n\n'
+    + '💡 Frase para usar hoje:\n"Preciso de um momento para processar. Não estou me afastando — vou voltar para continuar."\n\n'
+    + '────────────\n'
+    + '🩺 Quer aplicar com apoio especializado?\nDra. Lucia Kratz — (62) 9464-4950\nPresencial em Goiânia · Online para todo o Brasil\n'
+    + '_© CRP 09/20590_';
+
+  window.open('https://wa.me/55' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  var lead = '🔔 Nova lead — Guia Comunicação\nNome: ' + nome + '\nWhatsApp: ' + wa;
+  setTimeout(function(){ window.open('https://wa.me/5562994644950?text=' + encodeURIComponent(lead), '_blank'); }, 1500);
+  document.getElementById('modalCad').classList.remove('open');
+}
+</script>
+</body>
+</html>

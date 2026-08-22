@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist de Saúde no Relacionamento — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --fundo:#faf3ea;--card:#fff;--card2:#f2e6d5;
+  --ouro:#b8863f;--dourado:#9a6f2a;
+  --branco:#2c1810;--cinza:#6b5c52;--cinza2:#8a7060;
+  --wine:#6b1f30;--wine-deep:#4a1521;--line:#e8ddd4;--green:#25D366;
+  --verde:#1a6b3a;
+}
+body{font-family:'Poppins',sans-serif;background:var(--fundo);color:var(--branco);line-height:1.7;-webkit-font-smoothing:antialiased;}
+header{background:linear-gradient(180deg,var(--card2) 0%,var(--fundo) 100%);padding:60px 24px 48px;text-align:center;border-bottom:1px solid var(--line);}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza);margin-bottom:16px;display:block;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--wine-deep);font-weight:600;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza);max-width:520px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:56px 24px;}
+.intro-box{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--ouro);border-radius:4px;padding:20px 24px;margin-bottom:40px;font-size:0.88rem;color:var(--cinza2);line-height:1.7;}
+.intro-box strong{color:var(--branco);}
+
+/* CHECKLIST */
+.secao-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);margin-bottom:8px;font-weight:400;}
+.secao-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.secao-tag::before{content:'';width:16px;height:1px;background:var(--ouro);}
+.grupo{margin-bottom:36px;}
+.grupo-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:14px;}
+.label-verde{background:rgba(13,110,62,0.08);color:#1a6b3a;border:1px solid rgba(13,110,62,0.25);}
+.label-amarelo{background:rgba(180,100,0,0.08);color:#8a5200;border:1px solid rgba(180,100,0,0.25);}
+.label-vermelho{background:rgba(139,32,32,0.08);color:#8b2020;border:1px solid rgba(139,32,32,0.25);}
+
+.item{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:18px 20px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;cursor:pointer;transition:border-color .2s;}
+.item:hover{border-color:rgba(191,152,64,0.2);}
+.item.marcado{border-color:rgba(191,152,64,0.3);}
+.chk{width:22px;height:22px;border:2px solid rgba(255,255,255,0.15);border-radius:4px;flex-shrink:0;margin-top:2px;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.item.marcado .chk{background:var(--dourado);border-color:var(--dourado);}
+.item.marcado .chk::after{content:'✓';color:#06070E;font-size:13px;font-weight:700;}
+.item-titulo{font-size:0.9rem;font-weight:600;color:var(--branco);margin-bottom:3px;}
+.item-desc{font-size:0.8rem;color:var(--cinza);line-height:1.55;}
+
+/* BARRA DE PROGRESSO */
+.progress-wrap{background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:24px 26px;margin-bottom:32px;}
+.progress-wrap h3{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--branco);margin-bottom:16px;font-weight:400;}
+.barra-grupo{margin-bottom:14px;}
+.barra-label{display:flex;justify-content:space-between;font-size:0.78rem;color:var(--cinza2);margin-bottom:5px;}
+.barra-track{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;}
+.barra-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.barra-verde{background:linear-gradient(90deg,#0D6E3E,#6EE7A8);}
+.barra-amarelo{background:linear-gradient(90deg,#C47A00,#F0C060);}
+.barra-vermelho{background:linear-gradient(90deg,#8B2020,#F08080);}
+.resultado-texto{margin-top:16px;font-size:0.85rem;color:var(--cinza2);line-height:1.65;padding:14px 16px;background:rgba(255,255,255,0.03);border-radius:4px;}
+.resultado-texto strong{color:var(--branco);}
+
+/* AUTORA */
+.autora{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:32px;display:grid;grid-template-columns:90px 1fr;gap:24px;align-items:center;margin-bottom:36px;}
+.autora-foto{width:90px;height:90px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(191,152,64,0.3);}
+.autora-nome{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--branco);font-weight:400;margin-bottom:4px;}
+.autora-cargo{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--ouro);margin-bottom:10px;}
+.autora-bio{font-size:0.82rem;color:var(--cinza2);line-height:1.65;}
+.diferenciais{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.dif{font-size:0.72rem;background:rgba(191,152,64,0.08);border:1px solid rgba(191,152,64,0.2);color:var(--ouro);padding:3px 10px;border-radius:20px;}
+
+/* CTA */
+.cta{background:linear-gradient(135deg,var(--wine-deep),var(--wine));border:1px solid rgba(184,134,63,0.2);border-radius:6px;padding:36px 32px;text-align:center;margin-bottom:36px;}
+.cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
+.cta-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:10px;line-height:1.3;}
+.cta-p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:480px;margin-left:auto;margin-right:auto;}
+.btn-gold{display:inline-block;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:14px 40px;border-radius:4px;text-decoration:none;transition:all .25s;box-shadow:0 6px 24px rgba(191,152,64,0.3);}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 10px 32px rgba(191,152,64,0.4);}
+.btn-enviar{width:100%;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:14px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:all .25s;}
+.btn-enviar:hover{opacity:.9;}
+.btn-receber{background:rgba(191,152,64,0.1);border:1px solid rgba(191,152,64,0.3);color:var(--ouro);font-size:0.88rem;font-weight:600;padding:12px 28px;border-radius:4px;cursor:pointer;font-family:inherit;width:100%;transition:all .2s;}
+.btn-receber:hover{background:rgba(191,152,64,0.18);}
+
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid var(--line);}
+#modalCad{display:none;}
+#modalCad.open{display:flex!important;}
+@media(max-width:600px){.autora{grid-template-columns:1fr;text-align:center;}.autora-foto{margin:0 auto;}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="h-tag">Bônus exclusivo — Eneagrama no Amor em Tempos de Crise</span>
+  <h1>Checklist de <em>Saúde</em> no Relacionamento</h1>
+  <p>Avalie com honestidade e clareza como está a saúde da sua relação — com base clínica e sem julgamento.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="intro-box">
+    <strong>Como usar:</strong> Marque cada item que representa algo que você reconhece na sua relação atual. Os itens estão organizados por categoria. Ao final, você verá uma análise acumulada e poderá receber o relatório no WhatsApp.
+  </div>
+
+  <!-- GRUPO 1 -->
+  <div class="grupo">
+    <span class="grupo-label label-verde">Sinais saudáveis</span>
+    <div class="item" onclick="marcar(this,'v')"><div class="chk"></div><div><div class="item-titulo">Comunicação respeitosa mesmo em conflito</div><div class="item-desc">Conseguimos conversar sobre problemas sem gritar, humilhar ou silenciar.</div></div></div>
+    <div class="item" onclick="marcar(this,'v')"><div class="chk"></div><div><div class="item-titulo">Respeito ao espaço e às necessidades individuais</div><div class="item-desc">Cada um preserva amizades, interesses e tempo para si sem que isso gere crises.</div></div></div>
+    <div class="item" onclick="marcar(this,'v')"><div class="chk"></div><div><div class="item-titulo">Responsabilidade emocional real</div><div class="item-desc">Quando erramos, pedimos desculpas genuínas e mudamos o comportamento.</div></div></div>
+    <div class="item" onclick="marcar(this,'v')"><div class="chk"></div><div><div class="item-titulo">Sentimento de ser visto e valorizado</div><div class="item-desc">Me sinto reconhecido(a) pelo outro — não só pelo que faço, mas por quem sou.</div></div></div>
+    <div class="item" onclick="marcar(this,'v')"><div class="chk"></div><div><div class="item-titulo">Projetos e sonhos em comum</div><div class="item-desc">Temos direção compartilhada — um futuro que construímos juntos.</div></div></div>
+  </div>
+
+  <!-- GRUPO 2 -->
+  <div class="grupo">
+    <span class="grupo-label label-amarelo">Pontos de atenção</span>
+    <div class="item" onclick="marcar(this,'a')"><div class="chk"></div><div><div class="item-titulo">Conflitos cíclicos sem resolução</div><div class="item-desc">Brigamos pelos mesmos assuntos repetidamente — sem chegar a lugar nenhum.</div></div></div>
+    <div class="item" onclick="marcar(this,'a')"><div class="chk"></div><div><div class="item-titulo">Falha na comunicação emocional</div><div class="item-desc">Sinto que meu parceiro(a) não me entende de verdade, mesmo quando me esforço.</div></div></div>
+    <div class="item" onclick="marcar(this,'a')"><div class="chk"></div><div><div class="item-titulo">Clima de crítica e julgamento constante</div><div class="item-desc">Existe mais crítica do que apoio na relação — me sinto avaliado(a) com frequência.</div></div></div>
+    <div class="item" onclick="marcar(this,'a')"><div class="chk"></div><div><div class="item-titulo">Silêncio como mecanismo de defesa</div><div class="item-desc">Evitamos conversas importantes por medo de conflito.</div></div></div>
+    <div class="item" onclick="marcar(this,'a')"><div class="chk"></div><div><div class="item-titulo">Hipervigilância emocional</div><div class="item-desc">Ando "na ponta dos pés" para não provocar reações negativas.</div></div></div>
+  </div>
+
+  <!-- GRUPO 3 -->
+  <div class="grupo">
+    <span class="grupo-label label-vermelho">Sinais de alerta</span>
+    <div class="item" onclick="marcar(this,'r')"><div class="chk"></div><div><div class="item-titulo">Humilhação, desrespeito ou controle excessivo</div><div class="item-desc">Há episódios de desvalorização, controle de atividades ou humor imprevisível.</div></div></div>
+    <div class="item" onclick="marcar(this,'r')"><div class="chk"></div><div><div class="item-titulo">Culpabilização sistemática</div><div class="item-desc">Me sinto constantemente culpado(a) por coisas que não fiz — possível manipulação.</div></div></div>
+    <div class="item" onclick="marcar(this,'r')"><div class="chk"></div><div><div class="item-titulo">Isolamento de rede de apoio</div><div class="item-desc">Fui me afastando de amigos e família por conta da relação.</div></div></div>
+    <div class="item" onclick="marcar(this,'r')"><div class="chk"></div><div><div class="item-titulo">Supressão emocional por medo</div><div class="item-desc">Tenho medo de expressar o que sinto ou penso — me calo para evitar reações.</div></div></div>
+    <div class="item" onclick="marcar(this,'r')"><div class="chk"></div><div><div class="item-titulo">Agressividade ou ameaças</div><div class="item-desc">Já houve episódios de agressividade física, verbal intensa ou ameaças.</div></div></div>
+  </div>
+
+  <!-- RESULTADO COM BARRAS -->
+  <div class="progress-wrap" id="progress-wrap">
+    <h3>Sua análise acumulada</h3>
+    <div class="barra-grupo">
+      <div class="barra-label"><span>Sinais saudáveis</span><span id="cnt-v">0 / 5</span></div>
+      <div class="barra-track"><div class="barra-fill barra-verde" id="bar-v" style="width:0%"></div></div>
+    </div>
+    <div class="barra-grupo">
+      <div class="barra-label"><span>Pontos de atenção</span><span id="cnt-a">0 / 5</span></div>
+      <div class="barra-track"><div class="barra-fill barra-amarelo" id="bar-a" style="width:0%"></div></div>
+    </div>
+    <div class="barra-grupo">
+      <div class="barra-label"><span>Sinais de alerta</span><span id="cnt-r">0 / 5</span></div>
+      <div class="barra-track"><div class="barra-fill barra-vermelho" id="bar-r" style="width:0%"></div></div>
+    </div>
+    <div class="resultado-texto" id="res-texto">Marque os itens acima para ver sua análise aqui.</div>
+    <div style="margin-top:16px;">
+      <button class="btn-receber" onclick="document.getElementById('modalCad').classList.add('open')">📲 Receber relatório completo no WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- AUTORA -->
+  <div class="autora">
+    <img class="autora-foto" src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/foto-dra-lucia.png" alt="Dra. Lucia Kratz" onerror="this.style.display='none'">
+    <div>
+      <div class="autora-nome">Dra. Lucia Kratz</div>
+      <div class="autora-cargo">CRP 09/20590 · Psicóloga · Goiânia, GO</div>
+      <div class="autora-bio">Doutora em Psicologia com especialização em Neuropsicologia e TCC aplicada aos relacionamentos. Mais de 24 anos de experiência clínica. Atende presencialmente em Goiânia e online para todo o Brasil.</div>
+      <div class="diferenciais">
+        <span class="dif">TCC</span>
+        <span class="dif">Eneagrama</span>
+        <span class="dif">Neuropsicologia</span>
+        <span class="dif">Musicoterapia</span>
+        <span class="dif">Neuromodulação</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <span class="cta-tag">Aprofunde a jornada</span>
+    <div class="cta-h">Seu companheiro tem comportamentos que te preocupam?</div>
+    <p class="cta-p">O livro <em>"Meu Companheiro é um Psicopata, Será?"</em> traz análise clínica aprofundada sobre padrões manipuladores e controlativos — e como identificar, entender e se proteger.</p>
+    <a class="btn-gold" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank">Conhecer o livro →</a>
+    <div style="margin-top:12px;font-size:0.75rem;color:var(--cinza);">Dra. Lucia Kratz & Dr. Carlos Azevedo · Acesso imediato</div>
+  </div>
+
+  <div style="font-size:0.78rem;color:var(--cinza);text-align:center;line-height:1.6;padding:16px;border-top:1px solid var(--line);">
+    ⚠ Este checklist é orientativo e não substitui avaliação clínica. Se estiver em situação de risco, ligue <strong>180</strong> (Central da Mulher).
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2025 Dra. Lucia Kratz · CRP 09/20590 · Eneagrama no Amor em Tempos de Crise</p>
+</footer>
+
+<!-- MODAL -->
+<div id="modalCad" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border:1px solid rgba(201,150,10,0.3);border-radius:8px;padding:32px 28px;max-width:420px;width:100%;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#F0EAD6;margin-bottom:8px;">Receba sua análise no WhatsApp</div>
+    <p style="font-size:0.85rem;color:var(--cinza);margin-bottom:20px;line-height:1.6;">Preencha seus dados e o relatório completo chega na hora.</p>
+    <input id="cadNome" type="text" placeholder="Seu nome" style="width:100%;background:var(--card2);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:inherit;margin-bottom:12px;">
+    <input id="cadWa" type="tel" placeholder="Seu WhatsApp com DDD" style="width:100%;background:var(--card2);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:inherit;margin-bottom:12px;">
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;">
+      <input type="checkbox" id="cadConcordo" style="margin-top:3px;accent-color:#C9960A;width:16px;height:16px;flex-shrink:0;">
+      <span style="font-size:0.78rem;color:var(--cinza);line-height:1.5;">Concordo em receber meu resultado e materiais da Dra. Lucia Kratz pelo WhatsApp, conforme a <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/politica-privacidade.html" style="color:#C9960A;" target="_blank">Política de Privacidade</a>.</span>
+    </label>
+    <button class="btn-enviar" onclick="enviar()">Receber meu relatório →</button>
+    <button onclick="document.getElementById('modalCad').classList.remove('open')" style="width:100%;background:none;border:none;color:#6E6E88;font-size:0.82rem;cursor:pointer;padding:8px;font-family:inherit;">Cancelar</button>
+  </div>
+</div>
+
+<script>
+var sc = {v:0, a:0, r:0};
+
+function marcar(el, tipo) {
+  el.classList.toggle('marcado');
+  sc[tipo] += el.classList.contains('marcado') ? 1 : -1;
+  atualizar();
+}
+
+function atualizar() {
+  document.getElementById('cnt-v').textContent = sc.v + ' / 5';
+  document.getElementById('cnt-a').textContent = sc.a + ' / 5';
+  document.getElementById('cnt-r').textContent = sc.r + ' / 5';
+  document.getElementById('bar-v').style.width = (sc.v/5*100) + '%';
+  document.getElementById('bar-a').style.width = (sc.a/5*100) + '%';
+  document.getElementById('bar-r').style.width = (sc.r/5*100) + '%';
+
+  var total = sc.v + sc.a + sc.r;
+  var txt = '';
+  if (total === 0) {
+    txt = 'Marque os itens acima para ver sua análise aqui.';
+  } else if (sc.r >= 3) {
+    txt = '<strong>Atenção urgente:</strong> você identificou múltiplos sinais de alerta. Isso merece apoio profissional imediato. A Dra. Lucia pode te orientar com segurança e sem julgamento. Considere entrar em contato.';
+  } else if (sc.r >= 1 || sc.a >= 3) {
+    txt = '<strong>Há padrões que merecem cuidado:</strong> você identificou pontos de atenção relevantes. O Eneagrama aplicado ao relacionamento pode ajudar muito a entender e transformar esses padrões. Uma conversa com a Dra. Lucia é um ótimo próximo passo.';
+  } else if (sc.v >= 3) {
+    txt = '<strong>Sua relação tem bases saudáveis:</strong> os sinais positivos predominam. Continue investindo no autoconhecimento e na comunicação consciente — o curso de Eneagrama pode aprofundar ainda mais essa conexão.';
+  } else {
+    txt = '<strong>Análise em andamento:</strong> continue marcando os itens para ter uma leitura mais completa da sua situação.';
+  }
+  document.getElementById('res-texto').innerHTML = txt;
+}
+
+function enviar() {
+  var nome = document.getElementById('cadNome').value.trim();
+  var wa = document.getElementById('cadWa').value.trim().replace(/\D/g,'');
+  var ok = document.getElementById('cadConcordo').checked;
+  if (!nome) { alert('Informe seu nome.'); return; }
+  if (!wa || wa.length < 10) { alert('Informe um WhatsApp válido com DDD.'); return; }
+  if (!ok) { alert('Confirme o aceite para continuar.'); return; }
+
+  var nivel = sc.r>=3 ? '🔴 Sinais sérios identificados' : sc.r>=1||sc.a>=3 ? '🟡 Pontos de atenção relevantes' : '🟢 Relação com bases saudáveis';
+  var msg = 'Olá ' + nome + '! 💛 Aqui está sua análise do Checklist de Saúde no Relacionamento — Dra. Lucia Kratz\n\n'
+    + '📊 RESULTADO: ' + nivel + '\n\n'
+    + '✅ Sinais saudáveis marcados: ' + sc.v + '/5\n'
+    + '⚠️ Pontos de atenção: ' + sc.a + '/5\n'
+    + '🚨 Sinais de alerta: ' + sc.r + '/5\n\n'
+    + document.getElementById('res-texto').innerText + '\n\n'
+    + '📱 Dra. Lucia Kratz — (62) 9464-4950\n'
+    + '_© CRP 09/20590_';
+
+  window.open('https://wa.me/55' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  var lead = '🔔 Nova lead — Checklist Amor\nNome: ' + nome + '\nWhatsApp: ' + wa + '\nResultado: ' + nivel;
+  setTimeout(function(){ window.open('https://wa.me/5562994644950?text=' + encodeURIComponent(lead), '_blank'); }, 1500);
+  document.getElementById('modalCad').classList.remove('open');
+}
+</script>
+</body>
+</html>

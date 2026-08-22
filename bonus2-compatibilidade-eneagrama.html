@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compatibilidade pelo Eneagrama — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --fundo:#faf3ea;--card:#fff;--card2:#f2e6d5;
+  --ouro:#b8863f;--dourado:#9a6f2a;
+  --branco:#2c1810;--cinza:#6b5c52;--cinza2:#8a7060;
+  --wine:#6b1f30;--wine-deep:#4a1521;--line:#e8ddd4;--green:#25D366;
+  --verde:#1a6b3a;
+}
+body{font-family:'Poppins',sans-serif;background:var(--fundo);color:var(--branco);line-height:1.7;-webkit-font-smoothing:antialiased;}
+header{background:linear-gradient(180deg,var(--card2) 0%,var(--fundo) 100%);padding:60px 24px 48px;text-align:center;border-bottom:1px solid var(--line);}
+.h-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza);margin-bottom:16px;display:block;}
+header h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--wine-deep);font-weight:600;margin-bottom:10px;line-height:1.2;}
+header h1 em{color:var(--ouro);font-style:italic;}
+header p{font-size:0.95rem;color:var(--cinza);max-width:520px;margin:0 auto;}
+.wrap{max-width:720px;margin:0 auto;padding:56px 24px;}
+.intro-box{background:var(--card2);border:1px solid var(--line);border-left:3px solid var(--ouro);border-radius:4px;padding:20px 24px;margin-bottom:40px;font-size:0.88rem;color:var(--cinza2);line-height:1.7;}
+.intro-box strong{color:var(--branco);}
+
+/* ETAPAS */
+.etapa{display:none;}
+.etapa.ativa{display:block;}
+.etapa-titulo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);margin-bottom:6px;font-weight:400;}
+.etapa-sub{font-size:0.85rem;color:var(--cinza2);margin-bottom:24px;}
+.etapa-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--cinza2);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.etapa-tag::before{content:'';width:16px;height:1px;background:var(--ouro);}
+
+/* PERGUNTA */
+.pergunta{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:22px;margin-bottom:16px;}
+.perg-enunciado{font-size:0.92rem;color:var(--branco);font-weight:600;margin-bottom:14px;line-height:1.5;}
+.opcoes{display:flex;flex-direction:column;gap:8px;}
+.opcao{background:var(--card2);border:1px solid var(--line);border-radius:4px;padding:10px 14px;font-size:0.85rem;color:var(--cinza2);cursor:pointer;transition:all .2s;text-align:left;}
+.opcao:hover{border-color:rgba(191,152,64,0.3);color:var(--branco);}
+.opcao.sel{border-color:var(--dourado);background:rgba(191,152,64,0.08);color:var(--branco);}
+
+/* PROGRESSO DE PERGUNTAS */
+.perg-progress{display:flex;gap:5px;margin-bottom:28px;}
+.pp{height:3px;flex:1;background:rgba(255,255,255,0.06);border-radius:2px;transition:background .3s;}
+.pp.feita{background:var(--dourado);}
+.pp.atual{background:rgba(191,152,64,0.4);}
+
+.btn-proximo{background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.9rem;font-weight:700;padding:12px 32px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:12px;}
+.btn-proximo:hover{opacity:.9;}
+.btn-proximo:disabled{opacity:.4;cursor:not-allowed;}
+
+/* RESULTADO COMPATIBILIDADE */
+.comp-card{background:var(--card2);border:1px solid rgba(191,152,64,0.2);border-radius:6px;padding:28px 26px;margin-bottom:24px;}
+.comp-tipos{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;}
+.tipo-badge{background:rgba(191,152,64,0.1);border:1px solid rgba(191,152,64,0.3);border-radius:6px;padding:10px 18px;text-align:center;}
+.tipo-num{font-family:'Cormorant Garamond',serif;font-size:2rem;color:var(--ouro);line-height:1;}
+.tipo-nome{font-size:0.75rem;color:var(--cinza2);margin-top:2px;}
+.comp-mais{font-size:1.5rem;color:var(--cinza);align-self:center;}
+.comp-score-wrap{margin-bottom:18px;}
+.comp-score-label{display:flex;justify-content:space-between;font-size:0.8rem;color:var(--cinza2);margin-bottom:6px;}
+.comp-barra-track{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;}
+.comp-barra-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--dourado),var(--ouro));transition:width .8s ease;}
+.comp-desc{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:16px;}
+.comp-dica{background:rgba(201,150,10,0.05);border-left:3px solid var(--ouro);padding:12px 16px;border-radius:0 4px 4px 0;font-size:0.83rem;color:var(--cinza2);line-height:1.65;}
+.comp-dica strong{color:var(--branco);}
+
+/* AUTORA */
+.autora{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:28px;display:grid;grid-template-columns:80px 1fr;gap:20px;align-items:center;margin-bottom:32px;}
+.autora-foto{width:80px;height:80px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(191,152,64,0.3);}
+.autora-nome{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--branco);font-weight:400;margin-bottom:3px;}
+.autora-cargo{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--ouro);margin-bottom:8px;}
+.autora-bio{font-size:0.8rem;color:var(--cinza2);line-height:1.6;}
+.diferenciais{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.dif{font-size:0.7rem;background:rgba(191,152,64,0.08);border:1px solid rgba(191,152,64,0.2);color:var(--ouro);padding:2px 9px;border-radius:20px;}
+
+/* CTA */
+.cta{background:linear-gradient(135deg,var(--wine-deep),var(--wine));border:1px solid rgba(184,134,63,0.2);border-radius:6px;padding:36px 32px;text-align:center;margin-bottom:32px;}
+.cta-tag{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ouro);margin-bottom:12px;display:block;}
+.cta-h{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--branco);font-weight:400;margin-bottom:10px;}
+.cta-p{font-size:0.88rem;color:var(--cinza2);line-height:1.7;margin-bottom:22px;max-width:480px;margin-left:auto;margin-right:auto;}
+.btn-gold{display:inline-block;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:14px 40px;border-radius:4px;text-decoration:none;transition:all .25s;box-shadow:0 6px 24px rgba(191,152,64,0.3);}
+.btn-gold:hover{transform:translateY(-1px);}
+.btn-receber{background:rgba(191,152,64,0.1);border:1px solid rgba(191,152,64,0.3);color:var(--ouro);font-size:0.88rem;font-weight:600;padding:12px 28px;border-radius:4px;cursor:pointer;font-family:inherit;width:100%;margin-top:16px;transition:all .2s;}
+.btn-receber:hover{background:rgba(191,152,64,0.18);}
+footer{text-align:center;padding:28px 24px;font-size:0.76rem;color:var(--cinza);border-top:1px solid var(--line);}
+#modalCad{display:none;}
+#modalCad.open{display:flex!important;}
+.btn-enviar{width:100%;background:linear-gradient(135deg,var(--dourado),var(--ouro));color:#06070E;font-size:0.95rem;font-weight:700;padding:13px;border-radius:4px;border:none;cursor:pointer;font-family:inherit;margin-bottom:10px;}
+@media(max-width:600px){.autora{grid-template-columns:1fr;text-align:center;}.autora-foto{margin:0 auto;}.comp-tipos{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="h-tag">Bônus exclusivo — Eneagrama no Amor em Tempos de Crise</span>
+  <h1>Teste de <em>Compatibilidade</em> pelo Eneagrama</h1>
+  <p>Responda algumas perguntas sobre você e seu parceiro(a) para descobrir como os perfis de vocês se relacionam.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="intro-box">
+    <strong>Como funciona:</strong> Você vai responder perguntas curtas sobre você e sobre seu parceiro(a). Com base nas respostas, identificaremos os perfis mais prováveis e mostraremos como essa combinação funciona — pontos de força, tensões naturais e dicas práticas.
+    <br><br>
+    <strong>Importante:</strong> Este é um resultado introdutório. Para um mapeamento completo e preciso do seu perfil, conheça o 9&Self ao final.
+  </div>
+
+  <!-- ETAPA 1: PERGUNTAS SOBRE VOCÊ -->
+  <div class="etapa ativa" id="et1">
+    <div class="etapa-tag">Passo 1 de 3</div>
+    <div class="etapa-titulo">Primeiro, vamos entender você</div>
+    <div class="etapa-sub">Escolha a opção que mais se aproxima da sua forma de ser — não pense demais, vá com o primeiro instinto.</div>
+
+    <div class="perg-progress">
+      <div class="pp atual" id="pp1-1"></div>
+      <div class="pp" id="pp1-2"></div>
+      <div class="pp" id="pp1-3"></div>
+      <div class="pp" id="pp1-4"></div>
+    </div>
+
+    <div id="perg1-bloco">
+
+      <div class="pergunta" id="p1-1">
+        <div class="perg-enunciado">1. O que mais te motiva no relacionamento?</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p1',1,'A')">Fazer tudo certo — ser um(a) parceiro(a) exemplar</div>
+          <div class="opcao" onclick="resp('p1',1,'B')">Cuidar e ser necessário(a) para o outro</div>
+          <div class="opcao" onclick="resp('p1',1,'C')">Crescer junto e alcançar objetivos como casal</div>
+          <div class="opcao" onclick="resp('p1',1,'D')">Ter uma conexão profunda e única</div>
+          <div class="opcao" onclick="resp('p1',1,'E')">Ter espaço para pensar e ser compreendido(a)</div>
+          <div class="opcao" onclick="resp('p1',1,'F')">Segurança, fidelidade e compromisso</div>
+          <div class="opcao" onclick="resp('p1',1,'G')">Aventura, novas experiências e alegria</div>
+          <div class="opcao" onclick="resp('p1',1,'H')">Força, respeito e parceria real</div>
+          <div class="opcao" onclick="resp('p1',1,'I')">Paz, harmonia e cumplicidade</div>
+        </div>
+      </div>
+
+      <div class="pergunta" id="p1-2" style="display:none;">
+        <div class="perg-enunciado">2. Em conflitos com seu parceiro(a), você tende a:</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p1',2,'A')">Apontar o que está errado e querer corrigir</div>
+          <div class="opcao" onclick="resp('p1',2,'B')">Se sacrificar para evitar mais conflito</div>
+          <div class="opcao" onclick="resp('p1',2,'C')">Focar na solução prática rapidamente</div>
+          <div class="opcao" onclick="resp('p1',2,'D')">Sentir muito e precisar de tempo para processar</div>
+          <div class="opcao" onclick="resp('p1',2,'E')">Se distanciar e analisar a situação com calma</div>
+          <div class="opcao" onclick="resp('p1',2,'F')">Questionar bastante antes de ceder</div>
+          <div class="opcao" onclick="resp('p1',2,'G')">Mudar de assunto ou tentar aliviar a tensão</div>
+          <div class="opcao" onclick="resp('p1',2,'H')">Enfrentar direto — não tolerar injustiça</div>
+          <div class="opcao" onclick="resp('p1',2,'I')">Ceder para manter a paz, mesmo discordando</div>
+        </div>
+      </div>
+
+      <div class="pergunta" id="p1-3" style="display:none;">
+        <div class="perg-enunciado">3. Seus amigos diriam que você é:</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p1',3,'A')">Organizado(a), criterioso(a) e responsável</div>
+          <div class="opcao" onclick="resp('p1',3,'B')">Generoso(a), atencioso(a) e afetuoso(a)</div>
+          <div class="opcao" onclick="resp('p1',3,'C')">Determinado(a), eficiente e ambicioso(a)</div>
+          <div class="opcao" onclick="resp('p1',3,'D')">Sensível, criativo(a) e profundo(a)</div>
+          <div class="opcao" onclick="resp('p1',3,'E')">Analítico(a), reservado(a) e inteligente</div>
+          <div class="opcao" onclick="resp('p1',3,'F')">Leal, cauteloso(a) e comprometido(a)</div>
+          <div class="opcao" onclick="resp('p1',3,'G')">Divertido(a), otimista e espontâneo(a)</div>
+          <div class="opcao" onclick="resp('p1',3,'H')">Direto(a), corajoso(a) e protetor(a)</div>
+          <div class="opcao" onclick="resp('p1',3,'I')">Tranquilo(a), paciente e conciliador(a)</div>
+        </div>
+      </div>
+
+      <div class="pergunta" id="p1-4" style="display:none;">
+        <div class="perg-enunciado">4. O que mais te incomoda em um relacionamento?</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p1',4,'A')">Descuido, irresponsabilidade ou falta de ética</div>
+          <div class="opcao" onclick="resp('p1',4,'B')">Ingratidão — dar muito e não ser reconhecido(a)</div>
+          <div class="opcao" onclick="resp('p1',4,'C')">Estagnação — ficar parado sem crescer</div>
+          <div class="opcao" onclick="resp('p1',4,'D')">Superficialidade — falta de profundidade</div>
+          <div class="opcao" onclick="resp('p1',4,'E')">Invasão de espaço ou sobrecarga emocional</div>
+          <div class="opcao" onclick="resp('p1',4,'F')">Traição, imprevisibilidade ou falta de compromisso</div>
+          <div class="opcao" onclick="resp('p1',4,'G')">Monotonia, rigidez ou excesso de seriedade</div>
+          <div class="opcao" onclick="resp('p1',4,'H')">Fraqueza, manipulação ou injustiça</div>
+          <div class="opcao" onclick="resp('p1',4,'I')">Conflito desnecessário e ambiente pesado</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ETAPA 2: PERGUNTAS SOBRE PARCEIRO(A) -->
+  <div class="etapa" id="et2">
+    <div class="etapa-tag">Passo 2 de 3</div>
+    <div class="etapa-titulo">Agora, sobre seu parceiro(a)</div>
+    <div class="etapa-sub">Pense em como ele(a) costuma se comportar — não como você gostaria que fosse, mas como realmente é.</div>
+
+    <div class="perg-progress">
+      <div class="pp atual" id="pp2-1"></div>
+      <div class="pp" id="pp2-2"></div>
+      <div class="pp" id="pp2-3"></div>
+    </div>
+
+    <div id="perg2-bloco">
+
+      <div class="pergunta" id="p2-1">
+        <div class="perg-enunciado">5. No relacionamento, seu parceiro(a) tende a:</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p2',1,'A')">Cobrar muito e querer fazer tudo do jeito certo</div>
+          <div class="opcao" onclick="resp('p2',1,'B')">Cuidar de todos — às vezes esquecendo de si</div>
+          <div class="opcao" onclick="resp('p2',1,'C')">Focar em conquistas e resultados</div>
+          <div class="opcao" onclick="resp('p2',1,'D')">Ser intenso(a) emocionalmente e único(a)</div>
+          <div class="opcao" onclick="resp('p2',1,'E')">Precisar de espaço e ser reservado(a)</div>
+          <div class="opcao" onclick="resp('p2',1,'F')">Ser muito leal mas também muito cauteloso(a)</div>
+          <div class="opcao" onclick="resp('p2',1,'G')">Ser animado(a), cheio(a) de projetos e ideias</div>
+          <div class="opcao" onclick="resp('p2',1,'H')">Ser direto(a), forte e protetor(a)</div>
+          <div class="opcao" onclick="resp('p2',1,'I')">Evitar conflito e buscar paz sempre</div>
+        </div>
+      </div>
+
+      <div class="pergunta" id="p2-2" style="display:none;">
+        <div class="perg-enunciado">6. Como ele(a) reage quando está estressado(a) ou sobrecarregado(a)?</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p2',2,'A')">Fica mais crítico(a) e exigente</div>
+          <div class="opcao" onclick="resp('p2',2,'B')">Faz mais pelos outros para se sentir necessário(a)</div>
+          <div class="opcao" onclick="resp('p2',2,'C')">Se joga ainda mais no trabalho ou projetos</div>
+          <div class="opcao" onclick="resp('p2',2,'D')">Fica introspectivo(a) e melancólico(a)</div>
+          <div class="opcao" onclick="resp('p2',2,'E')">Se isola completamente para recarregar</div>
+          <div class="opcao" onclick="resp('p2',2,'F')">Fica ansioso(a) e questiona muito</div>
+          <div class="opcao" onclick="resp('p2',2,'G')">Foge do problema buscando distração</div>
+          <div class="opcao" onclick="resp('p2',2,'H')">Fica mais controlador(a) ou agressivo(a)</div>
+          <div class="opcao" onclick="resp('p2',2,'I')">Se fecha e fica passivo(a)</div>
+        </div>
+      </div>
+
+      <div class="pergunta" id="p2-3" style="display:none;">
+        <div class="perg-enunciado">7. O que ele(a) mais valoriza na relação com você?</div>
+        <div class="opcoes">
+          <div class="opcao" onclick="resp('p2',3,'A')">Que você seja responsável e honesto(a)</div>
+          <div class="opcao" onclick="resp('p2',3,'B')">Que você precise dele(a) e reconheça o cuidado</div>
+          <div class="opcao" onclick="resp('p2',3,'C')">Que você seja parceiro(a) de crescimento</div>
+          <div class="opcao" onclick="resp('p2',3,'D')">Que você o(a) compreenda profundamente</div>
+          <div class="opcao" onclick="resp('p2',3,'E')">Que você respeite o espaço e a independência</div>
+          <div class="opcao" onclick="resp('p2',3,'F')">Que você seja confiável e previsível</div>
+          <div class="opcao" onclick="resp('p2',3,'G')">Que você seja parceiro(a) de aventuras</div>
+          <div class="opcao" onclick="resp('p2',3,'H')">Que você seja forte e não seja subserviente</div>
+          <div class="opcao" onclick="resp('p2',3,'I')">Que você traga paz e não gere conflito</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ETAPA 3: RESULTADO -->
+  <div class="etapa" id="et3">
+    <div class="etapa-tag">Passo 3 de 3</div>
+    <div class="etapa-titulo">Sua análise de compatibilidade</div>
+    <div class="etapa-sub">Com base nas suas respostas, identificamos os perfis prováveis e como essa combinação tende a funcionar.</div>
+
+    <div class="comp-card">
+      <div class="comp-tipos">
+        <div class="tipo-badge"><div class="tipo-num" id="res-eu-num">—</div><div class="tipo-nome" id="res-eu-nome">Seu perfil</div></div>
+        <span class="comp-mais">+</span>
+        <div class="tipo-badge"><div class="tipo-num" id="res-par-num">—</div><div class="tipo-nome" id="res-par-nome">Parceiro(a)</div></div>
+      </div>
+      <div class="comp-score-wrap">
+        <div class="comp-score-label"><span>Índice de complementaridade</span><span id="res-pct">—</span></div>
+        <div class="comp-barra-track"><div class="comp-barra-fill" id="res-barra" style="width:0%"></div></div>
+      </div>
+      <div class="comp-desc" id="res-desc">—</div>
+      <div class="comp-dica" id="res-dica">—</div>
+    </div>
+
+    <div style="background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--cinza2);margin-bottom:8px;">Importante</div>
+      <p style="font-size:0.82rem;color:var(--cinza2);line-height:1.65;">Este resultado é uma <strong style="color:var(--branco);">prévia introdutória</strong> baseada em padrões gerais do Eneagrama. Para um mapeamento preciso e personalizado do seu perfil, o 9&Self oferece um laudo completo elaborado pela Dra. Lucia Kratz.</p>
+    </div>
+
+    <button class="btn-receber" onclick="document.getElementById('modalCad').classList.add('open')">📲 Receber minha análise no WhatsApp</button>
+  </div>
+
+  <!-- AUTORA -->
+  <div class="autora" style="margin-top:40px;">
+    <img class="autora-foto" src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/foto-dra-lucia.png" alt="Dra. Lucia Kratz" onerror="this.style.display='none'">
+    <div>
+      <div class="autora-nome">Dra. Lucia Kratz</div>
+      <div class="autora-cargo">CRP 09/20590 · Psicóloga · Goiânia, GO</div>
+      <div class="autora-bio">Doutora em Psicologia. Especialista em Eneagrama aplicado ao desenvolvimento humano e aos relacionamentos. Mais de 24 anos de experiência clínica. Presencial em Goiânia e online para todo o Brasil.</div>
+      <div class="diferenciais"><span class="dif">TCC</span><span class="dif">Eneagrama</span><span class="dif">Neuropsicologia</span><span class="dif">Musicoterapia</span></div>
+    </div>
+  </div>
+
+  <!-- CTA 9SELF -->
+  <div class="cta">
+    <span class="cta-tag">Conheça seu perfil com profundidade</span>
+    <div class="cta-h">Quer seu mapeamento completo?</div>
+    <p class="cta-p">O <strong>9&Self</strong> é o mapeamento avançado de personalidade pelo Eneagrama — com laudo personalizado elaborado pela Dra. Lucia. Vai muito além de um teste rápido: é uma análise clínica do seu perfil real.</p>
+    <a class="btn-gold" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10&bid=1783114567745" target="_blank">Conhecer o 9&Self →</a>
+    <div style="margin-top:12px;font-size:0.75rem;color:var(--cinza);">Mapeamento de Perfil Avançado · Acesso imediato</div>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2025 Dra. Lucia Kratz · CRP 09/20590 · Eneagrama no Amor em Tempos de Crise</p>
+</footer>
+
+<!-- MODAL -->
+<div id="modalCad" style="position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border:1px solid rgba(201,150,10,0.3);border-radius:8px;padding:32px 28px;max-width:420px;width:100%;">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:#F0EAD6;margin-bottom:8px;">Receba sua análise no WhatsApp</div>
+    <p style="font-size:0.85rem;color:var(--cinza);margin-bottom:20px;line-height:1.6;">Preencha seus dados e a análise completa chega na hora.</p>
+    <input id="cadNome" type="text" placeholder="Seu nome" style="width:100%;background:var(--card2);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:inherit;margin-bottom:12px;">
+    <input id="cadWa" type="tel" placeholder="Seu WhatsApp com DDD" style="width:100%;background:var(--card2);border:1px solid rgba(201,150,10,0.2);border-radius:4px;padding:12px;font-size:0.9rem;color:var(--branco);font-family:inherit;margin-bottom:12px;">
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;">
+      <input type="checkbox" id="cadConcordo" style="margin-top:3px;accent-color:#C9960A;width:16px;height:16px;flex-shrink:0;">
+      <span style="font-size:0.78rem;color:var(--cinza);line-height:1.5;">Concordo em receber minha análise e materiais da Dra. Lucia Kratz pelo WhatsApp, conforme a <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/politica-privacidade.html" style="color:#C9960A;" target="_blank">Política de Privacidade</a>.</span>
+    </label>
+    <button class="btn-enviar" onclick="enviar()">Receber minha análise →</button>
+    <button onclick="document.getElementById('modalCad').classList.remove('open')" style="width:100%;background:none;border:none;color:#6E6E88;font-size:0.82rem;cursor:pointer;padding:8px;font-family:inherit;">Cancelar</button>
+  </div>
+</div>
+
+<script>
+var resps = {p1:{}, p2:{}};
+var pAtual1 = 1, pAtual2 = 1;
+var tipoEu = 0, tipoPar = 0;
+
+var MAP = {A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9};
+var NOMES = ['','Perfeccionista','Prestativo','Realizador','Individualista','Investigador','Leal','Entusiasta','Desafiador','Pacificador'];
+var COMPAT = {
+  '1-1':{p:72,d:'Dois Perfeccionistas compartilham padrões elevados — força e fonte de tensão ao mesmo tempo.',c:'Cultivem compaixão mútua. Celebrem o "bom o suficiente" em vez de buscar o perfeito.'},
+  '1-2':{p:78,d:'O 1 traz estrutura, o 2 traz calor humano. Complementação natural quando há consciência dos próprios padrões.',c:'O 1 precisa aprender a receber cuidado. O 2 precisa expressar suas próprias necessidades.'},
+  '1-3':{p:75,d:'Ambos orientados a objetivos. O 1 foca na qualidade, o 3 na performance. Dupla produtiva.',c:'Cuidado com a competitividade. Celebrem as conquistas um do outro.'},
+  '1-4':{p:70,d:'O 1 busca perfeição externa; o 4 busca autenticidade. Tensão criativa quando os valores divergem.',c:'O 1 aprende profundidade com o 4. O 4 se beneficia da organização do 1.'},
+  '1-5':{p:74,d:'Ambos valorizam competência e controle. Coexistem bem respeitando espaços individuais.',c:'Cultivem momentos de conexão emocional intencional — ambos tendem à reserva.'},
+  '1-6':{p:80,d:'Compartilham responsabilidade e comprometimento. Parceiros leais que constroem relações sólidas.',c:'Atenção para não se tornarem críticos um do outro. Aprendam a relaxar juntos.'},
+  '1-7':{p:68,d:'O 1 é disciplinado; o 7 é espontâneo. Atração dos opostos intensa, mas ritmos diferentes geram atrito.',c:'O 1 aprende leveza com o 7. O 7 aprende comprometimento com o 1.'},
+  '1-8':{p:73,d:'Ambos têm forte senso de justiça e não fogem do conflito. Muito honestos um com o outro.',c:'Cuidado com o excesso de rigidez. Aprendam a ceder sem perder a integridade.'},
+  '1-9':{p:82,d:'O 9 suaviza a rigidez do 1; o 1 dá direção ao 9. Uma das combinações mais equilibradas.',c:'O 1 deve aprender a não pressionar o 9. O 9 deve expressar suas preferências.'},
+  '2-2':{p:70,d:'Dois Prestativos podem cuidar muito um do outro — mas negligenciam as próprias necessidades esperando reciprocidade.',c:'Pratiquem pedir ajuda abertamente. Aprendam a receber tanto quanto dar.'},
+  '2-3':{p:76,d:'O 2 apoia emocionalmente o 3; o 3 inspira o 2 a crescer. Parceria de apoio mútuo.',c:'O 2 precisa ser valorizado além do que faz. O 3 precisa mostrar vulnerabilidade.'},
+  '2-4':{p:74,d:'Ambos emocionalmente intensos. O 2 quer dar; o 4 quer ser compreendido. Muita profundidade.',c:'Evitem o drama emocional. Cultivem conversas honestas sobre sentimentos reais.'},
+  '2-5':{p:72,d:'O 2 é expansivo; o 5 é retraído. Tensão: o 2 quer mais contato, o 5 quer mais espaço.',c:'Negociem os limites de espaço e contato com clareza e sem julgamento.'},
+  '2-6':{p:80,d:'Ambos valorizam segurança e lealdade. O 2 oferece suporte emocional; o 6 oferece fidelidade.',c:'Cuidado com codependência. Mantenham identidades individuais saudáveis.'},
+  '2-7':{p:78,d:'O 2 ama cuidar; o 7 ama a energia e a leveza. O cuidado do 2 ancora o 7.',c:'O 2 não deve se perder nas aventuras do 7. O 7 deve aprender a retribuir o cuidado.'},
+  '2-8':{p:75,d:'Estilos opostos: um usa cuidado, o outro usa força. Mas ambos querem impacto no mundo.',c:'O 8 deve abrir o coração. O 2 deve colocar limites claros.'},
+  '2-9':{p:84,d:'Uma das combinações mais harmoniosas. O 2 cuida ativamente; o 9 cria paz.',c:'Expressem discordâncias de forma saudável. Muita concordância pode esconder necessidades reais.'},
+  '3-3':{p:68,d:'Podem ter relação energizada e produtiva — mas também competitiva se não cultivarem vulnerabilidade.',c:'Criem momentos sem agenda. Conectem-se como pessoas, não como perfis.'},
+  '3-4':{p:72,d:'O 3 quer sucesso; o 4 quer autenticidade. Enriquecem-se mutuamente com consciência.',c:'O 3 aprende profundidade emocional com o 4. O 4 aprende a agir apesar dos sentimentos.'},
+  '3-5':{p:74,d:'Ambos independentes e competentes. Respeitam muito um ao outro.',c:'Cultivem conexão emocional. Não deixem a relação ser apenas funcional.'},
+  '3-6':{p:76,d:'O 3 tem confiança que o 6 deseja; o 6 tem lealdade que o 3 precisa.',c:'O 6 não deve projetar inseguranças no 3. O 3 deve ser transparente.'},
+  '3-7':{p:80,d:'Ambos energéticos, otimistas e orientados ao futuro. Relação vibrante.',c:'Aprendam a ficar quietos juntos. A conexão também acontece no silêncio.'},
+  '3-8':{p:78,d:'Muita energia e ambição. Podem construir grandes coisas — e ter conflitos intensos.',c:'Aprendam quando colaborar e quando ceder.'},
+  '3-9':{p:75,d:'O 3 traz energia e direção; o 9 traz paz e estabilidade.',c:'O 9 deve expressar desejos. O 3 deve aprender a desacelerar.'},
+  '4-4':{p:66,d:'Dois Individualistas: profundidade, beleza — e possíveis dramas intensos.',c:'Cada um precisa de espaço para processar. Não se fundam completamente.'},
+  '4-5':{p:75,d:'O 4 busca conexão emocional; o 5 busca compreensão intelectual. Conversas profundas.',c:'O 4 deve respeitar o espaço do 5. O 5 deve aprender a expressar sentimentos.'},
+  '4-6':{p:73,d:'Ambos tendem à ansiedade de formas diferentes. Podem complementar-se.',c:'Cultivem estabilidade juntos. Encontrem rituais que tragam segurança.'},
+  '4-7':{p:72,d:'O 4 mergulha; o 7 voa. Opostos que se atraem e podem se frustrar.',c:'O 4 aprende leveza com o 7. O 7 aprende profundidade com o 4.'},
+  '4-8':{p:77,d:'Ambos intensos e diretos. Relação de muita paixão.',c:'Aprendam a modular a intensidade. Criem espaços de suavidade.'},
+  '4-9':{p:79,d:'O 9 oferece a estabilidade que o 4 anseia; o 4 oferece profundidade ao 9.',c:'O 9 deve aprender presença emocional. O 4 deve aprender gratidão.'},
+  '5-5':{p:70,d:'Intelectualmente rica, mas emocionalmente distante se não houver cultivo.',c:'Façam da conexão emocional um projeto intelectual — estudem-se com curiosidade.'},
+  '5-6':{p:76,d:'O 5 traz racionalidade; o 6 traz lealdade. Parceria muito confiável.',c:'O 5 deve tranquilizar o 6. O 6 deve confiar mais no 5.'},
+  '5-7':{p:74,d:'O 5 analisa em profundidade; o 7 explora em amplitude. Ambos vivem no mundo das ideias.',c:'Conectem as ideias ao cotidiano emocional.'},
+  '5-8':{p:72,d:'O 5 é reservado; o 8 é expansivo. Tensão natural, mas equilíbrio interessante.',c:'O 8 deve respeitar o espaço do 5. O 5 deve aprender a se posicionar.'},
+  '5-9':{p:78,d:'O 5 pensa; o 9 sente o ambiente. Parceria tranquila que respeita silêncios.',c:'Ambos evitam conflito. Expressem necessidades antes que se acumulem.'},
+  '6-6':{p:74,d:'Dois Leais que se apoiam. Segurança profunda.',c:'Cuidado com o reforço mútuo de ansiedades. Cultivem perspectivas otimistas.'},
+  '6-7':{p:76,d:'O 6 quer segurança; o 7 quer liberdade. Tensão que gera crescimento com diálogo.',c:'O 7 deve tranquilizar o 6 com consistência. O 6 deve soltar o controle.'},
+  '6-8':{p:78,d:'O 6 respeita a força do 8; o 8 respeita a lealdade do 6. Núcleo sólido.',c:'O 8 não deve intimidar o 6. O 6 deve confiar mais.'},
+  '6-9':{p:82,d:'O 6 busca segurança; o 9 oferece estabilidade. Uma das combinações mais pacíficas.',c:'Cuidado com estagnação. Cultivem sonhos e projetos que os movam juntos.'},
+  '7-7':{p:72,d:'Aventura, alegria, novas experiências. Mas quem cuida da estrutura?',c:'Aprendam a ficar presentes no momento. A felicidade também está no ordinário.'},
+  '7-8':{p:76,d:'Ambos com muita energia. Relação vibrante e apaixonada.',c:'Respeitem os limites um do outro.'},
+  '7-9':{p:80,d:'O 7 energiza o 9; o 9 ancora o 7. Complementação natural e agradável.',c:'O 9 deve expressar desejos. O 7 deve aprender a finalizar o que começa.'},
+  '8-8':{p:68,d:'Dois Desafiadores: poder, intensidade. Pode ser épico ou exaustivo sem vulnerabilidade.',c:'Criem um código de respeito mútuo. Saibam quando recuar.'},
+  '8-9':{p:80,d:'O 8 age; o 9 suaviza. O 9 apazigua; o 8 decide. Parceria onde a força e a paz coexistem.',c:'O 8 deve aprender a não atropelar o 9. O 9 deve aprender a se posicionar.'},
+  '9-9':{p:74,d:'Dois Pacificadores: muita harmonia, mas quem toma as decisões?',c:'Pratiquem ter opiniões e expressá-las. A paz real inclui a verdade.'}
+};
+
+function resp(grupo, num, letra) {
+  resps[grupo][num] = letra;
+  if (grupo === 'p1') {
+    if (num < 4) {
+      document.getElementById('p1-' + num).style.display = 'none';
+      document.getElementById('p1-' + (num+1)).style.display = 'block';
+      for(var i=1;i<=4;i++) document.getElementById('pp1-'+i).className='pp'+(i<num+1?' feita':i===num+1?' atual':'');
+    } else {
+      calcularTipo1();
+      document.getElementById('et1').classList.remove('ativa');
+      document.getElementById('et2').classList.add('ativa');
+    }
+  } else {
+    if (num < 3) {
+      document.getElementById('p2-' + num).style.display = 'none';
+      document.getElementById('p2-' + (num+1)).style.display = 'block';
+      for(var i=1;i<=3;i++) document.getElementById('pp2-'+i).className='pp'+(i<num+1?' feita':i===num+1?' atual':'');
+    } else {
+      calcularTipo2();
+      mostrarResultado();
+      document.getElementById('et2').classList.remove('ativa');
+      document.getElementById('et3').classList.add('ativa');
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+  }
+}
+
+function calcularTipo1() {
+  var contagem = {};
+  for(var k in resps.p1) { var v=resps.p1[k]; contagem[v]=(contagem[v]||0)+1; }
+  var max=0,tipo='A';
+  for(var k in contagem) { if(contagem[k]>max){max=contagem[k];tipo=k;} }
+  tipoEu = MAP[tipo];
+}
+
+function calcularTipo2() {
+  var contagem = {};
+  for(var k in resps.p2) { var v=resps.p2[k]; contagem[v]=(contagem[v]||0)+1; }
+  var max=0,tipo='A';
+  for(var k in contagem) { if(contagem[k]>max){max=contagem[k];tipo=k;} }
+  tipoPar = MAP[tipo];
+}
+
+function getComp(a,b) {
+  var key = a<=b ? a+'-'+b : b+'-'+a;
+  return COMPAT[key] || {p:74,d:'Esta combinação tem potencial único. O Eneagrama mostra que toda dupla pode crescer com autoconhecimento e comunicação consciente.',c:'Explore o mapeamento completo com o 9&Self para entender os padrões mais profundos da sua personalidade.'};
+}
+
+function mostrarResultado() {
+  var comp = getComp(tipoEu, tipoPar);
+  document.getElementById('res-eu-num').textContent = tipoEu;
+  document.getElementById('res-eu-nome').textContent = NOMES[tipoEu];
+  document.getElementById('res-par-num').textContent = tipoPar;
+  document.getElementById('res-par-nome').textContent = NOMES[tipoPar];
+  document.getElementById('res-pct').textContent = comp.p + '%';
+  document.getElementById('res-barra').style.width = comp.p + '%';
+  document.getElementById('res-desc').textContent = comp.d;
+  document.getElementById('res-dica').innerHTML = '<strong>Dica para o casal:</strong> ' + comp.c;
+}
+
+function enviar() {
+  var nome = document.getElementById('cadNome').value.trim();
+  var wa = document.getElementById('cadWa').value.trim().replace(/\D/g,'');
+  var ok = document.getElementById('cadConcordo').checked;
+  if (!nome) { alert('Informe seu nome.'); return; }
+  if (!wa || wa.length < 10) { alert('Informe um WhatsApp válido com DDD.'); return; }
+  if (!ok) { alert('Confirme o aceite para continuar.'); return; }
+
+  var comp = getComp(tipoEu, tipoPar);
+  var msg = 'Olá ' + nome + '! 💑 Sua análise de Compatibilidade pelo Eneagrama — Dra. Lucia Kratz\n\n'
+    + '🧩 Combinação: Tipo ' + tipoEu + ' (' + NOMES[tipoEu] + ') + Tipo ' + tipoPar + ' (' + NOMES[tipoPar] + ')\n\n'
+    + '📊 Índice de complementaridade: ' + comp.p + '%\n\n'
+    + comp.d + '\n\n'
+    + '💡 Dica para o casal: ' + comp.c + '\n\n'
+    + '⚠️ Este é um resultado introdutório. Para seu mapeamento completo, conheça o 9&Self:\n'
+    + 'https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10\n\n'
+    + '📱 Dra. Lucia Kratz — (62) 9464-4950\n_© CRP 09/20590_';
+
+  window.open('https://wa.me/55' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  var lead = '🔔 Nova lead — Compatibilidade\nNome: ' + nome + '\nWhatsApp: ' + wa + '\nTipo ' + tipoEu + ' + Tipo ' + tipoPar;
+  setTimeout(function(){ window.open('https://wa.me/5562994644950?text=' + encodeURIComponent(lead), '_blank'); }, 1500);
+  document.getElementById('modalCad').classList.remove('open');
+}
+</script>
+</body>
+</html>
