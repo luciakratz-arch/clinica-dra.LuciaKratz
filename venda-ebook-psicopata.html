@@ -76,9 +76,23 @@ nav {
   border-radius:4px;
   box-shadow:-24px 32px 80px rgba(0,0,0,0.85), 4px -4px 20px rgba(155,25,25,0.12);
   position:relative; z-index:2;
-  transition:transform 0.5s ease;
+  animation: bookFloat 6s ease-in-out infinite;
+  transition: box-shadow 0.5s ease, filter 0.5s ease;
+  cursor: pointer;
 }
-.hero-book:hover { transform:rotate(2deg) scale(1.02); }
+.hero-book:hover {
+  animation: bookFloat 6s ease-in-out infinite, bookGlow 0.5s ease forwards;
+  box-shadow: -24px 32px 80px rgba(0,0,0,0.9), 0 0 60px rgba(191,152,64,0.35), 4px -4px 30px rgba(155,25,25,0.4);
+  filter: brightness(1.08) saturate(1.1);
+}
+@keyframes bookFloat {
+  0%   { transform: translateY(0px) rotate(-1deg); }
+  50%  { transform: translateY(-12px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(-1deg); }
+}
+@keyframes bookGlow {
+  to { transform: translateY(-8px) rotate(0deg) scale(1.03); }
+}
 
 .hero-tag {
   display:inline-flex; align-items:center; gap:8px;
@@ -466,6 +480,134 @@ nav {
   font-size:0.75rem; color:var(--cinza2);
 }
 
+/* ── PARTÍCULAS HERO ── */
+#hero-particles {
+  position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+}
+.hero-particle {
+  position:absolute; border-radius:50%;
+  animation: particleDrift linear infinite;
+  opacity:0;
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity:0; transform:translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity:1; transform:translateY(0); }
+.reveal-left {
+  opacity:0; transform:translateX(-32px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-left.visible { opacity:1; transform:translateX(0); }
+.reveal-scale {
+  opacity:0; transform:scale(0.93);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-scale.visible { opacity:1; transform:scale(1); }
+
+/* ── STAT COUNTER ── */
+.stat-n { transition: color 0.3s; }
+.stat:hover .stat-n { color: var(--vm2); }
+
+/* ── SINAL CARDS ANIM ── */
+.sinal {
+  opacity:0; transform:translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease,
+              background 0.3s, border-top-color 0.3s;
+}
+.sinal.visible { opacity:1; transform:translateY(0); }
+.sinal:hover .sinal-n { color: rgba(191,152,64,0.2); transition: color 0.4s; }
+
+/* ── TIPO REVEAL ── */
+.tipo {
+  opacity:0; transform:translateX(-20px);
+  transition: opacity 0.55s ease, transform 0.55s ease, background 0.25s;
+}
+.tipo.visible { opacity:1; transform:translateX(0); }
+
+/* ── BONUS GLOW ── */
+.bonus-card {
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.bonus-card:hover {
+  border-color: rgba(191,152,64,0.4) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.bonus-destaque:hover {
+  box-shadow: 0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(191,152,64,0.12);
+}
+
+/* ── PQ-CARDS REVEAL ── */
+.pq-card {
+  opacity:0; transform:translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease,
+              border-color 0.3s, background 0.3s;
+}
+.pq-card.visible { opacity:1; transform:translateY(0); }
+
+/* ── BTN CTA PULSE ── */
+.btn-hotmart {
+  animation: ctaPulse 3s ease-in-out infinite;
+}
+.btn-hotmart:hover { animation: none; }
+@keyframes ctaPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(178,32,32,0); }
+  50%      { box-shadow: 0 0 0 8px rgba(178,32,32,0.25); }
+}
+.btn-main {
+  animation: ctaPulse 3.5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+.btn-main:hover { animation: none; }
+
+/* ── CITAÇÃO FADE ── */
+.cit-sec blockquote {
+  opacity:0; transform:translateY(16px);
+  transition: opacity 0.9s ease 0.2s, transform 0.9s ease 0.2s;
+}
+.cit-sec.visible blockquote { opacity: 0.85; transform: translateY(0); }
+.cit-sec cite {
+  opacity:0;
+  transition: opacity 0.7s ease 0.8s;
+}
+.cit-sec.visible cite { opacity:1; }
+
+/* ── EYEBROW ANIM ── */
+.eyebrow {
+  opacity:0; transform:translateX(-16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.eyebrow.visible { opacity:1; transform:translateX(0); }
+
+/* ── NAV fade-in ── */
+nav { animation: navFadeIn 0.8s ease both; }
+@keyframes navFadeIn {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── HERO TEXT SLIDE ── */
+.hero-tag  { animation: heroSlide 0.7s ease 0.2s both; }
+.hero h1   { animation: heroSlide 0.7s ease 0.4s both; }
+.hero-sub  { animation: heroSlide 0.7s ease 0.6s both; }
+.hero-btns { animation: heroSlide 0.7s ease 0.8s both; }
+.hero-nota { animation: heroSlide 0.7s ease 1.0s both; }
+@keyframes heroSlide {
+  from { opacity:0; transform:translateX(-24px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+/* ── PARTÍCULA DRIFT ── */
+@keyframes particleDrift {
+  0%   { transform:translateY(0) translateX(0); opacity:0; }
+  10%  { opacity:1; }
+  90%  { opacity:0.6; }
+  100% { transform:translateY(-80vh) translateX(30px); opacity:0; }
+}
+
 /* WA FLOAT */
 .wa {
   position:fixed; bottom:28px; right:28px; z-index:500;
@@ -509,11 +651,12 @@ footer {
 
 <nav>
   <div class="nav-logo">Meu Companheiro é um <em>Psicopata,</em> Será?</div>
-  <a class="nav-btn" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank">Comprar</a>
+  <a class="nav-btn" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank" onclick="fbq('track', 'InitiateCheckout')">Comprar</a>
 </nav>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" id="hero-section">
+  <div id="hero-particles"></div>
   <div class="hero-left">
     <div class="hero-tag">Dra. Lucia Kratz · Dr. Carlos Azevedo · 2023</div>
     <h1>Meu Companheiro<br>é um <span class="verm">Psicopata,</span><br><span class="ouro">Será?</span></h1>
@@ -645,7 +788,7 @@ footer {
       <div class="bonus-card bonus-destaque">
         <span class="bonus-tag">Bônus 1 — Principal</span>
         <div class="bonus-titulo">Teste: Meu Relacionamento é Saudável?</div>
-        <p class="bonus-desc">10 perguntas clínicas revelam se você está em zona verde, amarela ou vermelha — com indicadores detalhados e próximos passos recomendados. <a href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank" style="color:var(--ouro);font-weight:600;">Fazer o teste agora →</a></p>
+        <p class="bonus-desc">10 perguntas clínicas revelam se você está em zona verde, amarela ou vermelha — com indicadores detalhados e próximos passos recomendados. <a href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank" style="color:var(--ouro);font-weight:600;" onclick="fbq('track', 'InitiateCheckout')">Fazer o teste agora →</a></p>
         <div class="bonus-valor">Valor: R$ 67,00</div>
         <div class="bonus-free">✓ Incluso gratuitamente</div>
       </div>
@@ -670,6 +813,12 @@ footer {
         <div class="bonus-valor">Valor: R$ 47,00</div>
         <div class="bonus-free">✓ Incluso gratuitamente</div>
       </div>
+    </div>
+    <div style="text-align:center;margin-top:48px;">
+      <a class="btn-main" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank" onclick="fbq('track', 'InitiateCheckout')" style="display:inline-block;max-width:360px;">
+        Quero o e-book + todos os bônus — R$ 29,90
+      </a>
+      <p style="margin-top:12px;font-size:0.75rem;color:var(--cinza);">Acesso imediato · Checkout seguro Hotmart · 7 dias de garantia</p>
     </div>
   </div>
 </section>
@@ -710,8 +859,8 @@ footer {
       <li>4 bônus exclusivos — avaliados em R$ 178,00</li>
     </ul>
     <a class="btn-hotmart" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank">Comprar e-book pela Hotmart</a>
-    <a class="btn-wa-fisico" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20comprar%20o%20livro%20físico%20Meu%20Companheiro%20é%20um%20Psicopata%2C%20SERÁ%3F%20pelo%20valor%20de%20R%2459%2C90%20%2B%20frete" target="_blank">Comprar livro físico via WhatsApp — R$ 59,90 + frete</a>
-    <a class="btn-wa-duvida" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20tenho%20uma%20dúvida%20sobre%20o%20e-book%20antes%20de%20comprar" target="_blank">Tirar uma dúvida antes de comprar →</a>
+    <a class="btn-wa-fisico" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20gostaria%20de%20comprar%20o%20livro%20físico%20Meu%20Companheiro%20é%20um%20Psicopata%2C%20SERÁ%3F%20pelo%20valor%20de%20R%2459%2C90%20%2B%20frete" target="_blank" onclick="fbq('track', 'Lead')">Comprar livro físico via WhatsApp — R$ 59,90 + frete</a>
+    <a class="btn-wa-duvida" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia%2C%20tenho%20uma%20dúvida%20sobre%20o%20e-book%20antes%20de%20comprar" target="_blank" onclick="fbq('track', 'Contact')">Tirar uma dúvida antes de comprar →</a>
     <div class="selos">
       <span class="selo">— Checkout seguro Hotmart</span>
       <span class="selo">— 7 dias de garantia</span>
@@ -756,17 +905,146 @@ footer {
   <p style="margin-top:12px;font-size:0.68rem;opacity:0.4">Este livro não substitui avaliação clínica. Em situações de risco, ligue 180 ou 188.</p>
 </footer>
 
-<a class="wa" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank">
+<a class="wa" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10&bid=1783114494401" target="_blank" onclick="fbq('track', 'Contact')">
   <svg viewBox="0 0 24 24" width="26" height="26"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm5.406 16.568c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/></svg>
 </a>
 
 <script>
+/* ── FAQ ── */
 function f(btn) {
   const item = btn.closest('.faq-item');
   const open = item.classList.contains('open');
   document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
   if(!open) item.classList.add('open');
 }
+
+/* ── PARTÍCULAS HERO ── */
+(function(){
+  const container = document.getElementById('hero-particles');
+  if(!container) return;
+  const colors = ['rgba(155,25,25,', 'rgba(191,152,64,', 'rgba(178,32,32,'];
+  for(let i = 0; i < 28; i++){
+    const p = document.createElement('div');
+    p.className = 'hero-particle';
+    const size = Math.random() * 3 + 1;
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    const opacity = (Math.random() * 0.35 + 0.1).toFixed(2);
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      background:${c}${opacity});
+      animation-duration:${Math.random()*12+8}s;
+      animation-delay:${Math.random()*8}s;
+    `;
+    container.appendChild(p);
+  }
+})();
+
+/* ── SCROLL REVEAL GERAL ── */
+const revealOpts = { threshold: 0.12 };
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting) {
+      const el = e.target;
+      const delay = el.dataset.delay || 0;
+      setTimeout(() => el.classList.add('visible'), delay);
+      revealObs.unobserve(el);
+    }
+  });
+}, revealOpts);
+
+/* Eyebrows */
+document.querySelectorAll('.eyebrow').forEach(el => {
+  revealObs.observe(el);
+});
+
+/* Títulos de seção */
+document.querySelectorAll('.sec-title, .sec-text').forEach((el, i) => {
+  el.classList.add('reveal');
+  el.dataset.delay = i * 80;
+  revealObs.observe(el);
+});
+
+/* ── SINAIS — stagger ── */
+document.querySelectorAll('.sinal').forEach((el, i) => {
+  el.dataset.delay = i * 80;
+  revealObs.observe(el);
+});
+
+/* ── TIPOS — stagger ── */
+document.querySelectorAll('.tipo').forEach((el, i) => {
+  el.dataset.delay = i * 100;
+  revealObs.observe(el);
+});
+
+/* ── PQ-CARDS — stagger ── */
+document.querySelectorAll('.pq-card').forEach((el, i) => {
+  el.dataset.delay = i * 90;
+  revealObs.observe(el);
+});
+
+/* ── BONUS CARDS ── */
+document.querySelectorAll('.bonus-card').forEach((el, i) => {
+  el.classList.add('reveal');
+  el.dataset.delay = i * 100;
+  revealObs.observe(el);
+});
+
+/* ── AUTORES ── */
+document.querySelectorAll('.autor').forEach((el, i) => {
+  el.classList.add('reveal-scale');
+  el.dataset.delay = i * 150;
+  revealObs.observe(el);
+});
+
+/* ── STATS — contador ── */
+const statObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseInt(el.textContent, 10);
+    if(isNaN(target)) return;
+    let start = 0;
+    const dur = 1200;
+    const step = dur / target;
+    el.classList.add('reveal');
+    setTimeout(() => el.classList.add('visible'), 100);
+    const tick = setInterval(() => {
+      start++;
+      el.textContent = start;
+      if(start >= target) clearInterval(tick);
+    }, step);
+    statObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+
+document.querySelectorAll('.stat-n').forEach(el => statObs.observe(el));
+
+/* ── CITAÇÃO ── */
+const citObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      citObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.cit-sec').forEach(el => citObs.observe(el));
+
+/* ── PRECO BOX ── */
+const precoBox = document.querySelector('.preco-box');
+if(precoBox){
+  precoBox.classList.add('reveal-scale');
+  revealObs.observe(precoBox);
+}
+
+/* ── HEADER STATS BAR ── */
+document.querySelectorAll('.stat').forEach((el, i) => {
+  el.classList.add('reveal');
+  el.dataset.delay = i * 120;
+  revealObs.observe(el);
+});
 </script>
 </body>
 </html>
