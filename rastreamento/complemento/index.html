@@ -7,54 +7,61 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:#f5f3ff;min-height:100vh;padding:0 0 60px}
+body{font-family:'Inter',sans-serif;background:#f5f3ff;min-height:100vh;padding:0 0 80px}
 .header{background:linear-gradient(135deg,#7B00C4,#a855f7);padding:20px 16px 16px;text-align:center;color:white}
 .header h1{font-family:'Dancing Script',cursive;font-size:22px;margin-bottom:2px}
 .header p{font-size:12px;opacity:.85}
 .card{background:white;border-radius:16px;padding:20px 18px;margin:16px 14px;box-shadow:0 2px 10px rgba(123,0,196,.08)}
-.badge-novo{display:inline-block;background:#7B00C4;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px;margin-left:8px;vertical-align:middle}
-.badge-antigo{display:inline-block;background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px;margin-left:8px;vertical-align:middle}
-.bloco-titulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:2px solid #ede9fe;margin-bottom:14px}
-.pergunta{margin-bottom:20px}
+.bloco-titulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:2px solid #ede9fe;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px}
+.badge-novo{background:#7B00C4;color:white}
+.badge-rev{background:#f3e8ff;color:#7B00C4;border:1px solid #c4b5fd}
+
+/* Pergunta */
+.pergunta{margin-bottom:22px}
+.pergunta-num{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .pergunta-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:10px;font-weight:500}
-.opcoes{display:flex;flex-direction:column;gap:8px}
-.opcao{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .2s}
+.opcoes{display:flex;flex-direction:column;gap:7px}
+.opcao{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .15s}
 .opcao:hover{border-color:#a855f7;background:#faf5ff}
 .opcao.selected{border-color:#7B00C4;background:#f5f3ff}
-.opcao.selected .letra-circle{background:#7B00C4;color:white;border-color:#7B00C4}
-.letra-circle{min-width:28px;height:28px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#6b7280;flex-shrink:0;transition:all .2s}
+.opcao.selected .lc{background:#7B00C4;color:white;border-color:#7B00C4}
+.lc{min-width:28px;height:28px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#6b7280;flex-shrink:0;transition:all .15s}
 .opcao-texto{font-size:13px;color:#374151;line-height:1.5;padding-top:3px}
 
-/* Perguntas antigas — travadas */
-.pergunta-antiga{margin-bottom:14px;opacity:.75}
-.pergunta-antiga .pergunta-texto{font-size:13px;color:#6b7280}
-.resposta-antiga{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-top:6px}
-.letra-antiga{width:26px;height:26px;min-width:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
-.letra-A{background:#dcfce7;color:#16a34a;border:2px solid #bbf7d0}
-.letra-B{background:#fef9c3;color:#a16207;border:2px solid #fde047}
-.letra-C{background:#fee2e2;color:#dc2626;border:2px solid #fca5a5}
-.letra-D{background:#fce7f3;color:#9d174d;border:2px solid #f9a8d4}
-.letra-vazio{background:#f3f4f6;color:#9ca3af;border:2px solid #e5e7eb}
+/* Destaque perguntas novas */
+.card-novo{border:2px solid #7B00C4}
+.aviso-topo{background:#faf5ff;border:2px solid #7B00C4;border-radius:12px;padding:14px 16px;margin:16px 14px}
+.aviso-topo h3{font-size:14px;color:#7B00C4;font-weight:700;margin-bottom:4px}
+.aviso-topo p{font-size:13px;color:#4b5563;line-height:1.5}
 
-.aviso-novo{background:#faf5ff;border:2px solid #7B00C4;border-radius:12px;padding:14px 16px;margin:16px 14px}
-.aviso-novo h3{font-size:14px;color:#7B00C4;font-weight:700;margin-bottom:6px}
-.aviso-novo p{font-size:13px;color:#4b5563;line-height:1.5}
+/* Progress */
+.prog-wrap{background:#e5e7eb;border-radius:20px;height:5px;margin-bottom:16px}
+.prog-fill{background:#7B00C4;height:5px;border-radius:20px;transition:width .3s}
+.prog-label{font-size:11px;color:#7B00C4;font-weight:600;margin-bottom:6px}
 
-.btn-enviar{width:calc(100% - 28px);margin:0 14px;padding:16px;background:linear-gradient(135deg,#7B00C4,#a855f7);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s}
-.btn-enviar:disabled{opacity:.5;cursor:not-allowed}
+/* Info respondente */
+.info-resp{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:12px 14px;margin:16px 14px}
+.info-resp-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px}
+.info-resp-nome{font-size:15px;font-weight:600;color:#1f2937}
+
+/* Botão */
+.btn-enviar{width:calc(100% - 28px);margin:8px 14px 0;padding:16px;background:linear-gradient(135deg,#7B00C4,#a855f7);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s;display:block}
+.btn-enviar:disabled{opacity:.4;cursor:not-allowed}
 .btn-enviar:hover:not(:disabled){opacity:.9}
+.aviso-incompleto{text-align:center;font-size:12px;color:#9ca3af;margin-top:8px;display:none}
 
-.success{display:none;text-align:center;padding:40px 20px}
+/* Sucesso */
+.success{display:none;text-align:center;padding:60px 20px}
 .success h2{font-family:'Dancing Script',cursive;font-size:28px;color:#7B00C4;margin-bottom:12px}
 .success p{font-size:14px;color:#6b7280;line-height:1.6}
 
+.loading{text-align:center;padding:60px 20px;color:#7B00C4;font-size:14px}
 .erro-card{background:#fee2e2;border:1px solid #fca5a5;border-radius:12px;padding:16px;margin:16px 14px;text-align:center}
 .erro-card p{font-size:14px;color:#dc2626}
 
-.loading{text-align:center;padding:40px 20px;color:#7B00C4;font-size:14px}
-
-.progress-novas{background:#e5e7eb;border-radius:20px;height:6px;margin-bottom:16px}
-.progress-novas-fill{background:#7B00C4;height:6px;border-radius:20px;transition:width .3s}
+/* Separador de bloco antigo */
+.bloco-sep{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin:16px 0 10px;padding-bottom:5px;border-bottom:1px solid #f3f4f6}
 </style>
 </head>
 <body>
@@ -65,46 +72,41 @@ body{font-family:'Inter',sans-serif;background:#f5f3ff;min-height:100vh;padding:
 </div>
 
 <div id="loadingArea" class="loading">Carregando suas respostas anteriores...</div>
-<div id="erroArea" class="erro-card" style="display:none">
-  <p id="erroMsg">Não foi possível carregar o questionário. Verifique o link e tente novamente.</p>
-</div>
+<div id="erroArea" class="erro-card" style="display:none"><p id="erroMsg">Link inválido. Verifique e tente novamente.</p></div>
 
 <div id="mainArea" style="display:none">
 
-  <!-- Info do respondente -->
-  <div class="card" id="infoRespondente"></div>
+  <div class="info-resp" id="infoResp"></div>
 
-  <!-- Aviso sobre perguntas novas -->
-  <div class="aviso-novo">
-    <h3>📋 Perguntas adicionais</h3>
-    <p>Suas respostas anteriores já foram salvas. Precisamos que você responda apenas <strong>5 perguntas novas</strong> para completar a avaliação. As respostas antigas estão exibidas abaixo para referência.</p>
+  <!-- AVISO -->
+  <div class="aviso-topo">
+    <h3>📋 Quase lá!</h3>
+    <p>Seu questionário anterior foi salvo. Precisamos que você responda <strong>5 perguntas novas</strong> e, se quiser, revise e corrija as respostas anteriores antes de confirmar.</p>
   </div>
 
-  <!-- Respostas antigas (travadas) -->
-  <div class="card">
-    <div class="bloco-titulo">Respostas anteriores <span class="badge-antigo">JÁ SALVAS</span></div>
-    <div id="respostasAntigas"></div>
-  </div>
-
-  <!-- Perguntas novas -->
-  <div class="card">
-    <div class="bloco-titulo">Perguntas novas <span class="badge-novo">RESPONDA AQUI</span></div>
-    <div class="progress-novas">
-      <div class="progress-novas-fill" id="progressNovas" style="width:0%"></div>
-    </div>
+  <!-- PERGUNTAS NOVAS — em cima, em destaque -->
+  <div class="card card-novo">
+    <div class="bloco-titulo">Perguntas novas <span class="badge badge-novo">RESPONDA AQUI</span></div>
+    <div class="prog-label" id="progLabel">0 de 5 respondidas</div>
+    <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
     <div id="perguntasNovas"></div>
   </div>
 
-  <button class="btn-enviar" id="btnEnviar" onclick="enviarComplemento()" disabled>
-    ✓ Enviar Complemento
-  </button>
+  <!-- REVISÃO DAS ANTIGAS — abertas e editáveis -->
+  <div class="card">
+    <div class="bloco-titulo">Respostas anteriores <span class="badge badge-rev">REVISE SE QUISER</span></div>
+    <div id="perguntasAntigas"></div>
+  </div>
+
+  <button class="btn-enviar" id="btnEnviar" onclick="enviar()" disabled>✓ Confirmar e Enviar Tudo</button>
+  <div class="aviso-incompleto" id="avisoIncompleto">Responda as 5 perguntas novas para continuar.</div>
 
 </div>
 
 <div id="successArea" class="success">
   <div style="font-size:48px;margin-bottom:16px">🦋</div>
   <h2>Obrigada!</h2>
-  <p>Suas respostas complementares foram registradas com sucesso.<br/>A Dra. Lucia Kratz irá analisar junto com as anteriores.</p>
+  <p>Suas respostas foram registradas com sucesso.<br/>A Dra. Lucia irá analisar tudo junto.</p>
   <p style="margin-top:16px;font-size:12px;color:#9ca3af">Pode fechar esta janela.</p>
 </div>
 
@@ -115,249 +117,359 @@ const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevist
 if(!firebase.apps.length)firebase.initializeApp(fc);
 const db=firebase.firestore();
 
-// Parâmetros da URL
-const urlParams = new URLSearchParams(window.location.search);
-const docId = urlParams.get("id");           // ID do documento Firestore
-const nomePaciente = urlParams.get("paciente") || "";
+const urlParams=new URLSearchParams(window.location.search);
+const docId=urlParams.get("id");
+const nomePaciente=urlParams.get("paciente")||"";
 
-// Perguntas novas (p16-p20)
-const PERGUNTAS_NOVAS = [
-  {
-    id: "p16",
-    num: "16",
-    bloco: "Cognição e Humor Misto",
-    texto: "Durante os períodos de agitação ou aceleração, você notou que a pessoa avaliada parecia ter os pensamentos acelerados demais — como se as ideias se atropelassem, saltando de um assunto para outro sem conseguir parar?",
-    opcoes: [
-      {letra:"A", texto:"Não, o raciocínio sempre pareceu organizado e no ritmo normal."},
-      {letra:"B", texto:"Sim, ficava muito dispersa(o) nas conversas, mudava de assunto com frequência mas sem parecer fora de controle."},
-      {letra:"C", texto:"Sim, os pensamentos pareciam tão acelerados que era difícil acompanhar — falava muito rápido e saltava de ideia em ideia sem concluir nenhuma."}
+// === TODAS AS PERGUNTAS ===
+const TODAS_PERGUNTAS = [
+  // NOVAS (p16-p20) — aparecem primeiro
+  { id:"p16", num:"16", nova:true, bloco:"Cognição e Humor Misto",
+    texto:"Durante os períodos de agitação ou aceleração, você notou que a pessoa avaliada parecia ter os pensamentos acelerados demais — como se as ideias se atropelassem, saltando de um assunto para outro sem conseguir parar?",
+    opcoes:[
+      {letra:"A",texto:"Não, o raciocínio sempre pareceu organizado e no ritmo normal."},
+      {letra:"B",texto:"Sim, ficava muito dispersa(o) nas conversas, mudava de assunto com frequência mas sem parecer fora de controle."},
+      {letra:"C",texto:"Sim, os pensamentos pareciam tão acelerados que era difícil acompanhar — falava muito rápido e saltava de ideia em ideia sem concluir nenhuma."}
     ]
   },
-  {
-    id: "p17",
-    num: "17",
-    bloco: "Cognição e Humor Misto",
-    texto: "Nesses momentos de agitação, a pessoa demonstrava grande dificuldade de manter a atenção — qualquer barulho, movimento ou estímulo externo parecia distraí-la facilmente, mesmo quando estava tentando fazer algo importante?",
-    opcoes: [
-      {letra:"A", texto:"Não, conseguia se concentrar normalmente mesmo em períodos de agitação."},
-      {letra:"B", texto:"Ficava um pouco mais dispersa(o) que o habitual, mas conseguia retomar o foco."},
-      {letra:"C", texto:"Sim, era impossível mantê-la focada — qualquer coisa tirava a atenção e ela não conseguia terminar nada."}
+  { id:"p17", num:"17", nova:true, bloco:"Cognição e Humor Misto",
+    texto:"Nesses momentos de agitação, a pessoa demonstrava grande dificuldade de manter a atenção — qualquer barulho, movimento ou estímulo externo parecia distraí-la facilmente, mesmo quando estava tentando fazer algo importante?",
+    opcoes:[
+      {letra:"A",texto:"Não, conseguia se concentrar normalmente mesmo em períodos de agitação."},
+      {letra:"B",texto:"Ficava um pouco mais dispersa(o) que o habitual, mas conseguia retomar o foco."},
+      {letra:"C",texto:"Sim, era impossível mantê-la focada — qualquer coisa tirava a atenção e ela não conseguia terminar nada."}
     ]
   },
-  {
-    id: "p18",
-    num: "18",
-    bloco: "Cognição e Humor Misto",
-    texto: "Nos períodos de tristeza ou baixa energia, você observou uma inquietação física visível — a pessoa não conseguia ficar parada, andava de um lado para outro, remexia as mãos ou os pés sem parar — ou o contrário: um estado de lentidão marcante, como se cada movimento custasse um esforço enorme?",
-    opcoes: [
-      {letra:"A", texto:"Não, o comportamento motor estava dentro do normal."},
-      {letra:"B", texto:"Sim, ficava levemente inquieta(o) ou um pouco mais lenta(o) que o habitual."},
-      {letra:"C", texto:"Sim, de forma marcante e visível para qualquer pessoa ao redor — agitação intensa ou lentidão extrema nos movimentos e na fala."}
+  { id:"p18", num:"18", nova:true, bloco:"Cognição e Humor Misto",
+    texto:"Nos períodos de tristeza ou baixa energia, você observou uma inquietação física visível — a pessoa não conseguia ficar parada, andava de um lado para outro, remexia as mãos ou os pés sem parar — ou o contrário: um estado de lentidão marcante, como se cada movimento custasse um esforço enorme?",
+    opcoes:[
+      {letra:"A",texto:"Não, o comportamento motor estava dentro do normal."},
+      {letra:"B",texto:"Sim, ficava levemente inquieta(o) ou um pouco mais lenta(o) que o habitual."},
+      {letra:"C",texto:"Sim, de forma marcante e visível para qualquer pessoa ao redor — agitação intensa ou lentidão extrema nos movimentos e na fala."}
     ]
   },
-  {
-    id: "p19",
-    num: "19",
-    bloco: "Cognição e Humor Misto",
-    texto: "Durante as fases de tristeza ou baixa energia, a pessoa demonstrava dificuldade acentuada para se concentrar, tomar decisões simples do cotidiano ou lembrar de coisas que normalmente lembraria sem esforço?",
-    opcoes: [
-      {letra:"A", texto:"Não, a memória e o raciocínio permaneciam normais."},
-      {letra:"B", texto:"Sim, reclamava de 'cabeça pesada' ou dificuldade leve para se concentrar."},
-      {letra:"C", texto:"Sim, de forma significativa — tinha dificuldade até para decisões simples e esquecia coisas rotineiras com frequência."}
+  { id:"p19", num:"19", nova:true, bloco:"Cognição e Humor Misto",
+    texto:"Durante as fases de tristeza ou baixa energia, a pessoa demonstrava dificuldade acentuada para se concentrar, tomar decisões simples do cotidiano ou lembrar de coisas que normalmente lembraria sem esforço?",
+    opcoes:[
+      {letra:"A",texto:"Não, a memória e o raciocínio permaneciam normais."},
+      {letra:"B",texto:"Sim, reclamava de 'cabeça pesada' ou dificuldade leve para se concentrar."},
+      {letra:"C",texto:"Sim, de forma significativa — tinha dificuldade até para decisões simples e esquecia coisas rotineiras com frequência."}
     ]
   },
-  {
-    id: "p20",
-    num: "20",
-    bloco: "Cognição e Humor Misto",
-    texto: "Você já notou períodos em que a pessoa parecia apresentar tristeza ou choro frequente ao mesmo tempo em que estava agitada, com energia elevada, pensamentos acelerados ou pouco sono — como se estivesse 'deprimida e acelerada ao mesmo tempo'?",
-    opcoes: [
-      {letra:"A", texto:"Não, os períodos de tristeza e os de agitação sempre ocorreram de forma separada."},
-      {letra:"B", texto:"Talvez — havia momentos em que parecia triste mas inquieta, embora não fosse o padrão principal."},
-      {letra:"C", texto:"Sim, claramente — havia episódios em que a tristeza e a agitação coexistiam de forma intensa e perturbadora ao mesmo tempo."}
+  { id:"p20", num:"20", nova:true, bloco:"Cognição e Humor Misto",
+    texto:"Você já notou períodos em que a pessoa parecia apresentar tristeza ou choro frequente ao mesmo tempo em que estava agitada, com energia elevada, pensamentos acelerados ou pouco sono — como se estivesse 'deprimida e acelerada ao mesmo tempo'?",
+    opcoes:[
+      {letra:"A",texto:"Não, os períodos de tristeza e os de agitação sempre ocorreram de forma separada."},
+      {letra:"B",texto:"Talvez — havia momentos em que parecia triste mas inquieta, embora não fosse o padrão principal."},
+      {letra:"C",texto:"Sim, claramente — havia episódios em que a tristeza e a agitação coexistiam de forma intensa e perturbadora ao mesmo tempo."}
+    ]
+  },
+  // ANTIGAS (p1-p15) — aparecem abaixo para revisão
+  { id:"p1", num:"1", nova:false, bloco:"Energia e Aceleração",
+    texto:"Em algum período da vida ou de forma recorrente, você notou fases em que a pessoa avaliada passou a apresentar uma energia muito acima do normal, ficando extremamente acelerado(a), com disposição fora do comum, a ponto de parecer incansável?",
+    opcoes:[
+      {letra:"A",texto:"Não, nunca notei nada parecido com isso."},
+      {letra:"B",texto:"Sim, por alguns dias parecia com a 'bateria 24h', mas depois voltava ao normal."},
+      {letra:"C",texto:"Sim, por uma semana ou mais — ritmo frenético de atividade, agitação intensa e pouca necessidade de descanso."},
+      {letra:"D",texto:"Sim, a ponto de perder o controle, agir de forma impulsiva perigosa ou precisar de atendimento médico."}
+    ]
+  },
+  { id:"p2", num:"2", nova:false, bloco:"Energia e Aceleração",
+    texto:"Como costumava ser o padrão de sono e a fala da pessoa durante esses momentos de maior agitação?",
+    opcoes:[
+      {letra:"A",texto:"Dormia e falava normalmente, no ritmo de sempre."},
+      {letra:"B",texto:"Dizia precisar dormir bem menos (2 a 4h) e acordava descansado(a); a fala era bem rápida e atropelada."},
+      {letra:"C",texto:"Passava noites inteiras acordado(a) organizando coisas ou trabalhando sem cansaço, falando excessivamente e mudando de assunto o tempo todo."}
+    ]
+  },
+  { id:"p3", num:"3", nova:false, bloco:"Energia e Aceleração",
+    texto:"Houve momentos em que a pessoa avaliada demonstrava autoconfiança exagerada, achando que podia realizar coisas grandiosas ou assumindo riscos que não costumava assumir (como gastos financeiros excessivos ou projetos mirabolantes)?",
+    opcoes:[
+      {letra:"A",texto:"Não, manteve o comportamento prudente de sempre."},
+      {letra:"B",texto:"Sim, mostrava-se muito otimista com ideias fora do comum ou projetos de grande porte."},
+      {letra:"C",texto:"Sim, tomou decisões impulsivas e arriscadas que trouxeram prejuízos ou grande preocupação para a família."}
+    ]
+  },
+  { id:"p4", num:"4", nova:false, bloco:"Tristeza e Depressão",
+    texto:"Por outro lado, você observou fases em que a pessoa apresentou uma tristeza profunda, desânimo persistente ou perda total do interesse por coisas que antes davam prazer?",
+    opcoes:[
+      {letra:"A",texto:"Não, o humor manteve-se estável ou dentro das variações comuns."},
+      {letra:"B",texto:"Sim, apresentou períodos de apatia e desinteresse, mas conseguia levar a rotina adiante."},
+      {letra:"C",texto:"Sim, períodos prolongados de tristeza profunda, choro frequente, isolamento social e incapacidade de sentir prazer."}
+    ]
+  },
+  { id:"p5", num:"5", nova:false, bloco:"Tristeza e Depressão",
+    texto:"Nesses períodos de desânimo ou baixa energia, como ficavam a disposição física, o sono, o apetite e o ânimo para as tarefas básicas?",
+    opcoes:[
+      {letra:"A",texto:"Mantinha as atividades e os cuidados pessoais normalmente."},
+      {letra:"B",texto:"Apresentava cansaço constante, alterações moderadas no sono/apetite e lentidão para realizar tarefas."},
+      {letra:"C",texto:"Ficava praticamente sem energia para sair da cama, descuidando da higiene e da alimentação, com mudanças drásticas no sono."}
+    ]
+  },
+  { id:"p6", num:"6", nova:false, bloco:"Tristeza e Depressão",
+    texto:"Durante essas fases de baixa energia ou tristeza, a pessoa avaliada chegou a verbalizar sentimentos de desesperança, culpa excessiva ou vontade de sumir / desistir de viver?",
+    opcoes:[
+      {letra:"A",texto:"Nunca verbalizou nada disso."},
+      {letra:"B",texto:"Reclamava que a vida estava difícil, mas sem citar morte ou ideação suicida."},
+      {letra:"C",texto:"Falava abertamente sobre querer sumir, que a vida não tinha sentido ou mencionou pensamentos de morte."}
+    ]
+  },
+  { id:"p7", num:"7", nova:false, bloco:"Relacionamentos e Identidade",
+    texto:"Como a pessoa avaliada costuma reagir quando percebe — ou imagina — que vai ser rejeitado(a), ignorado(a) ou deixado(a) sozinho(a) por alguém importante?",
+    opcoes:[
+      {letra:"A",texto:"Reage de forma equilibrada, compreendendo que as pessoas têm seus compromissos."},
+      {letra:"B",texto:"Fica chateado(a) ou carente, mas consegue lidar após conversar ou se acalmar."},
+      {letra:"C",texto:"Tem reações extremas e desesperadas — liga repetidamente, faz ameaças, chora compulsivamente ou implora para a pessoa não ir embora."}
+    ]
+  },
+  { id:"p8", num:"8", nova:false, bloco:"Relacionamentos e Identidade",
+    texto:"Você percebe que as relações afetivas ou de amizade dessa pessoa costumam ser intensas mas muito instáveis ao longo do tempo?",
+    opcoes:[
+      {letra:"A",texto:"Não, as relações são estáveis e duradouras."},
+      {letra:"B",texto:"Há alguns desentendimentos normais de relacionamento, sem rupturas drásticas."},
+      {letra:"C",texto:"É muito comum passar rapidamente de 'amar alguém excessivamente' para 'odiar essa mesma pessoa' por motivos pequenos."}
+    ]
+  },
+  { id:"p9", num:"9", nova:false, bloco:"Relacionamentos e Identidade",
+    texto:"Como é a percepção que a pessoa tem de si mesmo(a)? Parece haver uma instabilidade marcante sobre quem ela é, seus objetivos ou sua identidade?",
+    opcoes:[
+      {letra:"A",texto:"Tem uma noção clara e estável de quem é, de seus valores e objetivos."},
+      {letra:"B",texto:"Às vezes se sente confusa(o) sobre o futuro ou escolhas, o que é comum."},
+      {letra:"C",texto:"Muda drasticamente de opinião sobre si mesma(o), planos, crenças ou aparência de tempos em tempos, parecendo não saber quem realmente é."}
+    ]
+  },
+  { id:"p10", num:"10", nova:false, bloco:"Impulsos, Humor e Emoções",
+    texto:"A pessoa costuma apresentar comportamentos impulsivos no dia a dia (como gastos descontrolados, direção perigosa, excessos na comida ou uso desregrado de substâncias)?",
+    opcoes:[
+      {letra:"A",texto:"Não, costuma ser uma pessoa prudente e controla bem seus impulsos."},
+      {letra:"B",texto:"Ocorre ocasionalmente de forma leve."},
+      {letra:"C",texto:"Tem episódios frequentes de impulsividade descontrolada em várias áreas, sem pensar nas consequências."}
+    ]
+  },
+  { id:"p11", num:"11", nova:false, bloco:"Impulsos, Humor e Emoções",
+    texto:"Houve episódios de automutilação física (como cortes ou queimaduras superficiais) ou ameaças e tentativas de autoextermínio?",
+    opcoes:[
+      {letra:"A",texto:"Nunca apresentou nenhum comportamento desse tipo."},
+      {letra:"B",texto:"Já mencionou verbalmente querer sumir sob estresse, mas sem atos práticos."},
+      {letra:"C",texto:"Apresenta ou já apresentou histórico de cortes, automutilação para aliviar sofrimento emocional ou tentativas reais de suicídio."}
+    ]
+  },
+  { id:"p12", num:"12", nova:false, bloco:"Impulsos, Humor e Emoções",
+    texto:"Como o humor dessa pessoa costuma oscilar no dia a dia ou de uma semana para outra?",
+    opcoes:[
+      {letra:"A",texto:"O humor é relativamente estável, variando de acordo com os fatos reais."},
+      {letra:"B",texto:"Apresenta oscilações normais do estresse cotidiano."},
+      {letra:"C",texto:"Tem mudanças de humor muito rápidas e intensas — passa de calma para irritação profunda ou desespero em poucas horas."}
+    ]
+  },
+  { id:"p13", num:"13", nova:false, bloco:"Impulsos, Humor e Emoções",
+    texto:"A pessoa avaliada costuma relatar uma sensação persistente de vazio interior ou tédio crônico?",
+    opcoes:[
+      {letra:"A",texto:"Não relata esse tipo de sentimento."},
+      {letra:"B",texto:"Sente-se vazia(o) ou entediada(o) esporadicamente, em fases de solidão."},
+      {letra:"C",texto:"Queixa-se com frequência de um vazio interno profundo ou um 'buraco no peito' que nada parece preencher."}
+    ]
+  },
+  { id:"p14", num:"14", nova:false, bloco:"Impulsos, Humor e Emoções",
+    texto:"Como a pessoa lida com a raiva e a frustração nas situações cotidianas?",
+    opcoes:[
+      {letra:"A",texto:"Consegue expressar o que sente de forma adequada e negociar quando algo a incomoda."},
+      {letra:"B",texto:"Fica irritada(o), mas consegue se conter e evitar discussões maiores."},
+      {letra:"C",texto:"Tem explosões de raiva intensas, desproporcionais ao motivo, com forte dificuldade de controlar a agressividade verbal ou física."}
+    ]
+  },
+  { id:"p15", num:"15", nova:false, bloco:"Impulsos, Humor e Emoções",
+    texto:"Em momentos de forte pressão ou estresse, você já notou se a pessoa parece 'se desligar' da realidade, apresentar desconfianças exageradas das intenções dos outros ou um estranhamento intenso de si mesma?",
+    opcoes:[
+      {letra:"A",texto:"Não, mantém o contato firme com a realidade mesmo sob pressão."},
+      {letra:"B",texto:"Fica apenas muito estressada(o) temporariamente."},
+      {letra:"C",texto:"Sob estresse extremo, já apresentou episódios em que parecia 'fora de si', muito desconfiada(o) (quase persecutória) ou relatando sensação de irrealidade."}
     ]
   }
 ];
 
-// Perguntas antigas para exibição
-const LABELS_ANTIGAS = {
-  p1:"Energia muito acima do normal / fases de aceleração",
-  p2:"Padrão de sono e fala durante agitação",
-  p3:"Autoconfiança exagerada ou riscos incomuns",
-  p4:"Tristeza profunda ou perda de interesse",
-  p5:"Disposição física, sono e apetite nas fases de baixa",
-  p6:"Desesperança, culpa excessiva ou ideação suicida",
-  p7:"Reação ao abandono real ou imaginado",
-  p8:"Relações intensas e instáveis",
-  p9:"Instabilidade de identidade ou objetivos",
-  p10:"Comportamentos impulsivos no dia a dia",
-  p11:"Automutilação ou tentativas de autoextermínio",
-  p12:"Oscilação rápida de humor",
-  p13:"Vazio interior persistente ou tédio crônico",
-  p14:"Manejo da raiva e da frustração",
-  p15:"Dissociação ou paranoia sob estresse extremo"
-};
-
-const BLOCOS_ANTIGOS = {
-  p1:"Energia e Aceleração",p2:"Energia e Aceleração",p3:"Energia e Aceleração",
-  p4:"Tristeza e Depressão",p5:"Tristeza e Depressão",p6:"Tristeza e Depressão",
-  p7:"Relacionamentos e Identidade",p8:"Relacionamentos e Identidade",p9:"Relacionamentos e Identidade",
-  p10:"Impulsos, Humor e Emoções",p11:"Impulsos, Humor e Emoções",p12:"Impulsos, Humor e Emoções",
-  p13:"Impulsos, Humor e Emoções",p14:"Impulsos, Humor e Emoções",p15:"Impulsos, Humor e Emoções"
-};
-
+const NOVAS = TODAS_PERGUNTAS.filter(p=>p.nova);
+const ANTIGAS = TODAS_PERGUNTAS.filter(p=>!p.nova);
+let respostas = {}; // guarda todas (novas + revisadas antigas)
 let docOriginal = null;
-let respostasNovas = {};
 
-// === CARREGAR DOCUMENTO ===
-async function carregarDoc() {
-  if(!docId) {
+// === CARREGAR ===
+async function carregar() {
+  if(!docId){
     document.getElementById("loadingArea").style.display="none";
     document.getElementById("erroArea").style.display="block";
-    document.getElementById("erroMsg").textContent="Link inválido — ID do questionário não encontrado.";
+    document.getElementById("erroMsg").textContent="Link inválido — ID não encontrado.";
     return;
   }
   try {
     const snap = await db.collection("clinica_rastreamento_bipolar").doc(docId).get();
-    if(!snap.exists) {
+    if(!snap.exists){
       document.getElementById("loadingArea").style.display="none";
       document.getElementById("erroArea").style.display="block";
-      document.getElementById("erroMsg").textContent="Questionário não encontrado. Verifique o link.";
+      document.getElementById("erroMsg").textContent="Questionário não encontrado.";
       return;
     }
     docOriginal = snap.data();
+    // Pré-carregar respostas antigas
+    ANTIGAS.forEach(p => { if(docOriginal[p.id]) respostas[p.id] = docOriginal[p.id]; });
     document.getElementById("loadingArea").style.display="none";
     renderPagina();
   } catch(e) {
     document.getElementById("loadingArea").style.display="none";
     document.getElementById("erroArea").style.display="block";
-    document.getElementById("erroMsg").textContent="Erro ao carregar: "+e.message;
+    document.getElementById("erroMsg").textContent="Erro: "+e.message;
   }
 }
 
 function renderPagina() {
-  // Info do respondente
+  // Info respondente
   const nomeResp = docOriginal.tipoRespondente==="paciente"
     ? "🧑 Próprio paciente"
-    : "👨‍👩‍👧 " + (docOriginal.nomeRespondente||"Familiar") + " · " + (docOriginal.parentesco||"");
-  document.getElementById("infoRespondente").innerHTML =
-    '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Respondente</div>' +
-    '<div style="font-size:15px;font-weight:600;color:#1f2937">'+nomeResp+'</div>' +
-    (nomePaciente ? '<div style="font-size:12px;color:#6b7280;margin-top:4px">Paciente: '+nomePaciente+'</div>' : '');
-
-  // Respostas antigas
-  let htmlAntigo = "";
-  let blocoAtual = "";
-  ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14","p15"].forEach(pid => {
-    const bloco = BLOCOS_ANTIGOS[pid];
-    if(bloco !== blocoAtual) {
-      blocoAtual = bloco;
-      htmlAntigo += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid #f3f4f6">'+bloco+'</div>';
-    }
-    const letra = docOriginal[pid] || "—";
-    const classeLetra = letra !== "—" ? "letra-"+letra : "letra-vazio";
-    htmlAntigo +=
-      '<div class="pergunta-antiga">' +
-        '<div class="pergunta-texto">'+LABELS_ANTIGAS[pid]+'</div>' +
-        '<div class="resposta-antiga">' +
-          '<div class="letra-antiga '+classeLetra+'">'+letra+'</div>' +
-          '<div style="font-size:12px;color:#6b7280">'+(letra==="—"?"Não respondida":"Resposta registrada")+'</div>' +
-        '</div>' +
-      '</div>';
-  });
-  document.getElementById("respostasAntigas").innerHTML = htmlAntigo;
+    : "👨‍👩‍👧 "+(docOriginal.nomeRespondente||"Familiar")+" · "+(docOriginal.parentesco||"");
+  document.getElementById("infoResp").innerHTML =
+    '<div class="info-resp-label">Respondente</div>' +
+    '<div class="info-resp-nome">'+nomeResp+'</div>' +
+    (nomePaciente?'<div style="font-size:12px;color:#6b7280;margin-top:3px">Paciente: '+nomePaciente+'</div>':'');
 
   // Perguntas novas
-  let htmlNovas = "";
-  PERGUNTAS_NOVAS.forEach((p, idx) => {
-    htmlNovas += '<div class="pergunta" id="pergunta_'+p.id+'">';
-    htmlNovas += '<div class="pergunta-texto"><strong>'+p.num+'.</strong> '+p.texto+'</div>';
-    htmlNovas += '<div class="opcoes">';
-    p.opcoes.forEach(op => {
-      htmlNovas +=
-        '<div class="opcao" id="opcao_'+p.id+'_'+op.letra+'" onclick="selecionarOpcao(\''+p.id+'\',\''+op.letra+'\')">' +
-          '<div class="letra-circle" id="circle_'+p.id+'_'+op.letra+'">'+op.letra+'</div>' +
-          '<div class="opcao-texto">'+op.texto+'</div>' +
-        '</div>';
-    });
-    htmlNovas += '</div></div>';
-  });
-  document.getElementById("perguntasNovas").innerHTML = htmlNovas;
+  renderGrupo("perguntasNovas", NOVAS);
+
+  // Perguntas antigas (agrupadas por bloco)
+  renderGrupoAntigas();
 
   document.getElementById("mainArea").style.display="block";
 }
 
-function selecionarOpcao(pid, letra) {
-  // Desselecionar anteriores
-  PERGUNTAS_NOVAS.find(p=>p.id===pid).opcoes.forEach(op => {
-    document.getElementById("opcao_"+pid+"_"+op.letra).classList.remove("selected");
-    document.getElementById("circle_"+pid+"_"+op.letra).style.background="";
-    document.getElementById("circle_"+pid+"_"+op.letra).style.color="";
-    document.getElementById("circle_"+pid+"_"+op.letra).style.borderColor="";
+function renderGrupo(containerId, perguntas) {
+  let html = "";
+  perguntas.forEach(p => {
+    html += '<div class="pergunta" id="perg_'+p.id+'">';
+    html += '<div class="pergunta-num">Pergunta '+p.num+'</div>';
+    html += '<div class="pergunta-texto">'+p.texto+'</div>';
+    html += '<div class="opcoes">';
+    p.opcoes.forEach(op => {
+      const sel = respostas[p.id]===op.letra ? " selected" : "";
+      html += '<div class="opcao'+sel+'" id="opcao_'+p.id+'_'+op.letra+'" onclick="selecionar(\''+p.id+'\',\''+op.letra+'\')">' +
+        '<div class="lc" id="lc_'+p.id+'_'+op.letra+'">'+op.letra+'</div>' +
+        '<div class="opcao-texto">'+op.texto+'</div>' +
+        '</div>';
+    });
+    html += '</div></div>';
   });
-  // Selecionar nova
-  document.getElementById("opcao_"+pid+"_"+letra).classList.add("selected");
-  respostasNovas[pid] = letra;
+  document.getElementById(containerId).innerHTML = html;
 
-  // Atualizar progresso
-  const total = PERGUNTAS_NOVAS.length;
-  const respondidas = Object.keys(respostasNovas).length;
-  document.getElementById("progressNovas").style.width = Math.round(respondidas/total*100)+"%";
-
-  // Habilitar botão se tudo respondido
-  document.getElementById("btnEnviar").disabled = respondidas < total;
+  // Restaurar seleção visual para antigas pré-carregadas
+  perguntas.forEach(p => {
+    if(respostas[p.id]) aplicarVisual(p.id, respostas[p.id], p.opcoes);
+  });
 }
 
-async function enviarComplemento() {
+function renderGrupoAntigas() {
+  let html = "";
+  let blocoAtual = "";
+  ANTIGAS.forEach(p => {
+    if(p.bloco !== blocoAtual) {
+      blocoAtual = p.bloco;
+      html += '<div class="bloco-sep">'+p.bloco+'</div>';
+    }
+    html += '<div class="pergunta" id="perg_'+p.id+'">';
+    html += '<div class="pergunta-num">Pergunta '+p.num+'</div>';
+    html += '<div class="pergunta-texto">'+p.texto+'</div>';
+    html += '<div class="opcoes">';
+    p.opcoes.forEach(op => {
+      const sel = respostas[p.id]===op.letra ? " selected" : "";
+      html += '<div class="opcao'+sel+'" id="opcao_'+p.id+'_'+op.letra+'" onclick="selecionar(\''+p.id+'\',\''+op.letra+'\')">' +
+        '<div class="lc" id="lc_'+p.id+'_'+op.letra+'">'+op.letra+'</div>' +
+        '<div class="opcao-texto">'+op.texto+'</div>' +
+        '</div>';
+    });
+    html += '</div></div>';
+  });
+  document.getElementById("perguntasAntigas").innerHTML = html;
+
+  // Restaurar visual das antigas
+  ANTIGAS.forEach(p => {
+    if(respostas[p.id]) aplicarVisual(p.id, respostas[p.id], p.opcoes);
+  });
+}
+
+function aplicarVisual(pid, letra, opcoes) {
+  opcoes.forEach(op => {
+    const el = document.getElementById("opcao_"+pid+"_"+op.letra);
+    const lc = document.getElementById("lc_"+pid+"_"+op.letra);
+    if(!el) return;
+    if(op.letra === letra) {
+      el.classList.add("selected");
+      lc.style.background="#7B00C4"; lc.style.color="white"; lc.style.borderColor="#7B00C4";
+    } else {
+      el.classList.remove("selected");
+      lc.style.background=""; lc.style.color=""; lc.style.borderColor="";
+    }
+  });
+}
+
+function selecionar(pid, letra) {
+  const perg = TODAS_PERGUNTAS.find(p=>p.id===pid);
+  respostas[pid] = letra;
+  aplicarVisual(pid, letra, perg.opcoes);
+  atualizarProgresso();
+  atualizarBotao();
+}
+
+function atualizarProgresso() {
+  const respondidas = NOVAS.filter(p=>respostas[p.id]).length;
+  const total = NOVAS.length;
+  const pct = Math.round(respondidas/total*100);
+  document.getElementById("progFill").style.width=pct+"%";
+  document.getElementById("progLabel").textContent=respondidas+" de "+total+" respondidas";
+}
+
+function atualizarBotao() {
+  const todasNovas = NOVAS.every(p=>respostas[p.id]);
+  document.getElementById("btnEnviar").disabled = !todasNovas;
+  document.getElementById("avisoIncompleto").style.display = !todasNovas ? "block" : "none";
+}
+
+async function enviar() {
   const btn = document.getElementById("btnEnviar");
-  btn.disabled = true;
-  btn.textContent = "Enviando...";
+  btn.disabled=true; btn.textContent="Enviando...";
   try {
-    // Salvar como novo documento com referência ao original
-    const novoDoc = {
-      pacienteNome: docOriginal.pacienteNome || nomePaciente || "",
-      token: docOriginal.token || "",
-      tipoRespondente: docOriginal.tipoRespondente || "",
-      nomeRespondente: docOriginal.nomeRespondente || "",
-      parentesco: docOriginal.parentesco || "",
-      // Respostas originais (p1-p15)
-      p1: docOriginal.p1||"", p2: docOriginal.p2||"", p3: docOriginal.p3||"",
-      p4: docOriginal.p4||"", p5: docOriginal.p5||"", p6: docOriginal.p6||"",
-      p7: docOriginal.p7||"", p8: docOriginal.p8||"", p9: docOriginal.p9||"",
-      p10: docOriginal.p10||"", p11: docOriginal.p11||"", p12: docOriginal.p12||"",
-      p13: docOriginal.p13||"", p14: docOriginal.p14||"", p15: docOriginal.p15||"",
-      // Respostas novas (p16-p20)
-      p16: respostasNovas.p16||"", p17: respostasNovas.p17||"", p18: respostasNovas.p18||"",
-      p19: respostasNovas.p19||"", p20: respostasNovas.p20||"",
-      obsFinais: docOriginal.obsFinais || "",
+    const doc = {
+      pacienteNome: docOriginal.pacienteNome||nomePaciente||"",
+      token: docOriginal.token||"",
+      tipoRespondente: docOriginal.tipoRespondente||"",
+      nomeRespondente: docOriginal.nomeRespondente||"",
+      parentesco: docOriginal.parentesco||"",
+      p1:respostas.p1||"", p2:respostas.p2||"", p3:respostas.p3||"",
+      p4:respostas.p4||"", p5:respostas.p5||"", p6:respostas.p6||"",
+      p7:respostas.p7||"", p8:respostas.p8||"", p9:respostas.p9||"",
+      p10:respostas.p10||"", p11:respostas.p11||"", p12:respostas.p12||"",
+      p13:respostas.p13||"", p14:respostas.p14||"", p15:respostas.p15||"",
+      p16:respostas.p16||"", p17:respostas.p17||"", p18:respostas.p18||"",
+      p19:respostas.p19||"", p20:respostas.p20||"",
+      obsFinais: docOriginal.obsFinais||"",
       complementoDeDocId: docId,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-
-    await db.collection("clinica_rastreamento_bipolar").add(novoDoc);
-
-    // Notificar Lucia
+    await db.collection("clinica_rastreamento_bipolar").add(doc);
     await db.collection("nr1map_emails").add({
-      to: "luciakratz@gmail.com",
+      to:"luciakratz@gmail.com",
       message:{
-        subject: "🔔 Complemento de Rastreamento — " + (novoDoc.pacienteNome||"Sem nome"),
-        html: "<h2>Complemento recebido</h2><p><b>Paciente:</b> "+(novoDoc.pacienteNome||"—")+"</p><p><b>Respondido por:</b> "+novoDoc.nomeRespondente+" ("+novoDoc.parentesco+")</p><p><b>Perguntas novas respondidas:</b> p16="+novoDoc.p16+", p17="+novoDoc.p17+", p18="+novoDoc.p18+", p19="+novoDoc.p19+", p20="+novoDoc.p20+"</p>"
+        subject:"🔔 Complemento — "+(doc.pacienteNome||"Sem nome"),
+        html:"<h2>Complemento recebido</h2><p><b>Paciente:</b> "+(doc.pacienteNome||"—")+"</p><p><b>Novas respostas:</b> p16="+doc.p16+", p17="+doc.p17+", p18="+doc.p18+", p19="+doc.p19+", p20="+doc.p20+"</p>"
       },
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-
     document.getElementById("mainArea").style.display="none";
     document.getElementById("successArea").style.display="block";
     window.scrollTo({top:0,behavior:"smooth"});
   } catch(e) {
-    alert("Erro ao enviar. Tente novamente.\n"+e.message);
-    btn.disabled=false;
-    btn.textContent="✓ Enviar Complemento";
+    alert("Erro ao enviar.\n"+e.message);
+    btn.disabled=false; btn.textContent="✓ Confirmar e Enviar Tudo";
   }
 }
 
-// Iniciar
-carregarDoc();
+carregar();
 </script>
 </body>
 </html>
