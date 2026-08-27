@@ -3415,139 +3415,313 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         fontSize: 12,
         lineHeight: 1.5
       }
-    }, a))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600,
-        fontSize: 13,
-        marginBottom: 10
+    }, a))), (() => {
+      // Deduplica por id do documento
+      const vistos = new Set();
+      const unicos = escoresPorDoc.filter(d => {
+        if (vistos.has(d.id)) {
+          return false;
+        }
+        vistos.add(d.id);
+        return true;
+      });
+      const temDivergencia = unicos.length > 1;
+
+      // Detecta divergência por eixo (diferença >15pp entre respondentes)
+      function diverge(campo, max) {
+        if (unicos.length < 2) return false;
+        const vals = unicos.map(d => Math.round(d.escores[campo] / max * 100));
+        return Math.max(...vals) - Math.min(...vals) > 15;
       }
-    }, "Respondentes"), escoresPorDoc.map((d, i) => /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        border: "1px solid var(--gray-200)",
-        borderRadius: 12,
-        padding: 14,
-        marginBottom: 10,
-        cursor: "pointer",
-        background: selecionado === i ? "#f5f3ff" : "white"
-      },
-      onClick: () => setSelecionado(selecionado === i ? null : i)
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600,
-        fontSize: 13
-      }
-    }, d.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : "👨‍👩‍👧 " + (d.nomeRespondente || "Familiar") + " · " + (d.parentesco || "Familiar")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "Data não disponível")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 6
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "#fef2f2",
-        color: "#dc2626",
-        padding: "2px 8px",
-        borderRadius: 20,
-        fontSize: 11,
-        fontWeight: 600
-      }
-    }, "Mania ", Math.round(d.escores.bipolarMania / 8 * 100), "%"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "#ede9fe",
-        color: "#7c3aed",
-        padding: "2px 8px",
-        borderRadius: 20,
-        fontSize: 11,
-        fontWeight: 600
-      }
-    }, "Dep ", Math.round(d.escores.bipolarDep / 6 * 100), "%"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "#eff6ff",
-        color: "#2563eb",
-        padding: "2px 8px",
-        borderRadius: 20,
-        fontSize: 11,
-        fontWeight: 600
-      }
-    }, "TPB ", Math.round(d.escores.borderline / 18 * 100), "%"))), selecionado === i && /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 14,
-        borderTop: "1px solid var(--gray-200)",
-        paddingTop: 12
-      }
-    }, PERGUNTAS_RASTREAMENTO.map(p => /*#__PURE__*/React.createElement("div", {
-      key: p.id,
-      style: {
-        display: "flex",
-        gap: 10,
-        alignItems: "flex-start",
-        marginBottom: 8,
-        fontSize: 12
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        minWidth: 22,
-        height: 22,
-        borderRadius: "50%",
-        background: d[p.id] === "C" || d[p.id] === "D" ? "#fef2f2" : d[p.id] === "B" ? "#fffbeb" : "#f0fdf4",
-        color: d[p.id] === "C" || d[p.id] === "D" ? "#dc2626" : d[p.id] === "B" ? "#d97706" : "#16a34a",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: 700,
-        fontSize: 11
-      }
-    }, d[p.id] || "—"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        color: "var(--text-muted)",
-        fontSize: 10,
-        fontWeight: 600,
-        textTransform: "uppercase",
-        letterSpacing: .5
-      }
-    }, p.bloco), /*#__PURE__*/React.createElement("div", {
-      style: {
-        color: "var(--text-dark)",
-        lineHeight: 1.4
-      }
-    }, p.texto)))), d.obsFinais && /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "var(--gray-50)",
-        border: "1px solid var(--gray-200)",
-        borderRadius: 8,
-        padding: 10,
-        marginTop: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        fontWeight: 700,
-        color: "var(--text-muted)",
-        textTransform: "uppercase",
-        letterSpacing: .5,
-        marginBottom: 4
-      }
-    }, "Observações livres"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-dark)",
-        lineHeight: 1.6
-      }
-    }, d.obsFinais))))));
+      const divMania = diverge("bipolarMania", 8);
+      const divDep = diverge("bipolarDep", 6);
+      const divTPB = diverge("borderline", 18);
+      return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 600,
+          fontSize: 13,
+          marginBottom: 10
+        }
+      }, "Respondentes", temDivergencia && /*#__PURE__*/React.createElement("span", {
+        style: {
+          marginLeft: 8,
+          fontSize: 11,
+          fontWeight: 400,
+          color: "#d97706",
+          background: "#fffbeb",
+          border: "1px solid #fcd34d",
+          borderRadius: 20,
+          padding: "2px 8px"
+        }
+      }, "⚡ Divergência detectada")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          overflowX: "auto",
+          marginBottom: 16
+        }
+      }, /*#__PURE__*/React.createElement("table", {
+        style: {
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: 12
+        }
+      }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+        style: {
+          background: "var(--gray-50)"
+        }
+      }, /*#__PURE__*/React.createElement("th", {
+        style: {
+          textAlign: "left",
+          padding: "8px 10px",
+          fontWeight: 600,
+          color: "var(--text-muted)",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: .5,
+          borderBottom: "2px solid var(--gray-200)"
+        }
+      }, "Respondente"), /*#__PURE__*/React.createElement("th", {
+        style: {
+          textAlign: "left",
+          padding: "8px 10px",
+          fontWeight: 600,
+          color: "var(--text-muted)",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: .5,
+          borderBottom: "2px solid var(--gray-200)"
+        }
+      }, "Data"), /*#__PURE__*/React.createElement("th", {
+        style: {
+          textAlign: "center",
+          padding: "8px 10px",
+          fontWeight: 600,
+          color: "#dc2626",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: .5,
+          borderBottom: "2px solid var(--gray-200)",
+          background: divMania ? "#fef2f2" : "var(--gray-50)"
+        }
+      }, "Mania", divMania ? " ⚡" : ""), /*#__PURE__*/React.createElement("th", {
+        style: {
+          textAlign: "center",
+          padding: "8px 10px",
+          fontWeight: 600,
+          color: "#7c3aed",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: .5,
+          borderBottom: "2px solid var(--gray-200)",
+          background: divDep ? "#fdf4ff" : "var(--gray-50)"
+        }
+      }, "Dep", divDep ? " ⚡" : ""), /*#__PURE__*/React.createElement("th", {
+        style: {
+          textAlign: "center",
+          padding: "8px 10px",
+          fontWeight: 600,
+          color: "#2563eb",
+          fontSize: 11,
+          textTransform: "uppercase",
+          letterSpacing: .5,
+          borderBottom: "2px solid var(--gray-200)",
+          background: divTPB ? "#eff6ff" : "var(--gray-50)"
+        }
+      }, "TPB", divTPB ? " ⚡" : ""), /*#__PURE__*/React.createElement("th", {
+        style: {
+          textAlign: "center",
+          padding: "8px 10px",
+          fontWeight: 600,
+          color: "var(--text-muted)",
+          fontSize: 11,
+          borderBottom: "2px solid var(--gray-200)"
+        }
+      }))), /*#__PURE__*/React.createElement("tbody", null, unicos.map((d, i) => {
+        const mPct = Math.round(d.escores.bipolarMania / 8 * 100);
+        const dPct = Math.round(d.escores.bipolarDep / 6 * 100);
+        const tPct = Math.round(d.escores.borderline / 18 * 100);
+        const nome = d.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : "👥 " + (d.nomeRespondente || "Familiar") + " · " + (d.parentesco || "Familiar");
+        const data = d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—";
+        return /*#__PURE__*/React.createElement("tr", {
+          key: i,
+          style: {
+            borderBottom: "1px solid var(--gray-200)",
+            cursor: "pointer",
+            background: selecionado === i ? "#f5f3ff" : "white"
+          },
+          onClick: () => setSelecionado(selecionado === i ? null : i)
+        }, /*#__PURE__*/React.createElement("td", {
+          style: {
+            padding: "10px 10px",
+            fontWeight: 600,
+            fontSize: 12,
+            color: "var(--text-dark)"
+          }
+        }, nome), /*#__PURE__*/React.createElement("td", {
+          style: {
+            padding: "10px 10px",
+            fontSize: 11,
+            color: "var(--text-muted)"
+          }
+        }, data), /*#__PURE__*/React.createElement("td", {
+          style: {
+            padding: "10px 10px",
+            textAlign: "center",
+            background: divMania ? "#fff8f8" : ""
+          }
+        }, /*#__PURE__*/React.createElement("span", {
+          style: {
+            background: "#fef2f2",
+            color: "#dc2626",
+            padding: "2px 8px",
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 700
+          }
+        }, mPct, "%")), /*#__PURE__*/React.createElement("td", {
+          style: {
+            padding: "10px 10px",
+            textAlign: "center",
+            background: divDep ? "#fdf4ff" : ""
+          }
+        }, /*#__PURE__*/React.createElement("span", {
+          style: {
+            background: "#ede9fe",
+            color: "#7c3aed",
+            padding: "2px 8px",
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 700
+          }
+        }, dPct, "%")), /*#__PURE__*/React.createElement("td", {
+          style: {
+            padding: "10px 10px",
+            textAlign: "center",
+            background: divTPB ? "#f0f7ff" : ""
+          }
+        }, /*#__PURE__*/React.createElement("span", {
+          style: {
+            background: "#eff6ff",
+            color: "#2563eb",
+            padding: "2px 8px",
+            borderRadius: 20,
+            fontSize: 11,
+            fontWeight: 700
+          }
+        }, tPct, "%")), /*#__PURE__*/React.createElement("td", {
+          style: {
+            padding: "10px 10px",
+            textAlign: "center",
+            color: "var(--text-muted)",
+            fontSize: 12
+          }
+        }, selecionado === i ? "▲" : "▼"));
+      })))), unicos.map((d, i) => selecionado === i && /*#__PURE__*/React.createElement("div", {
+        key: i,
+        style: {
+          border: "1px solid #c4b5fd",
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 10,
+          background: "#f5f3ff"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 600,
+          fontSize: 13,
+          marginBottom: 12,
+          color: "#3d006a"
+        }
+      }, d.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : "👥 " + (d.nomeRespondente || "Familiar") + " · " + (d.parentesco || "Familiar"), /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: 11,
+          fontWeight: 400,
+          color: "var(--text-muted)",
+          marginLeft: 8
+        }
+      }, d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginBottom: 12
+        }
+      }, /*#__PURE__*/React.createElement(BarraEscore, {
+        label: "Mania/Hipomania",
+        valor: d.escores.bipolarMania,
+        max: 8,
+        cor: "#dc2626"
+      }), /*#__PURE__*/React.createElement(BarraEscore, {
+        label: "Depressão",
+        valor: d.escores.bipolarDep,
+        max: 6,
+        cor: "#7c3aed"
+      }), /*#__PURE__*/React.createElement(BarraEscore, {
+        label: "Borderline (TPB)",
+        valor: d.escores.borderline,
+        max: 18,
+        cor: "#2563eb"
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          borderTop: "1px solid #c4b5fd",
+          paddingTop: 12
+        }
+      }, PERGUNTAS_RASTREAMENTO.map(p => /*#__PURE__*/React.createElement("div", {
+        key: p.id,
+        style: {
+          display: "flex",
+          gap: 10,
+          alignItems: "flex-start",
+          marginBottom: 8,
+          fontSize: 12
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          minWidth: 22,
+          height: 22,
+          borderRadius: "50%",
+          background: d[p.id] === "C" || d[p.id] === "D" ? "#fef2f2" : d[p.id] === "B" ? "#fffbeb" : "#f0fdf4",
+          color: d[p.id] === "C" || d[p.id] === "D" ? "#dc2626" : d[p.id] === "B" ? "#d97706" : "#16a34a",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 700,
+          fontSize: 11
+        }
+      }, d[p.id] || "—"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          color: "var(--text-muted)",
+          fontSize: 10,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: .5
+        }
+      }, p.bloco), /*#__PURE__*/React.createElement("div", {
+        style: {
+          color: "var(--text-dark)",
+          lineHeight: 1.4
+        }
+      }, p.texto)))), d.obsFinais && /*#__PURE__*/React.createElement("div", {
+        style: {
+          background: "white",
+          border: "1px solid var(--gray-200)",
+          borderRadius: 8,
+          padding: 10,
+          marginTop: 8
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 10,
+          fontWeight: 700,
+          color: "var(--text-muted)",
+          textTransform: "uppercase",
+          letterSpacing: .5,
+          marginBottom: 4
+        }
+      }, "Observações livres"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-dark)",
+          lineHeight: 1.6
+        }
+      }, d.obsFinais))))));
+    })());
   })());
 }
 
