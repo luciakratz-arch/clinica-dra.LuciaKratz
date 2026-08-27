@@ -3425,13 +3425,13 @@ function PainelGeralFinanceiro() {
 // ORÇAMENTO CLÍNICO
 // ═══════════════════════════════════════════════════════
 const SERVICOS_PADRAO = [
-  {id:"s1", nome:"Psicoterapia",                    particular:250,  adufg:225,  social:175},
-  {id:"s2", nome:"Psicoterapia Pacote",              particular:220,  adufg:200,  social:154},
-  {id:"s3", nome:"Avaliação Vocacional",             particular:1500, adufg:1200, social:1050},
-  {id:"s4", nome:"Avaliação Neuromodulação",         particular:1800, adufg:1460, social:1260},
-  {id:"s5", nome:"Avaliação Neuropsicológica",       particular:3200, adufg:1600, social:2240},
-  {id:"s6", nome:"Sessões de Neuromodulação",        particular:250,  adufg:175,  social:175},
-  {id:"s7", nome:"Pacote Sessões Neuromodulação",    particular:200,  adufg:150,  social:140},
+  {id:"s1", nome:"Psicoterapia",                    particular:250,  adufg:225,  social:175,  aluno:125},
+  {id:"s2", nome:"Psicoterapia Pacote",              particular:220,  adufg:200,  social:154,  aluno:110},
+  {id:"s3", nome:"Avaliação Vocacional",             particular:1500, adufg:1200, social:1050, aluno:750},
+  {id:"s4", nome:"Avaliação Neuromodulação",         particular:1800, adufg:1460, social:1260, aluno:900},
+  {id:"s5", nome:"Avaliação Neuropsicológica",       particular:3200, adufg:1600, social:2240, aluno:1600},
+  {id:"s6", nome:"Sessões de Neuromodulação",        particular:250,  adufg:175,  social:175,  aluno:125},
+  {id:"s7", nome:"Pacote Sessões Neuromodulação",    particular:200,  adufg:150,  social:140,  aluno:100},
 ];
 
 function OrcamentoClinica() {
@@ -3454,7 +3454,7 @@ function OrcamentoClinica() {
         const batch = db.batch();
         SERVICOS_PADRAO.forEach(s=>{
           const ref = db.collection("clinica_orcamento_servicos").doc(s.id);
-          batch.set(ref, {nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social});
+          batch.set(ref, {nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social, aluno:s.aluno||0});
         });
         batch.commit().then(()=>{
           setServicos(SERVICOS_PADRAO);
@@ -3482,6 +3482,7 @@ function OrcamentoClinica() {
       particular: Number(formServ.particular)||0,
       adufg: Number(formServ.adufg)||0,
       social: Number(formServ.social)||0,
+      aluno: Number(formServ.aluno)||0,
     };
     if(editando){
       await db.collection("clinica_orcamento_servicos").doc(editando).update(dados);
@@ -3492,7 +3493,7 @@ function OrcamentoClinica() {
       setServicos(prev=>[...prev,{id:ref.id,...dados}].sort((a,b)=>a.nome.localeCompare(b.nome)));
       setNovoAberto(false);
     }
-    setFormServ({nome:"",particular:"",adufg:"",social:""});
+    setFormServ({nome:"",particular:"",adufg:"",social:"",aluno:""});
   }
 
   async function excluirServico(id){
@@ -3503,7 +3504,7 @@ function OrcamentoClinica() {
 
   function iniciarEdicao(s){
     setEditando(s.id);
-    setFormServ({nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social});
+    setFormServ({nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social, aluno:s.aluno||0});
     setNovoAberto(false);
   }
 
@@ -3513,9 +3514,21 @@ function OrcamentoClinica() {
     const itens = servicos.filter(s=>selecionados.includes(s.id));
     const total = itens.reduce((sum,s)=>sum+(s[modalidade]||0),0);
     const modalLabel = modalidade==="particular"?"Particular":modalidade==="adufg"?"Adufg":"Social";
-    const linhas = itens.map(s=>"🔹 "+s.nome+" — "+fmtR(s[modalidade])).join("\n");
     const linkCadastro = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
-    const msg = "Olá, "+nomeCliente+"! 😊\n\nSegue o orçamento personalizado da *Dra. Lucia Kratz*:\n\n"+linhas+"\n\n💰 *Total ("+modalLabel+"): "+fmtR(total)+"*\n\n💳 Formas de pagamento: Pix, cartão ou boleto\n\n📋 Para agendar sua consulta, faça seu cadastro pelo link:\n"+linkCadastro+"\n\nQualquer dúvida estou à disposição! 🦋\n_Dra. Lucia Kratz · CRP 09/20590_";
+    let linhas = "";
+    if(modalidade==="particular"){
+      linhas = itens.map(s=>"🔹 "+s.nome+" — "+fmtR(s.particular)).join("\n");
+    } else {
+      linhas = itens.map(s=>"🔹 "+s.nome+"\n   De "+fmtR(s.particular)+" por "+fmtR(s[modalidade])).join("\n");
+    }
+    const intro = modalidade==="adufg"
+      ? "Como associado(a) da ADUFG, você tem direito a um desconto especial! 🎓\n\n"
+      : modalidade==="social"
+      ? "Como atendimento social, você tem acesso ao valor reduzido! 💙\n\n"
+      : modalidade==="aluno"
+      ? "Como meu(minha) aluno(a), você tem 50% de desconto! 🌟\n\n"
+      : "";
+    const msg = "Olá, "+nomeCliente+"! 😊\n\nSegue o orçamento personalizado da *Dra. Lucia Kratz*:\n\n"+intro+linhas+"\n\n💰 *Total: "+fmtR(total)+"*\n\n💳 Formas de pagamento: Pix, cartão ou boleto\n\n📋 Para agendar sua consulta, faça seu cadastro pelo link:\n"+linkCadastro+"\n\nQualquer dúvida estou à disposição! 🦋\n_Dra. Lucia Kratz · CRP 09/20590_";
     const wNum = whatsCliente.replace(/\D/g,"");
     if(wNum){
       window.open("https://wa.me/55"+wNum+"?text="+encodeURIComponent(msg),"_blank");
@@ -3526,7 +3539,7 @@ function OrcamentoClinica() {
 
   if(loading) return <div style={{textAlign:"center",padding:40}}><Spinner/></div>;
 
-  const MODAL_COLS = [{key:"particular",label:"Particular",cor:"#7c3aed"},{key:"adufg",label:"Adufg",cor:"#0891b2"},{key:"social",label:"Social",cor:"#059669"}];
+  const MODAL_COLS = [{key:"particular",label:"Particular",cor:"#7c3aed"},{key:"adufg",label:"Adufg",cor:"#0891b2"},{key:"social",label:"Social",cor:"#059669"},{key:"aluno",label:"Aluno",cor:"#d97706"}];
 
   return (
     <div>
@@ -3537,7 +3550,7 @@ function OrcamentoClinica() {
       <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:20,marginBottom:24}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={{fontWeight:600,fontSize:14}}>Tabela de Serviços</div>
-          <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setNovoAberto(true);setEditando(null);setFormServ({nome:"",particular:"",adufg:"",social:""});}}>
+          <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setNovoAberto(true);setEditando(null);setFormServ({nome:"",particular:"",adufg:"",social:"",aluno:""});}}>
             <Icon name="plus" size={13}/> Novo Serviço
           </button>
         </div>
