@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Complemento de Rastreamento — Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f5f3ff;min-height:100vh;padding:0 0 60px}
+.header{background:linear-gradient(135deg,#7B00C4,#a855f7);padding:20px 16px 16px;text-align:center;color:white}
+.header h1{font-family:'Dancing Script',cursive;font-size:22px;margin-bottom:2px}
+.header p{font-size:12px;opacity:.85}
+.card{background:white;border-radius:16px;padding:20px 18px;margin:16px 14px;box-shadow:0 2px 10px rgba(123,0,196,.08)}
+.badge-novo{display:inline-block;background:#7B00C4;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px;margin-left:8px;vertical-align:middle}
+.badge-antigo{display:inline-block;background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px;margin-left:8px;vertical-align:middle}
+.bloco-titulo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:2px solid #ede9fe;margin-bottom:14px}
+.pergunta{margin-bottom:20px}
+.pergunta-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:10px;font-weight:500}
+.opcoes{display:flex;flex-direction:column;gap:8px}
+.opcao{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all .2s}
+.opcao:hover{border-color:#a855f7;background:#faf5ff}
+.opcao.selected{border-color:#7B00C4;background:#f5f3ff}
+.opcao.selected .letra-circle{background:#7B00C4;color:white;border-color:#7B00C4}
+.letra-circle{min-width:28px;height:28px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#6b7280;flex-shrink:0;transition:all .2s}
+.opcao-texto{font-size:13px;color:#374151;line-height:1.5;padding-top:3px}
+
+/* Perguntas antigas — travadas */
+.pergunta-antiga{margin-bottom:14px;opacity:.75}
+.pergunta-antiga .pergunta-texto{font-size:13px;color:#6b7280}
+.resposta-antiga{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-top:6px}
+.letra-antiga{width:26px;height:26px;min-width:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.letra-A{background:#dcfce7;color:#16a34a;border:2px solid #bbf7d0}
+.letra-B{background:#fef9c3;color:#a16207;border:2px solid #fde047}
+.letra-C{background:#fee2e2;color:#dc2626;border:2px solid #fca5a5}
+.letra-D{background:#fce7f3;color:#9d174d;border:2px solid #f9a8d4}
+.letra-vazio{background:#f3f4f6;color:#9ca3af;border:2px solid #e5e7eb}
+
+.aviso-novo{background:#faf5ff;border:2px solid #7B00C4;border-radius:12px;padding:14px 16px;margin:16px 14px}
+.aviso-novo h3{font-size:14px;color:#7B00C4;font-weight:700;margin-bottom:6px}
+.aviso-novo p{font-size:13px;color:#4b5563;line-height:1.5}
+
+.btn-enviar{width:calc(100% - 28px);margin:0 14px;padding:16px;background:linear-gradient(135deg,#7B00C4,#a855f7);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-enviar:disabled{opacity:.5;cursor:not-allowed}
+.btn-enviar:hover:not(:disabled){opacity:.9}
+
+.success{display:none;text-align:center;padding:40px 20px}
+.success h2{font-family:'Dancing Script',cursive;font-size:28px;color:#7B00C4;margin-bottom:12px}
+.success p{font-size:14px;color:#6b7280;line-height:1.6}
+
+.erro-card{background:#fee2e2;border:1px solid #fca5a5;border-radius:12px;padding:16px;margin:16px 14px;text-align:center}
+.erro-card p{font-size:14px;color:#dc2626}
+
+.loading{text-align:center;padding:40px 20px;color:#7B00C4;font-size:14px}
+
+.progress-novas{background:#e5e7eb;border-radius:20px;height:6px;margin-bottom:16px}
+.progress-novas-fill{background:#7B00C4;height:6px;border-radius:20px;transition:width .3s}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🦋 Dra. Lucia Kratz</h1>
+  <p>Complemento de Rastreamento Clínico</p>
+</div>
+
+<div id="loadingArea" class="loading">Carregando suas respostas anteriores...</div>
+<div id="erroArea" class="erro-card" style="display:none">
+  <p id="erroMsg">Não foi possível carregar o questionário. Verifique o link e tente novamente.</p>
+</div>
+
+<div id="mainArea" style="display:none">
+
+  <!-- Info do respondente -->
+  <div class="card" id="infoRespondente"></div>
+
+  <!-- Aviso sobre perguntas novas -->
+  <div class="aviso-novo">
+    <h3>📋 Perguntas adicionais</h3>
+    <p>Suas respostas anteriores já foram salvas. Precisamos que você responda apenas <strong>5 perguntas novas</strong> para completar a avaliação. As respostas antigas estão exibidas abaixo para referência.</p>
+  </div>
+
+  <!-- Respostas antigas (travadas) -->
+  <div class="card">
+    <div class="bloco-titulo">Respostas anteriores <span class="badge-antigo">JÁ SALVAS</span></div>
+    <div id="respostasAntigas"></div>
+  </div>
+
+  <!-- Perguntas novas -->
+  <div class="card">
+    <div class="bloco-titulo">Perguntas novas <span class="badge-novo">RESPONDA AQUI</span></div>
+    <div class="progress-novas">
+      <div class="progress-novas-fill" id="progressNovas" style="width:0%"></div>
+    </div>
+    <div id="perguntasNovas"></div>
+  </div>
+
+  <button class="btn-enviar" id="btnEnviar" onclick="enviarComplemento()" disabled>
+    ✓ Enviar Complemento
+  </button>
+
+</div>
+
+<div id="successArea" class="success">
+  <div style="font-size:48px;margin-bottom:16px">🦋</div>
+  <h2>Obrigada!</h2>
+  <p>Suas respostas complementares foram registradas com sucesso.<br/>A Dra. Lucia Kratz irá analisar junto com as anteriores.</p>
+  <p style="margin-top:16px;font-size:12px;color:#9ca3af">Pode fechar esta janela.</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial"};
+if(!firebase.apps.length)firebase.initializeApp(fc);
+const db=firebase.firestore();
+
+// Parâmetros da URL
+const urlParams = new URLSearchParams(window.location.search);
+const docId = urlParams.get("id");           // ID do documento Firestore
+const nomePaciente = urlParams.get("paciente") || "";
+
+// Perguntas novas (p16-p20)
+const PERGUNTAS_NOVAS = [
+  {
+    id: "p16",
+    num: "16",
+    bloco: "Cognição e Humor Misto",
+    texto: "Durante os períodos de agitação ou aceleração, você notou que a pessoa avaliada parecia ter os pensamentos acelerados demais — como se as ideias se atropelassem, saltando de um assunto para outro sem conseguir parar?",
+    opcoes: [
+      {letra:"A", texto:"Não, o raciocínio sempre pareceu organizado e no ritmo normal."},
+      {letra:"B", texto:"Sim, ficava muito dispersa(o) nas conversas, mudava de assunto com frequência mas sem parecer fora de controle."},
+      {letra:"C", texto:"Sim, os pensamentos pareciam tão acelerados que era difícil acompanhar — falava muito rápido e saltava de ideia em ideia sem concluir nenhuma."}
+    ]
+  },
+  {
+    id: "p17",
+    num: "17",
+    bloco: "Cognição e Humor Misto",
+    texto: "Nesses momentos de agitação, a pessoa demonstrava grande dificuldade de manter a atenção — qualquer barulho, movimento ou estímulo externo parecia distraí-la facilmente, mesmo quando estava tentando fazer algo importante?",
+    opcoes: [
+      {letra:"A", texto:"Não, conseguia se concentrar normalmente mesmo em períodos de agitação."},
+      {letra:"B", texto:"Ficava um pouco mais dispersa(o) que o habitual, mas conseguia retomar o foco."},
+      {letra:"C", texto:"Sim, era impossível mantê-la focada — qualquer coisa tirava a atenção e ela não conseguia terminar nada."}
+    ]
+  },
+  {
+    id: "p18",
+    num: "18",
+    bloco: "Cognição e Humor Misto",
+    texto: "Nos períodos de tristeza ou baixa energia, você observou uma inquietação física visível — a pessoa não conseguia ficar parada, andava de um lado para outro, remexia as mãos ou os pés sem parar — ou o contrário: um estado de lentidão marcante, como se cada movimento custasse um esforço enorme?",
+    opcoes: [
+      {letra:"A", texto:"Não, o comportamento motor estava dentro do normal."},
+      {letra:"B", texto:"Sim, ficava levemente inquieta(o) ou um pouco mais lenta(o) que o habitual."},
+      {letra:"C", texto:"Sim, de forma marcante e visível para qualquer pessoa ao redor — agitação intensa ou lentidão extrema nos movimentos e na fala."}
+    ]
+  },
+  {
+    id: "p19",
+    num: "19",
+    bloco: "Cognição e Humor Misto",
+    texto: "Durante as fases de tristeza ou baixa energia, a pessoa demonstrava dificuldade acentuada para se concentrar, tomar decisões simples do cotidiano ou lembrar de coisas que normalmente lembraria sem esforço?",
+    opcoes: [
+      {letra:"A", texto:"Não, a memória e o raciocínio permaneciam normais."},
+      {letra:"B", texto:"Sim, reclamava de 'cabeça pesada' ou dificuldade leve para se concentrar."},
+      {letra:"C", texto:"Sim, de forma significativa — tinha dificuldade até para decisões simples e esquecia coisas rotineiras com frequência."}
+    ]
+  },
+  {
+    id: "p20",
+    num: "20",
+    bloco: "Cognição e Humor Misto",
+    texto: "Você já notou períodos em que a pessoa parecia apresentar tristeza ou choro frequente ao mesmo tempo em que estava agitada, com energia elevada, pensamentos acelerados ou pouco sono — como se estivesse 'deprimida e acelerada ao mesmo tempo'?",
+    opcoes: [
+      {letra:"A", texto:"Não, os períodos de tristeza e os de agitação sempre ocorreram de forma separada."},
+      {letra:"B", texto:"Talvez — havia momentos em que parecia triste mas inquieta, embora não fosse o padrão principal."},
+      {letra:"C", texto:"Sim, claramente — havia episódios em que a tristeza e a agitação coexistiam de forma intensa e perturbadora ao mesmo tempo."}
+    ]
+  }
+];
+
+// Perguntas antigas para exibição
+const LABELS_ANTIGAS = {
+  p1:"Energia muito acima do normal / fases de aceleração",
+  p2:"Padrão de sono e fala durante agitação",
+  p3:"Autoconfiança exagerada ou riscos incomuns",
+  p4:"Tristeza profunda ou perda de interesse",
+  p5:"Disposição física, sono e apetite nas fases de baixa",
+  p6:"Desesperança, culpa excessiva ou ideação suicida",
+  p7:"Reação ao abandono real ou imaginado",
+  p8:"Relações intensas e instáveis",
+  p9:"Instabilidade de identidade ou objetivos",
+  p10:"Comportamentos impulsivos no dia a dia",
+  p11:"Automutilação ou tentativas de autoextermínio",
+  p12:"Oscilação rápida de humor",
+  p13:"Vazio interior persistente ou tédio crônico",
+  p14:"Manejo da raiva e da frustração",
+  p15:"Dissociação ou paranoia sob estresse extremo"
+};
+
+const BLOCOS_ANTIGOS = {
+  p1:"Energia e Aceleração",p2:"Energia e Aceleração",p3:"Energia e Aceleração",
+  p4:"Tristeza e Depressão",p5:"Tristeza e Depressão",p6:"Tristeza e Depressão",
+  p7:"Relacionamentos e Identidade",p8:"Relacionamentos e Identidade",p9:"Relacionamentos e Identidade",
+  p10:"Impulsos, Humor e Emoções",p11:"Impulsos, Humor e Emoções",p12:"Impulsos, Humor e Emoções",
+  p13:"Impulsos, Humor e Emoções",p14:"Impulsos, Humor e Emoções",p15:"Impulsos, Humor e Emoções"
+};
+
+let docOriginal = null;
+let respostasNovas = {};
+
+// === CARREGAR DOCUMENTO ===
+async function carregarDoc() {
+  if(!docId) {
+    document.getElementById("loadingArea").style.display="none";
+    document.getElementById("erroArea").style.display="block";
+    document.getElementById("erroMsg").textContent="Link inválido — ID do questionário não encontrado.";
+    return;
+  }
+  try {
+    const snap = await db.collection("clinica_rastreamento_bipolar").doc(docId).get();
+    if(!snap.exists) {
+      document.getElementById("loadingArea").style.display="none";
+      document.getElementById("erroArea").style.display="block";
+      document.getElementById("erroMsg").textContent="Questionário não encontrado. Verifique o link.";
+      return;
+    }
+    docOriginal = snap.data();
+    document.getElementById("loadingArea").style.display="none";
+    renderPagina();
+  } catch(e) {
+    document.getElementById("loadingArea").style.display="none";
+    document.getElementById("erroArea").style.display="block";
+    document.getElementById("erroMsg").textContent="Erro ao carregar: "+e.message;
+  }
+}
+
+function renderPagina() {
+  // Info do respondente
+  const nomeResp = docOriginal.tipoRespondente==="paciente"
+    ? "🧑 Próprio paciente"
+    : "👨‍👩‍👧 " + (docOriginal.nomeRespondente||"Familiar") + " · " + (docOriginal.parentesco||"");
+  document.getElementById("infoRespondente").innerHTML =
+    '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Respondente</div>' +
+    '<div style="font-size:15px;font-weight:600;color:#1f2937">'+nomeResp+'</div>' +
+    (nomePaciente ? '<div style="font-size:12px;color:#6b7280;margin-top:4px">Paciente: '+nomePaciente+'</div>' : '');
+
+  // Respostas antigas
+  let htmlAntigo = "";
+  let blocoAtual = "";
+  ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14","p15"].forEach(pid => {
+    const bloco = BLOCOS_ANTIGOS[pid];
+    if(bloco !== blocoAtual) {
+      blocoAtual = bloco;
+      htmlAntigo += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid #f3f4f6">'+bloco+'</div>';
+    }
+    const letra = docOriginal[pid] || "—";
+    const classeLetra = letra !== "—" ? "letra-"+letra : "letra-vazio";
+    htmlAntigo +=
+      '<div class="pergunta-antiga">' +
+        '<div class="pergunta-texto">'+LABELS_ANTIGAS[pid]+'</div>' +
+        '<div class="resposta-antiga">' +
+          '<div class="letra-antiga '+classeLetra+'">'+letra+'</div>' +
+          '<div style="font-size:12px;color:#6b7280">'+(letra==="—"?"Não respondida":"Resposta registrada")+'</div>' +
+        '</div>' +
+      '</div>';
+  });
+  document.getElementById("respostasAntigas").innerHTML = htmlAntigo;
+
+  // Perguntas novas
+  let htmlNovas = "";
+  PERGUNTAS_NOVAS.forEach((p, idx) => {
+    htmlNovas += '<div class="pergunta" id="pergunta_'+p.id+'">';
+    htmlNovas += '<div class="pergunta-texto"><strong>'+p.num+'.</strong> '+p.texto+'</div>';
+    htmlNovas += '<div class="opcoes">';
+    p.opcoes.forEach(op => {
+      htmlNovas +=
+        '<div class="opcao" id="opcao_'+p.id+'_'+op.letra+'" onclick="selecionarOpcao(\''+p.id+'\',\''+op.letra+'\')">' +
+          '<div class="letra-circle" id="circle_'+p.id+'_'+op.letra+'">'+op.letra+'</div>' +
+          '<div class="opcao-texto">'+op.texto+'</div>' +
+        '</div>';
+    });
+    htmlNovas += '</div></div>';
+  });
+  document.getElementById("perguntasNovas").innerHTML = htmlNovas;
+
+  document.getElementById("mainArea").style.display="block";
+}
+
+function selecionarOpcao(pid, letra) {
+  // Desselecionar anteriores
+  PERGUNTAS_NOVAS.find(p=>p.id===pid).opcoes.forEach(op => {
+    document.getElementById("opcao_"+pid+"_"+op.letra).classList.remove("selected");
+    document.getElementById("circle_"+pid+"_"+op.letra).style.background="";
+    document.getElementById("circle_"+pid+"_"+op.letra).style.color="";
+    document.getElementById("circle_"+pid+"_"+op.letra).style.borderColor="";
+  });
+  // Selecionar nova
+  document.getElementById("opcao_"+pid+"_"+letra).classList.add("selected");
+  respostasNovas[pid] = letra;
+
+  // Atualizar progresso
+  const total = PERGUNTAS_NOVAS.length;
+  const respondidas = Object.keys(respostasNovas).length;
+  document.getElementById("progressNovas").style.width = Math.round(respondidas/total*100)+"%";
+
+  // Habilitar botão se tudo respondido
+  document.getElementById("btnEnviar").disabled = respondidas < total;
+}
+
+async function enviarComplemento() {
+  const btn = document.getElementById("btnEnviar");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
+  try {
+    // Salvar como novo documento com referência ao original
+    const novoDoc = {
+      pacienteNome: docOriginal.pacienteNome || nomePaciente || "",
+      token: docOriginal.token || "",
+      tipoRespondente: docOriginal.tipoRespondente || "",
+      nomeRespondente: docOriginal.nomeRespondente || "",
+      parentesco: docOriginal.parentesco || "",
+      // Respostas originais (p1-p15)
+      p1: docOriginal.p1||"", p2: docOriginal.p2||"", p3: docOriginal.p3||"",
+      p4: docOriginal.p4||"", p5: docOriginal.p5||"", p6: docOriginal.p6||"",
+      p7: docOriginal.p7||"", p8: docOriginal.p8||"", p9: docOriginal.p9||"",
+      p10: docOriginal.p10||"", p11: docOriginal.p11||"", p12: docOriginal.p12||"",
+      p13: docOriginal.p13||"", p14: docOriginal.p14||"", p15: docOriginal.p15||"",
+      // Respostas novas (p16-p20)
+      p16: respostasNovas.p16||"", p17: respostasNovas.p17||"", p18: respostasNovas.p18||"",
+      p19: respostasNovas.p19||"", p20: respostasNovas.p20||"",
+      obsFinais: docOriginal.obsFinais || "",
+      complementoDeDocId: docId,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("clinica_rastreamento_bipolar").add(novoDoc);
+
+    // Notificar Lucia
+    await db.collection("nr1map_emails").add({
+      to: "luciakratz@gmail.com",
+      message:{
+        subject: "🔔 Complemento de Rastreamento — " + (novoDoc.pacienteNome||"Sem nome"),
+        html: "<h2>Complemento recebido</h2><p><b>Paciente:</b> "+(novoDoc.pacienteNome||"—")+"</p><p><b>Respondido por:</b> "+novoDoc.nomeRespondente+" ("+novoDoc.parentesco+")</p><p><b>Perguntas novas respondidas:</b> p16="+novoDoc.p16+", p17="+novoDoc.p17+", p18="+novoDoc.p18+", p19="+novoDoc.p19+", p20="+novoDoc.p20+"</p>"
+      },
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById("mainArea").style.display="none";
+    document.getElementById("successArea").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+  } catch(e) {
+    alert("Erro ao enviar. Tente novamente.\n"+e.message);
+    btn.disabled=false;
+    btn.textContent="✓ Enviar Complemento";
+  }
+}
+
+// Iniciar
+carregarDoc();
+</script>
+</body>
+</html>
