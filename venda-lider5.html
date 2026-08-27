@@ -1,6 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1626778084286933');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1626778084286933&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Líd@r 5.0 — Revolucionando a Liderança</title>
@@ -714,6 +731,296 @@ footer {
   .autores-grid { grid-template-columns:1fr; }
 }
 
+/* ── ANIMAÇÕES ── */
+
+/* Partículas hero */
+#hero-particles {
+  position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+}
+.hero-particle {
+  position:absolute; border-radius:50%;
+  animation: particleDrift linear infinite;
+  opacity:0;
+}
+@keyframes particleDrift {
+  0%   { transform:translateY(0) translateX(0); opacity:0; }
+  10%  { opacity:1; }
+  90%  { opacity:0.5; }
+  100% { transform:translateY(-70vh) translateX(20px); opacity:0; }
+}
+
+/* Livro hero — flutua + brilha no hover */
+.book-cover {
+  animation: bookFloat 7s ease-in-out infinite;
+  transition: box-shadow 0.5s ease, filter 0.5s ease;
+}
+.book-cover:hover {
+  animation: bookFloat 7s ease-in-out infinite;
+  box-shadow: -20px 20px 60px rgba(0,0,0,0.55), 0 0 50px rgba(212,168,71,0.4), 20px -10px 40px rgba(107,33,168,0.35);
+  filter: brightness(1.07) saturate(1.1);
+  transform: rotate(0deg) scale(1.04) !important;
+}
+@keyframes bookFloat {
+  0%   { transform: translateY(0px) rotate(-3deg); }
+  50%  { transform: translateY(-10px) rotate(-1deg); }
+  100% { transform: translateY(0px) rotate(-3deg); }
+}
+
+/* Livro na seção "Sobre" */
+.book-img-large {
+  animation: bookFloat2 8s ease-in-out infinite;
+  transition: box-shadow 0.5s ease;
+}
+.book-img-large:hover {
+  box-shadow: 0 40px 100px rgba(107,33,168,0.4), 0 0 40px rgba(212,168,71,0.25);
+}
+@keyframes bookFloat2 {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-8px); }
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity:0; transform:translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+.reveal.visible { opacity:1; transform:translateY(0); }
+.reveal-left {
+  opacity:0; transform:translateX(-28px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-left.visible { opacity:1; transform:translateX(0); }
+.reveal-scale {
+  opacity:0; transform:scale(0.94);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-scale.visible { opacity:1; transform:scale(1); }
+
+/* Stat items */
+.stat-item {
+  opacity:0; transform:translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.stat-item.visible { opacity:1; transform:translateY(0); }
+
+/* Cards de diferenciais */
+.dif-card {
+  opacity:0; transform:translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease,
+              box-shadow 0.3s, transform 0.3s;
+}
+.dif-card.visible { opacity:1; transform:translateY(0); }
+
+/* Cards leitor */
+.leitor-card {
+  opacity:0; transform:translateY(22px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.leitor-card.visible { opacity:1; transform:translateY(0); }
+
+/* Bonus cards — cor suave, sem movimento */
+.bonus-card {
+  opacity:0; transform:translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease,
+              box-shadow 0.3s ease, border-left-color 0.3s ease, background 0.3s ease;
+}
+.bonus-card.visible { opacity:1; transform:translateY(0); }
+.bonus-card:not(.bonus-destaque):hover {
+  background: linear-gradient(135deg, #fff 0%, #F0EBFF 100%) !important;
+  border-left-color: var(--roxo-claro) !important;
+  box-shadow: 0 8px 28px rgba(107,33,168,0.12);
+}
+.bonus-destaque:hover {
+  box-shadow: 0 12px 40px rgba(107,33,168,0.3) !important;
+}
+
+/* Ferramentas cards — cor suave na borda e fundo, sem movimento */
+.ferr-card {
+  opacity:0; transform:translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease,
+              background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.ferr-card.visible { opacity:1; transform:translateY(0); }
+.ferr-card:not(.ferr-destaque):hover {
+  background: #EDE9FE !important;
+  box-shadow: 0 8px 28px rgba(107,33,168,0.12);
+  border-color: rgba(107,33,168,0.25);
+}
+.ferr-card:not(.ferr-destaque):hover .ferr-tag {
+  background: var(--roxo);
+  color: #fff;
+  transition: background 0.3s, color 0.3s;
+}
+.ferr-destaque:hover {
+  box-shadow: 0 12px 40px rgba(107,33,168,0.35) !important;
+}
+
+/* Diferenciais — só cor leve, sem subir */
+.dif-card {
+  opacity:0; transform:translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease,
+              background 0.3s ease, border-bottom-color 0.3s ease;
+}
+.dif-card.visible { opacity:1; transform:translateY(0); }
+.dif-card:hover {
+  background: #DDD6FE !important;
+  border-bottom-color: var(--dourado) !important;
+}
+.dif-card:hover strong { color: var(--roxo-escuro); transition: color 0.3s; }
+
+/* Stat items — só cor, sem subir */
+.stat-item {
+  opacity:0; transform:translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease, background 0.3s ease;
+}
+.stat-item.visible { opacity:1; transform:translateY(0); }
+.stat-item:hover { background: var(--roxo-suave) !important; }
+.stat-item:hover .stat-n { color: var(--roxo-escuro); transition: color 0.3s; }
+
+/* Leitor cards — sobem COM cor (estes têm apelo visual forte) */
+.leitor-card {
+  opacity:0; transform:translateY(22px);
+  transition: opacity 0.55s ease, transform 0.55s ease,
+              background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.leitor-card.visible { opacity:1; transform:translateY(0); }
+.leitor-card:hover {
+  transform: translateY(-6px) !important;
+  background: linear-gradient(160deg, #3B0D6E 0%, #6B21A8 100%) !important;
+  box-shadow: 0 18px 44px rgba(107,33,168,0.4);
+  border-color: rgba(212,168,71,0.35);
+}
+.leitor-card:hover h3 em { color: var(--dourado-claro); transition: color 0.3s; }
+
+/* Pillar list — só destaca o título, sem mover nada */
+.pillar-list li {
+  opacity:0; transform:translateX(-20px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.pillar-list li.visible { opacity:1; transform:translateX(0); }
+.pillar-list li:hover .pillar-icon {
+  background: linear-gradient(135deg, var(--dourado), var(--dourado-claro));
+  transition: background 0.3s ease;
+}
+.pillar-list li:hover .pillar-content strong { color: var(--roxo); transition: color 0.3s; }
+
+/* Exp items — só cor suave */
+.exp-item {
+  opacity:0; transform:translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease, background 0.3s ease;
+}
+.exp-item.visible { opacity:1; transform:translateY(0); }
+.exp-item:hover { background: #DDD6FE !important; }
+.exp-item:hover .exp-num { color: var(--roxo-escuro); transition: color 0.3s; }
+
+/* FAQ — borda e texto roxo, sem mover */
+.faq-item {
+  opacity:0; transform:translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease,
+              border-color 0.3s, box-shadow 0.3s;
+}
+.faq-item.visible { opacity:1; transform:translateY(0); }
+.faq-item:hover:not(.open) {
+  border-color: var(--roxo-claro) !important;
+  box-shadow: 0 4px 16px rgba(107,33,168,0.1);
+}
+.faq-item:hover .faq-q-text { color: var(--roxo); transition: color 0.3s; }
+
+/* Preco box */
+.preco-box {
+  opacity:0; transform:translateY(24px) scale(0.97);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.preco-box.visible { opacity:1; transform:translateY(0) scale(1); }
+
+/* QR float badge */
+.qr-float {
+  animation: qrPulse 4s ease-in-out infinite;
+}
+@keyframes qrPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.04); }
+}
+.banner-overlay blockquote {
+  opacity:0; transform:translateY(16px);
+  transition: opacity 0.9s ease 0.2s, transform 0.9s ease 0.2s;
+}
+.book-photo-banner.visible .banner-overlay blockquote { opacity:1; transform:translateY(0); }
+.banner-overlay cite {
+  opacity:0;
+  transition: opacity 0.7s ease 0.9s;
+}
+.book-photo-banner.visible .banner-overlay cite { opacity:1; }
+
+/* Eyebrows */
+.eyebrow {
+  opacity:0; transform:translateX(-14px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.eyebrow.visible { opacity:1; transform:translateX(0); }
+
+/* Nav */
+nav { animation: navFadeIn 0.7s ease both; }
+@keyframes navFadeIn {
+  from { opacity:0; transform:translateY(-10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* Hero text */
+.hero-badge    { animation: heroSlide 0.7s ease 0.2s both; }
+.hero h1       { animation: heroSlide 0.7s ease 0.35s both; }
+.hero-subtitle { animation: heroSlide 0.7s ease 0.5s both; }
+.hero-desc     { animation: heroSlide 0.7s ease 0.65s both; }
+.hero-btns     { animation: heroSlide 0.7s ease 0.8s both; }
+@keyframes heroSlide {
+  from { opacity:0; transform:translateX(-22px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.hero-book { animation: heroBookIn 0.9s ease 0.5s both; }
+@keyframes heroBookIn {
+  from { opacity:0; transform:translateY(20px) rotate(-6deg); }
+  to   { opacity:1; transform:translateY(0px) rotate(-3deg); }
+}
+
+/* CTA pulse */
+.btn-comprar {
+  animation: ctaPulse 3s ease-in-out infinite;
+}
+.btn-comprar:hover { animation: none; }
+.nav-cta {
+  animation: ctaPulse 3.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+.nav-cta:hover { animation: none; }
+@keyframes ctaPulse {
+  0%,100% { box-shadow: 0 6px 20px rgba(212,168,71,0); }
+  50%      { box-shadow: 0 6px 28px rgba(212,168,71,0.55); }
+}
+
+/* Preco box */
+.preco-box {
+  opacity:0; transform:translateY(24px) scale(0.97);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.preco-box.visible { opacity:1; transform:translateY(0) scale(1); }
+
+/* FAQ items */
+.faq-item {
+  opacity:0; transform:translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease,
+              border-color 0.3s, box-shadow 0.3s;
+}
+.faq-item.visible { opacity:1; transform:translateY(0); }
+
+/* QR float badge */
+.qr-float {
+  animation: qrPulse 4s ease-in-out infinite;
+}
+@keyframes qrPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.04); }
+}
+
 /* WHATSAPP FLUTUANTE */
 .wa-float {
   position: fixed;
@@ -746,11 +1053,12 @@ footer {
 <!-- NAV -->
 <nav>
   <div class="nav-logo">Líd@r <em>5.0</em></div>
-  <a class="nav-cta" href="https://pay.hotmart.com/L106620879F?checkoutMode=10" target="_blank" target="_blank">📚 Adquirir o livro</a>
+  <a class="nav-cta" href="https://pay.hotmart.com/L106620879F?checkoutMode=10" target="_blank" onclick="fbq('track','InitiateCheckout')">📚 Adquirir o livro</a>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
+  <div id="hero-particles"></div>
   <div class="hero-inner">
     <div class="hero-content">
       <span class="hero-badge">📚 Lançamento — Edição 2025</span>
@@ -1172,7 +1480,7 @@ footer {
     <div class="preco-label" style="margin-top:28px;">Seu investimento hoje</div>
     <div class="preco-valor"><sup>R$</sup>29<span style="font-size:2.5rem;">,90</span></div>
 
-    <a class="btn-comprar" href="https://pay.hotmart.com/L106620879F?checkoutMode=10" target="_blank" target="_blank">
+    <a class="btn-comprar" href="https://pay.hotmart.com/L106620879F?checkoutMode=10" target="_blank" onclick="fbq('track','InitiateCheckout')">
       📚 Quero adquirir agora
     </a>
     <div class="selos">
@@ -1181,7 +1489,7 @@ footer {
       <span class="selo">🚚 Entrega para todo o Brasil</span>
     </div>
     <br>
-    <a class="btn-wa-small" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Tenho%20interesse%20no%20livro%20Líd%40r%205.0%20%E2%80%94%20Revolucionando%20a%20Liderança.%20Pode%20me%20dar%20mais%20informações%3F" target="_blank">
+    <a class="btn-wa-small" href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Tenho%20interesse%20no%20livro%20Líd%40r%205.0%20%E2%80%94%20Revolucionando%20a%20Liderança.%20Pode%20me%20dar%20mais%20informações%3F" target="_blank" onclick="fbq('track','Lead')">
       💬 Falar sobre palestra ou compra em volume
     </a>
   </div>
@@ -1254,15 +1562,129 @@ footer {
 
 <footer>
   <p>© 2025 Dra. Lucia Kratz · Líd@r 5.0 — Revolucionando a Liderança · Todos os direitos reservados</p>
-  <p style="margin-top:8px;">📞 (62) 9464-4950 · <a href="https://wa.me/5562994644950" style="color:rgba(255,255,255,0.35);text-decoration:none;">WhatsApp</a></p>
+  <p style="margin-top:8px;">📞 (62) 9464-4950 · <a href="https://wa.me/5562994644950" style="color:rgba(255,255,255,0.35);text-decoration:none;" target="_blank" onclick="fbq('track','Contact')">WhatsApp</a></p>
 </footer>
 
 <script>
+/* ── FAQ ── */
 function toggleFaq(btn) {
   const item = btn.closest('.faq-item');
   const isOpen = item.classList.contains('open');
   document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
   if (!isOpen) item.classList.add('open');
+}
+
+/* ── PARTÍCULAS HERO ── */
+(function(){
+  const container = document.getElementById('hero-particles');
+  if(!container) return;
+  const colors = ['rgba(212,168,71,','rgba(107,33,168,','rgba(168,85,247,'];
+  for(let i = 0; i < 26; i++){
+    const p = document.createElement('div');
+    p.className = 'hero-particle';
+    const size = Math.random() * 3 + 1;
+    const c = colors[Math.floor(Math.random()*colors.length)];
+    const op = (Math.random() * 0.3 + 0.08).toFixed(2);
+    p.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      background:${c}${op});
+      animation-duration:${Math.random()*14+8}s;
+      animation-delay:${Math.random()*8}s;
+    `;
+    container.appendChild(p);
+  }
+})();
+
+/* ── SCROLL REVEAL ── */
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    const el = e.target;
+    const delay = parseInt(el.dataset.delay || 0);
+    setTimeout(() => el.classList.add('visible'), delay);
+    obs.unobserve(el);
+  });
+}, { threshold: 0.1 });
+
+/* Eyebrows */
+document.querySelectorAll('.eyebrow').forEach(el => obs.observe(el));
+
+/* Títulos e textos de seção */
+document.querySelectorAll('.section-title, .section-text').forEach((el,i) => {
+  el.classList.add('reveal');
+  el.dataset.delay = i % 2 * 100;
+  obs.observe(el);
+});
+
+/* Stats */
+document.querySelectorAll('.stat-item').forEach((el,i) => {
+  el.dataset.delay = i * 100;
+  obs.observe(el);
+});
+
+/* Pillar list */
+document.querySelectorAll('.pillar-list li').forEach((el,i) => {
+  el.dataset.delay = i * 110;
+  obs.observe(el);
+});
+
+/* Diferenciais */
+document.querySelectorAll('.dif-card').forEach((el,i) => {
+  el.dataset.delay = i * 90;
+  obs.observe(el);
+});
+
+/* Exp items */
+document.querySelectorAll('.exp-item').forEach((el,i) => {
+  el.dataset.delay = i * 100;
+  obs.observe(el);
+});
+
+/* Leitor cards */
+document.querySelectorAll('.leitor-card').forEach((el,i) => {
+  el.dataset.delay = i * 90;
+  obs.observe(el);
+});
+
+/* Bonus cards */
+document.querySelectorAll('.bonus-card').forEach((el,i) => {
+  el.dataset.delay = i * 100;
+  obs.observe(el);
+});
+
+/* Ferramentas cards */
+document.querySelectorAll('.ferr-card').forEach((el,i) => {
+  el.dataset.delay = i * 80;
+  obs.observe(el);
+});
+
+/* Preco box */
+const precoBox = document.querySelector('.preco-box');
+if(precoBox) obs.observe(precoBox);
+
+/* FAQ items */
+document.querySelectorAll('.faq-item').forEach((el,i) => {
+  el.dataset.delay = i * 80;
+  obs.observe(el);
+});
+
+/* Banner foto */
+const banner = document.querySelector('.book-photo-banner');
+if(banner){
+  new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.3 }).observe(banner);
+}
+
+/* Autora photo */
+const autoraPhoto = document.querySelector('.autora-photo-wrap');
+if(autoraPhoto){
+  autoraPhoto.classList.add('reveal-left');
+  obs.observe(autoraPhoto);
 }
 </script>
 
@@ -1270,7 +1692,8 @@ function toggleFaq(btn) {
 <a class="wa-float" 
    href="https://wa.me/5562994644950?text=Olá%20Dra.%20Lucia!%20Tenho%20interesse%20no%20livro%20Líd%40r%205.0%20%E2%80%94%20Revolucionando%20a%20Liderança.%20Pode%20me%20dar%20mais%20informações%3F" 
    target="_blank" 
-   title="Fale pelo WhatsApp">
+   title="Fale pelo WhatsApp"
+   onclick="fbq('track','Contact')">
   <svg viewBox="0 0 24 24" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
     <path fill="#ffffff" d="M12 0C5.373 0 0 5.373 0 12c0 2.114.554 4.1 1.523 5.824L0 24l6.341-1.499A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.651-.518-5.165-1.418l-.371-.22-3.851.913.964-3.724-.242-.381A9.94 9.94 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm5.406-7.392c-.296-.148-1.75-.863-2.021-.961-.27-.099-.467-.148-.664.148-.197.296-.764.961-.936 1.158-.173.198-.345.223-.641.074-.296-.148-1.25-.46-2.38-1.47-.88-.786-1.474-1.756-1.647-2.052-.172-.296-.018-.456.13-.603.133-.133.296-.346.444-.518.148-.173.197-.296.296-.493.099-.198.05-.37-.025-.518-.074-.148-.664-1.6-.91-2.19-.24-.577-.483-.499-.664-.508-.172-.008-.37-.01-.567-.01s-.518.074-.79.37c-.27.296-1.035 1.011-1.035 2.466s1.06 2.86 1.207 3.058c.148.197 2.086 3.185 5.057 4.467.707.305 1.258.487 1.688.623.71.226 1.355.194 1.866.118.569-.085 1.75-.715 1.997-1.406.247-.69.247-1.282.172-1.406-.074-.123-.27-.197-.567-.345z"/>
   </svg>
