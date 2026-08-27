@@ -1721,9 +1721,25 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
 
             {/* Respondentes — tabela comparativa + cards expandíveis */}
             {(()=>{
-              // Deduplica por id do documento
-              const vistos = new Set();
-              const unicos = escoresPorDoc.filter(d=>{ if(vistos.has(d.id)){return false;} vistos.add(d.id); return true; });
+              // Agrupa por respondente e calcula média dos escores
+              const mapaResp = new Map();
+              escoresPorDoc.forEach(d=>{
+                const chave = (d.tipoRespondente||"") + "|" + (d.nomeRespondente||"");
+                if(!mapaResp.has(chave)){
+                  mapaResp.set(chave, {docs:[], ref:d});
+                }
+                mapaResp.get(chave).docs.push(d);
+              });
+              const unicos = Array.from(mapaResp.values()).map(grupo=>{
+                const n = grupo.docs.length;
+                const mediaEscores = {
+                  bipolarMania: grupo.docs.reduce((s,d)=>s+d.escores.bipolarMania,0)/n,
+                  bipolarDep:   grupo.docs.reduce((s,d)=>s+d.escores.bipolarDep,0)/n,
+                  borderline:   grupo.docs.reduce((s,d)=>s+d.escores.borderline,0)/n,
+                };
+                const ultimo = grupo.docs.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))[0];
+                return {...ultimo, escores: mediaEscores, totalEnvios: n};
+              }).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
               const temDivergencia = unicos.length>1;
 
               // Detecta divergência por eixo (diferença >15pp entre respondentes)
