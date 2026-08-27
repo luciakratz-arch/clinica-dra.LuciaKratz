@@ -8286,14 +8286,16 @@ const SERVICOS_PADRAO = [{
   particular: 250,
   adufg: 175,
   social: 175,
-  aluno: 125
+  aluno: 125,
+  obs: "O ideal é de 2 a 3 sessões por semana, dependendo do caso."
 }, {
   id: "s7",
   nome: "Pacote Sessões Neuromodulação",
   particular: 200,
   adufg: 150,
   social: 140,
-  aluno: 100
+  aluno: 100,
+  obs: "O ideal é de 2 a 3 sessões por semana, dependendo do caso."
 }];
 function OrcamentoClinica() {
   const [servicos, setServicos] = useState([]);
@@ -8324,7 +8326,8 @@ function OrcamentoClinica() {
             particular: s.particular,
             adufg: s.adufg,
             social: s.social,
-            aluno: s.aluno || 0
+            aluno: s.aluno || 0,
+            obs: s.obs || ""
           });
         });
         batch.commit().then(() => {
@@ -8360,7 +8363,8 @@ function OrcamentoClinica() {
       particular: Number(formServ.particular) || 0,
       adufg: Number(formServ.adufg) || 0,
       social: Number(formServ.social) || 0,
-      aluno: Number(formServ.aluno) || 0
+      aluno: Number(formServ.aluno) || 0,
+      obs: formServ.obs || ""
     };
     if (editando) {
       await db.collection("clinica_orcamento_servicos").doc(editando).update(dados);
@@ -8382,7 +8386,8 @@ function OrcamentoClinica() {
       particular: "",
       adufg: "",
       social: "",
-      aluno: ""
+      aluno: "",
+      obs: ""
     });
   }
   async function excluirServico(id) {
@@ -8397,7 +8402,8 @@ function OrcamentoClinica() {
       particular: s.particular,
       adufg: s.adufg,
       social: s.social,
-      aluno: s.aluno || 0
+      aluno: s.aluno || 0,
+      obs: s.obs || ""
     });
     setNovoAberto(false);
   }
@@ -8416,9 +8422,9 @@ function OrcamentoClinica() {
     const linkCadastro = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
     let linhas = "";
     if (modalidade === "particular") {
-      linhas = itens.map(s => "🔹 " + s.nome + " — " + fmtR(s.particular)).join("\n");
+      linhas = itens.map(s => "🔹 " + s.nome + " — " + fmtR(s.particular) + (s.obs ? "\n   " + s.obs : "")).join("\n");
     } else {
-      linhas = itens.map(s => "🔹 " + s.nome + "\n   De " + fmtR(s.particular) + " por " + fmtR(s[modalidade])).join("\n");
+      linhas = itens.map(s => "🔹 " + s.nome + "\n   De " + fmtR(s.particular) + " por " + fmtR(s[modalidade]) + (s.obs ? ", " + s.obs : "")).join("\n");
     }
     const intro = modalidade === "adufg" ? "Como associado(a) da ADUFG, você tem direito a um desconto especial! 🎓\n\n" : modalidade === "social" ? "Como atendimento social, você tem acesso ao valor reduzido! 💙\n\n" : modalidade === "aluno" ? "Como meu(minha) aluno(a), você tem 50% de desconto! 🌟\n\n" : "";
     const msg = "Olá, " + nomeCliente + "! 😊\n\nSegue o orçamento personalizado da *Dra. Lucia Kratz*:\n\n" + intro + linhas + "\n\n💰 *Total: " + fmtR(total) + "*\n\n💳 Formas de pagamento: Pix, cartão ou boleto\n\n📋 Para agendar sua consulta, faça seu cadastro pelo link:\n" + linkCadastro + "\n\nQualquer dúvida estou à disposição! 🦋\n_Dra. Lucia Kratz · CRP 09/20590_";
@@ -8499,7 +8505,8 @@ function OrcamentoClinica() {
         particular: "",
         adufg: "",
         social: "",
-        aluno: ""
+        aluno: "",
+        obs: ""
       });
     }
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -8573,6 +8580,31 @@ function OrcamentoClinica() {
     })),
     placeholder: "0"
   })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      marginBottom: 4
+    }
+  }, "OBSERVAÇÃO (aparece na mensagem do WhatsApp)"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      width: "100%",
+      padding: "8px 10px",
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      fontSize: 13
+    },
+    value: formServ.obs || "",
+    onChange: e => setFormServ(p => ({
+      ...p,
+      obs: e.target.value
+    })),
+    placeholder: "Ex: O ideal é de 2 a 3 sessões por semana."
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
