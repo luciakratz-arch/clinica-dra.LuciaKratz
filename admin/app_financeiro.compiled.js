@@ -1761,7 +1761,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
       scrollbarWidth: "none",
       flexShrink: 0
     }
-  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"], ["comissoes", "Comissões", "percent"]].map(([id, lbl, ic]) => /*#__PURE__*/React.createElement("button", {
+  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"], ["comissoes", "Comissões", "percent"], ["orcamento", "Orçamento", "file-text"]].map(([id, lbl, ic]) => /*#__PURE__*/React.createElement("button", {
     key: id,
     onClick: () => setAba(id),
     style: {
@@ -3297,7 +3297,7 @@ ${sessPac.some(s => s.dataPagamento || s.dataRecebimento) ? `<div style="margin-
         color: "var(--text-muted)"
       }
     }))));
-  })), aba === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
+  })), aba === "orcamento" && /*#__PURE__*/React.createElement(OrcamentoClinica, null), aba === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
     user: user
   }), modalDespesa && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8241,6 +8241,618 @@ function PainelGeralFinanceiro() {
     }
   }, fmt(totalSaldo)))))));
 }
+
+// ═══════════════════════════════════════════════════════
+// ORÇAMENTO CLÍNICO
+// ═══════════════════════════════════════════════════════
+const SERVICOS_PADRAO = [{
+  id: "s1",
+  nome: "Psicoterapia",
+  particular: 250,
+  adufg: 225,
+  social: 175
+}, {
+  id: "s2",
+  nome: "Psicoterapia Pacote",
+  particular: 220,
+  adufg: 200,
+  social: 154
+}, {
+  id: "s3",
+  nome: "Avaliação Vocacional",
+  particular: 1500,
+  adufg: 1200,
+  social: 1050
+}, {
+  id: "s4",
+  nome: "Avaliação Neuromodulação",
+  particular: 1800,
+  adufg: 1460,
+  social: 1260
+}, {
+  id: "s5",
+  nome: "Avaliação Neuropsicológica",
+  particular: 3200,
+  adufg: 1600,
+  social: 2240
+}, {
+  id: "s6",
+  nome: "Sessões de Neuromodulação",
+  particular: 250,
+  adufg: 175,
+  social: 175
+}, {
+  id: "s7",
+  nome: "Pacote Sessões Neuromodulação",
+  particular: 200,
+  adufg: 150,
+  social: 140
+}];
+function OrcamentoClinica() {
+  const [servicos, setServicos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editando, setEditando] = useState(null);
+  const [formServ, setFormServ] = useState({
+    nome: "",
+    particular: "",
+    adufg: "",
+    social: ""
+  });
+  const [novoAberto, setNovoAberto] = useState(false);
+
+  // Gerador de orçamento
+  const [nomeCliente, setNomeCliente] = useState("");
+  const [whatsCliente, setWhatsCliente] = useState("");
+  const [modalidade, setModalidade] = useState("particular");
+  const [selecionados, setSelecionados] = useState([]);
+  useEffect(() => {
+    db.collection("clinica_orcamento_servicos").get().then(snap => {
+      if (snap.empty) {
+        // Pré-cadastra serviços padrão na primeira vez
+        const batch = db.batch();
+        SERVICOS_PADRAO.forEach(s => {
+          const ref = db.collection("clinica_orcamento_servicos").doc(s.id);
+          batch.set(ref, {
+            nome: s.nome,
+            particular: s.particular,
+            adufg: s.adufg,
+            social: s.social
+          });
+        });
+        batch.commit().then(() => {
+          setServicos(SERVICOS_PADRAO);
+          setLoading(false);
+        });
+      } else {
+        const lista = snap.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        lista.sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+        setServicos(lista);
+        setLoading(false);
+      }
+    }).catch(() => setLoading(false));
+  }, []);
+  function fmtR(v) {
+    return "R$ " + (Number(v) || 0).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2
+    });
+  }
+  function toggleSelecionado(id) {
+    setSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+  async function salvarServico() {
+    if (!formServ.nome.trim()) {
+      alert("Informe o nome do serviço.");
+      return;
+    }
+    const dados = {
+      nome: formServ.nome.trim(),
+      particular: Number(formServ.particular) || 0,
+      adufg: Number(formServ.adufg) || 0,
+      social: Number(formServ.social) || 0
+    };
+    if (editando) {
+      await db.collection("clinica_orcamento_servicos").doc(editando).update(dados);
+      setServicos(prev => prev.map(s => s.id === editando ? {
+        ...s,
+        ...dados
+      } : s));
+      setEditando(null);
+    } else {
+      const ref = await db.collection("clinica_orcamento_servicos").add(dados);
+      setServicos(prev => [...prev, {
+        id: ref.id,
+        ...dados
+      }].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setNovoAberto(false);
+    }
+    setFormServ({
+      nome: "",
+      particular: "",
+      adufg: "",
+      social: ""
+    });
+  }
+  async function excluirServico(id) {
+    if (!confirm("Excluir este serviço?")) return;
+    await db.collection("clinica_orcamento_servicos").doc(id).delete();
+    setServicos(prev => prev.filter(s => s.id !== id));
+  }
+  function iniciarEdicao(s) {
+    setEditando(s.id);
+    setFormServ({
+      nome: s.nome,
+      particular: s.particular,
+      adufg: s.adufg,
+      social: s.social
+    });
+    setNovoAberto(false);
+  }
+  function gerarWhatsApp() {
+    if (!nomeCliente.trim()) {
+      alert("Informe o nome do cliente.");
+      return;
+    }
+    if (selecionados.length === 0) {
+      alert("Selecione ao menos um serviço.");
+      return;
+    }
+    const itens = servicos.filter(s => selecionados.includes(s.id));
+    const total = itens.reduce((sum, s) => sum + (s[modalidade] || 0), 0);
+    const modalLabel = modalidade === "particular" ? "Particular" : modalidade === "adufg" ? "Adufg" : "Social";
+    const linhas = itens.map(s => "🔹 " + s.nome + " — " + fmtR(s[modalidade])).join("\n");
+    const linkCadastro = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
+    const msg = "Olá, " + nomeCliente + "! 😊\n\nSegue o orçamento personalizado da *Dra. Lucia Kratz*:\n\n" + linhas + "\n\n💰 *Total (" + modalLabel + "): " + fmtR(total) + "*\n\n💳 Formas de pagamento: Pix, cartão ou boleto\n\n📋 Para agendar sua consulta, faça seu cadastro pelo link:\n" + linkCadastro + "\n\nQualquer dúvida estou à disposição! 🦋\n_Dra. Lucia Kratz · CRP 09/20590_";
+    const wNum = whatsCliente.replace(/\D/g, "");
+    if (wNum) {
+      window.open("https://wa.me/55" + wNum + "?text=" + encodeURIComponent(msg), "_blank");
+    } else {
+      window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
+    }
+  }
+  if (loading) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: 40
+    }
+  }, /*#__PURE__*/React.createElement(Spinner, null));
+  const MODAL_COLS = [{
+    key: "particular",
+    label: "Particular",
+    cor: "#7c3aed"
+  }, {
+    key: "adufg",
+    label: "Adufg",
+    cor: "#0891b2"
+  }, {
+    key: "social",
+    label: "Social",
+    cor: "#059669"
+  }];
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 17,
+      color: "var(--text-dark)",
+      marginBottom: 4
+    }
+  }, "Orçamento"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)",
+      marginBottom: 20
+    }
+  }, "Gere orçamentos personalizados e envie pelo WhatsApp."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      border: "1px solid var(--gray-200)",
+      borderRadius: 12,
+      padding: 20,
+      marginBottom: 24
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14
+    }
+  }, "Tabela de Serviços"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      fontSize: 12,
+      padding: "6px 14px"
+    },
+    onClick: () => {
+      setNovoAberto(true);
+      setEditando(null);
+      setFormServ({
+        nome: "",
+        particular: "",
+        adufg: "",
+        social: ""
+      });
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Novo Serviço")), (novoAberto || editando) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f5f3ff",
+      border: "1px solid #c4b5fd",
+      borderRadius: 10,
+      padding: 16,
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      marginBottom: 12,
+      color: "var(--purple)"
+    }
+  }, editando ? "Editar Serviço" : "Novo Serviço"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "2fr 1fr 1fr 1fr",
+      gap: 10,
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      marginBottom: 4
+    }
+  }, "NOME DO SERVIÇO"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      width: "100%",
+      padding: "8px 10px",
+      border: "1.5px solid #c4b5fd",
+      borderRadius: 8,
+      fontSize: 13
+    },
+    value: formServ.nome,
+    onChange: e => setFormServ(p => ({
+      ...p,
+      nome: e.target.value
+    })),
+    placeholder: "Ex: Psicoterapia"
+  })), MODAL_COLS.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.key
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: m.cor,
+      marginBottom: 4
+    }
+  }, m.label.toUpperCase()), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    style: {
+      width: "100%",
+      padding: "8px 10px",
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      fontSize: 13
+    },
+    value: formServ[m.key],
+    onChange: e => setFormServ(p => ({
+      ...p,
+      [m.key]: e.target.value
+    })),
+    placeholder: "0"
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      fontSize: 12,
+      padding: "6px 14px"
+    },
+    onClick: salvarServico
+  }, "✓ Salvar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      padding: "6px 14px"
+    },
+    onClick: () => {
+      setNovoAberto(false);
+      setEditando(null);
+    }
+  }, "Cancelar"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: "auto"
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: "100%",
+      borderCollapse: "collapse",
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: "var(--gray-50)"
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    style: {
+      textAlign: "left",
+      padding: "10px 12px",
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      fontSize: 11,
+      textTransform: "uppercase",
+      letterSpacing: .5,
+      borderBottom: "2px solid var(--gray-200)"
+    }
+  }, "Serviço"), MODAL_COLS.map(m => /*#__PURE__*/React.createElement("th", {
+    key: m.key,
+    style: {
+      textAlign: "right",
+      padding: "10px 12px",
+      fontWeight: 600,
+      color: m.cor,
+      fontSize: 11,
+      textTransform: "uppercase",
+      letterSpacing: .5,
+      borderBottom: "2px solid var(--gray-200)"
+    }
+  }, m.label)), /*#__PURE__*/React.createElement("th", {
+    style: {
+      borderBottom: "2px solid var(--gray-200)",
+      width: 80
+    }
+  }))), /*#__PURE__*/React.createElement("tbody", null, servicos.map(s => /*#__PURE__*/React.createElement("tr", {
+    key: s.id,
+    style: {
+      borderBottom: "1px solid var(--gray-200)"
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "11px 12px",
+      fontWeight: 500,
+      color: "var(--text-dark)"
+    }
+  }, s.nome), MODAL_COLS.map(m => /*#__PURE__*/React.createElement("td", {
+    key: m.key,
+    style: {
+      padding: "11px 12px",
+      textAlign: "right",
+      fontWeight: 600,
+      color: m.cor
+    }
+  }, fmtR(s[m.key]))), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: "11px 12px",
+      textAlign: "right"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 11,
+      padding: "3px 8px",
+      marginRight: 4
+    },
+    onClick: () => iniciarEdicao(s)
+  }, "✏️"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 11,
+      padding: "3px 8px",
+      color: "#dc2626"
+    },
+    onClick: () => excluirServico(s.id)
+  }, "🗑")))))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      border: "1px solid var(--gray-200)",
+      borderRadius: 12,
+      padding: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14,
+      marginBottom: 16
+    }
+  }, "Gerar Orçamento"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 12,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      marginBottom: 4
+    }
+  }, "NOME DO CLIENTE"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      width: "100%",
+      padding: "9px 12px",
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      fontSize: 13
+    },
+    value: nomeCliente,
+    onChange: e => setNomeCliente(e.target.value),
+    placeholder: "Nome completo"
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      marginBottom: 4
+    }
+  }, "WHATSAPP (opcional)"), /*#__PURE__*/React.createElement("input", {
+    style: {
+      width: "100%",
+      padding: "9px 12px",
+      border: "1.5px solid #e5e7eb",
+      borderRadius: 8,
+      fontSize: 13
+    },
+    value: whatsCliente,
+    onChange: e => setWhatsCliente(e.target.value),
+    placeholder: "(62) 9 9999-9999"
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      marginBottom: 8
+    }
+  }, "MODALIDADE"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, MODAL_COLS.map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.key,
+    onClick: () => setModalidade(m.key),
+    style: {
+      padding: "7px 16px",
+      borderRadius: 20,
+      border: "1.5px solid",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer",
+      background: modalidade === m.key ? m.cor : "white",
+      color: modalidade === m.key ? "white" : m.cor,
+      borderColor: m.cor,
+      transition: "all .15s"
+    }
+  }, m.label)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-muted)",
+      marginBottom: 8
+    }
+  }, "SELECIONE OS SERVIÇOS"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 6
+    }
+  }, servicos.map(s => {
+    const sel = selecionados.includes(s.id);
+    const MODAL = MODAL_COLS.find(m => m.key === modalidade);
+    return /*#__PURE__*/React.createElement("div", {
+      key: s.id,
+      onClick: () => toggleSelecionado(s.id),
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px 14px",
+        border: "1.5px solid",
+        borderColor: sel ? "var(--purple)" : "#e5e7eb",
+        borderRadius: 10,
+        cursor: "pointer",
+        background: sel ? "#f5f3ff" : "white",
+        transition: "all .15s"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 18,
+        height: 18,
+        borderRadius: 4,
+        border: "2px solid",
+        borderColor: sel ? "var(--purple)" : "#d1d5db",
+        background: sel ? "var(--purple)" : "white",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      }
+    }, sel && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "white",
+        fontSize: 11,
+        fontWeight: 700
+      }
+    }, "✓")), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 500,
+        color: "var(--text-dark)"
+      }
+    }, s.nome)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        fontWeight: 700,
+        color: MODAL?.cor
+      }
+    }, fmtR(s[modalidade])));
+  }))), selecionados.length > 0 && (() => {
+    const total = servicos.filter(s => selecionados.includes(s.id)).reduce((sum, s) => sum + (s[modalidade] || 0), 0);
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "var(--gray-50)",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 10,
+        padding: "12px 16px",
+        marginBottom: 16,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--text-muted)"
+      }
+    }, selecionados.length, " serviço(s) selecionado(s)"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 16,
+        fontWeight: 700,
+        color: "var(--purple)"
+      }
+    }, "Total: ", fmtR(total)));
+  })(), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      width: "100%",
+      padding: "12px",
+      fontSize: 14,
+      fontWeight: 600
+    },
+    onClick: gerarWhatsApp
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 15
+  }), " Gerar e Enviar pelo WhatsApp")));
+}
+
 // ═══════════════════════════════════════════════════════
 // ALUNOS EM SUPERVISÃO
 // ═══════════════════════════════════════════════════════
