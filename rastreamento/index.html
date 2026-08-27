@@ -209,7 +209,7 @@ const tokenParam = urlParams.get("token") || "";
 let tipoRespondente = "";
 let step = 1;
 let respostas = {};
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 // ═══════════════════════════════════
 // SELEÇÃO DE TIPO
@@ -418,6 +418,62 @@ const BLOCOS = [
     ]
   },
   {
+    titulo: "Bloco 4 · Cognição e Humor Misto",
+    sub: "Estas perguntas ajudam a entender como o raciocínio, a concentração e eventuais sobreposições de humor se manifestam.",
+    perguntas: [
+      {
+        id: "p16",
+        num: "16",
+        texto: "Durante os períodos de agitação ou aceleração, você notou que a pessoa avaliada parecia ter os pensamentos acelerados demais — como se as ideias se atropelassem, saltando de um assunto para outro sem conseguir parar?",
+        opcoes: [
+          {letra:"A", texto:"Não, o raciocínio sempre pareceu organizado e no ritmo normal."},
+          {letra:"B", texto:"Sim, ficava muito dispersa(o) nas conversas, mudava de assunto com frequência mas sem parecer fora de controle."},
+          {letra:"C", texto:"Sim, os pensamentos pareciam tão acelerados que era difícil acompanhar — falava muito rápido e saltava de ideia em ideia sem concluir nenhuma."}
+        ]
+      },
+      {
+        id: "p17",
+        num: "17",
+        texto: "Nesses momentos de agitação, a pessoa demonstrava grande dificuldade de manter a atenção — qualquer barulho, movimento ou estímulo externo parecia distraí-la facilmente, mesmo quando estava tentando fazer algo importante?",
+        opcoes: [
+          {letra:"A", texto:"Não, conseguia se concentrar normalmente mesmo em períodos de agitação."},
+          {letra:"B", texto:"Ficava um pouco mais dispersa(o) que o habitual, mas conseguia retomar o foco."},
+          {letra:"C", texto:"Sim, era impossível mantê-la focada — qualquer coisa tirava a atenção e ela não conseguia terminar nada."}
+        ]
+      },
+      {
+        id: "p18",
+        num: "18",
+        texto: "Nos períodos de tristeza ou baixa energia, você observou uma inquietação física visível — a pessoa não conseguia ficar parada, andava de um lado para outro, remexia as mãos ou os pés sem parar — ou o contrário: um estado de lentidão marcante, como se cada movimento custasse um esforço enorme?",
+        opcoes: [
+          {letra:"A", texto:"Não, o comportamento motor estava dentro do normal."},
+          {letra:"B", texto:"Sim, ficava levemente inquieta(o) ou um pouco mais lenta(o) que o habitual."},
+          {letra:"C", texto:"Sim, de forma marcante e visível para qualquer pessoa ao redor — agitação intensa ou lentidão extrema nos movimentos e na fala."}
+        ]
+      },
+      {
+        id: "p19",
+        num: "19",
+        texto: "Durante as fases de tristeza ou baixa energia, a pessoa demonstrava dificuldade acentuada para se concentrar, tomar decisões simples do cotidiano ou lembrar de coisas que normalmente lembraria sem esforço?",
+        opcoes: [
+          {letra:"A", texto:"Não, a memória e o raciocínio permaneciam normais."},
+          {letra:"B", texto:"Sim, reclamava de 'cabeça pesada' ou dificuldade leve para se concentrar."},
+          {letra:"C", texto:"Sim, de forma significativa — tinha dificuldade até para decisões simples e esquecia coisas rotineiras com frequência."}
+        ]
+      },
+      {
+        id: "p20",
+        num: "20",
+        texto: "Você já notou períodos em que a pessoa parecia apresentar tristeza ou choro frequente ao mesmo tempo em que estava agitada, com energia elevada, pensamentos acelerados ou pouco sono — como se estivesse 'deprimida e acelerada ao mesmo tempo'?",
+        opcoes: [
+          {letra:"A", texto:"Não, os períodos de tristeza e os de agitação sempre ocorreram de forma separada."},
+          {letra:"B", texto:"Talvez — havia momentos em que parecia triste mas inquieta, embora não fosse o padrão principal."},
+          {letra:"C", texto:"Sim, claramente — havia episódios em que a tristeza e a agitação coexistiam de forma intensa e perturbadora ao mesmo tempo."}
+        ]
+      }
+    ]
+  },
+    {
     titulo: "Observações Finais",
     sub: "Se quiser, compartilhe qualquer observação adicional sobre o comportamento ou a história de a pessoa avaliada.",
     obs: true
@@ -546,7 +602,12 @@ const PERGUNTAS_REVISAO = [
   { id:"p12", bloco:"Impulsos, Humor e Emoções",  texto:"Oscilação rápida de humor" },
   { id:"p13", bloco:"Impulsos, Humor e Emoções",  texto:"Vazio interior persistente ou tédio crônico" },
   { id:"p14", bloco:"Impulsos, Humor e Emoções",  texto:"Manejo da raiva e da frustração" },
-  { id:"p15", bloco:"Impulsos, Humor e Emoções",  texto:"Dissociação ou paranoia sob estresse extremo" },
+  { id:"p15", bloco:"Impulsos, Humor e Emoções",    texto:"Dissociação ou paranoia sob estresse extremo" },
+  { id:"p16", bloco:"Cognição e Humor Misto",        texto:"Pensamentos acelerados / fuga de ideias" },
+  { id:"p17", bloco:"Cognição e Humor Misto",        texto:"Distrabilidade nos episódios de agitação" },
+  { id:"p18", bloco:"Cognição e Humor Misto",        texto:"Agitação psicomotora ou lentidão visível" },
+  { id:"p19", bloco:"Cognição e Humor Misto",        texto:"Dificuldade de concentração e memória" },
+  { id:"p20", bloco:"Cognição e Humor Misto",        texto:"Humor misto: tristeza e agitação simultâneas" },
 ];
 
 function mostrarRevisao() {
@@ -619,12 +680,14 @@ async function enviar(){
       tipoRespondente: respostas.tipoRespondente || "",
       nomeRespondente: respostas.nomeRespondente || "",
       parentesco: respostas.parentesco || "",
-      // Respostas das 15 perguntas
+      // Respostas das 20 perguntas
       p1: respostas.p1||"", p2: respostas.p2||"", p3: respostas.p3||"",
       p4: respostas.p4||"", p5: respostas.p5||"", p6: respostas.p6||"",
       p7: respostas.p7||"", p8: respostas.p8||"", p9: respostas.p9||"",
       p10: respostas.p10||"", p11: respostas.p11||"", p12: respostas.p12||"",
       p13: respostas.p13||"", p14: respostas.p14||"", p15: respostas.p15||"",
+      p16: respostas.p16||"", p17: respostas.p17||"", p18: respostas.p18||"",
+      p19: respostas.p19||"", p20: respostas.p20||"",
       obsFinais: respostas.obsFinais||"",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
