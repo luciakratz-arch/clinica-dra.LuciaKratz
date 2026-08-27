@@ -3430,8 +3430,8 @@ const SERVICOS_PADRAO = [
   {id:"s3", nome:"Avaliação Vocacional",             particular:1500, adufg:1200, social:1050, aluno:750},
   {id:"s4", nome:"Avaliação Neuromodulação",         particular:1800, adufg:1460, social:1260, aluno:900},
   {id:"s5", nome:"Avaliação Neuropsicológica",       particular:3200, adufg:1600, social:2240, aluno:1600},
-  {id:"s6", nome:"Sessões de Neuromodulação",        particular:250,  adufg:175,  social:175,  aluno:125},
-  {id:"s7", nome:"Pacote Sessões Neuromodulação",    particular:200,  adufg:150,  social:140,  aluno:100},
+  {id:"s6", nome:"Sessões de Neuromodulação",        particular:250,  adufg:175,  social:175,  aluno:125, obs:"O ideal é de 2 a 3 sessões por semana, dependendo do caso."},
+  {id:"s7", nome:"Pacote Sessões Neuromodulação",    particular:200,  adufg:150,  social:140,  aluno:100, obs:"O ideal é de 2 a 3 sessões por semana, dependendo do caso."},
 ];
 
 function OrcamentoClinica() {
@@ -3454,7 +3454,7 @@ function OrcamentoClinica() {
         const batch = db.batch();
         SERVICOS_PADRAO.forEach(s=>{
           const ref = db.collection("clinica_orcamento_servicos").doc(s.id);
-          batch.set(ref, {nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social, aluno:s.aluno||0});
+          batch.set(ref, {nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social, aluno:s.aluno||0, obs:s.obs||""});
         });
         batch.commit().then(()=>{
           setServicos(SERVICOS_PADRAO);
@@ -3483,6 +3483,7 @@ function OrcamentoClinica() {
       adufg: Number(formServ.adufg)||0,
       social: Number(formServ.social)||0,
       aluno: Number(formServ.aluno)||0,
+      obs: formServ.obs||"",
     };
     if(editando){
       await db.collection("clinica_orcamento_servicos").doc(editando).update(dados);
@@ -3493,7 +3494,7 @@ function OrcamentoClinica() {
       setServicos(prev=>[...prev,{id:ref.id,...dados}].sort((a,b)=>a.nome.localeCompare(b.nome)));
       setNovoAberto(false);
     }
-    setFormServ({nome:"",particular:"",adufg:"",social:"",aluno:""});
+    setFormServ({nome:"",particular:"",adufg:"",social:"",aluno:"",obs:""});
   }
 
   async function excluirServico(id){
@@ -3504,7 +3505,7 @@ function OrcamentoClinica() {
 
   function iniciarEdicao(s){
     setEditando(s.id);
-    setFormServ({nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social, aluno:s.aluno||0});
+    setFormServ({nome:s.nome, particular:s.particular, adufg:s.adufg, social:s.social, aluno:s.aluno||0, obs:s.obs||""});
     setNovoAberto(false);
   }
 
@@ -3517,9 +3518,9 @@ function OrcamentoClinica() {
     const linkCadastro = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
     let linhas = "";
     if(modalidade==="particular"){
-      linhas = itens.map(s=>"🔹 "+s.nome+" — "+fmtR(s.particular)).join("\n");
+      linhas = itens.map(s=>"🔹 "+s.nome+" — "+fmtR(s.particular)+(s.obs?"\n   "+s.obs:"")).join("\n");
     } else {
-      linhas = itens.map(s=>"🔹 "+s.nome+"\n   De "+fmtR(s.particular)+" por "+fmtR(s[modalidade])).join("\n");
+      linhas = itens.map(s=>"🔹 "+s.nome+"\n   De "+fmtR(s.particular)+" por "+fmtR(s[modalidade])+(s.obs?", "+s.obs:"")).join("\n");
     }
     const intro = modalidade==="adufg"
       ? "Como associado(a) da ADUFG, você tem direito a um desconto especial! 🎓\n\n"
@@ -3550,7 +3551,7 @@ function OrcamentoClinica() {
       <div style={{background:"white",border:"1px solid var(--gray-200)",borderRadius:12,padding:20,marginBottom:24}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <div style={{fontWeight:600,fontSize:14}}>Tabela de Serviços</div>
-          <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setNovoAberto(true);setEditando(null);setFormServ({nome:"",particular:"",adufg:"",social:"",aluno:""});}}>
+          <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={()=>{setNovoAberto(true);setEditando(null);setFormServ({nome:"",particular:"",adufg:"",social:"",aluno:"",obs:""});}}>
             <Icon name="plus" size={13}/> Novo Serviço
           </button>
         </div>
@@ -3570,6 +3571,10 @@ function OrcamentoClinica() {
                   <input type="number" style={{width:"100%",padding:"8px 10px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:13}} value={formServ[m.key]} onChange={e=>setFormServ(p=>({...p,[m.key]:e.target.value}))} placeholder="0"/>
                 </div>
               ))}
+            </div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:600,color:"var(--text-muted)",marginBottom:4}}>OBSERVAÇÃO (aparece na mensagem do WhatsApp)</div>
+              <input style={{width:"100%",padding:"8px 10px",border:"1.5px solid #e5e7eb",borderRadius:8,fontSize:13}} value={formServ.obs||""} onChange={e=>setFormServ(p=>({...p,obs:e.target.value}))} placeholder="Ex: O ideal é de 2 a 3 sessões por semana."/>
             </div>
             <div style={{display:"flex",gap:8}}>
               <button className="btn btn-purple" style={{fontSize:12,padding:"6px 14px"}} onClick={salvarServico}>✓ Salvar</button>
