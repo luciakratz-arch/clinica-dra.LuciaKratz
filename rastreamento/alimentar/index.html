@@ -118,7 +118,7 @@ textarea.has-mic{padding-right:44px}
   <div id="formArea" style="display:none">
     <div class="progress-wrap">
       <div class="progress-labels">
-        <span id="stepLabel">Etapa 1 de 4</span>
+        <span id="stepLabel">Etapa 1 de 5</span>
         <span id="stepPct">0%</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -170,7 +170,7 @@ const nomePaciente=urlParams.get("paciente")||"";
 let tipoRespondente="";
 let step=1;
 let respostas={};
-const TOTAL_STEPS=4;
+const TOTAL_STEPS=5;
 
 function selecionarTipo(tipo){
   tipoRespondente=tipo;
@@ -235,6 +235,25 @@ const BLOCOS=[
         opcoes:[{letra:"A",texto:"Nao se aplica."},{letra:"B",texto:"Ha compulsao ocasional com leve culpa, mas sem padrao clinico."},{letra:"C",texto:"Sofre intensamente com a culpa da compulsao, mas nao usa metodos de compensacao."}]}
     ]
   },
+,
+  {
+    titulo:"Bloco 4 - Restricao sem Preocupacao com Peso (ARFID)",
+    sub:"Observe se a pessoa evita alimentos por razoes que NAO incluem medo de engordar, como aversao sensorial, medo de engasgar ou falta de interesse por comida.",
+    perguntas:[
+      {id:"p11",num:"11",texto:"A pessoa evita ou restringe alimentos por causa de caracteristicas sensoriais (textura, cheiro, cor, temperatura) ou por medo de engasgar, vomitar ou ter reacao adversa, sem preocupacao com peso ou imagem corporal?",
+        opcoes:[
+          {letra:"A",texto:"Nao ha restricao alimentar por razoes sensoriais ou de medo."},
+          {letra:"B",texto:"Ha algumas preferencias sensoriais, mas sem impacto significativo na nutricao."},
+          {letra:"C",texto:"Restricao alimentar severa por aversao sensorial ou medo de engasgar, com impacto clinico na nutricao ou no funcionamento social."}
+        ]},
+      {id:"p12",num:"12",texto:"A restricao alimentar resulta em perda de peso significativa, deficiencia nutricional, dependencia de suplementos ou impacto importante nas atividades sociais (como nao conseguir comer fora de casa)?",
+        opcoes:[
+          {letra:"A",texto:"Nao ha impacto clinico na nutricao ou na vida social."},
+          {letra:"B",texto:"Ha alguma limitacao social, mas sem desnutricao ou perda de peso grave."},
+          {letra:"C",texto:"Impacto clinico significativo: perda de peso, deficiencia nutricional ou comprometimento grave da vida social por causa da restricao alimentar."}
+        ]}
+    ]
+  },
   {
     titulo:"Observacoes Finais",
     sub:"Se quiser, compartilhe qualquer observacao adicional sobre os habitos alimentares da pessoa avaliada.",
@@ -261,7 +280,7 @@ function renderStep(){
   } else {
     bloco.perguntas.forEach(p=>{
       h+="<div class='pergunta-card'>";
-      h+="<div class='perg-num'>Pergunta "+p.num+" de 10</div>";
+      h+="<div class='perg-num'>Pergunta "+p.num+" de 12</div>";
       h+="<div class='perg-texto'>"+p.texto+"</div>";
       h+="<div class='opcoes' id='grp_"+p.id+"'>";
       p.opcoes.forEach(o=>{
@@ -325,6 +344,8 @@ const PERGUNTAS_REVISAO=[
   {id:"p8",bloco:"Ingestao Excessiva",texto:"Uso de metodos compensatorios apos ingestao excessiva"},
   {id:"p9",bloco:"Comportamento e Sentimentos",texto:"Padrao de ingestao rapida, secreta ou exagerada"},
   {id:"p10",bloco:"Comportamento e Sentimentos",texto:"Culpa intensa sem comportamentos compensatorios"},
+  {id:"p11",bloco:"ARFID - Restricao Sensorial",texto:"Restricao por aversao sensorial / medo de engasgar (sem preocupacao com peso)"},
+  {id:"p12",bloco:"ARFID - Restricao Sensorial",texto:"Impacto clinico da restricao (nutricao, peso, vida social)"},
 ];
 
 const COR_LETRA={A:"#16a34a",B:"#d97706",C:"#dc2626"};
@@ -385,7 +406,7 @@ async function enviar(){
       parentesco:respostas.parentesco||"",
       p1:respostas.p1||"",p2:respostas.p2||"",p3:respostas.p3||"",p4:respostas.p4||"",
       p5:respostas.p5||"",p6:respostas.p6||"",p7:respostas.p7||"",p8:respostas.p8||"",
-      p9:respostas.p9||"",p10:respostas.p10||"",
+      p9:respostas.p9||"",p10:respostas.p10||"",p11:respostas.p11||"",p12:respostas.p12||"",
       obsFinais:respostas.obsFinais||"",
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     };
