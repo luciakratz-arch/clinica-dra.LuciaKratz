@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>O Olhar que Cuida — Dra. Lucia Kratz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min-height: 100vh; }
+#app { max-width: 480px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+.header { text-align: center; padding: 1.5rem 0 1rem; }
+.logo-txt { font-size: 13px; font-weight: 700; color: #2ca870; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+h1 { font-size: 20px; font-weight: 800; color: #1a2a4a; line-height: 1.3; }
+.sub { font-size: 13px; color: #7a8a9e; margin-top: 4px; }
+
+.card { background: white; border-radius: 16px; border: 1px solid #e4ecf5; padding: 1.5rem; margin-bottom: 1rem; }
+
+/* ENQUETE */
+.section-label { font-size: 11px; font-weight: 700; color: #2ca870; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+.enq-title { font-size: 16px; font-weight: 800; color: #1a2a4a; margin-bottom: 4px; }
+.enq-sub { font-size: 12px; color: #7a8a9e; margin-bottom: 14px; }
+.limit-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+.limit-dot { width: 24px; height: 6px; border-radius: 99px; background: #e4ecf5; transition: background 0.2s; }
+.limit-dot.ativo { background: #2ca870; }
+.palavras-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.p-btn { border: 1.5px solid #dde4ef; background: white; color: #2a3a55; font-size: 12px; font-weight: 600; padding: 7px 13px; border-radius: 8px; cursor: pointer; transition: all 0.18s; }
+.p-btn:hover { border-color: #1a5f8f; }
+.p-btn.sel { border-color: #2ca870; background: #e8f8f1; color: #1a5040; }
+.p-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.custom-row { display: flex; gap: 6px; }
+.c-input { flex: 1; border: 1.5px solid #dde4ef; border-radius: 8px; padding: 8px 12px; font-size: 12px; outline: none; }
+.c-input:focus { border-color: #1a5f8f; }
+.c-add { background: #1a5f8f; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.enq-enviado { text-align: center; padding: 1rem; }
+.enq-enviado .ok { font-size: 28px; margin-bottom: 6px; }
+.enq-enviado p { font-size: 13px; color: #5a6a82; }
+
+/* QUIZ */
+.progress-bar { background: #e8edf5; border-radius: 99px; height: 4px; margin: 12px 0 4px; }
+.progress-fill { background: linear-gradient(90deg, #1a5f8f, #2ca870); height: 4px; border-radius: 99px; transition: width 0.4s ease; }
+.prog-txt { font-size: 11px; color: #9aabb5; margin-bottom: 14px; }
+.q-num { font-size: 10px; font-weight: 700; color: #2ca870; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
+.q-txt { font-size: 15px; font-weight: 700; color: #1a2a4a; line-height: 1.4; margin-bottom: 14px; }
+.opcoes { display: flex; flex-direction: column; gap: 8px; }
+.opcao { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; border: 1.5px solid #dde4ef; border-radius: 10px; cursor: pointer; background: white; transition: all 0.18s; text-align: left; width: 100%; }
+.opcao:hover { border-color: #1a5f8f; background: #f0f6fd; }
+.opcao.sel { border-color: #1a5f8f; background: #e8f4fd; }
+.opcao-txt { font-size: 13px; color: #2a3a55; line-height: 1.4; }
+.radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #dde4ef; flex-shrink: 0; margin-top: 1px; transition: all 0.18s; }
+.opcao.sel .radio { border-color: #1a5f8f; background: #1a5f8f; }
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.btn-back { background: none; border: 1.5px solid #dde4ef; color: #5a6a82; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 8px; cursor: pointer; }
+.btn-next { background: #1a5f8f; color: white; border: none; font-size: 13px; font-weight: 700; padding: 10px 22px; border-radius: 8px; cursor: pointer; }
+.btn-next:disabled { background: #c5d3e8; cursor: not-allowed; }
+.err { font-size: 11px; color: #c0392b; margin-top: 6px; min-height: 14px; }
+
+/* RESULTADO */
+#tela-resultado { display: none; }
+.res-header { text-align: center; margin-bottom: 1.25rem; }
+.res-emoji { font-size: 40px; margin-bottom: 8px; }
+.res-title { font-size: 18px; font-weight: 800; color: #1a2a4a; }
+.res-sub { font-size: 13px; color: #5a6a82; margin-top: 3px; }
+.score-card { background: #1a2a4a; border-radius: 14px; padding: 1.25rem; text-align: center; margin-bottom: 1rem; }
+.score-big { font-size: 40px; font-weight: 900; color: #2ca870; }
+.score-lbl { font-size: 12px; color: #8ab0c8; margin-top: 2px; }
+.insight-box { border: 0.5px solid #e4ecf5; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; background: white; }
+.ins-tit { font-size: 11px; font-weight: 700; color: #1a5f8f; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+.ins-txt { font-size: 13px; color: #5a6a82; line-height: 1.6; }
+.quote { background: #fff8e8; border-left: 3px solid #e8a020; border-radius: 0 10px 10px 0; padding: 12px 14px; font-size: 13px; color: #5a3e10; font-style: italic; line-height: 1.6; margin: 1rem 0; }
+
+/* DRA */
+.dra-card { background: #1a2a4a; border-radius: 14px; padding: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 14px; }
+.dra-av { width: 48px; height: 48px; border-radius: 50%; background: #2ca870; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: white; flex-shrink: 0; }
+.dra-name { font-size: 15px; font-weight: 800; color: white; }
+.dra-crp { font-size: 11px; color: #8ab0c8; }
+.dra-bio { font-size: 13px; color: #5a6a82; line-height: 1.6; margin-bottom: 1rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem; }
+.tag { background: #e8f4fd; color: #1a5f8f; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+
+.sec-tit { font-size: 11px; font-weight: 700; color: #9aabb5; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+.prod-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+.prod-card { border: 1.5px solid #dde4ef; border-radius: 12px; padding: 12px; text-decoration: none; display: block; background: white; transition: all 0.2s; }
+.prod-card:hover { border-color: #1a5f8f; background: #f0f6fd; }
+.prod-card.wide { grid-column: 1/-1; border-color: #2ca870; background: #f0fdf7; display: flex; align-items: center; gap: 12px; }
+.prod-icon { font-size: 20px; margin-bottom: 4px; }
+.prod-nm { font-size: 12px; font-weight: 700; color: #1a2a4a; margin-bottom: 2px; }
+.prod-ds { font-size: 10.5px; color: #7a8a9e; line-height: 1.35; }
+.prod-badge { background: #2ca870; color: white; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-bottom: 4px; display: inline-block; }
+
+.redes { display: flex; gap: 8px; flex-wrap: wrap; }
+.rede { display: flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 8px; font-size: 12px; font-weight: 700; text-decoration: none; border: 1.5px solid #b8d4ef; background: #f0f6fd; color: #1a5f8f; transition: all 0.2s; }
+.rede.wpp { border-color: #9ad5bc; background: #e8f8f1; color: #1a5040; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="logo-txt">O Olhar que Cuida</div>
+    <h1>Saúde Psicossocial e Liderança Responsável</h1>
+    <div class="sub">Dra. Lucia Kratz · CRP 09/20590</div>
+  </div>
+
+  <!-- ENQUETE -->
+  <div id="tela-enquete">
+    <div class="card">
+      <div class="section-label">Enquete ao vivo</div>
+      <div class="enq-title">O que mais afeta sua equipe no dia a dia?</div>
+      <div class="enq-sub">Escolha até 3 palavras — ou escreva a sua.</div>
+      <div class="limit-bar">
+        <div class="limit-dot" id="d1"></div>
+        <div class="limit-dot" id="d2"></div>
+        <div class="limit-dot" id="d3"></div>
+      </div>
+      <div class="palavras-grid" id="palavras-grid"></div>
+      <div class="custom-row">
+        <input class="c-input" id="custom-inp" type="text" placeholder="Outra palavra..." maxlength="25">
+        <button class="c-add" onclick="addCustom()">+ Adicionar</button>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn-next" style="width:100%" onclick="enviarEnquete()">Confirmar escolhas →</button>
+      </div>
+      <div class="err" id="enq-err"></div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="tela-quiz" style="display:none">
+    <div class="card">
+      <div class="section-label">Autoavaliação Rápida</div>
+      <div style="font-size:14px;color:#5a6a82;margin-bottom:12px;line-height:1.5">5 perguntas sobre seu comportamento de liderança na última semana. Não há resposta certa ou errada.</div>
+      <div class="progress-bar"><div class="progress-fill" id="prog" style="width:20%"></div></div>
+      <div class="prog-txt" id="prog-txt">Pergunta 1 de 5</div>
+      <div class="q-num" id="q-num">Pergunta 01</div>
+      <div class="q-txt" id="q-txt"></div>
+      <div class="opcoes" id="opcoes"></div>
+      <div class="err" id="quiz-err"></div>
+      <div class="nav">
+        <button class="btn-back" id="btn-back" onclick="prev()" style="visibility:hidden">← Voltar</button>
+        <button class="btn-next" id="btn-next" onclick="next()">Próxima →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="tela-resultado">
+    <div class="card">
+      <div class="res-header">
+        <div class="res-emoji" id="r-emoji"></div>
+        <div class="res-title" id="r-title"></div>
+        <div class="res-sub" id="r-sub"></div>
+      </div>
+      <div class="score-card">
+        <div class="score-big" id="r-score"></div>
+        <div class="score-lbl">consciência em liderança</div>
+      </div>
+      <div class="insight-box">
+        <div class="ins-tit">Seu ponto de atenção</div>
+        <div class="ins-txt" id="r-insight"></div>
+      </div>
+      <div class="insight-box">
+        <div class="ins-tit">Seu próximo passo</div>
+        <div class="ins-txt" id="r-passo"></div>
+      </div>
+      <div class="quote">"A liderança responsável começa com o olhar que você dirige para si mesmo antes de dirigir para a sua equipe."</div>
+    </div>
+
+    <div class="card">
+      <div class="dra-card">
+        <div class="dra-av">LK</div>
+        <div>
+          <div class="dra-name">Dra. Lucia Kratz</div>
+          <div class="dra-crp">Psicóloga · Administradora · CRP 09/20590</div>
+        </div>
+      </div>
+      <div class="dra-bio">Especialista em Psicologia Organizacional e Saúde Psicossocial no trabalho. Une a visão clínica da psicologia com a prática da gestão para ajudar líderes a desenvolverem consciência, equilíbrio e resultados sustentáveis.</div>
+      <div class="tags">
+        <span class="tag">Liderança consciente</span>
+        <span class="tag">Saúde no trabalho</span>
+        <span class="tag">Eneagrama</span>
+        <span class="tag">TCC</span>
+        <span class="tag">Gestão de equipes</span>
+      </div>
+
+      <div class="sec-tit">Aprofunde sua jornada</div>
+      <div class="prod-grid">
+        <a class="prod-card wide" href="https://wa.me/5562946444950" target="_blank">
+          <div style="font-size:24px">🧠</div>
+          <div>
+            <div class="prod-badge">Atendimento clínico</div>
+            <div class="prod-nm">Psicoterapia — TCC</div>
+            <div class="prod-ds">Atendimento individual. Agende via WhatsApp.</div>
+          </div>
+        </a>
+        <a class="prod-card" href="https://pay.hotmart.com/L106620879F?checkoutMode=10" target="_blank">
+          <div class="prod-icon">🏆</div>
+          <div class="prod-nm">Líd@r 5.0</div>
+          <div class="prod-ds">Revolucionando a liderança</div>
+        </a>
+        <a class="prod-card" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10" target="_blank">
+          <div class="prod-icon">🧭</div>
+          <div class="prod-nm">9&Self</div>
+          <div class="prod-ds">Mapeamento pelo Eneagrama</div>
+        </a>
+        <a class="prod-card" href="https://pay.hotmart.com/R97548434J" target="_blank">
+          <div class="prod-icon">💛</div>
+          <div class="prod-nm">Eneagrama no Amor</div>
+          <div class="prod-ds">Curso — relacionamentos</div>
+        </a>
+        <a class="prod-card" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10" target="_blank">
+          <div class="prod-icon">📖</div>
+          <div class="prod-nm">Meu Companheiro é Psicopata?</div>
+          <div class="prod-ds">E-book — padrões relacionais</div>
+        </a>
+      </div>
+
+      <div class="sec-tit">Siga & conecte-se</div>
+      <div class="redes">
+        <a class="rede" href="https://instagram.com/luciakratz" target="_blank">📷 Instagram</a>
+        <a class="rede" href="https://linkedin.com/in/luciakratz" target="_blank">💼 LinkedIn</a>
+        <a class="rede wpp" href="https://wa.me/5562946444950" target="_blank">💬 WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'palestra_lucia_kratz_v1';
+
+const sugestoes = ["Sobrecarga","Falta de reconhecimento","Comunicação ruim","Microgestão","Conflitos","Ansiedade","Burnout","Falta de clareza","Silenciamento","Pressão excessiva","Falta de autonomia","Desmotivação"];
+const perguntas = [
+  { txt: "Na última semana, quando sua equipe trouxe um problema, qual foi sua primeira reação?", ops: [{ t:"Ouvi com atenção antes de responder",p:4},{t:"Já fui direto para a solução",p:2},{t:"Fiquei sobrecarregado e adiei",p:1},{t:"Deleguei sem acompanhar",p:2}] },
+  { txt: "Como você cuidou do seu próprio bem-estar psicossocial nos últimos 7 dias?", ops: [{t:"Mantive pausas, limites e descanso consciente",p:4},{t:"Tentei, mas o trabalho sempre venceu",p:2},{t:"Não pensei nisso — foco total na equipe",p:1},{t:"Tenho isso em radar, ainda não é rotina",p:3}] },
+  { txt: "Você comunicou expectativas claras à sua equipe esta semana?", ops: [{t:"Sim, com contexto e espaço para perguntas",p:4},{t:"Passei as informações, mas rapidamente",p:3},{t:"Assumi que todos já sabiam o que fazer",p:1},{t:"Não houve demanda clara esta semana",p:3}] },
+  { txt: "Quando surgiu um conflito ou tensão na equipe, como você agiu?", ops: [{t:"Mediei com escuta e imparcialidade",p:4},{t:"Resolvi rapidamente, talvez sem ouvir todos",p:2},{t:"Preferi não intervir e esperar passar",p:1},{t:"Não houve conflito perceptível esta semana",p:3}] },
+  { txt: "Como você avalia seu nível de presença nas conversas com sua equipe esta semana?", ops: [{t:"Estive presente de forma genuína e intencional",p:4},{t:"Presente fisicamente, mas a mente em outro lugar",p:2},{t:"Meetings mecânicos — muito a fazer, pouco a ouvir",p:1},{t:"Consegui equilibrar, com momentos de qualidade real",p:3}] }
+];
+
+let selecionados = new Set();
+let customVotos = [];
+let qAtual = 0;
+let respostas = [];
+let pontos = [];
+
+// ENQUETE
+function renderPalavras() {
+  const g = document.getElementById('palavras-grid');
+  g.innerHTML = sugestoes.map(s =>
+    `<button class="p-btn${selecionados.has(s)?' sel':''}" onclick="togglePalavra('${s}')" ${selecionados.size>=3&&!selecionados.has(s)?'disabled':''}>${s}</button>`
+  ).join('');
+  [1,2,3].forEach(i => {
+    document.getElementById(`d${i}`).className = 'limit-dot' + (selecionados.size>=i?' ativo':'');
+  });
+}
+
+function togglePalavra(p) {
+  if (selecionados.has(p)) selecionados.delete(p);
+  else if (selecionados.size < 3) selecionados.add(p);
+  renderPalavras();
+  document.getElementById('enq-err').textContent = '';
+}
+
+function addCustom() {
+  const inp = document.getElementById('custom-inp');
+  const v = inp.value.trim();
+  if (!v) return;
+  if (selecionados.size >= 3) { document.getElementById('enq-err').textContent = 'Máximo de 3 palavras atingido.'; return; }
+  selecionados.add(v);
+  customVotos.push(v);
+  inp.value = '';
+  renderPalavras();
+}
+
+async function enviarEnquete() {
+  if (selecionados.size === 0) { document.getElementById('enq-err').textContent = 'Selecione ao menos 1 palavra.'; return; }
+  const palavras = Array.from(selecionados);
+  await salvarEnquete(palavras);
+  document.getElementById('tela-enquete').style.display = 'none';
+  document.getElementById('tela-quiz').style.display = 'block';
+  renderQuiz();
+}
+
+async function salvarEnquete(palavras) {
+  try {
+    const res = await window.storage.get(STORAGE_KEY + '_enquete', true);
+    let dados = {};
+    try { dados = JSON.parse(res.value); } catch(e) {}
+    palavras.forEach(p => { dados[p] = (dados[p]||0) + 1; });
+    await window.storage.set(STORAGE_KEY + '_enquete', JSON.stringify(dados), true);
+  } catch(e) {}
+}
+
+// QUIZ
+function renderQuiz() {
+  const q = perguntas[qAtual];
+  document.getElementById('q-num').textContent = `Pergunta ${String(qAtual+1).padStart(2,'0')}`;
+  document.getElementById('q-txt').textContent = q.txt;
+  document.getElementById('prog').style.width = `${((qAtual+1)/5)*100}%`;
+  document.getElementById('prog-txt').textContent = `Pergunta ${qAtual+1} de 5`;
+  document.getElementById('quiz-err').textContent = '';
+  const sel = respostas[qAtual] !== undefined ? respostas[qAtual] : -1;
+  document.getElementById('opcoes').innerHTML = q.ops.map((o,i) =>
+    `<button class="opcao${sel===i?' sel':''}" onclick="selOp(${i})"><div class="radio"></div><span class="opcao-txt">${o.t}</span></button>`
+  ).join('');
+  document.getElementById('btn-back').style.visibility = qAtual===0?'hidden':'visible';
+  document.getElementById('btn-next').textContent = qAtual===4?'Ver resultado ✓':'Próxima →';
+}
+
+function selOp(i) {
+  respostas[qAtual] = i;
+  pontos[qAtual] = perguntas[qAtual].ops[i].p;
+  document.getElementById('quiz-err').textContent = '';
+  document.querySelectorAll('.opcao').forEach((el,idx) => el.classList.toggle('sel', idx===i));
+}
+
+function next() {
+  if (respostas[qAtual] === undefined) { document.getElementById('quiz-err').textContent = 'Selecione uma opção para continuar.'; return; }
+  if (qAtual < 4) { qAtual++; renderQuiz(); }
+  else mostrarResultado();
+}
+
+function prev() { if (qAtual > 0) { qAtual--; renderQuiz(); } }
+
+async function mostrarResultado() {
+  const total = pontos.reduce((a,b)=>a+b,0);
+  const pct = Math.round((total/20)*100);
+  await salvarQuiz(pct, respostas.map((r,i) => perguntas[i].ops[r].t));
+  document.getElementById('tela-quiz').style.display = 'none';
+  document.getElementById('tela-resultado').style.display = 'block';
+  document.getElementById('r-score').textContent = pct + '%';
+
+  let emoji, titulo, sub, insight, passo;
+  if (pct >= 80) {
+    emoji='🌟'; titulo='Liderança consciente em ação'; sub='Você está praticando uma liderança saudável e intencional.';
+    insight='Você demonstra presença, escuta e autocuidado. Líderes neste nível tendem a sustentar equipes mais resilientes.';
+    passo='O desafio agora é manter a consistência — e ajudar outros líderes à sua volta a chegarem aqui também.';
+  } else if (pct >= 55) {
+    emoji='🌱'; titulo='Liderança em desenvolvimento'; sub='Você tem boas bases — e pontos valiosos para evoluir.';
+    insight='Você alterna momentos de presença com reatividade. Isso é comum em ambientes de alta demanda como a saúde.';
+    passo='Escolha um comportamento desta avaliação para praticar intencionalmente nesta semana.';
+  } else {
+    emoji='🔍'; titulo='Um olhar honesto — e corajoso'; sub='Reconhecer é o primeiro passo real da liderança.';
+    insight='Líderes sobrecarregados frequentemente operam no modo automático. Você não está sozinho.';
+    passo='Considere uma conversa sobre saúde psicossocial. O atendimento em TCC pode ser um ponto de virada.';
+  }
+  document.getElementById('r-emoji').textContent = emoji;
+  document.getElementById('r-title').textContent = titulo;
+  document.getElementById('r-sub').textContent = sub;
+  document.getElementById('r-insight').textContent = insight;
+  document.getElementById('r-passo').textContent = passo;
+}
+
+async function salvarQuiz(pct, resps) {
+  try {
+    const res = await window.storage.get(STORAGE_KEY + '_quiz', true);
+    let dados = { perfis: { consciente:0, desenvolvimento:0, honesto:0 }, total: 0, soma: 0, respostas: {} };
+    try { dados = JSON.parse(res.value); } catch(e) {}
+    dados.total = (dados.total||0) + 1;
+    dados.soma = (dados.soma||0) + pct;
+    if (pct >= 80) dados.perfis.consciente++;
+    else if (pct >= 55) dados.perfis.desenvolvimento++;
+    else dados.perfis.honesto++;
+    await window.storage.set(STORAGE_KEY + '_quiz', JSON.stringify(dados), true);
+  } catch(e) {}
+}
+
+renderPalavras();
+</script>
+</body>
+</html>
