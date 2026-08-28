@@ -4,65 +4,64 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — O Olhar que Cuida</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min-height: 100vh; }
-#app { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
-
-.topbar { background: #1a2a4a; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
-.logo { font-size: 11px; color: #8ab0c8; letter-spacing: 0.08em; text-transform: uppercase; }
-.topbar h2 { font-size: 18px; font-weight: 800; color: white; }
-.btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.btn-green { background: #2ca870; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.btn-blue { background: #1a5f8f; color: white; border: none; border-radius: 8px; padding: 9px 16px; font-size: 12px; font-weight: 700; cursor: pointer; }
-.btn-red { background: none; border: 1.5px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; }
+#app { max-width: 960px; margin: 0 auto; padding: 1.25rem; }
+.topbar { background: #1a2a4a; border-radius: 14px; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+.logo { font-size: 10px; color: #8ab0c8; letter-spacing: 0.1em; text-transform: uppercase; }
+h2 { font-size: 16px; font-weight: 800; color: white; }
+.topbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ca870; display: inline-block; animation: pulse 1.5s infinite; margin-right: 4px; }
-.live-lbl { font-size: 11px; color: #8ab0c8; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-
-.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
-.stat { background: white; border-radius: 12px; border: 1px solid #e4ecf5; padding: 1rem 1.25rem; text-align: center; }
-.stat-num { font-size: 36px; font-weight: 900; color: #1a2a4a; }
-.stat-lbl { font-size: 11px; color: #9aabb5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-
-/* SLIDER TABS */
-.tabs-wrap { background: white; border-radius: 14px; border: 1px solid #e4ecf5; padding: 6px; display: flex; gap: 4px; margin-bottom: 1rem; }
-.tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.25s; background: none; color: #7a8a9e; }
-.tab-btn.ativo { background: #1a2a4a; color: white; }
-
-.tab-panel { display: none; }
-.tab-panel.ativo { display: block; }
-
-.card { background: white; border-radius: 14px; border: 1px solid #e4ecf5; padding: 1.5rem; margin-bottom: 1rem; }
-.card-title { font-size: 13px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; }
-
-/* NUVEM */
-.cloud-box { background: #f4fbf8; border: 1.5px solid #c0e8d8; border-radius: 12px; min-height: 200px; padding: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1.25rem; }
+.live-lbl { font-size: 11px; color: #8ab0c8; margin-right: 6px; }
+button { font-family: inherit; cursor: pointer; }
+.btn-green { background: #2ca870; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 700; }
+.btn-blue { background: #1a5f8f; color: white; border: none; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 700; }
+.btn-red { background: none; border: 1.5px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem; }
+.stat { background: white; border-radius: 12px; border: 1px solid #e4ecf5; padding: 0.875rem; text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; color: #1a2a4a; }
+.stat-lbl { font-size: 10px; color: #9aabb5; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+.tabs { background: white; border-radius: 12px; border: 1px solid #e4ecf5; padding: 5px; display: flex; gap: 4px; margin-bottom: 1rem; }
+.tab { flex: 1; padding: 9px; border: none; border-radius: 9px; font-size: 13px; font-weight: 700; background: none; color: #7a8a9e; transition: all 0.2s; cursor: pointer; }
+.tab.on { background: #1a2a4a; color: white; }
+.panel { display: none; }
+.panel.on { display: block; }
+.card { background: white; border-radius: 14px; border: 1px solid #e4ecf5; padding: 1.25rem; margin-bottom: 1rem; }
+.card-title { font-size: 12px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+.cloud { background: #f4fbf8; border: 1.5px solid #c0e8d8; border-radius: 12px; min-height: 160px; padding: 1.25rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-bottom: 1rem; }
 .cloud-empty { color: #a0b8b0; font-size: 13px; font-style: italic; }
-.word-tag { border-radius: 99px; font-weight: 700; cursor: default; animation: popIn 0.4s ease; }
-@keyframes popIn { from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1} }
-
-.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.bar-label { font-size: 13px; color: #2a3a55; font-weight: 600; min-width: 180px; }
-.bar-wrap { flex: 1; background: #e8edf5; border-radius: 99px; height: 12px; }
-.bar-fill { height: 12px; border-radius: 99px; transition: width 0.6s ease; }
-.bar-val { font-size: 12px; color: #5a6a82; font-weight: 700; min-width: 90px; text-align: right; }
-
-/* PERFIS */
-.perfis { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.25rem; }
-.perfil { border: 1.5px solid #e4ecf5; border-radius: 12px; padding: 1.25rem; text-align: center; }
-.perfil-emoji { font-size: 32px; margin-bottom: 8px; }
-.perfil-num { font-size: 36px; font-weight: 900; color: #1a2a4a; }
-.perfil-pct { font-size: 13px; color: #9aabb5; margin-top: 2px; }
-.perfil-lbl { font-size: 11px; font-weight: 700; color: #5a6a82; margin-top: 6px; }
-
-/* RESPOSTAS POR PERGUNTA */
-.pergunta-block { border: 1px solid #e4ecf5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
-.perg-titulo { font-size: 13px; font-weight: 700; color: #1a2a4a; margin-bottom: 1rem; }
-.perg-num { display: inline-block; background: #2ca870; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-right: 6px; }
-
+.wtag { border-radius: 99px; font-weight: 700; cursor: default; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.bar-lbl { font-size: 12px; color: #2a3a55; font-weight: 600; min-width: 160px; }
+.bar-bg { flex: 1; background: #e8edf5; border-radius: 99px; height: 10px; }
+.bar-fg { height: 10px; border-radius: 99px; transition: width 0.5s; }
+.bar-val { font-size: 11px; color: #5a6a82; font-weight: 700; min-width: 70px; text-align: right; }
+.perfis3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem; }
+.perfil { border: 1.5px solid #e4ecf5; border-radius: 12px; padding: 1rem; text-align: center; }
+.perfil-emoji { font-size: 28px; margin-bottom: 6px; }
+.perfil-num { font-size: 32px; font-weight: 900; color: #1a2a4a; }
+.perfil-pct { font-size: 12px; color: #9aabb5; }
+.perfil-lbl { font-size: 11px; font-weight: 700; color: #5a6a82; margin-top: 4px; }
+.subtabs { background: #f0f4fa; border-radius: 10px; padding: 4px; display: flex; gap: 4px; margin-bottom: 1rem; }
+.subtab { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; background: none; color: #7a8a9e; transition: all 0.2s; cursor: pointer; }
+.subtab.on { background: white; color: #1a2a4a; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.subpanel { display: none; }
+.subpanel.on { display: block; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qcard { border-radius: 12px; padding: 1rem; border-top: 3px solid; }
+.qcard-tema { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+.qcard-txt { font-size: 11px; color: #1a2a4a; font-weight: 600; margin-bottom: 10px; line-height: 1.35; }
+.mini-bar { margin-bottom: 5px; }
+.mini-top { display: flex; justify-content: space-between; margin-bottom: 2px; }
+.mini-lbl { font-size: 10px; color: #5a6a82; }
+.mini-val { font-size: 10px; font-weight: 700; }
+.mini-bg { background: #e8edf5; border-radius: 99px; height: 6px; }
+.mini-fg { height: 6px; border-radius: 99px; }
 .updated { font-size: 11px; color: #9aabb5; text-align: center; margin-top: 1rem; }
-@media print { .btns,.tabs-wrap { display:none!important; } .tab-panel { display:block!important; } body { background:white; } }
 </style>
 </head>
 <body>
@@ -72,238 +71,189 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min
       <div class="logo">Painel Admin · O Olhar que Cuida</div>
       <h2>Dra. Lucia Kratz — Dados em Tempo Real</h2>
     </div>
-    <div class="btns">
+    <div class="topbar-right">
       <span class="live-dot"></span>
       <span class="live-lbl" id="lbl-att">Carregando...</span>
-      <button class="btn-green" id="btn-atualizar">↺ Atualizar</button>
+      <button class="btn-green" id="btn-att">↺ Atualizar</button>
       <button class="btn-blue" onclick="window.print()">🖨️ PDF</button>
-      <button class="btn-red" id="btn-zerar">⚠️ Zerar</button>
+      <button class="btn-red" id="btn-zer">⚠️ Zerar</button>
     </div>
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="stat-num" id="tot-part">—</div><div class="stat-lbl">Participantes enquete</div></div>
-    <div class="stat"><div class="stat-num" id="tot-quiz">—</div><div class="stat-lbl">Quizzes respondidos</div></div>
-    <div class="stat"><div class="stat-num" id="media">—</div><div class="stat-lbl">Média consciência</div></div>
+    <div class="stat"><div class="stat-num" id="s-part">—</div><div class="stat-lbl">Participantes enquete</div></div>
+    <div class="stat"><div class="stat-num" id="s-quiz">—</div><div class="stat-lbl">Quizzes respondidos</div></div>
+    <div class="stat"><div class="stat-num" id="s-media">—</div><div class="stat-lbl">Média consciência</div></div>
   </div>
 
-  <!-- TABS -->
-  <div class="tabs-wrap">
-    <button class="tab-btn ativo" id="tab-enquete">☁️ Nuvem de Palavras</button>
-    <button class="tab-btn" id="tab-quiz">📊 Perfis de Liderança</button>
+  <div class="tabs">
+    <button class="tab on" id="tab-nuvem">☁️ Nuvem de Palavras</button>
+    <button class="tab" id="tab-perfil">📊 Perfis de Liderança</button>
   </div>
 
-  <!-- ABA 1: ENQUETE -->
-  <div class="tab-panel ativo" id="aba-enquete">
+  <div class="panel on" id="panel-nuvem">
     <div class="card">
       <div class="card-title">☁️ Nuvem de palavras — Enquete ao vivo</div>
-      <div class="cloud-box" id="cloud"><div class="cloud-empty" id="cloud-empty">Aguardando votos...</div></div>
+      <div class="cloud" id="cloud"><div class="cloud-empty" id="cloud-empty">Aguardando votos...</div></div>
       <div id="barras"></div>
     </div>
   </div>
 
-  <!-- ABA 2: QUIZ -->
-  <div class="tab-panel" id="aba-quiz">
+  <div class="panel" id="panel-perfil">
     <div class="card">
       <div class="card-title">📊 Perfis de Liderança</div>
-      <div class="perfis">
-        <div class="perfil"><div class="perfil-emoji">🌟</div><div class="perfil-num" id="p1">0</div><div class="perfil-pct" id="p1p">—</div><div class="perfil-lbl">Liderança Consciente<br><small style="color:#9aabb5;font-weight:400">≥80%</small></div></div>
-        <div class="perfil"><div class="perfil-emoji">🌱</div><div class="perfil-num" id="p2">0</div><div class="perfil-pct" id="p2p">—</div><div class="perfil-lbl">Em Desenvolvimento<br><small style="color:#9aabb5;font-weight:400">55–79%</small></div></div>
-        <div class="perfil"><div class="perfil-emoji">🔍</div><div class="perfil-num" id="p3">0</div><div class="perfil-pct" id="p3p">—</div><div class="perfil-lbl">Olhar Honesto<br><small style="color:#9aabb5;font-weight:400">abaixo de 55%</small></div></div>
+      <div class="perfis3">
+        <div class="perfil"><div class="perfil-emoji">🌟</div><div class="perfil-num" id="p1">0</div><div class="perfil-pct" id="p1p">—</div><div class="perfil-lbl">Liderança Consciente ≥80%</div></div>
+        <div class="perfil"><div class="perfil-emoji">🌱</div><div class="perfil-num" id="p2">0</div><div class="perfil-pct" id="p2p">—</div><div class="perfil-lbl">Em Desenvolvimento 55–79%</div></div>
+        <div class="perfil"><div class="perfil-emoji">🔍</div><div class="perfil-num" id="p3">0</div><div class="perfil-pct" id="p3p">—</div><div class="perfil-lbl">Olhar Honesto abaixo 55%</div></div>
       </div>
     </div>
-
-    <div class="card">
-      <div class="card-title">✅ Comportamentos que Protegem</div>
-      <div id="perguntas-positivas"></div>
+    <div class="subtabs">
+      <button class="subtab on" id="sub-pos">✅ Protegem a Equipe</button>
+      <button class="subtab" id="sub-neg">⚠️ Agravam o Risco</button>
     </div>
-    <div class="card">
-      <div class="card-title">⚠️ Comportamentos que Agravam</div>
-      <div id="perguntas-negativas"></div>
-    </div>
+    <div class="subpanel on" id="sp-pos"><div class="grid2" id="grid-pos"></div></div>
+    <div class="subpanel" id="sp-neg"><div class="grid2" id="grid-neg"></div></div>
   </div>
 
   <div class="updated" id="updated"></div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+var db;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
-  authDomain: "entrevista-inicial.firebaseapp.com",
-  projectId: "entrevista-inicial",
-  storageBucket: "entrevista-inicial.firebasestorage.app",
-  messagingSenderId: "437375609844",
-  appId: "1:437375609844:web:2ed0e16a7da5d46c2e27a1"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const paleta = [
-  {bg:'#daf0ea',text:'#0f5c3f'},{bg:'#dce8f8',text:'#1a3f70'},{bg:'#fdebd0',text:'#7a3e00'},
-  {bg:'#e8dcf8',text:'#3e0f70'},{bg:'#fddce0',text:'#7a0f1f'},{bg:'#dcf0f8',text:'#0f4a5c'},
-  {bg:'#f0f8dc',text:'#3c5c0f'},{bg:'#f8eedd',text:'#6b3a0f'}
-];
-let corMap = {}, corIdx = 0;
-function getCor(p) { if (!corMap[p]) { corMap[p] = paleta[corIdx%paleta.length]; corIdx++; } return corMap[p]; }
-function tam(v, max) {
-  const r = v/max;
-  if (r>0.7) return {size:30,pad:'11px 26px'};
-  if (r>0.4) return {size:22,pad:'8px 18px'};
-  if (r>0.2) return {size:17,pad:'7px 15px'};
-  return {size:13,pad:'5px 12px'};
-}
-
-const perguntas = [
-  { tema:"Escuta Ativa", txt: "Quando um colaborador traz um problema ou ideia, qual é sua reação mais frequente?", ops: ["Ouço com presença real — sem julgamento e sem interromper","Ouço, mas já vou pensando na solução enquanto fala","Interrompo ou redireciono rapidamente","Escuto, mas depois não dou retorno"] },
-  { tema:"Silenciamento", txt: "Com que frequência pessoas da sua equipe deixam de falar o que pensam na sua presença?", ops: ["Raramente — as pessoas se sentem seguras para se expressar","Às vezes — percebo que alguns se retraem","Frequentemente — o clima não favorece abertura","Nunca percebi isso acontecer"] },
-  { tema:"Reconhecimento Genuíno", txt: "Com que frequência você reconhece especificamente o que sua equipe fez bem?", ops: ["Frequentemente — de forma específica e no momento certo","Às vezes, mas de forma genérica ('bom trabalho')","Raramente — entendo que o bom trabalho é obrigação","Quase nunca — não tenho esse hábito"] },
-  { tema:"Reconhecimento Ausente", txt: "Na última semana, o trabalho bem feito da sua equipe foi visto e nomeado por você?", ops: ["Sim — identifiquei e reconheci de forma direta","Parcialmente — percebi, mas não verbalizei","Não — a semana foi intensa e não houve espaço","Não acho necessário reconhecer o que já é esperado"] },
-  { tema:"Clareza de Papéis", txt: "Sua equipe sabe exatamente o que se espera de cada pessoa no trabalho?", ops: ["Sim — papéis e expectativas são claros e revisados","Parcialmente — há ambiguidades que geram dúvidas","Nem sempre — as funções mudam sem comunicação clara","Prefiro deixar flexível para cada um se organizar"] },
-  { tema:"Microgestão", txt: "Como você acompanha as entregas da sua equipe?", ops: ["Defino o que precisa ser feito e confio no processo","Acompanho de perto, mas dou autonomia","Verifico com frequência — fico mais tranquilo assim","Prefiro fazer eu mesmo quando é algo importante"] },
-  { tema:"Comunicação Agressiva", txt: "Como você reage quando algo na equipe não sai como esperado?", ops: ["Converso com calma, buscando entender o que aconteceu","Corrijo diretamente — sem rodeios mas com respeito","Às vezes elevo o tom ou pressiono publicamente","Guardo a insatisfação e cobro depois de forma acumulada"] },
-  { tema:"Abertura ao Erro", txt: "O que acontece na sua equipe quando alguém comete um erro?", ops: ["Tratamos como aprendizado — analisamos e seguimos","Corrigimos, mas o clima fica pesado por um tempo","O erro costuma gerar punição ou exposição","Evitamos falar abertamente para não gerar mais tensão"] }
+var perguntas = [
+  { tema:"Escuta Ativa",      txt:"Quando um colaborador traz um problema ou ideia, qual é sua reação mais frequente?", ops:["Ouço com presença real — sem julgamento e sem interromper","Ouço, mas já vou pensando na solução enquanto fala","Interrompo ou redireciono rapidamente","Escuto, mas depois não dou retorno"] },
+  { tema:"Silenciamento",     txt:"Com que frequência pessoas da sua equipe deixam de falar o que pensam na sua presença?", ops:["Raramente — as pessoas se sentem seguras para se expressar","Às vezes — percebo que alguns se retraem","Frequentemente — o clima não favorece abertura","Nunca percebi isso acontecer"] },
+  { tema:"Reconhec. Genuíno", txt:"Com que frequência você reconhece especificamente o que sua equipe fez bem?", ops:["Frequentemente — de forma específica e no momento certo","Às vezes, mas de forma genérica ('bom trabalho')","Raramente — entendo que o bom trabalho é obrigação","Quase nunca — não tenho esse hábito"] },
+  { tema:"Reconhec. Ausente", txt:"Na última semana, o trabalho bem feito da sua equipe foi visto e nomeado por você?", ops:["Sim — identifiquei e reconheci de forma direta","Parcialmente — percebi, mas não verbalizei","Não — a semana foi intensa e não houve espaço","Não acho necessário reconhecer o que já é esperado"] },
+  { tema:"Clareza de Papéis", txt:"Sua equipe sabe exatamente o que se espera de cada pessoa no trabalho?", ops:["Sim — papéis e expectativas são claros e revisados","Parcialmente — há ambiguidades que geram dúvidas","Nem sempre — as funções mudam sem comunicação clara","Prefiro deixar flexível para cada um se organizar"] },
+  { tema:"Microgestão",       txt:"Como você acompanha as entregas da sua equipe?", ops:["Defino o que precisa ser feito e confio no processo","Acompanho de perto, mas dou autonomia","Verifico com frequência — fico mais tranquilo assim","Prefiro fazer eu mesmo quando é algo importante"] },
+  { tema:"Comun. Agressiva",  txt:"Como você reage quando algo na equipe não sai como esperado?", ops:["Converso com calma, buscando entender o que aconteceu","Corrijo diretamente — sem rodeios mas com respeito","Às vezes elevo o tom ou pressiono publicamente","Guardo a insatisfação e cobro depois de forma acumulada"] },
+  { tema:"Abertura ao Erro",  txt:"O que acontece na sua equipe quando alguém comete um erro?", ops:["Tratamos como aprendizado — analisamos e seguimos","Corrigimos, mas o clima fica pesado por um tempo","O erro costuma gerar punição ou exposição","Evitamos falar abertamente para não gerar mais tensão"] }
 ];
 
-function trocarAba(aba) {
-  document.getElementById('tab-enquete').classList.toggle('ativo', aba==='enquete');
-  document.getElementById('tab-quiz').classList.toggle('ativo', aba==='quiz');
-  document.getElementById('aba-enquete').classList.toggle('ativo', aba==='enquete');
-  document.getElementById('aba-quiz').classList.toggle('ativo', aba==='quiz');
-}
-document.getElementById('tab-enquete').addEventListener('click', () => trocarAba('enquete'));
-document.getElementById('tab-quiz').addEventListener('click', () => trocarAba('quiz'));
+var IDX_POS = [0,2,4,7];
+var IDX_NEG = [1,3,5,6];
+var COR_POS = ['#2ca870','#1a8f5f','#0f6b46','#1aaa70'];
+var COR_NEG = ['#c0392b','#e74c3c','#a93226','#e05a4a'];
+var paleta = [{bg:'#daf0ea',text:'#0f5c3f'},{bg:'#dce8f8',text:'#1a3f70'},{bg:'#fdebd0',text:'#7a3e00'},{bg:'#e8dcf8',text:'#3e0f70'},{bg:'#fddce0',text:'#7a0f1f'},{bg:'#dcf0f8',text:'#0f4a5c'},{bg:'#f0f8dc',text:'#3c5c0f'},{bg:'#f8eedd',text:'#6b3a0f'}];
+var corMap={}, corIdx=0;
+function getCor(p){ if(!corMap[p]){corMap[p]=paleta[corIdx%paleta.length];corIdx++;} return corMap[p]; }
+function tam(v,max){ var r=v/max; if(r>0.7)return{size:28,pad:'10px 22px'}; if(r>0.4)return{size:21,pad:'8px 17px'}; if(r>0.2)return{size:16,pad:'6px 13px'}; return{size:13,pad:'5px 11px'}; }
 
-async function carregar() {
+function carregar() {
   document.getElementById('lbl-att').textContent = 'Atualizando...';
-  try {
-    // ENQUETE
-    const enqSnap = await getDoc(doc(db, 'palestra_cbco', 'enquete'));
-    if (enqSnap.exists()) {
-      const dados = enqSnap.data();
-      const totalPart = dados.__total || 0;
-      document.getElementById('tot-part').textContent = totalPart;
-      const dadosSem = {...dados}; delete dadosSem.__total;
-
-      const sorted = Object.entries(dadosSem).sort((a,b)=>b[1]-a[1]);
-      const maxVal = sorted[0]?.[1]||1;
-      const totalVotos = sorted.reduce((s,[,v])=>s+v,0);
-
-      const cloud = document.getElementById('cloud');
+  db.collection('palestra_cbco').doc('enquete').get().then(function(eSnap) {
+    if(eSnap.exists) {
+      var d = eSnap.data();
+      var tot = d.__total||0;
+      document.getElementById('s-part').textContent = tot;
+      delete d.__total;
+      var sorted = Object.entries(d).sort(function(a,b){return b[1]-a[1];});
+      var maxV = sorted[0]?sorted[0][1]:1;
+      var totV = sorted.reduce(function(s,e){return s+e[1];},0);
+      var cloud = document.getElementById('cloud');
       document.getElementById('cloud-empty').style.display = sorted.length?'none':'block';
-      Array.from(cloud.querySelectorAll('.word-tag')).forEach(c=>c.remove());
-      sorted.forEach(([p,v]) => {
-        const {size,pad} = tam(v,maxVal);
-        const {bg,text} = getCor(p);
-        const tag = document.createElement('div');
-        tag.className = 'word-tag';
-        tag.style.cssText = `font-size:${size}px;padding:${pad};background:${bg};color:${text}`;
-        tag.innerHTML = `${p.replace(/_/g,' ')} <span style="opacity:0.55;font-size:${size-4}px">${v}</span>`;
+      cloud.querySelectorAll('.wtag').forEach(function(c){c.remove();});
+      sorted.forEach(function(e) {
+        var p=e[0],v=e[1];
+        var t2=tam(v,maxV); var c=getCor(p);
+        var tag=document.createElement('div'); tag.className='wtag';
+        tag.style.cssText='font-size:'+t2.size+'px;padding:'+t2.pad+';background:'+c.bg+';color:'+c.text;
+        tag.innerHTML=p.replace(/_/g,' ')+' <span style="opacity:0.55;font-size:'+(t2.size-4)+'px">'+v+'</span>';
         cloud.appendChild(tag);
       });
-
-      document.getElementById('barras').innerHTML = sorted.map(([p,v]) => {
-        const pct = totalVotos>0?Math.round((v/totalVotos)*100):0;
-        const {text} = getCor(p);
-        return `<div class="bar-row">
-          <div class="bar-label">${p.replace(/_/g,' ')}</div>
-          <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${text}"></div></div>
-          <div class="bar-val">${v} voto${v!==1?'s':''} · ${pct}%</div>
-        </div>`;
+      document.getElementById('barras').innerHTML = sorted.map(function(e) {
+        var p=e[0],v=e[1]; var pct=totV>0?Math.round((v/totV)*100):0; var c=getCor(p);
+        return '<div class="bar-row"><div class="bar-lbl">'+p.replace(/_/g,' ')+'</div><div class="bar-bg"><div class="bar-fg" style="width:'+pct+'%;background:'+c.text+'"></div></div><div class="bar-val">'+v+' voto'+(v!==1?'s':'')+' · '+pct+'%</div></div>';
       }).join('');
-    } else {
-      document.getElementById('tot-part').textContent = '0';
-    }
+    } else { document.getElementById('s-part').textContent='0'; }
+  });
 
-    // QUIZ
-    const quizSnap = await getDoc(doc(db, 'palestra_cbco', 'quiz'));
-    if (quizSnap.exists()) {
-      const d = quizSnap.data();
-      const tot = d.total||0, soma = d.soma||0;
-      document.getElementById('tot-quiz').textContent = tot;
-      document.getElementById('media').textContent = tot>0?Math.round(soma/tot)+'%':'—';
-      const p1=d.perfis_consciente||0, p2=d.perfis_desenvolvimento||0, p3=d.perfis_honesto||0;
-      document.getElementById('p1').textContent = p1;
-      document.getElementById('p2').textContent = p2;
-      document.getElementById('p3').textContent = p3;
-      const pct = n => tot>0?Math.round((n/tot)*100)+'% do grupo':'—';
-      document.getElementById('p1p').textContent = pct(p1);
-      document.getElementById('p2p').textContent = pct(p2);
-      document.getElementById('p3p').textContent = pct(p3);
-
-      // Respostas por pergunta — formato rp_p0_o1
-      // positivas: P1(Escuta), P3(Reconhec.Genuíno), P5(Clareza), P8(Abertura)
-      // negativas: P2(Silenciamento), P4(Reconhec.Ausente), P6(Microgestão), P7(Comun.Agressiva)
-      const idxPositivos = [0, 2, 4, 7];
-      const idxNegativos = [1, 3, 5, 6];
-      const coresPos = ['#2ca870','#1a8f5f','#0f6b46','#1aaa70'];
-      const coresNeg = ['#c0392b','#e74c3c','#a93226','#e05a4a'];
-
-      function renderGrupo(indices, cores, divId) {
-        const temRespostas = Object.keys(d).some(k => k.startsWith('rp_p'));
-        const div = document.getElementById(divId);
-        if (!temRespostas) { div.innerHTML = '<div style="color:#9aabb5;font-size:13px;text-align:center;padding:1rem">Aguardando respostas...</div>'; return; }
-        div.innerHTML = indices.map((pi, gi) => {
-          const perg = perguntas[pi];
-          const totalResps = perg.ops.reduce((s,_,oi) => s+(d[`rp_p${pi}_o${oi}`]||0), 0)||1;
-          // Pegar a opção mais votada
-          const vals = perg.ops.map((_,oi) => d[`rp_p${pi}_o${oi}`]||0);
-          const maxV = Math.max(...vals);
-          const barras = perg.ops.map((op, oi) => {
-            const v = d[`rp_p${pi}_o${oi}`]||0;
-            const p = Math.round((v/totalResps)*100);
-            const isMax = v === maxV && v > 0;
-            return `<div class="bar-row">
-              <div class="bar-label" style="font-size:12px;font-weight:${isMax?'700':'400'};color:${isMax?'#1a2a4a':'#5a6a82'}">${op}</div>
-              <div class="bar-wrap"><div class="bar-fill" style="width:${p}%;background:${isMax?cores[gi]:'#c5d3e8'}"></div></div>
-              <div class="bar-val" style="font-weight:${isMax?'700':'400'}">${v} · ${p}%</div>
-            </div>`;
-          }).join('');
-          return `<div class="pergunta-block">
-            <div class="perg-titulo">
-              <span class="perg-num" style="background:${cores[gi]}">${perg.tema}</span>
-              ${perg.txt}
-            </div>
-            ${barras}
-          </div>`;
-        }).join('');
-      }
-
-      renderGrupo(idxPositivos, coresPos, 'perguntas-positivas');
-      renderGrupo(idxNegativos, coresNeg, 'perguntas-negativas');
-    } else {
-      document.getElementById('tot-quiz').textContent = '0';
-      document.getElementById('media').textContent = '—';
-    }
-
-    const agora = new Date().toLocaleTimeString('pt-BR');
-    document.getElementById('lbl-att').textContent = `Atualizado · ${agora}`;
-    document.getElementById('updated').textContent = `Última atualização: ${agora}`;
-  } catch(e) {
-    console.error(e);
-    document.getElementById('lbl-att').textContent = 'Erro: '+e.message;
-  }
+  db.collection('palestra_cbco').doc('quiz').get().then(function(qSnap) {
+    if(qSnap.exists) {
+      var d = qSnap.data();
+      var tot=d.total||0, soma=d.soma||0;
+      document.getElementById('s-quiz').textContent=tot;
+      document.getElementById('s-media').textContent=tot>0?Math.round(soma/tot)+'%':'—';
+      var pc=function(n){return tot>0?Math.round((n/tot)*100)+'% do grupo':'—';};
+      var p1=d.perfis_consciente||0,p2=d.perfis_desenvolvimento||0,p3=d.perfis_honesto||0;
+      document.getElementById('p1').textContent=p1; document.getElementById('p1p').textContent=pc(p1);
+      document.getElementById('p2').textContent=p2; document.getElementById('p2p').textContent=pc(p2);
+      document.getElementById('p3').textContent=p3; document.getElementById('p3p').textContent=pc(p3);
+      renderGrupo(d,IDX_POS,COR_POS,'grid-pos');
+      renderGrupo(d,IDX_NEG,COR_NEG,'grid-neg');
+    } else { document.getElementById('s-quiz').textContent='0'; document.getElementById('s-media').textContent='—'; }
+    var agora=new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('lbl-att').textContent='Atualizado · '+agora;
+    document.getElementById('updated').textContent='Última atualização: '+agora;
+  });
 }
 
-document.getElementById('btn-atualizar').addEventListener('click', carregar);
-document.getElementById('btn-zerar').addEventListener('click', resetarTudo);
+function renderGrupo(d,indices,cores,gridId) {
+  var tem=Object.keys(d).some(function(k){return k.startsWith('rp_p');});
+  var grid=document.getElementById(gridId);
+  if(!tem){grid.innerHTML='<div style="color:#9aabb5;font-size:13px;text-align:center;padding:2rem;grid-column:1/-1">Aguardando respostas...</div>';return;}
+  grid.innerHTML=indices.map(function(pi,gi){
+    var perg=perguntas[pi];
+    var vals=perg.ops.map(function(_,oi){return d['rp_p'+pi+'_o'+oi]||0;});
+    var totR=vals.reduce(function(a,b){return a+b;},0)||1;
+    var maxV=Math.max.apply(null,vals);
+    var barras=perg.ops.map(function(op,oi){
+      var v=vals[oi],p=Math.round((v/totR)*100),isMax=v===maxV&&v>0;
+      return '<div class="mini-bar"><div class="mini-top"><span class="mini-lbl" style="font-weight:'+(isMax?'700':'400')+';color:'+(isMax?'#1a2a4a':'#8a9ab5')+'">'+op+'</span><span class="mini-val" style="color:'+(isMax?cores[gi]:'#9aabb5')+'">'+p+'%</span></div><div class="mini-bg"><div class="mini-fg" style="width:'+p+'%;background:'+(isMax?cores[gi]:'#dde4ef')+'"></div></div></div>';
+    }).join('');
+    return '<div class="qcard" style="border-color:'+cores[gi]+';background:'+cores[gi]+'11"><div class="qcard-tema" style="color:'+cores[gi]+'">'+perg.tema+'</div><div class="qcard-txt">'+perg.txt+'</div>'+barras+'</div>';
+  }).join('');
+}
 
-async function resetarTudo() {
-  if (!confirm('Zerar TODOS os dados? Esta ação não pode ser desfeita.')) return;
-  try {
-    await deleteDoc(doc(db, 'palestra_cbco', 'enquete'));
-    await deleteDoc(doc(db, 'palestra_cbco', 'quiz'));
-    corMap = {}; corIdx = 0;
-    await carregar();
+function zeraTudo() {
+  if(!confirm('Zerar TODOS os dados? Esta ação não pode ser desfeita.')) return;
+  db.collection('palestra_cbco').doc('enquete').delete().then(function(){
+    return db.collection('palestra_cbco').doc('quiz').delete();
+  }).then(function(){
+    corMap={}; corIdx=0;
+    carregar();
     alert('Dados zerados!');
-  } catch(e) { alert('Erro: '+e.message); }
-};
+  }).catch(function(e){ alert('Erro: '+e.message); });
+}
 
-carregar();
-setInterval(carregar, 15000);
+function aba(id) {
+  ['nuvem','perfil'].forEach(function(n){
+    document.getElementById('tab-'+n).classList.toggle('on',n===id);
+    document.getElementById('panel-'+n).classList.toggle('on',n===id);
+  });
+}
+
+function subaba(id) {
+  ['pos','neg'].forEach(function(n){
+    document.getElementById('sub-'+n).classList.toggle('on',n===id);
+    document.getElementById('sp-'+n).classList.toggle('on',n===id);
+  });
+}
+
+window.onload = function() {
+  firebase.initializeApp({
+    apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+    authDomain: "entrevista-inicial.firebaseapp.com",
+    projectId: "entrevista-inicial",
+    storageBucket: "entrevista-inicial.firebasestorage.app",
+    messagingSenderId: "437375609844",
+    appId: "1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+  });
+  db = firebase.firestore();
+
+  document.getElementById('btn-att').onclick = carregar;
+  document.getElementById('btn-zer').onclick = zeraTudo;
+  document.getElementById('tab-nuvem').onclick = function(){ aba('nuvem'); };
+  document.getElementById('tab-perfil').onclick = function(){ aba('perfil'); };
+  document.getElementById('sub-pos').onclick = function(){ subaba('pos'); };
+  document.getElementById('sub-neg').onclick = function(){ subaba('neg'); };
+
+  carregar();
+  setInterval(carregar, 15000);
+};
 </script>
 </body>
 </html>
