@@ -283,8 +283,23 @@ async function mostrarResultado() {
     respostas.forEach((r, pi) => {
       upd[`rp_p${pi}_o${r}`] = increment(1);
     });
+    console.log('Salvando quiz:', JSON.stringify(Object.keys(upd)));
     await setDoc(doc(db, 'palestra_cbco', 'quiz'), upd, { merge: true });
-  } catch(e) { console.error('Quiz erro:', e); }
+    console.log('Quiz salvo com sucesso!');
+    // Mostrar confirmação visual
+    const conf = document.createElement('div');
+    conf.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2ca870;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999';
+    conf.textContent = '✓ Dados salvos!';
+    document.body.appendChild(conf);
+    setTimeout(() => conf.remove(), 3000);
+  } catch(e) {
+    console.error('Quiz erro:', e);
+    const err = document.createElement('div');
+    err.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#c0392b;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999';
+    err.textContent = '✗ Erro: ' + e.message;
+    document.body.appendChild(err);
+    setTimeout(() => err.remove(), 5000);
+  }
 
   document.getElementById('tela-quiz').style.display = 'none';
   document.getElementById('tela-resultado').style.display = 'block';
