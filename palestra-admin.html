@@ -228,14 +228,14 @@ async function carregar() {
       document.getElementById('p2p').textContent = pct(p2);
       document.getElementById('p3p').textContent = pct(p3);
 
-      // Respostas por pergunta
+      // Respostas por pergunta — formato rp_p0_o1
       const resDiv = document.getElementById('perguntas-resultado');
-      if (d.respostas_por_pergunta) {
+      const temRespostas = Object.keys(d).some(k => k.startsWith('rp_p'));
+      if (temRespostas) {
         resDiv.innerHTML = perguntas.map((perg, pi) => {
-          const resps = d.respostas_por_pergunta[`p${pi}`] || {};
-          const totalResps = Object.values(resps).reduce((a,b)=>a+b,0)||1;
+          const totalResps = perg.ops.reduce((s,_,oi) => s+(d[`rp_p${pi}_o${oi}`]||0), 0)||1;
           const barras = perg.ops.map((op, oi) => {
-            const v = resps[`o${oi}`]||0;
+            const v = d[`rp_p${pi}_o${oi}`]||0;
             const p = Math.round((v/totalResps)*100);
             return `<div class="bar-row">
               <div class="bar-label" style="font-size:12px;font-weight:400">${op}</div>
@@ -249,7 +249,7 @@ async function carregar() {
           </div>`;
         }).join('');
       } else if (tot > 0) {
-        resDiv.innerHTML = '<div style="color:#9aabb5;font-size:13px;text-align:center;padding:1rem">Dados detalhados disponíveis nas próximas respostas.</div>';
+        resDiv.innerHTML = '<div style="color:#9aabb5;font-size:13px;text-align:center;padding:1rem">Zere os dados e responda novamente para ver o detalhamento.</div>';
       }
     } else {
       document.getElementById('tot-quiz').textContent = '0';
