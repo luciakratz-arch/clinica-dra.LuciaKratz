@@ -152,10 +152,10 @@ h1 { font-size: 20px; font-weight: 800; color: #1a2a4a; line-height: 1.3; }
           <div style="font-size:24px">🧠</div>
           <div><div class="prod-badge">Atendimento clínico</div><div class="prod-nm">Psicoterapia — TCC</div><div class="prod-ds">Agende via WhatsApp.</div></div>
         </a>
-        <a class="prod-card" href="https://pay.hotmart.com/L106620879F?checkoutMode=10" target="_blank"><div class="prod-icon">🏆</div><div class="prod-nm">Líd@r 5.0</div><div class="prod-ds">Revolucionando a liderança</div></a>
-        <a class="prod-card" href="https://pay.hotmart.com/M106544381G?off=4gis38df&checkoutMode=10" target="_blank"><div class="prod-icon">🧭</div><div class="prod-nm">9&Self</div><div class="prod-ds">Mapeamento pelo Eneagrama</div></a>
-        <a class="prod-card" href="https://pay.hotmart.com/R97548434J" target="_blank"><div class="prod-icon">💛</div><div class="prod-nm">Eneagrama no Amor</div><div class="prod-ds">Curso — relacionamentos</div></a>
-        <a class="prod-card" href="https://pay.hotmart.com/T106542807T?off=8eboomqf&checkoutMode=10" target="_blank"><div class="prod-icon">📖</div><div class="prod-nm">Meu Companheiro é Psicopata?</div><div class="prod-ds">E-book — padrões relacionais</div></a>
+        <a class="prod-card" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-lider5.html" target="_blank"><div class="prod-icon">🏆</div><div class="prod-nm">Líd@r 5.0</div><div class="prod-ds">Revolucionando a liderança</div></a>
+        <a class="prod-card" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-9self.html" target="_blank"><div class="prod-icon">🧭</div><div class="prod-nm">9&Self</div><div class="prod-ds">Mapeamento pelo Eneagrama</div></a>
+        <a class="prod-card" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-curso-eneagrama.html" target="_blank"><div class="prod-icon">💛</div><div class="prod-nm">Eneagrama no Amor</div><div class="prod-ds">Curso — relacionamentos</div></a>
+        <a class="prod-card" href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/venda-psicopata.html" target="_blank"><div class="prod-icon">📖</div><div class="prod-nm">Meu Companheiro é Psicopata?</div><div class="prod-ds">E-book — padrões relacionais</div></a>
       </div>
       <div class="sec-tit">Siga & conecte-se</div>
       <div class="redes">
@@ -169,7 +169,7 @@ h1 { font-size: 20px; font-weight: 800; color: #1a2a4a; line-height: 1.3; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
@@ -235,10 +235,7 @@ window.enviarEnquete = async function() {
       updates[key] = increment(1);
     });
     updates['__total'] = increment(1);
-    const ref = doc(db, 'palestra_cbco', 'enquete');
-    const snap = await getDoc(ref);
-    if (snap.exists()) { await updateDoc(ref, updates); }
-    else { const init = {}; Object.keys(updates).forEach(k => init[k] = 1); await setDoc(ref, init); }
+    await setDoc(doc(db, 'palestra_cbco', 'enquete'), updates, { merge: true });
   } catch(e) { console.error('Enquete erro:', e); }
   document.getElementById('tela-enquete').style.display = 'none';
   document.getElementById('tela-quiz').style.display = 'block';
@@ -278,11 +275,11 @@ async function mostrarResultado() {
   const pct = Math.round((total/20)*100);
   let perfil = pct>=80?'consciente':pct>=55?'desenvolvimento':'honesto';
   try {
-    const ref = doc(db, 'palestra_cbco', 'quiz');
-    const snap = await getDoc(ref);
     const upd = { total: increment(1), soma: increment(pct), [`perfis_${perfil}`]: increment(1) };
-    if (snap.exists()) { await updateDoc(ref, upd); }
-    else { await setDoc(ref, { total:1, soma:pct, [`perfis_${perfil}`]:1 }); }
+    respostas.forEach((r, pi) => {
+      upd[`respostas_por_pergunta.p${pi}.o${r}`] = increment(1);
+    });
+    await setDoc(doc(db, 'palestra_cbco', 'quiz'), upd, { merge: true });
   } catch(e) { console.error('Quiz erro:', e); }
 
   document.getElementById('tela-quiz').style.display = 'none';
