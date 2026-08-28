@@ -69,7 +69,15 @@ function DashboardAdmin({
         const ts = d.createdAt?.toDate?.();
         return ts && ts >= limite7;
       }).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 10);
-      setRastreamentos(todos);
+      // Agrupar por paciente: mantém o mais recente de cada paciente+tipo
+      const porPaciente = {};
+      todos.forEach(r => {
+        const chave = (r.pacienteId || r.pacienteNome || "?") + "||" + r._tipo;
+        if (!porPaciente[chave] || (r.createdAt?.seconds || 0) > (porPaciente[chave].createdAt?.seconds || 0)) {
+          porPaciente[chave] = r;
+        }
+      });
+      setRastreamentos(Object.values(porPaciente).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 10));
     });
     return () => {
       u1();
@@ -111,6 +119,24 @@ function DashboardAdmin({
     }, {
       col: "clinica_reflexoes",
       label: "💭 Reflexão",
+      campoData: "data",
+      campoNome: "pacienteNome",
+      campoPacId: "pacienteId"
+    }, {
+      col: "clinica_gestao_ansiedade",
+      label: "🗂️ Macroatividades",
+      campoData: "data",
+      campoNome: "pacienteNome",
+      campoPacId: "pacienteId"
+    }, {
+      col: "clinica_arvore_decisao",
+      label: "🌳 Árvore Decisão",
+      campoData: "data",
+      campoNome: "pacienteNome",
+      campoPacId: "pacienteId"
+    }, {
+      col: "clinica_atividades",
+      label: "✅ Atividades",
       campoData: "data",
       campoNome: "pacienteNome",
       campoPacId: "pacienteId"
@@ -521,17 +547,52 @@ function DashboardAdmin({
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, tempo))), /*#__PURE__*/React.createElement("span", {
+    }, tempo))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
       style: {
         background: "var(--purple-soft)",
         color: "var(--purple)",
         padding: "4px 12px",
         borderRadius: 20,
         fontSize: 12,
-        fontWeight: 600,
-        flexShrink: 0
+        fontWeight: 600
       }
-    }, "Novo ✓"));
+    }, "Novo ✓"), r.pacienteId && /*#__PURE__*/React.createElement("button", {
+      onClick: () => {
+        window._pacienteInicialId = r.pacienteId;
+        window._pacienteAbaInicial = "questionarios";
+        // Emitir evento para o App navegar até Pacientes
+        window.dispatchEvent(new CustomEvent("irParaPaciente", {
+          detail: {
+            pacienteId: r.pacienteId,
+            aba: "questionarios"
+          }
+        }));
+      },
+      style: {
+        background: "var(--purple)",
+        color: "white",
+        border: "none",
+        borderRadius: 8,
+        padding: "6px 14px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer",
+        fontFamily: "var(--font-body)",
+        display: "flex",
+        alignItems: "center",
+        gap: 5
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "external-link",
+      size: 12
+    }), " Ver")));
   }))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
@@ -935,9 +996,16 @@ function Pacientes({
   useEffect(() => {
     if (window._pacienteInicialId) {
       setPerfilAberto(window._pacienteInicialId);
-      setAbaInicialPerfil("evolucao");
+      setAbaInicialPerfil(window._pacienteAbaInicial || "evolucao");
       window._pacienteInicialId = null;
+      window._pacienteAbaInicial = null;
     }
+    function handleIrParaPaciente(e) {
+      setPerfilAberto(e.detail.pacienteId);
+      setAbaInicialPerfil(e.detail.aba || "questionarios");
+    }
+    window.addEventListener("irParaPaciente", handleIrParaPaciente);
+    return () => window.removeEventListener("irParaPaciente", handleIrParaPaciente);
   }, []);
   const [importLog, setImportLog] = useState([]);
   const [importando, setImportando] = useState(false);
