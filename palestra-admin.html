@@ -156,11 +156,14 @@ function tam(v, max) {
 }
 
 const perguntas = [
-  { txt: "Quando sua equipe trouxe um problema, qual foi sua primeira reação?", ops: ["Ouvi com atenção antes de responder","Já fui direto para a solução","Fiquei sobrecarregado e adiei","Deleguei sem acompanhar"] },
-  { txt: "Como você cuidou do seu bem-estar psicossocial nos últimos 7 dias?", ops: ["Mantive pausas, limites e descanso consciente","Tentei, mas o trabalho sempre venceu","Não pensei nisso — foco total na equipe","Tenho isso em radar, ainda não é rotina"] },
-  { txt: "Você comunicou expectativas claras à sua equipe esta semana?", ops: ["Sim, com contexto e espaço para perguntas","Passei as informações, mas rapidamente","Assumi que todos já sabiam o que fazer","Não houve demanda clara esta semana"] },
-  { txt: "Quando surgiu um conflito ou tensão, como você agiu?", ops: ["Mediei com escuta e imparcialidade","Resolvi rapidamente, talvez sem ouvir todos","Preferi não intervir e esperar passar","Não houve conflito perceptível esta semana"] },
-  { txt: "Como avalia seu nível de presença nas conversas com sua equipe?", ops: ["Estive presente de forma genuína e intencional","Presente fisicamente, mas a mente em outro lugar","Meetings mecânicos — muito a fazer, pouco a ouvir","Consegui equilibrar, com momentos de qualidade real"] }
+  { tema:"Escuta Ativa", txt: "Quando um colaborador traz um problema ou ideia, qual é sua reação mais frequente?", ops: ["Ouço com presença real — sem julgamento e sem interromper","Ouço, mas já vou pensando na solução enquanto fala","Interrompo ou redireciono rapidamente","Escuto, mas depois não dou retorno"] },
+  { tema:"Silenciamento", txt: "Com que frequência pessoas da sua equipe deixam de falar o que pensam na sua presença?", ops: ["Raramente — as pessoas se sentem seguras para se expressar","Às vezes — percebo que alguns se retraem","Frequentemente — o clima não favorece abertura","Nunca percebi isso acontecer"] },
+  { tema:"Reconhecimento Genuíno", txt: "Com que frequência você reconhece especificamente o que sua equipe fez bem?", ops: ["Frequentemente — de forma específica e no momento certo","Às vezes, mas de forma genérica ('bom trabalho')","Raramente — entendo que o bom trabalho é obrigação","Quase nunca — não tenho esse hábito"] },
+  { tema:"Reconhecimento Ausente", txt: "Na última semana, o trabalho bem feito da sua equipe foi visto e nomeado por você?", ops: ["Sim — identifiquei e reconheci de forma direta","Parcialmente — percebi, mas não verbalizei","Não — a semana foi intensa e não houve espaço","Não acho necessário reconhecer o que já é esperado"] },
+  { tema:"Clareza de Papéis", txt: "Sua equipe sabe exatamente o que se espera de cada pessoa no trabalho?", ops: ["Sim — papéis e expectativas são claros e revisados","Parcialmente — há ambiguidades que geram dúvidas","Nem sempre — as funções mudam sem comunicação clara","Prefiro deixar flexível para cada um se organizar"] },
+  { tema:"Microgestão", txt: "Como você acompanha as entregas da sua equipe?", ops: ["Defino o que precisa ser feito e confio no processo","Acompanho de perto, mas dou autonomia","Verifico com frequência — fico mais tranquilo assim","Prefiro fazer eu mesmo quando é algo importante"] },
+  { tema:"Comunicação Agressiva", txt: "Como você reage quando algo na equipe não sai como esperado?", ops: ["Converso com calma, buscando entender o que aconteceu","Corrijo diretamente — sem rodeios mas com respeito","Às vezes elevo o tom ou pressiono publicamente","Guardo a insatisfação e cobro depois de forma acumulada"] },
+  { tema:"Abertura ao Erro", txt: "O que acontece na sua equipe quando alguém comete um erro?", ops: ["Tratamos como aprendizado — analisamos e seguimos","Corrigimos, mas o clima fica pesado por um tempo","O erro costuma gerar punição ou exposição","Evitamos falar abertamente para não gerar mais tensão"] }
 ];
 
 window.trocarAba = function(aba) {
