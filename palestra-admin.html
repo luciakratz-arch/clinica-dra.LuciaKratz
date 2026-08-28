@@ -7,8 +7,9 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min-height: 100vh; }
-#app { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
-.topbar { background: #1a2a4a; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
+#app { max-width: 900px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+.topbar { background: #1a2a4a; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
 .logo { font-size: 11px; color: #8ab0c8; letter-spacing: 0.08em; text-transform: uppercase; }
 .topbar h2 { font-size: 18px; font-weight: 800; color: white; }
 .btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -18,29 +19,50 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min
 .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ca870; display: inline-block; animation: pulse 1.5s infinite; margin-right: 4px; }
 .live-lbl { font-size: 11px; color: #8ab0c8; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
 .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
 .stat { background: white; border-radius: 12px; border: 1px solid #e4ecf5; padding: 1rem 1.25rem; text-align: center; }
 .stat-num { font-size: 36px; font-weight: 900; color: #1a2a4a; }
 .stat-lbl { font-size: 11px; color: #9aabb5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* SLIDER TABS */
+.tabs-wrap { background: white; border-radius: 14px; border: 1px solid #e4ecf5; padding: 6px; display: flex; gap: 4px; margin-bottom: 1rem; }
+.tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.25s; background: none; color: #7a8a9e; }
+.tab-btn.ativo { background: #1a2a4a; color: white; }
+
+.tab-panel { display: none; }
+.tab-panel.ativo { display: block; }
+
 .card { background: white; border-radius: 14px; border: 1px solid #e4ecf5; padding: 1.5rem; margin-bottom: 1rem; }
 .card-title { font-size: 13px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; }
-.cloud-box { background: #f4fbf8; border: 1.5px solid #c0e8d8; border-radius: 12px; min-height: 180px; padding: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1.25rem; }
+
+/* NUVEM */
+.cloud-box { background: #f4fbf8; border: 1.5px solid #c0e8d8; border-radius: 12px; min-height: 200px; padding: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1.25rem; }
 .cloud-empty { color: #a0b8b0; font-size: 13px; font-style: italic; }
 .word-tag { border-radius: 99px; font-weight: 700; cursor: default; animation: popIn 0.4s ease; }
 @keyframes popIn { from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1} }
+
 .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .bar-label { font-size: 13px; color: #2a3a55; font-weight: 600; min-width: 180px; }
 .bar-wrap { flex: 1; background: #e8edf5; border-radius: 99px; height: 12px; }
 .bar-fill { height: 12px; border-radius: 99px; transition: width 0.6s ease; }
-.bar-val { font-size: 12px; color: #5a6a82; font-weight: 700; min-width: 80px; text-align: right; }
-.perfis { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.bar-val { font-size: 12px; color: #5a6a82; font-weight: 700; min-width: 90px; text-align: right; }
+
+/* PERFIS */
+.perfis { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.25rem; }
 .perfil { border: 1.5px solid #e4ecf5; border-radius: 12px; padding: 1.25rem; text-align: center; }
 .perfil-emoji { font-size: 32px; margin-bottom: 8px; }
 .perfil-num { font-size: 36px; font-weight: 900; color: #1a2a4a; }
 .perfil-pct { font-size: 13px; color: #9aabb5; margin-top: 2px; }
 .perfil-lbl { font-size: 11px; font-weight: 700; color: #5a6a82; margin-top: 6px; }
+
+/* RESPOSTAS POR PERGUNTA */
+.pergunta-block { border: 1px solid #e4ecf5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.perg-titulo { font-size: 13px; font-weight: 700; color: #1a2a4a; margin-bottom: 1rem; }
+.perg-num { display: inline-block; background: #2ca870; color: white; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-right: 6px; }
+
 .updated { font-size: 11px; color: #9aabb5; text-align: center; margin-top: 1rem; }
-@media print { .btns { display:none!important; } body { background:white; } }
+@media print { .btns,.tabs-wrap { display:none!important; } .tab-panel { display:block!important; } body { background:white; } }
 </style>
 </head>
 <body>
@@ -65,20 +87,40 @@ body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min
     <div class="stat"><div class="stat-num" id="media">—</div><div class="stat-lbl">Média consciência</div></div>
   </div>
 
-  <div class="card">
-    <div class="card-title">☁️ Nuvem de palavras — Enquete ao vivo</div>
-    <div class="cloud-box" id="cloud"><div class="cloud-empty" id="cloud-empty">Aguardando votos...</div></div>
-    <div id="barras"></div>
+  <!-- TABS -->
+  <div class="tabs-wrap">
+    <button class="tab-btn ativo" onclick="trocarAba('enquete')">☁️ Nuvem de Palavras</button>
+    <button class="tab-btn" onclick="trocarAba('quiz')">📊 Perfis de Liderança</button>
   </div>
 
-  <div class="card">
-    <div class="card-title">📊 Perfis de Liderança — Autoavaliação</div>
-    <div class="perfis">
-      <div class="perfil"><div class="perfil-emoji">🌟</div><div class="perfil-num" id="p1">0</div><div class="perfil-pct" id="p1p">—</div><div class="perfil-lbl">Liderança Consciente<br><small style="color:#9aabb5;font-weight:400">≥80%</small></div></div>
-      <div class="perfil"><div class="perfil-emoji">🌱</div><div class="perfil-num" id="p2">0</div><div class="perfil-pct" id="p2p">—</div><div class="perfil-lbl">Em Desenvolvimento<br><small style="color:#9aabb5;font-weight:400">55–79%</small></div></div>
-      <div class="perfil"><div class="perfil-emoji">🔍</div><div class="perfil-num" id="p3">0</div><div class="perfil-pct" id="p3p">—</div><div class="perfil-lbl">Olhar Honesto<br><small style="color:#9aabb5;font-weight:400">abaixo de 55%</small></div></div>
+  <!-- ABA 1: ENQUETE -->
+  <div class="tab-panel ativo" id="aba-enquete">
+    <div class="card">
+      <div class="card-title">☁️ Nuvem de palavras — Enquete ao vivo</div>
+      <div class="cloud-box" id="cloud"><div class="cloud-empty" id="cloud-empty">Aguardando votos...</div></div>
+      <div id="barras"></div>
     </div>
   </div>
+
+  <!-- ABA 2: QUIZ -->
+  <div class="tab-panel" id="aba-quiz">
+    <div class="card">
+      <div class="card-title">📊 Perfis de Liderança</div>
+      <div class="perfis">
+        <div class="perfil"><div class="perfil-emoji">🌟</div><div class="perfil-num" id="p1">0</div><div class="perfil-pct" id="p1p">—</div><div class="perfil-lbl">Liderança Consciente<br><small style="color:#9aabb5;font-weight:400">≥80%</small></div></div>
+        <div class="perfil"><div class="perfil-emoji">🌱</div><div class="perfil-num" id="p2">0</div><div class="perfil-pct" id="p2p">—</div><div class="perfil-lbl">Em Desenvolvimento<br><small style="color:#9aabb5;font-weight:400">55–79%</small></div></div>
+        <div class="perfil"><div class="perfil-emoji">🔍</div><div class="perfil-num" id="p3">0</div><div class="perfil-pct" id="p3p">—</div><div class="perfil-lbl">Olhar Honesto<br><small style="color:#9aabb5;font-weight:400">abaixo de 55%</small></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Respostas por Pergunta</div>
+      <div id="perguntas-resultado">
+        <div style="color:#9aabb5;font-size:13px;text-align:center;padding:1rem">Aguardando respostas do quiz...</div>
+      </div>
+    </div>
+  </div>
+
   <div class="updated" id="updated"></div>
 </div>
 
@@ -107,11 +149,27 @@ let corMap = {}, corIdx = 0;
 function getCor(p) { if (!corMap[p]) { corMap[p] = paleta[corIdx%paleta.length]; corIdx++; } return corMap[p]; }
 function tam(v, max) {
   const r = v/max;
-  if (r>0.7) return {size:28,pad:'10px 24px'};
-  if (r>0.4) return {size:21,pad:'8px 18px'};
-  if (r>0.2) return {size:16,pad:'6px 14px'};
+  if (r>0.7) return {size:30,pad:'11px 26px'};
+  if (r>0.4) return {size:22,pad:'8px 18px'};
+  if (r>0.2) return {size:17,pad:'7px 15px'};
   return {size:13,pad:'5px 12px'};
 }
+
+const perguntas = [
+  { txt: "Quando sua equipe trouxe um problema, qual foi sua primeira reação?", ops: ["Ouvi com atenção antes de responder","Já fui direto para a solução","Fiquei sobrecarregado e adiei","Deleguei sem acompanhar"] },
+  { txt: "Como você cuidou do seu bem-estar psicossocial nos últimos 7 dias?", ops: ["Mantive pausas, limites e descanso consciente","Tentei, mas o trabalho sempre venceu","Não pensei nisso — foco total na equipe","Tenho isso em radar, ainda não é rotina"] },
+  { txt: "Você comunicou expectativas claras à sua equipe esta semana?", ops: ["Sim, com contexto e espaço para perguntas","Passei as informações, mas rapidamente","Assumi que todos já sabiam o que fazer","Não houve demanda clara esta semana"] },
+  { txt: "Quando surgiu um conflito ou tensão, como você agiu?", ops: ["Mediei com escuta e imparcialidade","Resolvi rapidamente, talvez sem ouvir todos","Preferi não intervir e esperar passar","Não houve conflito perceptível esta semana"] },
+  { txt: "Como avalia seu nível de presença nas conversas com sua equipe?", ops: ["Estive presente de forma genuína e intencional","Presente fisicamente, mas a mente em outro lugar","Meetings mecânicos — muito a fazer, pouco a ouvir","Consegui equilibrar, com momentos de qualidade real"] }
+];
+
+window.trocarAba = function(aba) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('ativo', (i===0&&aba==='enquete')||(i===1&&aba==='quiz'));
+  });
+  document.getElementById('aba-enquete').classList.toggle('ativo', aba==='enquete');
+  document.getElementById('aba-quiz').classList.toggle('ativo', aba==='quiz');
+};
 
 async function carregar() {
   document.getElementById('lbl-att').textContent = 'Atualizando...';
@@ -122,9 +180,9 @@ async function carregar() {
       const dados = enqSnap.data();
       const totalPart = dados.__total || 0;
       document.getElementById('tot-part').textContent = totalPart;
-      delete dados.__total;
+      const dadosSem = {...dados}; delete dadosSem.__total;
 
-      const sorted = Object.entries(dados).sort((a,b)=>b[1]-a[1]);
+      const sorted = Object.entries(dadosSem).sort((a,b)=>b[1]-a[1]);
       const maxVal = sorted[0]?.[1]||1;
       const totalVotos = sorted.reduce((s,[,v])=>s+v,0);
 
@@ -141,7 +199,7 @@ async function carregar() {
         cloud.appendChild(tag);
       });
 
-      document.getElementById('barras').innerHTML = sorted.slice(0,12).map(([p,v]) => {
+      document.getElementById('barras').innerHTML = sorted.map(([p,v]) => {
         const pct = totalVotos>0?Math.round((v/totalVotos)*100):0;
         const {text} = getCor(p);
         return `<div class="bar-row">
@@ -169,6 +227,30 @@ async function carregar() {
       document.getElementById('p1p').textContent = pct(p1);
       document.getElementById('p2p').textContent = pct(p2);
       document.getElementById('p3p').textContent = pct(p3);
+
+      // Respostas por pergunta
+      const resDiv = document.getElementById('perguntas-resultado');
+      if (d.respostas_por_pergunta) {
+        resDiv.innerHTML = perguntas.map((perg, pi) => {
+          const resps = d.respostas_por_pergunta[`p${pi}`] || {};
+          const totalResps = Object.values(resps).reduce((a,b)=>a+b,0)||1;
+          const barras = perg.ops.map((op, oi) => {
+            const v = resps[`o${oi}`]||0;
+            const p = Math.round((v/totalResps)*100);
+            return `<div class="bar-row">
+              <div class="bar-label" style="font-size:12px;font-weight:400">${op}</div>
+              <div class="bar-wrap"><div class="bar-fill" style="width:${p}%;background:#1a5f8f"></div></div>
+              <div class="bar-val">${v} · ${p}%</div>
+            </div>`;
+          }).join('');
+          return `<div class="pergunta-block">
+            <div class="perg-titulo"><span class="perg-num">P${pi+1}</span>${perg.txt}</div>
+            ${barras}
+          </div>`;
+        }).join('');
+      } else if (tot > 0) {
+        resDiv.innerHTML = '<div style="color:#9aabb5;font-size:13px;text-align:center;padding:1rem">Dados detalhados disponíveis nas próximas respostas.</div>';
+      }
     } else {
       document.getElementById('tot-quiz').textContent = '0';
       document.getElementById('media').textContent = '—';
@@ -179,7 +261,7 @@ async function carregar() {
     document.getElementById('updated').textContent = `Última atualização: ${agora}`;
   } catch(e) {
     console.error(e);
-    document.getElementById('lbl-att').textContent = 'Erro ao carregar';
+    document.getElementById('lbl-att').textContent = 'Erro: '+e.message;
   }
 }
 
@@ -192,8 +274,8 @@ window.resetarTudo = async function() {
     await deleteDoc(doc(db, 'palestra_cbco', 'quiz'));
     corMap = {}; corIdx = 0;
     await carregar();
-    alert('Dados zerados! Pronto para nova turma.');
-  } catch(e) { alert('Erro ao zerar: '+e.message); }
+    alert('Dados zerados!');
+  } catch(e) { alert('Erro: '+e.message); }
 };
 
 carregar();
