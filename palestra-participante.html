@@ -185,11 +185,86 @@ const db = getFirestore(app);
 
 const sugestoes = ["Sobrecarga","Falta de reconhecimento","Comunicação ruim","Microgestão","Conflitos","Ansiedade","Burnout","Falta de clareza","Silenciamento","Pressão excessiva","Falta de autonomia","Desmotivação"];
 const perguntas = [
-  { txt: "Na última semana, quando sua equipe trouxe um problema, qual foi sua primeira reação?", ops: [{t:"Ouvi com atenção antes de responder",p:4},{t:"Já fui direto para a solução",p:2},{t:"Fiquei sobrecarregado e adiei",p:1},{t:"Deleguei sem acompanhar",p:2}] },
-  { txt: "Como você cuidou do seu próprio bem-estar psicossocial nos últimos 7 dias?", ops: [{t:"Mantive pausas, limites e descanso consciente",p:4},{t:"Tentei, mas o trabalho sempre venceu",p:2},{t:"Não pensei nisso — foco total na equipe",p:1},{t:"Tenho isso em radar, ainda não é rotina",p:3}] },
-  { txt: "Você comunicou expectativas claras à sua equipe esta semana?", ops: [{t:"Sim, com contexto e espaço para perguntas",p:4},{t:"Passei as informações, mas rapidamente",p:3},{t:"Assumi que todos já sabiam o que fazer",p:1},{t:"Não houve demanda clara esta semana",p:3}] },
-  { txt: "Quando surgiu um conflito ou tensão na equipe, como você agiu?", ops: [{t:"Mediei com escuta e imparcialidade",p:4},{t:"Resolvi rapidamente, talvez sem ouvir todos",p:2},{t:"Preferi não intervir e esperar passar",p:1},{t:"Não houve conflito perceptível esta semana",p:3}] },
-  { txt: "Como você avalia seu nível de presença nas conversas com sua equipe esta semana?", ops: [{t:"Estive presente de forma genuína e intencional",p:4},{t:"Presente fisicamente, mas a mente em outro lugar",p:2},{t:"Meetings mecânicos — muito a fazer, pouco a ouvir",p:1},{t:"Consegui equilibrar, com momentos de qualidade real",p:3}] }
+  {
+    tema: "Escuta Ativa",
+    txt: "Quando um colaborador traz um problema ou ideia, qual é sua reação mais frequente?",
+    ops: [
+      {t:"Ouço com presença real — sem julgamento e sem interromper",p:4},
+      {t:"Ouço, mas já vou pensando na solução enquanto fala",p:2},
+      {t:"Interrompo ou redireciono rapidamente",p:1},
+      {t:"Escuto, mas depois não dou retorno",p:1}
+    ]
+  },
+  {
+    tema: "Silenciamento",
+    txt: "Com que frequência pessoas da sua equipe deixam de falar o que pensam na sua presença?",
+    ops: [
+      {t:"Raramente — as pessoas se sentem seguras para se expressar",p:4},
+      {t:"Às vezes — percebo que alguns se retraem",p:2},
+      {t:"Frequentemente — o clima não favorece abertura",p:1},
+      {t:"Nunca percebi isso acontecer",p:2}
+    ]
+  },
+  {
+    tema: "Reconhecimento Genuíno",
+    txt: "Com que frequência você reconhece especificamente o que sua equipe fez bem?",
+    ops: [
+      {t:"Frequentemente — de forma específica e no momento certo",p:4},
+      {t:"Às vezes, mas de forma genérica ('bom trabalho')",p:2},
+      {t:"Raramente — entendo que o bom trabalho é obrigação",p:1},
+      {t:"Quase nunca — não tenho esse hábito",p:1}
+    ]
+  },
+  {
+    tema: "Reconhecimento Ausente",
+    txt: "Na última semana, o trabalho bem feito da sua equipe foi visto e nomeado por você?",
+    ops: [
+      {t:"Sim — identifiquei e reconheci de forma direta",p:4},
+      {t:"Parcialmente — percebi, mas não verbalizei",p:2},
+      {t:"Não — a semana foi intensa e não houve espaço",p:1},
+      {t:"Não acho necessário reconhecer o que já é esperado",p:1}
+    ]
+  },
+  {
+    tema: "Clareza de Papéis",
+    txt: "Sua equipe sabe exatamente o que se espera de cada pessoa no trabalho?",
+    ops: [
+      {t:"Sim — papéis e expectativas são claros e revisados",p:4},
+      {t:"Parcialmente — há ambiguidades que geram dúvidas",p:2},
+      {t:"Nem sempre — as funções mudam sem comunicação clara",p:1},
+      {t:"Prefiro deixar flexível para cada um se organizar",p:1}
+    ]
+  },
+  {
+    tema: "Microgestão",
+    txt: "Como você acompanha as entregas da sua equipe?",
+    ops: [
+      {t:"Defino o que precisa ser feito e confio no processo",p:4},
+      {t:"Acompanho de perto, mas dou autonomia",p:3},
+      {t:"Verifico com frequência — fico mais tranquilo assim",p:1},
+      {t:"Prefiro fazer eu mesmo quando é algo importante",p:1}
+    ]
+  },
+  {
+    tema: "Comunicação Agressiva",
+    txt: "Como você reage quando algo na equipe não sai como esperado?",
+    ops: [
+      {t:"Converso com calma, buscando entender o que aconteceu",p:4},
+      {t:"Corrijo diretamente — sem rodeios mas com respeito",p:3},
+      {t:"Às vezes elevo o tom ou pressiono publicamente",p:1},
+      {t:"Guardo a insatisfação e cobro depois de forma acumulada",p:1}
+    ]
+  },
+  {
+    tema: "Abertura ao Erro",
+    txt: "O que acontece na sua equipe quando alguém comete um erro?",
+    ops: [
+      {t:"Tratamos como aprendizado — analisamos e seguimos",p:4},
+      {t:"Corrigimos, mas o clima fica pesado por um tempo",p:2},
+      {t:"O erro costuma gerar punição ou exposição",p:1},
+      {t:"Evitamos falar abertamente para não gerar mais tensão",p:1}
+    ]
+  }
 ];
 
 let selecionados = new Set();
@@ -247,7 +322,7 @@ function renderQuiz() {
   document.getElementById('q-num').textContent = `Pergunta ${String(qAtual+1).padStart(2,'0')}`;
   document.getElementById('q-txt').textContent = q.txt;
   document.getElementById('prog').style.width = `${((qAtual+1)/5)*100}%`;
-  document.getElementById('prog-txt').textContent = `Pergunta ${qAtual+1} de 5`;
+  document.getElementById('prog-txt').textContent = `Pergunta ${qAtual+1} de 8`;
   document.getElementById('quiz-err').textContent = '';
   const sel = respostas[qAtual] !== undefined ? respostas[qAtual] : -1;
   document.getElementById('opcoes').innerHTML = q.ops.map((o,i) =>
@@ -265,14 +340,14 @@ window.selOp = function(i) {
 
 window.next = function() {
   if (respostas[qAtual] === undefined) { document.getElementById('quiz-err').textContent = 'Selecione uma opção para continuar.'; return; }
-  if (qAtual < 4) { qAtual++; renderQuiz(); } else mostrarResultado();
+  if (qAtual < 7) { qAtual++; renderQuiz(); } else mostrarResultado();
 };
 
 window.prev = function() { if (qAtual > 0) { qAtual--; renderQuiz(); } };
 
 async function mostrarResultado() {
   const total = pontos.reduce((a,b)=>a+b,0);
-  const pct = Math.round((total/20)*100);
+  const pct = Math.round((total/32)*100);
   let perfil = pct>=80?'consciente':pct>=55?'desenvolvimento':'honesto';
   try {
     const upd = {
