@@ -275,18 +275,15 @@ async function mostrarResultado() {
   const pct = Math.round((total/20)*100);
   let perfil = pct>=80?'consciente':pct>=55?'desenvolvimento':'honesto';
   try {
-    // Salva perfil, total e soma
-    const upd = { total: increment(1), soma: increment(pct), [`perfis_${perfil}`]: increment(1) };
-    await setDoc(doc(db, 'palestra_cbco', 'quiz'), upd, { merge: true });
-    // Salva respostas por pergunta em subcoleção separada
-    const resDoc = {};
+    const upd = {
+      total: increment(1),
+      soma: increment(pct),
+      [`perfis_${perfil}`]: increment(1)
+    };
     respostas.forEach((r, pi) => {
-      resDoc[`o${r}`] = increment(1);
-      // usa chave plana: p0_o1, p1_o2 etc
+      upd[`rp_p${pi}_o${r}`] = increment(1);
     });
-    const flatUpd = {};
-    respostas.forEach((r, pi) => { flatUpd[`rp_p${pi}_o${r}`] = increment(1); });
-    await setDoc(doc(db, 'palestra_cbco', 'quiz'), flatUpd, { merge: true });
+    await setDoc(doc(db, 'palestra_cbco', 'quiz'), upd, { merge: true });
   } catch(e) { console.error('Quiz erro:', e); }
 
   document.getElementById('tela-quiz').style.display = 'none';
