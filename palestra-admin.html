@@ -7,195 +7,194 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f8fc; min-height: 100vh; }
-#app { max-width: 800px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
-
+#app { max-width: 860px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
 .topbar { background: #1a2a4a; border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px; }
-.topbar-left .logo { font-size: 11px; color: #8ab0c8; letter-spacing: 0.08em; text-transform: uppercase; }
-.topbar-left h2 { font-size: 18px; font-weight: 800; color: white; }
-.topbar-right { display: flex; gap: 8px; align-items: center; }
-.btn-refresh { background: #2ca870; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.btn-reset { background: none; border: 1.5px solid #c0392b; color: #e74c3c; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
-.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ca870; display: inline-block; animation: pulse 1.5s infinite; }
-@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.logo { font-size: 11px; color: #8ab0c8; letter-spacing: 0.08em; text-transform: uppercase; }
+.topbar h2 { font-size: 18px; font-weight: 800; color: white; }
+.btns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn-green { background: #2ca870; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-blue { background: #1a5f8f; color: white; border: none; border-radius: 8px; padding: 9px 16px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-red { background: none; border: 1.5px solid #e74c3c; color: #e74c3c; border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ca870; display: inline-block; animation: pulse 1.5s infinite; margin-right: 4px; }
 .live-lbl { font-size: 11px; color: #8ab0c8; }
-
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
 .stat { background: white; border-radius: 12px; border: 1px solid #e4ecf5; padding: 1rem 1.25rem; text-align: center; }
-.stat-num { font-size: 32px; font-weight: 900; color: #1a2a4a; }
+.stat-num { font-size: 36px; font-weight: 900; color: #1a2a4a; }
 .stat-lbl { font-size: 11px; color: #9aabb5; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-
 .card { background: white; border-radius: 14px; border: 1px solid #e4ecf5; padding: 1.5rem; margin-bottom: 1rem; }
-.card-title { font-size: 13px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
-
-/* NUVEM */
-.cloud-box { background: #f4fbf8; border: 1.5px solid #c0e8d8; border-radius: 12px; min-height: 160px; padding: 1.25rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-bottom: 1rem; }
+.card-title { font-size: 13px; font-weight: 700; color: #1a2a4a; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.25rem; }
+.cloud-box { background: #f4fbf8; border: 1.5px solid #c0e8d8; border-radius: 12px; min-height: 180px; padding: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin-bottom: 1.25rem; }
 .cloud-empty { color: #a0b8b0; font-size: 13px; font-style: italic; }
-.word-tag { border-radius: 99px; font-weight: 700; padding: 6px 16px; cursor: default; }
-
-/* BARRAS */
-.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.bar-label { font-size: 12px; color: #2a3a55; font-weight: 600; min-width: 160px; flex-shrink: 0; }
-.bar-wrap { flex: 1; background: #e8edf5; border-radius: 99px; height: 10px; }
-.bar-fill { height: 10px; border-radius: 99px; transition: width 0.5s ease; }
-.bar-val { font-size: 12px; color: #5a6a82; font-weight: 600; min-width: 40px; text-align: right; }
-
-/* PERFIS */
-.perfis-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-.perfil-card { border: 1.5px solid #e4ecf5; border-radius: 12px; padding: 1rem; text-align: center; }
-.perfil-emoji { font-size: 28px; margin-bottom: 6px; }
-.perfil-num { font-size: 28px; font-weight: 900; color: #1a2a4a; }
-.perfil-pct { font-size: 12px; color: #9aabb5; }
-.perfil-lbl { font-size: 11px; font-weight: 700; color: #5a6a82; margin-top: 4px; }
-
+.word-tag { border-radius: 99px; font-weight: 700; cursor: default; animation: popIn 0.4s ease; }
+@keyframes popIn { from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1} }
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.bar-label { font-size: 13px; color: #2a3a55; font-weight: 600; min-width: 180px; }
+.bar-wrap { flex: 1; background: #e8edf5; border-radius: 99px; height: 12px; }
+.bar-fill { height: 12px; border-radius: 99px; transition: width 0.6s ease; }
+.bar-val { font-size: 12px; color: #5a6a82; font-weight: 700; min-width: 80px; text-align: right; }
+.perfis { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+.perfil { border: 1.5px solid #e4ecf5; border-radius: 12px; padding: 1.25rem; text-align: center; }
+.perfil-emoji { font-size: 32px; margin-bottom: 8px; }
+.perfil-num { font-size: 36px; font-weight: 900; color: #1a2a4a; }
+.perfil-pct { font-size: 13px; color: #9aabb5; margin-top: 2px; }
+.perfil-lbl { font-size: 11px; font-weight: 700; color: #5a6a82; margin-top: 6px; }
 .updated { font-size: 11px; color: #9aabb5; text-align: center; margin-top: 1rem; }
-.print-btn { background: #1a5f8f; color: white; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 1rem; width: 100%; }
+@media print { .btns { display:none!important; } body { background:white; } }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="topbar-left">
+    <div>
       <div class="logo">Painel Admin · O Olhar que Cuida</div>
-      <h2>Dra. Lucia Kratz — Respostas em Tempo Real</h2>
+      <h2>Dra. Lucia Kratz — Dados em Tempo Real</h2>
     </div>
-    <div class="topbar-right">
+    <div class="btns">
       <span class="live-dot"></span>
-      <span class="live-lbl" id="lbl-att">Atualizando...</span>
-      <button class="btn-refresh" onclick="carregar()">↺ Atualizar</button>
-      <button class="btn-reset" onclick="resetarTudo()">Zerar tudo</button>
+      <span class="live-lbl" id="lbl-att">Carregando...</span>
+      <button class="btn-green" onclick="carregar()">↺ Atualizar</button>
+      <button class="btn-blue" onclick="window.print()">🖨️ PDF</button>
+      <button class="btn-red" onclick="resetarTudo()">⚠️ Zerar</button>
     </div>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat"><div class="stat-num" id="tot-enq">—</div><div class="stat-lbl">Votos enquete</div></div>
-    <div class="stat"><div class="stat-num" id="tot-quiz">—</div><div class="stat-lbl">Quizzes feitos</div></div>
-    <div class="stat"><div class="stat-num" id="media-quiz">—</div><div class="stat-lbl">Média consciência</div></div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="tot-part">—</div><div class="stat-lbl">Participantes enquete</div></div>
+    <div class="stat"><div class="stat-num" id="tot-quiz">—</div><div class="stat-lbl">Quizzes respondidos</div></div>
+    <div class="stat"><div class="stat-num" id="media">—</div><div class="stat-lbl">Média consciência</div></div>
   </div>
 
   <div class="card">
-    <div class="card-title">☁️ Nuvem de palavras — Enquete</div>
-    <div class="cloud-box" id="cloud-box"><div class="cloud-empty" id="cloud-empty">Aguardando votos...</div></div>
-    <div id="barras-enq"></div>
+    <div class="card-title">☁️ Nuvem de palavras — Enquete ao vivo</div>
+    <div class="cloud-box" id="cloud"><div class="cloud-empty" id="cloud-empty">Aguardando votos...</div></div>
+    <div id="barras"></div>
   </div>
 
   <div class="card">
     <div class="card-title">📊 Perfis de Liderança — Autoavaliação</div>
-    <div class="perfis-grid" id="perfis-grid">
-      <div class="perfil-card"><div class="perfil-emoji">🌟</div><div class="perfil-num" id="p1">0</div><div class="perfil-pct" id="p1p">—</div><div class="perfil-lbl">Liderança Consciente</div></div>
-      <div class="perfil-card"><div class="perfil-emoji">🌱</div><div class="perfil-num" id="p2">0</div><div class="perfil-pct" id="p2p">—</div><div class="perfil-lbl">Em Desenvolvimento</div></div>
-      <div class="perfil-card"><div class="perfil-emoji">🔍</div><div class="perfil-num" id="p3">0</div><div class="perfil-pct" id="p3p">—</div><div class="perfil-lbl">Olhar Honesto</div></div>
+    <div class="perfis">
+      <div class="perfil"><div class="perfil-emoji">🌟</div><div class="perfil-num" id="p1">0</div><div class="perfil-pct" id="p1p">—</div><div class="perfil-lbl">Liderança Consciente<br><small style="color:#9aabb5;font-weight:400">≥80%</small></div></div>
+      <div class="perfil"><div class="perfil-emoji">🌱</div><div class="perfil-num" id="p2">0</div><div class="perfil-pct" id="p2p">—</div><div class="perfil-lbl">Em Desenvolvimento<br><small style="color:#9aabb5;font-weight:400">55–79%</small></div></div>
+      <div class="perfil"><div class="perfil-emoji">🔍</div><div class="perfil-num" id="p3">0</div><div class="perfil-pct" id="p3p">—</div><div class="perfil-lbl">Olhar Honesto<br><small style="color:#9aabb5;font-weight:400">abaixo de 55%</small></div></div>
     </div>
   </div>
-
-  <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Exportar para PowerPoint</button>
   <div class="updated" id="updated"></div>
 </div>
 
-<script>
-const STORAGE_KEY = 'palestra_lucia_kratz_v1';
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain: "entrevista-inicial.firebaseapp.com",
+  projectId: "entrevista-inicial",
+  storageBucket: "entrevista-inicial.firebasestorage.app",
+  messagingSenderId: "437375609844",
+  appId: "1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const paleta = [
   {bg:'#daf0ea',text:'#0f5c3f'},{bg:'#dce8f8',text:'#1a3f70'},{bg:'#fdebd0',text:'#7a3e00'},
   {bg:'#e8dcf8',text:'#3e0f70'},{bg:'#fddce0',text:'#7a0f1f'},{bg:'#dcf0f8',text:'#0f4a5c'},
-  {bg:'#f0f8dc',text:'#3c5c0f'}
+  {bg:'#f0f8dc',text:'#3c5c0f'},{bg:'#f8eedd',text:'#6b3a0f'}
 ];
-let corMap = {};
-let corIdx = 0;
-
-function getCor(p) {
-  if (!corMap[p]) { corMap[p] = paleta[corIdx % paleta.length]; corIdx++; }
-  return corMap[p];
-}
-
-function tamPalavra(v, max) {
-  const ratio = v / max;
-  if (ratio > 0.7) return { size: 26, pad: '9px 22px' };
-  if (ratio > 0.4) return { size: 20, pad: '7px 17px' };
-  if (ratio > 0.2) return { size: 16, pad: '6px 14px' };
-  return { size: 13, pad: '5px 12px' };
+let corMap = {}, corIdx = 0;
+function getCor(p) { if (!corMap[p]) { corMap[p] = paleta[corIdx%paleta.length]; corIdx++; } return corMap[p]; }
+function tam(v, max) {
+  const r = v/max;
+  if (r>0.7) return {size:28,pad:'10px 24px'};
+  if (r>0.4) return {size:21,pad:'8px 18px'};
+  if (r>0.2) return {size:16,pad:'6px 14px'};
+  return {size:13,pad:'5px 12px'};
 }
 
 async function carregar() {
   document.getElementById('lbl-att').textContent = 'Atualizando...';
-  await carregarEnquete();
-  await carregarQuiz();
-  const agora = new Date().toLocaleTimeString('pt-BR');
-  document.getElementById('lbl-att').textContent = `Atualizado às ${agora}`;
-  document.getElementById('updated').textContent = `Última atualização: ${agora}`;
-}
-
-async function carregarEnquete() {
   try {
-    const res = await window.storage.get(STORAGE_KEY + '_enquete', true);
-    let dados = {};
-    try { dados = JSON.parse(res.value); } catch(e) { return; }
+    // ENQUETE
+    const enqSnap = await getDoc(doc(db, 'palestra_cbco', 'enquete'));
+    if (enqSnap.exists()) {
+      const dados = enqSnap.data();
+      const totalPart = dados.__total || 0;
+      document.getElementById('tot-part').textContent = totalPart;
+      delete dados.__total;
 
-    const sorted = Object.entries(dados).sort((a,b) => b[1]-a[1]);
-    const totalVotos = sorted.reduce((s,[,v]) => s+v, 0);
-    const maxVal = sorted[0]?.[1] || 1;
+      const sorted = Object.entries(dados).sort((a,b)=>b[1]-a[1]);
+      const maxVal = sorted[0]?.[1]||1;
+      const totalVotos = sorted.reduce((s,[,v])=>s+v,0);
 
-    document.getElementById('tot-enq').textContent = totalVotos;
+      const cloud = document.getElementById('cloud');
+      document.getElementById('cloud-empty').style.display = sorted.length?'none':'block';
+      Array.from(cloud.querySelectorAll('.word-tag')).forEach(c=>c.remove());
+      sorted.forEach(([p,v]) => {
+        const {size,pad} = tam(v,maxVal);
+        const {bg,text} = getCor(p);
+        const tag = document.createElement('div');
+        tag.className = 'word-tag';
+        tag.style.cssText = `font-size:${size}px;padding:${pad};background:${bg};color:${text}`;
+        tag.innerHTML = `${p.replace(/_/g,' ')} <span style="opacity:0.55;font-size:${size-4}px">${v}</span>`;
+        cloud.appendChild(tag);
+      });
 
-    // Nuvem
-    const cloud = document.getElementById('cloud-box');
-    document.getElementById('cloud-empty').style.display = sorted.length ? 'none' : 'block';
-    Array.from(cloud.children).filter(c => c.classList.contains('word-tag')).forEach(c => c.remove());
-    sorted.forEach(([p, v]) => {
-      const { size, pad } = tamPalavra(v, maxVal);
-      const { bg, text } = getCor(p);
-      const tag = document.createElement('div');
-      tag.className = 'word-tag';
-      tag.style.cssText = `font-size:${size}px;padding:${pad};background:${bg};color:${text}`;
-      tag.innerHTML = `${p} <span style="opacity:0.6;font-size:${size-3}px">${v}</span>`;
-      cloud.appendChild(tag);
-    });
+      document.getElementById('barras').innerHTML = sorted.slice(0,12).map(([p,v]) => {
+        const pct = totalVotos>0?Math.round((v/totalVotos)*100):0;
+        const {text} = getCor(p);
+        return `<div class="bar-row">
+          <div class="bar-label">${p.replace(/_/g,' ')}</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${text}"></div></div>
+          <div class="bar-val">${v} voto${v!==1?'s':''} · ${pct}%</div>
+        </div>`;
+      }).join('');
+    } else {
+      document.getElementById('tot-part').textContent = '0';
+    }
 
-    // Barras
-    const barras = document.getElementById('barras-enq');
-    barras.innerHTML = sorted.slice(0,10).map(([p,v]) => {
-      const pct = Math.round((v/totalVotos)*100);
-      const {bg,text} = getCor(p);
-      return `<div class="bar-row">
-        <div class="bar-label">${p}</div>
-        <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${text}"></div></div>
-        <div class="bar-val">${v} (${pct}%)</div>
-      </div>`;
-    }).join('');
-  } catch(e) {}
+    // QUIZ
+    const quizSnap = await getDoc(doc(db, 'palestra_cbco', 'quiz'));
+    if (quizSnap.exists()) {
+      const d = quizSnap.data();
+      const tot = d.total||0, soma = d.soma||0;
+      document.getElementById('tot-quiz').textContent = tot;
+      document.getElementById('media').textContent = tot>0?Math.round(soma/tot)+'%':'—';
+      const p1=d.perfis_consciente||0, p2=d.perfis_desenvolvimento||0, p3=d.perfis_honesto||0;
+      document.getElementById('p1').textContent = p1;
+      document.getElementById('p2').textContent = p2;
+      document.getElementById('p3').textContent = p3;
+      const pct = n => tot>0?Math.round((n/tot)*100)+'% do grupo':'—';
+      document.getElementById('p1p').textContent = pct(p1);
+      document.getElementById('p2p').textContent = pct(p2);
+      document.getElementById('p3p').textContent = pct(p3);
+    } else {
+      document.getElementById('tot-quiz').textContent = '0';
+      document.getElementById('media').textContent = '—';
+    }
+
+    const agora = new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('lbl-att').textContent = `Atualizado · ${agora}`;
+    document.getElementById('updated').textContent = `Última atualização: ${agora}`;
+  } catch(e) {
+    console.error(e);
+    document.getElementById('lbl-att').textContent = 'Erro ao carregar';
+  }
 }
 
-async function carregarQuiz() {
-  try {
-    const res = await window.storage.get(STORAGE_KEY + '_quiz', true);
-    let dados = { perfis:{consciente:0,desenvolvimento:0,honesto:0}, total:0, soma:0 };
-    try { dados = JSON.parse(res.value); } catch(e) { return; }
+window.carregar = carregar;
 
-    const tot = dados.total || 0;
-    const media = tot > 0 ? Math.round(dados.soma / tot) : 0;
-    document.getElementById('tot-quiz').textContent = tot;
-    document.getElementById('media-quiz').textContent = tot > 0 ? media + '%' : '—';
-
-    const p = dados.perfis || {};
-    document.getElementById('p1').textContent = p.consciente || 0;
-    document.getElementById('p2').textContent = p.desenvolvimento || 0;
-    document.getElementById('p3').textContent = p.honesto || 0;
-    const pct = (n) => tot > 0 ? Math.round((n/tot)*100)+'%' : '—';
-    document.getElementById('p1p').textContent = pct(p.consciente||0);
-    document.getElementById('p2p').textContent = pct(p.desenvolvimento||0);
-    document.getElementById('p3p').textContent = pct(p.honesto||0);
-  } catch(e) {}
-}
-
-async function resetarTudo() {
+window.resetarTudo = async function() {
   if (!confirm('Zerar TODOS os dados? Esta ação não pode ser desfeita.')) return;
   try {
-    await window.storage.set(STORAGE_KEY + '_enquete', '{}', true);
-    await window.storage.set(STORAGE_KEY + '_quiz', JSON.stringify({perfis:{consciente:0,desenvolvimento:0,honesto:0},total:0,soma:0}), true);
+    await deleteDoc(doc(db, 'palestra_cbco', 'enquete'));
+    await deleteDoc(doc(db, 'palestra_cbco', 'quiz'));
     corMap = {}; corIdx = 0;
     await carregar();
-    alert('Dados zerados com sucesso!');
-  } catch(e) {}
-}
+    alert('Dados zerados! Pronto para nova turma.');
+  } catch(e) { alert('Erro ao zerar: '+e.message); }
+};
 
 carregar();
 setInterval(carregar, 15000);
