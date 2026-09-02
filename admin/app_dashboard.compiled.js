@@ -240,7 +240,7 @@ function DashboardAdmin({
   const recAno = lcAno.filter(l => l.tipo_lancamento !== "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0) + lpAno.filter(l => l.tipo === "receita" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const despAno = lcAno.filter(l => l.tipo_lancamento === "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0) + lpAno.filter(l => l.tipo === "despesa" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const saldoAno = recAno - despAno;
-  const pacAtivos = Object.entries(atividades).filter(([, v]) => Object.keys(v.itens).length > 0).sort((a, b) => (a[1].nome || "").localeCompare(b[1].nome || ""));
+  const pacAtivos = Object.entries(atividades).filter(([, v]) => Object.keys(v.itens).length > 0).sort((a, b) => (b[1].ultimaAtividade || "").localeCompare(a[1].ultimaAtividade || ""));
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "page-header"
   }, /*#__PURE__*/React.createElement("div", {
@@ -431,7 +431,8 @@ function DashboardAdmin({
       style: {
         display: "flex",
         flexWrap: "wrap",
-        gap: 6
+        gap: 6,
+        marginBottom: 4
       }
     }, Object.entries(info.itens).map(([label, count]) => /*#__PURE__*/React.createElement("span", {
       key: label,
@@ -443,7 +444,16 @@ function DashboardAdmin({
         padding: "2px 10px",
         color: "var(--text-muted)"
       }
-    }, label, " ", count > 1 ? `(${count})` : ""))))), /*#__PURE__*/React.createElement("button", {
+    }, label, " ", count > 1 ? `(${count})` : ""))), info.ultimaAtividade && (() => {
+      const diff = Math.floor((Date.now() - new Date(info.ultimaAtividade).getTime()) / (1000 * 60 * 60 * 24));
+      const txt = diff === 0 ? "hoje" : diff === 1 ? "ontem" : `há ${diff} dias`;
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 11,
+          color: "var(--text-muted)"
+        }
+      }, "Último acesso: ", txt);
+    })())), /*#__PURE__*/React.createElement("button", {
       onClick: () => onVerEvolucao && onVerEvolucao(pacId),
       style: {
         background: "var(--purple)",
@@ -569,12 +579,9 @@ function DashboardAdmin({
       if (!pid) return null;
       return /*#__PURE__*/React.createElement("button", {
         onClick: () => {
-          window.dispatchEvent(new CustomEvent("irParaPaciente", {
-            detail: {
-              pacienteId: pid,
-              aba: "questionarios"
-            }
-          }));
+          window._pacienteInicialId = pid;
+          window._pacienteAbaInicial = "questionarios";
+          onVerEvolucao && onVerEvolucao(pid);
         },
         style: {
           background: "var(--purple)",
@@ -1002,13 +1009,7 @@ function Pacientes({
       window._pacienteInicialId = null;
       window._pacienteAbaInicial = null;
     }
-    function handleIrParaPaciente(e) {
-      setPerfilAberto(e.detail.pacienteId);
-      setAbaInicialPerfil(e.detail.aba || "questionarios");
-    }
-    window.addEventListener("irParaPaciente", handleIrParaPaciente);
-    return () => window.removeEventListener("irParaPaciente", handleIrParaPaciente);
-  }, []);
+  }, [pacientes]);
   const [importLog, setImportLog] = useState([]);
   const [importando, setImportando] = useState(false);
   async function processarExcel(e) {
