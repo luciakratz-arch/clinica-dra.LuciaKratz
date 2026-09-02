@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Rastreamento de Saude Sexual | Dra. Lucia Kratz</title>
+<title>Rastreamento Clínico | Dra. Lucia Kratz</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
@@ -12,20 +13,37 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%
 .header{text-align:center;margin-bottom:24px}
 .header h1{font-size:19px;color:#3d006a;margin:10px 0 4px;font-weight:700}
 .header p{font-size:13px;color:#6b7280}
+.header .paciente-tag{display:inline-block;background:#f3e8ff;color:#7B00C4;font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;margin-top:8px}
+
 .welcome-box{background:#f5f3ff;border-radius:14px;padding:20px;margin-bottom:20px;font-size:13.5px;color:#4b5563;line-height:1.7}
 .welcome-box h2{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:10px}
 .welcome-box ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+
+/* Progress */
 .progress-wrap{margin-bottom:22px}
 .progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:5px}
 .progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
 .progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
 .step-title{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:3px}
 .step-sub{font-size:12.5px;color:#6b7280;margin-bottom:18px;line-height:1.5;background:#f9fafb;border-left:3px solid #7B00C4;padding:8px 12px;border-radius:0 8px 8px 0}
+
+/* Form */
 .fg{margin-bottom:16px}
 label.lbl{display:block;font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
 input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s;background:white}
 input:focus,select:focus,textarea:focus{border-color:#7B00C4}
 textarea{resize:vertical;min-height:80px;line-height:1.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Identificação — tipo respondente */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.tipo-btn{background:white;border:2px solid #ede9fe;border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.tipo-btn:hover,.tipo-btn.sel{border-color:#7B00C4;background:#f5f0ff}
+.tipo-btn .ico{font-size:32px;margin-bottom:8px}
+.tipo-btn .t{font-size:14px;font-weight:700;color:#3d006a}
+.tipo-btn .d{font-size:11.5px;color:#6b7280;margin-top:4px}
+
+/* Pergunta card */
 .pergunta-card{background:#f9fafb;border:1px solid #ede9fe;border-radius:14px;padding:18px;margin-bottom:16px}
 .perg-num{font-size:10px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
 .perg-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:14px;font-weight:500}
@@ -36,10 +54,16 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 .opcao.sel{border-color:#7B00C4;background:#f5f0ff}
 .opcao.sel .letra{background:#7B00C4;border-color:#7B00C4;color:white}
 .opcao:hover{border-color:#a78bfa}
-.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px}
+
+/* Secção label */
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px;display:flex;align-items:center;gap:8px}
+
+/* Mic */
 .mic-wrap{position:relative}
 .mic-btn{position:absolute;right:8px;top:8px;background:#f3e8ff;border:none;border-radius:7px;padding:5px 8px;cursor:pointer;font-size:15px;line-height:1;z-index:1}
 textarea.has-mic{padding-right:44px}
+
+/* Nav */
 .nav{display:flex;gap:10px;margin-top:24px}
 .btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
 .btn-back{background:#f3f4f6;color:#374151;flex:1}
@@ -47,76 +71,120 @@ textarea.has-mic{padding-right:44px}
 .btn-next:hover{opacity:.9}
 .btn-next:disabled{opacity:.6;cursor:default}
 .btn-start{background:#7B00C4;color:white;width:100%;margin-top:16px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+
+/* Aviso */
 .aviso-amarelo{background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#92400e;line-height:1.6;margin-bottom:14px}
-.aviso-privado{background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#065f46;line-height:1.6;margin-bottom:20px}
+.aviso-vermelho{background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:13px 16px;font-size:12.5px;color:#7f1d1d;line-height:1.6;margin-top:8px}
+
+/* Success */
 .success{text-align:center;padding:20px 0}
 .success-icon{font-size:64px;margin-bottom:16px}
 .success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
 .success-msg{font-size:14px;color:#6b7280;line-height:1.7}
-@media(max-width:500px){.grid{grid-template-columns:1fr}}
+
+@media(max-width:500px){.grid,.tipo-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="card">
   <div class="header">
-    <img src="../../logo.png" alt="" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
-    <h1>Rastreamento de Saude Sexual</h1>
-    <p>Dra. Lucia Kratz &middot; Psicologa &middot; CRP 09/20590</p>
+    <img src="../logo.png" alt="" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+    <h1>Rastreamento Clínico</h1>
+    <p>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</p>
+    <div class="paciente-tag" id="tagPaciente" style="display:none"></div>
   </div>
 
+  <!-- TELA INICIAL -->
   <div id="telaInicial">
-    <div class="aviso-privado">
-      &#128274; <strong>Privacidade total:</strong> Suas respostas sao completamente confidenciais e serao lidas apenas pela Dra. Lucia Kratz. Nenhuma outra pessoa tera acesso a este questionario.
-    </div>
     <div class="welcome-box">
-      <h2>&#128203; Antes de comecar, leia com atencao:</h2>
+      <h2>📋 Antes de começar, leia com atenção:</h2>
       <ul>
-        <li>Este questionario leva entre <strong>5 e 10 minutos</strong> para ser respondido.</li>
-        <li>Responda com <strong>honestidade</strong> — nao ha respostas certas ou erradas.</li>
-        <li>As perguntas abordam aspectos intimos da saude — sinta-se a vontade para responder no seu ritmo.</li>
-        <li>Voce pode usar o botao &#127908; para <strong>falar em vez de digitar</strong> nos campos de texto.</li>
-        <li>Suas respostas sao <strong>confidenciais</strong> e usadas exclusivamente para fins clinicos.</li>
+        <li>Este questionário leva entre <strong>5 e 10 minutos</strong> para ser respondido.</li>
+        <li>Não há respostas certas ou erradas — responda com <strong>honestidade e calma</strong>.</li>
+        <li>Se for familiar, responda sobre o <strong>comportamento da pessoa avaliada</strong>, não sobre você.</li>
+        <li>Você pode usar o botão 🎤 para <strong>falar em vez de digitar</strong> nos campos de texto.</li>
+        <li>Suas respostas são <strong>confidenciais</strong> e usadas apenas para fins clínicos.</li>
       </ul>
     </div>
-    <button class="btn-start" onclick="iniciar()">Comecar Questionario &rarr;</button>
+
+    <div class="sec">👤 Quem está respondendo?</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn" id="btnPaciente" onclick="selecionarTipo('paciente')">
+        <div class="ico">🙋</div>
+        <div class="t">O próprio paciente</div>
+        <div class="d">Você é a pessoa que está sendo avaliada</div>
+      </div>
+      <div class="tipo-btn" id="btnFamiliar" onclick="selecionarTipo('familiar')">
+        <div class="ico">👨‍👩‍👧</div>
+        <div class="t">Familiar / pessoa próxima</div>
+        <div class="d">Você conhece bem a pessoa avaliada</div>
+      </div>
+    </div>
+
+    <div id="camposFamiliar" style="display:none">
+      <div class="fg">
+        <label class="lbl">Seu nome completo *</label>
+        <input id="nomeRespondente" type="text" placeholder="Seu nome"/>
+      </div>
+      <div class="fg">
+        <label class="lbl">Sua relação com o paciente *</label>
+        <select id="parentesco">
+          <option value="">Selecione o grau de parentesco</option>
+          <option>Mãe</option>
+          <option>Pai</option>
+          <option>Cônjuge / Companheiro(a)</option>
+          <option>Irmão / Irmã</option>
+          <option>Filho(a)</option>
+          <option>Avô / Avó</option>
+          <option>Tio(a)</option>
+          <option>Amigo(a) próximo(a)</option>
+          <option>Outro familiar</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="iniciar()">Começar Questionário →</button>
   </div>
 
+  <!-- TELA DO FORMULÁRIO -->
   <div id="formArea" style="display:none">
     <div class="progress-wrap">
       <div class="progress-labels">
-        <span id="stepLabel">Etapa 1 de 4</span>
+        <span id="stepLabel">Etapa 1 de 5</span>
         <span id="stepPct">0%</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     </div>
     <div id="stepContent"></div>
     <div class="nav">
-      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">&#8592; Voltar</button>
-      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Proximo &rarr;</button>
+      <button class="btn btn-back" id="btnBack" onclick="voltarStep()" style="display:none">← Voltar</button>
+      <button class="btn btn-next" id="btnNext" onclick="avancarStep()">Próximo →</button>
     </div>
   </div>
 
+  <!-- TELA DE REVISÃO -->
   <div id="revisaoArea" style="display:none">
     <div style="text-align:center;margin-bottom:20px">
-      <div style="font-size:36px;margin-bottom:8px">&#128269;</div>
+      <div style="font-size:36px;margin-bottom:8px">🔍</div>
       <div style="font-size:17px;font-weight:700;color:#3d006a;margin-bottom:4px">Revise suas respostas</div>
-      <div style="font-size:13px;color:#6b7280;line-height:1.6">Confira tudo antes de enviar. Voce ainda pode voltar e corrigir.</div>
+      <div style="font-size:13px;color:#6b7280;line-height:1.6">Confira tudo antes de enviar. Você ainda pode voltar e corrigir.</div>
     </div>
     <div id="revisaoContent"></div>
     <div style="display:flex;gap:10px;margin-top:24px">
-      <button class="btn btn-back" style="flex:1" onclick="voltarRevisao()">&#8592; Corrigir</button>
-      <button class="btn btn-next" style="flex:2" onclick="enviar()">&#10003; Confirmar e Enviar</button>
+      <button class="btn btn-back" style="flex:1" onclick="voltarRevisao()">← Corrigir</button>
+      <button class="btn btn-next" style="flex:2" onclick="enviar()">✓ Confirmar e Enviar</button>
     </div>
   </div>
 
+  <!-- TELA DE SUCESSO -->
   <div id="successArea" style="display:none">
     <div class="success">
-      <div class="success-icon">&#129419;</div>
+      <div class="success-icon">🦋</div>
       <div class="success-title">Respostas enviadas!</div>
       <div class="success-msg">
-        Obrigado por responder com honestidade.<br/>
-        Suas respostas foram registradas com seguranca<br/>
-        e serao analisadas com total sigilo pela Dra. Lucia Kratz.<br/><br/>
+        Obrigado por responder com cuidado e honestidade.<br/>
+        Suas respostas foram registradas com segurança<br/>
+        e serão analisadas pela Dra. Lucia Kratz.<br/><br/>
         <strong>Pode fechar esta janela.</strong>
       </div>
     </div>
@@ -130,223 +198,544 @@ const fc={apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevist
 if(!firebase.apps.length)firebase.initializeApp(fc);
 const db=firebase.firestore();
 
-const urlParams=new URLSearchParams(window.location.search);
-const nomePaciente=urlParams.get("paciente")||"";
+// Parâmetros da URL
+const urlParams = new URLSearchParams(window.location.search);
+const nomePaciente = urlParams.get("paciente") || "";
+const tokenParam = urlParams.get("token") || "";
 
-let step=1;
-let respostas={tipoRespondente:"paciente",nomeRespondente:"Proprio paciente",parentesco:"paciente"};
-const TOTAL_STEPS=4;
+// Exibir tag do paciente se houver
+// nome do paciente usado internamente apenas — não exibir na tela
+
+let tipoRespondente = "";
+let step = 1;
+let respostas = {};
+const TOTAL_STEPS = 6;
+
+// ═══════════════════════════════════
+// SELEÇÃO DE TIPO
+// ═══════════════════════════════════
+function selecionarTipo(tipo){
+  tipoRespondente = tipo;
+  document.getElementById("btnPaciente").classList.toggle("sel", tipo==="paciente");
+  document.getElementById("btnFamiliar").classList.toggle("sel", tipo==="familiar");
+  document.getElementById("camposFamiliar").style.display = tipo==="familiar" ? "block" : "none";
+}
 
 function iniciar(){
-  document.getElementById("telaInicial").style.display="none";
-  document.getElementById("formArea").style.display="block";
+  if(!tipoRespondente){ alert("Por favor, selecione quem está respondendo."); return; }
+  if(tipoRespondente==="familiar"){
+    if(!document.getElementById("nomeRespondente").value.trim()){ alert("Por favor, informe seu nome."); return; }
+    if(!document.getElementById("parentesco").value){ alert("Por favor, selecione sua relação com o paciente."); return; }
+    respostas.nomeRespondente = document.getElementById("nomeRespondente").value.trim();
+    respostas.parentesco = document.getElementById("parentesco").value;
+  } else {
+    respostas.nomeRespondente = nomePaciente || "Próprio paciente";
+    respostas.parentesco = "paciente";
+  }
+  respostas.tipoRespondente = tipoRespondente;
+  document.getElementById("telaInicial").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
   renderStep();
 }
 
-const BLOCOS=[
+// ═══════════════════════════════════
+// PERGUNTAS
+// ═══════════════════════════════════
+const BLOCOS = [
   {
-    titulo:"Bloco 1 - Desejo e Interesse",
-    sub:"Responda sobre como voce percebe seu interesse e desejo pela vida sexual nos ultimos meses.",
-    perguntas:[
-      {id:"p1",num:"1",texto:"Voce percebe uma ausencia ou reducao significativa do desejo por atividade sexual ou de fantasias sexuais, de forma persistente ha 6 meses ou mais?",
-        opcoes:[{letra:"A",texto:"Mantenho um nivel de desejo adequado e estavel para minha realidade."},{letra:"B",texto:"Percebo quedas pontuais de desejo associadas a estresse, cansaco ou momentos dificeis na relacao."},{letra:"C",texto:"Ausencia cronica e marcante de desejo ou fantasias sexuais por 6 meses ou mais, causando sofrimento real."}]},
-      {id:"p2",num:"2",texto:"Voce sente repulsa, aversao ou evita ativamente qualquer situacao de contato sexual ou intimo?",
-        opcoes:[{letra:"A",texto:"Nao ha qualquer aversao ao toque ou contato intimo."},{letra:"B",texto:"Em momentos de cansaco extremo, prefiro caricia sem ato sexual, mas sem repulsa."},{letra:"C",texto:"Sinto repulsa ativa ou evito de forma intensa qualquer aproximacao de cunho sexual."}]}
+    titulo: "Bloco 1 · Energia e Aceleração",
+    sub: "Observe se já houve períodos em que a pessoa parecia muito diferente do normal — com muita energia, aceleração ou grandiosidade.",
+    perguntas: [
+      {
+        id: "p1",
+        num: "1",
+        texto: "Em algum período da vida ou de forma recorrente, você notou fases em que a pessoa avaliada passou a apresentar uma energia muito acima do normal, ficando extremamente acelerado(a), com disposição fora do comum, a ponto de parecer incansável?",
+        opcoes: [
+          {letra:"A", texto:"Não, nunca notei nada parecido com isso."},
+          {letra:"B", texto:"Sim, por alguns dias parecia com a 'bateria 24h', mas depois voltava ao normal."},
+          {letra:"C", texto:"Sim, por uma semana ou mais — ritmo frenético de atividade, agitação intensa e pouca necessidade de descanso."},
+          {letra:"D", texto:"Sim, a ponto de perder o controle, agir de forma impulsiva perigosa ou precisar de atendimento médico."}
+        ]
+      },
+      {
+        id: "p2",
+        num: "2",
+        texto: "Como costumava ser o padrão de sono e a fala da pessoa durante esses momentos de maior agitação?",
+        opcoes: [
+          {letra:"A", texto:"Dormia e falava normalmente, no ritmo de sempre."},
+          {letra:"B", texto:"Dizia precisar dormir bem menos (2 a 4h) e acordava descansado(a); a fala era bem rápida e atropelada."},
+          {letra:"C", texto:"Passava noites inteiras acordado(a) organizando coisas ou trabalhando sem cansaço, falando excessivamente e mudando de assunto o tempo todo."}
+        ]
+      },
+      {
+        id: "p3",
+        num: "3",
+        texto: "Houve momentos em que a pessoa avaliada demonstrava autoconfiança exagerada, achando que podia realizar coisas grandiosas ou assumindo riscos que não costumava assumir (como gastos financeiros excessivos ou projetos mirabolantes)?",
+        opcoes: [
+          {letra:"A", texto:"Não, manteve o comportamento prudente de sempre."},
+          {letra:"B", texto:"Sim, mostrava-se muito otimista com ideias fora do comum ou projetos de grande porte."},
+          {letra:"C", texto:"Sim, tomou decisões impulsivas e arriscadas que trouxeram prejuízos ou grande preocupação para a família."}
+        ]
+      }
     ]
   },
   {
-    titulo:"Bloco 2 - Resposta Fisica e Orgasmo",
-    sub:"Responda sobre o que acontece com seu corpo durante a atividade sexual.",
-    perguntas:[
-      {id:"p3",num:"3",texto:"Voce tem dificuldade persistente para obter ou manter a resposta fisica de excitacao durante a atividade sexual (lubrificacao, erecao) de forma adequada?",
-        opcoes:[{letra:"A",texto:"A resposta fisica de excitacao ocorre normalmente quando ha estimulo e intencao."},{letra:"B",texto:"Ocorre ocasionalmente por ansiedade ou cansaco, mas nao e um padrao."},{letra:"C",texto:"Dificuldade cronica e recorrente para atingir ou sustentar a resposta fisica ate o fim da relacao."}]},
-      {id:"p4",num:"4",texto:"Voce experimenta atraso acentuado, pouca frequencia ou ausencia total de orgasmo, mesmo apos estimulacao adequada?",
-        opcoes:[{letra:"A",texto:"Atinjo o orgasmo de forma satisfatoria e regular quando estimulado(a)."},{letra:"B",texto:"Ocorre variacao esporadica no tempo dependendo do contexto."},{letra:"C",texto:"Ausencia ou grande dificuldade persistente de atingir o orgasmo, gerando frustacao e sofrimento."}]},
-      {id:"p5",num:"5",texto:"(Para homens) A ejaculacao ocorre de forma muito rapida, antes ou logo apos o inicio da relacao, sem que voce consiga controlar?",
-        opcoes:[{letra:"A",texto:"Consigo controlar o momento da ejaculacao adequadamente."},{letra:"B",texto:"Ocorre de forma mais rapida raramente, em momentos de alta excitacao."},{letra:"C",texto:"Padrao persistente de ejaculacao rapida e involuntaria sem controle."}]},
-      {id:"p6",num:"6",texto:"(Para homens) Ha um atraso muito grande ou impossibilidade de ejacular durante a relacao sexual?",
-        opcoes:[{letra:"A",texto:"Tempo ejaculatorio normal e satisfatorio."},{letra:"B",texto:"Variacao esporadica no tempo ejaculatorio."},{letra:"C",texto:"Atraso extremo ou incapacidade de ejacular durante a relacao, gerando grande desgaste."}]}
+    titulo: "Bloco 2 · Tristeza e Depressão",
+    sub: "Agora pense no lado oposto — períodos de baixa energia, tristeza profunda ou desânimo persistente.",
+    perguntas: [
+      {
+        id: "p4",
+        num: "4",
+        texto: "Por outro lado, você observou fases em que a pessoa apresentou uma tristeza profunda, desânimo persistente ou perda total do interesse por coisas que antes davam prazer?",
+        opcoes: [
+          {letra:"A", texto:"Não, o humor manteve-se estável ou dentro das variações comuns."},
+          {letra:"B", texto:"Sim, apresentou períodos de apatia e desinteresse, mas conseguia levar a rotina adiante."},
+          {letra:"C", texto:"Sim, períodos prolongados de tristeza profunda, choro frequente, isolamento social e incapacidade de sentir prazer."}
+        ]
+      },
+      {
+        id: "p5",
+        num: "5",
+        texto: "Nesses períodos de desânimo ou baixa energia, como ficavam a disposição física, o sono, o apetite e o ânimo para as tarefas básicas?",
+        opcoes: [
+          {letra:"A", texto:"Mantinha as atividades e os cuidados pessoais normalmente."},
+          {letra:"B", texto:"Apresentava cansaço constante, alterações moderadas no sono/apetite e lentidão para realizar tarefas."},
+          {letra:"C", texto:"Ficava praticamente sem energia para sair da cama, descuidando da higiene e da alimentação, com mudanças drásticas no sono."}
+        ]
+      },
+      {
+        id: "p6",
+        num: "6",
+        texto: "Durante essas fases de baixa energia ou tristeza, a pessoa avaliada chegou a verbalizar sentimentos de desesperança, culpa excessiva ou vontade de sumir / desistir de viver?",
+        opcoes: [
+          {letra:"A", texto:"Nunca verbalizou nada disso."},
+          {letra:"B", texto:"Reclamava que a vida estava difícil, mas sem citar morte ou ideação suicida."},
+          {letra:"C", texto:"Falava abertamente sobre querer sumir, que a vida não tinha sentido ou mencionou pensamentos de morte."}
+        ]
+      }
     ]
   },
   {
-    titulo:"Bloco 3 - Dor e Desconforto",
-    sub:"Responda sobre eventuais dores ou desconfortos fisicos relacionados a atividade sexual.",
-    perguntas:[
-      {id:"p7",num:"7",texto:"Voce sente dor fisica genital ou pelvica durante ou ao tentar ter relacao sexual com penetracao?",
-        opcoes:[{letra:"A",texto:"Nenhuma dor ou desconforto durante as relacoes."},{letra:"B",texto:"Desconforto leve e pontual resolvido com lubrificacao ou ajustes."},{letra:"C",texto:"Dor genital ou pelvica acentuada, recorrente e significativa associada a penetracao."}]},
-      {id:"p8",num:"8",texto:"(Para mulheres) Voce percebe uma contracao ou aperto involuntario dos musculos vaginais ao tentar a penetracao, acompanhado de medo ou ansiedade intensa?",
-        opcoes:[{letra:"A",texto:"Musculatura relaxada e sem medo ou tensao associada."},{letra:"B",texto:"Tensao leve inicial por inexperiencia ou pressa que cede logo."},{letra:"C",texto:"Contracao involuntaria severa da musculatura e medo intenso da penetracao."}]}
+    titulo: "Bloco 3 · Relacionamentos e Identidade",
+    sub: "Como a pessoa se relaciona com os outros e como lida com a ideia de abandono ou rejeição.",
+    perguntas: [
+      {
+        id: "p7",
+        num: "7",
+        texto: "Como a pessoa avaliada costuma reagir quando percebe — ou imagina — que vai ser rejeitado(a), ignorado(a) ou deixado(a) sozinho(a) por alguém importante?",
+        opcoes: [
+          {letra:"A", texto:"Reage de forma equilibrada, compreendendo que as pessoas têm seus compromissos."},
+          {letra:"B", texto:"Fica chateado(a) ou carente, mas consegue lidar após conversar ou se acalmar."},
+          {letra:"C", texto:"Tem reações extremas e desesperadas — liga repetidamente, faz ameaças, chora compulsivamente ou implora para a pessoa não ir embora."}
+        ]
+      },
+      {
+        id: "p8",
+        num: "8",
+        texto: "Você percebe que as relações afetivas ou de amizade dessa pessoa costumam ser intensas mas muito instáveis ao longo do tempo?",
+        opcoes: [
+          {letra:"A", texto:"Não, as relações são estáveis e duradouras."},
+          {letra:"B", texto:"Há alguns desentendimentos normais de relacionamento, sem rupturas drásticas."},
+          {letra:"C", texto:"É muito comum passar rapidamente de 'amar alguém excessivamente' para 'odiar essa mesma pessoa' por motivos pequenos."}
+        ]
+      },
+      {
+        id: "p9",
+        num: "9",
+        texto: "Como é a percepção que a pessoa tem de si mesmo(a)? Parece haver uma instabilidade marcante sobre quem ela é, seus objetivos ou sua identidade?",
+        opcoes: [
+          {letra:"A", texto:"Tem uma noção clara e estável de quem é, de seus valores e objetivos."},
+          {letra:"B", texto:"Às vezes se sente confusa(o) sobre o futuro ou escolhas, o que é comum."},
+          {letra:"C", texto:"Muda drasticamente de opinião sobre si mesma(o), planos, crenças ou aparência de tempos em tempos, parecendo não saber quem realmente é."}
+        ]
+      }
     ]
   },
   {
-    titulo:"Bloco 4 - Contexto e Duracao",
-    sub:"Responda sobre ha quanto tempo isso acontece e em que situacoes.",
-    perguntas:[
-      {id:"p9",num:"9",texto:"Os sintomas ou dificuldades que voce descreveu persistem ha 6 meses ou mais e causam sofrimento real na sua vida ou nos seus relacionamentos?",
-        opcoes:[{letra:"A",texto:"Nao preenchem o criterio de 6 meses ou nao causam sofrimento real."},{letra:"B",texto:"Tenho duvida sobre a constancia ou duracao do que sinto."},{letra:"C",texto:"Sim, persistem ha mais de 6 meses e causam forte sofrimento pessoal ou nas relacoes."}]},
-      {id:"p10",num:"10",texto:"As dificuldades ocorrem em todas as situacoes ou apenas com determinados parceiros ou contextos especificos?",
-        opcoes:[{letra:"A",texto:"Nao se aplica — sem disfuncao."},{letra:"B",texto:"Ocorre apenas em situacoes ou com parceiros especificos (por exemplo, com alguem novo)."},{letra:"C",texto:"Ocorre em todas as situacoes, independentemente do parceiro ou contexto."}]},
-      {id:"p11",num:"11",texto:"Voce associa as dificuldades a algum desses fatores?",
-        opcoes:[{letra:"A",texto:"Problemas fisicos ou hormonais ja investigados por medico."},{letra:"B",texto:"Inicio ou mudanca de medicamentos (como antidepressivos, anticoncepcionais ou outros)."},{letra:"C",texto:"Ansiedade, pensamentos negativos sobre o proprio corpo ou desempenho, traumas ou conflitos no relacionamento."}]}
+    titulo: "Bloco 4 · Impulsos, Humor e Emoções",
+    sub: "Como a pessoa controla seus impulsos, lida com a raiva e experimenta o mundo emocional no dia a dia.",
+    perguntas: [
+      {
+        id: "p10",
+        num: "10",
+        texto: "A pessoa costuma apresentar comportamentos impulsivos no dia a dia (como gastos descontrolados, direção perigosa, excessos na comida ou uso desregrado de substâncias)?",
+        opcoes: [
+          {letra:"A", texto:"Não, costuma ser uma pessoa prudente e controla bem seus impulsos."},
+          {letra:"B", texto:"Ocorre ocasionalmente de forma leve."},
+          {letra:"C", texto:"Tem episódios frequentes de impulsividade descontrolada em várias áreas, sem pensar nas consequências."}
+        ]
+      },
+      {
+        id: "p11",
+        num: "11",
+        texto: "Houve episódios de automutilação física (como cortes ou queimaduras superficiais) ou ameaças e tentativas de autoextermínio?",
+        opcoes: [
+          {letra:"A", texto:"Nunca apresentou nenhum comportamento desse tipo."},
+          {letra:"B", texto:"Já mencionou verbalmente querer sumir sob estresse, mas sem atos práticos."},
+          {letra:"C", texto:"Apresenta ou já apresentou histórico de cortes, automutilação para aliviar sofrimento emocional ou tentativas reais de suicídio."}
+        ]
+      },
+      {
+        id: "p12",
+        num: "12",
+        texto: "Como o humor dessa pessoa costuma oscilar no dia a dia ou de uma semana para outra?",
+        opcoes: [
+          {letra:"A", texto:"O humor é relativamente estável, variando de acordo com os fatos reais."},
+          {letra:"B", texto:"Apresenta oscilações normais do estresse cotidiano."},
+          {letra:"C", texto:"Tem mudanças de humor muito rápidas e intensas — passa de calma para irritação profunda ou desespero em poucas horas."}
+        ]
+      },
+      {
+        id: "p13",
+        num: "13",
+        texto: "A pessoa avaliada costuma relatar uma sensação persistente de vazio interior ou tédio crônico?",
+        opcoes: [
+          {letra:"A", texto:"Não relata esse tipo de sentimento."},
+          {letra:"B", texto:"Sente-se vazia(o) ou entediada(o) esporadicamente, em fases de solidão."},
+          {letra:"C", texto:"Queixa-se com frequência de um vazio interno profundo ou um 'buraco no peito' que nada parece preencher."}
+        ]
+      },
+      {
+        id: "p14",
+        num: "14",
+        texto: "Como a pessoa lida com a raiva e a frustração nas situações cotidianas?",
+        opcoes: [
+          {letra:"A", texto:"Consegue expressar o que sente de forma adequada e negociar quando algo a incomoda."},
+          {letra:"B", texto:"Fica irritada(o), mas consegue se conter e evitar discussões maiores."},
+          {letra:"C", texto:"Tem explosões de raiva intensas, desproporcionais ao motivo, com forte dificuldade de controlar a agressividade verbal ou física."}
+        ]
+      },
+      {
+        id: "p15",
+        num: "15",
+        texto: "Em momentos de forte pressão ou estresse, você já notou se a pessoa parece 'se desligar' da realidade, apresentar desconfianças exageradas das intenções dos outros ou um estranhamento intenso de si mesma?",
+        opcoes: [
+          {letra:"A", texto:"Não, mantém o contato firme com a realidade mesmo sob pressão."},
+          {letra:"B", texto:"Fica apenas muito estressada(o) temporariamente."},
+          {letra:"C", texto:"Sob estresse extremo, já apresentou episódios em que parecia 'fora de si', muito desconfiada(o) (quase persecutória) ou relatando sensação de irrealidade."}
+        ]
+      }
     ]
+  },
+  {
+    titulo: "Bloco 4 · Cognição e Humor Misto",
+    sub: "Estas perguntas ajudam a entender como o raciocínio, a concentração e eventuais sobreposições de humor se manifestam.",
+    perguntas: [
+      {
+        id: "p16",
+        num: "16",
+        texto: "Durante os períodos de agitação ou aceleração, você notou que a pessoa avaliada parecia ter os pensamentos acelerados demais — como se as ideias se atropelassem, saltando de um assunto para outro sem conseguir parar?",
+        opcoes: [
+          {letra:"A", texto:"Não, o raciocínio sempre pareceu organizado e no ritmo normal."},
+          {letra:"B", texto:"Sim, ficava muito dispersa(o) nas conversas, mudava de assunto com frequência mas sem parecer fora de controle."},
+          {letra:"C", texto:"Sim, os pensamentos pareciam tão acelerados que era difícil acompanhar — falava muito rápido e saltava de ideia em ideia sem concluir nenhuma."}
+        ]
+      },
+      {
+        id: "p17",
+        num: "17",
+        texto: "Nesses momentos de agitação, a pessoa demonstrava grande dificuldade de manter a atenção — qualquer barulho, movimento ou estímulo externo parecia distraí-la facilmente, mesmo quando estava tentando fazer algo importante?",
+        opcoes: [
+          {letra:"A", texto:"Não, conseguia se concentrar normalmente mesmo em períodos de agitação."},
+          {letra:"B", texto:"Ficava um pouco mais dispersa(o) que o habitual, mas conseguia retomar o foco."},
+          {letra:"C", texto:"Sim, era impossível mantê-la focada — qualquer coisa tirava a atenção e ela não conseguia terminar nada."}
+        ]
+      },
+      {
+        id: "p18",
+        num: "18",
+        texto: "Nos períodos de tristeza ou baixa energia, você observou uma inquietação física visível — a pessoa não conseguia ficar parada, andava de um lado para outro, remexia as mãos ou os pés sem parar — ou o contrário: um estado de lentidão marcante, como se cada movimento custasse um esforço enorme?",
+        opcoes: [
+          {letra:"A", texto:"Não, o comportamento motor estava dentro do normal."},
+          {letra:"B", texto:"Sim, ficava levemente inquieta(o) ou um pouco mais lenta(o) que o habitual."},
+          {letra:"C", texto:"Sim, de forma marcante e visível para qualquer pessoa ao redor — agitação intensa ou lentidão extrema nos movimentos e na fala."}
+        ]
+      },
+      {
+        id: "p19",
+        num: "19",
+        texto: "Durante as fases de tristeza ou baixa energia, a pessoa demonstrava dificuldade acentuada para se concentrar, tomar decisões simples do cotidiano ou lembrar de coisas que normalmente lembraria sem esforço?",
+        opcoes: [
+          {letra:"A", texto:"Não, a memória e o raciocínio permaneciam normais."},
+          {letra:"B", texto:"Sim, reclamava de 'cabeça pesada' ou dificuldade leve para se concentrar."},
+          {letra:"C", texto:"Sim, de forma significativa — tinha dificuldade até para decisões simples e esquecia coisas rotineiras com frequência."}
+        ]
+      },
+      {
+        id: "p20",
+        num: "20",
+        texto: "Você já notou períodos em que a pessoa parecia apresentar tristeza ou choro frequente ao mesmo tempo em que estava agitada, com energia elevada, pensamentos acelerados ou pouco sono — como se estivesse 'deprimida e acelerada ao mesmo tempo'?",
+        opcoes: [
+          {letra:"A", texto:"Não, os períodos de tristeza e os de agitação sempre ocorreram de forma separada."},
+          {letra:"B", texto:"Talvez — havia momentos em que parecia triste mas inquieta, embora não fosse o padrão principal."},
+          {letra:"C", texto:"Sim, claramente — havia episódios em que a tristeza e a agitação coexistiam de forma intensa e perturbadora ao mesmo tempo."}
+        ]
+      }
+    ]
+  },
+    {
+    titulo: "Observações Finais",
+    sub: "Se quiser, compartilhe qualquer observação adicional sobre o comportamento ou a história de a pessoa avaliada.",
+    obs: true
   }
 ];
 
+// ═══════════════════════════════════
+// RENDER
+// ═══════════════════════════════════
 function renderStep(){
-  const total=TOTAL_STEPS;
-  const pct=Math.round(step/total*100);
-  document.getElementById("stepLabel").textContent="Etapa "+step+" de "+total;
-  document.getElementById("stepPct").textContent=pct+"%";
-  document.getElementById("progressFill").style.width=pct+"%";
-  document.getElementById("btnBack").style.display=step>1?"block":"none";
-  document.getElementById("btnNext").textContent=step===total?"Revisar Respostas":"Proximo →";
-  const bloco=BLOCOS[step-1];
-  let h="";
-  h+="<div class='step-title'>"+bloco.titulo+"</div>";
-  h+="<div class='step-sub'>"+bloco.sub+"</div>";
-  bloco.perguntas.forEach(p=>{
-    h+="<div class='pergunta-card'>";
-    h+="<div class='perg-num'>Pergunta "+p.num+" de 11</div>";
-    h+="<div class='perg-texto'>"+p.texto+"</div>";
-    h+="<div class='opcoes' id='grp_"+p.id+"'>";
-    p.opcoes.forEach(o=>{
-      const sel=respostas[p.id]===o.letra?" sel":"";
-      h+="<div class='opcao"+sel+"' data-pid='"+p.id+"' data-letra='"+o.letra+"' onclick='handleOpcao(this)'>";
-      h+="<input type='radio' name='"+p.id+"' value='"+o.letra+"'/>";
-      h+="<div class='letra'>"+o.letra+"</div>";
-      h+="<div>"+o.texto+"</div>";
-      h+="</div>";
+  const total = TOTAL_STEPS;
+  const pct = Math.round(step/total*100);
+  document.getElementById("stepLabel").textContent = "Etapa "+step+" de "+total;
+  document.getElementById("stepPct").textContent = pct+"%";
+  document.getElementById("progressFill").style.width = pct+"%";
+  document.getElementById("btnBack").style.display = step>1?"block":"none";
+  document.getElementById("btnNext").textContent = step===total ? "✓ Enviar Respostas" : "Próximo →";
+
+  const bloco = BLOCOS[step-1];
+  let h = '';
+  h += '<div class="step-title">'+bloco.titulo+'</div>';
+  h += '<div class="step-sub">'+bloco.sub+'</div>';
+
+  if(bloco.obs){
+    // Tela final de observações
+    h += '<div class="fg">';
+    h += '<label class="lbl">Quer acrescentar algo? <span style="font-weight:400;text-transform:none;color:#9ca3af">(opcional)</span></label>';
+    h += '<textarea id="obsFinais" class="has-mic" placeholder="Fale ou escreva qualquer observação que considera importante sobre o comportamento, a história ou o que você vivenciou..." style="min-height:120px">'+(respostas.obsFinais||'')+'</textarea>';
+    h += '</div>';
+    h += '<div class="aviso-amarelo">🔒 Suas respostas são confidenciais e serão analisadas exclusivamente pela Dra. Lucia Kratz para fins clínicos.</div>';
+  } else {
+    bloco.perguntas.forEach(p => {
+      h += '<div class="pergunta-card">';
+      h += '<div class="perg-num">Pergunta '+p.num+' de 15</div>';
+      h += '<div class="perg-texto">'+p.texto+'</div>';
+      h += '<div class="opcoes" id="grp_'+p.id+'">';
+      p.opcoes.forEach(o => {
+        const sel = respostas[p.id] === o.letra ? ' sel' : '';
+        h += '<div class="opcao'+sel+'" onclick="selecionarOpcao(\''+p.id+'\',\''+o.letra+'\',this)">';
+        h += '<input type="radio" name="'+p.id+'" value="'+o.letra+'"/>';
+        h += '<div class="letra">'+o.letra+'</div>';
+        h += '<div>'+o.texto+'</div>';
+        h += '</div>';
+      });
+      h += '</div></div>';
     });
-    h+="</div></div>";
-  });
-  document.getElementById("stepContent").innerHTML=h;
+  }
+
+  document.getElementById("stepContent").innerHTML = h;
   initMic();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-function handleOpcao(el){selecionarOpcao(el.dataset.pid,el.dataset.letra,el);}
-function selecionarOpcao(pergId,letra,el){
-  const grp=document.getElementById("grp_"+pergId);
+function selecionarOpcao(pergId, letra, el){
+  // Desmarcar todas do grupo
+  const grp = document.getElementById("grp_"+pergId);
   grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
   el.classList.add("sel");
-  respostas[pergId]=letra;
+  respostas[pergId] = letra;
 }
 
+// ═══════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════
 function avancarStep(){
-  const bloco=BLOCOS[step-1];
-  for(const p of bloco.perguntas){
-    if(!respostas[p.id]){
-      alert("Por favor, selecione uma opcao para a pergunta "+p.num+" antes de continuar.");
-      const el=document.getElementById("grp_"+p.id);
-      if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
-      return;
+  // Validar perguntas do bloco atual
+  const bloco = BLOCOS[step-1];
+  if(!bloco.obs){
+    for(const p of bloco.perguntas){
+      if(!respostas[p.id]){
+        alert("Por favor, selecione uma opção para a pergunta "+p.num+" antes de continuar.");
+        // Rolar até a pergunta
+        const el = document.getElementById("grp_"+p.id);
+        if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+        return;
+      }
     }
+  } else {
+    // Salvar obs finais
+    const ta = document.getElementById("obsFinais");
+    if(ta) respostas.obsFinais = ta.value;
   }
-  if(step<TOTAL_STEPS){step++;renderStep();}
-  else{mostrarRevisao();}
+
+  if(step < TOTAL_STEPS){
+    step++;
+    renderStep();
+  } else {
+    mostrarRevisao();
+  }
 }
 
 function voltarStep(){
-  if(step>1){step--;renderStep();}
+  if(step>1){
+    // Salvar obs se estiver na última tela
+    if(BLOCOS[step-1].obs){
+      const ta = document.getElementById("obsFinais");
+      if(ta) respostas.obsFinais = ta.value;
+    }
+    step--;
+    renderStep();
+  }
 }
 
-const PERGUNTAS_REVISAO=[
-  {id:"p1", bloco:"Desejo e Interesse",texto:"Ausencia ou reducao persistente de desejo sexual"},
-  {id:"p2", bloco:"Desejo e Interesse",texto:"Repulsa ou aversao ativa ao contato sexual"},
-  {id:"p3", bloco:"Resposta Fisica e Orgasmo",texto:"Dificuldade na resposta fisica de excitacao"},
-  {id:"p4", bloco:"Resposta Fisica e Orgasmo",texto:"Atraso ou ausencia de orgasmo"},
-  {id:"p5", bloco:"Resposta Fisica e Orgasmo",texto:"Ejaculacao rapida e involuntaria (homens)"},
-  {id:"p6", bloco:"Resposta Fisica e Orgasmo",texto:"Atraso ou ausencia de ejaculacao (homens)"},
-  {id:"p7", bloco:"Dor e Desconforto",texto:"Dor genital ou pelvica durante penetracao"},
-  {id:"p8", bloco:"Dor e Desconforto",texto:"Contracao involuntaria e medo da penetracao (mulheres)"},
-  {id:"p9", bloco:"Contexto e Duracao",texto:"Persistencia ha 6+ meses com sofrimento clinico"},
-  {id:"p10",bloco:"Contexto e Duracao",texto:"Generalizado vs. situacional"},
-  {id:"p11",bloco:"Contexto e Duracao",texto:"Fator etiologico associado"},
+// ═══════════════════════════════════
+// ENVIO
+// ═══════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+// REVISÃO
+// ═══════════════════════════════════════════════════════════════════
+const LETRAS_LABEL = { A:"A", B:"B", C:"C", D:"D" };
+const COR_LETRA = { A:"#16a34a", B:"#d97706", C:"#dc2626", D:"#7f1d1d" };
+
+const PERGUNTAS_REVISAO = [
+  { id:"p1",  bloco:"Energia e Aceleração",       texto:"Fases de energia acima do normal / aceleração" },
+  { id:"p2",  bloco:"Energia e Aceleração",       texto:"Padrão de sono e fala durante agitação" },
+  { id:"p3",  bloco:"Energia e Aceleração",       texto:"Autoconfiança exagerada ou riscos incomuns" },
+  { id:"p4",  bloco:"Tristeza e Depressão",       texto:"Tristeza profunda ou perda de interesse" },
+  { id:"p5",  bloco:"Tristeza e Depressão",       texto:"Disposição física, sono e apetite nas fases de baixa" },
+  { id:"p6",  bloco:"Tristeza e Depressão",       texto:"Desesperança, culpa excessiva ou ideação suicida" },
+  { id:"p7",  bloco:"Relacionamentos e Identidade", texto:"Reação ao abandono real ou imaginado" },
+  { id:"p8",  bloco:"Relacionamentos e Identidade", texto:"Relações intensas e instáveis" },
+  { id:"p9",  bloco:"Relacionamentos e Identidade", texto:"Instabilidade de identidade ou objetivos" },
+  { id:"p10", bloco:"Impulsos, Humor e Emoções",  texto:"Comportamentos impulsivos no dia a dia" },
+  { id:"p11", bloco:"Impulsos, Humor e Emoções",  texto:"Automutilação ou tentativas de autoextermínio" },
+  { id:"p12", bloco:"Impulsos, Humor e Emoções",  texto:"Oscilação rápida de humor" },
+  { id:"p13", bloco:"Impulsos, Humor e Emoções",  texto:"Vazio interior persistente ou tédio crônico" },
+  { id:"p14", bloco:"Impulsos, Humor e Emoções",  texto:"Manejo da raiva e da frustração" },
+  { id:"p15", bloco:"Impulsos, Humor e Emoções",    texto:"Dissociação ou paranoia sob estresse extremo" },
+  { id:"p16", bloco:"Cognição e Humor Misto",        texto:"Pensamentos acelerados / fuga de ideias" },
+  { id:"p17", bloco:"Cognição e Humor Misto",        texto:"Distrabilidade nos episódios de agitação" },
+  { id:"p18", bloco:"Cognição e Humor Misto",        texto:"Agitação psicomotora ou lentidão visível" },
+  { id:"p19", bloco:"Cognição e Humor Misto",        texto:"Dificuldade de concentração e memória" },
+  { id:"p20", bloco:"Cognição e Humor Misto",        texto:"Humor misto: tristeza e agitação simultâneas" },
 ];
 
-const COR_LETRA={A:"#16a34a",B:"#d97706",C:"#dc2626"};
+function mostrarRevisao() {
+  // Salvar obs finais se estiver na última tela
+  const ta = document.getElementById("obsFinais");
+  if(ta) respostas.obsFinais = ta.value;
 
-function mostrarRevisao(){
-  let h="";
-  h+="<div style='background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:16px'>";
-  h+="<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px'>Respondente</div>";
-  h+="<div style='font-size:14px;font-weight:600;color:#1f2937'>Proprio paciente &middot; Confidencial</div></div>";
-  let blocoAtual="";
-  PERGUNTAS_REVISAO.forEach(p=>{
-    if(p.bloco!==blocoAtual){
-      if(blocoAtual) h+="</div>";
-      blocoAtual=p.bloco;
-      h+="<div style='margin-bottom:12px'>";
-      h+="<div style='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:8px'>"+p.bloco+"</div>";
+  // Montar HTML da revisão
+  let h = "";
+
+  // Respondente
+  h += '<div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:12px;padding:14px 16px;margin-bottom:16px">';
+  h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Quem está respondendo</div>';
+  h += '<div style="font-size:14px;font-weight:600;color:#1f2937">';
+  h += respostas.tipoRespondente==="paciente" ? "🧑 Próprio paciente" : "👨‍👩‍👧 " + (respostas.nomeRespondente||"Familiar") + " · " + (respostas.parentesco||"");
+  h += "</div></div>";
+
+  // Perguntas agrupadas por bloco
+  let blocoAtual = "";
+  PERGUNTAS_REVISAO.forEach(p => {
+    if(p.bloco !== blocoAtual) {
+      if(blocoAtual) h += "</div>";
+      blocoAtual = p.bloco;
+      h += '<div style="margin-bottom:12px">';
+      h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;padding:8px 0 6px;border-bottom:1px solid #ede9fe;margin-bottom:8px">'+p.bloco+'</div>';
     }
-    const letra=respostas[p.id]||"-";
-    const cor=COR_LETRA[letra]||"#6b7280";
-    h+="<div style='display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6'>";
-    h+="<div style='width:26px;height:26px;min-width:26px;border-radius:50%;background:"+(letra!=="-"?cor+"22":"#f3f4f6")+";border:2px solid "+(letra!=="-"?cor:"#e5e7eb")+";display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:"+(letra!=="-"?cor:"#9ca3af")+"'>"+letra+"</div>";
-    h+="<div style='font-size:13px;color:#374151;line-height:1.4'>"+p.texto+"</div>";
-    h+="</div>";
+    const letra = respostas[p.id] || "—";
+    const cor = COR_LETRA[letra] || "#6b7280";
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">';
+    h += '<div style="width:26px;height:26px;min-width:26px;border-radius:50%;background:'+(letra!=="—"?cor+"22":"#f3f4f6")+';border:2px solid '+(letra!=="—"?cor:"#e5e7eb")+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+(letra!=="—"?cor:"#9ca3af")+'">' + letra + '</div>';
+    h += '<div style="font-size:13px;color:#374151;line-height:1.4">'+p.texto+'</div>';
+    h += '</div>';
   });
-  if(blocoAtual) h+="</div>";
-  document.getElementById("revisaoContent").innerHTML=h;
-  document.getElementById("formArea").style.display="none";
-  document.getElementById("revisaoArea").style.display="block";
+  if(blocoAtual) h += "</div>";
+
+  // Obs finais
+  if(respostas.obsFinais && respostas.obsFinais.trim()) {
+    h += '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-top:4px">';
+    h += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:6px">Observações livres</div>';
+    h += '<div style="font-size:13px;color:#374151;line-height:1.6">'+respostas.obsFinais+'</div>';
+    h += '</div>';
+  }
+
+  document.getElementById("revisaoContent").innerHTML = h;
+  document.getElementById("formArea").style.display = "none";
+  document.getElementById("revisaoArea").style.display = "block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-function voltarRevisao(){
-  document.getElementById("revisaoArea").style.display="none";
-  document.getElementById("formArea").style.display="block";
-  step=TOTAL_STEPS;renderStep();
+function voltarRevisao() {
+  document.getElementById("revisaoArea").style.display = "none";
+  document.getElementById("formArea").style.display = "block";
+  // Volta para a última etapa (obs finais)
+  step = TOTAL_STEPS;
+  renderStep();
+  // Restaurar obs finais
+  const ta = document.getElementById("obsFinais");
+  if(ta && respostas.obsFinais) ta.value = respostas.obsFinais;
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 async function enviar(){
-  const btn=document.querySelector("#revisaoArea .btn-next");
-  btn.disabled=true;btn.textContent="Enviando...";
+  const btn = document.getElementById("btnNext");
+  btn.disabled = true;
+  btn.textContent = "Enviando...";
   try{
-    await db.collection("clinica_rastreamento_sexual").add({
-      pacienteNome:nomePaciente||"",
-      tipoRespondente:"paciente",
-      p1:respostas.p1||"",p2:respostas.p2||"",p3:respostas.p3||"",
-      p4:respostas.p4||"",p5:respostas.p5||"",p6:respostas.p6||"",
-      p7:respostas.p7||"",p8:respostas.p8||"",p9:respostas.p9||"",
-      p10:respostas.p10||"",p11:respostas.p11||"",
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
+    const doc = {
+      pacienteNome: nomePaciente || "",
+      token: tokenParam || "",
+      tipoRespondente: respostas.tipoRespondente || "",
+      nomeRespondente: respostas.nomeRespondente || "",
+      parentesco: respostas.parentesco || "",
+      // Respostas das 20 perguntas
+      p1: respostas.p1||"", p2: respostas.p2||"", p3: respostas.p3||"",
+      p4: respostas.p4||"", p5: respostas.p5||"", p6: respostas.p6||"",
+      p7: respostas.p7||"", p8: respostas.p8||"", p9: respostas.p9||"",
+      p10: respostas.p10||"", p11: respostas.p11||"", p12: respostas.p12||"",
+      p13: respostas.p13||"", p14: respostas.p14||"", p15: respostas.p15||"",
+      p16: respostas.p16||"", p17: respostas.p17||"", p18: respostas.p18||"",
+      p19: respostas.p19||"", p20: respostas.p20||"",
+      obsFinais: respostas.obsFinais||"",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("clinica_rastreamento_bipolar").add(doc);
+
+    // Notificar Lucia
     await db.collection("nr1map_emails").add({
-      to:"luciakratz@gmail.com",
+      to: "luciakratz@gmail.com",
       message:{
-        subject:"Rastreamento Sexual — "+(nomePaciente||"Sem nome"),
-        html:"<h2>Novo rastreamento de saude sexual recebido</h2><p><b>Paciente:</b> "+(nomePaciente||"-")+"</p><p><b>Data:</b> "+new Date().toLocaleDateString("pt-BR")+"</p>"
+        subject: "🔔 Rastreamento Clínico — " + (nomePaciente||"Sem nome") + " (" + (respostas.tipoRespondente==="paciente"?"Próprio paciente":respostas.parentesco) + ")",
+        html: "<h2>Novo rastreamento recebido</h2><p><b>Paciente:</b> "+(nomePaciente||"—")+"</p><p><b>Respondido por:</b> "+respostas.nomeRespondente+" ("+respostas.parentesco+")</p><p><b>Data:</b> "+new Date().toLocaleDateString("pt-BR")+"</p>"
       },
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    document.getElementById("revisaoArea").style.display="none";
+
+    document.getElementById("formArea").style.display="none";
     document.getElementById("successArea").style.display="block";
     window.scrollTo({top:0,behavior:"smooth"});
   }catch(e){
     alert("Erro ao enviar. Tente novamente.\n"+e.message);
-    btn.disabled=false;btn.textContent="Confirmar e Enviar";
+    btn.disabled=false;
+    btn.textContent="✓ Enviar Respostas";
   }
 }
 
+// ═══════════════════════════════════
+// MICROFONE
+// ═══════════════════════════════════
 function initMic(){
   if(typeof SpeechRecognition==="undefined"&&typeof webkitSpeechRecognition==="undefined") return;
   const SR=typeof SpeechRecognition!=="undefined"?SpeechRecognition:webkitSpeechRecognition;
   document.querySelectorAll("textarea.has-mic").forEach(ta=>{
     if(ta.dataset.micDone) return;
     ta.dataset.micDone="1";
-    const wrap=document.createElement("div");wrap.className="mic-wrap";
-    ta.parentNode.insertBefore(wrap,ta);wrap.appendChild(ta);
+    const wrap=document.createElement("div");
+    wrap.className="mic-wrap";
+    ta.parentNode.insertBefore(wrap,ta);
+    wrap.appendChild(ta);
     const btn=document.createElement("button");
-    btn.type="button";btn.className="mic-btn";btn.title="Falar em vez de digitar";btn.textContent="&#127908;";
+    btn.type="button";btn.className="mic-btn";btn.title="Falar em vez de digitar";btn.textContent="🎤";
     let rec=null;
     btn.onclick=()=>{
-      if(rec){rec.stop();rec=null;btn.textContent="&#127908;";return;}
+      if(rec){rec.stop();rec=null;btn.textContent="🎤";return;}
       rec=new SR();rec.lang="pt-BR";rec.continuous=true;rec.interimResults=false;
       rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)ta.value+=(ta.value?" ":"")+e.results[i][0].transcript;};
-      rec.onend=()=>{rec=null;btn.textContent="&#127908;";};
-      rec.start();btn.textContent="&#128308;";
+      rec.onend=()=>{rec=null;btn.textContent="🎤";};
+      rec.start();btn.textContent="🔴";
     };
     wrap.appendChild(btn);
   });
