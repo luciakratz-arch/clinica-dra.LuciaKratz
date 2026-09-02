@@ -573,35 +573,45 @@ function DashboardAdmin({
         fontSize: 12,
         fontWeight: 600
       }
-    }, "Novo ✓"), (() => {
-      // Resolver pacienteId pelo nome se não vier salvo no doc
-      const pid = r.pacienteId || (window._pacientesCache || []).find(p => p.nome === r.pacienteNome)?.id;
-      if (!pid) return null;
-      return /*#__PURE__*/React.createElement("button", {
-        onClick: () => {
+    }, "Novo ✓"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => {
+        const pid = r.pacienteId || (window._pacientesCache || []).find(p => p.nome === r.pacienteNome)?.id;
+        if (pid) {
           window._pacienteInicialId = pid;
           window._pacienteAbaInicial = "questionarios";
+          // Navega para a página Pacientes
           onVerEvolucao && onVerEvolucao(pid);
-        },
-        style: {
-          background: "var(--purple)",
-          color: "white",
-          border: "none",
-          borderRadius: 8,
-          padding: "6px 14px",
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: "pointer",
-          fontFamily: "var(--font-body)",
-          display: "flex",
-          alignItems: "center",
-          gap: 5
+          // Se Pacientes já estava montado, dispara evento direto
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent("irParaPaciente", {
+              detail: {
+                pacienteId: pid,
+                aba: "questionarios"
+              }
+            }));
+          }, 80);
+        } else {
+          alert('Paciente não encontrado: ' + r.pacienteNome);
         }
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "external-link",
-        size: 12
-      }), " Ver");
-    })()));
+      },
+      style: {
+        background: "var(--purple)",
+        color: "white",
+        border: "none",
+        borderRadius: 8,
+        padding: "6px 14px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer",
+        fontFamily: "var(--font-body)",
+        display: "flex",
+        alignItems: "center",
+        gap: 5
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "external-link",
+      size: 12
+    }), " Ver")));
   }))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
@@ -1003,12 +1013,20 @@ function Pacientes({
 
   // Navegar direto para um paciente vindo do Dashboard
   useEffect(() => {
+    // Caso: pacientes acabou de carregar e há um paciente pendente
     if (window._pacienteInicialId) {
       setPerfilAberto(window._pacienteInicialId);
       setAbaInicialPerfil(window._pacienteAbaInicial || "evolucao");
       window._pacienteInicialId = null;
       window._pacienteAbaInicial = null;
     }
+    // Caso: componente já montado, recebe evento do Dashboard
+    function handleNav(e) {
+      setPerfilAberto(e.detail.pacienteId);
+      setAbaInicialPerfil(e.detail.aba || "questionarios");
+    }
+    window.addEventListener("irParaPaciente", handleNav);
+    return () => window.removeEventListener("irParaPaciente", handleNav);
   }, [pacientes]);
   const [importLog, setImportLog] = useState([]);
   const [importando, setImportando] = useState(false);
