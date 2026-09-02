@@ -248,18 +248,20 @@ function DashboardAdmin({ user, onVerEvolucao }) {
                     <span style={{background:"var(--purple-soft)",color:"var(--purple)",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>
                       Novo ✓
                     </span>
-                    {r.pacienteId && (
-                      <button
-                        onClick={()=>{
-                          window._pacienteInicialId = r.pacienteId;
-                          window._pacienteAbaInicial = "questionarios";
-                          // Emitir evento para o App navegar até Pacientes
-                          window.dispatchEvent(new CustomEvent("irParaPaciente",{detail:{pacienteId:r.pacienteId,aba:"questionarios"}}));
-                        }}
-                        style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
-                        <Icon name="external-link" size={12}/> Ver
-                      </button>
-                    )}
+                    {(()=>{
+                      // Resolver pacienteId pelo nome se não vier salvo no doc
+                      const pid = r.pacienteId || (window._pacientesCache||[]).find(p=>p.nome===r.pacienteNome)?.id;
+                      if(!pid) return null;
+                      return (
+                        <button
+                          onClick={()=>{
+                            window.dispatchEvent(new CustomEvent("irParaPaciente",{detail:{pacienteId:pid,aba:"questionarios"}}));
+                          }}
+                          style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
+                          <Icon name="external-link" size={12}/> Ver
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
