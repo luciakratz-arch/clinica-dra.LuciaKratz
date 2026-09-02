@@ -734,13 +734,21 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
         </div>
         <button style={{background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}} onClick={()=>{
           const pac = pacEfetivo;
+          const sessoesPac = sessPac; // alias local para o PDF
           const sessMeses = {};
           sessoesPac.forEach(s=>{
             const mes = (s.data||"").slice(0,7);
             if(!sessMeses[mes]) sessMeses[mes]=[];
             sessMeses[mes].push(s);
           });
-          const totalPago = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+          // Soma valorPago das sessões individuais
+          const totalPagoSessoes = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+          // Soma lançamentos recebidos/pagos vinculados ao pacote (cobre pagamentos parciais antecipados)
+          const totalPagoLanc = lancamentos
+            .filter(l=>pacoteIdsDosPac.includes(l.pacoteId)&&(l.status==="recebido"||l.status==="pago"))
+            .reduce((a,l)=>a+(parseFloat(l.valor)||0),0);
+          // Usa o maior dos dois valores para não duplicar
+          const totalPago = Math.max(totalPagoSessoes, totalPagoLanc);
           const totalValor = sessoesPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
           const fmtD = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}) : "—";
           const fmtM = m => { const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
@@ -801,8 +809,8 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
 </table>`).join("")}
 <div class="totais">
   <div class="total-item"><label>Total do pacote</label><span style="color:#111827">R$ ${totalValor.toFixed(2).replace(".",",")}</span></div>
-  <div class="total-item"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}</span></div>
-  <div class="total-item"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
+  <div class="total-item"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".",",")}${(()=>{const lp=lancamentos.filter(l=>pacoteIdsDosPac.includes(l.pacoteId)&&(l.status==="recebido"||l.status==="pago"));if(lp.length>0){const ultimo=lp.sort((a,b)=>(b.data||"").localeCompare(a.data||""))[0];return ' <small style="font-size:11px;font-weight:400;color:#059669">('+ultimo.formaPag+' · '+(ultimo.data?new Date(ultimo.data+"T12:00:00").toLocaleDateString("pt-BR"):"")+')</small>';}return"";})()}</span></div>
+  <div class="total-item"><label>A receber</label><span style="color:#d97706">R$ ${Math.max(0,totalValor-totalPago).toFixed(2).replace(".",",")}</span></div>
 </div>
 <div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · Clínica Dra. Lucia Kratz</div>
 </body></html>`;
