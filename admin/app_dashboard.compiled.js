@@ -563,36 +563,38 @@ function DashboardAdmin({
         fontSize: 12,
         fontWeight: 600
       }
-    }, "Novo ✓"), r.pacienteId && /*#__PURE__*/React.createElement("button", {
-      onClick: () => {
-        window._pacienteInicialId = r.pacienteId;
-        window._pacienteAbaInicial = "questionarios";
-        // Emitir evento para o App navegar até Pacientes
-        window.dispatchEvent(new CustomEvent("irParaPaciente", {
-          detail: {
-            pacienteId: r.pacienteId,
-            aba: "questionarios"
-          }
-        }));
-      },
-      style: {
-        background: "var(--purple)",
-        color: "white",
-        border: "none",
-        borderRadius: 8,
-        padding: "6px 14px",
-        fontSize: 12,
-        fontWeight: 600,
-        cursor: "pointer",
-        fontFamily: "var(--font-body)",
-        display: "flex",
-        alignItems: "center",
-        gap: 5
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "external-link",
-      size: 12
-    }), " Ver")));
+    }, "Novo ✓"), (() => {
+      // Resolver pacienteId pelo nome se não vier salvo no doc
+      const pid = r.pacienteId || (window._pacientesCache || []).find(p => p.nome === r.pacienteNome)?.id;
+      if (!pid) return null;
+      return /*#__PURE__*/React.createElement("button", {
+        onClick: () => {
+          window.dispatchEvent(new CustomEvent("irParaPaciente", {
+            detail: {
+              pacienteId: pid,
+              aba: "questionarios"
+            }
+          }));
+        },
+        style: {
+          background: "var(--purple)",
+          color: "white",
+          border: "none",
+          borderRadius: 8,
+          padding: "6px 14px",
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: "pointer",
+          fontFamily: "var(--font-body)",
+          display: "flex",
+          alignItems: "center",
+          gap: 5
+        }
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "external-link",
+        size: 12
+      }), " Ver");
+    })()));
   }))), /*#__PURE__*/React.createElement("div", {
     className: "card",
     style: {
