@@ -253,22 +253,25 @@ function DashboardAdmin({ user, onVerEvolucao }) {
                     <span style={{background:"var(--purple-soft)",color:"var(--purple)",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>
                       Novo ✓
                     </span>
-                    {(()=>{
-                      // Resolver pacienteId pelo nome se não vier salvo no doc
-                      const pid = r.pacienteId || (window._pacientesCache||[]).find(p=>p.nome===r.pacienteNome)?.id;
-                      if(!pid) return null;
-                      return (
-                        <button
-                          onClick={()=>{
-                            window._pacienteInicialId = pid;
-                            window._pacienteAbaInicial = "questionarios";
-                            onVerEvolucao && onVerEvolucao(pid);
-                          }}
-                          style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
-                          <Icon name="external-link" size={12}/> Ver
-                        </button>
-                      );
-                    })()}
+                    <button
+                      onClick={()=>{
+                        const pid = r.pacienteId || (window._pacientesCache||[]).find(p=>p.nome===r.pacienteNome)?.id;
+                        if(pid){
+                          window._pacienteInicialId = pid;
+                          window._pacienteAbaInicial = "questionarios";
+                          // Navega para a página Pacientes
+                          onVerEvolucao && onVerEvolucao(pid);
+                          // Se Pacientes já estava montado, dispara evento direto
+                          setTimeout(()=>{
+                            window.dispatchEvent(new CustomEvent("irParaPaciente",{detail:{pacienteId:pid,aba:"questionarios"}}));
+                          }, 80);
+                        } else {
+                          alert('Paciente não encontrado: '+r.pacienteNome);
+                        }
+                      }}
+                      style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
+                      <Icon name="external-link" size={12}/> Ver
+                    </button>
                   </div>
                 </div>
               );
@@ -404,12 +407,20 @@ function Pacientes({ user }) {
 
   // Navegar direto para um paciente vindo do Dashboard
   useEffect(()=>{
+    // Caso: pacientes acabou de carregar e há um paciente pendente
     if(window._pacienteInicialId){
       setPerfilAberto(window._pacienteInicialId);
       setAbaInicialPerfil(window._pacienteAbaInicial||"evolucao");
       window._pacienteInicialId = null;
       window._pacienteAbaInicial = null;
     }
+    // Caso: componente já montado, recebe evento do Dashboard
+    function handleNav(e){
+      setPerfilAberto(e.detail.pacienteId);
+      setAbaInicialPerfil(e.detail.aba||"questionarios");
+    }
+    window.addEventListener("irParaPaciente", handleNav);
+    return ()=> window.removeEventListener("irParaPaciente", handleNav);
   },[pacientes]);
   const [importLog, setImportLog] = useState([]);
   const [importando, setImportando] = useState(false);
