@@ -65,7 +65,7 @@ function DashboardAdmin({ user, onVerEvolucao }) {
     const COLS = [
       {col:"clinica_diario",           label:"📓 Diário",          campoData:"data",      campoNome:"pacienteNome", campoPacId:"pacienteId"},
       {col:"clinica_humor",            label:"😊 Humor",           campoData:"data",      campoNome:"pacienteNome", campoPacId:"pacienteId"},
-      {col:"clinica_metas",            label:"🎯 Metas",           campoData:"updatedAt", campoNome:"pacienteNome", campoPacId:"pacienteId"},
+      // clinica_metas excluída: updatedAt é atualizado pela psicóloga, não pelo paciente
       {col:"clinica_tcc",              label:"🧠 TCC",             campoData:"data",      campoNome:"pacienteNome", campoPacId:"pacienteId"},
       {col:"clinica_reflexoes",        label:"💭 Reflexão",        campoData:"data",      campoNome:"pacienteNome", campoPacId:"pacienteId"},
       {col:"clinica_gestao_ansiedade", label:"🗂️ Macroatividades",  campoData:"data",      campoNome:"pacienteNome", campoPacId:"pacienteId"},
@@ -207,9 +207,12 @@ function DashboardAdmin({ user, onVerEvolucao }) {
                         ))}
                       </div>
                       {info.ultimaAtividade&&(()=>{
-                        const diff = Math.floor((Date.now()-new Date(info.ultimaAtividade).getTime())/(1000*60*60*24));
-                        const txt = diff===0?"hoje":diff===1?"ontem":`há ${diff} dias`;
-                        return <div style={{fontSize:11,color:"var(--text-muted)"}}>Último acesso: {txt}</div>;
+                        const raw = info.ultimaAtividade.length===10
+                          ? info.ultimaAtividade+"T12:00:00"
+                          : info.ultimaAtividade;
+                        const diff = Math.floor((Date.now()-new Date(raw).getTime())/(1000*60*60*24));
+                        const txt = isNaN(diff)?"":diff===0?"hoje":diff===1?"ontem":`há ${diff} dias`;
+                        return txt?<div style={{fontSize:11,color:"var(--text-muted)"}}>Último acesso: {txt}</div>:null;
                       })()}
                     </div>
                   </div>
