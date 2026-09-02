@@ -152,7 +152,7 @@ function DashboardAdmin({ user, onVerEvolucao }) {
   const saldoAno = recAno - despAno;
 
   const pacAtivos = Object.entries(atividades).filter(([,v])=>Object.keys(v.itens).length>0)
-    .sort((a,b)=>(a[1].nome||"").localeCompare(b[1].nome||""));
+    .sort((a,b)=>(b[1].ultimaAtividade||"").localeCompare(a[1].ultimaAtividade||""));
 
   return (
     <div>
@@ -200,12 +200,17 @@ function DashboardAdmin({ user, onVerEvolucao }) {
                         <span style={{fontWeight:600,fontSize:14}}>{info.nome||"Paciente"}</span>
                         {isNovo&&<span style={{fontSize:10,background:"var(--purple)",color:"white",borderRadius:20,padding:"1px 8px",fontWeight:600}}>NOVO</span>}
                       </div>
-                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:4}}>
                         {Object.entries(info.itens).map(([label, count])=>(
                           <span key={label} style={{fontSize:12,background:"white",border:"1px solid var(--gray-200)",borderRadius:20,padding:"2px 10px",color:"var(--text-muted)"}}>
                             {label} {count>1?`(${count})`:""}</span>
                         ))}
                       </div>
+                      {info.ultimaAtividade&&(()=>{
+                        const diff = Math.floor((Date.now()-new Date(info.ultimaAtividade).getTime())/(1000*60*60*24));
+                        const txt = diff===0?"hoje":diff===1?"ontem":`há ${diff} dias`;
+                        return <div style={{fontSize:11,color:"var(--text-muted)"}}>Último acesso: {txt}</div>;
+                      })()}
                     </div>
                   </div>
                   <button
@@ -255,7 +260,9 @@ function DashboardAdmin({ user, onVerEvolucao }) {
                       return (
                         <button
                           onClick={()=>{
-                            window.dispatchEvent(new CustomEvent("irParaPaciente",{detail:{pacienteId:pid,aba:"questionarios"}}));
+                            window._pacienteInicialId = pid;
+                            window._pacienteAbaInicial = "questionarios";
+                            onVerEvolucao && onVerEvolucao(pid);
                           }}
                           style={{background:"var(--purple)",color:"white",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-body)",display:"flex",alignItems:"center",gap:5}}>
                           <Icon name="external-link" size={12}/> Ver
@@ -403,13 +410,7 @@ function Pacientes({ user }) {
       window._pacienteInicialId = null;
       window._pacienteAbaInicial = null;
     }
-    function handleIrParaPaciente(e){
-      setPerfilAberto(e.detail.pacienteId);
-      setAbaInicialPerfil(e.detail.aba||"questionarios");
-    }
-    window.addEventListener("irParaPaciente", handleIrParaPaciente);
-    return ()=> window.removeEventListener("irParaPaciente", handleIrParaPaciente);
-  },[]);
+  },[pacientes]);
   const [importLog, setImportLog] = useState([]);
   const [importando, setImportando] = useState(false);
 
