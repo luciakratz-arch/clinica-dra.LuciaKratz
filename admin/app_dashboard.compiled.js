@@ -104,13 +104,9 @@ function DashboardAdmin({
       campoData: "data",
       campoNome: "pacienteNome",
       campoPacId: "pacienteId"
-    }, {
-      col: "clinica_metas",
-      label: "🎯 Metas",
-      campoData: "updatedAt",
-      campoNome: "pacienteNome",
-      campoPacId: "pacienteId"
-    }, {
+    },
+    // clinica_metas excluída: updatedAt é atualizado pela psicóloga, não pelo paciente
+    {
       col: "clinica_tcc",
       label: "🧠 TCC",
       campoData: "data",
@@ -445,14 +441,15 @@ function DashboardAdmin({
         color: "var(--text-muted)"
       }
     }, label, " ", count > 1 ? `(${count})` : ""))), info.ultimaAtividade && (() => {
-      const diff = Math.floor((Date.now() - new Date(info.ultimaAtividade).getTime()) / (1000 * 60 * 60 * 24));
-      const txt = diff === 0 ? "hoje" : diff === 1 ? "ontem" : `há ${diff} dias`;
-      return /*#__PURE__*/React.createElement("div", {
+      const raw = info.ultimaAtividade.length === 10 ? info.ultimaAtividade + "T12:00:00" : info.ultimaAtividade;
+      const diff = Math.floor((Date.now() - new Date(raw).getTime()) / (1000 * 60 * 60 * 24));
+      const txt = isNaN(diff) ? "" : diff === 0 ? "hoje" : diff === 1 ? "ontem" : `há ${diff} dias`;
+      return txt ? /*#__PURE__*/React.createElement("div", {
         style: {
           fontSize: 11,
           color: "var(--text-muted)"
         }
-      }, "Último acesso: ", txt);
+      }, "Último acesso: ", txt) : null;
     })())), /*#__PURE__*/React.createElement("button", {
       onClick: () => onVerEvolucao && onVerEvolucao(pacId),
       style: {
