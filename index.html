@@ -347,133 +347,107 @@
       /* Depoimentos tela pequena */
       #carrossel img { width: calc(100vw - 60px) !important; height: 280px !important; }
     }
-    /* ── ANIMAÇÕES ── */
+    /* ── ANIMAÇÕES MODERADAS E VARIADAS ── */
 
-    /* Nav entrada */
-    .navbar { animation: navIn 0.6s ease both; }
-    @keyframes navIn {
-      from { opacity:0; transform:translateY(-12px); }
-      to   { opacity:1; transform:translateY(0); }
+    /* Nav — fade simples */
+    .navbar { animation: navFade 0.5s ease both; }
+    @keyframes navFade {
+      from { opacity:0; } to { opacity:1; }
     }
 
-    /* Hero entrada em cascata */
-    .hero-badge    { animation: slideIn 0.7s ease 0.1s both; }
-    .hero-title    { animation: slideIn 0.7s ease 0.25s both; }
-    .hero-sub      { animation: slideIn 0.7s ease 0.4s both; }
-    .hero-tags     { animation: slideIn 0.7s ease 0.55s both; }
-    .hero-btns     { animation: slideIn 0.7s ease 0.7s both; }
-    .hero-links    { animation: slideIn 0.7s ease 0.85s both; }
-    .hero-img      { animation: heroImgIn 0.9s ease 0.3s both; }
-    @keyframes slideIn {
-      from { opacity:0; transform:translateX(-20px); }
+    /* Hero — título desliza, restante faz fade puro */
+    .hero-badge { animation: slideX 0.6s ease 0.1s both; }
+    .hero-title { animation: slideX 0.7s ease 0.2s both; }
+    .hero-sub   { animation: justFade 0.8s ease 0.4s both; }
+    .hero-tags  { animation: justFade 0.7s ease 0.55s both; }
+    .hero-btns  { animation: justFade 0.7s ease 0.7s both; }
+    .hero-links { animation: justFade 0.6s ease 0.85s both; }
+    .hero-img   { animation: justFade 1.1s ease 0.3s both; }
+    @keyframes slideX {
+      from { opacity:0; transform:translateX(-14px); }
       to   { opacity:1; transform:translateX(0); }
     }
-    @keyframes heroImgIn {
-      from { opacity:0; transform:translateY(20px) scale(0.97); }
-      to   { opacity:1; transform:translateY(0) scale(1); }
+    @keyframes justFade {
+      from { opacity:0; } to { opacity:1; }
     }
 
-    /* Scroll reveal base */
-    .reveal {
-      opacity:0; transform:translateY(22px);
+    /* Scroll reveal — 3 variações para quebrar monotonia */
+
+    /* Fade puro — títulos, textos, badges de seção */
+    .rv-fade {
+      opacity:0;
+      transition: opacity 0.8s ease;
+    }
+    .rv-fade.vis { opacity:1; }
+
+    /* Sobe suave (6px) — cards de serviço, produtos */
+    .rv-up {
+      opacity:0; transform:translateY(6px);
       transition: opacity 0.65s ease, transform 0.65s ease;
     }
-    .reveal.visible { opacity:1; transform:translateY(0); }
-    .reveal-left {
-      opacity:0; transform:translateX(-24px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    .reveal-left.visible { opacity:1; transform:translateX(0); }
-    .reveal-scale {
-      opacity:0; transform:scale(0.94);
-      transition: opacity 0.6s ease, transform 0.6s ease;
-    }
-    .reveal-scale.visible { opacity:1; transform:scale(1); }
+    .rv-up.vis { opacity:1; transform:translateY(0); }
 
-    /* Hover — servico cards: sobem com sombra roxa */
-    .servico-card {
-      transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+    /* Vem da lateral — alternado nos pares de seções */
+    .rv-left {
+      opacity:0; transform:translateX(-12px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
     }
-    .servico-card:hover {
-      box-shadow: 0 12px 36px rgba(123,0,196,0.14);
-      transform: translateY(-6px);
-      border-color: rgba(123,0,196,0.25);
+    .rv-left.vis { opacity:1; transform:translateX(0); }
+    .rv-right {
+      opacity:0; transform:translateX(12px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
     }
-    .servico-card:hover .servico-icon {
-      background: var(--purple);
-      color: white;
-      transition: background 0.3s, color 0.3s;
-    }
+    .rv-right.vis { opacity:1; transform:translateX(0); }
 
-    /* Hover — stat cards: cor suave */
-    .stat-card {
-      transition: background 0.3s ease, border-color 0.3s ease;
-    }
-    .stat-card:hover {
-      background: var(--purple-soft);
-      border-color: rgba(123,0,196,0.2);
-    }
-    .stat-card:hover .stat-value { color: var(--purple-dark); transition: color 0.3s; }
+    /* ── CANTOS ARREDONDADOS (mais acolhedor) ── */
+    .servico-card    { border-radius: 18px !important; }
+    .stat-card       { border-radius: 16px !important; }
+    .modalidade-card { border-radius: 16px !important; }
+    .contato-card    { border-radius: 16px !important; }
+    .galeria-item    { border-radius: 16px !important; overflow:hidden; }
+    #depoimentos [style*="min-width:320px"] { border-radius: 20px !important; }
+    #voce-se-identifica .ident-card { border-radius: 16px !important; }
+    #imagine-voce .transf-card { border-radius: 16px !important; }
 
-    /* Hover — sobre chips */
-    .sobre-chip {
-      transition: background 0.25s, color 0.25s;
-    }
-    .sobre-chip:hover {
-      background: var(--purple);
-      color: white;
-    }
+    /* ── HOVERS DIFERENCIADOS POR FAMÍLIA ── */
 
-    /* Hover — processo cards */
-    .processo-card {
-      transition: background 0.25s ease, border-radius 0.25s;
-    }
-    .processo-card:hover { background: var(--purple-bg); border-radius: var(--radius); }
-    .processo-card:hover .processo-num { color: rgba(123,0,196,0.2); transition: color 0.3s; }
+    /* Serviços — sobem, ícone inverte */
+    .servico-card { transition: box-shadow .3s, transform .3s; }
+    .servico-card:hover { transform:translateY(-5px); box-shadow:0 10px 30px rgba(123,0,196,0.12); }
+    .servico-card:hover .servico-icon { background:var(--purple); color:white; transition:background .3s,color .3s; }
 
-    /* Hover — "Você se identifica" cards: borda acende */
-    #voce-se-identifica [style*="border-left"]:not([style*="purple-soft"]) {
-      transition: border-left-color 0.3s, background 0.3s, box-shadow 0.3s;
-    }
-    #voce-se-identifica [style*="border-left"]:not([style*="purple-soft"]):hover {
-      background: var(--purple-soft) !important;
-      box-shadow: 0 4px 16px rgba(123,0,196,0.1);
-    }
-    #voce-se-identifica svg { transition: stroke 0.3s; }
+    /* Stats — só cor, não sobem */
+    .stat-card { transition: background .3s, border-color .3s; }
+    .stat-card:hover { background:var(--purple-soft); border-color:rgba(123,0,196,0.15); }
+    .stat-card:hover .stat-value { color:var(--purple-dark); transition:color .3s; }
 
-    /* Hover — "Imagine você" cards brancos: cor de fundo suave */
-    #imagine-voce [style*="background:white"] {
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-    #imagine-voce [style*="background:white"]:hover {
-      background: var(--purple-soft) !important;
-      box-shadow: 0 4px 16px rgba(123,0,196,0.1);
-    }
+    /* Chips — invertem cor */
+    .sobre-chip { transition:background .25s,color .25s; cursor:default; }
+    .sobre-chip:hover { background:var(--purple); color:white; }
 
-    /* Hover — midia cards já têm hover, só suaviza */
-    .midia-card { transition: all .25s ease; }
+    /* "Você se identifica" — fundo suave, sem mover */
+    #voce-se-identifica .ident-card { transition:background .3s,box-shadow .3s; }
+    #voce-se-identifica .ident-card:hover { background:var(--purple-soft) !important; box-shadow:0 4px 16px rgba(123,0,196,0.07); }
 
-    /* Hover — galeria zoom */
-    .galeria-item { overflow: hidden; }
-    .galeria-item img { transition: transform 0.4s ease; }
-    .galeria-item:hover img { transform: scale(1.06); }
+    /* "Imagine você" — sombra sutil */
+    #imagine-voce .transf-card { transition:box-shadow .3s; }
+    #imagine-voce .transf-card:hover { box-shadow:0 6px 20px rgba(123,0,196,0.1); }
 
-    /* Hover — btn-primary micro lift */
-    .btn-primary { transition: background .2s, transform .2s, box-shadow .2s; }
-    .btn-primary:hover {
-      background: var(--purple-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(123,0,196,0.25);
-    }
+    /* Depoimentos — sombra suave, sem subir */
+    #depoimentos [style*="min-width:320px"] { transition:box-shadow .3s; }
+    #depoimentos [style*="min-width:320px"]:hover { box-shadow:0 8px 28px rgba(123,0,196,0.13); }
 
-    /* Depoimento cards hover */
-    #depoimentos [style*="border-radius:16px"] {
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-    }
-    #depoimentos [style*="border-radius:16px"]:hover {
-      box-shadow: 0 8px 32px rgba(123,0,196,0.16);
-      transform: translateY(-4px);
-    }
+    /* Galeria — zoom levinho */
+    .galeria-item img { transition:transform .5s ease; }
+    .galeria-item:hover img { transform:scale(1.04); }
+
+    /* Processo — fundo */
+    .processo-card { border-radius:14px; transition:background .3s; }
+    .processo-card:hover { background:var(--purple-bg); }
+
+    /* Botão primário */
+    .btn-primary { transition:background .2s,transform .15s,box-shadow .2s; }
+    .btn-primary:hover { background:var(--purple-dark); transform:translateY(-2px); box-shadow:0 6px 20px rgba(123,0,196,0.2); }
 
   </style>
 <!-- Google tag (gtag.js) -->
@@ -570,32 +544,32 @@
     <h2 class="section-title" style="max-width:560px">Talvez você esteja passando por isso agora</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:40px;">
 
-      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+      <div class="ident-card" style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
         <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Sente ansiedade, pensamentos que não param ou uma sensação constante de sobrecarga?</p>
       </div>
 
-      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+      <div class="ident-card" style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
         <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Tem conflitos nos relacionamentos — medo de abandono, dificuldade de se expressar ou padrões que se repetem?</p>
       </div>
 
-      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+      <div class="ident-card" style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
         <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Sente que carrega algo do passado que ainda pesa no presente — na autoestima, nas escolhas, no corpo?</p>
       </div>
 
-      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+      <div class="ident-card" style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
         <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Tem dificuldades de atenção, memória ou aprendizado que prejudicam sua vida profissional ou escolar?</p>
       </div>
 
-      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+      <div class="ident-card" style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
         <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Sente que perdeu conexão consigo — com suas emoções, seus limites, sua identidade ou seu propósito?</p>
       </div>
 
-      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--purple-soft);border-radius:var(--radius);border-left:3px solid var(--purple);">
+      <div class="ident-card" style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--purple-soft);border-radius:var(--radius);border-left:3px solid var(--purple);">
         <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5a0090" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <p style="font-size:14px;color:var(--purple-dark);line-height:1.6;font-weight:500;">Se você se reconhece em alguma dessas situações, saiba: há caminhos possíveis. E você não precisa percorrê-los sozinha.</p>
       </div>
@@ -706,27 +680,27 @@
       É para isso que trabalhamos juntas. Resultado a resultado, sessão a sessão.
     </p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;text-align:left;">
-      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+      <div class="transf-card" style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
         <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 3.5-5 9-5 9S7 10.5 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="2"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Dormindo melhor e sentindo seu corpo finalmente em paz</p>
       </div>
-      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+      <div class="transf-card" style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
         <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Respondendo às emoções com calma, sem explosões ou travamentos</p>
       </div>
-      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+      <div class="transf-card" style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
         <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Construindo relacionamentos mais leves, maduros e nutritivos</p>
       </div>
-      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+      <div class="transf-card" style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
         <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Se sentindo merecedora de amor — sem medo, sem defesas, sem sobressaltos</p>
       </div>
-      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+      <div class="transf-card" style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
         <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Com clareza sobre quem você é, o que quer e para onde vai</p>
       </div>
-      <div style="background:var(--purple);border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+      <div class="transf-card" style="background:var(--purple);border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
         <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <p style="font-size:14px;color:rgba(255,255,255,0.92);line-height:1.6;font-weight:500;">Aqui, isso é possível. E você não precisa fazer esse caminho sozinha.</p>
       </div>
@@ -765,7 +739,7 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px">
 
       <!-- Card 9&Self -->
-      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+      <div class="produto-card" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
         <img src="produtos_9self-banner.png" alt="9&Self — Descubra sua Personalidade" style="width:100%;display:block">
         <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
           <div style="font-size:11px;font-weight:700;color:#7B00C4;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Mapeamento de Perfil Comportamental</div>
@@ -787,7 +761,7 @@
       </div>
 
       <!-- Card NR-1 Map -->
-      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+      <div class="produto-card" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
         <img src="produtos_nr1map-banner.jpg.png" alt="NR-1 Map — Diagnóstico de Riscos Psicossociais" style="width:100%;display:block">
         <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
           <div style="font-size:11px;font-weight:700;color:#7B00C4;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Diagnóstico de Riscos Psicossociais</div>
@@ -810,7 +784,7 @@
       </div>
 
       <!-- Card Eneagrama do Amor -->
-      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+      <div class="produto-card" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
         <img src="produtos_eneagramadoamor-banner.png" alt="Eneagrama do Amor em Tempos de Crise" style="width:100%;display:block">
         <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
           <div style="font-size:11px;font-weight:700;color:#8B1E2E;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Curso para Casais</div>
@@ -832,7 +806,7 @@
       </div>
 
       <!-- Card Livro Psicopata -->
-      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+      <div class="produto-card" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
         <img src="produtos_livropsicopata-banner.png" alt="Meu companheiro é um psicopata, será?" style="width:100%;display:block">
         <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
           <div style="font-size:11px;font-weight:700;color:#0a0a0a;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Livro Digital</div>
@@ -854,7 +828,7 @@
       </div>
 
       <!-- Card Líder 5.0 -->
-      <div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
+      <div class="produto-card" style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(123,0,196,0.12);display:flex;flex-direction:column">
         <img src="produtos_lider5.o-banner.png" alt="Líder 5.0 — Revolucionando a liderança" style="width:100%;display:block">
         <div style="padding:20px 22px;flex:1;display:flex;flex-direction:column">
           <div style="font-size:11px;font-weight:700;color:#2BA6DE;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Livro Digital</div>
@@ -1401,115 +1375,82 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <script>
-/* ── SCROLL REVEAL ── */
+/* ── SCROLL REVEAL VARIADO ── */
 (function(){
   var obs = new IntersectionObserver(function(entries){
     entries.forEach(function(e){
       if(!e.isIntersecting) return;
-      var el = e.target;
-      var delay = parseInt(el.dataset.delay || 0);
-      setTimeout(function(){ el.classList.add('visible'); }, delay);
+      var el = e.target, delay = parseInt(el.dataset.delay||0);
+      setTimeout(function(){ el.classList.add('vis'); }, delay);
       obs.unobserve(el);
     });
-  }, { threshold: 0.1 });
+  }, { threshold:0.1 });
 
-  /* Títulos e labels de seção */
-  document.querySelectorAll('.section-label, .section-title, .section-sub').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i % 3 * 80;
+  function watch(el, cls, delay){
+    el.classList.add(cls);
+    if(delay) el.dataset.delay = delay;
     obs.observe(el);
+  }
+
+  /* Títulos e labels — fade puro, sem movimento */
+  document.querySelectorAll('.section-label,.section-title,.section-sub').forEach(function(el,i){
+    watch(el,'rv-fade', i%2*60);
   });
 
-  /* Cards de serviço — stagger */
-  document.querySelectorAll('.servico-card').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 80;
-    obs.observe(el);
+  /* Sobre — texto vem da esquerda, stats da direita */
+  var sobreText = document.querySelector('.sobre-text');
+  if(sobreText) watch(sobreText,'rv-left');
+  document.querySelectorAll('.stat-card').forEach(function(el,i){
+    watch(el,'rv-right', i*100);
   });
 
-  /* Stats */
-  document.querySelectorAll('.stat-card').forEach(function(el, i){
-    el.classList.add('reveal-scale');
-    el.dataset.delay = i * 100;
-    obs.observe(el);
+  /* Serviços — sobem suavemente em stagger */
+  document.querySelectorAll('.servico-card').forEach(function(el,i){
+    watch(el,'rv-up', i*70);
   });
 
-  /* Sobre texto */
-  document.querySelectorAll('.sobre-text').forEach(function(el){
-    el.classList.add('reveal-left');
-    obs.observe(el);
+  /* Processo — fade puro (não precisa de movimento) */
+  document.querySelectorAll('.processo-card').forEach(function(el,i){
+    watch(el,'rv-fade', i*80);
   });
 
-  /* Processo cards */
-  document.querySelectorAll('.processo-card').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 100;
-    obs.observe(el);
+  /* "Você se identifica" — alternado esquerda/direita */
+  document.querySelectorAll('#voce-se-identifica .ident-card').forEach(function(el,i){
+    watch(el, i%2===0 ? 'rv-left' : 'rv-right', i*80);
   });
 
-  /* "Você se identifica" cards */
-  document.querySelectorAll('#voce-se-identifica .section-inner > div:last-of-type > div').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 80;
-    obs.observe(el);
+  /* "Imagine você" — fade puro (seção já é colorida) */
+  document.querySelectorAll('#imagine-voce .transf-card').forEach(function(el,i){
+    watch(el,'rv-fade', i*80);
   });
 
-  /* "Imagine você" cards */
-  document.querySelectorAll('#imagine-voce .section-inner > div:last-of-type > div').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 80;
-    obs.observe(el);
+  /* Produtos — sobem */
+  document.querySelectorAll('.produto-card').forEach(function(el,i){
+    watch(el,'rv-up', i*90);
   });
 
-  /* Produtos cards */
-  document.querySelectorAll('#produtos > div > div > div').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 100;
-    obs.observe(el);
+  /* Depoimentos — fade */
+  document.querySelectorAll('#depoimentos [style*="min-width:320px"]').forEach(function(el,i){
+    watch(el,'rv-fade', i*60);
   });
 
-  /* Depoimentos cards */
-  document.querySelectorAll('#depoimentos [style*="min-width:320px"]').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 80;
-    obs.observe(el);
+  /* Galeria — fade escalonado */
+  document.querySelectorAll('.galeria-item').forEach(function(el,i){
+    watch(el,'rv-fade', i*60);
   });
 
-  /* Galeria */
-  document.querySelectorAll('.galeria-item').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 80;
-    obs.observe(el);
+  /* Mídia — fade simples */
+  document.querySelectorAll('.midia-card').forEach(function(el,i){
+    watch(el,'rv-fade', i*25);
   });
 
-  /* Midia cards */
-  document.querySelectorAll('.midia-card').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 40;
-    obs.observe(el);
+  /* Contato — itens da esquerda, cards da direita */
+  document.querySelectorAll('.contato-item').forEach(function(el,i){
+    watch(el,'rv-left', i*70);
   });
-
-  /* Contato items */
-  document.querySelectorAll('.contato-item').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 80;
-    obs.observe(el);
+  document.querySelectorAll('.contato-card').forEach(function(el,i){
+    watch(el,'rv-right', i*90);
   });
-
-  /* Contato cards */
-  document.querySelectorAll('.contato-card').forEach(function(el, i){
-    el.classList.add('reveal');
-    el.dataset.delay = i * 100;
-    obs.observe(el);
-  });
-
-  /* Processo nota */
-  var nota = document.querySelector('.processo-nota');
-  if(nota){ nota.classList.add('reveal'); obs.observe(nota); }
-
-  /* Banner app */
-  var bloco = document.getElementById('bloco-app-paciente');
-  if(bloco){ bloco.closest('[style*="border-radius:20px"]').classList.add('reveal-scale'); obs.observe(bloco.closest('[style*="border-radius:20px"]')); }
 
 })();
 </script>
