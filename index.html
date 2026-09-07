@@ -347,6 +347,134 @@
       /* Depoimentos tela pequena */
       #carrossel img { width: calc(100vw - 60px) !important; height: 280px !important; }
     }
+    /* ── ANIMAÇÕES ── */
+
+    /* Nav entrada */
+    .navbar { animation: navIn 0.6s ease both; }
+    @keyframes navIn {
+      from { opacity:0; transform:translateY(-12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* Hero entrada em cascata */
+    .hero-badge    { animation: slideIn 0.7s ease 0.1s both; }
+    .hero-title    { animation: slideIn 0.7s ease 0.25s both; }
+    .hero-sub      { animation: slideIn 0.7s ease 0.4s both; }
+    .hero-tags     { animation: slideIn 0.7s ease 0.55s both; }
+    .hero-btns     { animation: slideIn 0.7s ease 0.7s both; }
+    .hero-links    { animation: slideIn 0.7s ease 0.85s both; }
+    .hero-img      { animation: heroImgIn 0.9s ease 0.3s both; }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateX(-20px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+    @keyframes heroImgIn {
+      from { opacity:0; transform:translateY(20px) scale(0.97); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    /* Scroll reveal base */
+    .reveal {
+      opacity:0; transform:translateY(22px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    .reveal-left {
+      opacity:0; transform:translateX(-24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal-left.visible { opacity:1; transform:translateX(0); }
+    .reveal-scale {
+      opacity:0; transform:scale(0.94);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal-scale.visible { opacity:1; transform:scale(1); }
+
+    /* Hover — servico cards: sobem com sombra roxa */
+    .servico-card {
+      transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+    }
+    .servico-card:hover {
+      box-shadow: 0 12px 36px rgba(123,0,196,0.14);
+      transform: translateY(-6px);
+      border-color: rgba(123,0,196,0.25);
+    }
+    .servico-card:hover .servico-icon {
+      background: var(--purple);
+      color: white;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Hover — stat cards: cor suave */
+    .stat-card {
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+    .stat-card:hover {
+      background: var(--purple-soft);
+      border-color: rgba(123,0,196,0.2);
+    }
+    .stat-card:hover .stat-value { color: var(--purple-dark); transition: color 0.3s; }
+
+    /* Hover — sobre chips */
+    .sobre-chip {
+      transition: background 0.25s, color 0.25s;
+    }
+    .sobre-chip:hover {
+      background: var(--purple);
+      color: white;
+    }
+
+    /* Hover — processo cards */
+    .processo-card {
+      transition: background 0.25s ease, border-radius 0.25s;
+    }
+    .processo-card:hover { background: var(--purple-bg); border-radius: var(--radius); }
+    .processo-card:hover .processo-num { color: rgba(123,0,196,0.2); transition: color 0.3s; }
+
+    /* Hover — "Você se identifica" cards: borda acende */
+    #voce-se-identifica [style*="border-left"]:not([style*="purple-soft"]) {
+      transition: border-left-color 0.3s, background 0.3s, box-shadow 0.3s;
+    }
+    #voce-se-identifica [style*="border-left"]:not([style*="purple-soft"]):hover {
+      background: var(--purple-soft) !important;
+      box-shadow: 0 4px 16px rgba(123,0,196,0.1);
+    }
+    #voce-se-identifica svg { transition: stroke 0.3s; }
+
+    /* Hover — "Imagine você" cards brancos: cor de fundo suave */
+    #imagine-voce [style*="background:white"] {
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    #imagine-voce [style*="background:white"]:hover {
+      background: var(--purple-soft) !important;
+      box-shadow: 0 4px 16px rgba(123,0,196,0.1);
+    }
+
+    /* Hover — midia cards já têm hover, só suaviza */
+    .midia-card { transition: all .25s ease; }
+
+    /* Hover — galeria zoom */
+    .galeria-item { overflow: hidden; }
+    .galeria-item img { transition: transform 0.4s ease; }
+    .galeria-item:hover img { transform: scale(1.06); }
+
+    /* Hover — btn-primary micro lift */
+    .btn-primary { transition: background .2s, transform .2s, box-shadow .2s; }
+    .btn-primary:hover {
+      background: var(--purple-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(123,0,196,0.25);
+    }
+
+    /* Depoimento cards hover */
+    #depoimentos [style*="border-radius:16px"] {
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    #depoimentos [style*="border-radius:16px"]:hover {
+      box-shadow: 0 8px 32px rgba(123,0,196,0.16);
+      transform: translateY(-4px);
+    }
+
   </style>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-S8T7H1DEY5"></script>
@@ -395,14 +523,14 @@
       <h1 class="hero-title">
         <em>Lucia Kratz</em>
       </h1>
-      <p class="hero-sub">
-        Psicóloga · Especialista em TCC · Musicoterapeuta · Neuromodulação
+      <p style="font-size:20px;font-family:var(--font-display);font-style:italic;color:var(--purple-dark);line-height:1.5;margin-bottom:16px;">
+        Aqui, você é ouvida. Com técnica, acolhimento e ciência.
       </p>
       <p class="hero-sub">
-        Psicóloga (CRP 09/20590), Doutora em Psicologia, em especialização em Neuropsicologia dos Transtornos Mentais pela Artmed. Formação em Terapia Cognitivo-Comportamental (TCC), Musicoterapia e Neuromodulação não invasiva, com atuação em avaliação psicológica e estimulação cerebral por Neurofeedback EEG e Pulsetto.
+        Psicóloga · Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação
       </p>
-      <p class="hero-sub">
-        Atende a partir de 8 anos, adolescentes, adultos e idosos. Avaliações com instrumentos aprovados pelo SATEPSI/CFP e laudos conforme a Resolução CFP 06/2019.
+      <p class="hero-sub" style="font-size:14px;">
+        Atende a partir de 8 anos, adolescentes, adultos e idosos. Presencial em Goiânia e online. Avaliações com instrumentos aprovados pelo SATEPSI/CFP.
       </p>
       <div class="hero-tags">
         <span class="hero-tag">TCC</span>
@@ -431,6 +559,52 @@
     </div>
     <div class="hero-img">
       <img src="foto3.jpeg" alt="Dra. Lucia Kratz" onerror="this.style.display='none'" />
+    </div>
+  </div>
+</section>
+
+<!-- VOCÊ SE IDENTIFICA? -->
+<section id="voce-se-identifica" style="background:white;">
+  <div class="section-inner">
+    <div class="section-label">Você se identifica?</div>
+    <h2 class="section-title" style="max-width:560px">Talvez você esteja passando por isso agora</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:40px;">
+
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+        <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Sente ansiedade, pensamentos que não param ou uma sensação constante de sobrecarga?</p>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+        <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Tem conflitos nos relacionamentos — medo de abandono, dificuldade de se expressar ou padrões que se repetem?</p>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+        <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Sente que carrega algo do passado que ainda pesa no presente — na autoestima, nas escolhas, no corpo?</p>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+        <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Tem dificuldades de atenção, memória ou aprendizado que prejudicam sua vida profissional ou escolar?</p>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--purple);">
+        <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Sente que perdeu conexão consigo — com suas emoções, seus limites, sua identidade ou seu propósito?</p>
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:20px;background:var(--purple-soft);border-radius:var(--radius);border-left:3px solid var(--purple);">
+        <svg style="flex-shrink:0;margin-top:2px" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5a0090" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <p style="font-size:14px;color:var(--purple-dark);line-height:1.6;font-weight:500;">Se você se reconhece em alguma dessas situações, saiba: há caminhos possíveis. E você não precisa percorrê-los sozinha.</p>
+      </div>
+
+    </div>
+    <div style="margin-top:36px;text-align:center;">
+      <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20conversa." target="_blank" class="btn-primary">
+        📱 Quero cuidar de mim
+      </a>
     </div>
   </div>
 </section>
@@ -519,6 +693,48 @@
         <div class="servico-desc">Orientação profissional e vocacional para adolescentes e adultos em transição de carreira.</div>
         <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/avaliacao-vocacional" class="servico-agendar">Saiba mais →</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMAGINE VOCÊ -->
+<section id="imagine-voce" style="background:linear-gradient(135deg,#f5eeff,#ede0fa);padding:80px 40px;">
+  <div class="section-inner" style="text-align:center;">
+    <div class="section-label" style="text-align:center;">Transformação</div>
+    <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Imagine você...</h2>
+    <p style="font-size:15px;color:var(--gray-600);max-width:520px;margin:0 auto 48px;line-height:1.7;">
+      É para isso que trabalhamos juntas. Resultado a resultado, sessão a sessão.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;text-align:left;">
+      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+        <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 3.5-5 9-5 9S7 10.5 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="2"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Dormindo melhor e sentindo seu corpo finalmente em paz</p>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+        <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Respondendo às emoções com calma, sem explosões ou travamentos</p>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+        <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Construindo relacionamentos mais leves, maduros e nutritivos</p>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+        <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Se sentindo merecedora de amor — sem medo, sem defesas, sem sobressaltos</p>
+      </div>
+      <div style="background:white;border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+        <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7B00C4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;">Com clareza sobre quem você é, o que quer e para onde vai</p>
+      </div>
+      <div style="background:var(--purple);border-radius:var(--radius);padding:24px;display:flex;align-items:flex-start;gap:12px;">
+        <svg style="flex-shrink:0;margin-top:2px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <p style="font-size:14px;color:rgba(255,255,255,0.92);line-height:1.6;font-weight:500;">Aqui, isso é possível. E você não precisa fazer esse caminho sozinha.</p>
+      </div>
+    </div>
+    <div style="margin-top:40px;">
+      <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="btn-primary" style="display:inline-flex;">
+        📱 Agendar minha primeira sessão
+      </a>
     </div>
   </div>
 </section>
@@ -700,20 +916,55 @@
   </div>
 </section>
 
-<!-- DEPOIMENTOS — ocultado por orientação do Código de Ética CFP (Resolução 006/2019, Art. 2º, §1º) -->
-<!-- Página de depoimentos disponível em /depoimentos/ para compartilhamento direto com pacientes quando necessário -->
-<section id="depoimentos" style="display:none;background:var(--gray-50)">
+<!-- DEPOIMENTOS -->
+<section id="depoimentos" style="background:var(--gray-50)">
   <div class="section-inner">
     <div class="section-label">Depoimentos</div>
     <h2 class="section-title">O que dizem sobre o atendimento</h2>
-    <p class="section-sub" style="margin-bottom:40px">Histórias reais de transformação e cuidado.</p>
+    <p class="section-sub" style="margin-bottom:32px">Avaliações reais publicadas no Google e na Doctoralia.</p>
+
+    <!-- Notas gerais -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:40px;">
+      <a href="https://www.google.com/search?q=Dra+Lucia+Kratz+psicologa+Goiania" target="_blank"
+        style="display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px 20px;text-decoration:none;color:inherit;transition:box-shadow .2s;"
+        onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
+        <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Google</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+            <span style="color:#f59e0b;font-size:14px;">★★★★★</span>
+            <span style="font-size:13px;font-weight:600;color:var(--text)">5.0</span>
+            <span style="font-size:12px;color:var(--text-muted)">· Ver avaliações →</span>
+          </div>
+        </div>
+      </a>
+      <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania#profile-reviews" target="_blank"
+        style="display:flex;align-items:center;gap:12px;background:white;border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px 20px;text-decoration:none;color:inherit;transition:box-shadow .2s;"
+        onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='none'">
+        <span style="font-size:22px;">🩺</span>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Doctoralia</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+            <span style="color:#f59e0b;font-size:14px;">★★★★★</span>
+            <span style="font-size:13px;font-weight:600;color:var(--text)">5.0</span>
+            <span style="font-size:12px;color:var(--text-muted)">· Ver avaliações →</span>
+          </div>
+        </div>
+      </a>
+    </div>
 
     <div style="position:relative">
       <div id="carrossel-dep" style="display:flex;gap:20px;overflow:hidden;scroll-behavior:smooth;padding:4px 2px">
 
-        <!-- D.P.G.D. -->
+        <!-- D.P.G.D. — Google -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.google.com/search?q=Dra+Lucia+Kratz+psicologa+Goiania" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e8f0fe;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              <span style="font-size:11px;color:#1a73e8;font-weight:600;">Google</span>
+            </a>
+          </div>
           <div><div style="font-weight:700;font-size:15px">D.P.G.D.</div><div style="font-size:12px;color:#9ca3af">23/04/2026</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"De longe a melhor profissional do ramo. Humana, atenciosa e muito experiente. Uma grande referência no que faz. Mudou minha vida, me resgatou e salvou."</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
@@ -722,9 +973,15 @@
           </div>
         </div>
 
-        <!-- Vanessa -->
+        <!-- Vanessa — Google -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.google.com/search?q=Dra+Lucia+Kratz+psicologa+Goiania" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e8f0fe;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              <span style="font-size:11px;color:#1a73e8;font-weight:600;">Google</span>
+            </a>
+          </div>
           <div><div style="font-weight:700;font-size:15px">Vanessa</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"A Dra. Lúcia é de uma maestria enorme! Com uma frase ela conseguiu virar a chave da minha mente cheia de medo, restrita e limitada. Ela traz luz onde havia escuridão."</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
@@ -733,9 +990,15 @@
           </div>
         </div>
 
-        <!-- AMR -->
+        <!-- AMR — Doctoralia -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania#profile-reviews" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e6f4ea;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <span style="font-size:11px;">🩺</span>
+              <span style="font-size:11px;color:#137333;font-weight:600;">Doctoralia</span>
+            </a>
+          </div>
           <div><div style="font-weight:700;font-size:15px">AMR</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Tive uma excelente experiência, ótimo atendimento."</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
@@ -744,9 +1007,15 @@
           </div>
         </div>
 
-        <!-- E.M. -->
+        <!-- E.M. — Doctoralia -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania#profile-reviews" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e6f4ea;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <span style="font-size:11px;">🩺</span>
+              <span style="font-size:11px;color:#137333;font-weight:600;">Doctoralia</span>
+            </a>
+          </div>
           <div><div style="font-weight:700;font-size:15px">E.M.</div><div style="font-size:12px;color:#9ca3af">27/03/2026</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"É uma pessoa muito empática e atenciosa, uma boa profissional."</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
@@ -755,10 +1024,16 @@
           </div>
         </div>
 
-        <!-- Marilha Cumha -->
+        <!-- Marilha Cumha — Google -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
-          <div><div style="font-weight:700;font-size:15px">Marilha Cumha</div><div style="font-size:12px;color:#9ca3af">Empresária Bobys</div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.google.com/search?q=Dra+Lucia+Kratz+psicologa+Goiania" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e8f0fe;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              <span style="font-size:11px;color:#1a73e8;font-weight:600;">Google</span>
+            </a>
+          </div>
+          <div><div style="font-weight:700;font-size:15px">Marilha Cunha</div><div style="font-size:12px;color:#9ca3af">Empresária</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Esse processo trouxe para mim uma confiança muito grande e também despertou-me um mundo novo, de oportunidades e que está na minha mão. Basta acreditar e agir com inteligência e serenidade."</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
             <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px"><img src="foto.jpeg" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'"/> Lucia Kratz</div>
@@ -766,9 +1041,15 @@
           </div>
         </div>
 
-        <!-- Flávio Sabugo -->
+        <!-- Flávio Sabugo — Google -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.google.com/search?q=Dra+Lucia+Kratz+psicologa+Goiania" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e8f0fe;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+              <span style="font-size:11px;color:#1a73e8;font-weight:600;">Google</span>
+            </a>
+          </div>
           <div><div style="font-weight:700;font-size:15px">Flávio Sabugo</div><div style="font-size:12px;color:#9ca3af">Profissional Certificado Google Adwords</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Seja através de suas aulas, processos de coaching ou consultorias empresariais, se engaja e entrega sempre mais do que o esperado! Indico a Lúcia Kratz para executivos e empresas que buscam a excelência!"</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
@@ -777,9 +1058,15 @@
           </div>
         </div>
 
-        <!-- Lidiana Nascimento -->
+        <!-- Lidiana Nascimento — Doctoralia -->
         <div style="min-width:320px;max-width:320px;background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(123,0,196,.08);display:flex;flex-direction:column;gap:12px;flex-shrink:0">
-          <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="color:#7B00C4;font-size:20px;letter-spacing:2px">★★★★★</div>
+            <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania#profile-reviews" target="_blank" style="display:flex;align-items:center;gap:4px;background:#e6f4ea;border-radius:20px;padding:3px 10px;text-decoration:none;">
+              <span style="font-size:11px;">🩺</span>
+              <span style="font-size:11px;color:#137333;font-weight:600;">Doctoralia</span>
+            </a>
+          </div>
           <div><div style="font-weight:700;font-size:15px">Lidiana Nascimento</div><div style="font-size:12px;color:#9ca3af">Designer de Unhas / Empresária</div></div>
           <p style="font-size:14px;color:#374151;line-height:1.7;flex:1">"Meu relacionamento com meu marido melhorou muito. Obrigada!"</p>
           <div style="background:#f5f0ff;border-radius:10px;padding:12px;font-size:13px;color:#5a0090;line-height:1.6">
@@ -794,11 +1081,18 @@
       <button onclick="scrollDep(1)"  style="position:absolute;right:-20px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:white;border:none;box-shadow:0 2px 12px rgba(0,0,0,.15);cursor:pointer;font-size:22px;color:var(--purple);display:flex;align-items:center;justify-content:center">›</button>
     </div>
 
-    <div style="text-align:center;margin-top:32px">
-      <button onclick="copiarLinkDep()" id="btn-dep"
-        style="background:var(--purple);color:white;border:none;border-radius:20px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body)">
-        🔗 Compartilhar depoimentos
-      </button>
+    <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a href="https://www.google.com/search?q=Dra+Lucia+Kratz+psicologa+Goiania" target="_blank"
+        style="display:inline-flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--gray-200);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;text-decoration:none;transition:border-color .2s;"
+        onmouseover="this.style.borderColor='#4285F4'" onmouseout="this.style.borderColor='var(--gray-200)'">
+        <svg width="14" height="14" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Ver todas no Google
+      </a>
+      <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania#profile-reviews" target="_blank"
+        style="display:inline-flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--gray-200);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;text-decoration:none;transition:border-color .2s;"
+        onmouseover="this.style.borderColor='#137333'" onmouseout="this.style.borderColor='var(--gray-200)'">
+        🩺 Ver todas na Doctoralia
+      </a>
     </div>
   </div>
 </section>
@@ -821,7 +1115,13 @@ function copiarLinkDep(){
   <div class="section-inner">
     <div class="section-label">Agendamento</div>
     <h2 class="section-title">Contato</h2>
-    <p class="section-sub">Para agendamento de avaliação psicológica, psicoterapia ou sessão de neuromodulação, entre em contato pelo WhatsApp.</p>
+    <div style="background:linear-gradient(135deg,#f5eeff,#ede0fa);border-radius:16px;padding:28px 32px;margin:24px 0 40px;text-align:center;">
+      <p style="font-family:var(--font-display);font-size:20px;font-style:italic;color:var(--purple-dark);margin-bottom:12px;">Dê o primeiro passo. Uma conversa pode mudar tudo.</p>
+      <p style="font-size:14px;color:var(--gray-600);margin-bottom:20px;line-height:1.6;">Atendimento presencial em Goiânia e online para todo o Brasil.</p>
+      <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="btn-primary" style="display:inline-flex;">
+        📱 Agendar pelo WhatsApp agora
+      </a>
+    </div>
     <div class="contato-grid">
       <div>
         <div class="contato-item">
@@ -903,6 +1203,22 @@ function copiarLinkDep(){
         <div style="font-size:13px;color:var(--text-muted)">A psicóloga contemporânea na linha de frente da transformação — unindo profundidade acadêmica à inovação tecnológica.</div>
       </div>
       <a href="https://bastidoresdosfamosos.com.br/dra-lucia-kratz-revolucionando-a-saude-mental-atraves-da-neuromodulacao-e-tecnologia/" target="_blank" style="background:var(--purple);color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap;">Ler matéria →</a>
+    </div>
+
+    <!-- Faixa "Como visto em" -->
+    <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px 28px;margin-bottom:24px;">
+      <p style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:16px;">Como visto em</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">CLNews</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">Tonamidia</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">Gazeta de Goiás</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">Gazeta RJ</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">TV Nacional</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">Revista Influencer</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">Diário Mineiro</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">Folha Semanal</span>
+        <span style="font-size:12px;font-weight:600;color:var(--gray-600);background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;">+ 11 veículos</span>
+      </div>
     </div>
 
     <!-- Grid de portais -->
@@ -1083,6 +1399,119 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js')
     .catch(function(err) { console.warn('SW não registrado:', err); });
 }
+</script>
+<script>
+/* ── SCROLL REVEAL ── */
+(function(){
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var el = e.target;
+      var delay = parseInt(el.dataset.delay || 0);
+      setTimeout(function(){ el.classList.add('visible'); }, delay);
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.1 });
+
+  /* Títulos e labels de seção */
+  document.querySelectorAll('.section-label, .section-title, .section-sub').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i % 3 * 80;
+    obs.observe(el);
+  });
+
+  /* Cards de serviço — stagger */
+  document.querySelectorAll('.servico-card').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 80;
+    obs.observe(el);
+  });
+
+  /* Stats */
+  document.querySelectorAll('.stat-card').forEach(function(el, i){
+    el.classList.add('reveal-scale');
+    el.dataset.delay = i * 100;
+    obs.observe(el);
+  });
+
+  /* Sobre texto */
+  document.querySelectorAll('.sobre-text').forEach(function(el){
+    el.classList.add('reveal-left');
+    obs.observe(el);
+  });
+
+  /* Processo cards */
+  document.querySelectorAll('.processo-card').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 100;
+    obs.observe(el);
+  });
+
+  /* "Você se identifica" cards */
+  document.querySelectorAll('#voce-se-identifica .section-inner > div:last-of-type > div').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 80;
+    obs.observe(el);
+  });
+
+  /* "Imagine você" cards */
+  document.querySelectorAll('#imagine-voce .section-inner > div:last-of-type > div').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 80;
+    obs.observe(el);
+  });
+
+  /* Produtos cards */
+  document.querySelectorAll('#produtos > div > div > div').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 100;
+    obs.observe(el);
+  });
+
+  /* Depoimentos cards */
+  document.querySelectorAll('#depoimentos [style*="min-width:320px"]').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 80;
+    obs.observe(el);
+  });
+
+  /* Galeria */
+  document.querySelectorAll('.galeria-item').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 80;
+    obs.observe(el);
+  });
+
+  /* Midia cards */
+  document.querySelectorAll('.midia-card').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 40;
+    obs.observe(el);
+  });
+
+  /* Contato items */
+  document.querySelectorAll('.contato-item').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 80;
+    obs.observe(el);
+  });
+
+  /* Contato cards */
+  document.querySelectorAll('.contato-card').forEach(function(el, i){
+    el.classList.add('reveal');
+    el.dataset.delay = i * 100;
+    obs.observe(el);
+  });
+
+  /* Processo nota */
+  var nota = document.querySelector('.processo-nota');
+  if(nota){ nota.classList.add('reveal'); obs.observe(nota); }
+
+  /* Banner app */
+  var bloco = document.getElementById('bloco-app-paciente');
+  if(bloco){ bloco.closest('[style*="border-radius:20px"]').classList.add('reveal-scale'); obs.observe(bloco.closest('[style*="border-radius:20px"]')); }
+
+})();
 </script>
 </body>
 </html>
