@@ -63,12 +63,24 @@ function ModalEnviarParaPaciente({ recurso, tipo, onClose }) {
       }
       await db.collection("clinica_links_partilhados").add(doc);
 
-      // Habilitar automaticamente a ferramenta nos módulos da paciente
+      // Habilitar automaticamente nos módulos da paciente via modulosConfig
       const recursoId = recurso.id || recurso.formularioKey || recurso.titulo || "";
-      if (recursoId && tipo === "ferramenta") {
-        await db.collection("clinica_pacientes").doc(selecionado).update({
-          ferramentasAtivas: firebase.firestore.FieldValue.arrayUnion(recursoId)
-        });
+      if (recursoId) {
+        const hoje = new Date().toISOString().split("T")[0];
+        if (tipo === "ferramenta" || tipo === "psicoeducacao") {
+          const modKey = tipo === "psicoeducacao" ? "mod4" : "mod3";
+          const upd = {};
+          upd["modulosConfig." + modKey + ".ativo"] = true;
+          upd["modulosConfig." + modKey + ".ferramentas." + recursoId + ".ativo"] = true;
+          upd["modulosConfig." + modKey + ".ferramentas." + recursoId + ".dataInicio"] = hoje;
+          await db.collection("clinica_pacientes").doc(selecionado).update(upd);
+        } else if (tipo === "fabula") {
+          const upd = {};
+          upd["modulosConfig.mod2.ativo"] = true;
+          upd["modulosConfig.mod2.ferramentas." + recursoId + ".ativo"] = true;
+          upd["modulosConfig.mod2.ferramentas." + recursoId + ".dataInicio"] = hoje;
+          await db.collection("clinica_pacientes").doc(selecionado).update(upd);
+        }
       }
 
       // Abrir WhatsApp
