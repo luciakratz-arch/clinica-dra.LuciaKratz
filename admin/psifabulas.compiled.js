@@ -14258,6 +14258,7 @@ function AbaFabulas() {
   const [fabulaAberta, setFabulaAberta] = useState(null);
   const [filtro, setFiltro] = useState("todos");
   const [migrando, setMigrando] = useState(false);
+  const [enviandoFabula, setEnviandoFabula] = useState(null);
   const MIGRACAO_CATS = {
     "resiliência": "crescimento",
     "resiliencia": "crescimento",
@@ -14481,7 +14482,11 @@ function AbaFabulas() {
   // Órfãos
   const macroIds = new Set(Object.values(FAB_LEGADO_MACRO));
   const orfaos = filtradas.filter(f => !macroIds.has(f.categoria) && !FAB_LEGADO_MACRO[f.categoria || ""]);
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, enviandoFabula && /*#__PURE__*/React.createElement(ModalEnviarParaPaciente, {
+    recurso: enviandoFabula,
+    tipo: "fabula",
+    onClose: () => setEnviandoFabula(null)
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -14587,10 +14592,8 @@ function AbaFabulas() {
         borderColor: c.cor + "40",
         borderRadius: 14,
         overflow: "hidden",
-        cursor: "pointer",
         transition: "box-shadow .15s"
       },
-      onClick: () => setFabulaAberta(f),
       onMouseEnter: e => e.currentTarget.style.boxShadow = "0 4px 16px " + c.cor + "30",
       onMouseLeave: e => e.currentTarget.style.boxShadow = ""
     }, /*#__PURE__*/React.createElement("div", {
@@ -14599,8 +14602,10 @@ function AbaFabulas() {
         padding: "16px",
         display: "flex",
         alignItems: "center",
-        gap: 10
-      }
+        gap: 10,
+        cursor: "pointer"
+      },
+      onClick: () => setFabulaAberta(f)
     }, /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 28
@@ -14639,15 +14644,33 @@ function AbaFabulas() {
         justifyContent: "space-between",
         alignItems: "center",
         fontSize: 11,
-        color: "var(--text-muted)"
+        color: "var(--text-muted)",
+        marginBottom: 8
       }
     }, /*#__PURE__*/React.createElement("span", null, (f.paginas || []).length, " pág. · ", (f.perguntas || []).length, " reflexões"), /*#__PURE__*/React.createElement("span", {
       style: {
         color: c.cor,
         fontWeight: 600,
-        fontSize: 12
+        fontSize: 12,
+        cursor: "pointer"
+      },
+      onClick: () => setFabulaAberta(f)
+    }, "Começar a ler →")), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-outline",
+      style: {
+        fontSize: 12,
+        width: "100%",
+        color: "var(--purple)",
+        borderColor: "var(--purple)"
+      },
+      onClick: e => {
+        e.stopPropagation();
+        setEnviandoFabula(f);
       }
-    }, "Começar a ler →")))))));
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "send",
+      size: 13
+    }), " 📲 Enviar para paciente"))))));
   }));
 }
 
