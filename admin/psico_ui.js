@@ -5,6 +5,144 @@
 //  Carregar 3º no index.html (antes de app.js)
 // ═══════════════════════════════════════════════════════
 
+// ── Modal compartilhado: Enviar ferramenta para paciente ──────────────────────
+function ModalEnviarParaPaciente({ recurso, tipo, onClose }) {
+  // tipo: "ferramenta" | "fabula" | "psicoeducacao"
+  const [pacientes, setPacientes] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [selecionado, setSelecionado] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+
+  const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+
+  useEffect(() => {
+    db.collection("clinica_pacientes")
+      .where("status", "==", "ativo")
+      .get()
+      .then(snap => {
+        const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        lista.sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+        setPacientes(lista);
+      });
+  }, []);
+
+  function gerarToken() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase() +
+           Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
+  const filtrados = pacientes.filter(p =>
+    !busca || p.nome?.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  async function enviar() {
+    if (!selecionado) return;
+    setEnviando(true);
+    try {
+      const token = gerarToken();
+      const paciente = pacientes.find(p => p.id === selecionado);
+      const nomeRecurso = recurso.titulo || recurso.nome || recurso.id || "";
+      const doc = {
+        pacienteId: selecionado,
+        pacienteNome: paciente?.nome || "",
+        tipoFerramenta: tipo + ":" + (recurso.id || recurso.titulo || ""),
+        nomeRecurso,
+        tipo,
+        token,
+        status: "pendente",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      // Marcar link anterior da mesma ferramenta+paciente como substituído
+      const anteriores = await db.collection("clinica_links_partilhados")
+        .where("pacienteId", "==", selecionado)
+        .where("tipoFerramenta", "==", doc.tipoFerramenta)
+        .get();
+      for (const d of anteriores.docs) {
+        await d.ref.update({ status: "substituido" });
+      }
+      await db.collection("clinica_links_partilhados").add(doc);
+
+      // Abrir WhatsApp
+      const url = `${BASE_URL}/ferramentas/?token=${token}`;
+      const nome = paciente?.nome?.split(" ")[0] || "paciente";
+      const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou uma atividade terapêutica para você:\n\n🧠 *${nomeRecurso}*\n\nAcesse pelo link abaixo, faça no seu celular com calma — leva só alguns minutos:\n${url}\n\nQualquer dúvida, estou por aqui! 💜\n_Dra. Lucia Kratz · CRP 09/20590_`;
+      const tel = (paciente?.telefone || "").replace(/\D/g, "");
+      window.open(`https://api.whatsapp.com/send?${tel ? "phone=55" + tel + "&" : ""}text=${encodeURIComponent(msg)}`, "_blank");
+      setEnviado(true);
+    } catch (e) {
+      alert("Erro ao gerar link: " + e.message);
+    }
+    setEnviando(false);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: 20 }}
+      onClick={onClose}>
+      <div style={{ background: "white", borderRadius: 16, padding: 24, width: "100%", maxWidth: 460, maxHeight: "85vh", display: "flex", flexDirection: "column" }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>📲 Enviar para paciente</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--gray-400)", fontSize: 22 }}>×</button>
+        </div>
+        <div style={{ background: "var(--purple-soft)", borderRadius: 10, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "var(--purple)", fontWeight: 600 }}>
+          {recurso.emoji || "🧠"} {recurso.titulo || recurso.nome || ""}
+        </div>
+        {enviado ? (
+          <div style={{ textAlign: "center", padding: "24px 0" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Link enviado pelo WhatsApp!</div>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 20 }}>O link foi registrado e aparecerá em Links Partilhados no perfil da paciente.</div>
+            <button className="btn btn-purple" onClick={onClose}>Fechar</button>
+          </div>
+        ) : (
+          <>
+            <input
+              className="form-input"
+              placeholder="🔍 Buscar paciente..."
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              style={{ marginBottom: 10 }}
+              autoFocus
+            />
+            <div style={{ overflowY: "auto", flex: 1, border: "1px solid var(--gray-200)", borderRadius: 10, marginBottom: 16 }}>
+              {filtrados.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: "var(--text-muted)", fontSize: 13 }}>Nenhuma paciente encontrada.</div>
+              ) : filtrados.map(p => (
+                <div key={p.id}
+                  onClick={() => setSelecionado(p.id)}
+                  style={{
+                    padding: "12px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
+                    borderBottom: "1px solid var(--gray-100)",
+                    background: selecionado === p.id ? "var(--purple-soft)" : "white",
+                    transition: "background .15s"
+                  }}>
+                  <div style={{ width: 34, height: 34, borderRadius: "50%", background: selecionado === p.id ? "var(--purple)" : "var(--gray-100)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, color: selecionado === p.id ? "white" : "var(--gray-600)", flexShrink: 0, fontSize: 14 }}>
+                    {(p.nome || "?")[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 500, fontSize: 14, color: selecionado === p.id ? "var(--purple)" : "inherit" }}>{p.nome}</div>
+                    {p.telefone && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{p.telefone}</div>}
+                  </div>
+                  {selecionado === p.id && <Icon name="check-circle" size={16} style={{ color: "var(--purple)" }} />}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="btn btn-ghost" style={{ flex: 1 }} onClick={onClose}>Cancelar</button>
+              <button className="btn btn-purple" style={{ flex: 2 }} onClick={enviar}
+                disabled={!selecionado || enviando}>
+                <Icon name="message-circle" size={15} />
+                {enviando ? " Gerando..." : " Gerar Link + WhatsApp"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AbaPsicoeducacao() {
   const [itens, setItens]         = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -13,6 +151,7 @@ function AbaPsicoeducacao() {
   const [salvando, setSalvando]   = useState(false);
   const [filtro, setFiltro]       = useState("todos");
   const [aberto, setAberto]       = useState(null);
+  const [enviandoPsico, setEnviandoPsico] = useState(null);
 
   // Mapa de categorias legado → nova macrocategoria clínica
   const REMAP_PSICO = {
@@ -181,6 +320,7 @@ function AbaPsicoeducacao() {
 
   return (
     <div>
+      {enviandoPsico&&<ModalEnviarParaPaciente recurso={enviandoPsico} tipo="psicoeducacao" onClose={()=>setEnviandoPsico(null)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
         <div style={{display:"flex",gap:8}}>
@@ -277,6 +417,9 @@ function AbaPsicoeducacao() {
                         <Icon name="trash-2" size={13}/>
                       </button>
                     </div>
+                    <button className="btn btn-outline" style={{fontSize:12,width:"100%",marginTop:6,color:"var(--purple)",borderColor:"var(--purple)"}} onClick={()=>setEnviandoPsico(item)}>
+                      <Icon name="send" size={13}/> 📲 Enviar para paciente
+                    </button>
                   </div>
                 </div>
               );
@@ -520,8 +663,11 @@ function RecursosTerapeuticos({ user }) {
   const ICONES_FERRAMENTA={"breathing-478":"💨","muscle-relaxation":"💪","decision-tree":"🌳","abc-record":"📋","anxiety-management":"🎯","emotional-eating":"🍃","entrevista-clinica":"📝","anamnese":"📄","treino-neuro-auditivo":"🎵","diario-terapeutico":"📓"};
   const getIcone=(r)=>ICONES_FERRAMENTA[r.formularioKey]||(r.categoria==="tcc"?"🧠":r.categoria==="ansiedade"?"😮":r.categoria==="emocoes"?"💜":r.categoria==="autocuidado"?"🌱":r.categoria==="relacionamentos"?"❤️":r.categoria==="corpo"?"🥗":r.categoria==="esquema"?"🔑":r.categoria==="musicoterapia"?"🎵":r.categoria==="avaliacao"?"📋":"🔧");
   const [visualizando, setVisualizando] = useState(null);
+  const [enviandoRecurso, setEnviandoRecurso] = useState(null);
 
   if(loading) return <Spinner/>;
+
+  if(enviandoRecurso) return <ModalEnviarParaPaciente recurso={enviandoRecurso} tipo="ferramenta" onClose={()=>setEnviandoRecurso(null)}/>;
 
   if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)} user={user}/>;
   return (
@@ -681,6 +827,9 @@ function RecursosTerapeuticos({ user }) {
                     <button className="btn btn-ghost" style={{fontSize:12,flex:1}} onClick={()=>abrirEditar(r)}><Icon name="pencil" size={13}/> Editar</button>
                     <button className="btn btn-ghost" style={{padding:"6px 10px",color:"var(--danger)"}} onClick={()=>excluir(r.id)}><Icon name="trash-2" size={13}/></button>
                     </div>
+                    <button className="btn btn-outline" style={{fontSize:12,width:"100%",marginTop:6,color:"var(--purple)",borderColor:"var(--purple)"}} onClick={()=>setEnviandoRecurso(r)}>
+                      <Icon name="send" size={13}/> 📲 Enviar para paciente
+                    </button>
                     {(r.formularioKey==="anamnese"||["rastreamento-bipolar","rastreamento-sexual","rastreamento-alimentar","rastreamento-neuro","rastreamento-dependencia","rastreamento-jogos"].includes(r.formularioKey))&&(
                       <button className="btn btn-ghost" style={{fontSize:12,width:"100%",color:"#059669",border:"1px solid #059669",marginTop:6}} onClick={()=>{
                         const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/";
