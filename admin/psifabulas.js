@@ -5380,6 +5380,7 @@ function AbaFabulas() {
   const [fabulaAberta, setFabulaAberta] = useState(null);
   const [filtro, setFiltro] = useState("todos");
   const [migrando, setMigrando] = useState(false);
+  const [enviandoFabula, setEnviandoFabula] = useState(null);
 
   const MIGRACAO_CATS = {
     "resiliência":"crescimento","resiliencia":"crescimento",
@@ -5495,6 +5496,7 @@ function AbaFabulas() {
 
   return (
     <div>
+      {enviandoFabula&&<ModalEnviarParaPaciente recurso={enviandoFabula} tipo="fabula" onClose={()=>setEnviandoFabula(null)}/>}
       {/* Filtros por macrocategoria */}
       <div style={{display:"flex",gap:6,marginBottom:20,flexWrap:"wrap",paddingBottom:4}}>
         <button onClick={()=>setFiltro("todos")}
@@ -5531,11 +5533,11 @@ function AbaFabulas() {
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
               {grupo.itens.map(f=>(
-                <div key={f.id} style={{background:"white",border:"1.5px solid",borderColor:c.cor+"40",borderRadius:14,overflow:"hidden",cursor:"pointer",transition:"box-shadow .15s"}}
-                  onClick={()=>setFabulaAberta(f)}
+                <div key={f.id} style={{background:"white",border:"1.5px solid",borderColor:c.cor+"40",borderRadius:14,overflow:"hidden",transition:"box-shadow .15s"}}
                   onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 16px "+c.cor+"30"}
                   onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
-                  <div style={{background:c.cor,padding:"16px",display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{background:c.cor,padding:"16px",display:"flex",alignItems:"center",gap:10,cursor:"pointer"}}
+                    onClick={()=>setFabulaAberta(f)}>
                     <span style={{fontSize:28}}>{f.emoji||"📖"}</span>
                     <div>
                       <div style={{fontWeight:600,fontSize:13,color:"white",lineHeight:1.3}}>{f.titulo}</div>
@@ -5544,10 +5546,14 @@ function AbaFabulas() {
                   </div>
                   <div style={{padding:"12px 14px"}}>
                     <p style={{fontSize:12,color:"var(--text-muted)",fontStyle:"italic",lineHeight:1.5,marginBottom:8}}>"{f.moral}"</p>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,color:"var(--text-muted)"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11,color:"var(--text-muted)",marginBottom:8}}>
                       <span>{(f.paginas||[]).length} pág. · {(f.perguntas||[]).length} reflexões</span>
-                      <span style={{color:c.cor,fontWeight:600,fontSize:12}}>Começar a ler →</span>
+                      <span style={{color:c.cor,fontWeight:600,fontSize:12,cursor:"pointer"}} onClick={()=>setFabulaAberta(f)}>Começar a ler →</span>
                     </div>
+                    <button className="btn btn-outline" style={{fontSize:12,width:"100%",color:"var(--purple)",borderColor:"var(--purple)"}}
+                      onClick={e=>{e.stopPropagation();setEnviandoFabula(f);}}>
+                      <Icon name="send" size={13}/> 📲 Enviar para paciente
+                    </button>
                   </div>
                 </div>
               ))}
