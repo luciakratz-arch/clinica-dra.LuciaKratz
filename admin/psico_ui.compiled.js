@@ -58,6 +58,14 @@ function ModalEnviarParaPaciente({
       }
       await db.collection("clinica_links_partilhados").add(doc);
 
+      // Habilitar automaticamente a ferramenta nos módulos da paciente
+      const recursoId = recurso.id || recurso.formularioKey || recurso.titulo || "";
+      if (recursoId && tipo === "ferramenta") {
+        await db.collection("clinica_pacientes").doc(selecionado).update({
+          ferramentasAtivas: firebase.firestore.FieldValue.arrayUnion(recursoId)
+        });
+      }
+
       // Abrir WhatsApp
       const url = `${BASE_URL}/ferramentas/?token=${token}`;
       const nome = paciente?.nome?.split(" ")[0] || "paciente";
