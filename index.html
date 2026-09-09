@@ -679,8 +679,15 @@
 </section>
 
 <!-- IMAGINE VOCÊ -->
-<section id="imagine-voce" style="background:linear-gradient(135deg,#f5eeff,#ede0fa);padding:80px 40px;">
-  <div class="section-inner" style="text-align:center;">
+<section id="imagine-voce" style="background:linear-gradient(135deg,#f5eeff,#ede0fa);padding:80px 40px;position:relative;overflow:hidden;">
+
+  <video autoplay muted loop playsinline
+    style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);min-width:100%;min-height:100%;z-index:0;object-fit:cover;opacity:0.18;">
+    <source src="https://res.cloudinary.com/oqntgzyb/video/upload/FILME_2.mp4" type="video/mp4">
+  </video>
+
+  <div style="position:relative;z-index:1;">
+    <div class="section-inner" style="text-align:center;">
     <div class="section-label" style="text-align:center;">Transformação</div>
     <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Imagine você...</h2>
     <p style="font-size:15px;color:var(--gray-600);max-width:520px;margin:0 auto 48px;line-height:1.7;">
@@ -717,6 +724,7 @@
         📱 Agendar minha primeira sessão
       </a>
     </div>
+  </div>
   </div>
 </section>
 
