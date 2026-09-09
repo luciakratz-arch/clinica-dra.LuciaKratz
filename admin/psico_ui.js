@@ -53,14 +53,6 @@ function ModalEnviarParaPaciente({ recurso, tipo, onClose }) {
         status: "pendente",
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
-      // Marcar link anterior da mesma ferramenta+paciente como substituído
-      const anteriores = await db.collection("clinica_links_partilhados")
-        .where("pacienteId", "==", selecionado)
-        .where("tipoFerramenta", "==", doc.tipoFerramenta)
-        .get();
-      for (const d of anteriores.docs) {
-        await d.ref.update({ status: "substituido" });
-      }
       await db.collection("clinica_links_partilhados").add(doc);
 
       // Habilitar automaticamente nos módulos da paciente via modulosConfig
