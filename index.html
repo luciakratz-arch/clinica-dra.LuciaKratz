@@ -490,48 +490,62 @@
 </nav>
 
 <!-- HERO -->
-<section style="padding:0">
-  <div class="hero">
+<section style="padding:0;position:relative;overflow:hidden;">
+
+  <!-- Vídeo de fundo Google Drive -->
+  <div style="position:absolute;inset:0;z-index:0;pointer-events:none;">
+    <iframe
+      src="https://drive.google.com/file/d/1msvz9H29tjhMa8t_pdAZhaAAFhAqj-7B/preview"
+      style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(1.4);width:100%;height:100%;border:none;pointer-events:none;"
+      allow="autoplay"
+      allowfullscreen="false">
+    </iframe>
+    <!-- Overlay roxo semi-transparente -->
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(90,0,140,0.78) 0%,rgba(30,0,60,0.65) 100%);"></div>
+  </div>
+
+  <!-- Conteúdo original — sem alteração -->
+  <div class="hero" style="position:relative;z-index:1;">
     <div class="hero-content">
-      <div class="hero-badge">🦋 CRP 09/20590 · Goiânia — GO</div>
-      <h1 class="hero-title">
-        <em>Lucia Kratz</em>
+      <div class="hero-badge" style="background:rgba(255,255,255,0.15);color:white;">🦋 CRP 09/20590 · Goiânia — GO</div>
+      <h1 class="hero-title" style="color:white;">
+        <em style="color:rgba(212,170,255,1);">Lucia Kratz</em>
       </h1>
-      <p style="font-size:20px;font-family:var(--font-display);font-style:italic;color:var(--purple-dark);line-height:1.5;margin-bottom:16px;">
+      <p style="font-size:20px;font-family:var(--font-display);font-style:italic;color:rgba(255,255,255,0.95);line-height:1.5;margin-bottom:16px;">
         Aqui, você é ouvida. Com técnica, acolhimento e ciência.
       </p>
-      <p class="hero-sub">
+      <p class="hero-sub" style="color:rgba(255,255,255,0.75);">
         Psicóloga · Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação
       </p>
-      <p class="hero-sub" style="font-size:14px;">
+      <p class="hero-sub" style="font-size:14px;color:rgba(255,255,255,0.6);">
         Atende a partir de 8 anos, adolescentes, adultos e idosos. Presencial em Goiânia e online. Avaliações com instrumentos aprovados pelo SATEPSI/CFP.
       </p>
       <div class="hero-tags">
-        <span class="hero-tag">TCC</span>
-        <span class="hero-tag">Musicoterapia</span>
-        <span class="hero-tag">Neuromodulação</span>
-        <span class="hero-tag">Neuropsicologia</span>
-        <span class="hero-tag">Avaliação Psicológica</span>
-        <span class="hero-tag">Terapia de Casais</span>
+        <span class="hero-tag" style="background:rgba(255,255,255,0.15);color:white;">TCC</span>
+        <span class="hero-tag" style="background:rgba(255,255,255,0.15);color:white;">Musicoterapia</span>
+        <span class="hero-tag" style="background:rgba(255,255,255,0.15);color:white;">Neuromodulação</span>
+        <span class="hero-tag" style="background:rgba(255,255,255,0.15);color:white;">Neuropsicologia</span>
+        <span class="hero-tag" style="background:rgba(255,255,255,0.15);color:white;">Avaliação Psicológica</span>
+        <span class="hero-tag" style="background:rgba(255,255,255,0.15);color:white;">Terapia de Casais</span>
       </div>
       <div class="hero-btns">
-        <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="btn-primary">
+        <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20agendar%20uma%20consulta." target="_blank" class="btn-primary" style="background:white;color:var(--purple);">
           📱 Agendar pelo WhatsApp
         </a>
-        <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20solicitar%20um%20orçamento%20de%20serviços." target="_blank" class="btn-secondary">
+        <a href="https://wa.me/5562991546757?text=Olá%20Dra.%20Lucia,%20gostaria%20de%20solicitar%20um%20orçamento%20de%20serviços." target="_blank" class="btn-secondary" style="background:transparent;color:white;border-color:rgba(255,255,255,0.5);">
           💬 Solicitar Orçamento
         </a>
       </div>
       <div class="hero-links" style="margin-top:24px">
-        <a href="https://www.instagram.com/luciakratz" target="_blank" class="hero-link">
+        <a href="https://www.instagram.com/luciakratz" target="_blank" class="hero-link" style="color:rgba(255,255,255,0.6);">
           📸 @luciakratz
         </a>
-        <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania" target="_blank" class="hero-link">
-          <img src="https://raw.githubusercontent.com/luciakratz-arch/clinica-dra.LuciaKratz/main/images.png" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;"> Perfil Doctoralia
+        <a href="https://www.doctoralia.com.br/lucia-kratz/psicologo/goiania" target="_blank" class="hero-link" style="color:rgba(255,255,255,0.6);">
+          <img src="https://raw.githubusercontent.com/luciakratz-arch/clinica-dra.LuciaKratz/main/images.png" style="width:13px;height:13px;object-fit:contain;vertical-align:middle;filter:brightness(10);"> Perfil Doctoralia
         </a>
       </div>
     </div>
-    <div class="hero-img">
+    <div class="hero-img" style="box-shadow:0 20px 60px rgba(0,0,0,0.4);border:3px solid rgba(255,255,255,0.2);">
       <img src="foto3.jpeg" alt="Dra. Lucia Kratz" onerror="this.style.display='none'" />
     </div>
   </div>
