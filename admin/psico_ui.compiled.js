@@ -5,6 +5,245 @@
 //  Carregar 3º no index.html (antes de app.js)
 // ═══════════════════════════════════════════════════════
 
+// ── Modal compartilhado: Enviar ferramenta para paciente ──────────────────────
+function ModalEnviarParaPaciente({
+  recurso,
+  tipo,
+  onClose
+}) {
+  // tipo: "ferramenta" | "fabula" | "psicoeducacao"
+  const [pacientes, setPacientes] = useState([]);
+  const [busca, setBusca] = useState("");
+  const [selecionado, setSelecionado] = useState(null);
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+  const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+  useEffect(() => {
+    db.collection("clinica_pacientes").where("status", "==", "ativo").get().then(snap => {
+      const lista = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      lista.sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+      setPacientes(lista);
+    });
+  }, []);
+  function gerarToken() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase() + Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+  const filtrados = pacientes.filter(p => !busca || p.nome?.toLowerCase().includes(busca.toLowerCase()));
+  async function enviar() {
+    if (!selecionado) return;
+    setEnviando(true);
+    try {
+      const token = gerarToken();
+      const paciente = pacientes.find(p => p.id === selecionado);
+      const nomeRecurso = recurso.titulo || recurso.nome || recurso.id || "";
+      const doc = {
+        pacienteId: selecionado,
+        pacienteNome: paciente?.nome || "",
+        tipoFerramenta: tipo + ":" + (recurso.id || recurso.titulo || ""),
+        nomeRecurso,
+        tipo,
+        token,
+        status: "pendente",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      // Marcar link anterior da mesma ferramenta+paciente como substituído
+      const anteriores = await db.collection("clinica_links_partilhados").where("pacienteId", "==", selecionado).where("tipoFerramenta", "==", doc.tipoFerramenta).get();
+      for (const d of anteriores.docs) {
+        await d.ref.update({
+          status: "substituido"
+        });
+      }
+      await db.collection("clinica_links_partilhados").add(doc);
+
+      // Abrir WhatsApp
+      const url = `${BASE_URL}/ferramentas/?token=${token}`;
+      const nome = paciente?.nome?.split(" ")[0] || "paciente";
+      const msg = `Olá, ${nome}! 😊\n\nSua psicóloga Dra. Lucia Kratz enviou uma atividade terapêutica para você:\n\n🧠 *${nomeRecurso}*\n\nAcesse pelo link abaixo, faça no seu celular com calma — leva só alguns minutos:\n${url}\n\nQualquer dúvida, estou por aqui! 💜\n_Dra. Lucia Kratz · CRP 09/20590_`;
+      const tel = (paciente?.telefone || "").replace(/\D/g, "");
+      window.open(`https://api.whatsapp.com/send?${tel ? "phone=55" + tel + "&" : ""}text=${encodeURIComponent(msg)}`, "_blank");
+      setEnviado(true);
+    } catch (e) {
+      alert("Erro ao gerar link: " + e.message);
+    }
+    setEnviando(false);
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.45)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 2000,
+      padding: 20
+    },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 16,
+      padding: 24,
+      width: "100%",
+      maxWidth: 460,
+      maxHeight: "85vh",
+      display: "flex",
+      flexDirection: "column"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 16
+    }
+  }, "📲 Enviar para paciente"), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "var(--gray-400)",
+      fontSize: 22
+    }
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--purple-soft)",
+      borderRadius: 10,
+      padding: "10px 14px",
+      marginBottom: 16,
+      fontSize: 13,
+      color: "var(--purple)",
+      fontWeight: 600
+    }
+  }, recurso.emoji || "🧠", " ", recurso.titulo || recurso.nome || ""), enviado ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "24px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "✅"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      marginBottom: 6
+    }
+  }, "Link enviado pelo WhatsApp!"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)",
+      marginBottom: 20
+    }
+  }, "O link foi registrado e aparecerá em Links Partilhados no perfil da paciente."), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: onClose
+  }, "Fechar")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    placeholder: "🔍 Buscar paciente...",
+    value: busca,
+    onChange: e => setBusca(e.target.value),
+    style: {
+      marginBottom: 10
+    },
+    autoFocus: true
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowY: "auto",
+      flex: 1,
+      border: "1px solid var(--gray-200)",
+      borderRadius: 10,
+      marginBottom: 16
+    }
+  }, filtrados.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: 24,
+      color: "var(--text-muted)",
+      fontSize: 13
+    }
+  }, "Nenhuma paciente encontrada.") : filtrados.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    onClick: () => setSelecionado(p.id),
+    style: {
+      padding: "12px 16px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      borderBottom: "1px solid var(--gray-100)",
+      background: selecionado === p.id ? "var(--purple-soft)" : "white",
+      transition: "background .15s"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: "50%",
+      background: selecionado === p.id ? "var(--purple)" : "var(--gray-100)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 700,
+      color: selecionado === p.id ? "white" : "var(--gray-600)",
+      flexShrink: 0,
+      fontSize: 14
+    }
+  }, (p.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 500,
+      fontSize: 14,
+      color: selecionado === p.id ? "var(--purple)" : "inherit"
+    }
+  }, p.nome), p.telefone && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, p.telefone)), selecionado === p.id && /*#__PURE__*/React.createElement(Icon, {
+    name: "check-circle",
+    size: 16,
+    style: {
+      color: "var(--purple)"
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      flex: 1
+    },
+    onClick: onClose
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      flex: 2
+    },
+    onClick: enviar,
+    disabled: !selecionado || enviando
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 15
+  }), enviando ? " Gerando..." : " Gerar Link + WhatsApp")))));
+}
 function AbaPsicoeducacao() {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,6 +252,7 @@ function AbaPsicoeducacao() {
   const [salvando, setSalvando] = useState(false);
   const [filtro, setFiltro] = useState("todos");
   const [aberto, setAberto] = useState(null);
+  const [enviandoPsico, setEnviandoPsico] = useState(null);
 
   // Mapa de categorias legado → nova macrocategoria clínica
   const REMAP_PSICO = {
@@ -329,7 +569,11 @@ function AbaPsicoeducacao() {
       }
     }, aberto.conteudo))));
   }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", null, enviandoPsico && /*#__PURE__*/React.createElement(ModalEnviarParaPaciente, {
+    recurso: enviandoPsico,
+    tipo: "psicoeducacao",
+    onClose: () => setEnviandoPsico(null)
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -581,7 +825,20 @@ function AbaPsicoeducacao() {
       }, /*#__PURE__*/React.createElement(Icon, {
         name: "trash-2",
         size: 13
-      })))));
+      }))), /*#__PURE__*/React.createElement("button", {
+        className: "btn btn-outline",
+        style: {
+          fontSize: 12,
+          width: "100%",
+          marginTop: 6,
+          color: "var(--purple)",
+          borderColor: "var(--purple)"
+        },
+        onClick: () => setEnviandoPsico(item)
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "send",
+        size: 13
+      }), " 📲 Enviar para paciente")));
     }
     return /*#__PURE__*/React.createElement("div", null, todosGrupos.map(grupo => /*#__PURE__*/React.createElement("div", {
       key: grupo.id,
@@ -1003,7 +1260,13 @@ function RecursosTerapeuticos({
   };
   const getIcone = r => ICONES_FERRAMENTA[r.formularioKey] || (r.categoria === "tcc" ? "🧠" : r.categoria === "ansiedade" ? "😮" : r.categoria === "emocoes" ? "💜" : r.categoria === "autocuidado" ? "🌱" : r.categoria === "relacionamentos" ? "❤️" : r.categoria === "corpo" ? "🥗" : r.categoria === "esquema" ? "🔑" : r.categoria === "musicoterapia" ? "🎵" : r.categoria === "avaliacao" ? "📋" : "🔧");
   const [visualizando, setVisualizando] = useState(null);
+  const [enviandoRecurso, setEnviandoRecurso] = useState(null);
   if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
+  if (enviandoRecurso) return /*#__PURE__*/React.createElement(ModalEnviarParaPaciente, {
+    recurso: enviandoRecurso,
+    tipo: "ferramenta",
+    onClose: () => setEnviandoRecurso(null)
+  });
   if (visualizando) return /*#__PURE__*/React.createElement(ModalVisualizarFerramenta, {
     recurso: visualizando,
     onClose: () => setVisualizando(null),
@@ -1419,7 +1682,20 @@ function RecursosTerapeuticos({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "trash-2",
     size: 13
-  }))), (r.formularioKey === "anamnese" || ["rastreamento-bipolar", "rastreamento-sexual", "rastreamento-alimentar", "rastreamento-neuro", "rastreamento-dependencia", "rastreamento-jogos"].includes(r.formularioKey)) && /*#__PURE__*/React.createElement("button", {
+  }))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 12,
+      width: "100%",
+      marginTop: 6,
+      color: "var(--purple)",
+      borderColor: "var(--purple)"
+    },
+    onClick: () => setEnviandoRecurso(r)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "send",
+    size: 13
+  }), " 📲 Enviar para paciente"), (r.formularioKey === "anamnese" || ["rastreamento-bipolar", "rastreamento-sexual", "rastreamento-alimentar", "rastreamento-neuro", "rastreamento-dependencia", "rastreamento-jogos"].includes(r.formularioKey)) && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-ghost",
     style: {
       fontSize: 12,
