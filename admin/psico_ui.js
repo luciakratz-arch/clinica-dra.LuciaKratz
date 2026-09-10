@@ -674,46 +674,6 @@ function RecursosTerapeuticos({ user }) {
           <div className="page-title">Recursos Terapeuticos</div>
           <div className="page-subtitle">{recursos.length} ferramenta{recursos.length!==1?"s":""} · {recursos.filter(r=>r.tipo==="interativa").length} interativas · {recursos.filter(r=>r.tipo==="conteudo").length} de conteudo</div>
         </div>
-        <div style={{display:"flex",gap:8}}>
-          <button className="btn btn-ghost" style={{fontSize:12}} title="Corrige categorias antigas no Firebase"
-            onClick={async()=>{
-              if(!confirm("Corrigir categorias de Respiração e Relaxamento no Firebase?")) return;
-              const snap = await db.collection("clinica_recursos").get();
-              const validas = new Set(["tcc","ansiedade","emocoes","autocuidado","relacionamentos","corpo","esquema","musicoterapia","avaliacao","outro","casal"]);
-              const batch = db.batch();
-              let n = 0;
-              // Mapa de redistribuição clínica
-              const REMAP_KEY = {
-                "breathing-478":      {categoria:"ansiedade_diaria",    subcategoria:"Ansiedade Diária e Crises"},
-                "muscle-relaxation":  {categoria:"nervovago",           subcategoria:"Regulação do Sistema Nervoso"},
-                "anxiety-management": {categoria:"ansiedade_diaria",    subcategoria:"Ansiedade Diária e Crises"},
-                "decision-tree":      {categoria:"procrastinacao",      subcategoria:"Procrastinação e Foco"},
-                "abc-record":         {categoria:"distorcoes",          subcategoria:"Distorções Cognitivas e Ruminação"},
-                "emotional-eating":   {categoria:"alimentacao",         subcategoria:"Alimentação Emocional e Compulsão"},
-                "treino-neuro-auditivo":{categoria:"musicoterapia",     subcategoria:""},
-                "entrevista-clinica": {categoria:"avaliacao",           subcategoria:""},
-                "anamnese":           {categoria:"avaliacao",           subcategoria:""},
-              };
-              const MANTER = new Set(["musicoterapia","avaliacao"]);
-              snap.docs.forEach(doc=>{
-                const d = doc.data();
-                const remap = REMAP_KEY[d.formularioKey];
-                if(remap){
-                  batch.update(doc.ref,{categoria:remap.categoria, subcategoria:remap.subcategoria}); n++;
-                } else if(!validas.has(d.categoria) && !MANTER.has(d.categoria)){
-                  batch.update(doc.ref,{categoria:"outro"}); n++;
-                }
-              });
-              if(n===0){alert("✅ Nenhuma correção necessária — todas as categorias já estão corretas!");return;}
-              await batch.commit();
-              alert(`✅ ${n} ferramenta(s) corrigida(s)! Respiração e Relaxamento agora aparecem em Ansiedade.`);
-            }}>
-            🔧 Corrigir Categorias
-          </button>
-          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
-            <Icon name="plus" size={16}/> Nova Ferramenta
-          </button>
-        </div>
       </div>
 
       {/* Abas — 3 abas */}
@@ -738,6 +698,9 @@ function RecursosTerapeuticos({ user }) {
       {abaView==="ferramentas"&&(<>
       <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
+        <button className="btn btn-purple" style={{flexShrink:0}} onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
+          <Icon name="plus" size={16}/> Nova Ferramenta
+        </button>
       </div>
       {/* Filtros por macrocategoria */}
       <div style={{marginBottom:20}}>
