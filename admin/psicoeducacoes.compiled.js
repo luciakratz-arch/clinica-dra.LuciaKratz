@@ -15085,7 +15085,200 @@ function AbaPsicoeducacao() {
   const [editando, setEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const [filtro, setFiltro] = useState("todos");
+  const [busca, setBusca] = useState("");
   const [aberto, setAberto] = useState(null);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [wizardBlocos, setWizardBlocos] = useState([]);
+  const [formPsico, setFormPsico] = useState({
+    titulo: "",
+    descricao: "",
+    categoria: "macro_ansiedade",
+    emoji: "📚"
+  });
+  const TIPOS_BLOCO_PSICO = [{
+    id: "banner",
+    label: "Banner",
+    emoji: "🎨",
+    desc: "Cabeçalho colorido"
+  }, {
+    id: "texto",
+    label: "Texto",
+    emoji: "📝",
+    desc: "Parágrafo educativo"
+  }, {
+    id: "card",
+    label: "Card",
+    emoji: "🃏",
+    desc: "Card com ícone e texto"
+  }, {
+    id: "lista",
+    label: "Lista",
+    emoji: "📋",
+    desc: "Lista de itens"
+  }, {
+    id: "imagem",
+    label: "Imagem",
+    emoji: "🖼️",
+    desc: "Imagem via URL"
+  }, {
+    id: "grafico_barras",
+    label: "Gráfico Barras",
+    emoji: "📊",
+    desc: "Gráfico de barras"
+  }, {
+    id: "grafico_radar",
+    label: "Gráfico Teia",
+    emoji: "🕸️",
+    desc: "Gráfico radar/teia"
+  }, {
+    id: "grafico_pizza",
+    label: "Gráfico Pizza",
+    emoji: "🥧",
+    desc: "Gráfico circular"
+  }, {
+    id: "slider",
+    label: "Slider",
+    emoji: "🎚️",
+    desc: "Escala de intensidade"
+  }, {
+    id: "pergunta",
+    label: "Pergunta Reflexão",
+    emoji: "❓",
+    desc: "A paciente responde"
+  }, {
+    id: "audio",
+    label: "Áudio/Vídeo",
+    emoji: "🎵",
+    desc: "Link de mídia"
+  }, {
+    id: "estrelas",
+    label: "Avaliação ⭐",
+    emoji: "⭐",
+    desc: "Avaliação de 1 a 5"
+  }, {
+    id: "checklist",
+    label: "Checklist",
+    emoji: "☑️",
+    desc: "Itens para marcar"
+  }, {
+    id: "selecao",
+    label: "Seleção",
+    emoji: "🗂️",
+    desc: "Múltipla ou única escolha"
+  }];
+  function novoBlocoPsico(tipo) {
+    const d = {
+      banner: {
+        cor: "#7B00C4",
+        emoji: "🧠",
+        titulo: ""
+      },
+      texto: {
+        conteudo: ""
+      },
+      card: {
+        icone: "💡",
+        titulo: "",
+        texto: ""
+      },
+      lista: {
+        itens: [""]
+      },
+      imagem: {
+        url: "",
+        legenda: ""
+      },
+      grafico_barras: {
+        titulo: "",
+        itens: [{
+          label: "",
+          valor: 0
+        }, {
+          label: "",
+          valor: 0
+        }]
+      },
+      grafico_radar: {
+        titulo: "",
+        eixos: [{
+          label: "",
+          valor: 0
+        }, {
+          label: "",
+          valor: 0
+        }, {
+          label: "",
+          valor: 0
+        }]
+      },
+      grafico_pizza: {
+        titulo: "",
+        fatias: [{
+          label: "",
+          valor: 50
+        }, {
+          label: "",
+          valor: 50
+        }]
+      },
+      slider: {
+        pergunta: "",
+        min: 0,
+        max: 10,
+        labelMin: "Nada",
+        labelMax: "Muito"
+      },
+      pergunta: {
+        pergunta: "",
+        placeholder: "Escreva aqui..."
+      },
+      audio: {
+        url: "",
+        legenda: ""
+      },
+      estrelas: {
+        pergunta: "",
+        max: 5
+      },
+      checklist: {
+        titulo: "",
+        itens: [""]
+      },
+      selecao: {
+        pergunta: "",
+        tipo_sel: "unica",
+        opcoes: ["", ""]
+      }
+    };
+    return {
+      id: Date.now() + "_" + Math.random().toString(36).slice(2),
+      tipo,
+      ...d[tipo]
+    };
+  }
+  function addBlocoPsico(tipo) {
+    setWizardBlocos(b => [...b, novoBlocoPsico(tipo)]);
+  }
+  function removeBlocoPsico(idx) {
+    setWizardBlocos(b => b.filter((_, i) => i !== idx));
+  }
+  function moveBlocoPsico(idx, dir) {
+    setWizardBlocos(b => {
+      const a = [...b];
+      const s = idx + dir;
+      if (s < 0 || s >= a.length) return a;
+      const tmp = a[idx];
+      a[idx] = a[s];
+      a[s] = tmp;
+      return a;
+    });
+  }
+  function updateBlocoPsico(idx, patch) {
+    setWizardBlocos(b => b.map((bl, i) => i === idx ? {
+      ...bl,
+      ...patch
+    } : bl));
+  }
 
   // Mapa de categorias legado → nova macrocategoria clínica
   const REMAP_PSICO = {
@@ -15152,29 +15345,35 @@ function AbaPsicoeducacao() {
     }, () => setLoading(false));
     return unsub;
   }, []);
-  async function salvar() {
-    if (!form.titulo) {
+  async function salvarWizardPsico() {
+    if (!formPsico.titulo) {
       alert("Título obrigatório.");
       return;
     }
     setSalvando(true);
+    const doc = {
+      titulo: formPsico.titulo,
+      descricao: formPsico.descricao,
+      categoria: formPsico.categoria,
+      emoji: formPsico.emoji || "📚",
+      tipo: "builder",
+      blocos: wizardBlocos,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
     if (editando) {
-      await db.collection("clinica_psicoeducacao").doc(editando).update(form);
+      await db.collection("clinica_psicoeducacao").doc(editando).update(doc);
     } else {
-      await db.collection("clinica_psicoeducacao").add({
-        ...form,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      await db.collection("clinica_psicoeducacao").add(doc);
     }
     setModal(false);
     setEditando(null);
-    setForm({
+    setWizardBlocos([]);
+    setWizardStep(1);
+    setFormPsico({
       titulo: "",
       descricao: "",
-      categoria: "ansiedade",
-      conteudo: "",
-      emoji: "📚",
-      tipo: "texto"
+      categoria: "macro_ansiedade",
+      emoji: "📚"
     });
     setSalvando(false);
   }
@@ -15319,14 +15518,17 @@ function AbaPsicoeducacao() {
   }
 
   // Filtro: "todos" ou macrocategoria + legado mapeado (PSICO_LEGADO_MACRO declarado fora)
-  const filtrados = filtro === "todos" ? itens : itens.filter(i => {
-    if (i.categoria === filtro) return true;
-    const macro = MACROCATEGORIAS.find(m => m.id === filtro);
-    if (macro) {
-      const subIds = new Set(macro.subs.map(s => s.id));
-      return subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria] === filtro;
-    }
-    return false;
+  const filtrados = itens.filter(i => {
+    const catOk = filtro === "todos" ? true : i.categoria === filtro || (() => {
+      const macro = MACROCATEGORIAS.find(m => m.id === filtro);
+      if (macro) {
+        const subIds = new Set(macro.subs.map(s => s.id));
+        return subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria] === filtro;
+      }
+      return false;
+    })();
+    const buscaOk = !busca || (i.titulo || "").toLowerCase().includes(busca.toLowerCase()) || (i.descricao || "").toLowerCase().includes(busca.toLowerCase());
+    return catOk && buscaOk;
   });
   if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
   if (aberto) {
@@ -15407,7 +15609,9 @@ function AbaPsicoeducacao() {
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 16
+      marginBottom: 16,
+      flexWrap: "wrap",
+      gap: 8
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -15417,9 +15621,20 @@ function AbaPsicoeducacao() {
   }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeducação"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8
+      gap: 8,
+      alignItems: "center",
+      flexWrap: "wrap"
     }
-  }, itens.length === 0 && /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      minWidth: 180,
+      fontSize: 13
+    },
+    placeholder: "🔍 Buscar por título ou descrição...",
+    value: busca,
+    onChange: e => setBusca(e.target.value)
+  }), itens.length === 0 && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 12
@@ -15429,57 +15644,27 @@ function AbaPsicoeducacao() {
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "download",
     size: 14
-  }), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"), itens.length > 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 12
-    },
-    onClick: sincronizarNovas,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "refresh-cw",
-    size: 14
-  }), " ", salvando ? "Sincronizando..." : "Sincronizar novas"), itens.length > 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 12
-    },
-    onClick: migrarCatPsico,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "layers",
-    size: 14
-  }), " Migrar categorias"), itens.length > 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 12,
-      background: "#f3e6ff",
-      borderColor: "#7B00C4",
-      color: "#7B00C4"
-    },
-    onClick: atualizarVisuaisFirebase,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "zap",
-    size: 14
-  }), " Ativar visuais"), /*#__PURE__*/React.createElement("button", {
+  }), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
+    style: {
+      flexShrink: 0
+    },
     onClick: () => {
-      setForm({
+      setFormPsico({
         titulo: "",
         descricao: "",
-        categoria: "ansiedade",
-        conteudo: "",
-        emoji: "📚",
-        tipo: "texto"
+        categoria: "macro_ansiedade",
+        emoji: "📚"
       });
+      setWizardBlocos([]);
+      setWizardStep(1);
       setEditando(null);
       setModal(true);
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
     size: 16
-  }), " Novo Material"))), /*#__PURE__*/React.createElement("div", {
+  }), " Nova Psicoeducação"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
@@ -15716,153 +15901,1275 @@ function AbaPsicoeducacao() {
       alignItems: "center",
       justifyContent: "center",
       padding: 16
-    }
+    },
+    onClick: () => setModal(false)
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "white",
-      borderRadius: 16,
+      borderRadius: 20,
       width: "100%",
-      maxWidth: 540,
-      maxHeight: "90vh",
+      maxWidth: 700,
+      maxHeight: "92vh",
       overflowY: "auto",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
-    }
+      boxShadow: "0 24px 80px rgba(0,0,0,0.25)"
+    },
+    onClick: e => e.stopPropagation()
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: "18px 24px",
-      borderBottom: "1px solid var(--gray-100)",
+      background: "linear-gradient(135deg,#7B00C4,#9B30E0)",
+      borderRadius: "20px 20px 0 0",
+      padding: "20px 28px",
+      color: "white",
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontWeight: 700,
-      fontSize: 16
+      fontFamily: "var(--font-display)",
+      fontSize: 20,
+      fontWeight: 700
     }
-  }, editando ? "Editar Material" : "Novo Material de Psicoeducação"), /*#__PURE__*/React.createElement("button", {
+  }, editando ? "Editar Psicoeducação" : "Nova Psicoeducação"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      opacity: 0.85,
+      marginTop: 3
+    }
+  }, wizardStep === 1 ? "Passo 1 — Identidade e Categoria" : wizardStep === 2 ? "Passo 2 — Blocos de Conteúdo" : "Passo 3 — Revisão e Salvar")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, [1, 2, 3].map(s => /*#__PURE__*/React.createElement("div", {
+    key: s,
+    style: {
+      width: 26,
+      height: 26,
+      borderRadius: "50%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 11,
+      fontWeight: 700,
+      background: wizardStep === s ? "white" : wizardStep > s ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+      color: wizardStep === s ? "#7B00C4" : wizardStep > s ? "white" : "rgba(255,255,255,0.7)"
+    }
+  }, wizardStep > s ? "✓" : s)), /*#__PURE__*/React.createElement("button", {
     onClick: () => setModal(false),
     style: {
       background: "none",
       border: "none",
       cursor: "pointer",
-      fontSize: 22,
-      color: "var(--text-muted)"
+      color: "white",
+      marginLeft: 8
     }
-  }, "×")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 20
+  })))), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: "20px 24px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 14
+      padding: "24px 28px"
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, wizardStep === 1 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "60px 1fr",
-      gap: 10
+      gap: 10,
+      marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
     style: {
-      fontWeight: 600,
-      fontSize: 12,
-      display: "block",
-      marginBottom: 6
+      fontSize: 11
     }
   }, "Emoji"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
-    value: form.emoji,
-    onChange: e => setForm(f => ({
+    value: formPsico.emoji,
+    onChange: e => setFormPsico(f => ({
       ...f,
       emoji: e.target.value
     })),
     style: {
       textAlign: "center",
       fontSize: 20
-    }
+    },
+    maxLength: 2
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
     style: {
-      fontWeight: 600,
-      fontSize: 12,
-      display: "block",
-      marginBottom: 6
+      fontSize: 11
     }
   }, "Título *"), /*#__PURE__*/React.createElement("input", {
     className: "form-input",
-    value: form.titulo,
-    onChange: e => setForm(f => ({
+    value: formPsico.titulo,
+    autoFocus: true,
+    onChange: e => setFormPsico(f => ({
       ...f,
       titulo: e.target.value
     })),
     placeholder: "Ex: O que é ansiedade?"
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
     style: {
-      fontWeight: 600,
-      fontSize: 12,
-      display: "block",
-      marginBottom: 6
+      marginBottom: 16
     }
-  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: form.categoria,
-    onChange: e => setForm(f => ({
-      ...f,
-      categoria: e.target.value
-    }))
-  }, MACROCATEGORIAS.map(m => /*#__PURE__*/React.createElement("optgroup", {
-    key: m.id,
-    label: `${m.icone} ${m.label}`
-  }, m.subs.map(s => /*#__PURE__*/React.createElement("option", {
-    key: s.id,
-    value: s.id
-  }, s.label)))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
     style: {
-      fontWeight: 600,
-      fontSize: 12,
-      display: "block",
-      marginBottom: 6
+      fontSize: 11
     }
-  }, "Descrição breve"), /*#__PURE__*/React.createElement("input", {
+  }, "Descrição breve"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
-    value: form.descricao,
-    onChange: e => setForm(f => ({
+    rows: 2,
+    value: formPsico.descricao,
+    onChange: e => setFormPsico(f => ({
       ...f,
       descricao: e.target.value
     })),
-    placeholder: "Resumo do material..."
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    placeholder: "Resumo do material psicoeducativo..."
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
     style: {
-      fontWeight: 600,
-      fontSize: 12,
-      display: "block",
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Categoria"), MACROCATEGORIAS.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    style: {
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: m.cor,
+      textTransform: "uppercase",
+      letterSpacing: "0.6px",
       marginBottom: 6
     }
-  }, "Conteúdo completo"), /*#__PURE__*/React.createElement(TextAreaVoz, {
-    className: "form-input",
-    rows: 6,
-    value: form.conteudo,
-    onChange: e => setForm(f => ({
-      ...f,
-      conteudo: e.target.value
-    })),
-    placeholder: "Texto educativo completo...",
+  }, m.icone, " ", m.label), /*#__PURE__*/React.createElement("div", {
     style: {
-      resize: "vertical"
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "14px 24px",
-      borderTop: "1px solid var(--gray-100)",
       display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
+      flexWrap: "wrap",
+      gap: 6
+    }
+  }, m.subs.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => setFormPsico(f => ({
+      ...f,
+      categoria: s.id
+    })),
+    style: {
+      padding: "6px 12px",
+      borderRadius: 20,
+      border: "1.5px solid",
+      cursor: "pointer",
+      fontSize: 12,
+      fontFamily: "var(--font-body)",
+      borderColor: formPsico.categoria === s.id ? m.cor : "var(--gray-200)",
+      background: formPsico.categoria === s.id ? m.bg : "white",
+      color: formPsico.categoria === s.id ? m.cor : "var(--gray-600)",
+      fontWeight: formPsico.categoria === s.id ? 600 : 400
+    }
+  }, s.label)))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "flex-end",
+      marginTop: 24
     }
   }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModal(false),
-    className: "btn btn-ghost"
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    onClick: salvar,
-    disabled: salvando,
-    className: "btn btn-purple"
-  }, salvando ? "Salvando..." : "Salvar")))));
+    className: "btn btn-purple",
+    onClick: () => {
+      if (!formPsico.titulo) {
+        alert("Título obrigatório.");
+        return;
+      }
+      setWizardStep(2);
+    }
+  }, "Próximo — Blocos de Conteúdo ", /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-right",
+    size: 15
+  })))), wizardStep === 2 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: "var(--text-muted)",
+      textTransform: "uppercase",
+      letterSpacing: "0.6px",
+      marginBottom: 10
+    }
+  }, "Adicionar Bloco"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 8
+    }
+  }, TIPOS_BLOCO_PSICO.map(t => /*#__PURE__*/React.createElement("button", {
+    key: t.id,
+    onClick: () => addBlocoPsico(t.id),
+    title: t.desc,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "7px 13px",
+      borderRadius: 20,
+      border: "1.5px solid var(--gray-200)",
+      background: "white",
+      cursor: "pointer",
+      fontSize: 12,
+      fontFamily: "var(--font-body)",
+      color: "var(--gray-700)"
+    }
+  }, t.emoji, " ", t.label)))), wizardBlocos.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "32px 20px",
+      color: "var(--text-muted)",
+      background: "#fafafa",
+      borderRadius: 12,
+      border: "1.5px dashed var(--gray-200)"
+    }
+  }, "Clique nos tipos acima para montar a psicoeducação bloco a bloco"), wizardBlocos.map((bloco, idx) => /*#__PURE__*/React.createElement("div", {
+    key: bloco.id,
+    style: {
+      border: "1.5px solid var(--gray-200)",
+      borderRadius: 12,
+      marginBottom: 12,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "10px 14px",
+      background: "#f9f5ff",
+      borderBottom: "1px solid var(--gray-100)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16
+    }
+  }, TIPOS_BLOCO_PSICO.find(t => t.id === bloco.tipo)?.emoji), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      color: "var(--purple)",
+      flex: 1
+    }
+  }, TIPOS_BLOCO_PSICO.find(t => t.id === bloco.tipo)?.label), /*#__PURE__*/React.createElement("button", {
+    onClick: () => moveBlocoPsico(idx, -1),
+    disabled: idx === 0,
+    style: {
+      background: "none",
+      border: "none",
+      cursor: idx === 0 ? "not-allowed" : "pointer",
+      color: "var(--gray-400)",
+      padding: "2px 6px"
+    }
+  }, "▲"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => moveBlocoPsico(idx, 1),
+    disabled: idx === wizardBlocos.length - 1,
+    style: {
+      background: "none",
+      border: "none",
+      cursor: idx === wizardBlocos.length - 1 ? "not-allowed" : "pointer",
+      color: "var(--gray-400)",
+      padding: "2px 6px"
+    }
+  }, "▼"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeBlocoPsico(idx),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626",
+      padding: "2px 6px"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "trash-2",
+    size: 14
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 16px"
+    }
+  }, bloco.tipo === "banner" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Título"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 13
+    },
+    value: bloco.titulo,
+    onChange: e => updateBlocoPsico(idx, {
+      titulo: e.target.value
+    }),
+    placeholder: "Título..."
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 80
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Emoji"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 20,
+      textAlign: "center"
+    },
+    value: bloco.emoji,
+    onChange: e => updateBlocoPsico(idx, {
+      emoji: e.target.value
+    }),
+    maxLength: 2
+  }))), /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Cor de fundo"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap",
+      marginBottom: 10
+    }
+  }, ["#7B00C4", "#0891b2", "#059669", "#d97706", "#dc2626", "#db2777", "#6366f1", "#374151"].map(cor => /*#__PURE__*/React.createElement("button", {
+    key: cor,
+    onClick: () => updateBlocoPsico(idx, {
+      cor
+    }),
+    style: {
+      width: 28,
+      height: 28,
+      borderRadius: "50%",
+      background: cor,
+      border: bloco.cor === cor ? "3px solid #fff" : "2px solid transparent",
+      outline: bloco.cor === cor ? "2px solid " + cor : "none",
+      cursor: "pointer"
+    }
+  })), /*#__PURE__*/React.createElement("input", {
+    type: "color",
+    value: bloco.cor,
+    onChange: e => updateBlocoPsico(idx, {
+      cor: e.target.value
+    }),
+    style: {
+      width: 28,
+      height: 28,
+      borderRadius: "50%",
+      border: "none",
+      cursor: "pointer",
+      padding: 0
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 10,
+      padding: "14px 18px",
+      background: bloco.cor,
+      color: "white",
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 24
+    }
+  }, bloco.emoji), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, bloco.titulo || "Preview do banner"))), bloco.tipo === "texto" && /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 4,
+    value: bloco.conteudo,
+    onChange: e => updateBlocoPsico(idx, {
+      conteudo: e.target.value
+    }),
+    placeholder: "Escreva o texto psicoeducativo aqui..."
+  }), bloco.tipo === "card" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 70
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Ícone"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 20,
+      textAlign: "center"
+    },
+    value: bloco.icone,
+    onChange: e => updateBlocoPsico(idx, {
+      icone: e.target.value
+    }),
+    maxLength: 2
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Título"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 13
+    },
+    value: bloco.titulo,
+    onChange: e => updateBlocoPsico(idx, {
+      titulo: e.target.value
+    }),
+    placeholder: "Título do card..."
+  }))), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 3,
+    value: bloco.texto,
+    onChange: e => updateBlocoPsico(idx, {
+      texto: e.target.value
+    }),
+    placeholder: "Texto do card..."
+  })), bloco.tipo === "lista" && /*#__PURE__*/React.createElement(React.Fragment, null, bloco.itens.map((item, ii) => /*#__PURE__*/React.createElement("div", {
+    key: ii,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--purple)",
+      fontSize: 16
+    }
+  }, "•"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 1,
+      fontSize: 13
+    },
+    value: item,
+    onChange: e => updateBlocoPsico(idx, {
+      itens: bloco.itens.map((v, i) => i === ii ? e.target.value : v)
+    }),
+    placeholder: `Item ${ii + 1}...`
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateBlocoPsico(idx, {
+      itens: bloco.itens.filter((_, i) => i !== ii)
+    }),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => updateBlocoPsico(idx, {
+      itens: [...bloco.itens, ""]
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Adicionar item")), bloco.tipo === "imagem" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "URL da imagem"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginBottom: 8,
+      fontSize: 13
+    },
+    value: bloco.url,
+    onChange: e => updateBlocoPsico(idx, {
+      url: e.target.value
+    }),
+    placeholder: "https://..."
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Legenda (opcional)"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 13
+    },
+    value: bloco.legenda,
+    onChange: e => updateBlocoPsico(idx, {
+      legenda: e.target.value
+    }),
+    placeholder: "Legenda..."
+  }), bloco.url && /*#__PURE__*/React.createElement("img", {
+    src: bloco.url,
+    alt: "",
+    style: {
+      marginTop: 10,
+      maxWidth: "100%",
+      borderRadius: 8,
+      maxHeight: 160,
+      objectFit: "cover"
+    },
+    onError: e => e.target.style.display = "none"
+  })), bloco.tipo === "grafico_barras" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Título do gráfico"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginBottom: 10,
+      fontSize: 13
+    },
+    value: bloco.titulo,
+    onChange: e => updateBlocoPsico(idx, {
+      titulo: e.target.value
+    }),
+    placeholder: "Ex: Como estou em cada área"
+  }), bloco.itens.map((item, ii) => /*#__PURE__*/React.createElement("div", {
+    key: ii,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 2,
+      fontSize: 13
+    },
+    value: item.label,
+    onChange: e => updateBlocoPsico(idx, {
+      itens: bloco.itens.map((v, i) => i === ii ? {
+        ...v,
+        label: e.target.value
+      } : v)
+    }),
+    placeholder: `Rótulo ${ii + 1}`
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-input",
+    style: {
+      width: 70,
+      fontSize: 13
+    },
+    min: 0,
+    max: 100,
+    value: item.valor,
+    onChange: e => updateBlocoPsico(idx, {
+      itens: bloco.itens.map((v, i) => i === ii ? {
+        ...v,
+        valor: Number(e.target.value)
+      } : v)
+    })
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateBlocoPsico(idx, {
+      itens: bloco.itens.filter((_, i) => i !== ii)
+    }),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => updateBlocoPsico(idx, {
+      itens: [...bloco.itens, {
+        label: "",
+        valor: 0
+      }]
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Adicionar barra")), bloco.tipo === "grafico_radar" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Título do gráfico"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginBottom: 10,
+      fontSize: 13
+    },
+    value: bloco.titulo,
+    onChange: e => updateBlocoPsico(idx, {
+      titulo: e.target.value
+    }),
+    placeholder: "Ex: Roda da Vida"
+  }), bloco.eixos.map((eixo, ii) => /*#__PURE__*/React.createElement("div", {
+    key: ii,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 2,
+      fontSize: 13
+    },
+    value: eixo.label,
+    onChange: e => updateBlocoPsico(idx, {
+      eixos: bloco.eixos.map((v, i) => i === ii ? {
+        ...v,
+        label: e.target.value
+      } : v)
+    }),
+    placeholder: `Eixo ${ii + 1}`
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-input",
+    style: {
+      width: 70,
+      fontSize: 13
+    },
+    min: 0,
+    max: 10,
+    value: eixo.valor,
+    onChange: e => updateBlocoPsico(idx, {
+      eixos: bloco.eixos.map((v, i) => i === ii ? {
+        ...v,
+        valor: Number(e.target.value)
+      } : v)
+    })
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateBlocoPsico(idx, {
+      eixos: bloco.eixos.filter((_, i) => i !== ii)
+    }),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => updateBlocoPsico(idx, {
+      eixos: [...bloco.eixos, {
+        label: "",
+        valor: 0
+      }]
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Adicionar eixo")), bloco.tipo === "grafico_pizza" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Título do gráfico"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginBottom: 10,
+      fontSize: 13
+    },
+    value: bloco.titulo,
+    onChange: e => updateBlocoPsico(idx, {
+      titulo: e.target.value
+    }),
+    placeholder: "Ex: Como uso meu tempo"
+  }), bloco.fatias.map((fatia, ii) => /*#__PURE__*/React.createElement("div", {
+    key: ii,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 2,
+      fontSize: 13
+    },
+    value: fatia.label,
+    onChange: e => updateBlocoPsico(idx, {
+      fatias: bloco.fatias.map((v, i) => i === ii ? {
+        ...v,
+        label: e.target.value
+      } : v)
+    }),
+    placeholder: `Fatia ${ii + 1}`
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-input",
+    style: {
+      width: 70,
+      fontSize: 13
+    },
+    min: 0,
+    max: 100,
+    value: fatia.valor,
+    onChange: e => updateBlocoPsico(idx, {
+      fatias: bloco.fatias.map((v, i) => i === ii ? {
+        ...v,
+        valor: Number(e.target.value)
+      } : v)
+    })
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, "%"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateBlocoPsico(idx, {
+      fatias: bloco.fatias.filter((_, i) => i !== ii)
+    }),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => updateBlocoPsico(idx, {
+      fatias: [...bloco.fatias, {
+        label: "",
+        valor: 0
+      }]
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Adicionar fatia")), bloco.tipo === "slider" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Pergunta"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 2,
+    style: {
+      marginBottom: 10,
+      fontSize: 13
+    },
+    value: bloco.pergunta,
+    onChange: e => updateBlocoPsico(idx, {
+      pergunta: e.target.value
+    }),
+    placeholder: "Ex: Como você está se sentindo hoje?"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Mínimo"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-input",
+    value: bloco.min,
+    onChange: e => updateBlocoPsico(idx, {
+      min: Number(e.target.value)
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Máximo"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    className: "form-input",
+    value: bloco.max,
+    onChange: e => updateBlocoPsico(idx, {
+      max: Number(e.target.value)
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 2
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Rótulo mín"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: bloco.labelMin,
+    onChange: e => updateBlocoPsico(idx, {
+      labelMin: e.target.value
+    }),
+    placeholder: "Nada"
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 2
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Rótulo máx"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: bloco.labelMax,
+    onChange: e => updateBlocoPsico(idx, {
+      labelMax: e.target.value
+    }),
+    placeholder: "Muito"
+  })))), bloco.tipo === "pergunta" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Pergunta de reflexão"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 2,
+    style: {
+      marginBottom: 8,
+      fontSize: 13
+    },
+    value: bloco.pergunta,
+    onChange: e => updateBlocoPsico(idx, {
+      pergunta: e.target.value
+    }),
+    placeholder: "O que você percebe em você mesma com esse conteúdo?"
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Placeholder para a paciente"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 13
+    },
+    value: bloco.placeholder,
+    onChange: e => updateBlocoPsico(idx, {
+      placeholder: e.target.value
+    }),
+    placeholder: "Escreva aqui..."
+  })), bloco.tipo === "audio" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "URL do áudio ou vídeo"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginBottom: 8,
+      fontSize: 13
+    },
+    value: bloco.url,
+    onChange: e => updateBlocoPsico(idx, {
+      url: e.target.value
+    }),
+    placeholder: "YouTube, Spotify, SoundCloud, Google Drive..."
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Legenda (opcional)"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      fontSize: 13
+    },
+    value: bloco.legenda,
+    onChange: e => updateBlocoPsico(idx, {
+      legenda: e.target.value
+    }),
+    placeholder: "Ex: Música para meditação"
+  })), bloco.tipo === "estrelas" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Pergunta"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 2,
+    style: {
+      marginBottom: 8,
+      fontSize: 13
+    },
+    value: bloco.pergunta,
+    onChange: e => updateBlocoPsico(idx, {
+      pergunta: e.target.value
+    }),
+    placeholder: "Ex: Como você avalia seu nível de ansiedade hoje?"
+  }), /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Máximo de estrelas"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    style: {
+      fontSize: 13,
+      width: 100
+    },
+    value: bloco.max,
+    onChange: e => updateBlocoPsico(idx, {
+      max: Number(e.target.value)
+    })
+  }, [3, 5, 7, 10].map(n => /*#__PURE__*/React.createElement("option", {
+    key: n,
+    value: n
+  }, n, " ⭐")))), bloco.tipo === "checklist" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Título"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      marginBottom: 10,
+      fontSize: 13
+    },
+    value: bloco.titulo,
+    onChange: e => updateBlocoPsico(idx, {
+      titulo: e.target.value
+    }),
+    placeholder: "Ex: Meu checklist de autocuidado"
+  }), bloco.itens.map((item, ii) => /*#__PURE__*/React.createElement("div", {
+    key: ii,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16
+    }
+  }, "☐"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 1,
+      fontSize: 13
+    },
+    value: item,
+    onChange: e => updateBlocoPsico(idx, {
+      itens: bloco.itens.map((v, i) => i === ii ? e.target.value : v)
+    }),
+    placeholder: `Item ${ii + 1}...`
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateBlocoPsico(idx, {
+      itens: bloco.itens.filter((_, i) => i !== ii)
+    }),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => updateBlocoPsico(idx, {
+      itens: [...bloco.itens, ""]
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Adicionar item")), bloco.tipo === "selecao" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      fontSize: 11
+    }
+  }, "Pergunta"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 2,
+    style: {
+      marginBottom: 8,
+      fontSize: 13
+    },
+    value: bloco.pergunta,
+    onChange: e => updateBlocoPsico(idx, {
+      pergunta: e.target.value
+    }),
+    placeholder: "Ex: O que você mais sente no momento?"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 10
+    }
+  }, ["unica", "multipla"].map(t => /*#__PURE__*/React.createElement("button", {
+    key: t,
+    onClick: () => updateBlocoPsico(idx, {
+      tipo_sel: t
+    }),
+    style: {
+      padding: "5px 14px",
+      borderRadius: 16,
+      border: "1.5px solid",
+      cursor: "pointer",
+      fontSize: 12,
+      fontFamily: "var(--font-body)",
+      borderColor: bloco.tipo_sel === t ? "var(--purple)" : "var(--gray-200)",
+      background: bloco.tipo_sel === t ? "var(--purple-bg)" : "white",
+      color: bloco.tipo_sel === t ? "var(--purple)" : "var(--gray-600)"
+    }
+  }, t === "unica" ? "☝️ Escolha única" : "☑️ Múltipla escolha"))), bloco.opcoes.map((op, ii) => /*#__PURE__*/React.createElement("div", {
+    key: ii,
+    style: {
+      display: "flex",
+      gap: 8,
+      marginBottom: 8,
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--purple)",
+      fontSize: 13,
+      width: 18
+    }
+  }, ii + 1, "."), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 1,
+      fontSize: 13
+    },
+    value: op,
+    onChange: e => updateBlocoPsico(idx, {
+      opcoes: bloco.opcoes.map((v, i) => i === ii ? e.target.value : v)
+    }),
+    placeholder: `Opção ${ii + 1}...`
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => updateBlocoPsico(idx, {
+      opcoes: bloco.opcoes.filter((_, i) => i !== ii)
+    }),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "#dc2626"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 14
+  })))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => updateBlocoPsico(idx, {
+      opcoes: [...bloco.opcoes, ""]
+    })
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 13
+  }), " Adicionar opção"))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginTop: 24
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: () => setWizardStep(1)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: () => setWizardStep(3)
+  }, "Próximo — Revisar ", /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-right",
+    size: 15
+  })))), wizardStep === 3 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f9f5ff",
+      borderRadius: 12,
+      padding: "16px 20px",
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 28
+    }
+  }, formPsico.emoji), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15
+    }
+  }, formPsico.titulo)), formPsico.descricao && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)",
+      marginBottom: 8
+    }
+  }, formPsico.descricao), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--purple)",
+      fontWeight: 600
+    }
+  }, MACROCATEGORIAS.find(m => m.subs.some(s => s.id === formPsico.categoria))?.icone, " ", MACROCATEGORIAS.flatMap(m => m.subs).find(s => s.id === formPsico.categoria)?.label || formPsico.categoria)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: "var(--text-muted)",
+      textTransform: "uppercase",
+      letterSpacing: "0.6px",
+      marginBottom: 10
+    }
+  }, wizardBlocos.length, " bloco", wizardBlocos.length !== 1 ? "s" : "", " de conteúdo"), wizardBlocos.map((bloco, idx) => {
+    const t = TIPOS_BLOCO_PSICO.find(t => t.id === bloco.tipo);
+    return /*#__PURE__*/React.createElement("div", {
+      key: bloco.id,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 14px",
+        background: "white",
+        borderRadius: 10,
+        border: "1px solid var(--gray-200)",
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 18
+      }
+    }, t?.emoji), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 600,
+        fontSize: 13
+      }
+    }, t?.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)"
+      }
+    }, bloco.tipo === "texto" ? bloco.conteudo?.slice(0, 60) || "—" : bloco.tipo === "banner" ? bloco.titulo || "—" : bloco.tipo === "card" ? bloco.titulo || "—" : bloco.tipo === "lista" ? `${bloco.itens.filter(i => i).length} item(s)` : bloco.tipo === "imagem" ? bloco.url ? "URL definida" : "—" : bloco.tipo === "grafico_barras" ? `${bloco.itens?.length} item(s)` : bloco.tipo === "grafico_radar" ? `${bloco.eixos?.length} eixo(s)` : bloco.tipo === "grafico_pizza" ? `${bloco.fatias?.length} fatia(s)` : bloco.tipo === "slider" ? `${bloco.min} → ${bloco.max}` : bloco.tipo === "pergunta" ? bloco.pergunta?.slice(0, 60) || "—" : bloco.tipo === "audio" ? bloco.url ? "URL definida" : "—" : bloco.tipo === "estrelas" ? `Até ${bloco.max} estrelas` : bloco.tipo === "checklist" ? `${bloco.itens.filter(i => i).length} item(s)` : bloco.tipo === "selecao" ? `${bloco.opcoes.filter(o => o).length} opção(ões)` : "—")), /*#__PURE__*/React.createElement("button", {
+      onClick: () => setWizardStep(2),
+      style: {
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        color: "var(--purple)",
+        fontSize: 12
+      }
+    }, "editar"));
+  }), wizardBlocos.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: "var(--text-muted)",
+      fontSize: 13,
+      padding: "12px 0"
+    }
+  }, "Nenhum bloco — a psicoeducação terá apenas título e descrição."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      marginTop: 24
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: () => setWizardStep(2)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: salvarWizardPsico,
+    disabled: salvando
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "save",
+    size: 15
+  }), " ", salvando ? "Salvando..." : "Salvar Psicoeducação")))))));
 }
