@@ -14252,6 +14252,612 @@ const CATS_FABULAS = {
     accent: "#64748B"
   }
 };
+
+// ── Wizard Nova Fábula ────────────────────────────────────────────────────────
+function WizardNovaFabula({
+  onClose,
+  onSalva
+}) {
+  const [passo, setPasso] = useState(1);
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState({
+    titulo: "",
+    emoji: "📖",
+    moral: "",
+    categoria: "macro_ansiedade",
+    paginas: [""],
+    perguntas: ["", "", ""]
+  });
+  const macro = MACROCATEGORIAS.find(m => m.id === form.categoria) || MACROCATEGORIAS[0];
+  function addPagina() {
+    setForm(f => ({
+      ...f,
+      paginas: [...f.paginas, ""]
+    }));
+  }
+  function remPagina(i) {
+    setForm(f => ({
+      ...f,
+      paginas: f.paginas.filter((_, j) => j !== i)
+    }));
+  }
+  function setPagina(i, v) {
+    setForm(f => {
+      const p = [...f.paginas];
+      p[i] = v;
+      return {
+        ...f,
+        paginas: p
+      };
+    });
+  }
+  function setPergunta(i, v) {
+    setForm(f => {
+      const p = [...f.perguntas];
+      p[i] = v;
+      return {
+        ...f,
+        perguntas: p
+      };
+    });
+  }
+  async function salvar() {
+    if (!form.titulo.trim() || form.paginas.every(p => !p.trim())) return;
+    setSalvando(true);
+    try {
+      const doc = {
+        titulo: form.titulo.trim(),
+        emoji: form.emoji || "📖",
+        moral: form.moral.trim(),
+        categoria: form.categoria,
+        paginas: form.paginas.filter(p => p.trim()),
+        perguntas: form.perguntas.filter(p => p.trim()),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      const ref = await db.collection("clinica_fabulas").add(doc);
+      onSalva({
+        id: ref.id,
+        ...doc
+      });
+    } catch (e) {
+      alert("Erro ao salvar: " + e.message);
+    }
+    setSalvando(false);
+  }
+  const PASSOS = ["Identidade", "Categoria", "Conteúdo", "Reflexões"];
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 2000,
+      padding: 16
+    },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 18,
+      width: "100%",
+      maxWidth: 560,
+      maxHeight: "90vh",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: macro.cor,
+      padding: "20px 24px",
+      color: "white"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "var(--font-display)",
+      fontSize: 18,
+      fontWeight: 700
+    }
+  }, form.emoji, " ", form.titulo || "Nova Fábula"), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    style: {
+      background: "rgba(255,255,255,0.2)",
+      border: "none",
+      color: "white",
+      borderRadius: 8,
+      width: 30,
+      height: 30,
+      cursor: "pointer",
+      fontSize: 18
+    }
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6
+    }
+  }, PASSOS.map((p, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 3,
+      borderRadius: 3,
+      background: i < passo ? "white" : "rgba(255,255,255,0.3)",
+      marginBottom: 4
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      opacity: i < passo ? 1 : 0.6,
+      fontWeight: i === passo - 1 ? 700 : 400
+    }
+  }, p))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "20px 24px"
+    }
+  }, passo === 1 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "0 0 80px"
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Emoji"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.emoji,
+    onChange: e => setForm(f => ({
+      ...f,
+      emoji: e.target.value
+    })),
+    style: {
+      textAlign: "center",
+      fontSize: 24
+    },
+    maxLength: 2
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Título da Fábula *"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.titulo,
+    onChange: e => setForm(f => ({
+      ...f,
+      titulo: e.target.value
+    })),
+    placeholder: "Ex: A Borboleta e a Tempestade"
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Moral / Mensagem central"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.moral,
+    onChange: e => setForm(f => ({
+      ...f,
+      moral: e.target.value
+    })),
+    placeholder: "Ex: \"A crise que parece fim pode ser começo.\""
+  }))), passo === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Categoria terapêutica"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      marginTop: 8
+    }
+  }, MACROCATEGORIAS.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    onClick: () => setForm(f => ({
+      ...f,
+      categoria: m.id
+    })),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "12px 16px",
+      borderRadius: 12,
+      border: "2px solid",
+      borderColor: form.categoria === m.id ? m.cor : "#e5e7eb",
+      background: form.categoria === m.id ? m.bg : "white",
+      cursor: "pointer",
+      transition: "all .15s"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      background: m.cor,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 18,
+      flexShrink: 0
+    }
+  }, m.icone), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14,
+      color: form.categoria === m.id ? m.cor : "#374151"
+    }
+  }, m.label)), form.categoria === m.id && /*#__PURE__*/React.createElement(Icon, {
+    name: "check-circle",
+    size: 18,
+    style: {
+      color: m.cor,
+      marginLeft: "auto"
+    }
+  }))))), passo === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Páginas da fábula"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      marginBottom: 12
+    }
+  }, "Cada página é um bloco de texto. O leitor avança página por página."), form.paginas.map((p, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      marginBottom: 12,
+      position: "relative"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label",
+    style: {
+      margin: 0
+    }
+  }, "Página ", i + 1), form.paginas.length > 1 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => remPagina(i),
+    style: {
+      background: "none",
+      border: "none",
+      color: "var(--danger)",
+      cursor: "pointer",
+      fontSize: 18,
+      lineHeight: 1
+    }
+  }, "×")), /*#__PURE__*/React.createElement("textarea", {
+    className: "form-input",
+    rows: 4,
+    value: p,
+    onChange: e => setPagina(i, e.target.value),
+    placeholder: `Texto da página ${i + 1}...`,
+    style: {
+      resize: "vertical"
+    }
+  }))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      width: "100%",
+      justifyContent: "center",
+      fontSize: 13
+    },
+    onClick: addPagina
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 14
+  }), " Adicionar página")), passo === 4 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Perguntas de reflexão"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)",
+      marginBottom: 12
+    }
+  }, "Deixe em branco as que não quiser usar. O paciente responde após ler a fábula."), form.perguntas.map((p, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      marginBottom: 12
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Pergunta ", i + 1), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: p,
+    onChange: e => setPergunta(i, e.target.value),
+    placeholder: i === 0 ? "O que mais te tocou nessa história?" : i === 1 ? "Você se identificou com algum personagem?" : "Que mensagem você leva desta fábula?"
+  }))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "16px 24px",
+      borderTop: "1px solid var(--gray-100)",
+      display: "flex",
+      gap: 10
+    }
+  }, passo > 1 && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      flex: 1
+    },
+    onClick: () => setPasso(p => p - 1)
+  }, "← Anterior"), passo < 4 ? /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      flex: 2,
+      justifyContent: "center",
+      background: macro.cor
+    },
+    onClick: () => setPasso(p => p + 1),
+    disabled: passo === 1 && !form.titulo.trim()
+  }, "Próximo →") : /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      flex: 2,
+      justifyContent: "center",
+      background: macro.cor
+    },
+    onClick: salvar,
+    disabled: salvando || !form.titulo.trim()
+  }, salvando ? "Salvando..." : "✓ Salvar Fábula"))));
+}
+
+// ── Busca Inteligente por Sintomas (IA) ───────────────────────────────────────
+function BuscaIASintomas({
+  recursos,
+  onClose,
+  onEnviar
+}) {
+  const [sintoma, setSintoma] = useState("");
+  const [buscando, setBuscando] = useState(false);
+  const [resultado, setResultado] = useState(null);
+  const [erro, setErro] = useState("");
+  async function buscar() {
+    if (!sintoma.trim()) return;
+    setBuscando(true);
+    setErro("");
+    setResultado(null);
+    try {
+      const lista = recursos.map(r => `- [${r._tipo}] "${r.titulo || r.nome}" (${r.categoria || r.macroCategoria || ""}): ${r.descricao || r.moral || ""}`).join("\n");
+      const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.
+
+A psicóloga Dra. Lucia Kratz tem estes recursos terapêuticos disponíveis:
+${lista}
+
+A queixa/sintoma da paciente é: "${sintoma}"
+
+Selecione os 3 a 5 recursos mais indicados para esta queixa. Para cada um, informe:
+- O título exato (igual à lista)
+- Por que é indicado (1-2 frases clínicas)
+- Ordem sugerida de uso
+
+Responda APENAS em JSON válido, sem markdown, neste formato:
+{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: prompt
+          }]
+        })
+      });
+      const data = await res.json();
+      const texto = data.content?.[0]?.text || "";
+      const json = JSON.parse(texto);
+      // Cruzar com os recursos reais
+      const recomendados = json.recomendacoes.map(r => {
+        const recurso = recursos.find(x => (x.titulo || x.nome || "").toLowerCase() === r.titulo.toLowerCase());
+        return {
+          ...r,
+          recurso
+        };
+      }).filter(r => r.recurso);
+      setResultado(recomendados);
+    } catch (e) {
+      setErro("Erro ao consultar a IA. Tente novamente.");
+    }
+    setBuscando(false);
+  }
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 2000,
+      padding: 16
+    },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 18,
+      width: "100%",
+      maxWidth: 560,
+      maxHeight: "90vh",
+      display: "flex",
+      flexDirection: "column"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "linear-gradient(135deg,#7B00C4,#5a0090)",
+      padding: "20px 24px",
+      color: "white",
+      borderRadius: "18px 18px 0 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "var(--font-display)",
+      fontSize: 20,
+      fontWeight: 700,
+      marginBottom: 4
+    }
+  }, "🧠 Busca por Sintoma"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      opacity: 0.85
+    }
+  }, "Descreva a queixa da paciente e a IA recomenda os recursos mais indicados")), /*#__PURE__*/React.createElement("button", {
+    onClick: onClose,
+    style: {
+      background: "rgba(255,255,255,0.2)",
+      border: "none",
+      color: "white",
+      borderRadius: 8,
+      width: 30,
+      height: 30,
+      cursor: "pointer",
+      fontSize: 18
+    }
+  }, "×"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "20px 24px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Queixa ou sintoma da paciente"), /*#__PURE__*/React.createElement("textarea", {
+    className: "form-input",
+    rows: 3,
+    value: sintoma,
+    onChange: e => setSintoma(e.target.value),
+    placeholder: "Ex: \"autocrítica severa, se culpa por tudo, distorce a autoimagem negativamente, dificuldade de se perdoar\""
+  })), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      width: "100%",
+      justifyContent: "center"
+    },
+    onClick: buscar,
+    disabled: buscando || !sintoma.trim()
+  }, buscando ? "🔍 Analisando com IA..." : "🔍 Buscar recursos indicados"), erro && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12,
+      padding: 12,
+      background: "#fef2f2",
+      border: "1px solid #fecaca",
+      borderRadius: 10,
+      color: "#dc2626",
+      fontSize: 13
+    }
+  }, erro), resultado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14,
+      marginBottom: 12,
+      color: "var(--purple)"
+    }
+  }, "✨ ", resultado.length, " recursos recomendados para esta queixa:"), resultado.sort((a, b) => a.ordem - b.ordem).map((r, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      border: "1.5px solid var(--purple-soft)",
+      borderRadius: 12,
+      padding: "14px 16px",
+      marginBottom: 10,
+      background: "white"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 10,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 28,
+      height: 28,
+      borderRadius: "50%",
+      background: "var(--purple)",
+      color: "white",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 700,
+      fontSize: 13,
+      flexShrink: 0
+    }
+  }, r.ordem), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 14
+    }
+  }, r.recurso.emoji || "📖", " ", r.titulo), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)",
+      marginTop: 2
+    }
+  }, r.recurso._tipo === "fabula" ? "Fábula Terapêutica" : r.recurso._tipo === "ferramenta" ? "Ferramenta" : "Psicoeducação"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--gray-600)",
+      lineHeight: 1.5,
+      marginBottom: 10,
+      fontStyle: "italic"
+    }
+  }, "💡 ", r.motivo), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      fontSize: 12,
+      padding: "7px 14px"
+    },
+    onClick: () => onEnviar(r.recurso)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "send",
+    size: 13
+  }), " Enviar para paciente")))))));
+}
 function AbaFabulas() {
   const [fabulas, setFabulas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14259,6 +14865,8 @@ function AbaFabulas() {
   const [filtro, setFiltro] = useState("todos");
   const [migrando, setMigrando] = useState(false);
   const [enviandoFabula, setEnviandoFabula] = useState(null);
+  const [wizardAberto, setWizardAberto] = useState(false);
+  const [buscaIA, setBuscaIA] = useState(false);
   const MIGRACAO_CATS = {
     "resiliência": "crescimento",
     "resiliencia": "crescimento",
@@ -14486,7 +15094,60 @@ function AbaFabulas() {
     recurso: enviandoFabula,
     tipo: "fabula",
     onClose: () => setEnviandoFabula(null)
+  }), wizardAberto && /*#__PURE__*/React.createElement(WizardNovaFabula, {
+    onClose: () => setWizardAberto(false),
+    onSalva: f => {
+      setFabulas(prev => [f, ...prev]);
+      setWizardAberto(false);
+    }
+  }), buscaIA && /*#__PURE__*/React.createElement(BuscaIASintomas, {
+    recursos: [...fabulas.map(f => ({
+      ...f,
+      _tipo: "fabula"
+    }))],
+    onClose: () => setBuscaIA(false),
+    onEnviar: r => {
+      setBuscaIA(false);
+      setEnviandoFabula(r);
+    }
   }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+      flexWrap: "wrap",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)"
+    }
+  }, fabulas.length, " fábulas cadastradas"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 12
+    },
+    onClick: () => setBuscaIA(true)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkles",
+    size: 14
+  }), " 🧠 Busca por sintoma"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      fontSize: 13
+    },
+    onClick: () => setWizardAberto(true)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 15
+  }), " Nova Fábula"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 6,
