@@ -3413,6 +3413,7 @@ function AbaPsicoeducacao() {
   const [busca, setBusca]         = useState("");
   const [aberto, setAberto]       = useState(null);
   const [wizardStep, setWizardStep]   = useState(1);
+  const [buscaIA, setBuscaIA]         = useState(false);
   const [wizardBlocos, setWizardBlocos] = useState([]);
   const [formPsico, setFormPsico] = useState({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});
   const TIPOS_BLOCO_PSICO = [
@@ -3590,6 +3591,80 @@ function AbaPsicoeducacao() {
     return catOk && buscaOk;
   });
 
+  function BuscaIASintomas({recursos, onClose}){
+    const [sintoma, setSintoma] = useState("");
+    const [buscando, setBuscando] = useState(false);
+    const [resultado, setResultado] = useState(null);
+    const [erro, setErro] = useState("");
+    async function buscar(){
+      if(!sintoma.trim()) return;
+      setBuscando(true); setErro(""); setResultado(null);
+      try {
+        const lista = recursos.map(r=>`- "${r.titulo}" (${r.categoria||""}): ${r.descricao||""}`).join("\n");
+        const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estes materiais de psicoeducação disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione os 3 a 5 materiais mais indicados. Para cada um, informe:\n- O título exato (igual à lista)\n- Por que é indicado (1-2 frases clínicas)\n- Ordem sugerida de uso\n\nResponda APENAS em JSON válido, sem markdown, neste formato:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
+        const res = await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+        });
+        const data = await res.json();
+        const texto = data.content?.[0]?.text||"";
+        const json = JSON.parse(texto);
+        const recomendados = json.recomendacoes.map(r=>{
+          const recurso = recursos.find(x=>(x.titulo||"").toLowerCase()===r.titulo.toLowerCase());
+          return {...r, recurso};
+        }).filter(r=>r.recurso);
+        setResultado(recomendados);
+      } catch(e){ setErro("Erro ao consultar a IA. Tente novamente."); }
+      setBuscando(false);
+    }
+    return (
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000,padding:16}} onClick={onClose}>
+        <div style={{background:"white",borderRadius:18,width:"100%",maxWidth:560,maxHeight:"90vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+          <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",padding:"20px 24px",color:"white",borderRadius:"18px 18px 0 0"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:4}}>🧠 Busca por Sintoma</div>
+                <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e a IA recomenda os materiais mais indicados</div>
+              </div>
+              <button onClick={onClose} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:18}}>×</button>
+            </div>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+            <div style={{marginBottom:16}}>
+              <label className="form-label">Queixa ou sintoma da paciente</label>
+              <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes, dificuldade de se perdoar"/>
+            </div>
+            <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={buscar} disabled={buscando||!sintoma.trim()}>
+              {buscando?"🔍 Analisando com IA...":"🔍 Buscar materiais indicados"}
+            </button>
+            {erro&&<div style={{marginTop:12,padding:12,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,color:"#dc2626",fontSize:13}}>{erro}</div>}
+            {resultado&&(
+              <div style={{marginTop:20}}>
+                <div style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--purple)"}}>✨ {resultado.length} materiais recomendados para esta queixa:</div>
+                {resultado.sort((a,b)=>a.ordem-b.ordem).map((r,i)=>(
+                  <div key={i} style={{border:"1.5px solid var(--purple-soft)",borderRadius:12,padding:"14px 16px",marginBottom:10,background:"white"}}>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
+                      <div style={{width:28,height:28,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,flexShrink:0}}>{r.ordem}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:700,fontSize:14}}>{r.recurso.emoji||"📚"} {r.titulo}</div>
+                        <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>Psicoeducação</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:13,color:"var(--gray-600)",lineHeight:1.5,marginBottom:10,fontStyle:"italic"}}>💡 {r.motivo}</div>
+                    <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}} onClick={()=>{setAberto(r.recurso);onClose();}}>
+                      <Icon name="eye" size={13}/> Ver material
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if(loading) return <Spinner/>;
 
   if(aberto){
@@ -3620,6 +3695,7 @@ function AbaPsicoeducacao() {
 
   return (
     <div>
+      {buscaIA&&<BuscaIASintomas recursos={itens} onClose={()=>setBuscaIA(false)}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
@@ -3631,6 +3707,9 @@ function AbaPsicoeducacao() {
               <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
             </button>
           )}
+          <button className="btn btn-ghost" style={{flexShrink:0,border:"1.5px solid var(--purple)",color:"var(--purple)"}} onClick={()=>setBuscaIA(true)}>
+            🧠 Busca por sintoma
+          </button>
           <button className="btn btn-purple" style={{flexShrink:0}} onClick={()=>{setFormPsico({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});setWizardBlocos([]);setWizardStep(1);setEditando(null);setModal(true);}}>
             <Icon name="plus" size={16}/> Nova Psicoeducação
           </button>
