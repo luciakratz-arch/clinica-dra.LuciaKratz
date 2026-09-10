@@ -502,6 +502,98 @@ function RecursosTerapeuticos({ user }) {
   const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});
   const [salvando, setSalvando] = useState(false);
   const [abaView, setAbaView] = useState("ferramentas");
+  // Wizard Nova Ferramenta
+  const [wizardStep, setWizardStep] = useState(1);
+  const [wizardBlocos, setWizardBlocos] = useState([]);
+  const TIPOS_BLOCO = [
+    {id:"banner",     label:"Banner",           emoji:"🎨", desc:"Cabeçalho colorido com título e emoji"},
+    {id:"texto",      label:"Texto",             emoji:"📝", desc:"Parágrafo de texto livre"},
+    {id:"card",       label:"Card",              emoji:"🃏", desc:"Card com ícone, título e texto"},
+    {id:"lista",      label:"Lista",             emoji:"📋", desc:"Lista de itens"},
+    {id:"imagem",     label:"Imagem",            emoji:"🖼️", desc:"Imagem via URL"},
+    {id:"grafico_barras", label:"Gráfico Barras",emoji:"📊", desc:"Gráfico de barras comparativo"},
+    {id:"grafico_radar",  label:"Gráfico Teia",  emoji:"🕸️", desc:"Gráfico radar/teia"},
+    {id:"grafico_pizza",  label:"Gráfico Pizza", emoji:"🥧", desc:"Gráfico circular/pizza"},
+    {id:"slider",     label:"Slider",            emoji:"🎚️", desc:"Escala de intensidade (0 a 10)"},
+    {id:"pergunta",   label:"Pergunta Aberta",   emoji:"❓", desc:"Campo para a paciente responder"},
+    {id:"audio",      label:"Áudio/Vídeo",       emoji:"🎵", desc:"Link de áudio ou vídeo"},
+    {id:"estrelas",   label:"Avaliação ⭐",      emoji:"⭐", desc:"Avaliação de 1 a 5 estrelas"},
+    {id:"checklist",  label:"Checklist",         emoji:"☑️", desc:"Lista de itens para marcar"},
+    {id:"selecao",    label:"Seleção",           emoji:"🗂️", desc:"Múltipla escolha ou escolha única"},
+  ];
+
+  function novoBloco(tipo) {
+    const defaults = {
+      banner:       {cor:"#7B00C4", emoji:"🦋", titulo:""},
+      texto:        {conteudo:""},
+      card:         {icone:"💡", titulo:"", texto:""},
+      lista:        {itens:[""]},
+      imagem:       {url:"", legenda:""},
+      grafico_barras:{titulo:"", itens:[{label:"",valor:0},{label:"",valor:0}]},
+      grafico_radar: {titulo:"", eixos:[{label:"",valor:0},{label:"",valor:0},{label:"",valor:0}]},
+      grafico_pizza: {titulo:"", fatias:[{label:"",valor:50},{label:"",valor:50}]},
+      slider:       {pergunta:"", min:0, max:10, labelMin:"Nada", labelMax:"Muito"},
+      pergunta:     {pergunta:"", placeholder:"Escreva aqui..."},
+      audio:        {url:"", legenda:""},
+      estrelas:     {pergunta:"", max:5},
+      checklist:    {titulo:"", itens:[""]},
+      selecao:      {pergunta:"", tipo:"unica", opcoes:["",""]},
+    };
+    return {id: Date.now()+"_"+Math.random().toString(36).slice(2), tipo, ...defaults[tipo]};
+  }
+
+  function addBloco(tipo) {
+    setWizardBlocos(b=>[...b, novoBloco(tipo)]);
+  }
+
+  function removeBloco(idx) {
+    setWizardBlocos(b=>b.filter((_,i)=>i!==idx));
+  }
+
+  function moveBloco(idx, dir) {
+    setWizardBlocos(b=>{
+      const arr=[...b];
+      const swap=idx+dir;
+      if(swap<0||swap>=arr.length) return arr;
+      [arr[idx],arr[swap]]=[arr[swap],arr[idx]];
+      return arr;
+    });
+  }
+
+  function updateBloco(idx, patch) {
+    setWizardBlocos(b=>b.map((bl,i)=>i===idx?{...bl,...patch}:bl));
+  }
+
+  function abrirWizardNovo() {
+    setForm({titulo:"",descricao:"",categoria:"macro_ansiedade",tipo:"builder",formularioKey:"",musicUrl:""});
+    setWizardBlocos([]);
+    setWizardStep(1);
+    setEditando(null);
+    setModal(true);
+  }
+
+  async function salvarWizard() {
+    if(!form.titulo){alert("Título obrigatório.");return;}
+    setSalvando(true);
+    const doc = {
+      titulo: form.titulo,
+      descricao: form.descricao,
+      categoria: form.categoria,
+      tipo: "builder",
+      blocos: wizardBlocos,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if(editando) {
+      await db.collection("clinica_recursos").doc(editando).update(doc);
+    } else {
+      await db.collection("clinica_recursos").add(doc);
+    }
+    setModal(false);
+    setWizardBlocos([]);
+    setWizardStep(1);
+    setEditando(null);
+    setSalvando(false);
+  }
 
   useEffect(()=>{
     const unsub = db.collection("clinica_recursos").onSnapshot(snap=>{
@@ -698,7 +790,7 @@ function RecursosTerapeuticos({ user }) {
       {abaView==="ferramentas"&&(<>
       <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <button className="btn btn-purple" style={{flexShrink:0}} onClick={()=>{setForm({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});setEditando(null);setModal(true);}}>
+        <button className="btn btn-purple" style={{flexShrink:0}} onClick={abrirWizardNovo}>
           <Icon name="plus" size={16}/> Nova Ferramenta
         </button>
       </div>
@@ -841,99 +933,391 @@ function RecursosTerapeuticos({ user }) {
       )}
       </>)}
 
-      {/* Modal novo/editar recurso */}
+      {/* Wizard Nova Ferramenta */}
       {modal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:20}} onClick={()=>setModal(false)}>
-          <div style={{background:"white",borderRadius:16,padding:28,width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{editando?"Editar Ferramenta":"Nova Ferramenta"}</div>
-              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--gray-400)"}}><Icon name="x" size={20}/></button>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Titulo da Ferramenta *</label>
-              <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} autoFocus/>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Descricao curta</label>
-              <TextAreaVoz className="form-input" rows={2} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})}/>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Categoria</label>
-              {/* Macrocategorias clínicas */}
-              {MACROCATEGORIAS.map(m=>(
-                <div key={m.id} style={{marginBottom:10}}>
-                  <div style={{fontSize:11,fontWeight:700,color:m.cor,textTransform:"uppercase",
-                    letterSpacing:"0.6px",marginBottom:6}}>
-                    {m.icone} {m.label}
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500,padding:16}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:20,width:"100%",maxWidth:720,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(0,0,0,0.25)"}} onClick={e=>e.stopPropagation()}>
+
+            {/* Header do wizard */}
+            <div style={{background:"linear-gradient(135deg,#7B00C4,#9B30E0)",borderRadius:"20px 20px 0 0",padding:"20px 28px",color:"white",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>
+                  {editando?"Editar Ferramenta":"Nova Ferramenta"}
+                </div>
+                <div style={{fontSize:12,opacity:0.85,marginTop:3}}>
+                  {wizardStep===1?"Passo 1 — Identidade e Categoria":wizardStep===2?"Passo 2 — Blocos de Conteúdo":"Passo 3 — Revisão e Salvar"}
+                </div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:12}}>
+                {/* Indicador de passos */}
+                {[1,2,3].map(s=>(
+                  <div key={s} style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,
+                    background:wizardStep===s?"white":wizardStep>s?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.2)",
+                    color:wizardStep===s?"#7B00C4":wizardStep>s?"white":"rgba(255,255,255,0.7)"}}>
+                    {wizardStep>s?"✓":s}
                   </div>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                    {m.subs.map(s=>(
-                      <button key={s.id} onClick={()=>setForm({...form,categoria:s.id})}
-                        style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",
-                          fontSize:12,fontFamily:"var(--font-body)",
-                          borderColor:form.categoria===s.id?m.cor:"var(--gray-200)",
-                          background:form.categoria===s.id?m.bg:"white",
-                          color:form.categoria===s.id?m.cor:"var(--gray-600)",
-                          fontWeight:form.categoria===s.id?600:400}}>
-                        {s.label}
+                ))}
+                <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"white",marginLeft:8}}><Icon name="x" size={20}/></button>
+              </div>
+            </div>
+
+            <div style={{padding:"24px 28px"}}>
+
+              {/* ── PASSO 1: Identidade ── */}
+              {wizardStep===1&&(<>
+                <div className="form-group" style={{marginBottom:16}}>
+                  <label className="form-label">Título da Ferramenta *</label>
+                  <input className="form-input" value={form.titulo} onChange={e=>setForm({...form,titulo:e.target.value})} placeholder="Ex: Mapa das Emoções" autoFocus/>
+                </div>
+                <div className="form-group" style={{marginBottom:16}}>
+                  <label className="form-label">Descrição curta</label>
+                  <TextAreaVoz className="form-input" rows={2} value={form.descricao} onChange={e=>setForm({...form,descricao:e.target.value})} placeholder="O que esta ferramenta ajuda a paciente a fazer?"/>
+                </div>
+                <div className="form-group" style={{marginBottom:8}}>
+                  <label className="form-label">Categoria</label>
+                  {MACROCATEGORIAS.map(m=>(
+                    <div key={m.id} style={{marginBottom:10}}>
+                      <div style={{fontSize:11,fontWeight:700,color:m.cor,textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:6}}>{m.icone} {m.label}</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {m.subs.map(s=>(
+                          <button key={s.id} onClick={()=>setForm({...form,categoria:s.id})}
+                            style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",
+                              borderColor:form.categoria===s.id?m.cor:"var(--gray-200)",
+                              background:form.categoria===s.id?m.bg:"white",
+                              color:form.categoria===s.id?m.cor:"var(--gray-600)",
+                              fontWeight:form.categoria===s.id?600:400}}>
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{marginTop:6}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:6}}>Especializadas</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {[{id:"musicoterapia",label:"🎵 Musicoterapia"},{id:"avaliacao",label:"📋 Avaliação e Anamnese"},{id:"outro",label:"🔧 Outros"}].map(c=>(
+                        <button key={c.id} onClick={()=>setForm({...form,categoria:c.id})}
+                          style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",
+                            borderColor:form.categoria===c.id?"#7B00C4":"var(--gray-200)",
+                            background:form.categoria===c.id?"#f3e6ff":"white",
+                            color:form.categoria===c.id?"#7B00C4":"var(--gray-600)",
+                            fontWeight:form.categoria===c.id?600:400}}>
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{display:"flex",justifyContent:"flex-end",marginTop:24}}>
+                  <button className="btn btn-purple" onClick={()=>{if(!form.titulo){alert("Título obrigatório.");return;}setWizardStep(2);}}>
+                    Próximo — Blocos de Conteúdo <Icon name="arrow-right" size={15}/>
+                  </button>
+                </div>
+              </>)}
+
+              {/* ── PASSO 2: Blocos ── */}
+              {wizardStep===2&&(<>
+                {/* Seletor de tipo de bloco */}
+                <div style={{marginBottom:20}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:10}}>Adicionar Bloco</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                    {TIPOS_BLOCO.map(t=>(
+                      <button key={t.id} onClick={()=>addBloco(t.id)}
+                        style={{display:"flex",alignItems:"center",gap:6,padding:"7px 13px",borderRadius:20,border:"1.5px solid var(--gray-200)",
+                          background:"white",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",color:"var(--gray-700)",
+                          transition:"all .15s"}}
+                        title={t.desc}>
+                        <span>{t.emoji}</span> {t.label}
                       </button>
                     ))}
                   </div>
                 </div>
-              ))}
-              {/* Especializadas */}
-              <div style={{marginTop:6}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#6b7280",textTransform:"uppercase",
-                  letterSpacing:"0.6px",marginBottom:6}}>Especializadas</div>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {[{id:"musicoterapia",label:"🎵 Musicoterapia"},{id:"avaliacao",label:"📋 Avaliação e Anamnese"},{id:"outro",label:"🔧 Outros"}].map(c=>(
-                    <button key={c.id} onClick={()=>setForm({...form,categoria:c.id})}
-                      style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",
-                        fontSize:12,fontFamily:"var(--font-body)",
-                        borderColor:form.categoria===c.id?"#7B00C4":"var(--gray-200)",
-                        background:form.categoria===c.id?"#f3e6ff":"white",
-                        color:form.categoria===c.id?"#7B00C4":"var(--gray-600)",
-                        fontWeight:form.categoria===c.id?600:400}}>
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">Tipo de ferramenta</label>
-              <div style={{display:"flex",gap:10}}>
-                {[["conteudo","Conteudo para leitura","file-text"],["interativa","Formulario interativo","zap"]].map(([v,l,ic])=>(
-                  <button key={v} onClick={()=>setForm({...form,tipo:v})} style={{flex:1,padding:"12px",borderRadius:10,border:"1.5px solid",borderColor:form.tipo===v?"var(--purple)":"var(--gray-200)",background:form.tipo===v?"var(--purple-bg)":"white",cursor:"pointer",fontSize:13,fontFamily:"var(--font-body)",color:form.tipo===v?"var(--purple)":"var(--gray-700)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                    <Icon name={ic} size={15}/>{l}
-                  </button>
+
+                {/* Lista de blocos adicionados */}
+                {wizardBlocos.length===0&&(
+                  <div style={{textAlign:"center",padding:"32px 20px",color:"var(--text-muted)",background:"#fafafa",borderRadius:12,border:"1.5px dashed var(--gray-200)"}}>
+                    Clique nos tipos acima para adicionar blocos à ferramenta
+                  </div>
+                )}
+                {wizardBlocos.map((bloco,idx)=>(
+                  <div key={bloco.id} style={{border:"1.5px solid var(--gray-200)",borderRadius:12,marginBottom:12,overflow:"hidden"}}>
+                    {/* Cabeçalho do bloco */}
+                    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#f9f5ff",borderBottom:"1px solid var(--gray-100)"}}>
+                      <span style={{fontSize:16}}>{TIPOS_BLOCO.find(t=>t.id===bloco.tipo)?.emoji}</span>
+                      <span style={{fontWeight:600,fontSize:13,color:"var(--purple)",flex:1}}>{TIPOS_BLOCO.find(t=>t.id===bloco.tipo)?.label}</span>
+                      <button onClick={()=>moveBloco(idx,-1)} disabled={idx===0} style={{background:"none",border:"none",cursor:idx===0?"not-allowed":"pointer",color:"var(--gray-400)",padding:"2px 6px"}}>▲</button>
+                      <button onClick={()=>moveBloco(idx,1)} disabled={idx===wizardBlocos.length-1} style={{background:"none",border:"none",cursor:idx===wizardBlocos.length-1?"not-allowed":"pointer",color:"var(--gray-400)",padding:"2px 6px"}}>▼</button>
+                      <button onClick={()=>removeBloco(idx)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"2px 6px"}}><Icon name="trash-2" size={14}/></button>
+                    </div>
+                    {/* Campos do bloco */}
+                    <div style={{padding:"14px 16px"}}>
+
+                      {bloco.tipo==="banner"&&(<>
+                        <div style={{display:"flex",gap:10,marginBottom:10}}>
+                          <div style={{flex:1}}>
+                            <label className="form-label" style={{fontSize:11}}>Título do banner</label>
+                            <input className="form-input" style={{fontSize:13}} value={bloco.titulo} onChange={e=>updateBloco(idx,{titulo:e.target.value})} placeholder="Título..."/>
+                          </div>
+                          <div style={{width:80}}>
+                            <label className="form-label" style={{fontSize:11}}>Emoji</label>
+                            <input className="form-input" style={{fontSize:20,textAlign:"center"}} value={bloco.emoji} onChange={e=>updateBloco(idx,{emoji:e.target.value})} maxLength={2}/>
+                          </div>
+                        </div>
+                        <label className="form-label" style={{fontSize:11}}>Cor de fundo</label>
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                          {["#7B00C4","#0891b2","#059669","#d97706","#dc2626","#db2777","#6366f1","#374151"].map(cor=>(
+                            <button key={cor} onClick={()=>updateBloco(idx,{cor})}
+                              style={{width:28,height:28,borderRadius:"50%",background:cor,border:bloco.cor===cor?"3px solid #fff":"2px solid transparent",
+                                outline:bloco.cor===cor?"2px solid "+cor:"none",cursor:"pointer"}}/>
+                          ))}
+                          <input type="color" value={bloco.cor} onChange={e=>updateBloco(idx,{cor:e.target.value})} style={{width:28,height:28,borderRadius:"50%",border:"none",cursor:"pointer",padding:0}}/>
+                        </div>
+                        <div style={{marginTop:10,borderRadius:10,padding:"14px 18px",background:bloco.cor,color:"white",display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:24}}>{bloco.emoji}</span>
+                          <span style={{fontWeight:700,fontSize:15}}>{bloco.titulo||"Preview do banner"}</span>
+                        </div>
+                      </>)}
+
+                      {bloco.tipo==="texto"&&(
+                        <TextAreaVoz className="form-input" rows={4} value={bloco.conteudo} onChange={e=>updateBloco(idx,{conteudo:e.target.value})} placeholder="Escreva o texto aqui..."/>
+                      )}
+
+                      {bloco.tipo==="card"&&(<>
+                        <div style={{display:"flex",gap:10,marginBottom:10}}>
+                          <div style={{width:70}}>
+                            <label className="form-label" style={{fontSize:11}}>Ícone</label>
+                            <input className="form-input" style={{fontSize:20,textAlign:"center"}} value={bloco.icone} onChange={e=>updateBloco(idx,{icone:e.target.value})} maxLength={2}/>
+                          </div>
+                          <div style={{flex:1}}>
+                            <label className="form-label" style={{fontSize:11}}>Título</label>
+                            <input className="form-input" style={{fontSize:13}} value={bloco.titulo} onChange={e=>updateBloco(idx,{titulo:e.target.value})} placeholder="Título do card..."/>
+                          </div>
+                        </div>
+                        <TextAreaVoz className="form-input" rows={3} value={bloco.texto} onChange={e=>updateBloco(idx,{texto:e.target.value})} placeholder="Texto do card..."/>
+                      </>)}
+
+                      {bloco.tipo==="lista"&&(<>
+                        {bloco.itens.map((item,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <span style={{color:"var(--purple)",fontSize:16}}>•</span>
+                            <input className="form-input" style={{flex:1,fontSize:13}} value={item} onChange={e=>updateBloco(idx,{itens:bloco.itens.map((v,i)=>i===ii?e.target.value:v)})} placeholder={`Item ${ii+1}...`}/>
+                            <button onClick={()=>updateBloco(idx,{itens:bloco.itens.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBloco(idx,{itens:[...bloco.itens,""]})}>
+                          <Icon name="plus" size={13}/> Adicionar item
+                        </button>
+                      </>)}
+
+                      {bloco.tipo==="imagem"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>URL da imagem</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.url} onChange={e=>updateBloco(idx,{url:e.target.value})} placeholder="https://..."/>
+                        <label className="form-label" style={{fontSize:11}}>Legenda (opcional)</label>
+                        <input className="form-input" style={{fontSize:13}} value={bloco.legenda} onChange={e=>updateBloco(idx,{legenda:e.target.value})} placeholder="Legenda da imagem..."/>
+                        {bloco.url&&<img src={bloco.url} alt="" style={{marginTop:10,maxWidth:"100%",borderRadius:8,maxHeight:160,objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>}
+                      </>)}
+
+                      {bloco.tipo==="grafico_barras"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título do gráfico</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBloco(idx,{titulo:e.target.value})} placeholder="Ex: Áreas da minha vida"/>
+                        {bloco.itens.map((item,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <input className="form-input" style={{flex:2,fontSize:13}} value={item.label} onChange={e=>updateBloco(idx,{itens:bloco.itens.map((v,i)=>i===ii?{...v,label:e.target.value}:v)})} placeholder={`Rótulo ${ii+1}`}/>
+                            <input type="number" className="form-input" style={{width:70,fontSize:13}} min={0} max={100} value={item.valor} onChange={e=>updateBloco(idx,{itens:bloco.itens.map((v,i)=>i===ii?{...v,valor:Number(e.target.value)}:v)})}/>
+                            <button onClick={()=>updateBloco(idx,{itens:bloco.itens.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBloco(idx,{itens:[...bloco.itens,{label:"",valor:0}]})}>
+                          <Icon name="plus" size={13}/> Adicionar barra
+                        </button>
+                      </>)}
+
+                      {bloco.tipo==="grafico_radar"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título do gráfico</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBloco(idx,{titulo:e.target.value})} placeholder="Ex: Roda da Vida"/>
+                        {bloco.eixos.map((eixo,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <input className="form-input" style={{flex:2,fontSize:13}} value={eixo.label} onChange={e=>updateBloco(idx,{eixos:bloco.eixos.map((v,i)=>i===ii?{...v,label:e.target.value}:v)})} placeholder={`Eixo ${ii+1}`}/>
+                            <input type="number" className="form-input" style={{width:70,fontSize:13}} min={0} max={10} value={eixo.valor} onChange={e=>updateBloco(idx,{eixos:bloco.eixos.map((v,i)=>i===ii?{...v,valor:Number(e.target.value)}:v)})}/>
+                            <button onClick={()=>updateBloco(idx,{eixos:bloco.eixos.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBloco(idx,{eixos:[...bloco.eixos,{label:"",valor:0}]})}>
+                          <Icon name="plus" size={13}/> Adicionar eixo
+                        </button>
+                      </>)}
+
+                      {bloco.tipo==="grafico_pizza"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título do gráfico</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBloco(idx,{titulo:e.target.value})} placeholder="Ex: Como uso meu tempo"/>
+                        {bloco.fatias.map((fatia,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <input className="form-input" style={{flex:2,fontSize:13}} value={fatia.label} onChange={e=>updateBloco(idx,{fatias:bloco.fatias.map((v,i)=>i===ii?{...v,label:e.target.value}:v)})} placeholder={`Fatia ${ii+1}`}/>
+                            <input type="number" className="form-input" style={{width:70,fontSize:13}} min={0} max={100} value={fatia.valor} onChange={e=>updateBloco(idx,{fatias:bloco.fatias.map((v,i)=>i===ii?{...v,valor:Number(e.target.value)}:v)})}/>
+                            <span style={{fontSize:11,color:"var(--text-muted)"}}>%</span>
+                            <button onClick={()=>updateBloco(idx,{fatias:bloco.fatias.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBloco(idx,{fatias:[...bloco.fatias,{label:"",valor:0}]})}>
+                          <Icon name="plus" size={13}/> Adicionar fatia
+                        </button>
+                      </>)}
+
+                      {bloco.tipo==="slider"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você está se sentindo hoje?"/>
+                        <div style={{display:"flex",gap:10}}>
+                          <div style={{flex:1}}>
+                            <label className="form-label" style={{fontSize:11}}>Mínimo</label>
+                            <input type="number" className="form-input" value={bloco.min} onChange={e=>updateBloco(idx,{min:Number(e.target.value)})}/>
+                          </div>
+                          <div style={{flex:1}}>
+                            <label className="form-label" style={{fontSize:11}}>Máximo</label>
+                            <input type="number" className="form-input" value={bloco.max} onChange={e=>updateBloco(idx,{max:Number(e.target.value)})}/>
+                          </div>
+                          <div style={{flex:2}}>
+                            <label className="form-label" style={{fontSize:11}}>Rótulo mín</label>
+                            <input className="form-input" value={bloco.labelMin} onChange={e=>updateBloco(idx,{labelMin:e.target.value})} placeholder="Nada"/>
+                          </div>
+                          <div style={{flex:2}}>
+                            <label className="form-label" style={{fontSize:11}}>Rótulo máx</label>
+                            <input className="form-input" value={bloco.labelMax} onChange={e=>updateBloco(idx,{labelMax:e.target.value})} placeholder="Muito"/>
+                          </div>
+                        </div>
+                      </>)}
+
+                      {bloco.tipo==="pergunta"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="O que você gostaria de compartilhar?"/>
+                        <label className="form-label" style={{fontSize:11}}>Placeholder (sugestão para a paciente)</label>
+                        <input className="form-input" style={{fontSize:13}} value={bloco.placeholder} onChange={e=>updateBloco(idx,{placeholder:e.target.value})} placeholder="Escreva aqui..."/>
+                      </>)}
+
+                      {bloco.tipo==="audio"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>URL do áudio ou vídeo</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.url} onChange={e=>updateBloco(idx,{url:e.target.value})} placeholder="YouTube, Spotify, SoundCloud, Google Drive..."/>
+                        <label className="form-label" style={{fontSize:11}}>Legenda (opcional)</label>
+                        <input className="form-input" style={{fontSize:13}} value={bloco.legenda} onChange={e=>updateBloco(idx,{legenda:e.target.value})} placeholder="Ex: Música para relaxamento"/>
+                      </>)}
+
+                      {bloco.tipo==="estrelas"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você avalia seu dia?"/>
+                        <label className="form-label" style={{fontSize:11}}>Máximo de estrelas</label>
+                        <select className="form-input" style={{fontSize:13,width:100}} value={bloco.max} onChange={e=>updateBloco(idx,{max:Number(e.target.value)})}>
+                          {[3,5,7,10].map(n=><option key={n} value={n}>{n} ⭐</option>)}
+                        </select>
+                      </>)}
+
+                      {bloco.tipo==="checklist"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBloco(idx,{titulo:e.target.value})} placeholder="Ex: Minha lista de autocuidado"/>
+                        {bloco.itens.map((item,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <span style={{fontSize:16}}>☐</span>
+                            <input className="form-input" style={{flex:1,fontSize:13}} value={item} onChange={e=>updateBloco(idx,{itens:bloco.itens.map((v,i)=>i===ii?e.target.value:v)})} placeholder={`Item ${ii+1}...`}/>
+                            <button onClick={()=>updateBloco(idx,{itens:bloco.itens.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBloco(idx,{itens:[...bloco.itens,""]})}>
+                          <Icon name="plus" size={13}/> Adicionar item
+                        </button>
+                      </>)}
+
+                      {bloco.tipo==="selecao"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você se sente agora?"/>
+                        <div style={{display:"flex",gap:8,marginBottom:10}}>
+                          {["unica","multipla"].map(t=>(
+                            <button key={t} onClick={()=>updateBloco(idx,{tipo_sel:t})}
+                              style={{padding:"5px 14px",borderRadius:16,border:"1.5px solid",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",
+                                borderColor:bloco.tipo_sel===t?"var(--purple)":"var(--gray-200)",
+                                background:bloco.tipo_sel===t?"var(--purple-bg)":"white",
+                                color:bloco.tipo_sel===t?"var(--purple)":"var(--gray-600)"}}>
+                              {t==="unica"?"☝️ Escolha única":"☑️ Múltipla escolha"}
+                            </button>
+                          ))}
+                        </div>
+                        {bloco.opcoes.map((op,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <span style={{color:"var(--purple)",fontSize:13,width:18}}>{ii+1}.</span>
+                            <input className="form-input" style={{flex:1,fontSize:13}} value={op} onChange={e=>updateBloco(idx,{opcoes:bloco.opcoes.map((v,i)=>i===ii?e.target.value:v)})} placeholder={`Opção ${ii+1}...`}/>
+                            <button onClick={()=>updateBloco(idx,{opcoes:bloco.opcoes.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBloco(idx,{opcoes:[...bloco.opcoes,""]})}>
+                          <Icon name="plus" size={13}/> Adicionar opção
+                        </button>
+                      </>)}
+
+                    </div>
+                  </div>
                 ))}
-              </div>
-            </div>
-            {form.tipo==="interativa"&&(
-              <div className="form-group" style={{marginBottom:14}}>
-                <label className="form-label">Formulario interativo</label>
-                <select className="form-input" value={form.formularioKey} onChange={e=>setForm({...form,formularioKey:e.target.value})}>
-                  <option value="">Selecionar formulario...</option>
-                  {FERRAMENTAS_INTERATIVAS.map(f=><option key={f.key} value={f.key}>{f.label}</option>)}
-                </select>
-              </div>
-            )}
-            {(form.formularioKey==="breathing-478"||form.formularioKey==="muscle-relaxation")&&(
-              <div className="form-group" style={{marginBottom:14}}>
-                <label className="form-label">🎵 Link de Música (YouTube) — opcional</label>
-                <input className="form-input" value={form.musicUrl||""} onChange={e=>setForm({...form,musicUrl:e.target.value})} placeholder="https://www.youtube.com/watch?v=..."/>
-                <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Tocará em loop durante o exercício no portal do paciente.</div>
-              </div>
-            )}
-            <div className="form-group" style={{marginBottom:14}}>
-              <label className="form-label">🎬 Link de Áudio ou Vídeo complementar — opcional</label>
-              <input className="form-input" value={form.mediaUrl||""} onChange={e=>setForm({...form,mediaUrl:e.target.value})} placeholder="YouTube, Spotify, SoundCloud, Google Drive..."/>
-              <div style={{fontSize:11,color:"var(--text-muted)",marginTop:4}}>Aparecerá como botão "▶ Ouvir / Assistir" no portal do paciente junto com a ferramenta.</div>
-            </div>
-            <div style={{display:"flex",gap:10,justifyContent:"flex-end",marginTop:20}}>
-              <button className="btn btn-ghost" onClick={()=>setModal(false)}>Cancelar</button>
-              <button className="btn btn-purple" onClick={salvar} disabled={salvando}><Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Alteracoes"}</button>
+
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:24}}>
+                  <button className="btn btn-ghost" onClick={()=>setWizardStep(1)}>
+                    <Icon name="arrow-left" size={15}/> Voltar
+                  </button>
+                  <button className="btn btn-purple" onClick={()=>setWizardStep(3)}>
+                    Próximo — Revisar <Icon name="arrow-right" size={15}/>
+                  </button>
+                </div>
+              </>)}
+
+              {/* ── PASSO 3: Revisão ── */}
+              {wizardStep===3&&(<>
+                <div style={{background:"#f9f5ff",borderRadius:12,padding:"16px 20px",marginBottom:20}}>
+                  <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{form.titulo}</div>
+                  {form.descricao&&<div style={{fontSize:13,color:"var(--text-muted)",marginBottom:8}}>{form.descricao}</div>}
+                  <div style={{fontSize:12,color:"var(--purple)",fontWeight:600}}>
+                    {MACROCATEGORIAS.find(m=>m.subs.some(s=>s.id===form.categoria))?.icone}{" "}
+                    {MACROCATEGORIAS.flatMap(m=>m.subs).find(s=>s.id===form.categoria)?.label||form.categoria}
+                  </div>
+                </div>
+                <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:10}}>
+                  {wizardBlocos.length} bloco{wizardBlocos.length!==1?"s":""} de conteúdo
+                </div>
+                {wizardBlocos.map((bloco,idx)=>{
+                  const t=TIPOS_BLOCO.find(t=>t.id===bloco.tipo);
+                  return (
+                    <div key={bloco.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                      background:"white",borderRadius:10,border:"1px solid var(--gray-200)",marginBottom:8}}>
+                      <span style={{fontSize:18}}>{t?.emoji}</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:600,fontSize:13}}>{t?.label}</div>
+                        <div style={{fontSize:11,color:"var(--text-muted)"}}>
+                          {bloco.tipo==="texto"&&(bloco.conteudo?.slice(0,60)||"—")}
+                          {bloco.tipo==="banner"&&(bloco.titulo||"—")}
+                          {bloco.tipo==="card"&&(bloco.titulo||"—")}
+                          {bloco.tipo==="lista"&&`${bloco.itens.filter(i=>i).length} item(s)`}
+                          {bloco.tipo==="imagem"&&(bloco.url?"URL definida":"—")}
+                          {(bloco.tipo==="grafico_barras"||bloco.tipo==="grafico_pizza")&&`${bloco.itens?.length||bloco.fatias?.length} item(s)`}
+                          {bloco.tipo==="grafico_radar"&&`${bloco.eixos?.length} eixo(s)`}
+                          {bloco.tipo==="slider"&&`${bloco.min} → ${bloco.max}`}
+                          {bloco.tipo==="pergunta"&&(bloco.pergunta?.slice(0,60)||"—")}
+                          {bloco.tipo==="audio"&&(bloco.url?"URL definida":"—")}
+                          {bloco.tipo==="estrelas"&&`Até ${bloco.max} estrelas`}
+                          {bloco.tipo==="checklist"&&`${bloco.itens.filter(i=>i).length} item(s)`}
+                          {bloco.tipo==="selecao"&&`${bloco.opcoes.filter(o=>o).length} opção(ões)`}
+                        </div>
+                      </div>
+                      <button onClick={()=>{setWizardStep(2);}} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",fontSize:12}}>editar</button>
+                    </div>
+                  );
+                })}
+                {wizardBlocos.length===0&&(
+                  <div style={{color:"var(--text-muted)",fontSize:13,padding:"12px 0"}}>Nenhum bloco adicionado — a ferramenta terá apenas título e descrição.</div>
+                )}
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:24}}>
+                  <button className="btn btn-ghost" onClick={()=>setWizardStep(2)}>
+                    <Icon name="arrow-left" size={15}/> Voltar
+                  </button>
+                  <button className="btn btn-purple" onClick={salvarWizard} disabled={salvando}>
+                    <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Ferramenta"}
+                  </button>
+                </div>
+              </>)}
+
             </div>
           </div>
         </div>
