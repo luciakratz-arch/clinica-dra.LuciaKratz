@@ -613,40 +613,7 @@ function AbaPsicoeducacao() {
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "download",
     size: 14
-  }), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"), itens.length > 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 12
-    },
-    onClick: sincronizarNovas,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "refresh-cw",
-    size: 14
-  }), " ", salvando ? "Sincronizando..." : "Sincronizar novas"), itens.length > 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 12
-    },
-    onClick: migrarCatPsico,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "layers",
-    size: 14
-  }), " Migrar categorias"), itens.length > 0 && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      fontSize: 12,
-      background: "#f3e6ff",
-      borderColor: "#7B00C4",
-      color: "#7B00C4"
-    },
-    onClick: atualizarVisuaisFirebase,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "zap",
-    size: 14
-  }), " Ativar visuais"), /*#__PURE__*/React.createElement("button", {
+  }), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     onClick: () => {
       setForm({
