@@ -14758,7 +14758,7 @@ Responda APENAS em JSON válido, sem markdown, neste formato:
     }
   }, /*#__PURE__*/React.createElement("label", {
     className: "form-label"
-  }, "Queixa ou sintoma da paciente"), /*#__PURE__*/React.createElement("textarea", {
+  }, "Queixa ou sintoma da paciente"), /*#__PURE__*/React.createElement(TextAreaVoz, {
     className: "form-input",
     rows: 3,
     value: sintoma,
@@ -14856,7 +14856,24 @@ Responda APENAS em JSON válido, sem markdown, neste formato:
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "send",
     size: 13
-  }), " Enviar para paciente")))))));
+  }), " Enviar para paciente"), r.recurso.mediaUrl && /*#__PURE__*/React.createElement("a", {
+    href: r.recurso.mediaUrl,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      padding: "7px 14px",
+      marginTop: 6,
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      textDecoration: "none"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "volume-2",
+    size: 13
+  }), " Ouvir / Assistir")))))));
 }
 function AbaFabulas() {
   const [fabulas, setFabulas] = useState([]);
