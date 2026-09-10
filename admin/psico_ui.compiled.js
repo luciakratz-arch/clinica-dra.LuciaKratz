@@ -2601,6 +2601,7 @@ function RecursosTerapeuticos({
   });
   const [salvando, setSalvando] = useState(false);
   const [abaView, setAbaView] = useState("ferramentas");
+  const [buscaIAFerramenta, setBuscaIAFerramenta] = useState(false);
   // Wizard Nova Ferramenta
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardBlocos, setWizardBlocos] = useState([]);
@@ -3028,7 +3029,229 @@ function RecursosTerapeuticos({
     onClose: () => setVisualizando(null),
     user: user
   });
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  function BuscaIAFerramenta({
+    recursos,
+    onClose,
+    onEnviar
+  }) {
+    const [sintoma, setSintoma] = useState("");
+    const [buscando, setBuscando] = useState(false);
+    const [resultado, setResultado] = useState(null);
+    const [erro, setErro] = useState("");
+    async function buscar() {
+      if (!sintoma.trim()) return;
+      setBuscando(true);
+      setErro("");
+      setResultado(null);
+      try {
+        const lista = recursos.map(r => `- "${r.titulo || r.nome}" (${r.categoria || ""}): ${r.descricao || ""}`).join("\n");
+        const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estas ferramentas terapêuticas disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione as 3 a 5 ferramentas mais indicadas. Responda APENAS em JSON válido:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 1000,
+            messages: [{
+              role: "user",
+              content: prompt
+            }]
+          })
+        });
+        const data = await res.json();
+        const json = JSON.parse(data.content?.[0]?.text || "{}");
+        const recomendados = (json.recomendacoes || []).map(r => ({
+          ...r,
+          recurso: recursos.find(x => (x.titulo || x.nome || "").toLowerCase() === r.titulo.toLowerCase())
+        })).filter(r => r.recurso);
+        setResultado(recomendados);
+      } catch (e) {
+        setErro("Erro ao consultar a IA. Tente novamente.");
+      }
+      setBuscando(false);
+    }
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 2000,
+        padding: 16
+      },
+      onClick: onClose
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "white",
+        borderRadius: 18,
+        width: "100%",
+        maxWidth: 560,
+        maxHeight: "90vh",
+        display: "flex",
+        flexDirection: "column"
+      },
+      onClick: e => e.stopPropagation()
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        background: "linear-gradient(135deg,#7B00C4,#5a0090)",
+        padding: "20px 24px",
+        color: "white",
+        borderRadius: "18px 18px 0 0"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "var(--font-display)",
+        fontSize: 20,
+        fontWeight: 700,
+        marginBottom: 4
+      }
+    }, "🧠 Busca por Sintoma"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        opacity: 0.85
+      }
+    }, "Descreva a queixa e a IA recomenda as ferramentas mais indicadas")), /*#__PURE__*/React.createElement("button", {
+      onClick: onClose,
+      style: {
+        background: "rgba(255,255,255,0.2)",
+        border: "none",
+        color: "white",
+        borderRadius: 8,
+        width: 30,
+        height: 30,
+        cursor: "pointer",
+        fontSize: 18
+      }
+    }, "×"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        overflowY: "auto",
+        padding: "20px 24px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginBottom: 16
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      className: "form-label"
+    }, "Queixa ou sintoma da paciente"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+      className: "form-input",
+      rows: 3,
+      value: sintoma,
+      onChange: e => setSintoma(e.target.value),
+      placeholder: "Ex: autocrítica severa, pensamentos negativos recorrentes..."
+    })), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-purple",
+      style: {
+        width: "100%",
+        justifyContent: "center"
+      },
+      onClick: buscar,
+      disabled: buscando || !sintoma.trim()
+    }, buscando ? "🔍 Analisando com IA..." : "🔍 Buscar ferramentas indicadas"), erro && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 12,
+        padding: 12,
+        background: "#fef2f2",
+        border: "1px solid #fecaca",
+        borderRadius: 10,
+        color: "#dc2626",
+        fontSize: 13
+      }
+    }, erro), resultado && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 20
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        fontSize: 14,
+        marginBottom: 12,
+        color: "var(--purple)"
+      }
+    }, "✨ ", resultado.length, " ferramentas recomendadas:"), resultado.sort((a, b) => a.ordem - b.ordem).map((r, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        border: "1.5px solid var(--purple-soft)",
+        borderRadius: 12,
+        padding: "14px 16px",
+        marginBottom: 10,
+        background: "white"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 28,
+        height: 28,
+        borderRadius: "50%",
+        background: "var(--purple)",
+        color: "white",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 700,
+        fontSize: 13,
+        flexShrink: 0
+      }
+    }, r.ordem), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        fontSize: 14
+      }
+    }, r.recurso.emoji || "🔧", " ", r.titulo), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)",
+        marginTop: 2
+      }
+    }, "Ferramenta Interativa"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--gray-600)",
+        lineHeight: 1.5,
+        marginBottom: 10,
+        fontStyle: "italic"
+      }
+    }, "💡 ", r.motivo), /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-purple",
+      style: {
+        fontSize: 12,
+        padding: "7px 14px"
+      },
+      onClick: () => onEnviar(r.recurso)
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "send",
+      size: 13
+    }), " Enviar para paciente")))))));
+  }
+  return /*#__PURE__*/React.createElement("div", null, buscaIAFerramenta && /*#__PURE__*/React.createElement(BuscaIAFerramenta, {
+    recursos: recursos,
+    onClose: () => setBuscaIAFerramenta(false),
+    onEnviar: r => {
+      setEnviandoRecurso(r);
+      setBuscaIAFerramenta(false);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
     className: "page-header",
     style: {
       display: "flex",
@@ -3097,6 +3320,14 @@ function RecursosTerapeuticos({
     value: busca,
     onChange: e => setBusca(e.target.value)
   }), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      flexShrink: 0,
+      border: "1.5px solid var(--purple)",
+      color: "var(--purple)"
+    },
+    onClick: () => setBuscaIAFerramenta(true)
+  }, "🧠 Busca por sintoma"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       flexShrink: 0
