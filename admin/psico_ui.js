@@ -502,6 +502,7 @@ function RecursosTerapeuticos({ user }) {
   const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});
   const [salvando, setSalvando] = useState(false);
   const [abaView, setAbaView] = useState("ferramentas");
+  const [buscaIA, setBuscaIA] = useState(false);
   // Wizard Nova Ferramenta
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardBlocos, setWizardBlocos] = useState([]);
@@ -759,8 +760,84 @@ function RecursosTerapeuticos({ user }) {
   if(enviandoRecurso) return <ModalEnviarParaPaciente recurso={enviandoRecurso} tipo="ferramenta" onClose={()=>setEnviandoRecurso(null)}/>;
 
   if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)} user={user}/>;
+
+  function BuscaIASintomas({recursos, onClose, onEnviar}){
+    const [sintoma, setSintoma] = useState("");
+    const [buscando, setBuscando] = useState(false);
+    const [resultado, setResultado] = useState(null);
+    const [erro, setErro] = useState("");
+    async function buscar(){
+      if(!sintoma.trim()) return;
+      setBuscando(true); setErro(""); setResultado(null);
+      try {
+        const lista = recursos.map(r=>`- "${r.titulo||r.nome}" (${r.categoria||""}): ${r.descricao||""}`).join("\n");
+        const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estas ferramentas terapêuticas disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione as 3 a 5 ferramentas mais indicadas. Para cada uma, informe:\n- O título exato (igual à lista)\n- Por que é indicada (1-2 frases clínicas)\n- Ordem sugerida de uso\n\nResponda APENAS em JSON válido, sem markdown, neste formato:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
+        const res = await fetch("https://api.anthropic.com/v1/messages",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+        });
+        const data = await res.json();
+        const texto = data.content?.[0]?.text||"";
+        const json = JSON.parse(texto);
+        const recomendados = json.recomendacoes.map(r=>{
+          const recurso = recursos.find(x=>(x.titulo||x.nome||"").toLowerCase()===r.titulo.toLowerCase());
+          return {...r, recurso};
+        }).filter(r=>r.recurso);
+        setResultado(recomendados);
+      } catch(e){ setErro("Erro ao consultar a IA. Tente novamente."); }
+      setBuscando(false);
+    }
+    return (
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000,padding:16}} onClick={onClose}>
+        <div style={{background:"white",borderRadius:18,width:"100%",maxWidth:560,maxHeight:"90vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+          <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",padding:"20px 24px",color:"white",borderRadius:"18px 18px 0 0"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+              <div>
+                <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:4}}>🧠 Busca por Sintoma</div>
+                <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e a IA recomenda as ferramentas mais indicadas</div>
+              </div>
+              <button onClick={onClose} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:18}}>×</button>
+            </div>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+            <div style={{marginBottom:16}}>
+              <label className="form-label">Queixa ou sintoma da paciente</label>
+              <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes, dificuldade de se perdoar"/>
+            </div>
+            <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={buscar} disabled={buscando||!sintoma.trim()}>
+              {buscando?"🔍 Analisando com IA...":"🔍 Buscar ferramentas indicadas"}
+            </button>
+            {erro&&<div style={{marginTop:12,padding:12,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,color:"#dc2626",fontSize:13}}>{erro}</div>}
+            {resultado&&(
+              <div style={{marginTop:20}}>
+                <div style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--purple)"}}>✨ {resultado.length} ferramentas recomendadas para esta queixa:</div>
+                {resultado.sort((a,b)=>a.ordem-b.ordem).map((r,i)=>(
+                  <div key={i} style={{border:"1.5px solid var(--purple-soft)",borderRadius:12,padding:"14px 16px",marginBottom:10,background:"white"}}>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
+                      <div style={{width:28,height:28,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,flexShrink:0}}>{r.ordem}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:700,fontSize:14}}>{r.recurso.emoji||"🔧"} {r.titulo}</div>
+                        <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>Ferramenta Interativa</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:13,color:"var(--gray-600)",lineHeight:1.5,marginBottom:10,fontStyle:"italic"}}>💡 {r.motivo}</div>
+                    <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}} onClick={()=>onEnviar(r.recurso)}>
+                      <Icon name="send" size={13}/> Enviar para paciente
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
+      {buscaIA&&<BuscaIASintomas recursos={recursos} onClose={()=>setBuscaIA(false)} onEnviar={(r)=>{setEnviandoRecurso(r);setBuscaIA(false);}}/>}
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
         <div style={{minWidth:0,flex:1}}>
           <div className="page-title">Recursos Terapeuticos</div>
@@ -790,6 +867,9 @@ function RecursosTerapeuticos({ user }) {
       {abaView==="ferramentas"&&(<>
       <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
+        <button className="btn btn-ghost" style={{flexShrink:0,borderColor:"var(--purple)",color:"var(--purple)",border:"1.5px solid"}} onClick={()=>setBuscaIA(true)}>
+          🧠 Busca por sintoma
+        </button>
         <button className="btn btn-purple" style={{flexShrink:0}} onClick={abrirWizardNovo}>
           <Icon name="plus" size={16}/> Nova Ferramenta
         </button>
@@ -1165,7 +1245,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="slider"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você está se sentindo hoje?"/>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:10,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você está se sentindo hoje?"/>
                         <div style={{display:"flex",gap:10}}>
                           <div style={{flex:1}}>
                             <label className="form-label" style={{fontSize:11}}>Mínimo</label>
@@ -1188,7 +1268,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="pergunta"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="O que você gostaria de compartilhar?"/>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="O que você gostaria de compartilhar?"/>
                         <label className="form-label" style={{fontSize:11}}>Placeholder (sugestão para a paciente)</label>
                         <input className="form-input" style={{fontSize:13}} value={bloco.placeholder} onChange={e=>updateBloco(idx,{placeholder:e.target.value})} placeholder="Escreva aqui..."/>
                       </>)}
@@ -1202,7 +1282,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="estrelas"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você avalia seu dia?"/>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você avalia seu dia?"/>
                         <label className="form-label" style={{fontSize:11}}>Máximo de estrelas</label>
                         <select className="form-input" style={{fontSize:13,width:100}} value={bloco.max} onChange={e=>updateBloco(idx,{max:Number(e.target.value)})}>
                           {[3,5,7,10].map(n=><option key={n} value={n}>{n} ⭐</option>)}
@@ -1226,7 +1306,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="selecao"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você se sente agora?"/>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você se sente agora?"/>
                         <div style={{display:"flex",gap:8,marginBottom:10}}>
                           {["unica","multipla"].map(t=>(
                             <button key={t} onClick={()=>updateBloco(idx,{tipo_sel:t})}
