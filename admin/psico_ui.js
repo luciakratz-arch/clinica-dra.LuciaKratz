@@ -162,8 +162,47 @@ function AbaPsicoeducacao() {
   const [editando, setEditando]   = useState(null);
   const [salvando, setSalvando]   = useState(false);
   const [filtro, setFiltro]       = useState("todos");
+  const [busca, setBusca]         = useState("");
   const [aberto, setAberto]       = useState(null);
   const [enviandoPsico, setEnviandoPsico] = useState(null);
+  const [buscaIA, setBuscaIA]     = useState(false);
+  const [wizardStep, setWizardStep]   = useState(1);
+  const [wizardBlocos, setWizardBlocos] = useState([]);
+  const [formPsico, setFormPsico] = useState({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});
+  const TIPOS_BLOCO_PSICO = [
+    {id:"banner",        label:"Banner",           emoji:"🎨"},
+    {id:"texto",         label:"Texto",            emoji:"📝"},
+    {id:"card",          label:"Card",             emoji:"🃏"},
+    {id:"lista",         label:"Lista",            emoji:"📋"},
+    {id:"imagem",        label:"Imagem",           emoji:"🖼️"},
+    {id:"grafico_barras",label:"Gráfico Barras",   emoji:"📊"},
+    {id:"grafico_radar", label:"Gráfico Teia",     emoji:"🕸️"},
+    {id:"grafico_pizza", label:"Gráfico Pizza",    emoji:"🥧"},
+    {id:"slider",        label:"Slider",           emoji:"🎚️"},
+    {id:"pergunta",      label:"Pergunta Reflexão", emoji:"❓"},
+    {id:"audio",         label:"Áudio/Vídeo",      emoji:"🎵"},
+    {id:"estrelas",      label:"Avaliação ⭐",     emoji:"⭐"},
+    {id:"checklist",     label:"Checklist",        emoji:"☑️"},
+    {id:"selecao",       label:"Seleção",          emoji:"🗂️"},
+  ];
+  function novoBlocoPsico(tipo){
+    const d={
+      banner:{cor:"#7B00C4",emoji:"🧠",titulo:""},texto:{conteudo:""},card:{icone:"💡",titulo:"",texto:""},
+      lista:{itens:[""]},imagem:{url:"",legenda:""},
+      grafico_barras:{titulo:"",itens:[{label:"",valor:0},{label:"",valor:0}]},
+      grafico_radar:{titulo:"",eixos:[{label:"",valor:0},{label:"",valor:0},{label:"",valor:0}]},
+      grafico_pizza:{titulo:"",fatias:[{label:"",valor:50},{label:"",valor:50}]},
+      slider:{pergunta:"",min:0,max:10,labelMin:"Nada",labelMax:"Muito"},
+      pergunta:{pergunta:"",placeholder:"Escreva aqui..."},audio:{url:"",legenda:""},
+      estrelas:{pergunta:"",max:5},checklist:{titulo:"",itens:[""]},
+      selecao:{pergunta:"",tipo_sel:"unica",opcoes:["",""]},
+    };
+    return {id:Date.now()+"_"+Math.random().toString(36).slice(2),tipo,...d[tipo]};
+  }
+  function addBlocoPsico(tipo){setWizardBlocos(b=>[...b,novoBlocoPsico(tipo)]);}
+  function removeBlocoPsico(idx){setWizardBlocos(b=>b.filter((_,i)=>i!==idx));}
+  function moveBlocoPsico(idx,dir){setWizardBlocos(b=>{const a=[...b];const s=idx+dir;if(s<0||s>=a.length)return a;const tmp=a[idx];a[idx]=a[s];a[s]=tmp;return a;});}
+  function updateBlocoPsico(idx,patch){setWizardBlocos(b=>b.map((bl,i)=>i===idx?{...bl,...patch}:bl));}
 
   // Mapa de categorias legado → nova macrocategoria clínica
   const REMAP_PSICO = {
@@ -212,15 +251,13 @@ function AbaPsicoeducacao() {
     return unsub;
   },[]);
 
-  async function salvar(){
-    if(!form.titulo){alert("Título obrigatório.");return;}
+  async function salvarWizardPsico(){
+    if(!formPsico.titulo){alert("Título obrigatório.");return;}
     setSalvando(true);
-    if(editando){
-      await db.collection("clinica_psicoeducacao").doc(editando).update(form);
-    } else {
-      await db.collection("clinica_psicoeducacao").add({...form,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    }
-    setModal(false);setEditando(null);setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setSalvando(false);
+    const doc={titulo:formPsico.titulo,descricao:formPsico.descricao,categoria:formPsico.categoria,emoji:formPsico.emoji||"📚",tipo:"builder",blocos:wizardBlocos,createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+    if(editando){await db.collection("clinica_psicoeducacao").doc(editando).update(doc);}
+    else{await db.collection("clinica_psicoeducacao").add(doc);}
+    setModal(false);setEditando(null);setWizardBlocos([]);setWizardStep(1);setFormPsico({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});setSalvando(false);
   }
 
   async function popularPilulas() {
@@ -292,14 +329,14 @@ function AbaPsicoeducacao() {
   }
 
   // Filtro: "todos" ou macrocategoria + legado mapeado (PSICO_LEGADO_MACRO declarado fora)
-  const filtrados = filtro==="todos" ? itens : itens.filter(i=>{
-    if(i.categoria===filtro) return true;
-    const macro = MACROCATEGORIAS.find(m=>m.id===filtro);
-    if(macro){
-      const subIds = new Set(macro.subs.map(s=>s.id));
-      return subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria]===filtro;
-    }
-    return false;
+  const filtrados = itens.filter(i=>{
+    const catOk = filtro==="todos" ? true : (i.categoria===filtro || (()=>{
+      const macro=MACROCATEGORIAS.find(m=>m.id===filtro);
+      if(macro){const subIds=new Set(macro.subs.map(s=>s.id));return subIds.has(i.categoria)||PSICO_LEGADO_MACRO[i.categoria]===filtro;}
+      return false;
+    })());
+    const buscaOk = !busca||(i.titulo||"").toLowerCase().includes(busca.toLowerCase())||(i.descricao||"").toLowerCase().includes(busca.toLowerCase());
+    return catOk && buscaOk;
   });
 
   if(loading) return <Spinner/>;
@@ -333,16 +370,21 @@ function AbaPsicoeducacao() {
   return (
     <div>
       {enviandoPsico&&<ModalEnviarParaPaciente recurso={enviandoPsico} tipo="psicoeducacao" onClose={()=>setEnviandoPsico(null)}/>}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      {buscaIA&&<BuscaIASintomaPsico itens={itens} onClose={()=>setBuscaIA(false)} onVer={(item)=>{setAberto(item);setBuscaIA(false);}}/>}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
-        <div style={{display:"flex",gap:8}}>
+        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+          <input className="form-input" style={{minWidth:180,fontSize:13}} placeholder="🔍 Buscar por título..." value={busca} onChange={e=>setBusca(e.target.value)}/>
+          <button className="btn btn-ghost" style={{flexShrink:0,border:"1.5px solid var(--purple)",color:"var(--purple)"}} onClick={()=>setBuscaIA(true)}>
+            🧠 Busca por sintoma
+          </button>
           {itens.length===0&&(
             <button className="btn btn-outline" style={{fontSize:12}} onClick={popularPilulas} disabled={salvando}>
               <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
             </button>
           )}
-          <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
-            <Icon name="plus" size={16}/> Novo Material
+          <button className="btn btn-purple" style={{flexShrink:0}} onClick={()=>{setFormPsico({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});setWizardBlocos([]);setWizardStep(1);setEditando(null);setModal(true);}}>
+            <Icon name="plus" size={16}/> Nova Psicoeducação
           </button>
         </div>
       </div>
@@ -443,51 +485,352 @@ function AbaPsicoeducacao() {
           })()
       }
 
-      {/* Modal cadastro */}
+      {/* Wizard Nova Psicoeducação */}
       {modal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div style={{background:"white",borderRadius:16,width:"100%",maxWidth:540,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,0.2)"}}>
-            <div style={{padding:"18px 24px",borderBottom:"1px solid var(--gray-100)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontWeight:700,fontSize:16}}>{editando?"Editar Material":"Novo Material de Psicoeducação"}</div>
-              <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--text-muted)"}}>×</button>
-            </div>
-            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:14}}>
-              <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:10}}>
-                <div>
-                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Emoji</label>
-                  <input className="form-input" value={form.emoji} onChange={e=>setForm(f=>({...f,emoji:e.target.value}))} style={{textAlign:"center",fontSize:20}}/>
-                </div>
-                <div>
-                  <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Título *</label>
-                  <input className="form-input" value={form.titulo} onChange={e=>setForm(f=>({...f,titulo:e.target.value}))} placeholder="Ex: O que é ansiedade?"/>
-                </div>
-              </div>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setModal(false)}>
+          <div style={{background:"white",borderRadius:20,width:"100%",maxWidth:700,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(0,0,0,0.25)"}} onClick={e=>e.stopPropagation()}>
+            <div style={{background:"linear-gradient(135deg,#7B00C4,#9B30E0)",borderRadius:"20px 20px 0 0",padding:"20px 28px",color:"white",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
-                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Categoria</label>
-                <select className="form-input" value={form.categoria} onChange={e=>setForm(f=>({...f,categoria:e.target.value}))}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700}}>{editando?"Editar Psicoeducação":"Nova Psicoeducação"}</div>
+                <div style={{fontSize:12,opacity:0.85,marginTop:3}}>{wizardStep===1?"Passo 1 — Identidade e Categoria":wizardStep===2?"Passo 2 — Blocos de Conteúdo":"Passo 3 — Revisão e Salvar"}</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                {[1,2,3].map(s=>(
+                  <div key={s} style={{width:26,height:26,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,
+                    background:wizardStep===s?"white":wizardStep>s?"rgba(255,255,255,0.5)":"rgba(255,255,255,0.2)",
+                    color:wizardStep===s?"#7B00C4":wizardStep>s?"white":"rgba(255,255,255,0.7)"}}>
+                    {wizardStep>s?"✓":s}
+                  </div>
+                ))}
+                <button onClick={()=>setModal(false)} style={{background:"none",border:"none",cursor:"pointer",color:"white",marginLeft:8}}><Icon name="x" size={20}/></button>
+              </div>
+            </div>
+            <div style={{padding:"24px 28px"}}>
+              {wizardStep===1&&(<>
+                <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:10,marginBottom:16}}>
+                  <div><label className="form-label" style={{fontSize:11}}>Emoji</label><input className="form-input" value={formPsico.emoji} onChange={e=>setFormPsico(f=>({...f,emoji:e.target.value}))} style={{textAlign:"center",fontSize:20}} maxLength={2}/></div>
+                  <div><label className="form-label" style={{fontSize:11}}>Título *</label><input className="form-input" value={formPsico.titulo} autoFocus onChange={e=>setFormPsico(f=>({...f,titulo:e.target.value}))} placeholder="Ex: O que é ansiedade?"/></div>
+                </div>
+                <div className="form-group" style={{marginBottom:16}}>
+                  <label className="form-label" style={{fontSize:11}}>Descrição breve</label>
+                  <TextAreaVoz className="form-input" rows={2} value={formPsico.descricao} onChange={e=>setFormPsico(f=>({...f,descricao:e.target.value}))} placeholder="Resumo do material psicoeducativo..."/>
+                </div>
+                <div className="form-group" style={{marginBottom:8}}>
+                  <label className="form-label" style={{fontSize:11}}>Categoria</label>
                   {MACROCATEGORIAS.map(m=>(
-                    <optgroup key={m.id} label={`${m.icone} ${m.label}`}>
-                      {m.subs.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}
-                    </optgroup>
+                    <div key={m.id} style={{marginBottom:10}}>
+                      <div style={{fontSize:11,fontWeight:700,color:m.cor,textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:6}}>{m.icone} {m.label}</div>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {m.subs.map(s=>(
+                          <button key={s.id} onClick={()=>setFormPsico(f=>({...f,categoria:s.id}))}
+                            style={{padding:"6px 12px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",
+                              borderColor:formPsico.categoria===s.id?m.cor:"var(--gray-200)",
+                              background:formPsico.categoria===s.id?m.bg:"white",
+                              color:formPsico.categoria===s.id?m.cor:"var(--gray-600)",
+                              fontWeight:formPsico.categoria===s.id?600:400}}>
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
-                </select>
-              </div>
-              <div>
-                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Descrição breve</label>
-                <input className="form-input" value={form.descricao} onChange={e=>setForm(f=>({...f,descricao:e.target.value}))} placeholder="Resumo do material..."/>
-              </div>
-              <div>
-                <label style={{fontWeight:600,fontSize:12,display:"block",marginBottom:6}}>Conteúdo completo</label>
-                <TextAreaVoz className="form-input" rows={6} value={form.conteudo} onChange={e=>setForm(f=>({...f,conteudo:e.target.value}))} placeholder="Texto educativo completo..." style={{resize:"vertical"}}/>
-              </div>
-            </div>
-            <div style={{padding:"14px 24px",borderTop:"1px solid var(--gray-100)",display:"flex",gap:10,justifyContent:"flex-end"}}>
-              <button onClick={()=>setModal(false)} className="btn btn-ghost">Cancelar</button>
-              <button onClick={salvar} disabled={salvando} className="btn btn-purple">{salvando?"Salvando...":"Salvar"}</button>
+                </div>
+                <div style={{display:"flex",justifyContent:"flex-end",marginTop:24}}>
+                  <button className="btn btn-purple" onClick={()=>{if(!formPsico.titulo){alert("Título obrigatório.");return;}setWizardStep(2);}}>Próximo — Blocos <Icon name="arrow-right" size={15}/></button>
+                </div>
+              </>)}
+              {wizardStep===2&&(<>
+                <div style={{marginBottom:20}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:10}}>Adicionar Bloco</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                    {TIPOS_BLOCO_PSICO.map(t=>(
+                      <button key={t.id} onClick={()=>addBlocoPsico(t.id)}
+                        style={{display:"flex",alignItems:"center",gap:6,padding:"7px 13px",borderRadius:20,border:"1.5px solid var(--gray-200)",background:"white",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",color:"var(--gray-700)"}}>
+                        {t.emoji} {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {wizardBlocos.length===0&&(
+                  <div style={{textAlign:"center",padding:"32px 20px",color:"var(--text-muted)",background:"#fafafa",borderRadius:12,border:"1.5px dashed var(--gray-200)"}}>
+                    Clique nos tipos acima para montar a psicoeducação bloco a bloco
+                  </div>
+                )}
+                {wizardBlocos.map((bloco,idx)=>(
+                  <div key={bloco.id} style={{border:"1.5px solid var(--gray-200)",borderRadius:12,marginBottom:12,overflow:"hidden"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#f9f5ff",borderBottom:"1px solid var(--gray-100)"}}>
+                      <span style={{fontSize:16}}>{TIPOS_BLOCO_PSICO.find(t=>t.id===bloco.tipo)?.emoji}</span>
+                      <span style={{fontWeight:600,fontSize:13,color:"var(--purple)",flex:1}}>{TIPOS_BLOCO_PSICO.find(t=>t.id===bloco.tipo)?.label}</span>
+                      <button onClick={()=>moveBlocoPsico(idx,-1)} disabled={idx===0} style={{background:"none",border:"none",cursor:idx===0?"not-allowed":"pointer",color:"var(--gray-400)",padding:"2px 6px"}}>▲</button>
+                      <button onClick={()=>moveBlocoPsico(idx,1)} disabled={idx===wizardBlocos.length-1} style={{background:"none",border:"none",cursor:idx===wizardBlocos.length-1?"not-allowed":"pointer",color:"var(--gray-400)",padding:"2px 6px"}}>▼</button>
+                      <button onClick={()=>removeBlocoPsico(idx)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",padding:"2px 6px"}}><Icon name="trash-2" size={14}/></button>
+                    </div>
+                    <div style={{padding:"14px 16px"}}>
+                      {bloco.tipo==="banner"&&(<>
+                        <div style={{display:"flex",gap:10,marginBottom:10}}>
+                          <div style={{flex:1}}><label className="form-label" style={{fontSize:11}}>Título</label><input className="form-input" style={{fontSize:13}} value={bloco.titulo} onChange={e=>updateBlocoPsico(idx,{titulo:e.target.value})} placeholder="Título..."/></div>
+                          <div style={{width:80}}><label className="form-label" style={{fontSize:11}}>Emoji</label><input className="form-input" style={{fontSize:20,textAlign:"center"}} value={bloco.emoji} onChange={e=>updateBlocoPsico(idx,{emoji:e.target.value})} maxLength={2}/></div>
+                        </div>
+                        <label className="form-label" style={{fontSize:11}}>Cor de fundo</label>
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+                          {["#7B00C4","#0891b2","#059669","#d97706","#dc2626","#db2777","#6366f1","#374151"].map(cor=>(
+                            <button key={cor} onClick={()=>updateBlocoPsico(idx,{cor})} style={{width:28,height:28,borderRadius:"50%",background:cor,border:bloco.cor===cor?"3px solid #fff":"2px solid transparent",outline:bloco.cor===cor?"2px solid "+cor:"none",cursor:"pointer"}}/>
+                          ))}
+                          <input type="color" value={bloco.cor||"#7B00C4"} onChange={e=>updateBlocoPsico(idx,{cor:e.target.value})} style={{width:28,height:28,borderRadius:"50%",border:"none",cursor:"pointer",padding:0}}/>
+                        </div>
+                        <div style={{borderRadius:10,padding:"14px 18px",background:bloco.cor||"#7B00C4",color:"white",display:"flex",alignItems:"center",gap:10}}>
+                          <span style={{fontSize:24}}>{bloco.emoji}</span><span style={{fontWeight:700,fontSize:15}}>{bloco.titulo||"Preview do banner"}</span>
+                        </div>
+                      </>)}
+                      {bloco.tipo==="texto"&&(<TextAreaVoz className="form-input" rows={4} value={bloco.conteudo} onChange={e=>updateBlocoPsico(idx,{conteudo:e.target.value})} placeholder="Escreva o texto psicoeducativo aqui..."/>)}
+                      {bloco.tipo==="card"&&(<>
+                        <div style={{display:"flex",gap:10,marginBottom:10}}>
+                          <div style={{width:70}}><label className="form-label" style={{fontSize:11}}>Ícone</label><input className="form-input" style={{fontSize:20,textAlign:"center"}} value={bloco.icone} onChange={e=>updateBlocoPsico(idx,{icone:e.target.value})} maxLength={2}/></div>
+                          <div style={{flex:1}}><label className="form-label" style={{fontSize:11}}>Título</label><input className="form-input" style={{fontSize:13}} value={bloco.titulo} onChange={e=>updateBlocoPsico(idx,{titulo:e.target.value})} placeholder="Título do card..."/></div>
+                        </div>
+                        <TextAreaVoz className="form-input" rows={3} value={bloco.texto} onChange={e=>updateBlocoPsico(idx,{texto:e.target.value})} placeholder="Texto do card..."/>
+                      </>)}
+                      {bloco.tipo==="lista"&&(<>
+                        {bloco.itens.map((item,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <span style={{color:"var(--purple)",fontSize:16}}>•</span>
+                            <input className="form-input" style={{flex:1,fontSize:13}} value={item} onChange={e=>updateBlocoPsico(idx,{itens:bloco.itens.map((v,i)=>i===ii?e.target.value:v)})} placeholder={`Item ${ii+1}...`}/>
+                            <button onClick={()=>updateBlocoPsico(idx,{itens:bloco.itens.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBlocoPsico(idx,{itens:[...bloco.itens,""]})}>
+                          <Icon name="plus" size={13}/> Adicionar item
+                        </button>
+                      </>)}
+                      {bloco.tipo==="imagem"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>URL da imagem</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.url} onChange={e=>updateBlocoPsico(idx,{url:e.target.value})} placeholder="https://..."/>
+                        <label className="form-label" style={{fontSize:11}}>Legenda (opcional)</label>
+                        <input className="form-input" style={{fontSize:13}} value={bloco.legenda} onChange={e=>updateBlocoPsico(idx,{legenda:e.target.value})} placeholder="Legenda..."/>
+                        {bloco.url&&<img src={bloco.url} alt="" style={{marginTop:10,maxWidth:"100%",borderRadius:8,maxHeight:160,objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>}
+                      </>)}
+                      {bloco.tipo==="grafico_barras"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título do gráfico</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBlocoPsico(idx,{titulo:e.target.value})} placeholder="Ex: Como estou em cada área"/>
+                        {bloco.itens.map((item,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <input className="form-input" style={{flex:2,fontSize:13}} value={item.label} onChange={e=>updateBlocoPsico(idx,{itens:bloco.itens.map((v,i)=>i===ii?{...v,label:e.target.value}:v)})} placeholder={`Rótulo ${ii+1}`}/>
+                            <input type="number" className="form-input" style={{width:70,fontSize:13}} min={0} max={100} value={item.valor} onChange={e=>updateBlocoPsico(idx,{itens:bloco.itens.map((v,i)=>i===ii?{...v,valor:Number(e.target.value)}:v)})}/>
+                            <button onClick={()=>updateBlocoPsico(idx,{itens:bloco.itens.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBlocoPsico(idx,{itens:[...bloco.itens,{label:"",valor:0}]})}><Icon name="plus" size={13}/> Adicionar barra</button>
+                      </>)}
+                      {bloco.tipo==="grafico_radar"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título do gráfico</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBlocoPsico(idx,{titulo:e.target.value})} placeholder="Ex: Roda da Vida"/>
+                        {bloco.eixos.map((eixo,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <input className="form-input" style={{flex:2,fontSize:13}} value={eixo.label} onChange={e=>updateBlocoPsico(idx,{eixos:bloco.eixos.map((v,i)=>i===ii?{...v,label:e.target.value}:v)})} placeholder={`Eixo ${ii+1}`}/>
+                            <input type="number" className="form-input" style={{width:70,fontSize:13}} min={0} max={10} value={eixo.valor} onChange={e=>updateBlocoPsico(idx,{eixos:bloco.eixos.map((v,i)=>i===ii?{...v,valor:Number(e.target.value)}:v)})}/>
+                            <button onClick={()=>updateBlocoPsico(idx,{eixos:bloco.eixos.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBlocoPsico(idx,{eixos:[...bloco.eixos,{label:"",valor:0}]})}><Icon name="plus" size={13}/> Adicionar eixo</button>
+                      </>)}
+                      {bloco.tipo==="grafico_pizza"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título do gráfico</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBlocoPsico(idx,{titulo:e.target.value})} placeholder="Ex: Como uso meu tempo"/>
+                        {bloco.fatias.map((fatia,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <input className="form-input" style={{flex:2,fontSize:13}} value={fatia.label} onChange={e=>updateBlocoPsico(idx,{fatias:bloco.fatias.map((v,i)=>i===ii?{...v,label:e.target.value}:v)})} placeholder={`Fatia ${ii+1}`}/>
+                            <input type="number" className="form-input" style={{width:70,fontSize:13}} min={0} max={100} value={fatia.valor} onChange={e=>updateBlocoPsico(idx,{fatias:bloco.fatias.map((v,i)=>i===ii?{...v,valor:Number(e.target.value)}:v)})}/>
+                            <span style={{fontSize:11,color:"var(--text-muted)"}}>%</span>
+                            <button onClick={()=>updateBlocoPsico(idx,{fatias:bloco.fatias.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBlocoPsico(idx,{fatias:[...bloco.fatias,{label:"",valor:0}]})}><Icon name="plus" size={13}/> Adicionar fatia</button>
+                      </>)}
+                      {bloco.tipo==="slider"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:10}} value={bloco.pergunta} onChange={e=>updateBlocoPsico(idx,{pergunta:e.target.value})} placeholder="Ex: Como você está se sentindo hoje?"/>
+                        <div style={{display:"flex",gap:10}}>
+                          <div style={{flex:1}}><label className="form-label" style={{fontSize:11}}>Mínimo</label><input type="number" className="form-input" value={bloco.min} onChange={e=>updateBlocoPsico(idx,{min:Number(e.target.value)})}/></div>
+                          <div style={{flex:1}}><label className="form-label" style={{fontSize:11}}>Máximo</label><input type="number" className="form-input" value={bloco.max} onChange={e=>updateBlocoPsico(idx,{max:Number(e.target.value)})}/></div>
+                          <div style={{flex:2}}><label className="form-label" style={{fontSize:11}}>Rótulo mín</label><input className="form-input" value={bloco.labelMin} onChange={e=>updateBlocoPsico(idx,{labelMin:e.target.value})} placeholder="Nada"/></div>
+                          <div style={{flex:2}}><label className="form-label" style={{fontSize:11}}>Rótulo máx</label><input className="form-input" value={bloco.labelMax} onChange={e=>updateBlocoPsico(idx,{labelMax:e.target.value})} placeholder="Muito"/></div>
+                        </div>
+                      </>)}
+                      {bloco.tipo==="pergunta"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta de reflexão</label>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8}} value={bloco.pergunta} onChange={e=>updateBlocoPsico(idx,{pergunta:e.target.value})} placeholder="O que você percebe em você mesma com esse conteúdo?"/>
+                        <label className="form-label" style={{fontSize:11}}>Placeholder para a paciente</label>
+                        <input className="form-input" style={{fontSize:13}} value={bloco.placeholder} onChange={e=>updateBlocoPsico(idx,{placeholder:e.target.value})} placeholder="Escreva aqui..."/>
+                      </>)}
+                      {bloco.tipo==="audio"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>URL do áudio ou vídeo</label>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.url} onChange={e=>updateBlocoPsico(idx,{url:e.target.value})} placeholder="YouTube, Spotify, SoundCloud..."/>
+                        <label className="form-label" style={{fontSize:11}}>Legenda (opcional)</label>
+                        <input className="form-input" style={{fontSize:13}} value={bloco.legenda} onChange={e=>updateBlocoPsico(idx,{legenda:e.target.value})} placeholder="Ex: Música para meditação"/>
+                      </>)}
+                      {bloco.tipo==="estrelas"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8}} value={bloco.pergunta} onChange={e=>updateBlocoPsico(idx,{pergunta:e.target.value})} placeholder="Ex: Como você avalia seu nível de ansiedade hoje?"/>
+                        <label className="form-label" style={{fontSize:11}}>Máximo de estrelas</label>
+                        <select className="form-input" style={{fontSize:13,width:100}} value={bloco.max} onChange={e=>updateBlocoPsico(idx,{max:Number(e.target.value)})}>
+                          {[3,5,7,10].map(n=><option key={n} value={n}>{n} ⭐</option>)}
+                        </select>
+                      </>)}
+                      {bloco.tipo==="checklist"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Título</label>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.titulo} onChange={e=>updateBlocoPsico(idx,{titulo:e.target.value})} placeholder="Ex: Meu checklist de autocuidado"/>
+                        {bloco.itens.map((item,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <span style={{fontSize:16}}>☐</span>
+                            <input className="form-input" style={{flex:1,fontSize:13}} value={item} onChange={e=>updateBlocoPsico(idx,{itens:bloco.itens.map((v,i)=>i===ii?e.target.value:v)})} placeholder={`Item ${ii+1}...`}/>
+                            <button onClick={()=>updateBlocoPsico(idx,{itens:bloco.itens.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBlocoPsico(idx,{itens:[...bloco.itens,""]})}>
+                          <Icon name="plus" size={13}/> Adicionar item
+                        </button>
+                      </>)}
+                      {bloco.tipo==="selecao"&&(<>
+                        <label className="form-label" style={{fontSize:11}}>Pergunta</label>
+                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8}} value={bloco.pergunta} onChange={e=>updateBlocoPsico(idx,{pergunta:e.target.value})} placeholder="Ex: O que você mais sente no momento?"/>
+                        <div style={{display:"flex",gap:8,marginBottom:10}}>
+                          {["unica","multipla"].map(t=>(
+                            <button key={t} onClick={()=>updateBlocoPsico(idx,{tipo_sel:t})}
+                              style={{padding:"5px 14px",borderRadius:16,border:"1.5px solid",cursor:"pointer",fontSize:12,fontFamily:"var(--font-body)",
+                                borderColor:bloco.tipo_sel===t?"var(--purple)":"var(--gray-200)",
+                                background:bloco.tipo_sel===t?"var(--purple-bg)":"white",
+                                color:bloco.tipo_sel===t?"var(--purple)":"var(--gray-600)"}}>
+                              {t==="unica"?"☝️ Escolha única":"☑️ Múltipla escolha"}
+                            </button>
+                          ))}
+                        </div>
+                        {bloco.opcoes.map((op,ii)=>(
+                          <div key={ii} style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                            <span style={{color:"var(--purple)",fontSize:13,width:18}}>{ii+1}.</span>
+                            <input className="form-input" style={{flex:1,fontSize:13}} value={op} onChange={e=>updateBlocoPsico(idx,{opcoes:bloco.opcoes.map((v,i)=>i===ii?e.target.value:v)})} placeholder={`Opção ${ii+1}...`}/>
+                            <button onClick={()=>updateBlocoPsico(idx,{opcoes:bloco.opcoes.filter((_,i)=>i!==ii)})} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626"}}><Icon name="x" size={14}/></button>
+                          </div>
+                        ))}
+                        <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>updateBlocoPsico(idx,{opcoes:[...bloco.opcoes,""]})}>
+                          <Icon name="plus" size={13}/> Adicionar opção
+                        </button>
+                      </>)}
+                    </div>
+                  </div>
+                ))}
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:24}}>
+                  <button className="btn btn-ghost" onClick={()=>setWizardStep(1)}><Icon name="arrow-left" size={15}/> Voltar</button>
+                  <button className="btn btn-purple" onClick={()=>setWizardStep(3)}>Próximo — Revisar <Icon name="arrow-right" size={15}/></button>
+                </div>
+              </>)}
+              {wizardStep===3&&(<>
+                <div style={{background:"#f9f5ff",borderRadius:12,padding:"16px 20px",marginBottom:20}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                    <span style={{fontSize:28}}>{formPsico.emoji}</span>
+                    <div style={{fontWeight:700,fontSize:15}}>{formPsico.titulo}</div>
+                  </div>
+                  {formPsico.descricao&&<div style={{fontSize:13,color:"var(--text-muted)",marginBottom:8}}>{formPsico.descricao}</div>}
+                  <div style={{fontSize:12,color:"var(--purple)",fontWeight:600}}>
+                    {MACROCATEGORIAS.find(m=>m.subs.some(s=>s.id===formPsico.categoria))?.icone}{" "}
+                    {MACROCATEGORIAS.flatMap(m=>m.subs).find(s=>s.id===formPsico.categoria)?.label||formPsico.categoria}
+                  </div>
+                </div>
+                <div style={{fontSize:12,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.6px",marginBottom:10}}>
+                  {wizardBlocos.length} bloco{wizardBlocos.length!==1?"s":""} de conteúdo
+                </div>
+                {wizardBlocos.map((bloco,idx)=>{
+                  const t=TIPOS_BLOCO_PSICO.find(t=>t.id===bloco.tipo);
+                  return (
+                    <div key={bloco.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"white",borderRadius:10,border:"1px solid var(--gray-200)",marginBottom:8}}>
+                      <span style={{fontSize:18}}>{t?.emoji}</span>
+                      <div style={{flex:1}}>
+                        <div style={{fontWeight:600,fontSize:13}}>{t?.label}</div>
+                        <div style={{fontSize:11,color:"var(--text-muted)"}}>
+                          {bloco.tipo==="texto"?(bloco.conteudo?.slice(0,60)||"—"):bloco.tipo==="banner"?(bloco.titulo||"—"):bloco.tipo==="lista"?`${bloco.itens?.filter(i=>i).length} item(s)`:bloco.tipo==="pergunta"?(bloco.pergunta?.slice(0,60)||"—"):(bloco.titulo||bloco.url||bloco.pergunta||"—")}
+                        </div>
+                      </div>
+                      <button onClick={()=>setWizardStep(2)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--purple)",fontSize:12}}>editar</button>
+                    </div>
+                  );
+                })}
+                {wizardBlocos.length===0&&<div style={{color:"var(--text-muted)",fontSize:13,padding:"12px 0"}}>Nenhum bloco — a psicoeducação terá apenas título e descrição.</div>}
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:24}}>
+                  <button className="btn btn-ghost" onClick={()=>setWizardStep(2)}><Icon name="arrow-left" size={15}/> Voltar</button>
+                  <button className="btn btn-purple" onClick={salvarWizardPsico} disabled={salvando}>
+                    <Icon name="save" size={15}/> {salvando?"Salvando...":"Salvar Psicoeducação"}
+                  </button>
+                </div>
+              </>)}
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function BuscaIASintomaPsico({itens, onClose, onVer}){
+  const [sintoma, setSintoma] = useState("");
+  const [buscando, setBuscando] = useState(false);
+  const [resultado, setResultado] = useState(null);
+  const [erro, setErro] = useState("");
+  async function buscar(){
+    if(!sintoma.trim()) return;
+    setBuscando(true); setErro(""); setResultado(null);
+    try {
+      const lista = itens.map(r=>`- "${r.titulo}" (${r.categoria||""}): ${r.descricao||""}`).join("\n");
+      const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estes materiais de psicoeducação disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione os 3 a 5 materiais mais indicados. Responda APENAS em JSON válido:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
+      const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const data = await res.json();
+      const json = JSON.parse(data.content?.[0]?.text||"{}");
+      const recomendados = (json.recomendacoes||[]).map(r=>({...r,recurso:itens.find(x=>(x.titulo||"").toLowerCase()===r.titulo.toLowerCase())})).filter(r=>r.recurso);
+      setResultado(recomendados);
+    } catch(e){ setErro("Erro ao consultar a IA. Tente novamente."); }
+    setBuscando(false);
+  }
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000,padding:16}} onClick={onClose}>
+      <div style={{background:"white",borderRadius:18,width:"100%",maxWidth:560,maxHeight:"90vh",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+        <div style={{background:"linear-gradient(135deg,#7B00C4,#5a0090)",padding:"20px 24px",color:"white",borderRadius:"18px 18px 0 0"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,marginBottom:4}}>🧠 Busca por Sintoma</div>
+              <div style={{fontSize:13,opacity:0.85}}>Descreva a queixa e a IA recomenda os materiais mais indicados</div>
+            </div>
+            <button onClick={onClose} style={{background:"rgba(255,255,255,0.2)",border:"none",color:"white",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:18}}>×</button>
+          </div>
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+          <div style={{marginBottom:16}}>
+            <label className="form-label">Queixa ou sintoma da paciente</label>
+            <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes..."/>
+          </div>
+          <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={buscar} disabled={buscando||!sintoma.trim()}>
+            {buscando?"🔍 Analisando com IA...":"🔍 Buscar materiais indicados"}
+          </button>
+          {erro&&<div style={{marginTop:12,padding:12,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,color:"#dc2626",fontSize:13}}>{erro}</div>}
+          {resultado&&(
+            <div style={{marginTop:20}}>
+              <div style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--purple)"}}>✨ {resultado.length} materiais recomendados:</div>
+              {resultado.sort((a,b)=>a.ordem-b.ordem).map((r,i)=>(
+                <div key={i} style={{border:"1.5px solid var(--purple-soft)",borderRadius:12,padding:"14px 16px",marginBottom:10,background:"white"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,flexShrink:0}}>{r.ordem}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:14}}>{r.recurso.emoji||"📚"} {r.titulo}</div>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>Psicoeducação</div>
+                    </div>
+                  </div>
+                  <div style={{fontSize:13,color:"var(--gray-600)",lineHeight:1.5,marginBottom:10,fontStyle:"italic"}}>💡 {r.motivo}</div>
+                  <button className="btn btn-purple" style={{fontSize:12,padding:"7px 14px"}} onClick={()=>onVer(r.recurso)}>
+                    <Icon name="eye" size={13}/> Ver material
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -502,7 +845,7 @@ function RecursosTerapeuticos({ user }) {
   const [form, setForm] = useState({titulo:"",descricao:"",categoria:"tcc",tipo:"interativa",formularioKey:"",musicUrl:""});
   const [salvando, setSalvando] = useState(false);
   const [abaView, setAbaView] = useState("ferramentas");
-  const [buscaIA, setBuscaIA] = useState(false);
+  const [buscaIAFerramenta, setBuscaIAFerramenta] = useState(false);
   // Wizard Nova Ferramenta
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardBlocos, setWizardBlocos] = useState([]);
@@ -761,7 +1104,7 @@ function RecursosTerapeuticos({ user }) {
 
   if(visualizando) return <ModalVisualizarFerramenta recurso={visualizando} onClose={()=>setVisualizando(null)} user={user}/>;
 
-  function BuscaIASintomas({recursos, onClose, onEnviar}){
+  function BuscaIAFerramenta({recursos, onClose, onEnviar}){
     const [sintoma, setSintoma] = useState("");
     const [buscando, setBuscando] = useState(false);
     const [resultado, setResultado] = useState(null);
@@ -771,19 +1114,11 @@ function RecursosTerapeuticos({ user }) {
       setBuscando(true); setErro(""); setResultado(null);
       try {
         const lista = recursos.map(r=>`- "${r.titulo||r.nome}" (${r.categoria||""}): ${r.descricao||""}`).join("\n");
-        const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estas ferramentas terapêuticas disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione as 3 a 5 ferramentas mais indicadas. Para cada uma, informe:\n- O título exato (igual à lista)\n- Por que é indicada (1-2 frases clínicas)\n- Ordem sugerida de uso\n\nResponda APENAS em JSON válido, sem markdown, neste formato:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
-        const res = await fetch("https://api.anthropic.com/v1/messages",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
-        });
+        const prompt = `Você é uma psicóloga clínica especialista em TCC, Musicoterapia e Neuromodulação.\n\nA psicóloga Dra. Lucia Kratz tem estas ferramentas terapêuticas disponíveis:\n${lista}\n\nA queixa/sintoma da paciente é: "${sintoma}"\n\nSelecione as 3 a 5 ferramentas mais indicadas. Responda APENAS em JSON válido:\n{"recomendacoes":[{"titulo":"título exato","motivo":"justificativa clínica","ordem":1}]}`;
+        const res = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
         const data = await res.json();
-        const texto = data.content?.[0]?.text||"";
-        const json = JSON.parse(texto);
-        const recomendados = json.recomendacoes.map(r=>{
-          const recurso = recursos.find(x=>(x.titulo||x.nome||"").toLowerCase()===r.titulo.toLowerCase());
-          return {...r, recurso};
-        }).filter(r=>r.recurso);
+        const json = JSON.parse(data.content?.[0]?.text||"{}");
+        const recomendados=(json.recomendacoes||[]).map(r=>({...r,recurso:recursos.find(x=>(x.titulo||x.nome||"").toLowerCase()===r.titulo.toLowerCase())})).filter(r=>r.recurso);
         setResultado(recomendados);
       } catch(e){ setErro("Erro ao consultar a IA. Tente novamente."); }
       setBuscando(false);
@@ -803,7 +1138,7 @@ function RecursosTerapeuticos({ user }) {
           <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
             <div style={{marginBottom:16}}>
               <label className="form-label">Queixa ou sintoma da paciente</label>
-              <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes, dificuldade de se perdoar"/>
+              <TextAreaVoz className="form-input" rows={3} value={sintoma} onChange={e=>setSintoma(e.target.value)} placeholder="Ex: autocrítica severa, pensamentos negativos recorrentes..."/>
             </div>
             <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={buscar} disabled={buscando||!sintoma.trim()}>
               {buscando?"🔍 Analisando com IA...":"🔍 Buscar ferramentas indicadas"}
@@ -811,7 +1146,7 @@ function RecursosTerapeuticos({ user }) {
             {erro&&<div style={{marginTop:12,padding:12,background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,color:"#dc2626",fontSize:13}}>{erro}</div>}
             {resultado&&(
               <div style={{marginTop:20}}>
-                <div style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--purple)"}}>✨ {resultado.length} ferramentas recomendadas para esta queixa:</div>
+                <div style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--purple)"}}>✨ {resultado.length} ferramentas recomendadas:</div>
                 {resultado.sort((a,b)=>a.ordem-b.ordem).map((r,i)=>(
                   <div key={i} style={{border:"1.5px solid var(--purple-soft)",borderRadius:12,padding:"14px 16px",marginBottom:10,background:"white"}}>
                     <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:8}}>
@@ -837,7 +1172,7 @@ function RecursosTerapeuticos({ user }) {
 
   return (
     <div>
-      {buscaIA&&<BuscaIASintomas recursos={recursos} onClose={()=>setBuscaIA(false)} onEnviar={(r)=>{setEnviandoRecurso(r);setBuscaIA(false);}}/>}
+      {buscaIAFerramenta&&<BuscaIAFerramenta recursos={recursos} onClose={()=>setBuscaIAFerramenta(false)} onEnviar={(r)=>{setEnviandoRecurso(r);setBuscaIAFerramenta(false);}}/>}
       <div className="page-header" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
         <div style={{minWidth:0,flex:1}}>
           <div className="page-title">Recursos Terapeuticos</div>
@@ -867,7 +1202,7 @@ function RecursosTerapeuticos({ user }) {
       {abaView==="ferramentas"&&(<>
       <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <button className="btn btn-ghost" style={{flexShrink:0,borderColor:"var(--purple)",color:"var(--purple)",border:"1.5px solid"}} onClick={()=>setBuscaIA(true)}>
+        <button className="btn btn-ghost" style={{flexShrink:0,border:"1.5px solid var(--purple)",color:"var(--purple)"}} onClick={()=>setBuscaIAFerramenta(true)}>
           🧠 Busca por sintoma
         </button>
         <button className="btn btn-purple" style={{flexShrink:0}} onClick={abrirWizardNovo}>
@@ -1245,7 +1580,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="slider"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:10,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você está se sentindo hoje?"/>
+                        <input className="form-input" style={{marginBottom:10,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você está se sentindo hoje?"/>
                         <div style={{display:"flex",gap:10}}>
                           <div style={{flex:1}}>
                             <label className="form-label" style={{fontSize:11}}>Mínimo</label>
@@ -1268,7 +1603,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="pergunta"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="O que você gostaria de compartilhar?"/>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="O que você gostaria de compartilhar?"/>
                         <label className="form-label" style={{fontSize:11}}>Placeholder (sugestão para a paciente)</label>
                         <input className="form-input" style={{fontSize:13}} value={bloco.placeholder} onChange={e=>updateBloco(idx,{placeholder:e.target.value})} placeholder="Escreva aqui..."/>
                       </>)}
@@ -1282,7 +1617,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="estrelas"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você avalia seu dia?"/>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você avalia seu dia?"/>
                         <label className="form-label" style={{fontSize:11}}>Máximo de estrelas</label>
                         <select className="form-input" style={{fontSize:13,width:100}} value={bloco.max} onChange={e=>updateBloco(idx,{max:Number(e.target.value)})}>
                           {[3,5,7,10].map(n=><option key={n} value={n}>{n} ⭐</option>)}
@@ -1306,7 +1641,7 @@ function RecursosTerapeuticos({ user }) {
 
                       {bloco.tipo==="selecao"&&(<>
                         <label className="form-label" style={{fontSize:11}}>Pergunta</label>
-                        <TextAreaVoz className="form-input" rows={2} style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você se sente agora?"/>
+                        <input className="form-input" style={{marginBottom:8,fontSize:13}} value={bloco.pergunta} onChange={e=>updateBloco(idx,{pergunta:e.target.value})} placeholder="Ex: Como você se sente agora?"/>
                         <div style={{display:"flex",gap:8,marginBottom:10}}>
                           {["unica","multipla"].map(t=>(
                             <button key={t} onClick={()=>updateBloco(idx,{tipo_sel:t})}
