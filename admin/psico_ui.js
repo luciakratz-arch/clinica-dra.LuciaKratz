@@ -341,21 +341,6 @@ function AbaPsicoeducacao() {
               <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
             </button>
           )}
-          {itens.length>0&&(
-            <button className="btn btn-outline" style={{fontSize:12}} onClick={sincronizarNovas} disabled={salvando}>
-              <Icon name="refresh-cw" size={14}/> {salvando?"Sincronizando...":"Sincronizar novas"}
-            </button>
-          )}
-          {itens.length>0&&(
-            <button className="btn btn-outline" style={{fontSize:12}} onClick={migrarCatPsico} disabled={salvando}>
-              <Icon name="layers" size={14}/> Migrar categorias
-            </button>
-          )}
-          {itens.length>0&&(
-            <button className="btn btn-outline" style={{fontSize:12,background:"#f3e6ff",borderColor:"#7B00C4",color:"#7B00C4"}} onClick={atualizarVisuaisFirebase} disabled={salvando}>
-              <Icon name="zap" size={14}/> Ativar visuais
-            </button>
-          )}
           <button className="btn btn-purple" onClick={()=>{setForm({titulo:"",descricao:"",categoria:"ansiedade",conteudo:"",emoji:"📚",tipo:"texto"});setEditando(null);setModal(true);}}>
             <Icon name="plus" size={16}/> Novo Material
           </button>
