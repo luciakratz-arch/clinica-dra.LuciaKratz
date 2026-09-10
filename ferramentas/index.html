@@ -127,15 +127,105 @@ function FerramentaGenerica({recurso,user,onConcluido}){
 function FabulaPublica({fabula,user,onConcluido}){
   const [idx,setIdx]=useState(0);
   const [respostas,setRespostas]=useState({});
-  const [etapa,setEtapa]=useState("leitura");
+  const [msgSalvo,setMsgSalvo]=useState("");
   const paginas=fabula.paginas||[];
   const perguntas=fabula.perguntas||[];
+  const pct=Math.round(((idx+1)/paginas.length)*100);
+  const concluido=idx===paginas.length-1;
+
   async function salvar(){
-    if(user?.id){try{await db.collection("clinica_reflexoes").add({pacienteId:user.id,pacienteNome:user.nome||"",fabulaId:fabula.id||"",fabulaTitulo:fabula.titulo||"",registros:perguntas.map((p,i)=>({pergunta:p,resposta:respostas[i]||""})),data:new Date().toLocaleDateString("pt-BR"),createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}}
-    onConcluido();
+    if(user?.id){
+      try{
+        await db.collection("clinica_reflexoes").add({
+          pacienteId:user.id,pacienteNome:user.nome||"",
+          origem:"fabula",origemId:fabula.id||"",origemTitulo:fabula.titulo||"",
+          registros:perguntas.map((p,i)=>({pergunta:p,resposta:respostas[i]||""})),
+          data:new Date().toLocaleDateString("pt-BR"),
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }catch(e){}
+    }
+    setMsgSalvo("✓ Reflexões salvas!");
+    setTimeout(()=>{ onConcluido(); },1500);
   }
-  if(etapa==="reflexao")return(<div className="card"><div style={{fontWeight:700,fontSize:16,color:"var(--purple)",marginBottom:4}}>💭 Reflexões — {fabula.titulo}</div><div style={{fontSize:13,color:"var(--text-muted)",marginBottom:20}}>Responda com calma. Não há resposta certa ou errada.</div>{perguntas.map((p,i)=>(<div key={i} style={{marginBottom:16}}><label className="form-label">{i+1}. {p}</label><TextAreaVoz rows={3} value={respostas[i]||""} onChange={e=>setRespostas(r=>({...r,[i]:e.target.value}))} placeholder="Escreva sua reflexão aqui..."/></div>))}<button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={salvar}>💾 Salvar reflexões</button></div>);
-  return(<div><div className="card" style={{background:"var(--purple)",color:"white",textAlign:"center",padding:"24px 20px"}}><div style={{fontSize:48,marginBottom:8}}>{fabula.emoji||"📖"}</div><div style={{fontFamily:"var(--font-display)",fontSize:22,marginBottom:6}}>{fabula.titulo}</div>{fabula.moral&&<div style={{fontSize:13,fontStyle:"italic",opacity:0.9}}>"{fabula.moral}"</div>}<div style={{fontSize:11,opacity:0.7,marginTop:8}}>Página {idx+1} de {paginas.length}</div></div>{paginas[idx]&&<div className="card"><p style={{fontSize:14,lineHeight:1.9,color:"var(--gray-700)"}}>{paginas[idx]}</p></div>}<div style={{display:"flex",gap:10}}>{idx>0&&<button className="btn btn-ghost" style={{flex:1}} onClick={()=>setIdx(i=>i-1)}>← Anterior</button>}{idx<paginas.length-1?<button className="btn btn-purple" style={{flex:2,justifyContent:"center"}} onClick={()=>setIdx(i=>i+1)}>Próxima página →</button>:<button className="btn btn-purple" style={{flex:2,justifyContent:"center"}} onClick={()=>perguntas.length>0?setEtapa("reflexao"):onConcluido()}>{perguntas.length>0?"💭 Reflexões →":"✓ Concluído"}</button>}</div></div>);
+
+  return(
+    <div style={{fontFamily:"Georgia,serif"}}>
+      {/* Barra de progresso */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+        <div style={{flex:1,height:5,background:"rgba(123,0,196,0.15)",borderRadius:20,overflow:"hidden"}}>
+          <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,#7B00C4,#a855f7)",borderRadius:20,transition:"width .4s ease"}}/>
+        </div>
+        <span style={{fontSize:12,color:"#7B00C4",fontWeight:700,flexShrink:0}}>{idx+1}/{paginas.length}</span>
+      </div>
+
+      {/* Card da página — igual ao portal */}
+      <div style={{
+        background:"linear-gradient(145deg,#4c0094,#7B00C4,#6d28d9)",
+        borderRadius:20,padding:"36px 28px",minHeight:240,marginBottom:20,
+        boxShadow:"0 8px 32px rgba(123,0,196,0.35)",
+        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"
+      }}>
+        <div style={{fontSize:44,marginBottom:16}}>{fabula.emoji||"📖"}</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"white",marginBottom:12,textAlign:"center"}}>{fabula.titulo}</div>
+        <p style={{fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",fontStyle:"italic",margin:0,textShadow:"0 1px 3px rgba(0,0,0,0.2)"}}>{paginas[idx]}</p>
+      </div>
+
+      {/* Reflexões na última página */}
+      {concluido&&perguntas.length>0&&(
+        <div style={{background:"#f5f3ff",borderRadius:14,padding:"18px 20px",marginBottom:20,border:"1px solid #ede9fe"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.6px"}}>💭 Para Refletir</div>
+          {perguntas.map((q,i)=>(
+            <div key={i} style={{marginBottom:14}}>
+              <div style={{display:"flex",gap:10,marginBottom:6}}>
+                <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
+                <span style={{fontSize:14,color:"#374151",lineHeight:1.7,fontFamily:"Inter,sans-serif"}}>{q}</span>
+              </div>
+              <TextAreaVoz value={respostas[i]||""} onChange={e=>setRespostas(r=>({...r,[i]:e.target.value}))}
+                placeholder="Escreva sua reflexão..."
+                style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
+                  border:"1px solid #7B00C450",fontSize:13,fontFamily:"Inter,sans-serif",
+                  resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+            </div>
+          ))}
+          <button onClick={salvar}
+            style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
+              background:msgSalvo?"#059669":"#7B00C4",color:"white",cursor:"pointer",
+              fontSize:13,fontWeight:700,fontFamily:"Inter,sans-serif",transition:"background .2s"}}>
+            {msgSalvo||"💾 Salvar minhas reflexões"}
+          </button>
+        </div>
+      )}
+
+      {/* Navegação */}
+      <div style={{display:"flex",gap:10}}>
+        <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0}
+          style={{flex:1,padding:"13px",borderRadius:12,border:"1.5px solid #e9d5ff",
+            background:"white",color:idx===0?"#d1d5db":"#7B00C4",
+            fontWeight:600,fontSize:14,cursor:idx===0?"not-allowed":"pointer",
+            fontFamily:"Inter,sans-serif",transition:"all .15s"}}>
+          ← Anterior
+        </button>
+        {!concluido?(
+          <button onClick={()=>setIdx(i=>i+1)}
+            style={{flex:2,padding:"13px",borderRadius:12,border:"none",
+              background:"linear-gradient(135deg,#7B00C4,#a855f7)",color:"white",
+              fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
+            Próxima página →
+          </button>
+        ):(
+          perguntas.length===0&&(
+            <button onClick={onConcluido}
+              style={{flex:2,padding:"13px",borderRadius:12,border:"none",
+                background:"linear-gradient(135deg,#7B00C4,#a855f7)",color:"white",
+                fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
+              ✓ Concluído
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ═══════════════════════════════════════════════════════
