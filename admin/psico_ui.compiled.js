@@ -1,4 +1,3 @@
-import { jsxDEV as _jsxDEV, Fragment as _Fragment } from "react/jsx-dev-runtime";
 // ═══════════════════════════════════════════════════════
 //  psico_ui.js — Aba Psicoeducação + Recursos Terapêuticos
 //  Clínica Dra. Lucia Kratz — CRP 09/20590
@@ -84,7 +83,7 @@ function ModalEnviarParaPaciente({
     }
     setEnviando(false);
   }
-  return /*#__PURE__*/_jsxDEV("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
       inset: 0,
@@ -95,190 +94,168 @@ function ModalEnviarParaPaciente({
       zIndex: 2000,
       padding: 20
     },
+    onClick: onClose
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 16,
+      padding: 24,
+      width: "100%",
+      maxWidth: 460,
+      maxHeight: "85vh",
+      display: "flex",
+      flexDirection: "column"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 16
+    }
+  }, "📲 Enviar para paciente"), /*#__PURE__*/React.createElement("button", {
     onClick: onClose,
-    children: /*#__PURE__*/_jsxDEV("div", {
-      style: {
-        background: "white",
-        borderRadius: 16,
-        padding: 24,
-        width: "100%",
-        maxWidth: 460,
-        maxHeight: "85vh",
-        display: "flex",
-        flexDirection: "column"
-      },
-      onClick: e => e.stopPropagation(),
-      children: [/*#__PURE__*/_jsxDEV("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16
-        },
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          style: {
-            fontWeight: 700,
-            fontSize: 16
-          },
-          children: "📲 Enviar para paciente"
-        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-          onClick: onClose,
-          style: {
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--gray-400)",
-            fontSize: 22
-          },
-          children: "×"
-        }, void 0, false)]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          background: "var(--purple-soft)",
-          borderRadius: 10,
-          padding: "10px 14px",
-          marginBottom: 16,
-          fontSize: 13,
-          color: "var(--purple)",
-          fontWeight: 600
-        },
-        children: [recurso.emoji || "🧠", " ", recurso.titulo || recurso.nome || ""]
-      }, void 0, true), enviado ? /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          textAlign: "center",
-          padding: "24px 0"
-        },
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          style: {
-            fontSize: 40,
-            marginBottom: 12
-          },
-          children: "✅"
-        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            fontWeight: 600,
-            marginBottom: 6
-          },
-          children: "Link enviado pelo WhatsApp!"
-        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            fontSize: 13,
-            color: "var(--text-muted)",
-            marginBottom: 20
-          },
-          children: "O link foi registrado e aparecerá em Links Partilhados no perfil da paciente."
-        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-          className: "btn btn-purple",
-          onClick: onClose,
-          children: "Fechar"
-        }, void 0, false)]
-      }, void 0, true) : /*#__PURE__*/_jsxDEV(_Fragment, {
-        children: [/*#__PURE__*/_jsxDEV("input", {
-          className: "form-input",
-          placeholder: "🔍 Buscar paciente...",
-          value: busca,
-          onChange: e => setBusca(e.target.value),
-          style: {
-            marginBottom: 10
-          },
-          autoFocus: true
-        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            overflowY: "auto",
-            flex: 1,
-            border: "1px solid var(--gray-200)",
-            borderRadius: 10,
-            marginBottom: 16
-          },
-          children: filtrados.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              textAlign: "center",
-              padding: 24,
-              color: "var(--text-muted)",
-              fontSize: 13
-            },
-            children: "Nenhuma paciente encontrada."
-          }, void 0, false) : filtrados.map(p => /*#__PURE__*/_jsxDEV("div", {
-            onClick: () => setSelecionado(p.id),
-            style: {
-              padding: "12px 16px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              borderBottom: "1px solid var(--gray-100)",
-              background: selecionado === p.id ? "var(--purple-soft)" : "white",
-              transition: "background .15s"
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              style: {
-                width: 34,
-                height: 34,
-                borderRadius: "50%",
-                background: selecionado === p.id ? "var(--purple)" : "var(--gray-100)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 700,
-                color: selecionado === p.id ? "white" : "var(--gray-600)",
-                flexShrink: 0,
-                fontSize: 14
-              },
-              children: (p.nome || "?")[0].toUpperCase()
-            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                flex: 1
-              },
-              children: [/*#__PURE__*/_jsxDEV("div", {
-                style: {
-                  fontWeight: 500,
-                  fontSize: 14,
-                  color: selecionado === p.id ? "var(--purple)" : "inherit"
-                },
-                children: p.nome
-              }, void 0, false), p.telefone && /*#__PURE__*/_jsxDEV("div", {
-                style: {
-                  fontSize: 11,
-                  color: "var(--text-muted)"
-                },
-                children: p.telefone
-              }, void 0, false)]
-            }, void 0, true), selecionado === p.id && /*#__PURE__*/_jsxDEV(Icon, {
-              name: "check-circle",
-              size: 16,
-              style: {
-                color: "var(--purple)"
-              }
-            }, void 0, false)]
-          }, p.id, true))
-        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            display: "flex",
-            gap: 10
-          },
-          children: [/*#__PURE__*/_jsxDEV("button", {
-            className: "btn btn-ghost",
-            style: {
-              flex: 1
-            },
-            onClick: onClose,
-            children: "Cancelar"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-            className: "btn btn-purple",
-            style: {
-              flex: 2
-            },
-            onClick: enviar,
-            disabled: !selecionado || enviando,
-            children: [/*#__PURE__*/_jsxDEV(Icon, {
-              name: "message-circle",
-              size: 15
-            }, void 0, false), enviando ? " Gerando..." : " Gerar Link + WhatsApp"]
-          }, void 0, true)]
-        }, void 0, true)]
-      }, void 0, true)]
-    }, void 0, true)
-  }, void 0, false);
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "var(--gray-400)",
+      fontSize: 22
+    }
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "var(--purple-soft)",
+      borderRadius: 10,
+      padding: "10px 14px",
+      marginBottom: 16,
+      fontSize: 13,
+      color: "var(--purple)",
+      fontWeight: 600
+    }
+  }, recurso.emoji || "🧠", " ", recurso.titulo || recurso.nome || ""), enviado ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: "24px 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 40,
+      marginBottom: 12
+    }
+  }, "✅"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      marginBottom: 6
+    }
+  }, "Link enviado pelo WhatsApp!"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)",
+      marginBottom: 20
+    }
+  }, "O link foi registrado e aparecerá em Links Partilhados no perfil da paciente."), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: onClose
+  }, "Fechar")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    placeholder: "🔍 Buscar paciente...",
+    value: busca,
+    onChange: e => setBusca(e.target.value),
+    style: {
+      marginBottom: 10
+    },
+    autoFocus: true
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowY: "auto",
+      flex: 1,
+      border: "1px solid var(--gray-200)",
+      borderRadius: 10,
+      marginBottom: 16
+    }
+  }, filtrados.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: 24,
+      color: "var(--text-muted)",
+      fontSize: 13
+    }
+  }, "Nenhuma paciente encontrada.") : filtrados.map(p => /*#__PURE__*/React.createElement("div", {
+    key: p.id,
+    onClick: () => setSelecionado(p.id),
+    style: {
+      padding: "12px 16px",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      borderBottom: "1px solid var(--gray-100)",
+      background: selecionado === p.id ? "var(--purple-soft)" : "white",
+      transition: "background .15s"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 34,
+      height: 34,
+      borderRadius: "50%",
+      background: selecionado === p.id ? "var(--purple)" : "var(--gray-100)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontWeight: 700,
+      color: selecionado === p.id ? "white" : "var(--gray-600)",
+      flexShrink: 0,
+      fontSize: 14
+    }
+  }, (p.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 500,
+      fontSize: 14,
+      color: selecionado === p.id ? "var(--purple)" : "inherit"
+    }
+  }, p.nome), p.telefone && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)"
+    }
+  }, p.telefone)), selecionado === p.id && /*#__PURE__*/React.createElement(Icon, {
+    name: "check-circle",
+    size: 16,
+    style: {
+      color: "var(--purple)"
+    }
+  })))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      flex: 1
+    },
+    onClick: onClose
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      flex: 2
+    },
+    onClick: enviar,
+    disabled: !selecionado || enviando
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 15
+  }), enviando ? " Gerando..." : " Gerar Link + WhatsApp")))));
 }
 function AbaPsicoeducacao() {
   const [itens, setItens] = useState([]);
@@ -531,7 +508,7 @@ function AbaPsicoeducacao() {
     }
     return false;
   });
-  if (loading) return /*#__PURE__*/_jsxDEV(Spinner, {}, void 0, false);
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
   if (aberto) {
     const macroAberto = MACROCATEGORIAS.find(m => m.id === aberto.categoria || m.subs.some(s => s.id === aberto.categoria)) || MACROCATEGORIAS[0];
     const cat = {
@@ -541,586 +518,517 @@ function AbaPsicoeducacao() {
       accent: macroAberto.cor
     };
     const VisualComp = PSICO_VISUAIS[aberto.visualKey || aberto.titulo];
-    return /*#__PURE__*/_jsxDEV("div", {
-      children: [/*#__PURE__*/_jsxDEV("button", {
-        className: "btn btn-ghost",
-        style: {
-          marginBottom: 16,
-          padding: "8px 12px"
-        },
-        onClick: () => setAberto(null),
-        children: [/*#__PURE__*/_jsxDEV(Icon, {
-          name: "arrow-left",
-          size: 16
-        }, void 0, false), " Todos os materiais"]
-      }, void 0, true), VisualComp ? /*#__PURE__*/_jsxDEV(VisualComp, {
-        cat: cat
-      }, void 0, false) : /*#__PURE__*/_jsxDEV(_Fragment, {
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          className: "card",
-          style: {
-            marginBottom: 16,
-            background: cat.cor,
-            color: "white"
-          },
-          children: /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              textAlign: "center",
-              padding: "8px 0 16px"
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              style: {
-                fontSize: 52,
-                marginBottom: 12
-              },
-              children: aberto.emoji || "📚"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                fontFamily: "var(--font-display)",
-                fontSize: 22,
-                fontWeight: 600,
-                marginBottom: 8
-              },
-              children: aberto.titulo
-            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
-              style: {
-                background: "rgba(255,255,255,0.2)",
-                borderRadius: 20,
-                padding: "4px 14px",
-                fontSize: 12
-              },
-              children: cat.label
-            }, void 0, false)]
-          }, void 0, true)
-        }, void 0, false), aberto.descricao && /*#__PURE__*/_jsxDEV("div", {
-          className: "card",
-          style: {
-            marginBottom: 12
-          },
-          children: /*#__PURE__*/_jsxDEV("p", {
-            style: {
-              fontSize: 14,
-              color: "var(--text-muted)",
-              fontStyle: "italic"
-            },
-            children: aberto.descricao
-          }, void 0, false)
-        }, void 0, false), aberto.conteudo && /*#__PURE__*/_jsxDEV("div", {
-          className: "card",
-          children: /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              fontSize: 14,
-              lineHeight: 1.8,
-              whiteSpace: "pre-wrap"
-            },
-            children: aberto.conteudo
-          }, void 0, false)
-        }, void 0, false)]
-      }, void 0, true)]
-    }, void 0, true);
-  }
-  return /*#__PURE__*/_jsxDEV("div", {
-    children: [enviandoPsico && /*#__PURE__*/_jsxDEV(ModalEnviarParaPaciente, {
-      recurso: enviandoPsico,
-      tipo: "psicoeducacao",
-      onClose: () => setEnviandoPsico(null)
-    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+      className: "btn btn-ghost",
       style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 16
+        marginBottom: 16,
+        padding: "8px 12px"
       },
-      children: [/*#__PURE__*/_jsxDEV("div", {
-        style: {
-          fontSize: 13,
-          color: "var(--text-muted)"
-        },
-        children: [itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeducação"]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          display: "flex",
-          gap: 8
-        },
-        children: [itens.length === 0 && /*#__PURE__*/_jsxDEV("button", {
-          className: "btn btn-outline",
-          style: {
-            fontSize: 12
-          },
-          onClick: popularPilulas,
-          disabled: salvando,
-          children: [/*#__PURE__*/_jsxDEV(Icon, {
-            name: "download",
-            size: 14
-          }, void 0, false), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-          className: "btn btn-purple",
-          onClick: () => {
-            setForm({
-              titulo: "",
-              descricao: "",
-              categoria: "ansiedade",
-              conteudo: "",
-              emoji: "📚",
-              tipo: "texto"
-            });
-            setEditando(null);
-            setModal(true);
-          },
-          children: [/*#__PURE__*/_jsxDEV(Icon, {
-            name: "plus",
-            size: 16
-          }, void 0, false), " Novo Material"]
-        }, void 0, true)]
-      }, void 0, true)]
-    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      onClick: () => setAberto(null)
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "arrow-left",
+      size: 16
+    }), " Todos os materiais"), VisualComp ? /*#__PURE__*/React.createElement(VisualComp, {
+      cat: cat
+    }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "card",
       style: {
-        display: "flex",
-        gap: 6,
-        marginBottom: 20,
-        flexWrap: "wrap",
-        paddingBottom: 4
-      },
-      children: [/*#__PURE__*/_jsxDEV("button", {
-        onClick: () => setFiltro("todos"),
-        style: {
-          padding: "5px 14px",
-          borderRadius: 20,
-          border: "1.5px solid",
-          whiteSpace: "nowrap",
-          flexShrink: 0,
-          borderColor: filtro === "todos" ? "var(--purple)" : "var(--gray-200)",
-          background: filtro === "todos" ? "var(--purple)" : "white",
-          color: filtro === "todos" ? "white" : "var(--gray-600)",
-          fontSize: 12,
-          cursor: "pointer",
-          fontWeight: filtro === "todos" ? 600 : 400
-        },
-        children: ["Todos (", itens.length, ")"]
-      }, void 0, true), MACROCATEGORIAS.map(m => {
-        const subIds = new Set(m.subs.map(s => s.id));
-        const count = itens.filter(i => subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria] === m.id).length;
-        if (count === 0) return null;
-        return /*#__PURE__*/_jsxDEV("button", {
-          onClick: () => setFiltro(m.id),
-          style: {
-            padding: "5px 14px",
-            borderRadius: 20,
-            border: "1.5px solid",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-            borderColor: filtro === m.id ? m.cor : m.cor + "50",
-            background: filtro === m.id ? m.cor : m.bg,
-            color: filtro === m.id ? "white" : m.cor,
-            fontSize: 12,
-            cursor: "pointer",
-            fontWeight: filtro === m.id ? 600 : 400
-          },
-          children: [m.icone, " ", m.label, " (", count, ")"]
-        }, m.id, true);
-      })]
-    }, void 0, true), filtrados.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+        marginBottom: 16,
+        background: cat.cor,
+        color: "white"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center",
-        padding: 40,
-        color: "var(--text-muted)",
-        fontSize: 14
-      },
-      children: ["Nenhum material cadastrado ainda.", /*#__PURE__*/_jsxDEV("br", {}, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-        className: "btn btn-purple",
-        style: {
-          marginTop: 12
-        },
-        onClick: () => setModal(true),
-        children: "Adicionar primeiro material"
-      }, void 0, false)]
-    }, void 0, true) : (() => {
-      // Agrupa por macrocategoria
-      const grupos = MACROCATEGORIAS.map(m => {
-        const itensGrupo = filtrados.filter(i => i.categoria === m.id || PSICO_LEGADO_MACRO[i.categoria] === m.id || m.subs.some(s => s.id === i.categoria));
-        return {
-          ...m,
-          itens: itensGrupo
-        };
-      }).filter(g => g.itens.length > 0);
-      const orfaos = filtrados.filter(i => !MACROCATEGORIAS.some(m => i.categoria === m.id || PSICO_LEGADO_MACRO[i.categoria] === m.id || m.subs.some(s => s.id === i.categoria)));
-      const todosGrupos = [...grupos, ...(orfaos.length > 0 ? [{
-        id: "_orfaos",
-        label: "Sem Categoria",
-        icone: "🔧",
-        cor: "#6b7280",
-        bg: "#f3f4f6",
-        itens: orfaos
-      }] : [])];
-      function CardPsico({
-        item,
-        cat
-      }) {
-        return /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            background: "white",
-            borderRadius: 12,
-            border: "1px solid var(--gray-200)",
-            overflow: "hidden",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
-          },
-          children: [/*#__PURE__*/_jsxDEV("div", {
-            style: {
-              background: cat.bg,
-              padding: "20px 16px",
-              textAlign: "center",
-              borderBottom: "1px solid " + cat.cor + "20"
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              style: {
-                fontSize: 36,
-                marginBottom: 8
-              },
-              children: item.emoji || "📚"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                fontWeight: 700,
-                fontSize: 14,
-                color: cat.cor
-              },
-              children: item.titulo
-            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
-              style: {
-                background: cat.cor + "20",
-                color: cat.cor,
-                borderRadius: 20,
-                padding: "2px 10px",
-                fontSize: 11,
-                fontWeight: 600,
-                marginTop: 6,
-                display: "inline-block"
-              },
-              children: cat.label
-            }, void 0, false)]
-          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              padding: "12px 16px"
-            },
-            children: [item.descricao && /*#__PURE__*/_jsxDEV("p", {
-              style: {
-                fontSize: 12,
-                color: "var(--text-muted)",
-                marginBottom: 10,
-                lineHeight: 1.5
-              },
-              children: [item.descricao.slice(0, 80), item.descricao.length > 80 ? "..." : ""]
-            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                display: "flex",
-                gap: 6
-              },
-              children: [/*#__PURE__*/_jsxDEV("button", {
-                className: "btn btn-ghost",
-                style: {
-                  flex: 1,
-                  fontSize: 12,
-                  padding: "6px 0"
-                },
-                onClick: () => setAberto(item),
-                children: [/*#__PURE__*/_jsxDEV(Icon, {
-                  name: "eye",
-                  size: 13
-                }, void 0, false), " Ver"]
-              }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-                className: "btn btn-ghost",
-                style: {
-                  fontSize: 12,
-                  padding: "6px 10px"
-                },
-                onClick: () => {
-                  setForm({
-                    titulo: item.titulo || "",
-                    descricao: item.descricao || "",
-                    categoria: item.categoria || "ansiedade",
-                    conteudo: item.conteudo || "",
-                    emoji: item.emoji || "📚",
-                    tipo: item.tipo || "texto"
-                  });
-                  setEditando(item.id);
-                  setModal(true);
-                },
-                children: /*#__PURE__*/_jsxDEV(Icon, {
-                  name: "edit-2",
-                  size: 13
-                }, void 0, false)
-              }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-                className: "btn btn-ghost",
-                style: {
-                  fontSize: 12,
-                  padding: "6px 10px",
-                  color: "var(--danger)"
-                },
-                onClick: () => excluir(item.id),
-                children: /*#__PURE__*/_jsxDEV(Icon, {
-                  name: "trash-2",
-                  size: 13
-                }, void 0, false)
-              }, void 0, false)]
-            }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-              className: "btn btn-outline",
-              style: {
-                fontSize: 12,
-                width: "100%",
-                marginTop: 6,
-                color: "var(--purple)",
-                borderColor: "var(--purple)"
-              },
-              onClick: () => setEnviandoPsico(item),
-              children: [/*#__PURE__*/_jsxDEV(Icon, {
-                name: "send",
-                size: 13
-              }, void 0, false), " 📲 Enviar para paciente"]
-            }, void 0, true)]
-          }, void 0, true)]
-        }, void 0, true);
+        padding: "8px 0 16px"
       }
-      return /*#__PURE__*/_jsxDEV("div", {
-        children: todosGrupos.map(grupo => /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            marginBottom: 28
-          },
-          children: [/*#__PURE__*/_jsxDEV("div", {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 14,
-              paddingBottom: 8,
-              borderBottom: "1px solid var(--gray-100)"
-            },
-            children: [/*#__PURE__*/_jsxDEV("span", {
-              style: {
-                fontSize: 18
-              },
-              children: grupo.icone
-            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
-              style: {
-                fontWeight: 700,
-                fontSize: 12,
-                color: grupo.cor,
-                textTransform: "uppercase",
-                letterSpacing: "0.8px"
-              },
-              children: grupo.label
-            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
-              style: {
-                background: grupo.bg,
-                color: grupo.cor,
-                borderRadius: 20,
-                padding: "2px 8px",
-                fontSize: 11,
-                fontWeight: 600
-              },
-              children: grupo.itens.length
-            }, void 0, false)]
-          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))",
-              gap: 16
-            },
-            children: grupo.itens.map(item => /*#__PURE__*/_jsxDEV(CardPsico, {
-              item: item,
-              cat: {
-                label: grupo.label,
-                cor: grupo.cor,
-                bg: grupo.bg
-              }
-            }, item.id, false))
-          }, void 0, false)]
-        }, grupo.id, true))
-      }, void 0, false);
-    })(), modal && /*#__PURE__*/_jsxDEV("div", {
+    }, /*#__PURE__*/React.createElement("div", {
       style: {
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16
-      },
-      children: /*#__PURE__*/_jsxDEV("div", {
+        fontSize: 52,
+        marginBottom: 12
+      }
+    }, aberto.emoji || "📚"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: "var(--font-display)",
+        fontSize: 22,
+        fontWeight: 600,
+        marginBottom: 8
+      }
+    }, aberto.titulo), /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: "rgba(255,255,255,0.2)",
+        borderRadius: 20,
+        padding: "4px 14px",
+        fontSize: 12
+      }
+    }, cat.label))), aberto.descricao && /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      style: {
+        marginBottom: 12
+      }
+    }, /*#__PURE__*/React.createElement("p", {
+      style: {
+        fontSize: 14,
+        color: "var(--text-muted)",
+        fontStyle: "italic"
+      }
+    }, aberto.descricao)), aberto.conteudo && /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 14,
+        lineHeight: 1.8,
+        whiteSpace: "pre-wrap"
+      }
+    }, aberto.conteudo))));
+  }
+  return /*#__PURE__*/React.createElement("div", null, enviandoPsico && /*#__PURE__*/React.createElement(ModalEnviarParaPaciente, {
+    recurso: enviandoPsico,
+    tipo: "psicoeducacao",
+    onClose: () => setEnviandoPsico(null)
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)"
+    }
+  }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeducação"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, itens.length === 0 && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 12
+    },
+    onClick: popularPilulas,
+    disabled: salvando
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "download",
+    size: 14
+  }), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: () => {
+      setForm({
+        titulo: "",
+        descricao: "",
+        categoria: "ansiedade",
+        conteudo: "",
+        emoji: "📚",
+        tipo: "texto"
+      });
+      setEditando(null);
+      setModal(true);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 16
+  }), " Novo Material"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 20,
+      flexWrap: "wrap",
+      paddingBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setFiltro("todos"),
+    style: {
+      padding: "5px 14px",
+      borderRadius: 20,
+      border: "1.5px solid",
+      whiteSpace: "nowrap",
+      flexShrink: 0,
+      borderColor: filtro === "todos" ? "var(--purple)" : "var(--gray-200)",
+      background: filtro === "todos" ? "var(--purple)" : "white",
+      color: filtro === "todos" ? "white" : "var(--gray-600)",
+      fontSize: 12,
+      cursor: "pointer",
+      fontWeight: filtro === "todos" ? 600 : 400
+    }
+  }, "Todos (", itens.length, ")"), MACROCATEGORIAS.map(m => {
+    const subIds = new Set(m.subs.map(s => s.id));
+    const count = itens.filter(i => subIds.has(i.categoria) || PSICO_LEGADO_MACRO[i.categoria] === m.id).length;
+    if (count === 0) return null;
+    return /*#__PURE__*/React.createElement("button", {
+      key: m.id,
+      onClick: () => setFiltro(m.id),
+      style: {
+        padding: "5px 14px",
+        borderRadius: 20,
+        border: "1.5px solid",
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+        borderColor: filtro === m.id ? m.cor : m.cor + "50",
+        background: filtro === m.id ? m.cor : m.bg,
+        color: filtro === m.id ? "white" : m.cor,
+        fontSize: 12,
+        cursor: "pointer",
+        fontWeight: filtro === m.id ? 600 : 400
+      }
+    }, m.icone, " ", m.label, " (", count, ")");
+  })), filtrados.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: "center",
+      padding: 40,
+      color: "var(--text-muted)",
+      fontSize: 14
+    }
+  }, "Nenhum material cadastrado ainda.", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      marginTop: 12
+    },
+    onClick: () => setModal(true)
+  }, "Adicionar primeiro material")) : (() => {
+    // Agrupa por macrocategoria
+    const grupos = MACROCATEGORIAS.map(m => {
+      const itensGrupo = filtrados.filter(i => i.categoria === m.id || PSICO_LEGADO_MACRO[i.categoria] === m.id || m.subs.some(s => s.id === i.categoria));
+      return {
+        ...m,
+        itens: itensGrupo
+      };
+    }).filter(g => g.itens.length > 0);
+    const orfaos = filtrados.filter(i => !MACROCATEGORIAS.some(m => i.categoria === m.id || PSICO_LEGADO_MACRO[i.categoria] === m.id || m.subs.some(s => s.id === i.categoria)));
+    const todosGrupos = [...grupos, ...(orfaos.length > 0 ? [{
+      id: "_orfaos",
+      label: "Sem Categoria",
+      icone: "🔧",
+      cor: "#6b7280",
+      bg: "#f3f4f6",
+      itens: orfaos
+    }] : [])];
+    function CardPsico({
+      item,
+      cat
+    }) {
+      return /*#__PURE__*/React.createElement("div", {
         style: {
           background: "white",
-          borderRadius: 16,
-          width: "100%",
-          maxWidth: 540,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
+          borderRadius: 12,
+          border: "1px solid var(--gray-200)",
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06)"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          background: cat.bg,
+          padding: "20px 16px",
+          textAlign: "center",
+          borderBottom: "1px solid " + cat.cor + "20"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 36,
+          marginBottom: 8
+        }
+      }, item.emoji || "📚"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 14,
+          color: cat.cor
+        }
+      }, item.titulo), /*#__PURE__*/React.createElement("span", {
+        style: {
+          background: cat.cor + "20",
+          color: cat.cor,
+          borderRadius: 20,
+          padding: "2px 10px",
+          fontSize: 11,
+          fontWeight: 600,
+          marginTop: 6,
+          display: "inline-block"
+        }
+      }, cat.label)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "12px 16px"
+        }
+      }, item.descricao && /*#__PURE__*/React.createElement("p", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-muted)",
+          marginBottom: 10,
+          lineHeight: 1.5
+        }
+      }, item.descricao.slice(0, 80), item.descricao.length > 80 ? "..." : ""), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 6
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        className: "btn btn-ghost",
+        style: {
+          flex: 1,
+          fontSize: 12,
+          padding: "6px 0"
         },
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          style: {
-            padding: "18px 24px",
-            borderBottom: "1px solid var(--gray-100)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center"
-          },
-          children: [/*#__PURE__*/_jsxDEV("div", {
-            style: {
-              fontWeight: 700,
-              fontSize: 16
-            },
-            children: editando ? "Editar Material" : "Novo Material de Psicoeducação"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-            onClick: () => setModal(false),
-            style: {
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 22,
-              color: "var(--text-muted)"
-            },
-            children: "×"
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("div", {
-            style: {
-              display: "grid",
-              gridTemplateColumns: "60px 1fr",
-              gap: 10
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              children: [/*#__PURE__*/_jsxDEV("label", {
-                style: {
-                  fontWeight: 600,
-                  fontSize: 12,
-                  display: "block",
-                  marginBottom: 6
-                },
-                children: "Emoji"
-              }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
-                className: "form-input",
-                value: form.emoji,
-                onChange: e => setForm(f => ({
-                  ...f,
-                  emoji: e.target.value
-                })),
-                style: {
-                  textAlign: "center",
-                  fontSize: 20
-                }
-              }, void 0, false)]
-            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-              children: [/*#__PURE__*/_jsxDEV("label", {
-                style: {
-                  fontWeight: 600,
-                  fontSize: 12,
-                  display: "block",
-                  marginBottom: 6
-                },
-                children: "Título *"
-              }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
-                className: "form-input",
-                value: form.titulo,
-                onChange: e => setForm(f => ({
-                  ...f,
-                  titulo: e.target.value
-                })),
-                placeholder: "Ex: O que é ansiedade?"
-              }, void 0, false)]
-            }, void 0, true)]
-          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-            children: [/*#__PURE__*/_jsxDEV("label", {
-              style: {
-                fontWeight: 600,
-                fontSize: 12,
-                display: "block",
-                marginBottom: 6
-              },
-              children: "Categoria"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
-              className: "form-input",
-              value: form.categoria,
-              onChange: e => setForm(f => ({
-                ...f,
-                categoria: e.target.value
-              })),
-              children: MACROCATEGORIAS.map(m => /*#__PURE__*/_jsxDEV("optgroup", {
-                label: `${m.icone} ${m.label}`,
-                children: m.subs.map(s => /*#__PURE__*/_jsxDEV("option", {
-                  value: s.id,
-                  children: s.label
-                }, s.id, false))
-              }, m.id, false))
-            }, void 0, false)]
-          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-            children: [/*#__PURE__*/_jsxDEV("label", {
-              style: {
-                fontWeight: 600,
-                fontSize: 12,
-                display: "block",
-                marginBottom: 6
-              },
-              children: "Descrição breve"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
-              className: "form-input",
-              value: form.descricao,
-              onChange: e => setForm(f => ({
-                ...f,
-                descricao: e.target.value
-              })),
-              placeholder: "Resumo do material..."
-            }, void 0, false)]
-          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-            children: [/*#__PURE__*/_jsxDEV("label", {
-              style: {
-                fontWeight: 600,
-                fontSize: 12,
-                display: "block",
-                marginBottom: 6
-              },
-              children: "Conteúdo completo"
-            }, void 0, false), /*#__PURE__*/_jsxDEV(TextAreaVoz, {
-              className: "form-input",
-              rows: 6,
-              value: form.conteudo,
-              onChange: e => setForm(f => ({
-                ...f,
-                conteudo: e.target.value
-              })),
-              placeholder: "Texto educativo completo...",
-              style: {
-                resize: "vertical"
-              }
-            }, void 0, false)]
-          }, void 0, true)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            padding: "14px 24px",
-            borderTop: "1px solid var(--gray-100)",
-            display: "flex",
-            gap: 10,
-            justifyContent: "flex-end"
-          },
-          children: [/*#__PURE__*/_jsxDEV("button", {
-            onClick: () => setModal(false),
-            className: "btn btn-ghost",
-            children: "Cancelar"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-            onClick: salvar,
-            disabled: salvando,
-            className: "btn btn-purple",
-            children: salvando ? "Salvando..." : "Salvar"
-          }, void 0, false)]
-        }, void 0, true)]
-      }, void 0, true)
-    }, void 0, false)]
-  }, void 0, true);
+        onClick: () => setAberto(item)
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "eye",
+        size: 13
+      }), " Ver"), /*#__PURE__*/React.createElement("button", {
+        className: "btn btn-ghost",
+        style: {
+          fontSize: 12,
+          padding: "6px 10px"
+        },
+        onClick: () => {
+          setForm({
+            titulo: item.titulo || "",
+            descricao: item.descricao || "",
+            categoria: item.categoria || "ansiedade",
+            conteudo: item.conteudo || "",
+            emoji: item.emoji || "📚",
+            tipo: item.tipo || "texto"
+          });
+          setEditando(item.id);
+          setModal(true);
+        }
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "edit-2",
+        size: 13
+      })), /*#__PURE__*/React.createElement("button", {
+        className: "btn btn-ghost",
+        style: {
+          fontSize: 12,
+          padding: "6px 10px",
+          color: "var(--danger)"
+        },
+        onClick: () => excluir(item.id)
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "trash-2",
+        size: 13
+      }))), /*#__PURE__*/React.createElement("button", {
+        className: "btn btn-outline",
+        style: {
+          fontSize: 12,
+          width: "100%",
+          marginTop: 6,
+          color: "var(--purple)",
+          borderColor: "var(--purple)"
+        },
+        onClick: () => setEnviandoPsico(item)
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "send",
+        size: 13
+      }), " 📲 Enviar para paciente")));
+    }
+    return /*#__PURE__*/React.createElement("div", null, todosGrupos.map(grupo => /*#__PURE__*/React.createElement("div", {
+      key: grupo.id,
+      style: {
+        marginBottom: 28
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 14,
+        paddingBottom: 8,
+        borderBottom: "1px solid var(--gray-100)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 18
+      }
+    }, grupo.icone), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 700,
+        fontSize: 12,
+        color: grupo.cor,
+        textTransform: "uppercase",
+        letterSpacing: "0.8px"
+      }
+    }, grupo.label), /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: grupo.bg,
+        color: grupo.cor,
+        borderRadius: 20,
+        padding: "2px 8px",
+        fontSize: 11,
+        fontWeight: 600
+      }
+    }, grupo.itens.length)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))",
+        gap: 16
+      }
+    }, grupo.itens.map(item => /*#__PURE__*/React.createElement(CardPsico, {
+      key: item.id,
+      item: item,
+      cat: {
+        label: grupo.label,
+        cor: grupo.cor,
+        bg: grupo.bg
+      }
+    }))))));
+  })(), modal && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.5)",
+      zIndex: 1000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 16,
+      width: "100%",
+      maxWidth: 540,
+      maxHeight: "90vh",
+      overflowY: "auto",
+      boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "18px 24px",
+      borderBottom: "1px solid var(--gray-100)",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 16
+    }
+  }, editando ? "Editar Material" : "Novo Material de Psicoeducação"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModal(false),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      fontSize: 22,
+      color: "var(--text-muted)"
+    }
+  }, "×")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "20px 24px",
+      display: "flex",
+      flexDirection: "column",
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "60px 1fr",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontWeight: 600,
+      fontSize: 12,
+      display: "block",
+      marginBottom: 6
+    }
+  }, "Emoji"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.emoji,
+    onChange: e => setForm(f => ({
+      ...f,
+      emoji: e.target.value
+    })),
+    style: {
+      textAlign: "center",
+      fontSize: 20
+    }
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontWeight: 600,
+      fontSize: 12,
+      display: "block",
+      marginBottom: 6
+    }
+  }, "Título *"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.titulo,
+    onChange: e => setForm(f => ({
+      ...f,
+      titulo: e.target.value
+    })),
+    placeholder: "Ex: O que é ansiedade?"
+  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontWeight: 600,
+      fontSize: 12,
+      display: "block",
+      marginBottom: 6
+    }
+  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: form.categoria,
+    onChange: e => setForm(f => ({
+      ...f,
+      categoria: e.target.value
+    }))
+  }, MACROCATEGORIAS.map(m => /*#__PURE__*/React.createElement("optgroup", {
+    key: m.id,
+    label: `${m.icone} ${m.label}`
+  }, m.subs.map(s => /*#__PURE__*/React.createElement("option", {
+    key: s.id,
+    value: s.id
+  }, s.label)))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontWeight: 600,
+      fontSize: 12,
+      display: "block",
+      marginBottom: 6
+    }
+  }, "Descrição breve"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.descricao,
+    onChange: e => setForm(f => ({
+      ...f,
+      descricao: e.target.value
+    })),
+    placeholder: "Resumo do material..."
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontWeight: 600,
+      fontSize: 12,
+      display: "block",
+      marginBottom: 6
+    }
+  }, "Conteúdo completo"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 6,
+    value: form.conteudo,
+    onChange: e => setForm(f => ({
+      ...f,
+      conteudo: e.target.value
+    })),
+    placeholder: "Texto educativo completo...",
+    style: {
+      resize: "vertical"
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 24px",
+      borderTop: "1px solid var(--gray-100)",
+      display: "flex",
+      gap: 10,
+      justifyContent: "flex-end"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModal(false),
+    className: "btn btn-ghost"
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    onClick: salvar,
+    disabled: salvando,
+    className: "btn btn-purple"
+  }, salvando ? "Salvando..." : "Salvar")))));
 }
 function RecursosTerapeuticos({
   user
@@ -1333,779 +1241,709 @@ function RecursosTerapeuticos({
   const getIcone = r => ICONES_FERRAMENTA[r.formularioKey] || (r.categoria === "tcc" ? "🧠" : r.categoria === "ansiedade" ? "😮" : r.categoria === "emocoes" ? "💜" : r.categoria === "autocuidado" ? "🌱" : r.categoria === "relacionamentos" ? "❤️" : r.categoria === "corpo" ? "🥗" : r.categoria === "esquema" ? "🔑" : r.categoria === "musicoterapia" ? "🎵" : r.categoria === "avaliacao" ? "📋" : "🔧");
   const [visualizando, setVisualizando] = useState(null);
   const [enviandoRecurso, setEnviandoRecurso] = useState(null);
-  if (loading) return /*#__PURE__*/_jsxDEV(Spinner, {}, void 0, false);
-  if (enviandoRecurso) return /*#__PURE__*/_jsxDEV(ModalEnviarParaPaciente, {
+  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
+  if (enviandoRecurso) return /*#__PURE__*/React.createElement(ModalEnviarParaPaciente, {
     recurso: enviandoRecurso,
     tipo: "ferramenta",
     onClose: () => setEnviandoRecurso(null)
-  }, void 0, false);
-  if (visualizando) return /*#__PURE__*/_jsxDEV(ModalVisualizarFerramenta, {
+  });
+  if (visualizando) return /*#__PURE__*/React.createElement(ModalVisualizarFerramenta, {
     recurso: visualizando,
     onClose: () => setVisualizando(null),
     user: user
-  }, void 0, false);
-  return /*#__PURE__*/_jsxDEV("div", {
-    children: [/*#__PURE__*/_jsxDEV("div", {
-      className: "page-header",
+  });
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "page-header",
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      flexWrap: "wrap",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 0,
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "page-title"
+  }, "Recursos Terapeuticos"), /*#__PURE__*/React.createElement("div", {
+    className: "page-subtitle"
+  }, recursos.length, " ferramenta", recursos.length !== 1 ? "s" : "", " · ", recursos.filter(r => r.tipo === "interativa").length, " interativas · ", recursos.filter(r => r.tipo === "conteudo").length, " de conteudo"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 0,
+      marginBottom: 20,
+      borderBottom: "1px solid var(--gray-200)",
+      overflowX: "auto",
+      WebkitOverflowScrolling: "touch",
+      scrollbarWidth: "none"
+    }
+  }, [["ferramentas", "Ferramentas", "wrench"], ["fabulas", "Fábulas Terapêuticas", "book-open"], ["psicoeducacao", "Psicoeducação", "brain"], ["casais", "Terapia de Casais", "heart"]].map(([id, label, ic]) => /*#__PURE__*/React.createElement("button", {
+    key: id,
+    onClick: () => setAbaView(id),
+    style: {
+      padding: "10px 16px",
+      border: "none",
+      background: "none",
+      cursor: "pointer",
+      fontSize: 13,
+      color: abaView === id ? "var(--purple)" : "var(--gray-600)",
+      borderBottom: abaView === id ? "2px solid var(--purple)" : "2px solid transparent",
+      fontWeight: abaView === id ? 600 : 400,
+      fontFamily: "var(--font-body)",
+      marginBottom: -1,
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+      whiteSpace: "nowrap",
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: ic,
+    size: 15
+  }), label))), abaView === "fabulas" && /*#__PURE__*/React.createElement(AbaFabulas, null), abaView === "psicoeducacao" && /*#__PURE__*/React.createElement(AbaPsicoeducacao, null), abaView === "casais" && /*#__PURE__*/React.createElement(AbaProtocoloCasais, null), abaView === "ferramentas" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 12,
+      marginBottom: 16,
+      flexWrap: "wrap",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    style: {
+      flex: 1,
+      minWidth: 200
+    },
+    placeholder: "Buscar por nome, descricao ou tipo...",
+    value: busca,
+    onChange: e => setBusca(e.target.value)
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    style: {
+      flexShrink: 0
+    },
+    onClick: () => {
+      setForm({
+        titulo: "",
+        descricao: "",
+        categoria: "tcc",
+        tipo: "interativa",
+        formularioKey: "",
+        musicUrl: ""
+      });
+      setEditando(null);
+      setModal(true);
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "plus",
+    size: 16
+  }), " Nova Ferramenta")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 8,
+      flexWrap: "wrap",
+      paddingBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn " + (filtroCateg === "todos" ? "btn-purple" : "btn-ghost"),
+    style: {
+      fontSize: 12
+    },
+    onClick: () => setFiltroCateg("todos")
+  }, "Todas ", recursos.length), MACROCATEGORIAS.map(m => {
+    const subIds = new Set(m.subs.map(s => s.id));
+    const legadoIds = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([, mid]) => mid === m.id).map(([lid]) => lid));
+    const n = recursos.filter(r => r.categoria === m.id || subIds.has(r.categoria) || legadoIds.has(r.categoria) || legadoIds.has(r.formularioKey)).length;
+    const ativo = filtroCateg === m.id;
+    return /*#__PURE__*/React.createElement("button", {
+      key: m.id,
+      onClick: () => setFiltroCateg(filtroCateg === m.id ? "todos" : m.id),
       style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        flexWrap: "wrap",
-        gap: 8
-      },
-      children: /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          minWidth: 0,
-          flex: 1
-        },
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          className: "page-title",
-          children: "Recursos Terapeuticos"
-        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-          className: "page-subtitle",
-          children: [recursos.length, " ferramenta", recursos.length !== 1 ? "s" : "", " · ", recursos.filter(r => r.tipo === "interativa").length, " interativas · ", recursos.filter(r => r.tipo === "conteudo").length, " de conteudo"]
-        }, void 0, true)]
-      }, void 0, true)
-    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        fontSize: 12,
+        padding: "6px 12px",
+        borderRadius: 20,
+        border: "2px solid",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        fontWeight: 600,
+        transition: "all .15s",
+        borderColor: ativo ? m.cor : m.cor + "50",
+        background: ativo ? m.cor : m.bg,
+        color: ativo ? "white" : m.cor,
+        whiteSpace: "nowrap"
+      }
+    }, m.icone, " ", m.label, " ", n > 0 ? `(${n})` : "");
+  }), ["musicoterapia", "avaliacao"].map(cid => {
+    const cat = CATEGORIAS_LEGADO.find(c => c.id === cid);
+    if (!cat) return null;
+    const n = recursos.filter(r => r.categoria === cid).length;
+    const ativo = filtroCateg === cid;
+    return /*#__PURE__*/React.createElement("button", {
+      key: cid,
+      onClick: () => setFiltroCateg(filtroCateg === cid ? "todos" : cid),
       style: {
-        display: "flex",
-        gap: 0,
-        marginBottom: 20,
-        borderBottom: "1px solid var(--gray-200)",
-        overflowX: "auto",
-        WebkitOverflowScrolling: "touch",
-        scrollbarWidth: "none"
-      },
-      children: [["ferramentas", "Ferramentas", "wrench"], ["fabulas", "Fábulas Terapêuticas", "book-open"], ["psicoeducacao", "Psicoeducação", "brain"], ["casais", "Terapia de Casais", "heart"]].map(([id, label, ic]) => /*#__PURE__*/_jsxDEV("button", {
-        onClick: () => setAbaView(id),
-        style: {
-          padding: "10px 16px",
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          fontSize: 13,
-          color: abaView === id ? "var(--purple)" : "var(--gray-600)",
-          borderBottom: abaView === id ? "2px solid var(--purple)" : "2px solid transparent",
-          fontWeight: abaView === id ? 600 : 400,
-          fontFamily: "var(--font-body)",
-          marginBottom: -1,
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          whiteSpace: "nowrap",
-          flexShrink: 0
-        },
-        children: [/*#__PURE__*/_jsxDEV(Icon, {
-          name: ic,
-          size: 15
-        }, void 0, false), label]
-      }, id, true))
-    }, void 0, false), abaView === "fabulas" && /*#__PURE__*/_jsxDEV(AbaFabulas, {}, void 0, false), abaView === "psicoeducacao" && /*#__PURE__*/_jsxDEV(AbaPsicoeducacao, {}, void 0, false), abaView === "casais" && /*#__PURE__*/_jsxDEV(AbaProtocoloCasais, {}, void 0, false), abaView === "ferramentas" && /*#__PURE__*/_jsxDEV(_Fragment, {
-      children: [/*#__PURE__*/_jsxDEV("div", {
-        style: {
-          display: "flex",
-          gap: 12,
-          marginBottom: 16,
-          flexWrap: "wrap",
-          alignItems: "center"
-        },
-        children: [/*#__PURE__*/_jsxDEV("input", {
-          className: "form-input",
-          style: {
-            flex: 1,
-            minWidth: 200
-          },
-          placeholder: "Buscar por nome, descricao ou tipo...",
-          value: busca,
-          onChange: e => setBusca(e.target.value)
-        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-          className: "btn btn-purple",
-          style: {
-            flexShrink: 0
-          },
-          onClick: () => {
-            setForm({
-              titulo: "",
-              descricao: "",
-              categoria: "tcc",
-              tipo: "interativa",
-              formularioKey: "",
-              musicUrl: ""
-            });
-            setEditando(null);
-            setModal(true);
-          },
-          children: [/*#__PURE__*/_jsxDEV(Icon, {
-            name: "plus",
-            size: 16
-          }, void 0, false), " Nova Ferramenta"]
-        }, void 0, true)]
-      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          marginBottom: 20
-        },
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            marginBottom: 8,
-            flexWrap: "wrap",
-            paddingBottom: 4
-          },
-          children: [/*#__PURE__*/_jsxDEV("button", {
-            className: "btn " + (filtroCateg === "todos" ? "btn-purple" : "btn-ghost"),
-            style: {
-              fontSize: 12
-            },
-            onClick: () => setFiltroCateg("todos"),
-            children: ["Todas ", recursos.length]
-          }, void 0, true), MACROCATEGORIAS.map(m => {
-            const subIds = new Set(m.subs.map(s => s.id));
-            const legadoIds = new Set(Object.entries(LEGADO_PARA_MACRO).filter(([, mid]) => mid === m.id).map(([lid]) => lid));
-            const n = recursos.filter(r => r.categoria === m.id || subIds.has(r.categoria) || legadoIds.has(r.categoria) || legadoIds.has(r.formularioKey)).length;
-            const ativo = filtroCateg === m.id;
-            return /*#__PURE__*/_jsxDEV("button", {
-              onClick: () => setFiltroCateg(filtroCateg === m.id ? "todos" : m.id),
-              style: {
-                fontSize: 12,
-                padding: "6px 12px",
-                borderRadius: 20,
-                border: "2px solid",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontWeight: 600,
-                transition: "all .15s",
-                borderColor: ativo ? m.cor : m.cor + "50",
-                background: ativo ? m.cor : m.bg,
-                color: ativo ? "white" : m.cor,
-                whiteSpace: "nowrap"
-              },
-              children: [m.icone, " ", m.label, " ", n > 0 ? `(${n})` : ""]
-            }, m.id, true);
-          }), ["musicoterapia", "avaliacao"].map(cid => {
-            const cat = CATEGORIAS_LEGADO.find(c => c.id === cid);
-            if (!cat) return null;
-            const n = recursos.filter(r => r.categoria === cid).length;
-            const ativo = filtroCateg === cid;
-            return /*#__PURE__*/_jsxDEV("button", {
-              onClick: () => setFiltroCateg(filtroCateg === cid ? "todos" : cid),
-              style: {
-                fontSize: 12,
-                padding: "6px 12px",
-                borderRadius: 20,
-                border: "2px solid",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontWeight: 600,
-                borderColor: "#7B00C4",
-                background: ativo ? "#7B00C4" : "#f3e6ff",
-                color: ativo ? "white" : "#7B00C4"
-              },
-              children: [cid === "musicoterapia" ? "🎵" : "📋", " ", cat.label, " ", n > 0 ? `(${n})` : ""]
-            }, cid, true);
-          })]
-        }, void 0, true), filtroCateg !== "todos" && MACROCATEGORIAS.find(m => m.id === filtroCateg) && /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            paddingLeft: 10,
-            borderLeft: "3px solid",
-            borderColor: MACROCATEGORIAS.find(m => m.id === filtroCateg)?.cor,
-            fontSize: 12,
-            color: "var(--text-muted)",
-            lineHeight: 1.6
-          },
-          children: MACROCATEGORIAS.find(m => m.id === filtroCateg)?.subs.map(s => s.label).join(" · ")
-        }, void 0, false)]
-      }, void 0, true), filtrados.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
-        className: "card",
-        style: {
-          textAlign: "center",
-          padding: 48,
-          color: "var(--text-muted)"
-        },
-        children: [/*#__PURE__*/_jsxDEV(Icon, {
-          name: "wrench",
-          size: 40
-        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            marginTop: 12
-          },
-          children: "Nenhuma ferramenta encontrada."
-        }, void 0, false)]
-      }, void 0, true) : porCategoria.map(cat => /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          marginBottom: 28
-        },
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 14,
-            paddingBottom: 8,
-            borderBottom: "1px solid var(--gray-100)"
-          },
-          children: [/*#__PURE__*/_jsxDEV("span", {
-            style: {
-              fontWeight: 700,
-              fontSize: 12,
-              color: cat.cor,
-              textTransform: "uppercase",
-              letterSpacing: "0.8px"
-            },
-            children: cat.label
-          }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
-            style: {
-              background: cat.bg,
-              color: cat.cor,
-              borderRadius: 20,
-              padding: "2px 10px",
-              fontSize: 12,
-              fontWeight: 600
-            },
-            children: cat.itens.length
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
-            gap: 14
-          },
-          children: cat.itens.map(r => /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              background: "white",
-              border: "1.5px solid",
-              borderColor: cat.cor + "40",
-              borderRadius: 14,
-              padding: 18,
-              display: "flex",
-              flexDirection: "column",
-              gap: 10
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              style: {
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 8
-              },
-              children: [/*#__PURE__*/_jsxDEV("div", {
-                style: {
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: cat.cor,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 22,
-                  flexShrink: 0
-                },
-                children: getIcone(r)
-              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-                style: {
-                  flex: 1
-                },
-                children: [/*#__PURE__*/_jsxDEV("div", {
-                  style: {
-                    display: "flex",
-                    gap: 6,
-                    marginBottom: 4,
-                    flexWrap: "wrap"
-                  },
-                  children: [/*#__PURE__*/_jsxDEV("span", {
-                    style: {
-                      background: cat.bg,
-                      color: cat.cor,
-                      borderRadius: 20,
-                      padding: "2px 8px",
-                      fontSize: 10,
-                      fontWeight: 600,
-                      border: "1px solid " + cat.cor + "30"
-                    },
-                    children: r.tipo === "interativa" ? "INTERATIVA" : "CONTEÚDO"
-                  }, void 0, false), r.categoria === "musicoterapia" && /*#__PURE__*/_jsxDEV("span", {
-                    style: {
-                      background: "#f3e6ff",
-                      color: "#7B00C4",
-                      borderRadius: 20,
-                      padding: "2px 8px",
-                      fontSize: 10,
-                      fontWeight: 600
-                    },
-                    children: "Música"
-                  }, void 0, false)]
-                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-                  style: {
-                    fontWeight: 600,
-                    fontSize: 14
-                  },
-                  children: r.titulo
-                }, void 0, false)]
-              }, void 0, true)]
-            }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
-              style: {
-                fontSize: 13,
-                color: "var(--text-muted)",
-                lineHeight: 1.5,
-                flex: 1
-              },
-              children: r.descricao
-            }, void 0, false), r.formularioKey && /*#__PURE__*/_jsxDEV("span", {
-              style: {
-                fontSize: 11,
-                color: "var(--gray-400)",
-                background: "var(--gray-50)",
-                borderRadius: 6,
-                padding: "2px 8px",
-                display: "inline-block",
-                width: "fit-content"
-              },
-              children: r.formularioKey
-            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                borderTop: "1px solid var(--gray-100)",
-                paddingTop: 10
-              },
-              children: [/*#__PURE__*/_jsxDEV("div", {
-                style: {
-                  display: "flex",
-                  gap: 8
-                },
-                children: [/*#__PURE__*/_jsxDEV("button", {
-                  className: "btn btn-ghost",
-                  style: {
-                    fontSize: 12,
-                    flex: 1,
-                    color: "var(--purple)"
-                  },
-                  onClick: () => setVisualizando(r),
-                  children: [/*#__PURE__*/_jsxDEV(Icon, {
-                    name: "eye",
-                    size: 13
-                  }, void 0, false), " Visualizar"]
-                }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-                  className: "btn btn-ghost",
-                  style: {
-                    fontSize: 12,
-                    flex: 1
-                  },
-                  onClick: () => abrirEditar(r),
-                  children: [/*#__PURE__*/_jsxDEV(Icon, {
-                    name: "pencil",
-                    size: 13
-                  }, void 0, false), " Editar"]
-                }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-                  className: "btn btn-ghost",
-                  style: {
-                    padding: "6px 10px",
-                    color: "var(--danger)"
-                  },
-                  onClick: () => excluir(r.id),
-                  children: /*#__PURE__*/_jsxDEV(Icon, {
-                    name: "trash-2",
-                    size: 13
-                  }, void 0, false)
-                }, void 0, false)]
-              }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
-                className: "btn btn-outline",
-                style: {
-                  fontSize: 12,
-                  width: "100%",
-                  marginTop: 6,
-                  color: "var(--purple)",
-                  borderColor: "var(--purple)"
-                },
-                onClick: () => setEnviandoRecurso(r),
-                children: [/*#__PURE__*/_jsxDEV(Icon, {
-                  name: "send",
-                  size: 13
-                }, void 0, false), " 📲 Enviar para paciente"]
-              }, void 0, true), (r.formularioKey === "anamnese" || ["rastreamento-bipolar", "rastreamento-sexual", "rastreamento-alimentar", "rastreamento-neuro", "rastreamento-dependencia", "rastreamento-jogos"].includes(r.formularioKey)) && /*#__PURE__*/_jsxDEV("button", {
-                className: "btn btn-ghost",
-                style: {
-                  fontSize: 12,
-                  width: "100%",
-                  color: "#059669",
-                  border: "1px solid #059669",
-                  marginTop: 6
-                },
-                onClick: () => {
-                  const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/";
-                  const LINKS = {
-                    "anamnese": BASE + "anamnese-publica/",
-                    "rastreamento-bipolar": BASE + "rastreamento/",
-                    "rastreamento-sexual": BASE + "rastreamento/sexual/",
-                    "rastreamento-alimentar": BASE + "rastreamento/alimentar/",
-                    "rastreamento-neuro": BASE + "rastreamento/neuro/",
-                    "rastreamento-dependencia": BASE + "rastreamento/dependencia/",
-                    "rastreamento-jogos": BASE + "rastreamento/jogos/"
-                  };
-                  const NOMES = {
-                    "anamnese": "Anamnese",
-                    "rastreamento-bipolar": "Rastreamento Bipolar / Borderline",
-                    "rastreamento-sexual": "Rastreamento de Saúde Sexual",
-                    "rastreamento-alimentar": "Rastreamento de Hábitos Alimentares",
-                    "rastreamento-neuro": "Rastreamento de Funcionamento e Comportamento",
-                    "rastreamento-dependencia": "Rastreamento de Dependência Química",
-                    "rastreamento-jogos": "Rastreamento de Jogos e Apostas"
-                  };
-                  const link = LINKS[r.formularioKey] || BASE;
-                  const nome = NOMES[r.formularioKey] || r.titulo;
-                  const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de *" + nome + "* para você preencher.\n\n⏱️ Leva entre 5 e 15 minutos.\n\n💡 Dicas:\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
-                  navigator.clipboard.writeText(msg).then(() => {
-                    alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
-                  }).catch(() => {
-                    window.prompt("Copie a mensagem abaixo:", msg);
-                  });
-                },
-                children: [/*#__PURE__*/_jsxDEV(Icon, {
-                  name: "link",
-                  size: 13
-                }, void 0, false), " 🔗 Copiar Mensagem"]
-              }, void 0, true), false && r.formularioKey === "anamnese" && /*#__PURE__*/_jsxDEV("button", {
-                className: "btn btn-ghost",
-                style: {
-                  fontSize: 12,
-                  width: "100%",
-                  color: "#059669",
-                  border: "1px solid #059669",
-                  marginTop: 6
-                },
-                onClick: () => {
-                  const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
-                  const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\n📋 *O que é isso?*\nSão perguntas sobre seu histórico de saúde e desenvolvimento — informações importantes para o atendimento.\n\n⏱️ *Quanto tempo leva?*\nEntre 10 e 20 minutos.\n\n💡 *Dicas:*\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n• Tenha em mãos informações sobre a infância, se possível\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
-                  navigator.clipboard.writeText(msg).then(() => {
-                    alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
-                  }).catch(() => {
-                    window.prompt("Copie a mensagem abaixo e envie para o paciente:", msg);
-                  });
-                },
-                children: [/*#__PURE__*/_jsxDEV(Icon, {
-                  name: "link",
-                  size: 13
-                }, void 0, false), " 🔗 Copiar Mensagem"]
-              }, void 0, true)]
-            }, void 0, true)]
-          }, r.id, true))
-        }, void 0, false)]
-      }, cat.id, true))]
-    }, void 0, true), modal && /*#__PURE__*/_jsxDEV("div", {
-      style: {
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 500,
-        padding: 20
-      },
-      onClick: () => setModal(false),
-      children: /*#__PURE__*/_jsxDEV("div", {
-        style: {
-          background: "white",
-          borderRadius: 16,
-          padding: 28,
-          width: "100%",
-          maxWidth: 600,
-          maxHeight: "90vh",
-          overflowY: "auto"
-        },
-        onClick: e => e.stopPropagation(),
-        children: [/*#__PURE__*/_jsxDEV("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20
-          },
-          children: [/*#__PURE__*/_jsxDEV("div", {
-            style: {
-              fontFamily: "var(--font-display)",
-              fontSize: 20,
-              fontWeight: 600
-            },
-            children: editando ? "Editar Ferramenta" : "Nova Ferramenta"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-            onClick: () => setModal(false),
-            style: {
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--gray-400)"
-            },
-            children: /*#__PURE__*/_jsxDEV(Icon, {
-              name: "x",
-              size: 20
-            }, void 0, false)
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "Titulo da Ferramenta *"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
-            className: "form-input",
-            value: form.titulo,
-            onChange: e => setForm({
-              ...form,
-              titulo: e.target.value
-            }),
-            autoFocus: true
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "Descricao curta"
-          }, void 0, false), /*#__PURE__*/_jsxDEV(TextAreaVoz, {
-            className: "form-input",
-            rows: 2,
-            value: form.descricao,
-            onChange: e => setForm({
-              ...form,
-              descricao: e.target.value
-            })
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "Categoria"
-          }, void 0, false), MACROCATEGORIAS.map(m => /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              marginBottom: 10
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              style: {
-                fontSize: 11,
-                fontWeight: 700,
-                color: m.cor,
-                textTransform: "uppercase",
-                letterSpacing: "0.6px",
-                marginBottom: 6
-              },
-              children: [m.icone, " ", m.label]
-            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6
-              },
-              children: m.subs.map(s => /*#__PURE__*/_jsxDEV("button", {
-                onClick: () => setForm({
-                  ...form,
-                  categoria: s.id
-                }),
-                style: {
-                  padding: "6px 12px",
-                  borderRadius: 20,
-                  border: "1.5px solid",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontFamily: "var(--font-body)",
-                  borderColor: form.categoria === s.id ? m.cor : "var(--gray-200)",
-                  background: form.categoria === s.id ? m.bg : "white",
-                  color: form.categoria === s.id ? m.cor : "var(--gray-600)",
-                  fontWeight: form.categoria === s.id ? 600 : 400
-                },
-                children: s.label
-              }, s.id, false))
-            }, void 0, false)]
-          }, m.id, true)), /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              marginTop: 6
-            },
-            children: [/*#__PURE__*/_jsxDEV("div", {
-              style: {
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#6b7280",
-                textTransform: "uppercase",
-                letterSpacing: "0.6px",
-                marginBottom: 6
-              },
-              children: "Especializadas"
-            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-              style: {
-                display: "flex",
-                gap: 6,
-                flexWrap: "wrap"
-              },
-              children: [{
-                id: "musicoterapia",
-                label: "🎵 Musicoterapia"
-              }, {
-                id: "avaliacao",
-                label: "📋 Avaliação e Anamnese"
-              }, {
-                id: "outro",
-                label: "🔧 Outros"
-              }].map(c => /*#__PURE__*/_jsxDEV("button", {
-                onClick: () => setForm({
-                  ...form,
-                  categoria: c.id
-                }),
-                style: {
-                  padding: "6px 12px",
-                  borderRadius: 20,
-                  border: "1.5px solid",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontFamily: "var(--font-body)",
-                  borderColor: form.categoria === c.id ? "#7B00C4" : "var(--gray-200)",
-                  background: form.categoria === c.id ? "#f3e6ff" : "white",
-                  color: form.categoria === c.id ? "#7B00C4" : "var(--gray-600)",
-                  fontWeight: form.categoria === c.id ? 600 : 400
-                },
-                children: c.label
-              }, c.id, false))
-            }, void 0, false)]
-          }, void 0, true)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "Tipo de ferramenta"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              display: "flex",
-              gap: 10
-            },
-            children: [["conteudo", "Conteudo para leitura", "file-text"], ["interativa", "Formulario interativo", "zap"]].map(([v, l, ic]) => /*#__PURE__*/_jsxDEV("button", {
-              onClick: () => setForm({
-                ...form,
-                tipo: v
-              }),
-              style: {
-                flex: 1,
-                padding: "12px",
-                borderRadius: 10,
-                border: "1.5px solid",
-                borderColor: form.tipo === v ? "var(--purple)" : "var(--gray-200)",
-                background: form.tipo === v ? "var(--purple-bg)" : "white",
-                cursor: "pointer",
-                fontSize: 13,
-                fontFamily: "var(--font-body)",
-                color: form.tipo === v ? "var(--purple)" : "var(--gray-700)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6
-              },
-              children: [/*#__PURE__*/_jsxDEV(Icon, {
-                name: ic,
-                size: 15
-              }, void 0, false), l]
-            }, v, true))
-          }, void 0, false)]
-        }, void 0, true), form.tipo === "interativa" && /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "Formulario interativo"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
-            className: "form-input",
-            value: form.formularioKey,
-            onChange: e => setForm({
-              ...form,
-              formularioKey: e.target.value
-            }),
-            children: [/*#__PURE__*/_jsxDEV("option", {
-              value: "",
-              children: "Selecionar formulario..."
-            }, void 0, false), FERRAMENTAS_INTERATIVAS.map(f => /*#__PURE__*/_jsxDEV("option", {
-              value: f.key,
-              children: f.label
-            }, f.key, false))]
-          }, void 0, true)]
-        }, void 0, true), (form.formularioKey === "breathing-478" || form.formularioKey === "muscle-relaxation") && /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "🎵 Link de Música (YouTube) — opcional"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
-            className: "form-input",
-            value: form.musicUrl || "",
-            onChange: e => setForm({
-              ...form,
-              musicUrl: e.target.value
-            }),
-            placeholder: "https://www.youtube.com/watch?v=..."
-          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--text-muted)",
-              marginTop: 4
-            },
-            children: "Tocará em loop durante o exercício no portal do paciente."
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          className: "form-group",
-          style: {
-            marginBottom: 14
-          },
-          children: [/*#__PURE__*/_jsxDEV("label", {
-            className: "form-label",
-            children: "🎬 Link de Áudio ou Vídeo complementar — opcional"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
-            className: "form-input",
-            value: form.mediaUrl || "",
-            onChange: e => setForm({
-              ...form,
-              mediaUrl: e.target.value
-            }),
-            placeholder: "YouTube, Spotify, SoundCloud, Google Drive..."
-          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
-            style: {
-              fontSize: 11,
-              color: "var(--text-muted)",
-              marginTop: 4
-            },
-            children: "Aparecerá como botão \"▶ Ouvir / Assistir\" no portal do paciente junto com a ferramenta."
-          }, void 0, false)]
-        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
-          style: {
-            display: "flex",
-            gap: 10,
-            justifyContent: "flex-end",
-            marginTop: 20
-          },
-          children: [/*#__PURE__*/_jsxDEV("button", {
-            className: "btn btn-ghost",
-            onClick: () => setModal(false),
-            children: "Cancelar"
-          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
-            className: "btn btn-purple",
-            onClick: salvar,
-            disabled: salvando,
-            children: [/*#__PURE__*/_jsxDEV(Icon, {
-              name: "save",
-              size: 15
-            }, void 0, false), " ", salvando ? "Salvando..." : "Salvar Alteracoes"]
-          }, void 0, true)]
-        }, void 0, true)]
-      }, void 0, true)
-    }, void 0, false)]
-  }, void 0, true);
+        fontSize: 12,
+        padding: "6px 12px",
+        borderRadius: 20,
+        border: "2px solid",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        fontWeight: 600,
+        borderColor: "#7B00C4",
+        background: ativo ? "#7B00C4" : "#f3e6ff",
+        color: ativo ? "white" : "#7B00C4"
+      }
+    }, cid === "musicoterapia" ? "🎵" : "📋", " ", cat.label, " ", n > 0 ? `(${n})` : "");
+  })), filtroCateg !== "todos" && MACROCATEGORIAS.find(m => m.id === filtroCateg) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      paddingLeft: 10,
+      borderLeft: "3px solid",
+      borderColor: MACROCATEGORIAS.find(m => m.id === filtroCateg)?.cor,
+      fontSize: 12,
+      color: "var(--text-muted)",
+      lineHeight: 1.6
+    }
+  }, MACROCATEGORIAS.find(m => m.id === filtroCateg)?.subs.map(s => s.label).join(" · "))), filtrados.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      textAlign: "center",
+      padding: 48,
+      color: "var(--text-muted)"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "wrench",
+    size: 40
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12
+    }
+  }, "Nenhuma ferramenta encontrada.")) : porCategoria.map(cat => /*#__PURE__*/React.createElement("div", {
+    key: cat.id,
+    style: {
+      marginBottom: 28
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 14,
+      paddingBottom: 8,
+      borderBottom: "1px solid var(--gray-100)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 700,
+      fontSize: 12,
+      color: cat.cor,
+      textTransform: "uppercase",
+      letterSpacing: "0.8px"
+    }
+  }, cat.label), /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: cat.bg,
+      color: cat.cor,
+      borderRadius: 20,
+      padding: "2px 10px",
+      fontSize: 12,
+      fontWeight: 600
+    }
+  }, cat.itens.length)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
+      gap: 14
+    }
+  }, cat.itens.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.id,
+    style: {
+      background: "white",
+      border: "1.5px solid",
+      borderColor: cat.cor + "40",
+      borderRadius: 14,
+      padding: 18,
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 44,
+      height: 44,
+      borderRadius: 10,
+      background: cat.cor,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 22,
+      flexShrink: 0
+    }
+  }, getIcone(r)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      marginBottom: 4,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: cat.bg,
+      color: cat.cor,
+      borderRadius: 20,
+      padding: "2px 8px",
+      fontSize: 10,
+      fontWeight: 600,
+      border: "1px solid " + cat.cor + "30"
+    }
+  }, r.tipo === "interativa" ? "INTERATIVA" : "CONTEÚDO"), r.categoria === "musicoterapia" && /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#f3e6ff",
+      color: "#7B00C4",
+      borderRadius: 20,
+      padding: "2px 8px",
+      fontSize: 10,
+      fontWeight: 600
+    }
+  }, "Música")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 14
+    }
+  }, r.titulo))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-muted)",
+      lineHeight: 1.5,
+      flex: 1
+    }
+  }, r.descricao), r.formularioKey && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: "var(--gray-400)",
+      background: "var(--gray-50)",
+      borderRadius: 6,
+      padding: "2px 8px",
+      display: "inline-block",
+      width: "fit-content"
+    }
+  }, r.formularioKey), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid var(--gray-100)",
+      paddingTop: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      flex: 1,
+      color: "var(--purple)"
+    },
+    onClick: () => setVisualizando(r)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "eye",
+    size: 13
+  }), " Visualizar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      flex: 1
+    },
+    onClick: () => abrirEditar(r)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "pencil",
+    size: 13
+  }), " Editar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      padding: "6px 10px",
+      color: "var(--danger)"
+    },
+    onClick: () => excluir(r.id)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "trash-2",
+    size: 13
+  }))), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-outline",
+    style: {
+      fontSize: 12,
+      width: "100%",
+      marginTop: 6,
+      color: "var(--purple)",
+      borderColor: "var(--purple)"
+    },
+    onClick: () => setEnviandoRecurso(r)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "send",
+    size: 13
+  }), " 📲 Enviar para paciente"), (r.formularioKey === "anamnese" || ["rastreamento-bipolar", "rastreamento-sexual", "rastreamento-alimentar", "rastreamento-neuro", "rastreamento-dependencia", "rastreamento-jogos"].includes(r.formularioKey)) && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      width: "100%",
+      color: "#059669",
+      border: "1px solid #059669",
+      marginTop: 6
+    },
+    onClick: () => {
+      const BASE = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/";
+      const LINKS = {
+        "anamnese": BASE + "anamnese-publica/",
+        "rastreamento-bipolar": BASE + "rastreamento/",
+        "rastreamento-sexual": BASE + "rastreamento/sexual/",
+        "rastreamento-alimentar": BASE + "rastreamento/alimentar/",
+        "rastreamento-neuro": BASE + "rastreamento/neuro/",
+        "rastreamento-dependencia": BASE + "rastreamento/dependencia/",
+        "rastreamento-jogos": BASE + "rastreamento/jogos/"
+      };
+      const NOMES = {
+        "anamnese": "Anamnese",
+        "rastreamento-bipolar": "Rastreamento Bipolar / Borderline",
+        "rastreamento-sexual": "Rastreamento de Saúde Sexual",
+        "rastreamento-alimentar": "Rastreamento de Hábitos Alimentares",
+        "rastreamento-neuro": "Rastreamento de Funcionamento e Comportamento",
+        "rastreamento-dependencia": "Rastreamento de Dependência Química",
+        "rastreamento-jogos": "Rastreamento de Jogos e Apostas"
+      };
+      const link = LINKS[r.formularioKey] || BASE;
+      const nome = NOMES[r.formularioKey] || r.titulo;
+      const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de *" + nome + "* para você preencher.\n\n⏱️ Leva entre 5 e 15 minutos.\n\n💡 Dicas:\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
+      navigator.clipboard.writeText(msg).then(() => {
+        alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
+      }).catch(() => {
+        window.prompt("Copie a mensagem abaixo:", msg);
+      });
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " 🔗 Copiar Mensagem"), false && r.formularioKey === "anamnese" && /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    style: {
+      fontSize: 12,
+      width: "100%",
+      color: "#059669",
+      border: "1px solid #059669",
+      marginTop: 6
+    },
+    onClick: () => {
+      const link = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/";
+      const msg = "Olá! 🦋\n\nA Dra. Lucia Kratz encaminhou um formulário de Anamnese para você preencher antes da consulta.\n\n📋 *O que é isso?*\nSão perguntas sobre seu histórico de saúde e desenvolvimento — informações importantes para o atendimento.\n\n⏱️ *Quanto tempo leva?*\nEntre 10 e 20 minutos.\n\n💡 *Dicas:*\n• Responda com calma e honestidade\n• Se não souber algo, deixe em branco\n• Você pode falar em vez de digitar (botão 🎤)\n• Tenha em mãos informações sobre a infância, se possível\n\n👇 *Acesse pelo link abaixo:*\n" + link + "\n\nQualquer dúvida, pode responder aqui. 💜";
+      navigator.clipboard.writeText(msg).then(() => {
+        alert("✅ Mensagem copiada!\n\nCole diretamente no WhatsApp do paciente.");
+      }).catch(() => {
+        window.prompt("Copie a mensagem abaixo e envie para o paciente:", msg);
+      });
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " 🔗 Copiar Mensagem")))))))), modal && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.4)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 500,
+      padding: 20
+    },
+    onClick: () => setModal(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "white",
+      borderRadius: 16,
+      padding: 28,
+      width: "100%",
+      maxWidth: 600,
+      maxHeight: "90vh",
+      overflowY: "auto"
+    },
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "var(--font-display)",
+      fontSize: 20,
+      fontWeight: 600
+    }
+  }, editando ? "Editar Ferramenta" : "Nova Ferramenta"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setModal(false),
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      color: "var(--gray-400)"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "x",
+    size: 20
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Titulo da Ferramenta *"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.titulo,
+    onChange: e => setForm({
+      ...form,
+      titulo: e.target.value
+    }),
+    autoFocus: true
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Descricao curta"), /*#__PURE__*/React.createElement(TextAreaVoz, {
+    className: "form-input",
+    rows: 2,
+    value: form.descricao,
+    onChange: e => setForm({
+      ...form,
+      descricao: e.target.value
+    })
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Categoria"), MACROCATEGORIAS.map(m => /*#__PURE__*/React.createElement("div", {
+    key: m.id,
+    style: {
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: m.cor,
+      textTransform: "uppercase",
+      letterSpacing: "0.6px",
+      marginBottom: 6
+    }
+  }, m.icone, " ", m.label), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 6
+    }
+  }, m.subs.map(s => /*#__PURE__*/React.createElement("button", {
+    key: s.id,
+    onClick: () => setForm({
+      ...form,
+      categoria: s.id
+    }),
+    style: {
+      padding: "6px 12px",
+      borderRadius: 20,
+      border: "1.5px solid",
+      cursor: "pointer",
+      fontSize: 12,
+      fontFamily: "var(--font-body)",
+      borderColor: form.categoria === s.id ? m.cor : "var(--gray-200)",
+      background: form.categoria === s.id ? m.bg : "white",
+      color: form.categoria === s.id ? m.cor : "var(--gray-600)",
+      fontWeight: form.categoria === s.id ? 600 : 400
+    }
+  }, s.label))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: "#6b7280",
+      textTransform: "uppercase",
+      letterSpacing: "0.6px",
+      marginBottom: 6
+    }
+  }, "Especializadas"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 6,
+      flexWrap: "wrap"
+    }
+  }, [{
+    id: "musicoterapia",
+    label: "🎵 Musicoterapia"
+  }, {
+    id: "avaliacao",
+    label: "📋 Avaliação e Anamnese"
+  }, {
+    id: "outro",
+    label: "🔧 Outros"
+  }].map(c => /*#__PURE__*/React.createElement("button", {
+    key: c.id,
+    onClick: () => setForm({
+      ...form,
+      categoria: c.id
+    }),
+    style: {
+      padding: "6px 12px",
+      borderRadius: 20,
+      border: "1.5px solid",
+      cursor: "pointer",
+      fontSize: 12,
+      fontFamily: "var(--font-body)",
+      borderColor: form.categoria === c.id ? "#7B00C4" : "var(--gray-200)",
+      background: form.categoria === c.id ? "#f3e6ff" : "white",
+      color: form.categoria === c.id ? "#7B00C4" : "var(--gray-600)",
+      fontWeight: form.categoria === c.id ? 600 : 400
+    }
+  }, c.label))))), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Tipo de ferramenta"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10
+    }
+  }, [["conteudo", "Conteudo para leitura", "file-text"], ["interativa", "Formulario interativo", "zap"]].map(([v, l, ic]) => /*#__PURE__*/React.createElement("button", {
+    key: v,
+    onClick: () => setForm({
+      ...form,
+      tipo: v
+    }),
+    style: {
+      flex: 1,
+      padding: "12px",
+      borderRadius: 10,
+      border: "1.5px solid",
+      borderColor: form.tipo === v ? "var(--purple)" : "var(--gray-200)",
+      background: form.tipo === v ? "var(--purple-bg)" : "white",
+      cursor: "pointer",
+      fontSize: 13,
+      fontFamily: "var(--font-body)",
+      color: form.tipo === v ? "var(--purple)" : "var(--gray-700)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: ic,
+    size: 15
+  }), l)))), form.tipo === "interativa" && /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "Formulario interativo"), /*#__PURE__*/React.createElement("select", {
+    className: "form-input",
+    value: form.formularioKey,
+    onChange: e => setForm({
+      ...form,
+      formularioKey: e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "Selecionar formulario..."), FERRAMENTAS_INTERATIVAS.map(f => /*#__PURE__*/React.createElement("option", {
+    key: f.key,
+    value: f.key
+  }, f.label)))), (form.formularioKey === "breathing-478" || form.formularioKey === "muscle-relaxation") && /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "🎵 Link de Música (YouTube) — opcional"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.musicUrl || "",
+    onChange: e => setForm({
+      ...form,
+      musicUrl: e.target.value
+    }),
+    placeholder: "https://www.youtube.com/watch?v=..."
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)",
+      marginTop: 4
+    }
+  }, "Tocará em loop durante o exercício no portal do paciente.")), /*#__PURE__*/React.createElement("div", {
+    className: "form-group",
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "form-label"
+  }, "🎬 Link de Áudio ou Vídeo complementar — opcional"), /*#__PURE__*/React.createElement("input", {
+    className: "form-input",
+    value: form.mediaUrl || "",
+    onChange: e => setForm({
+      ...form,
+      mediaUrl: e.target.value
+    }),
+    placeholder: "YouTube, Spotify, SoundCloud, Google Drive..."
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: "var(--text-muted)",
+      marginTop: 4
+    }
+  }, "Aparecerá como botão \"▶ Ouvir / Assistir\" no portal do paciente junto com a ferramenta.")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 10,
+      justifyContent: "flex-end",
+      marginTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-ghost",
+    onClick: () => setModal(false)
+  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-purple",
+    onClick: salvar,
+    disabled: salvando
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "save",
+    size: 15
+  }), " ", salvando ? "Salvando..." : "Salvar Alteracoes")))));
 }
 
 // ═══════════════════════════════════════════════════════
