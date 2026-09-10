@@ -60,7 +60,7 @@ function ModalEnviarParaPaciente({ recurso, tipo, onClose }) {
       if (recursoId) {
         const hoje = new Date().toISOString().split("T")[0];
         if (tipo === "ferramenta" || tipo === "psicoeducacao") {
-          const modKey = tipo === "psicoeducacao" ? "mod4" : "mod3";
+          const modKey = tipo === "psicoeducacao" ? "mod6" : "mod3";
           const upd = {};
           upd["modulosConfig." + modKey + ".ativo"] = true;
           upd["modulosConfig." + modKey + ".ferramentas." + recursoId + ".ativo"] = true;
