@@ -2662,17 +2662,20 @@ function FerramentasAluno({ user }) {
     {id:"macro_compulsao",       icone:"⚠️",  label:"Compulsão",                          cor:"#dc2626", bg:"#fee2e2"},
   ];
   const LEGADO = {
+    // Legado simples
     "tcc":"macro_ansiedade","ansiedade":"macro_ansiedade","ansiedade_diario":"macro_ansiedade",
     "esquema":"macro_ansiedade","emocoes":"macro_humor","humor":"macro_humor",
     "autocuidado":"macro_habitos","habitos":"macro_habitos","relaxamento":"macro_habitos",
     "relacionamentos":"macro_relacionamentos","comunicacao":"macro_relacionamentos",
-    "corpo":"macro_corpo","alimentacao":"macro_corpo","casal":"macro_casais",
+    "corpo":"macro_corpo","alimentacao":"macro_habitos","casal":"macro_casais",
     "musicoterapia":"macro_musico","avaliacao":"macro_aval",
     "compulsao_sexual":"macro_compulsao","compulsao":"macro_compulsao","macro_compulsao":"macro_compulsao",
     "autoestima":"macro_humor","mindfulness":"macro_habitos","trauma":"macro_ansiedade","depressao":"macro_humor",
+    "outros":"macro_ansiedade",
+    // Formulários interativos
     "breathing-478":"macro_corpo","muscle-relaxation":"macro_corpo",
     "anxiety-management":"macro_ansiedade","decision-tree":"macro_ansiedade","abc-record":"macro_ansiedade",
-    "emotional-eating":"macro_corpo","treino-neuro-auditivo":"macro_aval",
+    "emotional-eating":"macro_habitos","treino-neuro-auditivo":"macro_aval",
     "polyvagal-ladder":"macro_corpo","grounding-5senses":"macro_corpo","body-mind-journal":"macro_corpo",
     "wheel-of-life":"macro_habitos","sleep-ritual":"macro_habitos","five-minute-rule":"macro_habitos",
     "habit-stacking":"macro_habitos","energy-map":"macro_habitos",
@@ -2689,8 +2692,27 @@ function FerramentasAluno({ user }) {
     "registro-cnv":"macro_relacionamentos","mapa-limites":"macro_relacionamentos",
     "escuta-ativa":"macro_relacionamentos","carga-mental":"macro_relacionamentos",
     "ciclo-conflito":"macro_relacionamentos",
+    // Subcategorias do psifabulas/psicoeducacoes
+    "ansiedade_diaria":"macro_ansiedade","distorcoes":"macro_ansiedade",
+    "crencas_esquemas":"macro_ansiedade","autocritica":"macro_ansiedade","procrastinacao":"macro_ansiedade",
+    "desamor":"macro_humor","regulacao_emocional":"macro_humor","burnout":"macro_humor","vergonha":"macro_humor",
+    "rotina":"macro_habitos","sono":"macro_habitos","motivacao":"macro_habitos",
+    "neuroplasticidade":"macro_habitos","praticas_autocuidado":"macro_habitos",
+    "autoimagem":"macro_habitos","nervovago":"macro_habitos","sintomas_fisicos":"macro_habitos","saude_mental":"macro_habitos",
+    "dependencia":"macro_relacionamentos","limites":"macro_relacionamentos",
+    "ciumes":"macro_relacionamentos","toxicos":"macro_relacionamentos",
+    "conflitos_casal":"macro_casais","sexualidade":"macro_casais","parentalidade":"macro_casais",
+    "conflitos_familia":"macro_casais","traicao":"macro_casais",
+    "compulsao_ciclo":"macro_compulsao","compulsao_habitos":"macro_compulsao","compulsao_emocional":"macro_compulsao",
+    // Passthrough de macros diretas
+    "macro_ansiedade":"macro_ansiedade","macro_humor":"macro_humor","macro_habitos":"macro_habitos",
+    "macro_relacionamentos":"macro_relacionamentos","macro_casais":"macro_casais",
+    "macro_corpo":"macro_corpo","macro_musico":"macro_musico","macro_aval":"macro_aval",
   };
-  function getMacro(r){ return LEGADO[r.categoria]||LEGADO[r.formularioKey]||null; }
+  function getMacro(r){
+    return LEGADO[r.categoria] || LEGADO[r.formularioKey] ||
+           (r.categoria && r.categoria.startsWith("macro_") ? r.categoria : null);
+  }
 
   React.useEffect(()=>{
     Promise.all([
