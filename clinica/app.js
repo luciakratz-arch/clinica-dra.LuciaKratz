@@ -3646,8 +3646,7 @@ function Login({ onLogin }) {
               </div>
               <button className="btn-primary" type="submit" disabled={loading}>{loading?"Entrando...":"Entrar"}</button>
               <div style={{background:"#f5f3ff",borderRadius:10,padding:"12px 14px",fontSize:13,color:"#5b21b6",lineHeight:1.6,marginTop:4}}>
-                💡 Use o <strong>e-mail</strong> e a <strong>senha</strong> que você cadastrou.<br/>
-                Pode trocar a senha depois em <em>Minha Conta</em>.
+                💡 <strong>Primeiro acesso?</strong> Use seu e-mail e a senha <strong>1234</strong>.
               </div>
             </form>
           </>
