@@ -799,24 +799,12 @@ function AbaPsicoeducacao() {
   }, itens.length, " material", itens.length !== 1 ? "is" : "", " de psicoeducação"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 8,
-      alignItems: "center",
-      flexWrap: "wrap"
+      gap: 8
     }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    style: {
-      minWidth: 180,
-      fontSize: 13
-    },
-    placeholder: "🔍 Buscar por título...",
-    value: busca,
-    onChange: e => setBusca(e.target.value)
-  }), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
-      fontSize: 12,
-      flexShrink: 0
+      fontSize: 12
     },
     onClick: () => setBuscaIA(true)
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -835,7 +823,7 @@ function AbaPsicoeducacao() {
   }), " ", salvando ? "Adicionando..." : "Popular pílulas TCC"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
-      flexShrink: 0
+      fontSize: 13
     },
     onClick: () => {
       setFormPsico({
@@ -851,7 +839,7 @@ function AbaPsicoeducacao() {
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
-    size: 16
+    size: 15
   }), " Nova Psicoeducação"))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -3307,25 +3295,26 @@ function RecursosTerapeuticos({
   }), label))), abaView === "fabulas" && /*#__PURE__*/React.createElement(AbaFabulas, null), abaView === "psicoeducacao" && /*#__PURE__*/React.createElement(AbaPsicoeducacao, null), abaView === "casais" && /*#__PURE__*/React.createElement(AbaProtocoloCasais, null), abaView === "ferramentas" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 12,
+      justifyContent: "space-between",
+      alignItems: "center",
       marginBottom: 16,
       flexWrap: "wrap",
-      alignItems: "center"
+      gap: 8
     }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      flex: 1,
-      minWidth: 200
-    },
-    placeholder: "Buscar por nome, descricao ou tipo...",
-    value: busca,
-    onChange: e => setBusca(e.target.value)
-  }), /*#__PURE__*/React.createElement("button", {
+      fontSize: 13,
+      color: "var(--text-muted)"
+    }
+  }, recursos.filter(r => r.categoria !== "casal").length, " ferramenta", recursos.filter(r => r.categoria !== "casal").length !== 1 ? "s" : ""), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
-      fontSize: 12,
-      flexShrink: 0
+      fontSize: 12
     },
     onClick: () => setBuscaIAFerramenta(true)
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -3334,13 +3323,13 @@ function RecursosTerapeuticos({
   }), " 🧠 Busca por sintoma"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
-      flexShrink: 0
+      fontSize: 13
     },
     onClick: abrirWizardNovo
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "plus",
-    size: 16
-  }), " Nova Ferramenta")), /*#__PURE__*/React.createElement("div", {
+    size: 15
+  }), " Nova Ferramenta"))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 20
     }
