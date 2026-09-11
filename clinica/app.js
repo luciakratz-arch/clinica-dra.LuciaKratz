@@ -1743,6 +1743,29 @@ function FerramentaTreino({user}){
 
 // ── Anamnese ────────────────────────────────────────────────────────────────
 function FerramentaPortal({ recurso, user }){
+  const k = recurso?.formularioKey || "";
+  if(k==="breathing-478")        return <FerramentaRespiracao user={user}/>;
+  if(k==="muscle-relaxation")    return <FerramentaRelaxamento user={user}/>;
+  if(k==="anxiety-management")   return <FerramentaGestaoAnsiedade user={user}/>;
+  if(k==="decision-tree")        return <FerramentaArvore user={user}/>;
+  if(typeof FerramentaRastreamentoCompulsao!=="undefined"&&k==="rastreamento-compulsao-sexual") return <FerramentaRastreamentoCompulsao user={user}/>;
+  if(typeof FerramentaChainAnalysis!=="undefined"&&k==="analise-cadeia")         return <FerramentaChainAnalysis user={user}/>;
+  if(typeof FerramentaBehavioralActivation!=="undefined"&&k==="ativacao-comportamental") return <FerramentaBehavioralActivation user={user}/>;
+  if(typeof FerramentaTIPP!=="undefined"&&k==="kit-sos-tipp")                    return <FerramentaTIPP user={user}/>;
+  if(typeof FerramentaStrategicPause!=="undefined"&&k==="pausa-estrategica")     return <FerramentaStrategicPause user={user}/>;
+  if(typeof FerramentaSelfCompassion!=="undefined"&&k==="diario-autocompaixao")  return <FerramentaSelfCompassion user={user}/>;
+  if(typeof FerramentaCNV!=="undefined"&&k==="registro-cnv")                     return <FerramentaCNV user={user}/>;
+  if(typeof FerramentaLimitsMap!=="undefined"&&k==="mapa-limites")               return <FerramentaLimitsMap user={user}/>;
+  if(typeof FerramentaMentalLoad!=="undefined"&&k==="carga-mental")              return <FerramentaMentalLoad user={user}/>;
+  if(typeof FerramentaConflictCycle!=="undefined"&&k==="ciclo-conflito")         return <FerramentaConflictCycle user={user}/>;
+  if(typeof FerramentaActiveListening!=="undefined"&&k==="escuta-ativa")         return <FerramentaActiveListening user={user}/>;
+  if(k==="mural-habilidades")    return <FerramentaMuralHabilidades user={user}/>;
+  if(k==="diagnostico-macroatividades") return <FerramentaDiagnosticoMacro user={user}/>;
+  if(k==="roda-vida-integral")   return <FerramentaRodaVidaIntegral user={user}/>;
+  if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
+  if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
+  return <FerramentaGenerica recurso={recurso} user={user}/>;
+}
 
 // ═══════════════════════════════════════════════════════
 // DIAGNOSTICO DE MACROATIVIDADES x DESGASTES — Portal
@@ -1980,27 +2003,6 @@ function FerramentaDiagnosticoMacro({ user }) {
   );
 }
 
-  const k = recurso?.formularioKey || "";
-  if(k==="breathing-478")        return <FerramentaRespiracao user={user}/>;
-  if(k==="muscle-relaxation")    return <FerramentaRelaxamento user={user}/>;
-  if(k==="anxiety-management")   return <FerramentaGestaoAnsiedade user={user}/>;
-  if(k==="decision-tree")        return <FerramentaArvore user={user}/>;
-  if(typeof FerramentaRastreamentoCompulsao!=="undefined"&&k==="rastreamento-compulsao-sexual") return <FerramentaRastreamentoCompulsao user={user}/>;
-  if(typeof FerramentaChainAnalysis!=="undefined"&&k==="analise-cadeia")         return <FerramentaChainAnalysis user={user}/>;
-  if(typeof FerramentaBehavioralActivation!=="undefined"&&k==="ativacao-comportamental") return <FerramentaBehavioralActivation user={user}/>;
-  if(typeof FerramentaTIPP!=="undefined"&&k==="kit-sos-tipp")                    return <FerramentaTIPP user={user}/>;
-  if(typeof FerramentaStrategicPause!=="undefined"&&k==="pausa-estrategica")     return <FerramentaStrategicPause user={user}/>;
-  if(typeof FerramentaSelfCompassion!=="undefined"&&k==="diario-autocompaixao")  return <FerramentaSelfCompassion user={user}/>;
-  if(typeof FerramentaCNV!=="undefined"&&k==="registro-cnv")                     return <FerramentaCNV user={user}/>;
-  if(typeof FerramentaLimitsMap!=="undefined"&&k==="mapa-limites")               return <FerramentaLimitsMap user={user}/>;
-  if(typeof FerramentaMentalLoad!=="undefined"&&k==="carga-mental")              return <FerramentaMentalLoad user={user}/>;
-  if(typeof FerramentaConflictCycle!=="undefined"&&k==="ciclo-conflito")         return <FerramentaConflictCycle user={user}/>;
-  if(typeof FerramentaActiveListening!=="undefined"&&k==="escuta-ativa")         return <FerramentaActiveListening user={user}/>;
-  if(k==="mural-habilidades")    return <FerramentaMuralHabilidades user={user}/>;
-  if(k==="diagnostico-macroatividades") return <FerramentaDiagnosticoMacro user={user}/>;
-  if(k==="roda-vida-integral")   return <FerramentaRodaVidaIntegral user={user}/>;
-  if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
-  if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
   // ── Fábulas com campo "paginas" (array) ──────────────────────────
   const paginas = recurso.paginas||[];
   if(paginas.length>0){
