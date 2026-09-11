@@ -158,10 +158,10 @@ tr:hover td{background:#faf5ff}
     <div class="dn">🎓 Supervisão Clínica</div>
     <div class="lt">Entrar</div>
     <div id="sup-er" class="er"></div>
-    <div class="fg"><label class="lbl">Seu Nome</label><input class="inp" id="sup-nm" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acSup(this.value)"/><div id="sup-ac" class="acl"></div></div>
-    <div class="fg"><label class="lbl">Matrícula (Senha)</label><input class="inp" id="sup-sn" type="password" placeholder="Matrícula ou 1234" onkeydown="if(event.key==='Enter')loginSup()"/></div>
+    <div class="fg"><label class="lbl">E-mail</label><input class="inp" id="sup-nm" type="email" placeholder="seu@email.com" autocomplete="off"/></div>
+    <div class="fg"><label class="lbl">Matrícula (Senha)</label><input class="inp" id="sup-sn" type="password" placeholder="Seu número de matrícula" onkeydown="if(event.key==='Enter')loginSup()"/></div>
     <button class="bp" onclick="loginSup()">Entrar</button>
-    <div class="ht">💡 Sem matrícula? Use <strong>1234</strong>.</div>
+    <div class="ht">💡 Senha = seu número de matrícula.</div>
   </div>
 </div>
 
@@ -703,15 +703,16 @@ function acSup(val){
   window._acSup=r.slice(0,8);list.innerHTML=window._acSup.map(function(a,i){return '<div class="aci" onclick="_selI(0,'+i+')">'+ a.nome+(a.matricula?' - '+a.matricula:'')+'</div>';}).join('');
   list.style.display='block';
 }
-function selSup(id){supSel=supCache.find(function(a){return a.id===id;});if(supSel){document.getElementById('sup-nm').value=supSel.nome;document.getElementById('sup-ac').style.display='none';document.getElementById('sup-sn').focus();}}
+function selSup(id){supSel=supCache.find(function(a){return a.id===id;});if(supSel){document.getElementById('sup-sn').focus();}}
 function loginSup(){
-  var nm=document.getElementById('sup-nm').value.trim(),sn=document.getElementById('sup-sn').value.trim(),er=document.getElementById('sup-er');
+  var nm=document.getElementById('sup-nm').value.trim().toLowerCase(),sn=document.getElementById('sup-sn').value.trim(),er=document.getElementById('sup-er');
   er.style.display='none';
-  if(!nm||!sn){er.textContent='Preencha nome e matrícula.';er.style.display='block';return;}
-  if(!supSel){var l=nm.toLowerCase();supSel=supCache.find(function(a){return(a.nome||'').toLowerCase()===l;});}
-  if(!supSel){er.textContent='Aluno não encontrado.';er.style.display='block';return;}
+  if(!nm||!sn){er.textContent='Preencha e-mail e matrícula.';er.style.display='block';return;}
+  if(!supSel){supSel=supCache.find(function(a){return(a.email||'').toLowerCase()===nm;});}
+  if(!supSel){er.textContent='E-mail não encontrado.';er.style.display='block';return;}
   if(supSel.status==='pendente'){er.textContent='Conta pendente de aprovação.';er.style.display='block';return;}
   var ok=supSel.matricula||supSel.senha||'1234';
+  if(!sn){er.textContent='Digite sua matrícula como senha.';er.style.display='block';return;}
   if(sn!==ok&&sn!=='1234'){er.textContent='Matrícula ou senha incorreta.';er.style.display='block';return;}
   window.location.href='../clinica/?aluno='+supSel.id;
 }
