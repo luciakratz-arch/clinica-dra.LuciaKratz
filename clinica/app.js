@@ -3496,8 +3496,17 @@ function Login({ onLogin }) {
   const { mostrarBotao, solicitarInstalacao, showIOSModal, setShowIOSModal, isIOS } = useInstallPWA();
 
   const perfis = [
-    { id:"paciente", nome:"Sou Paciente", desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
+    { id:"paciente", nome:"Sou Paciente",          desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
+    { id:"aluno",    nome:"Sou Aluno/Estagiário",  desc:"Portal de supervisão clínica",                      icon:"graduation-cap" },
   ];
+
+  // Detecta ?aluno= na URL e pula direto para a etapa de login do aluno
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("aluno")) {
+      setEtapa("aluno");
+    }
+  }, []);
 
   async function handleLoginPaciente(e) {
     e.preventDefault(); setErro(""); setLoading(true);
