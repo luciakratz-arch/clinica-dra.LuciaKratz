@@ -373,9 +373,8 @@ function AbaPsicoeducacao() {
       {buscaIA&&<BuscaIASintomaPsico itens={itens} onClose={()=>setBuscaIA(false)} onVer={(item)=>{setAberto(item);setBuscaIA(false);}}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
         <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
-        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-          <input className="form-input" style={{minWidth:180,fontSize:13}} placeholder="🔍 Buscar por título..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-          <button className="btn btn-outline" style={{fontSize:12,flexShrink:0}} onClick={()=>setBuscaIA(true)}>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn btn-outline" style={{fontSize:12}} onClick={()=>setBuscaIA(true)}>
             <Icon name="sparkles" size={14}/> 🧠 Busca por sintoma
           </button>
           {itens.length===0&&(
@@ -383,8 +382,8 @@ function AbaPsicoeducacao() {
               <Icon name="download" size={14}/> {salvando?"Adicionando...":"Popular pílulas TCC"}
             </button>
           )}
-          <button className="btn btn-purple" style={{flexShrink:0}} onClick={()=>{setFormPsico({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});setWizardBlocos([]);setWizardStep(1);setEditando(null);setModal(true);}}>
-            <Icon name="plus" size={16}/> Nova Psicoeducação
+          <button className="btn btn-purple" style={{fontSize:13}} onClick={()=>{setFormPsico({titulo:"",descricao:"",categoria:"macro_ansiedade",emoji:"📚"});setWizardBlocos([]);setWizardStep(1);setEditando(null);setModal(true);}}>
+            <Icon name="plus" size={15}/> Nova Psicoeducação
           </button>
         </div>
       </div>
@@ -1200,14 +1199,16 @@ function RecursosTerapeuticos({ user }) {
 
       {/* Aba Ferramentas — busca + filtros + grid */}
       {abaView==="ferramentas"&&(<>
-      <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-        <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <button className="btn btn-outline" style={{fontSize:12,flexShrink:0}} onClick={()=>setBuscaIAFerramenta(true)}>
-          <Icon name="sparkles" size={14}/> 🧠 Busca por sintoma
-        </button>
-        <button className="btn btn-purple" style={{flexShrink:0}} onClick={abrirWizardNovo}>
-          <Icon name="plus" size={16}/> Nova Ferramenta
-        </button>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}}>
+        <div style={{fontSize:13,color:"var(--text-muted)"}}>{recursos.filter(r=>r.categoria!=="casal").length} ferramenta{recursos.filter(r=>r.categoria!=="casal").length!==1?"s":""}</div>
+        <div style={{display:"flex",gap:8}}>
+          <button className="btn btn-outline" style={{fontSize:12}} onClick={()=>setBuscaIAFerramenta(true)}>
+            <Icon name="sparkles" size={14}/> 🧠 Busca por sintoma
+          </button>
+          <button className="btn btn-purple" style={{fontSize:13}} onClick={abrirWizardNovo}>
+            <Icon name="plus" size={15}/> Nova Ferramenta
+          </button>
+        </div>
       </div>
       {/* Filtros por macrocategoria */}
       <div style={{marginBottom:20}}>
