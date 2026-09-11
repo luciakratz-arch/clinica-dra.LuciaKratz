@@ -31,11 +31,11 @@ body{font-family:var(--font-body);background:#fff;min-height:100vh;color:var(--t
 .lw-btns{display:flex;gap:10px;margin-top:40px;z-index:1;flex-wrap:wrap;justify-content:center}
 .lw-btns button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font-body);font-size:13px;padding:8px 18px;border-radius:20px;cursor:pointer;transition:background var(--transition)}
 .lw-btns button:hover{background:rgba(255,255,255,.25)}
-.lw-right{background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:48px 56px;width:100%}
+.lw-right{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 56px;width:100%}
 .lw-back{align-self:flex-start;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer;margin-bottom:40px;background:none;border:none;font-family:var(--font-body);transition:color var(--transition)}
 .lw-back:hover{color:var(--purple)}
-.lw-title{font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--text);margin-bottom:6px;align-self:flex-start}
-.lw-desc{font-size:14px;color:var(--text-muted);margin-bottom:36px;align-self:flex-start}
+.lw-title{font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--text);margin-bottom:6px}
+.lw-desc{font-size:14px;color:var(--text-muted);margin-bottom:36px}
 
 /* Cards de perfil */
 .pc-list{display:flex;flex-direction:column;gap:14px;width:100%}
@@ -189,9 +189,9 @@ tr:hover td{background:#faf5ff}
     <div class="lw-title">Quem é você?</div>
     <div class="lw-desc">Selecione seu perfil para acessar a área correta.</div>
     <div class="pc-list">
-      <button class="pc" onclick="mostrar('v-sup')"><div class="pi">🎓</div><div><div class="pn">Aluno de Supervisão Clínica</div><div class="pd">Portal de supervisão — ferramentas e atendimentos</div></div><div class="pa">›</div></button>
-      <button class="pc" onclick="mostrar('v-psico')"><div class="pi">📚</div><div><div class="pn">Aluno de Psicoterapia Breve</div><div class="pd">Disciplina do 9º Período</div></div><div class="pa">›</div></button>
-      <button class="pc" onclick="mostrar('v-prof')"><div class="pi">👩‍🏫</div><div><div class="pn">Sou a Professora</div><div class="pd">Painel completo da disciplina</div></div><div class="pa">›</div></button>
+      <button class="pc" onclick="mostrar('v-sup')"><div class="pi" style="font-size:18px;color:#fff">🎓</div><div><div class="pn">Aluno de Supervisão Clínica</div><div class="pd">Portal de supervisão — ferramentas e atendimentos</div></div><div class="pa">›</div></button>
+      <button class="pc" onclick="mostrar('v-psico')"><div class="pi" style="font-size:18px;color:#fff">📚</div><div><div class="pn">Aluno de Psicoterapia Breve</div><div class="pd">Disciplina do 9º Período</div></div><div class="pa">›</div></button>
+      <button class="pc" onclick="mostrar('v-prof')"><div class="pi" style="font-size:18px;color:#fff">👩‍🏫</div><div><div class="pn">Sou a Professora</div><div class="pd">Painel completo da disciplina</div></div><div class="pa">›</div></button>
     </div>
     <div class="lw-footer">
       <a href="../" style="color:var(--purple);text-decoration:none;font-weight:500">← Voltar ao site</a>
