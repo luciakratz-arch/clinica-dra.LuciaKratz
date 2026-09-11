@@ -758,6 +758,10 @@ var GRUPOS={n1:[],n2:[]};
 var SESSOES_QR={n1:null,n2:null};
 var usuario=null,perfil=null,alunosFil=ALUNOS.slice();
 var supCache=[],supSel=null,psicSel=null,notaSel=null,ratVals={};
+// Pré-carrega alunos de supervisão ao iniciar
+db.collection('clinica_alunos').get().then(function(s){
+  supCache=s.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+}).catch(function(){});
 var _qrSel=null,_qrRat=null;
 
 // TELAS
@@ -785,8 +789,8 @@ function loginSup(){
   if(!supSel){er.textContent='E-mail não encontrado.';er.style.display='block';return;}
   if(supSel.status==='pendente'){er.textContent='Conta pendente de aprovação.';er.style.display='block';return;}
   var ok=supSel.matricula||supSel.senha||'1234';
-  if(!sn){er.textContent='Digite sua matrícula como senha.';er.style.display='block';return;}
-  if(sn!==ok&&sn!=='1234'){er.textContent='Matrícula ou senha incorreta.';er.style.display='block';return;}
+  if(!sn){er.textContent='Digite sua senha.';er.style.display='block';return;}
+  if(sn!==ok){er.textContent='Senha incorreta.';er.style.display='block';return;}
   window.location.href='../clinica/?aluno='+supSel.id;
 }
 
