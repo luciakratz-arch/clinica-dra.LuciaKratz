@@ -3496,8 +3496,7 @@ function Login({ onLogin }) {
   const { mostrarBotao, solicitarInstalacao, showIOSModal, setShowIOSModal, isIOS } = useInstallPWA();
 
   const perfis = [
-    { id:"paciente", nome:"Sou Paciente",          desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
-    { id:"aluno",    nome:"Sou Aluno/Estagiário",  desc:"Portal de supervisão clínica",                      icon:"graduation-cap" },
+    { id:"paciente", nome:"Sou Paciente", desc:"Portal do paciente — ferramentas e acompanhamento", icon:"user" },
   ];
 
   async function handleLoginPaciente(e) {
