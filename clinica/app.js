@@ -3519,17 +3519,17 @@ function Login({ onLogin }) {
   async function handleLoginAluno(e) {
     e.preventDefault(); setErro(""); setLoading(true);
     try {
-      const emailNorm = (email||nome||"").trim().toLowerCase();
-      if (!emailNorm) { setErro("Digite seu e-mail ou nome completo."); setLoading(false); return; }
+      const emailNorm = email.trim().toLowerCase();
+      if (!emailNorm) { setErro("Digite seu e-mail."); setLoading(false); return; }
       if (!senha) { setErro("Digite sua senha."); setLoading(false); return; }
       const snap = await db.collection("clinica_alunos").get();
-      // Busca por e-mail OU por nome (compatibilidade com cadastros antigos)
+      // Busca por e-mail (principal) ou por nome (compatibilidade com cadastros antigos sem email)
       const match = snap.docs.find(d => {
         const data = d.data();
         return (data.email||"").trim().toLowerCase() === emailNorm
             || (data.nome||"").trim().toLowerCase() === emailNorm;
       });
-      if (!match) { setErro("Aluno não encontrado. Verifique seu e-mail ou nome."); setLoading(false); return; }
+      if (!match) { setErro("E-mail não encontrado. Verifique o endereço cadastrado."); setLoading(false); return; }
       const aluno = { id: match.id, ...match.data() };
       if (aluno.status === "pendente") { setErro("Sua conta ainda está pendente de aprovação pela supervisora."); setLoading(false); return; }
       if (aluno.status === "inativo") { setErro("Conta inativa. Entre em contato com a supervisora."); setLoading(false); return; }
@@ -3638,14 +3638,18 @@ function Login({ onLogin }) {
               </div>
               {erro && <div className="login-error">{erro}</div>}
               <div className="form-group">
-                <label className="form-label">E-mail ou Nome Completo</label>
-                <input className="form-input" type="text" value={nome} onChange={e=>setNome(e.target.value)} placeholder="seu@email.com ou nome completo" autoFocus/>
+                <label className="form-label">E-mail</label>
+                <input className="form-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" autoFocus/>
               </div>
               <div className="form-group">
                 <label className="form-label">Senha</label>
-                <input className="form-input" type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"/>
+                <input className="form-input" type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••"/>
               </div>
               <button className="btn-primary" type="submit" disabled={loading}>{loading?"Entrando...":"Entrar"}</button>
+              <div style={{background:"#f5f3ff",borderRadius:10,padding:"12px 14px",fontSize:13,color:"#5b21b6",lineHeight:1.6,marginTop:4}}>
+                💡 Use o <strong>e-mail</strong> e a <strong>senha</strong> que você cadastrou.<br/>
+                Pode trocar a senha depois em <em>Minha Conta</em>.
+              </div>
             </form>
           </>
         )}
