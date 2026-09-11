@@ -3500,14 +3500,6 @@ function Login({ onLogin }) {
     { id:"aluno",    nome:"Sou Aluno/Estagiário",  desc:"Portal de supervisão clínica",                      icon:"graduation-cap" },
   ];
 
-  // Detecta ?aluno= na URL e pula direto para a etapa de login do aluno
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("aluno")) {
-      setEtapa("aluno");
-    }
-  }, []);
-
   async function handleLoginPaciente(e) {
     e.preventDefault(); setErro(""); setLoading(true);
     try {
@@ -5398,7 +5390,28 @@ function App() {
   const [user, setUser]   = React.useState(null);
   const [modo, setModo]   = React.useState(null);
   const [tab, setTab]     = React.useState(null);
+  const [autoLoginando, setAutoLoginando] = React.useState(false);
   const notifProps = useBotaoNotificacao(user);
+
+  // Auto-login quando ?aluno=ID está na URL — entra direto sem formulário
+  React.useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+    const alunoId = params.get("aluno");
+    if (!alunoId) return;
+    setAutoLoginando(true);
+    db.collection("clinica_alunos").doc(alunoId).get()
+      .then(doc=>{
+        if (doc.exists) {
+          const aluno = { id: doc.id, ...doc.data() };
+          if (aluno.status === "ativo") {
+            setUser({ tipo:"aluno", ...aluno });
+            setTab("painel-aluno");
+          }
+        }
+        setAutoLoginando(false);
+      })
+      .catch(()=>setAutoLoginando(false));
+  },[]);
 
   // Mantém user sincronizado com Firebase em tempo real
   React.useEffect(()=>{
@@ -5420,7 +5433,7 @@ function App() {
 
   function handleLogout() { setUser(null); setModo(null); setTab(null); }
 
-  if (!user) return <Login onLogin={handleLogin}/>;
+  if (!user) return autoLoginando ? <Spinner/> : <Login onLogin={handleLogin}/>;
 
   if (user.tipo === "aluno") {
     return (
