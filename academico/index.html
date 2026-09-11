@@ -4,37 +4,63 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Psicoterapia Breve — Dra. Lucia Kratz</title>
-<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--roxo:#7B00C4;--roxo-dark:#5a0090;--roxo-light:#f3e8ff;--text:#1f2937;--tl:#6b7280;--border:#e5e7eb;--white:#fff;--green:#16a34a;--red:#dc2626}
-body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;color:var(--text)}
+:root{
+  --purple:#7B00C4;--purple-dark:#5a0090;--purple-bg:#f5f3ff;
+  --text:#1f2937;--text-muted:#6b7280;--gray-200:#e5e7eb;--gray-400:#9ca3af;--gray-600:#4b5563;
+  --border:#e5e7eb;--danger:#dc2626;--radius:14px;--radius-sm:10px;
+  --font-display:'Playfair Display',Georgia,serif;--font-body:'DM Sans',sans-serif;
+  --transition:.2s ease;--shadow-md:0 4px 16px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:#fff;min-height:100vh;color:var(--text)}
 .hidden{display:none!important}
-.lw{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.lc{background:#fff;border-radius:24px;padding:36px;width:100%;max-width:480px;box-shadow:0 8px 48px rgba(123,0,196,.14)}
-.dn{font-family:'Dancing Script',cursive;font-size:32px;color:var(--roxo);font-weight:700;text-align:center}
-.ds{font-size:12px;color:var(--tl);text-align:center;margin-top:2px}
-.lt{font-size:20px;font-weight:700;color:#3d006a;text-align:center;margin:16px 0 4px}
-.ls{font-size:13px;color:var(--tl);text-align:center;margin-bottom:22px;line-height:1.6}
-.pc{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1.5px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:left;width:100%;margin-bottom:10px;transition:border-color .2s;font-family:'Inter',sans-serif}
-.pc:hover{border-color:var(--roxo)}
-.pi{width:44px;height:44px;border-radius:10px;background:var(--roxo-light);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.pn{font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:2px}
-.pd{font-size:12px;color:var(--tl)}
-.pa{color:var(--tl);font-size:18px;margin-left:auto}
-.bb{background:none;border:none;cursor:pointer;font-size:13px;color:var(--tl);font-family:'Inter',sans-serif;margin-bottom:18px;padding:0}
-.bb:hover{color:var(--roxo)}
-.lbl{display:block;font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
-.inp{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
-.inp:focus{border-color:var(--roxo)}
-.fg{margin-bottom:14px;position:relative}
-.bp{width:100%;padding:13px;background:var(--roxo);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .2s}
-.bp:hover{opacity:.88}
-.er{background:#fee2e2;color:var(--red);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;font-weight:500;display:none}
-.ht{background:var(--roxo-light);color:var(--roxo-dark);border-radius:8px;padding:10px 13px;font-size:12px;margin-top:12px;line-height:1.5}
-.acl{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--roxo);border-radius:9px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
+
+/* Layout split — igual clinica */
+.lw{min-height:100vh;display:grid;grid-template-columns:1fr 1fr}
+.lw-left{background:linear-gradient(145deg,#7B00C4 0%,#5a0090 60%,#3d006b 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 40px;position:relative;overflow:hidden}
+.lw-left::before{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:rgba(255,255,255,.04);top:-100px;right:-100px}
+.lw-left::after{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.04);bottom:-80px;left:-80px}
+.lw-logo{margin-bottom:28px;z-index:1}
+.lw-logo img{width:140px;height:140px;object-fit:contain}
+.lw-name{font-family:var(--font-display);font-size:32px;font-weight:600;color:#fff;text-align:center;margin-bottom:8px;z-index:1}
+.lw-sub{font-size:14px;color:rgba(255,255,255,.75);text-align:center;z-index:1}
+.lw-crp{font-size:12px;color:rgba(255,255,255,.55);margin-top:6px;z-index:1}
+.lw-btns{display:flex;gap:10px;margin-top:40px;z-index:1;flex-wrap:wrap;justify-content:center}
+.lw-btns button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font-body);font-size:13px;padding:8px 18px;border-radius:20px;cursor:pointer;transition:background var(--transition)}
+.lw-btns button:hover{background:rgba(255,255,255,.25)}
+.lw-right{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 56px}
+.lw-back{align-self:flex-start;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer;margin-bottom:40px;background:none;border:none;font-family:var(--font-body);transition:color var(--transition)}
+.lw-back:hover{color:var(--purple)}
+.lw-title{font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--text);margin-bottom:6px;align-self:flex-start}
+.lw-desc{font-size:14px;color:var(--text-muted);margin-bottom:36px;align-self:flex-start}
+
+/* Cards de perfil */
+.pc-list{display:flex;flex-direction:column;gap:14px;width:100%}
+.pc{display:flex;align-items:center;gap:16px;padding:18px 20px;border:1.5px solid var(--gray-200);border-radius:var(--radius);cursor:pointer;transition:all var(--transition);background:#fff;width:100%;text-align:left}
+.pc:hover{border-color:var(--purple);background:var(--purple-bg);transform:translateX(4px);box-shadow:var(--shadow-md)}
+.pi{width:48px;height:48px;border-radius:12px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.pn{font-size:15px;font-weight:600;color:var(--text);margin-bottom:2px}
+.pd{font-size:13px;color:var(--text-muted)}
+.pa{color:var(--gray-400);font-size:18px;margin-left:auto}
+.pc:hover .pa{color:var(--purple)}
+
+/* Formulário */
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;position:relative}
+.lbl{font-size:11px;font-weight:600;color:var(--gray-600);letter-spacing:.8px;text-transform:uppercase}
+.inp{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;color:var(--text);background:#fff;transition:border-color var(--transition),box-shadow var(--transition);outline:none}
+.inp:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(123,0,196,.08)}
+.bp{width:100%;padding:13px;background:var(--purple);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:background var(--transition),transform var(--transition)}
+.bp:hover{background:var(--purple-dark);transform:translateY(-1px)}
+.er{background:#fef2f2;border:1px solid #fecaca;color:var(--danger);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:12px;display:none}
+.ht{background:var(--purple-bg);color:var(--purple-dark);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;margin-top:12px;line-height:1.5}
+.acl{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--purple);border-radius:var(--radius-sm);box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:3px;display:none}
 .aci{padding:10px 13px;cursor:pointer;font-size:14px;color:var(--text)}
-.aci:hover{background:var(--roxo-light)}
+.aci:hover{background:var(--purple-bg)}
+.lw-footer{margin-top:48px;font-size:12px;color:var(--gray-400);text-align:center;align-self:center}
+@media(max-width:700px){.lw{grid-template-columns:1fr}.lw-left{display:none}.lw-right{padding:32px 24px}}
 .app{display:flex;min-height:100vh}
 .sb{width:220px;background:#3d006a;color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
 .sbl{padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
@@ -134,29 +160,57 @@ tr:hover td{background:#faf5ff}
 <body>
 
 <!-- SELEÇÃO -->
+<!-- PAINEL ESQUERDO — compartilhado por todas as telas de login -->
+<template id="tpl-left">
+  <div class="lw-left">
+    <div class="lw-logo"><img src="../logo-transparente.png" alt="Logo"/></div>
+    <div class="lw-name">Dra. Lucia Kratz</div>
+    <div class="lw-sub">Plataforma Acadêmica</div>
+    <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
+    <div class="lw-btns" id="left-btns-sel">
+      <button onclick="mostrar('v-sup')">Supervisão</button>
+      <button onclick="mostrar('v-psico')">Psicoterapia</button>
+      <button onclick="mostrar('v-prof')">Professora</button>
+    </div>
+  </div>
+</template>
+
+<!-- SELEÇÃO DE PERFIL -->
 <div id="v-sel" class="lw">
-  <div class="lc">
-    <div class="dn">🦋 Dra. Lucia Kratz</div>
-    <div class="ds">CRP 09/20590 · Psicóloga Doutora · Psicoterapia Breve</div>
-    <div class="lt">Olá! Quem é você?</div>
-    <div class="ls">Selecione seu perfil para acessar</div>
-    <button class="pc" onclick="mostrar('v-sup')"><div class="pi">🎓</div><div><div class="pn">Aluno de Supervisão Clínica</div><div class="pd">Portal de supervisão — ferramentas e atendimentos</div></div><div class="pa">›</div></button>
-    <button class="pc" onclick="mostrar('v-psico')"><div class="pi">📚</div><div><div class="pn">Aluno de Psicoterapia Breve</div><div class="pd">Disciplina do 9º Período</div></div><div class="pa">›</div></button>
-    <button class="pc" onclick="mostrar('v-prof')"><div class="pi">👩‍🏫</div><div><div class="pn">Sou a Professora</div><div class="pd">Painel completo da disciplina</div></div><div class="pa">›</div></button>
-    <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--tl)">
-      <a href="../" style="color:var(--roxo);text-decoration:none;font-weight:500">← Voltar ao site</a>
+  <div class="lw-left">
+    <div class="lw-logo"><img src="../logo-transparente.png" alt="Logo"/></div>
+    <div class="lw-name">Dra. Lucia Kratz</div>
+    <div class="lw-sub">Plataforma Acadêmica</div>
+    <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
+  </div>
+  <div class="lw-right">
+    <div class="lw-title">Quem é você?</div>
+    <div class="lw-desc">Selecione seu perfil para acessar a área correta.</div>
+    <div class="pc-list">
+      <button class="pc" onclick="mostrar('v-sup')"><div class="pi">🎓</div><div><div class="pn">Aluno de Supervisão Clínica</div><div class="pd">Portal de supervisão — ferramentas e atendimentos</div></div><div class="pa">›</div></button>
+      <button class="pc" onclick="mostrar('v-psico')"><div class="pi">📚</div><div><div class="pn">Aluno de Psicoterapia Breve</div><div class="pd">Disciplina do 9º Período</div></div><div class="pa">›</div></button>
+      <button class="pc" onclick="mostrar('v-prof')"><div class="pi">👩‍🏫</div><div><div class="pn">Sou a Professora</div><div class="pd">Painel completo da disciplina</div></div><div class="pa">›</div></button>
+    </div>
+    <div class="lw-footer">
+      <a href="../" style="color:var(--purple);text-decoration:none;font-weight:500">← Voltar ao site</a>
       &nbsp;·&nbsp;
-      <a id="lnk-cad-a" href="#" onclick="mostrar('v-cad');return false" style="color:var(--roxo);text-decoration:none;font-weight:500">📝 Auto-cadastro</a>
+      <a id="lnk-cad-a" href="#" onclick="mostrar('v-cad');return false" style="color:var(--purple);text-decoration:none;font-weight:500">📝 Auto-cadastro</a>
     </div>
   </div>
 </div>
 
 <!-- LOGIN SUPERVISÃO -->
 <div id="v-sup" class="lw hidden">
-  <div class="lc">
-    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="dn">🎓 Supervisão Clínica</div>
-    <div class="lt">Entrar</div>
+  <div class="lw-left">
+    <div class="lw-logo"><img src="../logo-transparente.png" alt="Logo"/></div>
+    <div class="lw-name">Dra. Lucia Kratz</div>
+    <div class="lw-sub">Plataforma Acadêmica</div>
+    <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
+  </div>
+  <div class="lw-right">
+    <button class="lw-back" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="lw-title">Supervisão Clínica</div>
+    <div class="lw-desc">Portal de supervisão — ferramentas e atendimentos</div>
     <div id="sup-er" class="er"></div>
     <div class="fg"><label class="lbl">E-mail</label><input class="inp" id="sup-nm" type="email" placeholder="seu@email.com" autocomplete="off"/></div>
     <div class="fg"><label class="lbl">Matrícula (Senha)</label><input class="inp" id="sup-sn" type="password" placeholder="Seu número de matrícula" onkeydown="if(event.key==='Enter')loginSup()"/></div>
@@ -167,11 +221,16 @@ tr:hover td{background:#faf5ff}
 
 <!-- LOGIN PSICOTERAPIA -->
 <div id="v-psico" class="lw hidden">
-  <div class="lc">
-    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="dn">📚 Psicoterapia Breve</div>
-    <div class="ds">9º Período · Dra. Lucia Kratz</div>
-    <div class="lt">Entrar</div>
+  <div class="lw-left">
+    <div class="lw-logo"><img src="../logo-transparente.png" alt="Logo"/></div>
+    <div class="lw-name">Dra. Lucia Kratz</div>
+    <div class="lw-sub">Plataforma Acadêmica</div>
+    <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
+  </div>
+  <div class="lw-right">
+    <button class="lw-back" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="lw-title">Psicoterapia Breve</div>
+    <div class="lw-desc">9º Período · Dra. Lucia Kratz</div>
     <div id="psico-er" class="er"></div>
     <div class="fg"><label class="lbl">Seu Nome</label><input class="inp" id="psico-nm" placeholder="Digite pelo menos 3 letras..." autocomplete="off" oninput="acPsico(this.value)"/><div id="psico-ac" class="acl"></div></div>
     <div class="fg"><label class="lbl">Matrícula (Senha)</label><input class="inp" id="psico-sn" type="password" placeholder="Número de matrícula" onkeydown="if(event.key==='Enter')loginPsico()"/></div>
@@ -181,10 +240,16 @@ tr:hover td{background:#faf5ff}
 
 <!-- LOGIN PROFESSORA -->
 <div id="v-prof" class="lw hidden">
-  <div class="lc">
-    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="dn">👩‍🏫 Área da Professora</div>
-    <div class="lt">Acesso Restrito</div>
+  <div class="lw-left">
+    <div class="lw-logo"><img src="../logo-transparente.png" alt="Logo"/></div>
+    <div class="lw-name">Dra. Lucia Kratz</div>
+    <div class="lw-sub">Plataforma Acadêmica</div>
+    <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
+  </div>
+  <div class="lw-right">
+    <button class="lw-back" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="lw-title">Área da Professora</div>
+    <div class="lw-desc">Acesso restrito</div>
     <div id="prof-er" class="er"></div>
     <div class="fg"><label class="lbl">Senha</label><input class="inp" id="prof-sn" type="password" placeholder="••••" onkeydown="if(event.key==='Enter')loginProf()"/></div>
     <button class="bp" onclick="loginProf()">Entrar</button>
@@ -193,17 +258,22 @@ tr:hover td{background:#faf5ff}
 
 <!-- AUTO-CADASTRO -->
 <div id="v-cad" class="lw hidden">
-  <div class="lc">
-    <button class="bb" onclick="mostrar('v-sel')">← Voltar</button>
-    <div class="dn">📝 Auto-Cadastro</div>
-    <div class="lt">Solicitar Acesso</div>
-    <div class="ls">Preencha seus dados. A professora aprovará seu acesso.</div>
+  <div class="lw-left">
+    <div class="lw-logo"><img src="../logo-transparente.png" alt="Logo"/></div>
+    <div class="lw-name">Dra. Lucia Kratz</div>
+    <div class="lw-sub">Plataforma Acadêmica</div>
+    <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
+  </div>
+  <div class="lw-right">
+    <button class="lw-back" onclick="mostrar('v-sel')">← Voltar</button>
+    <div class="lw-title">Solicitar Acesso</div>
+    <div class="lw-desc">Preencha seus dados. A professora aprovará seu acesso.</div>
     <div id="cad-er" class="er"></div>
     <div class="fg"><label class="lbl">Nome Completo *</label><input class="inp" id="cad-nm" placeholder="Seu nome completo"/></div>
     <div class="fg"><label class="lbl">Matrícula *</label><input class="inp" id="cad-mt" placeholder="Número de matrícula"/></div>
     <div class="fg"><label class="lbl">E-mail</label><input class="inp" id="cad-em" type="email" placeholder="seu@email.com"/></div>
     <button class="bp" onclick="autoCadastro()" id="cad-btn">Solicitar Acesso</button>
-    <div id="cad-ok" class="ag alt hidden">✅ Enviado! Aguarde aprovação da professora.</div>
+    <div id="cad-ok" class="ht hidden" style="margin-top:12px">✅ Enviado! Aguarde aprovação da professora.</div>
   </div>
 </div>
 
