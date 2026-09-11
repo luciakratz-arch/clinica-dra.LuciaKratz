@@ -45,7 +45,6 @@ function Alunos() {
 
   async function alterarStatus(id, novoStatus){
     await db.collection("clinica_alunos").doc(id).update({status:novoStatus});
-    // Envia email de aprovação via Firebase Trigger Email
     if(novoStatus === "ativo"){
       try{
         const doc = await db.collection("clinica_alunos").doc(id).get();
@@ -54,53 +53,12 @@ function Alunos() {
           await db.collection("clinica_emails").add({
             to: a.email,
             message: {
-              subject: "✅ Acesso aprovado — Portal de Supervisão Clínica",
-              html: `<!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#F5F0FF;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0FF;padding:32px 0;">
-  <tr><td align="center">
-  <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-    <tr><td style="background:#7B00C4;border-radius:12px 12px 0 0;padding:28px 40px;text-align:center;">
-      <div style="font-family:Georgia,serif;font-size:24px;color:#fff;font-weight:700;">Dra. Lucia Kratz</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase;">CRP 09/20590 · Supervisão Clínica</div>
-    </td></tr>
-    <tr><td style="background:#6d00b0;padding:36px 40px;text-align:center;">
-      <div style="font-size:48px;margin-bottom:12px;">🎓</div>
-      <h1 style="color:#ffffff;font-size:22px;font-weight:800;margin:0 0 10px;">Acesso aprovado!</h1>
-      <p style="color:rgba(255,255,255,0.85);font-size:14px;margin:0;line-height:1.6;">Seu cadastro no Portal de Supervisão Clínica foi liberado.</p>
-    </td></tr>
-    <tr><td style="background:#ffffff;padding:36px 40px;">
-      <p style="font-size:15px;color:#1f2937;line-height:1.7;margin:0 0 20px;">Olá, <strong>${a.nome}</strong>! 🦋<br/><br/>Sua conta foi aprovada pela Dra. Lucia. Você já pode acessar o portal.</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:10px;margin-bottom:24px;">
-        <tr><td style="padding:18px 22px;">
-          <div style="font-weight:700;font-size:13px;color:#3d006a;margin-bottom:12px;">🔐 Como entrar:</div>
-          <div style="font-size:14px;color:#4b5563;line-height:2.2;">
-            1. Acesse o portal pelo botão abaixo<br/>
-            2. Clique em <strong>Aluno/Estagiário</strong><br/>
-            3. E-mail: <strong>${a.email}</strong><br/>
-            4. Senha: a que você criou no cadastro
-          </div>
-        </td></tr>
-      </table>
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-        <tr><td align="center">
-          <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/" style="display:inline-block;background:#7B00C4;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 36px;border-radius:8px;">
-            Acessar Portal de Supervisão →
-          </a>
-        </td></tr>
-      </table>
-    </td></tr>
-    <tr><td style="background:#f9f5ff;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;">Dra. Lucia Kratz · CRP 09/20590 · Goiânia, GO 🦋</p>
-    </td></tr>
-  </table></td></tr>
-</table>
-</body></html>`
+              subject: "Acesso aprovado - Portal de Supervisao Clinica",
+              html: "<p>Ola, <b>"+a.nome+"</b>!</p><p>Sua conta foi aprovada pela Dra. Lucia. Acesse o portal em:</p><p><a href='https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/'>Portal de Supervisao Clinica</a></p><p>Use seu e-mail e senha <b>1234</b> no primeiro acesso.</p><p>Dra. Lucia Kratz - CRP 09/20590</p>"
             }
           });
         }
-      } catch(e){ console.error("Erro ao enviar email de aprovação:", e); }
+      } catch(e){ console.error("Erro ao enviar email:", e); }
     }
   }
 
