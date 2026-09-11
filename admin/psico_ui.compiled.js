@@ -813,14 +813,16 @@ function AbaPsicoeducacao() {
     value: busca,
     onChange: e => setBusca(e.target.value)
   }), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
+    className: "btn btn-outline",
     style: {
-      flexShrink: 0,
-      border: "1.5px solid var(--purple)",
-      color: "var(--purple)"
+      fontSize: 12,
+      flexShrink: 0
     },
     onClick: () => setBuscaIA(true)
-  }, "🧠 Busca por sintoma"), itens.length === 0 && /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkles",
+    size: 14
+  }), " 🧠 Busca por sintoma"), itens.length === 0 && /*#__PURE__*/React.createElement("button", {
     className: "btn btn-outline",
     style: {
       fontSize: 12
@@ -3320,14 +3322,16 @@ function RecursosTerapeuticos({
     value: busca,
     onChange: e => setBusca(e.target.value)
   }), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
+    className: "btn btn-outline",
     style: {
-      flexShrink: 0,
-      border: "1.5px solid var(--purple)",
-      color: "var(--purple)"
+      fontSize: 12,
+      flexShrink: 0
     },
     onClick: () => setBuscaIAFerramenta(true)
-  }, "🧠 Busca por sintoma"), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "sparkles",
+    size: 14
+  }), " 🧠 Busca por sintoma"), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-purple",
     style: {
       flexShrink: 0
