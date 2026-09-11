@@ -31,7 +31,7 @@ body{font-family:var(--font-body);background:#fff;min-height:100vh;color:var(--t
 .lw-btns{display:flex;gap:10px;margin-top:40px;z-index:1;flex-wrap:wrap;justify-content:center}
 .lw-btns button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-family:var(--font-body);font-size:13px;padding:8px 18px;border-radius:20px;cursor:pointer;transition:background var(--transition)}
 .lw-btns button:hover{background:rgba(255,255,255,.25)}
-.lw-right{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 56px}
+.lw-right{background:#fff;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:48px 56px;width:100%}
 .lw-back{align-self:flex-start;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer;margin-bottom:40px;background:none;border:none;font-family:var(--font-body);transition:color var(--transition)}
 .lw-back:hover{color:var(--purple)}
 .lw-title{font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--text);margin-bottom:6px;align-self:flex-start}
@@ -48,7 +48,7 @@ body{font-family:var(--font-body);background:#fff;min-height:100vh;color:var(--t
 .pc:hover .pa{color:var(--purple)}
 
 /* Formulário */
-.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;position:relative}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;position:relative;width:100%}
 .lbl{font-size:11px;font-weight:600;color:var(--gray-600);letter-spacing:.8px;text-transform:uppercase}
 .inp{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:14px;color:var(--text);background:#fff;transition:border-color var(--transition),box-shadow var(--transition);outline:none}
 .inp:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(123,0,196,.08)}
@@ -60,6 +60,7 @@ body{font-family:var(--font-body);background:#fff;min-height:100vh;color:var(--t
 .aci{padding:10px 13px;cursor:pointer;font-size:14px;color:var(--text)}
 .aci:hover{background:var(--purple-bg)}
 .lw-footer{margin-top:48px;font-size:12px;color:var(--gray-400);text-align:center;align-self:center}
+.lw-form{width:100%;max-width:420px}
 @media(max-width:700px){.lw{grid-template-columns:1fr}.lw-left{display:none}.lw-right{padding:32px 24px}}
 .app{display:flex;min-height:100vh}
 .sb{width:220px;background:#3d006a;color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:50;overflow-y:auto}
@@ -184,6 +185,7 @@ tr:hover td{background:#faf5ff}
     <div class="lw-crp">Psicóloga Doutora · CRP 09/20590</div>
   </div>
   <div class="lw-right">
+    <div class="lw-form">
     <div class="lw-title">Quem é você?</div>
     <div class="lw-desc">Selecione seu perfil para acessar a área correta.</div>
     <div class="pc-list">
@@ -195,6 +197,7 @@ tr:hover td{background:#faf5ff}
       <a href="../" style="color:var(--purple);text-decoration:none;font-weight:500">← Voltar ao site</a>
       &nbsp;·&nbsp;
       <a id="lnk-cad-a" href="#" onclick="mostrar('v-cad');return false" style="color:var(--purple);text-decoration:none;font-weight:500">📝 Auto-cadastro</a>
+    </div>
     </div>
   </div>
 </div>
