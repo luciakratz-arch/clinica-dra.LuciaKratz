@@ -788,7 +788,7 @@ function loginSup(){
   if(!supSel){supSel=supCache.find(function(a){return(a.email||'').toLowerCase()===nm;});}
   if(!supSel){er.textContent='E-mail não encontrado.';er.style.display='block';return;}
   if(supSel.status==='pendente'){er.textContent='Conta pendente de aprovação.';er.style.display='block';return;}
-  var ok=supSel.matricula||supSel.senha||'1234';
+  var ok=(supSel.matricula||'').trim()||(supSel.senha||'').trim()||'1234';
   if(!sn){er.textContent='Digite sua senha.';er.style.display='block';return;}
   if(sn!==ok){er.textContent='Senha incorreta.';er.style.display='block';return;}
   window.location.href='../clinica/?aluno='+supSel.id;
