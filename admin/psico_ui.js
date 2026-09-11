@@ -375,8 +375,8 @@ function AbaPsicoeducacao() {
         <div style={{fontSize:13,color:"var(--text-muted)"}}>{itens.length} material{itens.length!==1?"is":""} de psicoeducação</div>
         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
           <input className="form-input" style={{minWidth:180,fontSize:13}} placeholder="🔍 Buscar por título..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-          <button className="btn btn-ghost" style={{flexShrink:0,border:"1.5px solid var(--purple)",color:"var(--purple)"}} onClick={()=>setBuscaIA(true)}>
-            🧠 Busca por sintoma
+          <button className="btn btn-outline" style={{fontSize:12,flexShrink:0}} onClick={()=>setBuscaIA(true)}>
+            <Icon name="sparkles" size={14}/> 🧠 Busca por sintoma
           </button>
           {itens.length===0&&(
             <button className="btn btn-outline" style={{fontSize:12}} onClick={popularPilulas} disabled={salvando}>
@@ -1202,8 +1202,8 @@ function RecursosTerapeuticos({ user }) {
       {abaView==="ferramentas"&&(<>
       <div style={{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
         <input className="form-input" style={{flex:1,minWidth:200}} placeholder="Buscar por nome, descricao ou tipo..." value={busca} onChange={e=>setBusca(e.target.value)}/>
-        <button className="btn btn-ghost" style={{flexShrink:0,border:"1.5px solid var(--purple)",color:"var(--purple)"}} onClick={()=>setBuscaIAFerramenta(true)}>
-          🧠 Busca por sintoma
+        <button className="btn btn-outline" style={{fontSize:12,flexShrink:0}} onClick={()=>setBuscaIAFerramenta(true)}>
+          <Icon name="sparkles" size={14}/> 🧠 Busca por sintoma
         </button>
         <button className="btn btn-purple" style={{flexShrink:0}} onClick={abrirWizardNovo}>
           <Icon name="plus" size={16}/> Nova Ferramenta
