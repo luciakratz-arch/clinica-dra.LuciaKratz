@@ -1960,7 +1960,6 @@ function FerramentaPortal({ recurso, user }){
       )}
     </div>
   );
-}
   return <FerramentaGenerica recurso={recurso} user={user}/>;
 }
 
