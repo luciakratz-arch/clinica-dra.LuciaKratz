@@ -1764,6 +1764,203 @@ function FerramentaPortal({ recurso, user }){
   if(k==="roda-vida-integral")   return <FerramentaRodaVidaIntegral user={user}/>;
   if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
   if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
+
+
+  // ── Fábulas com campo "paginas" (array) ──────────────────────────
+  const paginas = recurso.paginas||[];
+  if(paginas.length>0){
+    const [idx,setIdx] = React.useState(0);
+    const [respFab,setRespFab] = React.useState({});
+    const [msgFab,setMsgFab] = React.useState("");
+    const jaConcluiu = React.useRef(false);
+    function avancar(){
+      setIdx(i=>{
+        const n = Math.min(paginas.length-1, i+1);
+        if(n===paginas.length-1 && !jaConcluiu.current){
+          jaConcluiu.current = true;
+          registrarUsoRecurso(user, recurso, "concluiu", {detalhe:"Leu a fábula até o fim"});
+        }
+        return n;
+      });
+    }
+    async function salvarReflexoesFabula(){
+      const perguntas = recurso.perguntas||[];
+      if(!perguntas.some((_,i)=>(respFab[i]||"").trim())){alert("Escreva pelo menos uma reflexão antes de salvar.");return;}
+      if(user&&user.id){
+        try{
+          await db.collection("clinica_reflexoes").add({
+            pacienteId:user.id, pacienteNome:user.nome||"",
+            origem:"fabula",
+            origemId:recurso.id||"", origemTitulo:recurso.titulo||recurso.nome||"",
+            registros:perguntas.map((p,i)=>({pergunta:p, resposta:respFab[i]||""})),
+            data:new Date().toLocaleDateString("pt-BR"),
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+          registrarUsoRecurso(user,recurso,"salvou",{detalhe:"Reflexões da fábula — "+(recurso.titulo||recurso.nome||"")});
+        }catch(e){}
+      }
+      setMsgFab("✓ Reflexões salvas!");setTimeout(()=>setMsgFab(""),2500);
+    }
+    const pag = paginas[idx]||"";
+    const pct = Math.round(((idx+1)/paginas.length)*100);
+    const concluido = idx===paginas.length-1;
+    return(
+      <div style={{fontFamily:"Georgia,serif"}}>
+        {/* Barra de progresso */}
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+          <div style={{flex:1,height:5,background:"rgba(123,0,196,0.15)",borderRadius:20,overflow:"hidden"}}>
+            <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,#7B00C4,#a855f7)",borderRadius:20,transition:"width .4s ease"}}/>
+          </div>
+          <span style={{fontSize:12,color:"#7B00C4",fontWeight:700,flexShrink:0}}>{idx+1}/{paginas.length}</span>
+        </div>
+        {/* Card da página */}
+        <div style={{
+          background:"linear-gradient(145deg,#4c0094,#7B00C4,#6d28d9)",
+          borderRadius:20,padding:"36px 28px",minHeight:220,marginBottom:20,
+          boxShadow:"0 8px 32px rgba(123,0,196,0.35)",
+          display:"flex",alignItems:"center",justifyContent:"center"
+        }}>
+          <p style={{
+            fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",
+            fontStyle:"italic",margin:0,
+            textShadow:"0 1px 3px rgba(0,0,0,0.2)"
+          }}>{pag}</p>
+        </div>
+        {/* Reflexões no último slide */}
+        {concluido&&(recurso.perguntas||[]).length>0&&(
+          <div style={{background:"#f5f3ff",borderRadius:14,padding:"18px 20px",marginBottom:20,border:"1px solid #ede9fe"}}>
+            <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.6px"}}>💭 Para Refletir</div>
+            {(recurso.perguntas||[]).map((q,i)=>(
+              <div key={i} style={{marginBottom:14}}>
+                <div style={{display:"flex",gap:10,marginBottom:6}}>
+                  <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
+                  <span style={{fontSize:14,color:"#374151",lineHeight:1.7}}>{q}</span>
+                </div>
+                <TextAreaVoz value={respFab[i]||""}
+                  onChange={e=>setRespFab(r=>({...r,[i]:e.target.value}))}
+                  placeholder="Escreva sua reflexão..."
+                  style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
+                    border:"1px solid #7B00C450",fontSize:13,fontFamily:"Inter,sans-serif",
+                    resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
+              </div>
+            ))}
+            <button onClick={salvarReflexoesFabula}
+              style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
+                background:msgFab?"#059669":"#7B00C4",color:"white",cursor:"pointer",
+                fontSize:13,fontWeight:700,fontFamily:"Inter,sans-serif",transition:"background .2s"}}>
+              {msgFab||"💾 Salvar minhas reflexões"}
+            </button>
+          </div>
+        )}
+        {/* Navegação */}
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0}
+            style={{flex:1,padding:"13px",borderRadius:12,border:"1.5px solid #e9d5ff",
+              background:"white",color:idx===0?"#d1d5db":"#7B00C4",
+              fontWeight:600,fontSize:14,cursor:idx===0?"not-allowed":"pointer",
+              fontFamily:"inherit",transition:"all .15s"}}>
+            ← Anterior
+          </button>
+          {!concluido?(
+            <button onClick={avancar}
+              style={{flex:2,padding:"13px",borderRadius:12,border:"none",
+                background:"linear-gradient(135deg,#7B00C4,#a855f7)",
+                color:"white",fontWeight:700,fontSize:15,cursor:"pointer",
+                fontFamily:"inherit",boxShadow:"0 4px 14px rgba(123,0,196,0.4)"}}>
+              Próxima página →
+            </button>
+          ):(
+            <button onClick={()=>setIdx(0)}
+              style={{flex:2,padding:"13px",borderRadius:12,border:"none",
+                background:"linear-gradient(135deg,#059669,#10b981)",
+                color:"white",fontWeight:700,fontSize:15,cursor:"pointer",
+                fontFamily:"inherit",boxShadow:"0 4px 14px rgba(5,150,105,0.35)"}}>
+              ✅ Concluído — Reler
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+  // ── Ferramentas com campo "passos" ou "conteudo" (texto) ──────────
+  const conteudo  = recurso.passos || recurso.conteudo || recurso.texto || "";
+  const objetivo  = recurso.objetivo || recurso.descricao || "";
+  return (
+    <div>
+      {objetivo&&(
+        <div style={{background:"#f3e6ff",borderRadius:10,padding:"14px 16px",marginBottom:20,border:"1px solid #e9d5ff"}}>
+          <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>🎯 Objetivo</div>
+          <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{objetivo}</div>
+        </div>
+      )}
+      {conteudo&&(()=>{
+        const slides = conteudo.split("\n\n").filter(function(p){return p.trim().length>2;});
+        const [idx, setIdx] = React.useState(0);
+        const jaConc = React.useRef(false);
+        function proximoSlide(){
+          setIdx(i=>{
+            const n = Math.min(slides.length-1, i+1);
+            if(n===slides.length-1 && !jaConc.current){
+              jaConc.current = true;
+              registrarUsoRecurso(user, recurso, "concluiu", {detalhe:"Concluiu o conteúdo"});
+            }
+            return n;
+          });
+        }
+        const atual = slides[idx]||"";
+        const linhas = atual.trim().split("\n");
+        const titulo = linhas[0];
+        const corpo  = linhas.slice(1).join("\n").trim();
+        const pct    = Math.round(((idx+1)/slides.length)*100);
+        return (
+          <div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <span style={{fontSize:11,color:"#9ca3af"}}>{idx+1} de {slides.length}</span>
+              <span style={{fontSize:11,color:"#7B00C4",fontWeight:600}}>{pct}%</span>
+            </div>
+            <div style={{height:4,background:"#f3e6ff",borderRadius:20,marginBottom:20,overflow:"hidden"}}>
+              <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:20,transition:"width .3s"}}/>
+            </div>
+            <div style={{background:"white",border:"1px solid #e9d5ff",borderRadius:16,padding:"24px 20px",minHeight:160,marginBottom:20,borderLeft:"4px solid #7B00C4"}}>
+              {titulo&&<div style={{fontWeight:700,fontSize:15,color:"#7B00C4",marginBottom:corpo?12:0,lineHeight:1.5}}>{titulo}</div>}
+              {corpo&&<div style={{fontSize:14,color:"#374151",lineHeight:1.8,whiteSpace:"pre-wrap"}}>{corpo}</div>}
+            </div>
+            <div style={{display:"flex",gap:12}}>
+              <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0}
+                style={{flex:1,padding:"12px",borderRadius:12,border:"1.5px solid #e9d5ff",background:"white",color:idx===0?"#d1d5db":"#7B00C4",fontWeight:600,fontSize:14,cursor:idx===0?"not-allowed":"pointer",fontFamily:"inherit"}}>
+                ← Anterior
+              </button>
+              {idx<slides.length-1?(
+                <button onClick={proximoSlide}
+                  style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#7B00C4",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
+                  Próximo →
+                </button>
+              ):(
+                <button onClick={()=>setIdx(0)}
+                  style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#059669",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
+                  ✅ Concluído — Recomeçar
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+      {!objetivo&&!conteudo&&(
+        <div style={{textAlign:"center",padding:"40px 20px"}}>
+          <div style={{fontSize:48,marginBottom:12}}>{recurso._colecao==="fabulas"?"📖":"🔧"}</div>
+          <div style={{fontFamily:"var(--font-display,Georgia)",fontSize:18,fontWeight:700,color:"#7B00C4",marginBottom:8}}>
+            {recurso._colecao==="fabulas"?"Fábula em preparação":"Em desenvolvimento"}
+          </div>
+          <div style={{fontSize:13,color:"#6b7280",lineHeight:1.6,maxWidth:280,margin:"0 auto"}}>
+            {recurso._colecao==="fabulas"
+              ? <span>O texto desta fábula ainda está sendo preparado pela sua psicóloga.<br/>Volte em breve para conferir a história completa. 💜</span>
+              : <span>Esta ferramenta está sendo preparada especialmente para você.<br/>Em breve estará disponível nesta área. 💜</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
   return <FerramentaGenerica recurso={recurso} user={user}/>;
 }
 
@@ -2002,203 +2199,6 @@ function FerramentaDiagnosticoMacro({ user }) {
     </div>
   );
 }
-
-  // ── Fábulas com campo "paginas" (array) ──────────────────────────
-  const paginas = recurso.paginas||[];
-  if(paginas.length>0){
-    const [idx,setIdx] = React.useState(0);
-    const [respFab,setRespFab] = React.useState({});
-    const [msgFab,setMsgFab] = React.useState("");
-    const jaConcluiu = React.useRef(false);
-    function avancar(){
-      setIdx(i=>{
-        const n = Math.min(paginas.length-1, i+1);
-        if(n===paginas.length-1 && !jaConcluiu.current){
-          jaConcluiu.current = true;
-          registrarUsoRecurso(user, recurso, "concluiu", {detalhe:"Leu a fábula até o fim"});
-        }
-        return n;
-      });
-    }
-    async function salvarReflexoesFabula(){
-      const perguntas = recurso.perguntas||[];
-      if(!perguntas.some((_,i)=>(respFab[i]||"").trim())){alert("Escreva pelo menos uma reflexão antes de salvar.");return;}
-      if(user&&user.id){
-        try{
-          await db.collection("clinica_reflexoes").add({
-            pacienteId:user.id, pacienteNome:user.nome||"",
-            origem:"fabula",
-            origemId:recurso.id||"", origemTitulo:recurso.titulo||recurso.nome||"",
-            registros:perguntas.map((p,i)=>({pergunta:p, resposta:respFab[i]||""})),
-            data:new Date().toLocaleDateString("pt-BR"),
-            createdAt:firebase.firestore.FieldValue.serverTimestamp()
-          });
-          registrarUsoRecurso(user,recurso,"salvou",{detalhe:"Reflexões da fábula — "+(recurso.titulo||recurso.nome||"")});
-        }catch(e){}
-      }
-      setMsgFab("✓ Reflexões salvas!");setTimeout(()=>setMsgFab(""),2500);
-    }
-    const pag = paginas[idx]||"";
-    const pct = Math.round(((idx+1)/paginas.length)*100);
-    const concluido = idx===paginas.length-1;
-    return(
-      <div style={{fontFamily:"Georgia,serif"}}>
-        {/* Barra de progresso */}
-        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-          <div style={{flex:1,height:5,background:"rgba(123,0,196,0.15)",borderRadius:20,overflow:"hidden"}}>
-            <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,#7B00C4,#a855f7)",borderRadius:20,transition:"width .4s ease"}}/>
-          </div>
-          <span style={{fontSize:12,color:"#7B00C4",fontWeight:700,flexShrink:0}}>{idx+1}/{paginas.length}</span>
-        </div>
-        {/* Card da página */}
-        <div style={{
-          background:"linear-gradient(145deg,#4c0094,#7B00C4,#6d28d9)",
-          borderRadius:20,padding:"36px 28px",minHeight:220,marginBottom:20,
-          boxShadow:"0 8px 32px rgba(123,0,196,0.35)",
-          display:"flex",alignItems:"center",justifyContent:"center"
-        }}>
-          <p style={{
-            fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",
-            fontStyle:"italic",margin:0,
-            textShadow:"0 1px 3px rgba(0,0,0,0.2)"
-          }}>{pag}</p>
-        </div>
-        {/* Reflexões no último slide */}
-        {concluido&&(recurso.perguntas||[]).length>0&&(
-          <div style={{background:"#f5f3ff",borderRadius:14,padding:"18px 20px",marginBottom:20,border:"1px solid #ede9fe"}}>
-            <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:12,textTransform:"uppercase",letterSpacing:"0.6px"}}>💭 Para Refletir</div>
-            {(recurso.perguntas||[]).map((q,i)=>(
-              <div key={i} style={{marginBottom:14}}>
-                <div style={{display:"flex",gap:10,marginBottom:6}}>
-                  <span style={{color:"#a855f7",fontWeight:700,flexShrink:0}}>{i+1}.</span>
-                  <span style={{fontSize:14,color:"#374151",lineHeight:1.7}}>{q}</span>
-                </div>
-                <TextAreaVoz value={respFab[i]||""}
-                  onChange={e=>setRespFab(r=>({...r,[i]:e.target.value}))}
-                  placeholder="Escreva sua reflexão..."
-                  style={{width:"100%",minHeight:64,padding:"8px 10px",borderRadius:8,
-                    border:"1px solid #7B00C450",fontSize:13,fontFamily:"Inter,sans-serif",
-                    resize:"vertical",lineHeight:1.5,boxSizing:"border-box",outline:"none"}}/>
-              </div>
-            ))}
-            <button onClick={salvarReflexoesFabula}
-              style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
-                background:msgFab?"#059669":"#7B00C4",color:"white",cursor:"pointer",
-                fontSize:13,fontWeight:700,fontFamily:"Inter,sans-serif",transition:"background .2s"}}>
-              {msgFab||"💾 Salvar minhas reflexões"}
-            </button>
-          </div>
-        )}
-        {/* Navegação */}
-        <div style={{display:"flex",gap:10}}>
-          <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0}
-            style={{flex:1,padding:"13px",borderRadius:12,border:"1.5px solid #e9d5ff",
-              background:"white",color:idx===0?"#d1d5db":"#7B00C4",
-              fontWeight:600,fontSize:14,cursor:idx===0?"not-allowed":"pointer",
-              fontFamily:"inherit",transition:"all .15s"}}>
-            ← Anterior
-          </button>
-          {!concluido?(
-            <button onClick={avancar}
-              style={{flex:2,padding:"13px",borderRadius:12,border:"none",
-                background:"linear-gradient(135deg,#7B00C4,#a855f7)",
-                color:"white",fontWeight:700,fontSize:15,cursor:"pointer",
-                fontFamily:"inherit",boxShadow:"0 4px 14px rgba(123,0,196,0.4)"}}>
-              Próxima página →
-            </button>
-          ):(
-            <button onClick={()=>setIdx(0)}
-              style={{flex:2,padding:"13px",borderRadius:12,border:"none",
-                background:"linear-gradient(135deg,#059669,#10b981)",
-                color:"white",fontWeight:700,fontSize:15,cursor:"pointer",
-                fontFamily:"inherit",boxShadow:"0 4px 14px rgba(5,150,105,0.35)"}}>
-              ✅ Concluído — Reler
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-  // ── Ferramentas com campo "passos" ou "conteudo" (texto) ──────────
-  const conteudo  = recurso.passos || recurso.conteudo || recurso.texto || "";
-  const objetivo  = recurso.objetivo || recurso.descricao || "";
-  return (
-    <div>
-      {objetivo&&(
-        <div style={{background:"#f3e6ff",borderRadius:10,padding:"14px 16px",marginBottom:20,border:"1px solid #e9d5ff"}}>
-          <div style={{fontWeight:700,fontSize:12,color:"#7B00C4",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.5px"}}>🎯 Objetivo</div>
-          <div style={{fontSize:13,color:"#3d006a",lineHeight:1.7}}>{objetivo}</div>
-        </div>
-      )}
-      {conteudo&&(()=>{
-        const slides = conteudo.split("\n\n").filter(function(p){return p.trim().length>2;});
-        const [idx, setIdx] = React.useState(0);
-        const jaConc = React.useRef(false);
-        function proximoSlide(){
-          setIdx(i=>{
-            const n = Math.min(slides.length-1, i+1);
-            if(n===slides.length-1 && !jaConc.current){
-              jaConc.current = true;
-              registrarUsoRecurso(user, recurso, "concluiu", {detalhe:"Concluiu o conteúdo"});
-            }
-            return n;
-          });
-        }
-        const atual = slides[idx]||"";
-        const linhas = atual.trim().split("\n");
-        const titulo = linhas[0];
-        const corpo  = linhas.slice(1).join("\n").trim();
-        const pct    = Math.round(((idx+1)/slides.length)*100);
-        return (
-          <div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <span style={{fontSize:11,color:"#9ca3af"}}>{idx+1} de {slides.length}</span>
-              <span style={{fontSize:11,color:"#7B00C4",fontWeight:600}}>{pct}%</span>
-            </div>
-            <div style={{height:4,background:"#f3e6ff",borderRadius:20,marginBottom:20,overflow:"hidden"}}>
-              <div style={{width:pct+"%",height:"100%",background:"#7B00C4",borderRadius:20,transition:"width .3s"}}/>
-            </div>
-            <div style={{background:"white",border:"1px solid #e9d5ff",borderRadius:16,padding:"24px 20px",minHeight:160,marginBottom:20,borderLeft:"4px solid #7B00C4"}}>
-              {titulo&&<div style={{fontWeight:700,fontSize:15,color:"#7B00C4",marginBottom:corpo?12:0,lineHeight:1.5}}>{titulo}</div>}
-              {corpo&&<div style={{fontSize:14,color:"#374151",lineHeight:1.8,whiteSpace:"pre-wrap"}}>{corpo}</div>}
-            </div>
-            <div style={{display:"flex",gap:12}}>
-              <button onClick={()=>setIdx(i=>Math.max(0,i-1))} disabled={idx===0}
-                style={{flex:1,padding:"12px",borderRadius:12,border:"1.5px solid #e9d5ff",background:"white",color:idx===0?"#d1d5db":"#7B00C4",fontWeight:600,fontSize:14,cursor:idx===0?"not-allowed":"pointer",fontFamily:"inherit"}}>
-                ← Anterior
-              </button>
-              {idx<slides.length-1?(
-                <button onClick={proximoSlide}
-                  style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#7B00C4",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
-                  Próximo →
-                </button>
-              ):(
-                <button onClick={()=>setIdx(0)}
-                  style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#059669",color:"white",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>
-                  ✅ Concluído — Recomeçar
-                </button>
-              )}
-            </div>
-          </div>
-        );
-      })()}
-      {!objetivo&&!conteudo&&(
-        <div style={{textAlign:"center",padding:"40px 20px"}}>
-          <div style={{fontSize:48,marginBottom:12}}>{recurso._colecao==="fabulas"?"📖":"🔧"}</div>
-          <div style={{fontFamily:"var(--font-display,Georgia)",fontSize:18,fontWeight:700,color:"#7B00C4",marginBottom:8}}>
-            {recurso._colecao==="fabulas"?"Fábula em preparação":"Em desenvolvimento"}
-          </div>
-          <div style={{fontSize:13,color:"#6b7280",lineHeight:1.6,maxWidth:280,margin:"0 auto"}}>
-            {recurso._colecao==="fabulas"
-              ? <span>O texto desta fábula ainda está sendo preparado pela sua psicóloga.<br/>Volte em breve para conferir a história completa. 💜</span>
-              : <span>Esta ferramenta está sendo preparada especialmente para você.<br/>Em breve estará disponível nesta área. 💜</span>}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function RecursosPaciente({ user, setTab, abaInicial }) {
   const [ferramentas,   setFerramentas]   = React.useState([]);
   const [fabulas,       setFabulas]       = React.useState([]);
