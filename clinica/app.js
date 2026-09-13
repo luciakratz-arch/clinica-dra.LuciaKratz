@@ -1743,27 +1743,54 @@ function FerramentaTreino({user}){
 
 // ── Anamnese ────────────────────────────────────────────────────────────────
 function FerramentaPortal({ recurso, user }){
-  const k = recurso?.formularioKey || "";
-  if(k==="breathing-478")        return <FerramentaRespiracao user={user}/>;
-  if(k==="muscle-relaxation")    return <FerramentaRelaxamento user={user}/>;
-  if(k==="anxiety-management")   return <FerramentaGestaoAnsiedade user={user}/>;
-  if(k==="decision-tree")        return <FerramentaArvore user={user}/>;
-  if(typeof FerramentaRastreamentoCompulsao!=="undefined"&&k==="rastreamento-compulsao-sexual") return <FerramentaRastreamentoCompulsao user={user}/>;
-  if(typeof FerramentaChainAnalysis!=="undefined"&&k==="analise-cadeia")         return <FerramentaChainAnalysis user={user}/>;
-  if(typeof FerramentaBehavioralActivation!=="undefined"&&k==="ativacao-comportamental") return <FerramentaBehavioralActivation user={user}/>;
-  if(typeof FerramentaTIPP!=="undefined"&&k==="kit-sos-tipp")                    return <FerramentaTIPP user={user}/>;
-  if(typeof FerramentaStrategicPause!=="undefined"&&k==="pausa-estrategica")     return <FerramentaStrategicPause user={user}/>;
-  if(typeof FerramentaSelfCompassion!=="undefined"&&k==="diario-autocompaixao")  return <FerramentaSelfCompassion user={user}/>;
-  if(typeof FerramentaCNV!=="undefined"&&k==="registro-cnv")                     return <FerramentaCNV user={user}/>;
-  if(typeof FerramentaLimitsMap!=="undefined"&&k==="mapa-limites")               return <FerramentaLimitsMap user={user}/>;
-  if(typeof FerramentaMentalLoad!=="undefined"&&k==="carga-mental")              return <FerramentaMentalLoad user={user}/>;
-  if(typeof FerramentaConflictCycle!=="undefined"&&k==="ciclo-conflito")         return <FerramentaConflictCycle user={user}/>;
-  if(typeof FerramentaActiveListening!=="undefined"&&k==="escuta-ativa")         return <FerramentaActiveListening user={user}/>;
-  if(k==="mural-habilidades")    return <FerramentaMuralHabilidades user={user}/>;
+  const ALIAS = {
+    "analise-cadeia":"chain-analysis","kit-sos-tipp":"tipp-sos",
+    "ativacao-comportamental":"behavioral-activation","pausa-estrategica":"strategic-pause",
+    "diario-autocompaixao":"self-compassion-journal","registro-cnv":"cnv-record",
+    "mapa-limites":"limits-map","carga-mental":"mental-load-inventory",
+    "ciclo-conflito":"conflict-cycle-map","escuta-ativa":"active-listening",
+    "regra-5-minutos":"five-minute-rule","ritual-noturno":"sleep-ritual",
+    "empilhamento-habitos":"habit-stacking","mapa-bateria":"energy-map",
+    "escada-polivagal":"polyvagal-ladder","aterramento-5-sentidos":"grounding-5senses",
+    "diario-corpo-mente":"body-mind-journal","mapa-intimidade":"intimacy-map",
+    "3-mapas-financeiros":"financial-three-maps","mapa-diferenciacao":"differentiation-map",
+    "mapa-triangulacao":"triangulation-map","diario-parentalidade":"compassionate-parenting-journal",
+  };
+  const k = ALIAS[recurso?.formularioKey] || recurso?.formularioKey || "";
+  if(k==="breathing-478")          return <FerramentaRespiracao user={user}/>;
+  if(k==="muscle-relaxation")      return <FerramentaRelaxamento user={user}/>;
+  if(k==="anxiety-management")     return <FerramentaGestaoAnsiedade user={user}/>;
+  if(k==="decision-tree")          return <FerramentaArvore user={user}/>;
+  if(k==="abc-record"&&typeof FerramentaABC!=="undefined")           return <FerramentaABC user={user}/>;
+  if(k==="chain-analysis"&&typeof FerramentaChainAnalysis!=="undefined")         return <FerramentaChainAnalysis user={user}/>;
+  if(k==="behavioral-activation"&&typeof FerramentaBehavioralActivation!=="undefined") return <FerramentaBehavioralActivation user={user}/>;
+  if(k==="tipp-sos"&&typeof FerramentaTIPP!=="undefined")            return <FerramentaTIPP user={user}/>;
+  if(k==="strategic-pause"&&typeof FerramentaStrategicPause!=="undefined")       return <FerramentaStrategicPause user={user}/>;
+  if(k==="self-compassion-journal"&&typeof FerramentaSelfCompassion!=="undefined") return <FerramentaSelfCompassion user={user}/>;
+  if(k==="cnv-record"&&typeof FerramentaCNV!=="undefined")           return <FerramentaCNV user={user}/>;
+  if(k==="limits-map"&&typeof FerramentaLimitsMap!=="undefined")     return <FerramentaLimitsMap user={user}/>;
+  if(k==="mental-load-inventory"&&typeof FerramentaMentalLoad!=="undefined")     return <FerramentaMentalLoad user={user}/>;
+  if(k==="conflict-cycle-map"&&typeof FerramentaConflictCycle!=="undefined")     return <FerramentaConflictCycle user={user}/>;
+  if(k==="active-listening"&&typeof FerramentaActiveListening!=="undefined")     return <FerramentaActiveListening user={user}/>;
+  if(k==="polyvagal-ladder"&&typeof FerramentaPolyvagal!=="undefined")           return <FerramentaPolyvagal user={user}/>;
+  if(k==="grounding-5senses"&&typeof FerramentaGrounding!=="undefined")          return <FerramentaGrounding user={user}/>;
+  if(k==="body-mind-journal"&&typeof FerramentaBodyMind!=="undefined")           return <FerramentaBodyMind user={user}/>;
+  if(k==="wheel-of-life"&&typeof FerramentaWheelOfLife!=="undefined")            return <FerramentaWheelOfLife user={user}/>;
+  if(k==="differentiation-map"&&typeof FerramentaDifferentiation!=="undefined")  return <FerramentaDifferentiation user={user}/>;
+  if(k==="triangulation-map"&&typeof FerramentaTriangulation!=="undefined")      return <FerramentaTriangulation user={user}/>;
+  if(k==="compassionate-parenting-journal"&&typeof FerramentaCompassionateParenting!=="undefined") return <FerramentaCompassionateParenting user={user}/>;
+  if(k==="financial-three-maps"&&typeof FerramentaFinancialMaps!=="undefined")   return <FerramentaFinancialMaps user={user}/>;
+  if(k==="intimacy-map"&&typeof FerramentaIntimacyMap!=="undefined")             return <FerramentaIntimacyMap user={user}/>;
+  if(k==="sleep-ritual"&&typeof FerramentaSleepRitual!=="undefined")             return <FerramentaSleepRitual user={user}/>;
+  if(k==="five-minute-rule"&&typeof FerramentaFiveMinute!=="undefined")          return <FerramentaFiveMinute user={user}/>;
+  if(k==="habit-stacking"&&typeof FerramentaHabitStacking!=="undefined")         return <FerramentaHabitStacking user={user}/>;
+  if(k==="energy-map"&&typeof FerramentaEnergyMap!=="undefined")                 return <FerramentaEnergyMap user={user}/>;
+  if(k==="rastreamento-compulsao-sexual"&&typeof FerramentaRastreamentoCompulsao!=="undefined") return <FerramentaRastreamentoCompulsao user={user}/>;
+  if(k==="mural-habilidades")      return <FerramentaMuralHabilidades user={user}/>;
   if(k==="diagnostico-macroatividades") return <FerramentaDiagnosticoMacro user={user}/>;
-  if(k==="roda-vida-integral")   return <FerramentaRodaVidaIntegral user={user}/>;
-  if(k==="emotional-eating")     return <FerramentaRastreamento user={user}/>;
-  if(k==="treino-neuro-auditivo") return <FerramentaTreino user={user}/>;
+  if(k==="roda-vida-integral"&&typeof FerramentaRodaVidaIntegral!=="undefined")  return <FerramentaRodaVidaIntegral user={user}/>;
+  if(k==="emotional-eating")       return <FerramentaRastreamento user={user}/>;
+  if(k==="treino-neuro-auditivo")  return <FerramentaTreino user={user}/>;
 
 
   // ── Fábulas com campo "paginas" (array) ──────────────────────────
