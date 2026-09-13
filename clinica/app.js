@@ -3131,6 +3131,7 @@ const NAV_CASAL = [
 
 const NAV_ALUNO = [
   { id:"painel-aluno",      label:"Meu Painel",   icon:"layout-dashboard" },
+  { id:"pacientes-aluno",   label:"Pacientes",    icon:"users" },
   { id:"ferramentas-aluno", label:"Ferramentas",  icon:"stethoscope" },
   { id:"relatorios-aluno",  label:"Relatórios",   icon:"file-bar-chart" },
 ];
@@ -5041,6 +5042,374 @@ function EtapaCasal({ user, etapaData }) {
 // ═══════════════════════════════════════════════════════
 //  PAINEL ALUNO
 // ═══════════════════════════════════════════════════════
+
+// ── PACIENTES DA ALUNA DE SUPERVISÃO ─────────────────────────────────
+// Coleções: acad_pacientes, acad_links, acad_respostas
+function PacientesAluno({ user }) {
+  const [pacientes, setPacientes]   = React.useState([]);
+  const [loading, setLoading]       = React.useState(true);
+  const [view, setView]             = React.useState("lista"); // lista | novo | detalhe
+  const [pacSel, setPacSel]         = React.useState(null);
+  // form novo paciente
+  const [nome, setNome]             = React.useState("");
+  const [whatsapp, setWhatsapp]     = React.useState("");
+  const [salvando, setSalvando]     = React.useState(false);
+
+  React.useEffect(()=>{
+    const unsub = db.collection("acad_pacientes")
+      .where("alunoId","==",user.id)
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
+        setPacientes(docs);
+        setLoading(false);
+      },()=>setLoading(false));
+    return unsub;
+  },[user.id]);
+
+  async function salvarPaciente(){
+    if(!nome.trim()){alert("Digite o nome do paciente.");return;}
+    setSalvando(true);
+    await db.collection("acad_pacientes").add({
+      alunoId: user.id,
+      alunoNome: user.nome,
+      nome: nome.trim(),
+      whatsapp: whatsapp.trim(),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setNome(""); setWhatsapp(""); setSalvando(false); setView("lista");
+  }
+
+  function abrirDetalhe(pac){
+    setPacSel(pac);
+    setView("detalhe");
+  }
+
+  if(loading) return <Spinner/>;
+
+  if(view==="detalhe" && pacSel){
+    return <DetalhePacienteAluno user={user} paciente={pacSel} onVoltar={()=>{setPacSel(null);setView("lista");}}/>;
+  }
+
+  return (
+    <div style={{maxWidth:700,margin:"0 auto"}}>
+      {/* Cabeçalho */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:600,color:"var(--purple)"}}>👥 Meus Pacientes</div>
+          <div style={{fontSize:13,color:"var(--text-muted)",marginTop:2}}>Gerencie seus pacientes de supervisão e envie ferramentas terapêuticas.</div>
+        </div>
+        <button className="btn btn-purple" onClick={()=>setView(view==="novo"?"lista":"novo")}>
+          <Icon name={view==="novo"?"x":"plus"} size={15}/> {view==="novo"?"Cancelar":"Novo Paciente"}
+        </button>
+      </div>
+
+      {/* Formulário novo paciente */}
+      {view==="novo" && (
+        <div className="card" style={{marginBottom:20,background:"var(--purple-bg)",border:"1.5px solid var(--purple-soft)"}}>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--purple)"}}>Cadastrar Paciente</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+            <div className="form-group">
+              <label className="form-label">Nome completo *</label>
+              <input className="form-input" value={nome} onChange={e=>setNome(e.target.value)}
+                placeholder="Nome do paciente"/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">WhatsApp</label>
+              <input className="form-input" value={whatsapp} onChange={e=>setWhatsapp(e.target.value)}
+                placeholder="(62) 9 ..." type="tel"/>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="btn btn-ghost" onClick={()=>{setView("lista");setNome("");setWhatsapp("");}}>Cancelar</button>
+            <button className="btn btn-purple" onClick={salvarPaciente} disabled={salvando}>
+              {salvando?"Salvando...":"Salvar Paciente"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de pacientes */}
+      {pacientes.length===0 && view!=="novo" ? (
+        <div className="card" style={{textAlign:"center",padding:"40px 20px",color:"var(--text-muted)"}}>
+          <Icon name="users" size={40} style={{opacity:0.3,marginBottom:12}}/>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:6}}>Nenhum paciente cadastrado</div>
+          <div style={{fontSize:13}}>Clique em "Novo Paciente" para começar.</div>
+        </div>
+      ) : (
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {pacientes.map(pac=>(
+            <div key={pac.id} className="card"
+              style={{display:"flex",alignItems:"center",gap:14,cursor:"pointer",transition:"box-shadow .2s"}}
+              onClick={()=>abrirDetalhe(pac)}
+              onMouseEnter={e=>e.currentTarget.style.boxShadow="0 4px 20px rgba(123,0,196,0.12)"}
+              onMouseLeave={e=>e.currentTarget.style.boxShadow=""}>
+              <div style={{width:44,height:44,borderRadius:"50%",background:"linear-gradient(135deg,#7B00C4,#5a0090)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={{color:"white",fontWeight:700,fontSize:18}}>{(pac.nome||"?")[0].toUpperCase()}</span>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:15}}>{pac.nome}</div>
+                {pac.whatsapp && <div style={{fontSize:12,color:"var(--text-muted)"}}>📱 {pac.whatsapp}</div>}
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:6,color:"var(--purple)",fontSize:13,fontWeight:600}}>
+                Ver <Icon name="chevron-right" size={16}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetalhePacienteAluno({ user, paciente, onVoltar }) {
+  const [links, setLinks]           = React.useState([]);
+  const [respostas, setRespostas]   = React.useState([]);
+  const [catalogo, setCatalogo]     = React.useState([]);
+  const [mostrarForm, setMostrarForm] = React.useState(false);
+  const [ferramenta, setFerramenta] = React.useState("");
+  const [obs, setObs]               = React.useState("");
+  const [salvando, setSalvando]     = React.useState(false);
+  const [copiado, setCopiado]       = React.useState(null);
+  const [excluindo, setExcluindo]   = React.useState(null);
+  const [abaAtiva, setAbaAtiva]     = React.useState("links"); // links | respostas
+
+  // Carrega catálogo
+  React.useEffect(()=>{
+    Promise.all([
+      db.collection("clinica_recursos").get(),
+      db.collection("clinica_fabulas").get(),
+      db.collection("clinica_psicoeducacao").get(),
+    ]).then(([sF,sFab,sPsi])=>{
+      const ord = a=>(a.titulo||a.nome||"").toLowerCase();
+      const all = [
+        ...sF.docs.map(d=>({id:d.id,...d.data(),_tipo:"🔧 Ferramenta"})),
+        ...sFab.docs.map(d=>({id:d.id,...d.data(),_tipo:"📖 Fábula"})),
+        ...sPsi.docs.map(d=>({id:d.id,...d.data(),_tipo:"🎓 Psicoeducação"})),
+      ].sort((a,b)=>ord(a).localeCompare(ord(b)));
+      setCatalogo(all);
+      if(all.length>0) setFerramenta(all[0].formularioKey||all[0].id);
+    }).catch(()=>{});
+  },[]);
+
+  // Links deste paciente
+  React.useEffect(()=>{
+    const unsub = db.collection("acad_links")
+      .where("alunoId","==",user.id)
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setLinks(docs);
+      },()=>{});
+    return unsub;
+  },[user.id,paciente.id]);
+
+  // Respostas deste paciente
+  React.useEffect(()=>{
+    const unsub = db.collection("acad_respostas")
+      .where("alunoId","==",user.id)
+      .where("pacienteId","==",paciente.id)
+      .onSnapshot(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
+        setRespostas(docs);
+      },()=>{});
+    return unsub;
+  },[user.id,paciente.id]);
+
+  async function gerarLink(){
+    if(!ferramenta){alert("Selecione uma ferramenta.");return;}
+    setSalvando(true);
+    const token = Math.random().toString(36).slice(2,10).toUpperCase();
+    const recurso = catalogo.find(c=>(c.formularioKey||c.id)===ferramenta);
+    const label = recurso?(recurso.titulo||recurso.nome||ferramenta):ferramenta;
+    const url = (typeof SITE_URL!=="undefined"?SITE_URL:"https://luciakratz-arch.github.io/clinica-dra.LuciaKratz")+"/clinica/?link="+token;
+    await db.collection("acad_links").add({
+      alunoId: user.id, alunoNome: user.nome,
+      pacienteId: paciente.id, pacienteNome: paciente.nome,
+      token, ferramenta, ferramentaLabel: label,
+      obs: obs.trim(), url, usos:0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setObs(""); setMostrarForm(false); setSalvando(false);
+  }
+
+  function copiar(url,id){
+    navigator.clipboard.writeText(url);
+    setCopiado(id);
+    setTimeout(()=>setCopiado(null),2000);
+  }
+
+  function enviarWhats(link){
+    const wpp = (paciente.whatsapp||"").replace(/\D/g,"");
+    const texto = encodeURIComponent(
+      "Olá! Preparei uma atividade terapêutica para você:\n"+
+      (link.ferramentaLabel?link.ferramentaLabel+"\n":"")+
+      link.url
+    );
+    if(wpp){
+      window.open("https://wa.me/55"+wpp+"?text="+texto,"_blank");
+    } else {
+      window.open("https://wa.me/?text="+texto,"_blank");
+    }
+  }
+
+  async function excluirLink(id){
+    if(!confirm("Excluir este link?")) return;
+    setExcluindo(id);
+    await db.collection("acad_links").doc(id).delete();
+    setExcluindo(null);
+  }
+
+  const fmtData = ts => ts?.seconds ? new Date(ts.seconds*1000).toLocaleDateString("pt-BR") : "";
+
+  return (
+    <div style={{maxWidth:700,margin:"0 auto"}}>
+      {/* Voltar + cabeçalho paciente */}
+      <button className="btn btn-ghost" style={{marginBottom:16,gap:6}} onClick={onVoltar}>
+        <Icon name="arrow-left" size={15}/> Voltar
+      </button>
+      <div className="card" style={{marginBottom:20,background:"linear-gradient(135deg,#7B00C4,#5a0090)",color:"white"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:50,height:50,borderRadius:"50%",background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:700,flexShrink:0}}>
+            {(paciente.nome||"?")[0].toUpperCase()}
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:600}}>{paciente.nome}</div>
+            {paciente.whatsapp && <div style={{fontSize:13,opacity:0.85}}>📱 {paciente.whatsapp}</div>}
+          </div>
+          <div style={{textAlign:"right",opacity:0.8,fontSize:12}}>
+            <div>{links.length} link(s)</div>
+            <div>{respostas.length} resposta(s)</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Abas */}
+      <div style={{display:"flex",gap:8,marginBottom:16}}>
+        {[{id:"links",label:"Links Enviados"},{id:"respostas",label:"Respostas"}].map(a=>(
+          <button key={a.id}
+            onClick={()=>setAbaAtiva(a.id)}
+            style={{padding:"8px 18px",borderRadius:20,border:"1.5px solid "+(abaAtiva===a.id?"var(--purple)":"var(--gray-200)"),
+              background:abaAtiva===a.id?"var(--purple)":"white",
+              color:abaAtiva===a.id?"white":"var(--text-muted)",
+              fontSize:13,fontWeight:600,cursor:"pointer",transition:"all .2s"}}>
+            {a.label} {a.id==="links"?`(${links.length})`:`(${respostas.length})`}
+          </button>
+        ))}
+        <div style={{flex:1}}/>
+        <button className="btn btn-purple" style={{fontSize:13}} onClick={()=>setMostrarForm(f=>!f)}>
+          <Icon name={mostrarForm?"x":"link"} size={14}/> {mostrarForm?"Cancelar":"Gerar Link"}
+        </button>
+      </div>
+
+      {/* Formulário gerar link */}
+      {mostrarForm && (
+        <div className="card" style={{marginBottom:16,background:"var(--purple-bg)",border:"1.5px solid var(--purple-soft)"}}>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:12,color:"var(--purple)"}}>Nova ferramenta para {paciente.nome}</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+            <div className="form-group">
+              <label className="form-label">Ferramenta</label>
+              <select className="form-input" value={ferramenta} onChange={e=>setFerramenta(e.target.value)}>
+                {catalogo.length===0 && <option>Carregando...</option>}
+                {["🔧 Ferramenta","📖 Fábula","🎓 Psicoeducação"].map(tipo=>{
+                  const itens = catalogo.filter(c=>c._tipo===tipo);
+                  if(!itens.length) return null;
+                  return <optgroup key={tipo} label={tipo}>
+                    {itens.map(c=><option key={c.id} value={c.formularioKey||c.id}>{c.titulo||c.nome||"—"}</option>)}
+                  </optgroup>;
+                })}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Observação (opcional)</label>
+              <input className="form-input" value={obs} onChange={e=>setObs(e.target.value)} placeholder="Ex: sessão 3 — TCC"/>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="btn btn-ghost" onClick={()=>setMostrarForm(false)}>Cancelar</button>
+            <button className="btn btn-purple" onClick={gerarLink} disabled={salvando}>
+              {salvando?"Gerando...":"Gerar Link"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Aba Links */}
+      {abaAtiva==="links" && (
+        <div>
+          {links.length===0 ? (
+            <div className="card" style={{textAlign:"center",padding:"32px 20px",color:"var(--text-muted)"}}>
+              <div style={{fontSize:14}}>Nenhum link gerado ainda para este paciente.</div>
+            </div>
+          ) : links.map(l=>(
+            <div key={l.id} className="card" style={{marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <div style={{width:36,height:36,borderRadius:8,background:"var(--purple-soft)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Icon name="link" size={16}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:14}}>{l.ferramentaLabel||l.ferramenta}</div>
+                  {l.obs && <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:2}}>{l.obs}</div>}
+                  <div style={{fontSize:11,color:"var(--text-muted)"}}>{fmtData(l.createdAt)} · {l.usos||0} uso(s)</div>
+                </div>
+                <div style={{display:"flex",gap:6,flexShrink:0}}>
+                  <button onClick={()=>copiar(l.url,l.id)}
+                    style={{padding:"5px 12px",borderRadius:16,border:"1.5px solid var(--purple)",
+                      background:copiado===l.id?"var(--purple)":"white",
+                      color:copiado===l.id?"white":"var(--purple)",
+                      fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .2s"}}>
+                    {copiado===l.id?"✓ Copiado!":"Copiar"}
+                  </button>
+                  <button onClick={()=>enviarWhats(l)}
+                    style={{padding:"5px 12px",borderRadius:16,border:"1.5px solid #25D366",
+                      background:"#25D366",color:"white",
+                      fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                    📱 WhatsApp
+                  </button>
+                  <button className="btn btn-ghost" style={{padding:"4px 8px",color:"var(--danger)"}}
+                    onClick={()=>excluirLink(l.id)} disabled={excluindo===l.id}>
+                    <Icon name="trash-2" size={13}/>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Aba Respostas */}
+      {abaAtiva==="respostas" && (
+        <div>
+          {respostas.length===0 ? (
+            <div className="card" style={{textAlign:"center",padding:"32px 20px",color:"var(--text-muted)"}}>
+              <div style={{fontSize:14}}>Nenhuma resposta recebida ainda.</div>
+            </div>
+          ) : respostas.map(r=>(
+            <div key={r.id} className="card" style={{marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <div style={{width:36,height:36,borderRadius:8,background:"#d1fae5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <Icon name="check-circle" size={16} style={{color:"#059669"}}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:14}}>{r.ferramentaLabel||r.ferramenta||"Resposta"}</div>
+                  <div style={{fontSize:11,color:"var(--text-muted)",marginBottom:6}}>{fmtData(r.createdAt)}</div>
+                  {r.conteudo && (
+                    <div style={{fontSize:13,color:"var(--gray-700)",background:"var(--gray-50)",borderRadius:8,padding:"8px 12px",whiteSpace:"pre-wrap"}}>
+                      {r.conteudo}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PainelAluno({ user }) {
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
   const hora = new Date().getHours();
@@ -5501,6 +5870,7 @@ function App() {
         </div>
         <div className="main-content">
           {tab==="painel-aluno"      && <PainelAluno user={user}/>}
+          {tab==="pacientes-aluno"   && <PacientesAluno user={user}/>}
           {tab==="ferramentas-aluno" && <FerramentasAluno user={user}/>}
           {tab==="relatorios-aluno"  && <RelatoriosSupervisao user={user}/>}
         </div>
