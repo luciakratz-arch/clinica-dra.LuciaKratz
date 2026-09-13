@@ -2676,6 +2676,8 @@ function FerramentasAluno({ user }) {
   const [linkDesc, setLinkDesc]       = React.useState("");
   const [linkSalvando, setLinkSalvando] = React.useState(false);
   const [linkMsg, setLinkMsg]         = React.useState("");
+  const [linkPacienteId, setLinkPacienteId] = React.useState("");
+  const [linkPacientes, setLinkPacientes]   = React.useState([]);
 
   // ── MACROCATEGORIAS (mesma taxonomia do admin) ──
   const MACROS = [
@@ -2778,22 +2780,49 @@ function FerramentasAluno({ user }) {
     if(r._colecao==="psicoeducacao") setAbrindoPsico(r); else setAbrindo(r);
   }
 
+  // ── Carrega pacientes da aluna para o modal ──
+  function abrirModalLink(r){
+    setLinkModal(r); setLinkDesc(""); setLinkMsg(""); setLinkPacienteId("");
+    db.collection("acad_pacientes")
+      .where("alunoId","==",user.id)
+      .get()
+      .then(s=>{
+        const docs = s.docs.map(d=>({id:d.id,...d.data()}));
+        docs.sort((a,b)=>(a.nome||"").localeCompare(b.nome||"","pt-BR"));
+        setLinkPacientes(docs);
+        if(docs.length>0) setLinkPacienteId(docs[0].id);
+      }).catch(()=>{});
+  }
+
   // ── Gerar link rápido ──
   async function gerarLinkRapido(){
-    if(!linkDesc.trim()){alert("Digite uma identificação.");return;}
+    const pac = linkPacientes.find(p=>p.id===linkPacienteId);
+    if(!pac && linkPacientes.length>0){alert("Selecione um paciente.");return;}
     setLinkSalvando(true);
     const token = Math.random().toString(36).slice(2,10).toUpperCase();
     const label = linkModal.titulo||linkModal.nome||"—";
-    await db.collection("clinica_aluno_links").add({
+    const url = SITE_URL+"/clinica/?link="+token;
+    const baseData = {
       alunoId:user.id, alunoNome:user.nome,
-      token, ferramenta:linkModal.formularioKey||linkModal.id, ferramentaLabel:label, descricao:linkDesc,
-      url:SITE_URL+"/clinica/?link="+token,
-      usos:0, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
+      token, ferramenta:linkModal.formularioKey||linkModal.id, ferramentaLabel:label,
+      obs:linkDesc, url, usos:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if(pac){
+      // Salva em acad_links vinculado ao paciente
+      await db.collection("acad_links").add({
+        ...baseData, pacienteId:pac.id, pacienteNome:pac.nome, descricao:pac.nome+(linkDesc?(" — "+linkDesc):"")
+      });
+    } else {
+      // Sem pacientes cadastrados — salva no legado
+      await db.collection("clinica_aluno_links").add({
+        ...baseData, descricao:linkDesc||"—"
+      });
+    }
     setLinkMsg("✓ Link copiado!");
-    try{ await navigator.clipboard.writeText(SITE_URL+"/clinica/?link="+token); }catch(e){}
+    try{ await navigator.clipboard.writeText(url); }catch(e){}
     setLinkSalvando(false);
-    setTimeout(()=>{ setLinkModal(null); setLinkDesc(""); setLinkMsg(""); },1800);
+    setTimeout(()=>{ setLinkModal(null); setLinkDesc(""); setLinkMsg(""); setLinkPacienteId(""); },1800);
   }
 
   const ICONES_KEY = {
@@ -2878,7 +2907,7 @@ function FerramentasAluno({ user }) {
               cursor:"pointer",fontFamily:"inherit"}}>
             ▶ Abrir
           </button>
-          <button onClick={()=>{setLinkModal(r);setLinkDesc("");setLinkMsg("");}}
+          <button onClick={()=>abrirModalLink(r)}
             title="Gerar link para enviar ao paciente"
             style={{flex:1,padding:"10px",borderRadius:10,border:"1.5px solid var(--purple)",
               background:"white",color:"var(--purple)",fontWeight:700,fontSize:12,
@@ -2942,9 +2971,23 @@ function FerramentasAluno({ user }) {
             <div style={{fontSize:13,color:"var(--text-muted)",marginBottom:16}}>
               Recurso: <strong>{titulo(linkModal)}</strong>
             </div>
+            {linkPacientes.length>0 ? (
+              <div className="form-group" style={{marginBottom:12}}>
+                <label className="form-label">Paciente *</label>
+                <select className="form-input" value={linkPacienteId} onChange={e=>setLinkPacienteId(e.target.value)} autoFocus>
+                  {linkPacientes.map(p=>(
+                    <option key={p.id} value={p.id}>{p.nome}{p.whatsapp?" · "+p.whatsapp:""}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div style={{marginBottom:12,padding:"10px 14px",borderRadius:10,background:"#fef9c3",fontSize:13,color:"#854d0e"}}>
+                ⚠️ Nenhum paciente cadastrado. <strong>Cadastre primeiro na aba Pacientes.</strong>
+              </div>
+            )}
             <div className="form-group" style={{marginBottom:16}}>
-              <label className="form-label">Identificação (nome do paciente, sessão etc.)</label>
-              <input className="form-input" value={linkDesc} onChange={e=>setLinkDesc(e.target.value)} placeholder="Ex: João — TCC sessão 3" autoFocus/>
+              <label className="form-label">Observação (opcional)</label>
+              <input className="form-input" value={linkDesc} onChange={e=>setLinkDesc(e.target.value)} placeholder="Ex: sessão 3 — TCC"/>
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" onClick={()=>setLinkModal(null)}>Cancelar</button>
