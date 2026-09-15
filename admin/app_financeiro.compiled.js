@@ -1,3 +1,4 @@
+import { jsxDEV as _jsxDEV, Fragment as _Fragment } from "react/jsx-dev-runtime";
 function FinanceiroClinica({
   user
 }) {
@@ -883,7 +884,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
     // Modo ver sessões (id__sessoes)
     if (pacoteSelecionado.endsWith("__sessoes")) {
       const pacoteId = pacoteSelecionado.replace("__sessoes", "");
-      return /*#__PURE__*/React.createElement(RelatorioFrequencia, {
+      return /*#__PURE__*/_jsxDEV(RelatorioFrequencia, {
         pacienteId: null,
         pacoteId: pacoteId,
         pacientes: pacientes,
@@ -892,7 +893,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
         lancamentos: lancamentos,
         FORMAS: FORMAS,
         onVoltar: () => setPacoteSelecionado(null)
-      });
+      }, void 0, false);
     }
     // Modo editar pacote individual (id__pacote) — abre modal de edição
     if (pacoteSelecionado.endsWith("__pacote")) {
@@ -918,7 +919,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
       }
     }
     // Modo controle geral do paciente (pacienteId)
-    return /*#__PURE__*/React.createElement(RelatorioFrequencia, {
+    return /*#__PURE__*/_jsxDEV(RelatorioFrequencia, {
       pacienteId: pacoteSelecionado,
       pacoteId: null,
       pacientes: pacientes,
@@ -927,7 +928,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
       lancamentos: lancamentos,
       FORMAS: FORMAS,
       onVoltar: () => setPacoteSelecionado(null)
-    });
+    }, void 0, false);
   }
 
   // Função salvar edição do pacote — v2 (sync financeiro + pagamentosExtras + try/catch robusto)
@@ -1116,1938 +1117,2240 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
     setAuditLog(log);
     setAuditando(false);
   }
-  return /*#__PURE__*/React.createElement("div", null, modalEditarPacote && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 600,
-      padding: 20
-    },
-    onClick: e => {
-      if (e.target === e.currentTarget) setModalEditarPacote(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 560,
-      maxHeight: "90vh",
-      overflowY: "auto"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      margin: 0,
-      color: "var(--purple)"
-    }
-  }, "✏️ Editar Pacote"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalEditarPacote(null),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      fontSize: 20,
-      color: "var(--gray-400)"
-    }
-  }, "✕")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Nº de Sessões"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    value: formEdicaoPacote.totalSessoes || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      totalSessoes: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor por Sessão (R$)"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    value: formEdicaoPacote.valorSessao || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      valorSessao: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data de Início"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formEdicaoPacote.dataInicio || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      dataInicio: e.target.value
-    })
-  }), formEdicaoPacote.dataInicio !== modalEditarPacote.dataInicio && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 6,
-      fontSize: 11,
-      color: "#d97706",
-      background: "#fffbeb",
-      border: "1px solid #fde68a",
-      borderRadius: 8,
-      padding: "6px 10px",
-      lineHeight: 1.5
-    }
-  }, "⚠️ Mudar a data de início ", /*#__PURE__*/React.createElement("strong", null, "não move"), " as sessões já criadas — elas continuam nas datas originais. Use o botão abaixo se quiser realinhar todas as sessões a partir desta nova data.", /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: recalcularDatasPacote,
-    disabled: salvandoEdicao,
-    style: {
-      display: "block",
-      marginTop: 8,
-      background: "#f59e0b",
-      color: "white",
-      border: "none",
-      borderRadius: 8,
-      padding: "6px 12px",
-      fontSize: 11,
-      fontWeight: 700,
-      cursor: "pointer",
-      fontFamily: "var(--font-body)"
-    }
-  }, "🔄 Recalcular datas das sessões"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Horário"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "time",
-    value: formEdicaoPacote.horario || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      horario: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Modalidade"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formEdicaoPacote.modalidade || "on-line",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      modalidade: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "on-line"
-  }, "💻 On-line"), /*#__PURE__*/React.createElement("option", {
-    value: "presencial"
-  }, "🏥 Presencial"), /*#__PURE__*/React.createElement("option", {
-    value: "híbrido"
-  }, "🔄 Híbrido"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Recorrência"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formEdicaoPacote.recorrencia || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      recorrencia: e.target.value
-    })
-  }, RECORRENCIAS.map(r => /*#__PURE__*/React.createElement("option", {
-    key: r
-  }, r)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Total do Pacote"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    readOnly: true,
-    value: "R$ " + (parseFloat(formEdicaoPacote.valorSessao || 0) * parseInt(formEdicaoPacote.totalSessoes || 0) || 0).toFixed(2).replace(".", ","),
-    style: {
-      background: "#f9fafb",
-      color: "var(--text-muted)"
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status do Pagamento"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, cor]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    type: "button",
-    onClick: () => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      statusPag: v
-    }),
-    style: {
-      flex: 1,
-      padding: "10px",
-      borderRadius: 10,
-      border: "1.5px solid",
-      cursor: "pointer",
-      fontWeight: 600,
-      fontSize: 13,
-      fontFamily: "var(--font-body)",
-      borderColor: (formEdicaoPacote.statusPag || "pendente") === v ? cor : "#e5e7eb",
-      background: (formEdicaoPacote.statusPag || "pendente") === v ? cor + "15" : "white",
-      color: (formEdicaoPacote.statusPag || "pendente") === v ? cor : "#6b7280"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma de Pagamento Principal"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formEdicaoPacote.formaPag || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      formaPag: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecionar..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
-  }, f)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data do Pagamento"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formEdicaoPacote.dataPagamento || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      dataPagamento: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label",
-    style: {
-      margin: 0
-    }
-  }, "Formas de pagamento (PIX, cartão, dinheiro em datas diferentes)"), /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    style: {
-      fontSize: 12,
-      color: "#7B00C4",
-      background: "#f3e6ff",
-      border: "1px solid #d9b3f5",
-      borderRadius: 6,
-      padding: "4px 12px",
-      cursor: "pointer"
-    },
-    onClick: () => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      pagamentosExtras: [...(formEdicaoPacote.pagamentosExtras || []), {
-        forma: "",
-        valor: "",
-        data: new Date().toISOString().slice(0, 10)
-      }]
-    })
-  }, "+ Adicionar forma")), (formEdicaoPacote.pagamentosExtras || []).length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      fontStyle: "italic",
-      padding: "6px 0"
-    }
-  }, "Clique em \"+ Adicionar forma\" para registrar pagamentos parciais ou múltiplas formas."), (formEdicaoPacote.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr 1fr auto",
-      gap: 6,
-      marginBottom: 6,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    style: {
-      fontSize: 12
-    },
-    value: pg.forma,
-    onChange: e => {
-      const p = [...(formEdicaoPacote.pagamentosExtras || [])];
-      p[i] = {
-        ...p[i],
-        forma: e.target.value
-      };
-      setFormEdicaoPacote({
-        ...formEdicaoPacote,
-        pagamentosExtras: p
-      });
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Forma..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
-  }, f))), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    style: {
-      fontSize: 12
-    },
-    type: "number",
-    placeholder: "Valor R$",
-    value: pg.valor,
-    onChange: e => {
-      const p = [...(formEdicaoPacote.pagamentosExtras || [])];
-      p[i] = {
-        ...p[i],
-        valor: e.target.value
-      };
-      setFormEdicaoPacote({
-        ...formEdicaoPacote,
-        pagamentosExtras: p
-      });
-    }
-  }), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    style: {
-      fontSize: 12
-    },
-    type: "date",
-    value: pg.data,
-    onChange: e => {
-      const p = [...(formEdicaoPacote.pagamentosExtras || [])];
-      p[i] = {
-        ...p[i],
-        data: e.target.value
-      };
-      setFormEdicaoPacote({
-        ...formEdicaoPacote,
-        pagamentosExtras: p
-      });
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    style: {
-      color: "#dc2626",
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      fontSize: 18,
-      padding: "0 4px"
-    },
-    onClick: () => {
-      const p = [...(formEdicaoPacote.pagamentosExtras || [])];
-      p.splice(i, 1);
-      setFormEdicaoPacote({
-        ...formEdicaoPacote,
-        pagamentosExtras: p
-      });
-    }
-  }, "✕")))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Observações"), /*#__PURE__*/React.createElement("textarea", {
-    className: "form-input",
-    rows: 2,
-    value: formEdicaoPacote.obs || "",
-    onChange: e => setFormEdicaoPacote({
-      ...formEdicaoPacote,
-      obs: e.target.value
-    }),
-    placeholder: "Notas sobre o pacote..."
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end",
-      marginTop: 20,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModalEditarPacote(null)
-  }, "Cancelar"), (formEdicaoPacote.statusPag || "pendente") === "recebido" && (modalEditarPacote.statusPag || "pendente") !== "recebido" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1px solid #e5e7eb",
-      color: "#6b7280",
-      fontSize: 13
-    },
-    onClick: () => salvarEdicaoPacote(null),
-    disabled: salvandoEdicao,
-    title: "Salvar sem registrar comissão"
-  }, salvandoEdicao ? "Salvando..." : "📋 Sem comissão"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => salvarEdicaoPacote("primeira"),
-    disabled: salvandoEdicao,
-    title: "10% de comissão"
-  }, salvandoEdicao ? "Salvando..." : "✨ Primeira Venda"), /*#__PURE__*/React.createElement("button", {
-    className: "btn",
-    style: {
-      background: "#0891b2",
-      color: "white"
-    },
-    onClick: () => salvarEdicaoPacote("recorrente"),
-    disabled: salvandoEdicao,
-    title: "5% de comissão"
-  }, salvandoEdicao ? "Salvando..." : "🔄 Venda Recorrente")) : /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => salvarEdicaoPacote(null),
-    disabled: salvandoEdicao
-  }, salvandoEdicao ? "Salvando..." : "💾 Salvar alterações")))), /*#__PURE__*/React.createElement("div", {
-    className: "page-header",
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-title"
-  }, "Financeiro da Clínica"), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle"
-  }, "Lançamentos, pacotes e controle de sessões")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      color: "#dc2626",
-      border: "1px solid #fca5a5",
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    },
-    onClick: () => {
-      setModalDespesa(true);
-      setEditandoDespesa(null);
-      setFormDespesa({
-        descricao: "",
-        categoria: "",
-        valor: "",
-        data: new Date().toISOString().slice(0, 10),
-        formaPag: "PIX",
-        status: "pago",
-        obs: "",
-        parcelas: "1"
-      });
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "minus-circle",
-    size: 16
-  }), " Nova Despesa"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    },
-    onClick: () => setModal("escolha")
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 16
-  }), " Novo Lançamento"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 14,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      flexShrink: 0
-    }
-  }, "Ano:"), (() => {
-    const anoAtualNum = new Date().getFullYear();
-    const anosExist = [...new Set(lancamentos.map(l => l.data?.slice(0, 4)).filter(Boolean))].map(Number);
-    // Sempre mostra: todos os anos com dados + ano atual + 1 ano antes e depois do atual
-    const anosSet = new Set([...anosExist, anoAtualNum - 1, anoAtualNum, anoAtualNum + 1]);
-    // Se houver dados fora dessa janela, eles já estão incluídos via anosExist
-    const anos = [...anosSet].sort().map(String);
-    return anos.map(a => /*#__PURE__*/React.createElement("button", {
-      key: a,
-      onClick: () => {
-        setAnoFiltro(a);
-        setMesFiltro(a === String(anoAtualNum) ? mesAtual : a + "-01");
-      },
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [modalEditarPacote && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        padding: "5px 16px",
-        borderRadius: 20,
-        border: "1.5px solid",
-        borderColor: anoFiltro === a ? "var(--purple)" : "#e5e7eb",
-        background: anoFiltro === a ? "var(--purple)" : "white",
-        color: anoFiltro === a ? "white" : "#6b7280",
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer"
-      }
-    }, a, a === String(anoAtualNum) && /*#__PURE__*/React.createElement("span", {
-      style: {
-        marginLeft: 3,
-        fontSize: 9
-      }
-    }, "●")));
-  })()), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
-      gap: 12,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    onClick: () => setPeriodoCard(p => p === "mes" ? "ano" : "mes"),
-    style: {
-      background: totalRecebidoPeriodo >= 0 ? "#d1fae5" : "#fee2e2",
-      borderRadius: 12,
-      padding: "14px 16px",
-      textAlign: "center",
-      cursor: "pointer",
-      border: "1.5px solid",
-      borderColor: totalRecebidoPeriodo >= 0 ? "#6ee7b7" : "#fca5a5",
-      transition: "all .2s",
-      position: "relative"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "absolute",
-      top: 6,
-      right: 8,
-      fontSize: 10,
-      color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626",
-      fontWeight: 600,
-      background: "white",
-      borderRadius: 10,
-      padding: "1px 6px"
-    }
-  }, periodoCard === "mes" ? "mês ↕" : "ano ↕"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626"
-    }
-  }, totalRecebidoPeriodo.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626",
-      fontWeight: 500,
-      marginTop: 2
-    }
-  }, "Saldo (", periodoCard === "mes" ? mesAtualLabel : anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "#6b7280",
-      marginTop: 4
-    }
-  }, "+", calcReceitas(lancPeriodo).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  }), " / -", calcDespesas(lancPeriodo).toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#fef3c7",
-      borderRadius: 12,
-      padding: "14px 16px",
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "#d97706"
-    }
-  }, totalPendente.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#d97706",
-      fontWeight: 500,
-      marginTop: 2
-    }
-  }, "Pendente (", anoFiltro, ")")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--purple-soft)",
-      borderRadius: 12,
-      padding: "14px 16px",
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "var(--purple)"
-    }
-  }, pacotes.filter(p => p.status === "ativo").length), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--purple)",
-      fontWeight: 500,
-      marginTop: 2
-    }
-  }, "Pacotes ativos")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#e0f2fe",
-      borderRadius: 12,
-      padding: "14px 16px",
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "#0891b2"
-    }
-  }, lancPeriodo.length), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#0891b2",
-      fontWeight: 500,
-      marginTop: 2
-    }
-  }, "Lançamentos (", periodoCard === "mes" ? new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
-    month: "short"
-  }) : anoFiltro, ")"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 0,
-      marginBottom: 20,
-      borderBottom: "1px solid var(--gray-200)",
-      overflowX: "auto",
-      WebkitOverflowScrolling: "touch",
-      scrollbarWidth: "none",
-      flexShrink: 0
-    }
-  }, [["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"], ["comissoes", "Comissões", "percent"], ["orcamento", "Orçamento", "file-text"]].map(([id, lbl, ic]) => /*#__PURE__*/React.createElement("button", {
-    key: id,
-    onClick: () => setAba(id),
-    style: {
-      padding: "10px 20px",
-      border: "none",
-      background: "none",
-      cursor: "pointer",
-      fontSize: 14,
-      color: aba === id ? "var(--purple)" : "var(--gray-600)",
-      borderBottom: aba === id ? "2px solid var(--purple)" : "2px solid transparent",
-      fontWeight: aba === id ? 600 : 400,
-      fontFamily: "var(--font-body)",
-      marginBottom: -1,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: ic,
-    size: 15
-  }), lbl)), (() => {
-    return null;
-  })()), aba === "lancamentos" && /*#__PURE__*/React.createElement("div", null, aba === "lancamentos" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 16,
-      background: "var(--gray-50)",
-      padding: 6,
-      borderRadius: 12,
-      width: "fit-content"
-    }
-  }, [["tudo", "📊 Tudo"], ["receita", "💰 Receitas"], ["despesa", "💸 Despesas"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    onClick: () => setFiltroTipo(v),
-    style: {
-      padding: "8px 16px",
-      borderRadius: 8,
-      border: "none",
-      cursor: "pointer",
-      fontFamily: "var(--font-body)",
-      fontSize: 13,
-      fontWeight: 600,
-      background: filtroTipo === v ? "white" : "transparent",
-      color: filtroTipo === v ? v === "receita" ? "#059669" : v === "despesa" ? "#dc2626" : "#7B00C4" : "#6b7280",
-      boxShadow: filtroTipo === v ? "0 1px 4px rgba(0,0,0,.1)" : "none",
-      transition: ".15s"
-    }
-  }, l))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 16,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      flexShrink: 0
-    }
-  }, "Mês:"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = mesesDisp.indexOf(mesFiltroEfetivo);
-      if (idx > 0) setMesFiltro(mesesDisp[idx - 1]);
-    },
-    style: {
-      background: "var(--purple)",
-      border: "none",
-      borderRadius: "50%",
-      width: 30,
-      height: 30,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      color: "white",
-      fontSize: 16,
-      fontWeight: 700
-    }
-  }, "‹"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      overflowX: "hidden",
-      flex: 1
-    }
-  }, mesesDisp.map(m => {
-    const isAtual = m === mesAtual;
-    const isSel = m === mesFiltroEfetivo;
-    return /*#__PURE__*/React.createElement("button", {
-      key: m,
-      onClick: () => setMesFiltro(m),
-      style: {
-        padding: "5px 14px",
-        borderRadius: 20,
-        border: "1.5px solid",
-        flexShrink: 0,
-        borderColor: isSel ? "var(--purple)" : isAtual ? "var(--purple)" : "#e5e7eb",
-        background: isSel ? "var(--purple)" : "white",
-        color: isSel ? "white" : isAtual ? "var(--purple)" : "#6b7280",
-        fontSize: 12,
-        fontWeight: isSel || isAtual ? 700 : 400,
-        cursor: "pointer",
-        display: Math.abs(mesesDisp.indexOf(m) - mesesDisp.indexOf(mesFiltroEfetivo)) <= 2 ? "flex" : "none",
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
         alignItems: "center",
-        gap: 4
-      }
-    }, new Date(m + "-15").toLocaleDateString("pt-BR", {
-      month: "long"
-    }), isAtual && !isSel && /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 9
-      }
-    }, "●"));
-  })), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = mesesDisp.indexOf(mesFiltroEfetivo);
-      if (idx < mesesDisp.length - 1) setMesFiltro(mesesDisp[idx + 1]);
-    },
-    style: {
-      background: "var(--purple)",
-      border: "none",
-      borderRadius: "50%",
-      width: 30,
-      height: 30,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      color: "white",
-      fontSize: 16,
-      fontWeight: 700
-    }
-  }, "›")), lancMes.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      textAlign: "center",
-      padding: 48,
-      color: "var(--text-muted)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "dollar-sign",
-    size: 40
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12
-    }
-  }, "Nenhum lançamento em ", new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric"
-  }))) : (() => {
-    const receitasTodas = lancMes.filter(l => l.tipo_lancamento !== "despesa").sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-    const despesasTodas = lancMes.filter(l => l.tipo_lancamento === "despesa").sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-    const receitas = filtroTipo === "despesa" ? [] : receitasTodas;
-    const despesas = filtroTipo === "receita" ? [] : despesasTodas;
-    const totalRecFiltro = receitasTodas.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const totalDespFiltro = despesasTodas.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const totalRec = calcReceitas(lancMes);
-    const totalDesp = calcDespesas(lancMes);
-    const saldo = totalRec - totalDesp;
-
-    // Cards de saldo dinâmicos por filtroTipo
-    const cardsSaldo = filtroTipo === "tudo" ? /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "repeat(3,1fr)",
-        gap: 12,
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        borderRadius: 12,
-        padding: "14px 18px",
-        border: "1px solid #e5e7eb"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#6b7280",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        marginBottom: 4
-      }
-    }, "Total Receitas"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 20,
-        fontWeight: 800,
-        color: "#059669"
-      }
-    }, totalRecFiltro.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        borderRadius: 12,
-        padding: "14px 18px",
-        border: "1px solid #e5e7eb"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#6b7280",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        marginBottom: 4
-      }
-    }, "Total Despesas"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 20,
-        fontWeight: 800,
-        color: "#dc2626"
-      }
-    }, totalDespFiltro.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "#f5f0ff",
-        borderRadius: 12,
-        padding: "14px 18px",
-        border: "2px solid #7B00C4"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#7B00C4",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        marginBottom: 4
-      }
-    }, "Saldo Líquido"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 20,
-        fontWeight: 800,
-        color: totalRecFiltro - totalDespFiltro >= 0 ? "#7B00C4" : "#dc2626"
-      }
-    }, (totalRecFiltro - totalDespFiltro).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })))) : filtroTipo === "receita" ? /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "#f0fdf4",
-        borderRadius: 12,
-        padding: "14px 18px",
-        border: "1px solid #6ee7b7",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#15803d",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        marginBottom: 4
-      }
-    }, "Total Receitas do Mês"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 24,
-        fontWeight: 800,
-        color: "#059669"
-      }
-    }, totalRecFiltro.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }))) : /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "#fef2f2",
-        borderRadius: 12,
-        padding: "14px 18px",
-        border: "1px solid #fca5a5",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "#b91c1c",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        marginBottom: 4
-      }
-    }, "Total Despesas do Mês"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 24,
-        fontWeight: 800,
-        color: "#dc2626"
-      }
-    }, totalDespFiltro.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })));
-    function TabelaLanc({
-      itens,
-      titulo,
-      corHeader,
-      corValor,
-      bgHeader
-    }) {
-      if (!itens.length) return null;
-      return /*#__PURE__*/React.createElement("div", {
-        className: "card",
+        justifyContent: "center",
+        zIndex: 600,
+        padding: 20
+      },
+      onClick: e => {
+        if (e.target === e.currentTarget) setModalEditarPacote(null);
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
         style: {
-          padding: 0,
-          marginBottom: 16
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "10px 16px",
-          background: bgHeader,
-          borderBottom: "2px solid " + corHeader,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center"
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontWeight: 700,
-          fontSize: 14,
-          color: corHeader
-        }
-      }, titulo), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontWeight: 800,
-          fontSize: 14,
-          color: corHeader
-        }
-      }, itens.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0).toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      }))), /*#__PURE__*/React.createElement("table", {
-        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
           width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13
-        }
-      }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-        style: {
-          background: "var(--gray-50)"
-        }
-      }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/React.createElement("th", {
-        key: h,
-        style: {
-          padding: "8px 14px",
-          textAlign: "left",
-          fontSize: 11,
-          fontWeight: 600,
-          color: "var(--text-muted)",
-          borderBottom: "1px solid var(--gray-200)",
-          whiteSpace: "nowrap"
-        }
-      }, h)))), /*#__PURE__*/React.createElement("tbody", null, itens.map(l => {
-        const isFut = l.data > new Date().toISOString().slice(0, 10);
-        const statusColor = l.status === "recebido" || l.status === "pago" ? "#059669" : l.status === "planejado" ? "#0891b2" : "#d97706";
-        const statusBg = l.status === "recebido" || l.status === "pago" ? "#d1fae5" : l.status === "planejado" ? "#e0f2fe" : "#fef3c7";
-        const statusLabel = l.status === "recebido" ? "✓ Recebido" : l.status === "pago" ? "✓ Pago" : l.status === "planejado" ? "📅 Planejado" : "Pendente";
-        return /*#__PURE__*/React.createElement("tr", {
-          key: l.id,
-          style: {
-            borderBottom: "1px solid var(--gray-100)",
-            background: isFut ? "#fafafa" : "white",
-            opacity: isFut ? 0.85 : 1
-          }
-        }, /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px",
-            whiteSpace: "nowrap",
-            fontSize: 12
-          }
-        }, l.data ? new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", isFut && /*#__PURE__*/React.createElement("span", {
-          style: {
-            marginLeft: 4,
-            fontSize: 9,
-            color: "#0891b2",
-            fontWeight: 600
-          }
-        }, "futuro")), /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px",
-            maxWidth: 320
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontWeight: 500,
-            fontSize: 13,
-            lineHeight: 1.4
-          }
-        }, l.descricao || l.tipo || l.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
+          maxWidth: 560,
+          maxHeight: "90vh",
+          overflowY: "auto"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
           style: {
             display: "flex",
-            gap: 4,
-            marginTop: 3,
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20
+          },
+          children: [/*#__PURE__*/_jsxDEV("h3", {
+            style: {
+              margin: 0,
+              color: "var(--purple)"
+            },
+            children: "✏️ Editar Pacote"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setModalEditarPacote(null),
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 20,
+              color: "var(--gray-400)"
+            },
+            children: "✕"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 14
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Nº de Sessões"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              value: formEdicaoPacote.totalSessoes || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                totalSessoes: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Valor por Sessão (R$)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              value: formEdicaoPacote.valorSessao || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                valorSessao: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Data de Início"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "date",
+              value: formEdicaoPacote.dataInicio || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                dataInicio: e.target.value
+              })
+            }, void 0, false), formEdicaoPacote.dataInicio !== modalEditarPacote.dataInicio && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                marginTop: 6,
+                fontSize: 11,
+                color: "#d97706",
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
+                borderRadius: 8,
+                padding: "6px 10px",
+                lineHeight: 1.5
+              },
+              children: ["⚠️ Mudar a data de início ", /*#__PURE__*/_jsxDEV("strong", {
+                children: "não move"
+              }, void 0, false), " as sessões já criadas — elas continuam nas datas originais. Use o botão abaixo se quiser realinhar todas as sessões a partir desta nova data.", /*#__PURE__*/_jsxDEV("button", {
+                type: "button",
+                onClick: recalcularDatasPacote,
+                disabled: salvandoEdicao,
+                style: {
+                  display: "block",
+                  marginTop: 8,
+                  background: "#f59e0b",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 12px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-body)"
+                },
+                children: "🔄 Recalcular datas das sessões"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Horário"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "time",
+              value: formEdicaoPacote.horario || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                horario: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Modalidade"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formEdicaoPacote.modalidade || "on-line",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                modalidade: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "on-line",
+                children: "💻 On-line"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "presencial",
+                children: "🏥 Presencial"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "híbrido",
+                children: "🔄 Híbrido"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Recorrência"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formEdicaoPacote.recorrencia || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                recorrencia: e.target.value
+              }),
+              children: RECORRENCIAS.map(r => /*#__PURE__*/_jsxDEV("option", {
+                children: r
+              }, r, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Total do Pacote"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              readOnly: true,
+              value: "R$ " + (parseFloat(formEdicaoPacote.valorSessao || 0) * parseInt(formEdicaoPacote.totalSessoes || 0) || 0).toFixed(2).replace(".", ","),
+              style: {
+                background: "#f9fafb",
+                color: "var(--text-muted)"
+              }
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Status do Pagamento"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8
+              },
+              children: [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, cor]) => /*#__PURE__*/_jsxDEV("button", {
+                type: "button",
+                onClick: () => setFormEdicaoPacote({
+                  ...formEdicaoPacote,
+                  statusPag: v
+                }),
+                style: {
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: 10,
+                  border: "1.5px solid",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  fontFamily: "var(--font-body)",
+                  borderColor: (formEdicaoPacote.statusPag || "pendente") === v ? cor : "#e5e7eb",
+                  background: (formEdicaoPacote.statusPag || "pendente") === v ? cor + "15" : "white",
+                  color: (formEdicaoPacote.statusPag || "pendente") === v ? cor : "#6b7280"
+                },
+                children: l
+              }, v, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Forma de Pagamento Principal"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formEdicaoPacote.formaPag || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                formaPag: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecionar..."
+              }, void 0, false), FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                children: f
+              }, f, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Data do Pagamento"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "date",
+              value: formEdicaoPacote.dataPagamento || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                dataPagamento: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 8
+              },
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                style: {
+                  margin: 0
+                },
+                children: "Formas de pagamento (PIX, cartão, dinheiro em datas diferentes)"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                type: "button",
+                style: {
+                  fontSize: 12,
+                  color: "#7B00C4",
+                  background: "#f3e6ff",
+                  border: "1px solid #d9b3f5",
+                  borderRadius: 6,
+                  padding: "4px 12px",
+                  cursor: "pointer"
+                },
+                onClick: () => setFormEdicaoPacote({
+                  ...formEdicaoPacote,
+                  pagamentosExtras: [...(formEdicaoPacote.pagamentosExtras || []), {
+                    forma: "",
+                    valor: "",
+                    data: new Date().toISOString().slice(0, 10)
+                  }]
+                }),
+                children: "+ Adicionar forma"
+              }, void 0, false)]
+            }, void 0, true), (formEdicaoPacote.pagamentosExtras || []).length === 0 && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)",
+                fontStyle: "italic",
+                padding: "6px 0"
+              },
+              children: "Clique em \"+ Adicionar forma\" para registrar pagamentos parciais ou múltiplas formas."
+            }, void 0, false), (formEdicaoPacote.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr auto",
+                gap: 6,
+                marginBottom: 6,
+                alignItems: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("select", {
+                className: "form-input",
+                style: {
+                  fontSize: 12
+                },
+                value: pg.forma,
+                onChange: e => {
+                  const p = [...(formEdicaoPacote.pagamentosExtras || [])];
+                  p[i] = {
+                    ...p[i],
+                    forma: e.target.value
+                  };
+                  setFormEdicaoPacote({
+                    ...formEdicaoPacote,
+                    pagamentosExtras: p
+                  });
+                },
+                children: [/*#__PURE__*/_jsxDEV("option", {
+                  value: "",
+                  children: "Forma..."
+                }, void 0, false), FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                  children: f
+                }, f, false))]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                style: {
+                  fontSize: 12
+                },
+                type: "number",
+                placeholder: "Valor R$",
+                value: pg.valor,
+                onChange: e => {
+                  const p = [...(formEdicaoPacote.pagamentosExtras || [])];
+                  p[i] = {
+                    ...p[i],
+                    valor: e.target.value
+                  };
+                  setFormEdicaoPacote({
+                    ...formEdicaoPacote,
+                    pagamentosExtras: p
+                  });
+                }
+              }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                style: {
+                  fontSize: 12
+                },
+                type: "date",
+                value: pg.data,
+                onChange: e => {
+                  const p = [...(formEdicaoPacote.pagamentosExtras || [])];
+                  p[i] = {
+                    ...p[i],
+                    data: e.target.value
+                  };
+                  setFormEdicaoPacote({
+                    ...formEdicaoPacote,
+                    pagamentosExtras: p
+                  });
+                }
+              }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                type: "button",
+                style: {
+                  color: "#dc2626",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  padding: "0 4px"
+                },
+                onClick: () => {
+                  const p = [...(formEdicaoPacote.pagamentosExtras || [])];
+                  p.splice(i, 1);
+                  setFormEdicaoPacote({
+                    ...formEdicaoPacote,
+                    pagamentosExtras: p
+                  });
+                },
+                children: "✕"
+              }, void 0, false)]
+            }, i, true))]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Observações"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("textarea", {
+              className: "form-input",
+              rows: 2,
+              value: formEdicaoPacote.obs || "",
+              onChange: e => setFormEdicaoPacote({
+                ...formEdicaoPacote,
+                obs: e.target.value
+              }),
+              placeholder: "Notas sobre o pacote..."
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 10,
+            justifyContent: "flex-end",
+            marginTop: 20,
             flexWrap: "wrap"
-          }
-        }, l.tipo_lancamento === "pacote" && /*#__PURE__*/React.createElement("span", {
-          style: {
-            background: "var(--purple-soft)",
-            color: "var(--purple)",
-            borderRadius: 20,
-            padding: "1px 6px",
-            fontSize: 10,
-            fontWeight: 600
-          }
-        }, "Pacote"), l.tipo_lancamento === "sessao" && /*#__PURE__*/React.createElement("span", {
-          style: {
-            background: "#e0f2fe",
-            color: "#0891b2",
-            borderRadius: 20,
-            padding: "1px 6px",
-            fontSize: 10,
-            fontWeight: 600
-          }
-        }, "Sessão"), (l.pagamentosExtras || []).length > 0 && /*#__PURE__*/React.createElement("span", {
-          style: {
-            background: "#fef3c7",
-            color: "#92400e",
-            borderRadius: 20,
-            padding: "1px 6px",
-            fontSize: 10,
-            fontWeight: 600
-          }
-        }, "💳 ", (l.pagamentosExtras || []).length, "x forma", (l.pagamentosExtras || []).length > 1 ? "s" : ""))), /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px",
-            fontSize: 12,
-            color: "var(--text-muted)"
-          }
-        }, l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px"
-          }
-        }, /*#__PURE__*/React.createElement("span", {
-          style: {
-            background: "#f3f4f6",
-            borderRadius: 6,
-            padding: "2px 6px",
-            fontSize: 11
-          }
-        }, l.formaPag || "—")), /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px",
-            fontWeight: 700,
-            color: corValor,
-            whiteSpace: "nowrap"
-          }
-        }, (parseFloat(l.valor) || 0).toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL"
-        })), /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px"
-          }
-        }, /*#__PURE__*/React.createElement("span", {
-          style: {
-            background: statusBg,
-            color: statusColor,
-            borderRadius: 20,
-            padding: "2px 8px",
-            fontSize: 11,
-            fontWeight: 600
-          }
-        }, statusLabel)), /*#__PURE__*/React.createElement("td", {
-          style: {
-            padding: "8px 14px"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            gap: 4
-          }
-        }, l.tipo_lancamento === "pacote" ? /*#__PURE__*/React.createElement("button", {
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            onClick: () => setModalEditarPacote(null),
+            children: "Cancelar"
+          }, void 0, false), (formEdicaoPacote.statusPag || "pendente") === "recebido" && (modalEditarPacote.statusPag || "pendente") !== "recebido" ? /*#__PURE__*/_jsxDEV(_Fragment, {
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              style: {
+                border: "1px solid #e5e7eb",
+                color: "#6b7280",
+                fontSize: 13
+              },
+              onClick: () => salvarEdicaoPacote(null),
+              disabled: salvandoEdicao,
+              title: "Salvar sem registrar comissão",
+              children: salvandoEdicao ? "Salvando..." : "📋 Sem comissão"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-purple",
+              onClick: () => salvarEdicaoPacote("primeira"),
+              disabled: salvandoEdicao,
+              title: "10% de comissão",
+              children: salvandoEdicao ? "Salvando..." : "✨ Primeira Venda"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn",
+              style: {
+                background: "#0891b2",
+                color: "white"
+              },
+              onClick: () => salvarEdicaoPacote("recorrente"),
+              disabled: salvandoEdicao,
+              title: "5% de comissão",
+              children: salvandoEdicao ? "Salvando..." : "🔄 Venda Recorrente"
+            }, void 0, false)]
+          }, void 0, true) : /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            onClick: () => salvarEdicaoPacote(null),
+            disabled: salvandoEdicao,
+            children: salvandoEdicao ? "Salvando..." : "💾 Salvar alterações"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      className: "page-header",
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start"
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "page-title",
+          children: "Financeiro da Clínica"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "page-subtitle",
+          children: "Lançamentos, pacotes e controle de sessões"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap"
+        },
+        children: [/*#__PURE__*/_jsxDEV("button", {
           className: "btn btn-ghost",
           style: {
-            padding: "4px 8px",
-            fontSize: 11,
-            color: "var(--purple)"
+            color: "#dc2626",
+            border: "1px solid #fca5a5",
+            display: "flex",
+            alignItems: "center",
+            gap: 6
           },
           onClick: () => {
-            setPacoteSelecionado(l.pacoteId);
-            setAba("pacotes");
-          }
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "clipboard-list",
-          size: 12
-        })) : /*#__PURE__*/React.createElement("button", {
-          className: "btn btn-ghost",
-          style: {
-            padding: "4px 8px",
-            fontSize: 11,
-            color: "var(--purple)"
+            setModalDespesa(true);
+            setEditandoDespesa(null);
+            setFormDespesa({
+              descricao: "",
+              categoria: "",
+              valor: "",
+              data: new Date().toISOString().slice(0, 10),
+              formaPag: "PIX",
+              status: "pago",
+              obs: "",
+              parcelas: "1"
+            });
           },
-          onClick: () => abrirEditar(l)
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "pencil",
-          size: 12
-        })), /*#__PURE__*/React.createElement("button", {
-          className: "btn btn-ghost",
-          style: {
-            padding: "4px 8px",
-            fontSize: 11,
-            color: "#dc2626"
-          },
-          onClick: () => setModalExcluirLanc(l)
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "trash-2",
-          size: 12
-        })))));
-      }))));
-    }
-    return /*#__PURE__*/React.createElement("div", null, cardsSaldo, /*#__PURE__*/React.createElement(TabelaLanc, {
-      itens: receitas,
-      titulo: "💰 Receitas",
-      corHeader: "#059669",
-      corValor: "#059669",
-      bgHeader: "#f0fdf4"
-    }), /*#__PURE__*/React.createElement(TabelaLanc, {
-      itens: despesas,
-      titulo: "💸 Despesas",
-      corHeader: "#dc2626",
-      corValor: "#dc2626",
-      bgHeader: "#fff1f2"
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        borderRadius: 12,
-        border: "1px solid var(--gray-200)",
-        padding: "14px 20px",
-        display: "flex",
-        gap: 24,
-        flexWrap: "wrap",
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--text-muted)",
-        marginBottom: 2
-      }
-    }, "Receitas"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 18,
-        fontWeight: 800,
-        color: "#059669"
-      }
-    }, totalRec.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 20,
-        color: "var(--text-muted)"
-      }
-    }, "−"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--text-muted)",
-        marginBottom: 2
-      }
-    }, "Despesas"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 18,
-        fontWeight: 800,
-        color: "#dc2626"
-      }
-    }, totalDesp.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 20,
-        color: "var(--text-muted)"
-      }
-    }, "="), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--text-muted)",
-        marginBottom: 2
-      }
-    }, "Saldo do Mês"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 22,
-        fontWeight: 900,
-        color: saldo >= 0 ? "#059669" : "#dc2626"
-      }
-    }, saldo.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })))));
-  })(), modalExcluirLanc && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 600,
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 420,
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 12
-    }
-  }, "🗑️"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 17,
-      fontWeight: 600,
-      marginBottom: 6
-    }
-  }, modalExcluirLanc.tipo), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: "#6b7280",
-      marginBottom: 20
-    }
-  }, modalExcluirLanc.data ? new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR") : ""), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8,
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1.5px solid #e5e7eb",
-      textAlign: "left",
-      padding: "12px 16px"
-    },
-    onClick: async () => {
-      await db.collection("clinica_lancamentos").doc(modalExcluirLanc.id).delete();
-      setModalExcluirLanc(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, "Só este lançamento"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280"
-    }
-  }, "Remove apenas ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
-    month: "long"
-  }))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1.5px solid #fbbf24",
-      textAlign: "left",
-      padding: "12px 16px"
-    },
-    onClick: async () => {
-      if (!modalExcluirLanc.pacoteId) {
-        alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");
-        return;
-      }
-      if (!confirm("Excluir este e todos os lançamentos futuros deste pacote?")) return;
-      const snap = await db.collection("clinica_lancamentos").get();
-      const futuros = snap.docs.filter(d => {
-        const dd = d.data();
-        return dd.pacoteId === modalExcluirLanc.pacoteId && dd.data >= modalExcluirLanc.data;
-      });
-      const b = db.batch();
-      futuros.forEach(d => b.delete(d.ref));
-      await b.commit();
-      setModalExcluirLanc(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      color: "#d97706"
-    }
-  }, "Este e todos os futuros"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280"
-    }
-  }, "Remove lançamentos deste pacote a partir de ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
-    month: "long"
-  }))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1.5px solid #fca5a5",
-      textAlign: "left",
-      padding: "12px 16px"
-    },
-    onClick: async () => {
-      if (!modalExcluirLanc.pacoteId) {
-        alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");
-        return;
-      }
-      if (!confirm("Excluir TODOS os lançamentos deste pacote no ano inteiro?")) return;
-      const snap = await db.collection("clinica_lancamentos").get();
-      const todos = snap.docs.filter(d => d.data().pacoteId === modalExcluirLanc.pacoteId);
-      const b = db.batch();
-      todos.forEach(d => b.delete(d.ref));
-      await b.commit();
-      setModalExcluirLanc(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      color: "#dc2626"
-    }
-  }, "Todos — o ano inteiro"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280"
-    }
-  }, "Remove todos os lançamentos deste pacote"))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      width: "100%"
-    },
-    onClick: () => setModalExcluirLanc(null)
-  }, "Cancelar")))), aba === "pacotes" && /*#__PURE__*/React.createElement("div", null, (() => {
-    const hoje = new Date().toISOString().slice(0, 10);
-    // Sessões pendentes = data PASSADA + status "agendado" + vinculada a pacote ativo
-    // Exclui: falta, realizado, cancelado, remarcado, futuras, sessões sem pacote
-    const pacoteIdsAtivos = new Set(pacotes.filter(p => p.status !== "inativo").map(p => p.id));
-    const sessoesPendentes = sessoes.filter(s => s.data < hoje && s.status === "agendado" && s.pacienteId && s.pacoteId && pacoteIdsAtivos.has(s.pacoteId));
-    // Pacotes com pagamento pendente (não 100% pago)
-    const pacotesPendPag = pacotes.filter(p => {
-      const sessPac = sessoes.filter(s => s.pacoteId === p.id);
-      const pagas = sessPac.filter(s => s.pagamento === "pago").length;
-      return p.status !== "inativo" && pagas < (p.totalSessoes || 0);
-    });
-    if (sessoesPendentes.length === 0 && pacotesPendPag.length === 0) return null;
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        marginBottom: 20
-      }
-    }, sessoesPendentes.length > 0 && (() => {
-      function AvisoSessoes({
-        lista,
-        pacientes
-      }) {
-        const [expandido, setExpandido] = React.useState(false);
-        const visiveis = expandido ? lista : lista.slice(0, 5);
-        const extras = lista.length - 5;
-        return /*#__PURE__*/React.createElement("div", {
-          style: {
-            background: "#fef3c7",
-            border: "1px solid #f59e0b",
-            borderRadius: 12,
-            padding: "14px 18px"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontWeight: 700,
-            fontSize: 14,
-            color: "#92400e",
-            marginBottom: 4
-          }
-        }, "⚠️ ", lista.length, " sessão(ões) passada(s) sem status final"), /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 12,
-            color: "#78350f",
-            marginBottom: 8
-          }
-        }, "Sessões que já ocorreram e ainda estão como \"Agendado\". Marque como ", /*#__PURE__*/React.createElement("strong", null, "Realizada"), ", ", /*#__PURE__*/React.createElement("strong", null, "Cancelada"), " ou ", /*#__PURE__*/React.createElement("strong", null, "Remarcada"), "."), /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 6,
-            alignItems: "center"
-          }
-        }, visiveis.map(s => {
-          const nome = pacientes.find(p => p.id === s.pacienteId)?.nome || "—";
-          return /*#__PURE__*/React.createElement("span", {
-            key: s.id,
-            style: {
-              background: "#fde68a",
-              borderRadius: 20,
-              padding: "2px 10px",
-              fontSize: 11,
-              color: "#78350f",
-              fontWeight: 600
-            }
-          }, nome.split(" ")[0], " · ", new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "short"
-          }));
-        }), !expandido && extras > 0 && /*#__PURE__*/React.createElement("button", {
-          onClick: () => setExpandido(true),
-          style: {
-            background: "#f59e0b",
-            color: "white",
-            border: "none",
-            borderRadius: 20,
-            padding: "2px 12px",
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "var(--font-body)"
-          }
-        }, "+", extras, " mais ▾"), expandido && /*#__PURE__*/React.createElement("button", {
-          onClick: () => setExpandido(false),
-          style: {
-            background: "none",
-            color: "#92400e",
-            border: "1px solid #f59e0b",
-            borderRadius: 20,
-            padding: "2px 10px",
-            fontSize: 11,
-            cursor: "pointer",
-            fontFamily: "var(--font-body)"
-          }
-        }, "▴ recolher")));
-      }
-      return /*#__PURE__*/React.createElement(AvisoSessoes, {
-        lista: sessoesPendentes,
-        pacientes: pacientes
-      });
-    })(), pacotesPendPag.length > 0 && (() => {
-      function AvisoPacotes({
-        lista,
-        pacientes,
-        sessoes
-      }) {
-        const [expandidoPac, setExpandidoPac] = React.useState(false);
-        const visiveis = expandidoPac ? lista : lista.slice(0, 5);
-        const extras = lista.length - 5;
-        return /*#__PURE__*/React.createElement("div", {
-          style: {
-            background: "#fff7ed",
-            border: "1px solid #fb923c",
-            borderRadius: 12,
-            padding: "14px 18px"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontWeight: 700,
-            fontSize: 14,
-            color: "#c2410c",
-            marginBottom: 4
-          }
-        }, "💰 ", lista.length, " pacote(s) com pagamento em aberto"), /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 12,
-            color: "#9a3412",
-            marginBottom: 8
-          }
-        }, "Pacotes ativos com sessões ainda não marcadas como pagas."), /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 6,
-            alignItems: "center"
-          }
-        }, visiveis.map(p => {
-          const nome = pacientes.find(pac => pac.id === p.pacienteId)?.nome || "—";
-          const sessPac = sessoes.filter(s => s.pacoteId === p.id);
-          const pagas = sessPac.filter(s => s.pagamento === "pago").length;
-          const total = p.totalSessoes || 0;
-          return /*#__PURE__*/React.createElement("span", {
-            key: p.id,
-            style: {
-              background: "#fed7aa",
-              borderRadius: 20,
-              padding: "2px 10px",
-              fontSize: 11,
-              color: "#9a3412",
-              fontWeight: 600
-            }
-          }, nome.split(" ")[0], " · ", pagas, "/", total, " pagas");
-        }), !expandidoPac && pacotesPendPag.length > 5 && /*#__PURE__*/React.createElement("button", {
-          onClick: () => setExpandidoPac(true),
-          style: {
-            background: "#ea580c",
-            color: "white",
-            border: "none",
-            borderRadius: 20,
-            padding: "2px 12px",
-            fontSize: 11,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontFamily: "var(--font-body)"
-          }
-        }, "+", pacotesPendPag.length - 5, " mais ▾"), expandidoPac && /*#__PURE__*/React.createElement("button", {
-          onClick: () => setExpandidoPac(false),
-          style: {
-            background: "none",
-            color: "#c2410c",
-            border: "1px solid #fb923c",
-            borderRadius: 20,
-            padding: "2px 10px",
-            fontSize: 11,
-            cursor: "pointer",
-            fontFamily: "var(--font-body)"
-          }
-        }, "▴ recolher")));
-      }
-      return /*#__PURE__*/React.createElement(AvisoPacotes, {
-        lista: pacotesPendPag,
-        pacientes: pacientes,
-        sessoes: sessoes
-      });
-    })());
-  })(), pacotes.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      textAlign: "center",
-      padding: 60
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "package",
-    size: 48
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      fontWeight: 500
-    }
-  }, "Nenhum pacote criado ainda"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      marginTop: 16
-    },
-    onClick: () => setModal("pacote")
-  }, "+ Criar Pacote")) : (() => {
-    // Agrupar pacotes por paciente — ordem alfabética
-    const pacientesComPacote = [...new Set(pacotes.map(p => p.pacienteId))];
-    const pacientesVisiveisBruto = buscaPac.trim() ? pacientesComPacote.filter(id => {
-      const pac = pacientes.find(p => p.id === id);
-      const inicial = (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-      return inicial === buscaPac;
-    }) : pacientesComPacote;
-    const pacientesVisiveis = pacientesVisiveisBruto.sort((a, b) => {
-      const nA = (pacientes.find(p => p.id === a)?.nome || "").toLowerCase();
-      const nB = (pacientes.find(p => p.id === b)?.nome || "").toLowerCase();
-      return nA.localeCompare(nB, "pt-BR");
-    });
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 28
-      }
-    }, (() => {
-      const letrasComPac = [...new Set(pacientesComPacote.map(id => {
-        const pac = pacientes.find(p => p.id === id);
-        return (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-      }))].sort();
-      return /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 4,
-          marginBottom: 12
-        }
-      }, buscaPac && /*#__PURE__*/React.createElement("button", {
-        onClick: () => setBuscaPac(""),
-        style: {
-          padding: "4px 12px",
-          borderRadius: 20,
-          border: "1.5px solid #7B00C4",
-          background: "#7B00C4",
-          color: "white",
-          fontSize: 12,
-          fontWeight: 700,
-          cursor: "pointer"
-        }
-      }, "Todos"), letrasComPac.map(letra => /*#__PURE__*/React.createElement("button", {
-        key: letra,
-        onClick: () => setBuscaPac(buscaPac === letra ? "" : letra),
-        style: {
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          border: "1.5px solid",
-          borderColor: buscaPac === letra ? "#7B00C4" : "#e8c8ff",
-          background: buscaPac === letra ? "#7B00C4" : "white",
-          color: buscaPac === letra ? "white" : "#7B00C4",
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: "pointer",
-          flexShrink: 0
-        }
-      }, letra)));
-    })(), pacientesVisiveis.map(pacId => {
-      const pac = pacientes.find(p => p.id === pacId);
-      const pacotesDoPac = pacotes.filter(p => p.pacienteId === pacId).sort((a, b) => {
-        const da = a.dataInicio || a.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
-        const db2 = b.dataInicio || b.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
-        return db2.localeCompare(da);
-      });
-      return /*#__PURE__*/React.createElement("div", {
-        key: pacId
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 12,
-          paddingBottom: 10,
-          borderBottom: "2px solid var(--purple-soft)"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: "var(--purple)",
-          color: "white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--font-display)",
-          fontSize: 18,
-          fontWeight: 600,
-          flexShrink: 0
-        }
-      }, (pac?.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontWeight: 700,
-          fontSize: 16
-        }
-      }, pac?.nome || pacotesDoPac[0]?.pacienteNome || "—"), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--text-muted)"
-        }
-      }, pacotesDoPac.length, " pacote(s)")), /*#__PURE__*/React.createElement("button", {
-        className: "btn btn-outline",
-        style: {
-          marginLeft: "auto",
-          fontSize: 12
-        },
-        onClick: () => setPacoteSelecionado(pacId)
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "bar-chart-2",
-        size: 13
-      }), " Acompanhamento")), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          flexDirection: "column",
-          gap: 10
-        }
-      }, pacotesDoPac.map(p => {
-        const sessPac = sessoes.filter(s => s.pacoteId === p.id);
-        const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "falta").length;
-        const pagas = sessPac.filter(s => s.pagamento === "pago").length;
-        const pct = Math.round(realizadas / (p.totalSessoes || 1) * 100);
-        const lancsPac = lancamentos.filter(l => l.pacoteId === p.id);
-        const totalPago = lancsPac.filter(l => l.status === "recebido").reduce((a, l) => a + (l.valor || 0), 0);
-        const isPago = p.statusPag === "recebido";
-        const dataStr = p.dataInicio ? new Date(p.dataInicio + "T00:00:00").toLocaleDateString("pt-BR", {
-          month: "short",
-          year: "2-digit"
-        }) : "—";
-        return /*#__PURE__*/React.createElement("div", {
-          key: p.id,
-          style: {
-            borderRadius: 12,
-            border: "1px solid #e8c8ff",
-            background: "white",
-            padding: "14px 16px",
-            marginBottom: 10,
-            boxShadow: "0 1px 3px #0001"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            marginBottom: 10
-          }
-        }, /*#__PURE__*/React.createElement("div", {
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "minus-circle",
+            size: 16
+          }, void 0, false), " Nova Despesa"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-purple",
           style: {
             display: "flex",
             alignItems: "center",
-            gap: 8
-          }
-        }, /*#__PURE__*/React.createElement("div", {
+            gap: 6
+          },
+          onClick: () => setModal("escolha"),
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "plus",
+            size: 16
+          }, void 0, false), " Novo Lançamento"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginBottom: 14,
+        alignItems: "center"
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--text-muted)",
+          flexShrink: 0
+        },
+        children: "Ano:"
+      }, void 0, false), (() => {
+        const anoAtualNum = new Date().getFullYear();
+        const anosExist = [...new Set(lancamentos.map(l => l.data?.slice(0, 4)).filter(Boolean))].map(Number);
+        // Sempre mostra: todos os anos com dados + ano atual + 1 ano antes e depois do atual
+        const anosSet = new Set([...anosExist, anoAtualNum - 1, anoAtualNum, anoAtualNum + 1]);
+        // Se houver dados fora dessa janela, eles já estão incluídos via anosExist
+        const anos = [...anosSet].sort().map(String);
+        return anos.map(a => /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => {
+            setAnoFiltro(a);
+            setMesFiltro(a === String(anoAtualNum) ? mesAtual : a + "-01");
+          },
           style: {
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: isPago ? "#22c55e" : "#f59e0b",
-            flexShrink: 0,
-            marginTop: 2
-          }
-        }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontWeight: 700,
-            fontSize: 14,
-            color: "#3d006a"
-          }
-        }, (() => {
-          // Título: "N sessões · período"
-          const sessPac = sessoes.filter(s => s.pacoteId === p.id).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
-          const primeira = sessPac[0]?.data;
-          const ultima = sessPac[sessPac.length - 1]?.data;
-          const fmt = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit"
-          }) : "—";
-          const periodo = primeira && ultima && primeira !== ultima ? fmt(primeira) + " a " + fmt(ultima) : primeira ? fmt(primeira) : dataStr;
-          return (p.totalSessoes || "?") + " sessões · " + periodo;
-        })()), /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 11,
-            color: "var(--text-muted)",
-            marginTop: 1
-          }
-        }, p.recorrencia, p.horario && /*#__PURE__*/React.createElement("span", null, " · 🕐 ", p.horario)))), /*#__PURE__*/React.createElement("div", {
-          style: {
-            textAlign: "right"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontWeight: 800,
-            fontSize: 16,
-            color: isPago ? "#22c55e" : "#f59e0b"
-          }
-        }, (p.valorTotal || 0).toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL"
-        })), /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 11,
-            color: isPago ? "#22c55e" : "#f59e0b",
-            fontWeight: 600
-          }
-        }, isPago ? "✓ Recebido" : "⏳ Pendente", p.formaPag && /*#__PURE__*/React.createElement("span", {
-          style: {
-            fontWeight: 400,
-            color: "var(--text-muted)"
-          }
-        }, " · ", p.formaPag)))), /*#__PURE__*/React.createElement("div", {
-          style: {
-            marginBottom: 10
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 11,
-            color: "var(--text-muted)",
-            marginBottom: 4
-          }
-        }, /*#__PURE__*/React.createElement("span", null, realizadas, " concluídas de ", p.totalSessoes, " · ", pagas, " pagas"), /*#__PURE__*/React.createElement("span", {
-          style: {
+            padding: "5px 16px",
+            borderRadius: 20,
+            border: "1.5px solid",
+            borderColor: anoFiltro === a ? "var(--purple)" : "#e5e7eb",
+            background: anoFiltro === a ? "var(--purple)" : "white",
+            color: anoFiltro === a ? "white" : "#6b7280",
+            fontSize: 13,
             fontWeight: 600,
-            color: "var(--purple)"
-          }
-        }, pct, "%")), /*#__PURE__*/React.createElement("div", {
+            cursor: "pointer"
+          },
+          children: [a, a === String(anoAtualNum) && /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              marginLeft: 3,
+              fontSize: 9
+            },
+            children: "●"
+          }, void 0, false)]
+        }, a, true));
+      })()]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+        gap: 12,
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        onClick: () => setPeriodoCard(p => p === "mes" ? "ano" : "mes"),
+        style: {
+          background: totalRecebidoPeriodo >= 0 ? "#d1fae5" : "#fee2e2",
+          borderRadius: 12,
+          padding: "14px 16px",
+          textAlign: "center",
+          cursor: "pointer",
+          border: "1.5px solid",
+          borderColor: totalRecebidoPeriodo >= 0 ? "#6ee7b7" : "#fca5a5",
+          transition: "all .2s",
+          position: "relative"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
           style: {
-            height: 6,
-            background: "#e8c8ff",
+            position: "absolute",
+            top: 6,
+            right: 8,
+            fontSize: 10,
+            color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626",
+            fontWeight: 600,
+            background: "white",
             borderRadius: 10,
-            overflow: "hidden"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
+            padding: "1px 6px"
+          },
+          children: periodoCard === "mes" ? "mês ↕" : "ano ↕"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
           style: {
-            width: pct + "%",
-            height: "100%",
-            background: "#7B00C4",
-            borderRadius: 10,
-            transition: "width .4s"
-          }
-        }))), (p.pagamentosExtras || []).length > 0 && /*#__PURE__*/React.createElement("div", {
-          style: {
-            marginBottom: 10,
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap"
-          }
-        }, (p.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/React.createElement("span", {
-          key: i,
-          style: {
-            background: "#f3e6ff",
-            borderRadius: 6,
-            padding: "2px 8px",
-            fontSize: 11,
-            color: "#6b7280"
-          }
-        }, "💳 ", pg.forma || "?", " R$", parseFloat(pg.valor || 0).toFixed(2).replace(".", ","), " · ", pg.data ? new Date(pg.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"))), /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            gap: 6,
-            flexWrap: "wrap"
-          }
-        }, /*#__PURE__*/React.createElement("button", {
-          className: "btn btn-ghost",
+            fontSize: 20,
+            fontWeight: 800,
+            color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626"
+          },
+          children: totalRecebidoPeriodo.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          })
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
           style: {
             fontSize: 12,
-            padding: "6px 12px",
-            color: "var(--purple)",
-            border: "1px solid #d9b3f5"
+            color: totalRecebidoPeriodo >= 0 ? "#059669" : "#dc2626",
+            fontWeight: 500,
+            marginTop: 2
           },
-          onClick: e => {
-            e.stopPropagation();
-            setPacoteSelecionado(p.id + "__pacote");
-          }
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "edit-3",
-          size: 13
-        }), " Editar"), /*#__PURE__*/React.createElement("button", {
+          children: ["Saldo (", periodoCard === "mes" ? mesAtualLabel : anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 10,
+            color: "#6b7280",
+            marginTop: 4
+          },
+          children: ["+", calcReceitas(lancPeriodo).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          }), " / -", calcDespesas(lancPeriodo).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          })]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#fef3c7",
+          borderRadius: 12,
+          padding: "14px 16px",
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#d97706"
+          },
+          children: totalPendente.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          })
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: "#d97706",
+            fontWeight: 500,
+            marginTop: 2
+          },
+          children: ["Pendente (", anoFiltro, ")"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "var(--purple-soft)",
+          borderRadius: 12,
+          padding: "14px 16px",
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: "var(--purple)"
+          },
+          children: pacotes.filter(p => p.status === "ativo").length
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: "var(--purple)",
+            fontWeight: 500,
+            marginTop: 2
+          },
+          children: "Pacotes ativos"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#e0f2fe",
+          borderRadius: 12,
+          padding: "14px 16px",
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#0891b2"
+          },
+          children: lancPeriodo.length
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: "#0891b2",
+            fontWeight: 500,
+            marginTop: 2
+          },
+          children: ["Lançamentos (", periodoCard === "mes" ? new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
+            month: "short"
+          }) : anoFiltro, ")"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 0,
+        marginBottom: 20,
+        borderBottom: "1px solid var(--gray-200)",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
+        flexShrink: 0
+      },
+      children: [[["lancamentos", "Lançamentos", "dollar-sign"], ["pacotes", "Pacotes & Sessões", "package"], ["acompanhamento", "Acompanhamento Geral", "users"], ["comissoes", "Comissões", "percent"], ["orcamento", "Orçamento", "file-text"]].map(([id, lbl, ic]) => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setAba(id),
+        style: {
+          padding: "10px 20px",
+          border: "none",
+          background: "none",
+          cursor: "pointer",
+          fontSize: 14,
+          color: aba === id ? "var(--purple)" : "var(--gray-600)",
+          borderBottom: aba === id ? "2px solid var(--purple)" : "2px solid transparent",
+          fontWeight: aba === id ? 600 : 400,
+          fontFamily: "var(--font-body)",
+          marginBottom: -1,
+          display: "flex",
+          alignItems: "center",
+          gap: 6
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: ic,
+          size: 15
+        }, void 0, false), lbl]
+      }, id, true)), (() => {
+        return null;
+      })()]
+    }, void 0, true), aba === "lancamentos" && /*#__PURE__*/_jsxDEV("div", {
+      children: [aba === "lancamentos" && /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 6,
+          marginBottom: 16,
+          background: "var(--gray-50)",
+          padding: 6,
+          borderRadius: 12,
+          width: "fit-content"
+        },
+        children: [["tudo", "📊 Tudo"], ["receita", "💰 Receitas"], ["despesa", "💸 Despesas"]].map(([v, l]) => /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => setFiltroTipo(v),
+          style: {
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "var(--font-body)",
+            fontSize: 13,
+            fontWeight: 600,
+            background: filtroTipo === v ? "white" : "transparent",
+            color: filtroTipo === v ? v === "receita" ? "#059669" : v === "despesa" ? "#dc2626" : "#7B00C4" : "#6b7280",
+            boxShadow: filtroTipo === v ? "0 1px 4px rgba(0,0,0,.1)" : "none",
+            transition: ".15s"
+          },
+          children: l
+        }, v, false))
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 8,
+          marginBottom: 16,
+          alignItems: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            flexShrink: 0
+          },
+          children: "Mês:"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => {
+            const idx = mesesDisp.indexOf(mesFiltroEfetivo);
+            if (idx > 0) setMesFiltro(mesesDisp[idx - 1]);
+          },
+          style: {
+            background: "var(--purple)",
+            border: "none",
+            borderRadius: "50%",
+            width: 30,
+            height: 30,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            color: "white",
+            fontSize: 16,
+            fontWeight: 700
+          },
+          children: "‹"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 6,
+            overflowX: "hidden",
+            flex: 1
+          },
+          children: mesesDisp.map(m => {
+            const isAtual = m === mesAtual;
+            const isSel = m === mesFiltroEfetivo;
+            return /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => setMesFiltro(m),
+              style: {
+                padding: "5px 14px",
+                borderRadius: 20,
+                border: "1.5px solid",
+                flexShrink: 0,
+                borderColor: isSel ? "var(--purple)" : isAtual ? "var(--purple)" : "#e5e7eb",
+                background: isSel ? "var(--purple)" : "white",
+                color: isSel ? "white" : isAtual ? "var(--purple)" : "#6b7280",
+                fontSize: 12,
+                fontWeight: isSel || isAtual ? 700 : 400,
+                cursor: "pointer",
+                display: Math.abs(mesesDisp.indexOf(m) - mesesDisp.indexOf(mesFiltroEfetivo)) <= 2 ? "flex" : "none",
+                alignItems: "center",
+                gap: 4
+              },
+              children: [new Date(m + "-15").toLocaleDateString("pt-BR", {
+                month: "long"
+              }), isAtual && !isSel && /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 9
+                },
+                children: "●"
+              }, void 0, false)]
+            }, m, true);
+          })
+        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => {
+            const idx = mesesDisp.indexOf(mesFiltroEfetivo);
+            if (idx < mesesDisp.length - 1) setMesFiltro(mesesDisp[idx + 1]);
+          },
+          style: {
+            background: "var(--purple)",
+            border: "none",
+            borderRadius: "50%",
+            width: 30,
+            height: 30,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            color: "white",
+            fontSize: 16,
+            fontWeight: 700
+          },
+          children: "›"
+        }, void 0, false)]
+      }, void 0, true), lancMes.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          textAlign: "center",
+          padding: 48,
+          color: "var(--text-muted)"
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "dollar-sign",
+          size: 40
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            marginTop: 12
+          },
+          children: ["Nenhum lançamento em ", new Date(mesFiltro + "-15").toLocaleDateString("pt-BR", {
+            month: "long",
+            year: "numeric"
+          })]
+        }, void 0, true)]
+      }, void 0, true) : (() => {
+        const receitasTodas = lancMes.filter(l => l.tipo_lancamento !== "despesa").sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+        const despesasTodas = lancMes.filter(l => l.tipo_lancamento === "despesa").sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+        const receitas = filtroTipo === "despesa" ? [] : receitasTodas;
+        const despesas = filtroTipo === "receita" ? [] : despesasTodas;
+        const totalRecFiltro = receitasTodas.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+        const totalDespFiltro = despesasTodas.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+        const totalRec = calcReceitas(lancMes);
+        const totalDesp = calcDespesas(lancMes);
+        const saldo = totalRec - totalDesp;
+
+        // Cards de saldo dinâmicos por filtroTipo
+        const cardsSaldo = filtroTipo === "tudo" ? /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 12,
+            marginBottom: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              background: "white",
+              borderRadius: 12,
+              padding: "14px 18px",
+              border: "1px solid #e5e7eb"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 11,
+                color: "#6b7280",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                marginBottom: 4
+              },
+              children: "Total Receitas"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 20,
+                fontWeight: 800,
+                color: "#059669"
+              },
+              children: totalRecFiltro.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              background: "white",
+              borderRadius: 12,
+              padding: "14px 18px",
+              border: "1px solid #e5e7eb"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 11,
+                color: "#6b7280",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                marginBottom: 4
+              },
+              children: "Total Despesas"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 20,
+                fontWeight: 800,
+                color: "#dc2626"
+              },
+              children: totalDespFiltro.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              background: "#f5f0ff",
+              borderRadius: 12,
+              padding: "14px 18px",
+              border: "2px solid #7B00C4"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 11,
+                color: "#7B00C4",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                marginBottom: 4
+              },
+              children: "Saldo Líquido"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 20,
+                fontWeight: 800,
+                color: totalRecFiltro - totalDespFiltro >= 0 ? "#7B00C4" : "#dc2626"
+              },
+              children: (totalRecFiltro - totalDespFiltro).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true) : filtroTipo === "receita" ? /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#f0fdf4",
+            borderRadius: 12,
+            padding: "14px 18px",
+            border: "1px solid #6ee7b7",
+            marginBottom: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              color: "#15803d",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              marginBottom: 4
+            },
+            children: "Total Receitas do Mês"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 24,
+              fontWeight: 800,
+              color: "#059669"
+            },
+            children: totalRecFiltro.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL"
+            })
+          }, void 0, false)]
+        }, void 0, true) : /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#fef2f2",
+            borderRadius: 12,
+            padding: "14px 18px",
+            border: "1px solid #fca5a5",
+            marginBottom: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              color: "#b91c1c",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              marginBottom: 4
+            },
+            children: "Total Despesas do Mês"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 24,
+              fontWeight: 800,
+              color: "#dc2626"
+            },
+            children: totalDespFiltro.toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL"
+            })
+          }, void 0, false)]
+        }, void 0, true);
+        function TabelaLanc({
+          itens,
+          titulo,
+          corHeader,
+          corValor,
+          bgHeader
+        }) {
+          if (!itens.length) return null;
+          return /*#__PURE__*/_jsxDEV("div", {
+            className: "card",
+            style: {
+              padding: 0,
+              marginBottom: 16
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                padding: "10px 16px",
+                background: bgHeader,
+                borderBottom: "2px solid " + corHeader,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: corHeader
+                },
+                children: titulo
+              }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontWeight: 800,
+                  fontSize: 14,
+                  color: corHeader
+                },
+                children: itens.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("table", {
+              style: {
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13
+              },
+              children: [/*#__PURE__*/_jsxDEV("thead", {
+                children: /*#__PURE__*/_jsxDEV("tr", {
+                  style: {
+                    background: "var(--gray-50)"
+                  },
+                  children: ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/_jsxDEV("th", {
+                    style: {
+                      padding: "8px 14px",
+                      textAlign: "left",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "var(--text-muted)",
+                      borderBottom: "1px solid var(--gray-200)",
+                      whiteSpace: "nowrap"
+                    },
+                    children: h
+                  }, h, false))
+                }, void 0, false)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+                children: itens.map(l => {
+                  const isFut = l.data > new Date().toISOString().slice(0, 10);
+                  const statusColor = l.status === "recebido" || l.status === "pago" ? "#059669" : l.status === "planejado" ? "#0891b2" : "#d97706";
+                  const statusBg = l.status === "recebido" || l.status === "pago" ? "#d1fae5" : l.status === "planejado" ? "#e0f2fe" : "#fef3c7";
+                  const statusLabel = l.status === "recebido" ? "✓ Recebido" : l.status === "pago" ? "✓ Pago" : l.status === "planejado" ? "📅 Planejado" : "Pendente";
+                  return /*#__PURE__*/_jsxDEV("tr", {
+                    style: {
+                      borderBottom: "1px solid var(--gray-100)",
+                      background: isFut ? "#fafafa" : "white",
+                      opacity: isFut ? 0.85 : 1
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px",
+                        whiteSpace: "nowrap",
+                        fontSize: 12
+                      },
+                      children: [l.data ? new Date(l.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", isFut && /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          marginLeft: 4,
+                          fontSize: 9,
+                          color: "#0891b2",
+                          fontWeight: 600
+                        },
+                        children: "futuro"
+                      }, void 0, false)]
+                    }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px",
+                        maxWidth: 320
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          fontWeight: 500,
+                          fontSize: 13,
+                          lineHeight: 1.4
+                        },
+                        children: l.descricao || l.tipo || l.pacienteNome || "—"
+                      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "flex",
+                          gap: 4,
+                          marginTop: 3,
+                          flexWrap: "wrap"
+                        },
+                        children: [l.tipo_lancamento === "pacote" && /*#__PURE__*/_jsxDEV("span", {
+                          style: {
+                            background: "var(--purple-soft)",
+                            color: "var(--purple)",
+                            borderRadius: 20,
+                            padding: "1px 6px",
+                            fontSize: 10,
+                            fontWeight: 600
+                          },
+                          children: "Pacote"
+                        }, void 0, false), l.tipo_lancamento === "sessao" && /*#__PURE__*/_jsxDEV("span", {
+                          style: {
+                            background: "#e0f2fe",
+                            color: "#0891b2",
+                            borderRadius: 20,
+                            padding: "1px 6px",
+                            fontSize: 10,
+                            fontWeight: 600
+                          },
+                          children: "Sessão"
+                        }, void 0, false), (l.pagamentosExtras || []).length > 0 && /*#__PURE__*/_jsxDEV("span", {
+                          style: {
+                            background: "#fef3c7",
+                            color: "#92400e",
+                            borderRadius: 20,
+                            padding: "1px 6px",
+                            fontSize: 10,
+                            fontWeight: 600
+                          },
+                          children: ["💳 ", (l.pagamentosExtras || []).length, "x forma", (l.pagamentosExtras || []).length > 1 ? "s" : ""]
+                        }, void 0, true)]
+                      }, void 0, true)]
+                    }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px",
+                        fontSize: 12,
+                        color: "var(--text-muted)"
+                      },
+                      children: l.categoria || "—"
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px"
+                      },
+                      children: /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          background: "#f3f4f6",
+                          borderRadius: 6,
+                          padding: "2px 6px",
+                          fontSize: 11
+                        },
+                        children: l.formaPag || "—"
+                      }, void 0, false)
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px",
+                        fontWeight: 700,
+                        color: corValor,
+                        whiteSpace: "nowrap"
+                      },
+                      children: (parseFloat(l.valor) || 0).toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL"
+                      })
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px"
+                      },
+                      children: /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          background: statusBg,
+                          color: statusColor,
+                          borderRadius: 20,
+                          padding: "2px 8px",
+                          fontSize: 11,
+                          fontWeight: 600
+                        },
+                        children: statusLabel
+                      }, void 0, false)
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                      style: {
+                        padding: "8px 14px"
+                      },
+                      children: /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "flex",
+                          gap: 4
+                        },
+                        children: [l.tipo_lancamento === "pacote" ? /*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-ghost",
+                          style: {
+                            padding: "4px 8px",
+                            fontSize: 11,
+                            color: "var(--purple)"
+                          },
+                          onClick: () => {
+                            setPacoteSelecionado(l.pacoteId);
+                            setAba("pacotes");
+                          },
+                          children: /*#__PURE__*/_jsxDEV(Icon, {
+                            name: "clipboard-list",
+                            size: 12
+                          }, void 0, false)
+                        }, void 0, false) : /*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-ghost",
+                          style: {
+                            padding: "4px 8px",
+                            fontSize: 11,
+                            color: "var(--purple)"
+                          },
+                          onClick: () => abrirEditar(l),
+                          children: /*#__PURE__*/_jsxDEV(Icon, {
+                            name: "pencil",
+                            size: 12
+                          }, void 0, false)
+                        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-ghost",
+                          style: {
+                            padding: "4px 8px",
+                            fontSize: 11,
+                            color: "#dc2626"
+                          },
+                          onClick: () => setModalExcluirLanc(l),
+                          children: /*#__PURE__*/_jsxDEV(Icon, {
+                            name: "trash-2",
+                            size: 12
+                          }, void 0, false)
+                        }, void 0, false)]
+                      }, void 0, true)
+                    }, void 0, false)]
+                  }, l.id, true);
+                })
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true);
+        }
+        return /*#__PURE__*/_jsxDEV("div", {
+          children: [cardsSaldo, /*#__PURE__*/_jsxDEV(TabelaLanc, {
+            itens: receitas,
+            titulo: "💰 Receitas",
+            corHeader: "#059669",
+            corValor: "#059669",
+            bgHeader: "#f0fdf4"
+          }, void 0, false), /*#__PURE__*/_jsxDEV(TabelaLanc, {
+            itens: despesas,
+            titulo: "💸 Despesas",
+            corHeader: "#dc2626",
+            corValor: "#dc2626",
+            bgHeader: "#fff1f2"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              background: "white",
+              borderRadius: 12,
+              border: "1px solid var(--gray-200)",
+              padding: "14px 20px",
+              display: "flex",
+              gap: 24,
+              flexWrap: "wrap",
+              alignItems: "center"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                textAlign: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                  marginBottom: 2
+                },
+                children: "Receitas"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: "#059669"
+                },
+                children: totalRec.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 20,
+                color: "var(--text-muted)"
+              },
+              children: "−"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                textAlign: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                  marginBottom: 2
+                },
+                children: "Despesas"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: "#dc2626"
+                },
+                children: totalDesp.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 20,
+                color: "var(--text-muted)"
+              },
+              children: "="
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                textAlign: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                  marginBottom: 2
+                },
+                children: "Saldo do Mês"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 22,
+                  fontWeight: 900,
+                  color: saldo >= 0 ? "#059669" : "#dc2626"
+                },
+                children: saldo.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL"
+                })
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true)]
+        }, void 0, true);
+      })(), modalExcluirLanc && /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 600,
+          padding: 20
+        },
+        children: /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "white",
+            borderRadius: 16,
+            padding: 28,
+            width: "100%",
+            maxWidth: 420,
+            textAlign: "center"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 32,
+              marginBottom: 12
+            },
+            children: "🗑️"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 17,
+              fontWeight: 600,
+              marginBottom: 6
+            },
+            children: modalExcluirLanc.tipo
+          }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+            style: {
+              fontSize: 13,
+              color: "#6b7280",
+              marginBottom: 20
+            },
+            children: modalExcluirLanc.data ? new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR") : ""
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              marginBottom: 14
+            },
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              style: {
+                border: "1.5px solid #e5e7eb",
+                textAlign: "left",
+                padding: "12px 16px"
+              },
+              onClick: async () => {
+                await db.collection("clinica_lancamentos").doc(modalExcluirLanc.id).delete();
+                setModalExcluirLanc(null);
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 600,
+                  fontSize: 13
+                },
+                children: "Só este lançamento"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  color: "#6b7280"
+                },
+                children: ["Remove apenas ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
+                  month: "long"
+                })]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              style: {
+                border: "1.5px solid #fbbf24",
+                textAlign: "left",
+                padding: "12px 16px"
+              },
+              onClick: async () => {
+                if (!modalExcluirLanc.pacoteId) {
+                  alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");
+                  return;
+                }
+                if (!confirm("Excluir este e todos os lançamentos futuros deste pacote?")) return;
+                const snap = await db.collection("clinica_lancamentos").get();
+                const futuros = snap.docs.filter(d => {
+                  const dd = d.data();
+                  return dd.pacoteId === modalExcluirLanc.pacoteId && dd.data >= modalExcluirLanc.data;
+                });
+                const b = db.batch();
+                futuros.forEach(d => b.delete(d.ref));
+                await b.commit();
+                setModalExcluirLanc(null);
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: "#d97706"
+                },
+                children: "Este e todos os futuros"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  color: "#6b7280"
+                },
+                children: ["Remove lançamentos deste pacote a partir de ", new Date(modalExcluirLanc.data + "T00:00:00").toLocaleDateString("pt-BR", {
+                  month: "long"
+                })]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              style: {
+                border: "1.5px solid #fca5a5",
+                textAlign: "left",
+                padding: "12px 16px"
+              },
+              onClick: async () => {
+                if (!modalExcluirLanc.pacoteId) {
+                  alert("Este lançamento não tem pacote vinculado — use 'Só este lançamento'.");
+                  return;
+                }
+                if (!confirm("Excluir TODOS os lançamentos deste pacote no ano inteiro?")) return;
+                const snap = await db.collection("clinica_lancamentos").get();
+                const todos = snap.docs.filter(d => d.data().pacoteId === modalExcluirLanc.pacoteId);
+                const b = db.batch();
+                todos.forEach(d => b.delete(d.ref));
+                await b.commit();
+                setModalExcluirLanc(null);
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: "#dc2626"
+                },
+                children: "Todos — o ano inteiro"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  color: "#6b7280"
+                },
+                children: "Remove todos os lançamentos deste pacote"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              width: "100%"
+            },
+            onClick: () => setModalExcluirLanc(null),
+            children: "Cancelar"
+          }, void 0, false)]
+        }, void 0, true)
+      }, void 0, false)]
+    }, void 0, true), aba === "pacotes" && /*#__PURE__*/_jsxDEV("div", {
+      children: [(() => {
+        const hoje = new Date().toISOString().slice(0, 10);
+        // Sessões pendentes = data PASSADA + status "agendado" + vinculada a pacote ativo
+        // Exclui: falta, realizado, cancelado, remarcado, futuras, sessões sem pacote
+        const pacoteIdsAtivos = new Set(pacotes.filter(p => p.status !== "inativo").map(p => p.id));
+        const sessoesPendentes = sessoes.filter(s => s.data < hoje && s.status === "agendado" && s.pacienteId && s.pacoteId && pacoteIdsAtivos.has(s.pacoteId));
+        // Pacotes com pagamento pendente (não marcados como recebido)
+        const pacotesPendPag = pacotes.filter(p => {
+          return p.status !== "inativo" && (p.statusPag || "pendente") !== "recebido";
+        });
+        if (sessoesPendentes.length === 0 && pacotesPendPag.length === 0) return null;
+        return /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            marginBottom: 20
+          },
+          children: [sessoesPendentes.length > 0 && (() => {
+            function AvisoSessoes({
+              lista,
+              pacientes
+            }) {
+              const [expandido, setExpandido] = React.useState(false);
+              const visiveis = expandido ? lista : lista.slice(0, 5);
+              const extras = lista.length - 5;
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  background: "#fef3c7",
+                  border: "1px solid #f59e0b",
+                  borderRadius: 12,
+                  padding: "14px 18px"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: "#92400e",
+                    marginBottom: 4
+                  },
+                  children: ["⚠️ ", lista.length, " sessão(ões) passada(s) sem status final"]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 12,
+                    color: "#78350f",
+                    marginBottom: 8
+                  },
+                  children: ["Sessões que já ocorreram e ainda estão como \"Agendado\". Marque como ", /*#__PURE__*/_jsxDEV("strong", {
+                    children: "Realizada"
+                  }, void 0, false), ", ", /*#__PURE__*/_jsxDEV("strong", {
+                    children: "Cancelada"
+                  }, void 0, false), " ou ", /*#__PURE__*/_jsxDEV("strong", {
+                    children: "Remarcada"
+                  }, void 0, false), "."]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    alignItems: "center"
+                  },
+                  children: [visiveis.map(s => {
+                    const nome = pacientes.find(p => p.id === s.pacienteId)?.nome || "—";
+                    return /*#__PURE__*/_jsxDEV("span", {
+                      style: {
+                        background: "#fde68a",
+                        borderRadius: 20,
+                        padding: "2px 10px",
+                        fontSize: 11,
+                        color: "#78350f",
+                        fontWeight: 600
+                      },
+                      children: [nome.split(" ")[0], " · ", new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "short"
+                      })]
+                    }, s.id, true);
+                  }), !expandido && extras > 0 && /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => setExpandido(true),
+                    style: {
+                      background: "#f59e0b",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 20,
+                      padding: "2px 12px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-body)"
+                    },
+                    children: ["+", extras, " mais ▾"]
+                  }, void 0, true), expandido && /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => setExpandido(false),
+                    style: {
+                      background: "none",
+                      color: "#92400e",
+                      border: "1px solid #f59e0b",
+                      borderRadius: 20,
+                      padding: "2px 10px",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-body)"
+                    },
+                    children: "▴ recolher"
+                  }, void 0, false)]
+                }, void 0, true)]
+              }, void 0, true);
+            }
+            return /*#__PURE__*/_jsxDEV(AvisoSessoes, {
+              lista: sessoesPendentes,
+              pacientes: pacientes
+            }, void 0, false);
+          })(), pacotesPendPag.length > 0 && (() => {
+            function AvisoPacotes({
+              lista,
+              pacientes,
+              sessoes
+            }) {
+              const [expandidoPac, setExpandidoPac] = React.useState(false);
+              const visiveis = expandidoPac ? lista : lista.slice(0, 5);
+              const extras = lista.length - 5;
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  background: "#fff7ed",
+                  border: "1px solid #fb923c",
+                  borderRadius: 12,
+                  padding: "14px 18px"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: "#c2410c",
+                    marginBottom: 4
+                  },
+                  children: ["💰 ", lista.length, " pacote(s) com pagamento em aberto"]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 12,
+                    color: "#9a3412",
+                    marginBottom: 8
+                  },
+                  children: "Pacotes ativos com sessões ainda não marcadas como pagas."
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    alignItems: "center"
+                  },
+                  children: [visiveis.map(p => {
+                    const nome = pacientes.find(pac => pac.id === p.pacienteId)?.nome || "—";
+                    const sessPac = sessoes.filter(s => s.pacoteId === p.id);
+                    const pagas = sessPac.filter(s => s.pagamento === "pago").length;
+                    const total = p.totalSessoes || 0;
+                    return /*#__PURE__*/_jsxDEV("span", {
+                      style: {
+                        background: "#fed7aa",
+                        borderRadius: 20,
+                        padding: "2px 10px",
+                        fontSize: 11,
+                        color: "#9a3412",
+                        fontWeight: 600
+                      },
+                      children: [nome.split(" ")[0], " · ", pagas, "/", total, " pagas"]
+                    }, p.id, true);
+                  }), !expandidoPac && pacotesPendPag.length > 5 && /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => setExpandidoPac(true),
+                    style: {
+                      background: "#ea580c",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 20,
+                      padding: "2px 12px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-body)"
+                    },
+                    children: ["+", pacotesPendPag.length - 5, " mais ▾"]
+                  }, void 0, true), expandidoPac && /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => setExpandidoPac(false),
+                    style: {
+                      background: "none",
+                      color: "#c2410c",
+                      border: "1px solid #fb923c",
+                      borderRadius: 20,
+                      padding: "2px 10px",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      fontFamily: "var(--font-body)"
+                    },
+                    children: "▴ recolher"
+                  }, void 0, false)]
+                }, void 0, true)]
+              }, void 0, true);
+            }
+            return /*#__PURE__*/_jsxDEV(AvisoPacotes, {
+              lista: pacotesPendPag,
+              pacientes: pacientes,
+              sessoes: sessoes
+            }, void 0, false);
+          })()]
+        }, void 0, true);
+      })(), pacotes.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          textAlign: "center",
+          padding: 60
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "package",
+          size: 48
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            marginTop: 12,
+            fontWeight: 500
+          },
+          children: "Nenhum pacote criado ainda"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
           className: "btn btn-purple",
           style: {
-            fontSize: 12,
-            padding: "6px 12px"
+            marginTop: 16
           },
-          onClick: e => {
-            e.stopPropagation();
-            setPacoteSelecionado(p.id + "__sessoes");
-          }
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "clipboard-list",
-          size: 13
-        }), " Sessões"), /*#__PURE__*/React.createElement("button", {
-          className: "btn btn-ghost",
+          onClick: () => setModal("pacote"),
+          children: "+ Criar Pacote"
+        }, void 0, false)]
+      }, void 0, true) : (() => {
+        // Agrupar pacotes por paciente — ordem alfabética
+        const pacientesComPacote = [...new Set(pacotes.map(p => p.pacienteId))];
+        const pacientesVisiveisBruto = buscaPac.trim() ? pacientesComPacote.filter(id => {
+          const pac = pacientes.find(p => p.id === id);
+          const inicial = (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+          return inicial === buscaPac;
+        }) : pacientesComPacote;
+        const pacientesVisiveis = pacientesVisiveisBruto.sort((a, b) => {
+          const nA = (pacientes.find(p => p.id === a)?.nome || "").toLowerCase();
+          const nB = (pacientes.find(p => p.id === b)?.nome || "").toLowerCase();
+          return nA.localeCompare(nB, "pt-BR");
+        });
+        return /*#__PURE__*/_jsxDEV("div", {
           style: {
-            fontSize: 12,
-            padding: "6px 12px",
-            color: "#059669",
-            border: "1px solid #6ee7b7"
+            display: "flex",
+            flexDirection: "column",
+            gap: 28
           },
-          onClick: e => {
-            e.stopPropagation();
-            const pac = pacientes.find(x => x.id === pacId);
-            const sessPac = sessoes.filter(s => s.pacoteId === p.id).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
-            const statusLabel = {
-              agendado: "Agendado",
-              confirmado: "Confirmado",
-              realizado: "✓ Realizado",
-              falta: "Falta",
-              remarcado: "Remarcado"
-            };
-            const statusColor = {
-              agendado: "#7B00C4",
-              confirmado: "#059669",
-              realizado: "#0891b2",
-              falta: "#d97706",
-              remarcado: "#6366f1"
-            };
-            const totalValor = sessPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-            const totalPago = sessPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
-            const sessMeses = {};
-            sessPac.forEach(s => {
-              const m = (s.data || "").slice(0, 7);
-              if (!sessMeses[m]) sessMeses[m] = [];
-              sessMeses[m].push(s);
-            });
-            const fmtM = m => {
-              const [y, mo] = m.split("-");
-              return new Date(y, mo - 1, 1).toLocaleDateString("pt-BR", {
-                month: "long",
-                year: "numeric"
+          children: [(() => {
+            const letrasComPac = [...new Set(pacientesComPacote.map(id => {
+              const pac = pacientes.find(p => p.id === id);
+              return (pac?.nome || "?")[0].toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+            }))].sort();
+            return /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 4,
+                marginBottom: 12
+              },
+              children: [buscaPac && /*#__PURE__*/_jsxDEV("button", {
+                onClick: () => setBuscaPac(""),
+                style: {
+                  padding: "4px 12px",
+                  borderRadius: 20,
+                  border: "1.5px solid #7B00C4",
+                  background: "#7B00C4",
+                  color: "white",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer"
+                },
+                children: "Todos"
+              }, void 0, false), letrasComPac.map(letra => /*#__PURE__*/_jsxDEV("button", {
+                onClick: () => setBuscaPac(buscaPac === letra ? "" : letra),
+                style: {
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  border: "1.5px solid",
+                  borderColor: buscaPac === letra ? "#7B00C4" : "#e8c8ff",
+                  background: buscaPac === letra ? "#7B00C4" : "white",
+                  color: buscaPac === letra ? "white" : "#7B00C4",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  flexShrink: 0
+                },
+                children: letra
+              }, letra, false))]
+            }, void 0, true);
+          })(), (() => {
+            function CardPaciente({
+              pacId
+            }) {
+              const [expandido, setExpandido] = React.useState(false);
+              React.useEffect(() => {
+                setExpandido(!!buscaPac);
+              }, [buscaPac]);
+              const pac = pacientes.find(p => p.id === pacId);
+              const pacotesDoPac = pacotes.filter(p => p.pacienteId === pacId).sort((a, b) => {
+                const da = a.dataInicio || a.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
+                const db2 = b.dataInicio || b.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
+                return db2.localeCompare(da);
               });
-            };
-            const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Resumo — ${pac?.nome || ""}</title>
+              const totalPacotes = pacotesDoPac.length;
+              const pagos = pacotesDoPac.filter(p => p.statusPag === "recebido").length;
+              const pendentes = totalPacotes - pagos;
+              const valorTotal = pacotesDoPac.reduce((s, p) => s + (p.valorTotal || 0), 0);
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  borderRadius: 14,
+                  border: "1.5px solid var(--purple-soft)",
+                  overflow: "hidden",
+                  marginBottom: 2
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  onClick: () => setExpandido(e => !e),
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "12px 16px",
+                    cursor: "pointer",
+                    background: expandido ? "#f5e8ff" : "white",
+                    borderBottom: expandido ? "2px solid var(--purple-soft)" : "none",
+                    transition: "background .15s"
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      width: 38,
+                      height: 38,
+                      borderRadius: "50%",
+                      background: "var(--purple)",
+                      color: "white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "var(--font-display)",
+                      fontSize: 17,
+                      fontWeight: 600,
+                      flexShrink: 0
+                    },
+                    children: (pac?.nome || "?")[0].toUpperCase()
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      flex: 1,
+                      minWidth: 0
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        fontWeight: 700,
+                        fontSize: 15,
+                        color: "#3d006a",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
+                      },
+                      children: pac?.nome || pacotesDoPac[0]?.pacienteNome || "—"
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        fontSize: 11,
+                        color: "var(--text-muted)",
+                        marginTop: 1,
+                        display: "flex",
+                        gap: 10,
+                        flexWrap: "wrap"
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("span", {
+                        children: [totalPacotes, " pacote(s)"]
+                      }, void 0, true), pendentes > 0 && /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          color: "#d97706",
+                          fontWeight: 600
+                        },
+                        children: ["⏳ ", pendentes, " pendente(s)"]
+                      }, void 0, true), pagos > 0 && /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          color: "#059669",
+                          fontWeight: 600
+                        },
+                        children: ["✓ ", pagos, " recebido(s)"]
+                      }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          color: "#7B00C4",
+                          fontWeight: 600
+                        },
+                        children: valorTotal.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL"
+                        })
+                      }, void 0, false)]
+                    }, void 0, true)]
+                  }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      flexShrink: 0
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("button", {
+                      className: "btn btn-outline",
+                      style: {
+                        fontSize: 11,
+                        padding: "5px 10px"
+                      },
+                      onClick: e => {
+                        e.stopPropagation();
+                        setPacoteSelecionado(pacId);
+                      },
+                      children: [/*#__PURE__*/_jsxDEV(Icon, {
+                        name: "bar-chart-2",
+                        size: 12
+                      }, void 0, false), " Acompanhamento"]
+                    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: "#f3e8ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#7B00C4",
+                        fontWeight: 700,
+                        fontSize: 16,
+                        transform: expandido ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform .2s"
+                      },
+                      children: "▾"
+                    }, void 0, false)]
+                  }, void 0, true)]
+                }, void 0, true), expandido && /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    padding: "12px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10
+                  },
+                  children: pacotesDoPac.map(p => {
+                    const sessPac = sessoes.filter(s => s.pacoteId === p.id);
+                    const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "falta").length;
+                    const pagas = sessPac.filter(s => s.pagamento === "pago").length;
+                    const pct = Math.round(realizadas / (p.totalSessoes || 1) * 100);
+                    const lancsPac = lancamentos.filter(l => l.pacoteId === p.id);
+                    const totalPago = lancsPac.filter(l => l.status === "recebido").reduce((a, l) => a + (l.valor || 0), 0);
+                    const isPago = p.statusPag === "recebido";
+                    const dataStr = p.dataInicio ? new Date(p.dataInicio + "T00:00:00").toLocaleDateString("pt-BR", {
+                      month: "short",
+                      year: "2-digit"
+                    }) : "—";
+                    return /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        borderRadius: 12,
+                        border: "1px solid #e8c8ff",
+                        background: "white",
+                        padding: "14px 16px",
+                        marginBottom: 10,
+                        boxShadow: "0 1px 3px #0001"
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          marginBottom: 10
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("div", {
+                          style: {
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8
+                          },
+                          children: [/*#__PURE__*/_jsxDEV("div", {
+                            style: {
+                              width: 10,
+                              height: 10,
+                              borderRadius: "50%",
+                              background: isPago ? "#22c55e" : "#f59e0b",
+                              flexShrink: 0,
+                              marginTop: 2
+                            }
+                          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                            children: [/*#__PURE__*/_jsxDEV("div", {
+                              style: {
+                                fontWeight: 700,
+                                fontSize: 14,
+                                color: "#3d006a"
+                              },
+                              children: (() => {
+                                // Título: "N sessões · período"
+                                const sessPac = sessoes.filter(s => s.pacoteId === p.id).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+                                const primeira = sessPac[0]?.data;
+                                const ultima = sessPac[sessPac.length - 1]?.data;
+                                const fmt = d => d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "2-digit"
+                                }) : "—";
+                                const periodo = primeira && ultima && primeira !== ultima ? fmt(primeira) + " a " + fmt(ultima) : primeira ? fmt(primeira) : dataStr;
+                                return (p.totalSessoes || "?") + " sessões · " + periodo;
+                              })()
+                            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                              style: {
+                                fontSize: 11,
+                                color: "var(--text-muted)",
+                                marginTop: 1
+                              },
+                              children: [p.recorrencia, p.horario && /*#__PURE__*/_jsxDEV("span", {
+                                children: [" · 🕐 ", p.horario]
+                              }, void 0, true)]
+                            }, void 0, true)]
+                          }, void 0, true)]
+                        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                          style: {
+                            textAlign: "right"
+                          },
+                          children: [/*#__PURE__*/_jsxDEV("div", {
+                            style: {
+                              fontWeight: 800,
+                              fontSize: 16,
+                              color: isPago ? "#22c55e" : "#f59e0b"
+                            },
+                            children: (p.valorTotal || 0).toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL"
+                            })
+                          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                            style: {
+                              fontSize: 11,
+                              color: isPago ? "#22c55e" : "#f59e0b",
+                              fontWeight: 600
+                            },
+                            children: [isPago ? "✓ Recebido" : "⏳ Pendente", p.formaPag && /*#__PURE__*/_jsxDEV("span", {
+                              style: {
+                                fontWeight: 400,
+                                color: "var(--text-muted)"
+                              },
+                              children: [" · ", p.formaPag]
+                            }, void 0, true)]
+                          }, void 0, true)]
+                        }, void 0, true)]
+                      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          marginBottom: 10
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("div", {
+                          style: {
+                            display: "flex",
+                            justifyContent: "space-between",
+                            fontSize: 11,
+                            color: "var(--text-muted)",
+                            marginBottom: 4
+                          },
+                          children: [/*#__PURE__*/_jsxDEV("span", {
+                            children: [realizadas, " concluídas de ", p.totalSessoes, " · ", pagas, " pagas"]
+                          }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                            style: {
+                              fontWeight: 600,
+                              color: "var(--purple)"
+                            },
+                            children: [pct, "%"]
+                          }, void 0, true)]
+                        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                          style: {
+                            height: 6,
+                            background: "#e8c8ff",
+                            borderRadius: 10,
+                            overflow: "hidden"
+                          },
+                          children: /*#__PURE__*/_jsxDEV("div", {
+                            style: {
+                              width: pct + "%",
+                              height: "100%",
+                              background: "#7B00C4",
+                              borderRadius: 10,
+                              transition: "width .4s"
+                            }
+                          }, void 0, false)
+                        }, void 0, false)]
+                      }, void 0, true), (p.pagamentosExtras || []).length > 0 && /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          marginBottom: 10,
+                          display: "flex",
+                          gap: 6,
+                          flexWrap: "wrap"
+                        },
+                        children: (p.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/_jsxDEV("span", {
+                          style: {
+                            background: "#f3e6ff",
+                            borderRadius: 6,
+                            padding: "2px 8px",
+                            fontSize: 11,
+                            color: "#6b7280"
+                          },
+                          children: ["💳 ", pg.forma || "?", " R$", parseFloat(pg.valor || 0).toFixed(2).replace(".", ","), " · ", pg.data ? new Date(pg.data + "T00:00:00").toLocaleDateString("pt-BR") : "—"]
+                        }, i, true))
+                      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "flex",
+                          gap: 6,
+                          flexWrap: "wrap"
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-ghost",
+                          style: {
+                            fontSize: 12,
+                            padding: "6px 12px",
+                            color: "var(--purple)",
+                            border: "1px solid #d9b3f5"
+                          },
+                          onClick: e => {
+                            e.stopPropagation();
+                            setPacoteSelecionado(p.id + "__pacote");
+                          },
+                          children: [/*#__PURE__*/_jsxDEV(Icon, {
+                            name: "edit-3",
+                            size: 13
+                          }, void 0, false), " Editar"]
+                        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-purple",
+                          style: {
+                            fontSize: 12,
+                            padding: "6px 12px"
+                          },
+                          onClick: e => {
+                            e.stopPropagation();
+                            setPacoteSelecionado(p.id + "__sessoes");
+                          },
+                          children: [/*#__PURE__*/_jsxDEV(Icon, {
+                            name: "clipboard-list",
+                            size: 13
+                          }, void 0, false), " Sessões"]
+                        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-ghost",
+                          style: {
+                            fontSize: 12,
+                            padding: "6px 12px",
+                            color: "#059669",
+                            border: "1px solid #6ee7b7"
+                          },
+                          onClick: e => {
+                            e.stopPropagation();
+                            const pac = pacientes.find(x => x.id === pacId);
+                            const sessPac = sessoes.filter(s => s.pacoteId === p.id).sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+                            const statusLabel = {
+                              agendado: "Agendado",
+                              confirmado: "Confirmado",
+                              realizado: "✓ Realizado",
+                              falta: "Falta",
+                              remarcado: "Remarcado"
+                            };
+                            const statusColor = {
+                              agendado: "#7B00C4",
+                              confirmado: "#059669",
+                              realizado: "#0891b2",
+                              falta: "#d97706",
+                              remarcado: "#6366f1"
+                            };
+                            const totalValor = sessPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
+                            const totalPago = sessPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
+                            const sessMeses = {};
+                            sessPac.forEach(s => {
+                              const m = (s.data || "").slice(0, 7);
+                              if (!sessMeses[m]) sessMeses[m] = [];
+                              sessMeses[m].push(s);
+                            });
+                            const fmtM = m => {
+                              const [y, mo] = m.split("-");
+                              return new Date(y, mo - 1, 1).toLocaleDateString("pt-BR", {
+                                month: "long",
+                                year: "numeric"
+                              });
+                            };
+                            const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Resumo — ${pac?.nome || ""}</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Arial,sans-serif;color:#1f2937;padding:32px;max-width:680px;margin:0 auto}
 .header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:14px;border-bottom:3px solid #7B00C4;margin-bottom:22px}
 .logo{font-family:Georgia,serif;font-size:24px;color:#7B00C4;font-weight:700}.sub{font-size:10px;color:#6b7280;margin-top:3px}
@@ -3064,10 +3367,10 @@ td{padding:6px 10px;border-bottom:1px solid #f3f4f6}tr:nth-child(even) td{backgr
 @media print{body{padding:16px}@page{margin:1.5cm}}</style></head><body>
 <div class="header"><div><div class="logo">Dra. Lucia Kratz</div><div class="sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação · Goiânia, GO</div></div>
 <div style="font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric"
-            })}</div></div>
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric"
+                            })}</div></div>
 <div class="box"><div class="nome">${pac?.nome || "—"}</div>
 <div class="meta">
 <div class="mi"><label>Início</label><span>${p.dataInicio ? new Date(p.dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "—"}</span></div>
@@ -3080,10 +3383,10 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
 <table><thead><tr><th>Nº</th><th>Data</th><th>Horário</th><th>Tipo</th><th>Presença</th><th>Valor</th></tr></thead>
 <tbody>${sess.map((s, i) => `<tr><td style="font-weight:700;color:#7B00C4">${s.numSessao || i + 1}</td>
 <td>${s.data ? new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR", {
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit"
-            }) : ""}</td>
+                              weekday: "short",
+                              day: "2-digit",
+                              month: "2-digit"
+                            }) : ""}</td>
 <td>${s.hora || "—"}</td><td>${s.tipo || "Psicoterapia"}</td>
 <td><span class="badge" style="background:${statusColor[s.status] || "#7B00C4"}">${statusLabel[s.status] || s.status || "—"}</span></td>
 <td>R$ ${(parseFloat(s.valorSessao) || 0).toFixed(2).replace(".", ",")}</td></tr>`).join("")}
@@ -3094,982 +3397,245 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
 <div class="ti"><label>A receber</label><span style="color:#d97706">R$ ${(totalValor - totalPago).toFixed(2).replace(".", ",")}</span></div>
 </div>
 ${p.dataPagamento || p.dataRecebimento ? `<div style="margin-top:14px;background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:18px">✅</span><div><div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#065f46;letter-spacing:.5px">Data de Pagamento</div><div style="font-size:16px;font-weight:800;color:#059669">${new Date((p.dataPagamento || p.dataRecebimento) + "T00:00:00").toLocaleDateString("pt-BR", {
-              weekday: "long",
-              day: "2-digit",
-              month: "long",
-              year: "numeric"
-            })}</div></div></div>` : ""}
+                              weekday: "long",
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric"
+                            })}</div></div></div>` : ""}
 ${sessPac.some(s => s.dataPagamento || s.dataRecebimento) ? `<div style="margin-top:10px;font-size:11px;color:#6b7280;font-weight:600">Pagamentos por sessão:</div><table style="margin-top:4px;font-size:11px"><tbody>${sessPac.filter(s => s.dataPagamento || s.dataRecebimento).map(s => `<tr><td style="padding:3px 10px 3px 0;color:#374151">Sessão ${s.numSessao || ""} — ${s.data ? new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR") : ""}:</td><td style="color:#059669;font-weight:700">pago em ${new Date((s.dataPagamento || s.dataRecebimento) + "T00:00:00").toLocaleDateString("pt-BR")}</td></tr>`).join("")}</tbody></table>` : ""}
 <div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit"
-            })} · Clínica Dra. Lucia Kratz</div>
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })} · Clínica Dra. Lucia Kratz</div>
 </body></html>`;
-            const w = window.open("", "_blank");
-            w.document.write(html);
-            w.document.close();
-            setTimeout(() => w.print(), 800);
-          }
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "file-text",
-          size: 13
-        }), " PDF"), /*#__PURE__*/React.createElement("button", {
-          className: "btn btn-ghost",
-          style: {
-            fontSize: 12,
-            padding: "6px 12px",
-            color: "#dc2626",
-            marginLeft: "auto"
-          },
-          onClick: async e => {
-            e.stopPropagation();
-            if (!confirm("Excluir pacote e TODAS as sessões e lançamentos vinculados? Esta ação não pode ser desfeita.")) return;
-            try {
-              const [snapSess, snapLanc] = await Promise.all([db.collection("clinica_sessoes").where("pacoteId", "==", p.id).get(), db.collection("clinica_lancamentos").where("pacoteId", "==", p.id).get()]);
-              const b = db.batch();
-              snapSess.docs.forEach(d => b.delete(d.ref));
-              snapLanc.docs.forEach(d => b.delete(d.ref));
-              b.delete(db.collection("clinica_pacotes").doc(p.id));
-              await b.commit();
-            } catch (e) {
-              alert("Erro ao excluir pacote: " + e.message);
+                            const w = window.open("", "_blank");
+                            w.document.write(html);
+                            w.document.close();
+                            setTimeout(() => w.print(), 800);
+                          },
+                          children: [/*#__PURE__*/_jsxDEV(Icon, {
+                            name: "file-text",
+                            size: 13
+                          }, void 0, false), " PDF"]
+                        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+                          className: "btn btn-ghost",
+                          style: {
+                            fontSize: 12,
+                            padding: "6px 12px",
+                            color: "#dc2626",
+                            marginLeft: "auto"
+                          },
+                          onClick: async e => {
+                            e.stopPropagation();
+                            if (!confirm("Excluir pacote e TODAS as sessões e lançamentos vinculados? Esta ação não pode ser desfeita.")) return;
+                            try {
+                              const [snapSess, snapLanc] = await Promise.all([db.collection("clinica_sessoes").where("pacoteId", "==", p.id).get(), db.collection("clinica_lancamentos").where("pacoteId", "==", p.id).get()]);
+                              const b = db.batch();
+                              snapSess.docs.forEach(d => b.delete(d.ref));
+                              snapLanc.docs.forEach(d => b.delete(d.ref));
+                              b.delete(db.collection("clinica_pacotes").doc(p.id));
+                              await b.commit();
+                            } catch (e) {
+                              alert("Erro ao excluir pacote: " + e.message);
+                            }
+                          },
+                          children: [/*#__PURE__*/_jsxDEV(Icon, {
+                            name: "trash-2",
+                            size: 13
+                          }, void 0, false), " Excluir"]
+                        }, void 0, true)]
+                      }, void 0, true)]
+                    }, p.id, true);
+                  })
+                }, void 0, false)]
+              }, pacId, true);
             }
-          }
-        }, /*#__PURE__*/React.createElement(Icon, {
-          name: "trash-2",
-          size: 13
-        }), " Excluir")));
-      })));
-    }));
-  })()), aba === "acompanhamento" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 16
-    }
-  }, "Clique em um paciente para abrir o Controle de Sessões e Frequência completo."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(pac => {
-    const sessPac = sessoes.filter(s => s.pacienteId === pac.id);
-    const pacotesPac = pacotes.filter(p => p.pacienteId === pac.id);
-    if (pacotesPac.length === 0) return null;
-    const totalSessoes = sessPac.length;
-    // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
-    const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "falta").length;
-    const pagas = sessPac.filter(s => s.pagamento === "pago").length;
-    // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
-    const pendentes = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "remarcado").length;
-    const recebido = sessPac.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
-    // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
-    const aReceber = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "remarcado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-    return /*#__PURE__*/React.createElement("div", {
-      key: pac.id,
-      className: "card",
-      style: {
-        padding: "14px 20px",
-        cursor: "pointer",
-        marginBottom: 10,
-        transition: "box-shadow .15s"
-      },
-      onClick: () => setPacoteSelecionado(pac.id),
-      onMouseEnter: e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(123,0,196,0.12)",
-      onMouseLeave: e => e.currentTarget.style.boxShadow = ""
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 40,
-        height: 40,
-        borderRadius: "50%",
-        background: "var(--purple)",
-        color: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "var(--font-display)",
-        fontSize: 18,
-        fontWeight: 600,
-        flexShrink: 0
-      }
-    }, (pac.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 14
-      }
-    }, pac.nome), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, pacotesPac[0]?.recorrencia, " · ", pacotesPac[0]?.horario)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 16,
-        alignItems: "center",
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: "var(--purple)"
-      }
-    }, realizadas, "/", totalSessoes), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "var(--text-muted)"
-      }
-    }, "Sessões")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: "#059669"
-      }
-    }, recebido.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "var(--text-muted)"
-      }
-    }, "Recebido")), aReceber > 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: "#d97706"
-      }
-    }, aReceber.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: "var(--text-muted)"
-      }
-    }, "A Receber")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 4
-      }
-    }, pendentes > 0 && /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "#fef3c7",
-        color: "#b45309",
-        borderRadius: 20,
-        padding: "2px 10px",
-        fontSize: 11,
-        fontWeight: 600
-      }
-    }, pendentes, " pendente(s)"), pendentes === 0 && /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "#d1fae5",
-        color: "#065f46",
-        borderRadius: 20,
-        padding: "2px 10px",
-        fontSize: 11,
-        fontWeight: 600
-      }
-    }, "✓ Em dia")), /*#__PURE__*/React.createElement(Icon, {
-      name: "chevron-right",
-      size: 16,
-      style: {
-        color: "var(--text-muted)"
-      }
-    }))));
-  })), aba === "orcamento" && /*#__PURE__*/React.createElement(OrcamentoClinica, null), aba === "comissoes" && /*#__PURE__*/React.createElement(Comissoes, {
-    user: user
-  }), modalDespesa && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModalDespesa(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 500,
-      maxHeight: "90vh",
-      overflowY: "auto"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
-    }
-  }, editandoDespesa ? "Editar" : "Nova", " Despesa — Clínica"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalDespesa(false),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formDespesa.categoria,
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      categoria: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecionar..."), CATS_DESPESA_CLINICA.map(cat => /*#__PURE__*/React.createElement("option", {
-    key: cat
-  }, cat)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formDespesa.descricao,
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      descricao: e.target.value
-    }),
-    placeholder: "Ex: Equipamento Neurofeedback"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor (R$)"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    value: formDespesa.valor,
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      valor: e.target.value
-    }),
-    placeholder: "0,00"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formDespesa.data,
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      data: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formDespesa.formaPag,
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      formaPag: e.target.value
-    })
-  }, FORMAS_PAG_CLINICA.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
-  }, f)))), !editandoDespesa && /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Parcelas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    min: "1",
-    max: "60",
-    value: formDespesa.parcelas,
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      parcelas: e.target.value
-    }),
-    style: {
-      width: 80
-    }
-  }), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, "= ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "var(--purple)"
-    }
-  }, "R$ ", ((parseFloat(formDespesa.valor) || 0) * (parseInt(formDespesa.parcelas) || 1)).toFixed(2).replace(".", ","))))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, cor]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    type: "button",
-    onClick: () => setFormDespesa({
-      ...formDespesa,
-      status: v
-    }),
-    style: {
-      flex: 1,
-      padding: 10,
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formDespesa.status === v ? cor : "#e5e7eb",
-      background: formDespesa.status === v ? cor + "15" : "white",
-      color: formDespesa.status === v ? cor : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Observações"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formDespesa.obs || "",
-    onChange: e => setFormDespesa({
-      ...formDespesa,
-      obs: e.target.value
-    }),
-    placeholder: "Opcional..."
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end",
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModalDespesa(false)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvarDespesaClinica,
-    disabled: salvando
-  }, salvando ? "Salvando..." : editandoDespesa ? "Salvar" : "Lançar")))), modal === "escolha" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModal(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 32,
-      width: "100%",
-      maxWidth: 420,
-      textAlign: "center"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600,
-      marginBottom: 8
-    }
-  }, "Novo Lançamento"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: "#6b7280",
-      marginBottom: 24
-    }
-  }, "Selecione o tipo:"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      width: "100%",
-      padding: "20px 20px",
-      fontSize: 13,
-      display: "flex",
-      alignItems: "center",
-      gap: 16,
-      textAlign: "left"
-    },
-    onClick: () => setModal("pacote")
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 32,
-      flexShrink: 0
-    }
-  }, "📦"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--purple)"
-    }
-  }, "Pacote de Sessões"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      lineHeight: 1.5,
-      marginTop: 2
-    }
-  }, "Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas")))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      width: "100%",
-      marginTop: 12
-    },
-    onClick: () => setModal(false)
-  }, "Cancelar"))), modal === "avulso" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 500
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
-    }
-  }, editando ? "Editar Lançamento" : "Lançamento Avulso"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Paciente / Cliente"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formAvulso.pacienteId,
-    onChange: e => {
-      const pac = pacientes.find(p => p.id === e.target.value);
-      setFormAvulso({
-        ...formAvulso,
-        pacienteId: e.target.value,
-        pacienteNome: pac?.nome || "",
-        obs: pac ? `${formAvulso.tipo} — ${pac.nome}` : formAvulso.obs
-      });
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecionar..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/React.createElement("option", {
-    key: p.id,
-    value: p.id
-  }, p.nome)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Tipo / Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formAvulso.tipo,
-    onChange: e => {
-      const pac = pacientes.find(p => p.id === formAvulso.pacienteId);
-      setFormAvulso({
-        ...formAvulso,
-        tipo: e.target.value,
-        obs: pac ? `${e.target.value} — ${pac.nome}` : formAvulso.obs
-      });
-    }
-  }, ["Consulta", "Sessão", "Avaliação", "Musicoterapia", "Neuromodulação", "Orientação", "Laudo", "Outro"].map(t => /*#__PURE__*/React.createElement("option", {
-    key: t
-  }, t)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor R$"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    placeholder: "0,00",
-    value: formAvulso.valor,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
-      valor: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formAvulso.data,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
-      data: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formAvulso.formaPag,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
-      formaPag: e.target.value
-    })
-  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
-  }, f)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    onClick: () => setFormAvulso({
-      ...formAvulso,
-      status: v
-    }),
-    style: {
-      flex: 1,
-      padding: "10px",
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formAvulso.status === v ? c : "#e5e7eb",
-      background: formAvulso.status === v ? c + "15" : "white",
-      color: formAvulso.status === v ? c : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Observações"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    placeholder: "Opcional...",
-    value: formAvulso.obs,
-    onChange: e => setFormAvulso({
-      ...formAvulso,
-      obs: e.target.value
-    })
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
-  }, "Cancelar"), editando && /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1px solid #fecaca",
-      color: "#dc2626",
-      fontSize: 12
-    },
-    title: "Este lançamento é uma despesa, não uma receita",
-    onClick: () => {
-      setFormDespesaEdit({
-        descricao: formAvulso.descricao || formAvulso.tipo || "",
-        categoria: formAvulso.categoria || "",
-        valor: formAvulso.valor + "",
-        data: formAvulso.data || "",
-        formaPag: formAvulso.formaPag || "",
-        status: formAvulso.status === "recebido" ? "pago" : formAvulso.status || "pago",
-        obs: formAvulso.obs || ""
-      });
-      setModal("editar-despesa");
-    }
-  }, "🔁 Marcar como Despesa"), editando ? /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => salvarAvulso(null),
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "save",
-    size: 15
-  }), " ", salvando ? "Salvando..." : "Salvar Alterações") : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => salvarAvulso(null),
-    disabled: salvando,
-    style: {
-      border: "1px solid #e5e7eb",
-      color: "#6b7280",
-      fontSize: 12
-    },
-    title: "Sem comissão — para lançamentos passados"
-  }, "📋 Sem comissão"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => salvarAvulso("primeira"),
-    disabled: salvando,
-    style: {
-      background: "#7B00C4"
-    },
-    title: "10% de comissão"
-  }, "🌟 Primeira Venda"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: () => salvarAvulso("recorrente"),
-    disabled: salvando,
-    style: {
-      background: "#0891b2"
-    },
-    title: "5% de comissão"
-  }, "🔁 Venda Recorrente"))))), modal === "editar-despesa" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 500
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600,
-      color: "#dc2626"
-    }
-  }, "✏️ Editar Despesa"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    placeholder: "Ex: Consultório locação",
-    value: formDespesaEdit.descricao,
-    onChange: e => setFormDespesaEdit({
-      ...formDespesaEdit,
-      descricao: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formDespesaEdit.categoria,
-    onChange: e => setFormDespesaEdit({
-      ...formDespesaEdit,
-      categoria: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecionar..."), CATS_DESPESA.map(c => /*#__PURE__*/React.createElement("option", {
-    key: c
-  }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor R$"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    placeholder: "0,00",
-    value: formDespesaEdit.valor,
-    onChange: e => setFormDespesaEdit({
-      ...formDespesaEdit,
-      valor: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formDespesaEdit.data,
-    onChange: e => setFormDespesaEdit({
-      ...formDespesaEdit,
-      data: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formDespesaEdit.formaPag,
-    onChange: e => setFormDespesaEdit({
-      ...formDespesaEdit,
-      formaPag: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "—"), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f
-  }, f)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    onClick: () => setFormDespesaEdit({
-      ...formDespesaEdit,
-      status: v
-    }),
-    style: {
-      flex: 1,
-      padding: "10px",
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: formDespesaEdit.status === v ? c : "#e5e7eb",
-      background: formDespesaEdit.status === v ? c + "15" : "white",
-      color: formDespesaEdit.status === v ? c : "#6b7280",
-      fontWeight: 600,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "1/-1"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Observações"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    placeholder: "Opcional...",
-    value: formDespesaEdit.obs,
-    onChange: e => setFormDespesaEdit({
-      ...formDespesaEdit,
-      obs: e.target.value
-    })
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      background: "#dc2626"
-    },
-    onClick: salvarDespesaEdit,
-    disabled: salvando
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "save",
-    size: 15
-  }), " ", salvando ? "Salvando..." : "Salvar Alterações")))), modal === "pacote" && (() => {
-    const DIAS = [{
-      v: "0",
-      l: "Dom"
-    }, {
-      v: "1",
-      l: "Seg"
-    }, {
-      v: "2",
-      l: "Ter"
-    }, {
-      v: "3",
-      l: "Qua"
-    }, {
-      v: "4",
-      l: "Qui"
-    }, {
-      v: "5",
-      l: "Sex"
-    }, {
-      v: "6",
-      l: "Sáb"
-    }];
-    const needDias = ["2x por semana", "3x por semana"].includes(formPacote.recorrencia);
-    const maxDias = formPacote.recorrencia === "3x por semana" ? 3 : 2;
-    const diasSel = formPacote.diasSemana || [];
-    function toggleDia(v) {
-      if (diasSel.includes(v)) {
-        setFormPacote({
-          ...formPacote,
-          diasSemana: diasSel.filter(d => d !== v)
-        });
-      } else if (diasSel.length < maxDias) {
-        setFormPacote({
-          ...formPacote,
-          diasSemana: [...diasSel, v].sort()
-        });
-      }
-    }
-    return /*#__PURE__*/React.createElement("div", {
+            return pacientesVisiveis.map(pacId => /*#__PURE__*/_jsxDEV(CardPaciente, {
+              pacId: pacId
+            }, pacId, false));
+          })()]
+        }, void 0, true);
+      })()]
+    }, void 0, true), aba === "acompanhamento" && /*#__PURE__*/_jsxDEV("div", {
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 13,
+          color: "var(--text-muted)",
+          marginBottom: 16
+        },
+        children: "Clique em um paciente para abrir o Controle de Sessões e Frequência completo."
+      }, void 0, false), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(pac => {
+        const sessPac = sessoes.filter(s => s.pacienteId === pac.id);
+        const pacotesPac = pacotes.filter(p => p.pacienteId === pac.id);
+        if (pacotesPac.length === 0) return null;
+        const totalSessoes = sessPac.length;
+        // "Remarcado" conta como sessão válida para fins de progresso e fluxo financeiro
+        const realizadas = sessPac.filter(s => s.status === "realizado" || s.status === "falta").length;
+        const pagas = sessPac.filter(s => s.pagamento === "pago").length;
+        // Pendentes: exclui canceladas E remarcadas (remarcado já retém valor pago)
+        const pendentes = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "remarcado").length;
+        const recebido = sessPac.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
+        // A receber: exclui canceladas E remarcadas do fluxo de cobrança pendente
+        const aReceber = sessPac.filter(s => s.pagamento !== "pago" && s.status !== "remarcado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
+        return /*#__PURE__*/_jsxDEV("div", {
+          className: "card",
+          style: {
+            padding: "14px 20px",
+            cursor: "pointer",
+            marginBottom: 10,
+            transition: "box-shadow .15s"
+          },
+          onClick: () => setPacoteSelecionado(pac.id),
+          onMouseEnter: e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(123,0,196,0.12)",
+          onMouseLeave: e => e.currentTarget.style.boxShadow = "",
+          children: /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 12
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: "var(--purple)",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "var(--font-display)",
+                fontSize: 18,
+                fontWeight: 600,
+                flexShrink: 0
+              },
+              children: (pac.nome || "?")[0].toUpperCase()
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                flex: 1
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 700,
+                  fontSize: 14
+                },
+                children: pac.nome
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 12,
+                  color: "var(--text-muted)",
+                  marginTop: 2
+                },
+                children: [pacotesPac[0]?.recorrencia, " · ", pacotesPac[0]?.horario]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 16,
+                alignItems: "center",
+                flexWrap: "wrap"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  textAlign: "center"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "var(--purple)"
+                  },
+                  children: [realizadas, "/", totalSessoes]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 10,
+                    color: "var(--text-muted)"
+                  },
+                  children: "Sessões"
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  textAlign: "center"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#059669"
+                  },
+                  children: recebido.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                  })
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 10,
+                    color: "var(--text-muted)"
+                  },
+                  children: "Recebido"
+                }, void 0, false)]
+              }, void 0, true), aReceber > 0 && /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  textAlign: "center"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#d97706"
+                  },
+                  children: aReceber.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                  })
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 10,
+                    color: "var(--text-muted)"
+                  },
+                  children: "A Receber"
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4
+                },
+                children: [pendentes > 0 && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    background: "#fef3c7",
+                    color: "#b45309",
+                    borderRadius: 20,
+                    padding: "2px 10px",
+                    fontSize: 11,
+                    fontWeight: 600
+                  },
+                  children: [pendentes, " pendente(s)"]
+                }, void 0, true), pendentes === 0 && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    background: "#d1fae5",
+                    color: "#065f46",
+                    borderRadius: 20,
+                    padding: "2px 10px",
+                    fontSize: 11,
+                    fontWeight: 600
+                  },
+                  children: "✓ Em dia"
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV(Icon, {
+                name: "chevron-right",
+                size: 16,
+                style: {
+                  color: "var(--text-muted)"
+                }
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true)
+        }, pac.id, false);
+      })]
+    }, void 0, true), aba === "orcamento" && /*#__PURE__*/_jsxDEV(OrcamentoClinica, {}, void 0, false), aba === "comissoes" && /*#__PURE__*/_jsxDEV(Comissoes, {
+      user: user
+    }, void 0, false), modalDespesa && /*#__PURE__*/_jsxDEV("div", {
       style: {
         position: "fixed",
         inset: 0,
@@ -4080,799 +3646,1784 @@ ${sessPac.some(s => s.dataPagamento || s.dataRecebimento) ? `<div style="margin-
         zIndex: 500,
         padding: 20
       },
-      onClick: () => setModal(false)
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        borderRadius: 16,
-        padding: 28,
-        width: "100%",
-        maxWidth: 560,
-        maxHeight: "90vh",
-        overflowY: "auto"
-      },
-      onClick: e => e.stopPropagation()
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 16
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: "var(--font-display)",
-        fontSize: 20,
-        fontWeight: 600
-      }
-    }, "Novo Pacote de Sessões"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => setModal(false),
-      style: {
-        background: "none",
-        border: "none",
-        cursor: "pointer"
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "x",
-      size: 20
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 12,
-        marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "form-group",
-      style: {
-        gridColumn: "1/-1"
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Paciente *"), /*#__PURE__*/React.createElement("select", {
-      className: "form-input",
-      value: formPacote.pacienteId,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        pacienteId: e.target.value
-      })
-    }, /*#__PURE__*/React.createElement("option", {
-      value: ""
-    }, "Selecionar..."), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/React.createElement("option", {
-      key: p.id,
-      value: p.id
-    }, p.nome)))), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Nº de Sessões *"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "number",
-      min: "1",
-      max: "40",
-      placeholder: "Ex: 10",
-      value: formPacote.totalSessoes,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        totalSessoes: e.target.value
-      })
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Recorrência *"), /*#__PURE__*/React.createElement("select", {
-      className: "form-input",
-      value: formPacote.recorrencia,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        recorrencia: e.target.value,
-        diasSemana: [],
-        horariosPorDia: {}
-      })
-    }, RECORRENCIAS.map(r => /*#__PURE__*/React.createElement("option", {
-      key: r
-    }, r)))), needDias && /*#__PURE__*/React.createElement("div", {
-      className: "form-group",
-      style: {
-        gridColumn: "1/-1"
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Dias da Semana * (escolha ", maxDias, ")"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        flexWrap: "wrap",
-        marginTop: 4
-      }
-    }, DIAS.map(d => {
-      const sel = diasSel.includes(d.v);
-      const dis = !sel && diasSel.length >= maxDias;
-      return /*#__PURE__*/React.createElement("div", {
-        key: d.v,
+      onClick: () => setModalDespesa(false),
+      children: /*#__PURE__*/_jsxDEV("div", {
         style: {
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 3
-        }
-      }, /*#__PURE__*/React.createElement("button", {
-        type: "button",
-        onClick: () => toggleDia(d.v),
-        disabled: dis,
-        style: {
-          padding: "8px 14px",
-          borderRadius: 10,
-          border: "1.5px solid",
-          borderColor: sel ? "var(--purple)" : "#e5e7eb",
-          background: sel ? "var(--purple)" : "white",
-          color: sel ? "white" : dis ? "#d1d5db" : "#374151",
-          fontWeight: sel ? 700 : 400,
-          cursor: dis ? "not-allowed" : "pointer",
-          fontSize: 13,
-          fontFamily: "var(--font-body)"
-        }
-      }, d.l), sel && /*#__PURE__*/React.createElement("input", {
-        type: "time",
-        value: (formPacote.horariosPorDia || {})[d.v] || formPacote.horario || "09:00",
-        onChange: e => setFormPacote({
-          ...formPacote,
-          horariosPorDia: {
-            ...(formPacote.horariosPorDia || {}),
-            [d.v]: e.target.value
-          }
-        }),
-        style: {
-          fontSize: 11,
-          border: "1px solid #e9d5ff",
-          borderRadius: 6,
-          padding: "3px 6px",
-          width: 72,
-          textAlign: "center",
-          color: "var(--purple)",
-          fontWeight: 600
-        }
-      }));
-    }))), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Data de Início *"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "date",
-      value: formPacote.dataInicio,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        dataInicio: e.target.value
-      })
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Horário ", needDias ? "(padrão)" : ""), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "time",
-      value: formPacote.horario,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        horario: e.target.value
-      })
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Modalidade"), /*#__PURE__*/React.createElement("select", {
-      className: "form-input",
-      value: formPacote.modalidade || "on-line",
-      onChange: e => setFormPacote({
-        ...formPacote,
-        modalidade: e.target.value
-      })
-    }, /*#__PURE__*/React.createElement("option", {
-      value: "on-line"
-    }, "💻 On-line"), /*#__PURE__*/React.createElement("option", {
-      value: "presencial"
-    }, "🏥 Presencial"), /*#__PURE__*/React.createElement("option", {
-      value: "híbrido"
-    }, "🔄 Híbrido"))), /*#__PURE__*/React.createElement("div", {
-      className: "form-group",
-      style: {
-        gridColumn: "1/-1"
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Tipo de Atendimento"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8
-      }
-    }, [["particular", "🏥 Particular"], ["social", "🌱 Social"], ["parceria", "🤝 Parceria"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
-      key: v,
-      type: "button",
-      onClick: () => setFormPacote({
-        ...formPacote,
-        tipoAtendimento: v,
-        valorSessao: v === "social" ? "" : formPacote.valorSessao,
-        valorSupervisaoSocial: v === "social" ? "40" : formPacote.valorSupervisaoSocial,
-        valorEstagiariaSocial: v === "social" ? "20" : formPacote.valorEstagiariaSocial,
-        percParceiro: v === "parceria" ? formPacote.percParceiro || "70" : formPacote.percParceiro
-      }),
-      style: {
-        flex: 1,
-        padding: "9px",
-        borderRadius: 8,
-        border: "2px solid",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        fontSize: 13,
-        fontWeight: 600,
-        borderColor: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#0d9488" : v === "parceria" ? "#b45309" : "#7B00C4" : "#e5e7eb",
-        background: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#ccfbf1" : v === "parceria" ? "#fef3c7" : "#f5f3ff" : "white",
-        color: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#0d9488" : v === "parceria" ? "#b45309" : "#7B00C4" : "#6b7280"
-      }
-    }, l)))), (formPacote.tipoAtendimento || "particular") === "social" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Valor Supervisão (R$)"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "number",
-      value: formPacote.valorSupervisaoSocial || "40",
-      onChange: e => setFormPacote({
-        ...formPacote,
-        valorSupervisaoSocial: e.target.value
-      })
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 3
-      }
-    }, "Receita da clínica")), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Valor Estagiária (R$)"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "number",
-      value: formPacote.valorEstagiariaSocial || "20",
-      onChange: e => setFormPacote({
-        ...formPacote,
-        valorEstagiariaSocial: e.target.value
-      })
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 3
-      }
-    }, "Comissão estagiária"))) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Valor por Sessão (R$)"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "number",
-      placeholder: "Ex: 250",
-      value: formPacote.valorSessao,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        valorSessao: e.target.value
-      })
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Total do Pacote (R$)"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "number",
-      placeholder: "Automático",
-      value: formPacote.valorSessao && formPacote.totalSessoes ? (parseFloat(formPacote.valorSessao) || 0) * (parseInt(formPacote.totalSessoes) || 0) : "",
-      readOnly: true,
-      style: {
-        background: "#f9fafb"
-      }
-    })), (formPacote.tipoAtendimento || "particular") === "parceria" && (() => {
-      const tot = (parseFloat(formPacote.valorSessao) || 0) * (parseInt(formPacote.totalSessoes) || 0);
-      const parceiros = formPacote.parceirosList || [];
-      const totalRepasses = parceiros.reduce((a, p) => {
-        const v = p.tipoValor === "fixo" ? parseFloat(p.valor) || 0 : tot * (parseFloat(p.perc) || 0) / 100;
-        return a + v;
-      }, 0);
-      const liquidoClinica = tot - totalRepasses;
-      return /*#__PURE__*/React.createElement("div", {
-        style: {
-          gridColumn: "1/-1"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 8
-        }
-      }, /*#__PURE__*/React.createElement("label", {
-        className: "form-label",
-        style: {
-          margin: 0
-        }
-      }, "🤝 Parceiros e Repasses"), /*#__PURE__*/React.createElement("button", {
-        type: "button",
-        style: {
-          fontSize: 12,
-          color: "#b45309",
-          background: "#fffbeb",
-          border: "1px solid #fde68a",
-          borderRadius: 6,
-          padding: "4px 12px",
-          cursor: "pointer",
-          fontWeight: 600
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 500,
+          maxHeight: "90vh",
+          overflowY: "auto"
         },
-        onClick: () => setFormPacote({
-          ...formPacote,
-          parceirosList: [...(formPacote.parceirosList || []), {
-            nome: "",
-            parceiraId: "",
-            tipoValor: "fixo",
-            valor: "",
-            perc: ""
-          }]
-        })
-      }, "+ Adicionar parceiro")), parceiros.length === 0 && /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 12,
-          color: "var(--text-muted)",
-          fontStyle: "italic",
-          padding: "6px 0"
-        }
-      }, "Clique em \"+ Adicionar parceiro\" para registrar cada pessoa e seu repasse."), parceiros.map((p, i) => {
-        const vCalc = p.tipoValor === "fixo" ? parseFloat(p.valor) || 0 : tot * (parseFloat(p.perc) || 0) / 100;
-        return /*#__PURE__*/React.createElement("div", {
-          key: i,
-          style: {
-            background: "#fffbeb",
-            border: "1px solid #fde68a",
-            borderRadius: 10,
-            padding: "10px 12px",
-            marginBottom: 8
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "1fr auto",
-            gap: 8,
-            marginBottom: 8,
-            alignItems: "center"
-          }
-        }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("select", {
-          className: "form-input",
-          style: {
-            fontSize: 12,
-            marginBottom: 4
-          },
-          value: p.parceiraId || "",
-          onChange: e => {
-            const pc = parceiras.find(x => x.id === e.target.value);
-            const lista = [...(formPacote.parceirosList || [])];
-            lista[i] = {
-              ...lista[i],
-              parceiraId: e.target.value,
-              nome: pc?.nome || lista[i].nome,
-              perc: pc?.percentual ? String(pc.percentual) : lista[i].perc
-            };
-            setFormPacote({
-              ...formPacote,
-              parceirosList: lista
-            });
-          }
-        }, /*#__PURE__*/React.createElement("option", {
-          value: ""
-        }, "— Do cadastro (opcional) —"), parceiras.map(pc => /*#__PURE__*/React.createElement("option", {
-          key: pc.id,
-          value: pc.id
-        }, pc.nome))), /*#__PURE__*/React.createElement("input", {
-          className: "form-input",
-          style: {
-            fontSize: 12
-          },
-          placeholder: "Nome do parceiro",
-          value: p.nome || "",
-          onChange: e => {
-            const lista = [...(formPacote.parceirosList || [])];
-            lista[i] = {
-              ...lista[i],
-              nome: e.target.value
-            };
-            setFormPacote({
-              ...formPacote,
-              parceirosList: lista
-            });
-          }
-        })), /*#__PURE__*/React.createElement("button", {
-          type: "button",
-          style: {
-            color: "#dc2626",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: 18,
-            padding: "0 4px"
-          },
-          onClick: () => {
-            const lista = [...(formPacote.parceirosList || [])];
-            lista.splice(i, 1);
-            setFormPacote({
-              ...formPacote,
-              parceirosList: lista
-            });
-          }
-        }, "✕")), /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            gap: 8,
-            alignItems: "center"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
           style: {
             display: "flex",
-            gap: 4
-          }
-        }, [["fixo", "R$ fixo"], ["perc", "% do total"]].map(([tv, tl]) => /*#__PURE__*/React.createElement("button", {
-          key: tv,
-          type: "button",
-          onClick: () => {
-            const lista = [...(formPacote.parceirosList || [])];
-            lista[i] = {
-              ...lista[i],
-              tipoValor: tv
-            };
-            setFormPacote({
-              ...formPacote,
-              parceirosList: lista
-            });
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20
           },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 600
+            },
+            children: [editandoDespesa ? "Editar" : "Nova", " Despesa — Clínica"]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setModalDespesa(false),
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "x",
+              size: 20
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
           style: {
-            padding: "5px 10px",
-            borderRadius: 6,
-            border: "1.5px solid",
-            cursor: "pointer",
-            fontSize: 11,
-            fontWeight: 600,
-            fontFamily: "var(--font-body)",
-            borderColor: p.tipoValor === tv ? "#b45309" : "#e5e7eb",
-            background: p.tipoValor === tv ? "#fffbeb" : "white",
-            color: p.tipoValor === tv ? "#b45309" : "#6b7280"
-          }
-        }, tl))), /*#__PURE__*/React.createElement("div", {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Categoria"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formDespesa.categoria,
+              onChange: e => setFormDespesa({
+                ...formDespesa,
+                categoria: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecionar..."
+              }, void 0, false), CATS_DESPESA_CLINICA.map(cat => /*#__PURE__*/_jsxDEV("option", {
+                children: cat
+              }, cat, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Descrição"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: formDespesa.descricao,
+              onChange: e => setFormDespesa({
+                ...formDespesa,
+                descricao: e.target.value
+              }),
+              placeholder: "Ex: Equipamento Neurofeedback"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Valor (R$)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              value: formDespesa.valor,
+              onChange: e => setFormDespesa({
+                ...formDespesa,
+                valor: e.target.value
+              }),
+              placeholder: "0,00"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Data"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "date",
+              value: formDespesa.data,
+              onChange: e => setFormDespesa({
+                ...formDespesa,
+                data: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Forma de Pagamento"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formDespesa.formaPag,
+              onChange: e => setFormDespesa({
+                ...formDespesa,
+                formaPag: e.target.value
+              }),
+              children: FORMAS_PAG_CLINICA.map(f => /*#__PURE__*/_jsxDEV("option", {
+                children: f
+              }, f, false))
+            }, void 0, false)]
+          }, void 0, true), !editandoDespesa && /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Parcelas"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8,
+                alignItems: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                type: "number",
+                min: "1",
+                max: "60",
+                value: formDespesa.parcelas,
+                onChange: e => setFormDespesa({
+                  ...formDespesa,
+                  parcelas: e.target.value
+                }),
+                style: {
+                  width: 80
+                }
+              }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 12,
+                  color: "var(--text-muted)"
+                },
+                children: ["= ", /*#__PURE__*/_jsxDEV("strong", {
+                  style: {
+                    color: "var(--purple)"
+                  },
+                  children: ["R$ ", ((parseFloat(formDespesa.valor) || 0) * (parseInt(formDespesa.parcelas) || 1)).toFixed(2).replace(".", ",")]
+                }, void 0, true)]
+              }, void 0, true)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Status"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8
+              },
+              children: [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, cor]) => /*#__PURE__*/_jsxDEV("button", {
+                type: "button",
+                onClick: () => setFormDespesa({
+                  ...formDespesa,
+                  status: v
+                }),
+                style: {
+                  flex: 1,
+                  padding: 10,
+                  borderRadius: 10,
+                  border: "1.5px solid",
+                  borderColor: formDespesa.status === v ? cor : "#e5e7eb",
+                  background: formDespesa.status === v ? cor + "15" : "white",
+                  color: formDespesa.status === v ? cor : "#6b7280",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontFamily: "var(--font-body)"
+                },
+                children: l
+              }, v, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Observações"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: formDespesa.obs || "",
+              onChange: e => setFormDespesa({
+                ...formDespesa,
+                obs: e.target.value
+              }),
+              placeholder: "Opcional..."
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
           style: {
             display: "flex",
-            gap: 8,
-            alignItems: "center"
-          }
-        }, p.tipoValor === "fixo" ? /*#__PURE__*/React.createElement("input", {
-          className: "form-input",
-          style: {
-            fontSize: 12
+            gap: 10,
+            justifyContent: "flex-end",
+            marginTop: 16
           },
-          type: "number",
-          placeholder: "Valor R$",
-          value: p.valor || "",
-          onChange: e => {
-            const lista = [...(formPacote.parceirosList || [])];
-            lista[i] = {
-              ...lista[i],
-              valor: e.target.value
-            };
-            setFormPacote({
-              ...formPacote,
-              parceirosList: lista
-            });
-          }
-        }) : /*#__PURE__*/React.createElement("input", {
-          className: "form-input",
-          style: {
-            fontSize: 12
-          },
-          type: "number",
-          placeholder: "%",
-          min: "0",
-          max: "100",
-          value: p.perc || "",
-          onChange: e => {
-            const lista = [...(formPacote.parceirosList || [])];
-            lista[i] = {
-              ...lista[i],
-              perc: e.target.value
-            };
-            setFormPacote({
-              ...formPacote,
-              parceirosList: lista
-            });
-          }
-        }), vCalc > 0 && /*#__PURE__*/React.createElement("span", {
-          style: {
-            fontSize: 12,
-            color: "#b45309",
-            fontWeight: 700,
-            whiteSpace: "nowrap"
-          }
-        }, "= R$ ", vCalc.toFixed(2).replace(".", ",")))));
-      }), tot > 0 && parceiros.length > 0 && /*#__PURE__*/React.createElement("div", {
-        style: {
-          background: "#f0fdf4",
-          border: "1px solid #86efac",
-          borderRadius: 10,
-          padding: "10px 14px",
-          fontSize: 13,
-          marginTop: 4
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "6px 20px"
-        }
-      }, /*#__PURE__*/React.createElement("span", null, "💰 Total recebido: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", tot.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "#b45309"
-        }
-      }, "↗ Total repasses: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", totalRepasses.toFixed(2).replace(".", ","))), /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "#059669"
-        }
-      }, "🏥 Líquido clínica: ", /*#__PURE__*/React.createElement("strong", null, "R$ ", liquidoClinica.toFixed(2).replace(".", ","))))));
-    })()), /*#__PURE__*/React.createElement("div", {
-      className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            onClick: () => setModalDespesa(false),
+            children: "Cancelar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            onClick: salvarDespesaClinica,
+            disabled: salvando,
+            children: salvando ? "Salvando..." : editandoDespesa ? "Salvar" : "Lançar"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), modal === "escolha" && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        gridColumn: "1/-1"
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Status do Pagamento"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8
-      }
-    }, [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => /*#__PURE__*/React.createElement("button", {
-      key: v,
-      type: "button",
-      onClick: () => setFormPacote({
-        ...formPacote,
-        statusPag: v
-      }),
-      style: {
-        flex: 1,
-        padding: "10px",
-        borderRadius: 10,
-        border: "1.5px solid",
-        borderColor: (formPacote.statusPag || "pendente") === v ? c : "#e5e7eb",
-        background: (formPacote.statusPag || "pendente") === v ? c + "15" : "white",
-        color: (formPacote.statusPag || "pendente") === v ? c : "#6b7280",
-        fontWeight: 600,
-        cursor: "pointer",
-        fontSize: 13,
-        fontFamily: "var(--font-body)"
-      }
-    }, l)))), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Forma de Pagamento"), /*#__PURE__*/React.createElement("select", {
-      className: "form-input",
-      value: formPacote.formaPag || "",
-      onChange: e => setFormPacote({
-        ...formPacote,
-        formaPag: e.target.value
-      })
-    }, /*#__PURE__*/React.createElement("option", {
-      value: ""
-    }, "Selecionar..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-      key: f
-    }, f)))), /*#__PURE__*/React.createElement("div", {
-      className: "form-group"
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Data do Pagamento"), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      type: "date",
-      value: formPacote.dataPagamento || "",
-      onChange: e => setFormPacote({
-        ...formPacote,
-        dataPagamento: e.target.value
-      })
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "form-group",
-      style: {
-        gridColumn: "1/-1"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 8
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label",
-      style: {
-        margin: 0
-      }
-    }, "Formas de pagamento"), /*#__PURE__*/React.createElement("button", {
-      type: "button",
-      style: {
-        fontSize: 12,
-        color: "#7B00C4",
-        background: "#f3e6ff",
-        border: "1px solid #d9b3f5",
-        borderRadius: 6,
-        padding: "3px 10px",
-        cursor: "pointer"
+        justifyContent: "center",
+        zIndex: 500,
+        padding: 20
       },
-      onClick: () => setFormPacote({
-        ...formPacote,
-        pagamentosExtras: [...(formPacote.pagamentosExtras || []), {
-          forma: "",
-          valor: "",
-          data: new Date().toISOString().slice(0, 10)
-        }]
-      })
-    }, "+ Adicionar forma")), (formPacote.pagamentosExtras || []).length === 0 && /*#__PURE__*/React.createElement("div", {
+      onClick: () => setModal(false),
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 32,
+          width: "100%",
+          maxWidth: 420,
+          textAlign: "center"
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "var(--font-display)",
+            fontSize: 20,
+            fontWeight: 600,
+            marginBottom: 8
+          },
+          children: "Novo Lançamento"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+          style: {
+            fontSize: 13,
+            color: "#6b7280",
+            marginBottom: 24
+          },
+          children: "Selecione o tipo:"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 10
+          },
+          children: /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-outline",
+            style: {
+              width: "100%",
+              padding: "20px 20px",
+              fontSize: 13,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              textAlign: "left"
+            },
+            onClick: () => setModal("pacote"),
+            children: [/*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 32,
+                flexShrink: 0
+              },
+              children: "📦"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: "var(--purple)"
+                },
+                children: "Pacote de Sessões"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  color: "#6b7280",
+                  lineHeight: 1.5,
+                  marginTop: 2
+                },
+                children: "Gera sessões recorrentes na agenda com ficha de frequência, controle de pagamento e formas mistas"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-ghost",
+          style: {
+            width: "100%",
+            marginTop: 12
+          },
+          onClick: () => setModal(false),
+          children: "Cancelar"
+        }, void 0, false)]
+      }, void 0, true)
+    }, void 0, false), modal === "avulso" && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        fontSize: 12,
-        color: "var(--text-muted)",
-        fontStyle: "italic",
-        padding: "6px 0"
-      }
-    }, "Clique em \"+ Adicionar forma\" para registrar PIX, cartão, dinheiro em datas diferentes."), (formPacote.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr auto",
-        gap: 6,
-        marginBottom: 6,
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("select", {
-      className: "form-input",
-      style: {
-        fontSize: 12
-      },
-      value: pg.forma,
-      onChange: e => {
-        const p = [...(formPacote.pagamentosExtras || [])];
-        p[i] = {
-          ...p[i],
-          forma: e.target.value
-        };
-        setFormPacote({
-          ...formPacote,
-          pagamentosExtras: p
-        });
-      }
-    }, /*#__PURE__*/React.createElement("option", {
-      value: ""
-    }, "Forma..."), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-      key: f
-    }, f))), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      style: {
-        fontSize: 12
-      },
-      type: "number",
-      placeholder: "Valor R$",
-      value: pg.valor,
-      onChange: e => {
-        const p = [...(formPacote.pagamentosExtras || [])];
-        p[i] = {
-          ...p[i],
-          valor: e.target.value
-        };
-        setFormPacote({
-          ...formPacote,
-          pagamentosExtras: p
-        });
-      }
-    }), /*#__PURE__*/React.createElement("input", {
-      className: "form-input",
-      style: {
-        fontSize: 12
-      },
-      type: "date",
-      value: pg.data,
-      onChange: e => {
-        const p = [...(formPacote.pagamentosExtras || [])];
-        p[i] = {
-          ...p[i],
-          data: e.target.value
-        };
-        setFormPacote({
-          ...formPacote,
-          pagamentosExtras: p
-        });
-      }
-    }), /*#__PURE__*/React.createElement("button", {
-      type: "button",
-      style: {
-        color: "#dc2626",
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        fontSize: 16,
-        padding: "0 4px"
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 500,
+        padding: 20
       },
       onClick: () => {
-        const p = [...(formPacote.pagamentosExtras || [])];
-        p.splice(i, 1);
-        setFormPacote({
-          ...formPacote,
-          pagamentosExtras: p
-        });
-      }
-    }, "✕")))), /*#__PURE__*/React.createElement("div", {
-      className: "form-group",
+        setModal(false);
+        setEditando(null);
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 500
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 600
+            },
+            children: editando ? "Editar Lançamento" : "Lançamento Avulso"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => {
+              setModal(false);
+              setEditando(null);
+            },
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "x",
+              size: 20
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12,
+            marginBottom: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Paciente / Cliente"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formAvulso.pacienteId,
+              onChange: e => {
+                const pac = pacientes.find(p => p.id === e.target.value);
+                setFormAvulso({
+                  ...formAvulso,
+                  pacienteId: e.target.value,
+                  pacienteNome: pac?.nome || "",
+                  obs: pac ? `${formAvulso.tipo} — ${pac.nome}` : formAvulso.obs
+                });
+              },
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecionar..."
+              }, void 0, false), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/_jsxDEV("option", {
+                value: p.id,
+                children: p.nome
+              }, p.id, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Tipo / Categoria"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formAvulso.tipo,
+              onChange: e => {
+                const pac = pacientes.find(p => p.id === formAvulso.pacienteId);
+                setFormAvulso({
+                  ...formAvulso,
+                  tipo: e.target.value,
+                  obs: pac ? `${e.target.value} — ${pac.nome}` : formAvulso.obs
+                });
+              },
+              children: ["Consulta", "Sessão", "Avaliação", "Musicoterapia", "Neuromodulação", "Orientação", "Laudo", "Outro"].map(t => /*#__PURE__*/_jsxDEV("option", {
+                children: t
+              }, t, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Valor R$"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              placeholder: "0,00",
+              value: formAvulso.valor,
+              onChange: e => setFormAvulso({
+                ...formAvulso,
+                valor: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Data"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "date",
+              value: formAvulso.data,
+              onChange: e => setFormAvulso({
+                ...formAvulso,
+                data: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Forma de Pagamento"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formAvulso.formaPag,
+              onChange: e => setFormAvulso({
+                ...formAvulso,
+                formaPag: e.target.value
+              }),
+              children: FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                children: f
+              }, f, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Status"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8
+              },
+              children: [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => /*#__PURE__*/_jsxDEV("button", {
+                onClick: () => setFormAvulso({
+                  ...formAvulso,
+                  status: v
+                }),
+                style: {
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: 10,
+                  border: "1.5px solid",
+                  borderColor: formAvulso.status === v ? c : "#e5e7eb",
+                  background: formAvulso.status === v ? c + "15" : "white",
+                  color: formAvulso.status === v ? c : "#6b7280",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontFamily: "var(--font-body)"
+                },
+                children: l
+              }, v, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Observações"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              placeholder: "Opcional...",
+              value: formAvulso.obs,
+              onChange: e => setFormAvulso({
+                ...formAvulso,
+                obs: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 10,
+            justifyContent: "flex-end"
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            onClick: () => {
+              setModal(false);
+              setEditando(null);
+            },
+            children: "Cancelar"
+          }, void 0, false), editando && /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              border: "1px solid #fecaca",
+              color: "#dc2626",
+              fontSize: 12
+            },
+            title: "Este lançamento é uma despesa, não uma receita",
+            onClick: () => {
+              setFormDespesaEdit({
+                descricao: formAvulso.descricao || formAvulso.tipo || "",
+                categoria: formAvulso.categoria || "",
+                valor: formAvulso.valor + "",
+                data: formAvulso.data || "",
+                formaPag: formAvulso.formaPag || "",
+                status: formAvulso.status === "recebido" ? "pago" : formAvulso.status || "pago",
+                obs: formAvulso.obs || ""
+              });
+              setModal("editar-despesa");
+            },
+            children: "🔁 Marcar como Despesa"
+          }, void 0, false), editando ? /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            onClick: () => salvarAvulso(null),
+            disabled: salvando,
+            children: [/*#__PURE__*/_jsxDEV(Icon, {
+              name: "save",
+              size: 15
+            }, void 0, false), " ", salvando ? "Salvando..." : "Salvar Alterações"]
+          }, void 0, true) : /*#__PURE__*/_jsxDEV(_Fragment, {
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              onClick: () => salvarAvulso(null),
+              disabled: salvando,
+              style: {
+                border: "1px solid #e5e7eb",
+                color: "#6b7280",
+                fontSize: 12
+              },
+              title: "Sem comissão — para lançamentos passados",
+              children: "📋 Sem comissão"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-purple",
+              onClick: () => salvarAvulso("primeira"),
+              disabled: salvando,
+              style: {
+                background: "#7B00C4"
+              },
+              title: "10% de comissão",
+              children: "🌟 Primeira Venda"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-purple",
+              onClick: () => salvarAvulso("recorrente"),
+              disabled: salvando,
+              style: {
+                background: "#0891b2"
+              },
+              title: "5% de comissão",
+              children: "🔁 Venda Recorrente"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), modal === "editar-despesa" && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        gridColumn: "1/-1"
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      className: "form-label"
-    }, "Observações"), /*#__PURE__*/React.createElement(TextAreaVoz, {
-      className: "form-input",
-      rows: 2,
-      value: formPacote.obs,
-      onChange: e => setFormPacote({
-        ...formPacote,
-        obs: e.target.value
-      }),
-      placeholder: "Notas sobre o pacote..."
-    }))), formPacote.totalSessoes && formPacote.dataInicio && /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "#f0fdf4",
-        border: "1px solid #86efac",
-        borderRadius: 10,
-        padding: 12,
-        marginBottom: 14,
-        fontSize: 13,
-        color: "#065f46"
-      }
-    }, "✅ ", /*#__PURE__*/React.createElement("strong", null, formPacote.totalSessoes, " sessões"), " a partir de ", /*#__PURE__*/React.createElement("strong", null, new Date(formPacote.dataInicio + "T00:00:00").toLocaleDateString("pt-BR")), " · ", /*#__PURE__*/React.createElement("strong", null, formPacote.recorrencia), needDias && diasSel.length > 0 && /*#__PURE__*/React.createElement("span", null, " · dias: ", /*#__PURE__*/React.createElement("strong", null, diasSel.map(d => DIAS_LABEL[d]).join(", ")))), /*#__PURE__*/React.createElement("div", {
-      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
         display: "flex",
-        gap: 10,
-        justifyContent: "flex-end",
-        flexWrap: "wrap"
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 500,
+        padding: 20
+      },
+      onClick: () => {
+        setModal(false);
+        setEditando(null);
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 500
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 600,
+              color: "#dc2626"
+            },
+            children: "✏️ Editar Despesa"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => {
+              setModal(false);
+              setEditando(null);
+            },
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "x",
+              size: 20
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12,
+            marginBottom: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Descrição"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              placeholder: "Ex: Consultório locação",
+              value: formDespesaEdit.descricao,
+              onChange: e => setFormDespesaEdit({
+                ...formDespesaEdit,
+                descricao: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Categoria"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formDespesaEdit.categoria,
+              onChange: e => setFormDespesaEdit({
+                ...formDespesaEdit,
+                categoria: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecionar..."
+              }, void 0, false), CATS_DESPESA.map(c => /*#__PURE__*/_jsxDEV("option", {
+                children: c
+              }, c, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Valor R$"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              placeholder: "0,00",
+              value: formDespesaEdit.valor,
+              onChange: e => setFormDespesaEdit({
+                ...formDespesaEdit,
+                valor: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Data"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "date",
+              value: formDespesaEdit.data,
+              onChange: e => setFormDespesaEdit({
+                ...formDespesaEdit,
+                data: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Forma de Pagamento"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formDespesaEdit.formaPag,
+              onChange: e => setFormDespesaEdit({
+                ...formDespesaEdit,
+                formaPag: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "—"
+              }, void 0, false), FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                children: f
+              }, f, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Status"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8
+              },
+              children: [["pago", "✓ Pago", "#059669"], ["pendente", "Pendente", "#d97706"]].map(([v, l, c]) => /*#__PURE__*/_jsxDEV("button", {
+                onClick: () => setFormDespesaEdit({
+                  ...formDespesaEdit,
+                  status: v
+                }),
+                style: {
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: 10,
+                  border: "1.5px solid",
+                  borderColor: formDespesaEdit.status === v ? c : "#e5e7eb",
+                  background: formDespesaEdit.status === v ? c + "15" : "white",
+                  color: formDespesaEdit.status === v ? c : "#6b7280",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontFamily: "var(--font-body)"
+                },
+                children: l
+              }, v, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "1/-1"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Observações"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              placeholder: "Opcional...",
+              value: formDespesaEdit.obs,
+              onChange: e => setFormDespesaEdit({
+                ...formDespesaEdit,
+                obs: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 10,
+            justifyContent: "flex-end"
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            onClick: () => {
+              setModal(false);
+              setEditando(null);
+            },
+            children: "Cancelar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            style: {
+              background: "#dc2626"
+            },
+            onClick: salvarDespesaEdit,
+            disabled: salvando,
+            children: [/*#__PURE__*/_jsxDEV(Icon, {
+              name: "save",
+              size: 15
+            }, void 0, false), " ", salvando ? "Salvando..." : "Salvar Alterações"]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), modal === "pacote" && (() => {
+      const DIAS = [{
+        v: "0",
+        l: "Dom"
+      }, {
+        v: "1",
+        l: "Seg"
+      }, {
+        v: "2",
+        l: "Ter"
+      }, {
+        v: "3",
+        l: "Qua"
+      }, {
+        v: "4",
+        l: "Qui"
+      }, {
+        v: "5",
+        l: "Sex"
+      }, {
+        v: "6",
+        l: "Sáb"
+      }];
+      const needDias = ["2x por semana", "3x por semana"].includes(formPacote.recorrencia);
+      const maxDias = formPacote.recorrencia === "3x por semana" ? 3 : 2;
+      const diasSel = formPacote.diasSemana || [];
+      function toggleDia(v) {
+        if (diasSel.includes(v)) {
+          setFormPacote({
+            ...formPacote,
+            diasSemana: diasSel.filter(d => d !== v)
+          });
+        } else if (diasSel.length < maxDias) {
+          setFormPacote({
+            ...formPacote,
+            diasSemana: [...diasSel, v].sort()
+          });
+        }
       }
-    }, /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-ghost",
-      onClick: () => setModal(false)
-    }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-ghost",
-      onClick: () => salvarPacote(null),
-      disabled: salvando,
-      style: {
-        border: "1px solid #e5e7eb",
-        color: "#6b7280",
-        fontSize: 12
-      },
-      title: "Sem comissão — para lançamentos passados"
-    }, "📋 Sem comissão"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-purple",
-      onClick: () => salvarPacote("primeira"),
-      disabled: salvando,
-      style: {
-        background: "#7B00C4"
-      },
-      title: "10% de comissão"
-    }, "🌟 Primeira Venda"), /*#__PURE__*/React.createElement("button", {
-      className: "btn btn-purple",
-      onClick: () => salvarPacote("recorrente"),
-      disabled: salvando,
-      style: {
-        background: "#0891b2"
-      },
-      title: "5% de comissão"
-    }, "🔁 Venda Recorrente"))));
-  })());
+      return /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 500,
+          padding: 20
+        },
+        onClick: () => setModal(false),
+        children: /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "white",
+            borderRadius: 16,
+            padding: 28,
+            width: "100%",
+            maxWidth: 560,
+            maxHeight: "90vh",
+            overflowY: "auto"
+          },
+          onClick: e => e.stopPropagation(),
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontFamily: "var(--font-display)",
+                fontSize: 20,
+                fontWeight: 600
+              },
+              children: "Novo Pacote de Sessões"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => setModal(false),
+              style: {
+                background: "none",
+                border: "none",
+                cursor: "pointer"
+              },
+              children: /*#__PURE__*/_jsxDEV(Icon, {
+                name: "x",
+                size: 20
+              }, void 0, false)
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+              marginBottom: 12
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              style: {
+                gridColumn: "1/-1"
+              },
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Paciente *"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+                className: "form-input",
+                value: formPacote.pacienteId,
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  pacienteId: e.target.value
+                }),
+                children: [/*#__PURE__*/_jsxDEV("option", {
+                  value: "",
+                  children: "Selecionar..."
+                }, void 0, false), pacientes.filter(p => p.status === "ativo").sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR")).map(p => /*#__PURE__*/_jsxDEV("option", {
+                  value: p.id,
+                  children: p.nome
+                }, p.id, false))]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Nº de Sessões *"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                type: "number",
+                min: "1",
+                max: "40",
+                placeholder: "Ex: 10",
+                value: formPacote.totalSessoes,
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  totalSessoes: e.target.value
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Recorrência *"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+                className: "form-input",
+                value: formPacote.recorrencia,
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  recorrencia: e.target.value,
+                  diasSemana: [],
+                  horariosPorDia: {}
+                }),
+                children: RECORRENCIAS.map(r => /*#__PURE__*/_jsxDEV("option", {
+                  children: r
+                }, r, false))
+              }, void 0, false)]
+            }, void 0, true), needDias && /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              style: {
+                gridColumn: "1/-1"
+              },
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: ["Dias da Semana * (escolha ", maxDias, ")"]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  marginTop: 4
+                },
+                children: DIAS.map(d => {
+                  const sel = diasSel.includes(d.v);
+                  const dis = !sel && diasSel.length >= maxDias;
+                  return /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 3
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("button", {
+                      type: "button",
+                      onClick: () => toggleDia(d.v),
+                      disabled: dis,
+                      style: {
+                        padding: "8px 14px",
+                        borderRadius: 10,
+                        border: "1.5px solid",
+                        borderColor: sel ? "var(--purple)" : "#e5e7eb",
+                        background: sel ? "var(--purple)" : "white",
+                        color: sel ? "white" : dis ? "#d1d5db" : "#374151",
+                        fontWeight: sel ? 700 : 400,
+                        cursor: dis ? "not-allowed" : "pointer",
+                        fontSize: 13,
+                        fontFamily: "var(--font-body)"
+                      },
+                      children: d.l
+                    }, void 0, false), sel && /*#__PURE__*/_jsxDEV("input", {
+                      type: "time",
+                      value: (formPacote.horariosPorDia || {})[d.v] || formPacote.horario || "09:00",
+                      onChange: e => setFormPacote({
+                        ...formPacote,
+                        horariosPorDia: {
+                          ...(formPacote.horariosPorDia || {}),
+                          [d.v]: e.target.value
+                        }
+                      }),
+                      style: {
+                        fontSize: 11,
+                        border: "1px solid #e9d5ff",
+                        borderRadius: 6,
+                        padding: "3px 6px",
+                        width: 72,
+                        textAlign: "center",
+                        color: "var(--purple)",
+                        fontWeight: 600
+                      }
+                    }, void 0, false)]
+                  }, d.v, true);
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Data de Início *"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                type: "date",
+                value: formPacote.dataInicio,
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  dataInicio: e.target.value
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: ["Horário ", needDias ? "(padrão)" : ""]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                type: "time",
+                value: formPacote.horario,
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  horario: e.target.value
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Modalidade"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+                className: "form-input",
+                value: formPacote.modalidade || "on-line",
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  modalidade: e.target.value
+                }),
+                children: [/*#__PURE__*/_jsxDEV("option", {
+                  value: "on-line",
+                  children: "💻 On-line"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                  value: "presencial",
+                  children: "🏥 Presencial"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                  value: "híbrido",
+                  children: "🔄 Híbrido"
+                }, void 0, false)]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              style: {
+                gridColumn: "1/-1"
+              },
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Tipo de Atendimento"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  gap: 8
+                },
+                children: [["particular", "🏥 Particular"], ["social", "🌱 Social"], ["parceria", "🤝 Parceria"]].map(([v, l]) => /*#__PURE__*/_jsxDEV("button", {
+                  type: "button",
+                  onClick: () => setFormPacote({
+                    ...formPacote,
+                    tipoAtendimento: v,
+                    valorSessao: v === "social" ? "" : formPacote.valorSessao,
+                    valorSupervisaoSocial: v === "social" ? "40" : formPacote.valorSupervisaoSocial,
+                    valorEstagiariaSocial: v === "social" ? "20" : formPacote.valorEstagiariaSocial,
+                    percParceiro: v === "parceria" ? formPacote.percParceiro || "70" : formPacote.percParceiro
+                  }),
+                  style: {
+                    flex: 1,
+                    padding: "9px",
+                    borderRadius: 8,
+                    border: "2px solid",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    borderColor: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#0d9488" : v === "parceria" ? "#b45309" : "#7B00C4" : "#e5e7eb",
+                    background: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#ccfbf1" : v === "parceria" ? "#fef3c7" : "#f5f3ff" : "white",
+                    color: (formPacote.tipoAtendimento || "particular") === v ? v === "social" ? "#0d9488" : v === "parceria" ? "#b45309" : "#7B00C4" : "#6b7280"
+                  },
+                  children: l
+                }, v, false))
+              }, void 0, false)]
+            }, void 0, true), (formPacote.tipoAtendimento || "particular") === "social" ? /*#__PURE__*/_jsxDEV(_Fragment, {
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                className: "form-group",
+                children: [/*#__PURE__*/_jsxDEV("label", {
+                  className: "form-label",
+                  children: "Valor Supervisão (R$)"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                  className: "form-input",
+                  type: "number",
+                  value: formPacote.valorSupervisaoSocial || "40",
+                  onChange: e => setFormPacote({
+                    ...formPacote,
+                    valorSupervisaoSocial: e.target.value
+                  })
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    marginTop: 3
+                  },
+                  children: "Receita da clínica"
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                className: "form-group",
+                children: [/*#__PURE__*/_jsxDEV("label", {
+                  className: "form-label",
+                  children: "Valor Estagiária (R$)"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                  className: "form-input",
+                  type: "number",
+                  value: formPacote.valorEstagiariaSocial || "20",
+                  onChange: e => setFormPacote({
+                    ...formPacote,
+                    valorEstagiariaSocial: e.target.value
+                  })
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    marginTop: 3
+                  },
+                  children: "Comissão estagiária"
+                }, void 0, false)]
+              }, void 0, true)]
+            }, void 0, true) : /*#__PURE__*/_jsxDEV(_Fragment, {
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                className: "form-group",
+                children: [/*#__PURE__*/_jsxDEV("label", {
+                  className: "form-label",
+                  children: "Valor por Sessão (R$)"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                  className: "form-input",
+                  type: "number",
+                  placeholder: "Ex: 250",
+                  value: formPacote.valorSessao,
+                  onChange: e => setFormPacote({
+                    ...formPacote,
+                    valorSessao: e.target.value
+                  })
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                className: "form-group",
+                children: [/*#__PURE__*/_jsxDEV("label", {
+                  className: "form-label",
+                  children: "Total do Pacote (R$)"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                  className: "form-input",
+                  type: "number",
+                  placeholder: "Automático",
+                  value: formPacote.valorSessao && formPacote.totalSessoes ? (parseFloat(formPacote.valorSessao) || 0) * (parseInt(formPacote.totalSessoes) || 0) : "",
+                  readOnly: true,
+                  style: {
+                    background: "#f9fafb"
+                  }
+                }, void 0, false)]
+              }, void 0, true), (formPacote.tipoAtendimento || "particular") === "parceria" && (() => {
+                const tot = (parseFloat(formPacote.valorSessao) || 0) * (parseInt(formPacote.totalSessoes) || 0);
+                const parceiros = formPacote.parceirosList || [];
+                const totalRepasses = parceiros.reduce((a, p) => {
+                  const v = p.tipoValor === "fixo" ? parseFloat(p.valor) || 0 : tot * (parseFloat(p.perc) || 0) / 100;
+                  return a + v;
+                }, 0);
+                const liquidoClinica = tot - totalRepasses;
+                return /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    gridColumn: "1/-1"
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 8
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("label", {
+                      className: "form-label",
+                      style: {
+                        margin: 0
+                      },
+                      children: "🤝 Parceiros e Repasses"
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                      type: "button",
+                      style: {
+                        fontSize: 12,
+                        color: "#b45309",
+                        background: "#fffbeb",
+                        border: "1px solid #fde68a",
+                        borderRadius: 6,
+                        padding: "4px 12px",
+                        cursor: "pointer",
+                        fontWeight: 600
+                      },
+                      onClick: () => setFormPacote({
+                        ...formPacote,
+                        parceirosList: [...(formPacote.parceirosList || []), {
+                          nome: "",
+                          parceiraId: "",
+                          tipoValor: "fixo",
+                          valor: "",
+                          perc: ""
+                        }]
+                      }),
+                      children: "+ Adicionar parceiro"
+                    }, void 0, false)]
+                  }, void 0, true), parceiros.length === 0 && /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                      fontStyle: "italic",
+                      padding: "6px 0"
+                    },
+                    children: "Clique em \"+ Adicionar parceiro\" para registrar cada pessoa e seu repasse."
+                  }, void 0, false), parceiros.map((p, i) => {
+                    const vCalc = p.tipoValor === "fixo" ? parseFloat(p.valor) || 0 : tot * (parseFloat(p.perc) || 0) / 100;
+                    return /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        background: "#fffbeb",
+                        border: "1px solid #fde68a",
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        marginBottom: 8
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: 8,
+                          marginBottom: 8,
+                          alignItems: "center"
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("div", {
+                          children: [/*#__PURE__*/_jsxDEV("select", {
+                            className: "form-input",
+                            style: {
+                              fontSize: 12,
+                              marginBottom: 4
+                            },
+                            value: p.parceiraId || "",
+                            onChange: e => {
+                              const pc = parceiras.find(x => x.id === e.target.value);
+                              const lista = [...(formPacote.parceirosList || [])];
+                              lista[i] = {
+                                ...lista[i],
+                                parceiraId: e.target.value,
+                                nome: pc?.nome || lista[i].nome,
+                                perc: pc?.percentual ? String(pc.percentual) : lista[i].perc
+                              };
+                              setFormPacote({
+                                ...formPacote,
+                                parceirosList: lista
+                              });
+                            },
+                            children: [/*#__PURE__*/_jsxDEV("option", {
+                              value: "",
+                              children: "— Do cadastro (opcional) —"
+                            }, void 0, false), parceiras.map(pc => /*#__PURE__*/_jsxDEV("option", {
+                              value: pc.id,
+                              children: pc.nome
+                            }, pc.id, false))]
+                          }, void 0, true), /*#__PURE__*/_jsxDEV("input", {
+                            className: "form-input",
+                            style: {
+                              fontSize: 12
+                            },
+                            placeholder: "Nome do parceiro",
+                            value: p.nome || "",
+                            onChange: e => {
+                              const lista = [...(formPacote.parceirosList || [])];
+                              lista[i] = {
+                                ...lista[i],
+                                nome: e.target.value
+                              };
+                              setFormPacote({
+                                ...formPacote,
+                                parceirosList: lista
+                              });
+                            }
+                          }, void 0, false)]
+                        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+                          type: "button",
+                          style: {
+                            color: "#dc2626",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 18,
+                            padding: "0 4px"
+                          },
+                          onClick: () => {
+                            const lista = [...(formPacote.parceirosList || [])];
+                            lista.splice(i, 1);
+                            setFormPacote({
+                              ...formPacote,
+                              parceirosList: lista
+                            });
+                          },
+                          children: "✕"
+                        }, void 0, false)]
+                      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "grid",
+                          gridTemplateColumns: "auto 1fr",
+                          gap: 8,
+                          alignItems: "center"
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("div", {
+                          style: {
+                            display: "flex",
+                            gap: 4
+                          },
+                          children: [["fixo", "R$ fixo"], ["perc", "% do total"]].map(([tv, tl]) => /*#__PURE__*/_jsxDEV("button", {
+                            type: "button",
+                            onClick: () => {
+                              const lista = [...(formPacote.parceirosList || [])];
+                              lista[i] = {
+                                ...lista[i],
+                                tipoValor: tv
+                              };
+                              setFormPacote({
+                                ...formPacote,
+                                parceirosList: lista
+                              });
+                            },
+                            style: {
+                              padding: "5px 10px",
+                              borderRadius: 6,
+                              border: "1.5px solid",
+                              cursor: "pointer",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              fontFamily: "var(--font-body)",
+                              borderColor: p.tipoValor === tv ? "#b45309" : "#e5e7eb",
+                              background: p.tipoValor === tv ? "#fffbeb" : "white",
+                              color: p.tipoValor === tv ? "#b45309" : "#6b7280"
+                            },
+                            children: tl
+                          }, tv, false))
+                        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                          style: {
+                            display: "flex",
+                            gap: 8,
+                            alignItems: "center"
+                          },
+                          children: [p.tipoValor === "fixo" ? /*#__PURE__*/_jsxDEV("input", {
+                            className: "form-input",
+                            style: {
+                              fontSize: 12
+                            },
+                            type: "number",
+                            placeholder: "Valor R$",
+                            value: p.valor || "",
+                            onChange: e => {
+                              const lista = [...(formPacote.parceirosList || [])];
+                              lista[i] = {
+                                ...lista[i],
+                                valor: e.target.value
+                              };
+                              setFormPacote({
+                                ...formPacote,
+                                parceirosList: lista
+                              });
+                            }
+                          }, void 0, false) : /*#__PURE__*/_jsxDEV("input", {
+                            className: "form-input",
+                            style: {
+                              fontSize: 12
+                            },
+                            type: "number",
+                            placeholder: "%",
+                            min: "0",
+                            max: "100",
+                            value: p.perc || "",
+                            onChange: e => {
+                              const lista = [...(formPacote.parceirosList || [])];
+                              lista[i] = {
+                                ...lista[i],
+                                perc: e.target.value
+                              };
+                              setFormPacote({
+                                ...formPacote,
+                                parceirosList: lista
+                              });
+                            }
+                          }, void 0, false), vCalc > 0 && /*#__PURE__*/_jsxDEV("span", {
+                            style: {
+                              fontSize: 12,
+                              color: "#b45309",
+                              fontWeight: 700,
+                              whiteSpace: "nowrap"
+                            },
+                            children: ["= R$ ", vCalc.toFixed(2).replace(".", ",")]
+                          }, void 0, true)]
+                        }, void 0, true)]
+                      }, void 0, true)]
+                    }, i, true);
+                  }), tot > 0 && parceiros.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      background: "#f0fdf4",
+                      border: "1px solid #86efac",
+                      borderRadius: 10,
+                      padding: "10px 14px",
+                      fontSize: 13,
+                      marginTop: 4
+                    },
+                    children: /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "6px 20px"
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("span", {
+                        children: ["💰 Total recebido: ", /*#__PURE__*/_jsxDEV("strong", {
+                          children: ["R$ ", tot.toFixed(2).replace(".", ",")]
+                        }, void 0, true)]
+                      }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          color: "#b45309"
+                        },
+                        children: ["↗ Total repasses: ", /*#__PURE__*/_jsxDEV("strong", {
+                          children: ["R$ ", totalRepasses.toFixed(2).replace(".", ",")]
+                        }, void 0, true)]
+                      }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                        style: {
+                          color: "#059669"
+                        },
+                        children: ["🏥 Líquido clínica: ", /*#__PURE__*/_jsxDEV("strong", {
+                          children: ["R$ ", liquidoClinica.toFixed(2).replace(".", ",")]
+                        }, void 0, true)]
+                      }, void 0, true)]
+                    }, void 0, true)
+                  }, void 0, false)]
+                }, void 0, true);
+              })()]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              style: {
+                gridColumn: "1/-1"
+              },
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Status do Pagamento"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  gap: 8
+                },
+                children: [["pendente", "Pendente", "#d97706"], ["recebido", "✓ Recebido", "#059669"]].map(([v, l, c]) => /*#__PURE__*/_jsxDEV("button", {
+                  type: "button",
+                  onClick: () => setFormPacote({
+                    ...formPacote,
+                    statusPag: v
+                  }),
+                  style: {
+                    flex: 1,
+                    padding: "10px",
+                    borderRadius: 10,
+                    border: "1.5px solid",
+                    borderColor: (formPacote.statusPag || "pendente") === v ? c : "#e5e7eb",
+                    background: (formPacote.statusPag || "pendente") === v ? c + "15" : "white",
+                    color: (formPacote.statusPag || "pendente") === v ? c : "#6b7280",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontFamily: "var(--font-body)"
+                  },
+                  children: l
+                }, v, false))
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Forma de Pagamento"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+                className: "form-input",
+                value: formPacote.formaPag || "",
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  formaPag: e.target.value
+                }),
+                children: [/*#__PURE__*/_jsxDEV("option", {
+                  value: "",
+                  children: "Selecionar..."
+                }, void 0, false), FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                  children: f
+                }, f, false))]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Data do Pagamento"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                className: "form-input",
+                type: "date",
+                value: formPacote.dataPagamento || "",
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  dataPagamento: e.target.value
+                })
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              style: {
+                gridColumn: "1/-1"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8
+                },
+                children: [/*#__PURE__*/_jsxDEV("label", {
+                  className: "form-label",
+                  style: {
+                    margin: 0
+                  },
+                  children: "Formas de pagamento"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                  type: "button",
+                  style: {
+                    fontSize: 12,
+                    color: "#7B00C4",
+                    background: "#f3e6ff",
+                    border: "1px solid #d9b3f5",
+                    borderRadius: 6,
+                    padding: "3px 10px",
+                    cursor: "pointer"
+                  },
+                  onClick: () => setFormPacote({
+                    ...formPacote,
+                    pagamentosExtras: [...(formPacote.pagamentosExtras || []), {
+                      forma: "",
+                      valor: "",
+                      data: new Date().toISOString().slice(0, 10)
+                    }]
+                  }),
+                  children: "+ Adicionar forma"
+                }, void 0, false)]
+              }, void 0, true), (formPacote.pagamentosExtras || []).length === 0 && /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 12,
+                  color: "var(--text-muted)",
+                  fontStyle: "italic",
+                  padding: "6px 0"
+                },
+                children: "Clique em \"+ Adicionar forma\" para registrar PIX, cartão, dinheiro em datas diferentes."
+              }, void 0, false), (formPacote.pagamentosExtras || []).map((pg, i) => /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr auto",
+                  gap: 6,
+                  marginBottom: 6,
+                  alignItems: "center"
+                },
+                children: [/*#__PURE__*/_jsxDEV("select", {
+                  className: "form-input",
+                  style: {
+                    fontSize: 12
+                  },
+                  value: pg.forma,
+                  onChange: e => {
+                    const p = [...(formPacote.pagamentosExtras || [])];
+                    p[i] = {
+                      ...p[i],
+                      forma: e.target.value
+                    };
+                    setFormPacote({
+                      ...formPacote,
+                      pagamentosExtras: p
+                    });
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("option", {
+                    value: "",
+                    children: "Forma..."
+                  }, void 0, false), FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                    children: f
+                  }, f, false))]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("input", {
+                  className: "form-input",
+                  style: {
+                    fontSize: 12
+                  },
+                  type: "number",
+                  placeholder: "Valor R$",
+                  value: pg.valor,
+                  onChange: e => {
+                    const p = [...(formPacote.pagamentosExtras || [])];
+                    p[i] = {
+                      ...p[i],
+                      valor: e.target.value
+                    };
+                    setFormPacote({
+                      ...formPacote,
+                      pagamentosExtras: p
+                    });
+                  }
+                }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                  className: "form-input",
+                  style: {
+                    fontSize: 12
+                  },
+                  type: "date",
+                  value: pg.data,
+                  onChange: e => {
+                    const p = [...(formPacote.pagamentosExtras || [])];
+                    p[i] = {
+                      ...p[i],
+                      data: e.target.value
+                    };
+                    setFormPacote({
+                      ...formPacote,
+                      pagamentosExtras: p
+                    });
+                  }
+                }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                  type: "button",
+                  style: {
+                    color: "#dc2626",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    padding: "0 4px"
+                  },
+                  onClick: () => {
+                    const p = [...(formPacote.pagamentosExtras || [])];
+                    p.splice(i, 1);
+                    setFormPacote({
+                      ...formPacote,
+                      pagamentosExtras: p
+                    });
+                  },
+                  children: "✕"
+                }, void 0, false)]
+              }, i, true))]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              className: "form-group",
+              style: {
+                gridColumn: "1/-1"
+              },
+              children: [/*#__PURE__*/_jsxDEV("label", {
+                className: "form-label",
+                children: "Observações"
+              }, void 0, false), /*#__PURE__*/_jsxDEV(TextAreaVoz, {
+                className: "form-input",
+                rows: 2,
+                value: formPacote.obs,
+                onChange: e => setFormPacote({
+                  ...formPacote,
+                  obs: e.target.value
+                }),
+                placeholder: "Notas sobre o pacote..."
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), formPacote.totalSessoes && formPacote.dataInicio && /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              background: "#f0fdf4",
+              border: "1px solid #86efac",
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 14,
+              fontSize: 13,
+              color: "#065f46"
+            },
+            children: ["✅ ", /*#__PURE__*/_jsxDEV("strong", {
+              children: [formPacote.totalSessoes, " sessões"]
+            }, void 0, true), " a partir de ", /*#__PURE__*/_jsxDEV("strong", {
+              children: new Date(formPacote.dataInicio + "T00:00:00").toLocaleDateString("pt-BR")
+            }, void 0, false), " · ", /*#__PURE__*/_jsxDEV("strong", {
+              children: formPacote.recorrencia
+            }, void 0, false), needDias && diasSel.length > 0 && /*#__PURE__*/_jsxDEV("span", {
+              children: [" · dias: ", /*#__PURE__*/_jsxDEV("strong", {
+                children: diasSel.map(d => DIAS_LABEL[d]).join(", ")
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              gap: 10,
+              justifyContent: "flex-end",
+              flexWrap: "wrap"
+            },
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              onClick: () => setModal(false),
+              children: "Cancelar"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              onClick: () => salvarPacote(null),
+              disabled: salvando,
+              style: {
+                border: "1px solid #e5e7eb",
+                color: "#6b7280",
+                fontSize: 12
+              },
+              title: "Sem comissão — para lançamentos passados",
+              children: "📋 Sem comissão"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-purple",
+              onClick: () => salvarPacote("primeira"),
+              disabled: salvando,
+              style: {
+                background: "#7B00C4"
+              },
+              title: "10% de comissão",
+              children: "🌟 Primeira Venda"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-purple",
+              onClick: () => salvarPacote("recorrente"),
+              disabled: salvando,
+              style: {
+                background: "#0891b2"
+              },
+              title: "5% de comissão",
+              children: "🔁 Venda Recorrente"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)
+      }, void 0, false);
+    })()]
+  }, void 0, true);
 }
 
 // ───────────────────────────────────────────────────────────
@@ -4997,216 +5548,238 @@ function PainelGeral({
   // Donut SVG — despesas por CC
   function Donut() {
     const total = ccs.reduce((a, c) => a + c.despesa, 0);
-    if (total <= 0) return /*#__PURE__*/React.createElement("div", {
+    if (total <= 0) return /*#__PURE__*/_jsxDEV("div", {
       style: {
         textAlign: "center",
         color: "var(--text-muted)",
         padding: 20,
         fontSize: 13
-      }
-    }, "Sem despesas no período.");
+      },
+      children: "Sem despesas no período."
+    }, void 0, false);
     let acc = 0;
     const r = 70,
       cx = 90,
       cy = 90,
       circ = 2 * Math.PI * r;
-    return /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 20,
         flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("svg", {
-      width: "180",
-      height: "180",
-      viewBox: "0 0 180 180"
-    }, /*#__PURE__*/React.createElement("circle", {
-      cx: cx,
-      cy: cy,
-      r: r,
-      fill: "none",
-      stroke: "#f3f4f6",
-      strokeWidth: "22"
-    }), ccs.filter(c => c.despesa > 0).map((c, i) => {
-      const frac = c.despesa / total;
-      const dash = frac * circ;
-      const offset = circ - acc;
-      const el = /*#__PURE__*/React.createElement("circle", {
-        key: c.cc,
-        cx: cx,
-        cy: cy,
-        r: r,
-        fill: "none",
-        stroke: CORES_CC[c.cc] || CORES_CAT[i % CORES_CAT.length],
-        strokeWidth: "22",
-        strokeDasharray: `${dash} ${circ - dash}`,
-        strokeDashoffset: offset,
-        transform: `rotate(-90 ${cx} ${cy})`
-      });
-      acc += dash;
-      return el;
-    }), /*#__PURE__*/React.createElement("text", {
-      x: cx,
-      y: cy - 4,
-      textAnchor: "middle",
-      fontSize: "13",
-      fontWeight: "700",
-      fill: "#111827"
-    }, fmt(total)), /*#__PURE__*/React.createElement("text", {
-      x: cx,
-      y: cy + 14,
-      textAnchor: "middle",
-      fontSize: "10",
-      fill: "#6b7280"
-    }, "despesas ", anoFiltro)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        flex: 1,
-        minWidth: 160
-      }
-    }, ccs.filter(c => c.despesa > 0).sort((a, b) => b.despesa - a.despesa).map((c, i) => /*#__PURE__*/React.createElement("div", {
-      key: c.cc,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        fontSize: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 10,
-        height: 10,
-        borderRadius: 3,
-        background: CORES_CC[c.cc] || CORES_CAT[i % CORES_CAT.length],
-        flexShrink: 0
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, c.cc), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700
-      }
-    }, fmt(c.despesa)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        color: "var(--text-muted)",
-        width: 42,
-        textAlign: "right"
-      }
-    }, (c.despesa / total * 100).toFixed(0), "%")))));
+      },
+      children: [/*#__PURE__*/_jsxDEV("svg", {
+        width: "180",
+        height: "180",
+        viewBox: "0 0 180 180",
+        children: [/*#__PURE__*/_jsxDEV("circle", {
+          cx: cx,
+          cy: cy,
+          r: r,
+          fill: "none",
+          stroke: "#f3f4f6",
+          strokeWidth: "22"
+        }, void 0, false), ccs.filter(c => c.despesa > 0).map((c, i) => {
+          const frac = c.despesa / total;
+          const dash = frac * circ;
+          const offset = circ - acc;
+          const el = /*#__PURE__*/_jsxDEV("circle", {
+            cx: cx,
+            cy: cy,
+            r: r,
+            fill: "none",
+            stroke: CORES_CC[c.cc] || CORES_CAT[i % CORES_CAT.length],
+            strokeWidth: "22",
+            strokeDasharray: `${dash} ${circ - dash}`,
+            strokeDashoffset: offset,
+            transform: `rotate(-90 ${cx} ${cy})`
+          }, c.cc, false);
+          acc += dash;
+          return el;
+        }), /*#__PURE__*/_jsxDEV("text", {
+          x: cx,
+          y: cy - 4,
+          textAnchor: "middle",
+          fontSize: "13",
+          fontWeight: "700",
+          fill: "#111827",
+          children: fmt(total)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("text", {
+          x: cx,
+          y: cy + 14,
+          textAnchor: "middle",
+          fontSize: "10",
+          fill: "#6b7280",
+          children: ["despesas ", anoFiltro]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          flex: 1,
+          minWidth: 160
+        },
+        children: ccs.filter(c => c.despesa > 0).sort((a, b) => b.despesa - a.despesa).map((c, i) => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: 10,
+              height: 10,
+              borderRadius: 3,
+              background: CORES_CC[c.cc] || CORES_CAT[i % CORES_CAT.length],
+              flexShrink: 0
+            }
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              flex: 1
+            },
+            children: c.cc
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontWeight: 700
+            },
+            children: fmt(c.despesa)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              color: "var(--text-muted)",
+              width: 42,
+              textAlign: "right"
+            },
+            children: [(c.despesa / total * 100).toFixed(0), "%"]
+          }, void 0, true)]
+        }, c.cc, true))
+      }, void 0, false)]
+    }, void 0, true);
   }
 
   // Barras — receita vs despesa por CC
   function BarrasCC() {
-    if (ccs.length === 0) return /*#__PURE__*/React.createElement("div", {
+    if (ccs.length === 0) return /*#__PURE__*/_jsxDEV("div", {
       style: {
         textAlign: "center",
         color: "var(--text-muted)",
         padding: 20,
         fontSize: 13
-      }
-    }, "Sem dados no período.");
-    return /*#__PURE__*/React.createElement("div", {
+      },
+      children: "Sem dados no período."
+    }, void 0, false);
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
         flexDirection: "column",
         gap: 14
-      }
-    }, ccs.map(c => /*#__PURE__*/React.createElement("div", {
-      key: c.cc
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: 12,
-        marginBottom: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 600
-      }
-    }, c.cc), /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: c.saldo >= 0 ? "#059669" : "#dc2626",
-        fontWeight: 700
-      }
-    }, fmt(c.saldo))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 3
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 60,
-        fontSize: 10,
-        color: "#059669"
-      }
-    }, "Receita"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        background: "#f3f4f6",
-        borderRadius: 4,
-        height: 10,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: `${c.receita / maxDespCC * 100}%`,
-        height: "100%",
-        background: "#10b981",
-        borderRadius: 4
-      }
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 80,
-        fontSize: 11,
-        textAlign: "right"
-      }
-    }, fmt(c.receita))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 60,
-        fontSize: 10,
-        color: "#dc2626"
-      }
-    }, "Despesa"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        background: "#f3f4f6",
-        borderRadius: 4,
-        height: 10,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: `${c.despesa / maxDespCC * 100}%`,
-        height: "100%",
-        background: "#ef4444",
-        borderRadius: 4
-      }
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 80,
-        fontSize: 11,
-        textAlign: "right"
-      }
-    }, fmt(c.despesa)))))));
+      },
+      children: ccs.map(c => /*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 12,
+            marginBottom: 4
+          },
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontWeight: 600
+            },
+            children: c.cc
+          }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              color: c.saldo >= 0 ? "#059669" : "#dc2626",
+              fontWeight: 700
+            },
+            children: fmt(c.saldo)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 3
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 60,
+                fontSize: 10,
+                color: "#059669"
+              },
+              children: "Receita"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                flex: 1,
+                background: "#f3f4f6",
+                borderRadius: 4,
+                height: 10,
+                overflow: "hidden"
+              },
+              children: /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  width: `${c.receita / maxDespCC * 100}%`,
+                  height: "100%",
+                  background: "#10b981",
+                  borderRadius: 4
+                }
+              }, void 0, false)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 80,
+                fontSize: 11,
+                textAlign: "right"
+              },
+              children: fmt(c.receita)
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 60,
+                fontSize: 10,
+                color: "#dc2626"
+              },
+              children: "Despesa"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                flex: 1,
+                background: "#f3f4f6",
+                borderRadius: 4,
+                height: 10,
+                overflow: "hidden"
+              },
+              children: /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  width: `${c.despesa / maxDespCC * 100}%`,
+                  height: "100%",
+                  background: "#ef4444",
+                  borderRadius: 4
+                }
+              }, void 0, false)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 80,
+                fontSize: 11,
+                textAlign: "right"
+              },
+              children: fmt(c.despesa)
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, c.cc, true))
+    }, void 0, false);
   }
 
   // Linha — evolução do saldo (12 meses)
@@ -5226,102 +5799,110 @@ function PainelGeral({
       };
     });
     const path = pontos.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
-    return /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         overflowX: "auto"
-      }
-    }, /*#__PURE__*/React.createElement("svg", {
-      width: w,
-      height: h,
-      viewBox: `0 0 ${w} ${h}`,
-      style: {
-        minWidth: 500
-      }
-    }, /*#__PURE__*/React.createElement("line", {
-      x1: pad,
-      y1: h / 2,
-      x2: w - pad,
-      y2: h / 2,
-      stroke: "#e5e7eb",
-      strokeWidth: "1"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: path,
-      fill: "none",
-      stroke: "#7B00C4",
-      strokeWidth: "2.5"
-    }), pontos.map((p, i) => /*#__PURE__*/React.createElement("g", {
-      key: i
-    }, /*#__PURE__*/React.createElement("circle", {
-      cx: p.x,
-      cy: p.y,
-      r: "3.5",
-      fill: p.saldo >= 0 ? "#059669" : "#dc2626"
-    }), /*#__PURE__*/React.createElement("text", {
-      x: p.x,
-      y: h - 6,
-      textAnchor: "middle",
-      fontSize: "9",
-      fill: "#9ca3af"
-    }, mesLabel(p.mes))))));
+      },
+      children: /*#__PURE__*/_jsxDEV("svg", {
+        width: w,
+        height: h,
+        viewBox: `0 0 ${w} ${h}`,
+        style: {
+          minWidth: 500
+        },
+        children: [/*#__PURE__*/_jsxDEV("line", {
+          x1: pad,
+          y1: h / 2,
+          x2: w - pad,
+          y2: h / 2,
+          stroke: "#e5e7eb",
+          strokeWidth: "1"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("path", {
+          d: path,
+          fill: "none",
+          stroke: "#7B00C4",
+          strokeWidth: "2.5"
+        }, void 0, false), pontos.map((p, i) => /*#__PURE__*/_jsxDEV("g", {
+          children: [/*#__PURE__*/_jsxDEV("circle", {
+            cx: p.x,
+            cy: p.y,
+            r: "3.5",
+            fill: p.saldo >= 0 ? "#059669" : "#dc2626"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("text", {
+            x: p.x,
+            y: h - 6,
+            textAnchor: "middle",
+            fontSize: "9",
+            fill: "#9ca3af",
+            children: mesLabel(p.mes)
+          }, void 0, false)]
+        }, i, true))]
+      }, void 0, true)
+    }, void 0, false);
   }
 
   // Barras — despesas por categoria (geral)
   function BarrasCategorias() {
     const top = categorias.slice(0, 10);
     const max = Math.max(1, ...top.map(c => c.valor));
-    if (top.length === 0) return /*#__PURE__*/React.createElement("div", {
+    if (top.length === 0) return /*#__PURE__*/_jsxDEV("div", {
       style: {
         textAlign: "center",
         color: "var(--text-muted)",
         padding: 20,
         fontSize: 13
-      }
-    }, "Sem despesas no período.");
-    return /*#__PURE__*/React.createElement("div", {
+      },
+      children: "Sem despesas no período."
+    }, void 0, false);
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
         flexDirection: "column",
         gap: 8
-      }
-    }, top.map((c, i) => /*#__PURE__*/React.createElement("div", {
-      key: c.cat,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 130,
-        fontSize: 12,
-        flexShrink: 0,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      }
-    }, c.cat), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        background: "#f3f4f6",
-        borderRadius: 4,
-        height: 14,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: `${c.valor / max * 100}%`,
-        height: "100%",
-        background: CORES_CAT[i % CORES_CAT.length],
-        borderRadius: 4
-      }
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 90,
-        fontSize: 12,
-        fontWeight: 700,
-        textAlign: "right"
-      }
-    }, fmt(c.valor)))));
+      },
+      children: top.map((c, i) => /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            width: 130,
+            fontSize: 12,
+            flexShrink: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+          },
+          children: c.cat
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            flex: 1,
+            background: "#f3f4f6",
+            borderRadius: 4,
+            height: 14,
+            overflow: "hidden"
+          },
+          children: /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: `${c.valor / max * 100}%`,
+              height: "100%",
+              background: CORES_CAT[i % CORES_CAT.length],
+              borderRadius: 4
+            }
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            width: 90,
+            fontSize: 12,
+            fontWeight: 700,
+            textAlign: "right"
+          },
+          children: fmt(c.valor)
+        }, void 0, false)]
+      }, c.cat, true))
+    }, void 0, false);
   }
 
   // ── Plano de Contas — agrupamento por categoria real ──
@@ -5356,440 +5937,499 @@ function PainelGeral({
   }));
   function DonutPlano() {
     const total = planoData.reduce((a, p) => a + p.valor, 0);
-    if (total <= 0) return /*#__PURE__*/React.createElement("div", {
+    if (total <= 0) return /*#__PURE__*/_jsxDEV("div", {
       style: {
         textAlign: "center",
         color: "var(--text-muted)",
         padding: 20,
         fontSize: 13
-      }
-    }, "Sem despesas no período.");
+      },
+      children: "Sem despesas no período."
+    }, void 0, false);
     let acc = 0;
     const r = 70,
       cx = 90,
       cy = 90,
       circ = 2 * Math.PI * r;
-    return /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
         alignItems: "center",
         gap: 20,
         flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("svg", {
-      width: "180",
-      height: "180",
-      viewBox: "0 0 180 180"
-    }, /*#__PURE__*/React.createElement("circle", {
-      cx: cx,
-      cy: cy,
-      r: r,
-      fill: "none",
-      stroke: "#f3f4f6",
-      strokeWidth: "22"
-    }), planoData.map((p, i) => {
-      const frac = p.valor / total;
-      const dash = frac * circ;
-      const offset = circ - acc;
-      const el = /*#__PURE__*/React.createElement("circle", {
-        key: p.cat,
-        cx: cx,
-        cy: cy,
-        r: r,
-        fill: "none",
-        stroke: p.cor,
-        strokeWidth: "22",
-        strokeDasharray: `${dash} ${circ - dash}`,
-        strokeDashoffset: offset,
-        transform: `rotate(-90 ${cx} ${cy})`
-      });
-      acc += dash;
-      return el;
-    }), /*#__PURE__*/React.createElement("text", {
-      x: cx,
-      y: cy - 4,
-      textAnchor: "middle",
-      fontSize: "12",
-      fontWeight: "700",
-      fill: "#111827"
-    }, fmt(total)), /*#__PURE__*/React.createElement("text", {
-      x: cx,
-      y: cy + 14,
-      textAnchor: "middle",
-      fontSize: "10",
-      fill: "#6b7280"
-    }, "despesas ", anoFiltro)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 5,
-        flex: 1,
-        minWidth: 180
-      }
-    }, planoData.map(p => /*#__PURE__*/React.createElement("div", {
-      key: p.cat,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        fontSize: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 10,
-        height: 10,
-        borderRadius: 3,
-        background: p.cor,
-        flexShrink: 0
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        lineHeight: 1.3
-      }
-    }, p.cat), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        flexShrink: 0
-      }
-    }, fmt(p.valor)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        color: "var(--text-muted)",
-        width: 38,
-        textAlign: "right",
-        flexShrink: 0
-      }
-    }, (p.valor / total * 100).toFixed(0), "%")))));
+      },
+      children: [/*#__PURE__*/_jsxDEV("svg", {
+        width: "180",
+        height: "180",
+        viewBox: "0 0 180 180",
+        children: [/*#__PURE__*/_jsxDEV("circle", {
+          cx: cx,
+          cy: cy,
+          r: r,
+          fill: "none",
+          stroke: "#f3f4f6",
+          strokeWidth: "22"
+        }, void 0, false), planoData.map((p, i) => {
+          const frac = p.valor / total;
+          const dash = frac * circ;
+          const offset = circ - acc;
+          const el = /*#__PURE__*/_jsxDEV("circle", {
+            cx: cx,
+            cy: cy,
+            r: r,
+            fill: "none",
+            stroke: p.cor,
+            strokeWidth: "22",
+            strokeDasharray: `${dash} ${circ - dash}`,
+            strokeDashoffset: offset,
+            transform: `rotate(-90 ${cx} ${cy})`
+          }, p.cat, false);
+          acc += dash;
+          return el;
+        }), /*#__PURE__*/_jsxDEV("text", {
+          x: cx,
+          y: cy - 4,
+          textAnchor: "middle",
+          fontSize: "12",
+          fontWeight: "700",
+          fill: "#111827",
+          children: fmt(total)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("text", {
+          x: cx,
+          y: cy + 14,
+          textAnchor: "middle",
+          fontSize: "10",
+          fill: "#6b7280",
+          children: ["despesas ", anoFiltro]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+          flex: 1,
+          minWidth: 180
+        },
+        children: planoData.map(p => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: 10,
+              height: 10,
+              borderRadius: 3,
+              background: p.cor,
+              flexShrink: 0
+            }
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              flex: 1,
+              lineHeight: 1.3
+            },
+            children: p.cat
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontWeight: 700,
+              flexShrink: 0
+            },
+            children: fmt(p.valor)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              color: "var(--text-muted)",
+              width: 38,
+              textAlign: "right",
+              flexShrink: 0
+            },
+            children: [(p.valor / total * 100).toFixed(0), "%"]
+          }, void 0, true)]
+        }, p.cat, true))
+      }, void 0, false)]
+    }, void 0, true);
   }
   function BarrasPlano() {
-    if (planoData.length === 0) return /*#__PURE__*/React.createElement("div", {
+    if (planoData.length === 0) return /*#__PURE__*/_jsxDEV("div", {
       style: {
         textAlign: "center",
         color: "var(--text-muted)",
         padding: 20,
         fontSize: 13
-      }
-    }, "Sem dados.");
+      },
+      children: "Sem dados."
+    }, void 0, false);
     const max = Math.max(1, ...planoData.map(p => p.valor));
-    return /*#__PURE__*/React.createElement("div", {
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
         flexDirection: "column",
         gap: 10
-      }
-    }, planoData.map(p => /*#__PURE__*/React.createElement("div", {
-      key: p.cat
-    }, /*#__PURE__*/React.createElement("div", {
+      },
+      children: planoData.map(p => /*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 12,
+            marginBottom: 3
+          },
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontWeight: 600
+            },
+            children: p.cat
+          }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontWeight: 700,
+              color: p.cor
+            },
+            children: fmt(p.valor)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#f3f4f6",
+            borderRadius: 6,
+            height: 12,
+            overflow: "hidden"
+          },
+          children: /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: `${p.valor / max * 100}%`,
+              height: "100%",
+              background: p.cor,
+              borderRadius: 6,
+              transition: ".4s"
+            }
+          }, void 0, false)
+        }, void 0, false)]
+      }, p.cat, true))
+    }, void 0, false);
+  }
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
-        justifyContent: "space-between",
-        fontSize: 12,
-        marginBottom: 3
-      }
-    }, /*#__PURE__*/React.createElement("span", {
+        gap: 6,
+        marginBottom: 18,
+        alignItems: "center",
+        flexWrap: "wrap"
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--text-muted)",
+          flexShrink: 0
+        },
+        children: "Ano:"
+      }, void 0, false), anos.map(a => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setAnoFiltro(a),
+        style: {
+          padding: "5px 16px",
+          borderRadius: 20,
+          border: "1.5px solid",
+          borderColor: anoFiltro === a ? "var(--purple)" : "#e5e7eb",
+          background: anoFiltro === a ? "var(--purple)" : "white",
+          color: anoFiltro === a ? "white" : "#6b7280",
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: "pointer"
+        },
+        children: a
+      }, a, false))]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        fontWeight: 600
-      }
-    }, p.cat), /*#__PURE__*/React.createElement("span", {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+        gap: 12,
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: saldoConsolidado >= 0 ? "#d1fae5" : "#fee2e2",
+          borderRadius: 12,
+          padding: "14px 16px",
+          border: "1.5px solid",
+          borderColor: saldoConsolidado >= 0 ? "#6ee7b7" : "#fca5a5"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: saldoConsolidado >= 0 ? "#059669" : "#dc2626",
+            marginBottom: 4
+          },
+          children: ["Saldo Consolidado (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: saldoConsolidado >= 0 ? "#059669" : "#dc2626"
+          },
+          children: fmt(saldoConsolidado)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "#6b7280",
+            marginTop: 2
+          },
+          children: ["+", fmt(totalReceita), " / -", fmt(totalDespesa)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#f0f9ff",
+          borderRadius: 12,
+          padding: "14px 16px",
+          border: "1.5px solid #93c5fd"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#2563eb",
+            marginBottom: 4
+          },
+          children: "Margem"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#2563eb"
+          },
+          children: [margem.toFixed(1), "%"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "#6b7280",
+            marginTop: 2
+          },
+          children: "(receita - despesa) / receita"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: variacaoMes >= 0 ? "#f0fdf4" : "#fef2f2",
+          borderRadius: 12,
+          padding: "14px 16px",
+          border: "1.5px solid",
+          borderColor: variacaoMes >= 0 ? "#86efac" : "#fca5a5"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: variacaoMes >= 0 ? "#059669" : "#dc2626",
+            marginBottom: 4
+          },
+          children: "Vs. mês anterior"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: variacaoMes >= 0 ? "#059669" : "#dc2626"
+          },
+          children: [variacaoMes >= 0 ? "▲" : "▼", " ", Math.abs(variacaoMes).toFixed(0), "%"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "#6b7280",
+            marginTop: 2
+          },
+          children: [fmt(saldoMesAnterior), " → ", fmt(saldoMesAtual)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#fffbeb",
+          borderRadius: 12,
+          padding: "14px 16px",
+          border: "1.5px solid #fcd34d"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#d97706",
+            marginBottom: 4
+          },
+          children: ["Pendentes (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#d97706"
+          },
+          children: fmt(totalPendente)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "#6b7280",
+            marginTop: 2
+          },
+          children: [pendentes.length, " lançamento(s)"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        fontWeight: 700,
-        color: p.cor
-      }
-    }, fmt(p.valor))), /*#__PURE__*/React.createElement("div", {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+        gap: 16,
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 14
+          },
+          children: "🥧 Despesas por Centro de Custo"
+        }, void 0, false), /*#__PURE__*/_jsxDEV(Donut, {}, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 14
+          },
+          children: "📊 Receita vs Despesa por CC"
+        }, void 0, false), /*#__PURE__*/_jsxDEV(BarrasCC, {}, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        background: "#f3f4f6",
-        borderRadius: 6,
-        height: 12,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+        gap: 16,
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 14
+          },
+          children: "🎯 Despesas por Plano de Contas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV(DonutPlano, {}, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 14
+          },
+          children: ["📉 Distribuição por Grupo (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV(BarrasPlano, {}, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        width: `${p.valor / max * 100}%`,
-        height: "100%",
-        background: p.cor,
-        borderRadius: 6,
-        transition: ".4s"
-      }
-    })))));
-  }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 18,
-      alignItems: "center",
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      flexShrink: 0
-    }
-  }, "Ano:"), anos.map(a => /*#__PURE__*/React.createElement("button", {
-    key: a,
-    onClick: () => setAnoFiltro(a),
-    style: {
-      padding: "5px 16px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      borderColor: anoFiltro === a ? "var(--purple)" : "#e5e7eb",
-      background: anoFiltro === a ? "var(--purple)" : "white",
-      color: anoFiltro === a ? "white" : "#6b7280",
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: "pointer"
-    }
-  }, a))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-      gap: 12,
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: saldoConsolidado >= 0 ? "#d1fae5" : "#fee2e2",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid",
-      borderColor: saldoConsolidado >= 0 ? "#6ee7b7" : "#fca5a5"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: saldoConsolidado >= 0 ? "#059669" : "#dc2626",
-      marginBottom: 4
-    }
-  }, "Saldo Consolidado (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: saldoConsolidado >= 0 ? "#059669" : "#dc2626"
-    }
-  }, fmt(saldoConsolidado)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      marginTop: 2
-    }
-  }, "+", fmt(totalReceita), " / -", fmt(totalDespesa))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f0f9ff",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid #93c5fd"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#2563eb",
-      marginBottom: 4
-    }
-  }, "Margem"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "#2563eb"
-    }
-  }, margem.toFixed(1), "%"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      marginTop: 2
-    }
-  }, "(receita - despesa) / receita")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: variacaoMes >= 0 ? "#f0fdf4" : "#fef2f2",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid",
-      borderColor: variacaoMes >= 0 ? "#86efac" : "#fca5a5"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: variacaoMes >= 0 ? "#059669" : "#dc2626",
-      marginBottom: 4
-    }
-  }, "Vs. mês anterior"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: variacaoMes >= 0 ? "#059669" : "#dc2626"
-    }
-  }, variacaoMes >= 0 ? "▲" : "▼", " ", Math.abs(variacaoMes).toFixed(0), "%"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      marginTop: 2
-    }
-  }, fmt(saldoMesAnterior), " → ", fmt(saldoMesAtual))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#fffbeb",
-      borderRadius: 12,
-      padding: "14px 16px",
-      border: "1.5px solid #fcd34d"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#d97706",
-      marginBottom: 4
-    }
-  }, "Pendentes (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 800,
-      color: "#d97706"
-    }
-  }, fmt(totalPendente)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#6b7280",
-      marginTop: 2
-    }
-  }, pendentes.length, " lançamento(s)"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-      gap: 16,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "🥧 Despesas por Centro de Custo"), /*#__PURE__*/React.createElement(Donut, null)), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "📊 Receita vs Despesa por CC"), /*#__PURE__*/React.createElement(BarrasCC, null))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-      gap: 16,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "🎯 Despesas por Plano de Contas"), /*#__PURE__*/React.createElement(DonutPlano, null)), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "📉 Distribuição por Grupo (", anoFiltro, ")"), /*#__PURE__*/React.createElement(BarrasPlano, null))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "📈 Evolução do Saldo — últimos 12 meses"), /*#__PURE__*/React.createElement(LinhaEvolucao, null)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-      gap: 16,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "🏷️ Maiores Categorias de Despesa (", anoFiltro, ")"), /*#__PURE__*/React.createElement(BarrasCategorias, null)), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 14
-    }
-  }, "🔝 Top 5 Maiores Despesas — ", mesLabel(mesAtualStr)), despesasMesAtual.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      color: "var(--text-muted)",
-      padding: 20,
-      fontSize: 13
-    }
-  }, "Sem despesas neste mês.") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, despesasMesAtual.map((d, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      padding: "8px 0",
-      borderBottom: i < despesasMesAtual.length - 1 ? "1px solid var(--gray-100)" : "none"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 24,
-      height: 24,
-      borderRadius: "50%",
-      background: "#fee2e2",
-      color: "#dc2626",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 11,
-      fontWeight: 700,
-      flexShrink: 0
-    }
-  }, i + 1), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, d.categoria), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)"
-    }
-  }, d.centroCusto, " · ", d.data)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      color: "#dc2626"
-    }
-  }, fmt(d.valor))))))));
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 14,
+          marginBottom: 14
+        },
+        children: "📈 Evolução do Saldo — últimos 12 meses"
+      }, void 0, false), /*#__PURE__*/_jsxDEV(LinhaEvolucao, {}, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+        gap: 16,
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 14
+          },
+          children: ["🏷️ Maiores Categorias de Despesa (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV(BarrasCategorias, {}, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            marginBottom: 14
+          },
+          children: ["🔝 Top 5 Maiores Despesas — ", mesLabel(mesAtualStr)]
+        }, void 0, true), despesasMesAtual.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            textAlign: "center",
+            color: "var(--text-muted)",
+            padding: 20,
+            fontSize: 13
+          },
+          children: "Sem despesas neste mês."
+        }, void 0, false) : /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 8
+          },
+          children: despesasMesAtual.map((d, i) => /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 0",
+              borderBottom: i < despesasMesAtual.length - 1 ? "1px solid var(--gray-100)" : "none"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                background: "#fee2e2",
+                color: "#dc2626",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 11,
+                fontWeight: 700,
+                flexShrink: 0
+              },
+              children: i + 1
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                flex: 1
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 600,
+                  fontSize: 13
+                },
+                children: d.categoria
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  color: "var(--text-muted)"
+                },
+                children: [d.centroCusto, " · ", d.data]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                color: "#dc2626"
+              },
+              children: fmt(d.valor)
+            }, void 0, false)]
+          }, i, true))
+        }, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6153,1444 +6793,1647 @@ function FinanceiroBase({
   }
   const corRec = "#059669";
   const corDes = "#dc2626";
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-header"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-title"
-  }, titulo), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle"
-  }, subtitulo)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => abrirNovo("receita"),
-    className: "btn",
-    style: {
-      background: "none",
-      border: `1px solid ${corRec}`,
-      color: corRec,
-      borderRadius: 8,
-      padding: "8px 16px",
-      fontWeight: 600,
-      fontSize: 13,
-      cursor: "pointer",
-      fontFamily: "var(--font-body)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 14
-  }), " Nova Receita"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => abrirNovo("despesa"),
-    className: "btn btn-purple",
-    style: {
-      padding: "8px 16px",
-      fontSize: 13
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 14
-  }), " Nova Despesa"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
-      gap: 16,
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20,
-      background: saldoMes >= 0 ? "#f0fdf4" : "#fef2f2",
-      border: `1px solid ${saldoMes >= 0 ? "#86efac" : "#fca5a5"}`
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: saldoMes >= 0 ? corRec : corDes,
-      marginBottom: 4
-    }
-  }, "Saldo (", mesLabel(mesFiltroEfetivo), ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 24,
-      fontWeight: 700,
-      color: saldoMes >= 0 ? corRec : corDes
-    }
-  }, fmt(saldoMes)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)",
-      marginTop: 4
-    }
-  }, "+", fmt(recMes), " / -", fmt(desMes))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20,
-      background: "#fffbeb",
-      border: "1px solid #fde68a"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#d97706",
-      marginBottom: 4
-    }
-  }, "Pendente (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 24,
-      fontWeight: 700,
-      color: "#d97706"
-    }
-  }, fmt(pendMes))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: corRec,
-      marginBottom: 4
-    }
-  }, "Receitas (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 24,
-      fontWeight: 700,
-      color: corRec
-    }
-  }, fmt(recAno))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: corDes,
-      marginBottom: 4
-    }
-  }, "Despesas (", anoFiltro, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 24,
-      fontWeight: 700,
-      color: corDes
-    }
-  }, fmt(desAno)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginBottom: 16,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      fontWeight: 600
-    }
-  }, "Ano:"), anos.map(a => /*#__PURE__*/React.createElement("button", {
-    key: a,
-    onClick: () => setAnoFiltro(a),
-    style: {
-      padding: "4px 14px",
-      borderRadius: 20,
-      border: "none",
-      background: anoFiltro === a ? "var(--purple)" : "var(--gray-100)",
-      color: anoFiltro === a ? "white" : "var(--gray-600)",
-      fontWeight: anoFiltro === a ? 700 : 400,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, a))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 16,
-      background: "var(--gray-50)",
-      padding: 6,
-      borderRadius: 12,
-      width: "fit-content"
-    }
-  }, [["tudo", "📊 Tudo"], ["receita", "💰 Receitas"], ["despesa", "💸 Despesas"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    onClick: () => setFiltroTipo(v),
-    style: {
-      padding: "6px 16px",
-      borderRadius: 8,
-      border: "none",
-      background: filtroTipo === v ? "white" : "transparent",
-      color: filtroTipo === v ? v === "receita" ? corRec : v === "despesa" ? corDes : "var(--purple)" : "#6b7280",
-      fontWeight: filtroTipo === v ? 700 : 500,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)",
-      boxShadow: filtroTipo === v ? "0 1px 4px rgba(0,0,0,.1)" : "none",
-      transition: ".15s"
-    }
-  }, l))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      marginBottom: 20,
-      overflowX: "auto",
-      scrollbarWidth: "none"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = mesesDisp.indexOf(mesFiltroEfetivo);
-      if (idx > 0) setMesFiltro(mesesDisp[idx - 1]);
-    },
-    style: {
-      background: "var(--purple)",
-      color: "white",
-      border: "none",
-      borderRadius: "50%",
-      width: 28,
-      height: 28,
-      cursor: "pointer",
-      flexShrink: 0,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "chevron-left",
-    size: 14
-  })), mesesDisp.map(m => /*#__PURE__*/React.createElement("button", {
-    key: m,
-    onClick: () => setMesFiltro(m),
-    style: {
-      padding: "5px 14px",
-      borderRadius: 20,
-      border: "none",
-      background: m === mesFiltroEfetivo ? "var(--purple)" : "var(--gray-100)",
-      color: m === mesFiltroEfetivo ? "white" : "var(--gray-600)",
-      fontWeight: m === mesFiltroEfetivo ? 700 : 400,
-      cursor: "pointer",
-      fontSize: 13,
-      flexShrink: 0,
-      fontFamily: "var(--font-body)"
-    }
-  }, mesLabel(m))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = mesesDisp.indexOf(mesFiltroEfetivo);
-      if (idx < mesesDisp.length - 1) setMesFiltro(mesesDisp[idx + 1]);
-    },
-    style: {
-      background: "var(--purple)",
-      color: "white",
-      border: "none",
-      borderRadius: "50%",
-      width: 28,
-      height: 28,
-      cursor: "pointer",
-      flexShrink: 0,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "chevron-right",
-    size: 14
-  }))), filtroTipo !== "despesa" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 20px",
-      background: "#f0fdf4",
-      border: "1px solid #86efac",
-      borderRadius: 12,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: corRec,
-      fontWeight: 600
-    }
-  }, "TOTAL RECEITAS DO MÊS "), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 18,
-      fontWeight: 700,
-      color: corRec,
-      marginLeft: 8
-    }
-  }, fmt(recMes))), filtroTipo !== "receita" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 20px",
-      background: "#fef2f2",
-      border: "1px solid #fca5a5",
-      borderRadius: 12,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: corDes,
-      fontWeight: 600
-    }
-  }, "TOTAL DESPESAS DO MÊS "), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 18,
-      fontWeight: 700,
-      color: corDes,
-      marginLeft: 8
-    }
-  }, fmt(desMes))), receitas.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: corRec
-    }
-  }, "🟢 Receitas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      color: corRec
-    }
-  }, fmt(calcRec(receitas)))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 0,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse"
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "var(--gray-50)"
-    }
-  }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/React.createElement("th", {
-    key: h,
-    style: {
-      padding: "10px 14px",
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      textAlign: "left",
-      borderBottom: "1px solid var(--gray-200)"
-    }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, receitas.map((l, i) => /*#__PURE__*/React.createElement("tr", {
-    key: l.id,
-    style: {
-      borderBottom: "1px solid var(--gray-100)",
-      background: i % 2 === 0 ? "white" : "var(--gray-50)"
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 13,
-      color: "var(--text-muted)",
-      whiteSpace: "nowrap"
-    }
-  }, l.data, l._virtual && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      background: "#fef3c7",
-      color: "#b45309",
-      padding: "1px 6px",
-      borderRadius: 20,
-      fontWeight: 600,
-      marginLeft: 6
-    }
-  }, "sem baixa")), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 13,
-      fontWeight: 500
-    }
-  }, l.descricao || l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, l.formaPag || "—"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 13,
-      fontWeight: 700,
-      color: corRec,
-      whiteSpace: "nowrap"
-    }
-  }, fmt(l.valor)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontWeight: 600,
-      background: l.status === "pago" || l.status === "recebido" ? "#d1fae5" : "#fef3c7",
-      color: l.status === "pago" || l.status === "recebido" ? "#065f46" : "#b45309"
-    }
-  }, l.status === "pago" || l.status === "recebido" ? "✓ Recebido" : "Pendente")), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 4,
-      flexWrap: "wrap",
-      alignItems: "center"
-    }
-  }, l._virtual && /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModalBaixa(l._recObj);
-      setFormBaixa({
-        valor: l.valor + "",
-        data: new Date().toISOString().slice(0, 10),
-        formaPag: "PIX",
-        modo: "este"
-      });
-    },
-    style: {
-      fontSize: 11,
-      background: "#d1fae5",
-      color: "#065f46",
-      border: "none",
-      borderRadius: 6,
-      padding: "3px 8px",
-      cursor: "pointer",
-      fontWeight: 600
-    }
-  }, "Dar baixa"), !l._virtual && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setFormLanc({
-        tipo: l.tipo,
-        categoria: l.categoria || "",
-        descricao: l.descricao || "",
-        valor: l.valor + "",
-        data: l.data,
-        formaPag: l.formaPag || "PIX",
-        status: l.status || "pago",
-        obs: l.obs || "",
-        parcelas: "1"
-      });
-      setEditando(l.id);
-      setAbaModal("avulso");
-      setModal("lanc");
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "var(--purple)",
-      padding: "3px 6px"
-    },
-    title: "Editar"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "pencil",
-    size: 13
-  })), /*#__PURE__*/React.createElement("button", {
-    onClick: () => excluir(l.id),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "#dc2626",
-      padding: "3px 6px"
-    },
-    title: "Excluir"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 13
-  }))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalMover({
-      lanc: l._virtual ? {
-        ...l,
-        id: l._recObj.id
-      } : l,
-      isRecorrente: true
-    }),
-    title: "Mover para outro financeiro",
-    style: {
-      background: "#f3f0ff",
-      border: "none",
-      cursor: "pointer",
-      color: "#7B00C4",
-      padding: "3px 8px",
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "↗ Mover"))))))))), despesas.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: corDes
-    }
-  }, "🔴 Despesas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      color: corDes
-    }
-  }, fmt(calcDes(despesas)))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 0,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse"
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "var(--gray-50)"
-    }
-  }, ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/React.createElement("th", {
-    key: h,
-    style: {
-      padding: "10px 14px",
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      textAlign: "left",
-      borderBottom: "1px solid var(--gray-200)"
-    }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, despesas.map((l, i) => /*#__PURE__*/React.createElement("tr", {
-    key: l.id,
-    style: {
-      borderBottom: "1px solid var(--gray-100)",
-      background: i % 2 === 0 ? "white" : "var(--gray-50)"
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 13,
-      color: "var(--text-muted)",
-      whiteSpace: "nowrap"
-    }
-  }, l.data, l._virtual && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      background: "#fef3c7",
-      color: "#b45309",
-      padding: "1px 6px",
-      borderRadius: 20,
-      fontWeight: 600,
-      marginLeft: 6
-    }
-  }, "sem baixa")), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 13,
-      fontWeight: 500
-    }
-  }, l.descricao || l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, l.categoria || "—"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, l.formaPag || "—"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px",
-      fontSize: 13,
-      fontWeight: 700,
-      color: corDes,
-      whiteSpace: "nowrap"
-    }
-  }, fmt(l.valor)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontWeight: 600,
-      background: l.status === "pago" ? "#d1fae5" : "#fef3c7",
-      color: l.status === "pago" ? "#065f46" : "#b45309"
-    }
-  }, l.status === "pago" ? "✓ Pago" : "Pendente")), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "10px 14px"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 4,
-      flexWrap: "wrap",
-      alignItems: "center"
-    }
-  }, l._virtual && /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModalBaixa(l._recObj);
-      setFormBaixa({
-        valor: l.valor + "",
-        data: new Date().toISOString().slice(0, 10),
-        formaPag: "PIX",
-        modo: "este"
-      });
-    },
-    style: {
-      fontSize: 11,
-      background: "#d1fae5",
-      color: "#065f46",
-      border: "none",
-      borderRadius: 6,
-      padding: "3px 8px",
-      cursor: "pointer",
-      fontWeight: 600
-    }
-  }, "Dar baixa"), !l._virtual && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setFormLanc({
-        tipo: l.tipo,
-        categoria: l.categoria || "",
-        descricao: l.descricao || "",
-        valor: l.valor + "",
-        data: l.data,
-        formaPag: l.formaPag || "PIX",
-        status: l.status || "pago",
-        obs: l.obs || "",
-        parcelas: "1"
-      });
-      setEditando(l.id);
-      setAbaModal("avulso");
-      setModal("lanc");
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "var(--purple)",
-      padding: "3px 6px"
-    },
-    title: "Editar"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "pencil",
-    size: 13
-  })), /*#__PURE__*/React.createElement("button", {
-    onClick: () => excluir(l.id),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "#dc2626",
-      padding: "3px 6px"
-    },
-    title: "Excluir"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 13
-  }))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalMover({
-      lanc: l._virtual ? {
-        ...l,
-        id: l._recObj.id
-      } : l,
-      isRecorrente: true
-    }),
-    title: "Mover para outro financeiro",
-    style: {
-      background: "#f3f0ff",
-      border: "none",
-      cursor: "pointer",
-      color: "#7B00C4",
-      padding: "3px 8px",
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "↗ Mover"))))))))), receitas.length === 0 && despesas.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 40,
-      color: "var(--text-muted)",
-      fontSize: 14
-    }
-  }, "Nenhum lançamento em ", mesLabel(mesFiltroEfetivo), " de ", anoFiltro, "."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 16,
-      alignItems: "center",
-      justifyContent: "flex-end",
-      padding: "16px 0",
-      borderTop: "1px solid var(--gray-200)",
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)"
-    }
-  }, "Receitas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      color: corRec
-    }
-  }, fmt(recMes))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 18,
-      color: "var(--text-muted)"
-    }
-  }, "—"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)"
-    }
-  }, "Despesas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      color: corDes
-    }
-  }, fmt(desMes))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 18,
-      color: "var(--text-muted)"
-    }
-  }, "="), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)"
-    }
-  }, "Saldo do Mês"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 18,
-      color: saldoMes >= 0 ? corRec : corDes
-    }
-  }, fmt(saldoMes)))), modal === "lanc" && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 520,
-      maxHeight: "90vh",
-      overflowY: "auto"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
-    }
-  }, editando ? "Editar" : "Novo", " Lançamento"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), !editando && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 16,
-      background: "var(--gray-50)",
-      padding: 4,
-      borderRadius: 10
-    }
-  }, [["avulso", "💰 Avulso"], ["recorrente", "🔁 Recorrente"]].map(([v, l]) => /*#__PURE__*/React.createElement("button", {
-    key: v,
-    onClick: () => setAbaModal(v),
-    style: {
-      flex: 1,
-      padding: "7px",
-      border: "none",
-      borderRadius: 8,
-      background: abaModal === v ? "white" : "transparent",
-      color: abaModal === v ? "var(--purple)" : "#6b7280",
-      fontWeight: abaModal === v ? 700 : 500,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, l))), abaModal === "avulso" ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formLanc.tipo,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      tipo: e.target.value,
-      categoria: ""
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "receita"
-  }, "Receita"), /*#__PURE__*/React.createElement("option", {
-    value: "despesa"
-  }, "Despesa"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formLanc.categoria,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      categoria: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecionar..."), (formLanc.tipo === "receita" ? catsRec : catsDes).map(c => /*#__PURE__*/React.createElement("option", {
-    key: c,
-    value: c
-  }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor (R$)"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    step: "0.01",
-    value: formLanc.valor,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      valor: e.target.value
-    }),
-    placeholder: "0,00"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formLanc.descricao,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      descricao: e.target.value
-    }),
-    placeholder: "Descrição opcional"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formLanc.data,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      data: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma Pag."), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formLanc.formaPag,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      formaPag: e.target.value
-    })
-  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f,
-    value: f
-  }, f)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formLanc.status,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      status: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "pago"
-  }, "✓ Pago / Recebido"), /*#__PURE__*/React.createElement("option", {
-    value: "pendente"
-  }, "Pendente"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Parcelas"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    min: "1",
-    max: "48",
-    value: formLanc.parcelas,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      parcelas: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Observação"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formLanc.obs,
-    onChange: e => setFormLanc({
-      ...formLanc,
-      obs: e.target.value
-    }),
-    placeholder: "Opcional"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: "span 2",
-      display: "flex",
-      gap: 8,
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, editando && /*#__PURE__*/React.createElement("button", {
-    onClick: async () => {
-      if (confirm("Excluir este lançamento?")) {
-        await excluir(editando);
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      className: "page-header",
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "page-title",
+          children: titulo
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "page-subtitle",
+          children: subtitulo
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap"
+        },
+        children: [/*#__PURE__*/_jsxDEV("button", {
+          onClick: () => abrirNovo("receita"),
+          className: "btn",
+          style: {
+            background: "none",
+            border: `1px solid ${corRec}`,
+            color: corRec,
+            borderRadius: 8,
+            padding: "8px 16px",
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: "pointer",
+            fontFamily: "var(--font-body)"
+          },
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "plus",
+            size: 14
+          }, void 0, false), " Nova Receita"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => abrirNovo("despesa"),
+          className: "btn btn-purple",
+          style: {
+            padding: "8px 16px",
+            fontSize: 13
+          },
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "plus",
+            size: 14
+          }, void 0, false), " Nova Despesa"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+        gap: 16,
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 20,
+          background: saldoMes >= 0 ? "#f0fdf4" : "#fef2f2",
+          border: `1px solid ${saldoMes >= 0 ? "#86efac" : "#fca5a5"}`
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: saldoMes >= 0 ? corRec : corDes,
+            marginBottom: 4
+          },
+          children: ["Saldo (", mesLabel(mesFiltroEfetivo), ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 24,
+            fontWeight: 700,
+            color: saldoMes >= 0 ? corRec : corDes
+          },
+          children: fmt(saldoMes)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--text-muted)",
+            marginTop: 4
+          },
+          children: ["+", fmt(recMes), " / -", fmt(desMes)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 20,
+          background: "#fffbeb",
+          border: "1px solid #fde68a"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#d97706",
+            marginBottom: 4
+          },
+          children: ["Pendente (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 24,
+            fontWeight: 700,
+            color: "#d97706"
+          },
+          children: fmt(pendMes)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 20
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: corRec,
+            marginBottom: 4
+          },
+          children: ["Receitas (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 24,
+            fontWeight: 700,
+            color: corRec
+          },
+          children: fmt(recAno)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 20
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: corDes,
+            marginBottom: 4
+          },
+          children: ["Despesas (", anoFiltro, ")"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 24,
+            fontWeight: 700,
+            color: corDes
+          },
+          children: fmt(desAno)
+        }, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        marginBottom: 16,
+        alignItems: "center"
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-muted)",
+          fontWeight: 600
+        },
+        children: "Ano:"
+      }, void 0, false), anos.map(a => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setAnoFiltro(a),
+        style: {
+          padding: "4px 14px",
+          borderRadius: 20,
+          border: "none",
+          background: anoFiltro === a ? "var(--purple)" : "var(--gray-100)",
+          color: anoFiltro === a ? "white" : "var(--gray-600)",
+          fontWeight: anoFiltro === a ? 700 : 400,
+          cursor: "pointer",
+          fontSize: 13,
+          fontFamily: "var(--font-body)"
+        },
+        children: a
+      }, a, false))]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginBottom: 16,
+        background: "var(--gray-50)",
+        padding: 6,
+        borderRadius: 12,
+        width: "fit-content"
+      },
+      children: [["tudo", "📊 Tudo"], ["receita", "💰 Receitas"], ["despesa", "💸 Despesas"]].map(([v, l]) => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setFiltroTipo(v),
+        style: {
+          padding: "6px 16px",
+          borderRadius: 8,
+          border: "none",
+          background: filtroTipo === v ? "white" : "transparent",
+          color: filtroTipo === v ? v === "receita" ? corRec : v === "despesa" ? corDes : "var(--purple)" : "#6b7280",
+          fontWeight: filtroTipo === v ? 700 : 500,
+          cursor: "pointer",
+          fontSize: 13,
+          fontFamily: "var(--font-body)",
+          boxShadow: filtroTipo === v ? "0 1px 4px rgba(0,0,0,.1)" : "none",
+          transition: ".15s"
+        },
+        children: l
+      }, v, false))
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        marginBottom: 20,
+        overflowX: "auto",
+        scrollbarWidth: "none"
+      },
+      children: [/*#__PURE__*/_jsxDEV("button", {
+        onClick: () => {
+          const idx = mesesDisp.indexOf(mesFiltroEfetivo);
+          if (idx > 0) setMesFiltro(mesesDisp[idx - 1]);
+        },
+        style: {
+          background: "var(--purple)",
+          color: "white",
+          border: "none",
+          borderRadius: "50%",
+          width: 28,
+          height: 28,
+          cursor: "pointer",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        },
+        children: /*#__PURE__*/_jsxDEV(Icon, {
+          name: "chevron-left",
+          size: 14
+        }, void 0, false)
+      }, void 0, false), mesesDisp.map(m => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setMesFiltro(m),
+        style: {
+          padding: "5px 14px",
+          borderRadius: 20,
+          border: "none",
+          background: m === mesFiltroEfetivo ? "var(--purple)" : "var(--gray-100)",
+          color: m === mesFiltroEfetivo ? "white" : "var(--gray-600)",
+          fontWeight: m === mesFiltroEfetivo ? 700 : 400,
+          cursor: "pointer",
+          fontSize: 13,
+          flexShrink: 0,
+          fontFamily: "var(--font-body)"
+        },
+        children: mesLabel(m)
+      }, m, false)), /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => {
+          const idx = mesesDisp.indexOf(mesFiltroEfetivo);
+          if (idx < mesesDisp.length - 1) setMesFiltro(mesesDisp[idx + 1]);
+        },
+        style: {
+          background: "var(--purple)",
+          color: "white",
+          border: "none",
+          borderRadius: "50%",
+          width: 28,
+          height: 28,
+          cursor: "pointer",
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        },
+        children: /*#__PURE__*/_jsxDEV(Icon, {
+          name: "chevron-right",
+          size: 14
+        }, void 0, false)
+      }, void 0, false)]
+    }, void 0, true), filtroTipo !== "despesa" && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        padding: "12px 20px",
+        background: "#f0fdf4",
+        border: "1px solid #86efac",
+        borderRadius: 12,
+        marginBottom: 12
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 12,
+          color: corRec,
+          fontWeight: 600
+        },
+        children: "TOTAL RECEITAS DO MÊS "
+      }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 18,
+          fontWeight: 700,
+          color: corRec,
+          marginLeft: 8
+        },
+        children: fmt(recMes)
+      }, void 0, false)]
+    }, void 0, true), filtroTipo !== "receita" && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        padding: "12px 20px",
+        background: "#fef2f2",
+        border: "1px solid #fca5a5",
+        borderRadius: 12,
+        marginBottom: 12
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 12,
+          color: corDes,
+          fontWeight: 600
+        },
+        children: "TOTAL DESPESAS DO MÊS "
+      }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontSize: 18,
+          fontWeight: 700,
+          color: corDes,
+          marginLeft: 8
+        },
+        children: fmt(desMes)
+      }, void 0, false)]
+    }, void 0, true), receitas.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            color: corRec
+          },
+          children: "🟢 Receitas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            color: corRec
+          },
+          children: fmt(calcRec(receitas))
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 0,
+          overflow: "hidden"
+        },
+        children: /*#__PURE__*/_jsxDEV("table", {
+          style: {
+            width: "100%",
+            borderCollapse: "collapse"
+          },
+          children: [/*#__PURE__*/_jsxDEV("thead", {
+            children: /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                background: "var(--gray-50)"
+              },
+              children: ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/_jsxDEV("th", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--text-muted)",
+                  textAlign: "left",
+                  borderBottom: "1px solid var(--gray-200)"
+                },
+                children: h
+              }, h, false))
+            }, void 0, false)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+            children: receitas.map((l, i) => /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                borderBottom: "1px solid var(--gray-100)",
+                background: i % 2 === 0 ? "white" : "var(--gray-50)"
+              },
+              children: [/*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                  whiteSpace: "nowrap"
+                },
+                children: [l.data, l._virtual && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 10,
+                    background: "#fef3c7",
+                    color: "#b45309",
+                    padding: "1px 6px",
+                    borderRadius: 20,
+                    fontWeight: 600,
+                    marginLeft: 6
+                  },
+                  children: "sem baixa"
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  fontWeight: 500
+                },
+                children: l.descricao || l.categoria || "—"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  color: "var(--text-muted)"
+                },
+                children: l.categoria || "—"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  color: "var(--text-muted)"
+                },
+                children: l.formaPag || "—"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: corRec,
+                  whiteSpace: "nowrap"
+                },
+                children: fmt(l.valor)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px"
+                },
+                children: /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 11,
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    fontWeight: 600,
+                    background: l.status === "pago" || l.status === "recebido" ? "#d1fae5" : "#fef3c7",
+                    color: l.status === "pago" || l.status === "recebido" ? "#065f46" : "#b45309"
+                  },
+                  children: l.status === "pago" || l.status === "recebido" ? "✓ Recebido" : "Pendente"
+                }, void 0, false)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px"
+                },
+                children: /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    gap: 4,
+                    flexWrap: "wrap",
+                    alignItems: "center"
+                  },
+                  children: [l._virtual && /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => {
+                      setModalBaixa(l._recObj);
+                      setFormBaixa({
+                        valor: l.valor + "",
+                        data: new Date().toISOString().slice(0, 10),
+                        formaPag: "PIX",
+                        modo: "este"
+                      });
+                    },
+                    style: {
+                      fontSize: 11,
+                      background: "#d1fae5",
+                      color: "#065f46",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "3px 8px",
+                      cursor: "pointer",
+                      fontWeight: 600
+                    },
+                    children: "Dar baixa"
+                  }, void 0, false), !l._virtual && /*#__PURE__*/_jsxDEV(_Fragment, {
+                    children: [/*#__PURE__*/_jsxDEV("button", {
+                      onClick: () => {
+                        setFormLanc({
+                          tipo: l.tipo,
+                          categoria: l.categoria || "",
+                          descricao: l.descricao || "",
+                          valor: l.valor + "",
+                          data: l.data,
+                          formaPag: l.formaPag || "PIX",
+                          status: l.status || "pago",
+                          obs: l.obs || "",
+                          parcelas: "1"
+                        });
+                        setEditando(l.id);
+                        setAbaModal("avulso");
+                        setModal("lanc");
+                      },
+                      style: {
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "var(--purple)",
+                        padding: "3px 6px"
+                      },
+                      title: "Editar",
+                      children: /*#__PURE__*/_jsxDEV(Icon, {
+                        name: "pencil",
+                        size: 13
+                      }, void 0, false)
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                      onClick: () => excluir(l.id),
+                      style: {
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#dc2626",
+                        padding: "3px 6px"
+                      },
+                      title: "Excluir",
+                      children: /*#__PURE__*/_jsxDEV(Icon, {
+                        name: "trash-2",
+                        size: 13
+                      }, void 0, false)
+                    }, void 0, false)]
+                  }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => setModalMover({
+                      lanc: l._virtual ? {
+                        ...l,
+                        id: l._recObj.id
+                      } : l,
+                      isRecorrente: true
+                    }),
+                    title: "Mover para outro financeiro",
+                    style: {
+                      background: "#f3f0ff",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#7B00C4",
+                      padding: "3px 8px",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 600
+                    },
+                    children: "↗ Mover"
+                  }, void 0, false)]
+                }, void 0, true)
+              }, void 0, false)]
+            }, l.id, true))
+          }, void 0, false)]
+        }, void 0, true)
+      }, void 0, false)]
+    }, void 0, true), despesas.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 14,
+            color: corDes
+          },
+          children: "🔴 Despesas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            color: corDes
+          },
+          children: fmt(calcDes(despesas))
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 0,
+          overflow: "hidden"
+        },
+        children: /*#__PURE__*/_jsxDEV("table", {
+          style: {
+            width: "100%",
+            borderCollapse: "collapse"
+          },
+          children: [/*#__PURE__*/_jsxDEV("thead", {
+            children: /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                background: "var(--gray-50)"
+              },
+              children: ["Data", "Descrição", "Categoria", "Forma Pag.", "Valor", "Status", "Ações"].map(h => /*#__PURE__*/_jsxDEV("th", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: "var(--text-muted)",
+                  textAlign: "left",
+                  borderBottom: "1px solid var(--gray-200)"
+                },
+                children: h
+              }, h, false))
+            }, void 0, false)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+            children: despesas.map((l, i) => /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                borderBottom: "1px solid var(--gray-100)",
+                background: i % 2 === 0 ? "white" : "var(--gray-50)"
+              },
+              children: [/*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  color: "var(--text-muted)",
+                  whiteSpace: "nowrap"
+                },
+                children: [l.data, l._virtual && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 10,
+                    background: "#fef3c7",
+                    color: "#b45309",
+                    padding: "1px 6px",
+                    borderRadius: 20,
+                    fontWeight: 600,
+                    marginLeft: 6
+                  },
+                  children: "sem baixa"
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  fontWeight: 500
+                },
+                children: l.descricao || l.categoria || "—"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  color: "var(--text-muted)"
+                },
+                children: l.categoria || "—"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 12,
+                  color: "var(--text-muted)"
+                },
+                children: l.formaPag || "—"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: corDes,
+                  whiteSpace: "nowrap"
+                },
+                children: fmt(l.valor)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px"
+                },
+                children: /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 11,
+                    padding: "3px 10px",
+                    borderRadius: 20,
+                    fontWeight: 600,
+                    background: l.status === "pago" ? "#d1fae5" : "#fef3c7",
+                    color: l.status === "pago" ? "#065f46" : "#b45309"
+                  },
+                  children: l.status === "pago" ? "✓ Pago" : "Pendente"
+                }, void 0, false)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "10px 14px"
+                },
+                children: /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    gap: 4,
+                    flexWrap: "wrap",
+                    alignItems: "center"
+                  },
+                  children: [l._virtual && /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => {
+                      setModalBaixa(l._recObj);
+                      setFormBaixa({
+                        valor: l.valor + "",
+                        data: new Date().toISOString().slice(0, 10),
+                        formaPag: "PIX",
+                        modo: "este"
+                      });
+                    },
+                    style: {
+                      fontSize: 11,
+                      background: "#d1fae5",
+                      color: "#065f46",
+                      border: "none",
+                      borderRadius: 6,
+                      padding: "3px 8px",
+                      cursor: "pointer",
+                      fontWeight: 600
+                    },
+                    children: "Dar baixa"
+                  }, void 0, false), !l._virtual && /*#__PURE__*/_jsxDEV(_Fragment, {
+                    children: [/*#__PURE__*/_jsxDEV("button", {
+                      onClick: () => {
+                        setFormLanc({
+                          tipo: l.tipo,
+                          categoria: l.categoria || "",
+                          descricao: l.descricao || "",
+                          valor: l.valor + "",
+                          data: l.data,
+                          formaPag: l.formaPag || "PIX",
+                          status: l.status || "pago",
+                          obs: l.obs || "",
+                          parcelas: "1"
+                        });
+                        setEditando(l.id);
+                        setAbaModal("avulso");
+                        setModal("lanc");
+                      },
+                      style: {
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "var(--purple)",
+                        padding: "3px 6px"
+                      },
+                      title: "Editar",
+                      children: /*#__PURE__*/_jsxDEV(Icon, {
+                        name: "pencil",
+                        size: 13
+                      }, void 0, false)
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                      onClick: () => excluir(l.id),
+                      style: {
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#dc2626",
+                        padding: "3px 6px"
+                      },
+                      title: "Excluir",
+                      children: /*#__PURE__*/_jsxDEV(Icon, {
+                        name: "trash-2",
+                        size: 13
+                      }, void 0, false)
+                    }, void 0, false)]
+                  }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+                    onClick: () => setModalMover({
+                      lanc: l._virtual ? {
+                        ...l,
+                        id: l._recObj.id
+                      } : l,
+                      isRecorrente: true
+                    }),
+                    title: "Mover para outro financeiro",
+                    style: {
+                      background: "#f3f0ff",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#7B00C4",
+                      padding: "3px 8px",
+                      borderRadius: 6,
+                      fontSize: 11,
+                      fontWeight: 600
+                    },
+                    children: "↗ Mover"
+                  }, void 0, false)]
+                }, void 0, true)
+              }, void 0, false)]
+            }, l.id, true))
+          }, void 0, false)]
+        }, void 0, true)
+      }, void 0, false)]
+    }, void 0, true), receitas.length === 0 && despesas.length === 0 && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        textAlign: "center",
+        padding: 40,
+        color: "var(--text-muted)",
+        fontSize: 14
+      },
+      children: ["Nenhum lançamento em ", mesLabel(mesFiltroEfetivo), " de ", anoFiltro, "."]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 16,
+        alignItems: "center",
+        justifyContent: "flex-end",
+        padding: "16px 0",
+        borderTop: "1px solid var(--gray-200)",
+        flexWrap: "wrap"
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--text-muted)"
+          },
+          children: "Receitas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            color: corRec
+          },
+          children: fmt(recMes)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 18,
+          color: "var(--text-muted)"
+        },
+        children: "—"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--text-muted)"
+          },
+          children: "Despesas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            color: corDes
+          },
+          children: fmt(desMes)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 18,
+          color: "var(--text-muted)"
+        },
+        children: "="
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--text-muted)"
+          },
+          children: "Saldo do Mês"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 18,
+            color: saldoMes >= 0 ? corRec : corDes
+          },
+          children: fmt(saldoMes)
+        }, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true), modal === "lanc" && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 500,
+        padding: 20
+      },
+      onClick: () => {
         setModal(false);
         setEditando(null);
-      }
-    },
-    style: {
-      background: "none",
-      border: "1px solid #dc2626",
-      color: "#dc2626",
-      borderRadius: 8,
-      padding: "7px 14px",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 600,
-      fontFamily: "var(--font-body)"
-    }
-  }, "🗑️ Excluir"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginLeft: "auto"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    },
-    className: "btn btn-ghost"
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    onClick: salvarLanc,
-    disabled: salvando,
-    className: "btn btn-purple"
-  }, salvando ? "Salvando..." : "Salvar")))) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Tipo"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formRecorr.tipo,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      tipo: e.target.value,
-      categoria: ""
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "receita"
-  }, "Receita"), /*#__PURE__*/React.createElement("option", {
-    value: "despesa"
-  }, "Despesa"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formRecorr.categoria,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      categoria: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecionar..."), (formRecorr.tipo === "receita" ? catsRec : catsDes).map(c => /*#__PURE__*/React.createElement("option", {
-    key: c,
-    value: c
-  }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor Previsto (R$)"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    step: "0.01",
-    value: formRecorr.valorPrevisto,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      valorPrevisto: e.target.value
-    }),
-    placeholder: "0,00"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Descrição"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: formRecorr.descricao,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      descricao: e.target.value
-    }),
-    placeholder: "Ex: Aluguel apartamento"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Recorrência"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formRecorr.recorrencia,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      recorrencia: e.target.value
-    })
-  }, RECORRS.map(r => /*#__PURE__*/React.createElement("option", {
-    key: r,
-    value: r
-  }, r)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Dia vencimento"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    min: "1",
-    max: "31",
-    value: formRecorr.diaVencimento,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      diaVencimento: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Início"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "month",
-    value: formRecorr.mesInicio,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      mesInicio: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Duração"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formRecorr.indeterminado ? "ind" : "det",
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      indeterminado: e.target.value === "ind"
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "ind"
-  }, "Indeterminado"), /*#__PURE__*/React.createElement("option", {
-    value: "det"
-  }, "Número fixo de meses"))), !formRecorr.indeterminado && /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Qtd meses"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    min: "1",
-    value: formRecorr.totalParcelas,
-    onChange: e => setFormRecorr({
-      ...formRecorr,
-      totalParcelas: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: "span 2",
-      display: "flex",
-      gap: 8,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModal(false);
-      setEditando(null);
-    },
-    className: "btn btn-ghost"
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    onClick: salvarRecorr,
-    disabled: salvando,
-    className: "btn btn-purple"
-  }, salvando ? "Salvando..." : "Salvar"))))), modalBaixa && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 600,
-      padding: 20
-    },
-    onClick: () => setModalBaixa(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 400
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 600,
-      marginBottom: 16
-    }
-  }, "Dar baixa — ", modalBaixa.descricao || modalBaixa.categoria), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Valor pago"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "number",
-    step: "0.01",
-    value: formBaixa.valor,
-    onChange: e => setFormBaixa({
-      ...formBaixa,
-      valor: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: formBaixa.data,
-    onChange: e => setFormBaixa({
-      ...formBaixa,
-      data: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Forma Pag."), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: formBaixa.formaPag,
-    onChange: e => setFormBaixa({
-      ...formBaixa,
-      formaPag: e.target.value
-    })
-  }, FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-    key: f,
-    value: f
-  }, f)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      justifyContent: "flex-end",
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalBaixa(null),
-    className: "btn btn-ghost"
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    onClick: darBaixa,
-    disabled: salvando,
-    className: "btn btn-purple"
-  }, salvando ? "Salvando..." : "Confirmar baixa")))), modalMover && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 700,
-      padding: 20
-    },
-    onClick: () => setModalMover(null)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 420
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 600,
-      marginBottom: 8
-    }
-  }, "↗ Mover lançamento"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("strong", null, modalMover.lanc.descricao || modalMover.lanc.categoria), " — ", fmt(modalMover.lanc.valor), /*#__PURE__*/React.createElement("br", null), "Para onde deseja mover?"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10,
-      marginBottom: 20
-    }
-  }, DESTINOS.map(dest => /*#__PURE__*/React.createElement("div", {
-    key: dest.col
-  }, modalMover.isRecorrente && dest.colRec ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => moverLancamento(modalMover.lanc, dest, "este"),
-    disabled: !!movendoId,
-    style: {
-      flex: 1,
-      padding: "10px",
-      border: "1px solid #e5e7eb",
-      borderRadius: 10,
-      background: "white",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 600,
-      fontFamily: "var(--font-body)"
-    }
-  }, movendoId === modalMover.lanc.id ? "Movendo..." : dest.label + " (só este)"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => moverLancamento(modalMover.lanc, dest, "todos"),
-    disabled: !!movendoId,
-    style: {
-      flex: 1,
-      padding: "10px",
-      border: "2px solid var(--purple)",
-      borderRadius: 10,
-      background: "#f3f0ff",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 700,
-      color: "var(--purple)",
-      fontFamily: "var(--font-body)"
-    }
-  }, dest.label + " + recorrente")) : /*#__PURE__*/React.createElement("button", {
-    onClick: () => moverLancamento(modalMover.lanc, dest, "este"),
-    disabled: !!movendoId,
-    style: {
-      width: "100%",
-      padding: "12px",
-      border: "1px solid #e5e7eb",
-      borderRadius: 10,
-      background: "white",
-      cursor: "pointer",
-      fontSize: 14,
-      fontWeight: 600,
-      fontFamily: "var(--font-body)",
-      textAlign: "left"
-    }
-  }, movendoId === modalMover.lanc.id ? "Movendo..." : dest.label)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderTop: "1px solid #fee2e2",
-      paddingTop: 14,
-      marginTop: 4,
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "#dc2626",
-      marginBottom: 2
-    }
-  }, "🗑️ Excluir"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: async () => {
-      if (confirm("Excluir só este lançamento?")) {
-        await excluir(modalMover.lanc.id);
-        setModalMover(null);
-      }
-    },
-    disabled: !!movendoId,
-    style: {
-      flex: 1,
-      padding: "9px",
-      border: "1px solid #fca5a5",
-      borderRadius: 10,
-      background: "#fef2f2",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 600,
-      color: "#dc2626",
-      fontFamily: "var(--font-body)"
-    }
-  }, "Excluir só este"), modalMover.isRecorrente && modalMover.lanc.recorrenteId && /*#__PURE__*/React.createElement("button", {
-    onClick: async () => {
-      if (confirm("Excluir este e desativar o recorrente?")) {
-        await excluir(modalMover.lanc.id);
-        await db.collection(colRecorr).doc(modalMover.lanc.recorrenteId).update({
-          ativo: false
-        });
-        setModalMover(null);
-      }
-    },
-    disabled: !!movendoId,
-    style: {
-      flex: 1,
-      padding: "9px",
-      border: "2px solid #dc2626",
-      borderRadius: 10,
-      background: "#fef2f2",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 700,
-      color: "#dc2626",
-      fontFamily: "var(--font-body)"
-    }
-  }, "Excluir + desativar recorrente"))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalMover(null),
-    className: "btn btn-ghost",
-    style: {
-      width: "100%",
-      marginTop: 8
-    }
-  }, "Cancelar"))));
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 520,
+          maxHeight: "90vh",
+          overflowY: "auto"
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 600
+            },
+            children: [editando ? "Editar" : "Novo", " Lançamento"]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => {
+              setModal(false);
+              setEditando(null);
+            },
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "x",
+              size: 20
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), !editando && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 6,
+            marginBottom: 16,
+            background: "var(--gray-50)",
+            padding: 4,
+            borderRadius: 10
+          },
+          children: [["avulso", "💰 Avulso"], ["recorrente", "🔁 Recorrente"]].map(([v, l]) => /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setAbaModal(v),
+            style: {
+              flex: 1,
+              padding: "7px",
+              border: "none",
+              borderRadius: 8,
+              background: abaModal === v ? "white" : "transparent",
+              color: abaModal === v ? "var(--purple)" : "#6b7280",
+              fontWeight: abaModal === v ? 700 : 500,
+              cursor: "pointer",
+              fontSize: 13,
+              fontFamily: "var(--font-body)"
+            },
+            children: l
+          }, v, false))
+        }, void 0, false), abaModal === "avulso" ? /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Tipo"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formLanc.tipo,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                tipo: e.target.value,
+                categoria: ""
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "receita",
+                children: "Receita"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "despesa",
+                children: "Despesa"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Categoria"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formLanc.categoria,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                categoria: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecionar..."
+              }, void 0, false), (formLanc.tipo === "receita" ? catsRec : catsDes).map(c => /*#__PURE__*/_jsxDEV("option", {
+                value: c,
+                children: c
+              }, c, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Valor (R$)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              step: "0.01",
+              value: formLanc.valor,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                valor: e.target.value
+              }),
+              placeholder: "0,00"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Descrição"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: formLanc.descricao,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                descricao: e.target.value
+              }),
+              placeholder: "Descrição opcional"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Data"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "date",
+              value: formLanc.data,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                data: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Forma Pag."
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formLanc.formaPag,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                formaPag: e.target.value
+              }),
+              children: FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                value: f,
+                children: f
+              }, f, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Status"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formLanc.status,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                status: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "pago",
+                children: "✓ Pago / Recebido"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "pendente",
+                children: "Pendente"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Parcelas"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              min: "1",
+              max: "48",
+              value: formLanc.parcelas,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                parcelas: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Observação"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: formLanc.obs,
+              onChange: e => setFormLanc({
+                ...formLanc,
+                obs: e.target.value
+              }),
+              placeholder: "Opcional"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              gridColumn: "span 2",
+              display: "flex",
+              gap: 8,
+              justifyContent: "space-between",
+              alignItems: "center"
+            },
+            children: [editando && /*#__PURE__*/_jsxDEV("button", {
+              onClick: async () => {
+                if (confirm("Excluir este lançamento?")) {
+                  await excluir(editando);
+                  setModal(false);
+                  setEditando(null);
+                }
+              },
+              style: {
+                background: "none",
+                border: "1px solid #dc2626",
+                color: "#dc2626",
+                borderRadius: 8,
+                padding: "7px 14px",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
+                fontFamily: "var(--font-body)"
+              },
+              children: "🗑️ Excluir"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8,
+                marginLeft: "auto"
+              },
+              children: [/*#__PURE__*/_jsxDEV("button", {
+                onClick: () => {
+                  setModal(false);
+                  setEditando(null);
+                },
+                className: "btn btn-ghost",
+                children: "Cancelar"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                onClick: salvarLanc,
+                disabled: salvando,
+                className: "btn btn-purple",
+                children: salvando ? "Salvando..." : "Salvar"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true)]
+        }, void 0, true) : /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Tipo"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formRecorr.tipo,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                tipo: e.target.value,
+                categoria: ""
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "receita",
+                children: "Receita"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "despesa",
+                children: "Despesa"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Categoria"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formRecorr.categoria,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                categoria: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecionar..."
+              }, void 0, false), (formRecorr.tipo === "receita" ? catsRec : catsDes).map(c => /*#__PURE__*/_jsxDEV("option", {
+                value: c,
+                children: c
+              }, c, false))]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Valor Previsto (R$)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              step: "0.01",
+              value: formRecorr.valorPrevisto,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                valorPrevisto: e.target.value
+              }),
+              placeholder: "0,00"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Descrição"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: formRecorr.descricao,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                descricao: e.target.value
+              }),
+              placeholder: "Ex: Aluguel apartamento"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Recorrência"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formRecorr.recorrencia,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                recorrencia: e.target.value
+              }),
+              children: RECORRS.map(r => /*#__PURE__*/_jsxDEV("option", {
+                value: r,
+                children: r
+              }, r, false))
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Dia vencimento"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              min: "1",
+              max: "31",
+              value: formRecorr.diaVencimento,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                diaVencimento: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Início"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "month",
+              value: formRecorr.mesInicio,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                mesInicio: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Duração"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: formRecorr.indeterminado ? "ind" : "det",
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                indeterminado: e.target.value === "ind"
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "ind",
+                children: "Indeterminado"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "det",
+                children: "Número fixo de meses"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), !formRecorr.indeterminado && /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Qtd meses"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "number",
+              min: "1",
+              value: formRecorr.totalParcelas,
+              onChange: e => setFormRecorr({
+                ...formRecorr,
+                totalParcelas: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              gridColumn: "span 2",
+              display: "flex",
+              gap: 8,
+              justifyContent: "flex-end"
+            },
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              onClick: () => {
+                setModal(false);
+                setEditando(null);
+              },
+              className: "btn btn-ghost",
+              children: "Cancelar"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              onClick: salvarRecorr,
+              disabled: salvando,
+              className: "btn btn-purple",
+              children: salvando ? "Salvando..." : "Salvar"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), modalBaixa && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 600,
+        padding: 20
+      },
+      onClick: () => setModalBaixa(null),
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 400
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "var(--font-display)",
+            fontSize: 18,
+            fontWeight: 600,
+            marginBottom: 16
+          },
+          children: ["Dar baixa — ", modalBaixa.descricao || modalBaixa.categoria]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Valor pago"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            type: "number",
+            step: "0.01",
+            value: formBaixa.valor,
+            onChange: e => setFormBaixa({
+              ...formBaixa,
+              valor: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Data"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            type: "date",
+            value: formBaixa.data,
+            onChange: e => setFormBaixa({
+              ...formBaixa,
+              data: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Forma Pag."
+          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+            className: "form-input",
+            value: formBaixa.formaPag,
+            onChange: e => setFormBaixa({
+              ...formBaixa,
+              formaPag: e.target.value
+            }),
+            children: FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+              value: f,
+              children: f
+            }, f, false))
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 8,
+            justifyContent: "flex-end",
+            marginTop: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setModalBaixa(null),
+            className: "btn btn-ghost",
+            children: "Cancelar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: darBaixa,
+            disabled: salvando,
+            className: "btn btn-purple",
+            children: salvando ? "Salvando..." : "Confirmar baixa"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), modalMover && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 700,
+        padding: 20
+      },
+      onClick: () => setModalMover(null),
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 420
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "var(--font-display)",
+            fontSize: 18,
+            fontWeight: 600,
+            marginBottom: 8
+          },
+          children: "↗ Mover lançamento"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)",
+            marginBottom: 20
+          },
+          children: [/*#__PURE__*/_jsxDEV("strong", {
+            children: modalMover.lanc.descricao || modalMover.lanc.categoria
+          }, void 0, false), " — ", fmt(modalMover.lanc.valor), /*#__PURE__*/_jsxDEV("br", {}, void 0, false), "Para onde deseja mover?"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            marginBottom: 20
+          },
+          children: DESTINOS.map(dest => /*#__PURE__*/_jsxDEV("div", {
+            children: modalMover.isRecorrente && dest.colRec ? /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 8
+              },
+              children: [/*#__PURE__*/_jsxDEV("button", {
+                onClick: () => moverLancamento(modalMover.lanc, dest, "este"),
+                disabled: !!movendoId,
+                style: {
+                  flex: 1,
+                  padding: "10px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 10,
+                  background: "white",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: "var(--font-body)"
+                },
+                children: movendoId === modalMover.lanc.id ? "Movendo..." : dest.label + " (só este)"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                onClick: () => moverLancamento(modalMover.lanc, dest, "todos"),
+                disabled: !!movendoId,
+                style: {
+                  flex: 1,
+                  padding: "10px",
+                  border: "2px solid var(--purple)",
+                  borderRadius: 10,
+                  background: "#f3f0ff",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "var(--purple)",
+                  fontFamily: "var(--font-body)"
+                },
+                children: dest.label + " + recorrente"
+              }, void 0, false)]
+            }, void 0, true) : /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => moverLancamento(modalMover.lanc, dest, "este"),
+              disabled: !!movendoId,
+              style: {
+                width: "100%",
+                padding: "12px",
+                border: "1px solid #e5e7eb",
+                borderRadius: 10,
+                background: "white",
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: "var(--font-body)",
+                textAlign: "left"
+              },
+              children: movendoId === modalMover.lanc.id ? "Movendo..." : dest.label
+            }, void 0, false)
+          }, dest.col, false))
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            borderTop: "1px solid #fee2e2",
+            paddingTop: 14,
+            marginTop: 4,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#dc2626",
+              marginBottom: 2
+            },
+            children: "🗑️ Excluir"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              gap: 8
+            },
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              onClick: async () => {
+                if (confirm("Excluir só este lançamento?")) {
+                  await excluir(modalMover.lanc.id);
+                  setModalMover(null);
+                }
+              },
+              disabled: !!movendoId,
+              style: {
+                flex: 1,
+                padding: "9px",
+                border: "1px solid #fca5a5",
+                borderRadius: 10,
+                background: "#fef2f2",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#dc2626",
+                fontFamily: "var(--font-body)"
+              },
+              children: "Excluir só este"
+            }, void 0, false), modalMover.isRecorrente && modalMover.lanc.recorrenteId && /*#__PURE__*/_jsxDEV("button", {
+              onClick: async () => {
+                if (confirm("Excluir este e desativar o recorrente?")) {
+                  await excluir(modalMover.lanc.id);
+                  await db.collection(colRecorr).doc(modalMover.lanc.recorrenteId).update({
+                    ativo: false
+                  });
+                  setModalMover(null);
+                }
+              },
+              disabled: !!movendoId,
+              style: {
+                flex: 1,
+                padding: "9px",
+                border: "2px solid #dc2626",
+                borderRadius: 10,
+                background: "#fef2f2",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#dc2626",
+                fontFamily: "var(--font-body)"
+              },
+              children: "Excluir + desativar recorrente"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => setModalMover(null),
+          className: "btn btn-ghost",
+          style: {
+            width: "100%",
+            marginTop: 8
+          },
+          children: "Cancelar"
+        }, void 0, false)]
+      }, void 0, true)
+    }, void 0, false)]
+  }, void 0, true);
 }
 function FinanceiroPessoal({
   somenteLeitura = false
 }) {
-  return /*#__PURE__*/React.createElement(FinanceiroBase, {
+  return /*#__PURE__*/_jsxDEV(FinanceiroBase, {
     titulo: "Financeiro Pessoal",
     subtitulo: "Receitas e despesas pessoais — moradia, saúde, alimentação, investimentos",
     colLanc: "clinica_financeiro_pessoal",
     colRecorr: "clinica_fin_pessoal_recorrentes"
-  });
+  }, void 0, false);
 }
 function FinanceiroEmpresa({
   somenteLeitura = false
 }) {
-  return /*#__PURE__*/React.createElement(FinanceiroBase, {
+  return /*#__PURE__*/_jsxDEV(FinanceiroBase, {
     titulo: "Financeiro Empresa",
     subtitulo: "Negócio digital — Ônix Brasil, infoprodutos, marketing, ferramentas, treinamentos",
     colLanc: "clinica_financeiro_empresa",
     colRecorr: "clinica_fin_empresa_recorrentes"
-  });
+  }, void 0, false);
 }
 function PainelGeralFinanceiro() {
   const [dados, setDados] = useState({
@@ -7710,536 +8553,610 @@ function PainelGeralFinanceiro() {
   });
   const maxVal = Math.max(...grafico.map(g => Math.max(g.rec, g.des)), 1);
   const altBar = 160;
-  if (loading) return /*#__PURE__*/React.createElement("div", {
+  if (loading) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       textAlign: "center",
       padding: 60
-    }
-  }, /*#__PURE__*/React.createElement(Spinner, null), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      color: "var(--text-muted)"
-    }
-  }, "Carregando..."));
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-header"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-title"
-  }, "Painel Geral"), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle"
-  }, "Consolidado — Clínica + Pessoal + Empresa")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      flexWrap: "wrap"
-    }
-  }, anos.map(a => /*#__PURE__*/React.createElement("button", {
-    key: a,
-    onClick: () => {
-      setAno(a);
-      setMesSel(a === ano ? mesSel : a + "-01");
     },
-    style: {
-      padding: "6px 14px",
-      borderRadius: 20,
-      border: "none",
-      background: ano === a ? "var(--purple)" : "var(--gray-100)",
-      color: ano === a ? "white" : "var(--gray-600)",
-      fontWeight: ano === a ? 700 : 400,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)"
-    }
-  }, a)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 8,
-      fontSize: 11,
-      fontWeight: 700,
-      color: "var(--text-muted)",
-      textTransform: "uppercase",
-      letterSpacing: 1
-    }
-  }, "Acumulado ", ano), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-      gap: 12,
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 18,
-      background: totalSaldo >= 0 ? "#f0fdf4" : "#fef2f2",
-      border: `1px solid ${totalSaldo >= 0 ? "#86efac" : "#fca5a5"}`
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: totalSaldo >= 0 ? "#059669" : "#dc2626",
-      marginBottom: 4
-    }
-  }, "Saldo Total"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: totalSaldo >= 0 ? "#059669" : "#dc2626"
-    }
-  }, fmt(totalSaldo)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "var(--text-muted)",
-      marginTop: 4
-    }
-  }, "+", fmt(totalRec), " / -", fmt(totalDes))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 18
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#059669",
-      marginBottom: 4
-    }
-  }, "Receitas ", ano), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: "#059669"
-    }
-  }, fmt(totalRec))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 18
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#dc2626",
-      marginBottom: 4
-    }
-  }, "Despesas ", ano), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: "#dc2626"
-    }
-  }, fmt(totalDes))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 18,
-      background: "#fffbeb",
-      border: "1px solid #fde68a"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "#d97706",
-      marginBottom: 4
-    }
-  }, "Pendente ", ano), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700,
-      color: "#d97706"
-    }
-  }, fmt(totalPend)))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 20,
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      marginBottom: 4
-    }
-  }, "📊 Receitas vs Despesas — ", ano), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      marginBottom: 16
-    }
-  }, "Clique em um mês para ver o detalhamento abaixo"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "flex-end",
-      gap: 4,
-      overflowX: "auto",
-      paddingBottom: 8
-    }
-  }, grafico.map(g => {
-    const hRec = maxVal > 0 ? g.rec / maxVal * altBar : 0;
-    const hDes = maxVal > 0 ? g.des / maxVal * altBar : 0;
-    const sel = g.mes === mesSel;
-    const temDados = g.rec > 0 || g.des > 0;
-    return /*#__PURE__*/React.createElement("div", {
-      key: g.mes,
-      onClick: () => setMesSel(g.mes),
+    children: [/*#__PURE__*/_jsxDEV(Spinner, {}, void 0, false), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 4,
-        minWidth: 52,
-        flex: 1,
-        cursor: "pointer",
-        padding: "6px 4px",
-        borderRadius: 8,
-        background: sel ? "#f3f0ff" : "transparent",
-        border: sel ? "2px solid var(--purple)" : "2px solid transparent",
-        transition: ".15s"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+        marginTop: 12,
+        color: "var(--text-muted)"
+      },
+      children: "Carregando..."
+    }, void 0, false)]
+  }, void 0, true);
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      className: "page-header",
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "page-title",
+          children: "Painel Geral"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "page-subtitle",
+          children: "Consolidado — Clínica + Pessoal + Empresa"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 6,
+          flexWrap: "wrap"
+        },
+        children: anos.map(a => /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => {
+            setAno(a);
+            setMesSel(a === ano ? mesSel : a + "-01");
+          },
+          style: {
+            padding: "6px 14px",
+            borderRadius: 20,
+            border: "none",
+            background: ano === a ? "var(--purple)" : "var(--gray-100)",
+            color: ano === a ? "white" : "var(--gray-600)",
+            fontWeight: ano === a ? 700 : 400,
+            cursor: "pointer",
+            fontSize: 13,
+            fontFamily: "var(--font-body)"
+          },
+          children: a
+        }, a, false))
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        display: "flex",
-        alignItems: "flex-end",
-        gap: 3,
-        height: altBar
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      title: `Receitas: ${fmt(g.rec)}`,
-      style: {
-        width: 18,
-        height: Math.max(hRec, 2),
-        background: "#059669",
-        borderRadius: "4px 4px 0 0",
-        opacity: temDados ? 1 : 0.15
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      title: `Despesas: ${fmt(g.des)}`,
-      style: {
-        width: 18,
-        height: Math.max(hDes, 2),
-        background: "#dc2626",
-        borderRadius: "4px 4px 0 0",
-        opacity: temDados ? 1 : 0.15
-      }
-    })), temDados && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 9,
-        fontWeight: 700,
-        color: g.saldo >= 0 ? "#059669" : "#dc2626",
-        whiteSpace: "nowrap"
-      }
-    }, g.saldo >= 0 ? "+" : "", fmt(g.saldo).replace("R$", "").trim()), /*#__PURE__*/React.createElement("div", {
-      style: {
+        marginBottom: 8,
         fontSize: 11,
-        color: sel ? "var(--purple)" : "var(--text-muted)",
-        fontWeight: sel ? 700 : 400
-      }
-    }, mesLabel(g.mes)));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 16,
-      marginTop: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      fontSize: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 12,
-      height: 12,
-      background: "#059669",
-      borderRadius: 3
-    }
-  }), " Receitas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      fontSize: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 12,
-      height: 12,
-      background: "#dc2626",
-      borderRadius: 3
-    }
-  }), " Despesas"))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 0,
-      overflow: "hidden",
-      marginBottom: 24,
-      border: "2px solid var(--purple)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "14px 20px",
-      borderBottom: "1px solid var(--gray-100)",
-      fontWeight: 700,
-      fontSize: 14,
-      background: "#f3f0ff",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "📅 ", mesLabel(mesSel, true).charAt(0).toUpperCase() + mesLabel(mesSel, true).slice(1), " de ", mesSel.slice(0, 4)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = mesesAno.indexOf(mesSel);
-      if (idx > 0) setMesSel(mesesAno[idx - 1]);
-    },
-    style: {
-      background: "var(--purple)",
-      color: "white",
-      border: "none",
-      borderRadius: "50%",
-      width: 26,
-      height: 26,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "chevron-left",
-    size: 13
-  })), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const idx = mesesAno.indexOf(mesSel);
-      if (idx < mesesAno.length - 1) setMesSel(mesesAno[idx + 1]);
-    },
-    style: {
-      background: "var(--purple)",
-      color: "white",
-      border: "none",
-      borderRadius: "50%",
-      width: 26,
-      height: 26,
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "chevron-right",
-    size: 13
-  })))), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse"
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "var(--gray-50)"
-    }
-  }, ["Financeiro", "Receitas", "Despesas", "Saldo"].map(h => /*#__PURE__*/React.createElement("th", {
-    key: h,
-    style: {
-      padding: "10px 20px",
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      textAlign: "left",
-      borderBottom: "1px solid var(--gray-200)"
-    }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [{
-    label: "🏥 Clínica",
-    rec: mCl.rec,
-    des: mCl.des
-  }, {
-    label: "🏠 Pessoal",
-    rec: mPs.rec,
-    des: mPs.des
-  }, {
-    label: "🏢 Empresa",
-    rec: mEm.rec,
-    des: mEm.des
-  }].map((row, i) => {
-    const saldo = row.rec - row.des;
-    return /*#__PURE__*/React.createElement("tr", {
-      key: i,
-      style: {
-        borderBottom: "1px solid var(--gray-100)"
-      }
-    }, /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "12px 20px",
-        fontWeight: 600,
-        fontSize: 14
-      }
-    }, row.label), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "12px 20px",
-        color: "#059669",
-        fontWeight: 700
-      }
-    }, fmt(row.rec)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "12px 20px",
-        color: "#dc2626",
-        fontWeight: 700
-      }
-    }, fmt(row.des)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "12px 20px",
-        color: saldo >= 0 ? "#059669" : "#dc2626",
         fontWeight: 700,
-        fontSize: 15
-      }
-    }, fmt(saldo)));
-  }), /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "#f3f0ff",
-      borderTop: "2px solid var(--purple)"
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      fontWeight: 700,
-      fontSize: 14
-    }
-  }, "TOTAL DO MÊS"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      color: "#059669",
-      fontWeight: 700,
-      fontSize: 15
-    }
-  }, fmt(mesRec)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      color: "#dc2626",
-      fontWeight: 700,
-      fontSize: 15
-    }
-  }, fmt(mesDes)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      color: mesSaldo >= 0 ? "#059669" : "#dc2626",
-      fontWeight: 700,
-      fontSize: 16
-    }
-  }, fmt(mesSaldo)))))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      padding: 0,
-      overflow: "hidden",
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "14px 20px",
-      borderBottom: "1px solid var(--gray-100)",
-      fontWeight: 700,
-      fontSize: 14
-    }
-  }, "📋 Resumo Anual — ", ano), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse"
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "var(--gray-50)"
-    }
-  }, ["Financeiro", "Receitas", "Despesas", "Saldo"].map(h => /*#__PURE__*/React.createElement("th", {
-    key: h,
-    style: {
-      padding: "10px 20px",
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      textAlign: "left",
-      borderBottom: "1px solid var(--gray-200)"
-    }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [{
-    label: "🏥 Clínica",
-    rec: aCl.rec,
-    des: aCl.des
-  }, {
-    label: "🏠 Pessoal",
-    rec: aPs.rec,
-    des: aPs.des
-  }, {
-    label: "🏢 Empresa",
-    rec: aEm.rec,
-    des: aEm.des
-  }].map((row, i) => {
-    const saldo = row.rec - row.des;
-    return /*#__PURE__*/React.createElement("tr", {
-      key: i,
+        color: "var(--text-muted)",
+        textTransform: "uppercase",
+        letterSpacing: 1
+      },
+      children: ["Acumulado ", ano]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        borderBottom: "1px solid var(--gray-100)"
-      }
-    }, /*#__PURE__*/React.createElement("td", {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+        gap: 12,
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 18,
+          background: totalSaldo >= 0 ? "#f0fdf4" : "#fef2f2",
+          border: `1px solid ${totalSaldo >= 0 ? "#86efac" : "#fca5a5"}`
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: totalSaldo >= 0 ? "#059669" : "#dc2626",
+            marginBottom: 4
+          },
+          children: "Saldo Total"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 700,
+            color: totalSaldo >= 0 ? "#059669" : "#dc2626"
+          },
+          children: fmt(totalSaldo)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 10,
+            color: "var(--text-muted)",
+            marginTop: 4
+          },
+          children: ["+", fmt(totalRec), " / -", fmt(totalDes)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 18
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#059669",
+            marginBottom: 4
+          },
+          children: ["Receitas ", ano]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#059669"
+          },
+          children: fmt(totalRec)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 18
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#dc2626",
+            marginBottom: 4
+          },
+          children: ["Despesas ", ano]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#dc2626"
+          },
+          children: fmt(totalDes)
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: {
+          padding: 18,
+          background: "#fffbeb",
+          border: "1px solid #fde68a"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#d97706",
+            marginBottom: 4
+          },
+          children: ["Pendente ", ano]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 20,
+            fontWeight: 700,
+            color: "#d97706"
+          },
+          children: fmt(totalPend)
+        }, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        padding: "12px 20px",
-        fontWeight: 600,
-        fontSize: 14
-      }
-    }, row.label), /*#__PURE__*/React.createElement("td", {
+        padding: 20,
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 14,
+          marginBottom: 4
+        },
+        children: ["📊 Receitas vs Despesas — ", ano]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-muted)",
+          marginBottom: 16
+        },
+        children: "Clique em um mês para ver o detalhamento abaixo"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 4,
+          overflowX: "auto",
+          paddingBottom: 8
+        },
+        children: grafico.map(g => {
+          const hRec = maxVal > 0 ? g.rec / maxVal * altBar : 0;
+          const hDes = maxVal > 0 ? g.des / maxVal * altBar : 0;
+          const sel = g.mes === mesSel;
+          const temDados = g.rec > 0 || g.des > 0;
+          return /*#__PURE__*/_jsxDEV("div", {
+            onClick: () => setMesSel(g.mes),
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+              minWidth: 52,
+              flex: 1,
+              cursor: "pointer",
+              padding: "6px 4px",
+              borderRadius: 8,
+              background: sel ? "#f3f0ff" : "transparent",
+              border: sel ? "2px solid var(--purple)" : "2px solid transparent",
+              transition: ".15s"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 3,
+                height: altBar
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                title: `Receitas: ${fmt(g.rec)}`,
+                style: {
+                  width: 18,
+                  height: Math.max(hRec, 2),
+                  background: "#059669",
+                  borderRadius: "4px 4px 0 0",
+                  opacity: temDados ? 1 : 0.15
+                }
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                title: `Despesas: ${fmt(g.des)}`,
+                style: {
+                  width: 18,
+                  height: Math.max(hDes, 2),
+                  background: "#dc2626",
+                  borderRadius: "4px 4px 0 0",
+                  opacity: temDados ? 1 : 0.15
+                }
+              }, void 0, false)]
+            }, void 0, true), temDados && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 9,
+                fontWeight: 700,
+                color: g.saldo >= 0 ? "#059669" : "#dc2626",
+                whiteSpace: "nowrap"
+              },
+              children: [g.saldo >= 0 ? "+" : "", fmt(g.saldo).replace("R$", "").trim()]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 11,
+                color: sel ? "var(--purple)" : "var(--text-muted)",
+                fontWeight: sel ? 700 : 400
+              },
+              children: mesLabel(g.mes)
+            }, void 0, false)]
+          }, g.mes, true);
+        })
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 16,
+          marginTop: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: 12,
+              height: 12,
+              background: "#059669",
+              borderRadius: 3
+            }
+          }, void 0, false), " Receitas"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: 12,
+              height: 12,
+              background: "#dc2626",
+              borderRadius: 3
+            }
+          }, void 0, false), " Despesas"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        padding: "12px 20px",
-        color: "#059669",
-        fontWeight: 700
-      }
-    }, fmt(row.rec)), /*#__PURE__*/React.createElement("td", {
+        padding: 0,
+        overflow: "hidden",
+        marginBottom: 24,
+        border: "2px solid var(--purple)"
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          padding: "14px 20px",
+          borderBottom: "1px solid var(--gray-100)",
+          fontWeight: 700,
+          fontSize: 14,
+          background: "#f3f0ff",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: ["📅 ", mesLabel(mesSel, true).charAt(0).toUpperCase() + mesLabel(mesSel, true).slice(1), " de ", mesSel.slice(0, 4)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 8
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            onClick: () => {
+              const idx = mesesAno.indexOf(mesSel);
+              if (idx > 0) setMesSel(mesesAno[idx - 1]);
+            },
+            style: {
+              background: "var(--purple)",
+              color: "white",
+              border: "none",
+              borderRadius: "50%",
+              width: 26,
+              height: 26,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "chevron-left",
+              size: 13
+            }, void 0, false)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => {
+              const idx = mesesAno.indexOf(mesSel);
+              if (idx < mesesAno.length - 1) setMesSel(mesesAno[idx + 1]);
+            },
+            style: {
+              background: "var(--purple)",
+              color: "white",
+              border: "none",
+              borderRadius: "50%",
+              width: 26,
+              height: 26,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "chevron-right",
+              size: 13
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("table", {
+        style: {
+          width: "100%",
+          borderCollapse: "collapse"
+        },
+        children: [/*#__PURE__*/_jsxDEV("thead", {
+          children: /*#__PURE__*/_jsxDEV("tr", {
+            style: {
+              background: "var(--gray-50)"
+            },
+            children: ["Financeiro", "Receitas", "Despesas", "Saldo"].map(h => /*#__PURE__*/_jsxDEV("th", {
+              style: {
+                padding: "10px 20px",
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--text-muted)",
+                textAlign: "left",
+                borderBottom: "1px solid var(--gray-200)"
+              },
+              children: h
+            }, h, false))
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+          children: [[{
+            label: "🏥 Clínica",
+            rec: mCl.rec,
+            des: mCl.des
+          }, {
+            label: "🏠 Pessoal",
+            rec: mPs.rec,
+            des: mPs.des
+          }, {
+            label: "🏢 Empresa",
+            rec: mEm.rec,
+            des: mEm.des
+          }].map((row, i) => {
+            const saldo = row.rec - row.des;
+            return /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                borderBottom: "1px solid var(--gray-100)"
+              },
+              children: [/*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  fontWeight: 600,
+                  fontSize: 14
+                },
+                children: row.label
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  color: "#059669",
+                  fontWeight: 700
+                },
+                children: fmt(row.rec)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  color: "#dc2626",
+                  fontWeight: 700
+                },
+                children: fmt(row.des)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  color: saldo >= 0 ? "#059669" : "#dc2626",
+                  fontWeight: 700,
+                  fontSize: 15
+                },
+                children: fmt(saldo)
+              }, void 0, false)]
+            }, i, true);
+          }), /*#__PURE__*/_jsxDEV("tr", {
+            style: {
+              background: "#f3f0ff",
+              borderTop: "2px solid var(--purple)"
+            },
+            children: [/*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                fontWeight: 700,
+                fontSize: 14
+              },
+              children: "TOTAL DO MÊS"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                color: "#059669",
+                fontWeight: 700,
+                fontSize: 15
+              },
+              children: fmt(mesRec)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                color: "#dc2626",
+                fontWeight: 700,
+                fontSize: 15
+              },
+              children: fmt(mesDes)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                color: mesSaldo >= 0 ? "#059669" : "#dc2626",
+                fontWeight: 700,
+                fontSize: 16
+              },
+              children: fmt(mesSaldo)
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        padding: "12px 20px",
-        color: "#dc2626",
-        fontWeight: 700
-      }
-    }, fmt(row.des)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "12px 20px",
-        color: saldo >= 0 ? "#059669" : "#dc2626",
-        fontWeight: 700,
-        fontSize: 15
-      }
-    }, fmt(saldo)));
-  }), /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "var(--gray-50)",
-      borderTop: "2px solid var(--gray-200)"
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      fontWeight: 700,
-      fontSize: 14
-    }
-  }, "TOTAL"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      color: "#059669",
-      fontWeight: 700,
-      fontSize: 15
-    }
-  }, fmt(totalRec)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      color: "#dc2626",
-      fontWeight: 700,
-      fontSize: 15
-    }
-  }, fmt(totalDes)), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "12px 20px",
-      color: totalSaldo >= 0 ? "#059669" : "#dc2626",
-      fontWeight: 700,
-      fontSize: 16
-    }
-  }, fmt(totalSaldo)))))));
+        padding: 0,
+        overflow: "hidden",
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          padding: "14px 20px",
+          borderBottom: "1px solid var(--gray-100)",
+          fontWeight: 700,
+          fontSize: 14
+        },
+        children: ["📋 Resumo Anual — ", ano]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("table", {
+        style: {
+          width: "100%",
+          borderCollapse: "collapse"
+        },
+        children: [/*#__PURE__*/_jsxDEV("thead", {
+          children: /*#__PURE__*/_jsxDEV("tr", {
+            style: {
+              background: "var(--gray-50)"
+            },
+            children: ["Financeiro", "Receitas", "Despesas", "Saldo"].map(h => /*#__PURE__*/_jsxDEV("th", {
+              style: {
+                padding: "10px 20px",
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--text-muted)",
+                textAlign: "left",
+                borderBottom: "1px solid var(--gray-200)"
+              },
+              children: h
+            }, h, false))
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+          children: [[{
+            label: "🏥 Clínica",
+            rec: aCl.rec,
+            des: aCl.des
+          }, {
+            label: "🏠 Pessoal",
+            rec: aPs.rec,
+            des: aPs.des
+          }, {
+            label: "🏢 Empresa",
+            rec: aEm.rec,
+            des: aEm.des
+          }].map((row, i) => {
+            const saldo = row.rec - row.des;
+            return /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                borderBottom: "1px solid var(--gray-100)"
+              },
+              children: [/*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  fontWeight: 600,
+                  fontSize: 14
+                },
+                children: row.label
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  color: "#059669",
+                  fontWeight: 700
+                },
+                children: fmt(row.rec)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  color: "#dc2626",
+                  fontWeight: 700
+                },
+                children: fmt(row.des)
+              }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "12px 20px",
+                  color: saldo >= 0 ? "#059669" : "#dc2626",
+                  fontWeight: 700,
+                  fontSize: 15
+                },
+                children: fmt(saldo)
+              }, void 0, false)]
+            }, i, true);
+          }), /*#__PURE__*/_jsxDEV("tr", {
+            style: {
+              background: "var(--gray-50)",
+              borderTop: "2px solid var(--gray-200)"
+            },
+            children: [/*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                fontWeight: 700,
+                fontSize: 14
+              },
+              children: "TOTAL"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                color: "#059669",
+                fontWeight: 700,
+                fontSize: 15
+              },
+              children: fmt(totalRec)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                color: "#dc2626",
+                fontWeight: 700,
+                fontSize: 15
+              },
+              children: fmt(totalDes)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+              style: {
+                padding: "12px 20px",
+                color: totalSaldo >= 0 ? "#059669" : "#dc2626",
+                fontWeight: 700,
+                fontSize: 16
+              },
+              children: fmt(totalSaldo)
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8435,12 +9352,13 @@ function OrcamentoClinica() {
       window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank");
     }
   }
-  if (loading) return /*#__PURE__*/React.createElement("div", {
+  if (loading) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       textAlign: "center",
       padding: 40
-    }
-  }, /*#__PURE__*/React.createElement(Spinner, null));
+    },
+    children: /*#__PURE__*/_jsxDEV(Spinner, {}, void 0, false)
+  }, void 0, false);
   const MODAL_COLS = [{
     key: "particular",
     label: "Particular",
@@ -8458,453 +9376,509 @@ function OrcamentoClinica() {
     label: "Aluno",
     cor: "#d97706"
   }];
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 17,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Orçamento"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 20
-    }
-  }, "Gere orçamentos personalizados e envie pelo WhatsApp."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      border: "1px solid var(--gray-200)",
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 14
-    }
-  }, "Tabela de Serviços"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      fontSize: 12,
-      padding: "6px 14px"
-    },
-    onClick: () => {
-      setNovoAberto(true);
-      setEditando(null);
-      setFormServ({
-        nome: "",
-        particular: "",
-        adufg: "",
-        social: "",
-        aluno: "",
-        obs: ""
-      });
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 13
-  }), " Novo Serviço")), (novoAberto || editando) && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f5f3ff",
-      border: "1px solid #c4b5fd",
-      borderRadius: 10,
-      padding: 16,
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      marginBottom: 12,
-      color: "var(--purple)"
-    }
-  }, editando ? "Editar Serviço" : "Novo Serviço"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "2fr 1fr 1fr 1fr",
-      gap: 10,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "NOME DO SERVIÇO"), /*#__PURE__*/React.createElement("input", {
-    style: {
-      width: "100%",
-      padding: "8px 10px",
-      border: "1.5px solid #c4b5fd",
-      borderRadius: 8,
-      fontSize: 13
-    },
-    value: formServ.nome,
-    onChange: e => setFormServ(p => ({
-      ...p,
-      nome: e.target.value
-    })),
-    placeholder: "Ex: Psicoterapia"
-  })), MODAL_COLS.map(m => /*#__PURE__*/React.createElement("div", {
-    key: m.key
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: m.cor,
-      marginBottom: 4
-    }
-  }, m.label.toUpperCase()), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    style: {
-      width: "100%",
-      padding: "8px 10px",
-      border: "1.5px solid #e5e7eb",
-      borderRadius: 8,
-      fontSize: 13
-    },
-    value: formServ[m.key],
-    onChange: e => setFormServ(p => ({
-      ...p,
-      [m.key]: e.target.value
-    })),
-    placeholder: "0"
-  })))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "OBSERVAÇÃO (aparece na mensagem do WhatsApp)"), /*#__PURE__*/React.createElement("input", {
-    style: {
-      width: "100%",
-      padding: "8px 10px",
-      border: "1.5px solid #e5e7eb",
-      borderRadius: 8,
-      fontSize: 13
-    },
-    value: formServ.obs || "",
-    onChange: e => setFormServ(p => ({
-      ...p,
-      obs: e.target.value
-    })),
-    placeholder: "Ex: O ideal é de 2 a 3 sessões por semana."
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      fontSize: 12,
-      padding: "6px 14px"
-    },
-    onClick: salvarServico
-  }, "✓ Salvar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 12,
-      padding: "6px 14px"
-    },
-    onClick: () => {
-      setNovoAberto(false);
-      setEditando(null);
-    }
-  }, "Cancelar"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      overflowX: "auto"
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse",
-      fontSize: 13
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: "var(--gray-50)"
-    }
-  }, /*#__PURE__*/React.createElement("th", {
-    style: {
-      textAlign: "left",
-      padding: "10px 12px",
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      fontSize: 11,
-      textTransform: "uppercase",
-      letterSpacing: .5,
-      borderBottom: "2px solid var(--gray-200)"
-    }
-  }, "Serviço"), MODAL_COLS.map(m => /*#__PURE__*/React.createElement("th", {
-    key: m.key,
-    style: {
-      textAlign: "right",
-      padding: "10px 12px",
-      fontWeight: 600,
-      color: m.cor,
-      fontSize: 11,
-      textTransform: "uppercase",
-      letterSpacing: .5,
-      borderBottom: "2px solid var(--gray-200)"
-    }
-  }, m.label)), /*#__PURE__*/React.createElement("th", {
-    style: {
-      borderBottom: "2px solid var(--gray-200)",
-      width: 80
-    }
-  }))), /*#__PURE__*/React.createElement("tbody", null, servicos.map(s => /*#__PURE__*/React.createElement("tr", {
-    key: s.id,
-    style: {
-      borderBottom: "1px solid var(--gray-200)"
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "11px 12px",
-      fontWeight: 500,
-      color: "var(--text-dark)"
-    }
-  }, s.nome), MODAL_COLS.map(m => /*#__PURE__*/React.createElement("td", {
-    key: m.key,
-    style: {
-      padding: "11px 12px",
-      textAlign: "right",
-      fontWeight: 600,
-      color: m.cor
-    }
-  }, fmtR(s[m.key]))), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: "11px 12px",
-      textAlign: "right"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 11,
-      padding: "3px 8px",
-      marginRight: 4
-    },
-    onClick: () => iniciarEdicao(s)
-  }, "✏️"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 11,
-      padding: "3px 8px",
-      color: "#dc2626"
-    },
-    onClick: () => excluirServico(s.id)
-  }, "🗑")))))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      border: "1px solid var(--gray-200)",
-      borderRadius: 12,
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 14,
-      marginBottom: 16
-    }
-  }, "Gerar Orçamento"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "NOME DO CLIENTE"), /*#__PURE__*/React.createElement("input", {
-    style: {
-      width: "100%",
-      padding: "9px 12px",
-      border: "1.5px solid #e5e7eb",
-      borderRadius: 8,
-      fontSize: 13
-    },
-    value: nomeCliente,
-    onChange: e => setNomeCliente(e.target.value),
-    placeholder: "Nome completo"
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "WHATSAPP (opcional)"), /*#__PURE__*/React.createElement("input", {
-    style: {
-      width: "100%",
-      padding: "9px 12px",
-      border: "1.5px solid #e5e7eb",
-      borderRadius: 8,
-      fontSize: 13
-    },
-    value: whatsCliente,
-    onChange: e => setWhatsCliente(e.target.value),
-    placeholder: "(62) 9 9999-9999"
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      marginBottom: 8
-    }
-  }, "MODALIDADE"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, MODAL_COLS.map(m => /*#__PURE__*/React.createElement("button", {
-    key: m.key,
-    onClick: () => setModalidade(m.key),
-    style: {
-      padding: "7px 16px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: "pointer",
-      background: modalidade === m.key ? m.cor : "white",
-      color: modalidade === m.key ? "white" : m.cor,
-      borderColor: m.cor,
-      transition: "all .15s"
-    }
-  }, m.label)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      fontWeight: 600,
-      color: "var(--text-muted)",
-      marginBottom: 8
-    }
-  }, "SELECIONE OS SERVIÇOS"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 6
-    }
-  }, servicos.map(s => {
-    const sel = selecionados.includes(s.id);
-    const MODAL = MODAL_COLS.find(m => m.key === modalidade);
-    return /*#__PURE__*/React.createElement("div", {
-      key: s.id,
-      onClick: () => toggleSelecionado(s.id),
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
       style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px 14px",
-        border: "1.5px solid",
-        borderColor: sel ? "var(--purple)" : "#e5e7eb",
-        borderRadius: 10,
-        cursor: "pointer",
-        background: sel ? "#f5f3ff" : "white",
-        transition: "all .15s"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 18,
-        height: 18,
-        borderRadius: 4,
-        border: "2px solid",
-        borderColor: sel ? "var(--purple)" : "#d1d5db",
-        background: sel ? "var(--purple)" : "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }
-    }, sel && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "white",
-        fontSize: 11,
-        fontWeight: 700
-      }
-    }, "✓")), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 13,
-        fontWeight: 500,
-        color: "var(--text-dark)"
-      }
-    }, s.nome)), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 13,
         fontWeight: 700,
-        color: MODAL?.cor
-      }
-    }, fmtR(s[modalidade])));
-  }))), selecionados.length > 0 && (() => {
-    const total = servicos.filter(s => selecionados.includes(s.id)).reduce((sum, s) => sum + (s[modalidade] || 0), 0);
-    return /*#__PURE__*/React.createElement("div", {
+        fontSize: 17,
+        color: "var(--text-dark)",
+        marginBottom: 4
+      },
+      children: "Orçamento"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        background: "var(--gray-50)",
+        fontSize: 13,
+        color: "var(--text-muted)",
+        marginBottom: 20
+      },
+      children: "Gere orçamentos personalizados e envie pelo WhatsApp."
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        background: "white",
         border: "1px solid var(--gray-200)",
-        borderRadius: 10,
-        padding: "12px 16px",
-        marginBottom: 16,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 14
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 600,
+            fontSize: 14
+          },
+          children: "Tabela de Serviços"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-purple",
+          style: {
+            fontSize: 12,
+            padding: "6px 14px"
+          },
+          onClick: () => {
+            setNovoAberto(true);
+            setEditando(null);
+            setFormServ({
+              nome: "",
+              particular: "",
+              adufg: "",
+              social: "",
+              aluno: "",
+              obs: ""
+            });
+          },
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "plus",
+            size: 13
+          }, void 0, false), " Novo Serviço"]
+        }, void 0, true)]
+      }, void 0, true), (novoAberto || editando) && /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#f5f3ff",
+          border: "1px solid #c4b5fd",
+          borderRadius: 10,
+          padding: 16,
+          marginBottom: 14
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 600,
+            fontSize: 13,
+            marginBottom: 12,
+            color: "var(--purple)"
+          },
+          children: editando ? "Editar Serviço" : "Novo Serviço"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr 1fr 1fr",
+            gap: 10,
+            marginBottom: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--text-muted)",
+                marginBottom: 4
+              },
+              children: "NOME DO SERVIÇO"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              style: {
+                width: "100%",
+                padding: "8px 10px",
+                border: "1.5px solid #c4b5fd",
+                borderRadius: 8,
+                fontSize: 13
+              },
+              value: formServ.nome,
+              onChange: e => setFormServ(p => ({
+                ...p,
+                nome: e.target.value
+              })),
+              placeholder: "Ex: Psicoterapia"
+            }, void 0, false)]
+          }, void 0, true), MODAL_COLS.map(m => /*#__PURE__*/_jsxDEV("div", {
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 11,
+                fontWeight: 600,
+                color: m.cor,
+                marginBottom: 4
+              },
+              children: m.label.toUpperCase()
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              type: "number",
+              style: {
+                width: "100%",
+                padding: "8px 10px",
+                border: "1.5px solid #e5e7eb",
+                borderRadius: 8,
+                fontSize: 13
+              },
+              value: formServ[m.key],
+              onChange: e => setFormServ(p => ({
+                ...p,
+                [m.key]: e.target.value
+              })),
+              placeholder: "0"
+            }, void 0, false)]
+          }, m.key, true))]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            marginBottom: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-muted)",
+              marginBottom: 4
+            },
+            children: "OBSERVAÇÃO (aparece na mensagem do WhatsApp)"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            style: {
+              width: "100%",
+              padding: "8px 10px",
+              border: "1.5px solid #e5e7eb",
+              borderRadius: 8,
+              fontSize: 13
+            },
+            value: formServ.obs || "",
+            onChange: e => setFormServ(p => ({
+              ...p,
+              obs: e.target.value
+            })),
+            placeholder: "Ex: O ideal é de 2 a 3 sessões por semana."
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 8
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            style: {
+              fontSize: 12,
+              padding: "6px 14px"
+            },
+            onClick: salvarServico,
+            children: "✓ Salvar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              fontSize: 12,
+              padding: "6px 14px"
+            },
+            onClick: () => {
+              setNovoAberto(false);
+              setEditando(null);
+            },
+            children: "Cancelar"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          overflowX: "auto"
+        },
+        children: /*#__PURE__*/_jsxDEV("table", {
+          style: {
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: 13
+          },
+          children: [/*#__PURE__*/_jsxDEV("thead", {
+            children: /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                background: "var(--gray-50)"
+              },
+              children: [/*#__PURE__*/_jsxDEV("th", {
+                style: {
+                  textAlign: "left",
+                  padding: "10px 12px",
+                  fontWeight: 600,
+                  color: "var(--text-muted)",
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: .5,
+                  borderBottom: "2px solid var(--gray-200)"
+                },
+                children: "Serviço"
+              }, void 0, false), MODAL_COLS.map(m => /*#__PURE__*/_jsxDEV("th", {
+                style: {
+                  textAlign: "right",
+                  padding: "10px 12px",
+                  fontWeight: 600,
+                  color: m.cor,
+                  fontSize: 11,
+                  textTransform: "uppercase",
+                  letterSpacing: .5,
+                  borderBottom: "2px solid var(--gray-200)"
+                },
+                children: m.label
+              }, m.key, false)), /*#__PURE__*/_jsxDEV("th", {
+                style: {
+                  borderBottom: "2px solid var(--gray-200)",
+                  width: 80
+                }
+              }, void 0, false)]
+            }, void 0, true)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+            children: servicos.map(s => /*#__PURE__*/_jsxDEV("tr", {
+              style: {
+                borderBottom: "1px solid var(--gray-200)"
+              },
+              children: [/*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "11px 12px",
+                  fontWeight: 500,
+                  color: "var(--text-dark)"
+                },
+                children: s.nome
+              }, void 0, false), MODAL_COLS.map(m => /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "11px 12px",
+                  textAlign: "right",
+                  fontWeight: 600,
+                  color: m.cor
+                },
+                children: fmtR(s[m.key])
+              }, m.key, false)), /*#__PURE__*/_jsxDEV("td", {
+                style: {
+                  padding: "11px 12px",
+                  textAlign: "right"
+                },
+                children: [/*#__PURE__*/_jsxDEV("button", {
+                  className: "btn btn-ghost",
+                  style: {
+                    fontSize: 11,
+                    padding: "3px 8px",
+                    marginRight: 4
+                  },
+                  onClick: () => iniciarEdicao(s),
+                  children: "✏️"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                  className: "btn btn-ghost",
+                  style: {
+                    fontSize: 11,
+                    padding: "3px 8px",
+                    color: "#dc2626"
+                  },
+                  onClick: () => excluirServico(s.id),
+                  children: "🗑"
+                }, void 0, false)]
+              }, void 0, true)]
+            }, s.id, true))
+          }, void 0, false)]
+        }, void 0, true)
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        fontSize: 13,
-        color: "var(--text-muted)"
-      }
-    }, selecionados.length, " serviço(s) selecionado(s)"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 16,
-        fontWeight: 700,
-        color: "var(--purple)"
-      }
-    }, "Total: ", fmtR(total)));
-  })(), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    style: {
-      width: "100%",
-      padding: "12px",
-      fontSize: 14,
-      fontWeight: 600
-    },
-    onClick: gerarWhatsApp
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "message-circle",
-    size: 15
-  }), " Gerar e Enviar pelo WhatsApp")));
+        background: "white",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 12,
+        padding: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          fontSize: 14,
+          marginBottom: 16
+        },
+        children: "Gerar Orçamento"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 12,
+          marginBottom: 16
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-muted)",
+              marginBottom: 4
+            },
+            children: "NOME DO CLIENTE"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            style: {
+              width: "100%",
+              padding: "9px 12px",
+              border: "1.5px solid #e5e7eb",
+              borderRadius: 8,
+              fontSize: 13
+            },
+            value: nomeCliente,
+            onChange: e => setNomeCliente(e.target.value),
+            placeholder: "Nome completo"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              fontWeight: 600,
+              color: "var(--text-muted)",
+              marginBottom: 4
+            },
+            children: "WHATSAPP (opcional)"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            style: {
+              width: "100%",
+              padding: "9px 12px",
+              border: "1.5px solid #e5e7eb",
+              borderRadius: 8,
+              fontSize: 13
+            },
+            value: whatsCliente,
+            onChange: e => setWhatsCliente(e.target.value),
+            placeholder: "(62) 9 9999-9999"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          marginBottom: 16
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            marginBottom: 8
+          },
+          children: "MODALIDADE"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 8
+          },
+          children: MODAL_COLS.map(m => /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setModalidade(m.key),
+            style: {
+              padding: "7px 16px",
+              borderRadius: 20,
+              border: "1.5px solid",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              background: modalidade === m.key ? m.cor : "white",
+              color: modalidade === m.key ? "white" : m.cor,
+              borderColor: m.cor,
+              transition: "all .15s"
+            },
+            children: m.label
+          }, m.key, false))
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          marginBottom: 16
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            marginBottom: 8
+          },
+          children: "SELECIONE OS SERVIÇOS"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 6
+          },
+          children: servicos.map(s => {
+            const sel = selecionados.includes(s.id);
+            const MODAL = MODAL_COLS.find(m => m.key === modalidade);
+            return /*#__PURE__*/_jsxDEV("div", {
+              onClick: () => toggleSelecionado(s.id),
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "10px 14px",
+                border: "1.5px solid",
+                borderColor: sel ? "var(--purple)" : "#e5e7eb",
+                borderRadius: 10,
+                cursor: "pointer",
+                background: sel ? "#f5f3ff" : "white",
+                transition: "all .15s"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    width: 18,
+                    height: 18,
+                    borderRadius: 4,
+                    border: "2px solid",
+                    borderColor: sel ? "var(--purple)" : "#d1d5db",
+                    background: sel ? "var(--purple)" : "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  },
+                  children: sel && /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      color: "white",
+                      fontSize: 11,
+                      fontWeight: 700
+                    },
+                    children: "✓"
+                  }, void 0, false)
+                }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: "var(--text-dark)"
+                  },
+                  children: s.nome
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: MODAL?.cor
+                },
+                children: fmtR(s[modalidade])
+              }, void 0, false)]
+            }, s.id, true);
+          })
+        }, void 0, false)]
+      }, void 0, true), selecionados.length > 0 && (() => {
+        const total = servicos.filter(s => selecionados.includes(s.id)).reduce((sum, s) => sum + (s[modalidade] || 0), 0);
+        return /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "var(--gray-50)",
+            border: "1px solid var(--gray-200)",
+            borderRadius: 10,
+            padding: "12px 16px",
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 13,
+              color: "var(--text-muted)"
+            },
+            children: [selecionados.length, " serviço(s) selecionado(s)"]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 16,
+              fontWeight: 700,
+              color: "var(--purple)"
+            },
+            children: ["Total: ", fmtR(total)]
+          }, void 0, true)]
+        }, void 0, true);
+      })(), /*#__PURE__*/_jsxDEV("button", {
+        className: "btn btn-purple",
+        style: {
+          width: "100%",
+          padding: "12px",
+          fontSize: 14,
+          fontWeight: 600
+        },
+        onClick: gerarWhatsApp,
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "message-circle",
+          size: 15
+        }, void 0, false), " Gerar e Enviar pelo WhatsApp"]
+      }, void 0, true)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ═══════════════════════════════════════════════════════
