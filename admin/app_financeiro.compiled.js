@@ -2777,9 +2777,7 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
         pacId
       }) {
         const [expandido, setExpandido] = React.useState(false);
-        React.useEffect(() => {
-          setExpandido(!!buscaPac);
-        }, [buscaPac]);
+        // Sempre começa recolhido — só abre ao clicar
         const pac = pacientes.find(p => p.id === pacId);
         const pacotesDoPac = pacotes.filter(p => p.pacienteId === pacId).sort((a, b) => {
           const da = a.dataInicio || a.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
