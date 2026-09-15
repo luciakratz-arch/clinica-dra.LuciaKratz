@@ -1316,11 +1316,9 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
               s.pacoteId &&
               pacoteIdsAtivos.has(s.pacoteId)
             );
-            // Pacotes com pagamento pendente (não 100% pago)
+            // Pacotes com pagamento pendente (não marcados como recebido)
             const pacotesPendPag = pacotes.filter(p=>{
-              const sessPac = sessoes.filter(s=>s.pacoteId===p.id);
-              const pagas = sessPac.filter(s=>s.pagamento==="pago").length;
-              return p.status !== "inativo" && pagas < (p.totalSessoes||0);
+              return p.status !== "inativo" && (p.statusPag || "pendente") !== "recebido";
             });
             if(sessoesPendentes.length===0 && pacotesPendPag.length===0) return null;
             return (
@@ -1456,30 +1454,53 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                     </div>
                   );
                 })()}
-                {pacientesVisiveis.map(pacId=>{
-                  const pac = pacientes.find(p=>p.id===pacId);
-                  const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
-                    const da = a.dataInicio||a.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
-                    const db2 = b.dataInicio||b.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
-                    return db2.localeCompare(da);
-                  });
-                  return (
-                    <div key={pacId}>
-                      {/* Cabeçalho do paciente */}
-                      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12,paddingBottom:10,borderBottom:"2px solid var(--purple-soft)"}}>
-                        <div style={{width:40,height:40,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:18,fontWeight:600,flexShrink:0}}>
-                          {(pac?.nome||"?")[0].toUpperCase()}
+                {(()=>{
+                  function CardPaciente({pacId}){
+                    const [expandido, setExpandido] = React.useState(false);
+                    React.useEffect(()=>{ setExpandido(!!buscaPac); },[buscaPac]);
+                    const pac = pacientes.find(p=>p.id===pacId);
+                    const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
+                      const da = a.dataInicio||a.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
+                      const db2 = b.dataInicio||b.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
+                      return db2.localeCompare(da);
+                    });
+                    const totalPacotes = pacotesDoPac.length;
+                    const pagos = pacotesDoPac.filter(p=>p.statusPag==="recebido").length;
+                    const pendentes = totalPacotes - pagos;
+                    const valorTotal = pacotesDoPac.reduce((s,p)=>s+(p.valorTotal||0),0);
+                    return (
+                      <div key={pacId} style={{borderRadius:14,border:"1.5px solid var(--purple-soft)",overflow:"hidden",marginBottom:2}}>
+                        {/* Cabeçalho clicável */}
+                        <div onClick={()=>setExpandido(e=>!e)}
+                          style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",cursor:"pointer",
+                            background:expandido?"#f5e8ff":"white",
+                            borderBottom:expandido?"2px solid var(--purple-soft)":"none",
+                            transition:"background .15s"}}>
+                          <div style={{width:38,height:38,borderRadius:"50%",background:"var(--purple)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--font-display)",fontSize:17,fontWeight:600,flexShrink:0}}>
+                            {(pac?.nome||"?")[0].toUpperCase()}
+                          </div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontWeight:700,fontSize:15,color:"#3d006a",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                              {pac?.nome||pacotesDoPac[0]?.pacienteNome||"—"}
+                            </div>
+                            <div style={{fontSize:11,color:"var(--text-muted)",marginTop:1,display:"flex",gap:10,flexWrap:"wrap"}}>
+                              <span>{totalPacotes} pacote(s)</span>
+                              {pendentes>0&&<span style={{color:"#d97706",fontWeight:600}}>⏳ {pendentes} pendente(s)</span>}
+                              {pagos>0&&<span style={{color:"#059669",fontWeight:600}}>✓ {pagos} recebido(s)</span>}
+                              <span style={{color:"#7B00C4",fontWeight:600}}>{valorTotal.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</span>
+                            </div>
+                          </div>
+                          <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+                            <button className="btn btn-outline" style={{fontSize:11,padding:"5px 10px"}}
+                              onClick={e=>{e.stopPropagation();setPacoteSelecionado(pacId);}}>
+                              <Icon name="bar-chart-2" size={12}/> Acompanhamento
+                            </button>
+                            <div style={{width:28,height:28,borderRadius:"50%",background:"#f3e8ff",display:"flex",alignItems:"center",justifyContent:"center",color:"#7B00C4",fontWeight:700,fontSize:16,
+                              transform:expandido?"rotate(180deg)":"rotate(0deg)",transition:"transform .2s"}}>▾</div>
+                          </div>
                         </div>
-                        <div>
-                          <div style={{fontWeight:700,fontSize:16}}>{pac?.nome||pacotesDoPac[0]?.pacienteNome||"—"}</div>
-                          <div style={{fontSize:12,color:"var(--text-muted)"}}>{pacotesDoPac.length} pacote(s)</div>
-                        </div>
-                        <button className="btn btn-outline" style={{marginLeft:"auto",fontSize:12}} onClick={()=>setPacoteSelecionado(pacId)}>
-                          <Icon name="bar-chart-2" size={13}/> Acompanhamento
-                        </button>
-                      </div>
-                      {/* Pacotes do paciente */}
-                      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                        {/* Pacotes — visíveis apenas quando expandido */}
+                        {expandido&&<div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
                         {pacotesDoPac.map(p=>{
                           const sessPac=sessoes.filter(s=>s.pacoteId===p.id);
                           const realizadas=sessPac.filter(s=>s.status==="realizado"||s.status==="falta").length;
@@ -1634,10 +1655,14 @@ ${sessPac.some(s=>s.dataPagamento||s.dataRecebimento)?`<div style="margin-top:10
                             </div>
                           );
                         })}
-                      </div>
+                      </div>}
                     </div>
                   );
-                })}
+                  }
+                  return pacientesVisiveis.map(pacId=>(
+                    <CardPaciente key={pacId} pacId={pacId}/>
+                  ));
+                })()}
               </div>
             );
           })()}
