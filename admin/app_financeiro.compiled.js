@@ -102,6 +102,8 @@ function FinanceiroClinica({
   }
   const [aba, setAba] = useState("lancamentos");
   const [buscaPac, setBuscaPac] = useState("");
+  const [expandidosPac, setExpandidosPac] = useState({}); // {[pacId]: true/false} — persiste entre filtros
+
   const FORMAS = ["PIX", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Depósito", "Transferência", "Outro"];
   const RECORRENCIAS = ["Semanal (1x/semana)", "2x por semana", "3x por semana", "Quinzenal", "Mensal", "Sessão única"];
   const DIAS_LABEL = {
@@ -2776,8 +2778,12 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
       function CardPaciente({
         pacId
       }) {
-        const [expandido, setExpandido] = React.useState(false);
-        // Sempre começa recolhido — só abre ao clicar
+        const expandido = !!expandidosPac[pacId];
+        const setExpandido = fn => setExpandidosPac(prev => ({
+          ...prev,
+          [pacId]: typeof fn === "function" ? fn(!!prev[pacId]) : fn
+        }));
+        // Estado no pai — não perde ao re-renderizar
         const pac = pacientes.find(p => p.id === pacId);
         const pacotesDoPac = pacotes.filter(p => p.pacienteId === pacId).sort((a, b) => {
           const da = a.dataInicio || a.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || "";
