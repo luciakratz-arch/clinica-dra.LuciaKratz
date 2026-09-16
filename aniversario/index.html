@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meu Aniversário · Dra. Lucia Kratz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600,700&family=Inter:wght@300,400,500,600,700&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      min-height:100vh;
+      background: linear-gradient(160deg,#f5e8ff 0%,#fff0fb 40%,#ede9fe 100%);
+      font-family:'Inter',sans-serif;
+      display:flex;align-items:center;justify-content:center;
+      padding:20px;
+    }
+    .card{
+      background:white;border-radius:24px;
+      box-shadow:0 20px 60px rgba(123,0,196,0.15);
+      max-width:440px;width:100%;
+      overflow:hidden;
+    }
+    .card-header{
+      background:linear-gradient(135deg,#7B00C4,#a855f7);
+      padding:32px 28px 24px;text-align:center;
+    }
+    .logo-nome{
+      font-family:'Dancing Script',cursive;
+      color:white;font-size:28px;font-weight:700;
+      margin-bottom:4px;
+    }
+    .logo-crp{color:rgba(255,255,255,0.75);font-size:12px;margin-bottom:16px;}
+    .emoji{font-size:48px;margin-bottom:8px;display:block;}
+    .header-titulo{color:white;font-size:18px;font-weight:600;}
+    .header-sub{color:rgba(255,255,255,0.8);font-size:13px;margin-top:4px;line-height:1.5;}
+
+    .card-body{padding:28px;}
+    .msg{
+      background:#f5e8ff;border-radius:12px;
+      padding:16px;margin-bottom:24px;
+      font-size:13px;color:#5a0099;line-height:1.6;
+    }
+    .msg strong{color:#7B00C4;}
+
+    label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+    .form-input{
+      width:100%;padding:12px 14px;
+      border:2px solid #e8c8ff;border-radius:10px;
+      font-size:14px;font-family:'Inter',sans-serif;
+      outline:none;transition:border-color .2s;
+      background:white;
+    }
+    .form-input:focus{border-color:#7B00C4;}
+    .form-group{margin-bottom:18px;}
+
+    .btn{
+      width:100%;padding:14px;border:none;border-radius:50px;
+      font-size:15px;font-weight:600;cursor:pointer;
+      background:linear-gradient(135deg,#7B00C4,#a855f7);
+      color:white;transition:transform .15s,box-shadow .15s;
+      box-shadow:0 4px 14px rgba(123,0,196,0.35);
+    }
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(123,0,196,0.45);}
+    .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+    .erro{color:#dc2626;font-size:13px;margin-top:8px;text-align:center;}
+    .sucesso{
+      text-align:center;padding:32px 20px;
+      display:none;
+    }
+    .sucesso .big{font-size:64px;margin-bottom:12px;}
+    .sucesso h2{font-family:'Dancing Script',cursive;color:#7B00C4;font-size:26px;margin-bottom:8px;}
+    .sucesso p{color:#666;font-size:14px;line-height:1.6;}
+
+    .rodape{
+      text-align:center;padding:16px;
+      font-size:11px;color:#aaa;
+      border-top:1px solid #f0e8ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <span class="emoji">🦋</span>
+      <div class="logo-nome">Dra. Lucia Kratz</div>
+      <div class="logo-crp">Psicóloga Doutora · CRP 09/20590</div>
+      <div class="header-titulo">🎂 Meu Dia Especial</div>
+      <div class="header-sub">Registre sua data de aniversário<br/>para receber uma surpresa!</div>
+    </div>
+
+    <div class="card-body">
+      <div class="msg">
+        💜 Olá! Para que eu possa te surpreender no seu dia especial com uma mensagem de carinho,
+        preciso saber quando é o seu aniversário.<br/><br/>
+        <strong>É bem rápido — só o seu nome e a data de nascimento!</strong>
+      </div>
+
+      <div id="form-area">
+        <div class="form-group">
+          <label>Seu nome completo</label>
+          <input id="nome" class="form-input" type="text" placeholder="Como está cadastrado no consultório" autocomplete="name"/>
+        </div>
+        <div class="form-group">
+          <label>Data de nascimento</label>
+          <input id="data" class="form-input" type="date"/>
+        </div>
+        <div id="erro" class="erro" style="display:none"></div>
+        <button id="btn" class="btn" onclick="salvar()">🎉 Salvar minha data</button>
+      </div>
+
+      <div class="sucesso" id="sucesso">
+        <div class="big">🎂</div>
+        <h2>Tudo certo!</h2>
+        <p>
+          Sua data de nascimento foi registrada com carinho.<br/>
+          No seu aniversário, você receberá uma mensagem especial! 🎉<br/><br/>
+          <em style="color:#a855f7">Com amor,<br/>
+          <span style="font-family:'Dancing Script',cursive;font-size:18px;color:#7B00C4">Dra. Lucia Kratz</span></em>
+        </p>
+      </div>
+    </div>
+
+    <div class="rodape">Clínica Dra. Lucia Kratz · Goiânia, GO 🦋</div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRFkPjTJ1yAVMFRoMbCWQMCxgEhHRLLBE",
+      authDomain: "entrevista-inicial.firebaseapp.com",
+      projectId: "entrevista-inicial",
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function salvar() {
+      const nome = document.getElementById('nome').value.trim();
+      const data = document.getElementById('data').value;
+      const erro = document.getElementById('erro');
+      const btn  = document.getElementById('btn');
+
+      erro.style.display = 'none';
+
+      if (!nome) { erro.textContent = 'Por favor, digite seu nome completo.'; erro.style.display='block'; return; }
+      if (!data) { erro.textContent = 'Por favor, selecione sua data de nascimento.'; erro.style.display='block'; return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Salvando... 🦋';
+
+      try {
+        // Busca pelo nome (igual ao login do portal)
+        const snap = await db.collection('clinica_pacientes').get();
+        const nomeNorm = nome.toLowerCase();
+        const match = snap.docs.find(d => (d.data().nome||'').trim().toLowerCase() === nomeNorm);
+
+        if (!match) {
+          erro.textContent = 'Nome não encontrado. Verifique se digitou exatamente como está no consultório.';
+          erro.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = '🎉 Salvar minha data';
+          return;
+        }
+
+        await db.collection('clinica_pacientes').doc(match.id).update({
+          dataNascimento: data
+        });
+
+        document.getElementById('form-area').style.display = 'none';
+        document.getElementById('sucesso').style.display = 'block';
+
+      } catch(e) {
+        erro.textContent = 'Erro ao salvar. Tente novamente.';
+        erro.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = '🎉 Salvar minha data';
+      }
+    }
+  </script>
+</body>
+</html>
