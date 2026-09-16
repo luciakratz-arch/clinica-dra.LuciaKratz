@@ -3106,7 +3106,8 @@ ${horario ? `<div class="row"><span class="label">Horário</span><span class="va
                 remarcado: "#6366f1"
               };
               const totalValor = sessPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-              const totalPago = sessPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
+              // Usa valorTotal do pacote se recebido; senão soma só sessões com pagamento=pago
+              const totalPago = p.statusPag === "recebido" ? p.valorTotal || totalValor : sessPac.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
               const sessMeses = {};
               sessPac.forEach(s => {
                 const m = (s.data || "").slice(0, 7);
