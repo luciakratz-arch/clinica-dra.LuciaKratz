@@ -1457,7 +1457,7 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                 {(()=>{
                   function CardPaciente({pacId}){
                     const [expandido, setExpandido] = React.useState(false);
-                    React.useEffect(()=>{ setExpandido(!!buscaPac); },[buscaPac]);
+                    // Sempre começa recolhido — só abre ao clicar
                     const pac = pacientes.find(p=>p.id===pacId);
                     const pacotesDoPac = pacotes.filter(p=>p.pacienteId===pacId).sort((a,b)=>{
                       const da = a.dataInicio||a.createdAt?.toDate?.()?.toISOString?.()?.slice(0,10)||"";
@@ -1582,7 +1582,8 @@ ${horario?`<div class="row"><span class="label">Horário</span><span class="val"
                                     const statusLabel = {agendado:"Agendado",confirmado:"Confirmado",realizado:"✓ Realizado",falta:"Falta",remarcado:"Remarcado"};
                                     const statusColor = {agendado:"#7B00C4",confirmado:"#059669",realizado:"#0891b2",falta:"#d97706",remarcado:"#6366f1"};
                                     const totalValor = sessPac.reduce((a,s)=>a+(parseFloat(s.valorSessao)||0),0);
-                                    const totalPago = sessPac.reduce((a,s)=>a+(parseFloat(s.valorPago)||0),0);
+                                    // Usa valorTotal do pacote se recebido; senão soma só sessões com pagamento=pago
+                                    const totalPago = p.statusPag==="recebido" ? (p.valorTotal||totalValor) : sessPac.filter(s=>s.pagamento==="pago").reduce((a,s)=>a+(parseFloat(s.valorPago)||parseFloat(s.valorSessao)||0),0);
                                     const sessMeses = {};
                                     sessPac.forEach(s=>{ const m=(s.data||"").slice(0,7); if(!sessMeses[m])sessMeses[m]=[]; sessMeses[m].push(s); });
                                     const fmtM = m=>{ const [y,mo]=m.split("-"); return new Date(y,mo-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); };
