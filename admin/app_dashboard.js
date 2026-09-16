@@ -122,6 +122,28 @@ function DashboardAdmin({ user, onVerEvolucao }) {
 
   const mesAtual = new Date().toISOString().slice(0,7);
   const hoje = new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  // Aniversariantes de hoje
+  const aniversariantesHoje = pacientes.filter(p=>{
+    if (!p.dataNascimento) return false;
+    const d = new Date();
+    const mes = parseInt(p.dataNascimento.slice(5,7),10);
+    const dia = parseInt(p.dataNascimento.slice(8,10),10);
+    return mes===d.getMonth()+1 && dia===d.getDate();
+  });
+  // Próximos aniversários (7 dias)
+  const proximosAniv = pacientes.filter(p=>{
+    if (!p.dataNascimento || aniversariantesHoje.find(a=>a.id===p.id)) return false;
+    const d = new Date();
+    for(let i=1;i<=7;i++){
+      const prox = new Date(d); prox.setDate(d.getDate()+i);
+      const mes = parseInt(p.dataNascimento.slice(5,7),10);
+      const dia = parseInt(p.dataNascimento.slice(8,10),10);
+      if(mes===prox.getMonth()+1 && dia===prox.getDate()) return true;
+    }
+    return false;
+  });
+  // Sem data cadastrada
+  const semData = pacientes.filter(p=>!p.dataNascimento || p.dataNascimento==="");
   const ativos = pacientes.filter(p=>p.status==="ativo").length;
   const sessoesHoje = sessoes.filter(s=>s.data===new Date().toISOString().slice(0,10)).length;
 
@@ -168,6 +190,98 @@ function DashboardAdmin({ user, onVerEvolucao }) {
         <div className="metric-card"><div className="metric-icon"><Icon name="package" size={20}/></div><div className="metric-label">Pendente Clínica</div><div className="metric-value" style={{fontSize:18,color:"#d97706"}}>{fmt(lcMes.filter(l=>l.status==="pendente").reduce((a,l)=>a+(parseFloat(l.valor)||0),0))}</div></div>
         <div className="metric-card"><div className="metric-icon"><Icon name="heart" size={20}/></div><div className="metric-label">Casais em Terapia</div><div className="metric-value">{pacientes.filter(p=>p.casalId).length/2|0}</div></div>
       </div>
+
+
+      {/* Card de Aniversariantes */}
+      {(aniversariantesHoje.length>0 || proximosAniv.length>0 || semData.length>0) && (
+        <div style={{marginBottom:24,borderRadius:16,overflow:"hidden",border:"2px solid #f3e8ff",boxShadow:"0 4px 20px rgba(123,0,196,0.1)"}}>
+          {/* Header */}
+          <div style={{background:"linear-gradient(135deg,#7B00C4,#a855f7)",padding:"16px 20px",display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontSize:24}}>🎂</span>
+            <div>
+              <div style={{color:"white",fontWeight:700,fontSize:16}}>Aniversários</div>
+              <div style={{color:"rgba(255,255,255,0.8)",fontSize:12}}>Acompanhe seus pacientes</div>
+            </div>
+          </div>
+
+          <div style={{background:"white",padding:"16px 20px",display:"flex",flexDirection:"column",gap:16}}>
+
+            {/* Hoje */}
+            {aniversariantesHoje.length>0&&(
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:"#7B00C4",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>
+                  🎉 Hoje
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {aniversariantesHoje.map(p=>{
+                    const nasc = p.dataNascimento;
+                    const anos = nasc ? new Date().getFullYear()-parseInt(nasc.slice(0,4),10) : null;
+                    return (
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"linear-gradient(135deg,#f5e8ff,#fff0fb)",borderRadius:10,border:"1px solid #e0c0ff"}}>
+                        <div style={{width:36,height:36,borderRadius:"50%",background:"#7B00C4",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:15,flexShrink:0}}>
+                          {(p.nome||"?")[0].toUpperCase()}
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:600,fontSize:14,color:"#3d006a"}}>{p.nome}</div>
+                          {anos&&<div style={{fontSize:12,color:"#a855f7"}}>🎈 {anos} anos hoje!</div>}
+                        </div>
+                        {p.email&&(
+                          <a href={"mailto:"+p.email+"?subject=Feliz Aniversário, "+(p.nome||"").split(" ")[0]+"!&body=Olá, "+(p.nome||"").split(" ")[0]+"! Feliz Aniversário! 🎉🦋"}
+                            style={{fontSize:11,color:"#7B00C4",textDecoration:"none",padding:"5px 10px",border:"1px solid #c4b0ff",borderRadius:20,whiteSpace:"nowrap"}}
+                            target="_blank">
+                            ✉ Enviar e-mail
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Próximos 7 dias */}
+            {proximosAniv.length>0&&(
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:"#BA7517",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>
+                  📅 Próximos 7 dias
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  {proximosAniv.map(p=>{
+                    const nasc = p.dataNascimento;
+                    const mes = parseInt(nasc.slice(5,7),10);
+                    const dia = parseInt(nasc.slice(8,10),10);
+                    const meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+                    return (
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",background:"#fffbf0",borderRadius:8,border:"1px solid #fde68a"}}>
+                        <span style={{fontSize:18}}>🎁</span>
+                        <div style={{flex:1}}>
+                          <span style={{fontWeight:600,fontSize:13,color:"#3d006a"}}>{p.nome}</span>
+                          <span style={{fontSize:12,color:"#BA7517",marginLeft:8}}>{dia}/{meses[mes-1]}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Sem data */}
+            {semData.length>0&&(
+              <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",border:"1px dashed #ddd"}}>
+                <div style={{fontSize:12,color:"#888",marginBottom:6}}>
+                  ⚠️ <strong>{semData.length} paciente(s)</strong> sem data de nascimento cadastrada
+                </div>
+                <div style={{fontSize:11,color:"#aaa"}}>
+                  Envie o link de atualização: <strong style={{color:"#7B00C4",wordBreak:"break-all"}}>
+                    {window.location.origin.replace("clinica","")}/aniversario/
+                  </strong>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
       {/* FEED DE ATIVIDADES */}
       <div className="card" style={{marginBottom:24}}>
