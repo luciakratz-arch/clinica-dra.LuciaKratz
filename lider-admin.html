@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Kit Líd@r 5.0</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0f0f1a; color: #e2e2e8; min-height: 100vh; }
+  header { background: linear-gradient(135deg, #1a0a2e 0%, #16213e 100%); padding: 24px; border-bottom: 1px solid #7c3aed33; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 1.2rem; font-weight: 800; color: #e2e2e8; }
+  header p { color: #6b6b8a; font-size: 0.8rem; }
+  .btn-att { background: #7c3aed; border: none; color: white; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  main { max-width: 1000px; margin: 0 auto; padding: 32px 20px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+  .tab { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.85rem; color: #8888a8; transition: all 0.15s; }
+  .tab.ativo { background: #2d1e5f; border-color: #7c3aed; color: #e2e2e8; font-weight: 600; }
+  .aba { display: none; }
+  .aba.ativo { display: block; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .stat-box { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 12px; padding: 18px; text-align: center; }
+  .stat-box .num { font-size: 2rem; font-weight: 800; color: #a78bfa; }
+  .stat-box .label { font-size: 0.75rem; color: #6b6b8a; margin-top: 4px; }
+  .card-res { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 14px; padding: 20px; margin-bottom: 12px; }
+  .card-res h3 { font-size: 0.9rem; font-weight: 700; color: #c4b5fd; margin-bottom: 14px; }
+  .carac-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .carac-row-nome { font-size: 0.8rem; color: #a0a0b8; min-width: 180px; }
+  .carac-row-barra { flex: 1; height: 10px; background: #2d2d4e; border-radius: 5px; overflow: hidden; }
+  .carac-row-fill { height: 100%; border-radius: 5px; transition: width 0.5s; }
+  .fill-alto { background: linear-gradient(90deg, #059669, #34d399); }
+  .fill-medio { background: linear-gradient(90deg, #d97706, #fbbf24); }
+  .fill-baixo { background: linear-gradient(90deg, #dc2626, #f87171); }
+  .carac-row-nota { font-size: 0.8rem; color: #e2e2e8; font-weight: 700; min-width: 36px; text-align: right; }
+  .tabela-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { background: #161628; color: #8888a8; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid #2d2d4e; }
+  td { padding: 10px 12px; border-bottom: 1px solid #1a1a2e; color: #c4c4d4; }
+  tr:hover td { background: #1a1a2e; }
+  .nota-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+  .n5 { background: #14532d; color: #86efac; }
+  .n4 { background: #1e3a5f; color: #93c5fd; }
+  .n3 { background: #2d2700; color: #fde68a; }
+  .n2 { background: #4a2000; color: #fdba74; }
+  .n1 { background: #4a0000; color: #fca5a5; }
+  .empty { text-align: center; padding: 48px; color: #4d4d6e; }
+  #status-att { font-size: 0.75rem; color: #6b6b8a; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🔒 Painel da Facilitadora — Kit Líd@r 5.0</h1>
+    <div id="status-att">Carregando...</div>
+  </div>
+  <button class="btn-att" onclick="carregar()">⟳ Atualizar</button>
+</header>
+<main>
+  <div class="tabs">
+    <div class="tab ativo" id="tab-21" onclick="aba('21')">📊 Autodiagnóstico (F2.1)</div>
+    <div class="tab" id="tab-all" onclick="aba('all')">👁 Todas as respostas</div>
+  </div>
+
+  <div class="aba ativo" id="aba-21">
+    <div class="stat-grid" id="stats-21">
+      <div class="stat-box"><div class="num" id="total-21">—</div><div class="label">Participantes</div></div>
+      <div class="stat-box"><div class="num" id="media-geral">—</div><div class="label">Média Geral</div></div>
+      <div class="stat-box"><div class="num" id="ponto-forte-top">—</div><div class="label">Característica mais forte</div></div>
+      <div class="stat-box"><div class="num" id="gap-top">—</div><div class="label">Maior GAP da turma</div></div>
+    </div>
+
+    <div class="card-res">
+      <h3>Média por Característica (Turma)</h3>
+      <div id="barras-caracs">
+        <div class="empty">Aguardando respostas...</div>
+      </div>
+    </div>
+
+    <div class="card-res">
+      <h3>Respostas Individuais</h3>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Setor</th>
+              <th>Média</th>
+              <th>Ponto Forte</th>
+              <th>GAP</th>
+              <th>Horário</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-21"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="aba" id="aba-all">
+    <p style="color:#8888a8; font-size:0.85rem; margin-bottom:16px;">Respostas de todas as ferramentas do kit</p>
+    <div id="lista-all"><div class="empty">Carregando...</div></div>
+  </div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+const CARACS = ["Gostar de Pessoas","Ter Iniciativa","Domínio do Trabalho","Ser Exemplo","Respeito e Confiança","Saber Ouvir e Orientar","Empatia","Resiliência e Motivação","Feedback Educativo","Capacidade de Inspirar","Inovação","Flexibilidade","Planejamento","Saber Delegar","Senso de Humor"];
+
+var db, abaAtual = '21';
+
+function aba(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
+  document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativo'));
+  document.getElementById('tab-' + id).classList.add('ativo');
+  document.getElementById('aba-' + id).classList.add('ativo');
+  abaAtual = id;
+}
+
+function classeFill(media) {
+  if(media >= 4) return 'fill-alto';
+  if(media >= 2.5) return 'fill-medio';
+  return 'fill-baixo';
+}
+
+function notaBadge(n) {
+  const cls = ['','n1','n2','n3','n4','n5'][Math.round(n)] || 'n3';
+  return `<span class="nota-badge ${cls}">${n.toFixed(1)}</span>`;
+}
+
+async function carregar() {
+  document.getElementById('status-att').textContent = 'Atualizando...';
+  try {
+    await carregarF21();
+    document.getElementById('status-att').textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+  } catch(e) {
+    document.getElementById('status-att').textContent = 'Erro: ' + e.message;
+  }
+}
+
+async function carregarF21() {
+  const snap = await db.collection('lider_f2_1').orderBy('timestamp', 'desc').get();
+  const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+
+  document.getElementById('total-21').textContent = docs.length;
+
+  if(docs.length === 0) {
+    document.getElementById('barras-caracs').innerHTML = '<div class="empty">Aguardando respostas...</div>';
+    document.getElementById('tabela-21').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#4d4d6e;padding:24px">Nenhuma resposta ainda</td></tr>';
+    document.getElementById('media-geral').textContent = '—';
+    document.getElementById('ponto-forte-top').textContent = '—';
+    document.getElementById('gap-top').textContent = '—';
+    return;
+  }
+
+  // Calcular médias por característica
+  const somas = new Array(15).fill(0);
+  const counts = new Array(15).fill(0);
+  docs.forEach(d => {
+    if(d.notas) d.notas.forEach((n, i) => { if(n > 0) { somas[i] += n; counts[i]++; } });
+  });
+  const medias = somas.map((s, i) => counts[i] > 0 ? s / counts[i] : 0);
+
+  const mediasOrdenadas = medias.map((m, i) => ({i, m, nome: CARACS[i]})).filter(x => x.m > 0).sort((a,b) => b.m - a.m);
+
+  // Stats
+  const mediaGlobal = medias.filter(m=>m>0).reduce((a,b)=>a+b,0) / medias.filter(m=>m>0).length;
+  document.getElementById('media-geral').textContent = mediaGlobal.toFixed(1);
+  if(mediasOrdenadas.length > 0) {
+    document.getElementById('ponto-forte-top').textContent = mediasOrdenadas[0].nome.split(' ').slice(0,2).join(' ');
+    document.getElementById('gap-top').textContent = mediasOrdenadas[mediasOrdenadas.length-1].nome.split(' ').slice(0,2).join(' ');
+  }
+
+  // Barras por característica
+  document.getElementById('barras-caracs').innerHTML = mediasOrdenadas.map(x => `
+    <div class="carac-row">
+      <span class="carac-row-nome">${x.nome}</span>
+      <div class="carac-row-barra">
+        <div class="carac-row-fill ${classeFill(x.m)}" style="width:${x.m/5*100}%"></div>
+      </div>
+      <span class="carac-row-nota">${x.m.toFixed(1)}</span>
+    </div>
+  `).join('');
+
+  // Tabela individual
+  document.getElementById('tabela-21').innerHTML = docs.map(d => {
+    const notasValidas = d.notas ? d.notas.filter(n=>n>0) : [];
+    const media = notasValidas.length > 0 ? notasValidas.reduce((a,b)=>a+b,0)/notasValidas.length : 0;
+    const ts = d.timestamp ? new Date(d.timestamp.toDate()).toLocaleString('pt-BR') : '—';
+    return `<tr>
+      <td>${d.nome || '—'}</td>
+      <td>${d.setor || '—'}</td>
+      <td>${notaBadge(media)}</td>
+      <td style="font-size:0.78rem;color:#a0a0b8">${d.pontos_fortes || '—'}</td>
+      <td style="font-size:0.78rem;color:#a0a0b8">${d.gaps || '—'}</td>
+      <td style="color:#6b6b8a">${ts}</td>
+    </tr>`;
+  }).join('');
+}
+
+window.onload = function() {
+  firebase.initializeApp({
+    apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+    authDomain: "entrevista-inicial.firebaseapp.com",
+    projectId: "entrevista-inicial",
+    storageBucket: "entrevista-inicial.firebasestorage.app",
+    messagingSenderId: "437375609844",
+    appId: "1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+  });
+  db = firebase.firestore();
+  carregar();
+  setInterval(carregar, 20000);
+};
+</script>
+</body>
+</html>
