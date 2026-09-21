@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1.2 — Matriz Geracional</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#1e3a5f;color:#60a5fa;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #3b82f6;border-radius:12px;margin:24px auto;max-width:700px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:740px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo select,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
+  .campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:#7c3aed}
+  .campo select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23a0a0b8' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .ger-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .ger-tag{background:#161628;border:1px solid #2d2d4e;border-radius:20px;padding:4px 12px;font-size:0.75rem;cursor:default}
+  .ger-bb{border-color:#7c3aed55;color:#c4b5fd}
+  .ger-x{border-color:#2563eb55;color:#93c5fd}
+  .ger-y{border-color:#059669;color:#6ee7b7}
+  .ger-z{border-color:#d97706;color:#fcd34d}
+  .linha-colab{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
+  .linha-colab h4{font-size:0.8rem;color:#60a5fa;margin-bottom:10px;font-weight:700}
+  .grid-colab{display:grid;grid-template-columns:1fr 100px 1fr 1fr;gap:10px}
+  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
+  .btn-add:hover{border-color:#7c3aed;color:#a78bfa}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="lider-hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 1 · Formulário 1.2</div>
+  <h1>Matriz de Mapeamento e Integração Geracional</h1>
+  <p>Mapeie sua equipe por geração e defina estratégias de integração</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#60a5fa">Gerações:</strong> <span style="color:#c4b5fd">Baby Boomers</span> (até 1964) · <span style="color:#93c5fd">Gen X</span> (1965-1980) · <span style="color:#6ee7b7">Millennials / Gen Y</span> (1981-1996) · <span style="color:#fcd34d">Gen Z</span> (1997+). Identifique o que motiva cada colaborador e defina estratégias de mentoria reversa.</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome (gestor)</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Faturamento T2"></div>
+  </div>
+
+  <div id="linhas">
+    <div class="linha-colab">
+      <h4>Colaborador 1</h4>
+      <div class="grid-colab">
+        <div class="campo"><label>Nome / Cargo</label><input class="nome-col" type="text" placeholder="Ex: Maria — Atendente"></div>
+        <div class="campo"><label>Geração</label>
+          <select class="ger">
+            <option value="">—</option>
+            <option value="Baby Boomers">Baby Boomers</option>
+            <option value="Gen X">Gen X</option>
+            <option value="Gen Y / Millennial">Gen Y</option>
+            <option value="Gen Z">Gen Z</option>
+          </select>
+        </div>
+        <div class="campo"><label>O que Motiva / Ponto Forte</label><textarea class="motiva" placeholder="Ex: Reconhecimento público, experiente em processos"></textarea></div>
+        <div class="campo"><label>Estratégia de Integração / Mentoria Reversa</label><textarea class="estrategia" placeholder="Ex: Ensinar processo antigo → jovem otimiza digitalmente"></textarea></div>
+      </div>
+    </div>
+    <div class="linha-colab">
+      <h4>Colaborador 2</h4>
+      <div class="grid-colab">
+        <div class="campo"><label>Nome / Cargo</label><input class="nome-col" type="text" placeholder="Ex: João — Analista"></div>
+        <div class="campo"><label>Geração</label>
+          <select class="ger">
+            <option value="">—</option>
+            <option value="Baby Boomers">Baby Boomers</option>
+            <option value="Gen X">Gen X</option>
+            <option value="Gen Y / Millennial">Gen Y</option>
+            <option value="Gen Z">Gen Z</option>
+          </select>
+        </div>
+        <div class="campo"><label>O que Motiva / Ponto Forte</label><textarea class="motiva" placeholder="..."></textarea></div>
+        <div class="campo"><label>Estratégia de Integração</label><textarea class="estrategia" placeholder="..."></textarea></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-add" onclick="addLinha()">+ Adicionar colaborador</button>
+  <button class="btn-enviar" onclick="enviar()">Enviar Matriz →</button>
+  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db, cnt=2;
+function addLinha(){
+  cnt++;
+  const d=document.createElement('div');
+  d.className='linha-colab';
+  d.innerHTML=`<h4>Colaborador ${cnt}</h4><div class="grid-colab">
+    <div class="campo"><label>Nome / Cargo</label><input class="nome-col" type="text" placeholder="..."></div>
+    <div class="campo"><label>Geração</label><select class="ger"><option value="">—</option><option>Baby Boomers</option><option>Gen X</option><option value="Gen Y / Millennial">Gen Y</option><option>Gen Z</option></select></div>
+    <div class="campo"><label>O que Motiva / Ponto Forte</label><textarea class="motiva" placeholder="..."></textarea></div>
+    <div class="campo"><label>Estratégia de Integração</label><textarea class="estrategia" placeholder="..."></textarea></div>
+  </div>`;
+  document.getElementById('linhas').appendChild(d);
+}
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  const colaboradores=[];
+  document.querySelectorAll('.linha-colab').forEach(l=>{
+    const n=l.querySelector('.nome-col').value.trim();
+    const g=l.querySelector('.ger').value;
+    const m=l.querySelector('.motiva').value.trim();
+    const e=l.querySelector('.estrategia').value.trim();
+    if(n) colaboradores.push({nome:n,geracao:g,motiva:m,estrategia:e});
+  });
+  if(!colaboradores.length){alert('Preencha pelo menos um colaborador.');return;}
+  await db.collection('lider_f1_2').add({nome,setor,colaboradores,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f1_2').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>

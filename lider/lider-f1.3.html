@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1.3 — A Corda das Soluções</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#1e3a5f;color:#60a5fa;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #3b82f6;border-radius:12px;margin:24px auto;max-width:700px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:720px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
+  .campo textarea{resize:vertical;min-height:64px}
+  .campo input:focus,.campo textarea:focus{outline:none;border-color:#7c3aed}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .linha-ex{background:#12122a;border:1px solid #1e3a5f;border-radius:10px;padding:14px 16px;margin-bottom:10px}
+  .ex-label{font-size:0.7rem;color:#3b82f6;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px}
+  .ex-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:0.78rem;color:#6b8abf;font-style:italic}
+  .linha-resp{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
+  .linha-resp h4{font-size:0.8rem;color:#60a5fa;margin-bottom:10px;font-weight:700}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
+  .btn-add:hover{border-color:#7c3aed;color:#a78bfa}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="lider-hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 1 · Formulário 1.3</div>
+  <h1>A Corda das Soluções</h1>
+  <p>Transforme reclamações em perguntas de liderança orientadas à solução</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#60a5fa">Como usar:</strong> Para cada queixa recorrente do setor, escreva a <strong>Pergunta de Liderança 5.0</strong> correspondente ("O que posso fazer?") e a <strong>Solução Colaborativa</strong> possível entre setores.</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Call Center T2"></div>
+  </div>
+  <div class="linha-ex">
+    <div class="ex-label">Exemplo</div>
+    <div class="ex-grid">
+      <div>"Os jovens do Call Center não prestam atenção na burocracia das guias."</div>
+      <div>"Como posso criar um checklist digital simples que facilite a checagem sem travar o atendimento?"</div>
+      <div>Parceria: sênior do Faturamento ensina o processo + jovem do Call Center otimiza o fluxo digital.</div>
+    </div>
+  </div>
+
+  <div id="linhas">
+    <div class="linha-resp">
+      <h4>Situação 1</h4>
+      <div class="grid3">
+        <div class="campo"><label>Queixa Recorrente ("Muro de Lamentações")</label><textarea class="queixa" placeholder="Ex: Ninguém segue o processo correto..."></textarea></div>
+        <div class="campo"><label>Pergunta de Liderança 5.0</label><textarea class="pergunta" placeholder="O que eu posso fazer para...?"></textarea></div>
+        <div class="campo"><label>Solução Colaborativa</label><textarea class="solucao" placeholder="Ponte entre setores..."></textarea></div>
+      </div>
+    </div>
+    <div class="linha-resp">
+      <h4>Situação 2</h4>
+      <div class="grid3">
+        <div class="campo"><label>Queixa Recorrente</label><textarea class="queixa" placeholder="..."></textarea></div>
+        <div class="campo"><label>Pergunta de Liderança 5.0</label><textarea class="pergunta" placeholder="..."></textarea></div>
+        <div class="campo"><label>Solução Colaborativa</label><textarea class="solucao" placeholder="..."></textarea></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-add" onclick="addLinha()">+ Adicionar situação</button>
+  <button class="btn-enviar" onclick="enviar()">Enviar Formulário →</button>
+  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db,cnt=2;
+function addLinha(){
+  cnt++;
+  const d=document.createElement('div');d.className='linha-resp';
+  d.innerHTML=`<h4>Situação ${cnt}</h4><div class="grid3">
+    <div class="campo"><label>Queixa</label><textarea class="queixa" placeholder="..."></textarea></div>
+    <div class="campo"><label>Pergunta 5.0</label><textarea class="pergunta" placeholder="..."></textarea></div>
+    <div class="campo"><label>Solução</label><textarea class="solucao" placeholder="..."></textarea></div>
+  </div>`;
+  document.getElementById('linhas').appendChild(d);
+}
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  const situacoes=[];
+  document.querySelectorAll('.linha-resp').forEach(l=>{
+    const q=l.querySelector('.queixa').value.trim();
+    const p=l.querySelector('.pergunta').value.trim();
+    const s=l.querySelector('.solucao').value.trim();
+    if(q||p||s) situacoes.push({queixa:q,pergunta:p,solucao:s});
+  });
+  if(!situacoes.length){alert('Preencha pelo menos uma situação.');return;}
+  await db.collection('lider_f1_3').add({nome,setor,situacoes,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f1_3').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>
