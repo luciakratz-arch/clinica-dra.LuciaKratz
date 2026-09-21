@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F3.2 — Machado Afiado</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#1e4a3a;color:#34d399;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #34d399;border-radius:12px;margin:24px auto;max-width:720px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:720px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
+  .campo textarea{resize:vertical;min-height:64px}
+  .campo input:focus,.campo textarea:focus{outline:none;border-color:#34d399}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .analogia{background:#111a16;border:1px solid #064e3b;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:0.82rem;color:#a0a0b8;line-height:1.6}
+  .analogia strong{color:#34d399}
+  .linha-ex{background:#12122a;border:1px solid #1e3a5f;border-radius:10px;padding:14px 16px;margin-bottom:12px}
+  .ex-label{font-size:0.7rem;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+  .ex-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:0.78rem;color:#6b8abf;font-style:italic}
+  .proc-card{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
+  .proc-card h4{font-size:0.82rem;color:#34d399;font-weight:700;margin-bottom:12px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
+  .btn-add:hover{border-color:#34d399;color:#6ee7b7}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 3 · Formulário 3.2</div>
+  <h1>Oficina "Machado Afiado" — Eficácia vs. Eficiência</h1>
+  <p>Identifique onde a equipe trabalha no piloto automático e crie pausas de treinamento</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#34d399">Metáfora:</strong> Trabalhar com o "machado cego" = esforço sem resultado. "Afiar o machado" = pausa estruturada para treinar e planejar antes de executar.</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Call Center T2"></div>
+  </div>
+  <div class="linha-ex">
+    <div class="ex-label">Exemplo</div>
+    <div class="ex-grid">
+      <div>Checagem manual repetitiva de guias com erros recorrentes.</div>
+      <div>Apagar incêndios diariamente sem treinar os atendentes da ponta.</div>
+      <div>Reunião de 20 min toda segunda-feira para treinar os 3 códigos de convênio mais críticos.</div>
+    </div>
+  </div>
+  <div id="processos">
+    <div class="proc-card">
+      <h4>Processo 1</h4>
+      <div class="grid3">
+        <div class="campo"><label>⚙️ Processo Atual com Esforço Desperdiçado</label><textarea class="proc" placeholder="Como o processo está sendo feito hoje, com esforço desnecessário..."></textarea></div>
+        <div class="campo"><label>🪓 Diagnóstico de Ineficiência ("Machado Cego")</label><textarea class="diag" placeholder="Onde está o desperdício de energia? O que não deveria estar acontecendo?"></textarea></div>
+        <div class="campo"><label>✨ Desenho da Pausa Estruturada ("Afiar o Machado")</label><textarea class="pausa" placeholder="Ex: Reunião de 20 min toda segunda com checklist dos 3 erros mais comuns..."></textarea></div>
+      </div>
+    </div>
+    <div class="proc-card">
+      <h4>Processo 2</h4>
+      <div class="grid3">
+        <div class="campo"><label>⚙️ Processo Atual</label><textarea class="proc" placeholder="..."></textarea></div>
+        <div class="campo"><label>🪓 Diagnóstico</label><textarea class="diag" placeholder="..."></textarea></div>
+        <div class="campo"><label>✨ Pausa Estruturada</label><textarea class="pausa" placeholder="..."></textarea></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-add" onclick="addProc()">+ Adicionar processo</button>
+  <button class="btn-enviar" onclick="enviar()">Enviar Oficina →</button>
+  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db,cnt=2;
+function addProc(){
+  cnt++;
+  const d=document.createElement('div');d.className='proc-card';
+  d.innerHTML=`<h4>Processo ${cnt}</h4><div class="grid3">
+    <div class="campo"><label>⚙️ Processo Atual</label><textarea class="proc" placeholder="..."></textarea></div>
+    <div class="campo"><label>🪓 Diagnóstico</label><textarea class="diag" placeholder="..."></textarea></div>
+    <div class="campo"><label>✨ Pausa Estruturada</label><textarea class="pausa" placeholder="..."></textarea></div>
+  </div>`;
+  document.getElementById('processos').appendChild(d);
+}
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  const processos=[];
+  document.querySelectorAll('.proc-card').forEach(card=>{
+    const p=card.querySelector('.proc').value.trim();
+    const d=card.querySelector('.diag').value.trim();
+    const ps=card.querySelector('.pausa').value.trim();
+    if(p||d||ps) processos.push({processo:p,diagnostico:d,pausa_estruturada:ps});
+  });
+  if(!processos.length){alert('Preencha pelo menos um processo.');return;}
+  await db.collection('lider_f3_2').add({nome,setor,processos,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f3_2').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F3.3 — Ciclo PDCA + Triângulo do Hábito</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#1e4a3a;color:#34d399;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #34d399;border-radius:12px;margin:24px auto;max-width:680px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:680px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
+  .campo textarea{resize:vertical;min-height:68px}
+  .campo input:focus,.campo textarea:focus{outline:none;border-color:#34d399}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .pdca-wrap{border-radius:12px;overflow:hidden;border:1px solid #2d2d4e;margin-bottom:20px}
+  .pdca-row{display:grid;grid-template-columns:90px 1fr;border-bottom:1px solid #2d2d4e}
+  .pdca-row:last-child{border-bottom:none}
+  .pdca-sigla{padding:16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #2d2d4e}
+  .pdca-sigla .s{font-size:1.1rem;font-weight:800}
+  .pdca-sigla .n{font-size:0.6rem;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;text-align:center}
+  .plan .pdca-sigla{background:#1e1e40;}.plan .s{color:#60a5fa}.plan .n{color:#3b82f6}
+  .do .pdca-sigla{background:#1e3020;}.do .s{color:#34d399}.do .n{color:#059669}
+  .check .pdca-sigla{background:#2d2010;}.check .s{color:#fbbf24}.check .n{color:#d97706}
+  .act .pdca-sigla{background:#2d1010;}.act .s{color:#f87171}.act .n{color:#dc2626}
+  .pdca-content{padding:12px 16px;background:#161628}
+  .pdca-content label{display:block;font-size:0.75rem;color:#8888a8;margin-bottom:6px}
+  .pdca-content textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 12px;color:#e2e2e8;font-size:0.85rem;resize:vertical;min-height:60px;font-family:inherit}
+  .pdca-content textarea:focus{outline:none;border-color:#34d399}
+  .habito-wrap{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:20px}
+  .habito-wrap h3{font-size:0.9rem;color:#fbbf24;font-weight:700;margin-bottom:14px}
+  .habito-grid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center}
+  .habito-box{background:#161628;border-radius:10px;padding:12px;text-align:center}
+  .habito-box .icon{font-size:1.3rem;margin-bottom:4px}
+  .habito-box label{display:block;font-size:0.7rem;color:#8888a8;margin-bottom:6px}
+  .habito-box textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:6px;padding:8px;color:#e2e2e8;font-size:0.8rem;resize:vertical;min-height:56px;text-align:left;font-family:inherit}
+  .habito-box textarea:focus{outline:none;border-color:#7c3aed}
+  .arr{color:#4d4d6e;font-size:1.2rem;text-align:center}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 3 · Formulário 3.3</div>
+  <h1>Ciclo PDCA + Triângulo do Hábito</h1>
+  <p>Aplique o PDCA a um gargalo real e consolide a mudança como hábito</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#34d399">PDCA:</strong> Plan (Planejar) → Do (Executar) → Check (Conferir) → Act (Corrigir). Na fase DO, use o <strong>Triângulo do Hábito</strong>: Gatilho → Rotina Nova → Recompensa.</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Agendamento T2"></div>
+  </div>
+  <div class="campo" style="margin-bottom:20px">
+    <label>Gargalo escolhido para aplicar o PDCA</label>
+    <input type="text" id="gargalo" placeholder="Ex: Alta taxa de glosas por guias incompletas no faturamento">
+  </div>
+  <div class="pdca-wrap">
+    <div class="pdca-row plan">
+      <div class="pdca-sigla"><span class="s">P</span><span class="n">Plan<br>Planejar</span></div>
+      <div class="pdca-content"><label>Objetivo claro, metas curtas (mensais) e método definido com a equipe</label><textarea id="plan" placeholder="Ex: Reduzir glosas em 50% até outubro. Meta: zero guias sem autorização prévia. Método: checklist na entrada + dupla checagem..."></textarea></div>
+    </div>
+    <div class="pdca-row do">
+      <div class="pdca-sigla"><span class="s">D</span><span class="n">Do<br>Executar</span></div>
+      <div class="pdca-content"><label>Identificação do Gatilho → Rotina Nova → Recompensa de Reconhecimento</label><textarea id="do_pdca" placeholder="Ex: GATILHO: Chegada do paciente → ROTINA: Conferir autorização no sistema antes de chamar → RECOMPENSA: Elogio público na reunião semanal para quem zerar erros..."></textarea></div>
+    </div>
+    <div class="pdca-row check">
+      <div class="pdca-sigla"><span class="s">C</span><span class="n">Check<br>Conferir</span></div>
+      <div class="pdca-content"><label>Indicador objetivo de checagem sem tom policialesco/punitivo</label><textarea id="check" placeholder="Ex: Número de guias devolvidas por falta de autorização (meta: zero por semana). Verificado na reunião de segunda-feira com tom de apoio..."></textarea></div>
+    </div>
+    <div class="pdca-row act">
+      <div class="pdca-sigla"><span class="s">A</span><span class="n">Act<br>Corrigir</span></div>
+      <div class="pdca-content"><label>Ação preventiva para eliminar a causa raiz do problema no CBCO</label><textarea id="act" placeholder="Ex: Se erros persistirem, identificar o convênio-problema e criar treinamento específico. Nunca punir — investigar o processo que falhou..."></textarea></div>
+    </div>
+  </div>
+  <div class="habito-wrap">
+    <h3>🔺 Triângulo do Hábito (Detalhe da fase DO)</h3>
+    <div class="habito-grid">
+      <div class="habito-box">
+        <div class="icon">⚡</div>
+        <label>GATILHO<br>O que dispara o hábito?</label>
+        <textarea id="gatilho" placeholder="Ex: Paciente chega no balcão..."></textarea>
+      </div>
+      <div class="arr">→</div>
+      <div class="habito-box">
+        <div class="icon">🔄</div>
+        <label>ROTINA NOVA<br>O que fazer diferente?</label>
+        <textarea id="rotina" placeholder="Ex: Abrir sistema de autorização antes de qualquer ação..."></textarea>
+      </div>
+      <div class="arr">→</div>
+      <div class="habito-box">
+        <div class="icon">🏆</div>
+        <label>RECOMPENSA<br>O que o colaborador ganha?</label>
+        <textarea id="recompensa" placeholder="Ex: Reconhecimento público + bônus de qualidade..."></textarea>
+      </div>
+    </div>
+  </div>
+  <button class="btn-enviar" onclick="enviar()">Enviar PDCA →</button>
+  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db;
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  const gargalo=document.getElementById('gargalo').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  if(!gargalo){alert('Identifique o gargalo a trabalhar.');return;}
+  const pdca={
+    plan:document.getElementById('plan').value.trim(),
+    do:document.getElementById('do_pdca').value.trim(),
+    check:document.getElementById('check').value.trim(),
+    act:document.getElementById('act').value.trim()
+  };
+  const habito={
+    gatilho:document.getElementById('gatilho').value.trim(),
+    rotina:document.getElementById('rotina').value.trim(),
+    recompensa:document.getElementById('recompensa').value.trim()
+  };
+  await db.collection('lider_f3_3').add({nome,setor,gargalo,pdca,habito,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f3_3').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>

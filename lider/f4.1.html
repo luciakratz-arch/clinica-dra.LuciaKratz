@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F4.1 — Feedback Bolo de Chocolate + CNV</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#4a2d1e;color:#fb923c;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #f97316;border-radius:12px;margin:24px auto;max-width:700px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:700px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
+  .campo textarea{resize:vertical;min-height:72px}
+  .campo input:focus,.campo textarea:focus{outline:none;border-color:#f97316}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .campo-contexto{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:10px;padding:14px 16px;margin-bottom:20px}
+  .campo-contexto label{display:block;font-size:0.8rem;color:#fb923c;font-weight:600;margin-bottom:6px}
+  .campo-contexto input{width:100%;background:#161628;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
+  .campo-contexto input:focus{outline:none;border-color:#f97316}
+  .cnv-wrap{border-radius:12px;overflow:hidden;border:1px solid #2d2d4e;margin-bottom:24px}
+  .cnv-row{display:grid;grid-template-columns:110px 1fr;border-bottom:1px solid #2d2d4e}
+  .cnv-row:last-child{border-bottom:none}
+  .cnv-label{padding:16px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #2d2d4e;text-align:center}
+  .cnv-label .num{font-size:1rem;font-weight:800}
+  .cnv-label .nome{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+  .c1 .cnv-label{background:#1a1e30}.c1 .num{color:#60a5fa}.c1 .nome{color:#3b82f6}
+  .c2 .cnv-label{background:#1e2030}.c2 .num{color:#a78bfa}.c2 .nome{color:#7c3aed}
+  .c3 .cnv-label{background:#1e2a1a}.c3 .num{color:#6ee7b7}.c3 .nome{color:#059669}
+  .c4 .cnv-label{background:#2a1e10}.c4 .num{color:#fcd34d}.c4 .nome{color:#d97706}
+  .cnv-content{padding:12px 16px;background:#161628}
+  .cnv-content .dica{font-size:0.72rem;color:#6b6b8a;font-style:italic;margin-bottom:6px;line-height:1.4}
+  .cnv-content .dica strong{color:#a0a0b8;font-style:normal}
+  .cnv-content textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 12px;color:#e2e2e8;font-size:0.85rem;resize:vertical;min-height:70px;font-family:inherit}
+  .cnv-content textarea:focus{outline:none;border-color:#f97316}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#ea580c,#c2410c);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 4 · Formulário 4.1</div>
+  <h1>Roteiro de Feedback "Bolo de Chocolate" com CNV</h1>
+  <p>4 pilares da Comunicação Não Violenta para um feedback educativo e afetuoso</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#fb923c">Os 4 Pilares da CNV:</strong> <strong>1. Observação Neutra</strong> (fato, sem julgamento) → <strong>2. Sentimento & Acolhimento</strong> (clima seguro) → <strong>3. Necessidade do Processo</strong> (propósito) → <strong>4. Pedido & Auxiliares</strong> (ação futura). Use "E", "Quando", "Sei" no lugar de "Mas", "Tentar", "Não".</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome (líder)</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Recepção T2"></div>
+  </div>
+  <div class="campo-contexto">
+    <label>📌 Contexto do Feedback</label>
+    <input type="text" id="contexto" placeholder="Ex: Guias do convênio X sem autorização prévia na última terça-feira...">
+  </div>
+  <div class="cnv-wrap">
+    <div class="cnv-row c1">
+      <div class="cnv-label"><span class="num">1</span><span class="nome">Observação<br>Neutra</span></div>
+      <div class="cnv-content">
+        <p class="dica"><strong>Descreva o fato específico</strong> — sem julgamentos, rótulos ou generalizações. Ex: "Na última terça-feira, identificamos que nas guias do convênio X..."</p>
+        <textarea id="cnv1" placeholder="Na [data/situação específica], identificamos que [fato observável e concreto, sem adjetivos ou rótulos]..."></textarea>
+      </div>
+    </div>
+    <div class="cnv-row c2">
+      <div class="cnv-label"><span class="num">2</span><span class="nome">Sentimento<br>& Acolhimento</span></div>
+      <div class="cnv-content">
+        <p class="dica"><strong>Crie o clima de parceria e escuta ativa</strong> — sem postura policialesca. Ex: "Compreendo a correria do atendimento, e meu objetivo é apoiar você..."</p>
+        <textarea id="cnv2" placeholder="Compreendo [reconhecer a dificuldade do colaborador], e meu objetivo aqui é [apoio, parceria, não punição]..."></textarea>
+      </div>
+    </div>
+    <div class="cnv-row c3">
+      <div class="cnv-label"><span class="num">3</span><span class="nome">Necessidade<br>do Processo</span></div>
+      <div class="cnv-content">
+        <p class="dica"><strong>Explique a necessidade operacional</strong> e o impacto no paciente/hospital. Conecte ao propósito maior.</p>
+        <textarea id="cnv3" placeholder="Precisamos [necessidade operacional] para garantir [impacto no paciente do CBCO / resultado do setor]..."></textarea>
+      </div>
+    </div>
+    <div class="cnv-row c4">
+      <div class="cnv-label"><span class="num">4</span><span class="nome">Pedido<br>& Auxiliares</span></div>
+      <div class="cnv-content">
+        <p class="dica"><strong>Use auxiliares linguísticos</strong>: "E", "Quando" (evite "Mas", "Tentar"). Termine com uma <strong>pergunta poderosa</strong>.</p>
+        <textarea id="cnv4" placeholder="Quando fizermos [nova rotina], [benefício concreto]. E para garantir isso, como podemos ajustar [processo específico]?"></textarea>
+      </div>
+    </div>
+  </div>
+  <button class="btn-enviar" onclick="enviar()">Enviar Roteiro →</button>
+  <div class="msg-ok" id="msg-ok">✓ Roteiro salvo com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db;
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  const cnv={
+    contexto:document.getElementById('contexto').value.trim(),
+    observacao:document.getElementById('cnv1').value.trim(),
+    sentimento:document.getElementById('cnv2').value.trim(),
+    necessidade:document.getElementById('cnv3').value.trim(),
+    pedido:document.getElementById('cnv4').value.trim()
+  };
+  await db.collection('lider_f4_1').add({nome,setor,cnv,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f4_1').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>

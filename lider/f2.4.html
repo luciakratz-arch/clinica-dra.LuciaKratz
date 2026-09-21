@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F2.4 — Plano 5W2H</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#2d1e5f;color:#a78bfa;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #7c3aed;border-radius:12px;margin:24px auto;max-width:680px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:680px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:10px 14px;color:#e2e2e8;font-size:0.88rem;font-family:inherit}
+  .campo textarea{resize:vertical;min-height:72px}
+  .campo input:focus,.campo textarea:focus{outline:none;border-color:#7c3aed}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .dim-card{display:grid;grid-template-columns:80px 1fr;gap:0;border:1px solid #2d2d4e;border-radius:0;margin-top:-1px}
+  .dim-card:first-of-type{border-radius:12px 12px 0 0}
+  .dim-card:last-of-type{border-radius:0 0 12px 12px}
+  .dim-label{background:#1e1030;padding:16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #2d2d4e}
+  .dim-label .sigla{font-size:1rem;font-weight:800;color:#a78bfa}
+  .dim-label .nome{font-size:0.6rem;color:#6b6b8a;text-align:center;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+  .dim-content{padding:12px 16px;background:#161628}
+  .dim-content label{display:block;font-size:0.75rem;color:#8888a8;margin-bottom:6px}
+  .dim-content textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:10px 12px;color:#e2e2e8;font-size:0.85rem;resize:vertical;min-height:56px;font-family:inherit}
+  .dim-content textarea:focus{outline:none;border-color:#7c3aed}
+  .plano-wrap{border-radius:12px;overflow:hidden;border:1px solid #2d2d4e;margin-bottom:24px}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 2 · Formulário 2.4</div>
+  <h1>Plano Individual de Ação 5W2H</h1>
+  <p>Estruture 1 ação prioritária de liderança para implementar no seu setor esta semana</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#a78bfa">5W2H:</strong> What (o quê) · Why (por quê) · Who (quem) · When (quando) · Where (onde) · How (como) · How Much (quanto custa). Seja específico — datas vagas não funcionam!</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Cadastro T2"></div>
+  </div>
+  <div class="plano-wrap">
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">WHAT</span><span class="nome">O que fazer?</span></div>
+      <div class="dim-content"><label>Descrição clara e objetiva da ação de liderança</label><textarea id="what" placeholder="Ex: Implantar checklist digital de verificação de guias antes do envio ao convênio..."></textarea></div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">WHY</span><span class="nome">Por quê?</span></div>
+      <div class="dim-content"><label>Justificativa e impacto esperado no setor e no paciente do CBCO</label><textarea id="why" placeholder="Ex: Reduzir em 80% as glosas por erro de autorização e garantir o agendamento do exame..."></textarea></div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">WHO</span><span class="nome">Quem fará?</span></div>
+      <div class="dim-content"><label>Responsável direto e equipe envolvida</label><textarea id="who" placeholder="Ex: Eu (gestor) + atendente sênior Maria para treinar a equipe..."></textarea></div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">WHEN</span><span class="nome">Quando?</span></div>
+      <div class="dim-content"><label>Data de início e prazo final de execução (evitar datas vagas!)</label><textarea id="when" placeholder="Ex: Início: segunda-feira 23/09 | Prazo: 30/09/2026 com revisão semanal..."></textarea></div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">WHERE</span><span class="nome">Onde?</span></div>
+      <div class="dim-content"><label>Setor/Unidade específica de aplicação</label><textarea id="where" placeholder="Ex: Recepção T2 — balcão de cadastro e agendamento..."></textarea></div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">HOW</span><span class="nome">Como?</span></div>
+      <div class="dim-content"><label>Metodologia, passo a passo e ferramentas</label><textarea id="how" placeholder="Ex: 1) Criar formulário Google; 2) Treinar equipe em 20 min na segunda; 3) Checar resultados semanalmente..."></textarea></div>
+    </div>
+    <div class="dim-card">
+      <div class="dim-label"><span class="sigla">HOW<br>MUCH</span><span class="nome">Recursos?</span></div>
+      <div class="dim-content"><label>Custo financeiro, esforço ou apoio necessário</label><textarea id="howmuch" placeholder="Ex: Sem custo financeiro. Preciso de 1h do meu tempo + aprovação da coordenação..."></textarea></div>
+    </div>
+  </div>
+  <button class="btn-enviar" onclick="enviar()">Enviar Plano de Ação →</button>
+  <div class="msg-ok" id="msg-ok">✓ Plano enviado com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db;
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  const w=document.getElementById('what').value.trim();
+  if(!w){alert('Preencha pelo menos o campo WHAT (O que fazer?).');return;}
+  const plano={
+    what:w,why:document.getElementById('why').value.trim(),
+    who:document.getElementById('who').value.trim(),
+    when:document.getElementById('when').value.trim(),
+    where:document.getElementById('where').value.trim(),
+    how:document.getElementById('how').value.trim(),
+    how_much:document.getElementById('howmuch').value.trim()
+  };
+  await db.collection('lider_f2_4').add({nome,setor,plano,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f2_4').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>

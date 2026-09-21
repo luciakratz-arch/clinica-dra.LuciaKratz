@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F3.1 — Herzberg no Hospital</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
+  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
+  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+  .badge{display:inline-block;background:#1e4a3a;color:#34d399;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
+  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
+  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #34d399;border-radius:12px;margin:24px auto;max-width:740px;padding:14px 18px}
+  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
+  main{max-width:740px;margin:0 auto;padding:0 20px 40px}
+  .campo{margin-bottom:10px}
+  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
+  .campo textarea{resize:vertical;min-height:72px}
+  .campo input:focus,.campo textarea:focus{outline:none;border-color:#34d399}
+  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .teoria{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .teoria-box{border-radius:10px;padding:14px;border:1px solid}
+  .teoria-box.hig{background:#161a1f;border-color:#1e3a5f}
+  .teoria-box.mot{background:#111a16;border-color:#064e3b}
+  .teoria-box h4{font-size:0.8rem;font-weight:700;margin-bottom:6px}
+  .hig h4{color:#93c5fd}
+  .mot h4{color:#6ee7b7}
+  .teoria-box p{font-size:0.75rem;color:#8888a8;line-height:1.5}
+  .setor-card{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
+  .setor-card h4{font-size:0.82rem;color:#34d399;margin-bottom:12px;font-weight:700}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .col-hig textarea,.col-hig input{border-color:#1e3a5f}
+  .col-hig textarea:focus,.col-hig input:focus{border-color:#3b82f6}
+  .col-mot textarea,.col-mot input{border-color:#064e3b}
+  .col-mot textarea:focus,.col-mot input:focus{border-color:#10b981}
+  .col-hig label{color:#93c5fd!important}
+  .col-mot label{color:#6ee7b7!important}
+  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
+  .btn-add:hover{border-color:#34d399;color:#6ee7b7}
+  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
+  .btn-enviar:hover{opacity:0.9}
+  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="hub.html">← Voltar ao Hub</a>
+  <div class="badge">Workshop 3 · Formulário 3.1</div>
+  <h1>Painel de Classificação de Herzberg no Hospital</h1>
+  <p>Mapeie fatores higiênicos e motivadores do seu setor administrativo</p>
+</header>
+<div class="instr">
+  <p><strong style="color:#34d399">Teoria de Herzberg:</strong> <strong>Fatores Higiênicos</strong> apenas evitam reclamação (salário, ambiente). <strong>Fatores Motivadores</strong> são os que realmente engajam e geram orgulho de trabalhar no CBCO (propósito, reconhecimento).</p>
+</div>
+<main>
+  <div class="campos-topo">
+    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
+    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Faturamento T2"></div>
+  </div>
+  <div class="teoria">
+    <div class="teoria-box hig">
+      <h4>🔵 Fatores Higiênicos (Manutenção)</h4>
+      <p>Salário, condições físicas, segurança, relacionamento com colegas. Evitam insatisfação, mas não motivam. Sem eles → desmotivação.</p>
+    </div>
+    <div class="teoria-box mot">
+      <h4>🟢 Fatores Motivadores (Crescimento)</h4>
+      <p>Reconhecimento, realização, responsabilidade, crescimento, propósito. Estes sim geram engajamento real e orgulho.</p>
+    </div>
+  </div>
+  <div id="setores">
+    <div class="setor-card">
+      <h4>Setor / Grupo analisado</h4>
+      <div class="campo"><label>Identifique o grupo ou setor</label><input class="nome-setor" type="text" placeholder="Ex: Equipe de Recepção e Cadastro"></div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="col-hig">
+          <div class="campo"><label>🔵 Fatores Higiênicos (Ambiente e Suporte)</label><textarea class="fator-hig" placeholder="Ex: Sistema de agendamento sem queda, estação ergonômica, salário em dia..."></textarea></div>
+        </div>
+        <div class="col-mot">
+          <div class="campo"><label>🟢 Fatores Motivadores (Propósito e Reconhecimento)</label><textarea class="fator-mot" placeholder="Ex: Elogio público por agilidade, saber que seu cadastro rápido salvou a visão do paciente..."></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div class="setor-card">
+      <h4>Setor / Grupo 2 (opcional)</h4>
+      <div class="campo"><label>Grupo ou setor</label><input class="nome-setor" type="text" placeholder="Ex: Equipe de Call Center..."></div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="col-hig"><div class="campo"><label>🔵 Fatores Higiênicos</label><textarea class="fator-hig" placeholder="..."></textarea></div></div>
+        <div class="col-mot"><div class="campo"><label>🟢 Fatores Motivadores</label><textarea class="fator-mot" placeholder="..."></textarea></div></div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-add" onclick="addSetor()">+ Adicionar setor</button>
+  <button class="btn-enviar" onclick="enviar()">Enviar Painel →</button>
+  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+var db,cnt=2;
+function addSetor(){
+  cnt++;
+  const d=document.createElement('div');d.className='setor-card';
+  d.innerHTML=`<h4>Setor / Grupo ${cnt}</h4>
+  <div class="campo"><label>Grupo</label><input class="nome-setor" type="text" placeholder="..."></div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="col-hig"><div class="campo"><label>🔵 Fatores Higiênicos</label><textarea class="fator-hig" placeholder="..."></textarea></div></div>
+    <div class="col-mot"><div class="campo"><label>🟢 Fatores Motivadores</label><textarea class="fator-mot" placeholder="..."></textarea></div></div>
+  </div>`;
+  document.getElementById('setores').appendChild(d);
+}
+async function enviar(){
+  const nome=document.getElementById('nome').value.trim();
+  const setor=document.getElementById('setor').value.trim();
+  if(!nome){alert('Informe seu nome.');return;}
+  const setores=[];
+  document.querySelectorAll('.setor-card').forEach(card=>{
+    const ns=card.querySelector('.nome-setor').value.trim();
+    const h=card.querySelector('.fator-hig').value.trim();
+    const m=card.querySelector('.fator-mot').value.trim();
+    if(ns||h||m) setores.push({grupo:ns,higienicos:h,motivadores:m});
+  });
+  if(!setores.length){alert('Preencha pelo menos um setor.');return;}
+  await db.collection('lider_f3_1').add({nome,setor,setores,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await db.doc('lider_agregados/f3_1').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+}
+window.onload=function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db=firebase.firestore();
+};
+</script>
+</body>
+</html>
