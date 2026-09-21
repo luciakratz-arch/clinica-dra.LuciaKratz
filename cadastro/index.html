@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Cadastro de Aluno — Dra. Lucia Kratz</title>
+<title>Cadastro de Paciente — Dra. Lucia Kratz</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -38,13 +38,13 @@ input:focus,select:focus{border-color:#7B00C4}
 <div class="card" id="app">
   <div class="logo">
     <div class="logo-name">Dra. Lucia Kratz</div>
-    <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora · Supervisão Clínica</div>
+    <div class="logo-sub">CRP 09/20590 · Psicóloga Doutora · TCC · Neuromodulação · Musicoterapia</div>
   </div>
   <div id="form-area">
-    <h2>🎓 Cadastro de Aluno/Estagiário</h2>
+    <h2>🦋 Cadastro de Paciente</h2>
     <div class="subtitle">
-      Preencha seus dados para solicitar acesso ao Portal de Supervisão Clínica.
-      Após o cadastro, a Dra. Lucia aprovará seu acesso.
+      Preencha seus dados para agilizar seu atendimento.
+      As informações ficam disponíveis com segurança para a sua psicóloga.
     </div>
     <div id="erro" class="erro" style="display:none"></div>
     <div class="form-group">
@@ -57,22 +57,28 @@ input:focus,select:focus{border-color:#7B00C4}
     </div>
     <div class="grid">
       <div class="form-group">
-        <label>Instituição de Ensino *</label>
-        <input id="instituicao" value="FACUNICAMPS" placeholder="Ex: FACUNICAMPS, PUC-GO..."/>
+        <label>Telefone / WhatsApp *</label>
+        <input id="telefone" type="tel" placeholder="(62) 99999-9999"/>
       </div>
       <div class="form-group">
-        <label>Curso *</label>
-        <input id="curso" value="Psicologia" placeholder="Ex: Psicologia"/>
+        <label>Data de Nascimento <span class="optional">(opcional)</span></label>
+        <input id="dataNascimento" type="date"/>
       </div>
     </div>
     <div class="grid">
       <div class="form-group">
-        <label>Semestre/Período <span class="optional">(opcional)</span></label>
-        <input id="semestre" placeholder="Ex: 8º período"/>
+        <label>Gênero <span class="optional">(opcional)</span></label>
+        <select id="genero">
+          <option value="">Selecione</option>
+          <option value="Feminino">Feminino</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Não-binário">Não-binário</option>
+          <option value="Não informar">Prefiro não informar</option>
+        </select>
       </div>
       <div class="form-group">
-        <label>Telefone <span class="optional">(opcional)</span></label>
-        <input id="telefone2" type="tel" placeholder="(62) 99999-9999"/>
+        <label>CPF <span class="optional">(opcional)</span></label>
+        <input id="cpf" placeholder="000.000.000-00"/>
       </div>
     </div>
     <div class="form-group">
@@ -83,28 +89,25 @@ input:focus,select:focus{border-color:#7B00C4}
       <label>Confirme a Senha *</label>
       <input id="senha2" type="password" placeholder="Repita a senha"/>
     </div>
-    <button class="btn" id="btnSalvar" onclick="salvar()">Solicitar Acesso</button>
+    <button class="btn" id="btnSalvar" onclick="salvar()">Enviar Cadastro</button>
     <div class="info">
-      🔒 Após o envio, sua solicitação ficará <strong>pendente de aprovação</strong>.
-      Você receberá o acesso assim que a supervisora ativar sua conta.
+      🔒 Seus dados são confidenciais e ficam disponíveis apenas para a Dra. Lucia Kratz.
     </div>
   </div>
   <div id="sucesso" class="success" style="display:none">
-    <div class="success-icon">🎓</div>
+    <div class="success-icon">🦋</div>
     <div class="success-title">Cadastro enviado com sucesso!</div>
     <div class="success-msg">
-      Sua solicitação está <strong>pendente de aprovação</strong>.<br/>
-      A Dra. Lucia irá analisar e ativar seu acesso em breve.<br/><br/>
+      Obrigada! Seus dados já estão disponíveis para a Dra. Lucia.<br/><br/>
       <div style="background:#f5f3ff;border-radius:12px;padding:16px;text-align:left;margin:16px 0;font-size:13px;line-height:1.8">
-        <strong style="color:#5b21b6;font-size:14px">📋 Como acessar quando aprovado:</strong><br/><br/>
-        1. Aguarde o e-mail de aprovação no seu endereço cadastrado<br/>
-        2. Acesse o portal abaixo<br/>
-        3. Clique em <strong>Aluno/Estagiário</strong><br/>
-        4. Digite seu <strong>e-mail</strong> e a <strong>senha</strong> que você criou agora<br/>
-        5. Dentro do portal, você pode trocar a senha em <strong>Minha Conta</strong>
+        <strong style="color:#5b21b6;font-size:14px">📋 Como acessar o portal do paciente:</strong><br/><br/>
+        1. Acesse o portal pelo link abaixo<br/>
+        2. Clique em <strong>Paciente</strong><br/>
+        3. Digite seu <strong>nome</strong> e a <strong>senha</strong> que você criou agora<br/>
+        4. Dentro do portal, você pode trocar a senha em <strong>Minha Conta</strong>
       </div>
       <a href="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/" style="display:inline-block;background:#7B00C4;color:white;padding:12px 24px;border-radius:10px;font-weight:600;text-decoration:none;margin-top:4px">
-        Acessar Portal de Supervisão →
+        Acessar Portal do Paciente →
       </a>
     </div>
   </div>
@@ -121,21 +124,23 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+const MOD1_PADRAO = {mod1:{ativo:true,ferramentas:{humor:{ativo:true,dataInicio:new Date().toISOString().slice(0,10)},metas:{ativo:true,dataInicio:new Date().toISOString().slice(0,10)},diario:{ativo:true,dataInicio:new Date().toISOString().slice(0,10)}}}};
+
 async function salvar(){
   const nome = document.getElementById("nome").value.trim();
   const email = document.getElementById("email").value.trim();
-  const telefone = (document.getElementById("telefone2")||{value:""}).value.trim();
-  const instituicao = document.getElementById("instituicao").value.trim();
-  const curso = document.getElementById("curso").value.trim();
-  const semestre = document.getElementById("semestre").value.trim();
+  const telefone = document.getElementById("telefone").value.trim();
+  const dataNascimento = document.getElementById("dataNascimento").value;
+  const genero = document.getElementById("genero").value;
+  const cpf = document.getElementById("cpf").value.trim();
   const senha = document.getElementById("senha").value;
   const senha2 = document.getElementById("senha2").value;
   const erro = document.getElementById("erro");
 
   erro.style.display="none";
 
-  if(!nome||!email||!instituicao||!curso){
-    erro.textContent="Preencha os campos obrigatórios: nome, e-mail, instituição e curso.";
+  if(!nome||!email||!telefone){
+    erro.textContent="Preencha os campos obrigatórios: nome, e-mail e telefone.";
     erro.style.display="block"; return;
   }
   if(!senha||senha.length<4){
@@ -148,9 +153,8 @@ async function salvar(){
   }
 
   // Verifica se e-mail já existe
-  const snap = await db.collection("clinica_alunos").get();
-  const jaExiste = snap.docs.find(d=>(d.data().email||"").toLowerCase()===email.toLowerCase());
-  if(jaExiste){
+  const snap = await db.collection("clinica_pacientes").where("email","==",email).get();
+  if(!snap.empty){
     erro.textContent="Este e-mail já está cadastrado. Se você já tem conta, acesse o portal diretamente.";
     erro.style.display="block"; return;
   }
@@ -159,64 +163,15 @@ async function salvar(){
   document.getElementById("btnSalvar").textContent="Enviando...";
 
   try{
-    await db.collection("clinica_alunos").add({
-      nome, email, telefone, instituicao, curso, semestre, senha,
+    await db.collection("clinica_pacientes").add({
+      nome, email, telefone, dataNascimento, genero, cpf, senha,
       status: "pendente",
       origemCadastro: "auto-cadastro",
+      modulosConfig: MOD1_PADRAO,
+      modulosAtivos: ["mod1"],
+      objetivosTerapeuticos: "",
+      observacoesClinicas: "",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Email automático via Firebase Trigger Email
-    await db.collection("clinica_emails").add({
-      to: email,
-      message: {
-        subject: "🎓 Solicitação de acesso recebida — Supervisão Clínica Dra. Lucia Kratz",
-        html: `<!DOCTYPE html>
-<html lang="pt-BR">
-<head><meta charset="UTF-8"/></head>
-<body style="margin:0;padding:0;background:#F5F0FF;font-family:Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0FF;padding:32px 0;">
-  <tr><td align="center">
-  <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-    <tr><td style="background:#7B00C4;border-radius:12px 12px 0 0;padding:28px 40px;text-align:center;">
-      <div style="font-family:'Dancing Script',Georgia,cursive;font-size:26px;color:#fff;font-weight:700;">Dra. Lucia Kratz</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase;">CRP 09/20590 · Supervisão Clínica</div>
-    </td></tr>
-    <tr><td style="background:#ffffff;padding:36px 40px;">
-      <p style="font-size:15px;color:#1f2937;line-height:1.7;margin:0 0 16px;">Olá, <strong>${nome}</strong>! 👋</p>
-      <p style="font-size:15px;color:#1f2937;line-height:1.7;margin:0 0 20px;">
-        Recebemos sua solicitação de acesso ao <strong>Portal de Supervisão Clínica</strong>.
-        Assim que a Dra. Lucia analisar e aprovar seu cadastro, você receberá outro e-mail com a confirmação.
-      </p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff;border-radius:10px;margin-bottom:24px;">
-        <tr><td style="padding:18px 22px;">
-          <div style="font-weight:700;font-size:13px;color:#3d006a;margin-bottom:8px;">📋 Seus dados cadastrados:</div>
-          <div style="font-size:13px;color:#4b5563;line-height:1.8;">
-            <b>Nome:</b> ${nome}<br/>
-            <b>E-mail:</b> ${email}<br/>
-            <b>Instituição:</b> ${instituicao}<br/>
-            <b>Curso:</b> ${curso}<br/>
-            ${semestre ? '<b>Período:</b> ' + semestre + '<br/>' : ''}
-          </div>
-        </td></tr>
-      </table>
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef3c7;border-left:4px solid #d97706;border-radius:0 8px 8px 0;margin-bottom:28px;">
-        <tr><td style="padding:14px 18px;">
-          <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
-            ⏳ Sua conta está <strong>pendente de aprovação</strong>. Você receberá um e-mail assim que for liberada.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-    <tr><td style="background:#f9f5ff;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;">Dra. Lucia Kratz · CRP 09/20590 · Goiânia, GO 🦋</p>
-    </td></tr>
-  </table>
-  </td></tr>
-</table>
-</body>
-</html>`
-      }
     });
 
     document.getElementById("form-area").style.display="none";
@@ -225,7 +180,7 @@ async function salvar(){
     erro.textContent="Erro ao salvar. Tente novamente.";
     erro.style.display="block";
     document.getElementById("btnSalvar").disabled=false;
-    document.getElementById("btnSalvar").textContent="Solicitar Acesso";
+    document.getElementById("btnSalvar").textContent="Enviar Cadastro";
   }
 }
 </script>
