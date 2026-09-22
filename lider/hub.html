@@ -31,11 +31,16 @@ main{max-width:940px;margin:0 auto;padding:36px 20px}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
 
 /* CARD BASE */
-.card{background:#fff;border-radius:14px;padding:18px;border:1.5px solid #e2e8f0;text-decoration:none;display:block;transition:box-shadow 0.18s,border-color 0.18s,transform 0.15s;position:relative}
+.card{background:#fff;border-radius:14px;padding:18px;border:1.5px solid #e2e8f0;display:block;transition:box-shadow 0.18s,border-color 0.18s,transform 0.15s;position:relative}
 .card:hover{transform:translateY(-2px)}
 .badge{font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;margin-bottom:8px;letter-spacing:0.04em}
-.card-title{font-size:0.92rem;font-weight:700;color:#1a2e1a;margin-bottom:4px;line-height:1.3}
-.card-desc{font-size:0.8rem;color:#4b5563;line-height:1.4}
+.card-title{font-size:0.92rem;font-weight:700;color:#1a2e1a;margin-bottom:4px;line-height:1.3;text-decoration:none;display:block}
+.card-title:hover{text-decoration:underline}
+.card-desc{font-size:0.8rem;color:#4b5563;line-height:1.4;margin-bottom:12px}
+
+/* WhatsApp button */
+.btn-wa{display:inline-flex;align-items:center;gap:5px;font-size:0.75rem;font-weight:600;color:#15803d;border:1.5px solid #16a34a;background:#f0fdf4;border-radius:8px;padding:5px 11px;cursor:pointer;text-decoration:none;transition:background 0.15s,color 0.15s}
+.btn-wa:hover{background:#16a34a;color:#fff}
 
 /* W1 — Azul */
 .ws1 .ws-title{color:#1d4ed8;border-left:4px solid #3b82f6;background:#eff6ff}
@@ -72,7 +77,7 @@ footer a:hover{text-decoration:underline}
 <header>
   <div class="header-inner">
     <div class="logo-row">
-      <img id="logo-lucia" src="" alt="Dra. Lucia Kratz" style="display:none">
+      <img id="logo-lucia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:block">
       <span id="sep-logos"></span>
       <img id="logo-cbco" src="" alt="Parceiro">
     </div>
@@ -88,21 +93,28 @@ footer a:hover{text-decoration:underline}
   <div class="ws-section ws1">
     <div class="ws-title">Workshop 1 — Liderança 5.0 e as Gerações</div>
     <div class="cards-grid">
-      <a class="card" href="f1.1.html">
+
+      <div class="card">
         <span class="badge">W1 · F1.1</span>
-        <div class="card-title">Esvaziando a Xícara Administrativa</div>
-        <div class="card-desc">Identifique certezas antigas e reprograme-as</div>
-      </a>
-      <a class="card" href="f1.2.html">
+        <a class="card-title" href="f1.1.html">Diagnóstico de Competências do Líder</a>
+        <div class="card-desc">Avalie suas competências de liderança</div>
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Diagn%C3%B3stico%20de%20Compet%C3%AAncias%20do%20L%C3%ADder%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff1.1.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W1 · F1.2</span>
-        <div class="card-title">Matriz de Mapeamento Geracional</div>
+        <a class="card-title" href="f1.2.html">Matriz de Mapeamento Geracional</a>
         <div class="card-desc">Mapeie colaboradores por geração</div>
-      </a>
-      <a class="card" href="f1.3.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Matriz%20de%20Mapeamento%20Geracional%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff1.2.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W1 · F1.3</span>
-        <div class="card-title">A Corda das Soluções</div>
+        <a class="card-title" href="f1.3.html">A Corda das Soluções</a>
         <div class="card-desc">Transforme reclamações em perguntas</div>
-      </a>
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20A%20Corda%20das%20Solu%C3%A7%C3%B5es%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff1.3.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
     </div>
   </div>
 
@@ -110,26 +122,35 @@ footer a:hover{text-decoration:underline}
   <div class="ws-section ws2">
     <div class="ws-title">Workshop 2 — O DNA do Líder</div>
     <div class="cards-grid">
-      <a class="card" href="f2.1.html">
+
+      <div class="card">
         <span class="badge">W2 · F2.1</span>
-        <div class="card-title">⭐ Autodiagnóstico das 15 Características</div>
+        <a class="card-title" href="f2.1.html">Autodiagnóstico das 15 Características</a>
         <div class="card-desc">Avalie e descubra pontos fortes e GAPs</div>
-      </a>
-      <a class="card" href="f2.2.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Autodiagn%C3%B3stico%20das%2015%20Caracter%C3%ADsticas%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff2.1.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W2 · F2.2</span>
-        <div class="card-title">Matriz GUT de Priorização</div>
+        <a class="card-title" href="f2.2.html">Matriz GUT de Priorização</a>
         <div class="card-desc">Priorize gargalos com G×U×T</div>
-      </a>
-      <a class="card" href="f2.3.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Matriz%20GUT%20de%20Prioriza%C3%A7%C3%A3o%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff2.2.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W2 · F2.3</span>
-        <div class="card-title">Perguntas Poderosas O que / Como</div>
+        <a class="card-title" href="f2.3.html">Perguntas Poderosas O que / Como</a>
         <div class="card-desc">Substitua falas limitantes</div>
-      </a>
-      <a class="card" href="f2.4.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Perguntas%20Poderosas%20O%20que%20%2F%20Como%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff2.3.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W2 · F2.4</span>
-        <div class="card-title">Plano de Ação 5W2H</div>
+        <a class="card-title" href="f2.4.html">Plano de Ação 5W2H</a>
         <div class="card-desc">Estruture 1 ação prioritária</div>
-      </a>
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Plano%20de%20A%C3%A7%C3%A3o%205W2H%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff2.4.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
     </div>
   </div>
 
@@ -137,21 +158,28 @@ footer a:hover{text-decoration:underline}
   <div class="ws-section ws3">
     <div class="ws-title">Workshop 3 — Motivação na Liderança 5.0</div>
     <div class="cards-grid">
-      <a class="card" href="f3.1.html">
+
+      <div class="card">
         <span class="badge">W3 · F3.1</span>
-        <div class="card-title">Painel de Herzberg no Hospital</div>
+        <a class="card-title" href="f3.1.html">Painel de Herzberg no Hospital</a>
         <div class="card-desc">Fatores higiênicos e motivadores</div>
-      </a>
-      <a class="card" href="f3.2.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Painel%20de%20Herzberg%20no%20Hospital%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff3.1.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W3 · F3.2</span>
-        <div class="card-title">Oficina Machado Afiado</div>
+        <a class="card-title" href="f3.2.html">Oficina Machado Afiado</a>
         <div class="card-desc">Identifique ineficiências</div>
-      </a>
-      <a class="card" href="f3.3.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Oficina%20Machado%20Afiado%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff3.2.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W3 · F3.3</span>
-        <div class="card-title">Ciclo PDCA + Triângulo do Hábito</div>
+        <a class="card-title" href="f3.3.html">Ciclo PDCA + Triângulo do Hábito</a>
         <div class="card-desc">Gargalo real com hábitos</div>
-      </a>
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Ciclo%20PDCA%20%2B%20Tri%C3%A2ngulo%20do%20H%C3%A1bito%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff3.3.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
     </div>
   </div>
 
@@ -159,16 +187,21 @@ footer a:hover{text-decoration:underline}
   <div class="ws-section ws4">
     <div class="ws-title">Workshop 4 — Feedback e CNV</div>
     <div class="cards-grid">
-      <a class="card" href="f4.1.html">
+
+      <div class="card">
         <span class="badge">W4 · F4.1</span>
-        <div class="card-title">Feedback 'Bolo de Chocolate' + CNV</div>
+        <a class="card-title" href="f4.1.html">Feedback 'Bolo de Chocolate' + CNV</a>
         <div class="card-desc">4 pilares da CNV</div>
-      </a>
-      <a class="card" href="f4.2.html">
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Feedback%20%27Bolo%20de%20Chocolate%27%20%2B%20CNV%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff4.1.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
+      <div class="card">
         <span class="badge">W4 · F4.2</span>
-        <div class="card-title">Checklist de Feedback + Psicogeografia</div>
+        <a class="card-title" href="f4.2.html">Checklist de Feedback + Psicogeografia</a>
         <div class="card-desc">Regras invioláveis</div>
-      </a>
+        <a class="btn-wa" href="https://wa.me/?text=Acesse%20a%20atividade%20Checklist%20de%20Feedback%20%2B%20Psicogeografia%20do%20Workshop%20L%C3%ADd%40r%205.0%3A%20https%3A%2F%2Fluciakratz-arch.github.io%2Fclinica-dra.LuciaKratz%2Flider%2Ff4.2.html" target="_blank">📲 Enviar pelo WhatsApp</a>
+      </div>
+
     </div>
   </div>
 
@@ -236,11 +269,6 @@ function initVoz(){
 }
 
 window.onload = function(){
-  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
-
-  var el = document.getElementById('logo-lucia');
-  if(el){ el.src = LOGO_LUCIA; el.style.display='block'; }
-
   if(!firebase.apps.length){
     firebase.initializeApp({
       apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
