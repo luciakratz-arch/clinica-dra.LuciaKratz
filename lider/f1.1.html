@@ -56,9 +56,38 @@
   .item-select{flex-shrink:0;width:74px}
   select.item-select{padding:7px 6px;font-size:13px;font-weight:600;text-align:center;cursor:pointer}
 
+  /* RESULTADO */
+  .resultado-box{background:#fff;border:2px solid #16a34a;border-radius:14px;padding:24px;margin-bottom:20px;text-align:center}
+  .resultado-titulo{font-size:12px;font-weight:700;color:#166534;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+  .resultado-pontos{font-size:2.8rem;font-weight:800;color:#14532d;line-height:1}
+  .resultado-maximo{font-size:14px;color:#6b7280;margin-top:4px;margin-bottom:16px}
+  .resultado-cat{display:inline-block;font-size:1rem;font-weight:700;padding:8px 24px;border-radius:30px;margin-bottom:16px}
+  .cat-excelente{background:#d1fae5;color:#14532d;border:2px solid #16a34a}
+  .cat-bom{background:#dbeafe;color:#1d4ed8;border:2px solid #3b82f6}
+  .cat-mediano{background:#fef9c3;color:#854d0e;border:2px solid #eab308}
+  .cat-deficiente{background:#fee2e2;color:#b91c1c;border:2px solid #ef4444}
+  .resultado-barra-wrap{background:#f0fdf4;border-radius:30px;height:12px;overflow:hidden;margin:0 auto;max-width:400px}
+  .resultado-barra{height:100%;border-radius:30px;background:linear-gradient(90deg,#16a34a,#4ade80);transition:width .6s ease}
+  .resultado-dims{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;text-align:left}
+  @media(max-width:520px){.resultado-dims{grid-template-columns:1fr 1fr}}
+  .dim-mini{background:#f0fdf4;border-radius:8px;padding:8px 10px}
+  .dim-mini-nome{font-size:10px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+  .dim-mini-pts{font-size:1rem;font-weight:700;color:#14532d}
+  .dim-mini-max{font-size:10px;color:#6b7280}
+
   /* REFLECTION */
   .reflect-title{font-size:14px;font-weight:600;color:#14532d;margin-bottom:8px}
   .reflect-group{margin-bottom:16px}
+
+  /* METAS */
+  .meta-row{display:flex;flex-direction:column;gap:6px;background:#f8fff8;border:1.5px solid #d1fae5;border-radius:10px;padding:12px;margin-bottom:10px}
+  .meta-txt{width:100%;font-family:'Inter',sans-serif;font-size:14px;color:#1a2e1a;background:#fff;border:1.5px solid #bbf7d0;border-radius:8px;padding:9px 36px 9px 12px;outline:none}
+  .meta-txt:focus{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+  .meta-datas{display:flex;gap:10px}
+  .meta-data-campo{display:flex;flex-direction:column;gap:3px;flex:1}
+  .meta-data-campo label{font-size:11px;font-weight:600;color:#166534;letter-spacing:.03em}
+  .meta-data-campo input[type=date]{width:100%;font-family:'Inter',sans-serif;font-size:13px;color:#1a2e1a;background:#fff;border:1.5px solid #bbf7d0;border-radius:8px;padding:7px 10px;outline:none;cursor:pointer}
+  .meta-data-campo input[type=date]:focus{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12)}
 
   /* SAVE BTN */
   .btn-save{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(22,163,74,.3)}
@@ -71,6 +100,9 @@
 
   /* DIM SCORES */
   .dim-score{font-size:12px;font-weight:600;color:#16a34a;margin-left:auto}
+
+  /* DIM DESCRIPTION */
+  .dim-desc{font-size:13px;color:#4b7c4b;line-height:1.55;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 8px 8px 0;padding:9px 13px;margin-bottom:16px}
 </style>
 </head>
 <body>
@@ -106,7 +138,7 @@
     <div class="grid2">
       <div>
         <label for="nome">Nome completo</label>
-        <input type="text" id="nome" placeholder="Seu nome">
+        <input type="text" id="nome" placeholder="Seu nome" data-voz>
       </div>
       <div>
         <label for="whatsapp">WhatsApp</label>
@@ -114,13 +146,45 @@
       </div>
       <div>
         <label for="cargo">Cargo</label>
-        <input type="text" id="cargo" placeholder="Ex: Gerente de Enfermagem">
+        <input type="text" id="cargo" placeholder="Ex: Gerente de Enfermagem" data-voz>
       </div>
       <div>
         <label for="setor">Setor</label>
-        <input type="text" id="setor" placeholder="Ex: UTI, Pronto-Socorro">
+        <input type="text" id="setor" placeholder="Ex: UTI, Pronto-Socorro" data-voz>
       </div>
     </div>
+  </div>
+
+  <!-- INSTRUÇÃO DE PONTUAÇÃO -->
+  <div class="card" style="border-color:#bbf7d0;background:#f0fdf4">
+    <div class="card-title" style="margin-bottom:10px">📋 Como pontuar cada afirmativa</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#dc2626">0</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">Nunca faço isso</div>
+      </div>
+      <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#ea580c">1</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">Raramente</div>
+      </div>
+      <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#ca8a04">2</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">Às vezes</div>
+      </div>
+      <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#16a34a">3</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">Frequentemente</div>
+      </div>
+      <div style="background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#15803d">4</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">Quase sempre</div>
+      </div>
+      <div style="background:#d1fae5;border:2px solid #16a34a;border-radius:8px;padding:8px 10px;text-align:center">
+        <div style="font-size:1.3rem;font-weight:800;color:#14532d">5</div>
+        <div style="font-size:11px;color:#14532d;font-weight:600;margin-top:2px">Sempre / É meu padrão</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#6b7280;margin-top:10px;text-align:center">Seja honesto(a) — o diagnóstico é seu espelho de crescimento</div>
   </div>
 
   <!-- DIMENSION 1 -->
@@ -399,6 +463,38 @@
     </div>
   </div>
 
+  <!-- RESULTADO DO DIAGNÓSTICO -->
+  <div class="resultado-box" id="resultado-box">
+    <div class="resultado-titulo">📊 Resultado do Diagnóstico</div>
+    <div class="resultado-pontos" id="res-pontos">0</div>
+    <div class="resultado-maximo">de 150 pontos</div>
+    <div class="resultado-cat cat-deficiente" id="res-cat">🔴 Deficiente</div>
+    <div class="resultado-barra-wrap">
+      <div class="resultado-barra" id="res-barra" style="width:0%"></div>
+    </div>
+    <div class="resultado-dims">
+      <div class="dim-mini"><div class="dim-mini-nome">D1 Liderança</div><div><span class="dim-mini-pts" id="rd1">0</span><span class="dim-mini-max"> / 25</span></div></div>
+      <div class="dim-mini"><div class="dim-mini-nome">D2 Desenv. Pessoas</div><div><span class="dim-mini-pts" id="rd2">0</span><span class="dim-mini-max"> / 25</span></div></div>
+      <div class="dim-mini"><div class="dim-mini-nome">D3 Retenção</div><div><span class="dim-mini-pts" id="rd3">0</span><span class="dim-mini-max"> / 25</span></div></div>
+      <div class="dim-mini"><div class="dim-mini-nome">D4 Confiança</div><div><span class="dim-mini-pts" id="rd4">0</span><span class="dim-mini-max"> / 25</span></div></div>
+      <div class="dim-mini"><div class="dim-mini-nome">D5 Delegação</div><div><span class="dim-mini-pts" id="rd5">0</span><span class="dim-mini-max"> / 25</span></div></div>
+      <div class="dim-mini"><div class="dim-mini-nome">D6 Proatividade</div><div><span class="dim-mini-pts" id="rd6">0</span><span class="dim-mini-max"> / 25</span></div></div>
+    </div>
+
+    <!-- descrições aparecem APÓS as respostas -->
+    <div style="margin-top:20px;text-align:left;border-top:1px solid #d1fae5;padding-top:16px">
+      <div style="font-size:11px;font-weight:700;color:#166534;letter-spacing:.07em;text-transform:uppercase;margin-bottom:12px">O que cada dimensão avalia</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#374151;line-height:1.5">
+        <div><strong style="color:#14532d">D1 Liderança:</strong> Visão estratégica, decisões participativas, autonomia da equipe, aprendizado com erros e equilíbrio entre resultados e pessoas.</div>
+        <div><strong style="color:#14532d">D2 Desenvolvimento de Pessoas:</strong> Ensinar, inovar, desafiar o crescimento, valorizar talentos individuais e dar feedback constante.</div>
+        <div><strong style="color:#14532d">D3 Retenção de Talentos:</strong> Reconhecimento genuíno, cuidado com as pessoas, promoção de crescimento e valorização do aprendizado pelo erro.</div>
+        <div><strong style="color:#14532d">D4 Desenvolvimento da Confiança:</strong> Cumprir promessas, comunicar verdades difíceis, ser exemplo, agir com justiça e falar com respeito.</div>
+        <div><strong style="color:#14532d">D5 Delegação:</strong> Soltar tarefas operacionais, escolher a pessoa certa, definir limites claros e estar disponível sem assumir o trabalho do outro.</div>
+        <div><strong style="color:#14532d">D6 Proatividade:</strong> Antecipar problemas, enfrentar desafios com coragem, agir rápido em crises e superar obstáculos com criatividade.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- REFLECTION -->
   <div class="card">
     <div class="card-title">Reflexão e Plano de Ação</div>
@@ -415,7 +511,30 @@
 
     <div class="reflect-group">
       <div class="reflect-title">Metas com datas de realização</div>
-      <textarea id="metas" placeholder="Ex: Implementar feedback semanal até 30/10/2026..."></textarea>
+      <div id="metas-lista">
+        <div class="meta-row">
+          <input type="text" class="meta-txt" placeholder="Descreva a meta..." data-voz>
+          <div class="meta-datas">
+            <div class="meta-data-campo"><label>Início</label><input type="date" class="meta-ini"></div>
+            <div class="meta-data-campo"><label>Término</label><input type="date" class="meta-fim"></div>
+          </div>
+        </div>
+        <div class="meta-row">
+          <input type="text" class="meta-txt" placeholder="Descreva a meta..." data-voz>
+          <div class="meta-datas">
+            <div class="meta-data-campo"><label>Início</label><input type="date" class="meta-ini"></div>
+            <div class="meta-data-campo"><label>Término</label><input type="date" class="meta-fim"></div>
+          </div>
+        </div>
+        <div class="meta-row">
+          <input type="text" class="meta-txt" placeholder="Descreva a meta..." data-voz>
+          <div class="meta-datas">
+            <div class="meta-data-campo"><label>Início</label><input type="date" class="meta-ini"></div>
+            <div class="meta-data-campo"><label>Término</label><input type="date" class="meta-fim"></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" onclick="addMeta()" style="margin-top:8px;background:none;border:1.5px dashed #16a34a;color:#16a34a;border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600">+ Adicionar meta</button>
     </div>
   </div>
 
@@ -454,6 +573,38 @@
     return vals;
   }
 
+  function addMeta(){
+    var lista = document.getElementById('metas-lista');
+    var row = document.createElement('div');
+    row.className = 'meta-row';
+    row.innerHTML = '<input type="text" class="meta-txt" placeholder="Descreva a meta..." data-voz><div class="meta-datas"><div class="meta-data-campo"><label>Início</label><input type="date" class="meta-ini"></div><div class="meta-data-campo"><label>Término</label><input type="date" class="meta-fim"></div></div>';
+    lista.appendChild(row);
+    // adiciona voz ao novo campo
+    var inp = row.querySelector('input[data-voz]');
+    if(inp) addVozToField(inp);
+  }
+
+  function coletarMetas(){
+    var metas = [];
+    document.querySelectorAll('#metas-lista .meta-row').forEach(function(row){
+      var txt = row.querySelector('.meta-txt').value.trim();
+      if(!txt) return;
+      metas.push({
+        meta: txt,
+        inicio: row.querySelector('.meta-ini').value || '',
+        termino: row.querySelector('.meta-fim').value || ''
+      });
+    });
+    return metas;
+  }
+
+  function getCatClass(total){
+    if(total>=121) return 'cat-excelente';
+    if(total>=91)  return 'cat-bom';
+    if(total>=61)  return 'cat-mediano';
+    return 'cat-deficiente';
+  }
+
   function calcScore(){
     var total = 0;
     for(var d=1;d<=6;d++){
@@ -461,9 +612,21 @@
       var sub = vals.reduce(function(a,b){return a+b;},0);
       total += sub;
       document.getElementById('dim-score-'+d).textContent = sub+' / 25';
+      var rd = document.getElementById('rd'+d);
+      if(rd) rd.textContent = sub;
     }
     document.getElementById('score-val').textContent = total+' / 150';
     document.getElementById('score-cat').textContent = getCategoria(total);
+    // atualiza bloco resultado
+    var rp = document.getElementById('res-pontos');
+    if(rp) rp.textContent = total;
+    var rc = document.getElementById('res-cat');
+    if(rc){
+      rc.textContent = getCategoria(total);
+      rc.className = 'resultado-cat '+getCatClass(total);
+    }
+    var rb = document.getElementById('res-barra');
+    if(rb) rb.style.width = Math.round(total/150*100)+'%';
     return total;
   }
 
@@ -494,7 +657,7 @@
       categoria: getCategoria(total),
       fortes: document.getElementById('fortes').value,
       melhoria: document.getElementById('melhoria').value,
-      metas: document.getElementById('metas').value,
+      metas: coletarMetas(),
       ts: Date.now()
     };
     try{localStorage.setItem('lider_whatsapp', wraw);}catch(e){}
@@ -503,37 +666,43 @@
       .catch(function(err){showToast('❌ Erro ao salvar: '+err.message);});
   }
 
+  function addVozToField(campo){
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return;
+    var isInput = campo.tagName === 'INPUT';
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:block';
+    campo.parentNode.insertBefore(wrap, campo);
+    wrap.appendChild(campo);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerHTML = '🎙️';
+    btn.title = 'Falar para digitar';
+    btn.style.cssText = 'position:absolute;right:6px;'+(isInput?'top:50%;transform:translateY(-50%)':'bottom:8px')+';background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+    wrap.appendChild(btn);
+    campo.style.paddingRight = '36px';
+    var dot = document.createElement('div');
+    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando...';
+    wrap.appendChild(dot);
+    var rec = null, gravando = false;
+    btn.addEventListener('click', function(){
+      if(gravando){ if(rec) rec.stop(); gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; btn.style.boxShadow='none'; dot.style.display='none'; return; }
+      rec = new SR();
+      rec.lang='pt-BR'; rec.continuous=true; rec.interimResults=true;
+      rec.onresult = function(e){ var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' '); var base = campo.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd(); campo.value = base ? base+' '+t : t; };
+      rec.onerror = function(){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+      rec.start();
+      gravando=true; btn.style.background='#7B00C4'; btn.style.color='white'; btn.style.boxShadow='0 0 0 3px #7B00C430'; dot.style.display='flex';
+    });
+  }
+
   function initVoz(){
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SR) return;
-    document.querySelectorAll('textarea').forEach(function(ta){
-      var wrap = document.createElement('div');
-      wrap.style.cssText = 'position:relative;display:block';
-      ta.parentNode.insertBefore(wrap, ta);
-      wrap.appendChild(ta);
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.innerHTML = '🎙️';
-      btn.title = 'Falar para digitar';
-      btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
-      wrap.appendChild(btn);
-      ta.style.paddingRight = '36px';
-      var dot = document.createElement('div');
-      dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
-      dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
-      wrap.appendChild(dot);
-      var rec = null, gravando = false;
-      btn.addEventListener('click', function(){
-        if(gravando){ if(rec) rec.stop(); gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; btn.style.boxShadow='none'; dot.style.display='none'; return; }
-        rec = new SR();
-        rec.lang='pt-BR'; rec.continuous=true; rec.interimResults=true;
-        rec.onresult = function(e){ var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' '); var base = ta.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd(); ta.value = base ? base+' '+t : t; };
-        rec.onerror = function(){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
-        rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
-        rec.start();
-        gravando=true; btn.style.background='#7B00C4'; btn.style.color='white'; btn.style.boxShadow='0 0 0 3px #7B00C430'; dot.style.display='flex';
-      });
-    });
+    document.querySelectorAll('textarea').forEach(function(ta){ addVozToField(ta); });
+    document.querySelectorAll('input[data-voz]').forEach(function(inp){ addVozToField(inp); });
   }
 
   window.onload = function(){
