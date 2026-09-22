@@ -38,6 +38,12 @@
   .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
   .btn-enviar:hover{opacity:0.9}
   .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
+  .campo-wpp{margin-top:16px;margin-bottom:8px}
+  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
+  .campo-wpp input:focus{outline:none;border-color:#25d366}
+  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
+  .btn-wpp:hover{opacity:0.9}
 </style>
 </head>
 <body>
@@ -91,12 +97,36 @@
     </div>
   </div>
   <button class="btn-add" onclick="addSit()">+ Adicionar situação</button>
+  <div class="campo-wpp">
+    <label>📱 Seu WhatsApp (para receber o resumo)</label>
+    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
+  </div>
   <button class="btn-enviar" onclick="enviar()">Enviar Formulário →</button>
   <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
+  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
+function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
+function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
+function enviarWpp(msg){
+  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
+  if(!raw){alert('Digite seu número de WhatsApp.');return;}
+  const num=raw.startsWith('55')?raw:'55'+raw;
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+}
+function montarMsg(){
+  const nome=document.getElementById('nome').value;
+  const setor=document.getElementById('setor').value;
+  let msg=`✅ F2.3 — Perguntas Poderosas\n👤 ${nome} | ${setor}\n\n`;
+  document.querySelectorAll('.sit-card').forEach((c,i)=>{
+    const fala=c.querySelector('.fala')?.value||'';
+    const pergunta=c.querySelector('.pergunta')?.value||'';
+    if(fala) msg+=`${i+1}. Fala: ${fala.substring(0,80)}\n   Pergunta: ${pergunta.substring(0,80)}\n\n`;
+  });
+  return msg.trim();
+}
 var db,cnt=2;
 function toggleTag(el){el.classList.toggle('sel')}
 function addSit(){
@@ -124,11 +154,13 @@ async function enviar(){
   await db.collection('lider_f2_3').add({nome,setor,situacoes,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
   await db.doc('lider_agregados/f2_3').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
   document.getElementById('msg-ok').style.display='block';
+  document.getElementById('btn-wpp').style.display='block';
   document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
 }
 window.onload=function(){
   firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
   db=firebase.firestore();
+  carregarWpp();
 };
 </script>
 </body>
