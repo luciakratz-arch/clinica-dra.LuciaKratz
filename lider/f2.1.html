@@ -2,248 +2,228 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Autodiagnóstico — 15 Características do Líder 5.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2.1 — Autodiagnóstico das 15 Características</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', sans-serif; background: #0f0f1a; color: #e2e2e8; min-height: 100vh; }
-  header { background: linear-gradient(135deg, #1a0a2e 0%, #16213e 100%); padding: 32px 24px 28px; text-align: center; border-bottom: 1px solid #7c3aed33; }
-  header .back { display: inline-block; color: #a78bfa; font-size: 0.8rem; text-decoration: none; margin-bottom: 12px; }
-  header .badge { display: inline-block; background: #2d1e5f; color: #a78bfa; font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-bottom: 10px; }
-  header h1 { font-size: 1.4rem; font-weight: 800; color: #e2e2e8; }
-  header p { color: #8888a8; font-size: 0.85rem; margin-top: 6px; }
-  .instrucoes { background: #1a1a2e; border: 1px solid #2d2d4e; border-left: 3px solid #7c3aed; border-radius: 12px; margin: 24px auto; max-width: 700px; padding: 16px 20px; }
-  .instrucoes strong { color: #a78bfa; }
-  .instrucoes p { font-size: 0.85rem; color: #a0a0b8; line-height: 1.6; }
-  main { max-width: 700px; margin: 0 auto; padding: 0 20px 40px; }
-  .campo { margin-bottom: 8px; }
-  .campo label { display: block; font-size: 0.82rem; color: #a0a0b8; margin-bottom: 4px; }
-  .campo input { width: 100%; background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 8px; padding: 10px 14px; color: #e2e2e8; font-size: 0.9rem; }
-  .campo input:focus { outline: none; border-color: #7c3aed; }
-  .campos-pessoa { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .card-carac { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; }
-  .card-carac:hover { border-color: #7c3aed55; }
-  .carac-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
-  .carac-num { font-size: 0.75rem; color: #6b6b8a; font-weight: 700; min-width: 24px; }
-  .carac-nome { font-weight: 700; color: #e2e2e8; font-size: 0.95rem; flex: 1; }
-  .carac-desc { font-size: 0.8rem; color: #8888a8; line-height: 1.5; margin-bottom: 14px; }
-  .estrelas { display: flex; gap: 8px; }
-  .estrela-btn { background: none; border: 2px solid #2d2d4e; border-radius: 8px; width: 44px; height: 44px; cursor: pointer; font-size: 1.1rem; color: #4d4d6e; transition: all 0.15s; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 700; font-size: 0.8rem; }
-  .estrela-btn span.num { font-size: 0.9rem; font-weight: 800; }
-  .estrela-btn span.txt { font-size: 0.5rem; color: #6b6b8a; }
-  .estrela-btn:hover { border-color: #7c3aed; color: #a78bfa; }
-  .estrela-btn.ativo { border-color: #7c3aed; background: #2d1e5f; color: #e2e2e8; }
-  .estrela-btn.ativo span.txt { color: #a78bfa; }
-  .legenda-notas { display: flex; gap: 6px; margin-top: 6px; font-size: 0.7rem; color: #6b6b8a; }
-  .legenda-notas span { flex: 1; text-align: center; }
-  .secao-sintese { background: #161628; border: 1px solid #2d2d4e; border-radius: 14px; padding: 20px; margin: 24px 0; }
-  .secao-sintese h3 { color: #c4b5fd; font-size: 0.9rem; margin-bottom: 14px; }
-  .campo-sintese label { display: block; font-size: 0.8rem; color: #a0a0b8; margin-bottom: 4px; }
-  .campo-sintese textarea { width: 100%; background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 8px; padding: 10px 14px; color: #e2e2e8; font-size: 0.88rem; resize: vertical; min-height: 60px; }
-  .campo-sintese textarea:focus { outline: none; border-color: #7c3aed; }
-  .campo-sintese { margin-bottom: 12px; }
-  .btn-enviar { display: block; width: 100%; padding: 16px; background: linear-gradient(135deg, #7c3aed, #6d28d9); border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
-  .btn-enviar:hover { opacity: 0.9; }
-  .msg-ok { display: none; background: #14532d; border: 1px solid #16a34a; border-radius: 12px; padding: 16px; text-align: center; color: #86efac; font-weight: 600; margin-top: 16px; }
-  .resultado-parcial { background: #1e1e3a; border: 1px solid #3d2d6e; border-radius: 12px; padding: 16px; margin-top: 16px; display: none; }
-  .resultado-parcial h4 { color: #c4b5fd; margin-bottom: 10px; font-size: 0.9rem; }
-  .barra-wrap { margin-bottom: 8px; }
-  .barra-label { font-size: 0.75rem; color: #a0a0b8; margin-bottom: 3px; }
-  .barra { height: 8px; background: #2d2d4e; border-radius: 4px; overflow: hidden; }
-  .barra-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 4px; transition: width 0.5s; }
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f4f6f4;color:#1a2e1a;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+.logos{display:flex;align-items:center}
+.container{max-width:780px;margin:0 auto;padding:20px 16px 40px}
+.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.88rem;color:#166534;line-height:1.6}
+.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px #14532d0a}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:540px){.form-row{grid-template-columns:1fr}}
+label{display:block;font-size:0.8rem;font-weight:700;color:#166534;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px}
+input,select,textarea{background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;width:100%;font-size:0.9rem;color:#1a2e1a;font-family:inherit;transition:border-color .2s,box-shadow .2s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+.media-box{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1px solid #86efac;border-radius:10px;padding:14px 18px;text-align:center;margin-bottom:20px;display:none}
+.media-box .valor{font-size:2rem;font-weight:800;color:#14532d}
+.media-box .label{font-size:0.8rem;color:#166534;font-weight:600;margin-top:2px}
+.char-row{display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;align-items:center;margin-bottom:10px;padding:10px;background:#f0fdf4;border-radius:8px;border:1px solid #d1fae5}
+@media(max-width:600px){.char-row{grid-template-columns:1fr;gap:6px}}
+.char-num{font-size:0.72rem;font-weight:700;color:#16a34a;margin-bottom:2px}
+.char-name{font-size:0.88rem;font-weight:700;color:#1a2e1a}
+.char-select select{font-size:0.85rem;text-align:center}
+.char-ev input{font-size:0.82rem}
+.section-title{font-size:1rem;font-weight:800;color:#14532d;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #d1fae5}
+.analise-row{margin-bottom:12px}
+textarea{resize:vertical;min-height:70px}
+.btn-enviar{width:100%;background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:0.3px;transition:opacity .2s}
+.btn-enviar:hover{opacity:0.9}
+.msg{display:none;text-align:center;padding:14px;border-radius:8px;margin-top:12px;font-weight:600}
+.msg.ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 2 · Formulário 2.1</div>
-  <h1>Autodiagnóstico das 15 Características do Líder 5.0</h1>
-  <p>Atribua uma nota de 1 a 5 para cada característica · Individual · 10 min</p>
+<header>
+  <div class="header-top">
+    <div class="logos">
+      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <div style="width:1px;height:32px;background:#ffffff33;margin:0 10px"></div>
+      <img id="logo-cbco" alt="CBCO" style="height:42px;object-fit:contain;display:none">
+    </div>
+    <a class="back" href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
+  </div>
+  <div style="padding:16px 20px 20px;text-align:center">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W2 · F2.1</span>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Autodiagnóstico do Líder 5.0</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Avalie cada característica e descubra seus pontos fortes e GAPs</p>
+  </div>
 </header>
-<div class="instrucoes" data-tema="border-left">
-  <p><strong>Como preencher:</strong> Atribua uma nota de <strong>1</strong> (Necessita Desenvolvimento Urgente) a <strong>5</strong> (Domínio Excelente) para cada característica. Ao final, identifique seus 2 maiores Pontos Fortes e seus 2 maiores GAPs.</p>
+
+<div class="container">
+  <div class="instrucao">
+    Avalie-se em cada uma das 15 características do Líder 5.0, de 1 (preciso desenvolver muito) a 5 (ponto forte consolidado). Ao final, identifique seus 3 maiores pontos fortes e 3 GAPs prioritários.
+  </div>
+
+  <div id="media-box" class="media-box">
+    <div class="valor" id="media-valor">—</div>
+    <div class="label">Média Geral das 15 Características</div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Identificação</div>
+    <div class="form-row">
+      <div><label>Nome do Líder</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
+      <div><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(00) 00000-0000"></div>
+    </div>
+    <div class="form-row">
+      <div><label>Cargo</label><input type="text" id="cargo" placeholder="Seu cargo atual"></div>
+      <div><label>Setor</label><input type="text" id="setor" placeholder="Setor / área"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">As 15 Características do Líder 5.0</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:6px;margin-bottom:8px;padding:0 4px">
+      <span style="font-size:0.72rem;font-weight:700;color:#6b7280;text-transform:uppercase">Característica</span>
+      <span style="font-size:0.72rem;font-weight:700;color:#6b7280;text-transform:uppercase;text-align:center">Nível (1-5)</span>
+      <span style="font-size:0.72rem;font-weight:700;color:#6b7280;text-transform:uppercase">Evidência / Exemplo</span>
+    </div>
+
+    <div id="chars-container"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Minha Análise</div>
+    <div class="analise-row">
+      <label>Meus 3 maiores pontos fortes:</label>
+      <textarea id="pontos_fortes" placeholder="Liste as 3 características onde você se saiu melhor e por quê..."></textarea>
+    </div>
+    <div class="analise-row">
+      <label>Meus 3 GAPs prioritários:</label>
+      <textarea id="gaps" placeholder="Liste as 3 características que mais precisam de desenvolvimento..."></textarea>
+    </div>
+    <div class="analise-row">
+      <label>Meu compromisso de desenvolvimento:</label>
+      <textarea id="compromisso" placeholder="Que ação concreta você vai tomar para desenvolver seus GAPs?"></textarea>
+    </div>
+    <button class="btn-enviar" onclick="enviar()">Enviar Autodiagnóstico</button>
+    <div class="msg" id="msg"></div>
+  </div>
 </div>
-<main>
-  <div class="campos-pessoa">
-    <div class="campo">
-      <label>Seu nome</label>
-      <input type="text" id="nome" placeholder="Nome completo">
-    </div>
-    <div class="campo">
-      <label>Setor / Unidade</label>
-      <input type="text" id="setor" placeholder="Ex: Recepção T2">
-    </div>
-  </div>
-
-  <div id="lista-caracs"></div>
-
-  <div class="resultado-parcial" id="resultado-parcial">
-    <h4>📊 Seu perfil parcial</h4>
-    <div id="barras-resultado"></div>
-  </div>
-
-  <div class="secao-sintese">
-    <h3>📌 Síntese do Autodiagnóstico</h3>
-    <div class="campo-sintese">
-      <label>Meus 2 Maiores Pontos Fortes (características com notas mais altas):</label>
-      <textarea id="pontos-fortes" placeholder="Ex: Empatia e Saber Ouvir..."></textarea>
-    </div>
-    <div class="campo-sintese">
-      <label>Meus 2 Maiores GAPs a Desenvolver (características com notas mais baixas):</label>
-      <textarea id="gaps" placeholder="Ex: Delegação e Planejamento..."></textarea>
-    </div>
-  </div>
-
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
-  </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Autodiagnóstico →</button>
-  <div class="msg-ok" id="msg-ok">✓ Autodiagnóstico enviado com sucesso! Obrigado pela participação.</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="tema.js"></script>
 <script>
-const CARACS = [
-  { nome: "Gostar de Pessoas", desc: "Disponibilidade genuína para servir e promover o crescimento do time." },
-  { nome: "Ter Iniciativa", desc: "Assumir derrotas do setor e dividir as vitórias com a equipe." },
-  { nome: "Domínio do Trabalho", desc: "Conhecer os fluxos técnicos do setor para orientar com autoridade." },
-  { nome: "Ser Exemplo", desc: "Coerência plena entre discurso e prática no dia a dia." },
-  { nome: "Respeito e Confiança", desc: "Transparência total e valorização da meritocracia." },
-  { nome: "Saber Ouvir e Orientar", desc: "Escutar questionamentos antes de tomar decisões corretivas." },
-  { nome: "Empatia", desc: "Compreender valores e dificuldades individuais dos colaboradores." },
-  { nome: "Resiliência e Motivação", desc: "Persistir nos objetivos sem contaminar o ambiente com frustrações." },
-  { nome: "Feedback Educativo", desc: "Focar em fatos concretos e ações futuras, eliminando rótulos." },
-  { nome: "Capacidade de Inspirar", desc: "Mobilizar a equipe em metas desafiadoras no hospital." },
-  { nome: "Inovação", desc: "Buscar novas formas eficazes de realizar tarefas rotineiras." },
-  { nome: "Flexibilidade", desc: "Saber dosar a cobrança firme com a sensibilidade humana." },
-  { nome: "Planejamento", desc: "Organizar rotinas diárias, semanais e mensais com clareza." },
-  { nome: "Saber Delegar", desc: "Distribuir tarefas com clareza e confiar na execução do liderado." },
-  { nome: "Senso de Humor", desc: "Manter o ambiente leve, saudável e livre de clima pesado." }
+var CARACTERISTICAS = [
+  'Autoconhecimento','Inteligência Emocional','Comunicação Assertiva','Escuta Ativa',
+  'Visão Sistêmica','Adaptabilidade','Tomada de Decisão','Desenvolvimento de Pessoas',
+  'Gestão de Conflitos','Foco em Resultados','Inovação e Criatividade','Ética e Integridade',
+  'Colaboração Intergeracional','Resiliência','Propósito e Significado'
 ];
 
-const notas = new Array(15).fill(0);
-
-function renderCaracs() {
-  const el = document.getElementById('lista-caracs');
-  el.innerHTML = CARACS.map((c, i) => `
-    <div class="card-carac">
-      <div class="carac-header">
-        <span class="carac-num">${i+1}.</span>
-        <span class="carac-nome">${c.nome}</span>
-      </div>
-      <p class="carac-desc">${c.desc}</p>
-      <div class="estrelas">
-        ${[1,2,3,4,5].map(n => `
-          <button class="estrela-btn" id="c${i}_n${n}" onclick="nota(${i},${n})">
-            <span class="num">${n}</span>
-          </button>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
+function buildChars(){
+  var c = document.getElementById('chars-container');
+  CARACTERISTICAS.forEach(function(nome,i){
+    var n = i+1;
+    var row = document.createElement('div');
+    row.className = 'char-row';
+    row.innerHTML =
+      '<div><div class="char-num">'+n+'</div><div class="char-name">'+nome+'</div></div>'+
+      '<div class="char-select"><select id="c_'+n+'" onchange="calcMedia()">'+
+        '<option value="">—</option>'+
+        '<option value="1">1 — Início</option>'+
+        '<option value="2">2 — Básico</option>'+
+        '<option value="3">3 — Médio</option>'+
+        '<option value="4">4 — Avançado</option>'+
+        '<option value="5">5 — Forte</option>'+
+      '</select></div>'+
+      '<div class="char-ev"><input type="text" id="ev_'+n+'" placeholder="Evidência ou exemplo..."></div>';
+    c.appendChild(row);
+  });
 }
 
-function nota(ci, n) {
-  notas[ci] = n;
-  for(let x=1; x<=5; x++) {
-    const btn = document.getElementById(`c${ci}_n${x}`);
-    btn.className = 'estrela-btn' + (x <= n ? ' ativo' : '');
+function calcMedia(){
+  var soma=0,count=0;
+  for(var i=1;i<=15;i++){
+    var v=parseInt(document.getElementById('c_'+i).value)||0;
+    if(v>0){soma+=v;count++;}
   }
-  atualizarResultado();
+  var box=document.getElementById('media-box');
+  var mv=document.getElementById('media-valor');
+  if(count>0){
+    box.style.display='block';
+    mv.textContent=(soma/count).toFixed(1);
+  } else {
+    box.style.display='none';
+  }
 }
 
-function atualizarResultado() {
-  const preenchidas = notas.filter(n => n > 0).length;
-  if(preenchidas < 5) return;
-  document.getElementById('resultado-parcial').style.display = 'block';
-  const barras = document.getElementById('barras-resultado');
-  const com_nota = CARACS.map((c,i) => ({nome: c.nome, nota: notas[i]})).filter(x => x.nota > 0);
-  com_nota.sort((a,b) => b.nota - a.nota);
-  barras.innerHTML = com_nota.map(x => `
-    <div class="barra-wrap">
-      <div class="barra-label">${x.nome} — <strong>${x.nota}/5</strong></div>
-      <div class="barra"><div class="barra-fill" style="width:${x.nota*20}%"></div></div>
-    </div>
-  `).join('');
-}
-
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
-}
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  const setor=document.getElementById('setor').value;
-  const preenchidas=notas.filter(n=>n>0).length;
-  const media=(preenchidas>0?(notas.reduce((a,b)=>a+b,0)/preenchidas):0).toFixed(1);
-  let msg=`✅ F2.1 — Autodiagnóstico Líd@r 5.0\n👤 ${nome} | ${setor}\n📊 Média geral: ${media}/5\n\n`;
-  CARACS.forEach((c,i)=>{if(notas[i]>0) msg+=`• ${c.nome}: ${notas[i]}/5\n`;});
-  const fortes=CARACS.filter((_,i)=>notas[i]>=4).map(c=>c.nome);
-  const gaps=CARACS.filter((_,i)=>notas[i]>0&&notas[i]<=2).map(c=>c.nome);
-  if(fortes.length) msg+=`\n💪 Pontos fortes: ${fortes.join(', ')}`;
-  if(gaps.length) msg+=`\n⚠️ GAPs: ${gaps.join(', ')}`;
-  return msg.trim();
-}
-
-var db;
-window.onload = function() {
-  firebase.initializeApp({
-    apiKey: "AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
-    authDomain: "entrevista-inicial.firebaseapp.com",
-    projectId: "entrevista-inicial",
-    storageBucket: "entrevista-inicial.firebasestorage.app",
-    messagingSenderId: "437375609844",
-    appId: "1:437375609844:web:2ed0e16a7da5d46c2e27a1"
-  });
-  db = firebase.firestore();
-  renderCaracs();
-  carregarWpp();
-};
-
-async function enviar() {
-  const nome = document.getElementById('nome').value.trim();
-  const setor = document.getElementById('setor').value.trim();
-  const pontos = document.getElementById('pontos-fortes').value.trim();
-  const gaps = document.getElementById('gaps').value.trim();
-  const preenchidas = notas.filter(n => n > 0).length;
-  if(!nome) { alert('Por favor, informe seu nome.'); return; }
-  if(preenchidas < 10) { alert('Por favor, avalie pelo menos 10 características antes de enviar.'); return; }
-
-  const upd = {
-    total: firebase.firestore.FieldValue.increment(1)
+function enviar(){
+  var nome=document.getElementById('nome').value.trim();
+  var wa=document.getElementById('whatsapp').value.trim();
+  if(!nome||!wa){
+    mostrarMsg('Preencha nome e WhatsApp antes de enviar.','err');
+    return;
+  }
+  var data={
+    nome:nome,
+    whatsapp:wa,
+    cargo:document.getElementById('cargo').value.trim(),
+    setor:document.getElementById('setor').value.trim(),
+    pontos_fortes:document.getElementById('pontos_fortes').value.trim(),
+    gaps:document.getElementById('gaps').value.trim(),
+    compromisso:document.getElementById('compromisso').value.trim(),
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
   };
-  CARACS.forEach((c, i) => {
-    if(notas[i] > 0) {
-      upd[`soma_c${i}`] = firebase.firestore.FieldValue.increment(notas[i]);
-      upd[`count_c${i}`] = firebase.firestore.FieldValue.increment(1);
+  var soma=0,count=0;
+  for(var i=1;i<=15;i++){
+    var v=parseInt(document.getElementById('c_'+i).value)||0;
+    var ev=document.getElementById('ev_'+i).value.trim();
+    var key=CARACTERISTICAS[i-1].replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase();
+    data['char_'+i+'_nome']=CARACTERISTICAS[i-1];
+    data['char_'+i+'_valor']=v||null;
+    data['char_'+i+'_evidencia']=ev;
+    if(v>0){soma+=v;count++;}
+  }
+  data.media_geral=count>0?Math.round((soma/count)*10)/10:null;
+  var db=firebase.firestore();
+  db.collection('lider_f2_1').add(data).then(function(){
+    localStorage.setItem('lider_whatsapp',wa);
+    mostrarMsg('Autodiagnóstico enviado com sucesso!','ok');
+    if(window.WhatsApp||true){
+      try{
+        var link='https://wa.me/'+wa.replace(/\D/g,'')+'?text='+encodeURIComponent('Autodiagnóstico Líd@r preenchido!');
+      }catch(e){}
     }
+  }).catch(function(e){
+    mostrarMsg('Erro ao enviar. Tente novamente.','err');
   });
-  await firebase.firestore().collection('lider_f2_1').add({
-    nome, setor, notas: [...notas], pontos_fortes: pontos, gaps,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  await firebase.firestore().doc('lider_agregados/f2_1').set(upd, { merge: true });
-
-  document.getElementById('msg-ok').style.display = 'block';
-  document.getElementById('btn-wpp').style.display = 'block';
-  document.querySelector('.btn-enviar').disabled = true;
-  document.querySelector('.btn-enviar').style.opacity = '0.5';
 }
+
+function mostrarMsg(txt,tipo){
+  var m=document.getElementById('msg');
+  m.textContent=txt;
+  m.className='msg '+tipo;
+  m.style.display='block';
+  setTimeout(function(){m.style.display='none';},4000);
+}
+
+window.onload=function(){
+  var LOGO_LUCIA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el=document.getElementById('logo-lucia');
+  el.src=LOGO_LUCIA; el.style.display='block';
+
+  if(!firebase.apps.length){
+    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  }
+  var db=firebase.firestore();
+  db.doc('lider_config/tema').get().then(function(doc){
+    if(doc.exists&&doc.data().logoParceiro){
+      var lp=document.getElementById('logo-cbco');
+      lp.src=doc.data().logoParceiro; lp.style.display='block';
+    }
+  }).catch(function(){});
+
+  var wa=localStorage.getItem('lider_whatsapp');
+  if(wa){var w=document.getElementById('whatsapp');if(w)w.value=wa;}
+
+  buildChars();
+};
 </script>
 </body>
 </html>
