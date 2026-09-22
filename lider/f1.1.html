@@ -41,13 +41,14 @@
 </style>
 </head>
 <body>
-<header>
+<header data-tema="header">
+  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
   <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge">Workshop 1 · Formulário 1.1</div>
+  <div class="badge" data-tema="badge">Workshop 1 · Formulário 1.1</div>
   <h1>Esvaziando a Xícara Administrativa</h1>
   <p>Individual + duplas · 15 min · Identifique certezas antigas e reprograme-as</p>
 </header>
-<div class="instr">
+<div class="instr" data-tema="border-left">
   <p><strong style="color:#60a5fa">Como preencher:</strong> Identifique certezas antigas ("xícara cheia") nos fluxos do seu setor e reprograme-as sob a perspectiva 5.0. Preencha pelo menos 2 linhas.</p>
 </div>
 <main>
@@ -88,12 +89,13 @@
     <label>📱 Seu WhatsApp (para receber o resumo)</label>
     <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
   </div>
-  <button class="btn-enviar" onclick="enviar()">Enviar Formulário →</button>
+  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Formulário →</button>
   <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso! Obrigado pela participação.</div>
   <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
 </main>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="tema.js"></script>
 <script>
 function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
 function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
