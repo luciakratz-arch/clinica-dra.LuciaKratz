@@ -248,6 +248,12 @@ function adicionarColab(){
 }
 function removerColab(idx){
   equipe.splice(idx,1);
+  // Reset pontos state so blocks are rebuilt cleanly
+  pontosData={forte:{},fraco:{}};
+  pontosCounter={forte:{},fraco:{}};
+  // Clear pontos wraps to force full rebuild
+  document.getElementById('fortes-wrap').innerHTML='';
+  document.getElementById('fracos-wrap').innerHTML='';
   renderChips();
   renderAll();
 }
@@ -303,7 +309,11 @@ function renderGrafico(){
   wrap.innerHTML=html;
 }
 
-// ── FEATURE 4 & 5: Pontos ─────────────────────────────────────────────
+// ── FEATURE 4 & 5: Pontos (múltiplos por pessoa) ─────────────────────
+// pontosData[tipo][pessoaIdx] = [{taId, slId, valId}, ...]
+var pontosData = {forte:{}, fraco:{}};
+var pontosCounter = {forte:{}, fraco:{}};
+
 function renderPontos(tipo){
   var isForte=(tipo==='forte');
   var cardId=isForte?'card-fortes':'card-fracos';
@@ -312,53 +322,89 @@ function renderPontos(tipo){
   var wrap=document.getElementById(wrapId);
   if(!equipe.length){card.style.display='none';wrap.innerHTML='';return;}
   card.style.display='block';
-  // Remove blocks for deleted collaborators (keep existing ones)
-  var existingBlocks=wrap.querySelectorAll('.person-block');
-  // If more blocks than equipe, remove extras from end
+  // Remove blocks for deleted collaborators
   while(wrap.querySelectorAll('.person-block').length > equipe.length){
     var blocks=wrap.querySelectorAll('.person-block');
     wrap.removeChild(blocks[blocks.length-1]);
   }
-  // Add missing blocks for new collaborators
+  // Add block for new collaborators only
   equipe.forEach(function(p,i){
-    var taId='ta-'+tipo+'-'+i;
-    // Only add if block doesn't exist yet
-    if(document.getElementById(taId)) return;
+    var blockId='pblock-'+tipo+'-'+i;
+    if(document.getElementById(blockId)) return;
+    if(!pontosData[tipo][i]) pontosData[tipo][i]=[];
+    if(!pontosCounter[tipo][i]) pontosCounter[tipo][i]=0;
     var cfg=GEN[p.geracao]||{cor:'#6b7280',emoji:'👤'};
-    var slId='sl-'+tipo+'-'+i;
-    var valId='val-'+tipo+'-'+i;
     var block=document.createElement('div');
     block.className='person-block';
+    block.id=blockId;
+    var listId='pontos-list-'+tipo+'-'+i;
     block.innerHTML='<div class="person-name-row">'
       +'<span class="person-badge" style="background:'+cfg.cor+'">'+cfg.emoji+' '+escHtml(p.nome)+'</span>'
       +'<span style="font-size:0.75rem;color:#6b7280">'+escHtml(p.geracao)+'</span>'
       +'</div>'
-      +'<div class="form-group">'
-      +'<label style="font-size:0.75rem">'+(isForte?'Descreva um ponto forte desta pessoa':'Descreva um ponto de melhoria')+'</label>'
-      +'<textarea id="'+taId+'" placeholder="'+(isForte?'Ex: Excelente comunicação com pacientes':'Ex: Dificuldade em adaptar-se a novas tecnologias')+'" oninput="renderSWOT();renderAnalise()"></textarea>'
-      +'</div>'
-      +'<div class="slider-wrap">'
-      +'<label>Importância</label>'
-      +'<input type="range" id="'+slId+'" min="0" max="10" value="5" style="accent-color:'+cfg.cor+'" oninput="document.getElementById(\''+valId+'\').textContent=this.value;renderSWOT();renderAnalise()">'
-      +'<span class="slider-val" id="'+valId+'">5</span>'
-      +'</div>';
+      +'<div id="'+listId+'"></div>'
+      +'<button type="button" class="btn" style="margin-top:8px;padding:6px 14px;font-size:0.8rem;background:#f0fdf4;color:#15803d;border:1.5px solid #86efac" '
+      +'onclick="adicionarPonto(\''+tipo+'\','+i+')">➕ Adicionar '+(isForte?'ponto forte':'ponto de melhoria')+'</button>';
     wrap.appendChild(block);
-    // Attach voz to new textarea
-    setTimeout(function(){
-      var ta=document.getElementById(taId);
-      if(ta&&!ta.dataset.vozInit){ta.dataset.vozInit='1';addVozToField(ta);}
-    },50);
+    // Add first item automatically
+    adicionarPonto(tipo, i);
   });
+}
+
+function adicionarPonto(tipo, pessoaIdx){
+  var isForte=(tipo==='forte');
+  var cfg=GEN[equipe[pessoaIdx].geracao]||{cor:'#6b7280'};
+  var n=pontosCounter[tipo][pessoaIdx]++;
+  var taId='ta-'+tipo+'-'+pessoaIdx+'-'+n;
+  var slId='sl-'+tipo+'-'+pessoaIdx+'-'+n;
+  var valId='val-'+tipo+'-'+pessoaIdx+'-'+n;
+  pontosData[tipo][pessoaIdx].push({taId:taId,slId:slId,valId:valId});
+  var listId='pontos-list-'+tipo+'-'+pessoaIdx;
+  var list=document.getElementById(listId);
+  if(!list) return;
+  var item=document.createElement('div');
+  item.style.cssText='border-top:'+(n>0?'1px solid #f3f4f6':'')+';padding-top:'+(n>0?'10px':0)+';margin-top:'+(n>0?'10px':0);
+  item.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+    +'<label style="font-size:0.75rem;font-weight:600;color:#374151">'+(isForte?'Ponto forte':'Ponto de melhoria')+' '+(n+1)+'</label>'
+    +(n>0?'<button type="button" onclick="removerPonto(\''+tipo+'\','+pessoaIdx+',\''+taId+'\')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:0.75rem">🗑️ remover</button>':'')
+    +'</div>'
+    +'<div class="form-group">'
+    +'<textarea id="'+taId+'" placeholder="'+(isForte?'Ex: Excelente comunicação com pacientes':'Ex: Dificuldade em adaptar-se a novas tecnologias')+'" oninput="renderSWOT();renderAnalise()"></textarea>'
+    +'</div>'
+    +'<div class="slider-wrap">'
+    +'<label>Importância</label>'
+    +'<input type="range" id="'+slId+'" min="0" max="10" value="5" style="accent-color:'+cfg.cor+'" oninput="document.getElementById(\''+valId+'\').textContent=this.value;renderSWOT();renderAnalise()">'
+    +'<span class="slider-val" id="'+valId+'">5</span>'
+    +'</div>';
+  list.appendChild(item);
+  setTimeout(function(){
+    var ta=document.getElementById(taId);
+    if(ta&&!ta.dataset.vozInit){ta.dataset.vozInit='1';addVozToField(ta);}
+  },50);
+}
+
+function removerPonto(tipo, pessoaIdx, taId){
+  var list=document.getElementById('pontos-list-'+tipo+'-'+pessoaIdx);
+  if(!list) return;
+  // find and remove the item div containing this textarea
+  var ta=document.getElementById(taId);
+  if(ta){var item=ta.closest('div[style]')||ta.parentNode.parentNode;list.removeChild(item);}
+  // remove from pontosData
+  pontosData[tipo][pessoaIdx]=pontosData[tipo][pessoaIdx].filter(function(p){return p.taId!==taId;});
+  renderSWOT();renderAnalise();
 }
 
 function getPontos(tipo){
   var arr=[];
   equipe.forEach(function(p,i){
-    var ta=document.getElementById('ta-'+tipo+'-'+i);
-    var sl=document.getElementById('sl-'+tipo+'-'+i);
-    if(ta&&sl){
-      arr.push({nome:p.nome,geracao:p.geracao,descricao:ta.value.trim(),importancia:parseInt(sl.value)});
-    }
+    var items=pontosData[tipo][i]||[];
+    items.forEach(function(item){
+      var ta=document.getElementById(item.taId);
+      var sl=document.getElementById(item.slId);
+      if(ta&&sl&&ta.value.trim()){
+        arr.push({nome:p.nome,geracao:p.geracao,descricao:ta.value.trim(),importancia:parseInt(sl.value)});
+      }
+    });
   });
   return arr;
 }
