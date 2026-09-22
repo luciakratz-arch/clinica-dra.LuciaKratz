@@ -3,136 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F1.1 — Esvaziando a Xícara Administrativa</title>
+<title>F1.1 – Diagnóstico de Competências do Líder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh;padding-bottom:60px}
+  a{color:inherit;text-decoration:none}
 
   /* HEADER */
-  header{
-    background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);
-    padding:0;
-    border-bottom:3px solid #15803d;
-  }
-  .header-top{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:12px 20px;border-bottom:1px solid #15803d66;
-  }
-  .logos{display:flex;align-items:center;gap:14px}
-  .logo-cbco{height:42px;object-fit:contain}
-  .logo-lucia{height:38px;object-fit:contain;border-radius:6px}
-  .logo-sep{width:1px;height:32px;background:#ffffff33}
-  .back{
-    color:#dcfce7;font-size:0.82rem;text-decoration:none;
-    display:inline-flex;align-items:center;gap:5px;
-    background:#ffffff22;border:1px solid #ffffff33;
-    padding:6px 14px;border-radius:20px;transition:all 0.2s;
-  }
-  .back:hover{background:#ffffff44}
-  .header-body{padding:16px 20px 20px;text-align:center}
-  .badge{
-    display:inline-block;background:#ffffff22;color:#dcfce7;
-    font-size:0.72rem;font-weight:700;padding:4px 14px;
-    border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase;
-  }
-  h1{font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px}
-  header p{color:#bbf7d0;font-size:0.83rem}
+  header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d;color:#fff;margin-bottom:28px}
+  .header-top{max-width:740px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .logos{display:flex;align-items:center;gap:12px}
+  .logo-sep{width:1px;height:28px;background:rgba(255,255,255,.3);display:block}
+  .back{font-size:13px;font-weight:500;color:rgba(255,255,255,.85);background:rgba(255,255,255,.12);padding:6px 14px;border-radius:20px;transition:.2s;white-space:nowrap}
+  .back:hover{background:rgba(255,255,255,.22)}
+  .header-body{max-width:740px;margin:0 auto;padding:8px 20px 22px}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);font-size:11px;font-weight:600;letter-spacing:.08em;padding:3px 10px;border-radius:20px;margin-bottom:10px;text-transform:uppercase}
+  header h1{font-size:clamp(1.25rem,4vw,1.65rem);font-weight:700;margin-bottom:6px;line-height:1.25}
+  header p{font-size:14px;color:rgba(255,255,255,.82)}
 
-  /* INSTRUÇÃO */
-  .instr{
-    background:#ffffff;border:1px solid #bbf7d0;border-left:4px solid #16a34a;
-    border-radius:12px;margin:20px auto;max-width:740px;padding:14px 18px;
-    box-shadow:0 2px 8px #16a34a11;
-  }
-  .instr p{font-size:0.83rem;color:#374151;line-height:1.6}
+  /* SCORE BOX */
+  .score-bar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:2px solid #bbf7d0;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .score-label{font-size:13px;color:#166534;font-weight:500}
+  .score-val{font-size:1.15rem;font-weight:700;color:#14532d}
+  .score-cat{font-size:13px;font-weight:600;padding:3px 12px;border-radius:20px;background:#d1fae5;color:#14532d}
 
   /* MAIN */
-  main{max-width:740px;margin:0 auto;padding:0 16px 48px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#4b5563;font-weight:600;margin-bottom:4px}
-  .campo input,.campo textarea{
-    width:100%;background:#ffffff;border:1px solid #d1fae5;
-    border-radius:8px;padding:10px 14px;color:#1a2e1a;
-    font-size:0.87rem;font-family:inherit;
-    box-shadow:0 1px 3px #0000000a;
-  }
-  .campo textarea{resize:vertical;min-height:64px}
-  .campo input:focus,.campo textarea:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  main{max-width:740px;margin:0 auto;padding:0 16px}
 
-  /* Exemplo */
-  .linha-exemplo{
-    background:#f0fdf4;border:1px solid #bbf7d0;
-    border-radius:12px;padding:14px 16px;margin-bottom:14px;
-  }
-  .linha-exemplo .ex-label{
-    font-size:0.7rem;color:#16a34a;font-weight:700;
-    letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;
-  }
-  .linha-exemplo .ex-grid{
-    display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;
-    font-size:0.78rem;color:#4b7c4b;font-style:italic;
-  }
+  /* CARD */
+  .card{background:#fff;border:1.5px solid #d1fae5;border-radius:12px;padding:22px 24px;margin-bottom:20px}
+  .card-title{font-size:15px;font-weight:700;color:#14532d;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .card-title .dim-num{background:#d1fae5;color:#15803d;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px}
 
-  /* Linhas de resposta */
-  .linha-resposta{
-    background:#ffffff;border:1px solid #d1fae5;
-    border-radius:12px;padding:16px;margin-bottom:10px;
-    box-shadow:0 1px 4px #0000000a;
-  }
-  .linha-resposta h4{
-    font-size:0.78rem;color:#16a34a;font-weight:700;
-    margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;
-  }
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  /* GRID 2x2 */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:520px){.grid2{grid-template-columns:1fr}}
 
-  .btn-add{
-    display:flex;align-items:center;gap:6px;
-    background:#f0fdf4;border:1px dashed #86efac;border-radius:10px;
-    padding:11px 16px;color:#16a34a;font-size:0.82rem;cursor:pointer;
-    width:100%;margin-bottom:20px;transition:all 0.15s;font-weight:600;
-  }
-  .btn-add:hover{background:#dcfce7;border-color:#16a34a}
+  /* FORM FIELDS */
+  label{display:block;font-size:12px;font-weight:600;color:#166534;margin-bottom:5px;letter-spacing:.02em}
+  input[type=text],input[type=tel],textarea,select{width:100%;font-family:'Inter',sans-serif;font-size:14px;color:#1a2e1a;background:#f8fff8;border:1.5px solid #bbf7d0;border-radius:8px;padding:9px 12px;outline:none;transition:border-color .2s}
+  input[type=text]:focus,input[type=tel]:focus,textarea:focus,select:focus{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+  textarea{resize:vertical;min-height:90px;line-height:1.5}
 
-  /* WhatsApp */
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#4b5563;font-weight:600;margin-bottom:4px}
-  .campo-wpp input{
-    width:100%;background:#ffffff;border:1px solid #d1fae5;
-    border-radius:8px;padding:10px 14px;color:#1a2e1a;font-size:0.87rem;
-    box-shadow:0 1px 3px #0000000a;
-  }
-  .campo-wpp input:focus{outline:none;border-color:#25d366;box-shadow:0 0 0 3px #25d36618}
+  /* ITEM ROW */
+  .item-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f0fdf0}
+  .item-row:last-child{border-bottom:none}
+  .item-num{flex-shrink:0;width:22px;height:22px;background:#d1fae5;color:#15803d;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .item-text{flex:1;font-size:14px;line-height:1.5;color:#1a2e1a;padding-top:1px}
+  .item-select{flex-shrink:0;width:74px}
+  select.item-select{padding:7px 6px;font-size:13px;font-weight:600;text-align:center;cursor:pointer}
 
-  /* Botões */
-  .btn-enviar{
-    display:block;width:100%;padding:15px;
-    background:linear-gradient(135deg,#16a34a,#14532d);
-    border:none;border-radius:12px;color:white;
-    font-size:0.97rem;font-weight:700;cursor:pointer;
-    transition:opacity 0.2s;box-shadow:0 4px 14px #16a34a33;
-    margin-top:8px;
-  }
-  .btn-enviar:hover{opacity:0.92}
-  .msg-ok{
-    display:none;background:#f0fdf4;border:1px solid #86efac;
-    border-radius:12px;padding:16px;text-align:center;
-    color:#15803d;font-weight:700;margin-top:14px;font-size:0.95rem;
-  }
-  .btn-wpp{
-    display:none;width:100%;padding:13px;
-    background:linear-gradient(135deg,#25d366,#128c7e);
-    border:none;border-radius:12px;color:white;
-    font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px;
-  }
+  /* REFLECTION */
+  .reflect-title{font-size:14px;font-weight:600;color:#14532d;margin-bottom:8px}
+  .reflect-group{margin-bottom:16px}
 
-  @media(max-width:600px){
-    .campos-topo,.grid3{grid-template-columns:1fr}
-    .linha-exemplo .ex-grid{grid-template-columns:1fr}
-    h1{font-size:1.15rem}
-  }
+  /* SAVE BTN */
+  .btn-save{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;font-family:'Inter',sans-serif;font-size:16px;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(22,163,74,.3)}
+  .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(22,163,74,.4)}
+  .btn-save:active{transform:none}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#14532d;color:#fff;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.18);opacity:0;transition:.35s;z-index:999;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* DIM SCORES */
+  .dim-score{font-size:12px;font-weight:600;color:#16a34a;margin-left:auto}
 </style>
 </head>
 <body>
@@ -140,194 +78,495 @@
 <header>
   <div class="header-top">
     <div class="logos">
-      <!-- Logo Lucia Kratz em base64 -->
-      <img id="logo-cbco" alt="Parceiro" style="height:42px;object-fit:contain;display:none">
-      <div id="sep-logo" class="logo-sep" style="display:none"></div>
-      <img class="logo-lucia" id="logo-lucia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=" alt="Dra. Lucia Kratz">
+      <img class="logo-lucia" id="logo-lucia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7dbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:block">
+      <span class="logo-sep"></span>
+      <img id="logo-cbco" src="" alt="CBCO" style="height:42px;object-fit:contain;display:none">
     </div>
     <a class="back" href="hub.html">← Voltar ao Hub</a>
   </div>
   <div class="header-body">
-    <div class="badge">Workshop 1 · Formulário 1.1</div>
-    <h1>Esvaziando a Xícara Administrativa</h1>
-    <p>Individual + duplas · 15 min · Identifique certezas antigas e reprograme-as</p>
+    <span class="badge">W1 · F1.1</span>
+    <h1>Diagnóstico de Competências do Líder</h1>
+    <p>Avalie suas 6 dimensões de liderança — 30 questões, pontuação de 0 a 5</p>
   </div>
 </header>
 
-<div class="instr">
-  <p><strong style="color:#16a34a">Como preencher:</strong> Identifique certezas antigas ("xícara cheia") nos fluxos do seu setor e reprograme-as sob a perspectiva 5.0. Preencha pelo menos 2 linhas.</p>
+<!-- STICKY SCORE BAR -->
+<div class="score-bar">
+  <span class="score-label">Total:</span>
+  <span class="score-val" id="score-val">0 / 150</span>
+  <span class="score-cat" id="score-cat">🔴 Deficiente</span>
 </div>
 
 <main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Recepção T2"></div>
-  </div>
 
-  <div class="linha-exemplo">
-    <div class="ex-label">Exemplo</div>
-    <div class="ex-grid">
-      <div>Exigir presença física e comando rígido para controle de horários.</div>
-      <div>Acompanhar por metas claras e responsabilidade com o resultado do paciente.</div>
-      <div>Definir indicadores diários de atendimento e dar autonomia.</div>
-    </div>
-  </div>
-
-  <div id="linhas">
-    <div class="linha-resposta">
-      <h4>Linha 1</h4>
-      <div class="grid3">
-        <div class="campo"><label>Certeza Antiga ("Xícara Cheia")</label><textarea class="cert" placeholder="Descreva uma certeza antiga do seu setor..."></textarea></div>
-        <div class="campo"><label>Ressignificação / Visão 5.0</label><textarea class="ressig" placeholder="Como ressignificar essa certeza..."></textarea></div>
-        <div class="campo"><label>Ação Imediata no CBCO</label><textarea class="acao" placeholder="Qual ação prática iniciar esta semana..."></textarea></div>
+  <!-- IDENTIFICATION CARD -->
+  <div class="card">
+    <div class="card-title">Identificação</div>
+    <div class="grid2">
+      <div>
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" placeholder="Seu nome">
       </div>
-    </div>
-    <div class="linha-resposta">
-      <h4>Linha 2</h4>
-      <div class="grid3">
-        <div class="campo"><label>Certeza Antiga ("Xícara Cheia")</label><textarea class="cert" placeholder="..."></textarea></div>
-        <div class="campo"><label>Ressignificação / Visão 5.0</label><textarea class="ressig" placeholder="..."></textarea></div>
-        <div class="campo"><label>Ação Imediata no CBCO</label><textarea class="acao" placeholder="..."></textarea></div>
+      <div>
+        <label for="whatsapp">WhatsApp</label>
+        <input type="tel" id="whatsapp" placeholder="(00) 00000-0000">
+      </div>
+      <div>
+        <label for="cargo">Cargo</label>
+        <input type="text" id="cargo" placeholder="Ex: Gerente de Enfermagem">
+      </div>
+      <div>
+        <label for="setor">Setor</label>
+        <input type="text" id="setor" placeholder="Ex: UTI, Pronto-Socorro">
       </div>
     </div>
   </div>
 
-  <button class="btn-add" onclick="addLinha()">＋ Adicionar mais uma certeza</button>
-
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
+  <!-- DIMENSION 1 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dim-num">D1</span>
+      Liderança
+      <span class="dim-score" id="dim-score-1">0 / 25</span>
+    </div>
+    <div id="dim-1">
+      <div class="item-row">
+        <div class="item-num">1</div>
+        <div class="item-text">Tenho visão estratégica e clareza do negócio onde atuo.</div>
+        <select class="item-select" data-dim="1" data-q="0" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">2</div>
+        <div class="item-text">Estimulo a participação das pessoas nas decisões que afetam seu trabalho.</div>
+        <select class="item-select" data-dim="1" data-q="1" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">3</div>
+        <div class="item-text">Estimulo o empowerment das pessoas, dando-lhes autonomia e responsabilidade para agir.</div>
+        <select class="item-select" data-dim="1" data-q="2" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">4</div>
+        <div class="item-text">Reconheço minhas falhas e as transformo em aprendizagem para mim e para a equipe.</div>
+        <select class="item-select" data-dim="1" data-q="3" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">5</div>
+        <div class="item-text">Foco em resultados e nas pessoas ao mesmo tempo.</div>
+        <select class="item-select" data-dim="1" data-q="4" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
   </div>
 
-  <button class="btn-enviar" onclick="enviar()">Enviar Formulário →</button>
-  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso! Obrigado pela participação.</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp()">📱 Enviar resumo para meu WhatsApp</button>
+  <!-- DIMENSION 2 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dim-num">D2</span>
+      Desenvolvimento de Pessoas
+      <span class="dim-score" id="dim-score-2">0 / 25</span>
+    </div>
+    <div id="dim-2">
+      <div class="item-row">
+        <div class="item-num">1</div>
+        <div class="item-text">Ensino e oriento minha equipe para o crescimento.</div>
+        <select class="item-select" data-dim="2" data-q="0" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">2</div>
+        <div class="item-text">Inovo e me atualizo constantemente.</div>
+        <select class="item-select" data-dim="2" data-q="1" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">3</div>
+        <div class="item-text">Desafio as pessoas a crescerem.</div>
+        <select class="item-select" data-dim="2" data-q="2" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">4</div>
+        <div class="item-text">Valorizo o melhor de cada um.</div>
+        <select class="item-select" data-dim="2" data-q="3" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">5</div>
+        <div class="item-text">Dou feedback regularmente.</div>
+        <select class="item-select" data-dim="2" data-q="4" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIMENSION 3 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dim-num">D3</span>
+      Retenção de Talentos
+      <span class="dim-score" id="dim-score-3">0 / 25</span>
+    </div>
+    <div id="dim-3">
+      <div class="item-row">
+        <div class="item-num">1</div>
+        <div class="item-text">Reconheço as conquistas das pessoas.</div>
+        <select class="item-select" data-dim="3" data-q="0" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">2</div>
+        <div class="item-text">Me realizo com os resultados das pessoas.</div>
+        <select class="item-select" data-dim="3" data-q="1" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">3</div>
+        <div class="item-text">Cuido das pessoas com consideração e respeito.</div>
+        <select class="item-select" data-dim="3" data-q="2" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">4</div>
+        <div class="item-text">Proporciono crescimento e realização às pessoas.</div>
+        <select class="item-select" data-dim="3" data-q="3" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">5</div>
+        <div class="item-text">Valorizo o aprendizado pelo erro.</div>
+        <select class="item-select" data-dim="3" data-q="4" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIMENSION 4 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dim-num">D4</span>
+      Desenvolvimento da Confiança
+      <span class="dim-score" id="dim-score-4">0 / 25</span>
+    </div>
+    <div id="dim-4">
+      <div class="item-row">
+        <div class="item-num">1</div>
+        <div class="item-text">Cumpro minhas promessas.</div>
+        <select class="item-select" data-dim="4" data-q="0" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">2</div>
+        <div class="item-text">Digo o que penso com respeito.</div>
+        <select class="item-select" data-dim="4" data-q="1" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">3</div>
+        <div class="item-text">Comunico a verdade mesmo quando é difícil.</div>
+        <select class="item-select" data-dim="4" data-q="2" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">4</div>
+        <div class="item-text">Sou exemplo do que prego.</div>
+        <select class="item-select" data-dim="4" data-q="3" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">5</div>
+        <div class="item-text">Ajo com justiça.</div>
+        <select class="item-select" data-dim="4" data-q="4" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIMENSION 5 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dim-num">D5</span>
+      Delegação
+      <span class="dim-score" id="dim-score-5">0 / 25</span>
+    </div>
+    <div id="dim-5">
+      <div class="item-row">
+        <div class="item-num">1</div>
+        <div class="item-text">Evito assumir tarefas técnicas que são de minha equipe.</div>
+        <select class="item-select" data-dim="5" data-q="0" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">2</div>
+        <div class="item-text">Estabeleço co-responsabilidade com minha equipe.</div>
+        <select class="item-select" data-dim="5" data-q="1" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">3</div>
+        <div class="item-text">Analiso a natureza da tarefa e o perfil da pessoa antes de delegar.</div>
+        <select class="item-select" data-dim="5" data-q="2" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">4</div>
+        <div class="item-text">Defino prazos e limites claros ao delegar.</div>
+        <select class="item-select" data-dim="5" data-q="3" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">5</div>
+        <div class="item-text">Estou disponível para dúvidas sem resolver por elas.</div>
+        <select class="item-select" data-dim="5" data-q="4" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIMENSION 6 -->
+  <div class="card">
+    <div class="card-title">
+      <span class="dim-num">D6</span>
+      Proatividade
+      <span class="dim-score" id="dim-score-6">0 / 25</span>
+    </div>
+    <div id="dim-6">
+      <div class="item-row">
+        <div class="item-num">1</div>
+        <div class="item-text">Penso nos problemas antes que aconteçam.</div>
+        <select class="item-select" data-dim="6" data-q="0" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">2</div>
+        <div class="item-text">Enfrento os problemas de frente.</div>
+        <select class="item-select" data-dim="6" data-q="1" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">3</div>
+        <div class="item-text">Atuo rapidamente em situações de crise.</div>
+        <select class="item-select" data-dim="6" data-q="2" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">4</div>
+        <div class="item-text">Antecipo mudanças e me preparo para elas.</div>
+        <select class="item-select" data-dim="6" data-q="3" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+      <div class="item-row">
+        <div class="item-num">5</div>
+        <div class="item-text">Supero obstáculos com criatividade.</div>
+        <select class="item-select" data-dim="6" data-q="4" onchange="calcScore()">
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFLECTION -->
+  <div class="card">
+    <div class="card-title">Reflexão e Plano de Ação</div>
+
+    <div class="reflect-group">
+      <div class="reflect-title">Pontos Fortes</div>
+      <textarea id="fortes" placeholder="Liste suas principais forças como líder..."></textarea>
+    </div>
+
+    <div class="reflect-group">
+      <div class="reflect-title">Pontos de Melhoria</div>
+      <textarea id="melhoria" placeholder="Quais competências você precisa desenvolver?"></textarea>
+    </div>
+
+    <div class="reflect-group">
+      <div class="reflect-title">Metas com datas de realização</div>
+      <textarea id="metas" placeholder="Ex: Implementar feedback semanal até 30/10/2026..."></textarea>
+    </div>
+  </div>
+
+  <!-- SAVE -->
+  <button class="btn-save" onclick="salvar()">💾 Salvar Diagnóstico</button>
+
 </main>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script>
-var db, cnt = 2;
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{var v=localStorage.getItem('lider_whatsapp');if(v)document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(){
-  var raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu WhatsApp.');return;}
-  var num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(montarMsg()),'_blank');
-}
-function montarMsg(){
-  var nome=document.getElementById('nome').value;
-  var setor=document.getElementById('setor').value;
-  var msg='✅ F1.1 — Esvaziando a Xícara\n👤 '+nome+' | '+setor+'\n\n';
-  document.querySelectorAll('.linha-resposta').forEach(function(c,i){
-    var cert=c.querySelector('.cert').value;
-    var res=c.querySelector('.ressig').value;
-    var acao=c.querySelector('.acao').value;
-    if(cert||res||acao) msg+=(i+1)+'. Certeza: '+cert+'\n   Ressig: '+res+'\n   Ação: '+acao+'\n\n';
-  });
-  return msg.trim();
-}
-function addLinha(){
-  cnt++;
-  var d=document.createElement('div');d.className='linha-resposta';
-  d.innerHTML='<h4>Linha '+cnt+'</h4><div class="grid3">'
-    +'<div class="campo"><label>Certeza Antiga</label><textarea class="cert" placeholder="..."></textarea></div>'
-    +'<div class="campo"><label>Ressignificação</label><textarea class="ressig" placeholder="..."></textarea></div>'
-    +'<div class="campo"><label>Ação Imediata</label><textarea class="acao" placeholder="..."></textarea></div></div>';
-  document.getElementById('linhas').appendChild(d);
-}
-function enviar(){
-  var nome=document.getElementById('nome').value.trim();
-  var setor=document.getElementById('setor').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  var linhas=[];
-  document.querySelectorAll('.linha-resposta').forEach(function(l){
-    var c=l.querySelector('.cert').value.trim();
-    var r=l.querySelector('.ressig').value.trim();
-    var a=l.querySelector('.acao').value.trim();
-    if(c||r||a) linhas.push({certeza:c,ressignificacao:r,acao:a});
-  });
-  if(!linhas.length){alert('Preencha pelo menos uma linha.');return;}
-  var btn=document.querySelector('.btn-enviar');
-  btn.textContent='Enviando...';btn.disabled=true;
-  db.collection('lider_f1_1').add({nome:nome,setor:setor,linhas:linhas,timestamp:firebase.firestore.FieldValue.serverTimestamp()})
-  .then(function(){return db.doc('lider_agregados/f1_1').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});})
-  .then(function(){
-    document.getElementById('msg-ok').style.display='block';
-    document.getElementById('btn-wpp').style.display='block';
-    btn.style.opacity='0.5';
-  }).catch(function(e){btn.textContent='Enviar Formulário →';btn.disabled=false;alert('Erro: '+e.message);});
-}
-// ── TextAreaVoz ──
-function initVoz(){
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return;
-  document.querySelectorAll('textarea').forEach(function(ta){
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;display:block';
-    ta.parentNode.insertBefore(wrap, ta);
-    wrap.appendChild(ta);
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.innerHTML = '🎙️';
-    btn.title = 'Falar para digitar';
-    btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
-    wrap.appendChild(btn);
-    ta.style.paddingRight = '36px';
-    var dot = document.createElement('div');
-    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
-    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
-    wrap.appendChild(dot);
-    var rec = null;
-    var gravando = false;
-    btn.addEventListener('click', function(){
-      if(gravando){
-        if(rec) rec.stop();
-        gravando = false;
-        btn.style.background = '#f3e6ff';
-        btn.style.color = '#7B00C4';
-        btn.style.boxShadow = 'none';
-        dot.style.display = 'none';
-        return;
-      }
-      rec = new SR();
-      rec.lang = 'pt-BR';
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onresult = function(e){
-        var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' ');
-        var base = ta.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd();
-        ta.value = base ? base + ' ' + t : t;
-      };
-      rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
-      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
-      rec.start();
-      gravando = true;
-      btn.style.background = '#7B00C4';
-      btn.style.color = 'white';
-      btn.style.boxShadow = '0 0 0 3px #7B00C430';
-      dot.style.display = 'flex';
-    });
-  });
-}
+<div class="toast" id="toast"></div>
 
-window.onload=function(){
-  if(!firebase.apps.length){
-    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+    authDomain:"entrevista-inicial.firebaseapp.com",
+    projectId:"entrevista-inicial",
+    storageBucket:"entrevista-inicial.firebasestorage.app",
+    messagingSenderId:"437375609844",
+    appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+  });
+  var db = firebase.firestore();
+
+  function getCategoria(total){
+    if(total>=121) return '🏆 Excelente';
+    if(total>=91)  return '✅ Bom';
+    if(total>=61)  return '⚠️ Mediano';
+    return '🔴 Deficiente';
   }
-  db=firebase.firestore();
-  db.doc('lider_config/tema').get().then(function(doc){
-    if(doc.exists && doc.data().logoParceiro){
-      var lp = document.getElementById('logo-cbco');
-      if(lp){ lp.src = doc.data().logoParceiro; lp.style.display='block'; }
-      var sep = document.getElementById('sep-logo');
-      if(sep) sep.style.display='block';
+
+  function getDimVals(dim){
+    var vals = [];
+    document.querySelectorAll('[data-dim="'+dim+'"]').forEach(function(s){
+      vals.push(parseInt(s.value)||0);
+    });
+    return vals;
+  }
+
+  function calcScore(){
+    var total = 0;
+    for(var d=1;d<=6;d++){
+      var vals = getDimVals(d);
+      var sub = vals.reduce(function(a,b){return a+b;},0);
+      total += sub;
+      document.getElementById('dim-score-'+d).textContent = sub+' / 25';
     }
-  }).catch(function(){});
-  carregarWpp();
-  initVoz();
-};
+    document.getElementById('score-val').textContent = total+' / 150';
+    document.getElementById('score-cat').textContent = getCategoria(total);
+    return total;
+  }
+
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},3200);
+  }
+
+  function salvar(){
+    var wraw = document.getElementById('whatsapp').value;
+    var wclean = wraw.replace(/\D/g,'');
+    if(!wclean){showToast('⚠️ Informe o WhatsApp antes de salvar.');return;}
+    var total = calcScore();
+    var data = {
+      nome: document.getElementById('nome').value,
+      whatsapp: wraw,
+      cargo: document.getElementById('cargo').value,
+      setor: document.getElementById('setor').value,
+      d1: getDimVals(1),
+      d2: getDimVals(2),
+      d3: getDimVals(3),
+      d4: getDimVals(4),
+      d5: getDimVals(5),
+      d6: getDimVals(6),
+      total: total,
+      categoria: getCategoria(total),
+      fortes: document.getElementById('fortes').value,
+      melhoria: document.getElementById('melhoria').value,
+      metas: document.getElementById('metas').value,
+      ts: Date.now()
+    };
+    try{localStorage.setItem('lider_whatsapp', wraw);}catch(e){}
+    db.collection('lider_f1_1').doc(wclean).set(data)
+      .then(function(){showToast('✅ Diagnóstico salvo com sucesso!');})
+      .catch(function(err){showToast('❌ Erro ao salvar: '+err.message);});
+  }
+
+  function initVoz(){
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return;
+    document.querySelectorAll('textarea').forEach(function(ta){
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;display:block';
+      ta.parentNode.insertBefore(wrap, ta);
+      wrap.appendChild(ta);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.innerHTML = '🎙️';
+      btn.title = 'Falar para digitar';
+      btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+      wrap.appendChild(btn);
+      ta.style.paddingRight = '36px';
+      var dot = document.createElement('div');
+      dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+      dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
+      wrap.appendChild(dot);
+      var rec = null, gravando = false;
+      btn.addEventListener('click', function(){
+        if(gravando){ if(rec) rec.stop(); gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; btn.style.boxShadow='none'; dot.style.display='none'; return; }
+        rec = new SR();
+        rec.lang='pt-BR'; rec.continuous=true; rec.interimResults=true;
+        rec.onresult = function(e){ var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' '); var base = ta.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd(); ta.value = base ? base+' '+t : t; };
+        rec.onerror = function(){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+        rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+        rec.start();
+        gravando=true; btn.style.background='#7B00C4'; btn.style.color='white'; btn.style.boxShadow='0 0 0 3px #7B00C430'; dot.style.display='flex';
+      });
+    });
+  }
+
+  window.onload = function(){
+    // Load CBCO logo from Firestore lider_config/tema
+    db.collection('lider_config').doc('tema').get().then(function(doc){
+      if(doc.exists){
+        var d = doc.data();
+        if(d.logoParceiro){
+          var img = document.getElementById('logo-cbco');
+          img.src = d.logoParceiro;
+          img.style.display = 'block';
+          document.querySelector('.logo-sep').style.display = 'block';
+        }
+      }
+    }).catch(function(){});
+
+    // Load whatsapp from localStorage
+    try{
+      var savedWa = localStorage.getItem('lider_whatsapp');
+      if(savedWa) document.getElementById('whatsapp').value = savedWa;
+    }catch(e){}
+
+    // Score listeners on all selects
+    document.querySelectorAll('select.item-select').forEach(function(s){
+      s.addEventListener('change', calcScore);
+    });
+
+    // Initial score
+    calcScore();
+
+    // Voice input
+    initVoz();
+  };
 </script>
 </body>
 </html>
