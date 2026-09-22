@@ -259,6 +259,59 @@ function enviar(){
     btn.style.opacity='0.5';
   }).catch(function(e){btn.textContent='Enviar Formulário →';btn.disabled=false;alert('Erro: '+e.message);});
 }
+// ── TextAreaVoz ──
+function initVoz(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  document.querySelectorAll('textarea').forEach(function(ta){
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:block';
+    ta.parentNode.insertBefore(wrap, ta);
+    wrap.appendChild(ta);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerHTML = '🎙️';
+    btn.title = 'Falar para digitar';
+    btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+    wrap.appendChild(btn);
+    ta.style.paddingRight = '36px';
+    var dot = document.createElement('div');
+    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
+    wrap.appendChild(dot);
+    var rec = null;
+    var gravando = false;
+    btn.addEventListener('click', function(){
+      if(gravando){
+        if(rec) rec.stop();
+        gravando = false;
+        btn.style.background = '#f3e6ff';
+        btn.style.color = '#7B00C4';
+        btn.style.boxShadow = 'none';
+        dot.style.display = 'none';
+        return;
+      }
+      rec = new SR();
+      rec.lang = 'pt-BR';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = function(e){
+        var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' ');
+        var base = ta.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd();
+        ta.value = base ? base + ' ' + t : t;
+      };
+      rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+      rec.start();
+      gravando = true;
+      btn.style.background = '#7B00C4';
+      btn.style.color = 'white';
+      btn.style.boxShadow = '0 0 0 3px #7B00C430';
+      dot.style.display = 'flex';
+    });
+  });
+}
+
 window.onload=function(){
   if(!firebase.apps.length){
     firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
@@ -273,6 +326,7 @@ window.onload=function(){
     }
   }).catch(function(){});
   carregarWpp();
+  initVoz();
 };
 </script>
 </body>
