@@ -2,171 +2,158 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F3.1 — Herzberg no Hospital</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F3.1 — Painel de Herzberg no Hospital</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
-  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
-  .badge{display:inline-block;background:#1e4a3a;color:#34d399;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
-  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
-  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
-  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #34d399;border-radius:12px;margin:24px auto;max-width:740px;padding:14px 18px}
-  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
-  main{max-width:740px;margin:0 auto;padding:0 20px 40px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
-  .campo textarea{resize:vertical;min-height:72px}
-  .campo input:focus,.campo textarea:focus{outline:none;border-color:#34d399}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .teoria{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-  .teoria-box{border-radius:10px;padding:14px;border:1px solid}
-  .teoria-box.hig{background:#161a1f;border-color:#1e3a5f}
-  .teoria-box.mot{background:#111a16;border-color:#064e3b}
-  .teoria-box h4{font-size:0.8rem;font-weight:700;margin-bottom:6px}
-  .hig h4{color:#93c5fd}
-  .mot h4{color:#6ee7b7}
-  .teoria-box p{font-size:0.75rem;color:#8888a8;line-height:1.5}
-  .setor-card{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
-  .setor-card h4{font-size:0.82rem;color:#34d399;margin-bottom:12px;font-weight:700}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .col-hig textarea,.col-hig input{border-color:#1e3a5f}
-  .col-hig textarea:focus,.col-hig input:focus{border-color:#3b82f6}
-  .col-mot textarea,.col-mot input{border-color:#064e3b}
-  .col-mot textarea:focus,.col-mot input:focus{border-color:#10b981}
-  .col-hig label{color:#93c5fd!important}
-  .col-mot label{color:#6ee7b7!important}
-  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
-  .btn-add:hover{border-color:#34d399;color:#6ee7b7}
-  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#059669,#047857);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
-  .btn-enviar:hover{opacity:0.9}
-  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh}
+.container{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:12px;padding:14px 18px;margin:20px auto;max-width:740px}
+.instrucao p{font-size:0.9rem;color:#166534;line-height:1.6}
+.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:18px}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:0.82rem;font-weight:600;color:#166534;margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;color:#1a2e1a;font-size:0.87rem;font-family:inherit}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+.field textarea{resize:vertical;min-height:72px}
+.topo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.col-higienico{background:#ffffff;border:1px solid #fed7aa;border-radius:12px;padding:18px}
+.col-higienico h3{color:#c2410c;font-size:0.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.col-motivador{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:18px}
+.col-motivador h3{color:#166534;font-size:0.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.badge-hig{background:#fff7ed;color:#c2410c;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fed7aa}
+.badge-mot{background:#f0fdf4;color:#166534;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #bbf7d0}
+.btn-enviar{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:0 auto;width:100%;max-width:300px;transition:opacity 0.2s}
+.btn-enviar:hover{opacity:0.9}
+.msg{text-align:center;padding:14px;border-radius:10px;margin-top:16px;font-weight:600;display:none}
+.msg.ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;display:block}
+.msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;display:block}
+@media(max-width:640px){.topo-grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 3 · Formulário 3.1</div>
-  <h1>Painel de Classificação de Herzberg no Hospital</h1>
-  <p>Mapeie fatores higiênicos e motivadores do seu setor administrativo</p>
+<header style="background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #15803d66">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <div id="sep-logo" style="width:1px;height:32px;background:#ffffff33;display:none"></div>
+      <img id="logo-cbco" alt="Parceiro" style="height:42px;object-fit:contain;display:none">
+    </div>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
+  </div>
+  <div style="padding:16px 20px 20px;text-align:center">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W3 · F3.1</span>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Painel de Herzberg no Hospital</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Mapeie fatores higiênicos e motivadores do seu setor administrativo</p>
+  </div>
 </header>
-<div class="instr" data-tema="border-left">
-  <p><strong style="color:#34d399">Teoria de Herzberg:</strong> <strong>Fatores Higiênicos</strong> apenas evitam reclamação (salário, ambiente). <strong>Fatores Motivadores</strong> são os que realmente engajam e geram orgulho de trabalhar no CBCO (propósito, reconhecimento).</p>
+
+<div class="container">
+  <div class="instrucao">
+    <p>Frederick Herzberg identificou que fatores <strong>HIGIÊNICOS</strong> evitam a insatisfação (salário, ambiente, segurança), enquanto fatores <strong>MOTIVADORES</strong> geram engajamento real (reconhecimento, crescimento, propósito). Mapeie seu setor.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo-grid">
+      <div class="field"><label>Nome</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
+      <div class="field"><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(11) 99999-9999"></div>
+      <div class="field"><label>Setor</label><input type="text" id="setor" placeholder="Ex: UTI, Administrativo..."></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="col-higienico">
+      <h3>🔶 Fatores Higiênicos <span class="badge-hig">Evitam insatisfação</span></h3>
+      <div class="field"><label>Salário e benefícios</label><textarea id="hig1" placeholder="Como está no seu setor?"></textarea></div>
+      <div class="field"><label>Condições de trabalho</label><textarea id="hig2" placeholder="Ambiente físico, equipamentos..."></textarea></div>
+      <div class="field"><label>Segurança no emprego</label><textarea id="hig3" placeholder="Estabilidade percebida..."></textarea></div>
+      <div class="field"><label>Relações interpessoais</label><textarea id="hig4" placeholder="Clima entre a equipe..."></textarea></div>
+      <div class="field"><label>Supervisão/Gestão</label><textarea id="hig5" placeholder="Como a liderança age..."></textarea></div>
+      <div class="field"><label>Políticas organizacionais</label><textarea id="hig6" placeholder="Normas, processos, regras..."></textarea></div>
+    </div>
+    <div class="col-motivador">
+      <h3>✅ Fatores Motivadores <span class="badge-mot">Geram engajamento</span></h3>
+      <div class="field"><label>Reconhecimento</label><textarea id="mot1" placeholder="Como o esforço é reconhecido?"></textarea></div>
+      <div class="field"><label>Realização profissional</label><textarea id="mot2" placeholder="Senso de conquista..."></textarea></div>
+      <div class="field"><label>Crescimento e aprendizado</label><textarea id="mot3" placeholder="Oportunidades de desenvolvimento..."></textarea></div>
+      <div class="field"><label>Responsabilidade</label><textarea id="mot4" placeholder="Autonomia e ownership..."></textarea></div>
+      <div class="field"><label>Propósito e significado</label><textarea id="mot5" placeholder="Conexão com a missão..."></textarea></div>
+      <div class="field"><label>Natureza do trabalho</label><textarea id="mot6" placeholder="O trabalho em si é estimulante?"></textarea></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="field">
+      <label>Meu plano de ação motivacional (o que vou implementar):</label>
+      <textarea id="plano" style="min-height:100px" placeholder="Com base no diagnóstico acima, as ações concretas que vou tomar são..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn-enviar" onclick="enviar()">Enviar Respostas</button>
+  <div id="msg" class="msg"></div>
 </div>
-<main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Faturamento T2"></div>
-  </div>
-  <div class="teoria">
-    <div class="teoria-box hig">
-      <h4>🔵 Fatores Higiênicos (Manutenção)</h4>
-      <p>Salário, condições físicas, segurança, relacionamento com colegas. Evitam insatisfação, mas não motivam. Sem eles → desmotivação.</p>
-    </div>
-    <div class="teoria-box mot">
-      <h4>🟢 Fatores Motivadores (Crescimento)</h4>
-      <p>Reconhecimento, realização, responsabilidade, crescimento, propósito. Estes sim geram engajamento real e orgulho.</p>
-    </div>
-  </div>
-  <div id="setores">
-    <div class="setor-card">
-      <h4>Setor / Grupo analisado</h4>
-      <div class="campo"><label>Identifique o grupo ou setor</label><input class="nome-setor" type="text" placeholder="Ex: Equipe de Recepção e Cadastro"></div>
-      <div class="grid2" style="margin-top:12px">
-        <div class="col-hig">
-          <div class="campo"><label>🔵 Fatores Higiênicos (Ambiente e Suporte)</label><textarea class="fator-hig" placeholder="Ex: Sistema de agendamento sem queda, estação ergonômica, salário em dia..."></textarea></div>
-        </div>
-        <div class="col-mot">
-          <div class="campo"><label>🟢 Fatores Motivadores (Propósito e Reconhecimento)</label><textarea class="fator-mot" placeholder="Ex: Elogio público por agilidade, saber que seu cadastro rápido salvou a visão do paciente..."></textarea></div>
-        </div>
-      </div>
-    </div>
-    <div class="setor-card">
-      <h4>Setor / Grupo 2 (opcional)</h4>
-      <div class="campo"><label>Grupo ou setor</label><input class="nome-setor" type="text" placeholder="Ex: Equipe de Call Center..."></div>
-      <div class="grid2" style="margin-top:12px">
-        <div class="col-hig"><div class="campo"><label>🔵 Fatores Higiênicos</label><textarea class="fator-hig" placeholder="..."></textarea></div></div>
-        <div class="col-mot"><div class="campo"><label>🟢 Fatores Motivadores</label><textarea class="fator-mot" placeholder="..."></textarea></div></div>
-      </div>
-    </div>
-  </div>
-  <button class="btn-add" onclick="addSetor()">+ Adicionar setor</button>
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
-  </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Painel →</button>
-  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
-}
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  const setor=document.getElementById('setor').value;
-  let msg=`✅ F3.1 — Painel de Herzberg\n👤 ${nome} | ${setor}\n\n`;
-  document.querySelectorAll('.setor-card').forEach((c,i)=>{
-    const grupo=c.querySelector('.nome-setor')?.value||'';
-    const hig=c.querySelector('.fator-hig')?.value||'';
-    const mot=c.querySelector('.fator-mot')?.value||'';
-    if(grupo||hig||mot) msg+=`Grupo: ${grupo}\n🔵 Higiênicos: ${hig}\n🟢 Motivadores: ${mot}\n\n`;
-  });
-  return msg.trim();
-}
-var db,cnt=2;
-function addSetor(){
-  cnt++;
-  const d=document.createElement('div');d.className='setor-card';
-  d.innerHTML=`<h4>Setor / Grupo ${cnt}</h4>
-  <div class="campo"><label>Grupo</label><input class="nome-setor" type="text" placeholder="..."></div>
-  <div class="grid2" style="margin-top:12px">
-    <div class="col-hig"><div class="campo"><label>🔵 Fatores Higiênicos</label><textarea class="fator-hig" placeholder="..."></textarea></div></div>
-    <div class="col-mot"><div class="campo"><label>🟢 Fatores Motivadores</label><textarea class="fator-mot" placeholder="..."></textarea></div></div>
-  </div>`;
-  document.getElementById('setores').appendChild(d);
-}
-async function enviar(){
-  const nome=document.getElementById('nome').value.trim();
-  const setor=document.getElementById('setor').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  const setores=[];
-  document.querySelectorAll('.setor-card').forEach(card=>{
-    const ns=card.querySelector('.nome-setor').value.trim();
-    const h=card.querySelector('.fator-hig').value.trim();
-    const m=card.querySelector('.fator-mot').value.trim();
-    if(ns||h||m) setores.push({grupo:ns,higienicos:h,motivadores:m});
-  });
-  if(!setores.length){alert('Preencha pelo menos um setor.');return;}
-  await db.collection('lider_f3_1').add({nome,setor,setores,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.doc('lider_agregados/f3_1').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
-  document.getElementById('msg-ok').style.display='block';
-  document.getElementById('btn-wpp').style.display='block';
-  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
-}
-window.onload=function(){
-  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
-  db=firebase.firestore();
-  carregarWpp();
+window.onload = function(){
+  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el = document.getElementById('logo-lucia');
+  if(el){ el.src = LOGO_LUCIA; el.style.display = 'block'; }
+
+  if(!firebase.apps.length){
+    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  }
+  var db = firebase.firestore();
+  db.doc('lider_config/tema').get().then(function(doc){
+    if(doc.exists && doc.data().logoParceiro){
+      var lp = document.getElementById('logo-cbco');
+      if(lp){ lp.src = doc.data().logoParceiro; lp.style.display = 'block';
+        var sep = document.getElementById('sep-logo'); if(sep) sep.style.display='block'; }
+    }
+  }).catch(function(){});
+  var wa = localStorage.getItem('lider_whatsapp');
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
 };
+
+function enviar(){
+  var db = firebase.firestore();
+  var nome = document.getElementById('nome').value.trim();
+  var wa = document.getElementById('whatsapp').value.trim();
+  var msg = document.getElementById('msg');
+  if(!nome || !wa){ msg.className='msg err'; msg.textContent='Preencha Nome e WhatsApp.'; return; }
+  localStorage.setItem('lider_whatsapp', wa);
+  var dados = {
+    nome: nome, whatsapp: wa,
+    setor: document.getElementById('setor').value,
+    higienicos: {
+      salario: document.getElementById('hig1').value,
+      condicoes: document.getElementById('hig2').value,
+      seguranca: document.getElementById('hig3').value,
+      relacoes: document.getElementById('hig4').value,
+      supervisao: document.getElementById('hig5').value,
+      politicas: document.getElementById('hig6').value
+    },
+    motivadores: {
+      reconhecimento: document.getElementById('mot1').value,
+      realizacao: document.getElementById('mot2').value,
+      crescimento: document.getElementById('mot3').value,
+      responsabilidade: document.getElementById('mot4').value,
+      proposito: document.getElementById('mot5').value,
+      natureza: document.getElementById('mot6').value
+    },
+    plano: document.getElementById('plano').value,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('lider_f3_1').add(dados).then(function(){
+    msg.className='msg ok'; msg.textContent='✅ Respostas salvas com sucesso!';
+  }).catch(function(e){
+    msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
+  });
+}
 </script>
-<script src="tema.js"></script>
 </body>
 </html>
