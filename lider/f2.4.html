@@ -2,150 +2,218 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F2.4 — Plano 5W2H</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2.4 — Plano de Ação 5W2H</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
-  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
-  .badge{display:inline-block;background:#2d1e5f;color:#a78bfa;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
-  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
-  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
-  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #7c3aed;border-radius:12px;margin:24px auto;max-width:680px;padding:14px 18px}
-  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
-  main{max-width:680px;margin:0 auto;padding:0 20px 40px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:10px 14px;color:#e2e2e8;font-size:0.88rem;font-family:inherit}
-  .campo textarea{resize:vertical;min-height:72px}
-  .campo input:focus,.campo textarea:focus{outline:none;border-color:#7c3aed}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .dim-card{display:grid;grid-template-columns:80px 1fr;gap:0;border:1px solid #2d2d4e;border-radius:0;margin-top:-1px}
-  .dim-card:first-of-type{border-radius:12px 12px 0 0}
-  .dim-card:last-of-type{border-radius:0 0 12px 12px}
-  .dim-label{background:#1e1030;padding:16px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #2d2d4e}
-  .dim-label .sigla{font-size:1rem;font-weight:800;color:#a78bfa}
-  .dim-label .nome{font-size:0.6rem;color:#6b6b8a;text-align:center;margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
-  .dim-content{padding:12px 16px;background:#161628}
-  .dim-content label{display:block;font-size:0.75rem;color:#8888a8;margin-bottom:6px}
-  .dim-content textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:10px 12px;color:#e2e2e8;font-size:0.85rem;resize:vertical;min-height:56px;font-family:inherit}
-  .dim-content textarea:focus{outline:none;border-color:#7c3aed}
-  .plano-wrap{border-radius:12px;overflow:hidden;border:1px solid #2d2d4e;margin-bottom:24px}
-  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
-  .btn-enviar:hover{opacity:0.9}
-  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f4f6f4;color:#1a2e1a;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+.logos{display:flex;align-items:center}
+.container{max-width:740px;margin:0 auto;padding:20px 16px 40px}
+.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.88rem;color:#166534;line-height:1.6}
+.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px #14532d0a}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:540px){.form-row{grid-template-columns:1fr}}
+label{display:block;font-size:0.8rem;font-weight:700;color:#166534;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px}
+input,textarea{background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;width:100%;font-size:0.9rem;color:#1a2e1a;font-family:inherit;transition:border-color .2s,box-shadow .2s;outline:none}
+input:focus,textarea:focus{border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+input[type="date"]{cursor:pointer}
+.section-title{font-size:1rem;font-weight:800;color:#14532d;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #d1fae5}
+.w-field{display:flex;gap:14px;align-items:flex-start;padding:14px;background:#f0fdf4;border:1px solid #d1fae5;border-radius:10px;margin-bottom:10px}
+.w-icon{font-size:1.6rem;flex-shrink:0;margin-top:2px;width:36px;text-align:center}
+.w-body{flex:1}
+.w-tag{display:inline-block;font-size:0.72rem;font-weight:800;color:#fff;padding:3px 10px;border-radius:20px;margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase}
+.w-question{font-size:0.82rem;color:#166534;margin-bottom:8px;font-style:italic}
+textarea{resize:vertical;min-height:70px}
+.w-tag.what{background:#dc2626}
+.w-tag.why{background:#ea580c}
+.w-tag.who{background:#ca8a04}
+.w-tag.where{background:#16a34a}
+.w-tag.when{background:#0284c7}
+.w-tag.how{background:#7c3aed}
+.w-tag.howmuch{background:#475569}
+.commit-card{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:12px;padding:20px;margin-bottom:16px}
+.commit-card .section-title{color:#14532d}
+.btn-enviar{width:100%;background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:0.3px;transition:opacity .2s}
+.btn-enviar:hover{opacity:0.9}
+.msg{display:none;text-align:center;padding:14px;border-radius:8px;margin-top:12px;font-weight:600}
+.msg.ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 2 · Formulário 2.4</div>
-  <h1>Plano Individual de Ação 5W2H</h1>
-  <p>Estruture 1 ação prioritária de liderança para implementar no seu setor esta semana</p>
+<header>
+  <div class="header-top">
+    <div class="logos">
+      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <div style="width:1px;height:32px;background:#ffffff33;margin:0 10px"></div>
+      <img id="logo-cbco" alt="CBCO" style="height:42px;object-fit:contain;display:none">
+    </div>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
+  </div>
+  <div style="padding:16px 20px 20px;text-align:center">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W2 · F2.4</span>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Plano de Ação 5W2H</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Estruture 1 ação prioritária de liderança para implementar no seu setor</p>
+  </div>
 </header>
-<div class="instr" data-tema="border-left">
-  <p><strong style="color:#a78bfa">5W2H:</strong> What (o quê) · Why (por quê) · Who (quem) · When (quando) · Where (onde) · How (como) · How Much (quanto custa). Seja específico — datas vagas não funcionam!</p>
+
+<div class="container">
+  <div class="instrucao">
+    O <strong>5W2H</strong> é uma ferramenta de planejamento que garante clareza total na execução. Preencha para sua ação prioritária de liderança.
+  </div>
+
+  <div class="card">
+    <div class="section-title">Identificação</div>
+    <div class="form-row">
+      <div><label>Nome</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
+      <div><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(00) 00000-0000"></div>
+    </div>
+    <div>
+      <label>Setor</label>
+      <input type="text" id="setor" placeholder="Setor / área onde a ação será implementada">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Plano de Ação 5W2H</div>
+
+    <div class="w-field">
+      <div class="w-icon">🔴</div>
+      <div class="w-body">
+        <span class="w-tag what">WHAT</span>
+        <div class="w-question">O que fazer?</div>
+        <input type="text" id="what" placeholder="Descreva a ação que será executada...">
+      </div>
+    </div>
+
+    <div class="w-field">
+      <div class="w-icon">🟠</div>
+      <div class="w-body">
+        <span class="w-tag why">WHY</span>
+        <div class="w-question">Por que fazer?</div>
+        <textarea id="why" placeholder="Qual a justificativa e importância desta ação?"></textarea>
+      </div>
+    </div>
+
+    <div class="w-field">
+      <div class="w-icon">🟡</div>
+      <div class="w-body">
+        <span class="w-tag who">WHO</span>
+        <div class="w-question">Quem vai fazer?</div>
+        <input type="text" id="who" placeholder="Responsável(eis) pela execução...">
+      </div>
+    </div>
+
+    <div class="w-field">
+      <div class="w-icon">🟢</div>
+      <div class="w-body">
+        <span class="w-tag where">WHERE</span>
+        <div class="w-question">Onde vai acontecer?</div>
+        <input type="text" id="where" placeholder="Local, ambiente ou contexto de aplicação...">
+      </div>
+    </div>
+
+    <div class="w-field">
+      <div class="w-icon">🔵</div>
+      <div class="w-body">
+        <span class="w-tag when">WHEN</span>
+        <div class="w-question">Quando? Prazo:</div>
+        <input type="date" id="when">
+      </div>
+    </div>
+
+    <div class="w-field">
+      <div class="w-icon">🟣</div>
+      <div class="w-body">
+        <span class="w-tag how">HOW</span>
+        <div class="w-question">Como vai ser feito?</div>
+        <textarea id="how" placeholder="Descreva o método, etapas ou estratégia de execução..."></textarea>
+      </div>
+    </div>
+
+    <div class="w-field">
+      <div class="w-icon">⚪</div>
+      <div class="w-body">
+        <span class="w-tag howmuch">HOW MUCH</span>
+        <div class="w-question">Quanto vai custar / Que recursos preciso?</div>
+        <textarea id="howmuch" placeholder="Recursos financeiros, humanos, materiais ou de tempo necessários..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="commit-card">
+    <div class="section-title">Meu Comprometimento</div>
+    <label>Eu me comprometo a...</label>
+    <textarea id="compromisso" style="min-height:90px" placeholder="Descreva seu comprometimento pessoal com a execução deste plano..."></textarea>
+  </div>
+
+  <div class="card" style="padding:16px">
+    <button class="btn-enviar" onclick="enviar()">Enviar Plano de Ação</button>
+    <div class="msg" id="msg"></div>
+  </div>
 </div>
-<main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Cadastro T2"></div>
-  </div>
-  <div class="plano-wrap">
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">WHAT</span><span class="nome">O que fazer?</span></div>
-      <div class="dim-content"><label>Descrição clara e objetiva da ação de liderança</label><textarea id="what" placeholder="Ex: Implantar checklist digital de verificação de guias antes do envio ao convênio..."></textarea></div>
-    </div>
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">WHY</span><span class="nome">Por quê?</span></div>
-      <div class="dim-content"><label>Justificativa e impacto esperado no setor e no paciente do CBCO</label><textarea id="why" placeholder="Ex: Reduzir em 80% as glosas por erro de autorização e garantir o agendamento do exame..."></textarea></div>
-    </div>
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">WHO</span><span class="nome">Quem fará?</span></div>
-      <div class="dim-content"><label>Responsável direto e equipe envolvida</label><textarea id="who" placeholder="Ex: Eu (gestor) + atendente sênior Maria para treinar a equipe..."></textarea></div>
-    </div>
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">WHEN</span><span class="nome">Quando?</span></div>
-      <div class="dim-content"><label>Data de início e prazo final de execução (evitar datas vagas!)</label><textarea id="when" placeholder="Ex: Início: segunda-feira 23/09 | Prazo: 30/09/2026 com revisão semanal..."></textarea></div>
-    </div>
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">WHERE</span><span class="nome">Onde?</span></div>
-      <div class="dim-content"><label>Setor/Unidade específica de aplicação</label><textarea id="where" placeholder="Ex: Recepção T2 — balcão de cadastro e agendamento..."></textarea></div>
-    </div>
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">HOW</span><span class="nome">Como?</span></div>
-      <div class="dim-content"><label>Metodologia, passo a passo e ferramentas</label><textarea id="how" placeholder="Ex: 1) Criar formulário Google; 2) Treinar equipe em 20 min na segunda; 3) Checar resultados semanalmente..."></textarea></div>
-    </div>
-    <div class="dim-card">
-      <div class="dim-label"><span class="sigla">HOW<br>MUCH</span><span class="nome">Recursos?</span></div>
-      <div class="dim-content"><label>Custo financeiro, esforço ou apoio necessário</label><textarea id="howmuch" placeholder="Ex: Sem custo financeiro. Preciso de 1h do meu tempo + aprovação da coordenação..."></textarea></div>
-    </div>
-  </div>
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
-  </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Plano de Ação →</button>
-  <div class="msg-ok" id="msg-ok">✓ Plano enviado com sucesso!</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
-}
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  let msg=`✅ F2.4 — Plano 5W2H\n👤 ${nome}\n`;
-  const ids=['what','why','who','when','where','how','howmuch'];
-  const labels=['O Quê','Por Quê','Quem','Quando','Onde','Como','Quanto'];
-  ids.forEach((id,i)=>{
-    const v=document.getElementById(id)?.value||'';
-    if(v) msg+=`\n${labels[i]}: ${v}`;
-  });
-  return msg.trim();
-}
-var db;
-async function enviar(){
-  const nome=document.getElementById('nome').value.trim();
-  const setor=document.getElementById('setor').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  const w=document.getElementById('what').value.trim();
-  if(!w){alert('Preencha pelo menos o campo WHAT (O que fazer?).');return;}
-  const plano={
-    what:w,why:document.getElementById('why').value.trim(),
+function enviar(){
+  var nome=document.getElementById('nome').value.trim();
+  var wa=document.getElementById('whatsapp').value.trim();
+  if(!nome||!wa){
+    mostrarMsg('Preencha nome e WhatsApp antes de enviar.','err');
+    return;
+  }
+  var data={
+    nome:nome,
+    whatsapp:wa,
+    setor:document.getElementById('setor').value.trim(),
+    what:document.getElementById('what').value.trim(),
+    why:document.getElementById('why').value.trim(),
     who:document.getElementById('who').value.trim(),
-    when:document.getElementById('when').value.trim(),
     where:document.getElementById('where').value.trim(),
+    when:document.getElementById('when').value,
     how:document.getElementById('how').value.trim(),
-    how_much:document.getElementById('howmuch').value.trim()
+    howmuch:document.getElementById('howmuch').value.trim(),
+    compromisso:document.getElementById('compromisso').value.trim(),
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
   };
-  await db.collection('lider_f2_4').add({nome,setor,plano,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.doc('lider_agregados/f2_4').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
-  document.getElementById('msg-ok').style.display='block';
-  document.getElementById('btn-wpp').style.display='block';
-  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
+  firebase.firestore().collection('lider_f2_4').add(data).then(function(){
+    localStorage.setItem('lider_whatsapp',wa);
+    mostrarMsg('Plano de Ação enviado com sucesso!','ok');
+  }).catch(function(){
+    mostrarMsg('Erro ao enviar. Tente novamente.','err');
+  });
 }
+
+function mostrarMsg(txt,tipo){
+  var m=document.getElementById('msg');
+  m.textContent=txt;
+  m.className='msg '+tipo;
+  m.style.display='block';
+  setTimeout(function(){m.style.display='none';},4000);
+}
+
 window.onload=function(){
-  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
-  db=firebase.firestore();
-  carregarWpp();
+  var LOGO_LUCIA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el=document.getElementById('logo-lucia');
+  el.src=LOGO_LUCIA; el.style.display='block';
+
+  if(!firebase.apps.length){
+    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  }
+  var db=firebase.firestore();
+  db.doc('lider_config/tema').get().then(function(doc){
+    if(doc.exists&&doc.data().logoParceiro){
+      var lp=document.getElementById('logo-cbco');
+      lp.src=doc.data().logoParceiro; lp.style.display='block';
+    }
+  }).catch(function(){});
+
+  var wa=localStorage.getItem('lider_whatsapp');
+  if(wa){var w=document.getElementById('whatsapp');if(w)w.value=wa;}
 };
 </script>
-<script src="tema.js"></script>
 </body>
 </html>
