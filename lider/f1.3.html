@@ -5,207 +5,330 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>F1.3 — A Corda das Soluções</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh;padding-bottom:60px}
+header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:900px;margin:0 auto}
+.logos{display:flex;align-items:center;gap:12px}
+.header-body{padding:16px 20px 22px;max-width:900px;margin:0 auto}
+.badge{display:inline-block;background:rgba(255,255,255,.18);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 12px;border-radius:20px;margin-bottom:10px;text-transform:uppercase;color:#fff}
+header h1{font-size:clamp(1.2rem,4vw,1.6rem);font-weight:800;color:#fff;margin-bottom:5px}
+header p{font-size:13px;color:#bbf7d0}
+.container{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+.card{background:#fff;border:1.5px solid #d1fae5;border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.card-title{font-size:1rem;font-weight:700;color:#14532d;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.instrucao{background:#f0fdf4;border-left:4px solid #16a34a;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:14px;line-height:1.65;color:#14532d}
+.instrucao strong{font-weight:700}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px}
+.form-group label{font-size:0.78rem;font-weight:600;color:#374151}
+.form-group input,.form-group textarea{border:1.5px solid #d1fae5;border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:0.875rem;color:#1a2e1a;outline:none;transition:border-color .2s;background:#fff;width:100%}
+.form-group input:focus,.form-group textarea:focus{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.1)}
+.form-group textarea{resize:vertical;min-height:76px}
+.btn{display:inline-flex;align-items:center;gap:6px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:600;cursor:pointer;transition:background .2s}
+.btn:hover{background:#15803d}
+.btn-save{background:#14532d;border:none;border-radius:10px;color:#fff;font-family:'Inter',sans-serif;font-size:1rem;font-weight:700;padding:13px;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;transition:background .2s}
+.btn-save:hover{background:#052e16}
+.btn-wa{background:#25d366;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center;width:100%;transition:background .2s;margin-top:8px}
+.btn-wa:hover{background:#128c7e}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #f4f6f4; color: #1a2e1a; font-family: 'Inter', sans-serif; min-height: 100vh; }
-header { background: linear-gradient(135deg,#14532d 0%,#16a34a 100%); border-bottom: 3px solid #15803d; color: #fff; padding: 0; }
-.header-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
-.logos { display: flex; align-items: center; gap: 12px; }
-.logo-lucia { height: 44px; object-fit: contain; }
-.logo-cbco { height: 44px; object-fit: contain; }
-.back { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; transition: all .2s; }
-.back:hover { background: rgba(255,255,255,0.12); color: #fff; }
-.header-body { padding: 20px 24px 24px; }
-.badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .5px; margin-bottom: 10px; }
-.header-body h1 { font-size: clamp(20px,4vw,28px); font-weight: 700; margin-bottom: 6px; }
-.header-body p { font-size: 14px; opacity: .85; }
-.container { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
-.instrucao { background: #ffffff; border-left: 4px solid #16a34a; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; line-height: 1.6; color: #14532d; }
-.instrucao strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; color: #166534; }
-.card { background: #ffffff; border: 1px solid #d1fae5; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media(max-width:600px){ .grid2 { grid-template-columns: 1fr; } }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: .4px; }
-input[type=text], textarea, select {
-  background: #ffffff; border: 1px solid #d1fae5; border-radius: 8px;
-  padding: 10px 12px; font-size: 14px; color: #1a2e1a; font-family: inherit;
-  width: 100%; transition: border-color .2s, box-shadow .2s;
-}
-input:focus, textarea:focus, select:focus {
-  outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px #16a34a18;
-}
-textarea { resize: vertical; min-height: 80px; }
-.btn-submit { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg,#16a34a,#14532d); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 24px; transition: opacity .2s; }
-.btn-submit:hover { opacity: .9; }
+/* chips participantes */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;margin:3px;background:#d1fae5;border:1.5px solid #86efac;color:#14532d}
+.chip-remove{background:none;border:none;cursor:pointer;font-size:11px;opacity:.6;padding:0 2px}
+.chip-remove:hover{opacity:1}
+#chips-area{min-height:24px;display:flex;flex-wrap:wrap;padding:4px 0;margin-top:4px}
 
-.transform-row { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; align-items: start; margin-bottom: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 14px; }
-.arrow { display: flex; align-items: center; justify-content: center; padding-top: 28px; font-size: 22px; color: #16a34a; font-weight: 700; }
-@media(max-width:600px){
-  .transform-row { grid-template-columns: 1fr; }
-  .arrow { padding-top: 4px; transform: rotate(90deg); }
+/* Transform row */
+.transform-row{display:grid;grid-template-columns:1fr 32px 1fr;gap:0;align-items:start;margin-bottom:14px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px}
+.transform-row .arrow{display:flex;align-items:center;justify-content:center;padding-top:26px;font-size:20px;color:#16a34a;font-weight:700}
+.row-num{font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+@media(max-width:560px){
+  .transform-row{grid-template-columns:1fr}
+  .transform-row .arrow{padding-top:4px;transform:rotate(90deg)}
 }
-.row-num { font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+
+.comprometimento-wrap{background:#fefce8;border:1.5px solid #fde68a;border-radius:10px;padding:16px;margin-top:4px}
+.comprometimento-wrap label{font-size:0.82rem;font-weight:700;color:#92400e;margin-bottom:8px;display:block}
+
+/* WhatsApp destino */
+.wa-destino-wrap{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.wa-destino-wrap label{font-size:0.82rem;font-weight:700;color:#14532d;white-space:nowrap}
+.wa-destino-wrap input{border:1.5px solid #86efac;border-radius:8px;padding:8px 12px;font-family:'Inter',sans-serif;font-size:0.875rem;color:#1a2e1a;outline:none;background:#fff;flex:1;min-width:180px}
+.wa-destino-wrap input:focus{border-color:#16a34a}
+
+.save-status{text-align:center;margin-top:8px;font-size:0.82rem;font-weight:600;color:#15803d;min-height:20px}
 </style>
 </head>
 <body>
+
 <header>
   <div class="header-top">
     <div class="logos">
-      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="display:none">
-      <div class="logo-sep"></div>
-      <img class="logo-cbco" id="logo-cbco" alt="CBCO" style="display:none">
+      <img id="logo-lucia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px">
+      <span id="sep-logos" style="display:none;width:1px;height:32px;background:#ffffff55"></span>
+      <img id="logo-cbco" src="" alt="CBCO" style="height:42px;object-fit:contain;display:none">
     </div>
-    <a class="back" href="hub.html">← Voltar ao Hub</a>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
   </div>
   <div class="header-body">
     <span class="badge">W1 · F1.3</span>
     <h1>A Corda das Soluções</h1>
-    <p>Transforme reclamações em perguntas de liderança orientadas à solução</p>
+    <p>Atividade em grupo — transforme reclamações em perguntas orientadas à solução</p>
   </div>
 </header>
+
 <div class="container">
+
   <div class="instrucao">
-    <strong>Instrução</strong>
-    Para cada reclamação/problema identificado, reformule como uma pergunta poderosa orientada à solução. O líder que puxa a corda foca no <strong>"Como podemos..."</strong> e não no <strong>"Por que aconteceu..."</strong>
+    Para cada reclamação/problema identificado pelo grupo, reformule como uma pergunta poderosa orientada à solução.<br>
+    O líder que puxa a corda foca no <strong>"Como podemos..."</strong> e não no <strong>"Por que aconteceu..."</strong>
   </div>
-  <form id="form">
-    <div class="card">
-      <div class="grid2">
-        <div class="field"><label>Nome do Líder</label><input type="text" id="nome" placeholder="Seu nome completo" required></div>
-        <div class="field"><label>WhatsApp</label><input type="text" id="whatsapp" placeholder="(00) 00000-0000"></div>
+
+  <!-- WhatsApp de envio -->
+  <div class="wa-destino-wrap">
+    <label>📲 Enviar resultados para:</label>
+    <input type="tel" id="wa-destino" placeholder="WhatsApp do facilitador — (62) 99999-9999">
+  </div>
+
+  <!-- Participantes do grupo -->
+  <div class="card">
+    <div class="card-title">👥 Participantes do Grupo</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome do participante</label>
+        <input type="text" id="novo-nome" data-voz placeholder="Nome completo">
+      </div>
+      <div style="flex:0">
+        <button class="btn" onclick="adicionarParticipante()" style="margin-top:22px;white-space:nowrap">➕ Adicionar</button>
       </div>
     </div>
+    <div id="chips-area"><span style="color:#9ca3af;font-size:0.82rem;font-style:italic">Nenhum participante adicionado ainda.</span></div>
+  </div>
 
-    <div class="card">
-      <p style="font-size:13px;color:#166534;font-weight:600;margin-bottom:16px;text-transform:uppercase;letter-spacing:.4px">Transformações de Reclamação → Solução</p>
-      
-      <div class="transform-row">
-        <div>
-          <div class="row-num">1 · Reclamação / Problema</div>
-          <textarea id="r1_prob" placeholder="Ex: A equipe não se comunica bem..."></textarea>
-        </div>
-        <div class="arrow">→</div>
-        <div>
-          <div class="row-num">1 · Pergunta Orientada à Solução</div>
-          <textarea id="r1_sol" placeholder="Ex: Como podemos criar rituais de comunicação que aproximem a equipe?"></textarea>
-        </div>
-      </div>
+  <!-- Transformações (únicas, do grupo) -->
+  <div class="card">
+    <div class="card-title">🪢 Transformações do Grupo — Reclamação → Solução</div>
+    <div id="trans-lista"></div>
+    <button class="btn" onclick="adicionarTransformacao()" style="margin-top:4px;background:#f0fdf4;color:#15803d;border:1.5px solid #86efac">➕ Adicionar transformação</button>
+  </div>
 
-      <div class="transform-row">
-        <div>
-          <div class="row-num">2 · Reclamação / Problema</div>
-          <textarea id="r2_prob" placeholder="Descreva o problema ou reclamação..."></textarea>
-        </div>
-        <div class="arrow">→</div>
-        <div>
-          <div class="row-num">2 · Pergunta Orientada à Solução</div>
-          <textarea id="r2_sol" placeholder="Reformule como 'Como podemos...'"></textarea>
-        </div>
-      </div>
+  <!-- Comprometimento coletivo -->
+  <div class="comprometimento-wrap" style="margin-bottom:20px">
+    <label>⚡ Como o grupo vai puxar a corda a partir de agora:</label>
+    <textarea id="comprometimento" style="min-height:100px;border:1.5px solid #fde68a;border-radius:8px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:0.875rem;color:#1a2e1a;background:#fff;width:100%;outline:none;resize:vertical" placeholder="Descreva o comprometimento coletivo — que atitude concreta o grupo vai adotar para liderar pelo foco em soluções?"></textarea>
+  </div>
 
-      <div class="transform-row">
-        <div>
-          <div class="row-num">3 · Reclamação / Problema</div>
-          <textarea id="r3_prob" placeholder="Descreva o problema ou reclamação..."></textarea>
-        </div>
-        <div class="arrow">→</div>
-        <div>
-          <div class="row-num">3 · Pergunta Orientada à Solução</div>
-          <textarea id="r3_sol" placeholder="Reformule como 'Como podemos...'"></textarea>
-        </div>
-      </div>
+  <!-- Ações finais -->
+  <div class="card">
+    <button class="btn-wa" onclick="enviarWhatsApp()">📲 Enviar resultados do grupo via WhatsApp</button>
+    <button class="btn-save" onclick="salvar()">💾 Salvar no sistema</button>
+    <p class="save-status" id="save-status"></p>
+  </div>
 
-      <div class="transform-row">
-        <div>
-          <div class="row-num">4 · Reclamação / Problema</div>
-          <textarea id="r4_prob" placeholder="Descreva o problema ou reclamação..."></textarea>
-        </div>
-        <div class="arrow">→</div>
-        <div>
-          <div class="row-num">4 · Pergunta Orientada à Solução</div>
-          <textarea id="r4_sol" placeholder="Reformule como 'Como podemos...'"></textarea>
-        </div>
-      </div>
-
-      <div class="transform-row">
-        <div>
-          <div class="row-num">5 · Reclamação / Problema</div>
-          <textarea id="r5_prob" placeholder="Descreva o problema ou reclamação..."></textarea>
-        </div>
-        <div class="arrow">→</div>
-        <div>
-          <div class="row-num">5 · Pergunta Orientada à Solução</div>
-          <textarea id="r5_sol" placeholder="Reformule como 'Como podemos...'"></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="field">
-        <label>Como vou puxar a corda a partir de agora:</label>
-        <textarea id="comprometimento" style="min-height:120px" placeholder="Descreva seu comprometimento como líder — que atitude concreta você vai adotar a partir de hoje para liderar pelo foco em soluções?"></textarea>
-      </div>
-    </div>
-
-    <button type="submit" class="btn-submit">✅ Enviar — Puxar a Corda!</button>
-  </form>
 </div>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
-  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
-  var db;
-  window.onload = function(){
-    document.getElementById('logo-lucia').src = LOGO_LUCIA;
-    document.getElementById('logo-lucia').style.display = 'block';
-    if(!firebase.apps.length){
-      firebase.initializeApp({
-        apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
-        authDomain:"entrevista-inicial.firebaseapp.com",
-        projectId:"entrevista-inicial",
-        storageBucket:"entrevista-inicial.firebasestorage.app",
-        messagingSenderId:"437375609844",
-        appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
-      });
-    }
-    db = firebase.firestore();
-    db.doc('lider_config/tema').get().then(function(doc){
-      if(doc.exists && doc.data().logoParceiro){
-        var lp = document.getElementById('logo-cbco');
-        lp.src = doc.data().logoParceiro;
-        lp.style.display = 'block';
-      }
-    }).catch(function(){});
-    var savedWa = localStorage.getItem('lider_whatsapp');
-    if(savedWa){ var waInput = document.getElementById('whatsapp'); if(waInput) waInput.value = savedWa; }
-  };
-</script>
-<script>
-document.getElementById('form').addEventListener('submit', function(e){
-  e.preventDefault();
-  var wa = document.getElementById('whatsapp').value.replace(/\D/g,'');
-  if(wa) localStorage.setItem('lider_whatsapp', wa);
-  var dados = {
-    nome: document.getElementById('nome').value,
-    whatsapp: document.getElementById('whatsapp').value,
-    transformacoes: [
-      { problema: document.getElementById('r1_prob').value, solucao: document.getElementById('r1_sol').value },
-      { problema: document.getElementById('r2_prob').value, solucao: document.getElementById('r2_sol').value },
-      { problema: document.getElementById('r3_prob').value, solucao: document.getElementById('r3_sol').value },
-      { problema: document.getElementById('r4_prob').value, solucao: document.getElementById('r4_sol').value },
-      { problema: document.getElementById('r5_prob').value, solucao: document.getElementById('r5_sol').value }
-    ],
-    comprometimento: document.getElementById('comprometimento').value,
-    timestamp: new Date()
-  };
-  db.collection('lider_f1_3').add(dados).then(function(){
-    alert('Corda das Soluções salva com sucesso!');
-    if(wa){ window.open('https://wa.me/55'+wa+'?text='+encodeURIComponent('Formulário Líd@r F1.3 - A Corda das Soluções preenchido!'), '_blank'); }
-  }).catch(function(err){ alert('Erro: '+err.message); });
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
 });
+var db = firebase.firestore();
+
+var participantes = [];
+var transCount = 0;
+
+// ── Transformações dinâmicas ──────────────────────────────────────────
+function adicionarTransformacao(pVal, sVal){
+  transCount++;
+  var n = transCount;
+  var lista = document.getElementById('trans-lista');
+  var ph1 = n===1 ? 'Ex: A equipe não se comunica bem...' : 'Descreva o problema ou reclamação...';
+  var ph2 = n===1 ? 'Como podemos criar rituais de comunicação que aproximem a equipe?' : 'Como podemos...';
+  var row = document.createElement('div');
+  row.className = 'transform-row';
+  row.id = 'trans-row-'+n;
+  row.style.position = 'relative';
+  row.innerHTML = '<div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'
+    +'<div class="row-num">'+n+' · Reclamação / Problema</div>'
+    +(n>1?'<button onclick="removerTransformacao('+n+')" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:0.75rem">🗑️</button>':'')
+    +'</div>'
+    +'<textarea id="p'+n+'" placeholder="'+ph1+'"></textarea>'
+    +'</div>'
+    +'<div class="arrow">→</div>'
+    +'<div><div class="row-num" style="margin-bottom:5px">'+n+' · Pergunta Orientada à Solução</div>'
+    +'<textarea id="s'+n+'" placeholder="'+ph2+'"></textarea>'
+    +'</div>';
+  lista.appendChild(row);
+  if(pVal) document.getElementById('p'+n).value = pVal;
+  if(sVal) document.getElementById('s'+n).value = sVal;
+  setTimeout(function(){
+    ['p'+n,'s'+n].forEach(function(id){
+      var ta = document.getElementById(id);
+      if(ta && !ta.dataset.vozInit){ ta.dataset.vozInit='1'; addVozToField(ta); }
+    });
+  }, 50);
+}
+
+function removerTransformacao(n){
+  var row = document.getElementById('trans-row-'+n);
+  if(row) row.parentNode.removeChild(row);
+}
+
+// ── Participantes ─────────────────────────────────────────────────────
+function adicionarParticipante(){
+  var nome = document.getElementById('novo-nome').value.trim();
+  if(!nome){ alert('Informe o nome do participante.'); return; }
+  participantes.push(nome);
+  document.getElementById('novo-nome').value = '';
+  renderChips();
+}
+
+function removerParticipante(idx){
+  participantes.splice(idx,1);
+  renderChips();
+}
+
+function renderChips(){
+  var area = document.getElementById('chips-area');
+  if(!participantes.length){
+    area.innerHTML='<span style="color:#9ca3af;font-size:0.82rem;font-style:italic">Nenhum participante adicionado ainda.</span>';
+    return;
+  }
+  area.innerHTML='';
+  participantes.forEach(function(nome,i){
+    var chip = document.createElement('span');
+    chip.className='chip';
+    chip.innerHTML='👤 <strong>'+escHtml(nome)+'</strong>'
+      +'<button class="chip-remove" onclick="removerParticipante('+i+')">❌</button>';
+    area.appendChild(chip);
+  });
+}
+
+// ── Coletar dados ─────────────────────────────────────────────────────
+function coletarDados(){
+  var trans = [];
+  for(var n=1;n<=transCount;n++){
+    var p = document.getElementById('p'+n);
+    var s = document.getElementById('s'+n);
+    if(p) trans.push({ problema: p.value.trim(), solucao: s?s.value.trim():'' });
+  }
+  return {
+    participantes: participantes.slice(),
+    transformacoes: trans,
+    comprometimento: document.getElementById('comprometimento').value.trim(),
+    ts: Date.now()
+  };
+}
+
+// ── WhatsApp ──────────────────────────────────────────────────────────
+function enviarWhatsApp(){
+  var destino = document.getElementById('wa-destino').value.replace(/\D/g,'');
+  if(!destino){ alert('Informe o WhatsApp de destino no topo da página.'); return; }
+  var d = coletarDados();
+  var msg = '🪢 *A Corda das Soluções — Líd@r 5.0*\n';
+  if(d.participantes.length){
+    msg += '👥 *Grupo:* '+d.participantes.join(', ')+'\n';
+  }
+  msg += '\n';
+  d.transformacoes.forEach(function(t,i){
+    if(t.problema || t.solucao){
+      msg += (i+1)+'. ❌ *Reclamação:* '+t.problema+'\n';
+      msg += '   ✅ *Solução:* '+t.solucao+'\n\n';
+    }
+  });
+  if(d.comprometimento){
+    msg += '⚡ *Comprometimento do grupo:* '+d.comprometimento;
+  }
+  window.open('https://wa.me/55'+destino+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ── Salvar ────────────────────────────────────────────────────────────
+function salvar(){
+  var status = document.getElementById('save-status');
+  var d = coletarDados();
+  status.textContent='Salvando...'; status.style.color='#6b7280';
+  var id = 'grupo_'+Date.now();
+  db.collection('lider_f1_3').doc(id).set(d).then(function(){
+    status.textContent='✅ Salvo com sucesso!';
+    status.style.color='#15803d';
+    // salva wa destino
+    var dest = document.getElementById('wa-destino').value.trim();
+    if(dest) localStorage.setItem('lider_f13_wa_destino', dest);
+  }).catch(function(e){
+    status.textContent='❌ Erro: '+e.message;
+    status.style.color='#dc2626';
+  });
+}
+
+// ── Voz ───────────────────────────────────────────────────────────────
+function addVozToField(campo){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  var isInput = campo.tagName === 'INPUT';
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;display:block';
+  campo.parentNode.insertBefore(wrap, campo);
+  wrap.appendChild(campo);
+  var btn = document.createElement('button');
+  btn.type='button'; btn.innerHTML='🎙️'; btn.title='Falar para digitar';
+  btn.style.cssText='position:absolute;right:6px;'+(isInput?'top:50%;transform:translateY(-50%)':'bottom:8px')+';background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+  wrap.appendChild(btn);
+  campo.style.paddingRight='36px';
+  var dot = document.createElement('div');
+  dot.style.cssText='display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+  dot.innerHTML='<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando...';
+  wrap.appendChild(dot);
+  var rec=null,gravando=false;
+  btn.addEventListener('click',function(){
+    if(gravando){if(rec)rec.stop();gravando=false;btn.style.background='#f3e6ff';btn.style.color='#7B00C4';btn.style.boxShadow='none';dot.style.display='none';return;}
+    rec=new SR();rec.lang='pt-BR';rec.continuous=true;rec.interimResults=true;
+    rec.onresult=function(e){var t=Array.from(e.results).map(function(r){return r[0].transcript;}).join(' ');var base=campo.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd();campo.value=base?base+' '+t:t;};
+    rec.onerror=function(){gravando=false;btn.style.background='#f3e6ff';btn.style.color='#7B00C4';dot.style.display='none';};
+    rec.onend=function(){if(gravando){gravando=false;btn.style.background='#f3e6ff';btn.style.color='#7B00C4';dot.style.display='none';}};
+    rec.start();gravando=true;btn.style.background='#7B00C4';btn.style.color='white';btn.style.boxShadow='0 0 0 3px #7B00C430';dot.style.display='flex';
+  });
+}
+
+function initVoz(){
+  document.querySelectorAll('textarea').forEach(function(ta){addVozToField(ta);});
+  document.querySelectorAll('input[data-voz]').forEach(function(inp){addVozToField(inp);});
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Init ──────────────────────────────────────────────────────────────
+window.onload = function(){
+  db.collection('lider_config').doc('tema').get().then(function(doc){
+    if(doc.exists && doc.data().logoParceiro){
+      document.getElementById('logo-cbco').src = doc.data().logoParceiro;
+      document.getElementById('logo-cbco').style.display = 'block';
+      document.getElementById('sep-logos').style.display = 'block';
+    }
+  }).catch(function(){});
+
+  var dest = localStorage.getItem('lider_f13_wa_destino');
+  if(dest) document.getElementById('wa-destino').value = dest;
+
+  document.getElementById('novo-nome').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();adicionarParticipante();}
+  });
+
+  // 3 transformações iniciais
+  adicionarTransformacao();
+  adicionarTransformacao();
+  adicionarTransformacao();
+
+  initVoz();
+};
 </script>
 </body>
 </html>
