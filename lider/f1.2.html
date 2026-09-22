@@ -2,171 +2,185 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F1.2 — Matriz Geracional</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1.2 — Matriz de Mapeamento Geracional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
-  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
-  .badge{display:inline-block;background:#1e3a5f;color:#60a5fa;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
-  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
-  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
-  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #3b82f6;border-radius:12px;margin:24px auto;max-width:700px;padding:14px 18px}
-  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
-  main{max-width:740px;margin:0 auto;padding:0 20px 40px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo input,.campo select,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
-  .campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:#7c3aed}
-  .campo select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%23a0a0b8' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .ger-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-  .ger-tag{background:#161628;border:1px solid #2d2d4e;border-radius:20px;padding:4px 12px;font-size:0.75rem;cursor:default}
-  .ger-bb{border-color:#7c3aed55;color:#c4b5fd}
-  .ger-x{border-color:#2563eb55;color:#93c5fd}
-  .ger-y{border-color:#059669;color:#6ee7b7}
-  .ger-z{border-color:#d97706;color:#fcd34d}
-  .linha-colab{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
-  .linha-colab h4{font-size:0.8rem;color:#60a5fa;margin-bottom:10px;font-weight:700}
-  .grid-colab{display:grid;grid-template-columns:1fr 100px 1fr 1fr;gap:10px}
-  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
-  .btn-add:hover{border-color:#7c3aed;color:#a78bfa}
-  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
-  .btn-enviar:hover{opacity:0.9}
-  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f4f6f4; color: #1a2e1a; font-family: 'Inter', sans-serif; min-height: 100vh; }
+header { background: linear-gradient(135deg,#14532d 0%,#16a34a 100%); border-bottom: 3px solid #15803d; color: #fff; padding: 0; }
+.header-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+.logos { display: flex; align-items: center; gap: 12px; }
+.logo-lucia { height: 44px; object-fit: contain; }
+.logo-sep { width: 1px; height: 36px; background: rgba(255,255,255,0.3); display: none; }
+.logo-cbco { height: 44px; object-fit: contain; }
+.back { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; transition: all .2s; }
+.back:hover { background: rgba(255,255,255,0.12); color: #fff; }
+.header-body { padding: 20px 24px 24px; }
+.badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .5px; margin-bottom: 10px; }
+.header-body h1 { font-size: clamp(20px,4vw,28px); font-weight: 700; margin-bottom: 6px; }
+.header-body p { font-size: 14px; opacity: .85; }
+.container { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+.instrucao { background: #ffffff; border-left: 4px solid #16a34a; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; line-height: 1.6; color: #14532d; }
+.instrucao strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; color: #166534; }
+.card { background: #ffffff; border: 1px solid #d1fae5; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.card h3 { font-size: 15px; font-weight: 700; color: #14532d; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #d1fae5; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:600px){ .grid2 { grid-template-columns: 1fr; } }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: .4px; }
+input[type=text], input[type=date], textarea, select {
+  background: #ffffff; border: 1px solid #d1fae5; border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; color: #1a2e1a; font-family: inherit;
+  width: 100%; transition: border-color .2s, box-shadow .2s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px #16a34a18;
+}
+textarea { resize: vertical; min-height: 80px; }
+.btn-submit { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg,#16a34a,#14532d); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 24px; transition: opacity .2s; }
+.btn-submit:hover { opacity: .9; }
+.section-label { font-size: 13px; font-weight: 700; color: #14532d; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; margin-top: 20px; }
+
+.gen-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.gen-card h4 { font-size: 14px; font-weight: 700; color: #14532d; margin-bottom: 12px; }
+.gen-fields { display: flex; flex-direction: column; gap: 10px; }
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 1 · Formulário 1.2</div>
-  <h1>Matriz de Mapeamento e Integração Geracional</h1>
-  <p>Mapeie sua equipe por geração e defina estratégias de integração</p>
+<header>
+  <div class="header-top">
+    <div class="logos">
+      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="display:none">
+      <div class="logo-sep"></div>
+      <img class="logo-cbco" id="logo-cbco" alt="CBCO" style="display:none">
+    </div>
+    <a class="back" href="hub.html">← Voltar ao Hub</a>
+  </div>
+  <div class="header-body">
+    <span class="badge">W1 · F1.2</span>
+    <h1>Matriz de Mapeamento Geracional</h1>
+    <p>Mapeie colaboradores por geração e defina estratégias de integração</p>
+  </div>
 </header>
-<div class="instr" data-tema="border-left">
-  <p><strong style="color:#60a5fa">Gerações:</strong> <span style="color:#c4b5fd">Baby Boomers</span> (até 1964) · <span style="color:#93c5fd">Gen X</span> (1965-1980) · <span style="color:#6ee7b7">Millennials / Gen Y</span> (1981-1996) · <span style="color:#fcd34d">Gen Z</span> (1997+). Identifique o que motiva cada colaborador e defina estratégias de mentoria reversa.</p>
-</div>
-<main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome (gestor)</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Faturamento T2"></div>
+<div class="container">
+  <div class="instrucao">
+    <strong>Instrução</strong>
+    Identifique colaboradores da sua equipe por faixa geracional e descreva como adaptar sua comunicação e liderança para cada grupo.
   </div>
+  <form id="form">
+    <div class="card">
+      <div class="grid2">
+        <div class="field"><label>Nome do Líder</label><input type="text" id="nome" placeholder="Seu nome completo" required></div>
+        <div class="field"><label>WhatsApp</label><input type="text" id="whatsapp" placeholder="(00) 00000-0000"></div>
+        <div class="field"><label>Setor / Departamento</label><input type="text" id="setor" placeholder="Ex: Recursos Humanos"></div>
+        <div class="field"><label>Data</label><input type="date" id="data"></div>
+      </div>
+    </div>
 
-  <div id="linhas">
-    <div class="linha-colab">
-      <h4>Colaborador 1</h4>
-      <div class="grid-colab">
-        <div class="campo"><label>Nome / Cargo</label><input class="nome-col" type="text" placeholder="Ex: Maria — Atendente"></div>
-        <div class="campo"><label>Geração</label>
-          <select class="ger">
-            <option value="">—</option>
-            <option value="Baby Boomers">Baby Boomers</option>
-            <option value="Gen X">Gen X</option>
-            <option value="Gen Y / Millennial">Gen Y</option>
-            <option value="Gen Z">Gen Z</option>
-          </select>
-        </div>
-        <div class="campo"><label>O que Motiva / Ponto Forte</label><textarea class="motiva" placeholder="Ex: Reconhecimento público, experiente em processos"></textarea></div>
-        <div class="campo"><label>Estratégia de Integração / Mentoria Reversa</label><textarea class="estrategia" placeholder="Ex: Ensinar processo antigo → jovem otimiza digitalmente"></textarea></div>
+    <div class="section-label">Mapeamento Geracional</div>
+
+    <div class="gen-card">
+      <h4>👴 Baby Boomers (1946–1964)</h4>
+      <div class="gen-fields">
+        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="bb_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
+        <div class="field"><label>Pontos Fortes</label><textarea id="bb_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
+        <div class="field"><label>Estratégia de Engajamento</label><textarea id="bb_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
       </div>
     </div>
-    <div class="linha-colab">
-      <h4>Colaborador 2</h4>
-      <div class="grid-colab">
-        <div class="campo"><label>Nome / Cargo</label><input class="nome-col" type="text" placeholder="Ex: João — Analista"></div>
-        <div class="campo"><label>Geração</label>
-          <select class="ger">
-            <option value="">—</option>
-            <option value="Baby Boomers">Baby Boomers</option>
-            <option value="Gen X">Gen X</option>
-            <option value="Gen Y / Millennial">Gen Y</option>
-            <option value="Gen Z">Gen Z</option>
-          </select>
-        </div>
-        <div class="campo"><label>O que Motiva / Ponto Forte</label><textarea class="motiva" placeholder="..."></textarea></div>
-        <div class="campo"><label>Estratégia de Integração</label><textarea class="estrategia" placeholder="..."></textarea></div>
+
+    <div class="gen-card">
+      <h4>🧑‍💼 Geração X (1965–1980)</h4>
+      <div class="gen-fields">
+        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="gx_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
+        <div class="field"><label>Pontos Fortes</label><textarea id="gx_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
+        <div class="field"><label>Estratégia de Engajamento</label><textarea id="gx_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
       </div>
     </div>
-  </div>
-  <button class="btn-add" onclick="addLinha()">+ Adicionar colaborador</button>
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
-  </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Matriz →</button>
-  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
+
+    <div class="gen-card">
+      <h4>💼 Millennials / Gen Y (1981–1996)</h4>
+      <div class="gen-fields">
+        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="my_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
+        <div class="field"><label>Pontos Fortes</label><textarea id="my_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
+        <div class="field"><label>Estratégia de Engajamento</label><textarea id="my_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
+      </div>
+    </div>
+
+    <div class="gen-card">
+      <h4>🚀 Gen Z (1997+)</h4>
+      <div class="gen-fields">
+        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="gz_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
+        <div class="field"><label>Pontos Fortes</label><textarea id="gz_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
+        <div class="field"><label>Estratégia de Engajamento</label><textarea id="gz_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label>Estratégia de Integração Intergeracional</label>
+        <textarea id="integracao" style="min-height:120px" placeholder="Descreva como vai promover a integração e colaboração entre as diferentes gerações da sua equipe..."></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">✅ Enviar Matriz Geracional</button>
+  </form>
+</div>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="tema.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
-}
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  const setor=document.getElementById('setor').value;
-  let msg=`✅ F1.2 — Matriz Geracional\n👤 ${nome} | ${setor}\n\n`;
-  document.querySelectorAll('.linha-colab').forEach((c,i)=>{
-    const nc=c.querySelector('.nome-col')?.value||'';
-    const ger=c.querySelector('.ger')?.value||'';
-    const mot=c.querySelector('.motiva')?.value||'';
-    const est=c.querySelector('.estrategia')?.value||'';
-    if(nc) msg+=`${i+1}. ${nc} (${ger})\n   Motivadores: ${mot}\n   Estratégia: ${est}\n\n`;
-  });
-  return msg.trim();
-}
-var db, cnt=2;
-function addLinha(){
-  cnt++;
-  const d=document.createElement('div');
-  d.className='linha-colab';
-  d.innerHTML=`<h4>Colaborador ${cnt}</h4><div class="grid-colab">
-    <div class="campo"><label>Nome / Cargo</label><input class="nome-col" type="text" placeholder="..."></div>
-    <div class="campo"><label>Geração</label><select class="ger"><option value="">—</option><option>Baby Boomers</option><option>Gen X</option><option value="Gen Y / Millennial">Gen Y</option><option>Gen Z</option></select></div>
-    <div class="campo"><label>O que Motiva / Ponto Forte</label><textarea class="motiva" placeholder="..."></textarea></div>
-    <div class="campo"><label>Estratégia de Integração</label><textarea class="estrategia" placeholder="..."></textarea></div>
-  </div>`;
-  document.getElementById('linhas').appendChild(d);
-}
-async function enviar(){
-  const nome=document.getElementById('nome').value.trim();
-  const setor=document.getElementById('setor').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  const colaboradores=[];
-  document.querySelectorAll('.linha-colab').forEach(l=>{
-    const n=l.querySelector('.nome-col').value.trim();
-    const g=l.querySelector('.ger').value;
-    const m=l.querySelector('.motiva').value.trim();
-    const e=l.querySelector('.estrategia').value.trim();
-    if(n) colaboradores.push({nome:n,geracao:g,motiva:m,estrategia:e});
-  });
-  if(!colaboradores.length){alert('Preencha pelo menos um colaborador.');return;}
-  await db.collection('lider_f1_2').add({nome,setor,colaboradores,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.doc('lider_agregados/f1_2').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
-  document.getElementById('msg-ok').style.display='block';
-  document.getElementById('btn-wpp').style.display='block';
-  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
-}
-window.onload=function(){
-  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
-  db=firebase.firestore();
-  carregarWpp();
-};
+  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var db;
+  window.onload = function(){
+    document.getElementById('logo-lucia').src = LOGO_LUCIA;
+    document.getElementById('logo-lucia').style.display = 'block';
+    if(!firebase.apps.length){
+      firebase.initializeApp({
+        apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+        authDomain:"entrevista-inicial.firebaseapp.com",
+        projectId:"entrevista-inicial",
+        storageBucket:"entrevista-inicial.firebasestorage.app",
+        messagingSenderId:"437375609844",
+        appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+      });
+    }
+    db = firebase.firestore();
+    db.doc('lider_config/tema').get().then(function(doc){
+      if(doc.exists && doc.data().logoParceiro){
+        var lp = document.getElementById('logo-cbco');
+        lp.src = doc.data().logoParceiro;
+        lp.style.display = 'block';
+      }
+    }).catch(function(){});
+    var savedWa = localStorage.getItem('lider_whatsapp');
+    if(savedWa){ var waInput = document.getElementById('whatsapp'); if(waInput) waInput.value = savedWa; }
+    
+  };
+</script>
+<script>
+document.getElementById('form').addEventListener('submit', function(e){
+  e.preventDefault();
+  var wa = document.getElementById('whatsapp').value.replace(/\D/g,'');
+  if(wa) localStorage.setItem('lider_whatsapp', wa);
+  var dados = {
+    nome: document.getElementById('nome').value,
+    whatsapp: document.getElementById('whatsapp').value,
+    setor: document.getElementById('setor').value,
+    data: document.getElementById('data').value,
+    baby_boomers: { nomes: document.getElementById('bb_nomes').value, pontos: document.getElementById('bb_pontos').value, estrategia: document.getElementById('bb_estrategia').value },
+    geracao_x: { nomes: document.getElementById('gx_nomes').value, pontos: document.getElementById('gx_pontos').value, estrategia: document.getElementById('gx_estrategia').value },
+    millennials: { nomes: document.getElementById('my_nomes').value, pontos: document.getElementById('my_pontos').value, estrategia: document.getElementById('my_estrategia').value },
+    gen_z: { nomes: document.getElementById('gz_nomes').value, pontos: document.getElementById('gz_pontos').value, estrategia: document.getElementById('gz_estrategia').value },
+    integracao: document.getElementById('integracao').value,
+    timestamp: new Date()
+  };
+  db.collection('lider_f1_2').add(dados).then(function(){
+    alert('Matriz salva com sucesso!');
+    if(wa){ window.open('https://wa.me/55'+wa+'?text='+encodeURIComponent('Formulário Líd@r F1.2 - Matriz Geracional preenchido!'), '_blank'); }
+  }).catch(function(err){ alert('Erro: '+err.message); });
+});
 </script>
 </body>
 </html>
