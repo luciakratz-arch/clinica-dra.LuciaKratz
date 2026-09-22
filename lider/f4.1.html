@@ -2,163 +2,179 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>F4.1 — Feedback Bolo de Chocolate + CNV</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
-  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
-  .badge{display:inline-block;background:#4a2d1e;color:#fb923c;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
-  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
-  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
-  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #f97316;border-radius:12px;margin:24px auto;max-width:700px;padding:14px 18px}
-  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
-  main{max-width:700px;margin:0 auto;padding:0 20px 40px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
-  .campo textarea{resize:vertical;min-height:72px}
-  .campo input:focus,.campo textarea:focus{outline:none;border-color:#f97316}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .campo-contexto{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:10px;padding:14px 16px;margin-bottom:20px}
-  .campo-contexto label{display:block;font-size:0.8rem;color:#fb923c;font-weight:600;margin-bottom:6px}
-  .campo-contexto input{width:100%;background:#161628;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-contexto input:focus{outline:none;border-color:#f97316}
-  .cnv-wrap{border-radius:12px;overflow:hidden;border:1px solid #2d2d4e;margin-bottom:24px}
-  .cnv-row{display:grid;grid-template-columns:110px 1fr;border-bottom:1px solid #2d2d4e}
-  .cnv-row:last-child{border-bottom:none}
-  .cnv-label{padding:16px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #2d2d4e;text-align:center}
-  .cnv-label .num{font-size:1rem;font-weight:800}
-  .cnv-label .nome{font-size:0.58rem;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
-  .c1 .cnv-label{background:#1a1e30}.c1 .num{color:#60a5fa}.c1 .nome{color:#3b82f6}
-  .c2 .cnv-label{background:#1e2030}.c2 .num{color:#a78bfa}.c2 .nome{color:#7c3aed}
-  .c3 .cnv-label{background:#1e2a1a}.c3 .num{color:#6ee7b7}.c3 .nome{color:#059669}
-  .c4 .cnv-label{background:#2a1e10}.c4 .num{color:#fcd34d}.c4 .nome{color:#d97706}
-  .cnv-content{padding:12px 16px;background:#161628}
-  .cnv-content .dica{font-size:0.72rem;color:#6b6b8a;font-style:italic;margin-bottom:6px;line-height:1.4}
-  .cnv-content .dica strong{color:#a0a0b8;font-style:normal}
-  .cnv-content textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 12px;color:#e2e2e8;font-size:0.85rem;resize:vertical;min-height:70px;font-family:inherit}
-  .cnv-content textarea:focus{outline:none;border-color:#f97316}
-  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#ea580c,#c2410c);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
-  .btn-enviar:hover{opacity:0.9}
-  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh}
+.container{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:12px;padding:14px 18px;margin:20px auto;max-width:740px}
+.instrucao p{font-size:0.9rem;color:#166534;line-height:1.6}
+.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:18px}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:0.82rem;font-weight:600;color:#166534;margin-bottom:5px}
+.field input,.field textarea{width:100%;background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;color:#1a2e1a;font-size:0.87rem;font-family:inherit}
+.field input:focus,.field textarea:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+.field textarea{resize:vertical;min-height:90px}
+.topo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.cnv-card{border-radius:12px;padding:20px;margin-bottom:14px}
+.cnv-obs{background:#f0f9ff;border:1px solid #bae6fd}
+.cnv-obs h4{color:#0369a1}
+.cnv-obs .field label{color:#0369a1}
+.cnv-obs .field input,.cnv-obs .field textarea{border-color:#bae6fd}
+.cnv-sent{background:#fffbeb;border:1px solid #fde68a}
+.cnv-sent h4{color:#92400e}
+.cnv-sent .field label{color:#92400e}
+.cnv-sent .field input,.cnv-sent .field textarea{border-color:#fde68a}
+.cnv-nec{background:#f0fdf4;border:1px solid #bbf7d0}
+.cnv-nec h4{color:#166534}
+.cnv-nec .field label{color:#166534}
+.cnv-nec .field input,.cnv-nec .field textarea{border-color:#bbf7d0}
+.cnv-ped{background:#faf5ff;border:1px solid #e9d5ff}
+.cnv-ped h4{color:#7c3aed}
+.cnv-ped .field label{color:#7c3aed}
+.cnv-ped .field input,.cnv-ped .field textarea{border-color:#e9d5ff}
+.cnv-card h4{font-size:0.95rem;font-weight:700;margin-bottom:12px}
+.step-badge{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:6px}
+.badge-obs{background:#e0f2fe;color:#0369a1}
+.badge-sent{background:#fef3c7;color:#92400e}
+.badge-nec{background:#dcfce7;color:#166534}
+.badge-ped{background:#ede9fe;color:#7c3aed}
+.btn-enviar{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:0 auto;width:100%;max-width:300px;transition:opacity 0.2s}
+.btn-enviar:hover{opacity:0.9}
+.msg{text-align:center;padding:14px;border-radius:10px;margin-top:16px;font-weight:600;display:none}
+.msg.ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;display:block}
+.msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;display:block}
+@media(max-width:600px){.topo-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 4 · Formulário 4.1</div>
-  <h1>Roteiro de Feedback "Bolo de Chocolate" com CNV</h1>
-  <p>4 pilares da Comunicação Não Violenta para um feedback educativo e afetuoso</p>
+<header style="background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #15803d66">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <div id="sep-logo" style="width:1px;height:32px;background:#ffffff33;display:none"></div>
+      <img id="logo-cbco" alt="Parceiro" style="height:42px;object-fit:contain;display:none">
+    </div>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
+  </div>
+  <div style="padding:16px 20px 20px;text-align:center">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W4 · F4.1</span>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Feedback "Bolo de Chocolate" + CNV</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Roteiro de feedback com os 4 pilares da Comunicação Não Violenta</p>
+  </div>
 </header>
-<div class="instr" data-tema="border-left">
-  <p><strong style="color:#fb923c">Os 4 Pilares da CNV:</strong> <strong>1. Observação Neutra</strong> (fato, sem julgamento) → <strong>2. Sentimento & Acolhimento</strong> (clima seguro) → <strong>3. Necessidade do Processo</strong> (propósito) → <strong>4. Pedido & Auxiliares</strong> (ação futura). Use "E", "Quando", "Sei" no lugar de "Mas", "Tentar", "Não".</p>
+
+<div class="container">
+  <div class="instrucao">
+    <p>O <strong>Feedback Bolo de Chocolate</strong> estrutura a conversa em: <strong>Observação → Sentimento → Necessidade → Pedido</strong> (os 4 pilares da CNV). Prepare um feedback real que você precisa dar.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo-grid">
+      <div class="field"><label>Nome do líder</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
+      <div class="field"><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(11) 99999-9999"></div>
+      <div class="field"><label>Nome do colaborador</label><input type="text" id="colaborador" placeholder="Para quem é o feedback?"></div>
+    </div>
+  </div>
+
+  <div class="cnv-card cnv-obs">
+    <h4>🔍 OBSERVAÇÃO <span class="step-badge badge-obs">Pilar 1</span></h4>
+    <div class="field">
+      <label>O que observei (fatos, sem julgamento):</label>
+      <textarea id="obs" placeholder="Ex: 'Nas últimas 3 reuniões, o relatório foi entregue após o horário combinado...' — Descreva fatos específicos e observáveis, sem interpretações."></textarea>
+    </div>
+  </div>
+
+  <div class="cnv-card cnv-sent">
+    <h4>💛 SENTIMENTO <span class="step-badge badge-sent">Pilar 2</span></h4>
+    <div class="field">
+      <label>Como me sinto em relação a isso:</label>
+      <textarea id="sent" placeholder="Ex: 'Fico preocupado, pois...', 'Me sinto frustrado quando...', 'Estou satisfeito com...' — Use sentimentos genuínos, não julgamentos disfarçados."></textarea>
+    </div>
+  </div>
+
+  <div class="cnv-card cnv-nec">
+    <h4>🌱 NECESSIDADE <span class="step-badge badge-nec">Pilar 3</span></h4>
+    <div class="field">
+      <label>O que preciso / O que é importante para mim e para a equipe:</label>
+      <textarea id="nec" placeholder="Ex: 'Para mim, é importante que a equipe tenha previsibilidade...', 'Preciso que o fluxo de trabalho seja confiável para...' — Identifique o valor por trás do sentimento."></textarea>
+    </div>
+  </div>
+
+  <div class="cnv-card cnv-ped">
+    <h4>🙏 PEDIDO <span class="step-badge badge-ped">Pilar 4</span></h4>
+    <div class="field">
+      <label>O que peço de forma específica e realizável:</label>
+      <textarea id="ped" placeholder="Ex: 'Você poderia me informar até quinta-feira se haverá atraso?', 'O que precisaria para entregar no prazo?' — Pedido concreto, não exigência."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📅 Roteiro para a conversa</h3>
+    <div class="field"><label>Data e local planejado para o feedback:</label><input type="text" id="data_local" placeholder="Ex: Quarta-feira, 14h, sala de reunião pequena"></div>
+    <div class="field"><label>Como vou criar um ambiente seguro:</label><textarea id="ambiente" placeholder="Ex: Começar com um agradecimento genuíno, garantir privacidade, sem interrupções..."></textarea></div>
+    <div class="field"><label>Como vou verificar que foi compreendido:</label><input type="text" id="verificar" placeholder="Ex: Pedir para a pessoa resumir o que combinamos..."></div>
+  </div>
+
+  <button class="btn-enviar" onclick="enviar()">Enviar Respostas</button>
+  <div id="msg" class="msg"></div>
 </div>
-<main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome (líder)</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Recepção T2"></div>
-  </div>
-  <div class="campo-contexto">
-    <label>📌 Contexto do Feedback</label>
-    <input type="text" id="contexto" placeholder="Ex: Guias do convênio X sem autorização prévia na última terça-feira...">
-  </div>
-  <div class="cnv-wrap">
-    <div class="cnv-row c1">
-      <div class="cnv-label"><span class="num">1</span><span class="nome">Observação<br>Neutra</span></div>
-      <div class="cnv-content">
-        <p class="dica"><strong>Descreva o fato específico</strong> — sem julgamentos, rótulos ou generalizações. Ex: "Na última terça-feira, identificamos que nas guias do convênio X..."</p>
-        <textarea id="cnv1" placeholder="Na [data/situação específica], identificamos que [fato observável e concreto, sem adjetivos ou rótulos]..."></textarea>
-      </div>
-    </div>
-    <div class="cnv-row c2">
-      <div class="cnv-label"><span class="num">2</span><span class="nome">Sentimento<br>& Acolhimento</span></div>
-      <div class="cnv-content">
-        <p class="dica"><strong>Crie o clima de parceria e escuta ativa</strong> — sem postura policialesca. Ex: "Compreendo a correria do atendimento, e meu objetivo é apoiar você..."</p>
-        <textarea id="cnv2" placeholder="Compreendo [reconhecer a dificuldade do colaborador], e meu objetivo aqui é [apoio, parceria, não punição]..."></textarea>
-      </div>
-    </div>
-    <div class="cnv-row c3">
-      <div class="cnv-label"><span class="num">3</span><span class="nome">Necessidade<br>do Processo</span></div>
-      <div class="cnv-content">
-        <p class="dica"><strong>Explique a necessidade operacional</strong> e o impacto no paciente/hospital. Conecte ao propósito maior.</p>
-        <textarea id="cnv3" placeholder="Precisamos [necessidade operacional] para garantir [impacto no paciente do CBCO / resultado do setor]..."></textarea>
-      </div>
-    </div>
-    <div class="cnv-row c4">
-      <div class="cnv-label"><span class="num">4</span><span class="nome">Pedido<br>& Auxiliares</span></div>
-      <div class="cnv-content">
-        <p class="dica"><strong>Use auxiliares linguísticos</strong>: "E", "Quando" (evite "Mas", "Tentar"). Termine com uma <strong>pergunta poderosa</strong>.</p>
-        <textarea id="cnv4" placeholder="Quando fizermos [nova rotina], [benefício concreto]. E para garantir isso, como podemos ajustar [processo específico]?"></textarea>
-      </div>
-    </div>
-  </div>
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
-  </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Roteiro →</button>
-  <div class="msg-ok" id="msg-ok">✓ Roteiro salvo com sucesso!</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
-}
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  const setor=document.getElementById('setor')?.value||'';
-  const ctx=document.getElementById('contexto')?.value||'';
-  const cnv1=document.getElementById('cnv1')?.value||'';
-  const cnv2=document.getElementById('cnv2')?.value||'';
-  const cnv3=document.getElementById('cnv3')?.value||'';
-  const cnv4=document.getElementById('cnv4')?.value||'';
-  let msg=`✅ F4.1 — Feedback CNV\n👤 ${nome} | ${setor}\n📌 Contexto: ${ctx}\n\n`;
-  if(cnv1) msg+=`1. Observação: ${cnv1}\n`;
-  if(cnv2) msg+=`2. Sentimento: ${cnv2}\n`;
-  if(cnv3) msg+=`3. Necessidade: ${cnv3}\n`;
-  if(cnv4) msg+=`4. Pedido: ${cnv4}`;
-  return msg.trim();
-}
-var db;
-async function enviar(){
-  const nome=document.getElementById('nome').value.trim();
-  const setor=document.getElementById('setor').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  const cnv={
-    contexto:document.getElementById('contexto').value.trim(),
-    observacao:document.getElementById('cnv1').value.trim(),
-    sentimento:document.getElementById('cnv2').value.trim(),
-    necessidade:document.getElementById('cnv3').value.trim(),
-    pedido:document.getElementById('cnv4').value.trim()
-  };
-  await db.collection('lider_f4_1').add({nome,setor,cnv,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.doc('lider_agregados/f4_1').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
-  document.getElementById('msg-ok').style.display='block';
-  document.getElementById('btn-wpp').style.display='block';
-  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
-}
-window.onload=function(){
-  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
-  db=firebase.firestore();
-  carregarWpp();
+window.onload = function(){
+  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el = document.getElementById('logo-lucia');
+  if(el){ el.src = LOGO_LUCIA; el.style.display = 'block'; }
+
+  if(!firebase.apps.length){
+    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  }
+  var db = firebase.firestore();
+  db.doc('lider_config/tema').get().then(function(doc){
+    if(doc.exists && doc.data().logoParceiro){
+      var lp = document.getElementById('logo-cbco');
+      if(lp){ lp.src = doc.data().logoParceiro; lp.style.display = 'block';
+        var sep = document.getElementById('sep-logo'); if(sep) sep.style.display='block'; }
+    }
+  }).catch(function(){});
+  var wa = localStorage.getItem('lider_whatsapp');
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
 };
+
+function enviar(){
+  var db = firebase.firestore();
+  var nome = document.getElementById('nome').value.trim();
+  var wa = document.getElementById('whatsapp').value.trim();
+  var msg = document.getElementById('msg');
+  if(!nome || !wa){ msg.className='msg err'; msg.textContent='Preencha Nome e WhatsApp.'; return; }
+  localStorage.setItem('lider_whatsapp', wa);
+  var dados = {
+    nome: nome, whatsapp: wa,
+    colaborador: document.getElementById('colaborador').value,
+    cnv: {
+      observacao: document.getElementById('obs').value,
+      sentimento: document.getElementById('sent').value,
+      necessidade: document.getElementById('nec').value,
+      pedido: document.getElementById('ped').value
+    },
+    roteiro: {
+      data_local: document.getElementById('data_local').value,
+      ambiente_seguro: document.getElementById('ambiente').value,
+      verificar_compreensao: document.getElementById('verificar').value
+    },
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('lider_f4_1').add(dados).then(function(){
+    msg.className='msg ok'; msg.textContent='✅ Respostas salvas com sucesso!';
+  }).catch(function(e){
+    msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
+  });
+}
 </script>
-<script src="tema.js"></script>
 </body>
 </html>
