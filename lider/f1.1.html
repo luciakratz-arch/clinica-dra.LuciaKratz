@@ -705,6 +705,51 @@
     document.querySelectorAll('input[data-voz]').forEach(function(inp){ addVozToField(inp); });
   }
 
+  function carregarDados(wa){
+    showToast('Carregando dados...');
+    db.collection('lider_f1_1').doc(wa).get().then(function(doc){
+      if(!doc.exists) return;
+      var d = doc.data();
+      if(d.nome)  document.getElementById('nome').value  = d.nome;
+      if(d.cargo) document.getElementById('cargo').value = d.cargo;
+      if(d.setor) document.getElementById('setor').value = d.setor;
+      // Respostas das dimensões
+      for(var dim=1;dim<=6;dim++){
+        var vals = d['d'+dim];
+        if(vals&&vals.length){
+          var sels = document.querySelectorAll('[data-dim="'+dim+'"]');
+          sels.forEach(function(s,i){ if(vals[i]!==undefined) s.value=vals[i]; });
+        }
+      }
+      // Reflexão
+      if(d.fortes)   document.getElementById('fortes').value   = d.fortes;
+      if(d.melhoria) document.getElementById('melhoria').value = d.melhoria;
+      // Metas
+      if(d.metas && d.metas.length){
+        var lista = document.getElementById('metas-lista');
+        var rows = lista.querySelectorAll('.meta-row');
+        d.metas.forEach(function(m, i){
+          var row;
+          if(i < rows.length){
+            row = rows[i];
+          } else {
+            row = document.createElement('div');
+            row.className = 'meta-row';
+            row.innerHTML = '<input type="text" class="meta-txt" placeholder="Descreva a meta..." data-voz><div class="meta-datas"><div class="meta-data-campo"><label>Início</label><input type="date" class="meta-ini"></div><div class="meta-data-campo"><label>Término</label><input type="date" class="meta-fim"></div></div>';
+            lista.appendChild(row);
+            var inp = row.querySelector('input[data-voz]');
+            if(inp) addVozToField(inp);
+          }
+          if(m.meta)    row.querySelector('.meta-txt').value = m.meta;
+          if(m.inicio)  row.querySelector('.meta-ini').value = m.inicio;
+          if(m.termino) row.querySelector('.meta-fim').value = m.termino;
+        });
+      }
+      calcScore();
+      showToast('✅ Dados carregados!');
+    }).catch(function(){});
+  }
+
   window.onload = function(){
     // Load CBCO logo from Firestore lider_config/tema
     db.collection('lider_config').doc('tema').get().then(function(doc){
@@ -719,11 +764,20 @@
       }
     }).catch(function(){});
 
-    // Load whatsapp from localStorage
+    // Load whatsapp from localStorage e carrega dados
     try{
       var savedWa = localStorage.getItem('lider_whatsapp');
-      if(savedWa) document.getElementById('whatsapp').value = savedWa;
+      if(savedWa){
+        document.getElementById('whatsapp').value = savedWa;
+        carregarDados(savedWa.replace(/\D/g,''));
+      }
     }catch(e){}
+
+    // Carrega ao sair do campo WhatsApp
+    document.getElementById('whatsapp').addEventListener('blur', function(){
+      var v = this.value.replace(/\D/g,'');
+      if(v.length >= 10) carregarDados(v);
+    });
 
     // Score listeners on all selects
     document.querySelectorAll('select.item-select').forEach(function(s){
