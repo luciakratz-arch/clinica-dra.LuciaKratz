@@ -178,6 +178,59 @@ main{max-width:1100px;margin:0 auto;padding:28px 20px}
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
+// ── TextAreaVoz ──
+function initVoz(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  document.querySelectorAll('textarea').forEach(function(ta){
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:block';
+    ta.parentNode.insertBefore(wrap, ta);
+    wrap.appendChild(ta);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerHTML = '🎙️';
+    btn.title = 'Falar para digitar';
+    btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+    wrap.appendChild(btn);
+    ta.style.paddingRight = '36px';
+    var dot = document.createElement('div');
+    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
+    wrap.appendChild(dot);
+    var rec = null;
+    var gravando = false;
+    btn.addEventListener('click', function(){
+      if(gravando){
+        if(rec) rec.stop();
+        gravando = false;
+        btn.style.background = '#f3e6ff';
+        btn.style.color = '#7B00C4';
+        btn.style.boxShadow = 'none';
+        dot.style.display = 'none';
+        return;
+      }
+      rec = new SR();
+      rec.lang = 'pt-BR';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = function(e){
+        var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' ');
+        var base = ta.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd();
+        ta.value = base ? base + ' ' + t : t;
+      };
+      rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+      rec.start();
+      gravando = true;
+      btn.style.background = '#7B00C4';
+      btn.style.color = 'white';
+      btn.style.boxShadow = '0 0 0 3px #7B00C430';
+      dot.style.display = 'flex';
+    });
+  });
+}
+
 var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
 
 // Collections map
@@ -259,6 +312,7 @@ function renderVisible(){
       +'<div class="card-detail" id="cd-'+idx+'">'+detailRows+'</div>'
       +'</div>';
   }).join('');
+  initVoz();
 }
 
 function toggleDetail(idx, btn){
@@ -405,6 +459,7 @@ window.onload = function(){
   if(allCard) allCard.classList.add('active');
 
   loadAllCollections();
+  initVoz();
 };
 </script>
 </body>
