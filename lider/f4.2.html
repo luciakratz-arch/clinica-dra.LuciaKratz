@@ -2,240 +2,234 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F4.2 — Checklist de Feedback</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F4.2 — Checklist de Feedback + Psicogeografia</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
-  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
-  .badge{display:inline-block;background:#4a2d1e;color:#fb923c;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
-  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
-  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
-  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #f97316;border-radius:12px;margin:24px auto;max-width:680px;padding:14px 18px}
-  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
-  main{max-width:680px;margin:0 auto;padding:0 20px 40px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo input:focus{outline:none;border-color:#f97316}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .progresso{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
-  .prog-bar-wrap{flex:1;height:10px;background:#2d2d4e;border-radius:5px;overflow:hidden}
-  .prog-bar-fill{height:100%;background:linear-gradient(90deg,#f97316,#fbbf24);border-radius:5px;transition:width 0.3s}
-  .prog-text{font-size:0.85rem;color:#fbbf24;font-weight:700;min-width:40px}
-  .section-title{font-size:0.82rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid #2d1e0e}
-  .check-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;user-select:none}
-  .check-item:hover{border-color:#f97316}
-  .check-item.marcado{background:#1e1208;border-color:#92400e}
-  .check-item .check-box{width:22px;height:22px;border:2px solid #3d3d5e;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:1px}
-  .check-item.marcado .check-box{background:#f97316;border-color:#f97316}
-  .check-item .check-icon{display:none;color:white;font-size:0.85rem;font-weight:800}
-  .check-item.marcado .check-icon{display:block}
-  .check-item .check-texto{flex:1}
-  .check-item .check-dim{font-size:0.7rem;color:#fb923c;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px}
-  .check-item .check-desc{font-size:0.85rem;color:#c4c4d4;line-height:1.5}
-  .regra-badge{display:inline-block;background:#3d1a00;color:#fb923c;font-size:0.65rem;font-weight:700;padding:2px 7px;border-radius:4px;margin-right:4px;vertical-align:middle}
-  .campo-obs{margin-top:20px}
-  .campo-obs label{display:block;font-size:0.8rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-obs textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:10px 14px;color:#e2e2e8;font-size:0.87rem;resize:vertical;min-height:64px;font-family:inherit}
-  .campo-obs textarea:focus{outline:none;border-color:#f97316}
-  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#ea580c,#c2410c);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer;margin-top:20px}
-  .btn-enviar:hover{opacity:0.9}
-  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh}
+.container{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:12px;padding:14px 18px;margin:20px auto;max-width:740px}
+.instrucao p{font-size:0.9rem;color:#166534;line-height:1.6}
+.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:18px}
+.card h3{font-size:1rem;font-weight:700;color:#166534;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:0.82rem;font-weight:600;color:#166534;margin-bottom:5px}
+.field input,.field textarea{width:100%;background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;color:#1a2e1a;font-size:0.87rem;font-family:inherit}
+.field input:focus,.field textarea:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+.field textarea{resize:vertical;min-height:80px}
+.topo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.topo-grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;margin-bottom:10px;cursor:pointer;transition:background 0.15s}
+.check-item:hover{background:#dcfce7}
+.check-item input[type=checkbox]{width:20px;height:20px;min-width:20px;accent-color:#16a34a;cursor:pointer;margin-top:1px}
+.check-item label{font-size:0.87rem;color:#166534;font-weight:500;cursor:pointer;line-height:1.5}
+.check-item.checked{background:#dcfce7;border-color:#86efac}
+.card-psico{background:#fff;border:2px solid #16a34a;border-radius:12px;padding:20px;margin-bottom:18px}
+.card-psico h3{font-size:1rem;font-weight:700;color:#14532d;margin-bottom:4px}
+.card-psico .subtitulo{font-size:0.78rem;color:#16a34a;margin-bottom:14px;font-style:italic}
+.card-prep{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:18px}
+.card-prep h3{font-size:1rem;font-weight:700;color:#166534;margin-bottom:4px}
+.card-prep .subtitulo{font-size:0.78rem;color:#16a34a;margin-bottom:14px;font-style:italic}
+.card-durante{background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:18px}
+.card-durante h3{font-size:1rem;font-weight:700;color:#166534;margin-bottom:14px}
+.btn-enviar{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:0 auto;width:100%;max-width:300px;transition:opacity 0.2s}
+.btn-enviar:hover{opacity:0.9}
+.msg{text-align:center;padding:14px;border-radius:10px;margin-top:16px;font-weight:600;display:none}
+.msg.ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;display:block}
+.msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;display:block}
+@media(max-width:600px){.topo-grid,.topo-grid4{grid-template-columns:1fr 1fr}}
+@media(max-width:400px){.topo-grid,.topo-grid4{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 4 · Formulário 4.2</div>
-  <h1>Checklist de Feedback + Psicogeografia</h1>
-  <p>Prepare e conduza sessões de feedback com as regras invioláveis da liderança</p>
+<header style="background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #15803d66">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <div id="sep-logo" style="width:1px;height:32px;background:#ffffff33;display:none"></div>
+      <img id="logo-cbco" alt="Parceiro" style="height:42px;object-fit:contain;display:none">
+    </div>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
+  </div>
+  <div style="padding:16px 20px 20px;text-align:center">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W4 · F4.2</span>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Checklist de Feedback + Psicogeografia</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Prepare e conduza sessões de feedback com as regras invioláveis da liderança</p>
+  </div>
 </header>
-<div class="instr" data-tema="border-left">
-  <p><strong style="color:#fb923c">Use antes e durante</strong> cada sessão individual de feedback. Marque cada item conforme for cumprindo. As Regras Invioláveis nunca podem ser quebradas.</p>
+
+<div class="container">
+  <div class="instrucao">
+    <p>A <strong>Psicogeografia do feedback</strong> é a ciência do espaço onde acontece a conversa. O ambiente certo potencializa o resultado. Use este checklist para não esquecer nenhum detalhe.</p>
+  </div>
+
+  <div class="card">
+    <div class="topo-grid" style="margin-bottom:14px">
+      <div class="field"><label>Nome</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
+      <div class="field"><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(11) 99999-9999"></div>
+    </div>
+    <div class="topo-grid">
+      <div class="field"><label>Colaborador</label><input type="text" id="colaborador" placeholder="Nome do colaborador"></div>
+      <div class="field"><label>Data/hora planejada</label><input type="datetime-local" id="data_hora"></div>
+    </div>
+  </div>
+
+  <div class="card-psico">
+    <h3>📍 Seção 1 — Psicogeografia do Espaço</h3>
+    <p class="subtitulo">Marque cada item que você vai garantir antes da conversa</p>
+
+    <label class="check-item" id="ci1" onclick="toggleCheck('c1','ci1')">
+      <input type="checkbox" id="c1">
+      <span>Local privado, sem interrupções</span>
+    </label>
+    <label class="check-item" id="ci2" onclick="toggleCheck('c2','ci2')">
+      <input type="checkbox" id="c2">
+      <span>Posição de parceria (lado a lado ou em ângulo, não frente a frente)</span>
+    </label>
+    <label class="check-item" id="ci3" onclick="toggleCheck('c3','ci3')">
+      <input type="checkbox" id="c3">
+      <span>Sem mesa entre os dois (ou em ambiente neutro)</span>
+    </label>
+    <label class="check-item" id="ci4" onclick="toggleCheck('c4','ci4')">
+      <input type="checkbox" id="c4">
+      <span>Celulares no silencioso / fora da vista</span>
+    </label>
+    <label class="check-item" id="ci5" onclick="toggleCheck('c5','ci5')">
+      <input type="checkbox" id="c5">
+      <span>Horário adequado (não na segunda de manhã nem sexta à tarde)</span>
+    </label>
+    <label class="check-item" id="ci6" onclick="toggleCheck('c6','ci6')">
+      <input type="checkbox" id="c6">
+      <span>Água disponível para ambos</span>
+    </label>
+
+    <div class="field" style="margin-top:14px">
+      <label>Local escolhido:</label>
+      <input type="text" id="local_escolhido" placeholder="Ex: Sala de reunião pequena, café do andar, área externa...">
+    </div>
+  </div>
+
+  <div class="card-prep">
+    <h3>✅ Seção 2 — Checklist de Preparação</h3>
+    <p class="subtitulo">Confirme cada item antes de agendar o feedback</p>
+
+    <label class="check-item" id="ci7" onclick="toggleCheck('c7','ci7')">
+      <input type="checkbox" id="c7">
+      <span>Escolhi fatos específicos, não impressões gerais</span>
+    </label>
+    <label class="check-item" id="ci8" onclick="toggleCheck('c8','ci8')">
+      <input type="checkbox" id="c8">
+      <span>Não confundo pessoa com comportamento</span>
+    </label>
+    <label class="check-item" id="ci9" onclick="toggleCheck('c9','ci9')">
+      <input type="checkbox" id="c9">
+      <span>Tenho exemplos concretos do comportamento</span>
+    </label>
+    <label class="check-item" id="ci10" onclick="toggleCheck('c10','ci10')">
+      <input type="checkbox" id="c10">
+      <span>Sei qual mudança específica quero propor</span>
+    </label>
+    <label class="check-item" id="ci11" onclick="toggleCheck('c11','ci11')">
+      <input type="checkbox" id="c11">
+      <span>Estou em estado emocional adequado</span>
+    </label>
+    <label class="check-item" id="ci12" onclick="toggleCheck('c12','ci12')">
+      <input type="checkbox" id="c12">
+      <span>Reservei tempo suficiente (mínimo 30 minutos)</span>
+    </label>
+  </div>
+
+  <div class="card-durante">
+    <h3>💬 Seção 3 — Durante o Feedback</h3>
+    <div class="field"><label>Abertura que vou usar para criar segurança:</label><textarea id="abertura" placeholder="Ex: 'Quero conversar sobre algo importante, e agradeço sua disponibilidade...'"></textarea></div>
+    <div class="field"><label>Ponto forte que vou reconhecer primeiro:</label><textarea id="ponto_forte" placeholder="Ex: 'Quero começar reconhecendo sua dedicação com...'"></textarea></div>
+    <div class="field"><label>Comportamento a desenvolver (específico):</label><textarea id="comportamento" placeholder="Ex: 'O que quero explorar com você é sobre as entregas de quinta-feira nas últimas semanas...'"></textarea></div>
+    <div class="field"><label>Combinado / próximos passos:</label><textarea id="combinado" placeholder="Ex: 'Então combinamos que... e vamos acompanhar isso em...'"></textarea></div>
+  </div>
+
+  <button class="btn-enviar" onclick="enviar()">Enviar Checklist</button>
+  <div id="msg" class="msg"></div>
 </div>
-<main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome (líder)</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Colaborador / Setor</label><input type="text" id="colab" placeholder="Ex: João — Atendente Faturamento"></div>
-  </div>
-  <div class="progresso">
-    <span style="font-size:0.8rem;color:#8888a8">Checklist:</span>
-    <div class="prog-bar-wrap"><div class="prog-bar-fill" data-tema="prog-fill" id="prog-fill" style="width:0%"></div></div>
-    <span class="prog-text" id="prog-text">0/12</span>
-  </div>
 
-  <div class="section-title" data-tema="section-title">🪑 Preparação do Ambiente</div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Psicogeografia</div>
-      <div class="check-desc">Sentar ao lado ou em ângulo de 90° (lado direito/força), eliminando a mesa como barreira hierárquica.</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Local Seguro</div>
-      <div class="check-desc">Garantir sala privativa sem interrupções de telefone ou terceiros. Silenciar celular.</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Rapport</div>
-      <div class="check-desc">Calibrar tom de voz, ritmo da fala e manter contato visual presente e acolhedor.</div>
-    </div>
-  </div>
-
-  <div class="section-title" data-tema="section-title">📋 Condução do Feedback</div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Fatos Concretos</div>
-      <div class="check-desc">Apresentar dados observáveis e específicos, sem usar rótulos ("você é desatento", "você sempre faz isso").</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Auxiliares Linguísticos</div>
-      <div class="check-desc">Eliminar termos limitantes ("mas", "tentar", "não"). Substituir por "E", "Quando", "Sei que você pode...".</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Escuta Ativa</div>
-      <div class="check-desc"><span class="regra-badge">REGRA 03</span>Ouvir na essência e suspender julgamentos emocionais imediatos. Deixar o colaborador terminar de falar.</div>
-    </div>
-  </div>
-
-  <div class="section-title" data-tema="section-title">🔒 Regras Invioláveis</div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Regra 01 — Privacidade</div>
-      <div class="check-desc"><span class="regra-badge">INVIOLÁVEL</span>Elogiar em público, corrigir SEMPRE em particular. Nunca expor um colaborador na frente da equipe.</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Regra 02 — Ética e Respeito</div>
-      <div class="check-desc"><span class="regra-badge">INVIOLÁVEL</span>Jamais violar a confiança, o respeito e a dignidade do liderado, mesmo nos casos mais difíceis.</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Regra 04 — Confirmação</div>
-      <div class="check-desc"><span class="regra-badge">INVIOLÁVEL</span>Certificar-se de que a mensagem e o compromisso foram perfeitamente compreendidos antes de encerrar.</div>
-    </div>
-  </div>
-
-  <div class="section-title" data-tema="section-title">🎯 Encerramento</div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Plano de Ação</div>
-      <div class="check-desc">Encerrar a conversa pactuando uma meta clara no modelo 5W2H — O quê, Quem, Quando e Como.</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Pergunta Final</div>
-      <div class="check-desc">Fechar com uma pergunta poderosa: "Como você se sentiu sobre nossa conversa? Tem algo mais que quer compartilhar?"</div>
-    </div>
-  </div>
-  <div class="check-item" onclick="toggle(this)">
-    <div class="check-box"><span class="check-icon">✓</span></div>
-    <div class="check-texto">
-      <div class="check-dim">Follow-up Marcado</div>
-      <div class="check-desc">Agendar próximo check-in para avaliar o progresso do plano de ação combinado.</div>
-    </div>
-  </div>
-
-  <div class="campo-obs">
-    <label>📝 Observações / Compromisso pactuado</label>
-    <textarea id="obs" placeholder="Registre aqui o compromisso final acordado com o colaborador..."></textarea>
-  </div>
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
-  </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Salvar Checklist →</button>
-  <div class="msg-ok" id="msg-ok">✓ Checklist salvo com sucesso!</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+function toggleCheck(cbId, wrapId){
+  // handled by native checkbox click via label, just style the wrapper
+  setTimeout(function(){
+    var cb = document.getElementById(cbId);
+    var wrap = document.getElementById(wrapId);
+    if(cb && wrap){
+      if(cb.checked) wrap.style.background='#dcfce7';
+      else wrap.style.background='';
+    }
+  }, 10);
 }
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  const colab=document.getElementById('colab')?.value||'';
-  const marcados=document.querySelectorAll('.check-item.marcado').length;
-  let msg=`✅ F4.2 — Checklist de Feedback\n👤 ${nome} | Colaborador: ${colab}\n📊 ${marcados}/12 itens marcados\n\n`;
-  document.querySelectorAll('.check-item.marcado').forEach(el=>{
-    const dim=el.querySelector('.check-dim')?.textContent||'';
-    msg+=`✓ ${dim}\n`;
-  });
-  const obs=document.getElementById('obs')?.value||'';
-  if(obs) msg+=`\n📝 Compromisso: ${obs}`;
-  return msg.trim();
-}
-var db;
-const TOTAL = 12;
-function toggle(el){
-  el.classList.toggle('marcado');
-  atualizarProg();
-}
-function atualizarProg(){
-  const marcados=document.querySelectorAll('.check-item.marcado').length;
-  const pct=Math.round(marcados/TOTAL*100);
-  document.getElementById('prog-fill').style.width=pct+'%';
-  document.getElementById('prog-text').textContent=marcados+'/'+TOTAL;
-}
-async function enviar(){
-  const nome=document.getElementById('nome').value.trim();
-  const colab=document.getElementById('colab').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  const itens=[];
-  document.querySelectorAll('.check-item').forEach(el=>{
-    const dim=el.querySelector('.check-dim').textContent.trim();
-    itens.push({item:dim,marcado:el.classList.contains('marcado')});
-  });
-  const marcados=itens.filter(i=>i.marcado).length;
-  const obs=document.getElementById('obs').value.trim();
-  await db.collection('lider_f4_2').add({nome,colaborador:colab,itens,marcados,total_itens:TOTAL,obs,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.doc('lider_agregados/f4_2').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
-  document.getElementById('msg-ok').style.display='block';
-  document.getElementById('btn-wpp').style.display='block';
-  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
-}
-window.onload=function(){
-  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
-  db=firebase.firestore();
-  carregarWpp();
+
+window.onload = function(){
+  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el = document.getElementById('logo-lucia');
+  if(el){ el.src = LOGO_LUCIA; el.style.display = 'block'; }
+
+  if(!firebase.apps.length){
+    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  }
+  var db = firebase.firestore();
+  db.doc('lider_config/tema').get().then(function(doc){
+    if(doc.exists && doc.data().logoParceiro){
+      var lp = document.getElementById('logo-cbco');
+      if(lp){ lp.src = doc.data().logoParceiro; lp.style.display = 'block';
+        var sep = document.getElementById('sep-logo'); if(sep) sep.style.display='block'; }
+    }
+  }).catch(function(){});
+  var wa = localStorage.getItem('lider_whatsapp');
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
 };
+
+function enviar(){
+  var db = firebase.firestore();
+  var nome = document.getElementById('nome').value.trim();
+  var wa = document.getElementById('whatsapp').value.trim();
+  var msg = document.getElementById('msg');
+  if(!nome || !wa){ msg.className='msg err'; msg.textContent='Preencha Nome e WhatsApp.'; return; }
+  localStorage.setItem('lider_whatsapp', wa);
+  function chk(id){ return document.getElementById(id) ? document.getElementById(id).checked : false; }
+  var dados = {
+    nome: nome, whatsapp: wa,
+    colaborador: document.getElementById('colaborador').value,
+    data_hora: document.getElementById('data_hora').value,
+    psicogeografia: {
+      local_privado: chk('c1'),
+      posicao_parceria: chk('c2'),
+      sem_mesa: chk('c3'),
+      celulares_silencio: chk('c4'),
+      horario_adequado: chk('c5'),
+      agua_disponivel: chk('c6'),
+      local_escolhido: document.getElementById('local_escolhido').value
+    },
+    preparacao: {
+      fatos_especificos: chk('c7'),
+      pessoa_vs_comportamento: chk('c8'),
+      exemplos_concretos: chk('c9'),
+      mudanca_especifica: chk('c10'),
+      estado_emocional: chk('c11'),
+      tempo_suficiente: chk('c12')
+    },
+    durante: {
+      abertura: document.getElementById('abertura').value,
+      ponto_forte: document.getElementById('ponto_forte').value,
+      comportamento: document.getElementById('comportamento').value,
+      combinado: document.getElementById('combinado').value
+    },
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('lider_f4_2').add(dados).then(function(){
+    msg.className='msg ok'; msg.textContent='✅ Checklist salvo com sucesso!';
+  }).catch(function(e){
+    msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
+  });
+}
 </script>
-<script src="tema.js"></script>
 </body>
 </html>
