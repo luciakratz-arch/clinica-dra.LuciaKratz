@@ -588,11 +588,106 @@ function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Carregar dados salvos ──────────────────────────────────────────────
+function carregarDados(wa){
+  var status=document.getElementById('save-status');
+  status.textContent='Carregando dados...';
+  status.style.color='#6b7280';
+  db.collection('lider_f1_2').doc(wa).get().then(function(doc){
+    if(!doc.exists){status.textContent='';return;}
+    var d=doc.data();
+    // Identificação
+    if(d.nome) document.getElementById('lider-nome').value=d.nome;
+    if(d.cargo) document.getElementById('lider-cargo').value=d.cargo;
+    if(d.setor) document.getElementById('lider-setor').value=d.setor;
+    // Equipe
+    if(d.equipe&&d.equipe.length){
+      equipe=d.equipe.slice();
+      renderChips();
+      renderGrafico();
+      // Renderiza blocos de pontos
+      renderPontos('forte');
+      renderPontos('fraco');
+      // Preenche pontos fortes salvos
+      if(d.fortes&&d.fortes.length){
+        var fortesPorPessoa={};
+        d.fortes.forEach(function(f){
+          if(!fortesPorPessoa[f.nome]) fortesPorPessoa[f.nome]=[];
+          fortesPorPessoa[f.nome].push(f);
+        });
+        equipe.forEach(function(p,i){
+          var itens=fortesPorPessoa[p.nome]||[];
+          // first slot already created; add extras
+          itens.forEach(function(f,j){
+            if(j>0) adicionarPonto('forte',i);
+            // wait for DOM then fill
+            (function(idx,item,slot){
+              setTimeout(function(){
+                var slots=pontosData['forte'][idx]||[];
+                if(slots[slot]){
+                  var ta=document.getElementById(slots[slot].taId);
+                  var sl=document.getElementById(slots[slot].slId);
+                  var vl=document.getElementById(slots[slot].valId);
+                  if(ta) ta.value=item.descricao||'';
+                  if(sl){sl.value=item.importancia||5;}
+                  if(vl) vl.textContent=item.importancia||5;
+                }
+              },150);
+            })(i,f,j);
+          });
+        });
+      }
+      // Preenche pontos de melhoria salvos
+      if(d.fracos&&d.fracos.length){
+        var fracosPorPessoa={};
+        d.fracos.forEach(function(f){
+          if(!fracosPorPessoa[f.nome]) fracosPorPessoa[f.nome]=[];
+          fracosPorPessoa[f.nome].push(f);
+        });
+        equipe.forEach(function(p,i){
+          var itens=fracosPorPessoa[p.nome]||[];
+          itens.forEach(function(f,j){
+            if(j>0) adicionarPonto('fraco',i);
+            (function(idx,item,slot){
+              setTimeout(function(){
+                var slots=pontosData['fraco'][idx]||[];
+                if(slots[slot]){
+                  var ta=document.getElementById(slots[slot].taId);
+                  var sl=document.getElementById(slots[slot].slId);
+                  var vl=document.getElementById(slots[slot].valId);
+                  if(ta) ta.value=item.descricao||'';
+                  if(sl){sl.value=item.importancia||5;}
+                  if(vl) vl.textContent=item.importancia||5;
+                }
+              },150);
+            })(i,f,j);
+          });
+        });
+      }
+      setTimeout(function(){renderSWOT();renderAnalise();},300);
+    }
+    status.textContent='✅ Dados carregados!';
+    status.style.color='#15803d';
+    setTimeout(function(){status.textContent='';},3000);
+  }).catch(function(e){
+    status.textContent='';
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────────
 window.onload=function(){
-  // Restore WhatsApp
+  // Restore WhatsApp e carrega dados
   var wa=localStorage.getItem('lider_whatsapp');
-  if(wa) document.getElementById('lider-whatsapp').value=wa;
+  if(wa){
+    document.getElementById('lider-whatsapp').value=wa;
+    carregarDados(wa);
+  }
+
+  // Carrega ao sair do campo WhatsApp
+  document.getElementById('lider-whatsapp').addEventListener('blur',function(){
+    var v=this.value.replace(/\D/g,'');
+    if(v.length>=10) carregarDados(v);
+  });
 
   // Initial empty state for chips
   renderChips();
