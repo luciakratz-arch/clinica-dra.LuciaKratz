@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuração do Cliente — Líd@r 5.0</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f0f4f0;color:#1a2e1a;min-height:100vh}
+header{background:linear-gradient(135deg,#14532d,#16a34a);padding:24px 20px;text-align:center;color:white}
+header .badge{display:inline-block;background:rgba(255,255,255,0.2);font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+header h1{font-size:1.3rem;font-weight:800}
+header p{font-size:0.83rem;opacity:0.8;margin-top:4px}
+.back{display:inline-block;color:rgba(255,255,255,0.8);font-size:0.8rem;text-decoration:none;margin-bottom:10px}
+main{max-width:600px;margin:0 auto;padding:24px 16px 48px}
+.card{background:white;border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07)}
+.card h3{font-size:0.9rem;font-weight:700;color:#14532d;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.campo{margin-bottom:12px}
+.campo label{display:block;font-size:0.78rem;color:#6b7280;margin-bottom:4px;font-weight:500}
+.campo input[type=text],.campo input[type=url]{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:9px 13px;font-size:0.87rem;color:#1f2937;background:#f9fafb}
+.campo input:focus{outline:none;border-color:#16a34a;background:white}
+.cor-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.campo-cor{display:flex;align-items:center;gap:10px}
+.campo-cor input[type=color]{width:44px;height:44px;border:2px solid #e5e7eb;border-radius:8px;padding:2px;cursor:pointer;background:none}
+.campo-cor input[type=text]{flex:1;border:1px solid #d1d5db;border-radius:8px;padding:8px 12px;font-size:0.85rem}
+.upload-area{border:2px dashed #d1d5db;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:#f9fafb}
+.upload-area:hover{border-color:#16a34a;background:#f0fdf4}
+.upload-area input{display:none}
+.upload-area p{font-size:0.82rem;color:#9ca3af}
+.upload-area strong{color:#16a34a;display:block;font-size:0.9rem;margin-bottom:4px}
+#logo-preview{max-width:200px;max-height:80px;object-fit:contain;margin:10px auto 0;display:none;border-radius:6px}
+.preview-tema{border-radius:10px;overflow:hidden;border:1px solid #e5e7eb}
+.prev-header{padding:14px 16px;display:flex;align-items:center;gap:10px}
+.prev-header img{height:32px;object-fit:contain}
+.prev-header span{font-weight:700;font-size:0.9rem;color:white}
+.prev-body{background:white;padding:14px 16px}
+.prev-badge{display:inline-block;font-size:0.7rem;font-weight:700;padding:2px 10px;border-radius:20px;margin-bottom:8px}
+.prev-titulo{font-size:0.95rem;font-weight:800;color:#111;margin-bottom:6px}
+.prev-btn{display:inline-block;padding:8px 18px;border-radius:8px;color:white;font-size:0.82rem;font-weight:700;margin-top:8px}
+.modo-row{display:flex;gap:10px}
+.modo-btn{flex:1;padding:10px;border-radius:8px;border:2px solid #e5e7eb;background:white;font-size:0.82rem;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s}
+.modo-btn.ativo{border-color:#16a34a;background:#f0fdf4;color:#14532d}
+.btn-salvar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#16a34a,#14532d);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer;margin-top:8px}
+.btn-salvar:hover{opacity:0.9}
+.msg-ok{display:none;background:#f0fdf4;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#14532d;font-weight:600;margin-top:12px}
+.aviso{background:#fefce8;border:1px solid #fde047;border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#713f12;line-height:1.5;margin-bottom:16px}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="hub.html">← Voltar ao Hub</a>
+  <div class="badge">⚙️ Configuração</div>
+  <h1>Personalização do Cliente</h1>
+  <p>Logo, cores e tema — aplicados em toda a plataforma</p>
+</header>
+<main>
+  <div class="aviso">
+    💡 As configurações ficam salvas no Firebase e se aplicam automaticamente a todos os formulários quando o participante abre qualquer página da plataforma.
+  </div>
+
+  <!-- LOGO -->
+  <div class="card">
+    <h3>🖼️ Logo do Cliente</h3>
+    <div class="upload-area" onclick="document.getElementById('logo-input').click()">
+      <input type="file" id="logo-input" accept="image/*" onchange="previewLogo(this)">
+      <strong>Clique para fazer upload da logo</strong>
+      <p>PNG, JPG ou SVG — recomendado fundo transparente</p>
+    </div>
+    <img id="logo-preview" src="" alt="Preview da logo">
+    <div class="campo" style="margin-top:12px">
+      <label>Ou cole a URL da logo (hospedada externamente)</label>
+      <input type="url" id="logo-url" placeholder="https://..." oninput="atualizarPreview()">
+    </div>
+    <div class="campo" style="margin-top:8px">
+      <label>Nome / Marca do cliente</label>
+      <input type="text" id="nome-cliente" placeholder="Ex: Hospital CBCO" oninput="atualizarPreview()">
+    </div>
+  </div>
+
+  <!-- CORES -->
+  <div class="card">
+    <h3>🎨 Cores do Tema</h3>
+    <div class="cor-row">
+      <div class="campo">
+        <label>Cor Primária (header, botões)</label>
+        <div class="campo-cor">
+          <input type="color" id="cor-primaria" value="#16a34a" oninput="sincCor('primaria',this.value)">
+          <input type="text" id="cor-primaria-hex" value="#16a34a" oninput="sincHex('primaria',this.value)">
+        </div>
+      </div>
+      <div class="campo">
+        <label>Cor Secundária (badges, destaques)</label>
+        <div class="campo-cor">
+          <input type="color" id="cor-secundaria" value="#14532d" oninput="sincCor('secundaria',this.value)">
+          <input type="text" id="cor-secundaria-hex" value="#14532d" oninput="sincHex('secundaria',this.value)">
+        </div>
+      </div>
+      <div class="campo">
+        <label>Cor de Fundo</label>
+        <div class="campo-cor">
+          <input type="color" id="cor-fundo" value="#f0f4f0" oninput="sincCor('fundo',this.value)">
+          <input type="text" id="cor-fundo-hex" value="#f0f4f0" oninput="sincHex('fundo',this.value)">
+        </div>
+      </div>
+      <div class="campo">
+        <label>Cor do Texto Principal</label>
+        <div class="campo-cor">
+          <input type="color" id="cor-texto" value="#1a2e1a" oninput="sincCor('texto',this.value)">
+          <input type="text" id="cor-texto-hex" value="#1a2e1a" oninput="sincHex('texto',this.value)">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODO -->
+  <div class="card">
+    <h3>🌓 Modo do Tema</h3>
+    <div class="modo-row">
+      <button class="modo-btn ativo" id="modo-claro" onclick="setModo('claro')">☀️ Claro</button>
+      <button class="modo-btn" id="modo-escuro" onclick="setModo('escuro')">🌙 Escuro</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="card">
+    <h3>👁️ Pré-visualização</h3>
+    <div class="preview-tema" id="preview-wrap">
+      <div class="prev-header" id="prev-header" style="background:linear-gradient(135deg,#16a34a,#14532d)">
+        <img id="prev-logo" src="" style="display:none;height:28px">
+        <span id="prev-nome">Hospital CBCO</span>
+      </div>
+      <div class="prev-body">
+        <div class="prev-badge" id="prev-badge" style="background:#dcfce7;color:#14532d">Workshop 4 · Formulário 4.1</div>
+        <div class="prev-titulo">Feedback CNV — Bolo de Chocolate</div>
+        <button class="prev-btn" id="prev-btn" style="background:#16a34a">Enviar Formulário →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRESETS -->
+  <div class="card">
+    <h3>⚡ Presets Rápidos</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <button onclick="aplicarPreset('#16a34a','#14532d','#f0f4f0','#1a2e1a','claro')" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer;font-size:0.78rem;font-weight:600;background:white">🌿 Verde (padrão)</button>
+      <button onclick="aplicarPreset('#7c3aed','#4c1d95','#f5f3ff','#1e1b4b','claro')" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer;font-size:0.78rem;font-weight:600;background:white">💜 Roxo</button>
+      <button onclick="aplicarPreset('#0ea5e9','#0369a1','#f0f9ff','#0c1a2e','claro')" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer;font-size:0.78rem;font-weight:600;background:white">💙 Azul</button>
+      <button onclick="aplicarPreset('#ea580c','#9a3412','#fff7ed','#2e1a0a','claro')" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer;font-size:0.78rem;font-weight:600;background:white">🟠 Laranja</button>
+      <button onclick="aplicarPreset('#e11d48','#9f1239','#fff1f2','#2e0a14','claro')" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer;font-size:0.78rem;font-weight:600;background:white">❤️ Vermelho</button>
+      <button onclick="aplicarPreset('#a78bfa','#6d28d9','#0f0f1a','#e2e2e8','escuro')" style="padding:10px;border-radius:8px;border:1px solid #d1d5db;cursor:pointer;font-size:0.78rem;font-weight:600;background:white">🌙 Dark Roxo</button>
+    </div>
+  </div>
+
+  <button class="btn-salvar" onclick="salvar()">💾 Salvar Configurações para Todos os Formulários</button>
+  <div class="msg-ok" id="msg-ok">✓ Configurações salvas! Todos os formulários já estão com o novo tema.</div>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script>
+var db, storage;
+var modoAtual = 'claro';
+var logoBase64 = '';
+
+function sincCor(campo, val){
+  document.getElementById('cor-'+campo+'-hex').value = val;
+  atualizarPreview();
+}
+function sincHex(campo, val){
+  if(/^#[0-9a-fA-F]{6}$/.test(val)) document.getElementById('cor-'+campo).value = val;
+  atualizarPreview();
+}
+function setModo(modo){
+  modoAtual = modo;
+  document.getElementById('modo-claro').classList.toggle('ativo', modo==='claro');
+  document.getElementById('modo-escuro').classList.toggle('ativo', modo==='escuro');
+  atualizarPreview();
+}
+function aplicarPreset(p,s,f,t,modo){
+  document.getElementById('cor-primaria').value=p;
+  document.getElementById('cor-primaria-hex').value=p;
+  document.getElementById('cor-secundaria').value=s;
+  document.getElementById('cor-secundaria-hex').value=s;
+  document.getElementById('cor-fundo').value=f;
+  document.getElementById('cor-fundo-hex').value=f;
+  document.getElementById('cor-texto').value=t;
+  document.getElementById('cor-texto-hex').value=t;
+  setModo(modo);
+  atualizarPreview();
+}
+function atualizarPreview(){
+  const p = document.getElementById('cor-primaria-hex').value;
+  const s = document.getElementById('cor-secundaria-hex').value;
+  const nome = document.getElementById('nome-cliente').value || 'Empresa Cliente';
+  const logoUrl = logoBase64 || document.getElementById('logo-url').value;
+  document.getElementById('prev-header').style.background = `linear-gradient(135deg,${p},${s})`;
+  document.getElementById('prev-badge').style.background = p+'22';
+  document.getElementById('prev-badge').style.color = s;
+  document.getElementById('prev-btn').style.background = p;
+  document.getElementById('prev-nome').textContent = nome;
+  const prevLogo = document.getElementById('prev-logo');
+  if(logoUrl){ prevLogo.src=logoUrl; prevLogo.style.display='block'; }
+  else { prevLogo.style.display='none'; }
+}
+function previewLogo(input){
+  if(!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    logoBase64 = e.target.result;
+    document.getElementById('logo-preview').src = logoBase64;
+    document.getElementById('logo-preview').style.display = 'block';
+    atualizarPreview();
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+async function salvar(){
+  const config = {
+    corPrimaria: document.getElementById('cor-primaria-hex').value,
+    corSecundaria: document.getElementById('cor-secundaria-hex').value,
+    corFundo: document.getElementById('cor-fundo-hex').value,
+    corTexto: document.getElementById('cor-texto-hex').value,
+    modo: modoAtual,
+    nomeCliente: document.getElementById('nome-cliente').value,
+    logoUrl: logoBase64 || document.getElementById('logo-url').value,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  await db.doc('lider_config/tema').set(config, {merge:true});
+  document.getElementById('msg-ok').style.display='block';
+  setTimeout(()=>{ document.getElementById('msg-ok').style.display='none'; }, 4000);
+}
+async function carregarConfig(){
+  try{
+    const doc = await db.doc('lider_config/tema').get();
+    if(doc.exists){
+      const c = doc.data();
+      if(c.corPrimaria){ document.getElementById('cor-primaria').value=c.corPrimaria; document.getElementById('cor-primaria-hex').value=c.corPrimaria; }
+      if(c.corSecundaria){ document.getElementById('cor-secundaria').value=c.corSecundaria; document.getElementById('cor-secundaria-hex').value=c.corSecundaria; }
+      if(c.corFundo){ document.getElementById('cor-fundo').value=c.corFundo; document.getElementById('cor-fundo-hex').value=c.corFundo; }
+      if(c.corTexto){ document.getElementById('cor-texto').value=c.corTexto; document.getElementById('cor-texto-hex').value=c.corTexto; }
+      if(c.modo) setModo(c.modo);
+      if(c.nomeCliente) document.getElementById('nome-cliente').value=c.nomeCliente;
+      if(c.logoUrl){ logoBase64=c.logoUrl; document.getElementById('logo-preview').src=c.logoUrl; document.getElementById('logo-preview').style.display='block'; document.getElementById('logo-url').value=c.logoUrl.startsWith('data:')?'':c.logoUrl; }
+    }
+  }catch(e){}
+  atualizarPreview();
+}
+window.onload = function(){
+  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  db = firebase.firestore();
+  storage = firebase.storage();
+  carregarConfig();
+};
+</script>
+</body>
+</html>
