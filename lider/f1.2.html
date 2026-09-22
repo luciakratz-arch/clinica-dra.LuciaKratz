@@ -3,237 +3,562 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>F1.2 — Matriz de Mapeamento Geracional</title>
+<title>F1.2 · Matriz de Mapeamento Geracional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #f4f6f4; color: #1a2e1a; font-family: 'Inter', sans-serif; min-height: 100vh; }
-header { background: linear-gradient(135deg,#14532d 0%,#16a34a 100%); border-bottom: 3px solid #15803d; color: #fff; padding: 0; }
-.header-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
-.logos { display: flex; align-items: center; gap: 12px; }
-.logo-lucia { height: 44px; object-fit: contain; }
-.logo-sep { width: 1px; height: 36px; background: rgba(255,255,255,0.3); display: none; }
-.logo-cbco { height: 44px; object-fit: contain; }
-.back { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; transition: all .2s; }
-.back:hover { background: rgba(255,255,255,0.12); color: #fff; }
-.header-body { padding: 20px 24px 24px; }
-.badge { display: inline-block; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: .5px; margin-bottom: 10px; }
-.header-body h1 { font-size: clamp(20px,4vw,28px); font-weight: 700; margin-bottom: 6px; }
-.header-body p { font-size: 14px; opacity: .85; }
-.container { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
-.instrucao { background: #ffffff; border-left: 4px solid #16a34a; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; line-height: 1.6; color: #14532d; }
-.instrucao strong { display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .4px; color: #166534; }
-.card { background: #ffffff; border: 1px solid #d1fae5; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-.card h3 { font-size: 15px; font-weight: 700; color: #14532d; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #d1fae5; }
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media(max-width:600px){ .grid2 { grid-template-columns: 1fr; } }
-.field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase; letter-spacing: .4px; }
-input[type=text], input[type=date], textarea, select {
-  background: #ffffff; border: 1px solid #d1fae5; border-radius: 8px;
-  padding: 10px 12px; font-size: 14px; color: #1a2e1a; font-family: inherit;
-  width: 100%; transition: border-color .2s, box-shadow .2s;
-}
-input:focus, textarea:focus, select:focus {
-  outline: none; border-color: #16a34a; box-shadow: 0 0 0 3px #16a34a18;
-}
-textarea { resize: vertical; min-height: 80px; }
-.btn-submit { display: block; width: 100%; padding: 14px; background: linear-gradient(135deg,#16a34a,#14532d); color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 24px; transition: opacity .2s; }
-.btn-submit:hover { opacity: .9; }
-.section-label { font-size: 13px; font-weight: 700; color: #14532d; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px; margin-top: 20px; }
-
-.gen-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-.gen-card h4 { font-size: 14px; font-weight: 700; color: #14532d; margin-bottom: 12px; }
-.gen-fields { display: flex; flex-direction: column; gap: 10px; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh}
+header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:860px;margin:0 auto}
+.logos{display:flex;align-items:center;gap:12px}
+.container{max-width:860px;margin:0 auto;padding:24px 16px 60px}
+.card{background:#fff;border:1.5px solid #d1fae5;border-radius:12px;padding:20px 24px;margin-bottom:20px}
+.card-title{font-size:1rem;font-weight:700;color:#14532d;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:150px}
+.form-group label{font-size:0.78rem;font-weight:600;color:#374151}
+.form-group input,.form-group select,.form-group textarea{border:1.5px solid #d1fae5;border-radius:8px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:0.875rem;color:#1a2e1a;outline:none;transition:border-color .2s;background:#fff;width:100%}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#16a34a}
+.form-group textarea{resize:vertical;min-height:72px}
+.btn{display:inline-flex;align-items:center;gap:6px;background:#16a34a;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:0.875rem;font-weight:600;cursor:pointer;transition:background .2s}
+.btn:hover{background:#15803d}
+.btn-save{background:#14532d;width:100%;justify-content:center;padding:14px;font-size:1rem;border-radius:10px;margin-top:8px}
+.btn-save:hover{background:#052e16}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;margin:4px}
+.chip-remove{background:none;border:none;cursor:pointer;font-size:12px;line-height:1;opacity:.7;transition:opacity .2s;padding:0 2px}
+.chip-remove:hover{opacity:1}
+#chips-area{min-height:20px;display:flex;flex-wrap:wrap;padding:4px 0}
+.gen-bar-wrap{margin:6px 0}
+.gen-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.gen-bar-label{font-size:0.75rem;font-weight:600;color:#374151;width:160px;flex-shrink:0}
+.gen-bar-track{flex:1;height:22px;background:#f3f4f6;border-radius:6px;overflow:hidden;position:relative}
+.gen-bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:0.72rem;font-weight:700;color:#fff;min-width:2px;transition:width .5s ease}
+.gen-bar-count{font-size:0.75rem;font-weight:600;color:#374151;width:60px;flex-shrink:0;text-align:right}
+.dominant-badge{margin-top:8px;font-size:0.82rem;font-weight:600;color:#14532d;background:#dcfce7;border-radius:8px;padding:8px 14px;display:inline-block}
+.person-block{border:1.5px solid #d1fae5;border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.person-name-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.person-badge{font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:20px;color:#fff}
+.slider-wrap{display:flex;align-items:center;gap:10px;margin-top:8px}
+.slider-wrap label{font-size:0.75rem;font-weight:600;color:#374151;white-space:nowrap}
+.slider-wrap input[type=range]{flex:1;height:4px;cursor:pointer;accent-color:#16a34a}
+.slider-val{font-size:0.82rem;font-weight:700;color:#14532d;min-width:22px;text-align:center}
+.swot-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.swot-grid{grid-template-columns:1fr}}
+.swot-box{border-radius:10px;padding:14px}
+.swot-s{background:#f0fdf4;border:1.5px solid #86efac}
+.swot-w{background:#fff7ed;border:1.5px solid #fcd34d}
+.swot-o{background:#eff6ff;border:1.5px solid #93c5fd}
+.swot-t{background:#fff1f2;border:1.5px solid #fca5a5}
+.swot-box h3{font-size:0.85rem;font-weight:700;margin-bottom:10px}
+.swot-s h3{color:#15803d}
+.swot-w h3{color:#d97706}
+.swot-o h3{color:#2563eb}
+.swot-t h3{color:#dc2626}
+.swot-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:0.8rem}
+.imp-badge{padding:2px 7px;border-radius:10px;font-size:0.7rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+.imp-low{background:#fee2e2;color:#dc2626}
+.imp-mid{background:#fef3c7;color:#d97706}
+.imp-high{background:#d1fae5;color:#059669}
+.analysis-text{font-size:0.875rem;line-height:1.7;color:#374151}
+details{border:1.5px solid #d1fae5;border-radius:12px;padding:0;overflow:hidden;margin-bottom:20px;background:#fff}
+details summary{padding:16px 24px;font-weight:700;color:#14532d;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-size:1rem}
+details summary::-webkit-details-marker{display:none}
+details[open] summary{border-bottom:1.5px solid #d1fae5}
+.details-body{padding:20px 24px}
+.empty-msg{font-size:0.82rem;color:#9ca3af;font-style:italic;padding:8px 0}
+.save-status{text-align:center;margin-top:8px;font-size:0.82rem;font-weight:600;color:#15803d;min-height:20px}
 </style>
 </head>
 <body>
+
 <header>
   <div class="header-top">
     <div class="logos">
-      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="display:none">
-      <div class="logo-sep"></div>
-      <img class="logo-cbco" id="logo-cbco" alt="CBCO" style="display:none">
+      <img id="logo-lucia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7dbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:block">
+      <span id="sep-logos" style="display:none;width:1px;height:32px;background:#ffffff55"></span>
+      <img id="logo-cbco" src="" alt="CBCO" style="height:42px;object-fit:contain;display:none">
     </div>
-    <a class="back" href="hub.html">← Voltar ao Hub</a>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
   </div>
-  <div class="header-body">
-    <span class="badge">W1 · F1.2</span>
-    <h1>Matriz de Mapeamento Geracional</h1>
-    <p>Mapeie colaboradores por geração e defina estratégias de integração</p>
+  <div style="padding:16px 20px 20px;text-align:center;max-width:860px;margin:0 auto">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W1 · F1.2</span>
+    <h1 style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:4px">Matriz de Mapeamento Geracional</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Cadastre sua equipe, identifique gerações e gere análise SWOT com grau de importância</p>
   </div>
 </header>
+
 <div class="container">
-  <div class="instrucao">
-    <strong>Instrução</strong>
-    Identifique colaboradores da sua equipe por faixa geracional e descreva como adaptar sua comunicação e liderança para cada grupo.
+
+  <!-- FEATURE 1: IDENTIFICAÇÃO DO LÍDER -->
+  <div class="card">
+    <div class="card-title">🏷️ Identificação do Líder</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nome do Líder</label>
+        <input type="text" id="lider-nome" data-voz placeholder="Seu nome completo">
+      </div>
+      <div class="form-group">
+        <label>WhatsApp</label>
+        <input type="tel" id="lider-whatsapp" placeholder="(11) 99999-9999">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cargo</label>
+        <input type="text" id="lider-cargo" data-voz placeholder="Ex: Gerente de Enfermagem">
+      </div>
+      <div class="form-group">
+        <label>Setor</label>
+        <input type="text" id="lider-setor" data-voz placeholder="Ex: UTI Adulto">
+      </div>
+    </div>
   </div>
-  <form id="form">
-    <div class="card">
-      <div class="grid2">
-        <div class="field"><label>Nome do Líder</label><input type="text" id="nome" placeholder="Seu nome completo" required></div>
-        <div class="field"><label>WhatsApp</label><input type="text" id="whatsapp" placeholder="(00) 00000-0000"></div>
-        <div class="field"><label>Setor / Departamento</label><input type="text" id="setor" placeholder="Ex: Recursos Humanos"></div>
-        <div class="field"><label>Data</label><input type="date" id="data"></div>
+
+  <!-- FEATURE 2: CADASTRO DE COLABORADORES -->
+  <div class="card">
+    <div class="card-title">👥 Equipe — Cadastro de Colaboradores</div>
+    <div class="form-row" style="align-items:flex-end">
+      <div class="form-group" style="min-width:180px">
+        <label>Nome do Colaborador</label>
+        <input type="text" id="colab-nome" placeholder="Nome completo">
+      </div>
+      <div class="form-group" style="min-width:220px">
+        <label>Geração</label>
+        <select id="colab-gen">
+          <option value="Tradicionalistas">🏛️ Tradicionalistas (antes de 1946)</option>
+          <option value="Baby Boomers">👴 Baby Boomers (1946–1964)</option>
+          <option value="Geração X">💼 Geração X (1965–1980)</option>
+          <option value="Millennials" selected>💻 Millennials / Gen Y (1981–1996)</option>
+          <option value="Geração Z">📱 Geração Z (1997–2012)</option>
+        </select>
+      </div>
+      <div class="form-group" style="min-width:auto;flex:0">
+        <button class="btn" onclick="adicionarColab()">➕ Adicionar</button>
       </div>
     </div>
+    <div id="chips-area"></div>
+  </div>
 
-    <div class="section-label">Mapeamento Geracional</div>
+  <!-- FEATURE 3: GRÁFICO GERACIONAL -->
+  <div class="card" id="card-grafico" style="display:none">
+    <div class="card-title">📊 Distribuição Geracional da Equipe</div>
+    <div id="grafico-wrap"></div>
+  </div>
 
-    <div class="gen-card">
-      <h4>👴 Baby Boomers (1946–1964)</h4>
-      <div class="gen-fields">
-        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="bb_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
-        <div class="field"><label>Pontos Fortes</label><textarea id="bb_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
-        <div class="field"><label>Estratégia de Engajamento</label><textarea id="bb_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
-      </div>
+  <!-- FEATURE 4: PONTOS FORTES -->
+  <div class="card" id="card-fortes" style="display:none">
+    <div class="card-title">⭐ Pontos Fortes da Equipe</div>
+    <div id="fortes-wrap"></div>
+  </div>
+
+  <!-- FEATURE 5: PONTOS FRACOS -->
+  <div class="card" id="card-fracos" style="display:none">
+    <div class="card-title">⚠️ Pontos de Melhoria da Equipe</div>
+    <div id="fracos-wrap"></div>
+  </div>
+
+  <!-- FEATURE 6: SWOT -->
+  <div class="card" id="card-swot" style="display:none">
+    <div class="card-title">🎯 Análise SWOT da Equipe</div>
+    <div class="swot-grid" id="swot-grid"></div>
+  </div>
+
+  <!-- FEATURE 7: ANÁLISE FINAL -->
+  <details id="details-analise" style="display:none">
+    <summary>📋 Análise Final da Equipe</summary>
+    <div class="details-body">
+      <p class="analysis-text" id="analise-texto"></p>
     </div>
+  </details>
 
-    <div class="gen-card">
-      <h4>🧑‍💼 Geração X (1965–1980)</h4>
-      <div class="gen-fields">
-        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="gx_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
-        <div class="field"><label>Pontos Fortes</label><textarea id="gx_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
-        <div class="field"><label>Estratégia de Engajamento</label><textarea id="gx_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
-      </div>
-    </div>
+  <!-- SAVE -->
+  <div class="card">
+    <button class="btn btn-save" onclick="salvarDados()">💾 Salvar Análise</button>
+    <p class="save-status" id="save-status"></p>
+  </div>
 
-    <div class="gen-card">
-      <h4>💼 Millennials / Gen Y (1981–1996)</h4>
-      <div class="gen-fields">
-        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="my_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
-        <div class="field"><label>Pontos Fortes</label><textarea id="my_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
-        <div class="field"><label>Estratégia de Engajamento</label><textarea id="my_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
-      </div>
-    </div>
-
-    <div class="gen-card">
-      <h4>🚀 Gen Z (1997+)</h4>
-      <div class="gen-fields">
-        <div class="field"><label>Nomes dos Colaboradores</label><textarea id="gz_nomes" placeholder="Liste os colaboradores desta geração na sua equipe..."></textarea></div>
-        <div class="field"><label>Pontos Fortes</label><textarea id="gz_pontos" placeholder="Quais são os principais pontos fortes desta geração na sua equipe?"></textarea></div>
-        <div class="field"><label>Estratégia de Engajamento</label><textarea id="gz_estrategia" placeholder="Como você vai adaptar comunicação e liderança para este grupo?"></textarea></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="field">
-        <label>Estratégia de Integração Intergeracional</label>
-        <textarea id="integracao" style="min-height:120px" placeholder="Descreva como vai promover a integração e colaboração entre as diferentes gerações da sua equipe..."></textarea>
-      </div>
-    </div>
-
-    <button type="submit" class="btn-submit">✅ Enviar Matriz Geracional</button>
-  </form>
 </div>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase SDKs v8 compat -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <script>
-  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
-  var db;
-// ── TextAreaVoz ──
-function initVoz(){
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return;
-  document.querySelectorAll('textarea').forEach(function(ta){
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;display:block';
-    ta.parentNode.insertBefore(wrap, ta);
-    wrap.appendChild(ta);
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.innerHTML = '🎙️';
-    btn.title = 'Falar para digitar';
-    btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
-    wrap.appendChild(btn);
-    ta.style.paddingRight = '36px';
-    var dot = document.createElement('div');
-    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
-    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
-    wrap.appendChild(dot);
-    var rec = null;
-    var gravando = false;
-    btn.addEventListener('click', function(){
-      if(gravando){
-        if(rec) rec.stop();
-        gravando = false;
-        btn.style.background = '#f3e6ff';
-        btn.style.color = '#7B00C4';
-        btn.style.boxShadow = 'none';
-        dot.style.display = 'none';
-        return;
-      }
-      rec = new SR();
-      rec.lang = 'pt-BR';
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onresult = function(e){
-        var t = Array.from(e.results).map(function(r){return r[0].transcript;}).join(' ');
-        var base = ta.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd();
-        ta.value = base ? base + ' ' + t : t;
-      };
-      rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
-      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
-      rec.start();
-      gravando = true;
-      btn.style.background = '#7B00C4';
-      btn.style.color = 'white';
-      btn.style.boxShadow = '0 0 0 3px #7B00C430';
-      dot.style.display = 'flex';
-    });
+// ── Firebase init ──────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial",
+  storageBucket:"entrevista-inicial.firebasestorage.app",
+  messagingSenderId:"437375609844",
+  appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
+});
+var db = firebase.firestore();
+
+// ── State ──────────────────────────────────────────────────────────────
+var equipe = []; // [{nome, geracao}]
+
+// ── Generation config ──────────────────────────────────────────────────
+var GEN = {
+  'Tradicionalistas': {cor:'#78716c', emoji:'🏛️'},
+  'Baby Boomers':     {cor:'#f59e0b', emoji:'👴'},
+  'Geração X':        {cor:'#3b82f6', emoji:'💼'},
+  'Millennials':      {cor:'#8b5cf6', emoji:'💻'},
+  'Geração Z':        {cor:'#10b981', emoji:'📱'}
+};
+var GEN_ORDER = ['Tradicionalistas','Baby Boomers','Geração X','Millennials','Geração Z'];
+
+var GEN_TRAITS = {
+  'Tradicionalistas': 'valoriza disciplina, hierarquia e lealdade institucional',
+  'Baby Boomers':     'traz experiência consolidada, comprometimento e visão estratégica',
+  'Geração X':        'equilibra pragmatismo, autonomia e adaptabilidade',
+  'Millennials':      'apresenta alta adaptabilidade digital, criatividade e foco em propósito',
+  'Geração Z':        'é nativa digital, ágil e orientada a resultados imediatos'
+};
+
+// ── Utils ──────────────────────────────────────────────────────────────
+function contarGens(){
+  var c={};
+  GEN_ORDER.forEach(function(g){c[g]=0;});
+  equipe.forEach(function(p){if(c[p.geracao]!==undefined)c[p.geracao]++;});
+  return c;
+}
+function geracaoDominante(){
+  var c=contarGens(); var max=0; var dom='';
+  Object.keys(c).forEach(function(g){if(c[g]>max){max=c[g];dom=g;}});
+  return dom;
+}
+function diversidadeScore(){
+  var c=contarGens(); var total=equipe.length; if(!total) return 0;
+  var presentes=Object.values(c).filter(function(v){return v>0;}).length;
+  return presentes;
+}
+
+// ── FEATURE 2: Chips ──────────────────────────────────────────────────
+function adicionarColab(){
+  var nome=document.getElementById('colab-nome').value.trim();
+  var gen=document.getElementById('colab-gen').value;
+  if(!nome){alert('Informe o nome do colaborador.');return;}
+  equipe.push({nome:nome, geracao:gen});
+  document.getElementById('colab-nome').value='';
+  renderChips();
+  renderAll();
+}
+function removerColab(idx){
+  equipe.splice(idx,1);
+  renderChips();
+  renderAll();
+}
+function renderChips(){
+  var area=document.getElementById('chips-area');
+  if(!equipe.length){area.innerHTML='<span class="empty-msg">Nenhum colaborador adicionado ainda.</span>';return;}
+  area.innerHTML='';
+  equipe.forEach(function(p,i){
+    var cfg=GEN[p.geracao]||{cor:'#6b7280',emoji:'👤'};
+    var chip=document.createElement('span');
+    chip.className='chip';
+    chip.style.background=cfg.cor+'22';
+    chip.style.border='1.5px solid '+cfg.cor+'66';
+    chip.innerHTML='<span style="font-size:0.75rem">' + cfg.emoji + '</span> '
+      + '<strong style="color:'+cfg.cor+'">' + escHtml(p.nome) + '</strong>'
+      + ' <span style="background:'+cfg.cor+';color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px">' + escHtml(p.geracao) + '</span>'
+      + ' <button class="chip-remove" onclick="removerColab('+i+')">❌</button>';
+    area.appendChild(chip);
   });
 }
 
-  window.onload = function(){
-    document.getElementById('logo-lucia').src = LOGO_LUCIA;
-    document.getElementById('logo-lucia').style.display = 'block';
-    if(!firebase.apps.length){
-      firebase.initializeApp({
-        apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",
-        authDomain:"entrevista-inicial.firebaseapp.com",
-        projectId:"entrevista-inicial",
-        storageBucket:"entrevista-inicial.firebasestorage.app",
-        messagingSenderId:"437375609844",
-        appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"
-      });
+// ── FEATURE 3: Gráfico ─────────────────────────────────────────────────
+function renderGrafico(){
+  var card=document.getElementById('card-grafico');
+  var wrap=document.getElementById('grafico-wrap');
+  if(!equipe.length){card.style.display='none';return;}
+  card.style.display='block';
+  var total=equipe.length;
+  var c=contarGens();
+  var dom=geracaoDominante();
+  var html='<div class="gen-bar-wrap">';
+  GEN_ORDER.forEach(function(g){
+    var n=c[g]; if(!n && dom!==g) return;
+    var pct=total?Math.round(n/total*100):0;
+    var cfg=GEN[g];
+    var isDom=(g===dom && n>0);
+    html+='<div class="gen-bar-row">';
+    html+='<div class="gen-bar-label" style="font-weight:'+(isDom?'700':'500')+'">'
+      +cfg.emoji+' '+escHtml(g)+'</div>';
+    html+='<div class="gen-bar-track">';
+    html+='<div class="gen-bar-fill" style="width:'+pct+'%;background:'+cfg.cor+(isDom?';box-shadow:0 0 0 2px '+cfg.cor+'44':'')+'">'
+      +(pct>10?pct+'%':'')+'</div>';
+    html+='</div>';
+    html+='<div class="gen-bar-count">'+n+' ('+pct+'%)</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  if(dom){
+    var domN=c[dom];
+    var domPct=total?Math.round(domN/total*100):0;
+    html+='<div class="dominant-badge">⭐ Geração predominante: <strong>'+escHtml(dom)+'</strong> com '+domN+' pessoa'+(domN>1?'s':'')+' ('+domPct+'%)</div>';
+  }
+  wrap.innerHTML=html;
+}
+
+// ── FEATURE 4 & 5: Pontos ─────────────────────────────────────────────
+function renderPontos(tipo){
+  var isForte=(tipo==='forte');
+  var cardId=isForte?'card-fortes':'card-fracos';
+  var wrapId=isForte?'fortes-wrap':'fracos-wrap';
+  var card=document.getElementById(cardId);
+  var wrap=document.getElementById(wrapId);
+  if(!equipe.length){card.style.display='none';wrap.innerHTML='';return;}
+  card.style.display='block';
+  // Remove blocks for deleted collaborators (keep existing ones)
+  var existingBlocks=wrap.querySelectorAll('.person-block');
+  // If more blocks than equipe, remove extras from end
+  while(wrap.querySelectorAll('.person-block').length > equipe.length){
+    var blocks=wrap.querySelectorAll('.person-block');
+    wrap.removeChild(blocks[blocks.length-1]);
+  }
+  // Add missing blocks for new collaborators
+  equipe.forEach(function(p,i){
+    var taId='ta-'+tipo+'-'+i;
+    // Only add if block doesn't exist yet
+    if(document.getElementById(taId)) return;
+    var cfg=GEN[p.geracao]||{cor:'#6b7280',emoji:'👤'};
+    var slId='sl-'+tipo+'-'+i;
+    var valId='val-'+tipo+'-'+i;
+    var block=document.createElement('div');
+    block.className='person-block';
+    block.innerHTML='<div class="person-name-row">'
+      +'<span class="person-badge" style="background:'+cfg.cor+'">'+cfg.emoji+' '+escHtml(p.nome)+'</span>'
+      +'<span style="font-size:0.75rem;color:#6b7280">'+escHtml(p.geracao)+'</span>'
+      +'</div>'
+      +'<div class="form-group">'
+      +'<label style="font-size:0.75rem">'+(isForte?'Descreva um ponto forte desta pessoa':'Descreva um ponto de melhoria')+'</label>'
+      +'<textarea id="'+taId+'" placeholder="'+(isForte?'Ex: Excelente comunicação com pacientes':'Ex: Dificuldade em adaptar-se a novas tecnologias')+'" oninput="renderSWOT();renderAnalise()"></textarea>'
+      +'</div>'
+      +'<div class="slider-wrap">'
+      +'<label>Importância</label>'
+      +'<input type="range" id="'+slId+'" min="0" max="10" value="5" style="accent-color:'+cfg.cor+'" oninput="document.getElementById(\''+valId+'\').textContent=this.value;renderSWOT();renderAnalise()">'
+      +'<span class="slider-val" id="'+valId+'">5</span>'
+      +'</div>';
+    wrap.appendChild(block);
+    // Attach voz to new textarea
+    setTimeout(function(){
+      var ta=document.getElementById(taId);
+      if(ta&&!ta.dataset.vozInit){ta.dataset.vozInit='1';addVozToField(ta);}
+    },50);
+  });
+}
+
+function getPontos(tipo){
+  var arr=[];
+  equipe.forEach(function(p,i){
+    var ta=document.getElementById('ta-'+tipo+'-'+i);
+    var sl=document.getElementById('sl-'+tipo+'-'+i);
+    if(ta&&sl){
+      arr.push({nome:p.nome,geracao:p.geracao,descricao:ta.value.trim(),importancia:parseInt(sl.value)});
     }
-    db = firebase.firestore();
-    db.doc('lider_config/tema').get().then(function(doc){
-      if(doc.exists && doc.data().logoParceiro){
-        var lp = document.getElementById('logo-cbco');
-        lp.src = doc.data().logoParceiro;
-        lp.style.display = 'block';
-      }
-    }).catch(function(){});
-    var savedWa = localStorage.getItem('lider_whatsapp');
-    if(savedWa){ var waInput = document.getElementById('whatsapp'); if(waInput) waInput.value = savedWa; }
-    initVoz();
+  });
+  return arr;
+}
+
+// ── FEATURE 6: SWOT ────────────────────────────────────────────────────
+function impClass(v){return v<=3?'imp-low':v<=6?'imp-mid':'imp-high';}
+function renderSWOT(){
+  var card=document.getElementById('card-swot');
+  var grid=document.getElementById('swot-grid');
+  if(!equipe.length){card.style.display='none';return;}
+  card.style.display='block';
+  var fortes=getPontos('forte').filter(function(f){return f.descricao;}).sort(function(a,b){return b.importancia-a.importancia;});
+  var fracos=getPontos('fraco').filter(function(f){return f.descricao;}).sort(function(a,b){return b.importancia-a.importancia;});
+  var total=equipe.length;
+  var c=contarGens();
+  var dom=geracaoDominante();
+  var div=diversidadeScore();
+
+  // Oportunidades
+  var op=[];
+  if(dom==='Millennials'||dom==='Geração Z') op.push('Alta adaptabilidade digital e abertura a inovação e novas tecnologias.');
+  if(dom==='Baby Boomers'||dom==='Geração X') op.push('Equipe com vasta experiência e maturidade profissional consolidada.');
+  if(dom==='Geração Z') op.push('Potencial para acelerar transformações digitais e criar novos fluxos de trabalho.');
+  if(dom==='Baby Boomers') op.push('Forte senso de comprometimento e lealdade institucional.');
+  if(div>=3) op.push('Alta diversidade geracional cria oportunidade de mentoria cruzada e transferência de conhecimento.');
+  if(total>=5) op.push('Equipe numerosa amplia capacidade de distribuição de tarefas e especialização.');
+  if(c['Millennials']>0&&c['Baby Boomers']>0) op.push('Combinação de experiência e inovação favorece decisões equilibradas.');
+  if(!op.length) op.push('Equipe com potencial de crescimento e desenvolvimento contínuo.');
+
+  // Ameaças
+  var am=[];
+  if(div<=1) am.push('Baixa diversidade geracional pode criar gaps de comunicação e resistência a mudanças.');
+  if(div<=2&&total>3) am.push('Concentração geracional pode limitar diferentes perspectivas na resolução de problemas.');
+  if(dom==='Geração Z') am.push('Alta rotatividade potencial típica de profissionais mais jovens em início de carreira.');
+  if(dom==='Baby Boomers'||dom==='Tradicionalistas') am.push('Possível resistência a transformações digitais e novos modelos de trabalho.');
+  if(dom==='Millennials') am.push('Expectativas elevadas de crescimento acelerado podem gerar frustração em ambientes hierárquicos.');
+  if(c['Tradicionalistas']>0) am.push('Diferença de valores entre gerações extremas pode gerar conflitos de expectativa.');
+  if(!am.length) am.push('Monitorar continuamente o clima organizacional para prevenir conflitos intergeracionais.');
+
+  var sHtml='<div class="swot-box swot-s"><h3>💪 S — Forças</h3>';
+  if(fortes.length){
+    fortes.forEach(function(f){
+      var cfg=GEN[f.geracao]||{cor:'#6b7280'};
+      sHtml+='<div class="swot-item"><div><strong style="color:'+cfg.cor+';font-size:0.78rem">'+escHtml(f.nome)+'</strong><br>'+escHtml(f.descricao)+'</div><span class="imp-badge '+impClass(f.importancia)+'">'+f.importancia+'/10</span></div>';
+    });
+  } else { sHtml+='<p class="empty-msg">Preencha os pontos fortes acima.</p>'; }
+  sHtml+='</div>';
+
+  var wHtml='<div class="swot-box swot-w"><h3>⚠️ W — Fraquezas</h3>';
+  if(fracos.length){
+    fracos.forEach(function(f){
+      var cfg=GEN[f.geracao]||{cor:'#6b7280'};
+      wHtml+='<div class="swot-item"><div><strong style="color:'+cfg.cor+';font-size:0.78rem">'+escHtml(f.nome)+'</strong><br>'+escHtml(f.descricao)+'</div><span class="imp-badge '+impClass(f.importancia)+'">'+f.importancia+'/10</span></div>';
+    });
+  } else { wHtml+='<p class="empty-msg">Preencha os pontos de melhoria acima.</p>'; }
+  wHtml+='</div>';
+
+  var oHtml='<div class="swot-box swot-o"><h3>🌱 O — Oportunidades</h3>';
+  op.forEach(function(t){oHtml+='<div class="swot-item" style="gap:4px"><span style="color:#2563eb;font-size:1rem">→</span><span>'+escHtml(t)+'</span></div>';});
+  oHtml+='</div>';
+
+  var tHtml='<div class="swot-box swot-t"><h3>⚡ T — Ameaças</h3>';
+  am.forEach(function(t){tHtml+='<div class="swot-item" style="gap:4px"><span style="color:#dc2626;font-size:1rem">→</span><span>'+escHtml(t)+'</span></div>';});
+  tHtml+='</div>';
+
+  grid.innerHTML=sHtml+wHtml+oHtml+tHtml;
+}
+
+// ── FEATURE 7: Análise Final ───────────────────────────────────────────
+function renderAnalise(){
+  var details=document.getElementById('details-analise');
+  var txt=document.getElementById('analise-texto');
+  if(!equipe.length){details.style.display='none';return;}
+  details.style.display='block';
+  var total=equipe.length;
+  var c=contarGens();
+  var dom=geracaoDominante();
+  var div=diversidadeScore();
+  var fortes=getPontos('forte').filter(function(f){return f.descricao;}).sort(function(a,b){return b.importancia-a.importancia;});
+  var fracos=getPontos('fraco').filter(function(f){return f.descricao;}).sort(function(a,b){return b.importancia-a.importancia;});
+
+  var distText=GEN_ORDER.filter(function(g){return c[g]>0;}).map(function(g){return c[g]+' '+g;}).join(', ');
+  var domTrait=GEN_TRAITS[dom]||'apresenta características diversas';
+  var divText=div>=4?'Alta':div===3?'Média':div===2?'Baixa':'Muito baixa';
+  var domPct=total?Math.round(c[dom]/total*100):0;
+
+  var top3f=fortes.slice(0,3).map(function(f){return f.nome+' (importância '+f.importancia+'/10)';}).join('; ');
+  var top3w=fracos.slice(0,3).map(function(f){return f.nome+' (importância '+f.importancia+'/10)';}).join('; ');
+
+  var rec='';
+  if(div<=1) rec='Recomenda-se ampliar a diversidade geracional nas próximas contratações para enriquecer as perspectivas da equipe.';
+  else if(dom==='Millennials'||dom==='Geração Z') rec='Invista em iniciativas de mentoria reversa para valorizar a experiência dos profissionais mais sênior junto à energia inovadora dos mais jovens.';
+  else if(dom==='Baby Boomers'||dom==='Tradicional') rec='Crie programas estruturados de capacitação digital e incentive o diálogo intergeracional para acelerar a transformação da equipe.';
+  else rec='Aproveite a diversidade geracional existente para implementar programas de mentoria cruzada e grupos de trabalho mistos.';
+
+  var p='Sua equipe conta com <strong>'+total+' colaborador'+(total>1?'es':'')+'</strong>, distribuídos da seguinte forma: '+distText+'. ';
+  p+='A geração predominante é <strong>'+dom+' ('+domPct+'%)</strong>, que '+domTrait+'. ';
+  p+='O índice de diversidade geracional é <strong>'+divText+'</strong>, com '+div+' geração'+(div>1?'ões presente':'presente')+(div>1?'s':'')+'. ';
+  if(top3f) p+='Os três principais pontos fortes identificados pertencem a: '+top3f+'. ';
+  if(top3w) p+='As três principais áreas de desenvolvimento são: '+top3w+'. ';
+  p+=rec;
+
+  txt.innerHTML=p;
+}
+
+// ── Master render ──────────────────────────────────────────────────────
+function renderAll(){
+  renderGrafico();
+  renderPontos('forte');
+  renderPontos('fraco');
+  renderSWOT();
+  renderAnalise();
+}
+
+// ── SAVE ───────────────────────────────────────────────────────────────
+function salvarDados(){
+  var status=document.getElementById('save-status');
+  var wa=document.getElementById('lider-whatsapp').value.replace(/\D/g,'');
+  if(!wa){status.textContent='⚠️ Informe o WhatsApp para salvar.';status.style.color='#d97706';return;}
+  var fortes=getPontos('forte');
+  var fracos=getPontos('fraco');
+  var dados={
+    nome: document.getElementById('lider-nome').value.trim(),
+    whatsapp: wa,
+    cargo: document.getElementById('lider-cargo').value.trim(),
+    setor: document.getElementById('lider-setor').value.trim(),
+    equipe: equipe.slice(),
+    fortes: fortes,
+    fracos: fracos,
+    ts: Date.now()
   };
-</script>
-<script>
-document.getElementById('form').addEventListener('submit', function(e){
-  e.preventDefault();
-  var wa = document.getElementById('whatsapp').value.replace(/\D/g,'');
-  if(wa) localStorage.setItem('lider_whatsapp', wa);
-  var dados = {
-    nome: document.getElementById('nome').value,
-    whatsapp: document.getElementById('whatsapp').value,
-    setor: document.getElementById('setor').value,
-    data: document.getElementById('data').value,
-    baby_boomers: { nomes: document.getElementById('bb_nomes').value, pontos: document.getElementById('bb_pontos').value, estrategia: document.getElementById('bb_estrategia').value },
-    geracao_x: { nomes: document.getElementById('gx_nomes').value, pontos: document.getElementById('gx_pontos').value, estrategia: document.getElementById('gx_estrategia').value },
-    millennials: { nomes: document.getElementById('my_nomes').value, pontos: document.getElementById('my_pontos').value, estrategia: document.getElementById('my_estrategia').value },
-    gen_z: { nomes: document.getElementById('gz_nomes').value, pontos: document.getElementById('gz_pontos').value, estrategia: document.getElementById('gz_estrategia').value },
-    integracao: document.getElementById('integracao').value,
-    timestamp: new Date()
-  };
-  db.collection('lider_f1_2').add(dados).then(function(){
-    alert('Matriz salva com sucesso!');
-    if(wa){ window.open('https://wa.me/55'+wa+'?text='+encodeURIComponent('Formulário Líd@r F1.2 - Matriz Geracional preenchido!'), '_blank'); }
-  }).catch(function(err){ alert('Erro: '+err.message); });
-});
+  status.textContent='Salvando...';
+  status.style.color='#6b7280';
+  db.collection('lider_f1_2').doc(wa).set(dados).then(function(){
+    status.textContent='✅ Análise salva com sucesso!';
+    status.style.color='#15803d';
+    localStorage.setItem('lider_whatsapp', wa);
+  }).catch(function(e){
+    status.textContent='❌ Erro ao salvar: '+e.message;
+    status.style.color='#dc2626';
+  });
+}
+
+// ── VoZ functions ──────────────────────────────────────────────────────
+function addVozToField(campo){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  var isInput=campo.tagName==='INPUT';
+  var wrap=document.createElement('div');
+  wrap.style.cssText='position:relative;display:block';
+  campo.parentNode.insertBefore(wrap,campo);
+  wrap.appendChild(campo);
+  var btn=document.createElement('button');
+  btn.type='button'; btn.innerHTML='🎙️'; btn.title='Falar para digitar';
+  btn.style.cssText='position:absolute;right:6px;'+(isInput?'top:50%;transform:translateY(-50%)':'bottom:8px')+';background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+  wrap.appendChild(btn);
+  campo.style.paddingRight='36px';
+  var dot=document.createElement('div');
+  dot.style.cssText='display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+  dot.innerHTML='<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando...';
+  wrap.appendChild(dot);
+  var rec=null,gravando=false;
+  btn.addEventListener('click',function(){
+    if(gravando){if(rec)rec.stop();gravando=false;btn.style.background='#f3e6ff';btn.style.color='#7B00C4';btn.style.boxShadow='none';dot.style.display='none';return;}
+    rec=new SR(); rec.lang='pt-BR'; rec.continuous=true; rec.interimResults=true;
+    rec.onresult=function(e){var t=Array.from(e.results).map(function(r){return r[0].transcript;}).join(' ');var base=campo.value.replace(/\s*\[\.\.\.]+$/,'').trimEnd();campo.value=base?base+' '+t:t;};
+    rec.onerror=function(){gravando=false;btn.style.background='#f3e6ff';btn.style.color='#7B00C4';dot.style.display='none';};
+    rec.onend=function(){if(gravando){gravando=false;btn.style.background='#f3e6ff';btn.style.color='#7B00C4';dot.style.display='none';}};
+    rec.start(); gravando=true; btn.style.background='#7B00C4'; btn.style.color='white'; btn.style.boxShadow='0 0 0 3px #7B00C430'; dot.style.display='flex';
+  });
+}
+function initVoz(){
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  document.querySelectorAll('textarea').forEach(function(ta){addVozToField(ta);});
+  document.querySelectorAll('input[data-voz]').forEach(function(inp){addVozToField(inp);});
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+window.onload=function(){
+  // Restore WhatsApp
+  var wa=localStorage.getItem('lider_whatsapp');
+  if(wa) document.getElementById('lider-whatsapp').value=wa;
+
+  // Initial empty state for chips
+  renderChips();
+
+  // Enter key on colab-nome
+  document.getElementById('colab-nome').addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();adicionarColab();}
+  });
+
+  // initVoz
+  initVoz();
+};
 </script>
 </body>
 </html>
