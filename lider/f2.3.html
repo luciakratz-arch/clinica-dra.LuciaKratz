@@ -2,168 +2,180 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F2.3 — Perguntas Poderosas</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2.3 — Perguntas Poderosas O que / Como</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',sans-serif;background:#0f0f1a;color:#e2e2e8;min-height:100vh}
-  header{background:linear-gradient(135deg,#1a0a2e,#16213e);padding:28px 24px;border-bottom:1px solid #7c3aed33;text-align:center}
-  .back{display:inline-block;color:#a78bfa;font-size:0.8rem;text-decoration:none;margin-bottom:10px}
-  .badge{display:inline-block;background:#2d1e5f;color:#a78bfa;font-size:0.75rem;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
-  h1{font-size:1.3rem;font-weight:800;color:#e2e2e8}
-  header p{color:#8888a8;font-size:0.83rem;margin-top:6px}
-  .instr{background:#1a1a2e;border:1px solid #2d2d4e;border-left:3px solid #7c3aed;border-radius:12px;margin:24px auto;max-width:720px;padding:14px 18px}
-  .instr p{font-size:0.83rem;color:#a0a0b8;line-height:1.6}
-  main{max-width:720px;margin:0 auto;padding:0 20px 40px}
-  .campo{margin-bottom:10px}
-  .campo label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo input,.campo textarea{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem;font-family:inherit}
-  .campo textarea{resize:vertical;min-height:56px}
-  .campo input:focus,.campo textarea:focus{outline:none;border-color:#7c3aed}
-  .campos-topo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .exemplos{background:#12122a;border:1px solid #2d1e5f;border-radius:10px;padding:14px 16px;margin-bottom:16px}
-  .exemplos h3{font-size:0.78rem;color:#a78bfa;font-weight:700;margin-bottom:10px}
-  .ex-row{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:8px;font-size:0.78rem}
-  .ex-row .limitante{color:#f87171;font-style:italic}
-  .ex-row .arr{color:#6b6b8a;text-align:center}
-  .ex-row .poderosa{color:#86efac}
-  .sit-card{background:#1a1a2e;border:1px solid #2d2d4e;border-radius:12px;padding:16px;margin-bottom:10px}
-  .sit-card h4{font-size:0.8rem;color:#a78bfa;font-weight:700;margin-bottom:12px}
-  .diag-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .diag-tag{background:#161628;border:1px solid #2d2d4e;border-radius:6px;padding:4px 10px;font-size:0.72rem;cursor:pointer;color:#8888a8;transition:all 0.15s}
-  .diag-tag.sel{background:#3b1d6e;border-color:#7c3aed;color:#c4b5fd}
-  .diag-label{font-size:0.75rem;color:#8888a8;margin-top:8px;display:block}
-  .btn-add{display:flex;align-items:center;gap:6px;background:#161628;border:1px dashed #3d3d5e;border-radius:8px;padding:10px 16px;color:#6b6b8a;font-size:0.82rem;cursor:pointer;width:100%;margin-bottom:20px;transition:all 0.15s}
-  .btn-add:hover{border-color:#7c3aed;color:#a78bfa}
-  .btn-enviar{display:block;width:100%;padding:15px;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;border-radius:12px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer}
-  .btn-enviar:hover{opacity:0.9}
-  .msg-ok{display:none;background:#14532d;border:1px solid #16a34a;border-radius:12px;padding:16px;text-align:center;color:#86efac;font-weight:600;margin-top:16px}
-  .campo-wpp{margin-top:16px;margin-bottom:8px}
-  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
-  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
-  .campo-wpp input:focus{outline:none;border-color:#25d366}
-  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
-  .btn-wpp:hover{opacity:0.9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f4f6f4;color:#1a2e1a;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
+.logos{display:flex;align-items:center}
+.container{max-width:740px;margin:0 auto;padding:20px 16px 40px}
+.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.88rem;color:#166534;line-height:1.6}
+.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px #14532d0a}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:540px){.form-row{grid-template-columns:1fr}}
+label{display:block;font-size:0.8rem;font-weight:700;color:#166534;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px}
+input,textarea{background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;width:100%;font-size:0.9rem;color:#1a2e1a;font-family:inherit;transition:border-color .2s,box-shadow .2s;outline:none}
+input:focus,textarea:focus{border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+.section-title{font-size:1rem;font-weight:800;color:#14532d;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #d1fae5}
+.exemplos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+@media(max-width:580px){.exemplos-grid{grid-template-columns:1fr}}
+.exemplo-card{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.fala-box{background:#fee2e2;border-radius:6px;padding:8px 10px;font-size:0.8rem;color:#991b1b;font-style:italic}
+.fala-label{font-size:0.67rem;font-weight:700;color:#dc2626;margin-bottom:3px;text-transform:uppercase}
+.arrow{text-align:center;font-size:1.1rem;color:#16a34a;font-weight:800}
+.pergunta-box{background:#dcfce7;border-radius:6px;padding:8px 10px;font-size:0.8rem;color:#14532d;font-weight:600}
+.pergunta-label{font-size:0.67rem;font-weight:700;color:#16a34a;margin-bottom:3px;text-transform:uppercase}
+.pratica-row{background:#f0fdf4;border:1px solid #d1fae5;border-radius:8px;padding:14px;margin-bottom:10px}
+.pratica-num{font-size:0.72rem;font-weight:700;color:#16a34a;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.pratica-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:540px){.pratica-fields{grid-template-columns:1fr}}
+textarea{resize:vertical;min-height:80px}
+.btn-enviar{width:100%;background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:0.3px;transition:opacity .2s}
+.btn-enviar:hover{opacity:0.9}
+.msg{display:none;text-align:center;padding:14px;border-radius:8px;margin-top:12px;font-weight:600}
+.msg.ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 </style>
 </head>
 <body>
-<header data-tema="header">
-  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
-  <a class="back" href="hub.html">← Voltar ao Hub</a>
-  <div class="badge" data-tema="badge">Workshop 2 · Formulário 2.3</div>
-  <h1>Perguntas Poderosas — "O que" e "Como"</h1>
-  <p>Substitua falas limitantes por perguntas que geram reflexão e compromisso</p>
-</header>
-<div class="instr" data-tema="border-left">
-  <p><strong style="color:#a78bfa">Princípio:</strong> Substitua "Por que você errou?" (gera postura defensiva) por perguntas baseadas em <strong>"O que"</strong> e <strong>"Como"</strong>. Use Auxiliares Linguísticos: "E", "Quando", "Sei".</p>
-</div>
-<main>
-  <div class="campos-topo">
-    <div class="campo"><label>Seu nome</label><input type="text" id="nome" placeholder="Nome completo"></div>
-    <div class="campo"><label>Setor / Unidade</label><input type="text" id="setor" placeholder="Ex: Recepção T2"></div>
+<header>
+  <div class="header-top">
+    <div class="logos">
+      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <div style="width:1px;height:32px;background:#ffffff33;margin:0 10px"></div>
+      <img id="logo-cbco" alt="CBCO" style="height:42px;object-fit:contain;display:none">
+    </div>
+    <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
   </div>
-  <div class="exemplos">
-    <h3>Exemplos do Kit</h3>
-    <div class="ex-row"><span class="limitante">"Não tive tempo de enviar a guia."</span><span class="arr">→</span><span class="poderosa">"O que impediu o envio? O que precisa para concluir até as 15h?"</span></div>
-    <div class="ex-row"><span class="limitante">"O setor de faturamento não ajuda."</span><span class="arr">→</span><span class="poderosa">"Quem precisa ser envolvido? Como você vai abordar essa pessoa?"</span></div>
-    <div class="ex-row"><span class="limitante">"Vamos tentar melhorar o atendimento."</span><span class="arr">→</span><span class="poderosa">"Como exatamente? Qual é o primeiro passo na segunda-feira?"</span></div>
+  <div style="padding:16px 20px 20px;text-align:center">
+    <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W2 · F2.3</span>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Perguntas Poderosas O que / Como</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Substitua falas limitantes por perguntas que geram reflexão e compromisso</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="instrucao">
+    Perguntas que começam com <strong>"O que"</strong> e <strong>"Como"</strong> ativam o pensamento criativo e a responsabilidade. Substitua falas limitantes (Por que você não fez?, Quem é o culpado?) por perguntas poderosas.
   </div>
 
-  <div id="situacoes">
-    <div class="sit-card">
-      <h4>Situação 1</h4>
-      <div class="campo"><label>Fala Limitante do Colaborador</label><textarea class="fala" placeholder="Ex: Não tive tempo, o sistema travou..."></textarea></div>
-      <span class="diag-label">Diagnóstico (marque o tipo):</span>
-      <div class="diag-tags">
-        <span class="diag-tag" onclick="toggleTag(this)">Defensiva</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Omissão</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Culpa externa</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Ação vaga</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Pouco compromisso</span>
-      </div>
-      <div class="campo" style="margin-top:12px"><label>Pergunta Poderosa do Líder Mentor</label><textarea class="pergunta" placeholder="O que / Como ...?"></textarea></div>
-    </div>
-    <div class="sit-card">
-      <h4>Situação 2</h4>
-      <div class="campo"><label>Fala Limitante</label><textarea class="fala" placeholder="..."></textarea></div>
-      <span class="diag-label">Diagnóstico:</span>
-      <div class="diag-tags">
-        <span class="diag-tag" onclick="toggleTag(this)">Defensiva</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Omissão</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Culpa externa</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Ação vaga</span>
-        <span class="diag-tag" onclick="toggleTag(this)">Pouco compromisso</span>
-      </div>
-      <div class="campo" style="margin-top:12px"><label>Pergunta Poderosa</label><textarea class="pergunta" placeholder="..."></textarea></div>
+  <div class="card">
+    <div class="section-title">Identificação</div>
+    <div class="form-row">
+      <div><label>Nome</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
+      <div><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(00) 00000-0000"></div>
     </div>
   </div>
-  <button class="btn-add" onclick="addSit()">+ Adicionar situação</button>
-  <div class="campo-wpp">
-    <label>📱 Seu WhatsApp (para receber o resumo)</label>
-    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
+
+  <div class="card">
+    <div class="section-title">Exemplos: Fala Limitante → Pergunta Poderosa</div>
+    <div class="exemplos-grid">
+      <div class="exemplo-card">
+        <div><div class="fala-label">Fala Limitante</div><div class="fala-box">"Por que isso não foi feito?"</div></div>
+        <div class="arrow">↓</div>
+        <div><div class="pergunta-label">Pergunta Poderosa</div><div class="pergunta-box">"O que precisamos fazer diferente?"</div></div>
+      </div>
+      <div class="exemplo-card">
+        <div><div class="fala-label">Fala Limitante</div><div class="fala-box">"Quem é o responsável pelo erro?"</div></div>
+        <div class="arrow">↓</div>
+        <div><div class="pergunta-label">Pergunta Poderosa</div><div class="pergunta-box">"Como podemos evitar isso juntos?"</div></div>
+      </div>
+      <div class="exemplo-card">
+        <div><div class="fala-label">Fala Limitante</div><div class="fala-box">"Isso nunca vai funcionar."</div></div>
+        <div class="arrow">↓</div>
+        <div><div class="pergunta-label">Pergunta Poderosa</div><div class="pergunta-box">"O que precisamos para que funcione?"</div></div>
+      </div>
+    </div>
   </div>
-  <button class="btn-enviar" data-tema="btn-primary" onclick="enviar()">Enviar Formulário →</button>
-  <div class="msg-ok" id="msg-ok">✓ Enviado com sucesso!</div>
-  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
-</main>
+
+  <div class="card">
+    <div class="section-title">Sua Prática — 6 Situações</div>
+    <div id="pratica-container"></div>
+
+    <div style="margin-top:16px">
+      <label>Como vou aplicar isso com minha equipe esta semana:</label>
+      <textarea id="aplicacao" placeholder="Descreva como vai usar perguntas poderosas na prática com sua equipe..."></textarea>
+    </div>
+
+    <button class="btn-enviar" onclick="enviar()">Enviar Atividade</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
-function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
-function enviarWpp(msg){
-  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
-  if(!raw){alert('Digite seu número de WhatsApp.');return;}
-  const num=raw.startsWith('55')?raw:'55'+raw;
-  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+function buildPratica(){
+  var c=document.getElementById('pratica-container');
+  for(var i=1;i<=6;i++){
+    var row=document.createElement('div');
+    row.className='pratica-row';
+    row.innerHTML=
+      '<div class="pratica-num">Situação '+i+'</div>'+
+      '<div class="pratica-fields">'+
+        '<div><label>Fala / Situação limitante</label><input type="text" id="fala_'+i+'" placeholder="Ex: Por que você não terminou?"></div>'+
+        '<div><label>Minha pergunta "O que" ou "Como"</label><input type="text" id="pergunta_'+i+'" placeholder="Ex: O que impediu a conclusão?"></div>'+
+      '</div>';
+    c.appendChild(row);
+  }
 }
-function montarMsg(){
-  const nome=document.getElementById('nome').value;
-  const setor=document.getElementById('setor').value;
-  let msg=`✅ F2.3 — Perguntas Poderosas\n👤 ${nome} | ${setor}\n\n`;
-  document.querySelectorAll('.sit-card').forEach((c,i)=>{
-    const fala=c.querySelector('.fala')?.value||'';
-    const pergunta=c.querySelector('.pergunta')?.value||'';
-    if(fala) msg+=`${i+1}. Fala: ${fala.substring(0,80)}\n   Pergunta: ${pergunta.substring(0,80)}\n\n`;
+
+function enviar(){
+  var nome=document.getElementById('nome').value.trim();
+  var wa=document.getElementById('whatsapp').value.trim();
+  if(!nome||!wa){
+    mostrarMsg('Preencha nome e WhatsApp antes de enviar.','err');
+    return;
+  }
+  var data={
+    nome:nome,
+    whatsapp:wa,
+    aplicacao:document.getElementById('aplicacao').value.trim(),
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  for(var i=1;i<=6;i++){
+    data['fala_'+i]=document.getElementById('fala_'+i).value.trim();
+    data['pergunta_'+i]=document.getElementById('pergunta_'+i).value.trim();
+  }
+  firebase.firestore().collection('lider_f2_3').add(data).then(function(){
+    localStorage.setItem('lider_whatsapp',wa);
+    mostrarMsg('Atividade enviada com sucesso!','ok');
+  }).catch(function(){
+    mostrarMsg('Erro ao enviar. Tente novamente.','err');
   });
-  return msg.trim();
 }
-var db,cnt=2;
-function toggleTag(el){el.classList.toggle('sel')}
-function addSit(){
-  cnt++;
-  const d=document.createElement('div');d.className='sit-card';
-  d.innerHTML=`<h4>Situação ${cnt}</h4>
-  <div class="campo"><label>Fala Limitante</label><textarea class="fala" placeholder="..."></textarea></div>
-  <span class="diag-label">Diagnóstico:</span>
-  <div class="diag-tags"><span class="diag-tag" onclick="toggleTag(this)">Defensiva</span><span class="diag-tag" onclick="toggleTag(this)">Omissão</span><span class="diag-tag" onclick="toggleTag(this)">Culpa externa</span><span class="diag-tag" onclick="toggleTag(this)">Ação vaga</span></div>
-  <div class="campo" style="margin-top:12px"><label>Pergunta Poderosa</label><textarea class="pergunta" placeholder="..."></textarea></div>`;
-  document.getElementById('situacoes').appendChild(d);
+
+function mostrarMsg(txt,tipo){
+  var m=document.getElementById('msg');
+  m.textContent=txt;
+  m.className='msg '+tipo;
+  m.style.display='block';
+  setTimeout(function(){m.style.display='none';},4000);
 }
-async function enviar(){
-  const nome=document.getElementById('nome').value.trim();
-  const setor=document.getElementById('setor').value.trim();
-  if(!nome){alert('Informe seu nome.');return;}
-  const situacoes=[];
-  document.querySelectorAll('.sit-card').forEach(card=>{
-    const fala=card.querySelector('.fala').value.trim();
-    const perg=card.querySelector('.pergunta').value.trim();
-    const diags=[...card.querySelectorAll('.diag-tag.sel')].map(t=>t.textContent);
-    if(fala||perg) situacoes.push({fala,diagnostico:diags,pergunta_poderosa:perg});
-  });
-  if(!situacoes.length){alert('Preencha pelo menos uma situação.');return;}
-  await db.collection('lider_f2_3').add({nome,setor,situacoes,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  await db.doc('lider_agregados/f2_3').set({total:firebase.firestore.FieldValue.increment(1)},{merge:true});
-  document.getElementById('msg-ok').style.display='block';
-  document.getElementById('btn-wpp').style.display='block';
-  document.querySelector('.btn-enviar').disabled=true;document.querySelector('.btn-enviar').style.opacity='0.5';
-}
+
 window.onload=function(){
-  firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
-  db=firebase.firestore();
-  carregarWpp();
+  var LOGO_LUCIA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el=document.getElementById('logo-lucia');
+  el.src=LOGO_LUCIA; el.style.display='block';
+
+  if(!firebase.apps.length){
+    firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
+  }
+  var db=firebase.firestore();
+  db.doc('lider_config/tema').get().then(function(doc){
+    if(doc.exists&&doc.data().logoParceiro){
+      var lp=document.getElementById('logo-cbco');
+      lp.src=doc.data().logoParceiro; lp.style.display='block';
+    }
+  }).catch(function(){});
+
+  var wa=localStorage.getItem('lider_whatsapp');
+  if(wa){var w=document.getElementById('whatsapp');if(w)w.value=wa;}
+
+  buildPratica();
 };
 </script>
-<script src="tema.js"></script>
 </body>
 </html>
