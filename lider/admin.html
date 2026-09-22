@@ -47,7 +47,8 @@
 </style>
 </head>
 <body>
-<header>
+<header data-tema="header">
+  <img data-tema="logo" src="" alt="Logo" style="display:none;max-height:44px;object-fit:contain;margin-bottom:8px">
   <div>
     <h1>🔒 Painel da Facilitadora — Kit Líd@r 5.0</h1>
     <div id="status-att">Carregando...</div>
@@ -211,5 +212,6 @@ window.onload = function() {
   setInterval(carregar, 20000);
 };
 </script>
+<script src="tema.js"></script>
 </body>
 </html>
