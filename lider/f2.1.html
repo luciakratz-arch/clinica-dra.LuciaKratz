@@ -51,6 +51,12 @@
   .barra-label { font-size: 0.75rem; color: #a0a0b8; margin-bottom: 3px; }
   .barra { height: 8px; background: #2d2d4e; border-radius: 4px; overflow: hidden; }
   .barra-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 4px; transition: width 0.5s; }
+  .campo-wpp{margin-top:16px;margin-bottom:8px}
+  .campo-wpp label{display:block;font-size:0.78rem;color:#a0a0b8;margin-bottom:4px}
+  .campo-wpp input{width:100%;background:#1a1a2e;border:1px solid #2d2d4e;border-radius:8px;padding:9px 13px;color:#e2e2e8;font-size:0.87rem}
+  .campo-wpp input:focus{outline:none;border-color:#25d366}
+  .btn-wpp{display:none;width:100%;padding:13px;background:linear-gradient(135deg,#25d366,#128c7e);border:none;border-radius:12px;color:white;font-size:0.92rem;font-weight:700;cursor:pointer;margin-top:10px}
+  .btn-wpp:hover{opacity:0.9}
 </style>
 </head>
 <body>
@@ -94,8 +100,13 @@
     </div>
   </div>
 
+  <div class="campo-wpp">
+    <label>📱 Seu WhatsApp (para receber o resumo)</label>
+    <input type="tel" id="wpp" placeholder="Ex: 62 99154-6757" oninput="salvarWpp(this.value)">
+  </div>
   <button class="btn-enviar" onclick="enviar()">Enviar Autodiagnóstico →</button>
   <div class="msg-ok" id="msg-ok">✓ Autodiagnóstico enviado com sucesso! Obrigado pela participação.</div>
+  <button class="btn-wpp" id="btn-wpp" onclick="enviarWpp(montarMsg())">📱 Enviar resumo para meu WhatsApp</button>
 </main>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -165,6 +176,28 @@ function atualizarResultado() {
   `).join('');
 }
 
+function salvarWpp(v){try{localStorage.setItem('lider_whatsapp',v);}catch(e){}}
+function carregarWpp(){try{const v=localStorage.getItem('lider_whatsapp');if(v&&document.getElementById('wpp'))document.getElementById('wpp').value=v;}catch(e){}}
+function enviarWpp(msg){
+  const raw=document.getElementById('wpp').value.replace(/\D/g,'');
+  if(!raw){alert('Digite seu número de WhatsApp.');return;}
+  const num=raw.startsWith('55')?raw:'55'+raw;
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg),'_blank');
+}
+function montarMsg(){
+  const nome=document.getElementById('nome').value;
+  const setor=document.getElementById('setor').value;
+  const preenchidas=notas.filter(n=>n>0).length;
+  const media=(preenchidas>0?(notas.reduce((a,b)=>a+b,0)/preenchidas):0).toFixed(1);
+  let msg=`✅ F2.1 — Autodiagnóstico Líd@r 5.0\n👤 ${nome} | ${setor}\n📊 Média geral: ${media}/5\n\n`;
+  CARACS.forEach((c,i)=>{if(notas[i]>0) msg+=`• ${c.nome}: ${notas[i]}/5\n`;});
+  const fortes=CARACS.filter((_,i)=>notas[i]>=4).map(c=>c.nome);
+  const gaps=CARACS.filter((_,i)=>notas[i]>0&&notas[i]<=2).map(c=>c.nome);
+  if(fortes.length) msg+=`\n💪 Pontos fortes: ${fortes.join(', ')}`;
+  if(gaps.length) msg+=`\n⚠️ GAPs: ${gaps.join(', ')}`;
+  return msg.trim();
+}
+
 var db;
 window.onload = function() {
   firebase.initializeApp({
@@ -177,6 +210,7 @@ window.onload = function() {
   });
   db = firebase.firestore();
   renderCaracs();
+  carregarWpp();
 };
 
 async function enviar() {
@@ -204,6 +238,7 @@ async function enviar() {
   await firebase.firestore().doc('lider_agregados/f2_1').set(upd, { merge: true });
 
   document.getElementById('msg-ok').style.display = 'block';
+  document.getElementById('btn-wpp').style.display = 'block';
   document.querySelector('.btn-enviar').disabled = true;
   document.querySelector('.btn-enviar').style.opacity = '0.5';
 }
