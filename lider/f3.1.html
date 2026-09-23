@@ -8,30 +8,101 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:100vh}
-.container{max-width:860px;margin:0 auto;padding:24px 16px 48px}
-.instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:12px;padding:14px 18px;margin:20px auto;max-width:740px}
-.instrucao p{font-size:0.9rem;color:#166534;line-height:1.6}
-.card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:18px}
-.card h3{font-size:1rem;font-weight:700;margin-bottom:14px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:0.82rem;font-weight:600;color:#166534;margin-bottom:5px}
-.field input,.field textarea,.field select{width:100%;background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;color:#1a2e1a;font-size:0.87rem;font-family:inherit}
-.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
-.field textarea{resize:vertical;min-height:72px}
-.topo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.col-higienico{background:#ffffff;border:1px solid #fed7aa;border-radius:12px;padding:18px}
-.col-higienico h3{color:#c2410c;font-size:0.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.col-motivador{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:18px}
-.col-motivador h3{color:#166534;font-size:0.95rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.badge-hig{background:#fff7ed;color:#c2410c;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #fed7aa}
-.badge-mot{background:#f0fdf4;color:#166534;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid #bbf7d0}
-.btn-enviar{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:0 auto;width:100%;max-width:300px;transition:opacity 0.2s}
-.btn-enviar:hover{opacity:0.9}
-.msg{text-align:center;padding:14px;border-radius:10px;margin-top:16px;font-weight:600;display:none}
+.container{max-width:920px;margin:0 auto;padding:24px 16px 60px}
+.instrucao{background:#fff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:12px;padding:14px 18px;margin:20px auto;max-width:860px}
+.instrucao p{font-size:0.88rem;color:#166534;line-height:1.6}
+/* Abas de participantes */
+.grupo-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center}
+.tab-btn{background:#e9f7ef;border:1px solid #bbf7d0;border-radius:20px;padding:7px 16px;font-size:0.82rem;font-weight:600;color:#166534;cursor:pointer;transition:all 0.15s}
+.tab-btn.ativo{background:#16a34a;color:#fff;border-color:#16a34a}
+.tab-btn:hover:not(.ativo){background:#d1fae5}
+.tab-add{background:#fff;border:2px dashed #16a34a;border-radius:20px;padding:6px 14px;font-size:0.82rem;font-weight:700;color:#16a34a;cursor:pointer}
+.tab-add:hover{background:#f0fdf4}
+.tab-remove{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#ffffff44;border-radius:50%;margin-left:6px;font-size:0.75rem;vertical-align:middle;cursor:pointer;color:inherit}
+/* Card geral */
+.card{background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-size:1rem;font-weight:700;color:#14532d;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.topo-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:4px}
+.field{margin-bottom:0}
+.field label{display:block;font-size:0.8rem;font-weight:600;color:#166534;margin-bottom:5px}
+.field input,.field textarea,.field select{width:100%;background:#fff;border:1px solid #d1fae5;border-radius:8px;padding:9px 12px;color:#1a2e1a;font-size:0.86rem;font-family:inherit}
+.field input:focus,.field textarea:focus{outline:none;border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+/* Colunas */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.col-hig{background:#fff;border:1px solid #fed7aa;border-radius:12px;padding:18px}
+.col-hig .col-titulo{color:#c2410c;font-size:0.92rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.col-mot{background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:18px}
+.col-mot .col-titulo{color:#166534;font-size:0.92rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.badge-hig{background:#fff7ed;color:#c2410c;font-size:0.68rem;font-weight:700;padding:2px 7px;border-radius:20px;border:1px solid #fed7aa}
+.badge-mot{background:#f0fdf4;color:#166534;font-size:0.68rem;font-weight:700;padding:2px 7px;border-radius:20px;border:1px solid #bbf7d0}
+/* Bloco de item */
+.item-bloco{margin-bottom:16px;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;padding:12px}
+.item-titulo{font-size:0.82rem;font-weight:700;color:#374151;margin-bottom:6px}
+/* Escala */
+.escala-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.escala-label{font-size:0.72rem;color:#6b7280;min-width:60px}
+.escala-btns{display:flex;gap:4px}
+.esc-btn{width:32px;height:32px;border-radius:6px;border:1px solid #d1d5db;background:#f9fafb;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.12s;color:#374151;display:flex;align-items:center;justify-content:center}
+.esc-btn:hover{background:#e5e7eb}
+.esc-btn.sel-1,.esc-btn.sel-2{background:#fee2e2;border-color:#f87171;color:#991b1b}
+.esc-btn.sel-3{background:#fef9c3;border-color:#facc15;color:#854d0e}
+.esc-btn.sel-4,.esc-btn.sel-5{background:#dcfce7;border-color:#4ade80;color:#166534}
+/* Sugestão */
+.sugestao-chip{display:inline-block;background:#f3f4f6;border:1px solid #e5e7eb;color:#374151;font-size:0.72rem;padding:3px 8px;border-radius:12px;cursor:pointer;margin:2px}
+.sugestao-chip:hover{background:#e5e7eb}
+.sugestao-label{font-size:0.7rem;color:#9ca3af;margin-bottom:4px}
+/* Diagnóstico */
+.diag-card{background:#fff;border-radius:14px;padding:22px;margin-bottom:16px;display:none}
+.diag-card.visible{display:block}
+.diag-titulo{font-size:1.05rem;font-weight:800;color:#14532d;margin-bottom:18px;text-align:center}
+/* Índice geral */
+.indice-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.indice-box{border-radius:12px;padding:16px;text-align:center}
+.indice-num{font-size:2rem;font-weight:800}
+.indice-desc{font-size:0.78rem;margin-top:4px}
+/* Participante row */
+.part-diag-row{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px}
+.part-diag-nome{font-size:0.9rem;font-weight:700;margin-bottom:8px;color:#1a2e1a}
+.nivel-bar-wrap{margin-bottom:6px}
+.nivel-bar-label{font-size:0.75rem;color:#6b7280;display:flex;justify-content:space-between;margin-bottom:3px}
+.nivel-bar{height:10px;background:#e5e7eb;border-radius:5px;overflow:hidden}
+.nivel-fill-hig{height:100%;border-radius:5px;transition:width 0.4s;background:linear-gradient(90deg,#ef4444,#f97316)}
+.nivel-fill-mot{height:100%;border-radius:5px;transition:width 0.4s;background:linear-gradient(90deg,#16a34a,#4ade80)}
+.diag-label{display:inline-block;font-size:0.75rem;font-weight:700;padding:3px 10px;border-radius:12px;margin-top:6px}
+.diag-motivado{background:#dcfce7;color:#166534}
+.diag-alerta{background:#fef9c3;color:#854d0e}
+.diag-desmotivado{background:#fee2e2;color:#991b1b}
+/* Plano 5W2H */
+.plano-card{background:#fff;border:1px solid #d1fae5;border-radius:14px;padding:20px;margin-bottom:14px}
+.plano-titulo{font-size:0.95rem;font-weight:700;color:#14532d;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.plano-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plano-item label{font-size:0.75rem;font-weight:700;color:#6b7280;display:block;margin-bottom:4px}
+.plano-item input,.plano-item textarea,.plano-item select{width:100%;border:1px solid #d1fae5;border-radius:7px;padding:8px 10px;font-size:0.82rem;font-family:inherit;background:#fff;color:#1a2e1a}
+.plano-item.full{grid-column:1/-1}
+/* PDCA */
+.pdca-box{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin-top:12px}
+.pdca-titulo{font-size:0.85rem;font-weight:700;color:#166534;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pdca-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pdca-etapa{background:#fff;border-radius:8px;padding:10px 8px;text-align:center}
+.pdca-letra{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.pdca-etapa-nome{font-size:0.68rem;font-weight:700;margin-bottom:4px}
+.pdca-etapa-desc{font-size:0.65rem;color:#6b7280;line-height:1.4}
+/* Resumo */
+.resumo-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin-bottom:16px;display:none;white-space:pre-wrap;font-size:0.78rem;color:#166534;font-family:inherit;line-height:1.6;max-height:340px;overflow-y:auto}
+.resumo-box.visible{display:block}
+/* Botões */
+.btn-diag{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;padding:12px 28px;border-radius:10px;font-size:0.92rem;font-weight:700;cursor:pointer;margin-right:10px;transition:opacity 0.2s}
+.btn-diag:hover{opacity:0.88}
+.btn-wpp{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;padding:12px 22px;border-radius:10px;font-size:0.88rem;font-weight:700;cursor:pointer;transition:opacity 0.2s}
+.btn-wpp:hover{opacity:0.88}
+.btn-salvar{background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;padding:14px 32px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;display:block;margin:0 auto;width:100%;max-width:340px}
+.wa-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.wa-row input{flex:1;min-width:180px;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit}
+.msg{text-align:center;padding:12px;border-radius:10px;margin-top:12px;font-weight:600;display:none}
 .msg.ok{background:#dcfce7;color:#166534;border:1px solid #bbf7d0;display:block}
 .msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fecaca;display:block}
-@media(max-width:640px){.topo-grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr}}
+.acoes-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;justify-content:center}
+@media(max-width:640px){.topo-grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr}.indice-row{grid-template-columns:1fr}.pdca-grid{grid-template-columns:1fr 1fr}.plano-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -46,114 +117,409 @@ body{font-family:'Inter',sans-serif;background:#f4f6f4;color:#1a2e1a;min-height:
   </div>
   <div style="padding:16px 20px 20px;text-align:center">
     <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W3 · F3.1</span>
-    <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Painel de Herzberg no Hospital</h1>
-    <p style="color:#bbf7d0;font-size:0.83rem">Mapeie fatores higiênicos e motivadores do seu setor administrativo</p>
+    <h1 style="font-size:1.35rem;font-weight:800;color:#fff;margin-bottom:4px">Painel de Herzberg no Hospital</h1>
+    <p style="color:#bbf7d0;font-size:0.83rem">Diagnóstico em dupla — fatores higiênicos e motivadores do seu setor</p>
   </div>
 </header>
 
 <div class="container">
   <div class="instrucao">
-    <p>Frederick Herzberg identificou que fatores <strong>HIGIÊNICOS</strong> evitam a insatisfação (salário, ambiente, segurança), enquanto fatores <strong>MOTIVADORES</strong> geram engajamento real (reconhecimento, crescimento, propósito). Mapeie seu setor.</p>
+    <p>Frederick Herzberg identificou que fatores <strong>HIGIÊNICOS</strong> evitam a insatisfação (salário, ambiente, segurança), enquanto fatores <strong>MOTIVADORES</strong> geram engajamento real (reconhecimento, crescimento, propósito). Cada pessoa avalia seu setor em dupla e, ao final, o grupo recebe um diagnóstico consolidado.</p>
   </div>
 
+  <!-- Abas de participantes -->
   <div class="card">
-    <div class="topo-grid">
-      <div class="field"><label>Nome</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
-      <div class="field"><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(11) 99999-9999"></div>
-      <div class="field"><label>Setor</label><input type="text" id="setor" placeholder="Ex: UTI, Administrativo..."></div>
+    <div class="card-title">👥 Participantes do Grupo</div>
+    <div class="grupo-tabs" id="grupo-tabs"></div>
+    <div id="participantes-container"></div>
+  </div>
+
+  <!-- Diagnóstico -->
+  <div class="diag-card" id="diag-card" style="border:1px solid #bbf7d0">
+    <div class="diag-titulo">📊 Diagnóstico do Grupo — Painel de Herzberg</div>
+    <div class="indice-row" id="indice-row"></div>
+    <div id="partes-diag"></div>
+    <div class="plano-card" id="plano-section" style="display:none">
+      <div class="plano-titulo">🚀 Plano de Ação — 5W2H</div>
+      <div id="planos-container"></div>
+    </div>
+    <div class="pdca-box">
+      <div class="pdca-titulo">🔄 Dica PDCA para implementar as melhorias</div>
+      <div class="pdca-grid">
+        <div class="pdca-etapa"><div class="pdca-letra" style="color:#3b82f6">P</div><div class="pdca-etapa-nome">PLAN</div><div class="pdca-etapa-desc">Defina as metas e ações com o grupo antes de agir</div></div>
+        <div class="pdca-etapa"><div class="pdca-letra" style="color:#16a34a">D</div><div class="pdca-etapa-nome">DO</div><div class="pdca-etapa-desc">Execute o plano 5W2H com responsáveis definidos</div></div>
+        <div class="pdca-etapa"><div class="pdca-letra" style="color:#f59e0b">C</div><div class="pdca-etapa-nome">CHECK</div><div class="pdca-etapa-desc">Meça os resultados e compare com o diagnóstico inicial</div></div>
+        <div class="pdca-etapa"><div class="pdca-letra" style="color:#ef4444">A</div><div class="pdca-etapa-nome">ACT</div><div class="pdca-etapa-desc">Ajuste o que não funcionou e padronize o que deu certo</div></div>
+      </div>
     </div>
   </div>
 
-  <div class="cols">
-    <div class="col-higienico">
-      <h3>🔶 Fatores Higiênicos <span class="badge-hig">Evitam insatisfação</span></h3>
-      <div class="field"><label>Salário e benefícios</label><textarea id="hig1" placeholder="Como está no seu setor?"></textarea></div>
-      <div class="field"><label>Condições de trabalho</label><textarea id="hig2" placeholder="Ambiente físico, equipamentos..."></textarea></div>
-      <div class="field"><label>Segurança no emprego</label><textarea id="hig3" placeholder="Estabilidade percebida..."></textarea></div>
-      <div class="field"><label>Relações interpessoais</label><textarea id="hig4" placeholder="Clima entre a equipe..."></textarea></div>
-      <div class="field"><label>Supervisão/Gestão</label><textarea id="hig5" placeholder="Como a liderança age..."></textarea></div>
-      <div class="field"><label>Políticas organizacionais</label><textarea id="hig6" placeholder="Normas, processos, regras..."></textarea></div>
-    </div>
-    <div class="col-motivador">
-      <h3>✅ Fatores Motivadores <span class="badge-mot">Geram engajamento</span></h3>
-      <div class="field"><label>Reconhecimento</label><textarea id="mot1" placeholder="Como o esforço é reconhecido?"></textarea></div>
-      <div class="field"><label>Realização profissional</label><textarea id="mot2" placeholder="Senso de conquista..."></textarea></div>
-      <div class="field"><label>Crescimento e aprendizado</label><textarea id="mot3" placeholder="Oportunidades de desenvolvimento..."></textarea></div>
-      <div class="field"><label>Responsabilidade</label><textarea id="mot4" placeholder="Autonomia e ownership..."></textarea></div>
-      <div class="field"><label>Propósito e significado</label><textarea id="mot5" placeholder="Conexão com a missão..."></textarea></div>
-      <div class="field"><label>Natureza do trabalho</label><textarea id="mot6" placeholder="O trabalho em si é estimulante?"></textarea></div>
-    </div>
+  <!-- Resumo e ações -->
+  <pre class="resumo-box" id="resumo-box"></pre>
+  <div class="acoes-row">
+    <button class="btn-diag" onclick="gerarDiag()">📊 Gerar Diagnóstico do Grupo</button>
+    <button class="btn-wpp" onclick="gerarResumoWpp()">📋 Resumo p/ WhatsApp</button>
   </div>
-
-  <div class="card" style="margin-top:16px">
-    <div class="field">
-      <label>Meu plano de ação motivacional (o que vou implementar):</label>
-      <textarea id="plano" style="min-height:100px" placeholder="Com base no diagnóstico acima, as ações concretas que vou tomar são..."></textarea>
-    </div>
+  <div class="wa-row">
+    <input type="tel" id="wa-destino" placeholder="WhatsApp destino: (00) 00000-0000">
+    <button class="btn-wpp" onclick="enviarWhatsApp()">📲 Enviar no WhatsApp</button>
   </div>
-
-  <button class="btn-enviar" onclick="enviar()">Enviar Respostas</button>
+  <div style="margin-top:16px">
+    <button class="btn-salvar" onclick="salvarFirestore()">✅ Salvar Atividade do Grupo</button>
+  </div>
   <div id="msg" class="msg"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
+// ======= CONFIGURAÇÃO =======
+var MAX_PART = 6;
+var participantes = [];
+var abaAtiva = 0;
+
+// Itens do mapa de Herzberg com sugestões de resposta
+var ITENS_HIG = [
+  { id:'hig1', titulo:'Salário e benefícios', sugestoes:['Salário compatível com o mercado','Benefícios como plano de saúde e vale','Desigualdade salarial entre colegas','Falta de reajuste periódico'] },
+  { id:'hig2', titulo:'Condições de trabalho', sugestoes:['Ambiente limpo e organizado','Equipamentos adequados','Falta de EPI ou recursos','Espaço físico precário'] },
+  { id:'hig3', titulo:'Segurança no emprego', sugestoes:['Vínculos estáveis / CLT','Medo de demissão frequente','Contratos temporários','Sensação de instabilidade'] },
+  { id:'hig4', titulo:'Relações interpessoais', sugestoes:['Trabalho em equipe colaborativo','Conflitos recorrentes na equipe','Boa comunicação entre setores','Fofoca ou clima de desconfiança'] },
+  { id:'hig5', titulo:'Supervisão / Gestão', sugestoes:['Liderança justa e presente','Gestão autoritária','Feedback raramente dado','Apoio técnico suficiente'] },
+  { id:'hig6', titulo:'Políticas organizacionais', sugestoes:['Normas claras e compreendidas','Regras inconsistentes','Falta de transparência institucional','Processos burocráticos excessivos'] }
+];
+var ITENS_MOT = [
+  { id:'mot1', titulo:'Reconhecimento', sugestoes:['Elogios públicos e reconhecimento','Ausência de feedback positivo','Méritos ignorados','Reconhecimento apenas financeiro'] },
+  { id:'mot2', titulo:'Realização profissional', sugestoes:['Senso de conquista ao cuidar','Falta de desafios motivadores','Trabalho repetitivo sem propósito','Orgulho dos resultados alcançados'] },
+  { id:'mot3', titulo:'Crescimento e aprendizado', sugestoes:['Cursos e treinamentos oferecidos','Sem oportunidade de capacitação','Plano de carreira claro','Estagnação profissional'] },
+  { id:'mot4', titulo:'Responsabilidade e autonomia', sugestoes:['Autonomia para tomar decisões','Microgerenciamento constante','Participação nas decisões do setor','Responsabilidade sem autoridade'] },
+  { id:'mot5', titulo:'Propósito e significado', sugestoes:['Conexão clara com a missão','Falta de sentido no trabalho','Impacto percebido no paciente','Trabalho mecânico sem propósito'] },
+  { id:'mot6', titulo:'Natureza do trabalho', sugestoes:['Trabalho variado e estimulante','Tarefas monótonas','Espaço para criatividade','Atividades alinhadas ao potencial'] }
+];
+
+function criarParticipante(nome, wa, setor){
+  return { nome: nome||'', wa: wa||'', setor: setor||'',
+    hig: ITENS_HIG.map(function(){ return {nota:0,texto:''}; }),
+    mot: ITENS_MOT.map(function(){ return {nota:0,texto:''}; })
+  };
+}
+
+function salvarEstadoAtual(){
+  if(participantes.length===0) return;
+  var p = participantes[abaAtiva];
+  p.nome = v('nome_'+abaAtiva)||'';
+  p.wa   = v('wa_'+abaAtiva)||'';
+  p.setor = v('setor_'+abaAtiva)||'';
+  ITENS_HIG.forEach(function(it,i){
+    p.hig[i].texto = v('hig_txt_'+abaAtiva+'_'+i)||'';
+    p.hig[i].nota  = parseInt(v('hig_nota_'+abaAtiva+'_'+i)||'0');
+  });
+  ITENS_MOT.forEach(function(it,i){
+    p.mot[i].texto = v('mot_txt_'+abaAtiva+'_'+i)||'';
+    p.mot[i].nota  = parseInt(v('mot_nota_'+abaAtiva+'_'+i)||'0');
+  });
+}
+function v(id){ var el=document.getElementById(id); return el?el.value:''; }
+
+function renderTabs(){
+  var tabs = document.getElementById('grupo-tabs');
+  tabs.innerHTML = '';
+  participantes.forEach(function(p,i){
+    var btn = document.createElement('button');
+    btn.className = 'tab-btn'+(i===abaAtiva?' ativo':'');
+    var label = p.nome || ('Participante '+(i+1));
+    btn.innerHTML = label + (participantes.length>2?'<span class="tab-remove" onclick="remover('+i+',event)">✕</span>':'');
+    btn.onclick = (function(idx){ return function(e){ if(!e.target.classList.contains('tab-remove')){ salvarEstadoAtual(); abaAtiva=idx; renderTabs(); renderBlocos(); }}; })(i);
+    tabs.appendChild(btn);
+  });
+  if(participantes.length < MAX_PART){
+    var add = document.createElement('button');
+    add.className='tab-add'; add.textContent='+ Adicionar';
+    add.onclick = function(){ salvarEstadoAtual(); participantes.push(criarParticipante()); abaAtiva=participantes.length-1; renderTabs(); renderBlocos(); };
+    tabs.appendChild(add);
+  }
+}
+
+function remover(idx, e){
+  e.stopPropagation();
+  if(participantes.length<=2) return;
+  salvarEstadoAtual();
+  participantes.splice(idx,1);
+  if(abaAtiva>=participantes.length) abaAtiva=participantes.length-1;
+  renderTabs(); renderBlocos();
+}
+
+function renderBlocos(){
+  var cont = document.getElementById('participantes-container');
+  cont.innerHTML = '';
+  participantes.forEach(function(p, pi){
+    var div = document.createElement('div');
+    div.style.display = pi===abaAtiva?'block':'none';
+    // Topo
+    div.innerHTML = '<div class="topo-grid" style="margin-bottom:16px">'+
+      '<div class="field"><label>Nome</label><input id="nome_'+pi+'" value="'+esc(p.nome)+'" placeholder="Nome completo" oninput="atualizarTab('+pi+',this.value)"></div>'+
+      '<div class="field"><label>WhatsApp</label><input id="wa_'+pi+'" type="tel" value="'+esc(p.wa)+'" placeholder="(00) 00000-0000"></div>'+
+      '<div class="field"><label>Setor</label><input id="setor_'+pi+'" value="'+esc(p.setor)+'" placeholder="Ex: UTI, Administrativo..."></div>'+
+    '</div>'+
+    '<div class="cols">'+
+      '<div class="col-hig"><div class="col-titulo">🔶 Fatores Higiênicos <span class="badge-hig">Evitam insatisfação</span></div>'+
+        ITENS_HIG.map(function(it,i){ return renderItem(pi,'hig',i,it,p.hig[i],'#c2410c'); }).join('')+
+      '</div>'+
+      '<div class="col-mot"><div class="col-titulo">✅ Fatores Motivadores <span class="badge-mot">Geram engajamento</span></div>'+
+        ITENS_MOT.map(function(it,i){ return renderItem(pi,'mot',i,it,p.mot[i],'#16a34a'); }).join('')+
+      '</div>'+
+    '</div>';
+    cont.appendChild(div);
+  });
+}
+
+function renderItem(pi, tipo, idx, it, estado, cor){
+  var notaAtual = estado.nota||0;
+  var textoAtual = estado.texto||'';
+  var escalaHtml = '<div class="escala-row"><span class="escala-label">Satisfação:</span><div class="escala-btns">';
+  for(var n=1;n<=5;n++){
+    var sel = notaAtual===n?' sel-'+n:'';
+    escalaHtml += '<button class="esc-btn'+sel+'" id="esc_'+tipo+'_'+pi+'_'+idx+'_'+n+'" onclick="selecionarNota(\''+tipo+'\','+pi+','+idx+','+n+')">'+n+'</button>';
+  }
+  escalaHtml += '</div><span style="font-size:0.7rem;color:#9ca3af;margin-left:4px">'+['','😠 Muito ruim','😕 Ruim','😐 Regular','🙂 Bom','😊 Excelente'][notaAtual]+'</span></div>';
+  var sug = it.sugestoes.map(function(s){ return '<span class="sugestao-chip" onclick="usarSugestao(\''+tipo+'_txt_'+pi+'_'+idx+'\',\''+s.replace(/'/g,"\\'")+'\')">'+s+'</span>'; }).join('');
+  return '<div class="item-bloco">'+
+    '<div class="item-titulo">'+it.titulo+'</div>'+
+    escalaHtml+
+    '<div class="sugestao-label">💡 Sugestões:</div><div style="margin-bottom:6px">'+sug+'</div>'+
+    '<textarea id="'+tipo+'_txt_'+pi+'_'+idx+'" placeholder="Descreva como está no seu setor..." style="width:100%;border:1px solid #e5e7eb;border-radius:7px;padding:7px 10px;font-size:0.82rem;font-family:inherit;resize:vertical;min-height:54px">'+esc(textoAtual)+'</textarea>'+
+  '</div>';
+}
+
+function selecionarNota(tipo, pi, idx, nota){
+  salvarEstadoAtual();
+  if(tipo==='hig') participantes[pi].hig[idx].nota = nota;
+  else participantes[pi].mot[idx].nota = nota;
+  // Atualiza apenas os botões da escala sem re-render total
+  for(var n=1;n<=5;n++){
+    var btn = document.getElementById('esc_'+tipo+'_'+pi+'_'+idx+'_'+n);
+    if(btn){ btn.className = 'esc-btn'+(nota===n?' sel-'+n:''); }
+  }
+  // Atualiza label
+  var labels = ['','😠 Muito ruim','😕 Ruim','😐 Regular','🙂 Bom','😊 Excelente'];
+  var escalaRow = document.querySelector('#esc_'+tipo+'_'+pi+'_'+idx+'_1').closest('.escala-row');
+  if(escalaRow){ var sp=escalaRow.querySelector('span:last-child'); if(sp) sp.textContent=labels[nota]; }
+}
+
+function usarSugestao(inputId, texto){
+  var el = document.getElementById(inputId);
+  if(!el) return;
+  el.value = (el.value ? el.value+'\n' : '') + texto;
+  el.focus();
+}
+
+function atualizarTab(idx, val){
+  renderTabs();
+}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== DIAGNÓSTICO =====
+function mediaNotas(arr){
+  var s=arr.reduce(function(a,b){return a+(b.nota||0);},0);
+  return s/arr.length;
+}
+function labelDiag(media){
+  if(media>=4) return '<span class="diag-label diag-motivado">✅ Satisfeito</span>';
+  if(media>=2.5) return '<span class="diag-label diag-alerta">⚠️ Alerta</span>';
+  return '<span class="diag-label diag-desmotivado">🔴 Insatisfeito</span>';
+}
+function porcentagem(media){ return Math.round((media-1)/4*100); }
+
+function gerarDiag(){
+  salvarEstadoAtual();
+  var card = document.getElementById('diag-card');
+  card.className='diag-card visible';
+
+  // Índice global
+  var totalHig=0, totalMot=0, count=participantes.length;
+  participantes.forEach(function(p){
+    totalHig += mediaNotas(p.hig);
+    totalMot += mediaNotas(p.mot);
+  });
+  var mHig = count>0?totalHig/count:0;
+  var mMot = count>0?totalMot/count:0;
+  var indiceGeral = (mHig+mMot)/2;
+
+  var corGeral = indiceGeral>=4?'#166534':indiceGeral>=2.5?'#854d0e':'#991b1b';
+  var bgGeral  = indiceGeral>=4?'#dcfce7':indiceGeral>=2.5?'#fef9c3':'#fee2e2';
+  var labelGeral = indiceGeral>=4?'Grupo Motivado':indiceGeral>=2.5?'Grupo em Alerta':'Grupo Desmotivado';
+
+  document.getElementById('indice-row').innerHTML =
+    '<div class="indice-box" style="background:'+bgGeral+';border:1px solid '+corGeral+'44">'+
+      '<div class="indice-num" style="color:'+corGeral+'">'+indiceGeral.toFixed(1)+'</div>'+
+      '<div class="indice-desc" style="color:'+corGeral+'"><strong>'+labelGeral+'</strong><br>Índice geral (1–5)</div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start">'+
+      '<div class="indice-box" style="background:#fff7ed;border:1px solid #fed7aa">'+
+        '<div class="indice-num" style="color:#c2410c">'+mHig.toFixed(1)+'</div>'+
+        '<div class="indice-desc" style="color:#c2410c">🔶 Higiênicos</div>'+
+      '</div>'+
+      '<div class="indice-box" style="background:#f0fdf4;border:1px solid #bbf7d0">'+
+        '<div class="indice-num" style="color:#166534">'+mMot.toFixed(1)+'</div>'+
+        '<div class="indice-desc" style="color:#166534">✅ Motivadores</div>'+
+      '</div>'+
+    '</div>';
+
+  // Por participante
+  var html = '';
+  participantes.forEach(function(p,i){
+    var mH = mediaNotas(p.hig), mM = mediaNotas(p.mot);
+    var pctH = porcentagem(mH), pctM = porcentagem(mM);
+    html += '<div class="part-diag-row">'+
+      '<div class="part-diag-nome">'+(p.nome||'Participante '+(i+1))+' — '+(p.setor||'setor não informado')+'</div>'+
+      '<div class="nivel-bar-wrap"><div class="nivel-bar-label"><span>🔶 Higiênicos: '+mH.toFixed(1)+'/5</span><span>'+pctH+'%</span></div>'+
+        '<div class="nivel-bar"><div class="nivel-fill-hig" style="width:'+pctH+'%"></div></div></div>'+
+      '<div class="nivel-bar-wrap"><div class="nivel-bar-label"><span>✅ Motivadores: '+mM.toFixed(1)+'/5</span><span>'+pctM+'%</span></div>'+
+        '<div class="nivel-bar"><div class="nivel-fill-mot" style="width:'+pctM+'%"></div></div></div>'+
+      labelDiag((mH+mM)/2)+
+    '</div>';
+  });
+  document.getElementById('partes-diag').innerHTML = html;
+
+  // Plano 5W2H — detecta os piores GAPs
+  gerarPlanos();
+  document.getElementById('plano-section').style.display='block';
+
+  card.scrollIntoView({behavior:'smooth'});
+}
+
+function gerarPlanos(){
+  // Agrega média por item (hig e mot) do grupo
+  var gapsHig = ITENS_HIG.map(function(it,i){
+    var soma = participantes.reduce(function(a,p){ return a+(p.hig[i].nota||0); },0);
+    return {titulo:it.titulo, tipo:'Higiênico', media: participantes.length>0?soma/participantes.length:0};
+  }).filter(function(g){ return g.media<3 && g.media>0; })
+    .sort(function(a,b){ return a.media-b.media; }).slice(0,2);
+
+  var gapsMot = ITENS_MOT.map(function(it,i){
+    var soma = participantes.reduce(function(a,p){ return a+(p.mot[i].nota||0); },0);
+    return {titulo:it.titulo, tipo:'Motivador', media: participantes.length>0?soma/participantes.length:0};
+  }).filter(function(g){ return g.media<3 && g.media>0; })
+    .sort(function(a,b){ return a.media-b.media; }).slice(0,2);
+
+  var gaps = gapsHig.concat(gapsMot);
+  if(gaps.length===0){
+    document.getElementById('planos-container').innerHTML = '<p style="color:#166534;font-size:0.85rem;text-align:center;padding:12px">🎉 Parabéns! Nenhum fator com nota crítica detectado. Continue monitorando!</p>';
+    return;
+  }
+
+  var html = '<p style="font-size:0.82rem;color:#6b7280;margin-bottom:14px">Focando nos fatores com menor satisfação do grupo:</p>';
+  gaps.forEach(function(g,gi){
+    html += '<div style="margin-bottom:20px;padding:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px">'+
+      '<div style="font-size:0.88rem;font-weight:700;color:#374151;margin-bottom:10px">🎯 GAP #'+(gi+1)+': '+g.titulo+' <span style="font-size:0.72rem;font-weight:400;color:#9ca3af">('+g.tipo+' · média '+g.media.toFixed(1)+')</span></div>'+
+      '<div class="plano-grid">'+
+        '<div class="plano-item full"><label>❓ WHAT — O que fazer?</label><input id="5w_what_'+gi+'" placeholder="Ex: Implementar rodízio de reconhecimento semanal..."></div>'+
+        '<div class="plano-item"><label>👤 WHO — Quem?</label><input id="5w_who_'+gi+'" placeholder="Ex: Gestor do setor, RH..."></div>'+
+        '<div class="plano-item"><label>📍 WHERE — Onde?</label><input id="5w_where_'+gi+'" placeholder="Ex: Reuniões de equipe, mural..."></div>'+
+        '<div class="plano-item"><label>🕐 WHEN — Quando?</label><input id="5w_when_'+gi+'" type="date"></div>'+
+        '<div class="plano-item"><label>📅 HOW LONG — Prazo?</label><input id="5w_howlong_'+gi+'" type="date"></div>'+
+        '<div class="plano-item full"><label>❔ WHY — Por quê é prioritário?</label><input id="5w_why_'+gi+'" placeholder="Ex: Impacta diretamente na satisfação e retenção da equipe..."></div>'+
+        '<div class="plano-item"><label>⚙️ HOW — Como implementar?</label><textarea id="5w_how_'+gi+'" style="min-height:60px" placeholder="Passo a passo da ação..."></textarea></div>'+
+        '<div class="plano-item"><label>💰 HOW MUCH — Recurso / custo?</label><input id="5w_cost_'+gi+'" placeholder="Ex: Custo zero, apenas tempo de reunião..."></div>'+
+      '</div>'+
+    '</div>';
+  });
+  document.getElementById('planos-container').innerHTML = html;
+}
+
+// ===== RESUMO WHATSAPP =====
+function gerarResumoWpp(){
+  salvarEstadoAtual();
+  var linhas = ['📊 *PAINEL DE HERZBERG — DIAGNÓSTICO DO GRUPO*'];
+  linhas.push('W3 · F3.1 — '+participantes.length+' participante(s)\n');
+
+  var totalHig=0, totalMot=0, cnt=participantes.length;
+  participantes.forEach(function(p){
+    totalHig += mediaNotas(p.hig);
+    totalMot += mediaNotas(p.mot);
+  });
+  var mH=cnt>0?totalHig/cnt:0, mM=cnt>0?totalMot/cnt:0;
+  var ig=(mH+mM)/2;
+  var statusGeral=ig>=4?'✅ Grupo Motivado':ig>=2.5?'⚠️ Grupo em Alerta':'🔴 Grupo Desmotivado';
+  linhas.push('*ÍNDICE GERAL: '+ig.toFixed(1)+'/5 — '+statusGeral+'*');
+  linhas.push('🔶 Higiênicos: '+mH.toFixed(1)+'/5  |  ✅ Motivadores: '+mM.toFixed(1)+'/5\n');
+
+  participantes.forEach(function(p,i){
+    var mHi=mediaNotas(p.hig), mMi=mediaNotas(p.mot);
+    var st=(mHi+mMi)/2>=4?'✅ Satisfeito':(mHi+mMi)/2>=2.5?'⚠️ Alerta':'🔴 Insatisfeito';
+    linhas.push('👤 '+(p.nome||'P'+(i+1))+(p.setor?' ('+p.setor+')':''));
+    linhas.push('   Higiênicos: '+mHi.toFixed(1)+' | Motivadores: '+mMi.toFixed(1)+' → '+st);
+  });
+
+  linhas.push('\n🚀 *PRÓXIMO PASSO:* Definir plano de ação 5W2H para os GAPs identificados.');
+  linhas.push('\n🔄 *CICLO PDCA:* Planejar → Executar → Checar → Ajustar');
+  linhas.push('\n— Diagnóstico gerado via Liderança 5.0 · A!Equipe');
+
+  var texto = linhas.join('\n');
+  var box = document.getElementById('resumo-box');
+  box.textContent = texto;
+  box.className='resumo-box visible';
+  box.scrollIntoView({behavior:'smooth'});
+}
+
+function enviarWhatsApp(){
+  var waEl = document.getElementById('wa-destino');
+  var wa = (waEl.value||'').replace(/\D/g,'');
+  if(!wa){ alert('Informe o WhatsApp de destino.'); return; }
+  var box = document.getElementById('resumo-box');
+  if(!box.textContent.trim()){ gerarResumoWpp(); }
+  var texto = encodeURIComponent(box.textContent);
+  window.open('https://wa.me/55'+wa+'?text='+texto,'_blank');
+}
+
+// ===== FIRESTORE =====
+function salvarFirestore(){
+  salvarEstadoAtual();
+  var msg = document.getElementById('msg');
+  var nomes = participantes.map(function(p){ return p.nome||''; }).filter(Boolean);
+  if(nomes.length===0){ msg.className='msg err'; msg.textContent='Preencha pelo menos um nome.'; return; }
+  var db = firebase.firestore();
+  var dados = {
+    participantes: JSON.stringify(participantes),
+    total_participantes: participantes.length,
+    nomes: nomes.join(', '),
+    setores: participantes.map(function(p){ return p.setor||''; }).filter(Boolean).join(', '),
+    wa_destino: document.getElementById('wa-destino').value.trim(),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('lider_f3_1').add(dados).then(function(){
+    msg.className='msg ok'; msg.textContent='✅ Atividade do grupo salva com sucesso!';
+  }).catch(function(e){
+    msg.className='msg err'; msg.textContent='Erro: '+e.message;
+  });
+}
+
+// ===== INIT =====
 window.onload = function(){
-  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O30=';
   var el = document.getElementById('logo-lucia');
-  if(el){ el.src = LOGO_LUCIA; el.style.display = 'block'; }
+  if(el){ el.src = LOGO_LUCIA; el.style.display='block'; }
 
   if(!firebase.apps.length){
     firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
   }
-  var db = firebase.firestore();
-  db.doc('lider_config/tema').get().then(function(doc){
+  firebase.firestore().doc('lider_config/tema').get().then(function(doc){
     if(doc.exists && doc.data().logoParceiro){
-      var lp = document.getElementById('logo-cbco');
-      if(lp){ lp.src = doc.data().logoParceiro; lp.style.display = 'block';
-        var sep = document.getElementById('sep-logo'); if(sep) sep.style.display='block'; }
+      var lp=document.getElementById('logo-cbco');
+      if(lp){ lp.src=doc.data().logoParceiro; lp.style.display='block';
+        var sep=document.getElementById('sep-logo'); if(sep) sep.style.display='block'; }
     }
   }).catch(function(){});
-  var wa = localStorage.getItem('lider_whatsapp');
-  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
-};
 
-function enviar(){
-  var db = firebase.firestore();
-  var nome = document.getElementById('nome').value.trim();
-  var wa = document.getElementById('whatsapp').value.trim();
-  var msg = document.getElementById('msg');
-  if(!nome || !wa){ msg.className='msg err'; msg.textContent='Preencha Nome e WhatsApp.'; return; }
-  localStorage.setItem('lider_whatsapp', wa);
-  var dados = {
-    nome: nome, whatsapp: wa,
-    setor: document.getElementById('setor').value,
-    higienicos: {
-      salario: document.getElementById('hig1').value,
-      condicoes: document.getElementById('hig2').value,
-      seguranca: document.getElementById('hig3').value,
-      relacoes: document.getElementById('hig4').value,
-      supervisao: document.getElementById('hig5').value,
-      politicas: document.getElementById('hig6').value
-    },
-    motivadores: {
-      reconhecimento: document.getElementById('mot1').value,
-      realizacao: document.getElementById('mot2').value,
-      crescimento: document.getElementById('mot3').value,
-      responsabilidade: document.getElementById('mot4').value,
-      proposito: document.getElementById('mot5').value,
-      natureza: document.getElementById('mot6').value
-    },
-    plano: document.getElementById('plano').value,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  db.collection('lider_f3_1').add(dados).then(function(){
-    msg.className='msg ok'; msg.textContent='✅ Respostas salvas com sucesso!';
-  }).catch(function(e){
-    msg.className='msg err'; msg.textContent='Erro ao salvar: '+e.message;
-  });
-}
+  // Inicia com 2 participantes
+  participantes = [criarParticipante(), criarParticipante()];
+  renderTabs();
+  renderBlocos();
+
+  // Recupera WhatsApp salvo
+  var wa = localStorage.getItem('lider_whatsapp');
+  if(wa){ var w=document.getElementById('wa-destino'); if(w) w.value=wa; }
+};
 </script>
 </body>
 </html>
