@@ -886,6 +886,32 @@ function AbaMetas({ paciente }) {
 }
 
 // ABA EVOLUCAO
+const RODA_AREAS=[
+  {id:"saude",label:"Saúde"},{id:"carreira",label:"Carreira"},
+  {id:"financeiro",label:"Finanças"},{id:"familia",label:"Família"},
+  {id:"social",label:"Relacionamentos"},{id:"espirito",label:"Espiritualidade"},
+  {id:"lazer",label:"Lazer"},{id:"pessoal",label:"Desenv. Pessoal"},
+];
+function RodaRadarSVG({valores,cor}){
+  const c=cor||"#7B00C4";
+  const n=RODA_AREAS.length,cx=110,cy=110,r=84;
+  const grades=[2,4,6,8,10].map(g=>{
+    const pts=RODA_AREAS.map((_,i)=>{const ang=(i/n)*2*Math.PI-Math.PI/2;return[cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");}).join(" ");
+    return <polygon key={g} points={pts} fill="none" stroke="#e5e7eb" strokeWidth={g===10?"1":"0.5"}/>;
+  });
+  const eixos=RODA_AREAS.map((_,i)=>{const ang=(i/n)*2*Math.PI-Math.PI/2;return<line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;});
+  const pts=RODA_AREAS.map((a,i)=>{const ang=(i/n)*2*Math.PI-Math.PI/2;const v=(valores[a.id]||0)/10;return[cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)].join(",");}).join(" ");
+  const pontos=RODA_AREAS.map((a,i)=>{const ang=(i/n)*2*Math.PI-Math.PI/2;const v=(valores[a.id]||0)/10;return{x:cx+r*v*Math.cos(ang),y:cy+r*v*Math.sin(ang)};});
+  const labels=RODA_AREAS.map((a,i)=>{const ang=(i/n)*2*Math.PI-Math.PI/2;const lx=cx+(r+18)*Math.cos(ang);const ly=cy+(r+18)*Math.sin(ang);return<text key={i} x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#6b7280" fontWeight="600">{a.label}</text>;});
+  const fillColor=c==="#7B00C4"?"rgba(123,0,196,0.15)":"rgba(167,139,250,0.15)";
+  return(<svg width="220" height="220" viewBox="0 0 220 220">{grades}{eixos}<polygon points={pts} fill={fillColor} stroke={c} strokeWidth="2"/>{pontos.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="3.5" fill={c}/>)}{labels}</svg>);
+}
+function rodaDocToVals(doc){
+  const v={};
+  (doc.areas||[]).forEach(a=>{const found=RODA_AREAS.find(x=>x.label===a.area);if(found)v[found.id]=a.valor;});
+  return v;
+}
+
 function AbaEvolucao({ paciente }) {
   const [humor, setHumor] = useState([]);
   const [atividades, setAtividades] = useState([]);
@@ -899,6 +925,7 @@ function AbaEvolucao({ paciente }) {
   const [tccAberto, setTccAberto] = useState(null);
   const [verTodoHistorico, setVerTodoHistorico] = useState(false);
   const [itemExpandido, setItemExpandido] = useState(null);
+  const [rodas, setRodas] = useState([]);
   useEffect(()=>{
     const u1 = db.collection("clinica_humor")
       .where("pacienteId","==",paciente.id)
@@ -955,6 +982,14 @@ function AbaEvolucao({ paciente }) {
         docs.sort((a,b)=>(b.createdAt?.toDate?.()??new Date(0))-(a.createdAt?.toDate?.()??new Date(0)));
         setReflexoes(docs);
       },()=>{});
+    // Roda da Vida — sessões salvas
+    db.collection("clinica_gestao_ansiedade")
+      .where("pacienteId","==",paciente.id)
+      .where("tipo","==","roda")
+      .get().then(snap=>{
+        const docs=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        setRodas(docs.slice(0,10));
+      }).catch(()=>{});
     return ()=>{ u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); };
   },[paciente.id]);
   const media = humor.length?(humor.reduce((a,h)=>a+(h.valor||0),0)/humor.length).toFixed(1):"—";
@@ -1025,6 +1060,68 @@ function AbaEvolucao({ paciente }) {
                   <div style={{fontWeight:700,fontSize:18,color:a.nota>=7?"#16a34a":a.nota>=4?"#d97706":"#dc2626"}}>{a.nota}/10</div>
                   <div style={{fontSize:10,color:"var(--text-muted)"}}>relaxamento</div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── RODA DA VIDA ── */}
+      {rodas.length>0&&(
+        <div className="card" style={{marginTop:16}}>
+          <div style={{fontWeight:600,marginBottom:4,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span>🎯 Roda da Vida</span>
+            <span style={{fontSize:13,color:"var(--text-muted)"}}>{rodas.length} sessão(ões)</span>
+          </div>
+          <div style={{fontSize:12,color:"var(--text-muted)",marginBottom:14}}>Evolução da satisfação do paciente em cada área da vida.</div>
+          {rodas.length>=2?(()=>{
+            const atual=rodas[0];
+            const anterior=rodas[1];
+            const vAtual=rodaDocToVals(atual);
+            const vAnterior=rodaDocToVals(anterior);
+            return(
+              <div>
+                <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap",marginBottom:16}}>
+                  <div style={{textAlign:"center",flex:"1 1 140px",maxWidth:240}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#6b7280",marginBottom:6,background:"#f3f4f6",borderRadius:20,padding:"3px 12px",display:"inline-block"}}>📅 Antes — {anterior.data}</div>
+                    <RodaRadarSVG valores={vAnterior} cor="#a78bfa"/>
+                  </div>
+                  <div style={{textAlign:"center",flex:"1 1 140px",maxWidth:240}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"var(--purple)",marginBottom:6,background:"#ede9fe",borderRadius:20,padding:"3px 12px",display:"inline-block"}}>📅 Agora — {atual.data}</div>
+                    <RodaRadarSVG valores={vAtual} cor="#7B00C4"/>
+                  </div>
+                </div>
+                {/* Variações */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4,marginBottom:12}}>
+                  {RODA_AREAS.map(a=>{
+                    const vA=vAnterior[a.id]||0;
+                    const vB=vAtual[a.id]||0;
+                    const diff=vB-vA;
+                    const cor=diff>0?"#059669":diff<0?"#dc2626":"#9ca3af";
+                    const icone=diff>0?"▲":diff<0?"▼":"—";
+                    return(
+                      <div key={a.id} style={{display:"flex",justifyContent:"space-between",fontSize:12,padding:"4px 8px",borderRadius:6,background:"#f9fafb",border:"1px solid #f3f4f6"}}>
+                        <span style={{color:"#374151",fontWeight:600,fontSize:11}}>{a.label}</span>
+                        <span style={{color:cor,fontWeight:700,fontSize:11}}>{icone} {vA}→{vB}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })():(
+            <div style={{textAlign:"center",paddingBottom:8}}>
+              <RodaRadarSVG valores={rodaDocToVals(rodas[0])} cor="#7B00C4"/>
+              <div style={{fontSize:12,color:"var(--text-muted)",marginTop:4}}>{rodas[0].data} — apenas 1 sessão (comparação disponível a partir de 2)</div>
+            </div>
+          )}
+          {/* Histórico */}
+          <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
+            <div style={{fontSize:11,fontWeight:600,color:"var(--text-muted)",marginBottom:6}}>Histórico de sessões:</div>
+            {rodas.map((r,i)=>(
+              <div key={i} style={{fontSize:11,color:"#6b7280",padding:"5px 8px",background:i===0?"#f3e8ff":"#f9fafb",borderRadius:6,marginBottom:3,display:"flex",justifyContent:"space-between"}}>
+                <span style={{fontWeight:i===0?700:400,color:i===0?"var(--purple)":"#6b7280"}}>{r.data}{i===0?" ✓ atual":""}</span>
+                <span style={{fontSize:10,color:"#9ca3af"}}>{(r.areas||[]).slice(0,4).map(a=>`${a.area.substring(0,3)}: ${a.valor}`).join(" · ")}…</span>
               </div>
             ))}
           </div>
