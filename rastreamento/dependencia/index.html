@@ -211,6 +211,53 @@ let respostas = {};
 const TOTAL_STEPS = 5;
 
 // ═══════════════════════════════════
+// RASCUNHO AUTOMÁTICO
+// ═══════════════════════════════════
+const RASCUNHO_KEY = 'psi_rascunho:' + (nomePaciente||'anon') + ':dependencia';
+
+function salvarRascunho() {
+  try {
+    const obj = {
+      tipoRespondente: tipoRespondente, step: step,
+      nomeRespondente: document.getElementById('nomeRespondente')?.value || '',
+      parentesco: document.getElementById('parentesco')?.value || '',
+      respostas: Object.assign({}, respostas),
+      obs: document.getElementById('obsFinais')?.value || ''
+    };
+    localStorage.setItem(RASCUNHO_KEY, JSON.stringify(obj));
+  } catch(e) {}
+}
+
+function restaurarRascunho() {
+  try {
+    const salvo = localStorage.getItem(RASCUNHO_KEY);
+    if (!salvo) return;
+    const obj = JSON.parse(salvo);
+    if (!obj || !obj.respostas) return;
+    if (Object.keys(obj.respostas).length === 0) return;
+    tipoRespondente = obj.tipoRespondente || null;
+    respostas = obj.respostas || {};
+    step = obj.step || 1;
+    if (obj.nomeRespondente && document.getElementById('nomeRespondente'))
+      document.getElementById('nomeRespondente').value = obj.nomeRespondente;
+    if (obj.parentesco && document.getElementById('parentesco'))
+      document.getElementById('parentesco').value = obj.parentesco;
+    if (tipoRespondente) {
+      document.getElementById('btnPaciente').classList.toggle('sel', tipoRespondente==='paciente');
+      document.getElementById('btnFamiliar').classList.toggle('sel', tipoRespondente==='familiar');
+      document.getElementById('camposFamiliar').style.display = tipoRespondente==='familiar' ? 'block' : 'none';
+      document.getElementById('telaInicial').style.display = 'none';
+      document.getElementById('formArea').style.display = 'block';
+      renderStep();
+    }
+  } catch(e) {}
+}
+
+function limparRascunho() {
+  try { localStorage.removeItem(RASCUNHO_KEY); } catch(e) {}
+}
+
+// ═══════════════════════════════════
 // SELEÇÃO DE TIPO
 // ═══════════════════════════════════
 function selecionarTipo(tipo){
@@ -435,6 +482,7 @@ function selecionarOpcao(el){
   grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
   el.classList.add("sel");
   respostas[pergId] = letra;
+  salvarRascunho();
 }
 
 // ═══════════════════════════════════
@@ -459,6 +507,7 @@ function avancarStep(){
   if(step < TOTAL_STEPS){
     step++;
     renderStep();
+    salvarRascunho();
   } else {
     mostrarRevisao();
   }
@@ -472,6 +521,7 @@ function voltarStep(){
     }
     step--;
     renderStep();
+    salvarRascunho();
   }
 }
 
@@ -572,6 +622,7 @@ async function enviar(){
     };
 
     await db.collection("clinica_rastreamento_dependencia").add(doc);
+    limparRascunho();
 
     await db.collection("nr1map_emails").add({
       to: "luciakratz@gmail.com",
@@ -591,6 +642,8 @@ async function enviar(){
     btn.textContent="✓ Confirmar e Enviar";
   }
 }
+
+document.addEventListener('DOMContentLoaded', restaurarRascunho);
 
 // ═══════════════════════════════════
 // MICROFONE
