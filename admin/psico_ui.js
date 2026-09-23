@@ -1015,6 +1015,7 @@ function RecursosTerapeuticos({ user }) {
     "kit-sos-tipp":               "macro_humor",
     "analise-cadeia":             "macro_ansiedade",
     "rastreamento-compulsao-sexual": "macro_compulsao",
+    "baralho-distorcoes":            "macro_ansiedade",
   };
 
   const filtrados = abaRecursos.filter(r=>{
@@ -1262,6 +1263,36 @@ function RecursosTerapeuticos({ user }) {
           </div>
         )}
       </div>
+      {/* Card estático — Baralho das Distorções Cognitivas */}
+      {(filtroCateg==="todos"||filtroCateg==="macro_ansiedade")&&abaView==="ferramentas"&&(
+        <div style={{marginBottom:28}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,paddingBottom:8,borderBottom:"1px solid var(--gray-100)"}}>
+            <span style={{fontWeight:700,fontSize:12,color:"#7B00C4",textTransform:"uppercase",letterSpacing:"0.8px"}}>🧠 Ansiedade e Controle dos Pensamentos</span>
+            <span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:600}}>Ferramenta Interativa</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+            <div style={{background:"white",border:"1.5px solid #7B00C440",borderRadius:14,padding:18,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:8}}>
+                <div style={{width:44,height:44,borderRadius:10,background:"linear-gradient(135deg,#7B00C4,#9b59b6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🃏</div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
+                    <span style={{background:"#f3e6ff",color:"#7B00C4",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:600,border:"1px solid #7B00C430"}}>INTERATIVA</span>
+                  </div>
+                  <div style={{fontWeight:600,fontSize:14}}>Baralho das Distorções Cognitivas</div>
+                </div>
+              </div>
+              <p style={{fontSize:13,color:"var(--text-muted)",lineHeight:1.5,flex:1}}>Ferramenta interativa para identificar e trabalhar crenças limitantes em 3 categorias: Desvalor, Desamor e Desamparo. Com perguntas socráticas e sessões progressivas.</p>
+              <span style={{fontSize:11,color:"var(--gray-400)",background:"var(--gray-50)",borderRadius:6,padding:"2px 8px",display:"inline-block",width:"fit-content"}}>baralho-distorcoes</span>
+              <div style={{borderTop:"1px solid var(--gray-100)",paddingTop:10}}>
+                <button className="btn btn-outline" style={{fontSize:12,width:"100%",color:"var(--purple)",borderColor:"var(--purple)"}} onClick={()=>setEnviandoRecurso({id:"baralho-distorcoes",titulo:"Baralho das Distorções Cognitivas",formularioKey:"baralho-distorcoes",descricao:"Ferramenta interativa para identificar e trabalhar crenças limitantes em 3 categorias: Desvalor, Desamor e Desamparo."})}>
+                  <Icon name="send" size={13}/> 📲 Enviar para paciente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {filtrados.length===0?(
         <div className="card" style={{textAlign:"center",padding:48,color:"var(--text-muted)"}}>
           <Icon name="wrench" size={40}/>
