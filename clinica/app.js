@@ -41,6 +41,41 @@ function registrarUsoRecurso(user, info, tipo, extra) {
   } catch(e) {}
 }
 
+// ─── RASCUNHO AUTOMÁTICO ─────────────────────────────────
+function useRascunho(chaveBase, valores, restaurar) {
+  const timerRef = React.useRef(null);
+  const pausadoRef = React.useRef(false);
+
+  React.useEffect(() => {
+    try {
+      const salvo = localStorage.getItem(chaveBase);
+      if (salvo) {
+        const obj = JSON.parse(salvo);
+        if (obj && typeof obj === 'object' && Object.keys(obj).length > 0) {
+          restaurar(obj);
+        }
+      }
+    } catch(e) {}
+  }, []); // eslint-disable-line
+
+  React.useEffect(() => {
+    if (pausadoRef.current) return;
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      try { localStorage.setItem(chaveBase, JSON.stringify(valores)); } catch(e) {}
+    }, 400);
+    return () => clearTimeout(timerRef.current);
+  }, [JSON.stringify(valores)]);
+
+  function limparRascunho() {
+    pausadoRef.current = true;
+    try { localStorage.removeItem(chaveBase); } catch(e) {}
+    setTimeout(() => { pausadoRef.current = false; }, 1000);
+  }
+
+  return { limparRascunho };
+}
+
 // ─── ICON ────────────────────────────────────────────────
 function Icon({ name, size = 18 }) {
   const ref = React.useRef(null);
@@ -205,6 +240,16 @@ function FerramentaDiario({ user }){
   const [verEntrada,setVerEntrada]= React.useState(null);
   const [loading,   setLoading]   = React.useState(true);
 
+  const rascunhoKey = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':diario';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    { texto, tag },
+    (obj) => {
+      if (obj.texto) setTexto(obj.texto);
+      if (obj.tag)   setTag(obj.tag);
+    }
+  );
+
   const TAGS = [
     {v:"geral",     l:"Geral",     e:"📝"},
     {v:"gratidao",  l:"Gratidão",  e:"🙏"},
@@ -249,6 +294,7 @@ function FerramentaDiario({ user }){
         hora: new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
+      limparRascunho();
       setTexto(""); setTag("geral");
       setMsg("✓ Entrada salva! 💜");
       setTimeout(()=>setMsg(""),2500);
@@ -1005,7 +1051,19 @@ function FerramentaArvore({user}){
   const [conclusao,setConclusao]=React.useState(null);
   const [historico,setHistorico]=React.useState([]);
 
-  function reiniciar(){setStep("home");setPreocupacao("");setAcoes("");setPlano("");setConclusao(null);}
+  const rascunhoKey = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':arvore';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    step === "conclusao" ? {} : { step, preocupacao, acoes, plano },
+    (obj) => {
+      if (obj.step && obj.step !== "home") setStep(obj.step);
+      if (obj.preocupacao) setPreocupacao(obj.preocupacao);
+      if (obj.acoes)       setAcoes(obj.acoes);
+      if (obj.plano)       setPlano(obj.plano);
+    }
+  );
+
+  function reiniciar(){limparRascunho();setStep("home");setPreocupacao("");setAcoes("");setPlano("");setConclusao(null);}
 
   function salvarHistorico(c){
     setHistorico(h=>[{data:new Date().toLocaleDateString("pt-BR"),preocupacao,conclusao:c},...h].slice(0,10));
@@ -1020,6 +1078,7 @@ function FerramentaArvore({user}){
         registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`"${preocupacao.slice(0,80)}" → ${c}`});
       }catch(e){}
     }
+    limparRascunho();
     setConclusao(c);setStep("conclusao");
   }
 
@@ -1148,13 +1207,25 @@ function FerramentaABC(){
   const [registros,setRegistros]= React.useState([]);
   const [verReg,   setVerReg]   = React.useState(null);
 
+  const rascunhoKey = 'psi_rascunho:anon:abc';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    passo === 5 ? {} : { passo, draft },
+    (obj) => {
+      if (obj.passo && obj.passo < 5) setPasso(obj.passo);
+      if (obj.draft) setDraft(d => ({...d, ...obj.draft}));
+    }
+  );
+
   function salvar(){
     if(!draft.situacao||!draft.pensamento||!draft.emocao) return;
     setRegistros(r=>[{...draft,id:Date.now()+"",data:new Date().toLocaleDateString("pt-BR")},...r]);
+    limparRascunho();
     setPasso(5);
   }
 
   function reiniciar(){
+    limparRascunho();
     setDraft({situacao:"",pensamento:"",emocao:"",intensidade:60,alternativo:""});
     setPasso(1);
   }
@@ -1372,6 +1443,19 @@ function FerramentaGestaoAnsiedade({user}){
   const [log,setLog]=React.useState([]);
   const [msg,setMsg]=React.useState("");
   const sc=stress<=3?"#059669":stress<=5?"#d97706":stress<=7?"#f97316":"#dc2626";
+
+  const rascunhoKey = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':gestao-ansiedade';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    { aba, stress, nota, track, resp },
+    (obj) => {
+      if (obj.aba !== undefined)    setAba(obj.aba);
+      if (obj.stress !== undefined) setStress(obj.stress);
+      if (obj.nota)                 setNota(obj.nota);
+      if (obj.track)                setTrack(obj.track);
+      if (obj.resp && Array.isArray(obj.resp)) setResp(obj.resp);
+    }
+  );
   return(
     <div>
       <div style={{display:"flex",gap:0,marginBottom:16,borderBottom:"1px solid #e5e7eb",overflowX:"auto"}}>
@@ -1396,6 +1480,7 @@ function FerramentaGestaoAnsiedade({user}){
               registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`Estresse ${stress}/10${nota?" — "+nota:""}`});
             }catch(e){}
           }
+          limparRascunho();
           setNota("");setMsg("✓ Registrado!");setTimeout(()=>setMsg(""),2000);
         }}>{msg||"Registrar"}</button>
         {log.length>0&&<div style={{marginTop:12}}>{log.slice(0,5).map((s,i)=><div key={i} style={{display:"flex",gap:8,padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4,fontSize:12}}><span style={{fontWeight:700,color:sc}}>{s.nivel}/10</span><span style={{flex:1,color:"#6b7280"}}>{s.nota||"—"}</span><span style={{color:"#9ca3af"}}>{s.data}</span></div>)}</div>}
@@ -1423,6 +1508,7 @@ function FerramentaGestaoAnsiedade({user}){
               registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Tracking do dia: "+feitos.join(", ")});
             }catch(e){}
           }
+          limparRascunho();
           setTrack({});setMsg("✓ Tracking salvo!");setTimeout(()=>setMsg(""),2000);
         }}>{msg||"Salvar tracking do dia"}</button>
       </div>}
@@ -1446,6 +1532,7 @@ function FerramentaGestaoAnsiedade({user}){
               registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Pensamentos guiados (8 perguntas TCC)"});
             }catch(e){}
           }
+          limparRascunho();
           setResp(Array(8).fill(""));setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
         }}>{msg||"Salvar respostas"}</button>
       </div>}
@@ -1470,6 +1557,13 @@ function FerramentaRodaVidaIntegral({user}){
   const [vals,setVals]=React.useState({});
   const [msg,setMsg]=React.useState("");
   const [historico,setHistorico]=React.useState([]);
+
+  const rascunhoKey = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':roda-vida';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    { vals },
+    (obj) => { if (obj.vals) setVals(obj.vals); }
+  );
 
   React.useEffect(()=>{
     if(!user?.id) return;
@@ -1545,6 +1639,7 @@ function FerramentaRodaVidaIntegral({user}){
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:"Roda da Vida ("+AREAS.map(a=>`${a.label}: ${vals[a.id]||0}`).join(", ")+")"});
+      limparRascunho();
       setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2500);
     }catch(e){setMsg("Erro ao salvar.");}
   }
@@ -1651,6 +1746,23 @@ function FerramentaRastreamento({user}){
   const [reflexao,setReflexao]=React.useState("");
   const [entries,setEntries]=React.useState([]);
   const [msg,setMsg]=React.useState("");
+
+  const rascunhoKey = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':rastreamento-alimentar';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    { fome, emocoes, pensamento, comeu, alivio, duracao, sensacoes, reflexao },
+    (obj) => {
+      if (obj.fome !== undefined)       setFome(obj.fome);
+      if (obj.emocoes)                  setEmocoes(obj.emocoes);
+      if (obj.pensamento !== undefined) setPensamento(obj.pensamento);
+      if (obj.comeu !== undefined)      setComeu(obj.comeu);
+      if (obj.alivio !== undefined)     setAlivio(obj.alivio);
+      if (obj.duracao !== undefined)    setDuracao(obj.duracao);
+      if (obj.sensacoes)                setSensacoes(obj.sensacoes);
+      if (obj.reflexao !== undefined)   setReflexao(obj.reflexao);
+    }
+  );
+
   React.useEffect(()=>{
     if(!user||!user.id)return;
     const unsub=db.collection("clinica_rastreamento_alimentar")
@@ -1677,6 +1789,7 @@ function FerramentaRastreamento({user}){
     }else{
       setEntries(e=>[{id:Date.now()+"",...registro},...e]);
     }
+    limparRascunho();
     setFome(5);setEmocoes([]);setPensamento("");setComeu("");setAlivio(5);setDuracao("");setSensacoes([]);setReflexao("");
     setMsg("✓ Salvo!");setTimeout(()=>setMsg(""),2000);
   }
@@ -1717,6 +1830,17 @@ function FerramentaTreino({user}){
   const [total,setTotal]=React.useState(0);
   const [tocando,setTocando]=React.useState(null);
   const [msgTreino,setMsgTreino]=React.useState("");
+
+  const rascunhoKey = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':treino-neuro';
+  const { limparRascunho } = useRascunho(
+    rascunhoKey,
+    { modulo, respostas },
+    (obj) => {
+      if (obj.modulo !== undefined) setModulo(obj.modulo);
+      if (obj.respostas)           setRespostas(obj.respostas);
+    }
+  );
+
   async function salvarResultado(){
     if(total===0){alert("Responda pelo menos um exercício antes de salvar.");return;}
     const pct=Math.round(score/total*100);
@@ -1731,6 +1855,7 @@ function FerramentaTreino({user}){
         registrarUsoRecurso(user,INFO_REC,"salvou",{detalhe:`Pontuação ${score}/${total} (${pct}% de acerto)`});
       }catch(e){}
     }
+    limparRascunho();
     setMsgTreino("✓ Resultado salvo!");setTimeout(()=>setMsgTreino(""),2500);
   }
   const ctxRef=React.useRef(null);
@@ -1850,6 +1975,13 @@ function FerramentaPortal({ recurso, user }){
     const [idx,setIdx] = React.useState(0);
     const [respFab,setRespFab] = React.useState({});
     const [msgFab,setMsgFab] = React.useState("");
+
+    const rascunhoKeyFab = 'psi_rascunho:' + (user?.uid || user?.nome || 'anon') + ':fabula:' + (recurso.id||recurso.titulo||'');
+    const { limparRascunho: limparRascunhoFab } = useRascunho(
+      rascunhoKeyFab,
+      { respFab },
+      (obj) => { if (obj.respFab) setRespFab(obj.respFab); }
+    );
     const jaConcluiu = React.useRef(false);
     function avancar(){
       setIdx(i=>{
@@ -1877,6 +2009,7 @@ function FerramentaPortal({ recurso, user }){
           registrarUsoRecurso(user,recurso,"salvou",{detalhe:"Reflexões da fábula — "+(recurso.titulo||recurso.nome||"")});
         }catch(e){}
       }
+      limparRascunhoFab();
       setMsgFab("✓ Reflexões salvas!");setTimeout(()=>setMsgFab(""),2500);
     }
     const pag = paginas[idx]||"";
