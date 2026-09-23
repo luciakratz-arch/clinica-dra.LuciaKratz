@@ -118,6 +118,131 @@ function FerramentaABC({user}){
   return(<div className="card"><div style={{display:"flex",gap:6,marginBottom:20}}>{PASSOS.map(p=><div key={p.n} style={{flex:1,height:4,borderRadius:4,background:p.n<=passo?p.cor:"var(--gray-100)",transition:"background .2s"}}/>)}</div><div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}><div style={{width:44,height:44,borderRadius:12,background:pi.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontWeight:900,fontSize:18,color:pi.cor}}>{pi.letra}</span></div><div><div style={{fontWeight:700,fontSize:15}}>{pi.titulo}</div><div style={{fontSize:12,color:"var(--text-muted)"}}>{pi.dica}</div></div></div>{passo<=2&&<TextAreaVoz rows={3} value={draft[passo===1?"situacao":"pensamento"]} onChange={e=>setDraft({...draft,[passo===1?"situacao":"pensamento"]:e.target.value})} placeholder={pi.placeholder}/>}{passo===3&&(<div><div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:16}}>{EMOCOES.map(em=>{const sel=draft.emocao===em;return(<button key={em} onClick={()=>setDraft({...draft,emocao:em})} style={{padding:"7px 14px",borderRadius:20,border:"1.5px solid",cursor:"pointer",fontFamily:"inherit",fontSize:13,borderColor:sel?pi.cor:"var(--gray-200)",background:sel?pi.bg:"white",color:sel?pi.cor:"var(--text-muted)",fontWeight:sel?700:400}}>{em}</button>);})}</div>{draft.emocao&&(<div><div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}><span style={{fontWeight:600}}>Intensidade</span><span style={{fontWeight:700,color:intCor}}>{draft.intensidade}%</span></div><input type="range" min={0} max={100} value={draft.intensidade} onChange={e=>setDraft({...draft,intensidade:+e.target.value})} style={{width:"100%",accentColor:pi.cor}}/></div>)}</div>)}{passo===4&&<TextAreaVoz rows={3} value={draft.alternativo} onChange={e=>setDraft({...draft,alternativo:e.target.value})} placeholder={pi.placeholder}/>}<div style={{display:"flex",gap:10,marginTop:20}}>{passo>1&&<button className="btn btn-ghost" style={{flex:1}} onClick={()=>setPasso(passo-1)}>← Anterior</button>}{passo<4&&<button className="btn btn-purple" style={{flex:2,justifyContent:"center"}} disabled={(passo===1&&!draft.situacao)||(passo===2&&!draft.pensamento)||(passo===3&&!draft.emocao)} onClick={()=>setPasso(passo+1)}>Próximo →</button>}{passo===4&&<button className="btn btn-purple" style={{flex:2,justifyContent:"center"}} onClick={salvar}>Salvar Registro ✓</button>}</div></div>);
 }
 
+// ── Roda da Vida Integral ─────────────────────────────────────────────────────
+function FerramentaRodaVidaIntegral({user}){
+  const AREAS=[
+    {id:"saude",label:"Saúde"},{id:"carreira",label:"Carreira"},
+    {id:"financeiro",label:"Finanças"},{id:"familia",label:"Família"},
+    {id:"social",label:"Relacionamentos"},{id:"espirito",label:"Espiritualidade"},
+    {id:"lazer",label:"Lazer"},{id:"pessoal",label:"Desenv. Pessoal"},
+  ];
+  const [vals,setVals]=useState({});
+  const [msg,setMsg]=useState("");
+  const [historico,setHistorico]=useState([]);
+
+  useEffect(()=>{
+    if(!user?.id) return;
+    db.collection("clinica_gestao_ansiedade")
+      .where("pacienteId","==",user.id)
+      .where("tipo","==","roda")
+      .get().then(snap=>{
+        const docs=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        if(docs.length>0){
+          const v={};
+          (docs[0].areas||[]).forEach(a=>{
+            const found=AREAS.find(x=>x.label===a.area);
+            if(found) v[found.id]=a.valor;
+          });
+          setVals(v);
+        }
+        setHistorico(docs.slice(0,5));
+      }).catch(()=>{});
+  },[user?.id]);
+
+  function RadarSVG({valores}){
+    const n=AREAS.length;
+    const cx=140,cy=140,r=110;
+    const grades=[2,4,6,8,10].map(g=>{
+      const pts=AREAS.map((_,i)=>{
+        const ang=(i/n)*2*Math.PI-Math.PI/2;
+        return [cx+r*(g/10)*Math.cos(ang),cy+r*(g/10)*Math.sin(ang)].join(",");
+      }).join(" ");
+      return <polygon key={g} points={pts} fill="none" stroke="#e5e7eb" strokeWidth={g===10?"1":"0.5"}/>;
+    });
+    const eixos=AREAS.map((_,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(ang)} y2={cy+r*Math.sin(ang)} stroke="#e5e7eb" strokeWidth="0.5"/>;
+    });
+    const pts=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[a.id]||0)/10;
+      return [cx+r*v*Math.cos(ang),cy+r*v*Math.sin(ang)].join(",");
+    }).join(" ");
+    const pontos=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      const v=(valores[a.id]||0)/10;
+      return {x:cx+r*v*Math.cos(ang),y:cy+r*v*Math.sin(ang)};
+    });
+    const labels=AREAS.map((a,i)=>{
+      const ang=(i/n)*2*Math.PI-Math.PI/2;
+      return <text key={i} x={cx+(r+22)*Math.cos(ang)} y={cy+(r+22)*Math.sin(ang)} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#6b7280" fontWeight="600">{a.label}</text>;
+    });
+    return(
+      <svg width="280" height="280" viewBox="0 0 280 280">
+        {grades}{eixos}
+        <polygon points={pts} fill="rgba(123,0,196,0.15)" stroke="#7B00C4" strokeWidth="2"/>
+        {pontos.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="4" fill="#7B00C4"/>)}
+        {labels}
+      </svg>
+    );
+  }
+
+  async function salvar(){
+    if(!user?.id){setMsg("⚠️ Faça login para salvar.");return;}
+    try{
+      await db.collection("clinica_gestao_ansiedade").add({
+        pacienteId:user.id,pacienteNome:user.nome||"",tipo:"roda",
+        areas:AREAS.map(a=>({area:a.label,valor:vals[a.id]||0})),
+        data:new Date().toLocaleDateString("pt-BR"),
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setMsg("✓ Roda da Vida salva!");setTimeout(()=>setMsg(""),2500);
+    }catch(e){setMsg("Erro ao salvar.");}
+  }
+
+  return(
+    <div className="card">
+      <div style={{textAlign:"center",marginBottom:8}}>
+        <div style={{fontSize:32,marginBottom:4}}>🎯</div>
+        <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"var(--purple)",marginBottom:4}}>Roda da Vida Integral</div>
+        <div style={{fontSize:13,color:"var(--text-muted)"}}>Avalie sua satisfação em cada área de 0 a 10</div>
+      </div>
+      <div style={{background:"var(--gray-50)",borderRadius:10,padding:12,marginBottom:16,fontSize:12,color:"#5a007a",lineHeight:1.6}}>
+        O gráfico atualiza em tempo real. Seja honesto(a) — não existe resposta certa ou errada. 💜
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
+        {AREAS.map(a=>(
+          <div key={a.id}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+              <span style={{fontWeight:600}}>{a.label}</span>
+              <span style={{fontWeight:700,color:"var(--purple)",minWidth:32,textAlign:"right"}}>{vals[a.id]||0}/10</span>
+            </div>
+            <input type="range" min={0} max={10} step={1} value={vals[a.id]||0}
+              onChange={e=>setVals(v=>({...v,[a.id]:+e.target.value}))}
+              style={{width:"100%",accentColor:"var(--purple)"}}/>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"flex",justifyContent:"center",margin:"8px 0 16px"}}>
+        <RadarSVG valores={vals}/>
+      </div>
+      <button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={salvar}>
+        {msg||"💾 Salvar Roda da Vida"}
+      </button>
+      {historico.length>1&&(
+        <div style={{marginTop:16}}>
+          <div style={{fontSize:12,fontWeight:600,color:"var(--purple)",marginBottom:8}}>Histórico anterior</div>
+          {historico.slice(1,4).map((h,i)=>(
+            <div key={i} style={{fontSize:11,color:"#6b7280",padding:"6px 10px",background:"#f9fafb",borderRadius:8,marginBottom:4}}>
+              {h.data} — {(h.areas||[]).map(a=>`${a.area}: ${a.valor}`).join(" · ")}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Ferramenta Genérica ──────────────────────────────────────────────────────
 function FerramentaGenerica({recurso,user,onConcluido}){
   return(<div className="card" style={{textAlign:"center",padding:"32px 20px"}}><div style={{fontSize:48,marginBottom:12}}>🧠</div><div style={{fontFamily:"var(--font-display)",fontSize:20,color:"var(--purple)",marginBottom:8}}>{recurso.titulo||"Ferramenta"}</div>{recurso.descricao&&<p style={{fontSize:13,color:"var(--text-muted)",marginBottom:20,lineHeight:1.6}}>{recurso.descricao}</p>}{recurso.conteudo&&<div style={{fontSize:14,lineHeight:1.8,whiteSpace:"pre-wrap",textAlign:"left",marginBottom:20}}>{recurso.conteudo}</div>}<button className="btn btn-purple" style={{width:"100%",justifyContent:"center"}} onClick={onConcluido}>✓ Concluído</button></div>);
@@ -3693,8 +3818,9 @@ function App(){
   function renderConteudo(){
     if(estado==="ferramenta"&&recurso){
       const k=recurso.formularioKey||"";
-      if(k==="decision-tree") return <FerramentaArvore user={user}/>;
-      if(k==="abc-record")    return <FerramentaABC user={user}/>;
+      if(k==="decision-tree")      return <FerramentaArvore user={user}/>;
+      if(k==="abc-record")         return <FerramentaABC user={user}/>;
+      if(k==="roda-vida-integral") return <FerramentaRodaVidaIntegral user={user}/>;
       return <FerramentaGenerica recurso={recurso} user={user} onConcluido={concluir}/>;
     }
     if(estado==="fabula"&&recurso)        return <FabulaPublica fabula={recurso} user={user} onConcluido={concluir}/>;
