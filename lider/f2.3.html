@@ -10,15 +10,15 @@ body{background:#f4f6f4;color:#1a2e1a;font-family:'Segoe UI',system-ui,sans-seri
 header{background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);border-bottom:3px solid #15803d}
 .header-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px}
 .logos{display:flex;align-items:center}
-.container{max-width:740px;margin:0 auto;padding:20px 16px 40px}
+.container{max-width:780px;margin:0 auto;padding:20px 16px 40px}
 .instrucao{background:#ffffff;border-left:4px solid #16a34a;border:1px solid #bbf7d0;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:0.88rem;color:#166534;line-height:1.6}
 .card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px #14532d0a}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-@media(max-width:540px){.form-row{grid-template-columns:1fr}}
-label{display:block;font-size:0.8rem;font-weight:700;color:#166534;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px}
-input,textarea{background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;width:100%;font-size:0.9rem;color:#1a2e1a;font-family:inherit;transition:border-color .2s,box-shadow .2s;outline:none}
-input:focus,textarea:focus{border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
 .section-title{font-size:1rem;font-weight:800;color:#14532d;margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid #d1fae5}
+label{display:block;font-size:0.8rem;font-weight:700;color:#166534;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px}
+input,textarea,select{background:#ffffff;border:1px solid #d1fae5;border-radius:8px;padding:10px 14px;width:100%;font-size:0.9rem;color:#1a2e1a;font-family:inherit;transition:border-color .2s,box-shadow .2s;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
+textarea{resize:vertical;min-height:64px}
+/* Exemplos */
 .exemplos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
 @media(max-width:580px){.exemplos-grid{grid-template-columns:1fr}}
 .exemplo-card{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
@@ -27,46 +27,55 @@ input:focus,textarea:focus{border-color:#16a34a;box-shadow:0 0 0 3px #16a34a18}
 .arrow{text-align:center;font-size:1.1rem;color:#16a34a;font-weight:800}
 .pergunta-box{background:#dcfce7;border-radius:6px;padding:8px 10px;font-size:0.8rem;color:#14532d;font-weight:600}
 .pergunta-label{font-size:0.67rem;font-weight:700;color:#16a34a;margin-bottom:3px;text-transform:uppercase}
+/* Participantes */
+.trio-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.trio-tab{padding:8px 18px;border-radius:20px;border:2px solid #d1fae5;background:#f0fdf4;font-size:0.82rem;font-weight:700;color:#166534;cursor:pointer;transition:all .2s}
+.trio-tab.ativo{background:#16a34a;color:#fff;border-color:#16a34a}
+.trio-tab.btn-add{background:#fff;border-color:#86efac;color:#16a34a}
+.trio-tab.btn-add:hover{background:#dcfce7}
+.participante-bloco{display:none}
+.participante-bloco.ativo{display:block}
+.part-header{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:520px){.part-header{grid-template-columns:1fr}}
 .pratica-row{background:#f0fdf4;border:1px solid #d1fae5;border-radius:8px;padding:14px;margin-bottom:10px}
 .pratica-num{font-size:0.72rem;font-weight:700;color:#16a34a;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
 .pratica-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:540px){.pratica-fields{grid-template-columns:1fr}}
-textarea{resize:vertical;min-height:80px}
-.btn-enviar{width:100%;background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:0.3px;transition:opacity .2s}
+.btn-remover{font-size:0.72rem;color:#dc2626;background:none;border:none;cursor:pointer;float:right;margin-top:-2px;font-weight:700;padding:2px 6px;border-radius:4px}
+.btn-remover:hover{background:#fee2e2}
+/* Envio */
+.envio-card{background:#ffffff;border:1px solid #d1fae5;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px #14532d0a}
+.whatsapp-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:flex-end;margin-top:12px}
+.btn-wpp{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:8px;padding:11px 18px;font-size:0.85rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.btn-wpp:hover{opacity:0.9}
+.btn-enviar{width:100%;background:linear-gradient(135deg,#16a34a,#14532d);color:#fff;border:none;border-radius:10px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:12px;letter-spacing:0.3px;transition:opacity .2s}
 .btn-enviar:hover{opacity:0.9}
 .msg{display:none;text-align:center;padding:14px;border-radius:8px;margin-top:12px;font-weight:600}
 .msg.ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
 .msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.resumo-trio{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:12px;font-size:0.85rem;line-height:1.7;white-space:pre-wrap;display:none}
 </style>
 </head>
 <body>
 <header>
   <div class="header-top">
     <div class="logos">
-      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <img id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
       <div style="width:1px;height:32px;background:#ffffff33;margin:0 10px"></div>
-      <img id="logo-cbco" alt="CBCO" style="height:42px;object-fit:contain;display:none">
+      <img id="logo-cbco" alt="Parceiro" style="height:42px;object-fit:contain;display:none">
     </div>
     <a href="hub.html" style="color:#dcfce7;font-size:0.82rem;text-decoration:none;display:inline-flex;align-items:center;gap:5px;background:#ffffff22;border:1px solid #ffffff33;padding:6px 14px;border-radius:20px">← Voltar ao Hub</a>
   </div>
   <div style="padding:16px 20px 20px;text-align:center">
     <span style="display:inline-block;background:#ffffff22;color:#dcfce7;font-size:0.72rem;font-weight:700;padding:4px 14px;border-radius:20px;margin-bottom:10px;letter-spacing:1px;text-transform:uppercase">W2 · F2.3</span>
     <h1 style="font-size:1.35rem;font-weight:800;color:#ffffff;margin-bottom:4px">Perguntas Poderosas O que / Como</h1>
-    <p style="color:#bbf7d0;font-size:0.83rem">Substitua falas limitantes por perguntas que geram reflexão e compromisso</p>
+    <p style="color:#bbf7d0;font-size:0.83rem">Dinâmica em trio — substitua falas limitantes por perguntas que geram reflexão</p>
   </div>
 </header>
 
 <div class="container">
   <div class="instrucao">
-    Perguntas que começam com <strong>"O que"</strong> e <strong>"Como"</strong> ativam o pensamento criativo e a responsabilidade. Substitua falas limitantes (Por que você não fez?, Quem é o culpado?) por perguntas poderosas.
-  </div>
-
-  <div class="card">
-    <div class="section-title">Identificação</div>
-    <div class="form-row">
-      <div><label>Nome</label><input type="text" id="nome" placeholder="Seu nome completo"></div>
-      <div><label>WhatsApp</label><input type="tel" id="whatsapp" placeholder="(00) 00000-0000"></div>
-    </div>
+    Perguntas que começam com <strong>"O que"</strong> e <strong>"Como"</strong> ativam o pensamento criativo e a responsabilidade. Em trio, cada participante registra suas situações e a transformação das falas. Ao final, o resumo do grupo pode ser enviado por WhatsApp.
   </div>
 
   <div class="card">
@@ -90,16 +99,31 @@ textarea{resize:vertical;min-height:80px}
     </div>
   </div>
 
+  <!-- ABAS DE PARTICIPANTES -->
   <div class="card">
-    <div class="section-title">Sua Prática — 6 Situações</div>
-    <div id="pratica-container"></div>
+    <div class="section-title">👥 Participantes do Trio</div>
+    <div class="trio-tabs" id="trio-tabs"></div>
+    <div id="participantes-container"></div>
+  </div>
 
-    <div style="margin-top:16px">
-      <label>Como vou aplicar isso com minha equipe esta semana:</label>
-      <textarea id="aplicacao" placeholder="Descreva como vai usar perguntas poderosas na prática com sua equipe..."></textarea>
+  <!-- ENVIO -->
+  <div class="envio-card">
+    <div class="section-title">📤 Enviar Resumo do Trio</div>
+    <p style="font-size:0.83rem;color:#6b7280;margin-bottom:10px">Gere o resumo completo e envie para um WhatsApp do grupo ou facilitador.</p>
+
+    <div id="resumo-trio" class="resumo-trio"></div>
+
+    <button class="btn-enviar" style="margin-top:0;margin-bottom:12px;background:linear-gradient(135deg,#4b5563,#1f2937)" onclick="gerarResumo()">📋 Gerar Resumo do Trio</button>
+
+    <div class="whatsapp-row">
+      <div>
+        <label>WhatsApp para enviar o resumo</label>
+        <input type="tel" id="wa-destino" placeholder="(00) 00000-0000 — número do grupo ou facilitador">
+      </div>
+      <button class="btn-wpp" onclick="enviarWhatsApp()">📲 Enviar no WhatsApp</button>
     </div>
 
-    <button class="btn-enviar" onclick="enviar()">Enviar Atividade</button>
+    <button class="btn-enviar" onclick="enviarFirestore()">✅ Salvar Atividade do Trio</button>
     <div class="msg" id="msg"></div>
   </div>
 </div>
@@ -107,74 +131,248 @@ textarea{resize:vertical;min-height:80px}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-function buildPratica(){
-  var c=document.getElementById('pratica-container');
-  for(var i=1;i<=6;i++){
-    var row=document.createElement('div');
-    row.className='pratica-row';
-    row.innerHTML=
-      '<div class="pratica-num">Situação '+i+'</div>'+
-      '<div class="pratica-fields">'+
-        '<div><label>Fala / Situação limitante</label><input type="text" id="fala_'+i+'" placeholder="Ex: Por que você não terminou?"></div>'+
-        '<div><label>Minha pergunta "O que" ou "Como"</label><input type="text" id="pergunta_'+i+'" placeholder="Ex: O que impediu a conclusão?"></div>'+
-      '</div>';
-    c.appendChild(row);
+var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+
+// Estado dos participantes
+var participantes = [];
+var abaAtiva = 0;
+
+function criarParticipante(nome, wa) {
+  return { nome: nome || '', whatsapp: wa || '', situacoes: [{fala:'',pergunta:''},{fala:'',pergunta:''},{fala:'',pergunta:''},{fala:'',pergunta:''},{fala:'',pergunta:''},{fala:'',pergunta:''}], aplicacao: '' };
+}
+
+function salvarEstadoAtual() {
+  if (participantes.length === 0) return;
+  var p = participantes[abaAtiva];
+  var cont = document.getElementById('part-bloco-' + abaAtiva);
+  if (!cont) return;
+  p.nome = cont.querySelector('.part-nome').value;
+  p.whatsapp = cont.querySelector('.part-wa').value;
+  p.aplicacao = cont.querySelector('.part-aplicacao').value;
+  for (var i = 0; i < 6; i++) {
+    p.situacoes[i].fala = (cont.querySelector('.fala-' + i) || {value:''}).value;
+    p.situacoes[i].pergunta = (cont.querySelector('.pergunta-' + i) || {value:''}).value;
   }
 }
 
-function enviar(){
-  var nome=document.getElementById('nome').value.trim();
-  var wa=document.getElementById('whatsapp').value.trim();
-  if(!nome||!wa){
-    mostrarMsg('Preencha nome e WhatsApp antes de enviar.','err');
-    return;
+function renderTabs() {
+  var tabs = document.getElementById('trio-tabs');
+  tabs.innerHTML = '';
+  participantes.forEach(function(p, idx) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'trio-tab' + (idx === abaAtiva ? ' ativo' : '');
+    btn.textContent = (p.nome || 'Participante ' + (idx + 1));
+    btn.setAttribute('data-idx', idx);
+    btn.onclick = function() { salvarEstadoAtual(); abaAtiva = idx; renderTabs(); renderBlocos(); };
+    tabs.appendChild(btn);
+    // botão remover (só se mais de 1)
+    if (participantes.length > 1) {
+      var rem = document.createElement('button');
+      rem.type = 'button';
+      rem.className = 'btn-remover';
+      rem.title = 'Remover participante';
+      rem.textContent = '✕';
+      rem.onclick = function(e) { e.stopPropagation(); removerParticipante(idx); };
+      btn.appendChild(rem);
+    }
+  });
+  // botão adicionar (máx 6)
+  if (participantes.length < 6) {
+    var add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'trio-tab btn-add';
+    add.textContent = '+ Adicionar participante';
+    add.onclick = function() { salvarEstadoAtual(); participantes.push(criarParticipante()); abaAtiva = participantes.length - 1; renderTabs(); renderBlocos(); };
+    tabs.appendChild(add);
   }
-  var data={
-    nome:nome,
-    whatsapp:wa,
-    aplicacao:document.getElementById('aplicacao').value.trim(),
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
-  };
-  for(var i=1;i<=6;i++){
-    data['fala_'+i]=document.getElementById('fala_'+i).value.trim();
-    data['pergunta_'+i]=document.getElementById('pergunta_'+i).value.trim();
-  }
-  firebase.firestore().collection('lider_f2_3').add(data).then(function(){
-    localStorage.setItem('lider_whatsapp',wa);
-    mostrarMsg('Atividade enviada com sucesso!','ok');
-  }).catch(function(){
-    mostrarMsg('Erro ao enviar. Tente novamente.','err');
+}
+
+function renderBlocos() {
+  var cont = document.getElementById('participantes-container');
+  cont.innerHTML = '';
+  participantes.forEach(function(p, idx) {
+    var bloco = document.createElement('div');
+    bloco.id = 'part-bloco-' + idx;
+    bloco.className = 'participante-bloco' + (idx === abaAtiva ? ' ativo' : '');
+
+    var html = '<div class="part-header">' +
+      '<div><label>Nome do participante</label><input type="text" class="part-nome" value="' + esc(p.nome) + '" placeholder="Nome completo" oninput="atualizarNomeTab(' + idx + ',this.value)"></div>' +
+      '<div><label>WhatsApp</label><input type="tel" class="part-wa" value="' + esc(p.whatsapp) + '" placeholder="(00) 00000-0000"></div>' +
+    '</div>';
+
+    for (var i = 0; i < 6; i++) {
+      html += '<div class="pratica-row">' +
+        '<div class="pratica-num">Situação ' + (i + 1) + '</div>' +
+        '<div class="pratica-fields">' +
+          '<div><label>Fala / Situação limitante</label><input type="text" class="fala-' + i + '" value="' + esc(p.situacoes[i].fala) + '" placeholder="Ex: Por que você não terminou?"></div>' +
+          '<div><label>Minha pergunta "O que" ou "Como"</label><input type="text" class="pergunta-' + i + '" value="' + esc(p.situacoes[i].pergunta) + '" placeholder="Ex: O que impediu a conclusão?"></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    html += '<div style="margin-top:14px">' +
+      '<label>Como vou aplicar isso com minha equipe esta semana:</label>' +
+      '<textarea class="part-aplicacao" placeholder="Descreva como vai usar perguntas poderosas na prática...">' + esc(p.aplicacao) + '</textarea>' +
+    '</div>';
+
+    bloco.innerHTML = html;
+    cont.appendChild(bloco);
+    // microfone no textarea de aplicação
+    initVozEm(bloco.querySelector('.part-aplicacao'));
   });
 }
 
-function mostrarMsg(txt,tipo){
-  var m=document.getElementById('msg');
-  m.textContent=txt;
-  m.className='msg '+tipo;
-  m.style.display='block';
-  setTimeout(function(){m.style.display='none';},4000);
+function atualizarNomeTab(idx, val) {
+  participantes[idx].nome = val;
+  var tabs = document.getElementById('trio-tabs');
+  var tab = tabs.querySelectorAll('.trio-tab:not(.btn-add)')[idx];
+  if (tab) { tab.firstChild.textContent = val || 'Participante ' + (idx + 1); }
 }
 
-window.onload=function(){
-  var LOGO_LUCIA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
-  var el=document.getElementById('logo-lucia');
-  el.src=LOGO_LUCIA; el.style.display='block';
+function removerParticipante(idx) {
+  if (participantes.length <= 1) return;
+  salvarEstadoAtual();
+  participantes.splice(idx, 1);
+  if (abaAtiva >= participantes.length) abaAtiva = participantes.length - 1;
+  renderTabs();
+  renderBlocos();
+}
 
-  if(!firebase.apps.length){
+function esc(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function coletarDados() {
+  salvarEstadoAtual();
+  return participantes.map(function(p) {
+    var cont = document.getElementById('part-bloco-' + participantes.indexOf(p));
+    return p;
+  });
+}
+
+function gerarResumo() {
+  salvarEstadoAtual();
+  var linhas = ['🌱 *PERGUNTAS PODEROSAS — Resumo do Trio*', ''];
+  participantes.forEach(function(p, idx) {
+    linhas.push('👤 *' + (p.nome || 'Participante ' + (idx + 1)) + '*');
+    var temSituacao = false;
+    p.situacoes.forEach(function(s, i) {
+      if (s.fala || s.pergunta) {
+        temSituacao = true;
+        linhas.push('  Situação ' + (i + 1) + ':');
+        if (s.fala) linhas.push('  ❌ Fala: ' + s.fala);
+        if (s.pergunta) linhas.push('  ✅ Pergunta: ' + s.pergunta);
+      }
+    });
+    if (!temSituacao) linhas.push('  (sem situações preenchidas)');
+    if (p.aplicacao) linhas.push('  📌 Compromisso: ' + p.aplicacao);
+    linhas.push('');
+  });
+  linhas.push('_Enviado via Líd@r 5.0 — Dra. Lucia Kratz_');
+  var texto = linhas.join('\n');
+  var resumoEl = document.getElementById('resumo-trio');
+  resumoEl.textContent = texto;
+  resumoEl.style.display = 'block';
+  return texto;
+}
+
+function enviarWhatsApp() {
+  var texto = gerarResumo();
+  var wa = document.getElementById('wa-destino').value.trim().replace(/\D/g,'');
+  if (!wa) { mostrarMsg('Informe o WhatsApp de destino.', 'err'); return; }
+  var url = 'https://wa.me/55' + wa + '?text=' + encodeURIComponent(texto);
+  window.open(url, '_blank');
+}
+
+function enviarFirestore() {
+  salvarEstadoAtual();
+  var validos = participantes.filter(function(p){ return p.nome.trim(); });
+  if (validos.length === 0) { mostrarMsg('Preencha o nome de pelo menos um participante.', 'err'); return; }
+  var data = {
+    participantes: JSON.stringify(participantes),
+    total_participantes: participantes.length,
+    nomes: participantes.map(function(p){ return p.nome; }).join(', '),
+    wa_destino: document.getElementById('wa-destino').value.trim(),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  firebase.firestore().collection('lider_f2_3').add(data).then(function(){
+    mostrarMsg('Atividade do trio salva com sucesso!', 'ok');
+  }).catch(function(){
+    mostrarMsg('Erro ao salvar. Tente novamente.', 'err');
+  });
+}
+
+function mostrarMsg(txt, tipo) {
+  var m = document.getElementById('msg');
+  m.textContent = txt;
+  m.className = 'msg ' + tipo;
+  m.style.display = 'block';
+  setTimeout(function(){ m.style.display = 'none'; }, 4000);
+}
+
+// ── Microfone ──
+function initVozEm(ta) {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR || !ta) return;
+  if (ta.getAttribute('data-voz')) return;
+  ta.setAttribute('data-voz', '1');
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;display:block';
+  ta.parentNode.insertBefore(wrap, ta);
+  wrap.appendChild(ta);
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.innerHTML = '🎙️'; btn.title = 'Falar para digitar';
+  btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+  wrap.appendChild(btn);
+  ta.style.paddingRight = '36px';
+  var dot = document.createElement('div');
+  dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+  dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
+  wrap.appendChild(dot);
+  var rec = null, gravando = false;
+  btn.addEventListener('click', function() {
+    if (gravando) {
+      if (rec) rec.stop(); gravando = false;
+      btn.style.background = '#f3e6ff'; btn.style.color = '#7B00C4';
+      btn.style.boxShadow = 'none'; dot.style.display = 'none'; return;
+    }
+    rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = true;
+    rec.onresult = function(e) {
+      var t = Array.from(e.results).map(function(r){ return r[0].transcript; }).join(' ');
+      var base = ta.value.replace(/\s*\[\.\.\.]+$/, '').trimEnd();
+      ta.value = base ? base + ' ' + t : t;
+    };
+    rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+    rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+    rec.start(); gravando = true;
+    btn.style.background = '#7B00C4'; btn.style.color = 'white';
+    btn.style.boxShadow = '0 0 0 3px #7B00C430'; dot.style.display = 'flex';
+  });
+}
+
+window.onload = function() {
+  var el = document.getElementById('logo-lucia');
+  el.src = LOGO_LUCIA; el.style.display = 'block';
+
+  if (!firebase.apps.length) {
     firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
   }
-  var db=firebase.firestore();
-  db.doc('lider_config/tema').get().then(function(doc){
-    if(doc.exists&&doc.data().logoParceiro){
-      var lp=document.getElementById('logo-cbco');
-      lp.src=doc.data().logoParceiro; lp.style.display='block';
+  firebase.firestore().doc('lider_config/tema').get().then(function(doc){
+    if (doc.exists && doc.data().logoParceiro) {
+      var lp = document.getElementById('logo-cbco');
+      lp.src = doc.data().logoParceiro; lp.style.display = 'block';
     }
   }).catch(function(){});
 
-  var wa=localStorage.getItem('lider_whatsapp');
-  if(wa){var w=document.getElementById('whatsapp');if(w)w.value=wa;}
+  // Inicia com 3 participantes
+  participantes = [criarParticipante(), criarParticipante(), criarParticipante()];
+  abaAtiva = 0;
+  renderTabs();
+  renderBlocos();
 
-  buildPratica();
+  var wa = localStorage.getItem('lider_whatsapp');
+  if (wa) { var w = document.getElementById('wa-destino'); if (w) w.value = wa; }
 };
 </script>
 </body>
