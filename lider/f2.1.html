@@ -37,6 +37,36 @@ textarea{resize:vertical;min-height:70px}
 .msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 /* Badge automático */
 .auto-badge{display:inline-block;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;background:#dcfce7;color:#15803d;border:1px solid #86efac}
+/* Cards de resultado */
+.result-card{border-radius:10px;padding:16px 18px;margin-bottom:4px}
+.result-card.pf{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac}
+.result-card.gap{background:linear-gradient(135deg,#fffbeb,#fef9c3);border:1px solid #fde047}
+.result-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #0000000a}
+.result-item:last-child{border-bottom:none;padding-bottom:0}
+.result-rank{min-width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0}
+.pf .result-rank{background:#16a34a;color:#fff}
+.gap .result-rank{background:#d97706;color:#fff}
+.result-nome{font-size:0.92rem;font-weight:700;color:#1a2e1a;margin-bottom:2px}
+.result-nivel{font-size:0.78rem;font-weight:600;margin-bottom:4px}
+.pf .result-nivel{color:#15803d}
+.gap .result-nivel{color:#92400e}
+.result-desc{font-size:0.8rem;color:#4b5563;line-height:1.5}
+.result-empty{font-size:0.85rem;color:#9ca3af;text-align:center;padding:18px 0}
+/* Barra de nível */
+.nivel-bar{height:6px;border-radius:3px;margin-top:4px;background:#e5e7eb}
+.nivel-fill{height:100%;border-radius:3px}
+.pf .nivel-fill{background:linear-gradient(90deg,#16a34a,#4ade80)}
+.gap .nivel-fill{background:linear-gradient(90deg,#d97706,#fbbf24)}
+/* Compromisso estruturado */
+.compromisso-bloco{background:#f8faff;border:1px solid #c7d2fe;border-radius:10px;padding:16px;margin-bottom:12px}
+.compromisso-bloco .bloco-titulo{font-size:0.78rem;font-weight:800;color:#3730a3;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:540px){.comp-grid{grid-template-columns:1fr}}
+.grau-row{display:flex;gap:8px;flex-wrap:wrap}
+.grau-btn{flex:1;min-width:70px;padding:8px 4px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;text-align:center;transition:all .2s;color:#6b7280}
+.grau-btn.sel-alta{border-color:#dc2626;background:#fef2f2;color:#dc2626}
+.grau-btn.sel-media{border-color:#d97706;background:#fffbeb;color:#d97706}
+.grau-btn.sel-baixa{border-color:#16a34a;background:#f0fdf4;color:#16a34a}
 </style>
 </head>
 <body>
@@ -89,20 +119,34 @@ textarea{resize:vertical;min-height:70px}
     <div id="chars-container"></div>
   </div>
 
-  <div class="card">
-    <div class="section-title">Minha Análise</div>
-    <div class="analise-row">
-      <label>Meus 3 maiores pontos fortes: <span class="auto-badge" id="badge-pf" style="display:none">✦ preenchido automaticamente</span></label>
-      <textarea id="pontos_fortes" placeholder="Preencha as notas acima — os 3 maiores pontos fortes aparecerão aqui automaticamente." style="min-height:80px"></textarea>
+  <div class="card" id="card-analise" style="display:none">
+    <div class="section-title">📊 Meu Diagnóstico de Liderança</div>
+
+    <div style="margin-bottom:18px">
+      <label style="margin-bottom:8px">🌟 Meus 3 Maiores Pontos Fortes <span class="auto-badge">✦ automático</span></label>
+      <div class="result-card pf" id="result-pf">
+        <div class="result-empty">Preencha as notas acima para ver seu diagnóstico.</div>
+      </div>
     </div>
-    <div class="analise-row">
-      <label>Meus 3 GAPs prioritários: <span class="auto-badge" id="badge-gap" style="display:none;background:#fef9c3;color:#92400e;border-color:#fde047">✦ preenchido automaticamente</span></label>
-      <textarea id="gaps" placeholder="Preencha as notas acima — os 3 GAPs prioritários aparecerão aqui automaticamente." style="min-height:80px"></textarea>
+
+    <div style="margin-bottom:18px">
+      <label style="margin-bottom:8px">🎯 Meus 3 GAPs Prioritários <span class="auto-badge" style="background:#fef9c3;color:#92400e;border-color:#fde047">✦ automático</span></label>
+      <div class="result-card gap" id="result-gap">
+        <div class="result-empty">Preencha as notas acima para ver seus GAPs.</div>
+      </div>
     </div>
-    <div class="analise-row">
-      <label>Meu compromisso de desenvolvimento:</label>
-      <textarea id="compromisso" placeholder="Que ação concreta você vai tomar para desenvolver seus GAPs?"></textarea>
-    </div>
+
+    <!-- Campo oculto para envio -->
+    <input type="hidden" id="pontos_fortes">
+    <input type="hidden" id="gaps">
+  </div>
+
+  <div class="card" id="card-compromisso" style="display:none">
+    <div class="section-title">🚀 Meu Plano de Desenvolvimento</div>
+    <p style="font-size:0.83rem;color:#6b7280;margin-bottom:16px">Para cada GAP prioritário, defina uma ação concreta com prazo e prioridade.</p>
+
+    <div id="compromissos-container"></div>
+
     <button class="btn-enviar" onclick="enviar()">Enviar Autodiagnóstico</button>
     <div class="msg" id="msg"></div>
   </div>
@@ -118,9 +162,20 @@ var CARACTERISTICAS = [
   'Colaboração Intergeracional','Resiliência','Propósito e Significado'
 ];
 
-// Controla se o usuário editou manualmente os campos de análise
-var pfEditado = false;
-var gapEditado = false;
+// (pfEditado/gapEditado removidos — campos são agora hidden e readonly)
+// Descrições explicativas por nível
+var DESC_NIVEL = {
+  1: 'Nível inicial — área que ainda está em desenvolvimento e requer atenção prioritária.',
+  2: 'Nível básico — fundamentos presentes, mas com grandes oportunidades de crescimento.',
+  3: 'Nível médio — competência funcional, porém ainda abaixo do potencial máximo.',
+  4: 'Nível avançado — ponto de força relevante; pequenos ajustes podem elevar ainda mais.',
+  5: 'Ponto forte consolidado — diferencial de liderança, use para influenciar e desenvolver outros.'
+};
+var DESC_GAP = {
+  1: 'GAP crítico — desenvolver esta característica é urgente para sua efetividade como líder.',
+  2: 'GAP significativo — investimento consistente aqui trará retorno rápido no seu desempenho.',
+  3: 'Oportunidade de melhoria — está no caminho certo, mas há espaço real para avançar.'
+};
 
 function buildChars(){
   var c = document.getElementById('chars-container');
@@ -142,9 +197,7 @@ function buildChars(){
       '<div class="char-ev"><input type="text" id="ev_'+n+'" placeholder="Evidência ou exemplo..."></div>';
     c.appendChild(row);
   });
-  // Detecta edição manual nos campos de análise
-  document.getElementById('pontos_fortes').addEventListener('input', function(){ pfEditado = true; });
-  document.getElementById('gaps').addEventListener('input', function(){ gapEditado = true; });
+  // campos pontos_fortes e gaps agora são hidden, preenchidos via JS
 }
 
 function calcMedia(){
@@ -198,34 +251,102 @@ function calcMedia(){
       if(row){ row.style.background = '#fef9c3'; row.style.borderColor = '#fde047'; }
     });
 
-    // Preenche pontos fortes (se não foi editado manualmente)
-    if(!pfEditado){
-      var textoPF = top3.map(function(it, idx){
-        return (idx+1)+'. '+it.nome+' (nível '+it.valor+'/5)';
-      }).join('\n');
-      document.getElementById('pontos_fortes').value = textoPF;
-      document.getElementById('badge-pf').style.display = 'inline-block';
-    }
+    // Renderiza cards de resultado
+    var pfEl = document.getElementById('result-pf');
+    var gapEl = document.getElementById('result-gap');
 
-    // Preenche GAPs (se não foi editado manualmente)
-    if(!gapEditado){
-      var textoGAP = gap3.map(function(it, idx){
-        return (idx+1)+'. '+it.nome+' (nível '+it.valor+'/5) — desenvolver';
-      }).join('\n');
-      document.getElementById('gaps').value = textoGAP;
-      document.getElementById('badge-gap').style.display = 'inline-block';
-    }
+    pfEl.innerHTML = top3.map(function(it, idx){
+      var pct = (it.valor/5*100)+'%';
+      var desc = DESC_NIVEL[it.valor] || '';
+      return '<div class="result-item">'+
+        '<div class="result-rank">'+(idx+1)+'</div>'+
+        '<div style="flex:1">'+
+          '<div class="result-nome">'+it.nome+'</div>'+
+          '<div class="result-nivel">Nível '+it.valor+'/5 — '+['','Início','Básico','Médio','Avançado','Forte'][it.valor]+'</div>'+
+          '<div class="nivel-bar"><div class="nivel-fill" style="width:'+pct+'"></div></div>'+
+          '<div class="result-desc">'+desc+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    gapEl.innerHTML = gap3.map(function(it, idx){
+      var pct = (it.valor/5*100)+'%';
+      var desc = DESC_GAP[it.valor] || DESC_NIVEL[it.valor] || '';
+      return '<div class="result-item">'+
+        '<div class="result-rank">'+(idx+1)+'</div>'+
+        '<div style="flex:1">'+
+          '<div class="result-nome">'+it.nome+'</div>'+
+          '<div class="result-nivel">Nível '+it.valor+'/5 — requer desenvolvimento</div>'+
+          '<div class="nivel-bar"><div class="nivel-fill" style="width:'+pct+'"></div></div>'+
+          '<div class="result-desc">'+desc+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    // Campos ocultos para envio
+    document.getElementById('pontos_fortes').value = top3.map(function(it,idx){ return (idx+1)+'. '+it.nome+' (nível '+it.valor+'/5)'; }).join('; ');
+    document.getElementById('gaps').value = gap3.map(function(it,idx){ return (idx+1)+'. '+it.nome+' (nível '+it.valor+'/5)'; }).join('; ');
+
+    // Mostra os cards e gera blocos de compromisso
+    document.getElementById('card-analise').style.display = 'block';
+    document.getElementById('card-compromisso').style.display = 'block';
+    gerarCompromissos(gap3);
+
   } else {
-    // Menos de 3 notas: limpa os campos automáticos (se não foram editados)
-    if(!pfEditado){
-      document.getElementById('pontos_fortes').value = '';
-      document.getElementById('badge-pf').style.display = 'none';
-    }
-    if(!gapEditado){
-      document.getElementById('gaps').value = '';
-      document.getElementById('badge-gap').style.display = 'none';
-    }
+    document.getElementById('result-pf').innerHTML = '<div class="result-empty">Preencha pelo menos 3 características para ver seu diagnóstico.</div>';
+    document.getElementById('result-gap').innerHTML = '<div class="result-empty">Preencha pelo menos 3 características para ver seus GAPs.</div>';
+    document.getElementById('card-analise').style.display = 'none';
+    document.getElementById('card-compromisso').style.display = 'none';
   }
+}
+
+function gerarCompromissos(gaps){
+  var cont = document.getElementById('compromissos-container');
+  // Mantém valores já digitados
+  var existentes = {};
+  cont.querySelectorAll('.compromisso-bloco').forEach(function(bl){
+    var idx = bl.getAttribute('data-idx');
+    existentes[idx] = {
+      acao: bl.querySelector('.comp-acao') ? bl.querySelector('.comp-acao').value : '',
+      inicio: bl.querySelector('.comp-inicio') ? bl.querySelector('.comp-inicio').value : '',
+      termino: bl.querySelector('.comp-termino') ? bl.querySelector('.comp-termino').value : '',
+      grau: bl.querySelector('.grau-btn.sel-alta') ? 'alta' : bl.querySelector('.grau-btn.sel-media') ? 'media' : bl.querySelector('.grau-btn.sel-baixa') ? 'baixa' : ''
+    };
+  });
+  cont.innerHTML = '';
+  gaps.forEach(function(gap, idx){
+    var ex = existentes[idx] || {};
+    var bl = document.createElement('div');
+    bl.className = 'compromisso-bloco';
+    bl.setAttribute('data-idx', idx);
+    bl.innerHTML =
+      '<div class="bloco-titulo">GAP '+(idx+1)+': '+gap.nome+' (nível '+gap.valor+'/5)</div>'+
+      '<div style="margin-bottom:10px">'+
+        '<label style="margin-bottom:4px">Ação concreta de desenvolvimento</label>'+
+        '<textarea class="comp-acao" placeholder="Ex: Participar de um curso de '+gap.nome+', buscar mentoria, praticar diariamente..." style="min-height:60px">'+( ex.acao||'')+'</textarea>'+
+      '</div>'+
+      '<div class="comp-grid" style="margin-bottom:10px">'+
+        '<div><label style="margin-bottom:4px">Data de início</label><input type="date" class="comp-inicio" value="'+(ex.inicio||'')+'"></div>'+
+        '<div><label style="margin-bottom:4px">Data de conclusão</label><input type="date" class="comp-termino" value="'+(ex.termino||'')+'"></div>'+
+      '</div>'+
+      '<div>'+
+        '<label style="margin-bottom:6px">Grau de importância</label>'+
+        '<div class="grau-row">'+
+          '<button type="button" class="grau-btn'+(ex.grau==='alta'?' sel-alta':'')+'" onclick="selecionarGrau(this,\'alta\')">🔴 Alta</button>'+
+          '<button type="button" class="grau-btn'+(ex.grau==='media'?' sel-media':'')+'" onclick="selecionarGrau(this,\'media\')">🟡 Média</button>'+
+          '<button type="button" class="grau-btn'+(ex.grau==='baixa'?' sel-baixa':'')+'" onclick="selecionarGrau(this,\'baixa\')">🟢 Baixa</button>'+
+        '</div>'+
+      '</div>';
+    cont.appendChild(bl);
+  });
+  // Reinicia microfone nos novos textareas do plano
+  cont.querySelectorAll('textarea').forEach(function(ta){ initVozEm(ta); });
+}
+
+function selecionarGrau(btn, grau){
+  var row = btn.closest('.grau-row');
+  row.querySelectorAll('.grau-btn').forEach(function(b){ b.className = 'grau-btn'; });
+  btn.classList.add('sel-'+grau);
 }
 
 function enviar(){
@@ -235,6 +356,18 @@ function enviar(){
     mostrarMsg('Preencha nome e WhatsApp antes de enviar.','err');
     return;
   }
+  // Coleta plano de compromisso
+  var plano = [];
+  document.querySelectorAll('.compromisso-bloco').forEach(function(bl, idx){
+    var grauBtn = bl.querySelector('.grau-btn.sel-alta') || bl.querySelector('.grau-btn.sel-media') || bl.querySelector('.grau-btn.sel-baixa');
+    plano.push({
+      gap: idx+1,
+      acao: bl.querySelector('.comp-acao') ? bl.querySelector('.comp-acao').value.trim() : '',
+      inicio: bl.querySelector('.comp-inicio') ? bl.querySelector('.comp-inicio').value : '',
+      termino: bl.querySelector('.comp-termino') ? bl.querySelector('.comp-termino').value : '',
+      grau: grauBtn ? (grauBtn.classList.contains('sel-alta') ? 'alta' : grauBtn.classList.contains('sel-media') ? 'media' : 'baixa') : ''
+    });
+  });
   var data = {
     nome: nome,
     whatsapp: wa,
@@ -242,7 +375,7 @@ function enviar(){
     setor: document.getElementById('setor').value.trim(),
     pontos_fortes: document.getElementById('pontos_fortes').value.trim(),
     gaps: document.getElementById('gaps').value.trim(),
-    compromisso: document.getElementById('compromisso').value.trim(),
+    plano_desenvolvimento: JSON.stringify(plano),
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
   var soma = 0, count = 0;
@@ -273,60 +406,63 @@ function mostrarMsg(txt, tipo){
 }
 
 // ── TextAreaVoz ──
-function initVoz(){
+function initVozEm(ta){
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR) return;
-  document.querySelectorAll('textarea').forEach(function(ta){
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative;display:block';
-    ta.parentNode.insertBefore(wrap, ta);
-    wrap.appendChild(ta);
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.innerHTML = '🎙️';
-    btn.title = 'Falar para digitar';
-    btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
-    wrap.appendChild(btn);
-    ta.style.paddingRight = '36px';
-    var dot = document.createElement('div');
-    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
-    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
-    wrap.appendChild(dot);
-    var rec = null;
-    var gravando = false;
-    btn.addEventListener('click', function(){
-      if(gravando){
-        if(rec) rec.stop();
-        gravando = false;
-        btn.style.background = '#f3e6ff';
-        btn.style.color = '#7B00C4';
-        btn.style.boxShadow = 'none';
-        dot.style.display = 'none';
-        return;
-      }
-      // Quando clica para gravar, marca como editado manualmente (pois irá falar)
-      if(ta.id === 'pontos_fortes') pfEditado = true;
-      if(ta.id === 'gaps') gapEditado = true;
-      if(ta.id === 'compromisso') {} // sem flag
-      rec = new SR();
-      rec.lang = 'pt-BR';
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.onresult = function(e){
-        var t = Array.from(e.results).map(function(r){ return r[0].transcript; }).join(' ');
-        var base = ta.value.replace(/\s*\[\.\.\.]+$/, '').trimEnd();
-        ta.value = base ? base + ' ' + t : t;
-      };
-      rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
-      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
-      rec.start();
-      gravando = true;
-      btn.style.background = '#7B00C4';
-      btn.style.color = 'white';
-      btn.style.boxShadow = '0 0 0 3px #7B00C430';
-      dot.style.display = 'flex';
-    });
+  if(ta.getAttribute('data-voz')) return; // já iniciado
+  ta.setAttribute('data-voz','1');
+  var wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;display:block';
+  ta.parentNode.insertBefore(wrap, ta);
+  wrap.appendChild(ta);
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.innerHTML = '🎙️';
+  btn.title = 'Falar para digitar';
+  btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+  wrap.appendChild(btn);
+  ta.style.paddingRight = '36px';
+  var dot = document.createElement('div');
+  dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+  dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
+  wrap.appendChild(dot);
+  var rec = null;
+  var gravando = false;
+  btn.addEventListener('click', function(){
+    if(gravando){
+      if(rec) rec.stop();
+      gravando = false;
+      btn.style.background = '#f3e6ff';
+      btn.style.color = '#7B00C4';
+      btn.style.boxShadow = 'none';
+      dot.style.display = 'none';
+      return;
+    }
+    rec = new SR();
+    rec.lang = 'pt-BR';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = function(e){
+      var t = Array.from(e.results).map(function(r){ return r[0].transcript; }).join(' ');
+      var base = ta.value.replace(/\s*\[\.\.\.]+$/, '').trimEnd();
+      ta.value = base ? base + ' ' + t : t;
+    };
+    rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+    rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+    rec.start();
+    gravando = true;
+    btn.style.background = '#7B00C4';
+    btn.style.color = 'white';
+    btn.style.boxShadow = '0 0 0 3px #7B00C430';
+    dot.style.display = 'flex';
   });
+}
+
+function initVoz(){
+  // Microfone apenas nos textareas de evidência (nas 15 características)
+  // Os textareas de compromisso são iniciados dinamicamente em gerarCompromissos()
+  document.querySelectorAll('.char-ev input').forEach(function(){ }); // inputs não recebem voz
+  // Não iniciamos voz nos campos pontos_fortes/gaps (agora são hidden)
 }
 
 window.onload = function(){
