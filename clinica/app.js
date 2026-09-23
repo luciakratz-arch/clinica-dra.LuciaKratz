@@ -1791,6 +1791,7 @@ function FerramentaPortal({ recurso, user }){
   if(k==="roda-vida-integral"&&typeof FerramentaRodaVidaIntegral!=="undefined")  return <FerramentaRodaVidaIntegral user={user}/>;
   if(k==="emotional-eating")       return <FerramentaRastreamento user={user}/>;
   if(k==="treino-neuro-auditivo")  return <FerramentaTreino user={user}/>;
+  if(k==="baralho-distorcoes")     return <FerramentaBaralhoDistorcoes user={user}/>;
 
 
   // ── Fábulas com campo "paginas" (array) ──────────────────────────
@@ -6450,6 +6451,708 @@ function FerramentaMuralHabilidades({ user }) {
     </div>
   );
 }
+
+
+// ── Baralho das Distorções Cognitivas ─────────────────────────────────────────
+// formularioKey: "baralho-distorcoes"  |  categoria: macro_ansiedade
+// Coleção Firestore: clinica_baralho_distorcoes
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FerramentaBaralhoDistorcoes({ user }) {
+  const INFO_REC = { titulo: "Baralho das Distorções Cognitivas", formularioKey: "baralho-distorcoes" };
+
+  const CATEGORIAS = [
+    {
+      id: "desvalor",
+      nome: "Desvalor",
+      emoji: "🔴",
+      cor: "#C0392B",
+      bg: "#fdf2f2",
+      bgGrad: "linear-gradient(135deg,#C0392B,#e74c3c)",
+      desc: "Crenças de que não tenho valor como pessoa",
+      frases: [
+        "Eu nunca faço nada certo.",
+        "Não tenho valor como pessoa.",
+        "Sou um fardo para as pessoas ao meu redor.",
+        "Qualquer um faria melhor do que eu.",
+        "Não mereço as coisas boas que acontecem na minha vida.",
+        "Sou inferior aos outros.",
+        "Meus erros me definem para sempre.",
+        "Não tenho nada de especial para oferecer.",
+        "Quando me conhecem de verdade, acabam me rejeitando.",
+        "Preciso ser perfeito para ter algum valor.",
+      ]
+    },
+    {
+      id: "desamor",
+      nome: "Desamor",
+      emoji: "🔵",
+      cor: "#1A5276",
+      bg: "#eaf1f8",
+      bgGrad: "linear-gradient(135deg,#1A5276,#2e86c1)",
+      desc: "Crenças de que não sou amado ou amável",
+      frases: [
+        "Ninguém me ama de verdade.",
+        "Sou difícil de amar.",
+        "As pessoas só ficam perto de mim por interesse.",
+        "Não mereço um amor verdadeiro.",
+        "Sempre vou terminar sozinho.",
+        "Quando me mostro como sou, as pessoas se afastam.",
+        "Nunca serei prioridade para ninguém.",
+        "O amor que recebo sempre tem um preço.",
+        "As pessoas que dizem me amar vão embora cedo ou tarde.",
+        "Sou muito intenso/complicado para ser amado.",
+      ]
+    },
+    {
+      id: "desamparo",
+      nome: "Desamparo",
+      emoji: "🟣",
+      cor: "#6C3483",
+      bg: "#f5eeff",
+      bgGrad: "linear-gradient(135deg,#6C3483,#9b59b6)",
+      desc: "Crenças de que não tenho controle ou suporte",
+      frases: [
+        "Não adianta tentar, as coisas nunca mudam.",
+        "Não tenho controle sobre o que acontece na minha vida.",
+        "Sempre vou precisar dos outros para sobreviver.",
+        "Não consigo me proteger sozinho.",
+        "O mundo é perigoso e eu estou sozinho nele.",
+        "Não importa o que eu faça, sempre dá errado.",
+        "Sou impotente diante dos meus problemas.",
+        "Ninguém vai me ajudar quando eu precisar de verdade.",
+        "Fui feito para sofrer.",
+        "Não tenho forças para mudar minha situação.",
+      ]
+    }
+  ];
+
+  const PERGUNTAS_SOCRATICAS = {
+    desvalor: [
+      "Que evidências reais você tem de que isso é verdade?",
+      "Você julgaria um amigo da mesma forma que se julga?",
+      "O que diria sobre você alguém que te conhece bem e te ama?",
+      "Que qualidades suas você costuma ignorar quando pensa isso?",
+      "Existe alguma situação em que você provou que essa crença está errada?",
+    ],
+    desamor: [
+      "Existem pessoas na sua vida que demonstram cuidado por você?",
+      "O que tornaria alguém 'digno' de ser amado, na sua visão?",
+      "Você aplicaria esse critério a alguém que você ama?",
+      "Que experiências antigas podem ter ensinado essa crença?",
+      "Como seria sua vida se acreditasse que merece amor?",
+    ],
+    desamparo: [
+      "Houve algum momento em que as coisas realmente mudaram na sua vida?",
+      "Quais recursos internos você tem que te ajudaram antes?",
+      "O que você poderia fazer, mesmo que pequeno, para se sentir mais em controle?",
+      "Quem poderia ser um apoio real para você agora?",
+      "Se um amigo te dissesse isso, o que você responderia?",
+    ]
+  };
+
+  // ── Estados ──────────────────────────────────────────────────────────────────
+  const [tela, setTela] = React.useState("intro"); // intro | selecao | ordenacao | sessao | concluido
+  const [categoriaSel, setCategoriaSel] = React.useState(null);
+  const [frasesSelecionadas, setFrasesSelecionadas] = React.useState([]); // [{categoriaId, frase}]
+  const [ordenadas, setOrdenadas] = React.useState([]); // mesma estrutura, ordenada por influência
+  const [sessaoIdx, setSessaoIdx] = React.useState(0); // qual frase está em sessão
+  const [etapaSessao, setEtapaSessao] = React.useState(0); // 0=frase, 1=perguntas, 2=reflexao
+  const [respostas, setRespostas] = React.useState({}); // {pergIdx: texto}
+  const [reflexaoFinal, setReflexaoFinal] = React.useState("");
+  const [salvando, setSalvando] = React.useState(false);
+  const [msgSalvo, setMsgSalvo] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
+  const [historico, setHistorico] = React.useState(null); // sessão salva anterior
+  const [modoHistorico, setModoHistorico] = React.useState(false);
+  const [gravando, setGravando] = React.useState(false);
+  const mediaRecRef = React.useRef(null);
+
+  // ── Carregar histórico ao iniciar ─────────────────────────────────────────
+  React.useEffect(() => {
+    if (!user?.id) { setLoading(false); return; }
+    db.collection("clinica_baralho_distorcoes")
+      .where("pacienteId", "==", user.id)
+      .get()
+      .then(snap => {
+        if (!snap.empty) {
+          const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+          setHistorico(docs[0]);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [user?.id]);
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function getCat(id) { return CATEGORIAS.find(c => c.id === id); }
+
+  function toggleFrase(categoriaId, frase) {
+    setFrasesSelecionadas(prev => {
+      const existe = prev.find(f => f.categoriaId === categoriaId && f.frase === frase);
+      if (existe) return prev.filter(f => !(f.categoriaId === categoriaId && f.frase === frase));
+      return [...prev, { categoriaId, frase }];
+    });
+  }
+
+  function isSelecionada(categoriaId, frase) {
+    return !!frasesSelecionadas.find(f => f.categoriaId === categoriaId && f.frase === frase);
+  }
+
+  function iniciarOrdenacao() {
+    if (frasesSelecionadas.length === 0) { alert("Selecione pelo menos uma frase que você se identifica."); return; }
+    setOrdenadas([...frasesSelecionadas]);
+    setTela("ordenacao");
+  }
+
+  function moverItem(idx, dir) {
+    setOrdenadas(prev => {
+      const arr = [...prev];
+      const novo = idx + dir;
+      if (novo < 0 || novo >= arr.length) return arr;
+      const tmp = arr[idx]; arr[idx] = arr[novo]; arr[novo] = tmp;
+      return arr;
+    });
+  }
+
+  function iniciarSessao(hierarquia, startIdx = 0) {
+    setOrdenadas(hierarquia);
+    setSessaoIdx(startIdx);
+    setEtapaSessao(0);
+    setRespostas({});
+    setReflexaoFinal("");
+    setTela("sessao");
+  }
+
+  function continuarHistorico() {
+    if (!historico) return;
+    const hier = historico.hierarquia || [];
+    const concluidas = historico.concluidas || 0;
+    const nextIdx = concluidas < hier.length ? concluidas : 0;
+    iniciarSessao(hier, nextIdx);
+  }
+
+  function getPerguntasPara(item) {
+    const pool = PERGUNTAS_SOCRATICAS[item.categoriaId] || PERGUNTAS_SOCRATICAS.desvalor;
+    // Escolhe 3 aleatórias mas determinísticas (baseadas no índice da frase)
+    const fraseIdx = (CATEGORIAS.find(c => c.id === item.categoriaId)?.frases || []).indexOf(item.frase);
+    const seed = fraseIdx >= 0 ? fraseIdx : 0;
+    const perms = [0, 1, 2, 3, 4].sort((a, b) => ((a * 7 + seed) % 5) - ((b * 7 + seed) % 5));
+    return perms.slice(0, 3).map(i => pool[i]);
+  }
+
+  async function salvarSessao() {
+    setSalvando(true);
+    try {
+      const itemAtual = ordenadas[sessaoIdx];
+      const perguntas = getPerguntasPara(itemAtual);
+      const registro = {
+        pacienteId: user?.id || "anonimo",
+        pacienteNome: user?.nome || "",
+        hierarquia: ordenadas,
+        concluidas: sessaoIdx + 1,
+        sessaoAtual: {
+          idx: sessaoIdx,
+          frase: itemAtual.frase,
+          categoriaId: itemAtual.categoriaId,
+          perguntas,
+          respostas: perguntas.map((p, i) => ({ pergunta: p, resposta: respostas[i] || "" })),
+          reflexaoFinal,
+          data: new Date().toLocaleDateString("pt-BR"),
+        },
+        data: new Date().toLocaleDateString("pt-BR"),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      if (historico?.id) {
+        await db.collection("clinica_baralho_distorcoes").doc(historico.id).update(registro);
+      } else {
+        await db.collection("clinica_baralho_distorcoes").add(registro);
+      }
+      if (typeof registrarUsoRecurso === "function") {
+        registrarUsoRecurso(user, INFO_REC, "concluiu", { detalhe: `Sessão ${sessaoIdx + 1}: ${itemAtual.frase.substring(0, 40)}` });
+      }
+      setMsgSalvo("✅ Sessão salva!");
+      setTimeout(() => setTela("concluido"), 800);
+    } catch (e) {
+      alert("Erro ao salvar: " + e.message);
+    }
+    setSalvando(false);
+  }
+
+  function enviarWhatsApp() {
+    const itemAtual = ordenadas[sessaoIdx];
+    const perguntas = getPerguntasPara(itemAtual);
+    let txt = `🃏 *Baralho das Distorções Cognitivas*\n`;
+    txt += `📅 ${new Date().toLocaleDateString("pt-BR")}\n\n`;
+    txt += `*Crença trabalhada:*\n"${itemAtual.frase}"\n\n`;
+    txt += `*Categoria:* ${getCat(itemAtual.categoriaId)?.nome || ""}\n\n`;
+    txt += `*Reflexões:*\n`;
+    perguntas.forEach((p, i) => {
+      if (respostas[i]?.trim()) txt += `• ${p}\n  → ${respostas[i]}\n\n`;
+    });
+    if (reflexaoFinal.trim()) txt += `*Reflexão final:*\n${reflexaoFinal}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`, "_blank");
+  }
+
+  function iniciarGravacao(campo) {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      alert("Reconhecimento de voz não suportado neste navegador."); return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = "pt-BR"; rec.continuous = false; rec.interimResults = false;
+    rec.onresult = e => {
+      const txt = e.results[0][0].transcript;
+      if (campo === "reflexao") {
+        setReflexaoFinal(prev => prev + (prev ? " " : "") + txt);
+      } else {
+        setRespostas(prev => ({ ...prev, [campo]: (prev[campo] ? prev[campo] + " " : "") + txt }));
+      }
+      setGravando(false);
+    };
+    rec.onerror = () => setGravando(false);
+    rec.onend = () => setGravando(false);
+    mediaRecRef.current = rec;
+    setGravando(campo);
+    rec.start();
+  }
+
+  function pararGravacao() {
+    if (mediaRecRef.current) { mediaRecRef.current.stop(); }
+    setGravando(false);
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  if (loading) return React.createElement("div", {
+    style: { textAlign: "center", padding: 40, color: "#7B00C4" }
+  }, "Carregando...");
+
+  // INTRO
+  if (tela === "intro") {
+    return React.createElement("div", { style: { maxWidth: 540, margin: "0 auto", padding: "0 0 60px" } },
+      // Header
+      React.createElement("div", {
+        style: { background: "linear-gradient(135deg,#4c0094,#7B00C4)", borderRadius: "0 0 24px 24px",
+          padding: "32px 24px 40px", textAlign: "center", color: "white", marginBottom: 24 }
+      },
+        React.createElement("div", { style: { fontSize: 48, marginBottom: 8 } }, "🃏"),
+        React.createElement("div", { style: { fontSize: 22, fontWeight: 800, marginBottom: 6 } }, "Baralho das Distorções"),
+        React.createElement("div", { style: { fontSize: 14, opacity: 0.85 } }, "Identifique e trabalhe suas crenças limitantes")
+      ),
+      React.createElement("div", { style: { padding: "0 16px" } },
+        // Descrição
+        React.createElement("div", {
+          style: { background: "white", borderRadius: 16, padding: 20, marginBottom: 16,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.06)", fontSize: 14, color: "#374151", lineHeight: 1.7 }
+        },
+          React.createElement("p", { style: { margin: "0 0 10px", fontWeight: 600, color: "#7B00C4" } },
+            "Como funciona?"),
+          React.createElement("p", { style: { margin: "0 0 8px" } },
+            "1️⃣  Leia as frases e marque as que você se identifica"),
+          React.createElement("p", { style: { margin: "0 0 8px" } },
+            "2️⃣  Ordene da mais influente para a menos influente"),
+          React.createElement("p", { style: { margin: 0 } },
+            "3️⃣  A cada sessão, trabalhamos a crença mais influente com perguntas reflexivas")
+        ),
+        // Categorias resumo
+        CATEGORIAS.map(cat =>
+          React.createElement("div", {
+            key: cat.id,
+            style: { background: cat.bg, border: `2px solid ${cat.cor}20`, borderRadius: 12,
+              padding: "12px 16px", marginBottom: 10, display: "flex", alignItems: "center", gap: 12 }
+          },
+            React.createElement("div", {
+              style: { width: 14, height: 14, borderRadius: "50%", background: cat.cor, flexShrink: 0 }
+            }),
+            React.createElement("div", null,
+              React.createElement("div", { style: { fontWeight: 700, color: cat.cor, fontSize: 14 } }, cat.nome),
+              React.createElement("div", { style: { fontSize: 12, color: "#6b7280" } }, cat.desc)
+            )
+          )
+        ),
+        // Botão continuar histórico
+        historico && React.createElement("div", {
+          style: { background: "#f0fdf4", border: "2px solid #22c55e30", borderRadius: 14,
+            padding: "14px 16px", marginBottom: 16, marginTop: 8 }
+        },
+          React.createElement("div", { style: { fontWeight: 700, color: "#166534", fontSize: 14, marginBottom: 4 } },
+            "🔄 Você tem uma sessão em progresso"),
+          React.createElement("div", { style: { fontSize: 12, color: "#4b5563", marginBottom: 10 } },
+            `Próxima crença: #${(historico.concluidas || 0) + 1} de ${historico.hierarquia?.length || 0}`),
+          React.createElement("button", {
+            onClick: continuarHistorico,
+            style: { width: "100%", padding: "10px", borderRadius: 10, border: "none",
+              background: "#22c55e", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }
+          }, "Continuar de onde parei →")
+        ),
+        // Botão iniciar nova
+        React.createElement("button", {
+          onClick: () => setTela("selecao"),
+          style: { width: "100%", padding: "14px", borderRadius: 12, border: "none",
+            background: "linear-gradient(135deg,#4c0094,#7B00C4)", color: "white",
+            fontWeight: 700, fontSize: 16, cursor: "pointer", marginTop: 8 }
+        }, historico ? "Iniciar nova hierarquia" : "Começar agora →")
+      )
+    );
+  }
+
+  // SELEÇÃO
+  if (tela === "selecao") {
+    const cat = categoriaSel ? getCat(categoriaSel) : null;
+    return React.createElement("div", { style: { maxWidth: 540, margin: "0 auto", paddingBottom: 80 } },
+      // Header fixo
+      React.createElement("div", {
+        style: { background: cat ? cat.bgGrad : "linear-gradient(135deg,#4c0094,#7B00C4)",
+          padding: "20px 16px 20px", color: "white", position: "sticky", top: 0, zIndex: 10 }
+      },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } },
+          React.createElement("button", {
+            onClick: () => categoriaSel ? setCategoriaSel(null) : setTela("intro"),
+            style: { background: "rgba(255,255,255,0.2)", border: "none", color: "white",
+              borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 18 }
+          }, "←"),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 16, fontWeight: 800 } },
+              cat ? cat.nome : "Selecione suas frases"),
+            React.createElement("div", { style: { fontSize: 12, opacity: 0.85 } },
+              cat ? cat.desc : `${frasesSelecionadas.length} frases selecionadas`)
+          )
+        )
+      ),
+      // Seleção de categoria
+      !categoriaSel && React.createElement("div", { style: { padding: "20px 16px" } },
+        React.createElement("div", { style: { fontSize: 14, color: "#6b7280", marginBottom: 16, textAlign: "center" } },
+          "Escolha uma categoria para explorar as frases"),
+        CATEGORIAS.map(c =>
+          React.createElement("button", {
+            key: c.id,
+            onClick: () => setCategoriaSel(c.id),
+            style: { width: "100%", background: c.bg, border: `2px solid ${c.cor}40`,
+              borderRadius: 14, padding: "18px 16px", marginBottom: 12, cursor: "pointer",
+              textAlign: "left", display: "flex", alignItems: "center", gap: 14 }
+          },
+            React.createElement("div", {
+              style: { width: 16, height: 16, borderRadius: "50%", background: c.cor, flexShrink: 0 }
+            }),
+            React.createElement("div", null,
+              React.createElement("div", { style: { fontWeight: 700, color: c.cor, fontSize: 15 } }, c.nome),
+              React.createElement("div", { style: { fontSize: 12, color: "#6b7280", marginTop: 2 } },
+                `${frasesSelecionadas.filter(f => f.categoriaId === c.id).length} selecionadas de 10`)
+            ),
+            React.createElement("div", { style: { marginLeft: "auto", fontSize: 18, color: c.cor } }, "›")
+          )
+        ),
+        frasesSelecionadas.length > 0 && React.createElement("button", {
+          onClick: iniciarOrdenacao,
+          style: { width: "100%", padding: "14px", borderRadius: 12, border: "none",
+            background: "linear-gradient(135deg,#4c0094,#7B00C4)", color: "white",
+            fontWeight: 700, fontSize: 16, cursor: "pointer", marginTop: 8 }
+        }, `Ordenar por influência (${frasesSelecionadas.length}) →`)
+      ),
+      // Frases da categoria
+      categoriaSel && React.createElement("div", { style: { padding: "16px" } },
+        cat.frases.map((frase, i) => {
+          const sel = isSelecionada(cat.id, frase);
+          return React.createElement("button", {
+            key: i,
+            onClick: () => toggleFrase(cat.id, frase),
+            style: { width: "100%", background: sel ? cat.bg : "white",
+              border: `2px solid ${sel ? cat.cor : "#e5e7eb"}`,
+              borderRadius: 12, padding: "14px 14px 14px 44px", marginBottom: 10,
+              cursor: "pointer", textAlign: "left", position: "relative", lineHeight: 1.5,
+              fontSize: 14, color: sel ? "#1f2937" : "#4b5563", fontFamily: "inherit" }
+          },
+            React.createElement("div", {
+              style: { position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+                width: 22, height: 22, borderRadius: "50%",
+                background: sel ? cat.cor : "transparent",
+                border: `2px solid ${sel ? cat.cor : "#d1d5db"}`,
+                display: "flex", alignItems: "center", justifyContent: "center" }
+            }, sel && React.createElement("span", { style: { color: "white", fontSize: 12, fontWeight: 700 } }, "✓")),
+            React.createElement("span", null, frase)
+          );
+        }),
+        frasesSelecionadas.filter(f => f.categoriaId === cat.id).length > 0 &&
+          React.createElement("button", {
+            onClick: () => setCategoriaSel(null),
+            style: { width: "100%", padding: "12px", borderRadius: 12, border: "none",
+              background: cat.cor, color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer", marginTop: 8 }
+          }, "Voltar e ver mais categorias")
+      )
+    );
+  }
+
+  // ORDENAÇÃO
+  if (tela === "ordenacao") {
+    return React.createElement("div", { style: { maxWidth: 540, margin: "0 auto", paddingBottom: 80 } },
+      React.createElement("div", {
+        style: { background: "linear-gradient(135deg,#4c0094,#7B00C4)", padding: "20px 16px",
+          color: "white", position: "sticky", top: 0, zIndex: 10 }
+      },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } },
+          React.createElement("button", {
+            onClick: () => setTela("selecao"),
+            style: { background: "rgba(255,255,255,0.2)", border: "none", color: "white",
+              borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 18 }
+          }, "←"),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 16, fontWeight: 800 } }, "Ordene por influência"),
+            React.createElement("div", { style: { fontSize: 12, opacity: 0.85 } },
+              "A mais influente fica no topo (↑ = mais influente)")
+          )
+        )
+      ),
+      React.createElement("div", { style: { padding: "16px" } },
+        React.createElement("div", {
+          style: { background: "#fef9ff", border: "1px solid #e9d5ff", borderRadius: 12,
+            padding: 12, marginBottom: 16, fontSize: 13, color: "#6b21a8" }
+        }, "💡 Use os botões ↑ ↓ para mover cada crença. A #1 é a que mais influencia sua vida agora."),
+        ordenadas.map((item, i) => {
+          const cat = getCat(item.categoriaId);
+          return React.createElement("div", {
+            key: i,
+            style: { background: "white", border: `2px solid ${cat?.cor || "#e5e7eb"}30`,
+              borderRadius: 14, padding: "14px 12px", marginBottom: 10,
+              display: "flex", alignItems: "center", gap: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }
+          },
+            // Número
+            React.createElement("div", {
+              style: { minWidth: 32, height: 32, borderRadius: "50%", background: cat?.cor || "#7B00C4",
+                color: "white", fontWeight: 800, fontSize: 14, display: "flex",
+                alignItems: "center", justifyContent: "center", flexShrink: 0 }
+            }, i + 1),
+            // Frase
+            React.createElement("div", { style: { flex: 1, fontSize: 13, color: "#374151", lineHeight: 1.4 } },
+              React.createElement("div", { style: { fontSize: 11, color: cat?.cor, fontWeight: 700, marginBottom: 2 } },
+                cat?.nome?.toUpperCase()),
+              item.frase
+            ),
+            // Botões ordem
+            React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 } },
+              React.createElement("button", {
+                onClick: () => moverItem(i, -1), disabled: i === 0,
+                style: { width: 32, height: 32, borderRadius: 8, border: `1px solid ${cat?.cor || "#7B00C4"}40`,
+                  background: i === 0 ? "#f9fafb" : cat?.bg || "white", color: i === 0 ? "#d1d5db" : cat?.cor,
+                  fontWeight: 800, fontSize: 14, cursor: i === 0 ? "default" : "pointer", lineHeight: 1 }
+              }, "↑"),
+              React.createElement("button", {
+                onClick: () => moverItem(i, 1), disabled: i === ordenadas.length - 1,
+                style: { width: 32, height: 32, borderRadius: 8, border: `1px solid ${cat?.cor || "#7B00C4"}40`,
+                  background: i === ordenadas.length - 1 ? "#f9fafb" : cat?.bg || "white",
+                  color: i === ordenadas.length - 1 ? "#d1d5db" : cat?.cor,
+                  fontWeight: 800, fontSize: 14, cursor: i === ordenadas.length - 1 ? "default" : "pointer", lineHeight: 1 }
+              }, "↓")
+            )
+          );
+        }),
+        React.createElement("button", {
+          onClick: () => iniciarSessao(ordenadas, 0),
+          style: { width: "100%", padding: "14px", borderRadius: 12, border: "none",
+            background: "linear-gradient(135deg,#4c0094,#7B00C4)", color: "white",
+            fontWeight: 700, fontSize: 16, cursor: "pointer", marginTop: 8 }
+        }, "Iniciar sessão com a #1 →")
+      )
+    );
+  }
+
+  // SESSÃO
+  if (tela === "sessao") {
+    const itemAtual = ordenadas[sessaoIdx];
+    if (!itemAtual) { setTela("concluido"); return null; }
+    const cat = getCat(itemAtual.categoriaId);
+    const perguntas = getPerguntasPara(itemAtual);
+
+    return React.createElement("div", { style: { maxWidth: 540, margin: "0 auto", paddingBottom: 80 } },
+      // Header
+      React.createElement("div", {
+        style: { background: cat?.bgGrad || "linear-gradient(135deg,#4c0094,#7B00C4)",
+          padding: "20px 16px 28px", color: "white" }
+      },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 } },
+          React.createElement("button", {
+            onClick: () => setTela("ordenacao"),
+            style: { background: "rgba(255,255,255,0.2)", border: "none", color: "white",
+              borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 18 }
+          }, "←"),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 14, fontWeight: 800, opacity: 0.9 } },
+              cat?.nome + " — Crença #" + (sessaoIdx + 1)),
+            React.createElement("div", { style: { fontSize: 11, opacity: 0.75 } },
+              `${sessaoIdx + 1} de ${ordenadas.length} na sua hierarquia`)
+          )
+        ),
+        // Barra de etapa
+        React.createElement("div", { style: { display: "flex", gap: 6 } },
+          ["A crença", "Reflexão", "Finalizar"].map((label, i) =>
+            React.createElement("div", {
+              key: i,
+              style: { flex: 1, height: 4, borderRadius: 4,
+                background: i <= etapaSessao ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)" }
+            })
+          )
+        )
+      ),
+      React.createElement("div", { style: { padding: "20px 16px" } },
+        // ETAPA 0 — Frase
+        etapaSessao === 0 && React.createElement("div", null,
+          React.createElement("div", {
+            style: { background: cat?.bg || "#f5eeff", border: `2px solid ${cat?.cor || "#7B00C4"}30`,
+              borderRadius: 16, padding: "24px 20px", marginBottom: 20, textAlign: "center" }
+          },
+            React.createElement("div", { style: { fontSize: 32, marginBottom: 12 } }, "🃏"),
+            React.createElement("div", { style: { fontSize: 16, color: cat?.cor || "#7B00C4", fontWeight: 700, marginBottom: 12 } },
+              cat?.nome),
+            React.createElement("div", {
+              style: { fontSize: 17, color: "#1f2937", fontStyle: "italic", lineHeight: 1.6, fontWeight: 500 }
+            }, `"${itemAtual.frase}"`)
+          ),
+          React.createElement("div", {
+            style: { background: "white", borderRadius: 14, padding: 16,
+              border: "1px solid #e5e7eb", fontSize: 14, color: "#374151", lineHeight: 1.6, marginBottom: 20 }
+          },
+            React.createElement("div", { style: { fontWeight: 700, color: "#7B00C4", marginBottom: 8 } }, "Sobre essa sessão"),
+            React.createElement("p", { style: { margin: "0 0 8px" } },
+              "Vamos olhar com cuidado para essa crença. Ela não define quem você é — é apenas um padrão aprendido que pode ser transformado."),
+            React.createElement("p", { style: { margin: 0 } },
+              "Responda as perguntas a seguir no seu tempo, com honestidade.")
+          ),
+          React.createElement("button", {
+            onClick: () => setEtapaSessao(1),
+            style: { width: "100%", padding: "14px", borderRadius: 12, border: "none",
+              background: cat?.cor || "#7B00C4", color: "white", fontWeight: 700, fontSize: 15, cursor: "pointer" }
+          }, "Continuar →")
+        ),
+        // ETAPA 1 — Perguntas socráticas
+        etapaSessao === 1 && React.createElement("div", null,
+          React.createElement("div", {
+            style: { fontSize: 13, color: "#7B00C4", fontWeight: 700, textTransform: "uppercase",
+              letterSpacing: 0.5, marginBottom: 16 }
+          }, "Perguntas para reflexão"),
+          perguntas.map((pergunta, pi) =>
+            React.createElement("div", {
+              key: pi,
+              style: { background: "white", borderRadius: 14, padding: "16px",
+                marginBottom: 16, border: "1px solid #e5e7eb",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }
+            },
+              React.createElement("div", { style: { fontSize: 14, color: "#374151", fontWeight: 600, marginBottom: 10, lineHeight: 1.5 } },
+                `${pi + 1}. ${pergunta}`),
+              React.createElement("div", { style: { position: "relative" } },
+                React.createElement("textarea", {
+                  value: respostas[pi] || "",
+                  onChange: e => setRespostas(prev => ({ ...prev, [pi]: e.target.value })),
+                  placeholder: "Escreva sua resposta aqui...",
+                  rows: 3,
+                  style: { width: "100%", borderRadius: 10, border: "1.5px solid #e5e7eb",
+                    padding: "10px 44px 10px 12px", fontSize: 13, fontFamily: "inherit",
+                    resize: "none", outline: "none", lineHeight: 1.5, boxSizing: "border-box" }
+                }),
+                React.createElement("button", {
+                  onClick: () => gravando === pi ? pararGravacao() : iniciarGravacao(pi),
+                  style: { position: "absolute", right: 8, bottom: 8, width: 30, height: 30,
+                    borderRadius: "50%", border: "none", cursor: "pointer",
+                    background: gravando === pi ? "#ef4444" : cat?.cor || "#7B00C4",
+                    color: "white", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }
+                }, gravando === pi ? "⏹" : "🎤")
+              )
+            )
+          ),
+          React.createElement("button", {
+            onClick: () => setEtapaSessao(2),
+            style: { width: "100%", padding: "14px", borderRadius: 12, border: "none",
+              background: cat?.cor || "#7B00C4", color: "white", fontWeight: 700, fontSize: 15, cursor: "pointer" }
+          }, "Próximo →")
+        ),
+        // ETAPA 2 — Reflexão final + salvar
+        etapaSessao === 2 && React.createElement("div", null,
+          React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "#374151", marginBottom: 8 } },
+            "✨ Reflexão final"),
+          React.createElement("div", { style: { fontSize: 13, color: "#6b7280", marginBottom: 12, lineHeight: 1.5 } },
+            "Após pensar nessas perguntas, o que você percebe? Há alguma nova perspectiva sobre essa crença?"),
+          React.createElement("div", { style: { position: "relative", marginBottom: 20 } },
+            React.createElement("textarea", {
+              value: reflexaoFinal,
+              onChange: e => setReflexaoFinal(e.target.value),
+              placeholder: "O que você percebe agora sobre essa crença?",
+              rows: 5,
+              style: { width: "100%", borderRadius: 12, border: "1.5px solid #e5e7eb",
+                padding: "12px 44px 12px 14px", fontSize: 14, fontFamily: "inherit",
+                resize: "none", outline: "none", lineHeight: 1.6, boxSizing: "border-box" }
+            }),
+            React.createElement("button", {
+              onClick: () => gravando === "reflexao" ? pararGravacao() : iniciarGravacao("reflexao"),
+              style: { position: "absolute", right: 10, bottom: 10, width: 32, height: 32,
+                borderRadius: "50%", border: "none", cursor: "pointer",
+                background: gravando === "reflexao" ? "#ef4444" : cat?.cor || "#7B00C4",
+                color: "white", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }
+            }, gravando === "reflexao" ? "⏹" : "🎤")
+          ),
+          msgSalvo && React.createElement("div", {
+            style: { background: "#f0fdf4", color: "#166534", padding: 12, borderRadius: 10,
+              marginBottom: 12, fontSize: 14, textAlign: "center", fontWeight: 600 }
+          }, msgSalvo),
+          React.createElement("div", { style: { display: "flex", gap: 10 } },
+            React.createElement("button", {
+              onClick: enviarWhatsApp,
+              style: { flex: 1, padding: "12px", borderRadius: 12, border: "none",
+                background: "#25D366", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }
+            }, "📲 WhatsApp"),
+            React.createElement("button", {
+              onClick: salvarSessao, disabled: salvando,
+              style: { flex: 2, padding: "12px", borderRadius: 12, border: "none",
+                background: cat?.cor || "#7B00C4", color: "white", fontWeight: 700, fontSize: 14, cursor: "pointer" }
+            }, salvando ? "Salvando..." : "💾 Salvar sessão")
+          )
+        )
+      )
+    );
+  }
+
+  // CONCLUÍDO
+  if (tela === "concluido") {
+    const itemTrabalhado = ordenadas[sessaoIdx] || ordenadas[0];
+    const cat = getCat(itemTrabalhado?.categoriaId);
+    const proxIdx = sessaoIdx + 1;
+    const temProxima = proxIdx < ordenadas.length;
+    return React.createElement("div", { style: { maxWidth: 540, margin: "0 auto", padding: "0 16px 60px" } },
+      React.createElement("div", {
+        style: { background: "linear-gradient(135deg,#4c0094,#7B00C4)", borderRadius: "0 0 24px 24px",
+          padding: "40px 24px", textAlign: "center", color: "white", marginBottom: 24 }
+      },
+        React.createElement("div", { style: { fontSize: 56, marginBottom: 12 } }, "🌟"),
+        React.createElement("div", { style: { fontSize: 20, fontWeight: 800, marginBottom: 6 } }, "Sessão concluída!"),
+        React.createElement("div", { style: { fontSize: 14, opacity: 0.85 } },
+          "Você trabalhou com coragem suas crenças hoje.")
+      ),
+      React.createElement("div", {
+        style: { background: cat?.bg || "#f5eeff", border: `2px solid ${cat?.cor || "#7B00C4"}20`,
+          borderRadius: 14, padding: 16, marginBottom: 16, fontSize: 14, color: "#374151" }
+      },
+        React.createElement("div", { style: { fontWeight: 700, color: cat?.cor || "#7B00C4", marginBottom: 8 } },
+          "Crença trabalhada hoje:"),
+        React.createElement("div", { style: { fontStyle: "italic" } }, `"${itemTrabalhado?.frase}"`)
+      ),
+      temProxima && React.createElement("div", {
+        style: { background: "#fef9ff", border: "1px solid #e9d5ff", borderRadius: 14,
+          padding: 16, marginBottom: 16, fontSize: 14, color: "#6b21a8" }
+      },
+        React.createElement("div", { style: { fontWeight: 700, marginBottom: 6 } }, "⏭ Próxima sessão:"),
+        React.createElement("div", { style: { fontStyle: "italic", color: "#374151" } },
+          `"${ordenadas[proxIdx]?.frase}"`)
+      ),
+      React.createElement("button", {
+        onClick: () => { setTela("intro"); },
+        style: { width: "100%", padding: "14px", borderRadius: 12, border: "none",
+          background: "linear-gradient(135deg,#4c0094,#7B00C4)", color: "white",
+          fontWeight: 700, fontSize: 16, cursor: "pointer" }
+      }, "Voltar ao início")
+    );
+  }
+
+  return null;
+}
+
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App/>);
