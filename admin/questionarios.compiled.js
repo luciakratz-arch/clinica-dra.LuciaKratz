@@ -179,6 +179,128 @@ function AbaQuestionarios({
     paciente: paciente
   }));
 
+  // Helper: gerar URL do questionário (sem token, link direto com nome)
+  function getUrlQuestionario(tipo) {
+    const base = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+    const nome = encodeURIComponent(paciente.nome || "");
+    const mapa = {
+      rastreamento: `${base}/rastreamento/?paciente=${nome}`,
+      neuro: `${base}/rastreamento/neuro/?paciente=${nome}`,
+      alimentar: `${base}/rastreamento/alimentar/?paciente=${nome}`,
+      sexual: `${base}/rastreamento/sexual/?paciente=${nome}`,
+      dependencia: `${base}/rastreamento/dependencia/?paciente=${nome}`,
+      jogos: `${base}/rastreamento/jogos/?paciente=${nome}`
+    };
+    return mapa[tipo] || null;
+  }
+  function whatsappCard(tipo, emoji, nomeForm, duracao) {
+    const url = getUrlQuestionario(tipo);
+    if (!url) return;
+    const tel = (paciente.telefone || "").replace(/\D/g, "");
+    const msg = `Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico para você preencher.\n\n${emoji} *${nomeForm}*\nResponda com calma e honestidade — leva cerca de ${duracao}.\n\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    if (tel) {
+      window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, "_blank");
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+  }
+
+  // Componente de card com dois botões
+  function CardQ({
+    emoji,
+    titulo,
+    descricao,
+    corBg,
+    corText,
+    sub: subKey,
+    tipo,
+    nomeWa,
+    duracao,
+    cor
+  }) {
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        border: "1px solid var(--gray-200)",
+        borderRadius: 14,
+        padding: 18,
+        background: "white",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 28,
+        lineHeight: 1
+      }
+    }, emoji), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        fontSize: 13.5,
+        color: "var(--text-dark)",
+        marginBottom: 3
+      }
+    }, titulo), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11.5,
+        color: "var(--text-muted)",
+        lineHeight: 1.5
+      }
+    }, "Visualize as respostas ou envie o questionário ao paciente pelo WhatsApp"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setSub(subKey),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        background: corBg,
+        color: corText,
+        border: "none",
+        borderRadius: 8,
+        padding: "7px 14px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "eye",
+      size: 13
+    }), " Visualizar"), tipo && /*#__PURE__*/React.createElement("button", {
+      onClick: () => whatsappCard(tipo, emoji, nomeWa || titulo, duracao || "5 a 10 min"),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        background: "#dcfce7",
+        color: "#15803d",
+        border: "none",
+        borderRadius: 8,
+        padding: "7px 14px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "message-circle",
+      size: 13
+    }), " Enviar WhatsApp")));
+  }
+
   // Tela de cards
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -193,381 +315,81 @@ function AbaQuestionarios({
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Selecione um questionário para visualizar ou enviar ao paciente."), /*#__PURE__*/React.createElement("div", {
+  }, "Visualize as respostas ou envie o questionário ao paciente pelo WhatsApp."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("anamnese"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "📋"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Anamnese"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Formulário completo de anamnese — marcos do desenvolvimento, histórico clínico e familiar."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "var(--purple-light-bg)",
-      color: "var(--purple)",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "📋 Ver anamnese →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("entrevista"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "🧠"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Entrevista Clínica Inicial"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Instrumento de avaliação clínica inicial com perfil etário, escalas de observação e hipóteses diagnósticas DSM-5."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#f0fdf4",
-      color: "#16a34a",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "🧠 Ver entrevista →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("rastreamento"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "📊"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Rastreamento Bipolar / Borderline"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Avaliação diferencial DSM-5 — aplicado ao paciente e familiares, com laudo comparativo."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#eff6ff",
-      color: "#2563eb",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "📊 Ver rastreamento →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("sexual"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "🌸"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Saúde Sexual"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Rastreamento confidencial de saúde sexual — respondido apenas pelo próprio paciente."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#fdf2f8",
-      color: "#be185d",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "🌸 Ver rastreamento →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("alimentar"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "🍎"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Hábitos Alimentares"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Rastreamento de padrões e comportamentos alimentares — avaliação diferencial DSM-5."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#f0fdf4",
-      color: "#16a34a",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "🍎 Ver rastreamento →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("neuro"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "🧩"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Funcionamento e Comportamento"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Rastreamento de atenção, agitação, interação social e comportamento — avaliação diferencial DSM-5."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#fdf4ff",
-      color: "#9333ea",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "🧩 Ver rastreamento →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("dependencia"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "💊"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Dependência Química e Substâncias"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Rastreamento dos 11 critérios DSM-5 para Transtornos por Uso de Substâncias — paciente e familiares."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#fef3c7",
-      color: "#b45309",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "💊 Ver rastreamento →"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      border: "1px solid var(--gray-200)",
-      borderRadius: 14,
-      padding: 20,
-      background: "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => setSub("jogos"),
-    onMouseEnter: e => e.currentTarget.style.borderColor = "#7B00C4",
-    onMouseLeave: e => e.currentTarget.style.borderColor = "var(--gray-200)"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 10
-    }
-  }, "🎮"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 14,
-      color: "var(--text-dark)",
-      marginBottom: 4
-    }
-  }, "Dependência de Jogos e Apostas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      lineHeight: 1.5,
-      marginBottom: 14
-    }
-  }, "Rastreamento de Gaming / Gambling Disorder — DSM-5 / CID-11 — paciente e familiares."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      background: "#ecfdf5",
-      color: "#047857",
-      padding: "3px 10px",
-      borderRadius: 20,
-      fontSize: 11,
-      fontWeight: 600
-    }
-  }, "🎮 Ver rastreamento →")))));
+  }, /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "📋",
+    titulo: "Anamnese",
+    sub: "anamnese",
+    corBg: "var(--purple-light-bg)",
+    corText: "var(--purple)",
+    descricao: "Formulário completo de anamnese — marcos do desenvolvimento, histórico clínico e familiar.",
+    tipo: null
+  }), /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "📊",
+    titulo: "Rastreamento Bipolar / Borderline",
+    sub: "rastreamento",
+    corBg: "#eff6ff",
+    corText: "#2563eb",
+    descricao: "Avaliação diferencial DSM-5 — aplicado ao paciente e familiares, com laudo comparativo.",
+    tipo: "rastreamento",
+    nomeWa: "Rastreamento Clínico — Bipolar / Borderline",
+    duracao: "5 a 10 min"
+  }), /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "🌸",
+    titulo: "Saúde Sexual",
+    sub: "sexual",
+    corBg: "#fdf2f8",
+    corText: "#be185d",
+    descricao: "Rastreamento confidencial de saúde sexual — respondido apenas pelo próprio paciente.",
+    tipo: "sexual",
+    nomeWa: "Questionário Clínico — Saúde Sexual",
+    duracao: "5 a 8 min"
+  }), /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "🍎",
+    titulo: "Hábitos Alimentares",
+    sub: "alimentar",
+    corBg: "#f0fdf4",
+    corText: "#16a34a",
+    descricao: "Rastreamento de padrões e comportamentos alimentares — avaliação diferencial DSM-5.",
+    tipo: "alimentar",
+    nomeWa: "Rastreamento de Hábitos Alimentares",
+    duracao: "5 a 10 min"
+  }), /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "🧩",
+    titulo: "Funcionamento e Comportamento",
+    sub: "neuro",
+    corBg: "#fdf4ff",
+    corText: "#9333ea",
+    descricao: "Rastreamento de atenção, agitação, interação social e comportamento — avaliação diferencial DSM-5.",
+    tipo: "neuro",
+    nomeWa: "Questionário Clínico — Funcionamento e Comportamento",
+    duracao: "10 a 15 min"
+  }), /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "💊",
+    titulo: "Dependência Química e Substâncias",
+    sub: "dependencia",
+    corBg: "#fef3c7",
+    corText: "#b45309",
+    descricao: "Rastreamento dos 11 critérios DSM-5 para Transtornos por Uso de Substâncias — paciente e familiares.",
+    tipo: "dependencia",
+    nomeWa: "Rastreamento de Dependência Química e Substâncias",
+    duracao: "8 a 12 min"
+  }), /*#__PURE__*/React.createElement(CardQ, {
+    emoji: "🎮",
+    titulo: "Dependência de Jogos e Apostas",
+    sub: "jogos",
+    corBg: "#ecfdf5",
+    corText: "#047857",
+    descricao: "Rastreamento de Gaming / Gambling Disorder — DSM-5 / CID-11 — paciente e familiares.",
+    tipo: "jogos",
+    nomeWa: "Rastreamento de Dependência de Jogos e Apostas",
+    duracao: "5 a 10 min"
+  })));
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -654,9 +476,9 @@ function AbaRastreamentoDependencia({
   function calcularCriterios(doc) {
     const C = PERGUNTAS_DEPENDENCIA.filter(p => doc[p.id] === "C").length;
     const B = PERGUNTAS_DEPENDENCIA.filter(p => doc[p.id] === "B").length;
-    const total = C + B;
+    const total = C;
     let gravidade = "—";
-    if (total >= 6) gravidade = "⚠ Grave (6+ critérios)";else if (total >= 4) gravidade = "⚡ Moderada (4-5 critérios)";else if (total >= 2) gravidade = "🟡 Leve (2-3 critérios)";else gravidade = "✅ Abaixo do limiar diagnóstico";
+    if (total >= 6) gravidade = "⚠ Grave (6+ critérios C)";else if (total >= 4) gravidade = "⚡ Moderada (4–5 critérios C)";else if (total >= 2) gravidade = "🟡 Leve (2–3 critérios C)";else if (total === 1) gravidade = "🔍 Provável (1 critério C — a observar)";else gravidade = "✅ Abaixo do limiar diagnóstico";
     return {
       C,
       B,
@@ -704,8 +526,8 @@ ${docs.map(doc => {
       const cr = calcularCriterios(doc);
       return `
 <h2>Respondente: ${doc.tipoRespondente === "paciente" ? "Próprio paciente" : (doc.nomeRespondente || "Familiar") + " (" + (doc.parentesco || "—") + ")"}</h2>
-<div class="gravidade">Critérios preenchidos: ${cr.total}/11 &nbsp;·&nbsp; ${cr.gravidade}</div>
-<p style="font-size:12px;color:#4b5563;margin-bottom:10px">Respostas C (critério pleno): <strong>${cr.C}</strong> &nbsp;|&nbsp; Respostas B (parcial/subclínico): <strong>${cr.B}</strong></p>
+<div class="gravidade">Critérios C (diagnósticos): ${cr.C}/11 &nbsp;·&nbsp; ${cr.gravidade}</div>
+<p style="font-size:12px;color:#4b5563;margin-bottom:10px">Respostas C (critério pleno): <strong>${cr.C}</strong> &nbsp;|&nbsp; Respostas B (a observar): <strong>${cr.B}</strong></p>
 <table class="resp-table"><thead><tr><th>#</th><th>Critério</th><th>Módulo</th><th>Resp.</th></tr></thead><tbody>
 ${PERGUNTAS_DEPENDENCIA.map(p => `<tr><td>${p.id.replace("p", "")}</td><td>${p.texto}</td><td>${p.modulo}</td><td style="font-weight:700;color:${COR[doc[p.id]] || "#6b7280"}">${doc[p.id] || "—"}</td></tr>`).join("")}
 ${doc.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td colspan="2">${doc.obsFinais}</td></tr>` : ""}
@@ -866,7 +688,7 @@ ${doc.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td co
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, cr.total, " critérios / 11"))), isOpen && /*#__PURE__*/React.createElement("div", {
+    }, cr.C, " critérios C / 11"))), isOpen && /*#__PURE__*/React.createElement("div", {
       style: {
         borderTop: "1px solid #e5e7eb",
         padding: 16
@@ -996,9 +818,9 @@ function AbaRastreamentoJogos({
   function calcularCriterios(doc) {
     const C = PERGUNTAS_JOGOS.filter(p => doc[p.id] === "C").length;
     const B = PERGUNTAS_JOGOS.filter(p => doc[p.id] === "B").length;
-    const total = C + B;
+    const total = C;
     let gravidade = "—";
-    if (total >= 6) gravidade = "⚠ Grave (6+ critérios)";else if (total >= 4) gravidade = "⚡ Moderada (4-5 critérios)";else if (total >= 2) gravidade = "🟡 Leve (2-3 critérios)";else gravidade = "✅ Abaixo do limiar diagnóstico";
+    if (total >= 8) gravidade = "⚠ Grave (8–9 critérios C)";else if (total >= 6) gravidade = "⚡ Moderada (6–7 critérios C)";else if (total >= 4) gravidade = "🟡 Leve (4–5 critérios C)";else if (total === 3) gravidade = "🔍 Provável (3 critérios C — a observar)";else gravidade = "✅ Abaixo do limiar diagnóstico";
     return {
       C,
       B,
@@ -1046,8 +868,8 @@ ${docs.map(doc => {
       const cr = calcularCriterios(doc);
       return `
 <h2>Respondente: ${doc.tipoRespondente === "paciente" ? "Próprio paciente" : (doc.nomeRespondente || "Familiar") + " (" + (doc.parentesco || "—") + ")"}</h2>
-<div class="gravidade">Critérios preenchidos: ${cr.total}/9 &nbsp;·&nbsp; ${cr.gravidade}</div>
-<p style="font-size:12px;color:#4b5563;margin-bottom:10px">Respostas C (critério pleno): <strong>${cr.C}</strong> &nbsp;|&nbsp; Respostas B (parcial/subclínico): <strong>${cr.B}</strong></p>
+<div class="gravidade">Critérios C (diagnósticos): ${cr.C}/9 &nbsp;·&nbsp; ${cr.gravidade}</div>
+<p style="font-size:12px;color:#4b5563;margin-bottom:10px">Respostas C (critério pleno): <strong>${cr.C}</strong> &nbsp;|&nbsp; Respostas B (a observar): <strong>${cr.B}</strong></p>
 <table class="resp-table"><thead><tr><th>#</th><th>Critério</th><th>Módulo</th><th>Resp.</th></tr></thead><tbody>
 ${PERGUNTAS_JOGOS.map(p => `<tr><td>${p.id.replace("p", "")}</td><td>${p.texto}</td><td>${p.modulo}</td><td style="font-weight:700;color:${COR[doc[p.id]] || "#6b7280"}">${doc[p.id] || "—"}</td></tr>`).join("")}
 ${doc.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td colspan="2">${doc.obsFinais}</td></tr>` : ""}
@@ -1208,7 +1030,7 @@ ${doc.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td co
         color: "var(--text-muted)",
         marginTop: 2
       }
-    }, cr.total, " critérios / 9"))), isOpen && /*#__PURE__*/React.createElement("div", {
+    }, cr.C, " critérios C / 9"))), isOpen && /*#__PURE__*/React.createElement("div", {
       style: {
         borderTop: "1px solid #e5e7eb",
         padding: 16
@@ -2826,72 +2648,66 @@ const PERGUNTAS_RASTREAMENTO = [{
   texto: "Dissociação ou paranoia sob estresse extremo"
 }];
 
-// Pontuação: A=0, B=1, C=2, D=3
-function pontuarResposta(letra) {
-  return {
-    A: 0,
-    B: 1,
-    C: 2,
-    D: 3
-  }[letra] || 0;
-}
+// DSM-5 contagem de critérios (apenas C = critério preenchido; B = "a observar")
 function calcularEscores(doc) {
-  const bipolarMania = ["p1", "p2", "p3"].reduce((s, k) => s + pontuarResposta(doc[k]), 0);
-  const bipolarDep = ["p4", "p5", "p6"].reduce((s, k) => s + pontuarResposta(doc[k]), 0);
-  const borderline = ["p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15"].reduce((s, k) => s + pontuarResposta(doc[k]), 0);
+  const isC = k => doc[k] === "C";
+  const isB = k => doc[k] === "B";
+  const mania = ["p1", "p2", "p3"];
+  const dep = ["p4", "p5", "p6"];
+  const border = ["p7", "p8", "p9", "p10", "p11", "p12", "p13", "p14", "p15"];
   return {
-    bipolarMania,
-    bipolarDep,
-    borderline
+    bipolarManiaC: mania.filter(isC).length,
+    bipolarManiaB: mania.filter(isB).length,
+    bipolarDepC: dep.filter(isC).length,
+    bipolarDepB: dep.filter(isB).length,
+    borderlineC: border.filter(isC).length,
+    borderlineB: border.filter(isB).length
   };
 }
 function laudoDSM5(escores) {
   const {
-    bipolarMania,
-    bipolarDep,
-    borderline
+    bipolarManiaC,
+    bipolarManiaB,
+    bipolarDepC,
+    bipolarDepB,
+    borderlineC,
+    borderlineB
   } = escores;
-  const maxMania = 8; // 3 perguntas × max 2-3
-  const maxDep = 6;
-  const maxBorder = 18; // 9 perguntas × max 2
-  const pctMania = bipolarMania / maxMania * 100;
-  const pctDep = bipolarDep / maxDep * 100;
-  const pctBorder = borderline / maxBorder * 100;
   let hipotese = "";
   let criterios = [];
   let atencao = [];
 
-  // Mania / Hipomania
-  if (pctMania >= 75) {
-    hipotese = "Transtorno Bipolar Tipo I (episódio maníaco com comprometimento grave)";
+  // Mania / Hipomania: 3 critérios possíveis (p1–p3). Diagnóstico = 3/3 C; Provável = 2/3 C
+  if (bipolarManiaC === 3) {
+    hipotese = "Transtorno Bipolar Tipo I (episódio maníaco)";
     criterios.push({
       label: "TB Tipo I",
-      atende: true,
-      obs: "Escores de mania/hipomania elevados (≥75%). Verificar duração ≥7 dias e comprometimento funcional (Critério A do DSM-5)."
+      atende: "diag",
+      obs: "Todos os 3 critérios de mania/hipomania preenchidos (p1–p3 = C). Verificar duração ≥7 dias e comprometimento funcional (Critério A do DSM-5)."
     });
     atencao.push("Confirmar duração exata dos episódios de aceleração (≥7 dias = mania; 4–6 dias = hipomania).");
     atencao.push("Checar se houve internação ou prejuízo grave — diferencial TB I vs TB II.");
-  } else if (pctMania >= 45) {
-    hipotese = "Transtorno Bipolar Tipo II (hipomania + depressão) — verificar";
+  } else if (bipolarManiaC === 2) {
+    if (!hipotese) hipotese = "Transtorno Bipolar Tipo II (hipomania) — provável";
     criterios.push({
       label: "TB Tipo II",
-      atende: true,
-      obs: "Indícios moderados de hipomania (45–74%). Confirmar ausência de episódio maníaco pleno."
+      atende: "prov",
+      obs: "2 de 3 critérios de hipomania preenchidos. Confirmar ausência de episódio maníaco pleno e duração de 4–6 dias."
     });
     atencao.push("Investigar se os episódios de aceleração duraram 4–6 dias sem internação (perfil Tipo II).");
-  } else if (pctMania >= 20 && pctDep >= 30) {
-    hipotese = "Ciclotimia ou Transtorno Depressivo com características mistas — investigar";
+  } else if (bipolarManiaC === 1 && bipolarDepC >= 1) {
+    if (!hipotese) hipotese = "Ciclotimia ou Transtorno Depressivo com características mistas — investigar";
     criterios.push({
       label: "Ciclotimia",
-      atende: null,
-      obs: "Flutuações leves de humor sem critério pleno para mania ou depressão maior."
+      atende: "prov",
+      obs: "Critérios parciais de mania e depressão. Flutuações leves de humor sem critério pleno — avaliar longitudinalmente (≥2 anos)."
     });
     atencao.push("Mapear se as oscilações são crônicas (≥2 anos em adultos) para confirmar Ciclotimia (DSM-5 301.13).");
   } else {
     criterios.push({
       label: "TB Tipo I",
       atende: false,
-      obs: "Escores de energia/aceleração abaixo do limiar clínico."
+      obs: "Critérios de mania/hipomania abaixo do limiar (" + bipolarManiaC + " de 3 C)."
     });
     criterios.push({
       label: "TB Tipo II",
@@ -2900,71 +2716,76 @@ function laudoDSM5(escores) {
     });
   }
 
-  // Depressão
-  if (pctDep >= 60) {
+  // Depressão: 3 critérios possíveis (p4–p6). Diagnóstico = 3/3 C; Provável = 2/3 C
+  if (bipolarDepC === 3) {
     criterios.push({
       label: "Episódio Depressivo Maior",
-      atende: true,
-      obs: "Escores depressivos elevados. Avaliar ≥5 critérios por ≥2 semanas (DSM-5 Critério A)."
+      atende: "diag",
+      obs: "Todos os 3 critérios depressivos preenchidos (p4–p6 = C). Confirmar ≥5 critérios por ≥2 semanas (DSM-5 Critério A)."
     });
     atencao.push("Verificar presença de ideação suicida ativa (p6=C) — acionar protocolo de segurança se necessário.");
-  } else if (pctDep >= 30) {
+  } else if (bipolarDepC === 2) {
     criterios.push({
-      label: "Depressão leve/moderada",
-      atende: null,
-      obs: "Indícios moderados. Não preenche critérios plenos — monitorar."
+      label: "Depressão — Diagnóstico provável",
+      atende: "prov",
+      obs: "2 de 3 critérios depressivos preenchidos. Não preenche critérios plenos — monitorar."
     });
   } else {
     criterios.push({
       label: "Episódio Depressivo Maior",
       atende: false,
-      obs: "Escores abaixo do limiar."
+      obs: "Critérios depressivos abaixo do limiar (" + bipolarDepC + " de 3 C)."
     });
   }
 
-  // Borderline
-  if (pctBorder >= 70) {
+  // Borderline: 9 critérios (p7–p15). Diagnóstico = 5+/9 C; Provável = 4/9 C
+  if (borderlineC >= 5) {
     if (!hipotese) hipotese = "Transtorno da Personalidade Borderline (TPB)";else hipotese += " com forte sobreposição de TPB";
     criterios.push({
       label: "TPB (DSM-5 301.83)",
-      atende: true,
-      obs: "Escores elevados em ≥5 dos 9 critérios DSM-5 para TPB (escore ≥70%)."
+      atende: "diag",
+      obs: borderlineC + " de 9 critérios DSM-5 para TPB preenchidos (C). Critério: ≥5 de 9."
     });
     atencao.push("Diferenciar oscilação de humor rápida (horas) do Borderline vs episódios longos do TB (dias/semanas).");
     atencao.push("Investigar história de automutilação, vazio crônico e instabilidade de identidade como critérios centrais do TPB.");
-  } else if (pctBorder >= 40) {
+  } else if (borderlineC === 4) {
     criterios.push({
-      label: "TPB (traços)",
-      atende: null,
-      obs: "Traços limítrofes moderados. Não preenche critérios plenos — avaliar longitudinalmente."
+      label: "TPB (traços — diagnóstico provável)",
+      atende: "prov",
+      obs: "4 de 9 critérios DSM-5 para TPB preenchidos. Não preenche critério pleno (5+) — avaliar longitudinalmente."
     });
     atencao.push("Checar se oscilações emocionais são reativas a estressores interpessoais (perfil Borderline) ou autônomas (perfil Bipolar).");
   } else {
     criterios.push({
       label: "TPB",
       atende: false,
-      obs: "Escores abaixo do limiar de critérios borderline."
+      obs: "Critérios borderline abaixo do limiar (" + borderlineC + " de 9 C — mínimo 5)."
     });
   }
 
   // Comorbidade
-  if (pctMania >= 45 && pctBorder >= 55) {
+  if (bipolarManiaC >= 2 && borderlineC >= 4) {
     atencao.push("Alta probabilidade de COMORBIDADE TB + TPB — padrão encontrado em até 20% dos casos. Priorizar diagnóstico longitudinal.");
   }
-  if (!hipotese) hipotese = "Sem hipótese diagnóstica definida pelos escores — avaliação clínica aprofundada indicada.";
+  if (!hipotese) hipotese = "Sem hipótese diagnóstica definida pelos critérios — avaliação clínica aprofundada indicada.";
   return {
     hipotese,
     criterios,
     atencao,
-    pctMania,
-    pctDep,
-    pctBorder
+    bipolarManiaC,
+    bipolarManiaB,
+    bipolarDepC,
+    bipolarDepB,
+    borderlineC,
+    borderlineB
   };
 }
+
+// Badge: "diag" = Diagnóstico, "prov" = Diagnóstico provável, false = Não atende, null/"inv" = A observar
 function CorBadge({
   atende
 }) {
-  if (atende === true) return /*#__PURE__*/React.createElement("span", {
+  if (atende === "diag") return /*#__PURE__*/React.createElement("span", {
     style: {
       background: "#fef2f2",
       color: "#dc2626",
@@ -2973,7 +2794,17 @@ function CorBadge({
       fontSize: 11,
       fontWeight: 700
     }
-  }, "✓ Critérios presentes");
+  }, "✓ Diagnóstico");
+  if (atende === "prov") return /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#fffbeb",
+      color: "#d97706",
+      padding: "2px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 700
+    }
+  }, "⚠ Diagnóstico provável");
   if (atende === false) return /*#__PURE__*/React.createElement("span", {
     style: {
       background: "#f0fdf4",
@@ -2984,6 +2815,17 @@ function CorBadge({
       fontWeight: 700
     }
   }, "✗ Não atende");
+  // legado: true → diag
+  if (atende === true) return /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: "#fef2f2",
+      color: "#dc2626",
+      padding: "2px 10px",
+      borderRadius: 20,
+      fontSize: 11,
+      fontWeight: 700
+    }
+  }, "✓ Diagnóstico");
   return /*#__PURE__*/React.createElement("span", {
     style: {
       background: "#fffbeb",
@@ -2993,7 +2835,7 @@ function CorBadge({
       fontSize: 11,
       fontWeight: 700
     }
-  }, "⚠ Investigar");
+  }, "⚠ A observar");
 }
 function BarraEscore({
   label,
@@ -3023,7 +2865,7 @@ function BarraEscore({
       color: cor,
       fontWeight: 700
     }
-  }, pct, "%")), /*#__PURE__*/React.createElement("div", {
+  }, valor, " de ", max, " critérios")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3f4f6",
       borderRadius: 20,
@@ -3075,16 +2917,20 @@ function AbaRastreamento({
     const pacNome = paciente.nome || "Paciente";
     const data = new Date().toLocaleDateString("pt-BR");
 
-    // Calcular escores por respondente
+    // Calcular critérios por respondente
     const escoresPorDoc = docs.map(d => ({
       ...d,
       escores: calcularEscores(d)
     }));
-    // Escores médios
+    // Médias de critérios C
+    const n = escoresPorDoc.length;
     const mediaEscores = {
-      bipolarMania: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bipolarMania, 0) / escoresPorDoc.length * 10) / 10,
-      bipolarDep: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bipolarDep, 0) / escoresPorDoc.length * 10) / 10,
-      borderline: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.borderline, 0) / escoresPorDoc.length * 10) / 10
+      bipolarManiaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bipolarManiaC, 0) / n * 10) / 10,
+      bipolarManiaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bipolarManiaB, 0) / n * 10) / 10,
+      bipolarDepC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bipolarDepC, 0) / n * 10) / 10,
+      bipolarDepB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bipolarDepB, 0) / n * 10) / 10,
+      borderlineC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.borderlineC, 0) / n * 10) / 10,
+      borderlineB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.borderlineB, 0) / n * 10) / 10
     };
     const laudo = laudoDSM5(mediaEscores);
     const LETRA_COR = {
@@ -3134,21 +2980,21 @@ h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
   <div class="sub">Respondentes: ${docs.length} (${docs.map(d => d.tipoRespondente === "paciente" ? "próprio paciente" : d.parentesco || "familiar").join(", ")})</div>
 </div>
 
-<h2>I. Escores por Eixo (média entre respondentes)</h2>
+<h2>I. Critérios por Eixo DSM-5 (média entre respondentes)</h2>
 <div class="barra-wrap">
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Mania/Hipomania</strong></span><span style="color:#dc2626;font-weight:700">${Math.round(mediaEscores.bipolarMania / 8 * 100)}%</span></div>
-  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarMania / 8 * 100)}%;background:#dc2626;height:100%;border-radius:20px"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Mania/Hipomania</strong> (3 critérios)</span><span style="color:#dc2626;font-weight:700">${mediaEscores.bipolarManiaC} de 3 critérios C</span></div>
+  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarManiaC / 3 * 100)}%;background:#dc2626;height:100%;border-radius:20px"></div></div>
 </div>
 <div class="barra-wrap">
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Depressão</strong></span><span style="color:#7c3aed;font-weight:700">${Math.round(mediaEscores.bipolarDep / 6 * 100)}%</span></div>
-  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarDep / 6 * 100)}%;background:#7c3aed;height:100%;border-radius:20px"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Depressão</strong> (3 critérios)</span><span style="color:#7c3aed;font-weight:700">${mediaEscores.bipolarDepC} de 3 critérios C</span></div>
+  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarDepC / 3 * 100)}%;background:#7c3aed;height:100%;border-radius:20px"></div></div>
 </div>
 <div class="barra-wrap">
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Borderline (TPB)</strong></span><span style="color:#2563eb;font-weight:700">${Math.round(mediaEscores.borderline / 18 * 100)}%</span></div>
-  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.borderline / 18 * 100)}%;background:#2563eb;height:100%;border-radius:20px"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Borderline (TPB)</strong> (9 critérios)</span><span style="color:#2563eb;font-weight:700">${mediaEscores.borderlineC} de 9 critérios C</span></div>
+  <div class="barra-bg"><div style="width:${Math.round(mediaEscores.borderlineC / 9 * 100)}%;background:#2563eb;height:100%;border-radius:20px"></div></div>
 </div>
 
-<h2>II. Hipótese Diagnóstica Provável</h2>
+<h2>II. Hipótese Diagnóstica</h2>
 <div class="hipotese">
   <div class="label">Hipótese principal</div>
   <div class="valor">${laudo.hipotese}</div>
@@ -3157,7 +3003,7 @@ h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
 <h3>Análise por Critério DSM-5</h3>
 ${laudo.criterios.map(c => `
 <div class="criterio">
-  <div class="nome">${c.label} &nbsp; <span class="${c.atende === true ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === true ? "✓ Critérios presentes" : c.atende === false ? "✗ Não atende" : "⚠ Investigar"}</span></div>
+  <div class="nome">${c.label} &nbsp; <span class="${c.atende === "diag" || c.atende === true ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === "diag" || c.atende === true ? "✓ Diagnóstico" : c.atende === "prov" ? "⚠ Diagnóstico provável" : "✗ Não atende"}</span></div>
   <div style="font-size:12px;color:#4b5563;margin-top:4px">${c.obs}</div>
 </div>`).join("")}
 
@@ -3296,10 +3142,14 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
       ...d,
       escores: calcularEscores(d)
     }));
+    const nDocs = docs.length;
     const media = {
-      bipolarMania: escoresPorDoc.reduce((s, d) => s + d.escores.bipolarMania, 0) / docs.length,
-      bipolarDep: escoresPorDoc.reduce((s, d) => s + d.escores.bipolarDep, 0) / docs.length,
-      borderline: escoresPorDoc.reduce((s, d) => s + d.escores.borderline, 0) / docs.length
+      bipolarManiaC: escoresPorDoc.reduce((s, d) => s + d.escores.bipolarManiaC, 0) / nDocs,
+      bipolarManiaB: escoresPorDoc.reduce((s, d) => s + d.escores.bipolarManiaB, 0) / nDocs,
+      bipolarDepC: escoresPorDoc.reduce((s, d) => s + d.escores.bipolarDepC, 0) / nDocs,
+      bipolarDepB: escoresPorDoc.reduce((s, d) => s + d.escores.bipolarDepB, 0) / nDocs,
+      borderlineC: escoresPorDoc.reduce((s, d) => s + d.escores.borderlineC, 0) / nDocs,
+      borderlineB: escoresPorDoc.reduce((s, d) => s + d.escores.borderlineB, 0) / nDocs
     };
     const laudo = laudoDSM5(media);
     return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -3319,7 +3169,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         color: "var(--purple)",
         marginBottom: 4
       }
-    }, "Hipótese diagnóstica provável"), /*#__PURE__*/React.createElement("div", {
+    }, "Hipótese diagnóstica"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 15,
         fontWeight: 700,
@@ -3340,20 +3190,20 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         fontSize: 13,
         marginBottom: 12
       }
-    }, "Escores médios por eixo"), /*#__PURE__*/React.createElement(BarraEscore, {
+    }, "Critérios por eixo (média entre respondentes)"), /*#__PURE__*/React.createElement(BarraEscore, {
       label: "Eixo Bipolar · Mania/Hipomania",
-      valor: media.bipolarMania,
-      max: 8,
+      valor: Math.round(laudo.bipolarManiaC),
+      max: 3,
       cor: "#dc2626"
     }), /*#__PURE__*/React.createElement(BarraEscore, {
       label: "Eixo Bipolar · Depressão",
-      valor: media.bipolarDep,
-      max: 6,
+      valor: Math.round(laudo.bipolarDepC),
+      max: 3,
       cor: "#7c3aed"
     }), /*#__PURE__*/React.createElement(BarraEscore, {
       label: "Eixo Borderline (TPB)",
-      valor: media.borderline,
-      max: 18,
+      valor: Math.round(laudo.borderlineC),
+      max: 9,
       cor: "#2563eb"
     })), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -3431,9 +3281,9 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
       const unicos = Array.from(mapaResp.values()).map(grupo => {
         const n = grupo.docs.length;
         const mediaEscores = {
-          bipolarMania: grupo.docs.reduce((s, d) => s + d.escores.bipolarMania, 0) / n,
-          bipolarDep: grupo.docs.reduce((s, d) => s + d.escores.bipolarDep, 0) / n,
-          borderline: grupo.docs.reduce((s, d) => s + d.escores.borderline, 0) / n
+          bipolarManiaC: grupo.docs.reduce((s, d) => s + d.escores.bipolarManiaC, 0) / n,
+          bipolarDepC: grupo.docs.reduce((s, d) => s + d.escores.bipolarDepC, 0) / n,
+          borderlineC: grupo.docs.reduce((s, d) => s + d.escores.borderlineC, 0) / n
         };
         const ultimo = grupo.docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))[0];
         return {
@@ -3444,15 +3294,15 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
       }).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       const temDivergencia = unicos.length > 1;
 
-      // Detecta divergência por eixo (diferença >15pp entre respondentes)
-      function diverge(campo, max) {
+      // Detecta divergência por eixo (diferença >1 critério entre respondentes)
+      function diverge(campo) {
         if (unicos.length < 2) return false;
-        const vals = unicos.map(d => Math.round(d.escores[campo] / max * 100));
-        return Math.max(...vals) - Math.min(...vals) > 15;
+        const vals = unicos.map(d => Math.round(d.escores[campo]));
+        return Math.max(...vals) - Math.min(...vals) > 1;
       }
-      const divMania = diverge("bipolarMania", 8);
-      const divDep = diverge("bipolarDep", 6);
-      const divTPB = diverge("borderline", 18);
+      const divMania = diverge("bipolarManiaC");
+      const divDep = diverge("bipolarDepC");
+      const divTPB = diverge("borderlineC");
       return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
         style: {
           fontWeight: 600,
@@ -3553,9 +3403,9 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
           borderBottom: "2px solid var(--gray-200)"
         }
       }))), /*#__PURE__*/React.createElement("tbody", null, unicos.map((d, i) => {
-        const mPct = Math.round(d.escores.bipolarMania / 8 * 100);
-        const dPct = Math.round(d.escores.bipolarDep / 6 * 100);
-        const tPct = Math.round(d.escores.borderline / 18 * 100);
+        const mC = Math.round(d.escores.bipolarManiaC);
+        const dC = Math.round(d.escores.bipolarDepC);
+        const tC = Math.round(d.escores.borderlineC);
         const nome = d.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : "👥 " + (d.nomeRespondente || "Familiar") + " · " + (d.parentesco || "Familiar");
         const data = d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—";
         return /*#__PURE__*/React.createElement("tr", {
@@ -3594,7 +3444,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
             fontSize: 11,
             fontWeight: 700
           }
-        }, mPct, "%")), /*#__PURE__*/React.createElement("td", {
+        }, mC, "/3")), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "10px 10px",
             textAlign: "center",
@@ -3609,7 +3459,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
             fontSize: 11,
             fontWeight: 700
           }
-        }, dPct, "%")), /*#__PURE__*/React.createElement("td", {
+        }, dC, "/3")), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "10px 10px",
             textAlign: "center",
@@ -3624,7 +3474,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
             fontSize: 11,
             fontWeight: 700
           }
-        }, tPct, "%")), /*#__PURE__*/React.createElement("td", {
+        }, tC, "/9")), /*#__PURE__*/React.createElement("td", {
           style: {
             padding: "10px 10px",
             textAlign: "center",
@@ -3661,18 +3511,18 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         }
       }, /*#__PURE__*/React.createElement(BarraEscore, {
         label: "Mania/Hipomania",
-        valor: d.escores.bipolarMania,
-        max: 8,
+        valor: d.escores.bipolarManiaC,
+        max: 3,
         cor: "#dc2626"
       }), /*#__PURE__*/React.createElement(BarraEscore, {
         label: "Depressão",
-        valor: d.escores.bipolarDep,
-        max: 6,
+        valor: d.escores.bipolarDepC,
+        max: 3,
         cor: "#7c3aed"
       }), /*#__PURE__*/React.createElement(BarraEscore, {
         label: "Borderline (TPB)",
-        valor: d.escores.borderline,
-        max: 18,
+        valor: d.escores.borderlineC,
+        max: 9,
         cor: "#2563eb"
       })), /*#__PURE__*/React.createElement("div", {
         style: {
@@ -3860,97 +3710,139 @@ const PERGUNTAS_NEURO = [{
   eixo: "TOD",
   texto: "Rancor e vingança persistentes"
 }];
+
+// Critérios Neuro: conta apenas C por eixo
 function calcularEscoresNeuro(doc) {
-  const pontuar = id => ({
-    A: 0,
-    B: 1,
-    C: 2
-  })[doc[id]] || 0;
+  const isC = id => doc[id] === "C";
+  const isB = id => doc[id] === "B";
   const ids = (a, b) => Array.from({
     length: b - a + 1
   }, (_, i) => "p" + (a + i));
+  const idsIn = ids(1, 8);
+  const idsHi = ids(9, 15);
+  const idsTea = ids(16, 22);
+  const idsTod = ids(23, 28);
   return {
-    tdahIn: ids(1, 8).reduce((s, id) => s + pontuar(id), 0),
-    tdahHi: ids(9, 15).reduce((s, id) => s + pontuar(id), 0),
-    tea: ids(16, 22).reduce((s, id) => s + pontuar(id), 0),
-    tod: ids(23, 28).reduce((s, id) => s + pontuar(id), 0)
+    tdahInC: idsIn.filter(isC).length,
+    tdahInB: idsIn.filter(isB).length,
+    tdahHiC: idsHi.filter(isC).length,
+    tdahHiB: idsHi.filter(isB).length,
+    teaA_C: ["p16", "p17", "p18"].filter(isC).length,
+    // critério A: social (3 itens)
+    teaB_C: ["p19", "p20", "p21", "p22"].filter(isC).length,
+    // critério B: restritivo (4 itens)
+    todC: idsTod.filter(isC).length,
+    todB: idsTod.filter(isB).length
   };
 }
 function laudoNeuro(escores) {
   const {
-    tdahIn,
-    tdahHi,
-    tea,
-    tod
+    tdahInC,
+    tdahInB,
+    tdahHiC,
+    tdahHiB,
+    teaA_C,
+    teaB_C,
+    todC,
+    todB
   } = escores;
-  const pIn = Math.round(tdahIn / 16 * 100);
-  const pHi = Math.round(tdahHi / 14 * 100);
-  const pTea = Math.round(tea / 14 * 100);
-  const pTod = Math.round(tod / 12 * 100);
-  const nivel = pct => pct >= 75 ? "Severo" : pct >= 50 ? "Moderado" : pct >= 25 ? "Leve" : "Subliminar";
   let hipotese = [];
   let criterios = [];
   let atencao = [];
-  if (pIn >= 50 || pHi >= 50) {
-    const subtipo = pIn >= 50 && pHi >= 50 ? "Apresentação Combinada" : pIn >= 50 ? "Predominantemente Desatento" : "Predominantemente Hiperativo/Impulsivo";
+
+  // TDAH Inatenção: 8 critérios — diag ≥5C, provável 4C
+  // TDAH Hiperatividade: 7 critérios — diag ≥5C, provável 4C
+  const tdahIn_diag = tdahInC >= 5;
+  const tdahIn_prov = tdahInC === 4;
+  const tdahHi_diag = tdahHiC >= 5;
+  const tdahHi_prov = tdahHiC === 4;
+  if (tdahIn_diag || tdahHi_diag) {
+    const subtipo = tdahIn_diag && tdahHi_diag ? "Apresentação Combinada" : tdahIn_diag ? "Predominantemente Desatento" : "Predominantemente Hiperativo/Impulsivo";
     hipotese.push("TDAH — " + subtipo);
     criterios.push({
       label: "TDAH (" + subtipo + ")",
-      atende: pIn >= 50 || pHi >= 50,
-      obs: "Inatenção: " + nivel(pIn) + " (" + pIn + "%) · Hiperatividade: " + nivel(pHi) + " (" + pHi + "%). Verificar início antes dos 12 anos e prejuízo em múltiplos contextos (DSM-5 Critério C)."
+      atende: "diag",
+      obs: "Inatenção: " + tdahInC + "/8 critérios C · Hiperatividade: " + tdahHiC + "/7 critérios C. Verificar início antes dos 12 anos e prejuízo em múltiplos contextos (DSM-5 Critério C)."
     });
     atencao.push("Confirmar início dos sintomas antes dos 12 anos de idade (critério obrigatório DSM-5).");
     atencao.push("Verificar se os sintomas ocorrem em pelo menos 2 contextos (escola/trabalho, casa, social).");
+  } else if (tdahIn_prov || tdahHi_prov) {
+    const subtipo = tdahIn_prov && tdahHi_prov ? "Apresentação Combinada (provável)" : tdahIn_prov ? "Desatento (provável)" : "Hiperativo/Impulsivo (provável)";
+    hipotese.push("TDAH — " + subtipo);
+    criterios.push({
+      label: "TDAH (" + subtipo + ")",
+      atende: "prov",
+      obs: "Inatenção: " + tdahInC + "/8 critérios C · Hiperatividade: " + tdahHiC + "/7 critérios C. Critérios insuficientes para diagnóstico pleno — avaliar longitudinalmente."
+    });
   } else {
     criterios.push({
       label: "TDAH",
       atende: false,
-      obs: "Escores abaixo do limiar clínico para ambos os subtipos."
+      obs: "Inatenção: " + tdahInC + "/8 C · Hiperatividade: " + tdahHiC + "/7 C. Abaixo do limiar clínico (mínimo 5 de cada subtipo)."
     });
   }
-  if (pTea >= 50) {
+
+  // TEA: critério A = todos 3 de p16–p18 C; critério B = 2+ de p19–p22 C
+  const teaA_ok = teaA_C === 3;
+  const teaB_ok = teaB_C >= 2;
+  if (teaA_ok && teaB_ok) {
     hipotese.push("TEA — Transtorno do Espectro Autista");
     criterios.push({
       label: "TEA (DSM-5 F84.0)",
-      atende: true,
-      obs: "Escore " + nivel(pTea) + " (" + pTea + "%). Verificar se déficits em comunicação social e padrões restritos estão presentes desde o período do desenvolvimento precoce."
+      atende: "diag",
+      obs: "Critério A (comunicação social): " + teaA_C + "/3 C. Critério B (padrões restritos): " + teaB_C + "/4 C. Verificar presença desde o desenvolvimento precoce."
     });
     atencao.push("Investigar histórico de desenvolvimento precoce — sinais de TEA devem estar presentes desde a infância.");
     atencao.push("Diferenciar hiperfoco do TEA (restrito e intenso) da desatenção seletiva do TDAH.");
-    if (pIn >= 40) atencao.push("Alta sobreposição TDAH + TEA detectada — avaliar comorbidade (presente em ~50% dos casos de TEA).");
+    if (tdahInC >= 4) atencao.push("Alta sobreposição TDAH + TEA detectada — avaliar comorbidade (presente em ~50% dos casos de TEA).");
+  } else if (teaA_ok || teaA_C >= 2 && teaB_C >= 1) {
+    criterios.push({
+      label: "TEA (traços — a investigar)",
+      atende: "prov",
+      obs: "Critério A: " + teaA_C + "/3 C · Critério B: " + teaB_C + "/4 C. Critérios parciais — não atende o diagnóstico pleno. Avaliação especializada recomendada."
+    });
+    atencao.push("Encaminhar para avaliação neuropsicológica especializada — critérios parciais para TEA detectados.");
   } else {
     criterios.push({
       label: "TEA",
       atende: false,
-      obs: "Escores abaixo do limiar — traços presentes mas insuficientes para indicação clínica de TEA."
+      obs: "Critério A: " + teaA_C + "/3 C · Critério B: " + teaB_C + "/4 C. Abaixo do limiar diagnóstico."
     });
   }
-  if (pTod >= 50) {
+
+  // TOD: 6 critérios — diag ≥4C, provável 3C
+  if (todC >= 4) {
     hipotese.push("TOD — Transtorno Opositivo-Desafiador");
     criterios.push({
       label: "TOD (DSM-5 F91.3)",
-      atende: true,
-      obs: "Escore " + nivel(pTod) + " (" + pTod + "%). Avaliar se o padrão é persistente por ≥6 meses e presente com pelo menos uma pessoa que não seja irmão."
+      atende: "diag",
+      obs: todC + "/6 critérios C. Avaliar se o padrão é persistente por ≥6 meses e presente com pelo menos uma pessoa além do irmão."
     });
     atencao.push("Diferenciar se a irritabilidade e oposição decorrem de desregulação emocional do TDAH ou de TOD independente.");
     atencao.push("Verificar duração ≥6 meses e prejuízo em pelo menos um contexto (DSM-5 Critério B).");
+  } else if (todC === 3) {
+    criterios.push({
+      label: "TOD (diagnóstico provável)",
+      atende: "prov",
+      obs: "3/6 critérios C. Abaixo do limiar pleno (4+) — monitorar e avaliar longitudinalmente."
+    });
   } else {
     criterios.push({
       label: "TOD",
       atende: false,
-      obs: "Escores abaixo do limiar clínico."
+      obs: todC + "/6 critérios C. Abaixo do limiar clínico (mínimo 4)."
     });
   }
-  if (hipotese.length === 0) hipotese.push("Sem hipótese diagnóstica definida pelos escores — avaliação clínica aprofundada indicada.");
+  if (hipotese.length === 0) hipotese.push("Sem hipótese diagnóstica definida pelos critérios — avaliação clínica aprofundada indicada.");
   return {
     hipotese: hipotese.join(" + "),
     criterios,
     atencao,
-    pIn,
-    pHi,
-    pTea,
-    pTod,
-    nivel
+    tdahInC,
+    tdahHiC,
+    teaA_C,
+    teaB_C,
+    todC
   };
 }
 function BarraEscoreNeuro({
@@ -3981,7 +3873,7 @@ function BarraEscoreNeuro({
       color: cor,
       fontWeight: 700
     }
-  }, pct, "%")), /*#__PURE__*/React.createElement("div", {
+  }, valor, " de ", max, " critérios")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#f3f4f6",
       borderRadius: 20,
@@ -4037,10 +3929,14 @@ function AbaRastreamentoNeuro({
     }));
     const n = docs.length;
     const media = {
-      tdahIn: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahIn, 0) / n * 10) / 10,
-      tdahHi: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahHi, 0) / n * 10) / 10,
-      tea: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tea, 0) / n * 10) / 10,
-      tod: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tod, 0) / n * 10) / 10
+      tdahInC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahInC, 0) / n * 10) / 10,
+      tdahInB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahInB, 0) / n * 10) / 10,
+      tdahHiC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahHiC, 0) / n * 10) / 10,
+      tdahHiB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tdahHiB, 0) / n * 10) / 10,
+      teaA_C: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.teaA_C, 0) / n * 10) / 10,
+      teaB_C: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.teaB_C, 0) / n * 10) / 10,
+      todC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.todC, 0) / n * 10) / 10,
+      todB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.todB, 0) / n * 10) / 10
     };
     const laudo = laudoNeuro(media);
     const COR = {
@@ -4083,15 +3979,16 @@ h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
   <div class="sub">Respondentes: ${docs.length} (${docs.map(d => d.tipoRespondente === "paciente" ? "próprio paciente" : d.parentesco || "familiar").join(", ")})</div>
 </div>
 
-<h2>I. Escores por Eixo DSM-5 (média entre respondentes)</h2>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TDAH — Inatenção</strong> (8 itens)</span><span style="color:#7c3aed;font-weight:700">${laudo.nivel(laudo.pIn)} (${laudo.pIn}%)</span></div><div class="barra-bg"><div style="width:${laudo.pIn}%;background:#7c3aed;height:100%;border-radius:20px"></div></div></div>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TDAH — Hiperatividade/Impulsividade</strong> (7 itens)</span><span style="color:#dc2626;font-weight:700">${laudo.nivel(laudo.pHi)} (${laudo.pHi}%)</span></div><div class="barra-bg"><div style="width:${laudo.pHi}%;background:#dc2626;height:100%;border-radius:20px"></div></div></div>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TEA — Espectro Autista</strong> (7 itens)</span><span style="color:#2563eb;font-weight:700">${laudo.nivel(laudo.pTea)} (${laudo.pTea}%)</span></div><div class="barra-bg"><div style="width:${laudo.pTea}%;background:#2563eb;height:100%;border-radius:20px"></div></div></div>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TOD — Transtorno Opositivo-Desafiador</strong> (6 itens)</span><span style="color:#d97706;font-weight:700">${laudo.nivel(laudo.pTod)} (${laudo.pTod}%)</span></div><div class="barra-bg"><div style="width:${laudo.pTod}%;background:#d97706;height:100%;border-radius:20px"></div></div></div>
+<h2>I. Critérios DSM-5 por Eixo (média entre respondentes)</h2>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TDAH — Inatenção</strong> (8 critérios, mín. 5C)</span><span style="color:#7c3aed;font-weight:700">${laudo.tdahInC} de 8 critérios C</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.tdahInC / 8 * 100)}%;background:#7c3aed;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TDAH — Hiperatividade/Impulsividade</strong> (7 critérios, mín. 5C)</span><span style="color:#dc2626;font-weight:700">${laudo.tdahHiC} de 7 critérios C</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.tdahHiC / 7 * 100)}%;background:#dc2626;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TEA — Critério A (comunicação social)</strong> (3 critérios, todos obrigatórios)</span><span style="color:#2563eb;font-weight:700">${laudo.teaA_C} de 3 critérios C</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.teaA_C / 3 * 100)}%;background:#2563eb;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TEA — Critério B (padrões restritos)</strong> (4 critérios, mín. 2C)</span><span style="color:#6366f1;font-weight:700">${laudo.teaB_C} de 4 critérios C</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.teaB_C / 4 * 100)}%;background:#6366f1;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TOD — Transtorno Opositivo-Desafiador</strong> (6 critérios, mín. 4C)</span><span style="color:#d97706;font-weight:700">${laudo.todC} de 6 critérios C</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.todC / 6 * 100)}%;background:#d97706;height:100%;border-radius:20px"></div></div></div>
 
 <h2>II. Hipótese Diagnóstica</h2>
 <div class="hipotese"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Hipótese principal</div><div style="font-size:15px;font-weight:700;color:#3d006a">${laudo.hipotese}</div></div>
-${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende ? "badge-sim" : "badge-nao"}">${c.atende ? "✓ Critérios presentes" : "✗ Não atende"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
+${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende === "diag" || c.atende === true ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === "diag" || c.atende === true ? "✓ Diagnóstico" : c.atende === "prov" ? "⚠ Diagnóstico provável" : "✗ Não atende"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
 
 <h2>III. Pontos de Atenção para a Entrevista Clínica</h2>
 ${laudo.atencao.length === 0 ? "<p style='color:#6b7280;font-size:12px'>Nenhum ponto crítico identificado pelos escores.</p>" : laudo.atencao.map(a => `<div class="atencao-item">⚠ ${a}</div>`).join("")}
@@ -4226,10 +4123,14 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
     }));
     const n = docs.length;
     const media = {
-      tdahIn: escoresPorDoc.reduce((s, d) => s + d.escores.tdahIn, 0) / n,
-      tdahHi: escoresPorDoc.reduce((s, d) => s + d.escores.tdahHi, 0) / n,
-      tea: escoresPorDoc.reduce((s, d) => s + d.escores.tea, 0) / n,
-      tod: escoresPorDoc.reduce((s, d) => s + d.escores.tod, 0) / n
+      tdahInC: escoresPorDoc.reduce((s, d) => s + d.escores.tdahInC, 0) / n,
+      tdahInB: escoresPorDoc.reduce((s, d) => s + d.escores.tdahInB, 0) / n,
+      tdahHiC: escoresPorDoc.reduce((s, d) => s + d.escores.tdahHiC, 0) / n,
+      tdahHiB: escoresPorDoc.reduce((s, d) => s + d.escores.tdahHiB, 0) / n,
+      teaA_C: escoresPorDoc.reduce((s, d) => s + d.escores.teaA_C, 0) / n,
+      teaB_C: escoresPorDoc.reduce((s, d) => s + d.escores.teaB_C, 0) / n,
+      todC: escoresPorDoc.reduce((s, d) => s + d.escores.todC, 0) / n,
+      todB: escoresPorDoc.reduce((s, d) => s + d.escores.todB, 0) / n
     };
     const laudo = laudoNeuro(media);
     return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -4249,7 +4150,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         color: "var(--purple)",
         marginBottom: 4
       }
-    }, "Hipótese diagnóstica provável"), /*#__PURE__*/React.createElement("div", {
+    }, "Hipótese diagnóstica"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 15,
         fontWeight: 700,
@@ -4270,25 +4171,30 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         fontSize: 13,
         marginBottom: 12
       }
-    }, "Escores médios por eixo DSM-5"), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
-      label: "TDAH — Inatenção",
-      valor: media.tdahIn,
-      max: 16,
+    }, "Critérios por eixo DSM-5"), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
+      label: "TDAH — Inatenção (mín. 5/8)",
+      valor: media.tdahInC,
+      max: 8,
       cor: "#7c3aed"
     }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
-      label: "TDAH — Hiperatividade/Impuls.",
-      valor: media.tdahHi,
-      max: 14,
+      label: "TDAH — Hiperatividade/Impuls. (mín. 5/7)",
+      valor: media.tdahHiC,
+      max: 7,
       cor: "#dc2626"
     }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
-      label: "TEA — Espectro Autista",
-      valor: media.tea,
-      max: 14,
+      label: "TEA — Critério A / Social (3/3 obrigatórios)",
+      valor: media.teaA_C,
+      max: 3,
       cor: "#2563eb"
     }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
-      label: "TOD — Opositivo-Desafiador",
-      valor: media.tod,
-      max: 12,
+      label: "TEA — Critério B / Restritos (mín. 2/4)",
+      valor: media.teaB_C,
+      max: 4,
+      cor: "#6366f1"
+    }), /*#__PURE__*/React.createElement(BarraEscoreNeuro, {
+      label: "TOD — Opositivo-Desafiador (mín. 4/6)",
+      valor: media.todC,
+      max: 6,
       cor: "#d97706"
     })), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -4322,7 +4228,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         fontSize: 13
       }
     }, c.label), /*#__PURE__*/React.createElement(CorBadge, {
-      atende: c.atende === true ? true : c.atende === false ? false : null
+      atende: c.atende
     })), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 12,
@@ -4393,19 +4299,23 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         flexWrap: "wrap"
       }
     }, [{
-      label: "In " + Math.round(d.escores.tdahIn / 16 * 100) + "%",
+      label: "In " + d.escores.tdahInC + "/8",
       cor: "#7c3aed",
       bg: "#ede9fe"
     }, {
-      label: "Hi " + Math.round(d.escores.tdahHi / 14 * 100) + "%",
+      label: "Hi " + d.escores.tdahHiC + "/7",
       cor: "#dc2626",
       bg: "#fef2f2"
     }, {
-      label: "TEA " + Math.round(d.escores.tea / 14 * 100) + "%",
+      label: "TEA A " + d.escores.teaA_C + "/3",
       cor: "#2563eb",
       bg: "#eff6ff"
     }, {
-      label: "TOD " + Math.round(d.escores.tod / 12 * 100) + "%",
+      label: "TEA B " + d.escores.teaB_C + "/4",
+      cor: "#6366f1",
+      bg: "#eef2ff"
+    }, {
+      label: "TOD " + d.escores.todC + "/6",
       cor: "#d97706",
       bg: "#fffbeb"
     }].map((b, bi) => /*#__PURE__*/React.createElement("span", {
@@ -4533,101 +4443,145 @@ const PERGUNTAS_ALIMENTAR = [{
   texto: "Culpa intensa sem comportamentos compensatórios"
 }];
 function calcularEscoresAlimentar(doc) {
-  const p = id => ({
-    A: 0,
-    B: 1,
-    C: 2
-  })[doc[id]] || 0;
+  const isC = id => doc[id] === "C";
+  const isB = id => doc[id] === "B";
   return {
-    anorexia: ["p1", "p2", "p3", "p4"].reduce((s, id) => s + p(id), 0),
-    bulimia: ["p5", "p6", "p7", "p8"].reduce((s, id) => s + p(id), 0),
-    tca: ["p9", "p10"].reduce((s, id) => s + p(id), 0)
+    anorexiaC: ["p1", "p2", "p3"].filter(isC).length,
+    anorexiaB: ["p1", "p2", "p3"].filter(isB).length,
+    bulimiaC: ["p5", "p6", "p7", "p8"].filter(isC).length,
+    bulimiaB: ["p5", "p6", "p7", "p8"].filter(isB).length,
+    tcaC: ["p5", "p6", "p7", "p9", "p10"].filter(isC).length,
+    tcaB: ["p5", "p6", "p7", "p9", "p10"].filter(isB).length,
+    arfid: isC("p1") && !isC("p2") && !isC("p3")
   };
 }
 function laudoAlimentar(escores, doc) {
+  // Use o primeiro doc para ARFID e subtipo purgativo
+  const isC = id => doc?.[id] === "C";
   const {
-    anorexia,
-    bulimia,
-    tca
+    anorexiaC,
+    anorexiaB,
+    bulimiaC,
+    bulimiaB,
+    tcaC,
+    tcaB,
+    arfid
   } = escores;
-  const pAn = Math.round(anorexia / 8 * 100);
-  const pBu = Math.round(bulimia / 8 * 100);
-  const pTc = Math.round(tca / 4 * 100);
   let hipotese = [];
   let criterios = [];
   let atencao = [];
-  if (pAn >= 50) {
-    const subtipo = doc?.p4 === "C" ? "Subtipo Compulsão/Purgativo" : "Subtipo Restritivo";
+
+  // Anorexia: p1+p2+p3 todos C = diag; p1+p2 ou p1+p3 C = prov
+  if (anorexiaC >= 3) {
+    const subtipo = isC("p4") ? "Subtipo Compulsão/Purgativo" : "Subtipo Restritivo";
     hipotese.push("Anorexia Nervosa — " + subtipo);
     criterios.push({
       label: "Anorexia Nervosa (DSM-5 F50.0)",
-      atende: true,
-      obs: "Escores elevados nos três critérios nucleares: restrição (p1), medo de engordar (p2) e distorção da imagem corporal (p3). Subtipo: " + subtipo + "."
+      atende: "diag",
+      obs: "Todos os três critérios nucleares preenchidos (C): restrição alimentar (p1), medo de engordar (p2) e distorção da imagem corporal (p3). Subtipo: " + subtipo + "."
     });
     atencao.push("Avaliar IMC atual e velocidade de perda de peso — risco clínico de desnutrição grave.");
     atencao.push("Solicitar exames laboratoriais urgentes: eletrólitos, hemograma, função cardíaca (ECG) e densidade óssea.");
-    if (doc?.p4 === "C") atencao.push("Padrão purgativo confirmado — investigar lesões esofágicas, erosão dentária e hipocalemia.");
+    if (isC("p4")) atencao.push("Padrão purgativo confirmado — investigar lesões esofágicas, erosão dentária e hipocalemia.");
+  } else if (anorexiaC === 2) {
+    hipotese.push("Anorexia Nervosa (provável)");
+    criterios.push({
+      label: "Anorexia Nervosa (DSM-5 F50.0)",
+      atende: "prov",
+      obs: "Dois dos três critérios nucleares (C) preenchidos — investigar critério restante em avaliação presencial."
+    });
+    atencao.push("Confirmar em avaliação presencial: verificar critério faltante (restrição, medo de engordar ou distorção da imagem).");
   } else {
     criterios.push({
       label: "Anorexia Nervosa",
       atende: false,
-      obs: "Escores abaixo do limiar — sem os três critérios nucleares simultâneos."
+      obs: "Menos de 2 critérios nucleares (C) — abaixo do limiar diagnóstico e de rastreamento."
     });
   }
-  if (pBu >= 50) {
-    const temPurgacao = doc?.p8 === "C";
-    if (temPurgacao) {
-      hipotese.push("Bulimia Nervosa");
-      criterios.push({
-        label: "Bulimia Nervosa (DSM-5 F50.2)",
-        atende: true,
-        obs: "Compulsão recorrente (p5/p6), frequência ≥1x/semana por 3 meses (p7) e comportamentos compensatórios (p8) confirmados."
-      });
-      atencao.push("Investigar desequilíbrio eletrolítico (hipocalemia, hiponatremia) — risco cardíaco.");
-      atencao.push("Avaliar erosão dentária, calosas nos nós dos dedos (sinal de Russell) e lesões esofágicas.");
-    } else if (pTc >= 50) {
+
+  // Bulimia: p5+p6+p7+p8 todos C = diag; p5+p6+p7 C (sem p8) = prov
+  if (bulimiaC >= 4) {
+    hipotese.push("Bulimia Nervosa");
+    criterios.push({
+      label: "Bulimia Nervosa (DSM-5 F50.2)",
+      atende: "diag",
+      obs: "Todos os critérios confirmados (C): compulsão recorrente (p5), perda de controle (p6), frequência ≥1x/semana por 3 meses (p7) e comportamentos compensatórios (p8)."
+    });
+    atencao.push("Investigar desequilíbrio eletrolítico (hipocalemia, hiponatremia) — risco cardíaco.");
+    atencao.push("Avaliar erosão dentária, calosas nos nós dos dedos (sinal de Russell) e lesões esofágicas.");
+  } else if (bulimiaC >= 3 && !isC("p8")) {
+    hipotese.push("Bulimia Nervosa (provável)");
+    criterios.push({
+      label: "Bulimia Nervosa (DSM-5 F50.2)",
+      atende: "prov",
+      obs: "Compulsão recorrente (p5/p6) e frequência (p7) confirmados — comportamentos compensatórios (p8) não marcados como critério pleno."
+    });
+    atencao.push("Investigar comportamentos compensatórios em avaliação presencial — podem estar presentes mas não revelados.");
+  } else {
+    if (hipotese.indexOf("Anorexia Nervosa — Subtipo Compulsão/Purgativo") < 0) criterios.push({
+      label: "Bulimia Nervosa",
+      atende: false,
+      obs: "Critérios insuficientes (C) para o diagnóstico ou rastreamento positivo."
+    });
+  }
+
+  // TCA (Compulsão Alimentar): p5+p6+p7+p9+p10 — 5C = diag; 3-4C = prov
+  if (tcaC >= 5) {
+    if (!hipotese.includes("Bulimia Nervosa") && !hipotese.includes("Bulimia Nervosa (provável)")) {
       hipotese.push("Transtorno de Compulsão Alimentar (TCA)");
       criterios.push({
         label: "TCA — Compulsão sem Purgação (DSM-5 F50.8)",
-        atende: true,
-        obs: "Compulsão recorrente com sofrimento intenso e ausência de comportamentos compensatórios — perfil clássico de TCA."
+        atende: "diag",
+        obs: "Todos os 5 critérios preenchidos (C): compulsão (p5), perda de controle (p6), frequência (p7), ingestão rápida/secreta (p9) e culpa sem compensação (p10)."
       });
       atencao.push("Avaliar sobrepeso/obesidade como consequência do TCA e impacto metabólico.");
       atencao.push("Rastrear depressão e ansiedade associadas — alta comorbidade com TCA.");
     }
-  } else if (pTc >= 50 && pBu < 50) {
-    hipotese.push("Transtorno de Compulsão Alimentar (TCA) leve");
-    criterios.push({
-      label: "TCA (traços)",
-      atende: null,
-      obs: "Padrão de compulsão com culpa presente, mas frequência abaixo do limiar diagnóstico pleno."
+  } else if (tcaC >= 3) {
+    if (!hipotese.some(h => h.includes("Bulimia") || h.includes("TCA"))) {
+      hipotese.push("Transtorno de Compulsão Alimentar (provável)");
+      criterios.push({
+        label: "TCA (DSM-5 F50.8)",
+        atende: "prov",
+        obs: tcaC + " de 5 critérios preenchidos (C) — abaixo do diagnóstico pleno mas acima do limiar de rastreamento."
+      });
+      atencao.push("Monitorar frequência dos episódios — se aumentar para ≥1x/semana por 3 meses, revisar diagnóstico.");
+    }
+  } else {
+    if (!hipotese.some(h => h.includes("Bulimia") || h.includes("TCA"))) criterios.push({
+      label: "TCA — Compulsão Alimentar",
+      atende: false,
+      obs: "Critérios insuficientes (C) para rastreamento positivo."
     });
-    atencao.push("Monitorar frequência dos episódios — se aumentar para ≥1x/semana por 3 meses, revisar diagnóstico.");
+  }
+
+  // ARFID: restrição sem medo/distorção
+  if (arfid && hipotese.length === 0) {
+    hipotese.push("ARFID — investigar");
+    criterios.push({
+      label: "ARFID (DSM-5 F50.82)",
+      atende: "prov",
+      obs: "Restrição alimentar (p1=C) sem medo de engordar (p2≠C) nem distorção de imagem (p3≠C) — padrão compatível com ARFID. Investigar seletividade sensorial ou medo de engasgo."
+    });
   }
   if (hipotese.length === 0) {
-    if (doc?.p4 === "B") {
-      hipotese.push("ARFID ou restrição alimentar subliminar — investigar");
-      criterios.push({
-        label: "ARFID (DSM-5 F50.82)",
-        atende: null,
-        obs: "Restrição presente sem distorção de imagem ou medo de engordar — investigar seletividade sensorial ou medo de engasgo."
-      });
-    } else {
-      hipotese.push("Sem hipótese diagnóstica definida pelos escores — avaliação clínica aprofundada indicada.");
-      criterios.push({
-        label: "Transtornos Alimentares",
-        atende: false,
-        obs: "Escores abaixo do limiar para todos os diagnósticos avaliados."
-      });
-    }
+    hipotese.push("Sem hipótese diagnóstica definida pelos critérios — avaliação clínica aprofundada indicada.");
+    criterios.push({
+      label: "Transtornos Alimentares",
+      atende: false,
+      obs: "Critérios abaixo do limiar para todos os diagnósticos avaliados."
+    });
   }
   return {
     hipotese: hipotese.join(" / "),
     criterios,
     atencao,
-    pAn,
-    pBu,
-    pTc
+    anorexiaC,
+    anorexiaB,
+    bulimiaC,
+    bulimiaB,
+    tcaC,
+    tcaB
   };
 }
 function AbaRastreamentoAlimentar({
@@ -4669,9 +4623,13 @@ function AbaRastreamentoAlimentar({
     }));
     const n = docs.length;
     const media = {
-      anorexia: escoresPorDoc.reduce((s, d) => s + d.escores.anorexia, 0) / n,
-      bulimia: escoresPorDoc.reduce((s, d) => s + d.escores.bulimia, 0) / n,
-      tca: escoresPorDoc.reduce((s, d) => s + d.escores.tca, 0) / n
+      anorexiaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.anorexiaC, 0) / n),
+      anorexiaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.anorexiaB, 0) / n),
+      bulimiaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bulimiaC, 0) / n),
+      bulimiaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bulimiaB, 0) / n),
+      tcaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tcaC, 0) / n),
+      tcaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tcaB, 0) / n),
+      arfid: escoresPorDoc[0]?.escores?.arfid || false
     };
     const laudo = laudoAlimentar(media, docs[0]);
     const COR = {
@@ -4716,14 +4674,14 @@ h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
   <div class="sub">Respondentes: ${docs.length} (${docs.map(d => d.tipoRespondente === "paciente" ? "próprio paciente" : d.parentesco || "familiar").join(", ")})</div>
 </div>
 
-<h2>I. Perfil Diagnóstico por Categoria DSM-5</h2>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Anorexia Nervosa</strong> (restrição, medo, distorção)</span><span style="color:#dc2626;font-weight:700">${laudo.pAn}%</span></div><div class="barra-bg"><div style="width:${laudo.pAn}%;background:#dc2626;height:100%;border-radius:20px"></div></div></div>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Bulimia Nervosa</strong> (compulsão + compensação)</span><span style="color:#7c3aed;font-weight:700">${laudo.pBu}%</span></div><div class="barra-bg"><div style="width:${laudo.pBu}%;background:#7c3aed;height:100%;border-radius:20px"></div></div></div>
-<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TCA — Compulsão sem Purgação</strong></span><span style="color:#d97706;font-weight:700">${laudo.pTc}%</span></div><div class="barra-bg"><div style="width:${laudo.pTc}%;background:#d97706;height:100%;border-radius:20px"></div></div></div>
+<h2>I. Critérios DSM-5 por Categoria</h2>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Anorexia Nervosa</strong> (restrição, medo, distorção)</span><span style="color:#dc2626;font-weight:700">${laudo.anorexiaC} de 3 critérios</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.anorexiaC / 3 * 100)}%;background:#dc2626;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Bulimia Nervosa</strong> (compulsão + compensação)</span><span style="color:#7c3aed;font-weight:700">${laudo.bulimiaC} de 4 critérios</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.bulimiaC / 4 * 100)}%;background:#7c3aed;height:100%;border-radius:20px"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>TCA — Compulsão sem Purgação</strong></span><span style="color:#d97706;font-weight:700">${laudo.tcaC} de 5 critérios</span></div><div class="barra-bg"><div style="width:${Math.round(laudo.tcaC / 5 * 100)}%;background:#d97706;height:100%;border-radius:20px"></div></div></div>
 
 <h2>II. Hipótese Diagnóstica</h2>
 <div class="hipotese"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Hipótese principal</div><div style="font-size:15px;font-weight:700;color:#3d006a">${laudo.hipotese}</div></div>
-${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende === true ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === true ? "✓ Critérios presentes" : c.atende === false ? "✗ Não atende" : "⚠ Investigar"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
+${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende === "diag" ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === "diag" ? "✓ Diagnóstico" : c.atende === "prov" ? "⚠ Diagnóstico provável" : "✗ Não atende"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
 
 <h2>III. Pontos de Atenção e Alertas Clínicos</h2>
 ${laudo.atencao.length === 0 ? "<p style='color:#6b7280;font-size:12px'>Nenhum alerta crítico identificado pelos escores.</p>" : laudo.atencao.map(a => `<div class="atencao-item">⚠ ${a}</div>`).join("")}
@@ -4858,9 +4816,13 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
     }));
     const n = docs.length;
     const media = {
-      anorexia: escoresPorDoc.reduce((s, d) => s + d.escores.anorexia, 0) / n,
-      bulimia: escoresPorDoc.reduce((s, d) => s + d.escores.bulimia, 0) / n,
-      tca: escoresPorDoc.reduce((s, d) => s + d.escores.tca, 0) / n
+      anorexiaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.anorexiaC, 0) / n),
+      anorexiaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.anorexiaB, 0) / n),
+      bulimiaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bulimiaC, 0) / n),
+      bulimiaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.bulimiaB, 0) / n),
+      tcaC: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tcaC, 0) / n),
+      tcaB: Math.round(escoresPorDoc.reduce((s, d) => s + d.escores.tcaB, 0) / n),
+      arfid: escoresPorDoc[0]?.escores?.arfid || false
     };
     const laudo = laudoAlimentar(media, docs[0]);
     return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
@@ -4880,7 +4842,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         color: "var(--purple)",
         marginBottom: 4
       }
-    }, "Hipótese diagnóstica provável"), /*#__PURE__*/React.createElement("div", {
+    }, "Hipótese diagnóstica"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 15,
         fontWeight: 700,
@@ -4901,20 +4863,20 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         fontSize: 13,
         marginBottom: 12
       }
-    }, "Escores por categoria DSM-5"), /*#__PURE__*/React.createElement(BarraEscore, {
-      label: "Anorexia Nervosa",
-      valor: media.anorexia,
-      max: 8,
+    }, "Critérios DSM-5 por categoria"), /*#__PURE__*/React.createElement(BarraEscore, {
+      label: "Anorexia Nervosa (p1–p3)",
+      valor: media.anorexiaC,
+      max: 3,
       cor: "#dc2626"
     }), /*#__PURE__*/React.createElement(BarraEscore, {
-      label: "Bulimia Nervosa",
-      valor: media.bulimia,
-      max: 8,
+      label: "Bulimia Nervosa (p5–p8)",
+      valor: media.bulimiaC,
+      max: 4,
       cor: "#7c3aed"
     }), /*#__PURE__*/React.createElement(BarraEscore, {
-      label: "TCA — Compulsão sem Purgação",
-      valor: media.tca,
-      max: 4,
+      label: "TCA — Compulsão (p5–p7,p9,p10)",
+      valor: media.tcaC,
+      max: 5,
       cor: "#d97706"
     })), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -5019,15 +4981,15 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         flexWrap: "wrap"
       }
     }, [{
-      label: "AN " + Math.round(d.escores.anorexia / 8 * 100) + "%",
+      label: "AN " + d.escores.anorexiaC + "/3",
       cor: "#dc2626",
       bg: "#fef2f2"
     }, {
-      label: "BN " + Math.round(d.escores.bulimia / 8 * 100) + "%",
+      label: "BN " + d.escores.bulimiaC + "/4",
       cor: "#7c3aed",
       bg: "#ede9fe"
     }, {
-      label: "TCA " + Math.round(d.escores.tca / 4 * 100) + "%",
+      label: "TCA " + d.escores.tcaC + "/5",
       cor: "#d97706",
       bg: "#fffbeb"
     }].map((b, bi) => /*#__PURE__*/React.createElement("span", {
@@ -5181,11 +5143,12 @@ function laudoSexual(doc) {
   const temCriterio = p("p9") === "C";
   const generalizado = p("p10") === "C";
   const etiologia = p("p11");
+  const atendeVal = temCriterio ? "diag" : "prov";
   if (p("p1") === "C") {
     hipotese.push("Transtorno do Desejo Sexual Hipoativo");
     criterios.push({
       label: "Desejo Sexual Hipoativo (DSM-5 F52.0)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Ausência crônica de desejo por ≥6 meses com sofrimento clínico. " + (generalizado ? "Caráter generalizado." : "Caráter situacional — avaliar fatores relacionais.")
     });
     atencao.push("Investigar queda hormonal (testosterona/estrogênio), uso de antidepressivos ISRS e conflitos relacionais.");
@@ -5194,7 +5157,7 @@ function laudoSexual(doc) {
     hipotese.push("Aversão Sexual");
     criterios.push({
       label: "Aversão Sexual",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Evitação fóbica ativa de contato sexual. Avaliar histórico de trauma ou abuso sexual."
     });
     atencao.push("Rastrear histórico de trauma sexual — alta prevalência de TEPT associado à aversão sexual.");
@@ -5203,7 +5166,7 @@ function laudoSexual(doc) {
     hipotese.push("Transtorno de Excitação");
     criterios.push({
       label: "Transtorno de Excitação (DSM-5 F52.22/F52.21)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Disfunção erétil ou déficit de lubrificação crônico. " + (etiologia === "B" ? "Possível efeito iatrogênico de medicação." : etiologia === "A" ? "Investigar causa orgânica vascular/neurológica." : "Fator psicogênico predominante.")
     });
     if (etiologia === "A") atencao.push("Encaminhar para urologia/ginecologia — possível causa orgânica vascular ou hormonal.");
@@ -5213,7 +5176,7 @@ function laudoSexual(doc) {
     hipotese.push("Transtorno do Orgasmo / Anorgasmia");
     criterios.push({
       label: "Anorgasmia (DSM-5 F52.31/F52.32)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Ausência ou grande dificuldade persistente de atingir o orgasmo. Avaliar se é primária (nunca teve) ou secundária (perdeu após período funcional)."
     });
     atencao.push("Diferenciar anorgasmia primária (nunca vivenciou orgasmo) de secundária (perdeu após período funcional).");
@@ -5222,7 +5185,7 @@ function laudoSexual(doc) {
     hipotese.push("Ejaculação Precoce");
     criterios.push({
       label: "Ejaculação Precoce (DSM-5 F52.4)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Padrão persistente de ejaculação involuntária. " + (generalizado ? "Caráter generalizado — não situacional." : "Caráter situacional.")
     });
     atencao.push("Avaliar ansiedade de desempenho como fator primário — técnica de start-stop e terapia sexual indicadas.");
@@ -5231,7 +5194,7 @@ function laudoSexual(doc) {
     hipotese.push("Ejaculação Retardada");
     criterios.push({
       label: "Ejaculação Retardada (DSM-5 F52.32)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Atraso extremo ou incapacidade de ejacular intravaginal. Investigar uso de antidepressivos e fatores psicogênicos."
     });
     atencao.push("Ejaculação retardada tem alta correlação com uso de ISRS — avaliar ajuste medicamentoso com psiquiatra.");
@@ -5240,7 +5203,7 @@ function laudoSexual(doc) {
     hipotese.push("Dispareunia / Dor Gênito-Pélvica");
     criterios.push({
       label: "Transtorno de Dor Gênito-Pélvica/Penetração (DSM-5 F52.6)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Dor genital/pélvica recorrente. Diferencial com endometriose, vulvodínia e vaginismo deve ser feito em consulta ginecológica."
     });
     atencao.push("Encaminhar para ginecologia — descartar endometriose, vulvodínia e outras causas orgânicas de dispareunia.");
@@ -5249,7 +5212,7 @@ function laudoSexual(doc) {
     if (!hipotese.includes("Dispareunia / Dor Gênito-Pélvica")) hipotese.push("Vaginismo");
     criterios.push({
       label: "Vaginismo (DSM-5 F52.6)",
-      atende: temCriterio,
+      atende: atendeVal,
       obs: "Espasmo involuntário da musculatura pélvica com medo fóbico da penetração. Alta resposta à terapia sexual com fisioterapia pélvica."
     });
     atencao.push("Vaginismo tem excelente prognóstico com fisioterapia pélvica + terapia sexual — encaminhar para especialistas.");
@@ -5356,7 +5319,7 @@ h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
 
 <h2>I. Perfil Diagnóstico por Categoria DSM-5</h2>
 <div class="hipotese"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px">Hipótese principal</div><div style="font-size:15px;font-weight:700;color:#3d006a">${laudo.hipotese}</div></div>
-${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende ? "badge-sim" : "badge-nao"}">${c.atende ? "✓ Critérios presentes" : "✗ Verificar critério temporal"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
+${laudo.criterios.map(c => `<div class="criterio"><div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.label} &nbsp;<span class="${c.atende === "diag" ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === "diag" ? "✓ Diagnóstico" : c.atende === "prov" ? "⚠ Diagnóstico provável" : "✗ Não atende"}</span></div><div style="font-size:12px;color:#4b5563">${c.obs}</div></div>`).join("")}
 
 <h2>II. Análise Etiológica Diferencial</h2>
 <div class="etio"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#2563eb;margin-bottom:4px">Etiologia predominante indicada</div><div style="font-size:14px;font-weight:700;color:#1e40af;margin-bottom:6px">${laudo.etioLabel}</div><div style="font-size:12px;color:#374151">${laudo.etioObs}</div></div>
@@ -5514,7 +5477,7 @@ ${PERGUNTAS_SEXUAL.map(p => `<tr><td>${p.id.replace("p", "")}</td><td>${p.texto}
         color: "var(--purple)",
         marginBottom: 4
       }
-    }, "Hipótese diagnóstica provável"), /*#__PURE__*/React.createElement("div", {
+    }, "Hipótese diagnóstica"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 15,
         fontWeight: 700,
