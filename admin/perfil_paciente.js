@@ -67,6 +67,67 @@ function AbaPerfil({ paciente, pacientes }) {
               ))}
             </div>
           </div>
+          {/* ── RESPONSÁVEL / PAIS ── */}
+          <div style={{gridColumn:"span 2",fontSize:12,fontWeight:700,color:"#0891b2",borderBottom:"1px solid #bae6fd",paddingBottom:4,marginTop:4,textTransform:"uppercase",letterSpacing:0.5}}>
+            👨‍👩‍👧 Responsável / Pais — para pacientes menores de idade
+          </div>
+          <div className="form-group" style={{gridColumn:"span 2"}}>
+            <label className="form-label">Nome do Responsável</label>
+            <input className="form-input" value={form.responsavelNome||""} onChange={e=>setForm({...form,responsavelNome:e.target.value})} placeholder="Ex: Maria da Silva Castro"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Parentesco / Vínculo</label>
+            <select className="form-input" value={form.responsavelParentesco||""} onChange={e=>setForm({...form,responsavelParentesco:e.target.value})}>
+              <option value="">Selecione</option>
+              <option>Mãe</option>
+              <option>Pai</option>
+              <option>Avó</option>
+              <option>Avô</option>
+              <option>Tia/Tio</option>
+              <option>Tutor(a) legal</option>
+              <option>Responsável institucional</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">CPF do Responsável</label>
+            <input className="form-input" value={form.responsavelCpf||""} onChange={e=>setForm({...form,responsavelCpf:e.target.value})} placeholder="000.000.000-00"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Telefone do Responsável</label>
+            <input className="form-input" value={form.responsavelTelefone||""} onChange={e=>setForm({...form,responsavelTelefone:e.target.value})} placeholder="(62) 9 0000-0000"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">E-mail do Responsável</label>
+            <input className="form-input" type="email" value={form.responsavelEmail||""} onChange={e=>setForm({...form,responsavelEmail:e.target.value})} placeholder="email@exemplo.com"/>
+          </div>
+          <div className="form-group" style={{gridColumn:"span 2"}}>
+            <label className="form-label">Nome do Segundo Responsável (opcional)</label>
+            <input className="form-input" value={form.responsavel2Nome||""} onChange={e=>setForm({...form,responsavel2Nome:e.target.value})} placeholder="Ex: João Castro (pai)"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Parentesco 2º Responsável</label>
+            <select className="form-input" value={form.responsavel2Parentesco||""} onChange={e=>setForm({...form,responsavel2Parentesco:e.target.value})}>
+              <option value="">Selecione</option>
+              <option>Mãe</option>
+              <option>Pai</option>
+              <option>Avó</option>
+              <option>Avô</option>
+              <option>Tia/Tio</option>
+              <option>Tutor(a) legal</option>
+              <option>Responsável institucional</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Telefone 2º Responsável</label>
+            <input className="form-input" value={form.responsavel2Telefone||""} onChange={e=>setForm({...form,responsavel2Telefone:e.target.value})} placeholder="(62) 9 0000-0000"/>
+          </div>
+          <div className="form-group" style={{gridColumn:"span 2"}}>
+            <label className="form-label">Observações sobre o responsável / contexto familiar</label>
+            <TextAreaVoz className="form-input" rows={2} value={form.responsavelObs||""} onChange={e=>setForm({...form,responsavelObs:e.target.value})} placeholder="Ex: Pais separados, guarda compartilhada. Mãe tem autoridade para autorizar procedimentos..."/>
+          </div>
+          {/* ── DADOS OCUPACIONAIS ── */}
           <div style={{gridColumn:"span 2",fontSize:12,fontWeight:700,color:"var(--purple)",borderBottom:"1px solid var(--purple-soft)",paddingBottom:4,marginTop:4,textTransform:"uppercase",letterSpacing:0.5}}>
             🏢 Dados Ocupacionais — para documentos NR-1 e declarações
           </div>
