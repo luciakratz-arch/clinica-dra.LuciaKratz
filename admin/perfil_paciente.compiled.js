@@ -174,6 +174,194 @@ function AbaPerfil({
             gridColumn: "span 2",
             fontSize: 12,
             fontWeight: 700,
+            color: "#0891b2",
+            borderBottom: "1px solid #bae6fd",
+            paddingBottom: 4,
+            marginTop: 4,
+            textTransform: "uppercase",
+            letterSpacing: 0.5
+          },
+          children: "👨‍👩‍👧 Responsável / Pais — para pacientes menores de idade"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            gridColumn: "span 2"
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Nome do Responsável"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.responsavelNome || "",
+            onChange: e => setForm({
+              ...form,
+              responsavelNome: e.target.value
+            }),
+            placeholder: "Ex: Maria da Silva Castro"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Parentesco / Vínculo"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+            className: "form-input",
+            value: form.responsavelParentesco || "",
+            onChange: e => setForm({
+              ...form,
+              responsavelParentesco: e.target.value
+            }),
+            children: [/*#__PURE__*/_jsxDEV("option", {
+              value: "",
+              children: "Selecione"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Mãe"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Pai"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Avó"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Avô"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Tia/Tio"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Tutor(a) legal"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Responsável institucional"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Outro"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "CPF do Responsável"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.responsavelCpf || "",
+            onChange: e => setForm({
+              ...form,
+              responsavelCpf: e.target.value
+            }),
+            placeholder: "000.000.000-00"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Telefone do Responsável"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.responsavelTelefone || "",
+            onChange: e => setForm({
+              ...form,
+              responsavelTelefone: e.target.value
+            }),
+            placeholder: "(62) 9 0000-0000"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "E-mail do Responsável"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            type: "email",
+            value: form.responsavelEmail || "",
+            onChange: e => setForm({
+              ...form,
+              responsavelEmail: e.target.value
+            }),
+            placeholder: "email@exemplo.com"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            gridColumn: "span 2"
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Nome do Segundo Responsável (opcional)"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.responsavel2Nome || "",
+            onChange: e => setForm({
+              ...form,
+              responsavel2Nome: e.target.value
+            }),
+            placeholder: "Ex: João Castro (pai)"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Parentesco 2º Responsável"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+            className: "form-input",
+            value: form.responsavel2Parentesco || "",
+            onChange: e => setForm({
+              ...form,
+              responsavel2Parentesco: e.target.value
+            }),
+            children: [/*#__PURE__*/_jsxDEV("option", {
+              value: "",
+              children: "Selecione"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Mãe"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Pai"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Avó"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Avô"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Tia/Tio"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Tutor(a) legal"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Responsável institucional"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Outro"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Telefone 2º Responsável"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.responsavel2Telefone || "",
+            onChange: e => setForm({
+              ...form,
+              responsavel2Telefone: e.target.value
+            }),
+            placeholder: "(62) 9 0000-0000"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            gridColumn: "span 2"
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Observações sobre o responsável / contexto familiar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV(TextAreaVoz, {
+            className: "form-input",
+            rows: 2,
+            value: form.responsavelObs || "",
+            onChange: e => setForm({
+              ...form,
+              responsavelObs: e.target.value
+            }),
+            placeholder: "Ex: Pais separados, guarda compartilhada. Mãe tem autoridade para autorizar procedimentos..."
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            gridColumn: "span 2",
+            fontSize: 12,
+            fontWeight: 700,
             color: "var(--purple)",
             borderBottom: "1px solid var(--purple-soft)",
             paddingBottom: 4,
