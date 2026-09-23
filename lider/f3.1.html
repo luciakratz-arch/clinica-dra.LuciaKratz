@@ -270,6 +270,17 @@ function renderBlocos(){
     '</div>';
     cont.appendChild(div);
   });
+  // Inicializa microfone em todos os textareas de texto livre
+  participantes.forEach(function(p,pi){
+    ITENS_HIG.forEach(function(it,i){
+      var ta=document.getElementById('hig_txt_'+pi+'_'+i);
+      if(ta && !ta.dataset.vozInit){ ta.dataset.vozInit='1'; initVozEm(ta); }
+    });
+    ITENS_MOT.forEach(function(it,i){
+      var ta=document.getElementById('mot_txt_'+pi+'_'+i);
+      if(ta && !ta.dataset.vozInit){ ta.dataset.vozInit='1'; initVozEm(ta); }
+    });
+  });
 }
 
 function renderItem(pi, tipo, idx, it, estado, cor){
@@ -318,49 +329,93 @@ function atualizarTab(idx, val){
 
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+// ===== MICROFONE =====
+function initVozEm(ta){
+  var SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  var wrap = document.createElement('div');
+  wrap.style.cssText='display:flex;align-items:center;gap:6px;margin-top:4px';
+  var btn = document.createElement('button');
+  btn.type='button';
+  btn.innerHTML='🎤';
+  btn.title='Falar (clique para ativar)';
+  btn.style.cssText='background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.85rem;color:#166534;transition:all 0.15s';
+  var lbl = document.createElement('span');
+  lbl.style.cssText='font-size:0.7rem;color:#9ca3af';
+  lbl.textContent='Clique para ditar';
+  var rec = new SR();
+  rec.lang='pt-BR'; rec.interimResults=false; rec.continuous=false;
+  var gravando=false;
+  btn.onclick=function(){
+    if(gravando){ rec.stop(); return; }
+    rec.start(); gravando=true;
+    btn.innerHTML='⏹'; btn.style.background='#fee2e2'; btn.style.borderColor='#f87171'; btn.style.color='#991b1b';
+    lbl.textContent='Gravando... clique para parar';
+  };
+  rec.onresult=function(e){
+    var txt=e.results[0][0].transcript;
+    ta.value=(ta.value?ta.value+' ':'')+txt;
+  };
+  rec.onend=function(){ gravando=false; btn.innerHTML='🎤'; btn.style.background='#f0fdf4'; btn.style.borderColor='#bbf7d0'; btn.style.color='#166534'; lbl.textContent='Clique para ditar'; };
+  rec.onerror=function(){ gravando=false; btn.innerHTML='🎤'; btn.style.background='#f0fdf4'; btn.style.borderColor='#bbf7d0'; btn.style.color='#166534'; lbl.textContent='Erro — tente novamente'; };
+  wrap.appendChild(btn); wrap.appendChild(lbl);
+  ta.parentNode.insertBefore(wrap, ta.nextSibling);
+}
+
 // ===== DIAGNÓSTICO =====
 function mediaNotas(arr){
-  var s=arr.reduce(function(a,b){return a+(b.nota||0);},0);
-  return s/arr.length;
+  var notados = arr.filter(function(b){ return b.nota>0; });
+  if(notados.length===0) return null;
+  return notados.reduce(function(a,b){return a+b.nota;},0)/notados.length;
 }
+function mediaSegura(m){ return m===null?0:m; }
 function labelDiag(media){
+  if(media===null) return '<span class="diag-label" style="background:#f3f4f6;color:#6b7280">— Sem notas ainda</span>';
   if(media>=4) return '<span class="diag-label diag-motivado">✅ Satisfeito</span>';
-  if(media>=2.5) return '<span class="diag-label diag-alerta">⚠️ Alerta</span>';
+  if(media>=2.5) return '<span class="diag-label diag-alerta">⚠️ Em alerta</span>';
   return '<span class="diag-label diag-desmotivado">🔴 Insatisfeito</span>';
 }
-function porcentagem(media){ return Math.round((media-1)/4*100); }
+function porcentagem(media){
+  if(media===null) return 0;
+  return Math.round((media-1)/4*100);
+}
+function fmtMedia(m){ return m===null?'—':m.toFixed(1); }
 
 function gerarDiag(){
   salvarEstadoAtual();
   var card = document.getElementById('diag-card');
   card.className='diag-card visible';
 
-  // Índice global
-  var totalHig=0, totalMot=0, count=participantes.length;
+  // Índice global — só conta participantes com ao menos 1 nota
+  var somaHig=0, somaMot=0, cntH=0, cntM=0;
   participantes.forEach(function(p){
-    totalHig += mediaNotas(p.hig);
-    totalMot += mediaNotas(p.mot);
+    var mH=mediaNotas(p.hig), mM=mediaNotas(p.mot);
+    if(mH!==null){ somaHig+=mH; cntH++; }
+    if(mM!==null){ somaMot+=mM; cntM++; }
   });
-  var mHig = count>0?totalHig/count:0;
-  var mMot = count>0?totalMot/count:0;
-  var indiceGeral = (mHig+mMot)/2;
+  var mHig = cntH>0?somaHig/cntH:null;
+  var mMot = cntM>0?somaMot/cntM:null;
+  var temDados = mHig!==null||mMot!==null;
+  var indiceGeral = temDados?(mediaSegura(mHig)+mediaSegura(mMot))/(mHig!==null&&mMot!==null?2:1):null;
 
-  var corGeral = indiceGeral>=4?'#166534':indiceGeral>=2.5?'#854d0e':'#991b1b';
-  var bgGeral  = indiceGeral>=4?'#dcfce7':indiceGeral>=2.5?'#fef9c3':'#fee2e2';
-  var labelGeral = indiceGeral>=4?'Grupo Motivado':indiceGeral>=2.5?'Grupo em Alerta':'Grupo Desmotivado';
+  var corGeral, bgGeral, labelGeral;
+  if(indiceGeral===null){ corGeral='#6b7280'; bgGeral='#f3f4f6'; labelGeral='Preencha as escalas'; }
+  else if(indiceGeral>=4){ corGeral='#166534'; bgGeral='#dcfce7'; labelGeral='Grupo Motivado'; }
+  else if(indiceGeral>=2.5){ corGeral='#854d0e'; bgGeral='#fef9c3'; labelGeral='Grupo em Alerta'; }
+  else { corGeral='#991b1b'; bgGeral='#fee2e2'; labelGeral='Grupo Desmotivado'; }
 
   document.getElementById('indice-row').innerHTML =
     '<div class="indice-box" style="background:'+bgGeral+';border:1px solid '+corGeral+'44">'+
-      '<div class="indice-num" style="color:'+corGeral+'">'+indiceGeral.toFixed(1)+'</div>'+
+      '<div class="indice-num" style="color:'+corGeral+'">'+(indiceGeral!==null?indiceGeral.toFixed(1):'—')+'</div>'+
       '<div class="indice-desc" style="color:'+corGeral+'"><strong>'+labelGeral+'</strong><br>Índice geral (1–5)</div>'+
     '</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start">'+
       '<div class="indice-box" style="background:#fff7ed;border:1px solid #fed7aa">'+
-        '<div class="indice-num" style="color:#c2410c">'+mHig.toFixed(1)+'</div>'+
+        '<div class="indice-num" style="color:#c2410c">'+fmtMedia(mHig)+'</div>'+
         '<div class="indice-desc" style="color:#c2410c">🔶 Higiênicos</div>'+
       '</div>'+
       '<div class="indice-box" style="background:#f0fdf4;border:1px solid #bbf7d0">'+
-        '<div class="indice-num" style="color:#166534">'+mMot.toFixed(1)+'</div>'+
+        '<div class="indice-num" style="color:#166534">'+fmtMedia(mMot)+'</div>'+
         '<div class="indice-desc" style="color:#166534">✅ Motivadores</div>'+
       '</div>'+
     '</div>';
@@ -368,15 +423,16 @@ function gerarDiag(){
   // Por participante
   var html = '';
   participantes.forEach(function(p,i){
-    var mH = mediaNotas(p.hig), mM = mediaNotas(p.mot);
-    var pctH = porcentagem(mH), pctM = porcentagem(mM);
+    var mH=mediaNotas(p.hig), mM=mediaNotas(p.mot);
+    var pctH=porcentagem(mH), pctM=porcentagem(mM);
+    var mediaGeral = (mH!==null||mM!==null)?(mediaSegura(mH)+mediaSegura(mM))/(mH!==null&&mM!==null?2:1):null;
     html += '<div class="part-diag-row">'+
       '<div class="part-diag-nome">'+(p.nome||'Participante '+(i+1))+' — '+(p.setor||'setor não informado')+'</div>'+
-      '<div class="nivel-bar-wrap"><div class="nivel-bar-label"><span>🔶 Higiênicos: '+mH.toFixed(1)+'/5</span><span>'+pctH+'%</span></div>'+
+      '<div class="nivel-bar-wrap"><div class="nivel-bar-label"><span>🔶 Higiênicos: '+fmtMedia(mH)+'/5</span><span>'+pctH+'%</span></div>'+
         '<div class="nivel-bar"><div class="nivel-fill-hig" style="width:'+pctH+'%"></div></div></div>'+
-      '<div class="nivel-bar-wrap"><div class="nivel-bar-label"><span>✅ Motivadores: '+mM.toFixed(1)+'/5</span><span>'+pctM+'%</span></div>'+
+      '<div class="nivel-bar-wrap"><div class="nivel-bar-label"><span>✅ Motivadores: '+fmtMedia(mM)+'/5</span><span>'+pctM+'%</span></div>'+
         '<div class="nivel-bar"><div class="nivel-fill-mot" style="width:'+pctM+'%"></div></div></div>'+
-      labelDiag((mH+mM)/2)+
+      labelDiag(mediaGeral)+
     '</div>';
   });
   document.getElementById('partes-diag').innerHTML = html;
@@ -390,23 +446,18 @@ function gerarDiag(){
 
 function gerarPlanos(){
   // Agrega média por item (hig e mot) do grupo
+  // Pega os 2 piores higiênicos e 2 piores motivadores (sempre mostra, independente de nota)
   var gapsHig = ITENS_HIG.map(function(it,i){
     var soma = participantes.reduce(function(a,p){ return a+(p.hig[i].nota||0); },0);
     return {titulo:it.titulo, tipo:'Higiênico', media: participantes.length>0?soma/participantes.length:0};
-  }).filter(function(g){ return g.media<3 && g.media>0; })
-    .sort(function(a,b){ return a.media-b.media; }).slice(0,2);
+  }).sort(function(a,b){ return a.media-b.media; }).slice(0,2);
 
   var gapsMot = ITENS_MOT.map(function(it,i){
     var soma = participantes.reduce(function(a,p){ return a+(p.mot[i].nota||0); },0);
     return {titulo:it.titulo, tipo:'Motivador', media: participantes.length>0?soma/participantes.length:0};
-  }).filter(function(g){ return g.media<3 && g.media>0; })
-    .sort(function(a,b){ return a.media-b.media; }).slice(0,2);
+  }).sort(function(a,b){ return a.media-b.media; }).slice(0,2);
 
   var gaps = gapsHig.concat(gapsMot);
-  if(gaps.length===0){
-    document.getElementById('planos-container').innerHTML = '<p style="color:#166534;font-size:0.85rem;text-align:center;padding:12px">🎉 Parabéns! Nenhum fator com nota crítica detectado. Continue monitorando!</p>';
-    return;
-  }
 
   var html = '<p style="font-size:0.82rem;color:#6b7280;margin-bottom:14px">Focando nos fatores com menor satisfação do grupo:</p>';
   gaps.forEach(function(g,gi){
@@ -433,22 +484,23 @@ function gerarResumoWpp(){
   var linhas = ['📊 *PAINEL DE HERZBERG — DIAGNÓSTICO DO GRUPO*'];
   linhas.push('W3 · F3.1 — '+participantes.length+' participante(s)\n');
 
-  var totalHig=0, totalMot=0, cnt=participantes.length;
+  var somaH=0,somaM=0,cH=0,cM=0;
   participantes.forEach(function(p){
-    totalHig += mediaNotas(p.hig);
-    totalMot += mediaNotas(p.mot);
+    var mH=mediaNotas(p.hig), mM=mediaNotas(p.mot);
+    if(mH!==null){somaH+=mH;cH++;} if(mM!==null){somaM+=mM;cM++;}
   });
-  var mH=cnt>0?totalHig/cnt:0, mM=cnt>0?totalMot/cnt:0;
-  var ig=(mH+mM)/2;
-  var statusGeral=ig>=4?'✅ Grupo Motivado':ig>=2.5?'⚠️ Grupo em Alerta':'🔴 Grupo Desmotivado';
-  linhas.push('*ÍNDICE GERAL: '+ig.toFixed(1)+'/5 — '+statusGeral+'*');
-  linhas.push('🔶 Higiênicos: '+mH.toFixed(1)+'/5  |  ✅ Motivadores: '+mM.toFixed(1)+'/5\n');
+  var mH=cH>0?somaH/cH:null, mM=cM>0?somaM/cM:null;
+  var ig=(mH!==null||mM!==null)?(mediaSegura(mH)+mediaSegura(mM))/(mH!==null&&mM!==null?2:1):null;
+  var statusGeral=ig===null?'— Sem notas':ig>=4?'✅ Grupo Motivado':ig>=2.5?'⚠️ Grupo em Alerta':'🔴 Grupo Desmotivado';
+  linhas.push('*ÍNDICE GERAL: '+(ig!==null?ig.toFixed(1):'—')+'/5 — '+statusGeral+'*');
+  linhas.push('🔶 Higiênicos: '+fmtMedia(mH)+'/5  |  ✅ Motivadores: '+fmtMedia(mM)+'/5\n');
 
   participantes.forEach(function(p,i){
     var mHi=mediaNotas(p.hig), mMi=mediaNotas(p.mot);
-    var st=(mHi+mMi)/2>=4?'✅ Satisfeito':(mHi+mMi)/2>=2.5?'⚠️ Alerta':'🔴 Insatisfeito';
+    var med=(mHi!==null||mMi!==null)?(mediaSegura(mHi)+mediaSegura(mMi))/(mHi!==null&&mMi!==null?2:1):null;
+    var st=med===null?'— sem notas':med>=4?'✅ Satisfeito':med>=2.5?'⚠️ Alerta':'🔴 Insatisfeito';
     linhas.push('👤 '+(p.nome||'P'+(i+1))+(p.setor?' ('+p.setor+')':''));
-    linhas.push('   Higiênicos: '+mHi.toFixed(1)+' | Motivadores: '+mMi.toFixed(1)+' → '+st);
+    linhas.push('   Higiênicos: '+fmtMedia(mHi)+' | Motivadores: '+fmtMedia(mMi)+' → '+st);
   });
 
   linhas.push('\n🚀 *PRÓXIMO PASSO:* Definir plano de ação 5W2H para os GAPs identificados.');
