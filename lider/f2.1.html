@@ -35,13 +35,15 @@ textarea{resize:vertical;min-height:70px}
 .msg{display:none;text-align:center;padding:14px;border-radius:8px;margin-top:12px;font-weight:600}
 .msg.ok{background:#dcfce7;color:#166534;border:1px solid #86efac}
 .msg.err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+/* Badge automático */
+.auto-badge{display:inline-block;font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:8px;vertical-align:middle;background:#dcfce7;color:#15803d;border:1px solid #86efac}
 </style>
 </head>
 <body>
 <header>
   <div class="header-top">
     <div class="logos">
-      <img class="logo-lucia" id="logo-lucia" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:none">
+      <img class="logo-lucia" id="logo-lucia" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=" alt="Dra. Lucia Kratz" style="height:38px;object-fit:contain;border-radius:6px;display:block">
       <div style="width:1px;height:32px;background:#ffffff33;margin:0 10px"></div>
       <img id="logo-cbco" alt="CBCO" style="height:42px;object-fit:contain;display:none">
     </div>
@@ -56,7 +58,7 @@ textarea{resize:vertical;min-height:70px}
 
 <div class="container">
   <div class="instrucao">
-    Avalie-se em cada uma das 15 características do Líder 5.0, de 1 (preciso desenvolver muito) a 5 (ponto forte consolidado). Ao final, identifique seus 3 maiores pontos fortes e 3 GAPs prioritários.
+    Avalie-se em cada uma das 15 características do Líder 5.0, de 1 (preciso desenvolver muito) a 5 (ponto forte consolidado). Os <strong>3 maiores pontos fortes</strong> e os <strong>3 GAPs prioritários</strong> serão identificados automaticamente conforme você preenche as notas.
   </div>
 
   <div id="media-box" class="media-box">
@@ -90,12 +92,12 @@ textarea{resize:vertical;min-height:70px}
   <div class="card">
     <div class="section-title">Minha Análise</div>
     <div class="analise-row">
-      <label>Meus 3 maiores pontos fortes:</label>
-      <textarea id="pontos_fortes" placeholder="Liste as 3 características onde você se saiu melhor e por quê..."></textarea>
+      <label>Meus 3 maiores pontos fortes: <span class="auto-badge" id="badge-pf" style="display:none">✦ preenchido automaticamente</span></label>
+      <textarea id="pontos_fortes" placeholder="Preencha as notas acima — os 3 maiores pontos fortes aparecerão aqui automaticamente." style="min-height:80px"></textarea>
     </div>
     <div class="analise-row">
-      <label>Meus 3 GAPs prioritários:</label>
-      <textarea id="gaps" placeholder="Liste as 3 características que mais precisam de desenvolvimento..."></textarea>
+      <label>Meus 3 GAPs prioritários: <span class="auto-badge" id="badge-gap" style="display:none;background:#fef9c3;color:#92400e;border-color:#fde047">✦ preenchido automaticamente</span></label>
+      <textarea id="gaps" placeholder="Preencha as notas acima — os 3 GAPs prioritários aparecerão aqui automaticamente." style="min-height:80px"></textarea>
     </div>
     <div class="analise-row">
       <label>Meu compromisso de desenvolvimento:</label>
@@ -116,12 +118,17 @@ var CARACTERISTICAS = [
   'Colaboração Intergeracional','Resiliência','Propósito e Significado'
 ];
 
+// Controla se o usuário editou manualmente os campos de análise
+var pfEditado = false;
+var gapEditado = false;
+
 function buildChars(){
   var c = document.getElementById('chars-container');
   CARACTERISTICAS.forEach(function(nome,i){
     var n = i+1;
     var row = document.createElement('div');
     row.className = 'char-row';
+    row.id = 'char-row-'+n;
     row.innerHTML =
       '<div><div class="char-num">'+n+'</div><div class="char-name">'+nome+'</div></div>'+
       '<div class="char-select"><select id="c_'+n+'" onchange="calcMedia()">'+
@@ -135,94 +142,214 @@ function buildChars(){
       '<div class="char-ev"><input type="text" id="ev_'+n+'" placeholder="Evidência ou exemplo..."></div>';
     c.appendChild(row);
   });
+  // Detecta edição manual nos campos de análise
+  document.getElementById('pontos_fortes').addEventListener('input', function(){ pfEditado = true; });
+  document.getElementById('gaps').addEventListener('input', function(){ gapEditado = true; });
 }
 
 function calcMedia(){
-  var soma=0,count=0;
-  for(var i=1;i<=15;i++){
-    var v=parseInt(document.getElementById('c_'+i).value)||0;
-    if(v>0){soma+=v;count++;}
+  var itens = [];
+  var soma = 0, count = 0;
+  for(var i = 1; i <= 15; i++){
+    var v = parseInt(document.getElementById('c_'+i).value) || 0;
+    if(v > 0){
+      soma += v;
+      count++;
+      itens.push({idx: i, nome: CARACTERISTICAS[i-1], valor: v});
+    }
   }
-  var box=document.getElementById('media-box');
-  var mv=document.getElementById('media-valor');
-  if(count>0){
-    box.style.display='block';
-    mv.textContent=(soma/count).toFixed(1);
+  // Média
+  var box = document.getElementById('media-box');
+  var mv = document.getElementById('media-valor');
+  if(count > 0){
+    box.style.display = 'block';
+    mv.textContent = (soma/count).toFixed(1);
   } else {
-    box.style.display='none';
+    box.style.display = 'none';
+  }
+
+  // Destaque visual nas linhas
+  for(var j = 1; j <= 15; j++){
+    var row = document.getElementById('char-row-'+j);
+    if(row){
+      row.style.background = '#f0fdf4';
+      row.style.borderColor = '#d1fae5';
+    }
+  }
+
+  // Auto-preenchimento de pontos fortes e GAPs (só se tiver pelo menos 3 notas preenchidas)
+  if(itens.length >= 3){
+    // Ordena decrescente para pontos fortes
+    var ordenadoDesc = itens.slice().sort(function(a,b){ return b.valor - a.valor; });
+    var top3 = ordenadoDesc.slice(0,3);
+
+    // Ordena crescente para GAPs
+    var ordenadoAsc = itens.slice().sort(function(a,b){ return a.valor - b.valor; });
+    var gap3 = ordenadoAsc.slice(0,3);
+
+    // Destaque visual nos top3
+    top3.forEach(function(it){
+      var row = document.getElementById('char-row-'+it.idx);
+      if(row){ row.style.background = '#dcfce7'; row.style.borderColor = '#86efac'; }
+    });
+    // Destaque visual nos gap3
+    gap3.forEach(function(it){
+      var row = document.getElementById('char-row-'+it.idx);
+      if(row){ row.style.background = '#fef9c3'; row.style.borderColor = '#fde047'; }
+    });
+
+    // Preenche pontos fortes (se não foi editado manualmente)
+    if(!pfEditado){
+      var textoPF = top3.map(function(it, idx){
+        return (idx+1)+'. '+it.nome+' (nível '+it.valor+'/5)';
+      }).join('\n');
+      document.getElementById('pontos_fortes').value = textoPF;
+      document.getElementById('badge-pf').style.display = 'inline-block';
+    }
+
+    // Preenche GAPs (se não foi editado manualmente)
+    if(!gapEditado){
+      var textoGAP = gap3.map(function(it, idx){
+        return (idx+1)+'. '+it.nome+' (nível '+it.valor+'/5) — desenvolver';
+      }).join('\n');
+      document.getElementById('gaps').value = textoGAP;
+      document.getElementById('badge-gap').style.display = 'inline-block';
+    }
+  } else {
+    // Menos de 3 notas: limpa os campos automáticos (se não foram editados)
+    if(!pfEditado){
+      document.getElementById('pontos_fortes').value = '';
+      document.getElementById('badge-pf').style.display = 'none';
+    }
+    if(!gapEditado){
+      document.getElementById('gaps').value = '';
+      document.getElementById('badge-gap').style.display = 'none';
+    }
   }
 }
 
 function enviar(){
-  var nome=document.getElementById('nome').value.trim();
-  var wa=document.getElementById('whatsapp').value.trim();
-  if(!nome||!wa){
+  var nome = document.getElementById('nome').value.trim();
+  var wa = document.getElementById('whatsapp').value.trim();
+  if(!nome || !wa){
     mostrarMsg('Preencha nome e WhatsApp antes de enviar.','err');
     return;
   }
-  var data={
-    nome:nome,
-    whatsapp:wa,
-    cargo:document.getElementById('cargo').value.trim(),
-    setor:document.getElementById('setor').value.trim(),
-    pontos_fortes:document.getElementById('pontos_fortes').value.trim(),
-    gaps:document.getElementById('gaps').value.trim(),
-    compromisso:document.getElementById('compromisso').value.trim(),
-    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  var data = {
+    nome: nome,
+    whatsapp: wa,
+    cargo: document.getElementById('cargo').value.trim(),
+    setor: document.getElementById('setor').value.trim(),
+    pontos_fortes: document.getElementById('pontos_fortes').value.trim(),
+    gaps: document.getElementById('gaps').value.trim(),
+    compromisso: document.getElementById('compromisso').value.trim(),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
-  var soma=0,count=0;
-  for(var i=1;i<=15;i++){
-    var v=parseInt(document.getElementById('c_'+i).value)||0;
-    var ev=document.getElementById('ev_'+i).value.trim();
-    var key=CARACTERISTICAS[i-1].replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'').toLowerCase();
-    data['char_'+i+'_nome']=CARACTERISTICAS[i-1];
-    data['char_'+i+'_valor']=v||null;
-    data['char_'+i+'_evidencia']=ev;
-    if(v>0){soma+=v;count++;}
+  var soma = 0, count = 0;
+  for(var i = 1; i <= 15; i++){
+    var v = parseInt(document.getElementById('c_'+i).value) || 0;
+    var ev = document.getElementById('ev_'+i).value.trim();
+    data['char_'+i+'_nome'] = CARACTERISTICAS[i-1];
+    data['char_'+i+'_valor'] = v || null;
+    data['char_'+i+'_evidencia'] = ev;
+    if(v > 0){ soma += v; count++; }
   }
-  data.media_geral=count>0?Math.round((soma/count)*10)/10:null;
-  var db=firebase.firestore();
+  data.media_geral = count > 0 ? Math.round((soma/count)*10)/10 : null;
+  var db = firebase.firestore();
   db.collection('lider_f2_1').add(data).then(function(){
-    localStorage.setItem('lider_whatsapp',wa);
+    localStorage.setItem('lider_whatsapp', wa);
     mostrarMsg('Autodiagnóstico enviado com sucesso!','ok');
-    if(window.WhatsApp||true){
-      try{
-        var link='https://wa.me/'+wa.replace(/\D/g,'')+'?text='+encodeURIComponent('Autodiagnóstico Líd@r preenchido!');
-      }catch(e){}
-    }
   }).catch(function(e){
     mostrarMsg('Erro ao enviar. Tente novamente.','err');
   });
 }
 
-function mostrarMsg(txt,tipo){
-  var m=document.getElementById('msg');
-  m.textContent=txt;
-  m.className='msg '+tipo;
-  m.style.display='block';
-  setTimeout(function(){m.style.display='none';},4000);
+function mostrarMsg(txt, tipo){
+  var m = document.getElementById('msg');
+  m.textContent = txt;
+  m.className = 'msg '+tipo;
+  m.style.display = 'block';
+  setTimeout(function(){ m.style.display = 'none'; }, 4000);
 }
 
-window.onload=function(){
-  var LOGO_LUCIA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
-  var el=document.getElementById('logo-lucia');
-  el.src=LOGO_LUCIA; el.style.display='block';
+// ── TextAreaVoz ──
+function initVoz(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return;
+  document.querySelectorAll('textarea').forEach(function(ta){
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:block';
+    ta.parentNode.insertBefore(wrap, ta);
+    wrap.appendChild(ta);
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerHTML = '🎙️';
+    btn.title = 'Falar para digitar';
+    btn.style.cssText = 'position:absolute;right:6px;bottom:8px;background:#f3e6ff;border:none;border-radius:6px;padding:4px 7px;cursor:pointer;color:#7B00C4;font-size:14px;line-height:1;transition:all .2s;z-index:2';
+    wrap.appendChild(btn);
+    ta.style.paddingRight = '36px';
+    var dot = document.createElement('div');
+    dot.style.cssText = 'display:none;font-size:11px;color:#7B00C4;margin-top:3px;align-items:center;gap:4px';
+    dot.innerHTML = '<span style="width:6px;height:6px;border-radius:50%;background:#7B00C4;display:inline-block"></span> Gravando... clique 🎙️ para parar';
+    wrap.appendChild(dot);
+    var rec = null;
+    var gravando = false;
+    btn.addEventListener('click', function(){
+      if(gravando){
+        if(rec) rec.stop();
+        gravando = false;
+        btn.style.background = '#f3e6ff';
+        btn.style.color = '#7B00C4';
+        btn.style.boxShadow = 'none';
+        dot.style.display = 'none';
+        return;
+      }
+      // Quando clica para gravar, marca como editado manualmente (pois irá falar)
+      if(ta.id === 'pontos_fortes') pfEditado = true;
+      if(ta.id === 'gaps') gapEditado = true;
+      if(ta.id === 'compromisso') {} // sem flag
+      rec = new SR();
+      rec.lang = 'pt-BR';
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.onresult = function(e){
+        var t = Array.from(e.results).map(function(r){ return r[0].transcript; }).join(' ');
+        var base = ta.value.replace(/\s*\[\.\.\.]+$/, '').trimEnd();
+        ta.value = base ? base + ' ' + t : t;
+      };
+      rec.onerror = function(){ gravando = false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; };
+      rec.onend = function(){ if(gravando){ gravando=false; btn.style.background='#f3e6ff'; btn.style.color='#7B00C4'; dot.style.display='none'; } };
+      rec.start();
+      gravando = true;
+      btn.style.background = '#7B00C4';
+      btn.style.color = 'white';
+      btn.style.boxShadow = '0 0 0 3px #7B00C430';
+      dot.style.display = 'flex';
+    });
+  });
+}
+
+window.onload = function(){
+  var LOGO_LUCIA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFgmlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI2LTA3LTIxPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkRhdGE+eyZxdW90O2RvYyZxdW90OzomcXVvdDtEQUhQMy1KQUJiYyZxdW90OywmcXVvdDt1c2VyJnF1b3Q7OiZxdW90O1VBQ0J0S1ZhbzJZJnF1b3Q7LCZxdW90O2JyYW5kJnF1b3Q7OiZxdW90O1Byb2ZhLiBMdWNpYSBLcmF0eiZxdW90O308L0F0dHJpYjpEYXRhPgogICAgIDxBdHRyaWI6RXh0SWQ+NWY1OThmY2ItZmNkMS00ZDBlLTljMTQtNzYxMTdkNjg2YTAyPC9BdHRyaWI6RXh0SWQ+CiAgICAgPEF0dHJpYjpGYklkPjUyNTI2NTkxNDE3OTU4MDwvQXR0cmliOkZiSWQ+CiAgICAgPEF0dHJpYjpUb3VjaFR5cGU+MjwvQXR0cmliOlRvdWNoVHlwZT4KICAgIDwvcmRmOmxpPgogICA8L3JkZjpTZXE+CiAgPC9BdHRyaWI6QWRzPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpkYz0naHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8nPgogIDxkYzp0aXRsZT4KICAgPHJkZjpBbHQ+CiAgICA8cmRmOmxpIHhtbDpsYW5nPSd4LWRlZmF1bHQnPkxvZ28gRHJhLiBMdWNpYSBLcmF0eiBUcmFuc3BhcmVudGUgKDE5MiB4IDE5MiBweCkgLSAxPC9yZGY6bGk+CiAgIDwvcmRmOkFsdD4KICA8L2RjOnRpdGxlPgogPC9yZGY6RGVzY3JpcHRpb24+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpwZGY9J2h0dHA6Ly9ucy5hZG9iZS5jb20vcGRmLzEuMy8nPgogIDxwZGY6QXV0aG9yPmx1Y2lha3JhdHouY29hY2g8L3BkZjpBdXRob3I+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0nJwogIHhtbG5zOnhtcD0naHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyc+CiAgPHhtcDpDcmVhdG9yVG9vbD5DYW52YSAoUmVuZGVyZXIpIGRvYz1EQUhQMy1KQUJiYyB1c2VyPVVBQ0J0S1ZhbzJZIGJyYW5kPVByb2ZhLiBMdWNpYSBLcmF0ejwveG1wOkNyZWF0b3JUb29sPgogPC9yZGY6RGVzY3JpcHRpb24+CjwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9J3InPz78zL7lAAAATmVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAAhMAAwAAAAEAAQAAAAAAAAAAAGAAAAABAAAAYAAAAAF3Bd/nAAAyL0lEQVR4nO2ddWAUZ97Hn2dm3bO7sY0nGzeihAQJ7tbSQqFGKUehAr2rXPveXXtUr9S40qsbpcULheJBEhIgAeLu7sm678y8fywNIUayu0mQ+fwFO7vPPLv5zmM/g88jXwMSEmtBxrsDJHc3pIBIbIIUEIlNkAIisQlSQCQ2QQqIxCZIAZHYBCkgEpsgBURiE6SASGyCFBCJTZACIrEJUkAkNkEKiMQmSAGR2AQpIBKbIAVEYhOkgEhsghQQiU2QAiKxCVJAJDZBCojEJkgBkdgEKSASm/h/qhy/IsvZ3z0AAAAASUVORK5CYII=';
+  var el = document.getElementById('logo-lucia');
+  el.src = LOGO_LUCIA; el.style.display = 'block';
 
   if(!firebase.apps.length){
     firebase.initializeApp({apiKey:"AIzaSyDnrgaY8R0Zetkr18uHQJAZXIUa4EwDnv4",authDomain:"entrevista-inicial.firebaseapp.com",projectId:"entrevista-inicial",storageBucket:"entrevista-inicial.firebasestorage.app",messagingSenderId:"437375609844",appId:"1:437375609844:web:2ed0e16a7da5d46c2e27a1"});
   }
-  var db=firebase.firestore();
+  var db = firebase.firestore();
   db.doc('lider_config/tema').get().then(function(doc){
-    if(doc.exists&&doc.data().logoParceiro){
-      var lp=document.getElementById('logo-cbco');
-      lp.src=doc.data().logoParceiro; lp.style.display='block';
+    if(doc.exists && doc.data().logoParceiro){
+      var lp = document.getElementById('logo-cbco');
+      lp.src = doc.data().logoParceiro; lp.style.display = 'block';
     }
   }).catch(function(){});
 
-  var wa=localStorage.getItem('lider_whatsapp');
-  if(wa){var w=document.getElementById('whatsapp');if(w)w.value=wa;}
+  var wa = localStorage.getItem('lider_whatsapp');
+  if(wa){ var w = document.getElementById('whatsapp'); if(w) w.value = wa; }
 
   buildChars();
+  initVoz();
 };
 </script>
 </body>
