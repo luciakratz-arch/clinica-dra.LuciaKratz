@@ -1,3 +1,4 @@
+import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
 function AbaPerfil({
   paciente,
   pacientes
@@ -30,247 +31,296 @@ function AbaPerfil({
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   }
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Nome completo"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.nome || "",
-    onChange: e => setForm({
-      ...form,
-      nome: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "E-mail"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "email",
-    value: form.email || "",
-    onChange: e => setForm({
-      ...form,
-      email: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Telefone"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.telefone || "",
-    onChange: e => setForm({
-      ...form,
-      telefone: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Data de Nascimento"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "date",
-    value: form.dataNasc || "",
-    onChange: e => setForm({
-      ...form,
-      dataNasc: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "CPF"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.cpf || "",
-    onChange: e => setForm({
-      ...form,
-      cpf: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Genero"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: form.genero || "",
-    onChange: e => setForm({
-      ...form,
-      genero: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecione"), /*#__PURE__*/React.createElement("option", null, "Feminino"), /*#__PURE__*/React.createElement("option", null, "Masculino"), /*#__PURE__*/React.createElement("option", null, "Nao-binario"), /*#__PURE__*/React.createElement("option", null, "Nao informar"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginTop: 4
-    }
-  }, [["ativo", "Ativo", "var(--success)"], ["inativo", "Inativo", "var(--danger)"], ["alta", "Alta", "var(--gray-400)"]].map(([s, l, c]) => /*#__PURE__*/React.createElement("button", {
-    key: s,
-    onClick: () => setForm({
-      ...form,
-      status: s
-    }),
-    style: {
-      padding: "7px 14px",
-      borderRadius: 20,
-      border: "1.5px solid " + c,
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "var(--font-body)",
-      background: form.status === s ? c : "white",
-      color: form.status === s ? "white" : c
-    }
-  }, l)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: "span 2",
-      fontSize: 12,
-      fontWeight: 700,
-      color: "var(--purple)",
-      borderBottom: "1px solid var(--purple-soft)",
-      paddingBottom: 4,
-      marginTop: 4,
-      textTransform: "uppercase",
-      letterSpacing: 0.5
-    }
-  }, "🏢 Dados Ocupacionais — para documentos NR-1 e declarações"), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Empresa Contratante"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.empresa || "",
-    onChange: e => setForm({
-      ...form,
-      empresa: e.target.value
-    }),
-    placeholder: "Ex: Construtora Horizonte Ltda."
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Setor"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.setor || "",
-    onChange: e => setForm({
-      ...form,
-      setor: e.target.value
-    }),
-    placeholder: "Ex: Administrativo"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Cargo"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.cargo || "",
-    onChange: e => setForm({
-      ...form,
-      cargo: e.target.value
-    }),
-    placeholder: "Ex: Analista de RH"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Objetivos Terapeuticos"), /*#__PURE__*/React.createElement(TextAreaVoz, {
-    className: "form-input",
-    rows: 3,
-    value: form.objetivos || "",
-    onChange: e => setForm({
-      ...form,
-      objetivos: e.target.value
-    }),
-    placeholder: "Descreva os objetivos da terapia..."
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvar,
-    disabled: salvando
-  }, salvando ? "Salvando..." : "Salvar alteracoes"))), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "key",
-    size: 18
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600
-    }
-  }, "Credenciais de Acesso")), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 16
-    }
-  }, "Copie o texto abaixo e envie para o paciente. A senha padrao e ", /*#__PURE__*/React.createElement("strong", null, "1234"), "."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--gray-50)",
-      border: "1px solid var(--gray-200)",
-      borderRadius: 10,
-      padding: 16,
-      fontSize: 13,
-      lineHeight: 1.8,
-      color: "var(--text-muted)"
-    }
-  }, "Ola, " + paciente.nome + "! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n📲 Instale o app: " + SITE_URL + "/\nNome de acesso: " + paciente.nome + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      marginTop: 12
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    onClick: copiarMsg
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "copy",
-    size: 15
-  }), " ", copiado ? "Copiado!" : "Copiar mensagem"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: redefinirSenha
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "key",
-    size: 15
-  }), " Redefinir senha para 1234"))));
+    },
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 16
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            gridColumn: "span 2"
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Nome completo"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.nome || "",
+            onChange: e => setForm({
+              ...form,
+              nome: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "E-mail"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            type: "email",
+            value: form.email || "",
+            onChange: e => setForm({
+              ...form,
+              email: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Telefone"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.telefone || "",
+            onChange: e => setForm({
+              ...form,
+              telefone: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Data de Nascimento"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            type: "date",
+            value: form.dataNasc || "",
+            onChange: e => setForm({
+              ...form,
+              dataNasc: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "CPF"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.cpf || "",
+            onChange: e => setForm({
+              ...form,
+              cpf: e.target.value
+            })
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Genero"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+            className: "form-input",
+            value: form.genero || "",
+            onChange: e => setForm({
+              ...form,
+              genero: e.target.value
+            }),
+            children: [/*#__PURE__*/_jsxDEV("option", {
+              value: "",
+              children: "Selecione"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Feminino"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Masculino"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Nao-binario"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              children: "Nao informar"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Status"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              gap: 8,
+              marginTop: 4
+            },
+            children: [["ativo", "Ativo", "var(--success)"], ["inativo", "Inativo", "var(--danger)"], ["alta", "Alta", "var(--gray-400)"]].map(([s, l, c]) => /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => setForm({
+                ...form,
+                status: s
+              }),
+              style: {
+                padding: "7px 14px",
+                borderRadius: 20,
+                border: "1.5px solid " + c,
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "var(--font-body)",
+                background: form.status === s ? c : "white",
+                color: form.status === s ? "white" : c
+              },
+              children: l
+            }, s, false))
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            gridColumn: "span 2",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--purple)",
+            borderBottom: "1px solid var(--purple-soft)",
+            paddingBottom: 4,
+            marginTop: 4,
+            textTransform: "uppercase",
+            letterSpacing: 0.5
+          },
+          children: "🏢 Dados Ocupacionais — para documentos NR-1 e declarações"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            gridColumn: "span 2"
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Empresa Contratante"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.empresa || "",
+            onChange: e => setForm({
+              ...form,
+              empresa: e.target.value
+            }),
+            placeholder: "Ex: Construtora Horizonte Ltda."
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Setor"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.setor || "",
+            onChange: e => setForm({
+              ...form,
+              setor: e.target.value
+            }),
+            placeholder: "Ex: Administrativo"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Cargo"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.cargo || "",
+            onChange: e => setForm({
+              ...form,
+              cargo: e.target.value
+            }),
+            placeholder: "Ex: Analista de RH"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            gridColumn: "span 2"
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Objetivos Terapeuticos"
+          }, void 0, false), /*#__PURE__*/_jsxDEV(TextAreaVoz, {
+            className: "form-input",
+            rows: 3,
+            value: form.objetivos || "",
+            onChange: e => setForm({
+              ...form,
+              objetivos: e.target.value
+            }),
+            placeholder: "Descreva os objetivos da terapia..."
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 10,
+          marginTop: 16
+        },
+        children: /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-purple",
+          onClick: salvar,
+          disabled: salvando,
+          children: salvando ? "Salvando..." : "Salvar alteracoes"
+        }, void 0, false)
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 12
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "key",
+          size: 18
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 600
+          },
+          children: "Credenciais de Acesso"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
+        style: {
+          fontSize: 13,
+          color: "var(--text-muted)",
+          marginBottom: 16
+        },
+        children: ["Copie o texto abaixo e envie para o paciente. A senha padrao e ", /*#__PURE__*/_jsxDEV("strong", {
+          children: "1234"
+        }, void 0, false), "."]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "var(--gray-50)",
+          border: "1px solid var(--gray-200)",
+          borderRadius: 10,
+          padding: 16,
+          fontSize: 13,
+          lineHeight: 1.8,
+          color: "var(--text-muted)"
+        },
+        children: "Ola, " + paciente.nome + "! 🦋\n\nSeu acesso ao portal terapeutico da Dra. Lucia Kratz esta pronto.\n📲 Instale o app: " + SITE_URL + "/\nNome de acesso: " + paciente.nome + "\nSenha: 1234\n\nDra. Lucia Kratz - CRP 09/20590"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 10,
+          marginTop: 12
+        },
+        children: [/*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-outline",
+          onClick: copiarMsg,
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "copy",
+            size: 15
+          }, void 0, false), " ", copiado ? "Copiado!" : "Copiar mensagem"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-ghost",
+          onClick: redefinirSenha,
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "key",
+            size: 15
+          }, void 0, false), " Redefinir senha para 1234"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ABA MODULOS
@@ -294,7 +344,7 @@ function Toggle({
   ativo,
   onClick
 }) {
-  return /*#__PURE__*/React.createElement("button", {
+  return /*#__PURE__*/_jsxDEV("button", {
     onClick: onClick,
     style: {
       width: 44,
@@ -306,20 +356,21 @@ function Toggle({
       position: "relative",
       transition: "background .2s",
       flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      position: "absolute",
-      top: 2,
-      left: ativo ? "22px" : "2px",
-      width: 20,
-      height: 20,
-      borderRadius: "50%",
-      background: "white",
-      transition: "left .2s",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
-    }
-  }));
+    },
+    children: /*#__PURE__*/_jsxDEV("span", {
+      style: {
+        position: "absolute",
+        top: 2,
+        left: ativo ? "22px" : "2px",
+        width: 20,
+        height: 20,
+        borderRadius: "50%",
+        background: "white",
+        transition: "left .2s",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
+      }
+    }, void 0, false)
+  }, void 0, false);
 }
 function AbaModulos({
   paciente
@@ -811,8 +862,7 @@ function AbaModulos({
   function renderFerramenta(ferr, modId, ferramentas) {
     const ferrConfig = ferramentas[ferr.id];
     const ferrAtiva = !!ferrConfig;
-    return /*#__PURE__*/React.createElement("div", {
-      key: ferr.id,
+    return /*#__PURE__*/_jsxDEV("div", {
       style: {
         background: "white",
         borderRadius: 10,
@@ -822,397 +872,445 @@ function AbaModulos({
         alignItems: "center",
         gap: 12,
         transition: "border-color .2s"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 500,
-        fontSize: 13
-      }
-    }, ferr.nome), ferr.desc && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, ferr.desc)), ferrAtiva && /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("label", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)"
-      }
-    }, "Início:"), /*#__PURE__*/React.createElement("input", {
-      type: "date",
-      value: ferrConfig.dataInicio || "",
-      onChange: e => setDataInicio(modId, ferr.id, e.target.value),
-      style: {
-        fontSize: 12,
-        border: "1px solid var(--gray-200)",
-        borderRadius: 6,
-        padding: "3px 6px",
-        fontFamily: "var(--font-body)"
-      }
-    })), /*#__PURE__*/React.createElement(Toggle, {
-      ativo: ferrAtiva,
-      onClick: () => toggleFerramenta(modId, ferr.id)
-    }));
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          flex: 1
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 500,
+            fontSize: 13
+          },
+          children: ferr.nome
+        }, void 0, false), ferr.desc && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "var(--text-muted)",
+            marginTop: 2
+          },
+          children: ferr.desc
+        }, void 0, false)]
+      }, void 0, true), ferrAtiva && /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV("label", {
+          style: {
+            fontSize: 11,
+            color: "var(--text-muted)"
+          },
+          children: "Início:"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+          type: "date",
+          value: ferrConfig.dataInicio || "",
+          onChange: e => setDataInicio(modId, ferr.id, e.target.value),
+          style: {
+            fontSize: 12,
+            border: "1px solid var(--gray-200)",
+            borderRadius: 6,
+            padding: "3px 6px",
+            fontFamily: "var(--font-body)"
+          }
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV(Toggle, {
+        ativo: ferrAtiva,
+        onClick: () => toggleFerramenta(modId, ferr.id)
+      }, void 0, false)]
+    }, ferr.id, true);
   }
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 16
-    }
-  }, MODULOS_DEF.map(mod => {
-    const modConfig = config[mod.id] || {};
-    const ativo = !!modConfig.ativo;
-    const ferramentas = modConfig.ferramentas || {};
-    const usaGrupo = MODS_COM_GRUPO.has(mod.id);
-    return /*#__PURE__*/React.createElement("div", {
-      key: mod.id,
+    },
+    children: [MODULOS_DEF.map(mod => {
+      const modConfig = config[mod.id] || {};
+      const ativo = !!modConfig.ativo;
+      const ferramentas = modConfig.ferramentas || {};
+      const usaGrupo = MODS_COM_GRUPO.has(mod.id);
+      return /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 14,
+          border: `2px solid ${ativo ? "var(--purple)" : "var(--gray-200)"}`,
+          overflow: "hidden",
+          transition: "border-color .2s"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            padding: "16px 20px",
+            background: ativo ? "var(--purple-bg)" : "white"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 24
+            },
+            children: mod.icone
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              flex: 1
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 15,
+                color: "var(--text)"
+              },
+              children: mod.nome
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)",
+                marginTop: 2
+              },
+              children: mod.desc
+            }, void 0, false)]
+          }, void 0, true), mod.automatico ? /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontSize: 12,
+              color: "var(--text-muted)",
+              fontStyle: "italic"
+            },
+            children: "automático"
+          }, void 0, false) : /*#__PURE__*/_jsxDEV(Toggle, {
+            ativo: ativo,
+            onClick: () => toggleModulo(mod.id)
+          }, void 0, false)]
+        }, void 0, true), ativo && !mod.automatico && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            borderTop: "1px solid var(--gray-100)",
+            padding: "12px 20px",
+            background: "#fafafa"
+          },
+          children: mod.ferramentas.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 13,
+              color: "var(--text-muted)",
+              padding: "8px 0"
+            },
+            children: "Nenhuma ferramenta cadastrada neste módulo ainda."
+          }, void 0, false) : usaGrupo ?
+          /*#__PURE__*/
+          // ── Agrupado por macrocategoria ──
+          _jsxDEV("div", {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 8
+            },
+            children: agruparPorMacro(mod.ferramentas).map(grupo => {
+              const key = mod.id + "_" + grupo.id;
+              const aberto = !!gruposAbertos[key]; // fechado por padrão
+              const ativosNoGrupo = grupo.itens.filter(f => !!ferramentas[f.id]).length;
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  borderRadius: 10,
+                  border: `1.5px solid ${grupo.cor}30`,
+                  overflow: "hidden"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  onClick: () => toggleGrupo(mod.id, grupo.id),
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: "10px 14px",
+                    background: grupo.bg,
+                    cursor: "pointer",
+                    userSelect: "none"
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontSize: 16
+                    },
+                    children: grupo.icone
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontWeight: 700,
+                      fontSize: 12,
+                      color: grupo.cor,
+                      flex: 1
+                    },
+                    children: grupo.label
+                  }, void 0, false), ativosNoGrupo > 0 && /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      background: grupo.cor,
+                      color: "white",
+                      borderRadius: 20,
+                      padding: "2px 8px",
+                      fontSize: 11,
+                      fontWeight: 700
+                    },
+                    children: [ativosNoGrupo, " ativo", ativosNoGrupo !== 1 ? "s" : ""]
+                  }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontSize: 11,
+                      color: grupo.cor,
+                      marginLeft: 4
+                    },
+                    children: [aberto ? "▲" : "▼", " ", grupo.itens.length]
+                  }, void 0, true)]
+                }, void 0, true), aberto && /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    padding: "10px 14px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    background: "white"
+                  },
+                  children: grupo.itens.map(ferr => renderFerramenta(ferr, mod.id, ferramentas))
+                }, void 0, false)]
+              }, grupo.id, true);
+            })
+          }, void 0, false) :
+          /*#__PURE__*/
+          // ── Lista simples (mod1, mod4, mod5) ──
+          _jsxDEV("div", {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 10
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--text-muted)",
+                marginBottom: 4
+              },
+              children: "FERRAMENTAS DISPONÍVEIS"
+            }, void 0, false), mod.ferramentas.map(ferr => renderFerramenta(ferr, mod.id, ferramentas))]
+          }, void 0, true)
+        }, void 0, false)]
+      }, mod.id, true);
+    }), modalSugestao && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        background: "white",
-        borderRadius: 14,
-        border: `2px solid ${ativo ? "var(--purple)" : "var(--gray-200)"}`,
-        overflow: "hidden",
-        transition: "border-color .2s"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        zIndex: 2000,
         display: "flex",
         alignItems: "center",
-        gap: 14,
-        padding: "16px 20px",
-        background: ativo ? "var(--purple-bg)" : "white"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 24
-      }
-    }, mod.icone), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 15,
-        color: "var(--text)"
-      }
-    }, mod.nome), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, mod.desc)), mod.automatico ? /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)",
-        fontStyle: "italic"
-      }
-    }, "automático") : /*#__PURE__*/React.createElement(Toggle, {
-      ativo: ativo,
-      onClick: () => toggleModulo(mod.id)
-    })), ativo && !mod.automatico && /*#__PURE__*/React.createElement("div", {
-      style: {
-        borderTop: "1px solid var(--gray-100)",
-        padding: "12px 20px",
-        background: "#fafafa"
-      }
-    }, mod.ferramentas.length === 0 ? /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--text-muted)",
-        padding: "8px 0"
-      }
-    }, "Nenhuma ferramenta cadastrada neste módulo ainda.") : usaGrupo ?
-    /*#__PURE__*/
-    // ── Agrupado por macrocategoria ──
-    React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 8
-      }
-    }, agruparPorMacro(mod.ferramentas).map(grupo => {
-      const key = mod.id + "_" + grupo.id;
-      const aberto = !!gruposAbertos[key]; // fechado por padrão
-      const ativosNoGrupo = grupo.itens.filter(f => !!ferramentas[f.id]).length;
-      return /*#__PURE__*/React.createElement("div", {
-        key: grupo.id,
+        justifyContent: "center",
+        padding: 16
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
         style: {
-          borderRadius: 10,
-          border: `1.5px solid ${grupo.cor}30`,
-          overflow: "hidden"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        onClick: () => toggleGrupo(mod.id, grupo.id),
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          padding: "10px 14px",
-          background: grupo.bg,
-          cursor: "pointer",
-          userSelect: "none"
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 16
-        }
-      }, grupo.icone), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontWeight: 700,
-          fontSize: 12,
-          color: grupo.cor,
-          flex: 1
-        }
-      }, grupo.label), ativosNoGrupo > 0 && /*#__PURE__*/React.createElement("span", {
-        style: {
-          background: grupo.cor,
-          color: "white",
-          borderRadius: 20,
-          padding: "2px 8px",
-          fontSize: 11,
-          fontWeight: 700
-        }
-      }, ativosNoGrupo, " ativo", ativosNoGrupo !== 1 ? "s" : ""), /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 11,
-          color: grupo.cor,
-          marginLeft: 4
-        }
-      }, aberto ? "▲" : "▼", " ", grupo.itens.length)), aberto && /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "10px 14px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          background: "white"
-        }
-      }, grupo.itens.map(ferr => renderFerramenta(ferr, mod.id, ferramentas))));
-    })) :
-    /*#__PURE__*/
-    // ── Lista simples (mod1, mod4, mod5) ──
-    React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 600,
-        color: "var(--text-muted)",
-        marginBottom: 4
-      }
-    }, "FERRAMENTAS DISPONÍVEIS"), mod.ferramentas.map(ferr => renderFerramenta(ferr, mod.id, ferramentas)))));
-  }), modalSugestao && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.5)",
-      zIndex: 2000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      width: "100%",
-      maxWidth: 520,
-      maxHeight: "85vh",
-      overflowY: "auto",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: `linear-gradient(135deg,${modalSugestao.cor},${modalSugestao.cor}cc)`,
-      borderRadius: "16px 16px 0 0",
-      padding: "18px 24px",
-      color: "white"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      opacity: 0.85,
-      marginBottom: 4,
-      textTransform: "uppercase",
-      letterSpacing: "0.6px"
-    }
-  }, modalSugestao.icone, " ", modalSugestao.categoria), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 700,
-      marginBottom: 4
-    }
-  }, "✨ Sugestões para complementar"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      opacity: 0.9
-    }
-  }, "Você ativou ", /*#__PURE__*/React.createElement("b", null, modalSugestao.ferramenta), ". Selecione fábulas e psicoeducações da mesma temática.")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "20px 24px"
-    }
-  }, modalSugestao.fabulas.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 13,
-      color: "var(--purple)",
-      marginBottom: 10,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "book-open",
-    size: 15
-  }), " Fábulas Terapêuticas"), modalSugestao.fabulas.map(f => /*#__PURE__*/React.createElement("label", {
-    key: f.id,
-    style: {
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 10,
-      padding: "10px 12px",
-      borderRadius: 10,
-      cursor: "pointer",
-      marginBottom: 6,
-      background: sugestoesSel[f.id] ? "var(--purple-soft)" : "#fafafa",
-      border: `1.5px solid ${sugestoesSel[f.id] ? "var(--purple)" : "var(--gray-200)"}`,
-      transition: "all .15s"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "checkbox",
-    checked: !!sugestoesSel[f.id],
-    onChange: e => setSugestoesSel(s => ({
-      ...s,
-      [f.id]: e.target.checked
-    })),
-    style: {
-      marginTop: 2,
-      accentColor: "var(--purple)",
-      flexShrink: 0
-    }
-  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, f.titulo || f.nome), f.moral && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)",
-      marginTop: 2,
-      fontStyle: "italic"
-    }
-  }, "\"", f.moral, "\""))))), modalSugestao.psicoeducacao.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 13,
-      color: "var(--purple)",
-      marginBottom: 10,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "brain",
-    size: 15
-  }), " Psicoeducação"), modalSugestao.psicoeducacao.map(p => /*#__PURE__*/React.createElement("label", {
-    key: p.id,
-    style: {
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 10,
-      padding: "10px 12px",
-      borderRadius: 10,
-      cursor: "pointer",
-      marginBottom: 6,
-      background: sugestoesSel[p.id] ? "var(--purple-soft)" : "#fafafa",
-      border: `1.5px solid ${sugestoesSel[p.id] ? "var(--purple)" : "var(--gray-200)"}`,
-      transition: "all .15s"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "checkbox",
-    checked: !!sugestoesSel[p.id],
-    onChange: e => setSugestoesSel(s => ({
-      ...s,
-      [p.id]: e.target.checked
-    })),
-    style: {
-      marginTop: 2,
-      accentColor: "var(--purple)",
-      flexShrink: 0
-    }
-  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, p.titulo || p.nome), p.descricao && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)",
-      marginTop: 2
-    }
-  }, p.descricao.slice(0, 80)))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModalSugestao(null),
-    style: {
-      flex: 1,
-      padding: "10px",
-      borderRadius: 8,
-      border: "1px solid var(--gray-200)",
-      background: "white",
-      cursor: "pointer",
-      fontSize: 13,
-      fontFamily: "inherit"
-    }
-  }, "Agora não"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      const algum = Object.values(sugestoesSel).some(v => v);
-      if (algum) ativarSugestoes();else setModalSugestao(null);
-    },
-    style: {
-      flex: 2,
-      padding: "10px",
-      borderRadius: 8,
-      border: "none",
-      background: "var(--purple)",
-      color: "white",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 700,
-      fontFamily: "inherit"
-    }
-  }, Object.values(sugestoesSel).some(v => v) ? `✓ Ativar ${Object.values(sugestoesSel).filter(v => v).length} selecionado(s)` : "Fechar sem ativar"))))));
+          background: "white",
+          borderRadius: 16,
+          width: "100%",
+          maxWidth: 520,
+          maxHeight: "85vh",
+          overflowY: "auto",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.2)"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: `linear-gradient(135deg,${modalSugestao.cor},${modalSugestao.cor}cc)`,
+            borderRadius: "16px 16px 0 0",
+            padding: "18px 24px",
+            color: "white"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              opacity: 0.85,
+              marginBottom: 4,
+              textTransform: "uppercase",
+              letterSpacing: "0.6px"
+            },
+            children: [modalSugestao.icone, " ", modalSugestao.categoria]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 18,
+              fontWeight: 700,
+              marginBottom: 4
+            },
+            children: "✨ Sugestões para complementar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 13,
+              opacity: 0.9
+            },
+            children: ["Você ativou ", /*#__PURE__*/_jsxDEV("b", {
+              children: modalSugestao.ferramenta
+            }, void 0, false), ". Selecione fábulas e psicoeducações da mesma temática."]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            padding: "20px 24px"
+          },
+          children: [modalSugestao.fabulas.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              marginBottom: 20
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 13,
+                color: "var(--purple)",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 6
+              },
+              children: [/*#__PURE__*/_jsxDEV(Icon, {
+                name: "book-open",
+                size: 15
+              }, void 0, false), " Fábulas Terapêuticas"]
+            }, void 0, true), modalSugestao.fabulas.map(f => /*#__PURE__*/_jsxDEV("label", {
+              style: {
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 10,
+                cursor: "pointer",
+                marginBottom: 6,
+                background: sugestoesSel[f.id] ? "var(--purple-soft)" : "#fafafa",
+                border: `1.5px solid ${sugestoesSel[f.id] ? "var(--purple)" : "var(--gray-200)"}`,
+                transition: "all .15s"
+              },
+              children: [/*#__PURE__*/_jsxDEV("input", {
+                type: "checkbox",
+                checked: !!sugestoesSel[f.id],
+                onChange: e => setSugestoesSel(s => ({
+                  ...s,
+                  [f.id]: e.target.checked
+                })),
+                style: {
+                  marginTop: 2,
+                  accentColor: "var(--purple)",
+                  flexShrink: 0
+                }
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 600,
+                    fontSize: 13
+                  },
+                  children: f.titulo || f.nome
+                }, void 0, false), f.moral && /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    marginTop: 2,
+                    fontStyle: "italic"
+                  },
+                  children: ["\"", f.moral, "\""]
+                }, void 0, true)]
+              }, void 0, true)]
+            }, f.id, true))]
+          }, void 0, true), modalSugestao.psicoeducacao.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              marginBottom: 20
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 13,
+                color: "var(--purple)",
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 6
+              },
+              children: [/*#__PURE__*/_jsxDEV(Icon, {
+                name: "brain",
+                size: 15
+              }, void 0, false), " Psicoeducação"]
+            }, void 0, true), modalSugestao.psicoeducacao.map(p => /*#__PURE__*/_jsxDEV("label", {
+              style: {
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 10,
+                padding: "10px 12px",
+                borderRadius: 10,
+                cursor: "pointer",
+                marginBottom: 6,
+                background: sugestoesSel[p.id] ? "var(--purple-soft)" : "#fafafa",
+                border: `1.5px solid ${sugestoesSel[p.id] ? "var(--purple)" : "var(--gray-200)"}`,
+                transition: "all .15s"
+              },
+              children: [/*#__PURE__*/_jsxDEV("input", {
+                type: "checkbox",
+                checked: !!sugestoesSel[p.id],
+                onChange: e => setSugestoesSel(s => ({
+                  ...s,
+                  [p.id]: e.target.checked
+                })),
+                style: {
+                  marginTop: 2,
+                  accentColor: "var(--purple)",
+                  flexShrink: 0
+                }
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 600,
+                    fontSize: 13
+                  },
+                  children: p.titulo || p.nome
+                }, void 0, false), p.descricao && /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    marginTop: 2
+                  },
+                  children: p.descricao.slice(0, 80)
+                }, void 0, false)]
+              }, void 0, true)]
+            }, p.id, true))]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              gap: 8
+            },
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              onClick: () => setModalSugestao(null),
+              style: {
+                flex: 1,
+                padding: "10px",
+                borderRadius: 8,
+                border: "1px solid var(--gray-200)",
+                background: "white",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "inherit"
+              },
+              children: "Agora não"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => {
+                const algum = Object.values(sugestoesSel).some(v => v);
+                if (algum) ativarSugestoes();else setModalSugestao(null);
+              },
+              style: {
+                flex: 2,
+                padding: "10px",
+                borderRadius: 8,
+                border: "none",
+                background: "var(--purple)",
+                color: "white",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: "inherit"
+              },
+              children: Object.values(sugestoesSel).some(v => v) ? `✓ Ativar ${Object.values(sugestoesSel).filter(v => v).length} selecionado(s)` : "Fechar sem ativar"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // ABA FERRAMENTAS
@@ -1227,78 +1325,86 @@ function AbaFerramentas({
       ferramentasAtivas: novas
     });
   }
-  return /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 4
-    }
-  }, "Ferramentas Terapeuticas"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 20
-    }
-  }, "Selecione as ferramentas disponiveis para este paciente no portal."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 12
-    }
-  }, FERRAMENTAS.map(f => /*#__PURE__*/React.createElement("div", {
-    key: f.id,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 14,
-      padding: 16,
-      borderRadius: 10,
-      border: "1.5px solid",
-      borderColor: ferramentas.includes(f.id) ? "var(--purple)" : "var(--gray-200)",
-      background: ferramentas.includes(f.id) ? "var(--purple-bg)" : "white",
-      cursor: "pointer",
-      transition: "all .2s"
-    },
-    onClick: () => toggle(f.id)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 500,
-      fontSize: 14
-    }
-  }, f.nome), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      marginTop: 2
-    }
-  }, f.desc)), /*#__PURE__*/React.createElement("button", {
-    style: {
-      width: 44,
-      height: 24,
-      borderRadius: 12,
-      border: "none",
-      cursor: "pointer",
-      background: ferramentas.includes(f.id) ? "var(--purple)" : "var(--gray-200)",
-      position: "relative",
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      position: "absolute",
-      top: 2,
-      left: ferramentas.includes(f.id) ? "22px" : "2px",
-      width: 20,
-      height: 20,
-      borderRadius: "50%",
-      background: "white",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
-    }
-  }))))));
+  return /*#__PURE__*/_jsxDEV("div", {
+    className: "card",
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        fontWeight: 600,
+        marginBottom: 4
+      },
+      children: "Ferramentas Terapeuticas"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("p", {
+      style: {
+        fontSize: 13,
+        color: "var(--text-muted)",
+        marginBottom: 20
+      },
+      children: "Selecione as ferramentas disponiveis para este paciente no portal."
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 12
+      },
+      children: FERRAMENTAS.map(f => /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: 16,
+          borderRadius: 10,
+          border: "1.5px solid",
+          borderColor: ferramentas.includes(f.id) ? "var(--purple)" : "var(--gray-200)",
+          background: ferramentas.includes(f.id) ? "var(--purple-bg)" : "white",
+          cursor: "pointer",
+          transition: "all .2s"
+        },
+        onClick: () => toggle(f.id),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            flex: 1
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontWeight: 500,
+              fontSize: 14
+            },
+            children: f.nome
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              color: "var(--text-muted)",
+              marginTop: 2
+            },
+            children: f.desc
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          style: {
+            width: 44,
+            height: 24,
+            borderRadius: 12,
+            border: "none",
+            cursor: "pointer",
+            background: ferramentas.includes(f.id) ? "var(--purple)" : "var(--gray-200)",
+            position: "relative",
+            flexShrink: 0
+          },
+          children: /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              position: "absolute",
+              top: 2,
+              left: ferramentas.includes(f.id) ? "22px" : "2px",
+              width: 20,
+              height: 20,
+              borderRadius: "50%",
+              background: "white",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
+            }
+          }, void 0, false)
+        }, void 0, false)]
+      }, f.id, true))
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // ABA METAS
@@ -1395,199 +1501,223 @@ function AbaModulo1({
     respiracao: "Exercício de respiração diafragmática 4-7-8 para regulação emocional.",
     relaxamento: "Técnica de relaxamento muscular progressivo de Jacobson."
   };
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 16,
-      marginBottom: 4
-    }
-  }, "Módulo 1 — Dashboard"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 20
-    }
-  }, "Ferramentas básicas do dia a dia de ", paciente.nome.split(" ")[0]), loading ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 32,
-      color: "var(--text-muted)"
-    }
-  }, "Carregando...") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
-      gap: 14
-    }
-  }, ITENS.map(item => /*#__PURE__*/React.createElement("div", {
-    key: item.id,
-    style: {
-      background: "white",
-      border: "1px solid var(--gray-100)",
-      borderRadius: 14,
-      padding: 18,
-      boxShadow: "0 2px 8px rgba(123,0,196,0.05)",
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      background: "var(--purple-soft)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: 20,
-      flexShrink: 0
-    }
-  }, item.icone), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      lineHeight: 1.3
-    }
-  }, item.nome)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 24,
-      fontWeight: 700,
-      color: "var(--purple)"
-    }
-  }, item.qtd), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)",
-      textAlign: "right"
-    }
-  }, item.qtd === 0 ? "Sem registros" : `registro${item.qtd !== 1 ? "s" : ""}`, item.ultima && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 2
-    }
-  }, "Último: ", new Date(item.ultima + "T00:00:00").toLocaleDateString("pt-BR")))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setPreview(item.id),
-    style: {
-      width: "100%",
-      padding: "7px",
-      borderRadius: 8,
-      border: "1px solid var(--purple)",
-      background: "white",
-      color: "var(--purple)",
-      cursor: "pointer",
-      fontSize: 12,
-      fontWeight: 600,
-      fontFamily: "inherit",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 5
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "eye",
-    size: 13
-  }), " Visualizar")))), preview && (() => {
-    const item = ITENS.find(i => i.id === preview);
-    const TAB_MAP = {
-      humor: "humor",
-      diario: "diario",
-      metas: "metas",
-      reflexoes: "reflexoes",
-      tcc: "tcc",
-      respiracao: "ferramentas",
-      relaxamento: "ferramentas"
-    };
-    const tab = TAB_MAP[preview] || "painel";
-    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/?preview=${tab}&email=${encodeURIComponent(paciente.email || "")}&senha=${encodeURIComponent(paciente.senha || "1234")}`;
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16
-      },
-      onClick: () => setPreview(null)
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "white",
-        borderRadius: 16,
-        width: "100%",
-        maxWidth: 900,
-        height: "85vh",
-        display: "flex",
-        flexDirection: "column",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.25)"
-      },
-      onClick: e => e.stopPropagation()
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: "linear-gradient(135deg,#7B00C4,#5a0090)",
-        borderRadius: "16px 16px 0 0",
-        padding: "14px 20px",
-        color: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 22
-      }
-    }, item?.icone), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
       style: {
         fontWeight: 700,
-        fontSize: 15
-      }
-    }, item?.nome), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        opacity: 0.8
-      }
-    }, "👁 Prévia — visão de ", paciente.nome.split(" ")[0]))), /*#__PURE__*/React.createElement("button", {
-      onClick: () => setPreview(null),
-      style: {
-        background: "rgba(255,255,255,0.2)",
-        border: "none",
-        borderRadius: 8,
-        padding: "6px 14px",
-        color: "white",
-        cursor: "pointer",
-        fontSize: 13,
-        fontFamily: "inherit"
-      }
-    }, "✕ Fechar")), /*#__PURE__*/React.createElement("iframe", {
-      src: `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/`,
-      style: {
-        flex: 1,
-        border: "none",
-        borderRadius: "0 0 16px 16px"
+        fontSize: 16,
+        marginBottom: 4
       },
-      title: "Prévia do portal do paciente"
-    })));
-  })());
+      children: "Módulo 1 — Dashboard"
+    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        fontSize: 13,
+        color: "var(--text-muted)",
+        marginBottom: 20
+      },
+      children: ["Ferramentas básicas do dia a dia de ", paciente.nome.split(" ")[0]]
+    }, void 0, true), loading ? /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        textAlign: "center",
+        padding: 32,
+        color: "var(--text-muted)"
+      },
+      children: "Carregando..."
+    }, void 0, false) : /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
+        gap: 14
+      },
+      children: ITENS.map(item => /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          border: "1px solid var(--gray-100)",
+          borderRadius: 14,
+          padding: 18,
+          boxShadow: "0 2px 8px rgba(123,0,196,0.05)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 10
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              background: "var(--purple-soft)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 20,
+              flexShrink: 0
+            },
+            children: item.icone
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontWeight: 600,
+              fontSize: 13,
+              lineHeight: 1.3
+            },
+            children: item.nome
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 24,
+              fontWeight: 700,
+              color: "var(--purple)"
+            },
+            children: item.qtd
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              color: "var(--text-muted)",
+              textAlign: "right"
+            },
+            children: [item.qtd === 0 ? "Sem registros" : `registro${item.qtd !== 1 ? "s" : ""}`, item.ultima && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                marginTop: 2
+              },
+              children: ["Último: ", new Date(item.ultima + "T00:00:00").toLocaleDateString("pt-BR")]
+            }, void 0, true)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          onClick: () => setPreview(item.id),
+          style: {
+            width: "100%",
+            padding: "7px",
+            borderRadius: 8,
+            border: "1px solid var(--purple)",
+            background: "white",
+            color: "var(--purple)",
+            cursor: "pointer",
+            fontSize: 12,
+            fontWeight: 600,
+            fontFamily: "inherit",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 5
+          },
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "eye",
+            size: 13
+          }, void 0, false), " Visualizar"]
+        }, void 0, true)]
+      }, item.id, true))
+    }, void 0, false), preview && (() => {
+      const item = ITENS.find(i => i.id === preview);
+      const TAB_MAP = {
+        humor: "humor",
+        diario: "diario",
+        metas: "metas",
+        reflexoes: "reflexoes",
+        tcc: "tcc",
+        respiracao: "ferramentas",
+        relaxamento: "ferramentas"
+      };
+      const tab = TAB_MAP[preview] || "painel";
+      const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/?preview=${tab}&email=${encodeURIComponent(paciente.email || "")}&senha=${encodeURIComponent(paciente.senha || "1234")}`;
+      return /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.6)",
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16
+        },
+        onClick: () => setPreview(null),
+        children: /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "white",
+            borderRadius: 16,
+            width: "100%",
+            maxWidth: 900,
+            height: "85vh",
+            display: "flex",
+            flexDirection: "column",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.25)"
+          },
+          onClick: e => e.stopPropagation(),
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              background: "linear-gradient(135deg,#7B00C4,#5a0090)",
+              borderRadius: "16px 16px 0 0",
+              padding: "14px 20px",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexShrink: 0
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 10
+              },
+              children: [/*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 22
+                },
+                children: item?.icone
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 700,
+                    fontSize: 15
+                  },
+                  children: item?.nome
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    opacity: 0.8
+                  },
+                  children: ["👁 Prévia — visão de ", paciente.nome.split(" ")[0]]
+                }, void 0, true)]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => setPreview(null),
+              style: {
+                background: "rgba(255,255,255,0.2)",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 14px",
+                color: "white",
+                cursor: "pointer",
+                fontSize: 13,
+                fontFamily: "inherit"
+              },
+              children: "✕ Fechar"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("iframe", {
+            src: `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/clinica/`,
+            style: {
+              flex: 1,
+              border: "none",
+              borderRadius: "0 0 16px 16px"
+            },
+            title: "Prévia do portal do paciente"
+          }, void 0, false)]
+        }, void 0, true)
+      }, void 0, false);
+    })()]
+  }, void 0, true);
 }
 function AbaMetas({
   paciente
@@ -1672,288 +1802,445 @@ function AbaMetas({
       progresso: val
     });
   }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600
-    }
-  }, "Metas Terapeuticas"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: abrirNova
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "plus",
-    size: 16
-  }), " Nova Meta")), metas.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      textAlign: "center",
-      padding: 48,
-      color: "var(--text-muted)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "target",
-    size: 40
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12
-    }
-  }, "Nenhuma meta cadastrada.")) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 14
-    }
-  }, metas.map(m => /*#__PURE__*/React.createElement("div", {
-    key: m.id,
-    className: "card",
-    style: m.status === "concluida" ? {
-      border: "1.5px solid #059669",
-      background: "#f0fdf4"
-    } : m.status === "arquivada" ? {
-      opacity: 0.55
-    } : {}
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 500
-    }
-  }, m.titulo), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginTop: 4,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "badge badge-purple"
-  }, m.categoria), m.status === "concluida" && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: "#059669",
-      background: "#d1fae5",
-      borderRadius: 20,
-      padding: "2px 8px"
-    }
-  }, "Concluída"), m.status === "arquivada" && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: "#6b7280",
-      background: "#f3f4f6",
-      borderRadius: 20,
-      padding: "2px 8px"
-    }
-  }, "Arquivada"), m.atualizadoPor === "paciente" && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "var(--purple)"
-    }
-  }, "✋ atualizada pelo paciente"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 4,
-      flexShrink: 0
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "4px 8px"
-    },
-    title: "Editar meta",
-    onClick: () => abrirEdicao(m)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "pencil",
-    size: 14
-  })), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      padding: "4px 8px"
-    },
-    title: "Excluir meta",
-    onClick: () => excluir(m.id)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 14
-  })))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: "var(--gray-100)",
-      borderRadius: 20,
-      height: 8,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: (m.progresso || 0) + "%",
-      height: "100%",
-      background: "var(--purple)",
-      borderRadius: 20
-    }
-  })), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: "var(--purple)",
-      minWidth: 36
-    }
-  }, m.progresso || 0, "%")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      marginTop: 10
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 12,
-      padding: "4px 10px"
-    },
-    onClick: () => atualizarProgresso(m.id, Math.max(0, (m.progresso || 0) - 10))
-  }, "-10%"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 12,
-      padding: "4px 10px"
-    },
-    onClick: () => atualizarProgresso(m.id, Math.min(100, (m.progresso || 0) + 10))
-  }, "+10%"))))), modal && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModal(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 440
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600,
-      marginBottom: 20
-    }
-  }, editando ? "Editar Meta" : "Nova Meta"), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Titulo da Meta"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.titulo,
-    onChange: e => setForm({
-      ...form,
-      titulo: e.target.value
-    }),
-    placeholder: "Ex: Praticar mindfulness diariamente"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Categoria"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: form.categoria,
-    onChange: e => setForm({
-      ...form,
-      categoria: e.target.value
-    })
-  }, ["Emocional", "Saude", "Pessoal", "Profissional", "Relacionamento", "Outro"].map(c => /*#__PURE__*/React.createElement("option", {
-    key: c
-  }, c)))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Progresso: ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "var(--purple)"
-    }
-  }, form.progresso, "%")), /*#__PURE__*/React.createElement("input", {
-    type: "range",
-    min: 0,
-    max: 100,
-    step: 5,
-    value: form.progresso,
-    onChange: e => setForm({
-      ...form,
-      progresso: +e.target.value
-    }),
-    style: {
-      width: "100%",
-      accentColor: "var(--purple)"
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: form.status,
-    onChange: e => setForm({
-      ...form,
-      status: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "ativa"
-  }, "Ativa (visível para o paciente)"), /*#__PURE__*/React.createElement("option", {
-    value: "concluida"
-  }, "Concluída (visível, marcada como alcançada)"), /*#__PURE__*/React.createElement("option", {
-    value: "arquivada"
-  }, "Arquivada (oculta do paciente)"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModal(false)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvar
-  }, editando ? "Salvar alterações" : "Salvar")))));
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600
+        },
+        children: "Metas Terapeuticas"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+        className: "btn btn-purple",
+        onClick: abrirNova,
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "plus",
+          size: 16
+        }, void 0, false), " Nova Meta"]
+      }, void 0, true)]
+    }, void 0, true), metas.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      style: {
+        textAlign: "center",
+        padding: 48,
+        color: "var(--text-muted)"
+      },
+      children: [/*#__PURE__*/_jsxDEV(Icon, {
+        name: "target",
+        size: 40
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          marginTop: 12
+        },
+        children: "Nenhuma meta cadastrada."
+      }, void 0, false)]
+    }, void 0, true) : /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 14
+      },
+      children: metas.map(m => /*#__PURE__*/_jsxDEV("div", {
+        className: "card",
+        style: m.status === "concluida" ? {
+          border: "1.5px solid #059669",
+          background: "#f0fdf4"
+        } : m.status === "arquivada" ? {
+          opacity: 0.55
+        } : {},
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 500
+              },
+              children: m.titulo
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                gap: 6,
+                marginTop: 4,
+                alignItems: "center"
+              },
+              children: [/*#__PURE__*/_jsxDEV("span", {
+                className: "badge badge-purple",
+                children: m.categoria
+              }, void 0, false), m.status === "concluida" && /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#059669",
+                  background: "#d1fae5",
+                  borderRadius: 20,
+                  padding: "2px 8px"
+                },
+                children: "Concluída"
+              }, void 0, false), m.status === "arquivada" && /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#6b7280",
+                  background: "#f3f4f6",
+                  borderRadius: 20,
+                  padding: "2px 8px"
+                },
+                children: "Arquivada"
+              }, void 0, false), m.atualizadoPor === "paciente" && /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 11,
+                  color: "var(--purple)"
+                },
+                children: "✋ atualizada pelo paciente"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              gap: 4,
+              flexShrink: 0
+            },
+            children: [/*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              style: {
+                padding: "4px 8px"
+              },
+              title: "Editar meta",
+              onClick: () => abrirEdicao(m),
+              children: /*#__PURE__*/_jsxDEV(Icon, {
+                name: "pencil",
+                size: 14
+              }, void 0, false)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+              className: "btn btn-ghost",
+              style: {
+                padding: "4px 8px"
+              },
+              title: "Excluir meta",
+              onClick: () => excluir(m.id),
+              children: /*#__PURE__*/_jsxDEV(Icon, {
+                name: "trash-2",
+                size: 14
+              }, void 0, false)
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              flex: 1,
+              background: "var(--gray-100)",
+              borderRadius: 20,
+              height: 8,
+              overflow: "hidden"
+            },
+            children: /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: (m.progresso || 0) + "%",
+                height: "100%",
+                background: "var(--purple)",
+                borderRadius: 20
+              }
+            }, void 0, false)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--purple)",
+              minWidth: 36
+            },
+            children: [m.progresso || 0, "%"]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 8,
+            marginTop: 10
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              fontSize: 12,
+              padding: "4px 10px"
+            },
+            onClick: () => atualizarProgresso(m.id, Math.max(0, (m.progresso || 0) - 10)),
+            children: "-10%"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              fontSize: 12,
+              padding: "4px 10px"
+            },
+            onClick: () => atualizarProgresso(m.id, Math.min(100, (m.progresso || 0) + 10)),
+            children: "+10%"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, m.id, true))
+    }, void 0, false), modal && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 500,
+        padding: 20
+      },
+      onClick: () => setModal(false),
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 440
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "var(--font-display)",
+            fontSize: 20,
+            fontWeight: 600,
+            marginBottom: 20
+          },
+          children: editando ? "Editar Meta" : "Nova Meta"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            marginBottom: 14
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Titulo da Meta"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+            className: "form-input",
+            value: form.titulo,
+            onChange: e => setForm({
+              ...form,
+              titulo: e.target.value
+            }),
+            placeholder: "Ex: Praticar mindfulness diariamente"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            marginBottom: 14
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Categoria"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+            className: "form-input",
+            value: form.categoria,
+            onChange: e => setForm({
+              ...form,
+              categoria: e.target.value
+            }),
+            children: ["Emocional", "Saude", "Pessoal", "Profissional", "Relacionamento", "Outro"].map(c => /*#__PURE__*/_jsxDEV("option", {
+              children: c
+            }, c, false))
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            marginBottom: 14
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: ["Progresso: ", /*#__PURE__*/_jsxDEV("strong", {
+              style: {
+                color: "var(--purple)"
+              },
+              children: [form.progresso, "%"]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("input", {
+            type: "range",
+            min: 0,
+            max: 100,
+            step: 5,
+            value: form.progresso,
+            onChange: e => setForm({
+              ...form,
+              progresso: +e.target.value
+            }),
+            style: {
+              width: "100%",
+              accentColor: "var(--purple)"
+            }
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "form-group",
+          style: {
+            marginBottom: 20
+          },
+          children: [/*#__PURE__*/_jsxDEV("label", {
+            className: "form-label",
+            children: "Status"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+            className: "form-input",
+            value: form.status,
+            onChange: e => setForm({
+              ...form,
+              status: e.target.value
+            }),
+            children: [/*#__PURE__*/_jsxDEV("option", {
+              value: "ativa",
+              children: "Ativa (visível para o paciente)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              value: "concluida",
+              children: "Concluída (visível, marcada como alcançada)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+              value: "arquivada",
+              children: "Arquivada (oculta do paciente)"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 10,
+            justifyContent: "flex-end"
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            onClick: () => setModal(false),
+            children: "Cancelar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            onClick: salvar,
+            children: editando ? "Salvar alterações" : "Salvar"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // ABA EVOLUCAO
+const RODA_AREAS = [{
+  id: "saude",
+  label: "Saúde"
+}, {
+  id: "carreira",
+  label: "Carreira"
+}, {
+  id: "financeiro",
+  label: "Finanças"
+}, {
+  id: "familia",
+  label: "Família"
+}, {
+  id: "social",
+  label: "Relacionamentos"
+}, {
+  id: "espirito",
+  label: "Espiritualidade"
+}, {
+  id: "lazer",
+  label: "Lazer"
+}, {
+  id: "pessoal",
+  label: "Desenv. Pessoal"
+}];
+function RodaRadarSVG({
+  valores,
+  cor
+}) {
+  const c = cor || "#7B00C4";
+  const n = RODA_AREAS.length,
+    cx = 110,
+    cy = 110,
+    r = 84;
+  const grades = [2, 4, 6, 8, 10].map(g => {
+    const pts = RODA_AREAS.map((_, i) => {
+      const ang = i / n * 2 * Math.PI - Math.PI / 2;
+      return [cx + r * (g / 10) * Math.cos(ang), cy + r * (g / 10) * Math.sin(ang)].join(",");
+    }).join(" ");
+    return /*#__PURE__*/_jsxDEV("polygon", {
+      points: pts,
+      fill: "none",
+      stroke: "#e5e7eb",
+      strokeWidth: g === 10 ? "1" : "0.5"
+    }, g, false);
+  });
+  const eixos = RODA_AREAS.map((_, i) => {
+    const ang = i / n * 2 * Math.PI - Math.PI / 2;
+    return /*#__PURE__*/_jsxDEV("line", {
+      x1: cx,
+      y1: cy,
+      x2: cx + r * Math.cos(ang),
+      y2: cy + r * Math.sin(ang),
+      stroke: "#e5e7eb",
+      strokeWidth: "0.5"
+    }, i, false);
+  });
+  const pts = RODA_AREAS.map((a, i) => {
+    const ang = i / n * 2 * Math.PI - Math.PI / 2;
+    const v = (valores[a.id] || 0) / 10;
+    return [cx + r * v * Math.cos(ang), cy + r * v * Math.sin(ang)].join(",");
+  }).join(" ");
+  const pontos = RODA_AREAS.map((a, i) => {
+    const ang = i / n * 2 * Math.PI - Math.PI / 2;
+    const v = (valores[a.id] || 0) / 10;
+    return {
+      x: cx + r * v * Math.cos(ang),
+      y: cy + r * v * Math.sin(ang)
+    };
+  });
+  const labels = RODA_AREAS.map((a, i) => {
+    const ang = i / n * 2 * Math.PI - Math.PI / 2;
+    const lx = cx + (r + 18) * Math.cos(ang);
+    const ly = cy + (r + 18) * Math.sin(ang);
+    return /*#__PURE__*/_jsxDEV("text", {
+      x: lx,
+      y: ly,
+      textAnchor: "middle",
+      dominantBaseline: "middle",
+      fontSize: "8",
+      fill: "#6b7280",
+      fontWeight: "600",
+      children: a.label
+    }, i, false);
+  });
+  const fillColor = c === "#7B00C4" ? "rgba(123,0,196,0.15)" : "rgba(167,139,250,0.15)";
+  return /*#__PURE__*/_jsxDEV("svg", {
+    width: "220",
+    height: "220",
+    viewBox: "0 0 220 220",
+    children: [grades, eixos, /*#__PURE__*/_jsxDEV("polygon", {
+      points: pts,
+      fill: fillColor,
+      stroke: c,
+      strokeWidth: "2"
+    }, void 0, false), pontos.map((p, i) => /*#__PURE__*/_jsxDEV("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: "3.5",
+      fill: c
+    }, i, false)), labels]
+  }, void 0, true);
+}
+function rodaDocToVals(doc) {
+  const v = {};
+  (doc.areas || []).forEach(a => {
+    const found = RODA_AREAS.find(x => x.label === a.area);
+    if (found) v[found.id] = a.valor;
+  });
+  return v;
+}
 function AbaEvolucao({
   paciente
 }) {
@@ -1969,6 +2256,7 @@ function AbaEvolucao({
   const [tccAberto, setTccAberto] = useState(null);
   const [verTodoHistorico, setVerTodoHistorico] = useState(false);
   const [itemExpandido, setItemExpandido] = useState(null);
+  const [rodas, setRodas] = useState([]);
   useEffect(() => {
     const u1 = db.collection("clinica_humor").where("pacienteId", "==", paciente.id).onSnapshot(snap => {
       const docs = snap.docs.map(d => ({
@@ -2033,6 +2321,11 @@ function AbaEvolucao({
       docs.sort((a, b) => (b.createdAt?.toDate?.() ?? new Date(0)) - (a.createdAt?.toDate?.() ?? new Date(0)));
       setReflexoes(docs);
     }, () => {});
+    // Roda da Vida — sessões salvas
+    db.collection("clinica_gestao_ansiedade").where("pacienteId", "==", paciente.id).where("tipo", "==", "roda").get().then(snap => {
+      const docs = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setRodas(docs.slice(0, 10));
+    }).catch(() => {});
     return () => {
       u1();
       u2();
@@ -2045,623 +2338,913 @@ function AbaEvolucao({
     };
   }, [paciente.id]);
   const media = humor.length ? (humor.reduce((a, h) => a + (h.valor || 0), 0) / humor.length).toFixed(1) : "—";
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "metrics-grid",
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "calendar",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Sessões registradas"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, sessoes)), /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "book-open",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Diário Terapêutico"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, diario.length), diario.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "metric-sub"
-  }, "última: ", diario[0]?.data || diario[0]?.createdAt?.toDate?.()?.toLocaleDateString?.("pt-BR") || "—")), /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "target",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Metas ativas"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, metas.length)), /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "heart",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Humor médio"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, media, "/10"), humor.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "metric-sub"
-  }, "última: ", humor[0]?.data || "—"))), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 16,
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "Evolucao do Humor"), humor.length > 0 && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, "Media: ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "var(--purple)"
-    }
-  }, media, "/10"))), humor.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 40,
-      color: "var(--text-muted)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "heart",
-    size: 40
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12
-    }
-  }, "Sem dados de humor para este paciente.")) : humor.slice(0, 10).map(h => /*#__PURE__*/React.createElement("div", {
-    key: h.id,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      padding: "8px 0",
-      borderBottom: "1px solid var(--gray-100)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      color: "var(--purple)",
-      minWidth: 40
-    }
-  }, h.valor, "/10"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      background: "var(--gray-100)",
-      borderRadius: 20,
-      height: 6
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: h.valor / 10 * 100 + "%",
-      height: "100%",
-      background: "var(--purple)",
-      borderRadius: 20
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, h.data)))), atividades.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 16,
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "🧘 Atividades de Relaxamento"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, atividades.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, atividades.slice(0, 10).map(a => /*#__PURE__*/React.createElement("div", {
-    key: a.id,
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      padding: "10px 12px",
-      borderRadius: 10,
-      border: "1px solid var(--gray-100)",
-      background: "#fafafa"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 24
-    }
-  }, a.ferramenta === "respiracao" ? "🫁" : "💆"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      textTransform: "capitalize"
-    }
-  }, a.ferramenta === "respiracao" ? "Respiração 4-7-8" : "Relaxamento Muscular"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)"
-    }
-  }, a.data, " às ", a.hora)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 18,
-      color: a.nota >= 7 ? "#16a34a" : a.nota >= 4 ? "#d97706" : "#dc2626"
-    }
-  }, a.nota, "/10"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "var(--text-muted)"
-    }
-  }, "relaxamento")))))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 4,
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "📊 Uso de Recursos Terapêuticos"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, acessos.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      marginBottom: 14
-    }
-  }, "Cada vez que o paciente abre um recurso ou salva um exercício, aparece aqui."), acessos.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 30,
-      color: "var(--text-muted)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "mouse-pointer-click",
-    size: 36
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 10,
-      fontSize: 13
-    }
-  }, "Nenhum acesso registrado ainda.")) : (() => {
-    const limite8 = new Date();
-    limite8.setDate(limite8.getDate() - 8);
-    const filtrados = verTodoHistorico ? acessos : acessos.filter(a => {
-      const d = a.createdAt?.toDate?.();
-      return d && d >= limite8;
-    });
-    if (filtrados.length === 0) return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      className: "metrics-grid",
       style: {
-        textAlign: "center",
-        padding: 20,
-        color: "var(--text-muted)",
-        fontSize: 13
-      }
-    }, "Nenhuma atividade nos últimos 8 dias.", /*#__PURE__*/React.createElement("button", {
-      onClick: () => setVerTodoHistorico(true),
-      style: {
-        display: "block",
-        margin: "8px auto 0",
-        background: "none",
-        border: "none",
-        color: "var(--purple)",
-        cursor: "pointer",
-        fontSize: 13,
-        fontWeight: 600,
-        fontFamily: "var(--font-body)"
-      }
-    }, "Ver histórico completo →"));
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        maxHeight: 500,
-        overflowY: "auto"
-      }
-    }, filtrados.map(a => {
-      const temReflexao = a.tipo === "salvou" && a.detalhe;
-      const expandido = itemExpandido === a.id;
-      // Buscar reflexão salva correspondente
-      const reflexaoVinc = reflexoes.find(r => r.recursoId === a.recursoId && r.pacienteId === a.pacienteId);
-      return /*#__PURE__*/React.createElement("div", {
-        key: a.id,
-        style: {
-          borderRadius: 10,
-          border: "1px solid var(--gray-100)",
-          overflow: "hidden"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "flex-start",
-          gap: 10,
-          padding: "9px 12px",
-          background: a.tipo === "salvou" ? "#f0fdf4" : "#fafafa",
-          cursor: temReflexao || reflexaoVinc ? "pointer" : "default"
-        },
-        onClick: () => (temReflexao || reflexaoVinc) && setItemExpandido(expandido ? null : a.id)
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 11,
-          fontWeight: 700,
-          borderRadius: 20,
-          padding: "3px 9px",
-          flexShrink: 0,
-          marginTop: 1,
-          background: a.tipo === "salvou" ? "#d1fae5" : a.tipo === "concluiu" ? "#dbeafe" : "#ede9fe",
-          color: a.tipo === "salvou" ? "#059669" : a.tipo === "concluiu" ? "#1d4ed8" : "var(--purple)"
-        }
-      }, a.tipo === "salvou" ? "💾 Salvou" : a.tipo === "concluiu" ? "✅ Concluiu" : "👁 Abriu"), /*#__PURE__*/React.createElement("div", {
-        style: {
-          flex: 1,
-          minWidth: 0
-        }
-      }, /*#__PURE__*/React.createElement("div", {
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "calendar",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Sessões registradas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: sessoes
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "book-open",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Diário Terapêutico"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: diario.length
+        }, void 0, false), diario.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-sub",
+          children: ["última: ", diario[0]?.data || diario[0]?.createdAt?.toDate?.()?.toLocaleDateString?.("pt-BR") || "—"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "target",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Metas ativas"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: metas.length
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "heart",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Humor médio"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: [media, "/10"]
+        }, void 0, true), humor.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-sub",
+          children: ["última: ", humor[0]?.data || "—"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      children: [/*#__PURE__*/_jsxDEV("div", {
         style: {
           fontWeight: 600,
-          fontSize: 13
-        }
-      }, a.recursoTitulo || "Recurso"), a.detalhe && !expandido && /*#__PURE__*/React.createElement("div", {
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "Evolucao do Humor"
+        }, void 0, false), humor.length > 0 && /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: ["Media: ", /*#__PURE__*/_jsxDEV("strong", {
+            style: {
+              color: "var(--purple)"
+            },
+            children: [media, "/10"]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true), humor.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
         style: {
-          fontSize: 12,
-          color: "#4b5563",
-          marginTop: 2,
-          lineHeight: 1.5,
-          wordBreak: "break-word",
-          opacity: .7
-        }
-      }, a.detalhe)), /*#__PURE__*/React.createElement("div", {
+          textAlign: "center",
+          padding: 40,
+          color: "var(--text-muted)"
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "heart",
+          size: 40
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            marginTop: 12
+          },
+          children: "Sem dados de humor para este paciente."
+        }, void 0, false)]
+      }, void 0, true) : humor.slice(0, 10).map(h => /*#__PURE__*/_jsxDEV("div", {
         style: {
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          flexShrink: 0
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: "var(--text-muted)",
-          textAlign: "right"
-        }
-      }, a.data, /*#__PURE__*/React.createElement("br", null), a.hora), (temReflexao || reflexaoVinc) && /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 12,
-          color: "var(--purple)",
-          fontWeight: 600
-        }
-      }, expandido ? "▲" : "▼"))), expandido && /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "12px 14px",
-          background: "white",
-          borderTop: "1px solid var(--gray-100)"
-        }
-      }, reflexaoVinc ? (() => {
-        // Suporta formato {registros:[{pergunta,resposta}]} (fábulas/psicoeducações)
-        // e formato legado {perguntas:[], respostas:[]}
-        const itens = reflexaoVinc.registros ? reflexaoVinc.registros : (reflexaoVinc.respostas || []).map((r, i) => ({
-          pergunta: (reflexaoVinc.perguntas || [])[i] || `Reflexão ${i + 1}`,
-          resposta: r
-        }));
-        return itens.length > 0 ? itens.map((item, i) => /*#__PURE__*/React.createElement("div", {
-          key: i,
+          gap: 12,
+          padding: "8px 0",
+          borderBottom: "1px solid var(--gray-100)"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
           style: {
-            marginBottom: i < itens.length - 1 ? 12 : 0
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: 12,
             fontWeight: 600,
             color: "var(--purple)",
-            marginBottom: 4
-          }
-        }, item.pergunta || `Reflexão ${i + 1}`), /*#__PURE__*/React.createElement("div", {
+            minWidth: 40
+          },
+          children: [h.valor, "/10"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
           style: {
-            fontSize: 13,
-            color: item.resposta ? "#1f2937" : "#9ca3af",
-            lineHeight: 1.65,
-            paddingLeft: 12,
-            borderLeft: "3px solid #e9d5ff"
-          }
-        }, item.resposta || "— sem resposta —"))) : a.detalhe ? /*#__PURE__*/React.createElement("div", {
+            flex: 1,
+            background: "var(--gray-100)",
+            borderRadius: 20,
+            height: 6
+          },
+          children: /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: h.valor / 10 * 100 + "%",
+              height: "100%",
+              background: "var(--purple)",
+              borderRadius: 20
+            }
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
           style: {
-            fontSize: 13,
-            color: "#1f2937",
-            lineHeight: 1.65,
-            paddingLeft: 12,
-            borderLeft: "3px solid #e9d5ff"
-          }
-        }, a.detalhe) : null;
-      })() : a.detalhe ? /*#__PURE__*/React.createElement("div", {
+            fontSize: 12,
+            color: "var(--text-muted)"
+          },
+          children: h.data
+        }, void 0, false)]
+      }, h.id, true))]
+    }, void 0, true), atividades.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      style: {
+        marginTop: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
         style: {
-          fontSize: 13,
-          color: "#1f2937",
-          lineHeight: 1.65,
-          paddingLeft: 12,
-          borderLeft: "3px solid #e9d5ff"
-        }
-      }, a.detalhe) : null));
-    }));
-  })()), tcc.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 14,
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "🧠 Registros TCC — Pensamentos Guiados"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, tcc.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, tcc.slice(0, 15).map(t => /*#__PURE__*/React.createElement("div", {
-    key: t.id,
-    style: {
-      border: "1px solid var(--gray-100)",
-      borderRadius: 10,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    onClick: () => setTccAberto(tccAberto === t.id ? null : t.id),
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "10px 14px",
-      cursor: "pointer",
-      background: tccAberto === t.id ? "var(--purple-soft,#f3e8ff)" : "#fafafa"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, "Registro de ", t.data || "—"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      color: "var(--purple)",
-      fontWeight: 600
-    }
-  }, tccAberto === t.id ? "▲ Fechar" : "▼ Ver respostas")), tccAberto === t.id && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 14px",
-      background: "white"
-    }
-  }, (t.registros || []).map((r, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      marginBottom: i < (t.registros || []).length - 1 ? 12 : 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "var(--purple)",
-      marginBottom: 3
-    }
-  }, i + 1, ". ", r.pergunta), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: r.resposta ? "#1f2937" : "#9ca3af",
-      lineHeight: 1.6,
-      paddingLeft: 14,
-      borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
-    }
-  }, r.resposta || "— sem resposta —")))))))), reflexoes.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 14,
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "💭 Reflexões Salvas — Fábulas e Psicoeducações"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, reflexoes.length, " registro(s)")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, reflexoes.slice(0, 15).map(r => {
-    const titulo = r.origemTitulo || r.psicoeducacaoTitulo || "Reflexão";
-    const tipoBadge = r.origem === "fabula" ? "📖 Fábula" : "🎓 Psicoeducação";
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
+          fontWeight: 600,
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "🧘 Atividades de Relaxamento"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: [atividades.length, " registro(s)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 8
+        },
+        children: atividades.slice(0, 10).map(a => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid var(--gray-100)",
+            background: "#fafafa"
+          },
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontSize: 24
+            },
+            children: a.ferramenta === "respiracao" ? "🫁" : "💆"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              flex: 1
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 600,
+                fontSize: 13,
+                textTransform: "capitalize"
+              },
+              children: a.ferramenta === "respiracao" ? "Respiração 4-7-8" : "Relaxamento Muscular"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)"
+              },
+              children: [a.data, " às ", a.hora]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              textAlign: "center"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 18,
+                color: a.nota >= 7 ? "#16a34a" : a.nota >= 4 ? "#d97706" : "#dc2626"
+              },
+              children: [a.nota, "/10"]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 10,
+                color: "var(--text-muted)"
+              },
+              children: "relaxamento"
+            }, void 0, false)]
+          }, void 0, true)]
+        }, a.id, true))
+      }, void 0, false)]
+    }, void 0, true), rodas.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        border: "1px solid var(--gray-100)",
-        borderRadius: 10,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      onClick: () => setReflexaoAberta(reflexaoAberta === r.id ? null : r.id),
+        marginTop: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          marginBottom: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "🎯 Roda da Vida"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: [rodas.length, " sessão(ões)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-muted)",
+          marginBottom: 14
+        },
+        children: "Evolução da satisfação do paciente em cada área da vida."
+      }, void 0, false), rodas.length >= 2 ? (() => {
+        const atual = rodas[0];
+        const anterior = rodas[1];
+        const vAtual = rodaDocToVals(atual);
+        const vAnterior = rodaDocToVals(anterior);
+        return /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              gap: 16,
+              justifyContent: "center",
+              flexWrap: "wrap",
+              marginBottom: 16
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                textAlign: "center",
+                flex: "1 1 140px",
+                maxWidth: 240
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#6b7280",
+                  marginBottom: 6,
+                  background: "#f3f4f6",
+                  borderRadius: 20,
+                  padding: "3px 12px",
+                  display: "inline-block"
+                },
+                children: ["📅 Antes — ", anterior.data]
+              }, void 0, true), /*#__PURE__*/_jsxDEV(RodaRadarSVG, {
+                valores: vAnterior,
+                cor: "#a78bfa"
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                textAlign: "center",
+                flex: "1 1 140px",
+                maxWidth: 240
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--purple)",
+                  marginBottom: 6,
+                  background: "#ede9fe",
+                  borderRadius: 20,
+                  padding: "3px 12px",
+                  display: "inline-block"
+                },
+                children: ["📅 Agora — ", atual.data]
+              }, void 0, true), /*#__PURE__*/_jsxDEV(RodaRadarSVG, {
+                valores: vAtual,
+                cor: "#7B00C4"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 4,
+              marginBottom: 12
+            },
+            children: RODA_AREAS.map(a => {
+              const vA = vAnterior[a.id] || 0;
+              const vB = vAtual[a.id] || 0;
+              const diff = vB - vA;
+              const cor = diff > 0 ? "#059669" : diff < 0 ? "#dc2626" : "#9ca3af";
+              const icone = diff > 0 ? "▲" : diff < 0 ? "▼" : "—";
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  background: "#f9fafb",
+                  border: "1px solid #f3f4f6"
+                },
+                children: [/*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    color: "#374151",
+                    fontWeight: 600,
+                    fontSize: 11
+                  },
+                  children: a.label
+                }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    color: cor,
+                    fontWeight: 700,
+                    fontSize: 11
+                  },
+                  children: [icone, " ", vA, "→", vB]
+                }, void 0, true)]
+              }, a.id, true);
+            })
+          }, void 0, false)]
+        }, void 0, true);
+      })() : /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center",
+          paddingBottom: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV(RodaRadarSVG, {
+          valores: rodaDocToVals(rodas[0]),
+          cor: "#7B00C4"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: "var(--text-muted)",
+            marginTop: 4
+          },
+          children: [rodas[0].data, " — apenas 1 sessão (comparação disponível a partir de 2)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          borderTop: "1px solid var(--gray-100)",
+          paddingTop: 10
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            marginBottom: 6
+          },
+          children: "Histórico de sessões:"
+        }, void 0, false), rodas.map((r, i) => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "#6b7280",
+            padding: "5px 8px",
+            background: i === 0 ? "#f3e8ff" : "#f9fafb",
+            borderRadius: 6,
+            marginBottom: 3,
+            display: "flex",
+            justifyContent: "space-between"
+          },
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontWeight: i === 0 ? 700 : 400,
+              color: i === 0 ? "var(--purple)" : "#6b7280"
+            },
+            children: [r.data, i === 0 ? " ✓ atual" : ""]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontSize: 10,
+              color: "#9ca3af"
+            },
+            children: [(r.areas || []).slice(0, 4).map(a => `${a.area.substring(0, 3)}: ${a.valor}`).join(" · "), "…"]
+          }, void 0, true)]
+        }, i, true))]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "10px 14px",
-        cursor: "pointer",
-        gap: 10,
-        background: reflexaoAberta === r.id ? "var(--purple-soft,#f3e8ff)" : "#fafafa"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+        marginTop: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          marginBottom: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "📊 Uso de Recursos Terapêuticos"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: [acessos.length, " registro(s)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 12,
+          color: "var(--text-muted)",
+          marginBottom: 14
+        },
+        children: "Cada vez que o paciente abre um recurso ou salva um exercício, aparece aqui."
+      }, void 0, false), acessos.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center",
+          padding: 30,
+          color: "var(--text-muted)"
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "mouse-pointer-click",
+          size: 36
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            marginTop: 10,
+            fontSize: 13
+          },
+          children: "Nenhum acesso registrado ainda."
+        }, void 0, false)]
+      }, void 0, true) : (() => {
+        const limite8 = new Date();
+        limite8.setDate(limite8.getDate() - 8);
+        const filtrados = verTodoHistorico ? acessos : acessos.filter(a => {
+          const d = a.createdAt?.toDate?.();
+          return d && d >= limite8;
+        });
+        if (filtrados.length === 0) return /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            textAlign: "center",
+            padding: 20,
+            color: "var(--text-muted)",
+            fontSize: 13
+          },
+          children: ["Nenhuma atividade nos últimos 8 dias.", /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setVerTodoHistorico(true),
+            style: {
+              display: "block",
+              margin: "8px auto 0",
+              background: "none",
+              border: "none",
+              color: "var(--purple)",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: "var(--font-body)"
+            },
+            children: "Ver histórico completo →"
+          }, void 0, false)]
+        }, void 0, true);
+        return /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+            maxHeight: 500,
+            overflowY: "auto"
+          },
+          children: filtrados.map(a => {
+            const temReflexao = a.tipo === "salvou" && a.detalhe;
+            const expandido = itemExpandido === a.id;
+            // Buscar reflexão salva correspondente
+            const reflexaoVinc = reflexoes.find(r => r.recursoId === a.recursoId && r.pacienteId === a.pacienteId);
+            return /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                borderRadius: 10,
+                border: "1px solid var(--gray-100)",
+                overflow: "hidden"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: "9px 12px",
+                  background: a.tipo === "salvou" ? "#f0fdf4" : "#fafafa",
+                  cursor: temReflexao || reflexaoVinc ? "pointer" : "default"
+                },
+                onClick: () => (temReflexao || reflexaoVinc) && setItemExpandido(expandido ? null : a.id),
+                children: [/*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 11,
+                    fontWeight: 700,
+                    borderRadius: 20,
+                    padding: "3px 9px",
+                    flexShrink: 0,
+                    marginTop: 1,
+                    background: a.tipo === "salvou" ? "#d1fae5" : a.tipo === "concluiu" ? "#dbeafe" : "#ede9fe",
+                    color: a.tipo === "salvou" ? "#059669" : a.tipo === "concluiu" ? "#1d4ed8" : "var(--purple)"
+                  },
+                  children: a.tipo === "salvou" ? "💾 Salvou" : a.tipo === "concluiu" ? "✅ Concluiu" : "👁 Abriu"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    flex: 1,
+                    minWidth: 0
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontWeight: 600,
+                      fontSize: 13
+                    },
+                    children: a.recursoTitulo || "Recurso"
+                  }, void 0, false), a.detalhe && !expandido && /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontSize: 12,
+                      color: "#4b5563",
+                      marginTop: 2,
+                      lineHeight: 1.5,
+                      wordBreak: "break-word",
+                      opacity: .7
+                    },
+                    children: a.detalhe
+                  }, void 0, false)]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    flexShrink: 0
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontSize: 11,
+                      color: "var(--text-muted)",
+                      textAlign: "right"
+                    },
+                    children: [a.data, /*#__PURE__*/_jsxDEV("br", {}, void 0, false), a.hora]
+                  }, void 0, true), (temReflexao || reflexaoVinc) && /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontSize: 12,
+                      color: "var(--purple)",
+                      fontWeight: 600
+                    },
+                    children: expandido ? "▲" : "▼"
+                  }, void 0, false)]
+                }, void 0, true)]
+              }, void 0, true), expandido && /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  padding: "12px 14px",
+                  background: "white",
+                  borderTop: "1px solid var(--gray-100)"
+                },
+                children: reflexaoVinc ? (() => {
+                  // Suporta formato {registros:[{pergunta,resposta}]} (fábulas/psicoeducações)
+                  // e formato legado {perguntas:[], respostas:[]}
+                  const itens = reflexaoVinc.registros ? reflexaoVinc.registros : (reflexaoVinc.respostas || []).map((r, i) => ({
+                    pergunta: (reflexaoVinc.perguntas || [])[i] || `Reflexão ${i + 1}`,
+                    resposta: r
+                  }));
+                  return itens.length > 0 ? itens.map((item, i) => /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      marginBottom: i < itens.length - 1 ? 12 : 0
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "var(--purple)",
+                        marginBottom: 4
+                      },
+                      children: item.pergunta || `Reflexão ${i + 1}`
+                    }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        fontSize: 13,
+                        color: item.resposta ? "#1f2937" : "#9ca3af",
+                        lineHeight: 1.65,
+                        paddingLeft: 12,
+                        borderLeft: "3px solid #e9d5ff"
+                      },
+                      children: item.resposta || "— sem resposta —"
+                    }, void 0, false)]
+                  }, i, true)) : a.detalhe ? /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontSize: 13,
+                      color: "#1f2937",
+                      lineHeight: 1.65,
+                      paddingLeft: 12,
+                      borderLeft: "3px solid #e9d5ff"
+                    },
+                    children: a.detalhe
+                  }, void 0, false) : null;
+                })() : a.detalhe ? /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 13,
+                    color: "#1f2937",
+                    lineHeight: 1.65,
+                    paddingLeft: 12,
+                    borderLeft: "3px solid #e9d5ff"
+                  },
+                  children: a.detalhe
+                }, void 0, false) : null
+              }, void 0, false)]
+            }, a.id, true);
+          })
+        }, void 0, false);
+      })()]
+    }, void 0, true), tcc.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+        marginTop: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          marginBottom: 14,
+          display: "flex",
+          justifyContent: "space-between"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "🧠 Registros TCC — Pensamentos Guiados"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: [tcc.length, " registro(s)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 8
+        },
+        children: tcc.slice(0, 15).map(t => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            border: "1px solid var(--gray-100)",
+            borderRadius: 10,
+            overflow: "hidden"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            onClick: () => setTccAberto(tccAberto === t.id ? null : t.id),
+            style: {
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "10px 14px",
+              cursor: "pointer",
+              background: tccAberto === t.id ? "var(--purple-soft,#f3e8ff)" : "#fafafa"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 600,
+                fontSize: 13
+              },
+              children: ["Registro de ", t.data || "—"]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 12,
+                color: "var(--purple)",
+                fontWeight: 600
+              },
+              children: tccAberto === t.id ? "▲ Fechar" : "▼ Ver respostas"
+            }, void 0, false)]
+          }, void 0, true), tccAberto === t.id && /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              padding: "12px 14px",
+              background: "white"
+            },
+            children: (t.registros || []).map((r, i) => /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                marginBottom: i < (t.registros || []).length - 1 ? 12 : 0
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "var(--purple)",
+                  marginBottom: 3
+                },
+                children: [i + 1, ". ", r.pergunta]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 13,
+                  color: r.resposta ? "#1f2937" : "#9ca3af",
+                  lineHeight: 1.6,
+                  paddingLeft: 14,
+                  borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
+                },
+                children: r.resposta || "— sem resposta —"
+              }, void 0, false)]
+            }, i, true))
+          }, void 0, false)]
+        }, t.id, true))
+      }, void 0, false)]
+    }, void 0, true), reflexoes.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        fontWeight: 600,
-        fontSize: 13,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      }
-    }, titulo), /*#__PURE__*/React.createElement("div", {
+        marginTop: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          marginBottom: 14,
+          display: "flex",
+          justifyContent: "space-between"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "💭 Reflexões Salvas — Fábulas e Psicoeducações"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: [reflexoes.length, " registro(s)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 8
+        },
+        children: reflexoes.slice(0, 15).map(r => {
+          const titulo = r.origemTitulo || r.psicoeducacaoTitulo || "Reflexão";
+          const tipoBadge = r.origem === "fabula" ? "📖 Fábula" : "🎓 Psicoeducação";
+          return /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              border: "1px solid var(--gray-100)",
+              borderRadius: 10,
+              overflow: "hidden"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              onClick: () => setReflexaoAberta(reflexaoAberta === r.id ? null : r.id),
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "10px 14px",
+                cursor: "pointer",
+                gap: 10,
+                background: reflexaoAberta === r.id ? "var(--purple-soft,#f3e8ff)" : "#fafafa"
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  minWidth: 0
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 600,
+                    fontSize: 13,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  },
+                  children: titulo
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    marginTop: 2
+                  },
+                  children: [tipoBadge, " · ", r.data || "—"]
+                }, void 0, true)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  fontSize: 12,
+                  color: "var(--purple)",
+                  fontWeight: 600,
+                  flexShrink: 0
+                },
+                children: reflexaoAberta === r.id ? "▲ Fechar" : "▼ Ver respostas"
+              }, void 0, false)]
+            }, void 0, true), reflexaoAberta === r.id && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                padding: "12px 14px",
+                background: "white"
+              },
+              children: (r.registros || []).map((reg, i) => /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  marginBottom: i < (r.registros || []).length - 1 ? 12 : 0
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "var(--purple)",
+                    marginBottom: 3
+                  },
+                  children: [i + 1, ". ", reg.pergunta]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 13,
+                    color: reg.resposta ? "#1f2937" : "#9ca3af",
+                    lineHeight: 1.6,
+                    paddingLeft: 14,
+                    borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
+                  },
+                  children: reg.resposta || "— sem resposta —"
+                }, void 0, false)]
+              }, i, true))
+            }, void 0, false)]
+          }, r.id, true);
+        })
+      }, void 0, false)]
+    }, void 0, true), diario.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
       style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, tipoBadge, " · ", r.data || "—")), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "var(--purple)",
-        fontWeight: 600,
-        flexShrink: 0
-      }
-    }, reflexaoAberta === r.id ? "▲ Fechar" : "▼ Ver respostas")), reflexaoAberta === r.id && /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: "12px 14px",
-        background: "white"
-      }
-    }, (r.registros || []).map((reg, i) => /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        marginBottom: i < (r.registros || []).length - 1 ? 12 : 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 600,
-        color: "var(--purple)",
-        marginBottom: 3
-      }
-    }, i + 1, ". ", reg.pergunta), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: reg.resposta ? "#1f2937" : "#9ca3af",
-        lineHeight: 1.6,
-        paddingLeft: 14,
-        borderLeft: "3px solid var(--purple-soft,#f3e8ff)"
-      }
-    }, reg.resposta || "— sem resposta —")))));
-  }))), diario.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 14,
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "📓 Diário Terapêutico"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)"
-    }
-  }, diario.length, " entrada(s)")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8,
-      maxHeight: 360,
-      overflowY: "auto"
-    }
-  }, diario.slice(0, 15).map(d => /*#__PURE__*/React.createElement("div", {
-    key: d.id,
-    style: {
-      padding: "10px 14px",
-      borderRadius: 10,
-      border: "1px solid var(--gray-100)",
-      background: "#fafafa"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: 4
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: "var(--purple)",
-      background: "var(--purple-soft,#f3e8ff)",
-      borderRadius: 20,
-      padding: "2px 8px",
-      textTransform: "capitalize"
-    }
-  }, d.tag || "geral"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)"
-    }
-  }, d.data, " ", d.hora ? "às " + d.hora : "")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      lineHeight: 1.6,
-      color: "#1f2937",
-      whiteSpace: "pre-wrap"
-    }
-  }, d.texto))))));
+        marginTop: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          marginBottom: 14,
+          display: "flex",
+          justifyContent: "space-between"
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          children: "📓 Diário Terapêutico"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 13,
+            color: "var(--text-muted)"
+          },
+          children: [diario.length, " entrada(s)"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          maxHeight: 360,
+          overflowY: "auto"
+        },
+        children: diario.slice(0, 15).map(d => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid var(--gray-100)",
+            background: "#fafafa"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 4
+            },
+            children: [/*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--purple)",
+                background: "var(--purple-soft,#f3e8ff)",
+                borderRadius: 20,
+                padding: "2px 8px",
+                textTransform: "capitalize"
+              },
+              children: d.tag || "geral"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 11,
+                color: "var(--text-muted)"
+              },
+              children: [d.data, " ", d.hora ? "às " + d.hora : ""]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: "#1f2937",
+              whiteSpace: "pre-wrap"
+            },
+            children: d.texto
+          }, void 0, false)]
+        }, d.id, true))
+      }, void 0, false)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ABA CASAL
@@ -2711,12 +3294,13 @@ function BlocoInventario({
   nomePar
 }) {
   const [verBrutos, setVerBrutos] = useState(false);
-  if (!docPaciente && !docParceiro) return /*#__PURE__*/React.createElement("div", {
+  if (!docPaciente && !docParceiro) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
-    }
-  }, "Nenhum preencheu ainda.");
+    },
+    children: "Nenhum preencheu ainda."
+  }, void 0, false);
   const resPac = docPaciente?.respostas || {};
   const resPar = docParceiro?.respostas || {};
   const catsPac = docPaciente ? calcularInventario(resPac) : null;
@@ -2727,256 +3311,294 @@ function BlocoInventario({
   const fortes = [...base].sort((a, b) => b.soma - a.soma).slice(0, 2);
   const fracos = [...base].sort((a, b) => a.soma - b.soma).slice(0, 2);
   const ESCALA = ["", "Nunca/Raramente", "Às vezes", "Frequentemente", "Sempre/Quase sempre"];
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 16,
-      fontSize: 12,
-      marginBottom: 10,
-      flexWrap: "wrap"
-    }
-  }, docPaciente && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: "inline-block",
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: "#7B00C4",
-      marginRight: 4
-    }
-  }), nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), docParceiro && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: "inline-block",
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: "#ec4899",
-      marginRight: 4
-    }
-  }), nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, INVENTARIO_CATS_C.map((cat, i) => {
-    const vPac = catsPac?.[i];
-    const vPar = catsPar?.[i];
-    return /*#__PURE__*/React.createElement("div", {
-      key: cat.label
-    }, /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
       style: {
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: 13,
-        fontWeight: 600,
-        marginBottom: 6
-      }
-    }, /*#__PURE__*/React.createElement("span", {
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 16,
+          fontSize: 12,
+          marginBottom: 10,
+          flexWrap: "wrap"
+        },
+        children: [docPaciente && /*#__PURE__*/_jsxDEV("span", {
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              display: "inline-block",
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: "#7B00C4",
+              marginRight: 4
+            }
+          }, void 0, false), nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"]
+        }, void 0, true), docParceiro && /*#__PURE__*/_jsxDEV("span", {
+          children: [/*#__PURE__*/_jsxDEV("span", {
+            style: {
+              display: "inline-block",
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: "#ec4899",
+              marginRight: 4
+            }
+          }, void 0, false), nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        },
+        children: INVENTARIO_CATS_C.map((cat, i) => {
+          const vPac = catsPac?.[i];
+          const vPar = catsPar?.[i];
+          return /*#__PURE__*/_jsxDEV("div", {
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 13,
+                fontWeight: 600,
+                marginBottom: 6
+              },
+              children: /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  color: cat.cor
+                },
+                children: cat.label
+              }, void 0, false)
+            }, void 0, false), vPac && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                marginBottom: 4
+              },
+              children: /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                },
+                children: [/*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 11,
+                    color: "#7B00C4",
+                    minWidth: 14,
+                    fontWeight: 600
+                  },
+                  children: "🟣"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    flex: 1,
+                    background: "#f3f4f6",
+                    borderRadius: 20,
+                    height: 10,
+                    overflow: "hidden"
+                  },
+                  children: /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      width: vPac.pct + "%",
+                      height: "100%",
+                      background: "#7B00C4",
+                      borderRadius: 20,
+                      transition: "width .5s"
+                    }
+                  }, void 0, false)
+                }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 12,
+                    color: "#7B00C4",
+                    fontWeight: 700,
+                    minWidth: 36,
+                    textAlign: "right"
+                  },
+                  children: [vPac.soma, "/35"]
+                }, void 0, true)]
+              }, void 0, true)
+            }, void 0, false), vPar && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                marginBottom: 4
+              },
+              children: /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8
+                },
+                children: [/*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 11,
+                    color: "#ec4899",
+                    minWidth: 14,
+                    fontWeight: 600
+                  },
+                  children: "🩷"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    flex: 1,
+                    background: "#f3f4f6",
+                    borderRadius: 20,
+                    height: 10,
+                    overflow: "hidden"
+                  },
+                  children: /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      width: vPar.pct + "%",
+                      height: "100%",
+                      background: "#ec4899",
+                      borderRadius: 20,
+                      transition: "width .5s"
+                    }
+                  }, void 0, false)
+                }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 12,
+                    color: "#ec4899",
+                    fontWeight: 700,
+                    minWidth: 36,
+                    textAlign: "right"
+                  },
+                  children: [vPar.soma, "/35"]
+                }, void 0, true)]
+              }, void 0, true)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 10,
+                color: "var(--text-muted)",
+                marginTop: 2,
+                paddingLeft: 22
+              },
+              children: [/*#__PURE__*/_jsxDEV("span", {
+                children: "Baixo (7)"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                children: "Alto (35)"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, cat.label, true);
+        })
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        color: cat.cor
-      }
-    }, cat.label)), vPac && /*#__PURE__*/React.createElement("div", {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 12,
+        marginBottom: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#f0fdf4",
+          borderRadius: 10,
+          padding: 12,
+          border: "1px solid #86efac"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 12,
+            color: "#16a34a",
+            marginBottom: 8
+          },
+          children: "💪 Pontos Fortes"
+        }, void 0, false), fortes.map(c => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: "#15803d",
+            marginBottom: 4
+          },
+          children: ["● ", c.label, " ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontWeight: 700
+            },
+            children: [c.soma, "/35"]
+          }, void 0, true)]
+        }, c.label, true))]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "#fef2f2",
+          borderRadius: 10,
+          padding: 12,
+          border: "1px solid #fca5a5"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 700,
+            fontSize: 12,
+            color: "#dc2626",
+            marginBottom: 8
+          },
+          children: "⚠️ Pontos de Atenção"
+        }, void 0, false), fracos.map(c => /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 12,
+            color: "#b91c1c",
+            marginBottom: 4
+          },
+          children: ["● ", c.label, " ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontWeight: 700
+            },
+            children: [c.soma, "/35"]
+          }, void 0, true)]
+        }, c.label, true))]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+      onClick: () => setVerBrutos(v => !v),
       style: {
-        marginBottom: 4
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: "#7B00C4",
-        minWidth: 14,
-        fontWeight: 600
-      }
-    }, "🟣"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        background: "#f3f4f6",
-        borderRadius: 20,
-        height: 10,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: vPac.pct + "%",
-        height: "100%",
-        background: "#7B00C4",
-        borderRadius: 20,
-        transition: "width .5s"
-      }
-    })), /*#__PURE__*/React.createElement("span", {
-      style: {
+        background: "none",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 8,
+        padding: "6px 12px",
         fontSize: 12,
-        color: "#7B00C4",
-        fontWeight: 700,
-        minWidth: 36,
-        textAlign: "right"
-      }
-    }, vPac.soma, "/35"))), vPar && /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginBottom: 4
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: "#ec4899",
-        minWidth: 14,
-        fontWeight: 600
-      }
-    }, "🩷"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        background: "#f3f4f6",
-        borderRadius: 20,
-        height: 10,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: vPar.pct + "%",
-        height: "100%",
-        background: "#ec4899",
-        borderRadius: 20,
-        transition: "width .5s"
-      }
-    })), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "#ec4899",
-        fontWeight: 700,
-        minWidth: 36,
-        textAlign: "right"
-      }
-    }, vPar.soma, "/35"))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: 10,
+        cursor: "pointer",
         color: "var(--text-muted)",
-        marginTop: 2,
-        paddingLeft: 22
-      }
-    }, /*#__PURE__*/React.createElement("span", null, "Baixo (7)"), /*#__PURE__*/React.createElement("span", null, "Alto (35)")));
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 12,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f0fdf4",
-      borderRadius: 10,
-      padding: 12,
-      border: "1px solid #86efac"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 12,
-      color: "#16a34a",
-      marginBottom: 8
-    }
-  }, "💪 Pontos Fortes"), fortes.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.label,
-    style: {
-      fontSize: 12,
-      color: "#15803d",
-      marginBottom: 4
-    }
-  }, "● ", c.label, " ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 700
-    }
-  }, c.soma, "/35")))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#fef2f2",
-      borderRadius: 10,
-      padding: 12,
-      border: "1px solid #fca5a5"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 12,
-      color: "#dc2626",
-      marginBottom: 8
-    }
-  }, "⚠️ Pontos de Atenção"), fracos.map(c => /*#__PURE__*/React.createElement("div", {
-    key: c.label,
-    style: {
-      fontSize: 12,
-      color: "#b91c1c",
-      marginBottom: 4
-    }
-  }, "● ", c.label, " ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 700
-    }
-  }, c.soma, "/35"))))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setVerBrutos(v => !v),
-    style: {
-      background: "none",
-      border: "1px solid var(--gray-200)",
-      borderRadius: 8,
-      padding: "6px 12px",
-      fontSize: 12,
-      cursor: "pointer",
-      color: "var(--text-muted)",
-      width: "100%"
-    }
-  }, verBrutos ? "▲ Ocultar respostas brutas" : "▼ Ver respostas brutas"), verBrutos && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 10,
-      display: "flex",
-      flexDirection: "column",
-      gap: 4
-    }
-  }, Array.from({
-    length: 42
-  }, (_, i) => i + 1).map(n => /*#__PURE__*/React.createElement("div", {
-    key: n,
-    style: {
-      display: "flex",
-      gap: 8,
-      fontSize: 12,
-      padding: "4px 8px",
-      background: n % 2 === 0 ? "#fafafa" : "white",
-      borderRadius: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--purple)",
-      fontWeight: 600,
-      minWidth: 22
-    }
-  }, n, "."), docPaciente && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#7B00C4",
-      flex: 1
-    }
-  }, nomePac.split(" ")[0], ": ", ESCALA[resPac[n]] || "—"), docParceiro && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "#ec4899",
-      flex: 1
-    }
-  }, nomePar.split(" ")[0], ": ", ESCALA[resPar[n]] || "—")))));
+        width: "100%"
+      },
+      children: verBrutos ? "▲ Ocultar respostas brutas" : "▼ Ver respostas brutas"
+    }, void 0, false), verBrutos && /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        marginTop: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 4
+      },
+      children: Array.from({
+        length: 42
+      }, (_, i) => i + 1).map(n => /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 8,
+          fontSize: 12,
+          padding: "4px 8px",
+          background: n % 2 === 0 ? "#fafafa" : "white",
+          borderRadius: 6
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "var(--purple)",
+            fontWeight: 600,
+            minWidth: 22
+          },
+          children: [n, "."]
+        }, void 0, true), docPaciente && /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "#7B00C4",
+            flex: 1
+          },
+          children: [nomePac.split(" ")[0], ": ", ESCALA[resPac[n]] || "—"]
+        }, void 0, true), docParceiro && /*#__PURE__*/_jsxDEV("span", {
+          style: {
+            color: "#ec4899",
+            flex: 1
+          },
+          children: [nomePar.split(" ")[0], ": ", ESCALA[resPar[n]] || "—"]
+        }, void 0, true)]
+      }, n, true))
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // ── Bloco visual: Roda da Vida do Relacionamento ─────────────────────────────
@@ -2987,91 +3609,103 @@ function BlocoRodaVida({
   nomePar
 }) {
   const [verBrutos, setVerBrutos] = useState(false);
-  if (!docPaciente && !docParceiro) return /*#__PURE__*/React.createElement("div", {
+  if (!docPaciente && !docParceiro) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
-    }
-  }, "Nenhum preencheu ainda.");
+    },
+    children: "Nenhum preencheu ainda."
+  }, void 0, false);
   const vPac = docPaciente?.respostas || {};
   const vPar = docParceiro?.respostas || {};
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8,
-      marginBottom: 12
-    }
-  }, RODA_DIMENSOES_C.map((dim, i) => {
-    const kPac = vPac[dim];
-    const kPar = vPar[dim];
-    return /*#__PURE__*/React.createElement("div", {
-      key: dim
-    }, /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
       style: {
         display: "flex",
-        justifyContent: "space-between",
+        flexDirection: "column",
+        gap: 8,
+        marginBottom: 12
+      },
+      children: RODA_DIMENSOES_C.map((dim, i) => {
+        const kPac = vPac[dim];
+        const kPar = vPar[dim];
+        return /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              justifyContent: "space-between",
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 3
+            },
+            children: [/*#__PURE__*/_jsxDEV("span", {
+              children: dim
+            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+              style: {
+                display: "flex",
+                gap: 10
+              },
+              children: [docPaciente && /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  color: "#7B00C4"
+                },
+                children: [kPac || 0, "/10"]
+              }, void 0, true), docParceiro && /*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  color: "#ec4899"
+                },
+                children: [kPar || 0, "/10"]
+              }, void 0, true)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              position: "relative",
+              height: 8,
+              borderRadius: 20,
+              background: "#f3f4f6",
+              overflow: "hidden"
+            },
+            children: [docPaciente && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: "100%",
+                width: (kPac || 0) * 10 + "%",
+                background: "#7B00C4",
+                borderRadius: 20,
+                opacity: 0.85
+              }
+            }, void 0, false), docParceiro && /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: "100%",
+                width: (kPar || 0) * 10 + "%",
+                background: "#ec4899",
+                borderRadius: 20,
+                opacity: 0.5
+              }
+            }, void 0, false)]
+          }, void 0, true)]
+        }, dim, true);
+      })
+    }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+      onClick: () => setVerBrutos(v => !v),
+      style: {
+        background: "none",
+        border: "1px solid var(--gray-200)",
+        borderRadius: 8,
+        padding: "6px 12px",
         fontSize: 12,
-        fontWeight: 600,
-        marginBottom: 3
-      }
-    }, /*#__PURE__*/React.createElement("span", null, dim), /*#__PURE__*/React.createElement("span", {
-      style: {
-        display: "flex",
-        gap: 10
-      }
-    }, docPaciente && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "#7B00C4"
-      }
-    }, kPac || 0, "/10"), docParceiro && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "#ec4899"
-      }
-    }, kPar || 0, "/10"))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "relative",
-        height: 8,
-        borderRadius: 20,
-        background: "#f3f4f6",
-        overflow: "hidden"
-      }
-    }, docPaciente && /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        height: "100%",
-        width: (kPac || 0) * 10 + "%",
-        background: "#7B00C4",
-        borderRadius: 20,
-        opacity: 0.85
-      }
-    }), docParceiro && /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        height: "100%",
-        width: (kPar || 0) * 10 + "%",
-        background: "#ec4899",
-        borderRadius: 20,
-        opacity: 0.5
-      }
-    })));
-  })), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setVerBrutos(v => !v),
-    style: {
-      background: "none",
-      border: "1px solid var(--gray-200)",
-      borderRadius: 8,
-      padding: "6px 12px",
-      fontSize: 12,
-      cursor: "pointer",
-      color: "var(--text-muted)",
-      width: "100%"
-    }
-  }, verBrutos ? "▲ Ocultar detalhes" : "▼ Ver detalhes completos"));
+        cursor: "pointer",
+        color: "var(--text-muted)",
+        width: "100%"
+      },
+      children: verBrutos ? "▲ Ocultar detalhes" : "▼ Ver detalhes completos"
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // ── Bloco visual genérico (Metas, Quem Sou, O Que Quero) ────────────────────
@@ -3081,17 +3715,17 @@ function BlocoTexto({
   nomePac,
   nomePar
 }) {
-  if (!docPaciente && !docParceiro) return /*#__PURE__*/React.createElement("div", {
+  if (!docPaciente && !docParceiro) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)"
-    }
-  }, "Nenhum preencheu ainda.");
+    },
+    children: "Nenhum preencheu ainda."
+  }, void 0, false);
   const ESCALA = ["", "Nunca/Raramente", "Às vezes", "Frequentemente", "Sempre/Quase sempre"];
   function renderResp(resp) {
     if (!resp || typeof resp !== "object") return null;
-    return Object.entries(resp).map(([k, v]) => /*#__PURE__*/React.createElement("div", {
-      key: k,
+    return Object.entries(resp).map(([k, v]) => /*#__PURE__*/_jsxDEV("div", {
       style: {
         padding: "6px 10px",
         background: "white",
@@ -3099,40 +3733,50 @@ function BlocoTexto({
         border: "1px solid #f3f4f6",
         fontSize: 13,
         marginBottom: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 600,
-        color: "var(--purple)",
-        marginRight: 6
-      }
-    }, k, ":"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--gray-700)"
-      }
-    }, typeof v === "number" ? ESCALA[v] || v : String(v))));
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        style: {
+          fontWeight: 600,
+          color: "var(--purple)",
+          marginRight: 6
+        },
+        children: [k, ":"]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+        style: {
+          color: "var(--gray-700)"
+        },
+        children: typeof v === "number" ? ESCALA[v] || v : String(v)
+      }, void 0, false)]
+    }, k, true));
   }
-  return /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
     style: {
       display: "grid",
       gridTemplateColumns: docPaciente && docParceiro ? "1fr 1fr" : "1fr",
       gap: 16
-    }
-  }, docPaciente && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 12,
-      color: "#7B00C4",
-      marginBottom: 8
-    }
-  }, "🟣 ", nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), renderResp(docPaciente.respostas)), docParceiro && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 12,
-      color: "#ec4899",
-      marginBottom: 8
-    }
-  }, "🩷 ", nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"), renderResp(docParceiro.respostas)));
+    },
+    children: [docPaciente && /*#__PURE__*/_jsxDEV("div", {
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 12,
+          color: "#7B00C4",
+          marginBottom: 8
+        },
+        children: ["🟣 ", nomePac, " (", docPaciente.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"]
+      }, void 0, true), renderResp(docPaciente.respostas)]
+    }, void 0, true), docParceiro && /*#__PURE__*/_jsxDEV("div", {
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 12,
+          color: "#ec4899",
+          marginBottom: 8
+        },
+        children: ["🩷 ", nomePar, " (", docParceiro.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || "—", ")"]
+      }, void 0, true), renderResp(docParceiro.respostas)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ── Respostas do diagnóstico — componente principal do admin ─────────────────
@@ -3208,14 +3852,15 @@ function RespostasCasal({
       u2();
     };
   }, [pacienteId, parceiroId]);
-  if (loading) return /*#__PURE__*/React.createElement("div", {
+  if (loading) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       fontSize: 13,
       color: "var(--text-muted)",
       padding: "8px 0"
-    }
-  }, "Carregando...");
-  if (respostas.length === 0) return /*#__PURE__*/React.createElement("div", {
+    },
+    children: "Carregando..."
+  }, void 0, false);
+  if (respostas.length === 0) return /*#__PURE__*/_jsxDEV("div", {
     style: {
       background: "#f9fafb",
       borderRadius: 10,
@@ -3223,134 +3868,153 @@ function RespostasCasal({
       fontSize: 13,
       color: "var(--text-muted)",
       textAlign: "center"
-    }
-  }, "Nenhuma resposta registrada ainda.");
+    },
+    children: "Nenhuma resposta registrada ainda."
+  }, void 0, false);
 
   // Para cada atividade, pega o doc mais recente de cada pessoa
   function getDoc(atividadeId, autorId) {
     return respostas.find(r => r.atividadeId === atividadeId && r.pacienteId === autorId) || null;
   }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      fontSize: 12,
-      marginBottom: 16,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: "inline-block",
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: "#7B00C4",
-      marginRight: 4
-    }
-  }), nomePac), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: "inline-block",
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      background: "#ec4899",
-      marginRight: 4
-    }
-  }), nomePar)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8
-    }
-  }, ATIVIDADES.map(atv => {
-    const docPac = getDoc(atv.id, pacienteId);
-    const docPar = getDoc(atv.id, parceiroId);
-    const total = (docPac ? 1 : 0) + (docPar ? 1 : 0);
-    if (total === 0) return null;
-    const aberto = expandido === atv.id;
-    return /*#__PURE__*/React.createElement("div", {
-      key: atv.id,
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
       style: {
-        border: "1px solid var(--gray-200)",
-        borderRadius: 12,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setExpandido(aberto ? null : atv.id),
-      style: {
-        width: "100%",
         display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "14px 16px",
-        background: aberto ? "#f5f3ff" : "white",
-        border: "none",
-        cursor: "pointer",
-        textAlign: "left"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
+        gap: 8,
+        fontSize: 12,
+        marginBottom: 16,
+        flexWrap: "wrap"
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            display: "inline-block",
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: "#7B00C4",
+            marginRight: 4
+          }
+        }, void 0, false), nomePac]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            display: "inline-block",
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: "#ec4899",
+            marginRight: 4
+          }
+        }, void 0, false), nomePar]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        fontSize: 20
-      }
-    }, atv.emoji), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600,
-        fontSize: 14
-      }
-    }, atv.titulo), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, docPac && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "#7B00C4",
-        marginRight: 10
-      }
-    }, "✓ ", nomePac), docPar && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "#ec4899"
-      }
-    }, "✓ ", nomePar), !docPac && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--gray-400)",
-        marginRight: 10
-      }
-    }, "○ ", nomePac), !docPar && /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--gray-400)"
-      }
-    }, "○ ", nomePar))), /*#__PURE__*/React.createElement(Icon, {
-      name: aberto ? "chevron-up" : "chevron-down",
-      size: 16
-    })), aberto && /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: "16px",
-        background: "#fafafa",
-        borderTop: "1px solid var(--gray-100)"
-      }
-    }, atv.id === "inventario-bem-estar" && /*#__PURE__*/React.createElement(BlocoInventario, {
-      docPaciente: docPac,
-      docParceiro: docPar,
-      nomePac: nomePac,
-      nomePar: nomePar
-    }), atv.id === "roda-vida-relacionamento" && /*#__PURE__*/React.createElement(BlocoRodaVida, {
-      docPaciente: docPac,
-      docParceiro: docPar,
-      nomePac: nomePac,
-      nomePar: nomePar
-    }), (atv.id === "3-metas" || atv.id === "quem-sou" || atv.id === "o-que-quero") && /*#__PURE__*/React.createElement(BlocoTexto, {
-      docPaciente: docPac,
-      docParceiro: docPar,
-      nomePac: nomePac,
-      nomePar: nomePar
-    })));
-  })));
+        display: "flex",
+        flexDirection: "column",
+        gap: 8
+      },
+      children: ATIVIDADES.map(atv => {
+        const docPac = getDoc(atv.id, pacienteId);
+        const docPar = getDoc(atv.id, parceiroId);
+        const total = (docPac ? 1 : 0) + (docPar ? 1 : 0);
+        if (total === 0) return null;
+        const aberto = expandido === atv.id;
+        return /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            border: "1px solid var(--gray-200)",
+            borderRadius: 12,
+            overflow: "hidden"
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setExpandido(aberto ? null : atv.id),
+            style: {
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "14px 16px",
+              background: aberto ? "#f5f3ff" : "white",
+              border: "none",
+              cursor: "pointer",
+              textAlign: "left"
+            },
+            children: [/*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 20
+              },
+              children: atv.emoji
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                flex: 1
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 600,
+                  fontSize: 14
+                },
+                children: atv.titulo
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 11,
+                  color: "var(--text-muted)",
+                  marginTop: 2
+                },
+                children: [docPac && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    color: "#7B00C4",
+                    marginRight: 10
+                  },
+                  children: ["✓ ", nomePac]
+                }, void 0, true), docPar && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    color: "#ec4899"
+                  },
+                  children: ["✓ ", nomePar]
+                }, void 0, true), !docPac && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    color: "var(--gray-400)",
+                    marginRight: 10
+                  },
+                  children: ["○ ", nomePac]
+                }, void 0, true), !docPar && /*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    color: "var(--gray-400)"
+                  },
+                  children: ["○ ", nomePar]
+                }, void 0, true)]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV(Icon, {
+              name: aberto ? "chevron-up" : "chevron-down",
+              size: 16
+            }, void 0, false)]
+          }, void 0, true), aberto && /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              padding: "16px",
+              background: "#fafafa",
+              borderTop: "1px solid var(--gray-100)"
+            },
+            children: [atv.id === "inventario-bem-estar" && /*#__PURE__*/_jsxDEV(BlocoInventario, {
+              docPaciente: docPac,
+              docParceiro: docPar,
+              nomePac: nomePac,
+              nomePar: nomePar
+            }, void 0, false), atv.id === "roda-vida-relacionamento" && /*#__PURE__*/_jsxDEV(BlocoRodaVida, {
+              docPaciente: docPac,
+              docParceiro: docPar,
+              nomePac: nomePac,
+              nomePar: nomePar
+            }, void 0, false), (atv.id === "3-metas" || atv.id === "quem-sou" || atv.id === "o-que-quero") && /*#__PURE__*/_jsxDEV(BlocoTexto, {
+              docPaciente: docPac,
+              docParceiro: docPar,
+              nomePac: nomePac,
+              nomePar: nomePar
+            }, void 0, false)]
+          }, void 0, true)]
+        }, atv.id, true);
+      })
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // ── Aba Anamnese ─────────────────────────────────────────────────────────────
