@@ -207,6 +207,7 @@ function AbaRastreamentoDependencia({ paciente }) {
   const [loading, setLoading] = React.useState(true);
   const [selecionado, setSelecionado] = React.useState(null);
   const COR = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
+  const { ajustes: ajustesDep, salvarAjuste: salvarDep, limparAjuste: limparDep, salvando: salvandoDep } = useAjustesClinicos("clinica_rastreamento_dependencia", docs.length > 0 ? docs[0].id : null);
 
   React.useEffect(()=>{
     if(!paciente?.nome) return;
@@ -365,6 +366,35 @@ ${doc.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td cols
           })}
         </div>
       )}
+
+      {/* ── Reavaliação clínica DSM-5 ── */}
+      {docs.length > 0 && (()=>{
+        const d0 = docs[0];
+        const criteriosDep = PERGUNTAS_DEPENDENCIA.map(p=>({
+          texto: p.texto, valorOriginal: d0[p.id] === "C" ? "C" : ""
+        }));
+        return (
+          <div style={{marginTop:16}}>
+            <div style={{textAlign:"center",fontSize:11,color:"#9ca3af",margin:"8px 0 4px",letterSpacing:1}}>── Reavaliação clínica ──</div>
+            <ListaCriteriosDSM5
+              titulo="Transtorno por Uso de Substâncias (DSM-5)"
+              criterios={criteriosDep}
+              ajustes={ajustesDep}
+              salvarAjuste={salvarDep}
+              limparAjuste={limparDep}
+              confirmacoes={CONF_DEPENDENCIA}
+              salvando={salvandoDep}
+              statusFn={(crs)=>{
+                const n=crs.filter(c=>c.atendeResolvido).length;
+                if(n>=6) return {atende:"diag",label:"✓ Grave — ≥6 critérios"};
+                if(n>=4) return {atende:"diag",label:"✓ Moderado — 4–5 critérios"};
+                if(n>=2) return {atende:"prov",label:"⚠ Leve — 2–3 critérios"};
+                return {atende:false,label:"✗ Não atende (< 2 critérios)"};
+              }}
+            />
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -392,6 +422,7 @@ function AbaRastreamentoJogos({ paciente }) {
   const [loading, setLoading] = React.useState(true);
   const [selecionado, setSelecionado] = React.useState(null);
   const COR = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
+  const { ajustes: ajustesJogos, salvarAjuste: salvarJogos, limparAjuste: limparJogos, salvando: salvandoJogos } = useAjustesClinicos("clinica_rastreamento_jogos", docs.length > 0 ? docs[0].id : null);
 
   React.useEffect(()=>{
     if(!paciente?.nome) return;
@@ -550,6 +581,35 @@ ${doc.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td cols
           })}
         </div>
       )}
+
+      {/* ── Reavaliação clínica DSM-5 ── */}
+      {docs.length > 0 && (()=>{
+        const d0 = docs[0];
+        const criteriosJogos = PERGUNTAS_JOGOS.map(p=>({
+          texto: p.texto, valorOriginal: d0[p.id] === "C" ? "C" : ""
+        }));
+        return (
+          <div style={{marginTop:16}}>
+            <div style={{textAlign:"center",fontSize:11,color:"#9ca3af",margin:"8px 0 4px",letterSpacing:1}}>── Reavaliação clínica ──</div>
+            <ListaCriteriosDSM5
+              titulo="Transtorno de Jogos (DSM-5 / CID-11)"
+              criterios={criteriosJogos}
+              ajustes={ajustesJogos}
+              salvarAjuste={salvarJogos}
+              limparAjuste={limparJogos}
+              confirmacoes={CONF_JOGOS}
+              salvando={salvandoJogos}
+              statusFn={(crs)=>{
+                const n=crs.filter(c=>c.atendeResolvido).length;
+                if(n>=5) return {atende:"diag",label:"✓ Transtorno de Jogos — ≥5 critérios"};
+                if(n>=4) return {atende:"prov",label:"⚠ Sugestivo — 4 critérios"};
+                if(n>=2) return {atende:"prov",label:"⚠ Investigar — " + n + " critérios"};
+                return {atende:false,label:"✗ Não atende"};
+              }}
+            />
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1464,10 +1524,304 @@ function BarraEscore({ label, valor, max, cor }) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  MUDANÇA 2: REAVALIAÇÃO CLÍNICA DSM-5
+// ═══════════════════════════════════════════════════════════════════
+
+// Perguntas de confirmação por instrumento
+const CONF_BIPOLAR_MANIA = [
+  { id: "dur",  pergunta: "Duração mínima de 4 dias (hipomania) ou 7 dias (mania) confirmada?" },
+  { id: "excl", pergunta: "Excluída causa por substância ou condição médica geral?" },
+];
+const CONF_BIPOLAR_DEP = [
+  { id: "dur",  pergunta: "Duração de pelo menos 2 semanas confirmada?" },
+  { id: "sofr", pergunta: "Sofrimento clínico significativo ou prejuízo funcional presente?" },
+  { id: "excl", pergunta: "Excluída causa por substância ou condição médica?" },
+];
+const CONF_BORDERLINE = [
+  { id: "perv",    pergunta: "Padrão pervasivo presente desde a adolescência ou início da vida adulta?" },
+  { id: "reativo", pergunta: "Humor reativo a estressores interpessoais (não episódio completo)?" },
+];
+const CONF_ANOREXIA = [
+  { id: "peso", pergunta: "Peso significativamente abaixo do mínimo esperado para idade e estatura?" },
+];
+const CONF_BULIMIA = [
+  { id: "auto", pergunta: "Autoavaliação indevidamente influenciada por forma e peso corporais?" },
+  { id: "excl", pergunta: "Episódios NÃO ocorrem exclusivamente durante episódios de anorexia?" },
+];
+const CONF_TCA = [
+  { id: "sofr", pergunta: "Sofrimento acentuado em relação à compulsão alimentar presente?" },
+];
+const CONF_ARFID = [
+  { id: "alim", pergunta: "Comportamento NÃO explicado por falta de alimento disponível?" },
+  { id: "excl", pergunta: "NÃO melhor explicado por outro transtorno mental ou condição médica?" },
+];
+const CONF_SEXUAL = [
+  { id: "excl", pergunta: "NÃO melhor explicado por outro transtorno mental, substância/medicamento ou condição médica?" },
+  { id: "rel",  pergunta: "NÃO atribuído exclusivamente a conflito relacional grave?" },
+];
+const CONF_TDAH_IN = [
+  { id: "ini",  pergunta: "Sintomas de desatenção presentes antes dos 12 anos?" },
+  { id: "ctx",  pergunta: "Presentes em 2 ou mais contextos (escola/trabalho e casa)?" },
+  { id: "dur",  pergunta: "Duração mínima de 6 meses confirmada?" },
+  { id: "prej", pergunta: "Prejuízo funcional claro em atividades sociais/acadêmicas/profissionais?" },
+];
+const CONF_TDAH_HI = [
+  { id: "ini",  pergunta: "Sintomas de hiperatividade/impulsividade presentes antes dos 12 anos?" },
+  { id: "ctx",  pergunta: "Presentes em 2 ou mais contextos?" },
+  { id: "dur",  pergunta: "Duração mínima de 6 meses confirmada?" },
+  { id: "prej", pergunta: "Prejuízo funcional claro?" },
+];
+const CONF_TEA = [
+  { id: "dev",  pergunta: "Sintomas presentes no período de desenvolvimento precoce (mesmo que se manifestem depois)?" },
+  { id: "prej", pergunta: "Prejuízo significativo no funcionamento social, profissional ou em outras áreas?" },
+];
+const CONF_TOD = [
+  { id: "dur", pergunta: "Comportamentos presentes por pelo menos 6 meses?" },
+  { id: "ctx", pergunta: "Ocorre com pelo menos uma pessoa que não seja irmão?" },
+];
+const CONF_JOGOS = [
+  { id: "dur",  pergunta: "Padrão persistente por pelo menos 12 meses?" },
+  { id: "excl", pergunta: "NÃO ocorre exclusivamente durante episódio maníaco?" },
+];
+const CONF_DEPENDENCIA = [
+  { id: "dur", pergunta: "Padrão problemático por pelo menos 12 meses?" },
+];
+
+// Hook: carrega e salva ajustes clínicos no Firestore
+function useAjustesClinicos(colecao, docId) {
+  const [ajustes, setAjustes] = useState({});
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!docId) return;
+    db.collection(colecao).doc(docId).get().then(snap => {
+      if (snap.exists) setAjustes(snap.data().ajustesClinicos || {});
+    });
+  }, [docId]);
+
+  function salvarAjuste(chave, valor) {
+    const novos = { ...ajustes, [chave]: valor };
+    setAjustes(novos);
+    setSalvando(true);
+    db.collection(colecao).doc(docId).update({ ajustesClinicos: novos })
+      .finally(() => setSalvando(false));
+  }
+
+  function limparAjuste(chave) {
+    const novos = { ...ajustes };
+    delete novos[chave];
+    setAjustes(novos);
+    db.collection(colecao).doc(docId).update({ ajustesClinicos: novos });
+  }
+
+  return { ajustes, salvarAjuste, limparAjuste, salvando };
+}
+
+// Função: avalia critérios DSM-5 com ajustes clínicos e confirmações
+function avaliarCriteriosDSM5(criterios, ajustes, confirmacoes, statusFn) {
+  // Resolve cada critério
+  const criteriosResolvidos = criterios.map((c, i) => {
+    const chave = "criterio#" + i;
+    const ajuste = ajustes[chave];
+    let atendeResolvido;
+    let fonte;
+    if (ajuste === "presente") {
+      atendeResolvido = true;
+      fonte = "clinico";
+    } else if (ajuste === "ausente") {
+      atendeResolvido = false;
+      fonte = "clinico";
+    } else {
+      atendeResolvido = c.valorOriginal === "C";
+      fonte = "questionario";
+    }
+    return { ...c, atendeResolvido, fonte };
+  });
+
+  const nC = criteriosResolvidos.filter(c => c.atendeResolvido).length;
+
+  // Resolve confirmações
+  const confsResolvidas = (confirmacoes || []).map((conf, i) => {
+    const chave = "conf#" + i;
+    const resposta = ajustes[chave] || null;
+    return { ...conf, resposta };
+  });
+
+  // Calcula status base
+  let status, label;
+  if (statusFn) {
+    const resultado = statusFn(criteriosResolvidos, confsResolvidas);
+    status = resultado.atende;
+    label = resultado.label;
+  } else {
+    // Regra padrão igual ao laudoDSM5 — "diag" se todos C, "prov" se maioria
+    const total = criteriosResolvidos.length;
+    if (total === 0) { status = false; label = "✗ Sem critérios"; }
+    else if (nC === total) { status = "diag"; label = "✓ Diagnóstico"; }
+    else if (nC >= Math.ceil(total * 0.6)) { status = "prov"; label = "⚠ Diagnóstico provável"; }
+    else { status = false; label = "✗ Não atende"; }
+  }
+
+  // Aplica regras de confirmação
+  const respondidas = confsResolvidas.filter(c => c.resposta !== null);
+  const algumaNao = confsResolvidas.some(c => c.resposta === "nao");
+
+  if (algumaNao) {
+    status = false;
+    label = "✗ Não fecha diagnóstico";
+  } else if (respondidas.length > 0 && status !== false) {
+    const todasSim = respondidas.length === confsResolvidas.length && confsResolvidas.every(c => c.resposta === "sim");
+    const algumasSim = respondidas.some(c => c.resposta === "sim");
+    const algumasSemResposta = confsResolvidas.some(c => c.resposta === null);
+    if (todasSim) {
+      label = label + " (confirmado)";
+    } else if (algumasSemResposta && algumasSim) {
+      label = label + " (confirmação parcial)";
+    } else if (algumasSemResposta) {
+      label = label + " (confirmar na entrevista)";
+    }
+  }
+
+  return { criteriosResolvidos, nC, status, label, confsResolvidas };
+}
+
+// Componente: Lista de critérios DSM-5 com painel de reavaliação
+function ListaCriteriosDSM5({ titulo, criterios, ajustes, salvarAjuste, limparAjuste, confirmacoes, statusFn, salvando }) {
+  const [painelAberto, setPainelAberto] = useState(false);
+
+  const { criteriosResolvidos, nC, status, label, confsResolvidas } = avaliarCriteriosDSM5(
+    criterios, ajustes, confirmacoes || [], statusFn
+  );
+
+  function badgeStatus() {
+    const cor = status === "diag" ? { bg: "#fef2f2", cor: "#dc2626" }
+      : status === "prov" ? { bg: "#fffbeb", cor: "#d97706" }
+      : { bg: "#f0fdf4", cor: "#16a34a" };
+    return (
+      <span style={{ background: cor.bg, color: cor.cor, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 16, border: "1px solid #e9d5ff", borderRadius: 12, overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ background: "#f5f3ff", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 600, fontSize: 12, color: "#3d006a" }}>Análise DSM-5{titulo ? " — " + titulo : ""}</span>
+          {badgeStatus()}
+          {salvando && <span style={{ fontSize: 11, color: "#7B00C4" }}>💾 Salvando...</span>}
+        </div>
+        <button
+          onClick={() => setPainelAberto(!painelAberto)}
+          style={{ display: "flex", alignItems: "center", gap: 5, background: painelAberto ? "#7B00C4" : "white", color: painelAberto ? "white" : "#7B00C4", border: "1.5px solid #7B00C4", borderRadius: 8, padding: "5px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          🩺 {painelAberto ? "Fechar reavaliação" : "Reavaliar com a entrevista"}
+        </button>
+      </div>
+
+      {/* Painel de reavaliação */}
+      {painelAberto && (
+        <div style={{ padding: 14, background: "white", borderBottom: "1px solid #e9d5ff" }}>
+          <div style={{ fontWeight: 600, fontSize: 12, color: "#374151", marginBottom: 10 }}>Ajuste de critérios</div>
+          {criteriosResolvidos.map((c, i) => {
+            const chave = "criterio#" + i;
+            const ajuste = ajustes[chave];
+            const fonteLabel = c.fonte === "clinico"
+              ? <span style={{ background: "#ede9fe", color: "#7B00C4", fontSize: 10, padding: "1px 7px", borderRadius: 20, fontWeight: 600 }}>clínico 🩺</span>
+              : <span style={{ background: "#dbeafe", color: "#1d4ed8", fontSize: 10, padding: "1px 7px", borderRadius: 20, fontWeight: 600 }}>questionário</span>;
+            return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #f3f4f6", flexWrap: "wrap" }}>
+                <div style={{ flex: 1, fontSize: 12, color: "#374151", minWidth: 120 }}>{c.label || c.texto}</div>
+                {fonteLabel}
+                <button
+                  onClick={() => salvarAjuste(chave, "presente")}
+                  style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: ajuste === "presente" ? "#dc2626" : "white", color: ajuste === "presente" ? "white" : "#dc2626", borderColor: "#dc2626" }}>
+                  Presente
+                </button>
+                <button
+                  onClick={() => salvarAjuste(chave, "ausente")}
+                  style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: ajuste === "ausente" ? "#16a34a" : "white", color: ajuste === "ausente" ? "white" : "#16a34a", borderColor: "#16a34a" }}>
+                  Ausente
+                </button>
+                {ajuste && (
+                  <button onClick={() => limparAjuste(chave)} style={{ padding: "3px 8px", borderRadius: 6, border: "1px solid #9ca3af", cursor: "pointer", fontSize: 11, color: "#6b7280", background: "white" }}>
+                    ↩ Restaurar
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {(confirmacoes || []).length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontWeight: 600, fontSize: 12, color: "#374151", marginBottom: 8, borderTop: "1px solid #e9d5ff", paddingTop: 10 }}>
+                Perguntas da entrevista clínica
+              </div>
+              {confsResolvidas.map((conf, i) => {
+                const chave = "conf#" + i;
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #f3f4f6", flexWrap: "wrap" }}>
+                    <div style={{ flex: 1, fontSize: 12, color: "#374151", minWidth: 180 }}>{conf.pergunta}</div>
+                    <button
+                      onClick={() => salvarAjuste(chave, "sim")}
+                      style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: conf.resposta === "sim" ? "#059669" : "white", color: conf.resposta === "sim" ? "white" : "#059669", borderColor: "#059669" }}>
+                      Sim
+                    </button>
+                    <button
+                      onClick={() => salvarAjuste(chave, "nao")}
+                      style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: conf.resposta === "nao" ? "#dc2626" : "white", color: conf.resposta === "nao" ? "white" : "#dc2626", borderColor: "#dc2626" }}>
+                      Não
+                    </button>
+                    {conf.resposta && (
+                      <button onClick={() => limparAjuste(chave)} style={{ padding: "3px 8px", borderRadius: 6, border: "1px solid #9ca3af", cursor: "pointer", fontSize: 11, color: "#6b7280", background: "white" }}>
+                        ↩
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Lista de critérios (exibição) */}
+      <div style={{ padding: "10px 14px", background: "white" }}>
+        {criteriosResolvidos.map((c, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0", borderBottom: "1px solid #f9fafb" }}>
+            <div style={{
+              minWidth: 22, height: 22, borderRadius: "50%",
+              background: c.atendeResolvido ? "#fef2f2" : "#f0fdf4",
+              color: c.atendeResolvido ? "#dc2626" : "#16a34a",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700
+            }}>
+              {c.atendeResolvido ? "C" : "—"}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, color: "#374151" }}>{c.label || c.texto}</div>
+              {c.obs && <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.4, marginTop: 2 }}>{c.obs}</div>}
+            </div>
+            {c.fonte === "clinico" && (
+              <span style={{ background: "#ede9fe", color: "#7B00C4", fontSize: 9, padding: "1px 6px", borderRadius: 20, fontWeight: 600, flexShrink: 0 }}>🩺</span>
+            )}
+          </div>
+        ))}
+        <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, color: "#6b7280" }}>{nC} de {criteriosResolvidos.length} critérios presentes</span>
+          {badgeStatus()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AbaRastreamento({ paciente }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
+  const { ajustes: ajustesBipolar, salvarAjuste: salvarBipolar, limparAjuste: limparBipolar, salvando: salvandoBipolar } = useAjustesClinicos("clinica_rastreamento_bipolar", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -1691,6 +2045,73 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
                 </div>
               ))}
             </div>
+
+            {/* ── Reavaliação clínica DSM-5 ── */}
+            {docs.length > 0 && (()=>{
+              const d0 = docs[0];
+              const criteriosMania = ["p1","p2","p3"].map(pid => {
+                const p = PERGUNTAS_RASTREAMENTO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              const criteriosDep = ["p4","p5","p6"].map(pid => {
+                const p = PERGUNTAS_RASTREAMENTO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              const criteriosBorderline = ["p7","p8","p9","p10","p11","p12","p13","p14","p15"].map(pid => {
+                const p = PERGUNTAS_RASTREAMENTO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              return (
+                <div style={{marginBottom:16}}>
+                  <div style={{textAlign:"center",fontSize:11,color:"#9ca3af",margin:"16px 0 4px",letterSpacing:1}}>── Reavaliação clínica ──</div>
+                  <ListaCriteriosDSM5
+                    titulo="Mania / Hipomania"
+                    criterios={criteriosMania}
+                    ajustes={ajustesBipolar}
+                    salvarAjuste={salvarBipolar}
+                    limparAjuste={limparBipolar}
+                    confirmacoes={CONF_BIPOLAR_MANIA}
+                    salvando={salvandoBipolar}
+                    statusFn={(crs, confs) => {
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if (n === 3) return { atende: "diag", label: "✓ Mania/Hipomania — critérios presentes" };
+                      if (n === 2) return { atende: "prov", label: "⚠ Hipomania provável" };
+                      return { atende: false, label: "✗ Não atende" };
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="Depressão Bipolar"
+                    criterios={criteriosDep}
+                    ajustes={ajustesBipolar}
+                    salvarAjuste={(k,v)=>salvarBipolar("dep_"+k,v)}
+                    limparAjuste={(k)=>limparBipolar("dep_"+k)}
+                    confirmacoes={CONF_BIPOLAR_DEP}
+                    salvando={salvandoBipolar}
+                    statusFn={(crs, confs) => {
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if (n === 3) return { atende: "diag", label: "✓ Episódio Depressivo Bipolar" };
+                      if (n === 2) return { atende: "prov", label: "⚠ Depressão bipolar provável" };
+                      return { atende: false, label: "✗ Não atende" };
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="Borderline (TPB)"
+                    criterios={criteriosBorderline}
+                    ajustes={ajustesBipolar}
+                    salvarAjuste={(k,v)=>salvarBipolar("tpb_"+k,v)}
+                    limparAjuste={(k)=>limparBipolar("tpb_"+k)}
+                    confirmacoes={CONF_BORDERLINE}
+                    salvando={salvandoBipolar}
+                    statusFn={(crs, confs) => {
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if (n >= 5) return { atende: "diag", label: "✓ TPB — 5+ critérios" };
+                      if (n >= 4) return { atende: "prov", label: "⚠ TPB provável — 4 critérios" };
+                      return { atende: false, label: "✗ Não atende (< 4 critérios)" };
+                    }}
+                  />
+                </div>
+              );
+            })()}
 
             {/* Pontos de atenção */}
             {laudo.atencao.length>0 && (
@@ -1986,6 +2407,7 @@ function AbaRastreamentoNeuro({ paciente }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
+  const { ajustes: ajustesNeuro, salvarAjuste: salvarNeuro, limparAjuste: limparNeuro, salvando: salvandoNeuro } = useAjustesClinicos("clinica_rastreamento_neuro", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -2188,6 +2610,111 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
               </div>
             )}
 
+            {/* ── Reavaliação clínica DSM-5 ── */}
+            {docs.length > 0 && (()=>{
+              const d0 = docs[0];
+              const cTdahIn = ["p1","p2","p3","p4","p5","p6","p7","p8"].map(pid => {
+                const p = PERGUNTAS_NEURO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              const cTdahHi = ["p9","p10","p11","p12","p13","p14","p15"].map(pid => {
+                const p = PERGUNTAS_NEURO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              const cTeaA = ["p16","p17","p18"].map(pid => {
+                const p = PERGUNTAS_NEURO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              const cTeaB = ["p19","p20","p21","p22"].map(pid => {
+                const p = PERGUNTAS_NEURO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              const cTod = ["p23","p24","p25","p26","p27","p28"].map(pid => {
+                const p = PERGUNTAS_NEURO.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              });
+              return (
+                <div style={{marginBottom:16}}>
+                  <div style={{textAlign:"center",fontSize:11,color:"#9ca3af",margin:"16px 0 4px",letterSpacing:1}}>── Reavaliação clínica ──</div>
+                  <ListaCriteriosDSM5
+                    titulo="TDAH — Inatenção"
+                    criterios={cTdahIn}
+                    ajustes={ajustesNeuro}
+                    salvarAjuste={salvarNeuro}
+                    limparAjuste={limparNeuro}
+                    confirmacoes={CONF_TDAH_IN}
+                    salvando={salvandoNeuro}
+                    statusFn={(crs)=>{
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=5) return {atende:"diag", label:"✓ TDAH-In — ≥5 critérios"};
+                      if(n>=3) return {atende:"prov", label:"⚠ Sugestivo — " + n + " critérios"};
+                      return {atende:false, label:"✗ Não atende (< 3)"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="TDAH — Hiperatividade/Impulsividade"
+                    criterios={cTdahHi}
+                    ajustes={ajustesNeuro}
+                    salvarAjuste={(k,v)=>salvarNeuro("hi_"+k,v)}
+                    limparAjuste={(k)=>limparNeuro("hi_"+k)}
+                    confirmacoes={CONF_TDAH_HI}
+                    salvando={salvandoNeuro}
+                    statusFn={(crs)=>{
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=5) return {atende:"diag", label:"✓ TDAH-Hi — ≥5 critérios"};
+                      if(n>=3) return {atende:"prov", label:"⚠ Sugestivo — " + n + " critérios"};
+                      return {atende:false, label:"✗ Não atende"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="TEA — Critério A (comunicação social)"
+                    criterios={cTeaA}
+                    ajustes={ajustesNeuro}
+                    salvarAjuste={(k,v)=>salvarNeuro("teaA_"+k,v)}
+                    limparAjuste={(k)=>limparNeuro("teaA_"+k)}
+                    confirmacoes={CONF_TEA}
+                    salvando={salvandoNeuro}
+                    statusFn={(crs, confs)=>{
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      // TEA Critério A: TODOS os 3 obrigatórios
+                      if(n===3) return {atende:"diag", label:"✓ TEA Crit-A — todos obrigatórios"};
+                      if(n===2) return {atende:"prov", label:"⚠ TEA Crit-A — 2/3"};
+                      return {atende:false, label:"✗ TEA Crit-A não atende"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="TEA — Critério B (comportamentos restritos)"
+                    criterios={cTeaB}
+                    ajustes={ajustesNeuro}
+                    salvarAjuste={(k,v)=>salvarNeuro("teaB_"+k,v)}
+                    limparAjuste={(k)=>limparNeuro("teaB_"+k)}
+                    salvando={salvandoNeuro}
+                    statusFn={(crs)=>{
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=2) return {atende:"diag", label:"✓ TEA Crit-B — ≥2 critérios"};
+                      if(n===1) return {atende:"prov", label:"⚠ TEA Crit-B — 1/4"};
+                      return {atende:false, label:"✗ TEA Crit-B não atende"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="TOD — Opositivo Desafiador"
+                    criterios={cTod}
+                    ajustes={ajustesNeuro}
+                    salvarAjuste={(k,v)=>salvarNeuro("tod_"+k,v)}
+                    limparAjuste={(k)=>limparNeuro("tod_"+k)}
+                    confirmacoes={CONF_TOD}
+                    salvando={salvandoNeuro}
+                    statusFn={(crs)=>{
+                      const n = crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=4) return {atende:"diag", label:"✓ TOD — ≥4 critérios"};
+                      if(n>=3) return {atende:"prov", label:"⚠ TOD provável — " + n + " critérios"};
+                      return {atende:false, label:"✗ Não atende"};
+                    }}
+                  />
+                </div>
+              );
+            })()}
+
             <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Respondentes</div>
             {escoresPorDoc.map((d,i)=>(
               <div key={i} style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:14,marginBottom:10,cursor:"pointer",background:selecionado===i?"#f5f3ff":"white"}}
@@ -2356,6 +2883,7 @@ function AbaRastreamentoAlimentar({ paciente }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
+  const { ajustes: ajustesAlim, salvarAjuste: salvarAlim, limparAjuste: limparAlim, salvando: salvandoAlim } = useAjustesClinicos("clinica_rastreamento_alimentar", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -2554,6 +3082,83 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
               </div>
             )}
 
+            {/* ── Reavaliação clínica DSM-5 ── */}
+            {docs.length > 0 && (()=>{
+              const d0 = docs[0];
+              const mkCriterio = (pid) => {
+                const p = PERGUNTAS_ALIMENTAR.find(x=>x.id===pid);
+                return { texto: p ? p.texto : pid, valorOriginal: d0[pid] === "C" ? "C" : "" };
+              };
+              const cAnorexia = ["p1","p2","p3"].map(mkCriterio);
+              const cBulimia  = ["p5","p6","p7","p8"].map(mkCriterio);
+              const cTca      = ["p5","p6","p7","p9","p10"].map(mkCriterio);
+              const cArfid    = ["p1"].map(mkCriterio); // ARFID: restrição sem medo de engordar nem distorção
+              return (
+                <div style={{marginBottom:16}}>
+                  <div style={{textAlign:"center",fontSize:11,color:"#9ca3af",margin:"16px 0 4px",letterSpacing:1}}>── Reavaliação clínica ──</div>
+                  <ListaCriteriosDSM5
+                    titulo="Anorexia Nervosa"
+                    criterios={cAnorexia}
+                    ajustes={ajustesAlim}
+                    salvarAjuste={salvarAlim}
+                    limparAjuste={limparAlim}
+                    confirmacoes={CONF_ANOREXIA}
+                    salvando={salvandoAlim}
+                    statusFn={(crs)=>{
+                      const n=crs.filter(c=>c.atendeResolvido).length;
+                      if(n===3) return {atende:"diag",label:"✓ Anorexia Nervosa"};
+                      if(n===2) return {atende:"prov",label:"⚠ Anorexia provável"};
+                      return {atende:false,label:"✗ Não atende"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="Bulimia Nervosa"
+                    criterios={cBulimia}
+                    ajustes={ajustesAlim}
+                    salvarAjuste={(k,v)=>salvarAlim("bul_"+k,v)}
+                    limparAjuste={(k)=>limparAlim("bul_"+k)}
+                    confirmacoes={CONF_BULIMIA}
+                    salvando={salvandoAlim}
+                    statusFn={(crs)=>{
+                      const n=crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=3) return {atende:"diag",label:"✓ Bulimia Nervosa"};
+                      if(n===2) return {atende:"prov",label:"⚠ Bulimia provável"};
+                      return {atende:false,label:"✗ Não atende"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="TCA — Transtorno da Compulsão Alimentar"
+                    criterios={cTca}
+                    ajustes={ajustesAlim}
+                    salvarAjuste={(k,v)=>salvarAlim("tca_"+k,v)}
+                    limparAjuste={(k)=>limparAlim("tca_"+k)}
+                    confirmacoes={CONF_TCA}
+                    salvando={salvandoAlim}
+                    statusFn={(crs)=>{
+                      const n=crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=4) return {atende:"diag",label:"✓ TCA"};
+                      if(n===3) return {atende:"prov",label:"⚠ TCA provável"};
+                      return {atende:false,label:"✗ Não atende"};
+                    }}
+                  />
+                  <ListaCriteriosDSM5
+                    titulo="ARFID — Transtorno Alimentar Restritivo/Evitativo"
+                    criterios={cArfid}
+                    ajustes={ajustesAlim}
+                    salvarAjuste={(k,v)=>salvarAlim("arfid_"+k,v)}
+                    limparAjuste={(k)=>limparAlim("arfid_"+k)}
+                    confirmacoes={CONF_ARFID}
+                    salvando={salvandoAlim}
+                    statusFn={(crs)=>{
+                      const n=crs.filter(c=>c.atendeResolvido).length;
+                      if(n===1) return {atende:"prov",label:"⚠ Investigar ARFID"};
+                      return {atende:false,label:"✗ Sem indicação de ARFID"};
+                    }}
+                  />
+                </div>
+              );
+            })()}
+
             <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Respondentes</div>
             {escoresPorDoc.map((d,i)=>(
               <div key={i} style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:14,marginBottom:10,cursor:"pointer",background:selecionado===i?"#f5f3ff":"white"}}
@@ -2714,6 +3319,7 @@ function AbaRastreamentoSexual({paciente}){
   const [docs,setDocs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [selecionado,setSelecionado]=useState(null);
+  const { ajustes: ajustesSex, salvarAjuste: salvarSex, limparAjuste: limparSex, salvando: salvandoSex } = useAjustesClinicos("clinica_rastreamento_sexual", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -2889,6 +3495,33 @@ ${PERGUNTAS_SEXUAL.map(p=>`<tr><td>${p.id.replace("p","")}</td><td>${p.texto}</t
                 ))}
               </div>
             )}
+
+            {/* ── Reavaliação clínica DSM-5 ── */}
+            {(()=>{
+              const criteriosSex = PERGUNTAS_SEXUAL.filter(p=>["p1","p2","p3","p4","p5","p6","p7","p8"].includes(p.id)).map(p=>({
+                texto: p.texto, valorOriginal: doc[p.id] === "C" ? "C" : ""
+              }));
+              return (
+                <div style={{marginBottom:16}}>
+                  <div style={{textAlign:"center",fontSize:11,color:"#9ca3af",margin:"16px 0 4px",letterSpacing:1}}>── Reavaliação clínica ──</div>
+                  <ListaCriteriosDSM5
+                    titulo="Disfunções Sexuais DSM-5"
+                    criterios={criteriosSex}
+                    ajustes={ajustesSex}
+                    salvarAjuste={salvarSex}
+                    limparAjuste={limparSex}
+                    confirmacoes={CONF_SEXUAL}
+                    salvando={salvandoSex}
+                    statusFn={(crs)=>{
+                      const n=crs.filter(c=>c.atendeResolvido).length;
+                      if(n>=2) return {atende:"diag",label:"✓ Disfunção Sexual — critérios presentes"};
+                      if(n===1) return {atende:"prov",label:"⚠ Investigar — 1 critério"};
+                      return {atende:false,label:"✗ Não atende"};
+                    }}
+                  />
+                </div>
+              );
+            })()}
 
             <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Respostas — {doc.createdAt?.toDate?.()?.toLocaleDateString("pt-BR")||""}</div>
             <div style={{border:"1px solid var(--gray-200)",borderRadius:12,padding:14,cursor:"pointer",background:selecionado===0?"#f5f3ff":"white"}}
