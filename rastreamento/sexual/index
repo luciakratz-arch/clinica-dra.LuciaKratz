@@ -137,6 +137,38 @@ let step=1;
 let respostas={tipoRespondente:"paciente",nomeRespondente:"Proprio paciente",parentesco:"paciente"};
 const TOTAL_STEPS=4;
 
+// ═══════════════════════════════════
+// RASCUNHO AUTOMÁTICO
+// ═══════════════════════════════════
+const RASCUNHO_KEY = 'psi_rascunho:' + (nomePaciente||'anon') + ':sexual';
+
+function salvarRascunho() {
+  try {
+    const obj = { step: step, respostas: Object.assign({}, respostas) };
+    localStorage.setItem(RASCUNHO_KEY, JSON.stringify(obj));
+  } catch(e) {}
+}
+
+function restaurarRascunho() {
+  try {
+    const salvo = localStorage.getItem(RASCUNHO_KEY);
+    if (!salvo) return;
+    const obj = JSON.parse(salvo);
+    if (!obj || !obj.respostas) return;
+    const keys = Object.keys(obj.respostas).filter(k => k !== 'tipoRespondente' && k !== 'nomeRespondente' && k !== 'parentesco');
+    if (keys.length === 0) return;
+    respostas = Object.assign({tipoRespondente:"paciente",nomeRespondente:"Proprio paciente",parentesco:"paciente"}, obj.respostas);
+    step = obj.step || 1;
+    document.getElementById('telaInicial').style.display = 'none';
+    document.getElementById('formArea').style.display = 'block';
+    renderStep();
+  } catch(e) {}
+}
+
+function limparRascunho() {
+  try { localStorage.removeItem(RASCUNHO_KEY); } catch(e) {}
+}
+
 function iniciar(){
   document.getElementById("telaInicial").style.display="none";
   document.getElementById("formArea").style.display="block";
@@ -230,6 +262,7 @@ function selecionarOpcao(pergId,letra,el){
   grp.querySelectorAll(".opcao").forEach(o=>o.classList.remove("sel"));
   el.classList.add("sel");
   respostas[pergId]=letra;
+  salvarRascunho();
 }
 
 function avancarStep(){
@@ -242,12 +275,12 @@ function avancarStep(){
       return;
     }
   }
-  if(step<TOTAL_STEPS){step++;renderStep();}
-  else{mostrarRevisao();}
+  if(step<TOTAL_STEPS){step++;salvarRascunho();renderStep();}
+  else{salvarRascunho();mostrarRevisao();}
 }
 
 function voltarStep(){
-  if(step>1){step--;renderStep();}
+  if(step>1){step--;salvarRascunho();renderStep();}
 }
 
 const PERGUNTAS_REVISAO=[
@@ -313,6 +346,7 @@ async function enviar(){
       p10:respostas.p10||"",p11:respostas.p11||"",
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+    limparRascunho();
     await db.collection("nr1map_emails").add({
       to:"luciakratz@gmail.com",
       message:{
@@ -351,6 +385,8 @@ function initMic(){
     wrap.appendChild(btn);
   });
 }
+
+document.addEventListener('DOMContentLoaded', restaurarRascunho);
 </script>
 </body>
 </html>
