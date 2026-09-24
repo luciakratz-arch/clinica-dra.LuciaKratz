@@ -184,15 +184,31 @@ const BANCO = {
     {id:"th9", texto:"Interrompe ou se intromete nas conversas ou atividades dos outros"},
   ],
 
+  // TEA — estrutura de espectro DSM-5:
+  // Critério A (obrigatórios — todos os 4 devem ser C ou B para acionar avaliação)
+  // Critério B (restritos/repetitivos — mínimo 2 de 4)
+  // Critério C (início precoce)
+  // Critério D (prejuízo funcional)
+  // Critério E (nível de suporte: 1, 2 ou 3)
   tea: [
-    {id:"tea1", texto:"Dificuldade em iniciar ou manter conversas sociais de forma natural"},
-    {id:"tea2", texto:"Dificuldade em usar linguagem não-verbal adequada (olhar nos olhos, expressões faciais, gestos)"},
-    {id:"tea3", texto:"Dificuldade em desenvolver e manter amizades adequadas à sua faixa etária"},
-    {id:"tea4", texto:"Parece não compartilhar espontaneamente interesses ou emoções com outras pessoas"},
-    {id:"tea5", texto:"Tem comportamentos repetitivos ou estereotipados (movimentos, falas, objetos)"},
-    {id:"tea6", texto:"Insiste em rotinas ou rituais rígidos; fica muito perturbado(a) se as rotinas mudam"},
-    {id:"tea7", texto:"Interesses muito intensos e restritos em temas específicos"},
-    {id:"tea8", texto:"Sensibilidade incomum a estímulos sensoriais (sons, texturas, luzes, cheiros, dor)"},
+    // ── Critério A — Comunicação e Interação Social (TODOS obrigatórios) ──
+    {id:"teaA1", grupo_tea:"A", texto:"[A1] Tem dificuldade em dar e receber sinais sociais durante conversas — por exemplo, não percebe quando alguém quer falar, não mantém o turno natural de diálogo ou responde de forma fora de contexto"},
+    {id:"teaA2", grupo_tea:"A", texto:"[A2] Tem dificuldade em usar e interpretar linguagem corporal, expressões faciais e contato visual de forma natural e integrada — por exemplo, olha pouco nos olhos, tem expressão facial rígida ou gesticula de forma atípica"},
+    {id:"teaA3", grupo_tea:"A", texto:"[A3] Tem dificuldade em iniciar, manter ou adaptar relacionamentos sociais conforme o contexto — por exemplo, prefere estar só, não sabe como fazer amigos ou age de forma inadequada ao ambiente social"},
+    {id:"teaA4", grupo_tea:"A", texto:"[A4] Raramente compartilha espontaneamente interesses, emoções ou realizações com outras pessoas — por exemplo, não aponta para mostrar coisas, não busca compartilhar alegrias ou conquistas"},
+    // ── Critério B — Comportamentos Restritos e Repetitivos (mínimo 2 de 4) ──
+    {id:"teaB1", grupo_tea:"B", texto:"[B1] Apresenta movimentos, uso de objetos ou fala de forma repetitiva ou estereotipada — por exemplo, balançar o corpo, alinhar objetos, repetir frases (ecolalia), girar objetos"},
+    {id:"teaB2", grupo_tea:"B", texto:"[B2] Insiste em rotinas, rituais ou padrões rígidos de comportamento — fica muito perturbado(a) com mudanças pequenas na rotina, refeições, rotas ou horários"},
+    {id:"teaB3", grupo_tea:"B", texto:"[B3] Tem interesses muito intensos, restritos e incomuns — por exemplo, sabe tudo sobre um tema específico e fala sobre ele de forma excessiva, com profundidade atípica para a idade"},
+    {id:"teaB4", grupo_tea:"B", texto:"[B4] Tem hiper ou hipossensibilidade a estímulos sensoriais — por exemplo, reage muito fortemente (ou muito pouco) a sons, texturas, luzes, cheiros, dor ou temperatura"},
+    // ── Critério C — Início precoce ──
+    {id:"teaC1", grupo_tea:"C", texto:"[C] Esses comportamentos estavam presentes desde a infância ou início da vida, mesmo que só tenham chamado atenção mais tarde (por exemplo, na escola ou no trabalho)"},
+    // ── Critério D — Prejuízo funcional ──
+    {id:"teaD1", grupo_tea:"D", texto:"[D] Essas dificuldades causam prejuízo significativo no funcionamento social, profissional, escolar ou em outras áreas importantes da vida"},
+    // ── Critério E — Nível de suporte (apenas 1 deve ser C) ──
+    {id:"teaE1", grupo_tea:"E1", texto:"[Nível 1] Com algum suporte, consegue funcionar — as dificuldades sociais e comportamentais causam prejuízo notável, mas a pessoa ainda se comunica com frases completas e tenta interagir"},
+    {id:"teaE2", grupo_tea:"E2", texto:"[Nível 2] Precisa de suporte substancial — as dificuldades de comunicação e comportamento são marcadas mesmo com apoios; inicia poucas interações e responde de forma atípica"},
+    {id:"teaE3", grupo_tea:"E3", texto:"[Nível 3] Precisa de suporte muito substancial — dificuldades graves em comunicação verbal e não-verbal; inicia muito poucas interações; comportamentos restritos/repetitivos interferem significativamente em todas as áreas"},
   ],
 
   tod: [
@@ -449,7 +465,7 @@ const LIMIARES = {
   narcisista:      {minC:5, total:9, obs:"DSM-5: 5 de 9 critérios."},
   tdah_desatento:  {minC:6, total:9, obs:"DSM-5: ≥6 sintomas (≥5 para ≥17 anos). Presentes em ≥2 contextos."},
   tdah_hiperativo: {minC:6, total:9, obs:"DSM-5: ≥6 sintomas (≥5 para ≥17 anos). Presentes em ≥2 contextos."},
-  tea:             {minC:3, total:8, obs:"Critérios A (tea1-4): todos necessários. Critérios B (tea5-8): ≥2."},
+  tea:             {minC:8, total:14, obs:"Critério A: teaA1+A2+A3+A4 todos necessários (C ou B). Critério B: ≥2 de teaB1-B4 em C. Critério C+D obrigatórios. Nível de suporte: teaE1=Nível1 / teaE2=Nível2 / teaE3=Nível3. Avaliação de espectro — ver análise detalhada abaixo."},
   tod:             {minC:4, total:8, obs:"DSM-5: ≥4 sintomas, ≥6 meses, em ≥2 contextos."},
   tdm:             {minC:5, total:9, obs:"Pelo menos d1 ou d2 devem ser C. Duração ≥2 semanas."},
   distimia:        {minC:3, total:7, obs:"dt1 obrigatório C + ≥2 de dt2-dt7. Duração ≥2 anos."},
@@ -507,9 +523,68 @@ function montarPerguntas(modulos) {
   return lista;
 }
 
+// ── Calcular resultado TEA (lógica de espectro) ──────────────────
+function calcularTEA(respostas) {
+  const pergs = BANCO["tea"] || [];
+  const label = LABELS["tea"];
+
+  // Critério A — todos os 4 devem ter pelo menos B
+  const crA = ["teaA1","teaA2","teaA3","teaA4"];
+  const crAc = crA.filter(id => respostas[id] === "C").length;
+  const crAb = crA.filter(id => respostas[id] === "B").length;
+  const crA_ok = crA.every(id => respostas[id] === "C" || respostas[id] === "B");
+  const crA_pleno = crA.every(id => respostas[id] === "C");
+
+  // Critério B — mínimo 2 em C
+  const crB = ["teaB1","teaB2","teaB3","teaB4"];
+  const crBc = crB.filter(id => respostas[id] === "C").length;
+  const crB_ok = crBc >= 2;
+
+  // Critério C — início precoce
+  const crC_ok = respostas["teaC1"] === "C" || respostas["teaC1"] === "B";
+
+  // Critério D — prejuízo funcional
+  const crD_ok = respostas["teaD1"] === "C" || respostas["teaD1"] === "B";
+
+  // Nível de suporte
+  let nivel = null;
+  if (respostas["teaE3"] === "C") nivel = 3;
+  else if (respostas["teaE2"] === "C") nivel = 2;
+  else if (respostas["teaE1"] === "C") nivel = 1;
+
+  const criteriosFechados = crA_ok && crB_ok && crC_ok && crD_ok;
+  const criteriosPlenos   = crA_pleno && crB_ok && crC_ok && crD_ok;
+
+  let status, cor, obs;
+  if (criteriosPlenos && nivel) {
+    status = `⚠ Critérios TEA — Nível ${nivel} de suporte`;
+    cor = "#dc2626";
+    obs = `Critério A: ${crAc}/4 C ✓ | Critério B: ${crBc}/4 C ✓ | Início precoce ✓ | Prejuízo funcional ✓ | Nível ${nivel} de suporte`;
+  } else if (criteriosFechados) {
+    status = "🔍 Critérios presentes (alguns B) — avaliar com instrumentos formais";
+    cor = "#d97706";
+    obs = `Critério A: ${crAc} C + ${crAb} B / Critério B: ${crBc} C ≥2 ✓ | Recomenda-se avaliação neuropsicológica formal`;
+  } else if (crA_ok || crBc >= 1) {
+    status = "🔍 Sinais parciais — a observar";
+    cor = "#d97706";
+    obs = `Critério A: ${crAc} C + ${crAb} B de 4 | Critério B: ${crBc} de 4 | Abaixo do limiar diagnóstico, mas relevante clinicamente`;
+  } else {
+    status = "✅ Abaixo do limiar";
+    cor = "#16a34a";
+    obs = "Não atingiu os critérios mínimos do Critério A ou B do TEA";
+  }
+
+  const nC = pergs.filter(p => respostas[p.id] === "C").length;
+  const nB = pergs.filter(p => respostas[p.id] === "B").length;
+  return { mod:"tea", label, nC, nB, total: pergs.length, minC: 8, status, cor, obs };
+}
+
 // ── Calcular resultado por transtorno ────────────────────────────
 function calcularResultados(modulos, respostas) {
   return modulos.map(mod => {
+    // TEA tem lógica especial de espectro
+    if (mod === "tea") return calcularTEA(respostas);
+
     const pergs = BANCO[mod] || [];
     const nC = pergs.filter(p => respostas[p.id] === "C").length;
     const nB = pergs.filter(p => respostas[p.id] === "B").length;
