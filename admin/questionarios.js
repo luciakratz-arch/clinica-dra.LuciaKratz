@@ -1591,31 +1591,54 @@ const CONF_DEPENDENCIA = [
 // Hook: carrega e salva ajustes clínicos no Firestore
 function useAjustesClinicos(colecao, docId) {
   const [ajustes, setAjustes] = useState({});
+  const [historico, setHistorico] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     if (!docId) return;
     db.collection(colecao).doc(docId).get().then(snap => {
-      if (snap.exists) setAjustes(snap.data().ajustesClinicos || {});
+      if (snap.exists) {
+        const data = snap.data().ajustesClinicos || {};
+        const hist = data._historico || [];
+        const ajustesSemHist = { ...data };
+        delete ajustesSemHist._historico;
+        setAjustes(ajustesSemHist);
+        setHistorico(hist);
+      }
     });
   }, [docId]);
 
-  function salvarAjuste(chave, valor) {
+  function salvarAjuste(chave, valor, snapshot) {
     const novos = { ...ajustes, [chave]: valor };
     setAjustes(novos);
     setSalvando(true);
-    db.collection(colecao).doc(docId).update({ ajustesClinicos: novos })
-      .finally(() => setSalvando(false));
+    // Se vier snapshot de resultado, registra no histórico
+    let novoHistorico = historico;
+    if (snapshot) {
+      const entrada = {
+        ts: new Date().toISOString(),
+        chave,
+        valor,
+        resultado: snapshot
+      };
+      novoHistorico = [...historico, entrada];
+      setHistorico(novoHistorico);
+    }
+    db.collection(colecao).doc(docId).update({
+      ajustesClinicos: { ...novos, _historico: novoHistorico }
+    }).finally(() => setSalvando(false));
   }
 
   function limparAjuste(chave) {
     const novos = { ...ajustes };
     delete novos[chave];
     setAjustes(novos);
-    db.collection(colecao).doc(docId).update({ ajustesClinicos: novos });
+    db.collection(colecao).doc(docId).update({
+      ajustesClinicos: { ...novos, _historico: historico }
+    });
   }
 
-  return { ajustes, salvarAjuste, limparAjuste, salvando };
+  return { ajustes, historico, salvarAjuste, limparAjuste, salvando };
 }
 
 // Função: avalia critérios DSM-5 com ajustes clínicos e confirmações
@@ -1687,8 +1710,9 @@ function avaliarCriteriosDSM5(criterios, ajustes, confirmacoes, statusFn) {
 }
 
 // Componente: Lista de critérios DSM-5 com painel de reavaliação
-function ListaCriteriosDSM5({ titulo, criterios, ajustes, salvarAjuste, limparAjuste, confirmacoes, statusFn, salvando }) {
+function ListaCriteriosDSM5({ titulo, criterios, ajustes, historico, salvarAjuste, limparAjuste, confirmacoes, statusFn, salvando }) {
   const [painelAberto, setPainelAberto] = useState(false);
+  const [histAberto, setHistAberto] = useState(false);
 
   const { criteriosResolvidos, nC, status, label, confsResolvidas } = avaliarCriteriosDSM5(
     criterios, ajustes, confirmacoes || [], statusFn
@@ -1736,12 +1760,12 @@ function ListaCriteriosDSM5({ titulo, criterios, ajustes, salvarAjuste, limparAj
                 <div style={{ flex: 1, fontSize: 12, color: "#374151", minWidth: 120 }}>{c.label || c.texto}</div>
                 {fonteLabel}
                 <button
-                  onClick={() => salvarAjuste(chave, "presente")}
+                  onClick={() => salvarAjuste(chave, "presente", { titulo, label, nC, total: criteriosResolvidos.length })}
                   style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: ajuste === "presente" ? "#dc2626" : "white", color: ajuste === "presente" ? "white" : "#dc2626", borderColor: "#dc2626" }}>
                   Presente
                 </button>
                 <button
-                  onClick={() => salvarAjuste(chave, "ausente")}
+                  onClick={() => salvarAjuste(chave, "ausente", { titulo, label, nC, total: criteriosResolvidos.length })}
                   style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: ajuste === "ausente" ? "#16a34a" : "white", color: ajuste === "ausente" ? "white" : "#16a34a", borderColor: "#16a34a" }}>
                   Ausente
                 </button>
@@ -1765,12 +1789,12 @@ function ListaCriteriosDSM5({ titulo, criterios, ajustes, salvarAjuste, limparAj
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #f3f4f6", flexWrap: "wrap" }}>
                     <div style={{ flex: 1, fontSize: 12, color: "#374151", minWidth: 180 }}>{conf.pergunta}</div>
                     <button
-                      onClick={() => salvarAjuste(chave, "sim")}
+                      onClick={() => salvarAjuste(chave, "sim", { titulo, label, nC, total: criteriosResolvidos.length })}
                       style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: conf.resposta === "sim" ? "#059669" : "white", color: conf.resposta === "sim" ? "white" : "#059669", borderColor: "#059669" }}>
                       Sim
                     </button>
                     <button
-                      onClick={() => salvarAjuste(chave, "nao")}
+                      onClick={() => salvarAjuste(chave, "nao", { titulo, label, nC, total: criteriosResolvidos.length })}
                       style={{ padding: "3px 10px", borderRadius: 6, border: "1.5px solid", cursor: "pointer", fontSize: 11, fontWeight: 600, background: conf.resposta === "nao" ? "#dc2626" : "white", color: conf.resposta === "nao" ? "white" : "#dc2626", borderColor: "#dc2626" }}>
                       Não
                     </button>
@@ -1813,6 +1837,36 @@ function ListaCriteriosDSM5({ titulo, criterios, ajustes, salvarAjuste, limparAj
           {badgeStatus()}
         </div>
       </div>
+
+      {/* Histórico de reavaliações */}
+      {historico && historico.length > 0 && (
+        <div style={{ borderTop: "1px solid #e9d5ff", background: "#faf5ff" }}>
+          <button
+            onClick={() => setHistAberto(!histAberto)}
+            style={{ width: "100%", textAlign: "left", padding: "8px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#7B00C4", fontWeight: 600 }}>
+            🕘 {histAberto ? "Ocultar" : "Ver"} histórico de reavaliações ({historico.length})
+          </button>
+          {histAberto && (
+            <div style={{ padding: "0 14px 12px" }}>
+              {[...historico].reverse().map((h, i) => {
+                const dt = new Date(h.ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+                const tipoChave = h.chave.startsWith("conf#") ? "Entrevista" : "Critério";
+                const valorLabel = h.valor === "presente" ? "Presente ✓" : h.valor === "ausente" ? "Ausente ✗" : h.valor === "sim" ? "Sim ✓" : "Não ✗";
+                return (
+                  <div key={i} style={{ fontSize: 11, color: "#4b5563", padding: "5px 0", borderBottom: "1px solid #ede9fe", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ color: "#9ca3af", minWidth: 100 }}>{dt}</span>
+                    <span style={{ background: "#ede9fe", color: "#7B00C4", padding: "0 6px", borderRadius: 10, fontWeight: 600 }}>{tipoChave}</span>
+                    <span>{valorLabel}</span>
+                    {h.resultado && (
+                      <span style={{ color: "#6b7280" }}>→ {h.resultado.label} ({h.resultado.nC}/{h.resultado.total})</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
