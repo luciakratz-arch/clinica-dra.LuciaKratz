@@ -1,15 +1,557 @@
 // ═══════════════════════════════════════════════════════════════════
-//  MÓDULO: QUESTIONÁRIOS — agrupa Anamnese + Rastreamento
+//  MÓDULO: QUESTIONÁRIOS — Anamnese + 7 Grupos Diagnósticos DSM-5
 // ═══════════════════════════════════════════════════════════════════
+
+// Definição dos 7 grupos diagnósticos com suas hipóteses
+const GRUPOS_DIAGNOSTICOS = [{
+  id: "g1",
+  emoji: "🌊",
+  titulo: "Instabilidade Emocional",
+  descricao: "Humor, identidade e regulação emocional",
+  cor: "#7B00C4",
+  corBg: "#f5f3ff",
+  hipoteses: [{
+    id: "bipolar_mania",
+    label: "Transtorno Bipolar I/II — Mania/Hipomania"
+  }, {
+    id: "bipolar_dep",
+    label: "Transtorno Bipolar — Episódio Depressivo"
+  }, {
+    id: "ciclotimia",
+    label: "Ciclotimia"
+  }, {
+    id: "borderline",
+    label: "TP Borderline (TPB)"
+  }, {
+    id: "histrionico",
+    label: "TP Histriônico"
+  }, {
+    id: "narcisista",
+    label: "TP Narcisista"
+  }]
+}, {
+  id: "g2",
+  emoji: "🧩",
+  titulo: "Neurodesenvolvimento",
+  descricao: "Atenção, comportamento e interação social",
+  cor: "#6d28d9",
+  corBg: "#ede9fe",
+  hipoteses: [{
+    id: "tdah_desatento",
+    label: "TDAH — Desatento"
+  }, {
+    id: "tdah_hiperativo",
+    label: "TDAH — Hiperativo/Impulsivo"
+  }, {
+    id: "tea",
+    label: "TEA — Espectro Autista"
+  }, {
+    id: "tod",
+    label: "TOD — Transtorno Opositivo Desafiador"
+  }]
+}, {
+  id: "g3",
+  emoji: "💭",
+  titulo: "Ansiedade e Internalização",
+  descricao: "Depressão, ansiedade, pânico, TOC e trauma",
+  cor: "#1d4ed8",
+  corBg: "#eff6ff",
+  hipoteses: [{
+    id: "tdm",
+    label: "Depressão Unipolar (TDM)"
+  }, {
+    id: "distimia",
+    label: "Distimia / Depressão Persistente"
+  }, {
+    id: "tag",
+    label: "TAG — Ansiedade Generalizada"
+  }, {
+    id: "panico",
+    label: "Transtorno de Pânico"
+  }, {
+    id: "fobia_social",
+    label: "Fobia Social / Ansiedade Social"
+  }, {
+    id: "toc",
+    label: "TOC — Obsessivo-Compulsivo"
+  }, {
+    id: "tept",
+    label: "TEPT — Estresse Pós-Traumático"
+  }]
+}, {
+  id: "g4",
+  emoji: "🍎",
+  titulo: "Comportamento Alimentar",
+  descricao: "Anorexia, Bulimia, TCA e ARFID",
+  cor: "#15803d",
+  corBg: "#f0fdf4",
+  hipoteses: [{
+    id: "anorexia",
+    label: "Anorexia Nervosa"
+  }, {
+    id: "bulimia",
+    label: "Bulimia Nervosa"
+  }, {
+    id: "tca",
+    label: "TCA — Compulsão Alimentar"
+  }, {
+    id: "arfid",
+    label: "ARFID — Evitação/Restrição Alimentar"
+  }]
+}, {
+  id: "g5",
+  emoji: "⚡",
+  titulo: "Comportamento Aditivo",
+  descricao: "Substâncias, jogos, apostas e TP Antissocial",
+  cor: "#b45309",
+  corBg: "#fef3c7",
+  hipoteses: [{
+    id: "substancias",
+    label: "Transtorno por Uso de Substâncias"
+  }, {
+    id: "gaming",
+    label: "Gaming Disorder — Jogos Digitais"
+  }, {
+    id: "gambling",
+    label: "Gambling Disorder — Apostas"
+  }, {
+    id: "antissocial",
+    label: "TP Antissocial (≥18 anos)"
+  }]
+}, {
+  id: "g6",
+  emoji: "🌸",
+  titulo: "Saúde Sexual",
+  descricao: "Disfunções e comportamento sexual",
+  cor: "#be185d",
+  corBg: "#fdf2f8",
+  hipoteses: [{
+    id: "sexual",
+    label: "Disfunções e Saúde Sexual"
+  }]
+}, {
+  id: "g7",
+  emoji: "🌿",
+  titulo: "Trauma e Dissociação",
+  descricao: "Trauma complexo, dissociação e adaptação",
+  cor: "#0f766e",
+  corBg: "#f0fdfa",
+  hipoteses: [{
+    id: "tept_complexo",
+    label: "TEPT Complexo / Trauma Crônico"
+  }, {
+    id: "dissociativo",
+    label: "Transtorno Dissociativo"
+  }, {
+    id: "adaptacao",
+    label: "Transtorno de Adaptação"
+  }]
+}];
+
+// ── Sub-tela: Painel de um Grupo Diagnóstico ──────────────────────
+function PainelGrupoDiagnostico({
+  paciente,
+  grupo,
+  onVoltar
+}) {
+  const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
+  const [selecionados, setSelecionados] = useState([]);
+  const [gerandoLink, setGerandoLink] = useState(false);
+  const [linkGerado, setLinkGerado] = useState(null);
+  const [respostas, setRespostas] = useState([]);
+  const [loadingRespostas, setLoadingRespostas] = useState(true);
+  const [respSelecionada, setRespSelecionada] = useState(null);
+
+  // Carregar respostas já recebidas deste grupo para este paciente
+  useEffect(() => {
+    if (!paciente?.nome) return;
+    db.collection("clinica_rastreamento_diagnostico").where("pacienteNome", "==", paciente.nome).where("grupo", "==", grupo.id).get().then(snap => {
+      const lista = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setRespostas(lista);
+      setLoadingRespostas(false);
+    }).catch(() => setLoadingRespostas(false));
+  }, [paciente?.nome, grupo.id]);
+  function toggleHipotese(id) {
+    setSelecionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setLinkGerado(null);
+  }
+  function gerarToken() {
+    return Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+  }
+  function gerarLink() {
+    if (selecionados.length === 0) {
+      alert("Selecione pelo menos uma hipótese diagnóstica.");
+      return;
+    }
+    setGerandoLink(true);
+    const token = gerarToken();
+    const config = {
+      token,
+      grupo: grupo.id,
+      grupoLabel: grupo.emoji + " " + grupo.titulo,
+      pacienteNome: paciente.nome || "",
+      modulos: selecionados,
+      criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      respondidoPor: null,
+      totalRespondentes: 0
+    };
+    db.collection("clinica_rastreamento_tokens").doc(token).set(config).then(() => {
+      const url = `${BASE_URL}/rastreamento/diagnostico/?token=${token}`;
+      setLinkGerado(url);
+      setGerandoLink(false);
+    }).catch(err => {
+      console.error(err);
+      alert("Erro ao gerar link. Tente novamente.");
+      setGerandoLink(false);
+    });
+  }
+  function copiarLink() {
+    if (!linkGerado) return;
+    navigator.clipboard.writeText(linkGerado).then(() => alert("✓ Link copiado!\n" + linkGerado));
+  }
+  function enviarWhatsApp() {
+    if (!linkGerado) return;
+    const tel = (paciente.telefone || "").replace(/\D/g, "");
+    const hipoLabels = selecionados.map(id => {
+      const h = grupo.hipoteses.find(x => x.id === id);
+      return h ? h.label : id;
+    }).join(", ");
+    const msg = `Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico personalizado para você.\n\n${grupo.emoji} *${grupo.titulo}*\nÁreas avaliadas: ${hipoLabels}\n\nResponda com calma e honestidade — leva cerca de 10 a 20 minutos.\n\n${linkGerado}\n\nQualquer dúvida, estou por aqui! 🦋\n_Dra. Lucia Kratz · CRP 09/20590_`;
+    if (tel) {
+      window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, "_blank");
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+  }
+
+  // Calcular resultado de uma resposta (resultados já vêm calculados do Firestore)
+  function calcularResultado(resp) {
+    return (resp.resultados || []).map(r => {
+      // TEA: cor já vem calculada com lógica de espectro
+      // Outros: recalcular cor pelo nC vs minC
+      const cor = r.cor || (r.nC >= r.minC ? "#dc2626" : r.nC >= Math.ceil((r.minC || 3) * 0.6) ? "#d97706" : "#16a34a");
+      return {
+        ...r,
+        cor
+      };
+    });
+  }
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: onVoltar,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      marginBottom: 6
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26
+    }
+  }, grupo.emoji), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 15,
+      color: "var(--text-dark)"
+    }
+  }, grupo.titulo), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--text-muted)"
+    }
+  }, grupo.descricao))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f9fafb",
+      border: "1px solid #e5e7eb",
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 12,
+      color: "var(--text-dark)",
+      marginBottom: 10
+    }
+  }, "🎯 Selecione as hipóteses diagnósticas a avaliar:"), grupo.hipoteses.map(h => /*#__PURE__*/React.createElement("label", {
+    key: h.id,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "8px 10px",
+      borderRadius: 8,
+      cursor: "pointer",
+      marginBottom: 4,
+      background: selecionados.includes(h.id) ? "#f5f3ff" : "white",
+      border: "1.5px solid",
+      borderColor: selecionados.includes(h.id) ? grupo.cor : "#e5e7eb",
+      transition: "all .15s"
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: selecionados.includes(h.id),
+    onChange: () => toggleHipotese(h.id),
+    style: {
+      accentColor: grupo.cor,
+      width: 15,
+      height: 15
+    }
+  }), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: "var(--text-dark)",
+      fontWeight: selecionados.includes(h.id) ? 600 : 400
+    }
+  }, h.label))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8,
+      marginTop: 14,
+      flexWrap: "wrap"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: gerarLink,
+    disabled: gerandoLink || selecionados.length === 0,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: grupo.cor,
+      color: "white",
+      border: "none",
+      borderRadius: 9,
+      padding: "9px 16px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: selecionados.length === 0 ? "not-allowed" : "pointer",
+      opacity: selecionados.length === 0 ? 0.5 : 1
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " ", gerandoLink ? "Gerando…" : "Gerar Link"), linkGerado && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    onClick: copiarLink,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: grupo.corBg,
+      color: grupo.cor,
+      border: "1px solid",
+      borderColor: grupo.cor,
+      borderRadius: 9,
+      padding: "9px 16px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "copy",
+    size: 13
+  }), " Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    onClick: enviarWhatsApp,
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "#dcfce7",
+      color: "#15803d",
+      border: "none",
+      borderRadius: 9,
+      padding: "9px 16px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 13
+  }), " WhatsApp"))), linkGerado && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 10,
+      background: "#f0fdf4",
+      border: "1px solid #bbf7d0",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontSize: 11,
+      color: "#166534",
+      wordBreak: "break-all"
+    }
+  }, "✓ Link gerado: ", linkGerado)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      fontSize: 13,
+      color: "var(--text-dark)",
+      marginBottom: 12
+    }
+  }, "📥 Respostas recebidas (", loadingRespostas ? "…" : respostas.length, ")"), loadingRespostas ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 20,
+      textAlign: "center"
+    }
+  }, /*#__PURE__*/React.createElement(Spinner, null)) : respostas.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: "#f9fafb",
+      border: "1px dashed #d1d5db",
+      borderRadius: 12,
+      padding: 28,
+      textAlign: "center",
+      color: "var(--text-muted)",
+      fontSize: 13
+    }
+  }, "Nenhuma resposta recebida ainda.", /*#__PURE__*/React.createElement("br", null), "Gere o link acima e envie ao paciente.") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 10
+    }
+  }, respostas.map(resp => {
+    const resultados = calcularResultado(resp);
+    const comCriterio = resultados.filter(r => r.nC >= r.minC);
+    const isOpen = respSelecionada === resp.id;
+    return /*#__PURE__*/React.createElement("div", {
+      key: resp.id,
+      style: {
+        border: "1px solid #e5e7eb",
+        borderRadius: 12,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      onClick: () => setRespSelecionada(isOpen ? null : resp.id),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 16px",
+        cursor: "pointer",
+        background: isOpen ? "#f5f3ff" : "white"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 700,
+        fontSize: 13,
+        color: "var(--text-dark)"
+      }
+    }, resp.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : `👨‍👩‍👧 ${resp.nomeRespondente || "Familiar"} · ${resp.parentesco || ""}`), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)",
+        marginTop: 2
+      }
+    }, resp.createdAt?.seconds ? new Date(resp.createdAt.seconds * 1000).toLocaleDateString("pt-BR") : "—", " · ", resp.modulos?.length || 0, " módulos avaliados")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, comCriterio.length > 0 ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: "#dc2626"
+      }
+    }, "⚠ ", comCriterio.length, " critério(s) atingido(s)") : /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: "#16a34a"
+      }
+    }, "✅ Abaixo dos limiares"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: "var(--text-muted)",
+        marginTop: 2
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: isOpen ? "chevron-up" : "chevron-down",
+      size: 13
+    })))), isOpen && /*#__PURE__*/React.createElement("div", {
+      style: {
+        padding: "0 16px 16px"
+      }
+    }, resultados.map(r => /*#__PURE__*/React.createElement("div", {
+      key: r.mod,
+      style: {
+        marginBottom: 8,
+        padding: "10px 12px",
+        background: "#f9fafb",
+        borderRadius: 10,
+        border: "1px solid #e5e7eb"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: "var(--text-dark)"
+      }
+    }, r.label), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        fontWeight: 700,
+        color: r.cor,
+        whiteSpace: "nowrap"
+      }
+    }, r.nC, "/", r.total, " C")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 11,
+        color: r.cor,
+        marginTop: 3
+      }
+    }, r.status), r.obs && /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        color: "var(--text-muted)",
+        marginTop: 4,
+        lineHeight: 1.5
+      }
+    }, r.obs))), resp.obsFinais && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8,
+        padding: "10px 12px",
+        background: "#fffbeb",
+        border: "1px solid #fcd34d",
+        borderRadius: 10,
+        fontSize: 12,
+        color: "#78350f"
+      }
+    }, /*#__PURE__*/React.createElement("strong", null, "Observações:"), " ", resp.obsFinais)));
+  })));
+}
+
+// ── Componente principal: AbaQuestionarios ────────────────────────
 function AbaQuestionarios({
   paciente
 }) {
-  const [sub, setSub] = useState(null); // null | "anamnese" | "rastreamento"
+  const [sub, setSub] = useState(null); // null | "anamnese" | "entrevista" | "rastreamento" | grupo.id
 
-  function abrirEntrevista() {
-    const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/rastreamento/entrevista/?paciente=${encodeURIComponent(paciente.nome || "")}`;
-    window.open(url, "_blank");
-  }
   if (sub === "anamnese") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
     onClick: () => setSub(null),
     style: {
@@ -31,6 +573,50 @@ function AbaQuestionarios({
   }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaAnamnese, {
     paciente: paciente
   }));
+  if (sub === "entrevista") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(null),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaEntrevistaClinica, {
+    paciente: paciente
+  }));
+  if (sub === "rastreamento") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(null),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      background: "none",
+      border: "none",
+      color: "var(--purple)",
+      fontWeight: 600,
+      fontSize: 13,
+      cursor: "pointer",
+      marginBottom: 20,
+      padding: 0
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "arrow-left",
+    size: 15
+  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaRastreamento, {
+    paciente: paciente
+  }));
+
+  // Sub-telas de compatibilidade (para histórico existente)
   if (sub === "sexual") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
     onClick: () => setSub(null),
     style: {
@@ -136,172 +722,16 @@ function AbaQuestionarios({
   }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaRastreamentoJogos, {
     paciente: paciente
   }));
-  if (sub === "entrevista") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSub(null),
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      background: "none",
-      border: "none",
-      color: "var(--purple)",
-      fontWeight: 600,
-      fontSize: 13,
-      cursor: "pointer",
-      marginBottom: 20,
-      padding: 0
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrow-left",
-    size: 15
-  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaEntrevistaClinica, {
-    paciente: paciente
-  }));
-  if (sub === "rastreamento") return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setSub(null),
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      background: "none",
-      border: "none",
-      color: "var(--purple)",
-      fontWeight: 600,
-      fontSize: 13,
-      cursor: "pointer",
-      marginBottom: 20,
-      padding: 0
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrow-left",
-    size: 15
-  }), " Voltar para Questionários"), /*#__PURE__*/React.createElement(AbaRastreamento, {
-    paciente: paciente
-  }));
 
-  // Helper: gerar URL do questionário (sem token, link direto com nome)
-  function getUrlQuestionario(tipo) {
-    const base = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
-    const nome = encodeURIComponent(paciente.nome || "");
-    const mapa = {
-      rastreamento: `${base}/rastreamento/?paciente=${nome}`,
-      neuro: `${base}/rastreamento/neuro/?paciente=${nome}`,
-      alimentar: `${base}/rastreamento/alimentar/?paciente=${nome}`,
-      sexual: `${base}/rastreamento/sexual/?paciente=${nome}`,
-      dependencia: `${base}/rastreamento/dependencia/?paciente=${nome}`,
-      jogos: `${base}/rastreamento/jogos/?paciente=${nome}`
-    };
-    return mapa[tipo] || null;
-  }
-  function whatsappCard(tipo, emoji, nomeForm, duracao) {
-    const url = getUrlQuestionario(tipo);
-    if (!url) return;
-    const tel = (paciente.telefone || "").replace(/\D/g, "");
-    const msg = `Olá! 😊\n\nSua psicóloga Dra. Lucia Kratz preparou um questionário clínico para você preencher.\n\n${emoji} *${nomeForm}*\nResponda com calma e honestidade — leva cerca de ${duracao}.\n\n${url}\n\nQualquer dúvida, estou por aqui!\n_Dra. Lucia Kratz · CRP 09/20590_`;
-    if (tel) {
-      window.open(`https://api.whatsapp.com/send?phone=55${tel}&text=${encodeURIComponent(msg)}`, "_blank");
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-    }
-  }
+  // Painel de grupo diagnóstico
+  const grupoAtivo = GRUPOS_DIAGNOSTICOS.find(g => g.id === sub);
+  if (grupoAtivo) return /*#__PURE__*/React.createElement(PainelGrupoDiagnostico, {
+    paciente: paciente,
+    grupo: grupoAtivo,
+    onVoltar: () => setSub(null)
+  });
 
-  // Componente de card com dois botões
-  function CardQ({
-    emoji,
-    titulo,
-    descricao,
-    corBg,
-    corText,
-    sub: subKey,
-    tipo,
-    nomeWa,
-    duracao,
-    cor
-  }) {
-    return /*#__PURE__*/React.createElement("div", {
-      style: {
-        border: "1px solid var(--gray-200)",
-        borderRadius: 14,
-        padding: 18,
-        background: "white",
-        display: "flex",
-        flexDirection: "column",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 28,
-        lineHeight: 1
-      }
-    }, emoji), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 700,
-        fontSize: 13.5,
-        color: "var(--text-dark)",
-        marginBottom: 3
-      }
-    }, titulo), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11.5,
-        color: "var(--text-muted)",
-        lineHeight: 1.5
-      }
-    }, "Visualize as respostas ou envie o questionário ao paciente pelo WhatsApp"))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setSub(subKey),
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        background: corBg,
-        color: corText,
-        border: "none",
-        borderRadius: 8,
-        padding: "7px 14px",
-        fontSize: 12,
-        fontWeight: 600,
-        cursor: "pointer"
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "eye",
-      size: 13
-    }), " Visualizar"), tipo && /*#__PURE__*/React.createElement("button", {
-      onClick: () => whatsappCard(tipo, emoji, nomeWa || titulo, duracao || "5 a 10 min"),
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        background: "#dcfce7",
-        color: "#15803d",
-        border: "none",
-        borderRadius: 8,
-        padding: "7px 14px",
-        fontSize: 12,
-        fontWeight: 600,
-        cursor: "pointer"
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "message-circle",
-      size: 13
-    }), " Enviar WhatsApp")));
-  }
-
-  // Tela de cards
+  // ── Tela de cards ───────────────────────────────────────────────
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
@@ -315,81 +745,145 @@ function AbaQuestionarios({
       color: "var(--text-muted)",
       marginBottom: 20
     }
-  }, "Visualize as respostas ou envie o questionário ao paciente pelo WhatsApp."), /*#__PURE__*/React.createElement("div", {
+  }, "Selecione um grupo para escolher as hipóteses diagnósticas e gerar o link personalizado."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 14
     }
-  }, /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "📋",
-    titulo: "Anamnese",
-    sub: "anamnese",
-    corBg: "var(--purple-light-bg)",
-    corText: "var(--purple)",
-    descricao: "Formulário completo de anamnese — marcos do desenvolvimento, histórico clínico e familiar.",
-    tipo: null
-  }), /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "📊",
-    titulo: "Rastreamento Bipolar / Borderline",
-    sub: "rastreamento",
-    corBg: "#eff6ff",
-    corText: "#2563eb",
-    descricao: "Avaliação diferencial DSM-5 — aplicado ao paciente e familiares, com laudo comparativo.",
-    tipo: "rastreamento",
-    nomeWa: "Rastreamento Clínico — Bipolar / Borderline",
-    duracao: "5 a 10 min"
-  }), /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "🌸",
-    titulo: "Saúde Sexual",
-    sub: "sexual",
-    corBg: "#fdf2f8",
-    corText: "#be185d",
-    descricao: "Rastreamento confidencial de saúde sexual — respondido apenas pelo próprio paciente.",
-    tipo: "sexual",
-    nomeWa: "Questionário Clínico — Saúde Sexual",
-    duracao: "5 a 8 min"
-  }), /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "🍎",
-    titulo: "Hábitos Alimentares",
-    sub: "alimentar",
-    corBg: "#f0fdf4",
-    corText: "#16a34a",
-    descricao: "Rastreamento de padrões e comportamentos alimentares — avaliação diferencial DSM-5.",
-    tipo: "alimentar",
-    nomeWa: "Rastreamento de Hábitos Alimentares",
-    duracao: "5 a 10 min"
-  }), /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "🧩",
-    titulo: "Funcionamento e Comportamento",
-    sub: "neuro",
-    corBg: "#fdf4ff",
-    corText: "#9333ea",
-    descricao: "Rastreamento de atenção, agitação, interação social e comportamento — avaliação diferencial DSM-5.",
-    tipo: "neuro",
-    nomeWa: "Questionário Clínico — Funcionamento e Comportamento",
-    duracao: "10 a 15 min"
-  }), /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "💊",
-    titulo: "Dependência Química e Substâncias",
-    sub: "dependencia",
-    corBg: "#fef3c7",
-    corText: "#b45309",
-    descricao: "Rastreamento dos 11 critérios DSM-5 para Transtornos por Uso de Substâncias — paciente e familiares.",
-    tipo: "dependencia",
-    nomeWa: "Rastreamento de Dependência Química e Substâncias",
-    duracao: "8 a 12 min"
-  }), /*#__PURE__*/React.createElement(CardQ, {
-    emoji: "🎮",
-    titulo: "Dependência de Jogos e Apostas",
-    sub: "jogos",
-    corBg: "#ecfdf5",
-    corText: "#047857",
-    descricao: "Rastreamento de Gaming / Gambling Disorder — DSM-5 / CID-11 — paciente e familiares.",
-    tipo: "jogos",
-    nomeWa: "Rastreamento de Dependência de Jogos e Apostas",
-    duracao: "5 a 10 min"
-  })));
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid var(--gray-200)",
+      borderRadius: 14,
+      padding: 18,
+      background: "white",
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26,
+      lineHeight: 1
+    }
+  }, "📋"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13.5,
+      color: "var(--text-dark)",
+      marginBottom: 3
+    }
+  }, "Anamnese"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: "var(--text-muted)",
+      lineHeight: 1.5
+    }
+  }, "Formulário clínico completo — histórico, desenvolvimento e queixas"))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub("anamnese"),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 5,
+      background: "var(--purple-light-bg)",
+      color: "var(--purple)",
+      border: "none",
+      borderRadius: 8,
+      padding: "7px 14px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer",
+      alignSelf: "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "eye",
+    size: 13
+  }), " Visualizar")), GRUPOS_DIAGNOSTICOS.map(g => /*#__PURE__*/React.createElement("div", {
+    key: g.id,
+    style: {
+      border: "1px solid var(--gray-200)",
+      borderRadius: 14,
+      padding: 18,
+      background: "white",
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 26,
+      lineHeight: 1
+    }
+  }, g.emoji), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13.5,
+      color: "var(--text-dark)",
+      marginBottom: 3
+    }
+  }, g.titulo), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11.5,
+      color: "var(--text-muted)",
+      lineHeight: 1.5
+    }
+  }, g.descricao), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 5,
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 4
+    }
+  }, g.hipoteses.map(h => /*#__PURE__*/React.createElement("span", {
+    key: h.id,
+    style: {
+      fontSize: 9.5,
+      background: g.corBg,
+      color: g.cor,
+      borderRadius: 4,
+      padding: "2px 6px",
+      fontWeight: 600
+    }
+  }, h.label.split(" — ")[0]))))), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSub(g.id),
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 5,
+      background: g.corBg,
+      color: g.cor,
+      border: "none",
+      borderRadius: 8,
+      padding: "7px 14px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer",
+      alignSelf: "flex-start"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "clipboard-list",
+    size: 13
+  }), " Selecionar e Gerar Link")))));
 }
 
 // ═══════════════════════════════════════════════════════════════════
