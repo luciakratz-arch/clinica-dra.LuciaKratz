@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Avaliação Diagnóstica | Dra. Lucia Kratz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#f3e8ff 0%,#faf5ff 50%,#ede9fe 100%);min-height:100vh;padding:20px}
+.card{background:white;border-radius:20px;padding:28px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 8px 40px rgba(123,0,196,0.12)}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:19px;color:#3d006a;margin:10px 0 4px;font-weight:700}
+.header p{font-size:13px;color:#6b7280}
+.welcome-box{background:#f5f3ff;border-radius:14px;padding:20px;margin-bottom:20px;font-size:13.5px;color:#4b5563;line-height:1.7}
+.welcome-box h2{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.welcome-box ul{padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.progress-wrap{margin-bottom:22px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:5px}
+.progress-bar{height:6px;background:#ede9fe;border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#7B00C4,#a855f7);border-radius:20px;transition:width .4s ease}
+.step-title{font-size:15px;font-weight:700;color:#3d006a;margin-bottom:3px}
+.step-sub{font-size:12.5px;color:#6b7280;margin-bottom:18px;line-height:1.5;background:#f9fafb;border-left:3px solid #7B00C4;padding:8px 12px;border-radius:0 8px 8px 0}
+.fg{margin-bottom:16px}
+label.lbl{display:block;font-size:11.5px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;font-family:'Inter',sans-serif;color:#1f2937;outline:none;transition:border-color .2s;background:white}
+input:focus,select:focus,textarea:focus{border-color:#7B00C4}
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.tipo-btn{background:white;border:2px solid #ede9fe;border-radius:14px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.tipo-btn:hover,.tipo-btn.sel{border-color:#7B00C4;background:#f5f0ff}
+.tipo-btn .ico{font-size:32px;margin-bottom:8px}
+.tipo-btn .t{font-size:14px;font-weight:700;color:#3d006a}
+.tipo-btn .d{font-size:11.5px;color:#6b7280;margin-top:4px}
+.pergunta-card{background:#f9fafb;border:1px solid #ede9fe;border-radius:14px;padding:18px;margin-bottom:16px}
+.perg-num{font-size:10px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.perg-texto{font-size:14px;color:#1f2937;line-height:1.6;margin-bottom:14px;font-weight:500}
+.opcoes{display:flex;flex-direction:column;gap:8px}
+.opcao{display:flex;align-items:flex-start;gap:10px;background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .2s;font-size:13.5px;color:#374151;line-height:1.5}
+.opcao input[type=radio]{display:none}
+.opcao .letra{width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9ca3af;transition:all .2s;margin-top:1px}
+.opcao.sel{border-color:#7B00C4;background:#f5f0ff}
+.opcao.sel .letra{background:#7B00C4;border-color:#7B00C4;color:white}
+.opcao:hover{border-color:#a78bfa}
+.sec{font-size:11px;font-weight:700;color:#7B00C4;text-transform:uppercase;letter-spacing:1px;padding:10px 0 6px;border-bottom:1px solid #ede9fe;margin:8px 0 16px}
+.nav{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 20px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
+.btn-back{background:#f3f4f6;color:#374151;flex:1}
+.btn-next{background:#7B00C4;color:white;flex:2;box-shadow:0 4px 14px rgba(123,0,196,0.35)}
+.btn-next:hover{opacity:.9}
+.btn-next:disabled{opacity:.6;cursor:default}
+.btn-start{background:#7B00C4;color:white;width:100%;margin-top:16px;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif}
+.success{text-align:center;padding:20px 0}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:#3d006a;margin-bottom:10px}
+.success-msg{font-size:14px;color:#6b7280;line-height:1.7}
+.loading-wrap{text-align:center;padding:60px 20px}
+.loading-wrap .spin{width:44px;height:44px;border:4px solid #ede9fe;border-top-color:#7B00C4;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.erro-box{background:#fef2f2;border:1px solid #fca5a5;border-radius:14px;padding:24px;text-align:center;color:#991b1b;font-size:14px}
+.obs-field{margin-top:16px}
+.obs-field textarea{min-height:70px;font-size:13.5px}
+@media(max-width:500px){.tipo-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="card" id="app">
+  <div class="loading-wrap">
+    <div class="spin"></div>
+    <div style="color:#6b7280;font-size:14px">Carregando questionário…</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// ── Firebase ──────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyBqKjIRMrKrmwJd8WMbwQ4LsPuqiYTJkFM",
+  authDomain:"entrevista-inicial.firebaseapp.com",
+  projectId:"entrevista-inicial"
+});
+const db = firebase.firestore();
+
+// ── BANCO DE PERGUNTAS — todos os grupos ─────────────────────────
+// Escala: N = Nunca | B = Às vezes | C = Frequentemente
+// Critério presente = C; B = "a observar"
+
+const BANCO = {
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 1 — Instabilidade Emocional
+  // ────────────────────────────────────────────────────────────────
+
+  bipolar_mania: [
+    {id:"bm1", texto:"Sente-se com energia muito acima do normal, como se não precisasse dormir e pudesse fazer tudo ao mesmo tempo"},
+    {id:"bm2", texto:"Fala muito rápido, com muitas ideias ao mesmo tempo, e as pessoas têm dificuldade de acompanhar"},
+    {id:"bm3", texto:"Sente que seus pensamentos correm tão rápido que mal consegue acompanhá-los"},
+    {id:"bm4", texto:"Fica muito irritado(a) ou agressivo(a), mesmo em situações pequenas"},
+    {id:"bm5", texto:"Toma decisões impulsivas (gastos excessivos, projetos grandiosos, comportamentos de risco) que depois lamenta"},
+    {id:"bm6", texto:"Sente que tem poderes, talentos ou importância muito acima do que as pessoas ao redor percebem"},
+    {id:"bm7", texto:"Dorme muito pouco (3 a 4 horas) e ainda assim acorda cheio(a) de energia"},
+    {id:"bm8", texto:"Se envolve em muitas atividades ao mesmo tempo, difícil de parar ou descansar"},
+  ],
+
+  bipolar_dep: [
+    {id:"bd1", texto:"Sente tristeza profunda, vazio ou desesperança na maior parte do tempo"},
+    {id:"bd2", texto:"Perdeu o interesse ou prazer em atividades que antes gostava"},
+    {id:"bd3", texto:"Sente-se muito cansado(a) ou sem energia, mesmo sem ter feito muito"},
+    {id:"bd4", texto:"Tem dificuldade para se concentrar, tomar decisões ou lembrar de coisas"},
+    {id:"bd5", texto:"Sente-se inútil, culpado(a) ou com baixa autoestima sem razão clara"},
+    {id:"bd6", texto:"Tem pensamentos sobre morte, de que seria melhor não estar aqui, ou pensamentos de se machucar"},
+    {id:"bd7", texto:"Mudança significativa no sono (dorme demais ou tem insônia frequente)"},
+    {id:"bd8", texto:"Mudança significativa no apetite ou peso (comer muito mais ou muito menos que o habitual)"},
+    {id:"bd9", texto:"Movimentos físicos muito lentos ou, ao contrário, agitação interna que os outros percebem"},
+  ],
+
+  ciclotimia: [
+    {id:"ci1", texto:"Alterna períodos de bom humor / muita energia com períodos de tristeza / baixa energia, sem motivo claro"},
+    {id:"ci2", texto:"Essas oscilações de humor ocorrem há pelo menos 2 anos de forma persistente"},
+    {id:"ci3", texto:"Nunca fica mais de 2 meses seguidos com o humor estável"},
+    {id:"ci4", texto:"Essas mudanças de humor prejudicam o trabalho, os relacionamentos ou o dia a dia"},
+  ],
+
+  borderline: [
+    {id:"tpb1",  texto:"Faz esforços intensos para evitar ser abandonado(a) — real ou imaginário"},
+    {id:"tpb2",  texto:"Seus relacionamentos são instáveis, alternando entre idealização intensa e decepção total"},
+    {id:"tpb3",  texto:"Tem sensação de vazio persistente, como se algo essencial estivesse sempre faltando"},
+    {id:"tpb4",  texto:"Sua identidade é instável — imagem de si mesmo(a), valores e objetivos mudam frequentemente"},
+    {id:"tpb5",  texto:"Age de forma impulsiva especialmente quando se sente rejeitado(a) ou emocionalmente ativado(a) (gastos, sexo, substâncias, direção perigosa, compulsão alimentar)"},
+    {id:"tpb6",  texto:"Comportamentos de automutilação ou ameaças de suicídio recorrentes"},
+    {id:"tpb7",  texto:"Instabilidade emocional intensa — humor muda rapidamente em resposta a situações, dura horas (raramente dias)"},
+    {id:"tpb8",  texto:"Raiva intensa e inapropriada, difícil de controlar"},
+    {id:"tpb9",  texto:"Em momentos de estresse, tem pensamentos paranoides passageiros ou sensação de se sentir 'fora do corpo'"},
+  ],
+
+  histrionico: [
+    {id:"h1", texto:"Sente-se desconfortável em situações onde não é o centro das atenções"},
+    {id:"h2", texto:"Usa a aparência física ou comportamentos sedutores para chamar atenção, mesmo em contextos inapropriados"},
+    {id:"h3", texto:"Expressa emoções de forma exagerada e teatral, que parece encenada para quem está de fora"},
+    {id:"h4", texto:"É muito influenciável pelas opiniões e modas de quem está ao redor"},
+    {id:"h5", texto:"Considera relacionamentos mais íntimos do que realmente são"},
+    {id:"h6", texto:"Fala de forma vaga e dramática, sem muitos detalhes concretos"},
+    {id:"h7", texto:"Muda de emoções rapidamente — chora muito e logo está animado(a) de novo"},
+    {id:"h8", texto:"Busca aprovação e elogios de forma insistente, fica muito mal quando não os recebe"},
+  ],
+
+  narcisista: [
+    {id:"n1", texto:"Sente que tem talentos ou importância muito superiores às de outras pessoas"},
+    {id:"n2", texto:"Se preocupa muito com fantasias de sucesso ilimitado, poder, brilhantismo ou beleza ideal"},
+    {id:"n3", texto:"Acredita ser especial e que só pessoas de alto nível podem entendê-lo(a)"},
+    {id:"n4", texto:"Precisa de admiração e elogios constantes para se sentir bem"},
+    {id:"n5", texto:"Sente que merece tratamento especial e que as regras não deveriam se aplicar a ele(a)"},
+    {id:"n6", texto:"Usa os outros para atingir seus objetivos, sem muito escrúpulo quanto ao impacto disso"},
+    {id:"n7", texto:"Tem pouca empatia — dificuldade de perceber ou se importar com os sentimentos alheios"},
+    {id:"n8", texto:"Sente inveja frequente dos outros ou acredita que os outros sentem inveja dele(a)"},
+    {id:"n9", texto:"Tem comportamentos arrogantes ou condescendentes nas interações"},
+  ],
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 2 — Neurodesenvolvimento
+  // ────────────────────────────────────────────────────────────────
+
+  tdah_desatento: [
+    {id:"td1", texto:"Comete erros por falta de atenção em tarefas ou atividades (escola, trabalho, casa)"},
+    {id:"td2", texto:"Dificuldade em manter a atenção em tarefas longas ou que exigem esforço mental"},
+    {id:"td3", texto:"Parece não estar ouvindo quando falado diretamente"},
+    {id:"td4", texto:"Não consegue concluir tarefas ou seguir instruções até o fim"},
+    {id:"td5", texto:"Dificuldade em organizar tarefas e atividades"},
+    {id:"td6", texto:"Evita ou adia tarefas que exigem esforço mental prolongado"},
+    {id:"td7", texto:"Perde objetos necessários para tarefas (chaves, documentos, agenda, celular)"},
+    {id:"td8", texto:"Distrai-se facilmente por estímulos externos ou pensamentos alheios à tarefa"},
+    {id:"td9", texto:"É esquecido(a) nas atividades diárias — esquece compromissos, recados, afazeres"},
+  ],
+
+  tdah_hiperativo: [
+    {id:"th1", texto:"Mexe as mãos ou os pés, ou fica se contorcendo na cadeira"},
+    {id:"th2", texto:"Levanta do lugar em momentos em que deveria ficar sentado(a)"},
+    {id:"th3", texto:"Corre ou sobe em coisas em situações inadequadas (em adultos: inquietação interna)"},
+    {id:"th4", texto:"Dificuldade em brincar ou se dedicar a atividades de lazer de forma tranquila"},
+    {id:"th5", texto:"Age como se estivesse 'a todo vapor', como se fosse movido(a) por um motor"},
+    {id:"th6", texto:"Fala em excesso"},
+    {id:"th7", texto:"Responde antes de a pergunta ser concluída"},
+    {id:"th8", texto:"Dificuldade em esperar a sua vez"},
+    {id:"th9", texto:"Interrompe ou se intromete nas conversas ou atividades dos outros"},
+  ],
+
+  tea: [
+    {id:"tea1", texto:"Dificuldade em iniciar ou manter conversas sociais de forma natural"},
+    {id:"tea2", texto:"Dificuldade em usar linguagem não-verbal adequada (olhar nos olhos, expressões faciais, gestos)"},
+    {id:"tea3", texto:"Dificuldade em desenvolver e manter amizades adequadas à sua faixa etária"},
+    {id:"tea4", texto:"Parece não compartilhar espontaneamente interesses ou emoções com outras pessoas"},
+    {id:"tea5", texto:"Tem comportamentos repetitivos ou estereotipados (movimentos, falas, objetos)"},
+    {id:"tea6", texto:"Insiste em rotinas ou rituais rígidos; fica muito perturbado(a) se as rotinas mudam"},
+    {id:"tea7", texto:"Interesses muito intensos e restritos em temas específicos"},
+    {id:"tea8", texto:"Sensibilidade incomum a estímulos sensoriais (sons, texturas, luzes, cheiros, dor)"},
+  ],
+
+  tod: [
+    {id:"tod1", texto:"Perde a calma facilmente, com frequência"},
+    {id:"tod2", texto:"Fica muito irritado(a) e ressentido(a) com facilidade"},
+    {id:"tod3", texto:"Discute com frequência com adultos ou figuras de autoridade"},
+    {id:"tod4", texto:"Desafia ativamente ou se recusa a seguir regras e solicitações de adultos"},
+    {id:"tod5", texto:"Aborrece os outros deliberadamente com frequência"},
+    {id:"tod6", texto:"Culpa os outros pelos próprios erros ou mau comportamento"},
+    {id:"tod7", texto:"Foi vingativo(a) pelo menos duas vezes nos últimos 6 meses"},
+    {id:"tod8", texto:"Esses comportamentos ocorrem em pelo menos dois contextos diferentes (casa, escola, trabalho)"},
+  ],
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 3 — Internalização, Ansiedade e Inibição
+  // ────────────────────────────────────────────────────────────────
+
+  tdm: [
+    {id:"d1", texto:"Humor deprimido na maior parte do dia, quase todos os dias (tristeza, vazio, choro)"},
+    {id:"d2", texto:"Perda de interesse ou prazer em quase todas as atividades na maior parte do dia"},
+    {id:"d3", texto:"Perda ou ganho de peso significativo sem fazer dieta, ou mudança no apetite"},
+    {id:"d4", texto:"Insônia ou hipersonia quase todos os dias"},
+    {id:"d5", texto:"Agitação ou lentidão psicomotora visível para os outros"},
+    {id:"d6", texto:"Fadiga ou perda de energia quase todos os dias"},
+    {id:"d7", texto:"Sentimentos de inutilidade ou culpa excessiva ou inapropriada"},
+    {id:"d8", texto:"Dificuldade de concentração, de pensar claramente ou de tomar decisões"},
+    {id:"d9", texto:"Pensamentos recorrentes de morte, ideação suicida, tentativa ou plano de suicídio"},
+  ],
+
+  distimia: [
+    {id:"dt1", texto:"Humor deprimido na maior parte do dia, na maioria dos dias, por pelo menos 2 anos"},
+    {id:"dt2", texto:"Apetite reduzido ou aumentado de forma persistente"},
+    {id:"dt3", texto:"Insônia ou hipersonia persistente"},
+    {id:"dt4", texto:"Baixa energia ou fadiga crônica"},
+    {id:"dt5", texto:"Baixa autoestima persistente"},
+    {id:"dt6", texto:"Dificuldade de concentração ou de tomar decisões"},
+    {id:"dt7", texto:"Sentimentos de desesperança persistentes"},
+  ],
+
+  tag: [
+    {id:"tg1", texto:"Preocupação excessiva e difícil de controlar com várias áreas da vida (trabalho, família, saúde, dinheiro)"},
+    {id:"tg2", texto:"Agitação, sensação de 'nervos à flor da pele' ou tensão"},
+    {id:"tg3", texto:"Cansa-se facilmente"},
+    {id:"tg4", texto:"Dificuldade de concentração ou sensação de 'cabeça em branco'"},
+    {id:"tg5", texto:"Irritabilidade frequente"},
+    {id:"tg6", texto:"Tensão muscular persistente"},
+    {id:"tg7", texto:"Dificuldades com o sono (iniciar, manter ou sono não reparador)"},
+    {id:"tg8", texto:"Esses sintomas estão presentes na maior parte dos dias por pelo menos 6 meses"},
+  ],
+
+  panico: [
+    {id:"pa1", texto:"Tem crises repentinas de medo intenso com sintomas físicos: coração acelerado, falta de ar, tontura, formigamentos, sensação de morte ou loucura"},
+    {id:"pa2", texto:"As crises atingem o pico em poucos minutos e acontecem inesperadamente (sem gatilho claro)"},
+    {id:"pa3", texto:"Após uma crise, fica preocupado(a) por semanas com a possibilidade de ter outra"},
+    {id:"pa4", texto:"Mudou comportamentos por causa das crises (evita lugares, situações, atividades)"},
+    {id:"pa5", texto:"As crises não são explicadas por substâncias, medicamentos ou outra condição médica"},
+  ],
+
+  fobia_social: [
+    {id:"fs1", texto:"Medo intenso de situações sociais onde pode ser observado(a), avaliado(a) ou humilhado(a)"},
+    {id:"fs2", texto:"Quase sempre sente ansiedade nessas situações (pode ter crise de pânico)"},
+    {id:"fs3", texto:"Evita essas situações ou as enfrenta com sofrimento intenso"},
+    {id:"fs4", texto:"O medo é desproporcional à ameaça real da situação"},
+    {id:"fs5", texto:"O medo ou a evitação dura 6 meses ou mais e prejudica o funcionamento"},
+  ],
+
+  toc: [
+    {id:"oc1", texto:"Tem pensamentos, impulsos ou imagens intrusivas, repetitivas e indesejadas que causam angústia"},
+    {id:"oc2", texto:"Tenta ignorar, suprimir ou neutralizar esses pensamentos com outro pensamento ou ação"},
+    {id:"oc3", texto:"Realiza comportamentos repetitivos (lavar as mãos, verificar, organizar) ou atos mentais (rezar, contar) em resposta a esses pensamentos"},
+    {id:"oc4", texto:"Esses rituais visam prevenir algum evento temido ou reduzir angústia, mas são excessivos"},
+    {id:"oc5", texto:"As obsessões/compulsões tomam mais de 1 hora por dia ou causam prejuízo significativo"},
+    {id:"oc6", texto:"Reconhece (ao menos às vezes) que esses pensamentos e rituais são excessivos ou irracionais"},
+  ],
+
+  tept: [
+    {id:"pt1", texto:"Foi exposto(a) a evento traumático (morte, ameaça, violência sexual, desastre)"},
+    {id:"pt2", texto:"Revive o trauma repetidamente (flashbacks, pesadelos, sofrimento intenso ao lembrar)"},
+    {id:"pt3", texto:"Evita pensamentos, sentimentos, lugares ou pessoas que lembrem o trauma"},
+    {id:"pt4", texto:"Crenças negativas persistentes sobre si mesmo, os outros ou o mundo após o trauma"},
+    {id:"pt5", texto:"Hipervigilância constante, sobressalto exagerado, dificuldade para dormir"},
+    {id:"pt6", texto:"Os sintomas duram mais de 1 mês e prejudicam o funcionamento"},
+  ],
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 4 — Comportamento Alimentar
+  // ────────────────────────────────────────────────────────────────
+
+  anorexia: [
+    {id:"an1", texto:"Restrição persistente da ingestão calórica levando a peso significativamente baixo"},
+    {id:"an2", texto:"Medo intenso de ganhar peso ou de engordar, mesmo estando abaixo do peso"},
+    {id:"an3", texto:"Distorção da imagem corporal: se vê gordo(a) mesmo estando magro(a), ou nega a gravidade do baixo peso"},
+    {id:"an4", texto:"Amenorreia ou irregularidade menstrual associada ao baixo peso (quando aplicável)"},
+  ],
+
+  bulimia: [
+    {id:"bu1", texto:"Episódios recorrentes de comer grandes quantidades em pouco tempo, com sensação de perda de controle"},
+    {id:"bu2", texto:"Comportamentos compensatórios recorrentes (vômito autoprovocado, laxantes, jejum, exercício excessivo)"},
+    {id:"bu3", texto:"Os episódios ocorrem em média pelo menos 1 vez por semana por 3 meses"},
+    {id:"bu4", texto:"Autoavaliação excessivamente influenciada pela forma e peso corporais"},
+  ],
+
+  tca: [
+    {id:"tc1", texto:"Episódios recorrentes de compulsão alimentar (comer rápido, grande quantidade, até sentir desconforto, em segredo, com culpa depois)"},
+    {id:"tc2", texto:"Os episódios ocorrem pelo menos 1 vez por semana por 3 meses"},
+    {id:"tc3", texto:"Sofrimento significativo relacionado à compulsão"},
+    {id:"tc4", texto:"Não usa comportamentos compensatórios (diferente da Bulimia)"},
+  ],
+
+  arfid: [
+    {id:"ar1", texto:"Evitação ou restrição alimentar por falta de interesse, aversão sensorial ou medo de consequências (engasgar, vomitar)"},
+    {id:"ar2", texto:"Isso resulta em déficit nutricional, dependência de suplementos ou prejuízo psicossocial"},
+    {id:"ar3", texto:"O comportamento não é explicado por falta de alimento ou prática cultural"},
+    {id:"ar4", texto:"Não há preocupação com peso corporal como motivação (diferente de Anorexia)"},
+  ],
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 5 — Aditivo, Externalização e Recompensa
+  // ────────────────────────────────────────────────────────────────
+
+  substancias: [
+    {id:"su1",  texto:"Usa a substância em maiores quantidades ou por mais tempo do que pretendia"},
+    {id:"su2",  texto:"Desejo persistente ou esforços infrutíferos para parar ou controlar o uso"},
+    {id:"su3",  texto:"Gasta muito tempo conseguindo, usando ou se recuperando da substância"},
+    {id:"su4",  texto:"Fissura (craving) — desejo ou vontade intensa de usar"},
+    {id:"su5",  texto:"Falha no cumprimento de obrigações (trabalho, escola, casa) por causa do uso"},
+    {id:"su6",  texto:"Continua usando mesmo com problemas sociais ou interpessoais causados pela substância"},
+    {id:"su7",  texto:"Abandona atividades importantes em função do uso"},
+    {id:"su8",  texto:"Usa em situações onde é fisicamente perigoso (dirigir, operar máquinas)"},
+    {id:"su9",  texto:"Continua usando mesmo sabendo que tem problema físico ou psicológico causado pela substância"},
+    {id:"su10", texto:"Tolerância: precisa de doses cada vez maiores para obter o mesmo efeito"},
+    {id:"su11", texto:"Abstinência: sintomas ao parar ou usa para evitar esses sintomas"},
+  ],
+
+  gaming: [
+    {id:"ga1", texto:"Preocupação com jogos — pensa em jogar quando não está jogando"},
+    {id:"ga2", texto:"Precisa jogar por períodos cada vez maiores para sentir o mesmo prazer (tolerância)"},
+    {id:"ga3", texto:"Tenta reduzir o tempo de jogo sem conseguir"},
+    {id:"ga4", texto:"Fica irritado, ansioso ou triste quando não pode jogar (abstinência)"},
+    {id:"ga5", texto:"Usa os jogos para fugir de problemas ou sentimentos negativos"},
+    {id:"ga6", texto:"Continua jogando excessivamente mesmo após conflitos com familiares ou amigos por causa disso"},
+    {id:"ga7", texto:"Mente sobre quanto tempo passa jogando"},
+    {id:"ga8", texto:"Arriscou ou perdeu relacionamento, emprego ou oportunidade importante por causa dos jogos"},
+    {id:"ga9", texto:"Os sintomas estão presentes por pelo menos 12 meses"},
+  ],
+
+  gambling: [
+    {id:"gb1", texto:"Precisa apostar quantias cada vez maiores para sentir emoção (tolerância)"},
+    {id:"gb2", texto:"Fica agitado(a) ou irritado(a) quando tenta parar ou reduzir as apostas"},
+    {id:"gb3", texto:"Tentou parar ou reduzir as apostas várias vezes sem sucesso"},
+    {id:"gb4", texto:"Pensa frequentemente em apostas — relembra apostas passadas, planeja as próximas"},
+    {id:"gb5", texto:"Aposta quando está ansioso(a), culpado(a) ou para aliviar mal-estar"},
+    {id:"gb6", texto:"Após perder, volta para tentar recuperar ('caçar o prejuízo')"},
+    {id:"gb7", texto:"Mente para família ou amigos sobre a extensão do envolvimento com apostas"},
+    {id:"gb8", texto:"Perdeu ou arriscou relacionamento, emprego ou oportunidade por causa das apostas"},
+    {id:"gb9", texto:"Depende de outras pessoas para conseguir dinheiro para apostar ou pagar dívidas de apostas"},
+    {id:"gb10", texto:"Os problemas com apostas não são explicados por episódio maníaco"},
+  ],
+
+  antissocial: [
+    {id:"as1", texto:"Descumprimento repetido de normas sociais e leis (já se envolveu em atos que levam à prisão)"},
+    {id:"as2", texto:"Enganação repetida — mente, usa pseudônimos, manipula outros para vantagem pessoal"},
+    {id:"as3", texto:"Impulsividade — age sem planejar as consequências"},
+    {id:"as4", texto:"Irritabilidade e agressividade — brigas ou agressões físicas recorrentes"},
+    {id:"as5", texto:"Desconsideração imprudente pela segurança própria ou alheia"},
+    {id:"as6", texto:"Irresponsabilidade persistente — incapaz de manter trabalho estável ou honrar obrigações financeiras"},
+    {id:"as7", texto:"Ausência de remorso — indiferente a ter magoado, maltratado ou roubado outros"},
+  ],
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 6 — Fisiológico / Saúde Sexual
+  // ────────────────────────────────────────────────────────────────
+
+  sexual: [
+    {id:"sx1", texto:"Diminuição significativa do desejo ou interesse sexual"},
+    {id:"sx2", texto:"Dificuldade de excitação ou manutenção da excitação sexual"},
+    {id:"sx3", texto:"Dificuldade de atingir orgasmo ou ausência de orgasmo"},
+    {id:"sx4", texto:"Dor durante a atividade sexual"},
+    {id:"sx5", texto:"Ansiedade ou preocupação intensa relacionada ao desempenho sexual"},
+    {id:"sx6", texto:"Comportamento sexual compulsivo — dificuldade de controlar impulsos sexuais"},
+    {id:"sx7", texto:"Essas dificuldades causam sofrimento significativo ou impactam o relacionamento"},
+  ],
+
+  // ────────────────────────────────────────────────────────────────
+  // GRUPO 7 — Trauma e Dissociação
+  // ────────────────────────────────────────────────────────────────
+
+  tept_complexo: [
+    {id:"tc1x", texto:"Histórico de trauma repetido ou prolongado (abuso, negligência crônica, violência doméstica)"},
+    {id:"tc2x", texto:"Dificuldade de regular emoções — explosões, entorpecimento emocional ou ambos"},
+    {id:"tc3x", texto:"Crença persistente de ser fracassado(a), defeituoso(a) ou sem valor"},
+    {id:"tc4x", texto:"Dificuldade em confiar nas pessoas e em manter relacionamentos estáveis"},
+    {id:"tc5x", texto:"Sensação de estar permanentemente danificado(a) ou diferente dos outros"},
+    {id:"tc6x", texto:"Esses sintomas estão associados ao trauma, mas são mais crônicos e abrangentes que o TEPT simples"},
+  ],
+
+  dissociativo: [
+    {id:"di1", texto:"Episódios de despersonalização — sente como se estivesse de fora do próprio corpo ou sendo um observador"},
+    {id:"di2", texto:"Episódios de desrealização — o mundo parece irreal, distante ou como em um sonho"},
+    {id:"di3", texto:"Amnésia de eventos importantes da própria vida (não explicada por esquecimento normal)"},
+    {id:"di4", texto:"Identidade perturbada — percepção de si mesmo(a) marcadamente diferente em diferentes momentos"},
+    {id:"di5", texto:"Esses sintomas causam sofrimento significativo ou prejuízo no funcionamento"},
+  ],
+
+  adaptacao: [
+    {id:"ad1", texto:"Desenvolveu sintomas emocionais ou comportamentais em resposta a um estressor identificável"},
+    {id:"ad2", texto:"O sofrimento é desproporcional ao estressor ou prejudica significativamente o funcionamento"},
+    {id:"ad3", texto:"Os sintomas começaram dentro de 3 meses após o estressor"},
+    {id:"ad4", texto:"Os sintomas não representam luto normal nem critérios de outro transtorno"},
+  ],
+
+};
+
+// ── LABELS dos módulos ────────────────────────────────────────────
+const LABELS = {
+  bipolar_mania:  "Bipolar — Critérios de Mania/Hipomania",
+  bipolar_dep:    "Bipolar — Episódio Depressivo",
+  ciclotimia:     "Ciclotimia",
+  borderline:     "Transtorno de Personalidade Borderline (TPB)",
+  histrionico:    "TP Histriônico",
+  narcisista:     "TP Narcisista",
+  tdah_desatento: "TDAH — Desatento",
+  tdah_hiperativo:"TDAH — Hiperativo/Impulsivo",
+  tea:            "TEA — Transtorno do Espectro Autista",
+  tod:            "TOD — Transtorno Opositivo Desafiador",
+  tdm:            "Depressão Unipolar (TDM)",
+  distimia:       "Distimia / Depressão Persistente",
+  tag:            "TAG — Transtorno de Ansiedade Generalizada",
+  panico:         "Transtorno de Pânico",
+  fobia_social:   "Fobia Social / Ansiedade Social",
+  toc:            "TOC — Transtorno Obsessivo-Compulsivo",
+  tept:           "TEPT — Estresse Pós-Traumático",
+  anorexia:       "Anorexia Nervosa",
+  bulimia:        "Bulimia Nervosa",
+  tca:            "TCA — Compulsão Alimentar",
+  arfid:          "ARFID — Evitação/Restrição Alimentar",
+  substancias:    "Transtorno por Uso de Substâncias",
+  gaming:         "Gaming Disorder — Jogos Digitais",
+  gambling:       "Gambling Disorder — Apostas",
+  antissocial:    "TP Antissocial",
+  sexual:         "Saúde Sexual e Disfunções",
+  tept_complexo:  "TEPT Complexo / Trauma Crônico",
+  dissociativo:   "Transtorno Dissociativo",
+  adaptacao:      "Transtorno de Adaptação",
+};
+
+// ── LIMIARES diagnósticos (minC = critérios C necessários) ────────
+const LIMIARES = {
+  bipolar_mania:   {minC:3, total:8, obs:"Bipolar I: ≥7 dias + 3 critérios C (4 se só irritabilidade). Hipomanía: ≥4 dias + 3."},
+  bipolar_dep:     {minC:5, total:9, obs:"Pelo menos 1 critério deve ser d1 ou d2. Duração ≥2 semanas."},
+  ciclotimia:      {minC:3, total:4, obs:"Sintomas ≥2 anos, nunca >2 meses estável."},
+  borderline:      {minC:5, total:9, obs:"DSM-5: 5 de 9 critérios."},
+  histrionico:     {minC:5, total:8, obs:"DSM-5: 5 de 8 critérios."},
+  narcisista:      {minC:5, total:9, obs:"DSM-5: 5 de 9 critérios."},
+  tdah_desatento:  {minC:6, total:9, obs:"DSM-5: ≥6 sintomas (≥5 para ≥17 anos). Presentes em ≥2 contextos."},
+  tdah_hiperativo: {minC:6, total:9, obs:"DSM-5: ≥6 sintomas (≥5 para ≥17 anos). Presentes em ≥2 contextos."},
+  tea:             {minC:3, total:8, obs:"Critérios A (tea1-4): todos necessários. Critérios B (tea5-8): ≥2."},
+  tod:             {minC:4, total:8, obs:"DSM-5: ≥4 sintomas, ≥6 meses, em ≥2 contextos."},
+  tdm:             {minC:5, total:9, obs:"Pelo menos d1 ou d2 devem ser C. Duração ≥2 semanas."},
+  distimia:        {minC:3, total:7, obs:"dt1 obrigatório C + ≥2 de dt2-dt7. Duração ≥2 anos."},
+  tag:             {minC:4, total:8, obs:"tg1 obrigatório C + ≥3 de tg2-tg7 + tg8 C. Duração ≥6 meses."},
+  panico:          {minC:4, total:5, obs:"pa1 e pa2 obrigatórios. DSM-5: crises inesperadas recorrentes + preocupação/mudança de comportamento."},
+  fobia_social:    {minC:4, total:5, obs:"fs1 obrigatório. Duração ≥6 meses."},
+  toc:             {minC:4, total:6, obs:"Obsessões (oc1-oc2) ou compulsões (oc3-oc4) + oc5. oc6 avalia insight."},
+  tept:            {minC:4, total:6, obs:"pt1 obrigatório. DSM-5 exige critérios A, B, C, D, E, F, G todos presentes."},
+  anorexia:        {minC:3, total:4, obs:"an1-an3 necessários. an4 complementar."},
+  bulimia:         {minC:3, total:4, obs:"bu1+bu2+bu3 necessários. bu4 complementar."},
+  tca:             {minC:3, total:4, obs:"tc1+tc2+tc3 necessários. tc4 diferencia da Bulimia."},
+  arfid:           {minC:3, total:4, obs:"ar1+ar2+ar3 necessários. ar4 diferencia da Anorexia."},
+  substancias:     {minC:2, total:11, obs:"2-3 critérios=leve; 4-5=moderado; ≥6=grave."},
+  gaming:          {minC:5, total:9, obs:"DSM-5 / CID-11: ≥5 critérios por ≥12 meses."},
+  gambling:        {minC:4, total:10, obs:"DSM-5: ≥4 critérios. gb10 é critério de exclusão."},
+  antissocial:     {minC:3, total:7, obs:"DSM-5: ≥3 critérios + idade ≥18 + evidências de Conduta antes dos 15."},
+  sexual:          {minC:3, total:7, obs:"Sintomas por ≥6 meses em quase todas/todas as situações."},
+  tept_complexo:   {minC:4, total:6, obs:"Trauma prolongado + sintomas além do TEPT simples (desregulação emocional, autoconceito negativo)."},
+  dissociativo:    {minC:3, total:5, obs:"Sintomas causam sofrimento ou prejuízo + não são devidos a substâncias."},
+  adaptacao:       {minC:3, total:4, obs:"Todos os critérios são clinicamente relevantes. Início ≤3 meses após estressor."},
+};
+
+// ── Estado da aplicação ───────────────────────────────────────────
+let TOKEN = null;
+let CONFIG = null; // { modulos: [...], pacienteNome, grupoLabel, grupo }
+let PERGUNTAS = []; // array de perguntas montado a partir dos módulos
+let RESPOSTAS = {};
+let etapa = "loading"; // loading | inicio | respondendo | sucesso | erro
+let tipoRespondente = null;
+let nomeRespondente = "";
+let parentesco = "";
+let paginaAtual = 0;
+const POR_PAGINA = 5;
+let jaRespondeu = false;
+
+// ── Ler token da URL ──────────────────────────────────────────────
+function lerToken() {
+  const p = new URLSearchParams(window.location.search);
+  return p.get("token") || p.get("t");
+}
+
+// ── Montar perguntas a partir dos módulos selecionados ────────────
+function montarPerguntas(modulos) {
+  const idsVistos = new Set();
+  const lista = [];
+  modulos.forEach(mod => {
+    const pergs = BANCO[mod] || [];
+    pergs.forEach(p => {
+      if (!idsVistos.has(p.id)) {
+        idsVistos.add(p.id);
+        lista.push({...p, modulo: mod});
+      }
+    });
+  });
+  return lista;
+}
+
+// ── Calcular resultado por transtorno ────────────────────────────
+function calcularResultados(modulos, respostas) {
+  return modulos.map(mod => {
+    const pergs = BANCO[mod] || [];
+    const nC = pergs.filter(p => respostas[p.id] === "C").length;
+    const nB = pergs.filter(p => respostas[p.id] === "B").length;
+    const lim = LIMIARES[mod] || {minC:3, total:pergs.length, obs:""};
+    const label = LABELS[mod] || mod;
+    let status, cor;
+    if (nC >= lim.minC) { status = "⚠ Critérios atingidos"; cor = "#dc2626"; }
+    else if (nC >= Math.ceil(lim.minC * 0.6)) { status = "🔍 Abaixo do limiar — a observar"; cor = "#d97706"; }
+    else { status = "✅ Abaixo do limiar"; cor = "#16a34a"; }
+    return { mod, label, nC, nB, total: pergs.length, minC: lim.minC, status, cor, obs: lim.obs };
+  });
+}
+
+// ── Render ────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById("app");
+  if (etapa === "loading") {
+    app.innerHTML = `<div class="loading-wrap"><div class="spin"></div><div style="color:#6b7280;font-size:14px">Carregando questionário…</div></div>`;
+    return;
+  }
+  if (etapa === "erro") {
+    app.innerHTML = `<div class="header"><h1>Avaliação Diagnóstica</h1><p>Dra. Lucia Kratz · CRP 09/20590</p></div><div class="erro-box">❌ Link inválido ou expirado.<br/>Solicite um novo link à Dra. Lucia Kratz.</div>`;
+    return;
+  }
+  if (etapa === "jaRespondeu") {
+    app.innerHTML = `
+      <div class="header">
+        <img src="../../logo.png" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+        <h1>${CONFIG.grupoLabel || "Avaliação Diagnóstica"}</h1>
+        <p>Dra. Lucia Kratz · CRP 09/20590</p>
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:24px;text-align:center;color:#166534;font-size:14px;line-height:1.7">
+        ✅ Este questionário já foi respondido por você.<br/>
+        Agradecemos sua participação! Suas respostas foram registradas.
+      </div>`;
+    return;
+  }
+  if (etapa === "inicio") { renderInicio(app); return; }
+  if (etapa === "respondendo") { renderPerguntas(app); return; }
+  if (etapa === "sucesso") { renderSucesso(app); return; }
+}
+
+function renderInicio(app) {
+  app.innerHTML = `
+    <div class="header">
+      <img src="../../logo.png" style="width:60px;height:60px;border-radius:12px;object-fit:cover" onerror="this.style.display='none'"/>
+      <h1>${CONFIG.grupoLabel || "Avaliação Diagnóstica"}</h1>
+      <p>Dra. Lucia Kratz · Psicóloga · CRP 09/20590</p>
+    </div>
+    <div class="welcome-box">
+      <h2>📋 Antes de começar, leia com atenção:</h2>
+      <ul>
+        <li>Este questionário leva entre <strong>10 e 20 minutos</strong> para ser respondido.</li>
+        <li>Não há respostas certas ou erradas — responda com <strong>honestidade e calma</strong>.</li>
+        <li>Se for familiar, responda sobre o <strong>comportamento da pessoa avaliada</strong>.</li>
+        <li>Suas respostas são <strong>confidenciais</strong> e usadas apenas para fins clínicos.</li>
+        <li>Paciente: <strong>${CONFIG.pacienteNome || "—"}</strong></li>
+      </ul>
+    </div>
+    <div class="sec">👤 Quem está respondendo?</div>
+    <div class="tipo-grid">
+      <div class="tipo-btn ${tipoRespondente==='paciente'?'sel':''}" onclick="selecionarTipo('paciente')">
+        <div class="ico">🙋</div>
+        <div class="t">O próprio paciente</div>
+        <div class="d">Você é a pessoa avaliada</div>
+      </div>
+      <div class="tipo-btn ${tipoRespondente==='familiar'?'sel':''}" onclick="selecionarTipo('familiar')">
+        <div class="ico">👨‍👩‍👧</div>
+        <div class="t">Familiar / pessoa próxima</div>
+        <div class="d">Você conhece bem o avaliado</div>
+      </div>
+    </div>
+    <div id="camposFamiliar" style="display:${tipoRespondente==='familiar'?'block':'none'}">
+      <div class="fg">
+        <label class="lbl">Seu nome</label>
+        <input id="nomeResp" type="text" placeholder="Seu nome completo" value="${nomeRespondente}" oninput="nomeRespondente=this.value"/>
+      </div>
+      <div class="fg">
+        <label class="lbl">Parentesco / relação</label>
+        <input id="parentescoResp" type="text" placeholder="Ex: mãe, cônjuge, amigo(a)" value="${parentesco}" oninput="parentesco=this.value"/>
+      </div>
+    </div>
+    <button class="btn-start" onclick="iniciar()">Começar questionário →</button>`;
+}
+
+function selecionarTipo(t) {
+  tipoRespondente = t;
+  render();
+}
+
+function iniciar() {
+  if (!tipoRespondente) { alert("Selecione quem está respondendo."); return; }
+  if (tipoRespondente === "familiar" && !nomeRespondente.trim()) { alert("Informe seu nome."); return; }
+  etapa = "respondendo";
+  paginaAtual = 0;
+  render();
+}
+
+function renderPerguntas(app) {
+  const inicio = paginaAtual * POR_PAGINA;
+  const fim = Math.min(inicio + POR_PAGINA, PERGUNTAS.length);
+  const pagPergs = PERGUNTAS.slice(inicio, fim);
+  const totalPags = Math.ceil(PERGUNTAS.length / POR_PAGINA);
+  const progresso = Math.round((paginaAtual / totalPags) * 100);
+  const ultimaPagina = fim >= PERGUNTAS.length;
+
+  let html = `
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span>Questão ${inicio+1}–${fim} de ${PERGUNTAS.length}</span>
+        <span>${progresso}% concluído</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${progresso}%"></div></div>
+    </div>`;
+
+  pagPergs.forEach((p, i) => {
+    const n = inicio + i + 1;
+    const resp = RESPOSTAS[p.id];
+    html += `
+      <div class="pergunta-card">
+        <div class="perg-num">Questão ${n}</div>
+        <div class="perg-texto">${p.texto}</div>
+        <div class="opcoes">
+          ${[
+            {val:"N", label:"Nunca", desc:"Não ocorre ou não se aplica"},
+            {val:"B", label:"Às vezes", desc:"Ocorre ocasionalmente"},
+            {val:"C", label:"Frequentemente", desc:"Ocorre na maior parte do tempo"},
+          ].map(op => `
+            <label class="opcao ${resp===op.val?'sel':''}" onclick="responder('${p.id}','${op.val}');this.classList.add('sel');this.parentNode.querySelectorAll('.opcao').forEach(o=>o!==this&&o.classList.remove('sel'))">
+              <input type="radio" name="${p.id}" value="${op.val}" ${resp===op.val?'checked':''}/>
+              <div class="letra">${op.val}</div>
+              <div><strong>${op.label}</strong> — ${op.desc}</div>
+            </label>`).join("")}
+        </div>
+      </div>`;
+  });
+
+  // Observações na última página
+  if (ultimaPagina) {
+    html += `
+      <div class="obs-field">
+        <label class="lbl">Observações adicionais (opcional)</label>
+        <textarea id="obsFinais" placeholder="Alguma informação que considere importante adicionar…" oninput="obsFinaisVal=this.value">${window.obsFinaisVal||""}</textarea>
+      </div>`;
+  }
+
+  html += `
+    <div class="nav">
+      ${paginaAtual > 0 ? `<button class="btn btn-back" onclick="voltarPag()">← Voltar</button>` : ""}
+      <button class="btn btn-next" onclick="${ultimaPagina?'enviar()':'avancarPag()'}" ${paginaAtual===0&&!tipoRespondente?'disabled':''}>
+        ${ultimaPagina ? "✓ Enviar respostas" : "Próxima →"}
+      </button>
+    </div>`;
+
+  app.innerHTML = html;
+}
+
+function responder(id, val) {
+  RESPOSTAS[id] = val;
+}
+
+function avancarPag() {
+  const inicio = paginaAtual * POR_PAGINA;
+  const fim = Math.min(inicio + POR_PAGINA, PERGUNTAS.length);
+  const pagPergs = PERGUNTAS.slice(inicio, fim);
+  const semResposta = pagPergs.filter(p => !RESPOSTAS[p.id]);
+  if (semResposta.length > 0) {
+    alert(`Por favor, responda todas as questões antes de continuar.\n(${semResposta.length} questão(ões) sem resposta)`);
+    return;
+  }
+  paginaAtual++;
+  window.scrollTo(0,0);
+  render();
+}
+
+function voltarPag() {
+  paginaAtual--;
+  window.scrollTo(0,0);
+  render();
+}
+
+function enviar() {
+  const semResposta = PERGUNTAS.filter(p => !RESPOSTAS[p.id]);
+  if (semResposta.length > 0) {
+    alert(`Por favor, responda todas as questões antes de enviar.\n(${semResposta.length} questão(ões) sem resposta)`);
+    return;
+  }
+
+  const resultados = calcularResultados(CONFIG.modulos, RESPOSTAS);
+  const doc = {
+    token: TOKEN,
+    pacienteNome: CONFIG.pacienteNome || "",
+    grupo: CONFIG.grupo || "",
+    grupoLabel: CONFIG.grupoLabel || "",
+    modulos: CONFIG.modulos,
+    tipoRespondente,
+    nomeRespondente: tipoRespondente === "familiar" ? nomeRespondente : "",
+    parentesco: tipoRespondente === "familiar" ? parentesco : "",
+    respostas: RESPOSTAS,
+    resultados,
+    obsFinais: window.obsFinaisVal || "",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  // Salvar resposta
+  db.collection("clinica_rastreamento_diagnostico").add(doc)
+    .then(() => {
+      // Marcar token como respondido
+      return db.collection("clinica_rastreamento_tokens").doc(TOKEN).update({
+        respondidoPor: tipoRespondente,
+        respondidoEm: firebase.firestore.FieldValue.serverTimestamp(),
+        totalRespondentes: firebase.firestore.FieldValue.increment(1),
+      });
+    })
+    .then(() => {
+      etapa = "sucesso";
+      render();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao enviar. Tente novamente.");
+    });
+}
+
+function renderSucesso(app) {
+  app.innerHTML = `
+    <div class="success">
+      <div class="success-icon">🦋</div>
+      <div class="success-title">Respostas enviadas!</div>
+      <div class="success-msg">
+        Obrigado por responder com atenção e honestidade.<br/>
+        Suas respostas foram registradas com segurança e serão analisadas pela<br/>
+        <strong>Dra. Lucia Kratz</strong>.<br/><br/>
+        Você já pode fechar esta página.
+      </div>
+    </div>`;
+}
+
+// ── Inicialização ─────────────────────────────────────────────────
+window.obsFinaisVal = "";
+
+async function init() {
+  TOKEN = lerToken();
+  if (!TOKEN) {
+    etapa = "erro";
+    render();
+    return;
+  }
+
+  try {
+    const snap = await db.collection("clinica_rastreamento_tokens").doc(TOKEN).get();
+    if (!snap.exists) { etapa = "erro"; render(); return; }
+
+    CONFIG = snap.data();
+    // CONFIG deve ter: { modulos: [...], pacienteNome, grupoLabel, grupo }
+
+    PERGUNTAS = montarPerguntas(CONFIG.modulos || []);
+
+    if (PERGUNTAS.length === 0) { etapa = "erro"; render(); return; }
+
+    etapa = "inicio";
+    render();
+  } catch(e) {
+    console.error(e);
+    etapa = "erro";
+    render();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
