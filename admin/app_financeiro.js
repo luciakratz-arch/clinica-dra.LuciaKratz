@@ -309,12 +309,23 @@ function FinanceiroClinica({ user }) {
     if(recorrencia==="Sessão única") return [dataInicio];
     const datas=[];
     if(["Semanal (1x/semana)","Quinzenal","Mensal"].includes(recorrencia)){
+      const diaSemanaInicio = new Date(dataInicio+"T00:00:00").getDay(); // 0=Dom..6=Sab
       let atual=new Date(dataInicio+"T00:00:00");
       while(datas.length<total){
         datas.push(atual.toISOString().split("T")[0]);
-        if(recorrencia==="Semanal (1x/semana)") atual.setDate(atual.getDate()+7);
-        else if(recorrencia==="Quinzenal") atual.setDate(atual.getDate()+14);
-        else atual.setMonth(atual.getMonth()+1);
+        if(recorrencia==="Semanal (1x/semana)"){
+          atual.setDate(atual.getDate()+7);
+        } else if(recorrencia==="Quinzenal"){
+          atual.setDate(atual.getDate()+14);
+        } else {
+          // Mensal: avança para o mesmo dia da semana no próximo mês
+          // (ex: toda sexta → próxima sexta que caia no mês seguinte)
+          const mesAtual = atual.getMonth();
+          atual.setDate(atual.getDate()+7);
+          while(atual.getMonth()===mesAtual || atual.getDay()!==diaSemanaInicio){
+            atual.setDate(atual.getDate()+1);
+          }
+        }
       }
       return datas.slice(0,total);
     }
