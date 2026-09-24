@@ -455,6 +455,7 @@ function AbaRastreamentoDependencia({
   };
   const {
     ajustes: ajustesDep,
+    historico: historicoDep,
     salvarAjuste: salvarDep,
     limparAjuste: limparDep,
     salvando: salvandoDep
@@ -767,6 +768,7 @@ ${doc.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td co
       titulo: "Transtorno por Uso de Substâncias (DSM-5)",
       criterios: criteriosDep,
       ajustes: ajustesDep,
+      historico: historicoDep,
       salvarAjuste: salvarDep,
       limparAjuste: limparDep,
       confirmacoes: CONF_DEPENDENCIA,
@@ -849,6 +851,7 @@ function AbaRastreamentoJogos({
   };
   const {
     ajustes: ajustesJogos,
+    historico: historicoJogos,
     salvarAjuste: salvarJogos,
     limparAjuste: limparJogos,
     salvando: salvandoJogos
@@ -1161,6 +1164,7 @@ ${doc.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td co
       titulo: "Transtorno de Jogos (DSM-5 / CID-11)",
       criterios: criteriosJogos,
       ajustes: ajustesJogos,
+      historico: historicoJogos,
       salvarAjuste: salvarJogos,
       limparAjuste: limparJogos,
       confirmacoes: CONF_JOGOS,
@@ -3100,22 +3104,47 @@ const CONF_DEPENDENCIA = [{
 // Hook: carrega e salva ajustes clínicos no Firestore
 function useAjustesClinicos(colecao, docId) {
   const [ajustes, setAjustes] = useState({});
+  const [historico, setHistorico] = useState([]);
   const [salvando, setSalvando] = useState(false);
   useEffect(() => {
     if (!docId) return;
     db.collection(colecao).doc(docId).get().then(snap => {
-      if (snap.exists) setAjustes(snap.data().ajustesClinicos || {});
+      if (snap.exists) {
+        const data = snap.data().ajustesClinicos || {};
+        const hist = data._historico || [];
+        const ajustesSemHist = {
+          ...data
+        };
+        delete ajustesSemHist._historico;
+        setAjustes(ajustesSemHist);
+        setHistorico(hist);
+      }
     });
   }, [docId]);
-  function salvarAjuste(chave, valor) {
+  function salvarAjuste(chave, valor, snapshot) {
     const novos = {
       ...ajustes,
       [chave]: valor
     };
     setAjustes(novos);
     setSalvando(true);
+    // Se vier snapshot de resultado, registra no histórico
+    let novoHistorico = historico;
+    if (snapshot) {
+      const entrada = {
+        ts: new Date().toISOString(),
+        chave,
+        valor,
+        resultado: snapshot
+      };
+      novoHistorico = [...historico, entrada];
+      setHistorico(novoHistorico);
+    }
     db.collection(colecao).doc(docId).update({
-      ajustesClinicos: novos
+      ajustesClinicos: {
+        ...novos,
+        _historico: novoHistorico
+      }
     }).finally(() => setSalvando(false));
   }
   function limparAjuste(chave) {
@@ -3125,11 +3154,15 @@ function useAjustesClinicos(colecao, docId) {
     delete novos[chave];
     setAjustes(novos);
     db.collection(colecao).doc(docId).update({
-      ajustesClinicos: novos
+      ajustesClinicos: {
+        ...novos,
+        _historico: historico
+      }
     });
   }
   return {
     ajustes,
+    historico,
     salvarAjuste,
     limparAjuste,
     salvando
@@ -3228,6 +3261,7 @@ function ListaCriteriosDSM5({
   titulo,
   criterios,
   ajustes,
+  historico,
   salvarAjuste,
   limparAjuste,
   confirmacoes,
@@ -3235,6 +3269,7 @@ function ListaCriteriosDSM5({
   salvando
 }) {
   const [painelAberto, setPainelAberto] = useState(false);
+  const [histAberto, setHistAberto] = useState(false);
   const {
     criteriosResolvidos,
     nC,
@@ -3367,7 +3402,12 @@ function ListaCriteriosDSM5({
         minWidth: 120
       }
     }, c.label || c.texto), fonteLabel, /*#__PURE__*/React.createElement("button", {
-      onClick: () => salvarAjuste(chave, "presente"),
+      onClick: () => salvarAjuste(chave, "presente", {
+        titulo,
+        label,
+        nC,
+        total: criteriosResolvidos.length
+      }),
       style: {
         padding: "3px 10px",
         borderRadius: 6,
@@ -3380,7 +3420,12 @@ function ListaCriteriosDSM5({
         borderColor: "#dc2626"
       }
     }, "Presente"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => salvarAjuste(chave, "ausente"),
+      onClick: () => salvarAjuste(chave, "ausente", {
+        titulo,
+        label,
+        nC,
+        total: criteriosResolvidos.length
+      }),
       style: {
         padding: "3px 10px",
         borderRadius: 6,
@@ -3437,7 +3482,12 @@ function ListaCriteriosDSM5({
         minWidth: 180
       }
     }, conf.pergunta), /*#__PURE__*/React.createElement("button", {
-      onClick: () => salvarAjuste(chave, "sim"),
+      onClick: () => salvarAjuste(chave, "sim", {
+        titulo,
+        label,
+        nC,
+        total: criteriosResolvidos.length
+      }),
       style: {
         padding: "3px 10px",
         borderRadius: 6,
@@ -3450,7 +3500,12 @@ function ListaCriteriosDSM5({
         borderColor: "#059669"
       }
     }, "Sim"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => salvarAjuste(chave, "nao"),
+      onClick: () => salvarAjuste(chave, "nao", {
+        titulo,
+        label,
+        nC,
+        total: criteriosResolvidos.length
+      }),
       style: {
         padding: "3px 10px",
         borderRadius: 6,
@@ -3539,7 +3594,68 @@ function ListaCriteriosDSM5({
       fontSize: 11,
       color: "#6b7280"
     }
-  }, nC, " de ", criteriosResolvidos.length, " critérios presentes"), badgeStatus())));
+  }, nC, " de ", criteriosResolvidos.length, " critérios presentes"), badgeStatus())), historico && historico.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid #e9d5ff",
+      background: "#faf5ff"
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setHistAberto(!histAberto),
+    style: {
+      width: "100%",
+      textAlign: "left",
+      padding: "8px 14px",
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      fontSize: 11,
+      color: "#7B00C4",
+      fontWeight: 600
+    }
+  }, "🕘 ", histAberto ? "Ocultar" : "Ver", " histórico de reavaliações (", historico.length, ")"), histAberto && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "0 14px 12px"
+    }
+  }, [...historico].reverse().map((h, i) => {
+    const dt = new Date(h.ts).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    const tipoChave = h.chave.startsWith("conf#") ? "Entrevista" : "Critério";
+    const valorLabel = h.valor === "presente" ? "Presente ✓" : h.valor === "ausente" ? "Ausente ✗" : h.valor === "sim" ? "Sim ✓" : "Não ✗";
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        fontSize: 11,
+        color: "#4b5563",
+        padding: "5px 0",
+        borderBottom: "1px solid #ede9fe",
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "#9ca3af",
+        minWidth: 100
+      }
+    }, dt), /*#__PURE__*/React.createElement("span", {
+      style: {
+        background: "#ede9fe",
+        color: "#7B00C4",
+        padding: "0 6px",
+        borderRadius: 10,
+        fontWeight: 600
+      }
+    }, tipoChave), /*#__PURE__*/React.createElement("span", null, valorLabel), h.resultado && /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "#6b7280"
+      }
+    }, "→ ", h.resultado.label, " (", h.resultado.nC, "/", h.resultado.total, ")"));
+  }))));
 }
 function AbaRastreamento({
   paciente
@@ -3549,6 +3665,7 @@ function AbaRastreamento({
   const [selecionado, setSelecionado] = useState(null);
   const {
     ajustes: ajustesBipolar,
+    historico: historicoBipolar,
     salvarAjuste: salvarBipolar,
     limparAjuste: limparBipolar,
     salvando: salvandoBipolar
@@ -3948,6 +4065,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         titulo: "Mania / Hipomania",
         criterios: criteriosMania,
         ajustes: ajustesBipolar,
+        historico: historicoBipolar,
         salvarAjuste: salvarBipolar,
         limparAjuste: limparBipolar,
         confirmacoes: CONF_BIPOLAR_MANIA,
@@ -3971,7 +4089,10 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         titulo: "Depressão Bipolar",
         criterios: criteriosDep,
         ajustes: ajustesBipolar,
-        salvarAjuste: (k, v) => salvarBipolar("dep_" + k, v),
+        historico: historicoBipolar,
+        salvarAjuste: (k, v) => salvarBipolar("dep_" + k, v, {
+          titulo: "Depressão Bipolar"
+        }),
         limparAjuste: k => limparBipolar("dep_" + k),
         confirmacoes: CONF_BIPOLAR_DEP,
         salvando: salvandoBipolar,
@@ -3994,7 +4115,10 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><
         titulo: "Borderline (TPB)",
         criterios: criteriosBorderline,
         ajustes: ajustesBipolar,
-        salvarAjuste: (k, v) => salvarBipolar("tpb_" + k, v),
+        historico: historicoBipolar,
+        salvarAjuste: (k, v) => salvarBipolar("tpb_" + k, v, {
+          titulo: "Borderline"
+        }),
         limparAjuste: k => limparBipolar("tpb_" + k),
         confirmacoes: CONF_BORDERLINE,
         salvando: salvandoBipolar,
@@ -4668,6 +4792,7 @@ function AbaRastreamentoNeuro({
   const [selecionado, setSelecionado] = useState(null);
   const {
     ajustes: ajustesNeuro,
+    historico: historicoNeuro,
     salvarAjuste: salvarNeuro,
     limparAjuste: limparNeuro,
     salvando: salvandoNeuro
@@ -5085,6 +5210,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "TDAH — Inatenção",
         criterios: cTdahIn,
         ajustes: ajustesNeuro,
+        historico: historicoNeuro,
         salvarAjuste: salvarNeuro,
         limparAjuste: limparNeuro,
         confirmacoes: CONF_TDAH_IN,
@@ -5108,6 +5234,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "TDAH — Hiperatividade/Impulsividade",
         criterios: cTdahHi,
         ajustes: ajustesNeuro,
+        historico: historicoNeuro,
         salvarAjuste: (k, v) => salvarNeuro("hi_" + k, v),
         limparAjuste: k => limparNeuro("hi_" + k),
         confirmacoes: CONF_TDAH_HI,
@@ -5131,6 +5258,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "TEA — Critério A (comunicação social)",
         criterios: cTeaA,
         ajustes: ajustesNeuro,
+        historico: historicoNeuro,
         salvarAjuste: (k, v) => salvarNeuro("teaA_" + k, v),
         limparAjuste: k => limparNeuro("teaA_" + k),
         confirmacoes: CONF_TEA,
@@ -5155,6 +5283,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "TEA — Critério B (comportamentos restritos)",
         criterios: cTeaB,
         ajustes: ajustesNeuro,
+        historico: historicoNeuro,
         salvarAjuste: (k, v) => salvarNeuro("teaB_" + k, v),
         limparAjuste: k => limparNeuro("teaB_" + k),
         salvando: salvandoNeuro,
@@ -5177,6 +5306,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "TOD — Opositivo Desafiador",
         criterios: cTod,
         ajustes: ajustesNeuro,
+        historico: historicoNeuro,
         salvarAjuste: (k, v) => salvarNeuro("tod_" + k, v),
         limparAjuste: k => limparNeuro("tod_" + k),
         confirmacoes: CONF_TOD,
@@ -5533,6 +5663,7 @@ function AbaRastreamentoAlimentar({
   const [selecionado, setSelecionado] = useState(null);
   const {
     ajustes: ajustesAlim,
+    historico: historicoAlim,
     salvarAjuste: salvarAlim,
     limparAjuste: limparAlim,
     salvando: salvandoAlim
@@ -5914,6 +6045,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "Anorexia Nervosa",
         criterios: cAnorexia,
         ajustes: ajustesAlim,
+        historico: historicoAlim,
         salvarAjuste: salvarAlim,
         limparAjuste: limparAlim,
         confirmacoes: CONF_ANOREXIA,
@@ -5937,6 +6069,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "Bulimia Nervosa",
         criterios: cBulimia,
         ajustes: ajustesAlim,
+        historico: historicoAlim,
         salvarAjuste: (k, v) => salvarAlim("bul_" + k, v),
         limparAjuste: k => limparAlim("bul_" + k),
         confirmacoes: CONF_BULIMIA,
@@ -5960,6 +6093,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "TCA — Transtorno da Compulsão Alimentar",
         criterios: cTca,
         ajustes: ajustesAlim,
+        historico: historicoAlim,
         salvarAjuste: (k, v) => salvarAlim("tca_" + k, v),
         limparAjuste: k => limparAlim("tca_" + k),
         confirmacoes: CONF_TCA,
@@ -5983,6 +6117,7 @@ ${d.obsFinais ? `<tr><td colspan="2"><strong>Observações</strong></td><td cols
         titulo: "ARFID — Transtorno Alimentar Restritivo/Evitativo",
         criterios: cArfid,
         ajustes: ajustesAlim,
+        historico: historicoAlim,
         salvarAjuste: (k, v) => salvarAlim("arfid_" + k, v),
         limparAjuste: k => limparAlim("arfid_" + k),
         confirmacoes: CONF_ARFID,
@@ -6309,6 +6444,7 @@ function AbaRastreamentoSexual({
   const [selecionado, setSelecionado] = useState(null);
   const {
     ajustes: ajustesSex,
+    historico: historicoSex,
     salvarAjuste: salvarSex,
     limparAjuste: limparSex,
     salvando: salvandoSex
@@ -6661,6 +6797,7 @@ ${PERGUNTAS_SEXUAL.map(p => `<tr><td>${p.id.replace("p", "")}</td><td>${p.texto}
         titulo: "Disfunções Sexuais DSM-5",
         criterios: criteriosSex,
         ajustes: ajustesSex,
+        historico: historicoSex,
         salvarAjuste: salvarSex,
         limparAjuste: limparSex,
         confirmacoes: CONF_SEXUAL,
