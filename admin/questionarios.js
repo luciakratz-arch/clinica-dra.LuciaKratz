@@ -207,7 +207,7 @@ function AbaRastreamentoDependencia({ paciente }) {
   const [loading, setLoading] = React.useState(true);
   const [selecionado, setSelecionado] = React.useState(null);
   const COR = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
-  const { ajustes: ajustesDep, salvarAjuste: salvarDep, limparAjuste: limparDep, salvando: salvandoDep } = useAjustesClinicos("clinica_rastreamento_dependencia", docs.length > 0 ? docs[0].id : null);
+  const { ajustes: ajustesDep, historico: historicoDep, salvarAjuste: salvarDep, limparAjuste: limparDep, salvando: salvandoDep } = useAjustesClinicos("clinica_rastreamento_dependencia", docs.length > 0 ? docs[0].id : null);
 
   React.useEffect(()=>{
     if(!paciente?.nome) return;
@@ -380,6 +380,7 @@ ${doc.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td cols
               titulo="Transtorno por Uso de Substâncias (DSM-5)"
               criterios={criteriosDep}
               ajustes={ajustesDep}
+              historico={historicoDep}
               salvarAjuste={salvarDep}
               limparAjuste={limparDep}
               confirmacoes={CONF_DEPENDENCIA}
@@ -422,7 +423,7 @@ function AbaRastreamentoJogos({ paciente }) {
   const [loading, setLoading] = React.useState(true);
   const [selecionado, setSelecionado] = React.useState(null);
   const COR = {A:"#16a34a", B:"#d97706", C:"#dc2626"};
-  const { ajustes: ajustesJogos, salvarAjuste: salvarJogos, limparAjuste: limparJogos, salvando: salvandoJogos } = useAjustesClinicos("clinica_rastreamento_jogos", docs.length > 0 ? docs[0].id : null);
+  const { ajustes: ajustesJogos, historico: historicoJogos, salvarAjuste: salvarJogos, limparAjuste: limparJogos, salvando: salvandoJogos } = useAjustesClinicos("clinica_rastreamento_jogos", docs.length > 0 ? docs[0].id : null);
 
   React.useEffect(()=>{
     if(!paciente?.nome) return;
@@ -595,6 +596,7 @@ ${doc.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td cols
               titulo="Transtorno de Jogos (DSM-5 / CID-11)"
               criterios={criteriosJogos}
               ajustes={ajustesJogos}
+              historico={historicoJogos}
               salvarAjuste={salvarJogos}
               limparAjuste={limparJogos}
               confirmacoes={CONF_JOGOS}
@@ -1875,7 +1877,7 @@ function AbaRastreamento({ paciente }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
-  const { ajustes: ajustesBipolar, salvarAjuste: salvarBipolar, limparAjuste: limparBipolar, salvando: salvandoBipolar } = useAjustesClinicos("clinica_rastreamento_bipolar", docs.length > 0 ? docs[0].id : null);
+  const { ajustes: ajustesBipolar, historico: historicoBipolar, salvarAjuste: salvarBipolar, limparAjuste: limparBipolar, salvando: salvandoBipolar } = useAjustesClinicos("clinica_rastreamento_bipolar", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -2122,6 +2124,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
                     titulo="Mania / Hipomania"
                     criterios={criteriosMania}
                     ajustes={ajustesBipolar}
+                    historico={historicoBipolar}
                     salvarAjuste={salvarBipolar}
                     limparAjuste={limparBipolar}
                     confirmacoes={CONF_BIPOLAR_MANIA}
@@ -2137,7 +2140,8 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
                     titulo="Depressão Bipolar"
                     criterios={criteriosDep}
                     ajustes={ajustesBipolar}
-                    salvarAjuste={(k,v)=>salvarBipolar("dep_"+k,v)}
+                    historico={historicoBipolar}
+                    salvarAjuste={(k,v)=>salvarBipolar("dep_"+k,v, {titulo:"Depressão Bipolar"})}
                     limparAjuste={(k)=>limparBipolar("dep_"+k)}
                     confirmacoes={CONF_BIPOLAR_DEP}
                     salvando={salvandoBipolar}
@@ -2152,7 +2156,8 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações livres</strong></td><td
                     titulo="Borderline (TPB)"
                     criterios={criteriosBorderline}
                     ajustes={ajustesBipolar}
-                    salvarAjuste={(k,v)=>salvarBipolar("tpb_"+k,v)}
+                    historico={historicoBipolar}
+                    salvarAjuste={(k,v)=>salvarBipolar("tpb_"+k,v, {titulo:"Borderline"})}
                     limparAjuste={(k)=>limparBipolar("tpb_"+k)}
                     confirmacoes={CONF_BORDERLINE}
                     salvando={salvandoBipolar}
@@ -2461,7 +2466,7 @@ function AbaRastreamentoNeuro({ paciente }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
-  const { ajustes: ajustesNeuro, salvarAjuste: salvarNeuro, limparAjuste: limparNeuro, salvando: salvandoNeuro } = useAjustesClinicos("clinica_rastreamento_neuro", docs.length > 0 ? docs[0].id : null);
+  const { ajustes: ajustesNeuro, historico: historicoNeuro, salvarAjuste: salvarNeuro, limparAjuste: limparNeuro, salvando: salvandoNeuro } = useAjustesClinicos("clinica_rastreamento_neuro", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -2694,6 +2699,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="TDAH — Inatenção"
                     criterios={cTdahIn}
                     ajustes={ajustesNeuro}
+                    historico={historicoNeuro}
                     salvarAjuste={salvarNeuro}
                     limparAjuste={limparNeuro}
                     confirmacoes={CONF_TDAH_IN}
@@ -2709,6 +2715,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="TDAH — Hiperatividade/Impulsividade"
                     criterios={cTdahHi}
                     ajustes={ajustesNeuro}
+                    historico={historicoNeuro}
                     salvarAjuste={(k,v)=>salvarNeuro("hi_"+k,v)}
                     limparAjuste={(k)=>limparNeuro("hi_"+k)}
                     confirmacoes={CONF_TDAH_HI}
@@ -2724,6 +2731,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="TEA — Critério A (comunicação social)"
                     criterios={cTeaA}
                     ajustes={ajustesNeuro}
+                    historico={historicoNeuro}
                     salvarAjuste={(k,v)=>salvarNeuro("teaA_"+k,v)}
                     limparAjuste={(k)=>limparNeuro("teaA_"+k)}
                     confirmacoes={CONF_TEA}
@@ -2740,6 +2748,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="TEA — Critério B (comportamentos restritos)"
                     criterios={cTeaB}
                     ajustes={ajustesNeuro}
+                    historico={historicoNeuro}
                     salvarAjuste={(k,v)=>salvarNeuro("teaB_"+k,v)}
                     limparAjuste={(k)=>limparNeuro("teaB_"+k)}
                     salvando={salvandoNeuro}
@@ -2754,6 +2763,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="TOD — Opositivo Desafiador"
                     criterios={cTod}
                     ajustes={ajustesNeuro}
+                    historico={historicoNeuro}
                     salvarAjuste={(k,v)=>salvarNeuro("tod_"+k,v)}
                     limparAjuste={(k)=>limparNeuro("tod_"+k)}
                     confirmacoes={CONF_TOD}
@@ -2937,7 +2947,7 @@ function AbaRastreamentoAlimentar({ paciente }) {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selecionado, setSelecionado] = useState(null);
-  const { ajustes: ajustesAlim, salvarAjuste: salvarAlim, limparAjuste: limparAlim, salvando: salvandoAlim } = useAjustesClinicos("clinica_rastreamento_alimentar", docs.length > 0 ? docs[0].id : null);
+  const { ajustes: ajustesAlim, historico: historicoAlim, salvarAjuste: salvarAlim, limparAjuste: limparAlim, salvando: salvandoAlim } = useAjustesClinicos("clinica_rastreamento_alimentar", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -3154,6 +3164,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="Anorexia Nervosa"
                     criterios={cAnorexia}
                     ajustes={ajustesAlim}
+                    historico={historicoAlim}
                     salvarAjuste={salvarAlim}
                     limparAjuste={limparAlim}
                     confirmacoes={CONF_ANOREXIA}
@@ -3169,6 +3180,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="Bulimia Nervosa"
                     criterios={cBulimia}
                     ajustes={ajustesAlim}
+                    historico={historicoAlim}
                     salvarAjuste={(k,v)=>salvarAlim("bul_"+k,v)}
                     limparAjuste={(k)=>limparAlim("bul_"+k)}
                     confirmacoes={CONF_BULIMIA}
@@ -3184,6 +3196,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="TCA — Transtorno da Compulsão Alimentar"
                     criterios={cTca}
                     ajustes={ajustesAlim}
+                    historico={historicoAlim}
                     salvarAjuste={(k,v)=>salvarAlim("tca_"+k,v)}
                     limparAjuste={(k)=>limparAlim("tca_"+k)}
                     confirmacoes={CONF_TCA}
@@ -3199,6 +3212,7 @@ ${d.obsFinais?`<tr><td colspan="2"><strong>Observações</strong></td><td colspa
                     titulo="ARFID — Transtorno Alimentar Restritivo/Evitativo"
                     criterios={cArfid}
                     ajustes={ajustesAlim}
+                    historico={historicoAlim}
                     salvarAjuste={(k,v)=>salvarAlim("arfid_"+k,v)}
                     limparAjuste={(k)=>limparAlim("arfid_"+k)}
                     confirmacoes={CONF_ARFID}
@@ -3373,7 +3387,7 @@ function AbaRastreamentoSexual({paciente}){
   const [docs,setDocs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [selecionado,setSelecionado]=useState(null);
-  const { ajustes: ajustesSex, salvarAjuste: salvarSex, limparAjuste: limparSex, salvando: salvandoSex } = useAjustesClinicos("clinica_rastreamento_sexual", docs.length > 0 ? docs[0].id : null);
+  const { ajustes: ajustesSex, historico: historicoSex, salvarAjuste: salvarSex, limparAjuste: limparSex, salvando: salvandoSex } = useAjustesClinicos("clinica_rastreamento_sexual", docs.length > 0 ? docs[0].id : null);
 
   useEffect(()=>{
     if(!paciente?.nome) return;
@@ -3562,6 +3576,7 @@ ${PERGUNTAS_SEXUAL.map(p=>`<tr><td>${p.id.replace("p","")}</td><td>${p.texto}</t
                     titulo="Disfunções Sexuais DSM-5"
                     criterios={criteriosSex}
                     ajustes={ajustesSex}
+                    historico={historicoSex}
                     salvarAjuste={salvarSex}
                     limparAjuste={limparSex}
                     confirmacoes={CONF_SEXUAL}
