@@ -418,7 +418,7 @@ function AbaQuestionarios({ paciente }) {
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
 
-        {/* Card Anamnese — inalterado */}
+        {/* Card Anamnese */}
         <div style={{border:"1px solid var(--gray-200)",borderRadius:14,padding:18,background:"white",display:"flex",flexDirection:"column",gap:12}}>
           <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
             <div style={{fontSize:26,lineHeight:1}}>📋</div>
@@ -427,10 +427,27 @@ function AbaQuestionarios({ paciente }) {
               <div style={{fontSize:11.5,color:"var(--text-muted)",lineHeight:1.5}}>Formulário clínico completo — histórico, desenvolvimento e queixas</div>
             </div>
           </div>
-          <button onClick={()=>setSub("anamnese")}
-            style={{display:"flex",alignItems:"center",gap:5,background:"var(--purple-light-bg)",color:"var(--purple)",border:"none",borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer",alignSelf:"flex-start"}}>
-            <Icon name="eye" size={13}/> Visualizar
-          </button>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <button onClick={()=>setSub("anamnese")}
+              style={{display:"flex",alignItems:"center",gap:5,background:"var(--purple-light-bg)",color:"var(--purple)",border:"none",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              <Icon name="eye" size={13}/> Visualizar
+            </button>
+            <button onClick={()=>{
+              const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/?paciente=${encodeURIComponent(paciente?.nome||"")}`;
+              navigator.clipboard.writeText(url).then(()=>alert("Link copiado!")).catch(()=>alert(url));
+            }}
+              style={{display:"flex",alignItems:"center",gap:5,background:"#f0fdf4",color:"#15803d",border:"none",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              <Icon name="link" size={13}/> Copiar Link
+            </button>
+            <button onClick={()=>{
+              const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/?paciente=${encodeURIComponent(paciente?.nome||"")}`;
+              const msg = `Olá${paciente?.nome?" "+paciente.nome.split(" ")[0]:""}! 😊\n\nPor favor, preencha sua anamnese clínica pelo link abaixo:\n\n${url}\n\n_Dra. Lucia Kratz — Psicóloga_`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank");
+            }}
+              style={{display:"flex",alignItems:"center",gap:5,background:"#f0fdf4",color:"#15803d",border:"1px solid #bbf7d0",borderRadius:8,padding:"7px 12px",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+              <Icon name="message-circle" size={13}/> WhatsApp
+            </button>
+          </div>
         </div>
 
         {/* Cards dos 7 grupos diagnósticos */}
