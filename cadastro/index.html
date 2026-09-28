@@ -31,6 +31,14 @@ input:focus,select:focus{border-color:#7B00C4}
 .optional{font-size:10px;color:#9ca3af;font-weight:400;margin-left:4px;text-transform:none;letter-spacing:0}
 .erro{background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;font-weight:500}
 .info{background:#f0fdf4;color:#166534;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:16px;line-height:1.5}
+/* Menor de idade */
+.menor-toggle{display:flex;align-items:center;gap:10px;padding:14px;background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:12px;cursor:pointer;margin-bottom:16px;user-select:none}
+.menor-toggle input[type=checkbox]{width:18px;height:18px;accent-color:#7B00C4;cursor:pointer;flex-shrink:0}
+.menor-toggle-label{font-size:13px;font-weight:600;color:#5b21b6}
+.menor-toggle-sub{font-size:11px;color:#7c3aed;font-weight:400}
+.responsavel-box{background:#fdf4ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:18px;margin-bottom:16px}
+.responsavel-title{font-size:12px;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.divider{border:none;border-top:1.5px solid #e9d5ff;margin:20px 0}
 @media(max-width:480px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -47,6 +55,8 @@ input:focus,select:focus{border-color:#7B00C4}
       As informações ficam disponíveis com segurança para a sua psicóloga.
     </div>
     <div id="erro" class="erro" style="display:none"></div>
+
+    <!-- Dados do paciente -->
     <div class="form-group">
       <label>Nome Completo *</label>
       <input id="nome" placeholder="Seu nome completo"/>
@@ -81,6 +91,50 @@ input:focus,select:focus{border-color:#7B00C4}
         <input id="cpf" placeholder="000.000.000-00"/>
       </div>
     </div>
+
+    <hr class="divider"/>
+
+    <!-- Toggle menor de idade -->
+    <label class="menor-toggle" onclick="toggleMenor()">
+      <input type="checkbox" id="chkMenor" onclick="event.stopPropagation();toggleMenor()"/>
+      <div>
+        <div class="menor-toggle-label">👦 Este paciente é menor de idade</div>
+        <div class="menor-toggle-sub">Marque para preencher os dados do responsável legal</div>
+      </div>
+    </label>
+
+    <!-- Dados do responsável (oculto por padrão) -->
+    <div class="responsavel-box" id="boxResponsavel" style="display:none">
+      <div class="responsavel-title">👤 Dados do Responsável Legal</div>
+      <div class="form-group">
+        <label>Nome do Responsável *</label>
+        <input id="respNome" placeholder="Nome completo do responsável"/>
+      </div>
+      <div class="grid">
+        <div class="form-group">
+          <label>CPF do Responsável <span class="optional">(opcional)</span></label>
+          <input id="respCpf" placeholder="000.000.000-00"/>
+        </div>
+        <div class="form-group">
+          <label>Grau de Parentesco *</label>
+          <select id="respParentesco">
+            <option value="">Selecione</option>
+            <option value="Mãe">Mãe</option>
+            <option value="Pai">Pai</option>
+            <option value="Avó/Avô">Avó / Avô</option>
+            <option value="Tutor Legal">Tutor Legal</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Telefone do Responsável <span class="optional">(opcional)</span></label>
+        <input id="respTelefone" type="tel" placeholder="(62) 99999-9999"/>
+      </div>
+    </div>
+
+    <hr class="divider"/>
+
     <div class="form-group">
       <label>Crie uma Senha de Acesso *</label>
       <input id="senha" type="password" placeholder="Mínimo 4 caracteres"/>
@@ -126,6 +180,12 @@ const db = firebase.firestore();
 
 const MOD1_PADRAO = {mod1:{ativo:true,ferramentas:{humor:{ativo:true,dataInicio:new Date().toISOString().slice(0,10)},metas:{ativo:true,dataInicio:new Date().toISOString().slice(0,10)},diario:{ativo:true,dataInicio:new Date().toISOString().slice(0,10)}}}};
 
+function toggleMenor(){
+  const chk = document.getElementById("chkMenor");
+  const box = document.getElementById("boxResponsavel");
+  box.style.display = chk.checked ? "block" : "none";
+}
+
 async function salvar(){
   const nome = document.getElementById("nome").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -135,6 +195,7 @@ async function salvar(){
   const cpf = document.getElementById("cpf").value.trim();
   const senha = document.getElementById("senha").value;
   const senha2 = document.getElementById("senha2").value;
+  const menorDeIdade = document.getElementById("chkMenor").checked;
   const erro = document.getElementById("erro");
 
   erro.style.display="none";
@@ -152,6 +213,23 @@ async function salvar(){
     erro.style.display="block"; return;
   }
 
+  // Validar responsável se menor
+  let responsavel = null;
+  if(menorDeIdade){
+    const respNome = document.getElementById("respNome").value.trim();
+    const respParentesco = document.getElementById("respParentesco").value;
+    if(!respNome||!respParentesco){
+      erro.textContent="Para pacientes menores de idade, informe o nome e o grau de parentesco do responsável.";
+      erro.style.display="block"; return;
+    }
+    responsavel = {
+      nome: respNome,
+      cpf: document.getElementById("respCpf").value.trim(),
+      parentesco: respParentesco,
+      telefone: document.getElementById("respTelefone").value.trim(),
+    };
+  }
+
   // Verifica se e-mail já existe
   const snap = await db.collection("clinica_pacientes").where("email","==",email).get();
   if(!snap.empty){
@@ -163,8 +241,9 @@ async function salvar(){
   document.getElementById("btnSalvar").textContent="Enviando...";
 
   try{
-    await db.collection("clinica_pacientes").add({
+    const dados = {
       nome, email, telefone, dataNascimento, genero, cpf, senha,
+      menorDeIdade,
       status: "pendente",
       origemCadastro: "auto-cadastro",
       modulosConfig: MOD1_PADRAO,
@@ -172,7 +251,10 @@ async function salvar(){
       objetivosTerapeuticos: "",
       observacoesClinicas: "",
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+    if(responsavel) dados.responsavel = responsavel;
+
+    await db.collection("clinica_pacientes").add(dados);
 
     document.getElementById("form-area").style.display="none";
     document.getElementById("sucesso").style.display="block";
