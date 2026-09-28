@@ -109,75 +109,102 @@ const GRUPOS_DIAGNOSTICOS = [
 function analisarLegado(doc) {
   const col = doc._colecao;
 
-  // Bipolar/Borderline — p1–p15
+  // Bipolar/Borderline — usa laudoDSM5 (mesma função do AbaRastreamento)
   if (col === "clinica_rastreamento_bipolar") {
-    const isC = k => doc[k] === "C";
-    const isB = k => doc[k] === "B";
-    const maniaC  = ["p1","p2","p3"].filter(isC).length;
-    const maniaB  = ["p1","p2","p3"].filter(isB).length;
-    const depC    = ["p4","p5","p6"].filter(isC).length;
-    const borderC = ["p7","p8","p9","p10","p11","p12","p13","p14","p15"].filter(isC).length;
-    const borderB = ["p7","p8","p9","p10","p11","p12","p13","p14","p15"].filter(isB).length;
-
+    const escores = calcularEscores(doc);
+    const laudo = laudoDSM5(escores);
+    const { bipolarManiaC, bipolarDepC, borderlineC } = escores;
     const itens = [
-      { label:"TB Mania/Hipomania", c:maniaC, b:maniaB, min:3, total:3 },
-      { label:"Episódio Depressivo", c:depC, b:0, min:3, total:3 },
-      { label:"Borderline (TPB)", c:borderC, b:borderB, min:5, total:9 },
+      { label:"TB Mania/Hipomania", c:bipolarManiaC, min:3, total:3 },
+      { label:"Episódio Depressivo", c:bipolarDepC, min:3, total:3 },
+      { label:"Borderline (TPB)", c:borderlineC, min:5, total:9 },
     ];
-    return itens.map(it => ({
-      label: it.label,
-      valor: `${it.c}/${it.total} C`,
-      cor: it.c >= it.min ? "#dc2626" : it.c >= it.min - 1 ? "#d97706" : "#16a34a",
-      status: it.c >= it.min ? "⚠ Critério atingido" : it.c >= it.min - 1 ? "🔍 A observar" : "✅ Abaixo do limiar",
-    }));
+    return {
+      hipotese: laudo.hipotese,
+      atencao: laudo.atencao,
+      itens: itens.map(it => ({
+        label: it.label,
+        valor: `${it.c}/${it.total} C`,
+        cor: it.c >= it.min ? "#dc2626" : it.c >= it.min - 1 ? "#d97706" : "#16a34a",
+        status: it.c >= it.min ? "⚠ Critério atingido" : it.c >= it.min - 1 ? "🔍 A observar" : "✅ Abaixo do limiar",
+      })),
+    };
   }
 
-  // Neuro — p1–p20 (TDAH/TEA/TOD etc.)
+  // Neuro
   if (col === "clinica_rastreamento_neuro") {
     const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10",
                    "p11","p12","p13","p14","p15","p16","p17","p18","p19","p20"];
     const nC = pergs.filter(k => doc[k] === "C").length;
     const nB = pergs.filter(k => doc[k] === "B").length;
-    return [{ label:"Funcionamento Neurodesenv.", valor:`${nC} C · ${nB} a observar`, cor: nC >= 8 ? "#dc2626" : nC >= 4 ? "#d97706" : "#16a34a",
-      status: nC >= 8 ? "⚠ Alta frequência de indicadores" : nC >= 4 ? "🔍 Indicadores moderados" : "✅ Baixa frequência" }];
+    const hip = nC >= 10 ? "Alta concentração de indicadores de neurodesenvolvimento — avaliação formal indicada"
+              : nC >= 6  ? "Indicadores moderados de neurodesenvolvimento — monitorar"
+              : "Baixa frequência de indicadores — sem hipótese diagnóstica definida";
+    return { hipotese: hip, atencao: [], itens: [
+      { label:"Indicadores Neurodesenv.", valor:`${nC} C · ${nB} a observar`,
+        cor: nC >= 10 ? "#dc2626" : nC >= 6 ? "#d97706" : "#16a34a",
+        status: nC >= 10 ? "⚠ Alta frequência" : nC >= 6 ? "🔍 Moderado" : "✅ Baixa frequência" }
+    ]};
   }
 
   // Alimentar
   if (col === "clinica_rastreamento_alimentar") {
     const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14","p15"];
     const nC = pergs.filter(k => doc[k] === "C").length;
-    return [{ label:"Comportamento Alimentar", valor:`${nC} C`, cor: nC >= 6 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
-      status: nC >= 6 ? "⚠ Indicadores significativos" : nC >= 3 ? "🔍 A observar" : "✅ Abaixo do limiar" }];
+    const hip = nC >= 8 ? "Indicadores significativos de transtorno alimentar — avaliação aprofundada indicada"
+              : nC >= 4 ? "Indicadores moderados de comportamento alimentar disfuncional — monitorar"
+              : "Abaixo dos limiares clínicos";
+    return { hipotese: hip, atencao: [], itens: [
+      { label:"Comportamento Alimentar", valor:`${nC}/15 C`,
+        cor: nC >= 8 ? "#dc2626" : nC >= 4 ? "#d97706" : "#16a34a",
+        status: nC >= 8 ? "⚠ Indicadores significativos" : nC >= 4 ? "🔍 A observar" : "✅ Abaixo do limiar" }
+    ]};
   }
 
   // Dependência Química
   if (col === "clinica_rastreamento_dependencia") {
     const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11"];
     const nC = pergs.filter(k => doc[k] === "C").length;
-    return [{ label:"Uso de Substâncias (DSM-5)", valor:`${nC}/11 C`,
-      cor: nC >= 6 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
-      status: nC >= 6 ? "⚠ Transtorno grave" : nC >= 4 ? "⚠ Transtorno moderado" : nC >= 2 ? "🔍 Transtorno leve" : "✅ Abaixo do limiar" }];
+    const hip = nC >= 6 ? "Transtorno por uso de substâncias — grave (DSM-5: ≥6 critérios)"
+              : nC >= 4 ? "Transtorno por uso de substâncias — moderado (DSM-5: 4–5 critérios)"
+              : nC >= 2 ? "Transtorno por uso de substâncias — leve (DSM-5: 2–3 critérios)"
+              : "Abaixo dos limiares clínicos";
+    return { hipotese: hip, atencao: [], itens: [
+      { label:"Uso de Substâncias (DSM-5)", valor:`${nC}/11 C`,
+        cor: nC >= 6 ? "#dc2626" : nC >= 4 ? "#d97706" : "#16a34a",
+        status: nC >= 6 ? "⚠ Grave" : nC >= 4 ? "⚠ Moderado" : nC >= 2 ? "🔍 Leve" : "✅ Abaixo do limiar" }
+    ]};
   }
 
   // Jogos
   if (col === "clinica_rastreamento_jogos") {
     const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9"];
     const nC = pergs.filter(k => doc[k] === "C").length;
-    return [{ label:"Transtorno de Jogos", valor:`${nC}/9 C`,
-      cor: nC >= 5 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
-      status: nC >= 5 ? "⚠ Critério atingido (≥5)" : nC >= 3 ? "🔍 A observar" : "✅ Abaixo do limiar" }];
+    const hip = nC >= 5 ? "Transtorno de Jogos pela Internet — critério atingido (DSM-5: ≥5 de 9)"
+              : nC >= 3 ? "Indicadores de uso problemático de jogos — monitorar"
+              : "Abaixo dos limiares clínicos";
+    return { hipotese: hip, atencao: [], itens: [
+      { label:"Transtorno de Jogos", valor:`${nC}/9 C`,
+        cor: nC >= 5 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
+        status: nC >= 5 ? "⚠ Critério atingido (≥5)" : nC >= 3 ? "🔍 A observar" : "✅ Abaixo do limiar" }
+    ]};
   }
 
   // Sexual
   if (col === "clinica_rastreamento_sexual") {
     const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10"];
     const nC = pergs.filter(k => doc[k] === "C").length;
-    return [{ label:"Saúde Sexual", valor:`${nC} C`,
-      cor: nC >= 4 ? "#dc2626" : nC >= 2 ? "#d97706" : "#16a34a",
-      status: nC >= 4 ? "⚠ Indicadores significativos" : nC >= 2 ? "🔍 A observar" : "✅ Abaixo do limiar" }];
+    const hip = nC >= 5 ? "Indicadores significativos de disfunção/preocupação sexual — avaliação clínica indicada"
+              : nC >= 2 ? "Indicadores leves — monitorar"
+              : "Sem indicadores clínicos relevantes";
+    return { hipotese: hip, atencao: [], itens: [
+      { label:"Saúde Sexual", valor:`${nC}/10 C`,
+        cor: nC >= 5 ? "#dc2626" : nC >= 2 ? "#d97706" : "#16a34a",
+        status: nC >= 5 ? "⚠ Indicadores significativos" : nC >= 2 ? "🔍 A observar" : "✅ Sem indicadores" }
+    ]};
   }
 
-  return [];
+  return { hipotese: null, atencao: [], itens: [] };
 }
 
 // Mapa: grupo.id → coleções antigas que contêm histórico legado
@@ -458,7 +485,8 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
                 ? `👨‍👩‍👧 ${doc.nomeRespondente || "Familiar"}`
                 : "🧑 Próprio paciente";
               const analise = analisarLegado(doc);
-              const temAlerta = analise.some(a => a.status && a.status.startsWith("⚠"));
+              const { hipotese, atencao, itens } = analise;
+              const temAlerta = itens.some(a => a.status && a.status.startsWith("⚠"));
               return (
                 <div key={doc.id + i} style={{border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden",background:"white"}}>
                   {/* Cabeçalho */}
@@ -473,10 +501,19 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
                       {temAlerta ? "⚠ Critérios atingidos" : "✅ Dentro dos limiares"}
                     </div>
                   </div>
-                  {/* Análise recalculada */}
-                  {analise.length > 0 && (
+
+                  {/* Hipótese diagnóstica geral */}
+                  {hipotese && (
+                    <div style={{margin:"12px 16px 0",padding:"10px 14px",background: temAlerta ? "#fef2f2" : "#f0fdf4",border:`1px solid ${temAlerta?"#fecaca":"#bbf7d0"}`,borderRadius:10}}>
+                      <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Hipótese Diagnóstica</div>
+                      <div style={{fontSize:12,fontWeight:700,color: temAlerta ? "#dc2626" : "#16a34a",lineHeight:1.5}}>{hipotese}</div>
+                    </div>
+                  )}
+
+                  {/* Pontuações por eixo */}
+                  {itens.length > 0 && (
                     <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
-                      {analise.map((a,j) => (
+                      {itens.map((a,j) => (
                         <div key={j} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:"#f9fafb",borderRadius:8,border:"1px solid #e5e7eb"}}>
                           <div>
                             <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{a.label}</div>
@@ -487,10 +524,21 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
                       ))}
                     </div>
                   )}
-                  {/* Observações */}
+
+                  {/* Alertas clínicos */}
+                  {atencao && atencao.length > 0 && (
+                    <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8}}>
+                      <div style={{fontSize:10,fontWeight:700,color:"#92400e",marginBottom:4}}>⚠ PONTOS DE ATENÇÃO CLÍNICA</div>
+                      {atencao.map((a,j) => (
+                        <div key={j} style={{fontSize:11,color:"#78350f",lineHeight:1.5,marginBottom:2}}>• {a}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Observações do respondente */}
                   {doc.obsFinais && (
-                    <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8,fontSize:11,color:"#78350f"}}>
-                      <strong>Obs:</strong> {doc.obsFinais}
+                    <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:8,fontSize:11,color:"var(--text-dark)"}}>
+                      <strong>Obs do respondente:</strong> {doc.obsFinais}
                     </div>
                   )}
                 </div>
