@@ -502,17 +502,9 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
                     </div>
                   </div>
 
-                  {/* Hipótese diagnóstica geral */}
-                  {hipotese && (
-                    <div style={{margin:"12px 16px 0",padding:"10px 14px",background: temAlerta ? "#fef2f2" : "#f0fdf4",border:`1px solid ${temAlerta?"#fecaca":"#bbf7d0"}`,borderRadius:10}}>
-                      <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Hipótese Diagnóstica</div>
-                      <div style={{fontSize:12,fontWeight:700,color: temAlerta ? "#dc2626" : "#16a34a",lineHeight:1.5}}>{hipotese}</div>
-                    </div>
-                  )}
-
-                  {/* Pontuações por eixo */}
-                  {itens.length > 0 && (
-                    <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
+                  {/* Pontuações por eixo — primeiro */}
+                  {itens && itens.length > 0 && (
+                    <div style={{padding:"10px 16px 0",display:"flex",flexDirection:"column",gap:6}}>
                       {itens.map((a,j) => (
                         <div key={j} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:"#f9fafb",borderRadius:8,border:"1px solid #e5e7eb"}}>
                           <div>
@@ -524,6 +516,15 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
                       ))}
                     </div>
                   )}
+
+                  {/* Hipótese consolidada — depois das pontuações */}
+                  <div style={{margin:"10px 16px 0",padding:"10px 14px",background: temAlerta ? "#fef2f2" : "#f0fdf4",border:`1px solid ${temAlerta?"#fecaca":"#bbf7d0"}`,borderRadius:10}}>
+                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Hipótese Diagnóstica</div>
+                    <div style={{fontSize:12,fontWeight:700,color: temAlerta ? "#dc2626" : "#16a34a",lineHeight:1.5}}>
+                      {hipotese || (temAlerta ? "Critérios atingidos — avaliação clínica indicada" : "Sem hipótese diagnóstica definida pelos critérios")}
+                    </div>
+                  </div>
+
 
                   {/* Alertas clínicos */}
                   {atencao && atencao.length > 0 && (
