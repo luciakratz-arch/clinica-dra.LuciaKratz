@@ -470,84 +470,100 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
       )}
 
       {/* Histórico de formulários antigos (coleções legadas) */}
-      {historicoLegado.length > 0 && (
-        <div style={{marginTop:24}}>
-          <div style={{fontWeight:600,fontSize:13,color:"var(--text-dark)",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
-            <span>📂 Histórico anterior ({historicoLegado.length})</span>
-            <span style={{fontSize:11,fontWeight:400,color:"var(--text-muted)"}}>— formulários preenchidos antes do novo sistema</span>
-          </div>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {historicoLegado.map((doc, i) => {
-              const data = doc.createdAt?.seconds
-                ? new Date(doc.createdAt.seconds * 1000).toLocaleDateString("pt-BR")
-                : doc.data || "—";
-              const respondente = doc.tipoRespondente === "familiar"
-                ? `👨‍👩‍👧 ${doc.nomeRespondente || "Familiar"}`
-                : "🧑 Próprio paciente";
-              const analise = analisarLegado(doc);
-              const { hipotese, atencao, itens } = analise;
-              const temAlerta = itens.some(a => a.status && a.status.startsWith("⚠"));
-              return (
-                <div key={doc.id + i} style={{border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden",background:"white"}}>
-                  {/* Cabeçalho */}
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6,padding:"12px 16px",background:"#fafafa",borderBottom:"1px solid #f3f4f6"}}>
-                    <div>
-                      <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{respondente}</div>
-                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
-                        {data} · <span style={{background:"#ede9fe",color:"#6d28d9",borderRadius:4,padding:"1px 6px",fontSize:10,fontWeight:600}}>{doc._label}</span>
+      {historicoLegado.length > 0 && (() => {
+        // Mais recente = análise consolidada; demais = linhas de histórico
+        const mais_recente = historicoLegado[0];
+        const anteriores = historicoLegado.slice(1);
+        const analise = analisarLegado(mais_recente);
+        const { hipotese, atencao, itens } = analise;
+        const temAlerta = itens.some(a => a.status && a.status.startsWith("⚠"));
+        const fmtData = ts => ts?.seconds ? new Date(ts.seconds*1000).toLocaleDateString("pt-BR") : "—";
+
+        return (
+          <div style={{marginTop:24}}>
+            <div style={{fontWeight:600,fontSize:13,color:"var(--text-dark)",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <span>📂 Histórico anterior</span>
+              <span style={{fontSize:11,fontWeight:400,color:"var(--text-muted)"}}>— {historicoLegado.length} resposta(s) · formulários do sistema antigo</span>
+            </div>
+
+            {/* Card consolidado — resposta mais recente */}
+            <div style={{border:`1px solid ${temAlerta?"#fecaca":"#bbf7d0"}`,borderRadius:12,overflow:"hidden",background:"white",marginBottom:8}}>
+              {/* Cabeçalho */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6,padding:"12px 16px",background: temAlerta?"#fef2f2":"#f0fdf4",borderBottom:"1px solid #e5e7eb"}}>
+                <div>
+                  <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}}>Última resposta · {fmtData(mais_recente.createdAt)}</div>
+                  <div style={{fontSize:13,fontWeight:700,color: temAlerta?"#dc2626":"#16a34a",lineHeight:1.5}}>
+                    {hipotese || (temAlerta ? "Critérios atingidos — avaliação clínica indicada" : "Sem hipótese diagnóstica definida pelos critérios")}
+                  </div>
+                </div>
+                <div style={{fontSize:11,fontWeight:700,color: temAlerta?"#dc2626":"#16a34a"}}>
+                  {temAlerta ? "⚠ Critérios atingidos" : "✅ Dentro dos limiares"}
+                </div>
+              </div>
+
+              {/* Pontuações por eixo */}
+              {itens && itens.length > 0 && (
+                <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
+                  {itens.map((a,j) => (
+                    <div key={j} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:"#f9fafb",borderRadius:8,border:"1px solid #e5e7eb"}}>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{a.label}</div>
+                        <div style={{fontSize:11,color:a.cor,marginTop:2}}>{a.status}</div>
+                      </div>
+                      <div style={{fontSize:12,fontWeight:700,color:a.cor,whiteSpace:"nowrap"}}>{a.valor}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Alertas clínicos */}
+              {atencao && atencao.length > 0 && (
+                <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8}}>
+                  <div style={{fontSize:10,fontWeight:700,color:"#92400e",marginBottom:4}}>⚠ PONTOS DE ATENÇÃO CLÍNICA</div>
+                  {atencao.map((a,j) => (
+                    <div key={j} style={{fontSize:11,color:"#78350f",lineHeight:1.5,marginBottom:2}}>• {a}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* Obs do respondente */}
+              {mais_recente.obsFinais && (
+                <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:8,fontSize:11,color:"var(--text-dark)"}}>
+                  <strong>Obs:</strong> {mais_recente.obsFinais}
+                </div>
+              )}
+
+              {/* Quem respondeu */}
+              <div style={{padding:"8px 16px 12px",fontSize:11,color:"var(--text-muted)"}}>
+                Respondido por: {mais_recente.tipoRespondente==="familiar"
+                  ? `${mais_recente.nomeRespondente||"Familiar"} (${mais_recente.parentesco||"familiar"})`
+                  : "Próprio paciente"}
+              </div>
+            </div>
+
+            {/* Respostas anteriores — linha resumo */}
+            {anteriores.length > 0 && (
+              <div style={{background:"#f9fafb",borderRadius:10,padding:"8px 14px"}}>
+                <div style={{fontSize:11,color:"var(--text-muted)",fontWeight:600,marginBottom:6}}>Respostas anteriores</div>
+                {anteriores.map((doc,i) => {
+                  const a2 = analisarLegado(doc);
+                  const alerta2 = a2.itens.some(x => x.status && x.status.startsWith("⚠"));
+                  return (
+                    <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"5px 0",borderBottom:i<anteriores.length-1?"1px solid #e5e7eb":"none",gap:8}}>
+                      <div style={{fontSize:11,color:"var(--text-dark)"}}>
+                        {fmtData(doc.createdAt)} · {doc.tipoRespondente==="familiar"?`${doc.nomeRespondente||"Familiar"}`:"Próprio paciente"}
+                      </div>
+                      <div style={{fontSize:11,fontWeight:700,color:alerta2?"#dc2626":"#16a34a",whiteSpace:"nowrap"}}>
+                        {alerta2?"⚠":"✅"} {a2.hipotese ? a2.hipotese.split("—")[0].trim() : (alerta2?"Critérios atingidos":"Dentro dos limiares")}
                       </div>
                     </div>
-                    <div style={{fontSize:11,fontWeight:700,color: temAlerta ? "#dc2626" : "#16a34a"}}>
-                      {temAlerta ? "⚠ Critérios atingidos" : "✅ Dentro dos limiares"}
-                    </div>
-                  </div>
-
-                  {/* Pontuações por eixo — primeiro */}
-                  {itens && itens.length > 0 && (
-                    <div style={{padding:"10px 16px 0",display:"flex",flexDirection:"column",gap:6}}>
-                      {itens.map((a,j) => (
-                        <div key={j} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:"#f9fafb",borderRadius:8,border:"1px solid #e5e7eb"}}>
-                          <div>
-                            <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{a.label}</div>
-                            <div style={{fontSize:11,color:a.cor,marginTop:2}}>{a.status}</div>
-                          </div>
-                          <div style={{fontSize:12,fontWeight:700,color:a.cor,whiteSpace:"nowrap"}}>{a.valor}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Hipótese consolidada — depois das pontuações */}
-                  <div style={{margin:"10px 16px 0",padding:"10px 14px",background: temAlerta ? "#fef2f2" : "#f0fdf4",border:`1px solid ${temAlerta?"#fecaca":"#bbf7d0"}`,borderRadius:10}}>
-                    <div style={{fontSize:10,fontWeight:700,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>Hipótese Diagnóstica</div>
-                    <div style={{fontSize:12,fontWeight:700,color: temAlerta ? "#dc2626" : "#16a34a",lineHeight:1.5}}>
-                      {hipotese || (temAlerta ? "Critérios atingidos — avaliação clínica indicada" : "Sem hipótese diagnóstica definida pelos critérios")}
-                    </div>
-                  </div>
-
-
-                  {/* Alertas clínicos */}
-                  {atencao && atencao.length > 0 && (
-                    <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8}}>
-                      <div style={{fontSize:10,fontWeight:700,color:"#92400e",marginBottom:4}}>⚠ PONTOS DE ATENÇÃO CLÍNICA</div>
-                      {atencao.map((a,j) => (
-                        <div key={j} style={{fontSize:11,color:"#78350f",lineHeight:1.5,marginBottom:2}}>• {a}</div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Observações do respondente */}
-                  {doc.obsFinais && (
-                    <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#f9fafb",border:"1px solid #e5e7eb",borderRadius:8,fontSize:11,color:"var(--text-dark)"}}>
-                      <strong>Obs do respondente:</strong> {doc.obsFinais}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
