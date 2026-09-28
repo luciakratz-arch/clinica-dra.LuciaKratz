@@ -105,6 +105,25 @@ const GRUPOS_DIAGNOSTICOS = [
   },
 ];
 
+// Mapa: grupo.id → coleções antigas que contêm histórico legado
+const COLECOES_LEGADO = {
+  g1: ["clinica_rastreamento_bipolar"],
+  g2: ["clinica_rastreamento_neuro"],
+  g4: ["clinica_rastreamento_alimentar"],
+  g5: ["clinica_rastreamento_dependencia", "clinica_rastreamento_jogos"],
+  g6: ["clinica_rastreamento_sexual"],
+};
+
+// Labels amigáveis para coleções legadas
+const LABEL_COLECAO = {
+  clinica_rastreamento_bipolar:    "Bipolar / Borderline",
+  clinica_rastreamento_neuro:      "Neuro / Comportamento",
+  clinica_rastreamento_alimentar:  "Alimentar",
+  clinica_rastreamento_dependencia:"Dependência Química",
+  clinica_rastreamento_jogos:      "Jogos / Gaming",
+  clinica_rastreamento_sexual:     "Saúde Sexual",
+};
+
 // ── Sub-tela: Painel de um Grupo Diagnóstico ──────────────────────
 function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
   const BASE_URL = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz";
@@ -114,6 +133,7 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
   const [respostas, setRespostas] = useState([]);
   const [loadingRespostas, setLoadingRespostas] = useState(true);
   const [respSelecionada, setRespSelecionada] = useState(null);
+  const [historicoLegado, setHistoricoLegado] = useState([]);
 
   // Carregar respostas já recebidas deste grupo para este paciente
   useEffect(() => {
@@ -129,6 +149,30 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
         setLoadingRespostas(false);
       })
       .catch(() => setLoadingRespostas(false));
+  }, [paciente?.nome, grupo.id]);
+
+  // Carregar histórico de coleções legadas (formulários antigos)
+  useEffect(() => {
+    const colecoes = COLECOES_LEGADO[grupo.id];
+    if (!colecoes || !paciente?.nome) return;
+    Promise.all(
+      colecoes.map(col =>
+        db.collection(col)
+          .where("pacienteNome", "==", paciente.nome)
+          .get()
+          .then(snap => snap.docs.map(d => ({
+            id: d.id,
+            _colecao: col,
+            _label: LABEL_COLECAO[col] || col,
+            ...d.data()
+          })))
+          .catch(() => [])
+      )
+    ).then(resultados => {
+      const todos = resultados.flat()
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setHistoricoLegado(todos);
+    });
   }, [paciente?.nome, grupo.id]);
 
   function toggleHipotese(id) {
@@ -320,6 +364,62 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Histórico de formulários antigos (coleções legadas) */}
+      {historicoLegado.length > 0 && (
+        <div style={{marginTop:24}}>
+          <div style={{fontWeight:600,fontSize:13,color:"var(--text-dark)",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+            <span>📂 Histórico anterior ({historicoLegado.length})</span>
+            <span style={{fontSize:11,fontWeight:400,color:"var(--text-muted)"}}>— formulários preenchidos antes do novo sistema</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {historicoLegado.map((doc, i) => {
+              const data = doc.createdAt?.seconds
+                ? new Date(doc.createdAt.seconds * 1000).toLocaleDateString("pt-BR")
+                : doc.data || "—";
+              const respondente = doc.tipoRespondente === "familiar"
+                ? `👨‍👩‍👧 ${doc.nomeRespondente || "Familiar"}`
+                : "🧑 Próprio paciente";
+              return (
+                <div key={doc.id + i} style={{border:"1px solid #e5e7eb",borderRadius:12,padding:"12px 16px",background:"#fafafa"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{respondente}</div>
+                      <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
+                        {data} · <span style={{background:"#ede9fe",color:"#6d28d9",borderRadius:4,padding:"1px 6px",fontSize:10,fontWeight:600}}>{doc._label}</span>
+                      </div>
+                    </div>
+                    <div style={{fontSize:11,color:"#6b7280",background:"#f3f4f6",borderRadius:6,padding:"4px 10px"}}>
+                      📋 Formulário legado
+                    </div>
+                  </div>
+                  {/* Mostrar pontuações se existirem */}
+                  {doc.pontuacoes && (
+                    <div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:6}}>
+                      {Object.entries(doc.pontuacoes).map(([k, v]) => (
+                        <span key={k} style={{fontSize:11,background:"white",border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 8px",color:"var(--text-dark)"}}>
+                          <strong>{k}:</strong> {v}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Mostrar resultado geral se existir */}
+                  {doc.resultado && (
+                    <div style={{marginTop:8,fontSize:12,color:"var(--text-dark)",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8,padding:"8px 12px"}}>
+                      <strong>Resultado:</strong> {doc.resultado}
+                    </div>
+                  )}
+                  {doc.obsFinais && (
+                    <div style={{marginTop:6,fontSize:11,color:"#78350f"}}>
+                      <strong>Obs:</strong> {doc.obsFinais}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
