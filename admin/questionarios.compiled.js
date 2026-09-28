@@ -789,7 +789,13 @@ function AbaQuestionarios({
       color: "var(--text-muted)",
       lineHeight: 1.5
     }
-  }, "Formulário clínico completo — histórico, desenvolvimento e queixas"))), /*#__PURE__*/React.createElement("button", {
+  }, "Formulário clínico completo — histórico, desenvolvimento e queixas"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setSub("anamnese"),
     style: {
       display: "flex",
@@ -799,16 +805,58 @@ function AbaQuestionarios({
       color: "var(--purple)",
       border: "none",
       borderRadius: 8,
-      padding: "7px 14px",
+      padding: "7px 12px",
       fontSize: 12,
       fontWeight: 600,
-      cursor: "pointer",
-      alignSelf: "flex-start"
+      cursor: "pointer"
     }
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "eye",
     size: 13
-  }), " Visualizar")), GRUPOS_DIAGNOSTICOS.map(g => /*#__PURE__*/React.createElement("div", {
+  }), " Visualizar"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/?paciente=${encodeURIComponent(paciente?.nome || "")}`;
+      navigator.clipboard.writeText(url).then(() => alert("Link copiado!")).catch(() => alert(url));
+    },
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 5,
+      background: "#f0fdf4",
+      color: "#15803d",
+      border: "none",
+      borderRadius: 8,
+      padding: "7px 12px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "link",
+    size: 13
+  }), " Copiar Link"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      const url = `https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/anamnese-publica/?paciente=${encodeURIComponent(paciente?.nome || "")}`;
+      const msg = `Olá${paciente?.nome ? " " + paciente.nome.split(" ")[0] : ""}! 😊\n\nPor favor, preencha sua anamnese clínica pelo link abaixo:\n\n${url}\n\n_Dra. Lucia Kratz — Psicóloga_`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    },
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 5,
+      background: "#f0fdf4",
+      color: "#15803d",
+      border: "1px solid #bbf7d0",
+      borderRadius: 8,
+      padding: "7px 12px",
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: "pointer"
+    }
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "message-circle",
+    size: 13
+  }), " WhatsApp"))), GRUPOS_DIAGNOSTICOS.map(g => /*#__PURE__*/React.createElement("div", {
     key: g.id,
     style: {
       border: "1px solid var(--gray-200)",
