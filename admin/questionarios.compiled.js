@@ -793,33 +793,9 @@ function PainelGrupoDiagnostico({
         fontWeight: 700,
         color: temAlerta ? "#dc2626" : "#16a34a"
       }
-    }, temAlerta ? "⚠ Critérios atingidos" : "✅ Dentro dos limiares")), hipotese && /*#__PURE__*/React.createElement("div", {
+    }, temAlerta ? "⚠ Critérios atingidos" : "✅ Dentro dos limiares")), itens && itens.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
-        margin: "12px 16px 0",
-        padding: "10px 14px",
-        background: temAlerta ? "#fef2f2" : "#f0fdf4",
-        border: `1px solid ${temAlerta ? "#fecaca" : "#bbf7d0"}`,
-        borderRadius: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        fontWeight: 700,
-        color: "var(--text-muted)",
-        textTransform: "uppercase",
-        letterSpacing: .5,
-        marginBottom: 4
-      }
-    }, "Hipótese Diagnóstica"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 700,
-        color: temAlerta ? "#dc2626" : "#16a34a",
-        lineHeight: 1.5
-      }
-    }, hipotese)), itens.length > 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: "10px 16px",
+        padding: "10px 16px 0",
         display: "flex",
         flexDirection: "column",
         gap: 6
@@ -854,7 +830,31 @@ function PainelGrupoDiagnostico({
         color: a.cor,
         whiteSpace: "nowrap"
       }
-    }, a.valor)))), atencao && atencao.length > 0 && /*#__PURE__*/React.createElement("div", {
+    }, a.valor)))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        margin: "10px 16px 0",
+        padding: "10px 14px",
+        background: temAlerta ? "#fef2f2" : "#f0fdf4",
+        border: `1px solid ${temAlerta ? "#fecaca" : "#bbf7d0"}`,
+        borderRadius: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 10,
+        fontWeight: 700,
+        color: "var(--text-muted)",
+        textTransform: "uppercase",
+        letterSpacing: .5,
+        marginBottom: 4
+      }
+    }, "Hipótese Diagnóstica"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 12,
+        fontWeight: 700,
+        color: temAlerta ? "#dc2626" : "#16a34a",
+        lineHeight: 1.5
+      }
+    }, hipotese || (temAlerta ? "Critérios atingidos — avaliação clínica indicada" : "Sem hipótese diagnóstica definida pelos critérios"))), atencao && atencao.length > 0 && /*#__PURE__*/React.createElement("div", {
       style: {
         margin: "0 16px 12px",
         padding: "8px 12px",
