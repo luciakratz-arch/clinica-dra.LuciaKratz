@@ -105,6 +105,81 @@ const GRUPOS_DIAGNOSTICOS = [
   },
 ];
 
+// ── Análise de documentos legados (recalcula critérios dos formulários antigos) ──
+function analisarLegado(doc) {
+  const col = doc._colecao;
+
+  // Bipolar/Borderline — p1–p15
+  if (col === "clinica_rastreamento_bipolar") {
+    const isC = k => doc[k] === "C";
+    const isB = k => doc[k] === "B";
+    const maniaC  = ["p1","p2","p3"].filter(isC).length;
+    const maniaB  = ["p1","p2","p3"].filter(isB).length;
+    const depC    = ["p4","p5","p6"].filter(isC).length;
+    const borderC = ["p7","p8","p9","p10","p11","p12","p13","p14","p15"].filter(isC).length;
+    const borderB = ["p7","p8","p9","p10","p11","p12","p13","p14","p15"].filter(isB).length;
+
+    const itens = [
+      { label:"TB Mania/Hipomania", c:maniaC, b:maniaB, min:3, total:3 },
+      { label:"Episódio Depressivo", c:depC, b:0, min:3, total:3 },
+      { label:"Borderline (TPB)", c:borderC, b:borderB, min:5, total:9 },
+    ];
+    return itens.map(it => ({
+      label: it.label,
+      valor: `${it.c}/${it.total} C`,
+      cor: it.c >= it.min ? "#dc2626" : it.c >= it.min - 1 ? "#d97706" : "#16a34a",
+      status: it.c >= it.min ? "⚠ Critério atingido" : it.c >= it.min - 1 ? "🔍 A observar" : "✅ Abaixo do limiar",
+    }));
+  }
+
+  // Neuro — p1–p20 (TDAH/TEA/TOD etc.)
+  if (col === "clinica_rastreamento_neuro") {
+    const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10",
+                   "p11","p12","p13","p14","p15","p16","p17","p18","p19","p20"];
+    const nC = pergs.filter(k => doc[k] === "C").length;
+    const nB = pergs.filter(k => doc[k] === "B").length;
+    return [{ label:"Funcionamento Neurodesenv.", valor:`${nC} C · ${nB} a observar`, cor: nC >= 8 ? "#dc2626" : nC >= 4 ? "#d97706" : "#16a34a",
+      status: nC >= 8 ? "⚠ Alta frequência de indicadores" : nC >= 4 ? "🔍 Indicadores moderados" : "✅ Baixa frequência" }];
+  }
+
+  // Alimentar
+  if (col === "clinica_rastreamento_alimentar") {
+    const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11","p12","p13","p14","p15"];
+    const nC = pergs.filter(k => doc[k] === "C").length;
+    return [{ label:"Comportamento Alimentar", valor:`${nC} C`, cor: nC >= 6 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
+      status: nC >= 6 ? "⚠ Indicadores significativos" : nC >= 3 ? "🔍 A observar" : "✅ Abaixo do limiar" }];
+  }
+
+  // Dependência Química
+  if (col === "clinica_rastreamento_dependencia") {
+    const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10","p11"];
+    const nC = pergs.filter(k => doc[k] === "C").length;
+    return [{ label:"Uso de Substâncias (DSM-5)", valor:`${nC}/11 C`,
+      cor: nC >= 6 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
+      status: nC >= 6 ? "⚠ Transtorno grave" : nC >= 4 ? "⚠ Transtorno moderado" : nC >= 2 ? "🔍 Transtorno leve" : "✅ Abaixo do limiar" }];
+  }
+
+  // Jogos
+  if (col === "clinica_rastreamento_jogos") {
+    const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9"];
+    const nC = pergs.filter(k => doc[k] === "C").length;
+    return [{ label:"Transtorno de Jogos", valor:`${nC}/9 C`,
+      cor: nC >= 5 ? "#dc2626" : nC >= 3 ? "#d97706" : "#16a34a",
+      status: nC >= 5 ? "⚠ Critério atingido (≥5)" : nC >= 3 ? "🔍 A observar" : "✅ Abaixo do limiar" }];
+  }
+
+  // Sexual
+  if (col === "clinica_rastreamento_sexual") {
+    const pergs = ["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10"];
+    const nC = pergs.filter(k => doc[k] === "C").length;
+    return [{ label:"Saúde Sexual", valor:`${nC} C`,
+      cor: nC >= 4 ? "#dc2626" : nC >= 2 ? "#d97706" : "#16a34a",
+      status: nC >= 4 ? "⚠ Indicadores significativos" : nC >= 2 ? "🔍 A observar" : "✅ Abaixo do limiar" }];
+  }
+
+  return [];
+}
+
 // Mapa: grupo.id → coleções antigas que contêm histórico legado
 const COLECOES_LEGADO = {
   g1: ["clinica_rastreamento_bipolar"],
@@ -382,37 +457,39 @@ function PainelGrupoDiagnostico({ paciente, grupo, onVoltar }) {
               const respondente = doc.tipoRespondente === "familiar"
                 ? `👨‍👩‍👧 ${doc.nomeRespondente || "Familiar"}`
                 : "🧑 Próprio paciente";
+              const analise = analisarLegado(doc);
+              const temAlerta = analise.some(a => a.status && a.status.startsWith("⚠"));
               return (
-                <div key={doc.id + i} style={{border:"1px solid #e5e7eb",borderRadius:12,padding:"12px 16px",background:"#fafafa"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+                <div key={doc.id + i} style={{border:"1px solid #e5e7eb",borderRadius:12,overflow:"hidden",background:"white"}}>
+                  {/* Cabeçalho */}
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6,padding:"12px 16px",background:"#fafafa",borderBottom:"1px solid #f3f4f6"}}>
                     <div>
                       <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{respondente}</div>
                       <div style={{fontSize:11,color:"var(--text-muted)",marginTop:2}}>
                         {data} · <span style={{background:"#ede9fe",color:"#6d28d9",borderRadius:4,padding:"1px 6px",fontSize:10,fontWeight:600}}>{doc._label}</span>
                       </div>
                     </div>
-                    <div style={{fontSize:11,color:"#6b7280",background:"#f3f4f6",borderRadius:6,padding:"4px 10px"}}>
-                      📋 Formulário legado
+                    <div style={{fontSize:11,fontWeight:700,color: temAlerta ? "#dc2626" : "#16a34a"}}>
+                      {temAlerta ? "⚠ Critérios atingidos" : "✅ Dentro dos limiares"}
                     </div>
                   </div>
-                  {/* Mostrar pontuações se existirem */}
-                  {doc.pontuacoes && (
-                    <div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:6}}>
-                      {Object.entries(doc.pontuacoes).map(([k, v]) => (
-                        <span key={k} style={{fontSize:11,background:"white",border:"1px solid #e5e7eb",borderRadius:6,padding:"3px 8px",color:"var(--text-dark)"}}>
-                          <strong>{k}:</strong> {v}
-                        </span>
+                  {/* Análise recalculada */}
+                  {analise.length > 0 && (
+                    <div style={{padding:"10px 16px",display:"flex",flexDirection:"column",gap:6}}>
+                      {analise.map((a,j) => (
+                        <div key={j} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:"#f9fafb",borderRadius:8,border:"1px solid #e5e7eb"}}>
+                          <div>
+                            <div style={{fontSize:12,fontWeight:700,color:"var(--text-dark)"}}>{a.label}</div>
+                            <div style={{fontSize:11,color:a.cor,marginTop:2}}>{a.status}</div>
+                          </div>
+                          <div style={{fontSize:12,fontWeight:700,color:a.cor,whiteSpace:"nowrap"}}>{a.valor}</div>
+                        </div>
                       ))}
                     </div>
                   )}
-                  {/* Mostrar resultado geral se existir */}
-                  {doc.resultado && (
-                    <div style={{marginTop:8,fontSize:12,color:"var(--text-dark)",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8,padding:"8px 12px"}}>
-                      <strong>Resultado:</strong> {doc.resultado}
-                    </div>
-                  )}
+                  {/* Observações */}
                   {doc.obsFinais && (
-                    <div style={{marginTop:6,fontSize:11,color:"#78350f"}}>
+                    <div style={{margin:"0 16px 12px",padding:"8px 12px",background:"#fffbeb",border:"1px solid #fcd34d",borderRadius:8,fontSize:11,color:"#78350f"}}>
                       <strong>Obs:</strong> {doc.obsFinais}
                     </div>
                   )}
