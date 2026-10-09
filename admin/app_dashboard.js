@@ -762,6 +762,90 @@ function RelatorioFrequencia({pacienteId, pacoteId, pacientes, sessoes, pacotes,
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
+  const [completando, setCompletando] = useState(false);
+
+  // Replica gerarDatas() do app_financeiro.js para uso local
+  function gerarDatasLocal(dataInicio, recorrencia, total, diasSemana){
+    if(recorrencia==="Sessão única") return [dataInicio];
+    const datas=[];
+    if(["Semanal (1x/semana)","Quinzenal","Mensal"].includes(recorrencia)){
+      const diaSemanaInicio = new Date(dataInicio+"T00:00:00").getDay();
+      let atual=new Date(dataInicio+"T00:00:00");
+      while(datas.length<total){
+        datas.push(atual.toISOString().split("T")[0]);
+        if(recorrencia==="Semanal (1x/semana)"){
+          atual.setDate(atual.getDate()+7);
+        } else if(recorrencia==="Quinzenal"){
+          atual.setDate(atual.getDate()+14);
+        } else {
+          const mesAtual = atual.getMonth();
+          atual.setDate(atual.getDate()+7);
+          while(atual.getMonth()===mesAtual || atual.getDay()!==diaSemanaInicio){
+            atual.setDate(atual.getDate()+1);
+          }
+        }
+      }
+      return datas.slice(0,total);
+    }
+    const dias=(diasSemana||[]).map(Number).sort();
+    if(!dias.length) return [];
+    datas.push(dataInicio);
+    let atual=new Date(dataInicio+"T00:00:00");
+    atual.setDate(atual.getDate()+1);
+    const fim=new Date(atual);fim.setFullYear(fim.getFullYear()+2);
+    while(datas.length<total&&atual<fim){
+      if(dias.includes(atual.getDay())) datas.push(atual.toISOString().split("T")[0]);
+      atual.setDate(atual.getDate()+1);
+    }
+    return datas.slice(0,total);
+  }
+
+  async function completarSessoes(){
+    if(!pacote) return;
+    const total = parseInt(pacote.totalSessoes)||0;
+    if(!total){ alert("Pacote sem total de sessões definido."); return; }
+    const todasDatas = gerarDatasLocal(pacote.dataInicio, pacote.recorrencia, total, pacote.diasSemana);
+    if(todasDatas.length < total){
+      alert("Não foi possível gerar todas as datas. Verifique as configurações do pacote.");
+      return;
+    }
+    const numerosExistentes = new Set(sessPac.map(s=>s.numSessao).filter(Boolean));
+    const faltantes = [];
+    for(let i=1;i<=total;i++){
+      if(!numerosExistentes.has(i)) faltantes.push(i);
+    }
+    if(faltantes.length===0){ alert("Nenhuma sessão faltante! O pacote está completo."); return; }
+    const conf = window.confirm(`Criar ${faltantes.length} sessão(ões) faltante(s): nº ${faltantes.join(", ")}?\n\nAs datas serão geradas conforme a recorrência do pacote.`);
+    if(!conf) return;
+    setCompletando(true);
+    try {
+      const batch = db.batch();
+      faltantes.forEach(num=>{
+        const data = todasDatas[num-1];
+        const ref = db.collection("clinica_sessoes").doc();
+        batch.set(ref,{
+          pacoteId: pacote.id,
+          pacienteId: pacote.pacienteId,
+          pacienteNome: pacote.pacienteNome||pacEfetivo?.nome||"",
+          numSessao: num,
+          data: data||"",
+          hora: pacote.horario||"",
+          valorSessao: parseFloat(pacote.valorSessao)||0,
+          status: "agendado",
+          pagamento: "pendente",
+          tipo: "Psicoterapia",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+      await batch.commit();
+      alert(`✅ ${faltantes.length} sessão(ões) criada(s) com sucesso!`);
+    } catch(e){
+      console.error("Erro ao completar sessões:", e);
+      alert("Erro ao criar sessões: "+e.message);
+    } finally {
+      setCompletando(false);
+    }
+  }
 
   const STATUS_S={
     agendado:  {l:"Agendado",   c:"#7B00C4"},
@@ -950,6 +1034,18 @@ ${Object.entries(sessMeses).sort(([a],[b])=>a.localeCompare(b)).map(([mes,sess])
         }}>
           <Icon name="printer" size={15}/> Imprimir / PDF
         </button>
+        {pacote&&(()=>{
+          const total = parseInt(pacote.totalSessoes)||0;
+          const faltam = total - sessPac.length;
+          if(faltam<=0) return null;
+          return(
+            <button onClick={completarSessoes} disabled={completando}
+              style={{background:"rgba(255,255,255,0.2)",border:"1.5px solid rgba(255,255,255,0.6)",cursor:"pointer",color:"white",padding:"6px 14px",borderRadius:8,fontSize:13,fontWeight:600,display:"flex",alignItems:"center",gap:6}}>
+              {completando?<Icon name="loader" size={15}/>:<Icon name="plus-circle" size={15}/>}
+              {completando?"Criando...":(`Completar (${faltam} faltante${faltam>1?"s":""})`)}
+            </button>
+          );
+        })()}
       </div>
 
       {/* Cabeçalho */}
