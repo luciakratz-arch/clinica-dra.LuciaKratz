@@ -1,3 +1,4 @@
+import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";
 function DashboardAdmin({
   user,
   onVerEvolucao
@@ -260,767 +261,881 @@ function DashboardAdmin({
   const despAno = lcAno.filter(l => l.tipo_lancamento === "despesa" && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0) + lpAno.filter(l => l.tipo === "despesa" && (l.status === "pago" || l.status === "recebido")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
   const saldoAno = recAno - despAno;
   const pacAtivos = Object.entries(atividades).filter(([, v]) => Object.keys(v.itens).length > 0).sort((a, b) => (b[1].ultimaAtividade || "").localeCompare(a[1].ultimaAtividade || ""));
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-header"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "page-title"
-  }, "Dashboard"), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle",
-    style: {
-      textTransform: "capitalize"
-    }
-  }, hoje)), /*#__PURE__*/React.createElement("div", {
-    className: "metrics-grid",
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "users",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Pacientes Ativos"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, ativos), /*#__PURE__*/React.createElement("div", {
-    className: "metric-sub"
-  }, pacientes.length, " total")), /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "calendar",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Sessões Hoje"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, sessoesHoje), /*#__PURE__*/React.createElement("div", {
-    className: "metric-sub"
-  }, "agendadas")), /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "package",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Pendente Clínica"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value",
-    style: {
-      fontSize: 18,
-      color: "#d97706"
-    }
-  }, fmt(lcMes.filter(l => l.status === "pendente").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0)))), /*#__PURE__*/React.createElement("div", {
-    className: "metric-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "metric-icon"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "heart",
-    size: 20
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "metric-label"
-  }, "Casais em Terapia"), /*#__PURE__*/React.createElement("div", {
-    className: "metric-value"
-  }, pacientes.filter(p => p.casalId).length / 2 | 0))), (aniversariantesHoje.length > 0 || proximosAniv.length > 0 || semData.length > 0) && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 24,
-      borderRadius: 16,
-      overflow: "hidden",
-      border: "2px solid #f3e8ff",
-      boxShadow: "0 4px 20px rgba(123,0,196,0.1)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "linear-gradient(135deg,#7B00C4,#a855f7)",
-      padding: "16px 20px",
-      display: "flex",
-      alignItems: "center",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 24
-    }
-  }, "🎂"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "white",
-      fontWeight: 700,
-      fontSize: 16
-    }
-  }, "Aniversários"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "rgba(255,255,255,0.8)",
-      fontSize: 12
-    }
-  }, "Acompanhe seus pacientes"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      padding: "16px 20px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 16
-    }
-  }, aniversariantesHoje.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: "#7B00C4",
-      textTransform: "uppercase",
-      letterSpacing: 1,
-      marginBottom: 8
-    }
-  }, "🎉 Hoje"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 6
-    }
-  }, aniversariantesHoje.map(p => {
-    const nasc = p.dataNascimento;
-    const anos = nasc ? new Date().getFullYear() - parseInt(nasc.slice(0, 4), 10) : null;
-    return /*#__PURE__*/React.createElement("div", {
-      key: p.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "10px 14px",
-        background: "linear-gradient(135deg,#f5e8ff,#fff0fb)",
-        borderRadius: 10,
-        border: "1px solid #e0c0ff"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        background: "#7B00C4",
-        color: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontWeight: 700,
-        fontSize: 15,
-        flexShrink: 0
-      }
-    }, (p.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600,
-        fontSize: 14,
-        color: "#3d006a"
-      }
-    }, p.nome), anos && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "#a855f7"
-      }
-    }, "🎈 ", anos, " anos hoje!")), p.email && /*#__PURE__*/React.createElement("a", {
-      href: "mailto:" + p.email + "?subject=Feliz Aniversário, " + (p.nome || "").split(" ")[0] + "!&body=Olá, " + (p.nome || "").split(" ")[0] + "! Feliz Aniversário! 🎉🦋",
-      style: {
-        fontSize: 11,
-        color: "#7B00C4",
-        textDecoration: "none",
-        padding: "5px 10px",
-        border: "1px solid #c4b0ff",
-        borderRadius: 20,
-        whiteSpace: "nowrap"
-      },
-      target: "_blank"
-    }, "✉ Enviar e-mail"));
-  }))), proximosAniv.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 700,
-      color: "#BA7517",
-      textTransform: "uppercase",
-      letterSpacing: 1,
-      marginBottom: 8
-    }
-  }, "📅 Próximos 7 dias"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 5
-    }
-  }, proximosAniv.map(p => {
-    const nasc = p.dataNascimento;
-    const mes = parseInt(nasc.slice(5, 7), 10);
-    const dia = parseInt(nasc.slice(8, 10), 10);
-    const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-    return /*#__PURE__*/React.createElement("div", {
-      key: p.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "8px 14px",
-        background: "#fffbf0",
-        borderRadius: 8,
-        border: "1px solid #fde68a"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 18
-      }
-    }, "🎁"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 600,
-        fontSize: 13,
-        color: "#3d006a"
-      }
-    }, p.nome), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "#BA7517",
-        marginLeft: 8
-      }
-    }, dia, "/", meses[mes - 1])));
-  }))), semData.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f9f9f9",
-      borderRadius: 10,
-      padding: "12px 14px",
-      border: "1px dashed #ddd"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#888",
-      marginBottom: 6
-    }
-  }, "⚠️ ", /*#__PURE__*/React.createElement("strong", null, semData.length, " paciente(s)"), " sem data de nascimento cadastrada"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "#aaa"
-    }
-  }, "Envie o link de atualização: ", /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: "#7B00C4",
-      wordBreak: "break-all"
-    }
-  }, window.location.origin.replace("clinica", ""), "/aniversario/"))))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 16,
-      marginBottom: 4,
-      display: "flex",
-      alignItems: "center",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "activity",
-    size: 18
-  }), " Atividades dos últimos 8 dias"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 16
-    }
-  }, "Pacientes que interagiram no app"), loadingAtiv ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement(Spinner, null)) : pacAtivos.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 24,
-      color: "var(--text-muted)",
-      fontSize: 14
-    }
-  }, "Nenhuma atividade nos últimos 8 dias.") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, pacAtivos.map(([pacId, info]) => {
-    const maisRecente = info.ultimaAtividade ? new Date(info.ultimaAtividade) : new Date(0);
-    const isNovo = maisRecente > ultimaVisita;
-    return /*#__PURE__*/React.createElement("div", {
-      key: pacId,
-      style: {
-        border: isNovo ? "1.5px solid var(--purple)" : "1px solid var(--gray-200)",
-        borderRadius: 12,
-        padding: "14px 18px",
-        background: isNovo ? "var(--purple-soft)" : "var(--gray-50)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        flex: 1,
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "relative",
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        background: "var(--purple-soft)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "var(--font-display)",
-        fontWeight: 700,
-        color: "var(--purple)",
-        fontSize: 14
-      }
-    }, (info.nome || "?").charAt(0).toUpperCase()), isNovo && /*#__PURE__*/React.createElement("div", {
-      style: {
-        position: "absolute",
-        top: -2,
-        right: -2,
-        width: 10,
-        height: 10,
-        borderRadius: "50%",
-        background: "var(--purple)",
-        border: "2px solid white"
-      }
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 600,
-        fontSize: 14
-      }
-    }, info.nome || "Paciente"), isNovo && /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 10,
-        background: "var(--purple)",
-        color: "white",
-        borderRadius: 20,
-        padding: "1px 8px",
-        fontWeight: 600
-      }
-    }, "NOVO")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 6,
-        marginBottom: 4
-      }
-    }, Object.entries(info.itens).map(([label, count]) => /*#__PURE__*/React.createElement("span", {
-      key: label,
-      style: {
-        fontSize: 12,
-        background: "white",
-        border: "1px solid var(--gray-200)",
-        borderRadius: 20,
-        padding: "2px 10px",
-        color: "var(--text-muted)"
-      }
-    }, label, " ", count > 1 ? `(${count})` : ""))), info.ultimaAtividade && (() => {
-      const raw = info.ultimaAtividade.length === 10 ? info.ultimaAtividade + "T12:00:00" : info.ultimaAtividade;
-      const diff = Math.floor((Date.now() - new Date(raw).getTime()) / (1000 * 60 * 60 * 24));
-      const txt = isNaN(diff) ? "" : diff === 0 ? "hoje" : diff === 1 ? "ontem" : `há ${diff} dias`;
-      return txt ? /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      className: "page-header",
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "page-title",
+        children: "Dashboard"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        className: "page-subtitle",
         style: {
-          fontSize: 11,
-          color: "var(--text-muted)"
-        }
-      }, "Último acesso: ", txt) : null;
-    })())), /*#__PURE__*/React.createElement("button", {
-      onClick: () => onVerEvolucao && onVerEvolucao(pacId),
+          textTransform: "capitalize"
+        },
+        children: hoje
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "metrics-grid",
       style: {
-        background: "var(--purple)",
-        color: "white",
-        border: "none",
-        borderRadius: 8,
-        padding: "7px 16px",
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        whiteSpace: "nowrap",
-        fontFamily: "var(--font-body)",
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "trending-up",
-      size: 13
-    }), " Ver Evolução"));
-  }))), rastreamentos.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 16,
-      marginBottom: 4,
-      display: "flex",
-      alignItems: "center",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "clipboard-list",
-    size: 18
-  }), " Rastreamentos Recebidos"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--text-muted)",
-      marginBottom: 16
-    }
-  }, "Respondidos nos últimos 7 dias"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, rastreamentos.map(r => {
-    const ts = r.createdAt?.toDate?.();
-    const agora = new Date();
-    const diff = ts ? Math.round((agora - ts) / 1000 / 60) : null;
-    const tempo = diff === null ? "" : diff < 60 ? `há ${diff} min` : diff < 1440 ? `há ${Math.round(diff / 60)}h` : `há ${Math.round(diff / 1440)} dia${Math.round(diff / 1440) > 1 ? "s" : ""}`;
-    const respondente = r.tipoRespondente === "paciente" ? "Próprio paciente" : r.parentesco || r.nomeRespondente || "Familiar";
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
-      style: {
-        border: "1px solid var(--gray-200)",
-        borderRadius: 12,
-        padding: "12px 16px",
-        background: "var(--gray-50)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        flex: 1,
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 28,
-        flexShrink: 0
-      }
-    }, r._emoji), /*#__PURE__*/React.createElement("div", {
-      style: {
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600,
-        fontSize: 14,
-        marginBottom: 2
-      }
-    }, r.pacienteNome || "Paciente"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)"
-      }
-    }, r._tipo, " · ", respondente), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        marginTop: 2
-      }
-    }, tempo))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        flexShrink: 0
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: "var(--purple-soft)",
-        color: "var(--purple)",
-        padding: "4px 12px",
-        borderRadius: 20,
-        fontSize: 12,
-        fontWeight: 600
-      }
-    }, "Novo ✓"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => {
-        const pid = r.pacienteId || (window._pacientesCache || []).find(p => p.nome === r.pacienteNome)?.id;
-        if (pid) {
-          window._pacienteInicialId = pid;
-          window._pacienteAbaInicial = "questionarios";
-          // Navega para a página Pacientes
-          onVerEvolucao && onVerEvolucao(pid);
-          // Se Pacientes já estava montado, dispara evento direto
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent("irParaPaciente", {
-              detail: {
-                pacienteId: pid,
-                aba: "questionarios"
-              }
-            }));
-          }, 80);
-        } else {
-          alert('Paciente não encontrado: ' + r.pacienteNome);
-        }
+        marginBottom: 24
       },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "users",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Pacientes Ativos"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: ativos
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-sub",
+          children: [pacientes.length, " total"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "calendar",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Sessões Hoje"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: sessoesHoje
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-sub",
+          children: "agendadas"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "package",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Pendente Clínica"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          style: {
+            fontSize: 18,
+            color: "#d97706"
+          },
+          children: fmt(lcMes.filter(l => l.status === "pendente").reduce((a, l) => a + (parseFloat(l.valor) || 0), 0))
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        className: "metric-card",
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "metric-icon",
+          children: /*#__PURE__*/_jsxDEV(Icon, {
+            name: "heart",
+            size: 20
+          }, void 0, false)
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-label",
+          children: "Casais em Terapia"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "metric-value",
+          children: pacientes.filter(p => p.casalId).length / 2 | 0
+        }, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true), (aniversariantesHoje.length > 0 || proximosAniv.length > 0 || semData.length > 0) && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        background: "var(--purple)",
-        color: "white",
-        border: "none",
-        borderRadius: 8,
-        padding: "6px 14px",
-        fontSize: 12,
-        fontWeight: 600,
-        cursor: "pointer",
-        fontFamily: "var(--font-body)",
-        display: "flex",
-        alignItems: "center",
-        gap: 5
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "external-link",
-      size: 12
-    }), " Ver")));
-  }))), /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      marginBottom: 24
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 16,
-      marginBottom: 16,
-      display: "flex",
-      alignItems: "center",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "bar-chart-2",
-    size: 18
-  }), " Resumo Financeiro — ", new Date().toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
-      gap: 10,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: saldoMes >= 0 ? "#d1fae5" : "#fee2e2",
-      borderRadius: 12,
-      padding: "16px 20px",
-      border: "1.5px solid",
-      borderColor: saldoMes >= 0 ? "#6ee7b7" : "#fca5a5"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: saldoMes >= 0 ? "#059669" : "#dc2626",
-      marginBottom: 6
-    }
-  }, "Saldo do Mês (Geral)"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 24,
-      fontWeight: 800,
-      color: saldoMes >= 0 ? "#059669" : "#dc2626"
-    }
-  }, fmt(saldoMes)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#6b7280",
-      marginTop: 4
-    }
-  }, "Clínica + Pessoal")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f0fdf4",
-      borderRadius: 12,
-      padding: "16px 20px",
-      border: "1.5px solid #86efac"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "#059669",
-      marginBottom: 6
-    }
-  }, "Total Receitas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 22,
-      fontWeight: 800,
-      color: "#059669"
-    }
-  }, fmt(totalRec)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#6b7280",
-      marginTop: 4
-    }
-  }, "Clínica: ", fmt(recClinica), " · Pessoal: ", fmt(recPessoal))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#fef2f2",
-      borderRadius: 12,
-      padding: "16px 20px",
-      border: "1.5px solid #fca5a5"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "#dc2626",
-      marginBottom: 6
-    }
-  }, "Total Despesas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 22,
-      fontWeight: 800,
-      color: "#dc2626"
-    }
-  }, fmt(totalDesp)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "#6b7280",
-      marginTop: 4
-    }
-  }, "Clínica: ", fmt(despClinica), " · Pessoal: ", fmt(despPessoal)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderTop: "1px solid var(--gray-100)",
-      paddingTop: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 12,
-      fontSize: 14,
-      color: "var(--text-muted)"
-    }
-  }, "Acumulado ", anoAtual), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(100px,1fr))",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 16px",
-      borderRadius: 10,
-      background: "var(--gray-50)",
-      border: "1px solid var(--gray-200)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "Receitas ", anoAtual), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 18,
-      color: "#059669"
-    }
-  }, fmt(recAno))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 16px",
-      borderRadius: 10,
-      background: "var(--gray-50)",
-      border: "1px solid var(--gray-200)"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "Despesas ", anoAtual), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 18,
-      color: "#dc2626"
-    }
-  }, fmt(despAno))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 16px",
-      borderRadius: 10,
-      background: saldoAno >= 0 ? "#f0fdf4" : "#fef2f2",
-      border: "1px solid",
-      borderColor: saldoAno >= 0 ? "#86efac" : "#fca5a5"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: "var(--text-muted)",
-      marginBottom: 4
-    }
-  }, "Saldo Acumulado ", anoAtual), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 700,
-      fontSize: 18,
-      color: saldoAno >= 0 ? "#059669" : "#dc2626"
-    }
-  }, fmt(saldoAno)))))), /*#__PURE__*/React.createElement("div", {
-    className: "card"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      marginBottom: 8
-    }
-  }, "Bem-vinda, ", user.nome, " 🦋"), /*#__PURE__*/React.createElement("a", {
-    href: "../clinica/",
-    style: {
-      fontSize: 13,
-      color: "var(--purple)",
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      width: "fit-content",
-      marginTop: 8
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "external-link",
-    size: 14
-  }), " Portal do Paciente")));
+        marginBottom: 24,
+        borderRadius: 16,
+        overflow: "hidden",
+        border: "2px solid #f3e8ff",
+        boxShadow: "0 4px 20px rgba(123,0,196,0.1)"
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "linear-gradient(135deg,#7B00C4,#a855f7)",
+          padding: "16px 20px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10
+        },
+        children: [/*#__PURE__*/_jsxDEV("span", {
+          style: {
+            fontSize: 24
+          },
+          children: "🎂"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              color: "white",
+              fontWeight: 700,
+              fontSize: 16
+            },
+            children: "Aniversários"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              color: "rgba(255,255,255,0.8)",
+              fontSize: 12
+            },
+            children: "Acompanhe seus pacientes"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          padding: "16px 20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16
+        },
+        children: [aniversariantesHoje.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#7B00C4",
+              textTransform: "uppercase",
+              letterSpacing: 1,
+              marginBottom: 8
+            },
+            children: "🎉 Hoje"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 6
+            },
+            children: aniversariantesHoje.map(p => {
+              const nasc = p.dataNascimento;
+              const anos = nasc ? new Date().getFullYear() - parseInt(nasc.slice(0, 4), 10) : null;
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 14px",
+                  background: "linear-gradient(135deg,#f5e8ff,#fff0fb)",
+                  borderRadius: 10,
+                  border: "1px solid #e0c0ff"
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "#7B00C4",
+                    color: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    flexShrink: 0
+                  },
+                  children: (p.nome || "?")[0].toUpperCase()
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    flex: 1
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: "#3d006a"
+                    },
+                    children: p.nome
+                  }, void 0, false), anos && /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontSize: 12,
+                      color: "#a855f7"
+                    },
+                    children: ["🎈 ", anos, " anos hoje!"]
+                  }, void 0, true)]
+                }, void 0, true), p.email && /*#__PURE__*/_jsxDEV("a", {
+                  href: "mailto:" + p.email + "?subject=Feliz Aniversário, " + (p.nome || "").split(" ")[0] + "!&body=Olá, " + (p.nome || "").split(" ")[0] + "! Feliz Aniversário! 🎉🦋",
+                  style: {
+                    fontSize: 11,
+                    color: "#7B00C4",
+                    textDecoration: "none",
+                    padding: "5px 10px",
+                    border: "1px solid #c4b0ff",
+                    borderRadius: 20,
+                    whiteSpace: "nowrap"
+                  },
+                  target: "_blank",
+                  children: "✉ Enviar e-mail"
+                }, void 0, false)]
+              }, p.id, true);
+            })
+          }, void 0, false)]
+        }, void 0, true), proximosAniv.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#BA7517",
+              textTransform: "uppercase",
+              letterSpacing: 1,
+              marginBottom: 8
+            },
+            children: "📅 Próximos 7 dias"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 5
+            },
+            children: proximosAniv.map(p => {
+              const nasc = p.dataNascimento;
+              const mes = parseInt(nasc.slice(5, 7), 10);
+              const dia = parseInt(nasc.slice(8, 10), 10);
+              const meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+              return /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 14px",
+                  background: "#fffbf0",
+                  borderRadius: 8,
+                  border: "1px solid #fde68a"
+                },
+                children: [/*#__PURE__*/_jsxDEV("span", {
+                  style: {
+                    fontSize: 18
+                  },
+                  children: "🎁"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    flex: 1
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontWeight: 600,
+                      fontSize: 13,
+                      color: "#3d006a"
+                    },
+                    children: p.nome
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontSize: 12,
+                      color: "#BA7517",
+                      marginLeft: 8
+                    },
+                    children: [dia, "/", meses[mes - 1]]
+                  }, void 0, true)]
+                }, void 0, true)]
+              }, p.id, true);
+            })
+          }, void 0, false)]
+        }, void 0, true), semData.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#f9f9f9",
+            borderRadius: 10,
+            padding: "12px 14px",
+            border: "1px dashed #ddd"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              color: "#888",
+              marginBottom: 6
+            },
+            children: ["⚠️ ", /*#__PURE__*/_jsxDEV("strong", {
+              children: [semData.length, " paciente(s)"]
+            }, void 0, true), " sem data de nascimento cadastrada"]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 11,
+              color: "#aaa"
+            },
+            children: ["Envie o link de atualização: ", /*#__PURE__*/_jsxDEV("strong", {
+              style: {
+                color: "#7B00C4",
+                wordBreak: "break-all"
+              },
+              children: [window.location.origin.replace("clinica", ""), "/aniversario/"]
+            }, void 0, true)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      style: {
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 16,
+          marginBottom: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "activity",
+          size: 18
+        }, void 0, false), " Atividades dos últimos 8 dias"]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 13,
+          color: "var(--text-muted)",
+          marginBottom: 16
+        },
+        children: "Pacientes que interagiram no app"
+      }, void 0, false), loadingAtiv ? /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center",
+          padding: 20
+        },
+        children: /*#__PURE__*/_jsxDEV(Spinner, {}, void 0, false)
+      }, void 0, false) : pacAtivos.length === 0 ? /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          textAlign: "center",
+          padding: 24,
+          color: "var(--text-muted)",
+          fontSize: 14
+        },
+        children: "Nenhuma atividade nos últimos 8 dias."
+      }, void 0, false) : /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        },
+        children: pacAtivos.map(([pacId, info]) => {
+          const maisRecente = info.ultimaAtividade ? new Date(info.ultimaAtividade) : new Date(0);
+          const isNovo = maisRecente > ultimaVisita;
+          return /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              border: isNovo ? "1.5px solid var(--purple)" : "1px solid var(--gray-200)",
+              borderRadius: 12,
+              padding: "14px 18px",
+              background: isNovo ? "var(--purple-soft)" : "var(--gray-50)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                flex: 1,
+                minWidth: 0
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  position: "relative",
+                  flexShrink: 0
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "var(--purple-soft)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: "var(--font-display)",
+                    fontWeight: 700,
+                    color: "var(--purple)",
+                    fontSize: 14
+                  },
+                  children: (info.nome || "?").charAt(0).toUpperCase()
+                }, void 0, false), isNovo && /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    position: "absolute",
+                    top: -2,
+                    right: -2,
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: "var(--purple)",
+                    border: "2px solid white"
+                  }
+                }, void 0, false)]
+              }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  minWidth: 0
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    marginBottom: 4
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontWeight: 600,
+                      fontSize: 14
+                    },
+                    children: info.nome || "Paciente"
+                  }, void 0, false), isNovo && /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontSize: 10,
+                      background: "var(--purple)",
+                      color: "white",
+                      borderRadius: 20,
+                      padding: "1px 8px",
+                      fontWeight: 600
+                    },
+                    children: "NOVO"
+                  }, void 0, false)]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginBottom: 4
+                  },
+                  children: Object.entries(info.itens).map(([label, count]) => /*#__PURE__*/_jsxDEV("span", {
+                    style: {
+                      fontSize: 12,
+                      background: "white",
+                      border: "1px solid var(--gray-200)",
+                      borderRadius: 20,
+                      padding: "2px 10px",
+                      color: "var(--text-muted)"
+                    },
+                    children: [label, " ", count > 1 ? `(${count})` : ""]
+                  }, label, true))
+                }, void 0, false), info.ultimaAtividade && (() => {
+                  const raw = info.ultimaAtividade.length === 10 ? info.ultimaAtividade + "T12:00:00" : info.ultimaAtividade;
+                  const diff = Math.floor((Date.now() - new Date(raw).getTime()) / (1000 * 60 * 60 * 24));
+                  const txt = isNaN(diff) ? "" : diff === 0 ? "hoje" : diff === 1 ? "ontem" : `há ${diff} dias`;
+                  return txt ? /*#__PURE__*/_jsxDEV("div", {
+                    style: {
+                      fontSize: 11,
+                      color: "var(--text-muted)"
+                    },
+                    children: ["Último acesso: ", txt]
+                  }, void 0, true) : null;
+                })()]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+              onClick: () => onVerEvolucao && onVerEvolucao(pacId),
+              style: {
+                background: "var(--purple)",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                padding: "7px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                fontFamily: "var(--font-body)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                flexShrink: 0
+              },
+              children: [/*#__PURE__*/_jsxDEV(Icon, {
+                name: "trending-up",
+                size: 13
+              }, void 0, false), " Ver Evolução"]
+            }, void 0, true)]
+          }, pacId, true);
+        })
+      }, void 0, false)]
+    }, void 0, true), rastreamentos.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      style: {
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 16,
+          marginBottom: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "clipboard-list",
+          size: 18
+        }, void 0, false), " Rastreamentos Recebidos"]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontSize: 13,
+          color: "var(--text-muted)",
+          marginBottom: 16
+        },
+        children: "Respondidos nos últimos 7 dias"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 10
+        },
+        children: rastreamentos.map(r => {
+          const ts = r.createdAt?.toDate?.();
+          const agora = new Date();
+          const diff = ts ? Math.round((agora - ts) / 1000 / 60) : null;
+          const tempo = diff === null ? "" : diff < 60 ? `há ${diff} min` : diff < 1440 ? `há ${Math.round(diff / 60)}h` : `há ${Math.round(diff / 1440)} dia${Math.round(diff / 1440) > 1 ? "s" : ""}`;
+          const respondente = r.tipoRespondente === "paciente" ? "Próprio paciente" : r.parentesco || r.nomeRespondente || "Familiar";
+          return /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              border: "1px solid var(--gray-200)",
+              borderRadius: 12,
+              padding: "12px 16px",
+              background: "var(--gray-50)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+              flexWrap: "wrap"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                flex: 1,
+                minWidth: 0
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 28,
+                  flexShrink: 0
+                },
+                children: r._emoji
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  minWidth: 0
+                },
+                children: [/*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontWeight: 600,
+                    fontSize: 14,
+                    marginBottom: 2
+                  },
+                  children: r.pacienteNome || "Paciente"
+                }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 12,
+                    color: "var(--text-muted)"
+                  },
+                  children: [r._tipo, " · ", respondente]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+                  style: {
+                    fontSize: 11,
+                    color: "var(--text-muted)",
+                    marginTop: 2
+                  },
+                  children: tempo
+                }, void 0, false)]
+              }, void 0, true)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexShrink: 0
+              },
+              children: [/*#__PURE__*/_jsxDEV("span", {
+                style: {
+                  background: "var(--purple-soft)",
+                  color: "var(--purple)",
+                  padding: "4px 12px",
+                  borderRadius: 20,
+                  fontSize: 12,
+                  fontWeight: 600
+                },
+                children: "Novo ✓"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+                onClick: () => {
+                  const pid = r.pacienteId || (window._pacientesCache || []).find(p => p.nome === r.pacienteNome)?.id;
+                  if (pid) {
+                    window._pacienteInicialId = pid;
+                    window._pacienteAbaInicial = "questionarios";
+                    // Navega para a página Pacientes
+                    onVerEvolucao && onVerEvolucao(pid);
+                    // Se Pacientes já estava montado, dispara evento direto
+                    setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent("irParaPaciente", {
+                        detail: {
+                          pacienteId: pid,
+                          aba: "questionarios"
+                        }
+                      }));
+                    }, 80);
+                  } else {
+                    alert('Paciente não encontrado: ' + r.pacienteNome);
+                  }
+                },
+                style: {
+                  background: "var(--purple)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 14px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-body)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5
+                },
+                children: [/*#__PURE__*/_jsxDEV(Icon, {
+                  name: "external-link",
+                  size: 12
+                }, void 0, false), " Ver"]
+              }, void 0, true)]
+            }, void 0, true)]
+          }, r.id, true);
+        })
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      style: {
+        marginBottom: 24
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 700,
+          fontSize: 16,
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "center",
+          gap: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "bar-chart-2",
+          size: 18
+        }, void 0, false), " Resumo Financeiro — ", new Date().toLocaleDateString("pt-BR", {
+          month: "long",
+          year: "numeric"
+        })]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
+          gap: 10,
+          marginBottom: 20
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: saldoMes >= 0 ? "#d1fae5" : "#fee2e2",
+            borderRadius: 12,
+            padding: "16px 20px",
+            border: "1.5px solid",
+            borderColor: saldoMes >= 0 ? "#6ee7b7" : "#fca5a5"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 600,
+              color: saldoMes >= 0 ? "#059669" : "#dc2626",
+              marginBottom: 6
+            },
+            children: "Saldo do Mês (Geral)"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 24,
+              fontWeight: 800,
+              color: saldoMes >= 0 ? "#059669" : "#dc2626"
+            },
+            children: fmt(saldoMes)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              color: "#6b7280",
+              marginTop: 4
+            },
+            children: "Clínica + Pessoal"
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#f0fdf4",
+            borderRadius: 12,
+            padding: "16px 20px",
+            border: "1.5px solid #86efac"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#059669",
+              marginBottom: 6
+            },
+            children: "Total Receitas"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 22,
+              fontWeight: 800,
+              color: "#059669"
+            },
+            children: fmt(totalRec)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              color: "#6b7280",
+              marginTop: 4
+            },
+            children: ["Clínica: ", fmt(recClinica), " · Pessoal: ", fmt(recPessoal)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#fef2f2",
+            borderRadius: 12,
+            padding: "16px 20px",
+            border: "1.5px solid #fca5a5"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#dc2626",
+              marginBottom: 6
+            },
+            children: "Total Despesas"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 22,
+              fontWeight: 800,
+              color: "#dc2626"
+            },
+            children: fmt(totalDesp)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              color: "#6b7280",
+              marginTop: 4
+            },
+            children: ["Clínica: ", fmt(despClinica), " · Pessoal: ", fmt(despPessoal)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          borderTop: "1px solid var(--gray-100)",
+          paddingTop: 16
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontWeight: 600,
+            marginBottom: 12,
+            fontSize: 14,
+            color: "var(--text-muted)"
+          },
+          children: ["Acumulado ", anoAtual]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(100px,1fr))",
+            gap: 8
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              padding: "12px 16px",
+              borderRadius: 10,
+              background: "var(--gray-50)",
+              border: "1px solid var(--gray-200)"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)",
+                marginBottom: 4
+              },
+              children: ["Receitas ", anoAtual]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 18,
+                color: "#059669"
+              },
+              children: fmt(recAno)
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              padding: "12px 16px",
+              borderRadius: 10,
+              background: "var(--gray-50)",
+              border: "1px solid var(--gray-200)"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)",
+                marginBottom: 4
+              },
+              children: ["Despesas ", anoAtual]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 18,
+                color: "#dc2626"
+              },
+              children: fmt(despAno)
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              padding: "12px 16px",
+              borderRadius: 10,
+              background: saldoAno >= 0 ? "#f0fdf4" : "#fef2f2",
+              border: "1px solid",
+              borderColor: saldoAno >= 0 ? "#86efac" : "#fca5a5"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)",
+                marginBottom: 4
+              },
+              children: ["Saldo Acumulado ", anoAtual]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 700,
+                fontSize: 18,
+                color: saldoAno >= 0 ? "#059669" : "#dc2626"
+              },
+              children: fmt(saldoAno)
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      className: "card",
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        style: {
+          fontWeight: 600,
+          marginBottom: 8
+        },
+        children: ["Bem-vinda, ", user.nome, " 🦋"]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("a", {
+        href: "../clinica/",
+        style: {
+          fontSize: 13,
+          color: "var(--purple)",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          width: "fit-content",
+          marginTop: 8
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "external-link",
+          size: 14
+        }, void 0, false), " Portal do Paciente"]
+      }, void 0, true)]
+    }, void 0, true)]
+  }, void 0, true);
 }
 
 // ABA PERFIL
@@ -1074,110 +1189,120 @@ function PerfilPaciente({
     label: "Links Partilhados",
     icon: "link"
   }] : [])];
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: onVoltar,
-    style: {
-      padding: "8px 12px"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrow-left",
-    size: 16
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "page-title",
-    style: {
-      fontSize: 24
-    }
-  }, paciente.nome), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle"
-  }, "Perfil clinico completo · ", /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: "var(--text-muted)",
-      cursor: "pointer"
-    },
-    onClick: () => {
-      navigator.clipboard.writeText(paciente.id);
-      alert("ID copiado: " + paciente.id);
-    }
-  }, "ID: ", paciente.id, " 📋"))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-danger",
-    onClick: async () => {
-      if (!confirm("Excluir paciente?")) return;
-      await db.collection("clinica_pacientes").doc(paciente.id).delete();
-      onVoltar();
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "trash-2",
-    size: 15
-  }), " Excluir paciente")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 4,
-      marginBottom: 24,
-      overflowX: "auto",
-      borderBottom: "1px solid var(--gray-200)",
-      flexShrink: 0,
-      WebkitOverflowScrolling: "touch",
-      scrollbarWidth: "none"
-    }
-  }, ABAS.map(a => /*#__PURE__*/React.createElement("button", {
-    key: a.id,
-    onClick: () => setAba(a.id),
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 6,
-      padding: "10px 16px",
-      border: "none",
-      background: "none",
-      fontSize: 14,
-      cursor: "pointer",
-      fontFamily: "var(--font-body)",
-      color: aba === a.id ? "var(--purple)" : "var(--gray-600)",
-      borderBottom: aba === a.id ? "2px solid var(--purple)" : "2px solid transparent",
-      fontWeight: aba === a.id ? 500 : 400,
-      transition: "all .2s",
-      marginBottom: -1
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: a.icon,
-    size: 15
-  }), a.label))), aba === "perfil" && /*#__PURE__*/React.createElement(AbaPerfil, {
-    paciente: paciente,
-    pacientes: pacientes
-  }), aba === "modulos" && /*#__PURE__*/React.createElement(AbaModulos, {
-    paciente: paciente
-  }), aba === "modulo1" && /*#__PURE__*/React.createElement(AbaModulo1, {
-    paciente: paciente
-  }), aba === "metas" && /*#__PURE__*/React.createElement(AbaMetas, {
-    paciente: paciente
-  }), aba === "laudos" && /*#__PURE__*/React.createElement(EmBreve, {
-    titulo: "Laudos",
-    subtitulo: "Etapa 10"
-  }), aba === "evolucao" && /*#__PURE__*/React.createElement(AbaEvolucao, {
-    paciente: paciente
-  }), aba === "casal" && /*#__PURE__*/React.createElement(AbaCasal, {
-    paciente: paciente,
-    pacientes: pacientes
-  }), aba === "nr1" && /*#__PURE__*/React.createElement(AbaOcupacional, {
-    paciente: paciente
-  }), aba === "questionarios" && /*#__PURE__*/React.createElement(AbaQuestionarios, {
-    paciente: paciente
-  }), aba === "links" && /*#__PURE__*/React.createElement(AbaLinksPartilhados, {
-    paciente: paciente
-  }));
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 20
+      },
+      children: [/*#__PURE__*/_jsxDEV("button", {
+        className: "btn btn-ghost",
+        onClick: onVoltar,
+        style: {
+          padding: "8px 12px"
+        },
+        children: /*#__PURE__*/_jsxDEV(Icon, {
+          name: "arrow-left",
+          size: 16
+        }, void 0, false)
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          flex: 1
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "page-title",
+          style: {
+            fontSize: 24
+          },
+          children: paciente.nome
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "page-subtitle",
+          children: ["Perfil clinico completo · ", /*#__PURE__*/_jsxDEV("span", {
+            style: {
+              fontSize: 11,
+              color: "var(--text-muted)",
+              cursor: "pointer"
+            },
+            onClick: () => {
+              navigator.clipboard.writeText(paciente.id);
+              alert("ID copiado: " + paciente.id);
+            },
+            children: ["ID: ", paciente.id, " 📋"]
+          }, void 0, true)]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+        className: "btn btn-danger",
+        onClick: async () => {
+          if (!confirm("Excluir paciente?")) return;
+          await db.collection("clinica_pacientes").doc(paciente.id).delete();
+          onVoltar();
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "trash-2",
+          size: 15
+        }, void 0, false), " Excluir paciente"]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 4,
+        marginBottom: 24,
+        overflowX: "auto",
+        borderBottom: "1px solid var(--gray-200)",
+        flexShrink: 0,
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none"
+      },
+      children: ABAS.map(a => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setAba(a.id),
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "10px 16px",
+          border: "none",
+          background: "none",
+          fontSize: 14,
+          cursor: "pointer",
+          fontFamily: "var(--font-body)",
+          color: aba === a.id ? "var(--purple)" : "var(--gray-600)",
+          borderBottom: aba === a.id ? "2px solid var(--purple)" : "2px solid transparent",
+          fontWeight: aba === a.id ? 500 : 400,
+          transition: "all .2s",
+          marginBottom: -1
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: a.icon,
+          size: 15
+        }, void 0, false), a.label]
+      }, a.id, true))
+    }, void 0, false), aba === "perfil" && /*#__PURE__*/_jsxDEV(AbaPerfil, {
+      paciente: paciente,
+      pacientes: pacientes
+    }, void 0, false), aba === "modulos" && /*#__PURE__*/_jsxDEV(AbaModulos, {
+      paciente: paciente
+    }, void 0, false), aba === "modulo1" && /*#__PURE__*/_jsxDEV(AbaModulo1, {
+      paciente: paciente
+    }, void 0, false), aba === "metas" && /*#__PURE__*/_jsxDEV(AbaMetas, {
+      paciente: paciente
+    }, void 0, false), aba === "laudos" && /*#__PURE__*/_jsxDEV(EmBreve, {
+      titulo: "Laudos",
+      subtitulo: "Etapa 10"
+    }, void 0, false), aba === "evolucao" && /*#__PURE__*/_jsxDEV(AbaEvolucao, {
+      paciente: paciente
+    }, void 0, false), aba === "casal" && /*#__PURE__*/_jsxDEV(AbaCasal, {
+      paciente: paciente,
+      pacientes: pacientes
+    }, void 0, false), aba === "nr1" && /*#__PURE__*/_jsxDEV(AbaOcupacional, {
+      paciente: paciente
+    }, void 0, false), aba === "questionarios" && /*#__PURE__*/_jsxDEV(AbaQuestionarios, {
+      paciente: paciente
+    }, void 0, false), aba === "links" && /*#__PURE__*/_jsxDEV(AbaLinksPartilhados, {
+      paciente: paciente
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // LISTA PACIENTES
@@ -1332,7 +1457,7 @@ function Pacientes({
   }
   if (perfilAberto) {
     const pac = pacientes.find(p => p.id === perfilAberto);
-    if (pac) return /*#__PURE__*/React.createElement(PerfilPaciente, {
+    if (pac) return /*#__PURE__*/_jsxDEV(PerfilPaciente, {
       paciente: pac,
       onVoltar: () => {
         setPerfilAberto(null);
@@ -1340,7 +1465,7 @@ function Pacientes({
       },
       pacientes: pacientes,
       abaInicial: abaInicialPerfil
-    });
+    }, void 0, false);
   }
   const filtrados = pacientes.filter(p => {
     const ok = filtro === "todos" || p.status === filtro;
@@ -1376,473 +1501,551 @@ function Pacientes({
     setModal(false);
     setSalvando(false);
   }
-  if (loading) return /*#__PURE__*/React.createElement(Spinner, null);
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-header",
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start"
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "page-title"
-  }, "Pacientes"), /*#__PURE__*/React.createElement("div", {
-    className: "page-subtitle"
-  }, pacientes.filter(p => p.status === "ativo").length, " ativos · ", pacientes.filter(p => p.status === "alta").length, " com alta · ", pacientes.filter(p => p.status === "inativo").length, " inativos")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 13
-    },
-    onClick: () => setModalImport(true)
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "upload",
-    size: 15
-  }), " Importar Excel"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      fontSize: 13
-    },
-    onClick: () => {
-      const url = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
-      const texto = `🦋 *Clínica Dra. Lucia Kratz*\n\nOlá! Para agilizar o seu atendimento, preencha o formulário de cadastro pelo link abaixo:\n\n👉 ${url}\n\nÉ rápido e seguro. Após o preenchimento, seus dados já estarão disponíveis para a sua psicóloga.\n\nQualquer dúvida, estamos à disposição! 💜`;
-      navigator.clipboard.writeText(texto).then(() => alert("✓ Texto + link copiado!\nCole direto no WhatsApp.")).catch(() => prompt("Copie o texto:", texto));
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "link",
-    size: 15
-  }), " Link de Cadastro"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: abrirNovo
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "user-plus",
-    size: 16
-  }), " Novo Paciente"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 12,
-      marginBottom: 20,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    style: {
-      flex: 1,
-      minWidth: 200
-    },
-    placeholder: "Buscar por nome ou e-mail...",
-    value: busca,
-    onChange: e => setBusca(e.target.value)
-  }), [["todos", "Todos"], ["ativo", "Em atendimento"], ["alta", "Alta"], ["inativo", "Inativos"]].map(([f, l]) => /*#__PURE__*/React.createElement("button", {
-    key: f,
-    className: "btn " + (filtro === f ? "btn-purple" : "btn-ghost"),
-    onClick: () => setFiltro(f)
-  }, l))), ["pendente", "ativo", "alta", "inativo"].map(st => {
-    const grupo = filtrados.filter(p => p.status === st);
-    if (grupo.length === 0) return null;
-    return /*#__PURE__*/React.createElement("div", {
-      key: st,
-      style: {
-        marginBottom: 24
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+  if (loading) return /*#__PURE__*/_jsxDEV(Spinner, {}, void 0, false);
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      className: "page-header",
       style: {
         display: "flex",
-        alignItems: "center",
-        gap: 8,
-        marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
+        justifyContent: "space-between",
+        alignItems: "flex-start"
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          className: "page-title",
+          children: "Pacientes"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          className: "page-subtitle",
+          children: [pacientes.filter(p => p.status === "ativo").length, " ativos · ", pacientes.filter(p => p.status === "alta").length, " com alta · ", pacientes.filter(p => p.status === "inativo").length, " inativos"]
+        }, void 0, true)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap"
+        },
+        children: [/*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-ghost",
+          style: {
+            fontSize: 13
+          },
+          onClick: () => setModalImport(true),
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "upload",
+            size: 15
+          }, void 0, false), " Importar Excel"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-ghost",
+          style: {
+            fontSize: 13
+          },
+          onClick: () => {
+            const url = "https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/cadastro/";
+            const texto = `🦋 *Clínica Dra. Lucia Kratz*\n\nOlá! Para agilizar o seu atendimento, preencha o formulário de cadastro pelo link abaixo:\n\n👉 ${url}\n\nÉ rápido e seguro. Após o preenchimento, seus dados já estarão disponíveis para a sua psicóloga.\n\nQualquer dúvida, estamos à disposição! 💜`;
+            navigator.clipboard.writeText(texto).then(() => alert("✓ Texto + link copiado!\nCole direto no WhatsApp.")).catch(() => prompt("Copie o texto:", texto));
+          },
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "link",
+            size: 15
+          }, void 0, false), " Link de Cadastro"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-purple",
+          onClick: abrirNovo,
+          children: [/*#__PURE__*/_jsxDEV(Icon, {
+            name: "user-plus",
+            size: 16
+          }, void 0, false), " Novo Paciente"]
+        }, void 0, true)]
+      }, void 0, true)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        background: st === "ativo" ? "var(--success)" : st === "alta" ? "var(--gray-400)" : st === "pendente" ? "#f59e0b" : "var(--danger)"
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 700,
-        color: "var(--text-muted)",
-        textTransform: "uppercase",
-        letterSpacing: "0.8px"
-      }
-    }, st === "ativo" ? "Em Atendimento" : st === "alta" ? "Alta" : st === "pendente" ? "⏳ Pendentes (Autocadastro)" : "Inativos", " (", grupo.length, ")")), /*#__PURE__*/React.createElement("div", {
+        display: "flex",
+        gap: 12,
+        marginBottom: 20,
+        flexWrap: "wrap"
+      },
+      children: [/*#__PURE__*/_jsxDEV("input", {
+        className: "form-input",
+        style: {
+          flex: 1,
+          minWidth: 200
+        },
+        placeholder: "Buscar por nome ou e-mail...",
+        value: busca,
+        onChange: e => setBusca(e.target.value)
+      }, void 0, false), [["todos", "Todos"], ["ativo", "Em atendimento"], ["alta", "Alta"], ["inativo", "Inativos"]].map(([f, l]) => /*#__PURE__*/_jsxDEV("button", {
+        className: "btn " + (filtro === f ? "btn-purple" : "btn-ghost"),
+        onClick: () => setFiltro(f),
+        children: l
+      }, f, false))]
+    }, void 0, true), ["pendente", "ativo", "alta", "inativo"].map(st => {
+      const grupo = filtrados.filter(p => p.status === st);
+      if (grupo.length === 0) return null;
+      return /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          marginBottom: 24
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 12
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: st === "ativo" ? "var(--success)" : st === "alta" ? "var(--gray-400)" : st === "pendente" ? "#f59e0b" : "var(--danger)"
+            }
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 12,
+              fontWeight: 700,
+              color: "var(--text-muted)",
+              textTransform: "uppercase",
+              letterSpacing: "0.8px"
+            },
+            children: [st === "ativo" ? "Em Atendimento" : st === "alta" ? "Alta" : st === "pendente" ? "⏳ Pendentes (Autocadastro)" : "Inativos", " (", grupo.length, ")"]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          className: "card",
+          style: {
+            padding: 0
+          },
+          children: grupo.map(p => /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              padding: "14px 20px",
+              borderBottom: "1px solid var(--gray-100)",
+              cursor: "pointer",
+              transition: "background .15s"
+            },
+            onClick: () => setPerfilAberto(p.id),
+            onMouseEnter: e => e.currentTarget.style.background = "#fafafa",
+            onMouseLeave: e => e.currentTarget.style.background = "white",
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                background: "var(--purple-soft)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 600,
+                color: "var(--purple)",
+                flexShrink: 0
+              },
+              children: (p.nome || "?")[0].toUpperCase()
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                flex: 1
+              },
+              children: [/*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontWeight: 500
+                },
+                children: p.nome
+              }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                style: {
+                  fontSize: 13,
+                  color: "var(--text-muted)"
+                },
+                children: p.email
+              }, void 0, false)]
+            }, void 0, true), /*#__PURE__*/_jsxDEV(Icon, {
+              name: "chevron-right",
+              size: 16
+            }, void 0, false)]
+          }, p.id, true))
+        }, void 0, false)]
+      }, st, true);
+    }), filtrados.length === 0 && /*#__PURE__*/_jsxDEV("div", {
       className: "card",
       style: {
-        padding: 0
-      }
-    }, grupo.map(p => /*#__PURE__*/React.createElement("div", {
-      key: p.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: "14px 20px",
-        borderBottom: "1px solid var(--gray-100)",
-        cursor: "pointer",
-        transition: "background .15s"
+        textAlign: "center",
+        padding: 48,
+        color: "var(--text-muted)"
       },
-      onClick: () => setPerfilAberto(p.id),
-      onMouseEnter: e => e.currentTarget.style.background = "#fafafa",
-      onMouseLeave: e => e.currentTarget.style.background = "white"
-    }, /*#__PURE__*/React.createElement("div", {
+      children: "Nenhum paciente encontrado."
+    }, void 0, false), modal && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        width: 38,
-        height: 38,
-        borderRadius: "50%",
-        background: "var(--purple-soft)",
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontWeight: 600,
-        color: "var(--purple)",
-        flexShrink: 0
-      }
-    }, (p.nome || "?")[0].toUpperCase()), /*#__PURE__*/React.createElement("div", {
+        zIndex: 500,
+        padding: 20
+      },
+      onClick: () => setModal(false),
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 560,
+          maxHeight: "90vh",
+          overflowY: "auto"
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 600
+            },
+            children: "Novo Paciente"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => setModal(false),
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--gray-400)"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "x",
+              size: 20
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 14
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Nome completo"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: form.nome || "",
+              onChange: e => setForm({
+                ...form,
+                nome: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "E-mail"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              type: "email",
+              value: form.email || "",
+              onChange: e => setForm({
+                ...form,
+                email: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Telefone"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: form.telefone || "",
+              onChange: e => setForm({
+                ...form,
+                telefone: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Genero"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: form.genero || "",
+              onChange: e => setForm({
+                ...form,
+                genero: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "",
+                children: "Selecione"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                children: "Feminino"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                children: "Masculino"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                children: "Nao-binario"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                children: "Nao informar"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Status"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("select", {
+              className: "form-input",
+              value: form.status || "ativo",
+              onChange: e => setForm({
+                ...form,
+                status: e.target.value
+              }),
+              children: [/*#__PURE__*/_jsxDEV("option", {
+                value: "ativo",
+                children: "Ativo"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "inativo",
+                children: "Inativo"
+              }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                value: "alta",
+                children: "Alta"
+              }, void 0, false)]
+            }, void 0, true)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "🏢 Empresa Contratante (opcional — NR-1)"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: form.empresa || "",
+              onChange: e => setForm({
+                ...form,
+                empresa: e.target.value
+              }),
+              placeholder: "Para colaboradores de empresas"
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Setor"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: form.setor || "",
+              onChange: e => setForm({
+                ...form,
+                setor: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Cargo"
+            }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+              className: "form-input",
+              value: form.cargo || "",
+              onChange: e => setForm({
+                ...form,
+                cargo: e.target.value
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+            className: "form-group",
+            style: {
+              gridColumn: "span 2"
+            },
+            children: [/*#__PURE__*/_jsxDEV("label", {
+              className: "form-label",
+              children: "Objetivos Terapeuticos"
+            }, void 0, false), /*#__PURE__*/_jsxDEV(TextAreaVoz, {
+              className: "form-input",
+              rows: 3,
+              value: form.objetivos || "",
+              onChange: e => setForm({
+                ...form,
+                objetivos: e.target.value
+              }),
+              placeholder: "Descreva os objetivos..."
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 10,
+            marginTop: 20,
+            justifyContent: "flex-end"
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            onClick: () => setModal(false),
+            children: "Cancelar"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-purple",
+            onClick: salvar,
+            disabled: salvando,
+            children: salvando ? "Salvando..." : "Salvar"
+          }, void 0, false)]
+        }, void 0, true)]
+      }, void 0, true)
+    }, void 0, false), modalImport && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 500
-      }
-    }, p.nome), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: "var(--text-muted)"
-      }
-    }, p.email)), /*#__PURE__*/React.createElement(Icon, {
-      name: "chevron-right",
-      size: 16
-    })))));
-  }), filtrados.length === 0 && /*#__PURE__*/React.createElement("div", {
-    className: "card",
-    style: {
-      textAlign: "center",
-      padding: 48,
-      color: "var(--text-muted)"
-    }
-  }, "Nenhum paciente encontrado."), modal && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => setModal(false)
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 560,
-      maxHeight: "90vh",
-      overflowY: "auto"
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
-    }
-  }, "Novo Paciente"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setModal(false),
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "var(--gray-400)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Nome completo"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.nome || "",
-    onChange: e => setForm({
-      ...form,
-      nome: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "E-mail"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    type: "email",
-    value: form.email || "",
-    onChange: e => setForm({
-      ...form,
-      email: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Telefone"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.telefone || "",
-    onChange: e => setForm({
-      ...form,
-      telefone: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Genero"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: form.genero || "",
-    onChange: e => setForm({
-      ...form,
-      genero: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Selecione"), /*#__PURE__*/React.createElement("option", null, "Feminino"), /*#__PURE__*/React.createElement("option", null, "Masculino"), /*#__PURE__*/React.createElement("option", null, "Nao-binario"), /*#__PURE__*/React.createElement("option", null, "Nao informar"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Status"), /*#__PURE__*/React.createElement("select", {
-    className: "form-input",
-    value: form.status || "ativo",
-    onChange: e => setForm({
-      ...form,
-      status: e.target.value
-    })
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "ativo"
-  }, "Ativo"), /*#__PURE__*/React.createElement("option", {
-    value: "inativo"
-  }, "Inativo"), /*#__PURE__*/React.createElement("option", {
-    value: "alta"
-  }, "Alta"))), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "🏢 Empresa Contratante (opcional — NR-1)"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.empresa || "",
-    onChange: e => setForm({
-      ...form,
-      empresa: e.target.value
-    }),
-    placeholder: "Para colaboradores de empresas"
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Setor"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.setor || "",
-    onChange: e => setForm({
-      ...form,
-      setor: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group"
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Cargo"), /*#__PURE__*/React.createElement("input", {
-    className: "form-input",
-    value: form.cargo || "",
-    onChange: e => setForm({
-      ...form,
-      cargo: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("div", {
-    className: "form-group",
-    style: {
-      gridColumn: "span 2"
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    className: "form-label"
-  }, "Objetivos Terapeuticos"), /*#__PURE__*/React.createElement(TextAreaVoz, {
-    className: "form-input",
-    rows: 3,
-    value: form.objetivos || "",
-    onChange: e => setForm({
-      ...form,
-      objetivos: e.target.value
-    }),
-    placeholder: "Descreva os objetivos..."
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      marginTop: 20,
-      justifyContent: "flex-end"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    onClick: () => setModal(false)
-  }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-purple",
-    onClick: salvar,
-    disabled: salvando
-  }, salvando ? "Salvando..." : "Salvar")))), modalImport && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.4)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 500,
-      padding: 20
-    },
-    onClick: () => {
-      setModalImport(false);
-      setImportLog([]);
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 520
-    },
-    onClick: e => e.stopPropagation()
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 20,
-      fontWeight: 600
-    }
-  }, "Importar Pacientes (Excel/CSV)"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setModalImport(false);
-      setImportLog([]);
-    },
-    style: {
-      background: "none",
-      border: "none",
-      cursor: "pointer",
-      color: "var(--gray-400)"
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "x",
-    size: 20
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f9f5ff",
-      border: "1px solid #e9d5ff",
-      borderRadius: 10,
-      padding: 14,
-      marginBottom: 16,
-      fontSize: 13,
-      lineHeight: 1.7
-    }
-  }, /*#__PURE__*/React.createElement("strong", null, "Colunas aceitas:"), " Nome, Email, Telefone, CPF, DataNascimento, Genero", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Formatos:"), " .csv ou .txt com separador vírgula, ponto-e-vírgula ou tab", /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("strong", null, "Encoding:"), " UTF-8"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 10,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-outline",
-    style: {
-      flex: 1,
-      fontSize: 13
-    },
-    onClick: baixarTemplate
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "download",
-    size: 14
-  }), " Baixar template CSV"), /*#__PURE__*/React.createElement("label", {
-    style: {
-      flex: 1,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 8,
-      padding: "10px",
-      borderRadius: 10,
-      border: "1.5px solid var(--purple)",
-      background: "var(--purple)",
-      color: "white",
-      cursor: "pointer",
-      fontSize: 13,
-      fontWeight: 600
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "upload",
-    size: 14
-  }), " Selecionar arquivo", /*#__PURE__*/React.createElement("input", {
-    type: "file",
-    accept: ".csv,.txt,.xls,.xlsx",
-    style: {
-      display: "none"
-    },
-    onChange: processarExcel
-  }))), importLog.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "#f9fafb",
-      borderRadius: 10,
-      padding: 14,
-      maxHeight: 240,
-      overflowY: "auto",
-      fontSize: 12,
-      lineHeight: 2,
-      border: "1px solid #e5e7eb"
-    }
-  }, importLog.map((l, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      color: l.tipo === "ok" ? "#059669" : l.tipo === "err" ? "#dc2626" : "#7B00C4",
-      fontWeight: l.tipo === "info" ? 600 : 400
-    }
-  }, l.msg))), importando && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      padding: 12,
-      color: "var(--purple)",
-      fontSize: 13
-    }
-  }, "Importando... aguarde"))));
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 500,
+        padding: 20
+      },
+      onClick: () => {
+        setModalImport(false);
+        setImportLog([]);
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 520
+        },
+        onClick: e => e.stopPropagation(),
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontFamily: "var(--font-display)",
+              fontSize: 20,
+              fontWeight: 600
+            },
+            children: "Importar Pacientes (Excel/CSV)"
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            onClick: () => {
+              setModalImport(false);
+              setImportLog([]);
+            },
+            style: {
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--gray-400)"
+            },
+            children: /*#__PURE__*/_jsxDEV(Icon, {
+              name: "x",
+              size: 20
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#f9f5ff",
+            border: "1px solid #e9d5ff",
+            borderRadius: 10,
+            padding: 14,
+            marginBottom: 16,
+            fontSize: 13,
+            lineHeight: 1.7
+          },
+          children: [/*#__PURE__*/_jsxDEV("strong", {
+            children: "Colunas aceitas:"
+          }, void 0, false), " Nome, Email, Telefone, CPF, DataNascimento, Genero", /*#__PURE__*/_jsxDEV("br", {}, void 0, false), /*#__PURE__*/_jsxDEV("strong", {
+            children: "Formatos:"
+          }, void 0, false), " .csv ou .txt com separador vírgula, ponto-e-vírgula ou tab", /*#__PURE__*/_jsxDEV("br", {}, void 0, false), /*#__PURE__*/_jsxDEV("strong", {
+            children: "Encoding:"
+          }, void 0, false), " UTF-8"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            gap: 10,
+            marginBottom: 16
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-outline",
+            style: {
+              flex: 1,
+              fontSize: 13
+            },
+            onClick: baixarTemplate,
+            children: [/*#__PURE__*/_jsxDEV(Icon, {
+              name: "download",
+              size: 14
+            }, void 0, false), " Baixar template CSV"]
+          }, void 0, true), /*#__PURE__*/_jsxDEV("label", {
+            style: {
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              padding: "10px",
+              borderRadius: 10,
+              border: "1.5px solid var(--purple)",
+              background: "var(--purple)",
+              color: "white",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 600
+            },
+            children: [/*#__PURE__*/_jsxDEV(Icon, {
+              name: "upload",
+              size: 14
+            }, void 0, false), " Selecionar arquivo", /*#__PURE__*/_jsxDEV("input", {
+              type: "file",
+              accept: ".csv,.txt,.xls,.xlsx",
+              style: {
+                display: "none"
+              },
+              onChange: processarExcel
+            }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true), importLog.length > 0 && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            background: "#f9fafb",
+            borderRadius: 10,
+            padding: 14,
+            maxHeight: 240,
+            overflowY: "auto",
+            fontSize: 12,
+            lineHeight: 2,
+            border: "1px solid #e5e7eb"
+          },
+          children: importLog.map((l, i) => /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              color: l.tipo === "ok" ? "#059669" : l.tipo === "err" ? "#dc2626" : "#7B00C4",
+              fontWeight: l.tipo === "info" ? 600 : 400
+            },
+            children: l.msg
+          }, i, false))
+        }, void 0, false), importando && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            textAlign: "center",
+            padding: 12,
+            color: "var(--purple)",
+            fontSize: 13
+          },
+          children: "Importando... aguarde"
+        }, void 0, false)]
+      }, void 0, true)
+    }, void 0, false)]
+  }, void 0, true);
 }
 
 // FINANCEIRO CLINICA
@@ -1872,6 +2075,96 @@ function RelatorioFrequencia({
   const [mesFiltro, setMesFiltro] = useState("todos");
   const [accordionAberto, setAccordionAberto] = useState({});
   const [modalExcluir, setModalExcluir] = useState(null);
+  const [completando, setCompletando] = useState(false);
+
+  // Replica gerarDatas() do app_financeiro.js para uso local
+  function gerarDatasLocal(dataInicio, recorrencia, total, diasSemana) {
+    if (recorrencia === "Sessão única") return [dataInicio];
+    const datas = [];
+    if (["Semanal (1x/semana)", "Quinzenal", "Mensal"].includes(recorrencia)) {
+      const diaSemanaInicio = new Date(dataInicio + "T00:00:00").getDay();
+      let atual = new Date(dataInicio + "T00:00:00");
+      while (datas.length < total) {
+        datas.push(atual.toISOString().split("T")[0]);
+        if (recorrencia === "Semanal (1x/semana)") {
+          atual.setDate(atual.getDate() + 7);
+        } else if (recorrencia === "Quinzenal") {
+          atual.setDate(atual.getDate() + 14);
+        } else {
+          const mesAtual = atual.getMonth();
+          atual.setDate(atual.getDate() + 7);
+          while (atual.getMonth() === mesAtual || atual.getDay() !== diaSemanaInicio) {
+            atual.setDate(atual.getDate() + 1);
+          }
+        }
+      }
+      return datas.slice(0, total);
+    }
+    const dias = (diasSemana || []).map(Number).sort();
+    if (!dias.length) return [];
+    datas.push(dataInicio);
+    let atual = new Date(dataInicio + "T00:00:00");
+    atual.setDate(atual.getDate() + 1);
+    const fim = new Date(atual);
+    fim.setFullYear(fim.getFullYear() + 2);
+    while (datas.length < total && atual < fim) {
+      if (dias.includes(atual.getDay())) datas.push(atual.toISOString().split("T")[0]);
+      atual.setDate(atual.getDate() + 1);
+    }
+    return datas.slice(0, total);
+  }
+  async function completarSessoes() {
+    if (!pacote) return;
+    const total = parseInt(pacote.totalSessoes) || 0;
+    if (!total) {
+      alert("Pacote sem total de sessões definido.");
+      return;
+    }
+    const todasDatas = gerarDatasLocal(pacote.dataInicio, pacote.recorrencia, total, pacote.diasSemana);
+    if (todasDatas.length < total) {
+      alert("Não foi possível gerar todas as datas. Verifique as configurações do pacote.");
+      return;
+    }
+    const numerosExistentes = new Set(sessPac.map(s => s.numSessao).filter(Boolean));
+    const faltantes = [];
+    for (let i = 1; i <= total; i++) {
+      if (!numerosExistentes.has(i)) faltantes.push(i);
+    }
+    if (faltantes.length === 0) {
+      alert("Nenhuma sessão faltante! O pacote está completo.");
+      return;
+    }
+    const conf = window.confirm(`Criar ${faltantes.length} sessão(ões) faltante(s): nº ${faltantes.join(", ")}?\n\nAs datas serão geradas conforme a recorrência do pacote.`);
+    if (!conf) return;
+    setCompletando(true);
+    try {
+      const batch = db.batch();
+      faltantes.forEach(num => {
+        const data = todasDatas[num - 1];
+        const ref = db.collection("clinica_sessoes").doc();
+        batch.set(ref, {
+          pacoteId: pacote.id,
+          pacienteId: pacote.pacienteId,
+          pacienteNome: pacote.pacienteNome || pacEfetivo?.nome || "",
+          numSessao: num,
+          data: data || "",
+          hora: pacote.horario || "",
+          valorSessao: parseFloat(pacote.valorSessao) || 0,
+          status: "agendado",
+          pagamento: "pendente",
+          tipo: "Psicoterapia",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      await batch.commit();
+      alert(`✅ ${faltantes.length} sessão(ões) criada(s) com sucesso!`);
+    } catch (e) {
+      console.error("Erro ao completar sessões:", e);
+      alert("Erro ao criar sessões: " + e.message);
+    } finally {
+      setCompletando(false);
+    }
+  }
   const STATUS_S = {
     agendado: {
       l: "Agendado",
@@ -1986,111 +2279,116 @@ function RelatorioFrequencia({
     }
     setModalExcluir(null);
   }
-  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--purple)",
-      borderRadius: 12,
-      padding: "12px 20px",
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      marginBottom: 16,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: onVoltar,
-    style: {
-      background: "rgba(255,255,255,0.2)",
-      border: "none",
-      cursor: "pointer",
-      color: "white",
-      padding: "6px 12px",
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 600,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "arrow-left",
-    size: 15
-  }), " Voltar"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "Dancing Script, cursive",
-      fontSize: 20,
-      color: "white",
-      fontWeight: 600,
-      lineHeight: 1
-    }
-  }, pacEfetivo?.nome), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: "rgba(255,255,255,0.75)",
-      marginTop: 2
-    }
-  }, "Controle de Sessões e Frequência")), /*#__PURE__*/React.createElement("button", {
-    style: {
-      background: "rgba(255,255,255,0.2)",
-      border: "none",
-      cursor: "pointer",
-      color: "white",
-      padding: "6px 14px",
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 600,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    },
-    onClick: () => {
-      const pac = pacEfetivo;
-      const sessoesPac = sessPac; // alias local para o PDF
-      const sessMeses = {};
-      sessoesPac.forEach(s => {
-        const mes = (s.data || "").slice(0, 7);
-        if (!sessMeses[mes]) sessMeses[mes] = [];
-        sessMeses[mes].push(s);
-      });
-      // Soma valorPago das sessões individuais
-      const totalPagoSessoes = sessoesPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
-      // Soma lançamentos recebidos/pagos vinculados ao pacote (cobre pagamentos parciais antecipados)
-      const totalPagoLanc = lancamentos.filter(l => pacoteIdsDosPac.includes(l.pacoteId) && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-      // Usa o maior dos dois valores para não duplicar
-      const totalPago = Math.max(totalPagoSessoes, totalPagoLanc);
-      const totalValor = sessoesPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-      const fmtD = d => d ? new Date(d + "T12:00:00").toLocaleDateString("pt-BR", {
-        weekday: "long",
-        day: "2-digit",
-        month: "long",
-        year: "numeric"
-      }) : "—";
-      const fmtM = m => {
-        const [y, mo] = m.split("-");
-        return new Date(y, mo - 1, 1).toLocaleDateString("pt-BR", {
-          month: "long",
-          year: "numeric"
-        });
-      };
-      const statusLabel = {
-        agendado: "Agendado",
-        confirmado: "Confirmado",
-        realizado: "✓ Realizado",
-        falta: "Falta",
-        remarcado: "Remarcado"
-      };
-      const statusColor = {
-        agendado: "#7B00C4",
-        confirmado: "#059669",
-        realizado: "#0891b2",
-        falta: "#d97706",
-        remarcado: "#6366f1"
-      };
-      const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  return /*#__PURE__*/_jsxDEV("div", {
+    children: [/*#__PURE__*/_jsxDEV("div", {
+      style: {
+        background: "var(--purple)",
+        borderRadius: 12,
+        padding: "12px 20px",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        marginBottom: 16,
+        flexWrap: "wrap"
+      },
+      children: [/*#__PURE__*/_jsxDEV("button", {
+        onClick: onVoltar,
+        style: {
+          background: "rgba(255,255,255,0.2)",
+          border: "none",
+          cursor: "pointer",
+          color: "white",
+          padding: "6px 12px",
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          gap: 6
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "arrow-left",
+          size: 15
+        }, void 0, false), " Voltar"]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          flex: 1
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "Dancing Script, cursive",
+            fontSize: 20,
+            color: "white",
+            fontWeight: 600,
+            lineHeight: 1
+          },
+          children: pacEfetivo?.nome
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 11,
+            color: "rgba(255,255,255,0.75)",
+            marginTop: 2
+          },
+          children: "Controle de Sessões e Frequência"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+        style: {
+          background: "rgba(255,255,255,0.2)",
+          border: "none",
+          cursor: "pointer",
+          color: "white",
+          padding: "6px 14px",
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          gap: 6
+        },
+        onClick: () => {
+          const pac = pacEfetivo;
+          const sessoesPac = sessPac; // alias local para o PDF
+          const sessMeses = {};
+          sessoesPac.forEach(s => {
+            const mes = (s.data || "").slice(0, 7);
+            if (!sessMeses[mes]) sessMeses[mes] = [];
+            sessMeses[mes].push(s);
+          });
+          // Soma valorPago das sessões individuais
+          const totalPagoSessoes = sessoesPac.reduce((a, s) => a + (parseFloat(s.valorPago) || 0), 0);
+          // Soma lançamentos recebidos/pagos vinculados ao pacote (cobre pagamentos parciais antecipados)
+          const totalPagoLanc = lancamentos.filter(l => pacoteIdsDosPac.includes(l.pacoteId) && (l.status === "recebido" || l.status === "pago")).reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+          // Usa o maior dos dois valores para não duplicar
+          const totalPago = Math.max(totalPagoSessoes, totalPagoLanc);
+          const totalValor = sessoesPac.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
+          const fmtD = d => d ? new Date(d + "T12:00:00").toLocaleDateString("pt-BR", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+          }) : "—";
+          const fmtM = m => {
+            const [y, mo] = m.split("-");
+            return new Date(y, mo - 1, 1).toLocaleDateString("pt-BR", {
+              month: "long",
+              year: "numeric"
+            });
+          };
+          const statusLabel = {
+            agendado: "Agendado",
+            confirmado: "Confirmado",
+            realizado: "✓ Realizado",
+            falta: "Falta",
+            remarcado: "Remarcado"
+          };
+          const statusColor = {
+            agendado: "#7B00C4",
+            confirmado: "#059669",
+            realizado: "#0891b2",
+            falta: "#d97706",
+            remarcado: "#6366f1"
+          };
+          const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>Resumo de Sessões — ${pac?.nome || ""}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
@@ -2118,10 +2416,10 @@ function RelatorioFrequencia({
 <div class="header">
   <div><div class="logo-name">Dra. Lucia Kratz</div><div class="logo-sub">CRP 09/20590 · Psicóloga · TCC · Musicoterapeuta · Neuromodulação<br>Goiânia, GO</div></div>
   <div style="text-align:right;font-size:11px;color:#9ca3af">${new Date().toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric"
-      })}</div>
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+          })}</div>
 </div>
 <div class="paciente-box">
   <div class="paciente-nome">${pac?.nome || "—"}</div>
@@ -2140,10 +2438,10 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
     <tr>
       <td style="font-weight:700;color:#7B00C4">${s.numSessao || i + 1}</td>
       <td>${s.data ? new Date(s.data + "T12:00:00").toLocaleDateString("pt-BR", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit"
-      }) : ""}</td>
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit"
+          }) : ""}</td>
       <td>${s.hora || "—"}</td>
       <td>${s.tipo || "Psicoterapia"}</td>
       <td><span class="status" style="background:${statusColor[s.status] || "#7B00C4"}">${statusLabel[s.status] || s.status || "—"}</span></td>
@@ -2154,636 +2452,732 @@ ${Object.entries(sessMeses).sort(([a], [b]) => a.localeCompare(b)).map(([mes, se
 <div class="totais">
   <div class="total-item"><label>Total do pacote</label><span style="color:#111827">R$ ${totalValor.toFixed(2).replace(".", ",")}</span></div>
   <div class="total-item"><label>Recebido</label><span style="color:#059669">R$ ${totalPago.toFixed(2).replace(".", ",")}${(() => {
-        const lp = lancamentos.filter(l => pacoteIdsDosPac.includes(l.pacoteId) && (l.status === "recebido" || l.status === "pago"));
-        if (lp.length > 0) {
-          const ultimo = lp.sort((a, b) => (b.data || "").localeCompare(a.data || ""))[0];
-          return ' <small style="font-size:11px;font-weight:400;color:#059669">(' + ultimo.formaPag + ' · ' + (ultimo.data ? new Date(ultimo.data + "T12:00:00").toLocaleDateString("pt-BR") : "") + ')</small>';
-        }
-        return "";
-      })()}</span></div>
+            const lp = lancamentos.filter(l => pacoteIdsDosPac.includes(l.pacoteId) && (l.status === "recebido" || l.status === "pago"));
+            if (lp.length > 0) {
+              const ultimo = lp.sort((a, b) => (b.data || "").localeCompare(a.data || ""))[0];
+              return ' <small style="font-size:11px;font-weight:400;color:#059669">(' + ultimo.formaPag + ' · ' + (ultimo.data ? new Date(ultimo.data + "T12:00:00").toLocaleDateString("pt-BR") : "") + ')</small>';
+            }
+            return "";
+          })()}</span></div>
   <div class="total-item"><label>A receber</label><span style="color:#d97706">R$ ${Math.max(0, totalValor - totalPago).toFixed(2).replace(".", ",")}</span></div>
 </div>
 <div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit"
-      })} · Clínica Dra. Lucia Kratz</div>
+            hour: "2-digit",
+            minute: "2-digit"
+          })} · Clínica Dra. Lucia Kratz</div>
 </body></html>`;
-      const w = window.open("", "_blank");
-      w.document.write(html);
-      w.document.close();
-      setTimeout(() => w.print(), 800);
-    }
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "printer",
-    size: 15
-  }), " Imprimir / PDF")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      overflow: "hidden",
-      border: "1px solid var(--gray-200)",
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--purple)",
-      padding: "12px 20px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "Dancing Script, cursive",
-      fontSize: 22,
-      color: "white",
-      fontWeight: 600
-    }
-  }, "Controle de Atendimento Terapêutico"), /*#__PURE__*/React.createElement("img", {
-    src: "../logo-transparente.png",
-    style: {
-      height: 36,
-      objectFit: "contain"
-    },
-    onError: e => e.target.style.display = "none"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "14px 20px",
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
-      gap: 12,
-      borderBottom: "1px solid var(--gray-100)"
-    }
-  }, [["Nome", pacEfetivo?.nome || "—"], ["Início", pacotesPac[0]?.dataInicio ? new Date(pacotesPac[0].dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "—"], ["Horário", pacotesPac[0]?.horario || "—"], ["Recorrência", pacotesPac[0]?.recorrencia || "—"]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
-    key: l
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 10,
-      color: "var(--text-muted)",
-      fontWeight: 600,
-      textTransform: "uppercase",
-      marginBottom: 2
-    }
-  }, l), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, v)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "12px 20px",
-      display: "flex",
-      gap: 20,
-      flexWrap: "wrap",
-      background: "var(--purple-soft)"
-    }
-  }, (() => {
-    const sessFiltro = mesFiltro === "todos" ? sessPac : sessPac.filter(s => s.data?.startsWith(mesFiltro));
-    const recFiltro = sessFiltro.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
-    const pendFiltro = sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
-    return [["Sessões", sessFiltro.length, "#7B00C4"], ["Realizadas", sessFiltro.filter(s => s.status === "realizado" || s.status === "falta").length, "#059669"], ["Pagas", sessFiltro.filter(s => s.pagamento === "pago").length, "#059669"], ["Pendentes", sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").length, "#d97706"], ["Faltas", sessFiltro.filter(s => s.status === "falta").length, "#dc2626"], ["Recebido", recFiltro.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }), "#059669"], ["A Receber", pendFiltro.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }), "#d97706"], ["Ano " + anoAtual, totalAno.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }), "#0891b2"]].map(([l, v, c]) => /*#__PURE__*/React.createElement("div", {
-      key: l,
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 16,
-        fontWeight: 800,
-        color: c
-      }
-    }, v), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: c,
-        fontWeight: 500
-      }
-    }, l)));
-  })())), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginBottom: 16,
-      flexWrap: "wrap",
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: "var(--text-muted)"
-    }
-  }, "Mês:"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setMesFiltro("todos"),
-    style: {
-      padding: "4px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      borderColor: mesFiltro === "todos" ? "var(--purple)" : "#e5e7eb",
-      background: mesFiltro === "todos" ? "var(--purple)" : "white",
-      color: mesFiltro === "todos" ? "white" : "#6b7280",
-      fontSize: 11,
-      fontWeight: 600,
-      cursor: "pointer"
-    }
-  }, "Todos"), meses.map(m => /*#__PURE__*/React.createElement("button", {
-    key: m,
-    onClick: () => setMesFiltro(m),
-    style: {
-      padding: "4px 12px",
-      borderRadius: 20,
-      border: "1.5px solid",
-      borderColor: mesFiltro === m ? "var(--purple)" : "#e5e7eb",
-      background: mesFiltro === m ? "var(--purple)" : "white",
-      color: mesFiltro === m ? "white" : "#6b7280",
-      fontSize: 11,
-      fontWeight: 600,
-      cursor: "pointer"
-    }
-  }, new Date(m + "-15").toLocaleDateString("pt-BR", {
-    month: "short",
-    year: "2-digit"
-  })))), mesesFiltrados.map(mes => {
-    const sessMes = porMes[mes] || [];
-    const mesLabel = new Date(mes + "-15").toLocaleDateString("pt-BR", {
-      month: "long",
-      year: "numeric"
-    });
-    const recMes = sessMes.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
-    const aberto = accordionAberto[mes] !== false;
-    return /*#__PURE__*/React.createElement("div", {
-      key: mes,
+          const w = window.open("", "_blank");
+          w.document.write(html);
+          w.document.close();
+          setTimeout(() => w.print(), 800);
+        },
+        children: [/*#__PURE__*/_jsxDEV(Icon, {
+          name: "printer",
+          size: 15
+        }, void 0, false), " Imprimir / PDF"]
+      }, void 0, true), pacote && (() => {
+        const total = parseInt(pacote.totalSessoes) || 0;
+        const faltam = total - sessPac.length;
+        if (faltam <= 0) return null;
+        return /*#__PURE__*/_jsxDEV("button", {
+          onClick: completarSessoes,
+          disabled: completando,
+          style: {
+            background: "rgba(255,255,255,0.2)",
+            border: "1.5px solid rgba(255,255,255,0.6)",
+            cursor: "pointer",
+            color: "white",
+            padding: "6px 14px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 6
+          },
+          children: [completando ? /*#__PURE__*/_jsxDEV(Icon, {
+            name: "loader",
+            size: 15
+          }, void 0, false) : /*#__PURE__*/_jsxDEV(Icon, {
+            name: "plus-circle",
+            size: 15
+          }, void 0, false), completando ? "Criando..." : `Completar (${faltam} faltante${faltam > 1 ? "s" : ""})`]
+        }, void 0, true);
+      })()]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
       style: {
         background: "white",
         borderRadius: 16,
         overflow: "hidden",
         border: "1px solid var(--gray-200)",
-        marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setAccordionAberto(a => ({
-        ...a,
-        [mes]: !aberto
-      })),
-      style: {
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "12px 20px",
-        background: "#f5f0ff",
-        border: "none",
-        cursor: "pointer",
-        borderBottom: aberto ? "2px solid var(--purple)" : "none"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 700,
-        fontSize: 14,
-        color: "var(--purple)",
-        textTransform: "capitalize"
-      }
-    }, mesLabel), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        color: "var(--text-muted)"
-      }
-    }, sessMes.length, " sessões"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        fontWeight: 600,
-        color: "#059669"
-      }
-    }, recMes.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }))), /*#__PURE__*/React.createElement(Icon, {
-      name: aberto ? "chevron-up" : "chevron-down",
-      size: 16
-    })), aberto && /*#__PURE__*/React.createElement("div", {
-      style: {
-        overflowX: "auto"
-      }
-    }, /*#__PURE__*/React.createElement("table", {
-      style: {
-        width: "100%",
-        borderCollapse: "collapse",
-        fontSize: 12
-      }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-      style: {
-        background: "var(--purple)",
-        color: "white"
-      }
-    }, ["", "Nº", "Data", "Presença", "Modalidade", "V. Sessão", "V. Pago", "Saldo", "Forma Pagto", "Data Pagto", "Obs"].map(h => /*#__PURE__*/React.createElement("th", {
-      key: h,
-      style: {
-        padding: "8px 10px",
-        textAlign: "left",
-        fontWeight: 600,
-        whiteSpace: "nowrap",
-        fontSize: 11
-      }
-    }, h)))), /*#__PURE__*/React.createElement("tbody", null, sessMes.map((s, i) => {
-      const st = STATUS_S[s.status] || STATUS_S.agendado;
-      const isPago = s.pagamento === "pago"; // remarcado mantém pagamento original
-      const vSessao = parseFloat(s.valorSessao) || 0;
-      const vPago = parseFloat(s.valorPago) || (isPago ? vSessao : 0);
-      const saldo = isPago ? vPago - vSessao : 0;
-      return /*#__PURE__*/React.createElement("tr", {
-        key: s.id,
+        marginBottom: 16
+      },
+      children: [/*#__PURE__*/_jsxDEV("div", {
         style: {
-          borderBottom: "1px solid var(--gray-100)",
-          background: i % 2 === 0 ? "white" : "#fafafa"
-        }
-      }, /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "5px 6px"
-        }
-      }, /*#__PURE__*/React.createElement("button", {
-        onClick: () => setModalExcluir({
-          id: s.id,
-          pacoteId: s.pacoteId,
-          numSessao: s.numSessao || i + 1,
-          data: s.data
-        }),
-        style: {
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: "#dc2626",
-          padding: "2px"
-        }
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "trash-2",
-        size: 12
-      }))), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px",
-          fontWeight: 700,
-          color: "var(--purple)"
-        }
-      }, s.numSessao || "—"), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px",
-          whiteSpace: "nowrap"
-        }
-      }, s.data ? new Date(s.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", s.remarcada && /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 9,
-          color: "#0891b2",
-          marginLeft: 4
-        }
-      }, "Rem.")), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px"
-        }
-      }, /*#__PURE__*/React.createElement("select", {
-        value: s.status,
-        onChange: e => atualizarSessao(s.id, {
-          status: e.target.value
-        }),
-        style: {
-          fontSize: 10,
-          border: "1px solid #e5e7eb",
-          borderRadius: 5,
-          padding: "2px 4px",
-          color: st.c,
-          fontWeight: 600,
-          background: "white",
-          cursor: "pointer",
-          minWidth: 88
-        }
-      }, Object.entries(STATUS_S).map(([k, v]) => /*#__PURE__*/React.createElement("option", {
-        key: k,
-        value: k
-      }, v.l))), (s.status === "cancelado" || s.status === "remarcado") && /*#__PURE__*/React.createElement("div", {
-        style: {
-          marginTop: 3
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 9,
-          color: "#0891b2",
-          marginBottom: 2
-        }
-      }, "Nova data e horário:"), /*#__PURE__*/React.createElement("div", {
-        style: {
+          background: "var(--purple)",
+          padding: "12px 20px",
           display: "flex",
-          gap: 4,
-          marginBottom: 2
-        }
-      }, /*#__PURE__*/React.createElement("input", {
-        type: "date",
-        id: "data_rem_" + s.id,
-        defaultValue: s.dataRemarcada || "",
-        onBlur: e => {
-          const h = document.getElementById("hora_rem_" + s.id)?.value || null;
-          if (e.target.value) remarcarSessao(s, e.target.value, s.motivoRemarcacao || "remarcacao", h);
+          alignItems: "center",
+          justifyContent: "space-between"
         },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "Dancing Script, cursive",
+            fontSize: 22,
+            color: "white",
+            fontWeight: 600
+          },
+          children: "Controle de Atendimento Terapêutico"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("img", {
+          src: "../logo-transparente.png",
+          style: {
+            height: 36,
+            objectFit: "contain"
+          },
+          onError: e => e.target.style.display = "none"
+        }, void 0, false)]
+      }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
         style: {
-          fontSize: 10,
-          border: "1px solid #0891b2",
-          borderRadius: 3,
-          padding: "1px 4px",
-          color: "#0891b2",
-          width: 105
-        }
-      }), /*#__PURE__*/React.createElement("input", {
-        type: "time",
-        id: "hora_rem_" + s.id,
-        defaultValue: s.hora || "",
-        onBlur: e => {
-          const d = document.getElementById("data_rem_" + s.id)?.value || null;
-          if (d && e.target.value) remarcarSessao(s, d, s.motivoRemarcacao || "remarcacao", e.target.value);
+          padding: "14px 20px",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
+          gap: 12,
+          borderBottom: "1px solid var(--gray-100)"
         },
+        children: [["Nome", pacEfetivo?.nome || "—"], ["Início", pacotesPac[0]?.dataInicio ? new Date(pacotesPac[0].dataInicio + "T00:00:00").toLocaleDateString("pt-BR") : "—"], ["Horário", pacotesPac[0]?.horario || "—"], ["Recorrência", pacotesPac[0]?.recorrencia || "—"]].map(([l, v]) => /*#__PURE__*/_jsxDEV("div", {
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontSize: 10,
+              color: "var(--text-muted)",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              marginBottom: 2
+            },
+            children: l
+          }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              fontWeight: 600,
+              fontSize: 13
+            },
+            children: v
+          }, void 0, false)]
+        }, l, true))
+      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
         style: {
-          fontSize: 10,
-          border: "1px solid #0891b2",
-          borderRadius: 3,
-          padding: "1px 4px",
-          color: "#0891b2",
-          width: 76
-        }
-      })), /*#__PURE__*/React.createElement("select", {
-        defaultValue: s.motivoRemarcacao || "remarcacao",
-        onChange: e => atualizarSessao(s.id, {
-          motivoRemarcacao: e.target.value
-        }),
+          padding: "12px 20px",
+          display: "flex",
+          gap: 20,
+          flexWrap: "wrap",
+          background: "var(--purple-soft)"
+        },
+        children: (() => {
+          const sessFiltro = mesFiltro === "todos" ? sessPac : sessPac.filter(s => s.data?.startsWith(mesFiltro));
+          const recFiltro = sessFiltro.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
+          const pendFiltro = sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0);
+          return [["Sessões", sessFiltro.length, "#7B00C4"], ["Realizadas", sessFiltro.filter(s => s.status === "realizado" || s.status === "falta").length, "#059669"], ["Pagas", sessFiltro.filter(s => s.pagamento === "pago").length, "#059669"], ["Pendentes", sessFiltro.filter(s => s.pagamento !== "pago" && s.status !== "cancelado").length, "#d97706"], ["Faltas", sessFiltro.filter(s => s.status === "falta").length, "#dc2626"], ["Recebido", recFiltro.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          }), "#059669"], ["A Receber", pendFiltro.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          }), "#d97706"], ["Ano " + anoAtual, totalAno.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+          }), "#0891b2"]].map(([l, v, c]) => /*#__PURE__*/_jsxDEV("div", {
+            style: {
+              textAlign: "center"
+            },
+            children: [/*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 16,
+                fontWeight: 800,
+                color: c
+              },
+              children: v
+            }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontSize: 10,
+                color: c,
+                fontWeight: 500
+              },
+              children: l
+            }, void 0, false)]
+          }, l, true));
+        })()
+      }, void 0, false)]
+    }, void 0, true), /*#__PURE__*/_jsxDEV("div", {
+      style: {
+        display: "flex",
+        gap: 6,
+        marginBottom: 16,
+        flexWrap: "wrap",
+        alignItems: "center"
+      },
+      children: [/*#__PURE__*/_jsxDEV("span", {
         style: {
-          fontSize: 9,
-          marginTop: 2,
-          border: "1px solid #cbd5e1",
-          borderRadius: 3,
-          padding: "1px 3px",
-          width: 105,
-          color: "#374151",
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--text-muted)"
+        },
+        children: "Mês:"
+      }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setMesFiltro("todos"),
+        style: {
+          padding: "4px 12px",
+          borderRadius: 20,
+          border: "1.5px solid",
+          borderColor: mesFiltro === "todos" ? "var(--purple)" : "#e5e7eb",
+          background: mesFiltro === "todos" ? "var(--purple)" : "white",
+          color: mesFiltro === "todos" ? "white" : "#6b7280",
+          fontSize: 11,
+          fontWeight: 600,
           cursor: "pointer"
-        }
-      }, /*#__PURE__*/React.createElement("option", {
-        value: "remarcacao"
-      }, "🔄 Remarcação"), /*#__PURE__*/React.createElement("option", {
-        value: "falta"
-      }, "⚠️ Falta"), /*#__PURE__*/React.createElement("option", {
-        value: "remarcado"
-      }, "🔄 Remarcado"), /*#__PURE__*/React.createElement("option", {
-        value: "compensacao"
-      }, "✅ Compensação")))), /*#__PURE__*/React.createElement("td", {
+        },
+        children: "Todos"
+      }, void 0, false), meses.map(m => /*#__PURE__*/_jsxDEV("button", {
+        onClick: () => setMesFiltro(m),
         style: {
-          padding: "6px 10px"
-        }
-      }, /*#__PURE__*/React.createElement("input", {
-        defaultValue: s.modalidade || "on-line",
-        onBlur: e => atualizarSessao(s.id, {
-          modalidade: e.target.value
-        }),
-        style: {
-          fontSize: 10,
-          border: "1px solid #e5e7eb",
-          borderRadius: 5,
-          padding: "2px 5px",
-          width: 62
-        }
-      })), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px",
+          padding: "4px 12px",
+          borderRadius: 20,
+          border: "1.5px solid",
+          borderColor: mesFiltro === m ? "var(--purple)" : "#e5e7eb",
+          background: mesFiltro === m ? "var(--purple)" : "white",
+          color: mesFiltro === m ? "white" : "#6b7280",
+          fontSize: 11,
           fontWeight: 600,
-          color: "#374151",
-          whiteSpace: "nowrap"
-        }
-      }, vSessao.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      })), /*#__PURE__*/React.createElement("td", {
+          cursor: "pointer"
+        },
+        children: new Date(m + "-15").toLocaleDateString("pt-BR", {
+          month: "short",
+          year: "2-digit"
+        })
+      }, m, false))]
+    }, void 0, true), mesesFiltrados.map(mes => {
+      const sessMes = porMes[mes] || [];
+      const mesLabel = new Date(mes + "-15").toLocaleDateString("pt-BR", {
+        month: "long",
+        year: "numeric"
+      });
+      const recMes = sessMes.filter(s => s.pagamento === "pago").reduce((a, s) => a + (parseFloat(s.valorPago) || parseFloat(s.valorSessao) || 0), 0);
+      const aberto = accordionAberto[mes] !== false;
+      return /*#__PURE__*/_jsxDEV("div", {
         style: {
-          padding: "6px 10px"
-        }
-      }, /*#__PURE__*/React.createElement("input", {
-        type: "number",
-        defaultValue: s.valorPago || "",
-        key: s.id + "_vpago",
-        onBlur: e => atualizarPagamento(s, s.formaPagamento || "", e.target.value),
-        placeholder: "0,00",
-        style: {
-          fontSize: 10,
-          border: "1px solid",
-          borderColor: isPago ? "#6ee7b7" : "#e5e7eb",
-          borderRadius: 5,
-          padding: "2px 5px",
-          width: 65,
-          color: isPago ? "#059669" : "#374151",
-          fontWeight: isPago ? 600 : 400
-        }
-      })), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px",
-          fontWeight: 600,
-          whiteSpace: "nowrap",
-          color: saldo < 0 ? "#dc2626" : saldo > 0 ? "#059669" : "#9ca3af",
-          fontSize: 11
-        }
-      }, isPago ? saldo === 0 ? "—" : saldo.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-      }) : "—"), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px"
-        }
-      }, /*#__PURE__*/React.createElement("select", {
-        value: s.formaPagamento || "",
-        onChange: e => atualizarPagamento(s, e.target.value, s.valorPago || s.valorSessao),
-        style: {
-          fontSize: 10,
-          border: "1px solid",
-          borderColor: isPago ? "#6ee7b7" : "#e5e7eb",
-          borderRadius: 5,
-          padding: "2px 4px",
-          color: isPago ? "#059669" : "#6b7280",
-          fontWeight: isPago ? 600 : 400,
-          cursor: "pointer",
-          background: isPago ? "#f0fdf4" : "white",
-          minWidth: 72
-        }
-      }, /*#__PURE__*/React.createElement("option", {
-        value: ""
-      }, "Pendente"), FORMAS.map(f => /*#__PURE__*/React.createElement("option", {
-        key: f,
-        value: f
-      }, f)))), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px"
-        }
-      }, /*#__PURE__*/React.createElement("input", {
-        type: "date",
-        defaultValue: s.dataPagamento || "",
-        key: s.id + "_dtpag",
-        onBlur: e => atualizarSessao(s.id, {
-          dataPagamento: e.target.value
-        }),
-        style: {
-          fontSize: 10,
-          border: "1px solid #e5e7eb",
-          borderRadius: 5,
-          padding: "2px 4px",
-          width: 105
-        }
-      })), /*#__PURE__*/React.createElement("td", {
-        style: {
-          padding: "6px 10px"
-        }
-      }, /*#__PURE__*/React.createElement("input", {
-        defaultValue: s.obs || "",
-        onBlur: e => atualizarSessao(s.id, {
-          obs: e.target.value
-        }),
-        placeholder: "—",
-        style: {
-          fontSize: 10,
-          border: "1px solid #e5e7eb",
-          borderRadius: 5,
-          padding: "2px 5px",
-          width: 70
-        }
-      })));
-    })), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
+          background: "white",
+          borderRadius: 16,
+          overflow: "hidden",
+          border: "1px solid var(--gray-200)",
+          marginBottom: 12
+        },
+        children: [/*#__PURE__*/_jsxDEV("button", {
+          onClick: () => setAccordionAberto(a => ({
+            ...a,
+            [mes]: !aberto
+          })),
+          style: {
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 20px",
+            background: "#f5f0ff",
+            border: "none",
+            cursor: "pointer",
+            borderBottom: aberto ? "2px solid var(--purple)" : "none"
+          },
+          children: [/*#__PURE__*/_jsxDEV("div", {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 12
+            },
+            children: [/*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontWeight: 700,
+                fontSize: 14,
+                color: "var(--purple)",
+                textTransform: "capitalize"
+              },
+              children: mesLabel
+            }, void 0, false), /*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 12,
+                color: "var(--text-muted)"
+              },
+              children: [sessMes.length, " sessões"]
+            }, void 0, true), /*#__PURE__*/_jsxDEV("span", {
+              style: {
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#059669"
+              },
+              children: recMes.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+              })
+            }, void 0, false)]
+          }, void 0, true), /*#__PURE__*/_jsxDEV(Icon, {
+            name: aberto ? "chevron-up" : "chevron-down",
+            size: 16
+          }, void 0, false)]
+        }, void 0, true), aberto && /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            overflowX: "auto"
+          },
+          children: /*#__PURE__*/_jsxDEV("table", {
+            style: {
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: 12
+            },
+            children: [/*#__PURE__*/_jsxDEV("thead", {
+              children: /*#__PURE__*/_jsxDEV("tr", {
+                style: {
+                  background: "var(--purple)",
+                  color: "white"
+                },
+                children: ["", "Nº", "Data", "Presença", "Modalidade", "V. Sessão", "V. Pago", "Saldo", "Forma Pagto", "Data Pagto", "Obs"].map(h => /*#__PURE__*/_jsxDEV("th", {
+                  style: {
+                    padding: "8px 10px",
+                    textAlign: "left",
+                    fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    fontSize: 11
+                  },
+                  children: h
+                }, h, false))
+              }, void 0, false)
+            }, void 0, false), /*#__PURE__*/_jsxDEV("tbody", {
+              children: sessMes.map((s, i) => {
+                const st = STATUS_S[s.status] || STATUS_S.agendado;
+                const isPago = s.pagamento === "pago"; // remarcado mantém pagamento original
+                const vSessao = parseFloat(s.valorSessao) || 0;
+                const vPago = parseFloat(s.valorPago) || (isPago ? vSessao : 0);
+                const saldo = isPago ? vPago - vSessao : 0;
+                return /*#__PURE__*/_jsxDEV("tr", {
+                  style: {
+                    borderBottom: "1px solid var(--gray-100)",
+                    background: i % 2 === 0 ? "white" : "#fafafa"
+                  },
+                  children: [/*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "5px 6px"
+                    },
+                    children: /*#__PURE__*/_jsxDEV("button", {
+                      onClick: () => setModalExcluir({
+                        id: s.id,
+                        pacoteId: s.pacoteId,
+                        numSessao: s.numSessao || i + 1,
+                        data: s.data
+                      }),
+                      style: {
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#dc2626",
+                        padding: "2px"
+                      },
+                      children: /*#__PURE__*/_jsxDEV(Icon, {
+                        name: "trash-2",
+                        size: 12
+                      }, void 0, false)
+                    }, void 0, false)
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px",
+                      fontWeight: 700,
+                      color: "var(--purple)"
+                    },
+                    children: s.numSessao || "—"
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px",
+                      whiteSpace: "nowrap"
+                    },
+                    children: [s.data ? new Date(s.data + "T00:00:00").toLocaleDateString("pt-BR") : "—", s.remarcada && /*#__PURE__*/_jsxDEV("span", {
+                      style: {
+                        fontSize: 9,
+                        color: "#0891b2",
+                        marginLeft: 4
+                      },
+                      children: "Rem."
+                    }, void 0, false)]
+                  }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px"
+                    },
+                    children: [/*#__PURE__*/_jsxDEV("select", {
+                      value: s.status,
+                      onChange: e => atualizarSessao(s.id, {
+                        status: e.target.value
+                      }),
+                      style: {
+                        fontSize: 10,
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 5,
+                        padding: "2px 4px",
+                        color: st.c,
+                        fontWeight: 600,
+                        background: "white",
+                        cursor: "pointer",
+                        minWidth: 88
+                      },
+                      children: Object.entries(STATUS_S).map(([k, v]) => /*#__PURE__*/_jsxDEV("option", {
+                        value: k,
+                        children: v.l
+                      }, k, false))
+                    }, void 0, false), (s.status === "cancelado" || s.status === "remarcado") && /*#__PURE__*/_jsxDEV("div", {
+                      style: {
+                        marginTop: 3
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          fontSize: 9,
+                          color: "#0891b2",
+                          marginBottom: 2
+                        },
+                        children: "Nova data e horário:"
+                      }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+                        style: {
+                          display: "flex",
+                          gap: 4,
+                          marginBottom: 2
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("input", {
+                          type: "date",
+                          id: "data_rem_" + s.id,
+                          defaultValue: s.dataRemarcada || "",
+                          onBlur: e => {
+                            const h = document.getElementById("hora_rem_" + s.id)?.value || null;
+                            if (e.target.value) remarcarSessao(s, e.target.value, s.motivoRemarcacao || "remarcacao", h);
+                          },
+                          style: {
+                            fontSize: 10,
+                            border: "1px solid #0891b2",
+                            borderRadius: 3,
+                            padding: "1px 4px",
+                            color: "#0891b2",
+                            width: 105
+                          }
+                        }, void 0, false), /*#__PURE__*/_jsxDEV("input", {
+                          type: "time",
+                          id: "hora_rem_" + s.id,
+                          defaultValue: s.hora || "",
+                          onBlur: e => {
+                            const d = document.getElementById("data_rem_" + s.id)?.value || null;
+                            if (d && e.target.value) remarcarSessao(s, d, s.motivoRemarcacao || "remarcacao", e.target.value);
+                          },
+                          style: {
+                            fontSize: 10,
+                            border: "1px solid #0891b2",
+                            borderRadius: 3,
+                            padding: "1px 4px",
+                            color: "#0891b2",
+                            width: 76
+                          }
+                        }, void 0, false)]
+                      }, void 0, true), /*#__PURE__*/_jsxDEV("select", {
+                        defaultValue: s.motivoRemarcacao || "remarcacao",
+                        onChange: e => atualizarSessao(s.id, {
+                          motivoRemarcacao: e.target.value
+                        }),
+                        style: {
+                          fontSize: 9,
+                          marginTop: 2,
+                          border: "1px solid #cbd5e1",
+                          borderRadius: 3,
+                          padding: "1px 3px",
+                          width: 105,
+                          color: "#374151",
+                          cursor: "pointer"
+                        },
+                        children: [/*#__PURE__*/_jsxDEV("option", {
+                          value: "remarcacao",
+                          children: "🔄 Remarcação"
+                        }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                          value: "falta",
+                          children: "⚠️ Falta"
+                        }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                          value: "remarcado",
+                          children: "🔄 Remarcado"
+                        }, void 0, false), /*#__PURE__*/_jsxDEV("option", {
+                          value: "compensacao",
+                          children: "✅ Compensação"
+                        }, void 0, false)]
+                      }, void 0, true)]
+                    }, void 0, true)]
+                  }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px"
+                    },
+                    children: /*#__PURE__*/_jsxDEV("input", {
+                      defaultValue: s.modalidade || "on-line",
+                      onBlur: e => atualizarSessao(s.id, {
+                        modalidade: e.target.value
+                      }),
+                      style: {
+                        fontSize: 10,
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 5,
+                        padding: "2px 5px",
+                        width: 62
+                      }
+                    }, void 0, false)
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px",
+                      fontWeight: 600,
+                      color: "#374151",
+                      whiteSpace: "nowrap"
+                    },
+                    children: vSessao.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL"
+                    })
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px"
+                    },
+                    children: /*#__PURE__*/_jsxDEV("input", {
+                      type: "number",
+                      defaultValue: s.valorPago || "",
+                      onBlur: e => atualizarPagamento(s, s.formaPagamento || "", e.target.value),
+                      placeholder: "0,00",
+                      style: {
+                        fontSize: 10,
+                        border: "1px solid",
+                        borderColor: isPago ? "#6ee7b7" : "#e5e7eb",
+                        borderRadius: 5,
+                        padding: "2px 5px",
+                        width: 65,
+                        color: isPago ? "#059669" : "#374151",
+                        fontWeight: isPago ? 600 : 400
+                      }
+                    }, s.id + "_vpago", false)
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      color: saldo < 0 ? "#dc2626" : saldo > 0 ? "#059669" : "#9ca3af",
+                      fontSize: 11
+                    },
+                    children: isPago ? saldo === 0 ? "—" : saldo.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL"
+                    }) : "—"
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px"
+                    },
+                    children: /*#__PURE__*/_jsxDEV("select", {
+                      value: s.formaPagamento || "",
+                      onChange: e => atualizarPagamento(s, e.target.value, s.valorPago || s.valorSessao),
+                      style: {
+                        fontSize: 10,
+                        border: "1px solid",
+                        borderColor: isPago ? "#6ee7b7" : "#e5e7eb",
+                        borderRadius: 5,
+                        padding: "2px 4px",
+                        color: isPago ? "#059669" : "#6b7280",
+                        fontWeight: isPago ? 600 : 400,
+                        cursor: "pointer",
+                        background: isPago ? "#f0fdf4" : "white",
+                        minWidth: 72
+                      },
+                      children: [/*#__PURE__*/_jsxDEV("option", {
+                        value: "",
+                        children: "Pendente"
+                      }, void 0, false), FORMAS.map(f => /*#__PURE__*/_jsxDEV("option", {
+                        value: f,
+                        children: f
+                      }, f, false))]
+                    }, void 0, true)
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px"
+                    },
+                    children: /*#__PURE__*/_jsxDEV("input", {
+                      type: "date",
+                      defaultValue: s.dataPagamento || "",
+                      onBlur: e => atualizarSessao(s.id, {
+                        dataPagamento: e.target.value
+                      }),
+                      style: {
+                        fontSize: 10,
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 5,
+                        padding: "2px 4px",
+                        width: 105
+                      }
+                    }, s.id + "_dtpag", false)
+                  }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                    style: {
+                      padding: "6px 10px"
+                    },
+                    children: /*#__PURE__*/_jsxDEV("input", {
+                      defaultValue: s.obs || "",
+                      onBlur: e => atualizarSessao(s.id, {
+                        obs: e.target.value
+                      }),
+                      placeholder: "—",
+                      style: {
+                        fontSize: 10,
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 5,
+                        padding: "2px 5px",
+                        width: 70
+                      }
+                    }, void 0, false)
+                  }, void 0, false)]
+                }, s.id, true);
+              })
+            }, void 0, false), /*#__PURE__*/_jsxDEV("tfoot", {
+              children: /*#__PURE__*/_jsxDEV("tr", {
+                style: {
+                  background: "var(--purple-soft)"
+                },
+                children: [/*#__PURE__*/_jsxDEV("td", {
+                  colSpan: 5,
+                  style: {
+                    padding: "8px 10px",
+                    fontWeight: 700,
+                    fontSize: 11
+                  },
+                  children: ["Total ", mesLabel]
+                }, void 0, true), /*#__PURE__*/_jsxDEV("td", {
+                  style: {
+                    padding: "8px 10px",
+                    fontWeight: 700,
+                    fontSize: 11
+                  },
+                  children: sessMes.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                  })
+                }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                  style: {
+                    padding: "8px 10px",
+                    fontWeight: 700,
+                    fontSize: 11,
+                    color: "#059669"
+                  },
+                  children: recMes.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                  })
+                }, void 0, false), /*#__PURE__*/_jsxDEV("td", {
+                  colSpan: 4
+                }, void 0, false)]
+              }, void 0, true)
+            }, void 0, false)]
+          }, void 0, true)
+        }, void 0, false)]
+      }, mes, true);
+    }), modalExcluir && /*#__PURE__*/_jsxDEV("div", {
       style: {
-        background: "var(--purple-soft)"
-      }
-    }, /*#__PURE__*/React.createElement("td", {
-      colSpan: 5,
-      style: {
-        padding: "8px 10px",
-        fontWeight: 700,
-        fontSize: 11
-      }
-    }, "Total ", mesLabel), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 10px",
-        fontWeight: 700,
-        fontSize: 11
-      }
-    }, sessMes.reduce((a, s) => a + (parseFloat(s.valorSessao) || 0), 0).toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 10px",
-        fontWeight: 700,
-        fontSize: 11,
-        color: "#059669"
-      }
-    }, recMes.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    })), /*#__PURE__*/React.createElement("td", {
-      colSpan: 4
-    }))))));
-  }), modalExcluir && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 600,
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "white",
-      borderRadius: 16,
-      padding: 28,
-      width: "100%",
-      maxWidth: 400,
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 12
-    }
-  }, "🗑️"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: "var(--font-display)",
-      fontSize: 18,
-      fontWeight: 600,
-      marginBottom: 8
-    }
-  }, "Excluir sessão #", modalExcluir.numSessao, "?"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: "#6b7280",
-      marginBottom: 20
-    }
-  }, modalExcluir.data ? new Date(modalExcluir.data + "T00:00:00").toLocaleDateString("pt-BR") : ""), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 8,
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1.5px solid #e5e7eb",
-      textAlign: "left",
-      padding: "12px 16px"
-    },
-    onClick: () => confirmarExclusao("este")
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13
-    }
-  }, "Só esta sessão")), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1.5px solid #fbbf24",
-      textAlign: "left",
-      padding: "12px 16px"
-    },
-    onClick: () => confirmarExclusao("daqui")
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      color: "#d97706"
-    }
-  }, "Esta e todas as próximas")), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      border: "1.5px solid #fca5a5",
-      textAlign: "left",
-      padding: "12px 16px"
-    },
-    onClick: () => confirmarExclusao("todos")
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontWeight: 600,
-      fontSize: 13,
-      color: "#dc2626"
-    }
-  }, "Cancelar todo o pacote"))), /*#__PURE__*/React.createElement("button", {
-    className: "btn btn-ghost",
-    style: {
-      width: "100%"
-    },
-    onClick: () => setModalExcluir(null)
-  }, "Cancelar"))));
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 600,
+        padding: 20
+      },
+      children: /*#__PURE__*/_jsxDEV("div", {
+        style: {
+          background: "white",
+          borderRadius: 16,
+          padding: 28,
+          width: "100%",
+          maxWidth: 400,
+          textAlign: "center"
+        },
+        children: [/*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontSize: 32,
+            marginBottom: 12
+          },
+          children: "🗑️"
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            fontFamily: "var(--font-display)",
+            fontSize: 18,
+            fontWeight: 600,
+            marginBottom: 8
+          },
+          children: ["Excluir sessão #", modalExcluir.numSessao, "?"]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("p", {
+          style: {
+            fontSize: 13,
+            color: "#6b7280",
+            marginBottom: 20
+          },
+          children: modalExcluir.data ? new Date(modalExcluir.data + "T00:00:00").toLocaleDateString("pt-BR") : ""
+        }, void 0, false), /*#__PURE__*/_jsxDEV("div", {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            marginBottom: 14
+          },
+          children: [/*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              border: "1.5px solid #e5e7eb",
+              textAlign: "left",
+              padding: "12px 16px"
+            },
+            onClick: () => confirmarExclusao("este"),
+            children: /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 600,
+                fontSize: 13
+              },
+              children: "Só esta sessão"
+            }, void 0, false)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              border: "1.5px solid #fbbf24",
+              textAlign: "left",
+              padding: "12px 16px"
+            },
+            onClick: () => confirmarExclusao("daqui"),
+            children: /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 600,
+                fontSize: 13,
+                color: "#d97706"
+              },
+              children: "Esta e todas as próximas"
+            }, void 0, false)
+          }, void 0, false), /*#__PURE__*/_jsxDEV("button", {
+            className: "btn btn-ghost",
+            style: {
+              border: "1.5px solid #fca5a5",
+              textAlign: "left",
+              padding: "12px 16px"
+            },
+            onClick: () => confirmarExclusao("todos"),
+            children: /*#__PURE__*/_jsxDEV("div", {
+              style: {
+                fontWeight: 600,
+                fontSize: 13,
+                color: "#dc2626"
+              },
+              children: "Cancelar todo o pacote"
+            }, void 0, false)
+          }, void 0, false)]
+        }, void 0, true), /*#__PURE__*/_jsxDEV("button", {
+          className: "btn btn-ghost",
+          style: {
+            width: "100%"
+          },
+          onClick: () => setModalExcluir(null),
+          children: "Cancelar"
+        }, void 0, false)]
+      }, void 0, true)
+    }, void 0, false)]
+  }, void 0, true);
 }
