@@ -4620,58 +4620,85 @@ function AbaRastreamento({
       C: "#dc2626",
       D: "#7f1d1d"
     };
+    const LETRA_BG = {
+      A: "#f0fdf4",
+      B: "#fffbeb",
+      C: "#fef2f2",
+      D: "#fef2f2"
+    };
+    const LETRA_LABEL = {
+      A: "Não se aplica",
+      B: "A observar",
+      C: "Critério presente",
+      D: "Intensidade severa"
+    };
+    const fmtResp = d => d.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : `👨‍👩‍👧 ${d.nomeRespondente || "Familiar"} · ${d.parentesco || "Familiar"}`;
+    const fmtData = d => d.createdAt?.toDate?.()?.toLocaleDateString("pt-BR") || (d.createdAt?.seconds ? new Date(d.createdAt.seconds * 1000).toLocaleDateString("pt-BR") : "—");
     const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
 <title>Laudo Rastreamento — ${pacNome}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:800px;margin:0 auto;font-size:13px;line-height:1.6}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:820px;margin:0 auto;font-size:13px;line-height:1.6}
 h1{font-size:20px;color:#3d006a;margin-bottom:4px}
-h2{font-size:14px;color:#7B00C4;margin:20px 0 8px;border-bottom:1px solid #ede9fe;padding-bottom:4px}
-h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
-.header{border-bottom:2px solid #7B00C4;padding-bottom:16px;margin-bottom:20px}
-.sub{font-size:12px;color:#6b7280;margin-top:2px}
-.barra-wrap{margin-bottom:10px}
-.barra-bg{background:#f3f4f6;border-radius:20px;height:10px;overflow:hidden;margin-top:3px}
+h2{font-size:14px;color:#7B00C4;margin:22px 0 10px;border-bottom:2px solid #ede9fe;padding-bottom:6px;page-break-after:avoid}
+h3{font-size:13px;color:#3d006a;margin:16px 0 8px;font-weight:700}
+h4{font-size:12px;color:#374151;margin:10px 0 6px;font-weight:600}
+.header{border-bottom:3px solid #7B00C4;padding-bottom:16px;margin-bottom:24px}
+.sub{font-size:12px;color:#6b7280;margin-top:3px}
+.barra-wrap{margin-bottom:12px}
+.barra-bg{background:#f3f4f6;border-radius:20px;height:10px;overflow:hidden;margin-top:4px}
 .hipotese{background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 18px;margin:12px 0}
 .hipotese .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7B00C4;margin-bottom:4px}
-.hipotese .valor{font-size:15px;font-weight:700;color:#3d006a}
+.hipotese .valor{font-size:15px;font-weight:700;color:#3d006a;line-height:1.4}
 .criterio{border:1px solid #e5e7eb;border-radius:8px;padding:10px 14px;margin-bottom:8px}
 .criterio .nome{font-weight:700;font-size:13px;margin-bottom:4px}
 .badge-sim{background:#fef2f2;color:#dc2626;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
 .badge-nao{background:#f0fdf4;color:#16a34a;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
 .badge-inv{background:#fffbeb;color:#d97706;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
 .atencao-item{background:#fff7ed;border-left:3px solid #f97316;padding:8px 12px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:12px}
-.resp-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11.5px}
-.resp-table th{background:#f5f3ff;padding:6px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #ede9fe}
-.resp-table td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+.resp-block{border:1px solid #c4b5fd;border-radius:10px;margin-bottom:20px;overflow:hidden;page-break-inside:avoid}
+.resp-header{background:#f5f3ff;padding:12px 16px;border-bottom:1px solid #e9d5ff}
+.resp-header .nome{font-weight:700;font-size:13px;color:#3d006a}
+.resp-header .meta{font-size:11px;color:#7B00C4;margin-top:3px}
+.escores-mini{display:flex;gap:12px;flex-wrap:wrap;padding:10px 16px;background:#fafafa;border-bottom:1px solid #e5e7eb}
+.escore-pill{display:flex;align-items:center;gap:6px;font-size:11px}
+.escore-pill .val{font-weight:700;padding:2px 8px;border-radius:20px;font-size:11px}
+.hipotese-mini{padding:8px 16px;background:#f5f3ff;border-bottom:1px solid #e5e7eb;font-size:12px;color:#3d006a;font-weight:600}
+.resp-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.resp-table th{background:#ede9fe;padding:7px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #e5e7eb}
+.resp-table td{padding:7px 10px;border:1px solid #e5e7eb;vertical-align:top}
 .resp-table tr:nth-child(even) td{background:#fafafa}
-.letra{font-weight:700;font-size:13px}
+.resp-table tr:hover td{background:#f5f3ff}
+.letra{font-weight:700;font-size:12px;padding:2px 8px;border-radius:12px;display:inline-block}
+.obs-box{padding:10px 16px;background:#fffbeb;border-top:1px solid #fcd34d;font-size:12px;color:#78350f}
+.legenda{display:flex;gap:14px;flex-wrap:wrap;padding:10px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:11px}
+.legenda-item{display:flex;align-items:center;gap:5px}
 .rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
 .assinatura{text-align:center;margin-top:40px}
 .assinatura img{height:60px;opacity:.9}
 .assinatura p{font-size:12px;color:#374151;margin-top:6px}
-@media print{body{padding:16px}.no-print{display:none}}
+@media print{body{padding:16px}.no-print{display:none}.resp-block{page-break-inside:avoid}}
 </style></head><body>
 <div class="no-print" style="margin-bottom:20px">
   <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>
 </div>
 <div class="header">
   <h1>Laudo Analítico de Rastreamento Clínico</h1>
-  <div class="sub">Paciente: <strong>${pacNome}</strong> · Data: ${data} · Dra. Lucia Kratz · CRP 09/20590</div>
-  <div class="sub">Respondentes: ${docs.length} (${docs.map(d => d.tipoRespondente === "paciente" ? "próprio paciente" : d.parentesco || "familiar").join(", ")})</div>
+  <div class="sub" style="margin-top:6px">Paciente: <strong>${pacNome}</strong> &nbsp;|&nbsp; Data: ${data} &nbsp;|&nbsp; Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Respondentes (${docs.length}): ${escoresPorDoc.map(d => fmtResp(d).replace(/🧑 |👨‍👩‍👧 /g, "")).join(" · ")}</div>
 </div>
 
-<h2>I. Critérios por Eixo DSM-5 (média entre respondentes)</h2>
+<h2>I. Critérios por Eixo DSM-5 — Visão Geral (média entre respondentes)</h2>
 <div class="barra-wrap">
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Mania/Hipomania</strong> (3 critérios)</span><span style="color:#dc2626;font-weight:700">${mediaEscores.bipolarManiaC} de 3 critérios C</span></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span><strong>Eixo Bipolar — Mania/Hipomania</strong> (3 critérios)</span><span style="color:#dc2626;font-weight:700">${mediaEscores.bipolarManiaC} de 3 critérios C</span></div>
   <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarManiaC / 3 * 100)}%;background:#dc2626;height:100%;border-radius:20px"></div></div>
 </div>
 <div class="barra-wrap">
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Bipolar — Depressão</strong> (3 critérios)</span><span style="color:#7c3aed;font-weight:700">${mediaEscores.bipolarDepC} de 3 critérios C</span></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span><strong>Eixo Bipolar — Depressão</strong> (3 critérios)</span><span style="color:#7c3aed;font-weight:700">${mediaEscores.bipolarDepC} de 3 critérios C</span></div>
   <div class="barra-bg"><div style="width:${Math.round(mediaEscores.bipolarDepC / 3 * 100)}%;background:#7c3aed;height:100%;border-radius:20px"></div></div>
 </div>
 <div class="barra-wrap">
-  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span><strong>Eixo Borderline (TPB)</strong> (9 critérios)</span><span style="color:#2563eb;font-weight:700">${mediaEscores.borderlineC} de 9 critérios C</span></div>
+  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span><strong>Eixo Borderline (TPB)</strong> (9 critérios)</span><span style="color:#2563eb;font-weight:700">${mediaEscores.borderlineC} de 9 critérios C</span></div>
   <div class="barra-bg"><div style="width:${Math.round(mediaEscores.borderlineC / 9 * 100)}%;background:#2563eb;height:100%;border-radius:20px"></div></div>
 </div>
 
@@ -4681,7 +4708,7 @@ h3{font-size:12.5px;color:#374151;margin:12px 0 6px}
   <div class="valor">${laudo.hipotese}</div>
 </div>
 
-<h3>Análise por Critério DSM-5</h3>
+<h4>Análise por Critério DSM-5</h4>
 ${laudo.criterios.map(c => `
 <div class="criterio">
   <div class="nome">${c.label} &nbsp; <span class="${c.atende === "diag" || c.atende === true ? "badge-sim" : c.atende === false ? "badge-nao" : "badge-inv"}">${c.atende === "diag" || c.atende === true ? "✓ Diagnóstico" : c.atende === "prov" ? "⚠ Diagnóstico provável" : "✗ Não atende"}</span></div>
@@ -4691,17 +4718,42 @@ ${laudo.criterios.map(c => `
 <h2>III. Pontos de Atenção para a Entrevista Clínica</h2>
 ${laudo.atencao.length === 0 ? "<p style='color:#6b7280;font-size:12px'>Nenhum ponto de atenção crítico identificado pelos escores.</p>" : laudo.atencao.map(a => `<div class="atencao-item">⚠ ${a}</div>`).join("")}
 
-<h2>IV. Respostas por Respondente</h2>
-${escoresPorDoc.map(d => `
-<h3>${d.tipoRespondente === "paciente" ? "🧑 Próprio paciente" : "👨‍👩‍👧 " + (d.nomeRespondente || "Familiar") + " (" + (d.parentesco || "—") + ")"}</h3>
-<table class="resp-table">
-<thead><tr><th>#</th><th>Pergunta</th><th>Bloco</th><th>Resp.</th></tr></thead>
-<tbody>
-${PERGUNTAS_RASTREAMENTO.map(p => `
-<tr><td>${p.id.replace("p", "")}</td><td>${p.texto}</td><td>${p.bloco}</td>
-<td><span class="letra" style="color:${LETRA_COR[d[p.id]] || "#6b7280"}">${d[p.id] || "—"}</span></td></tr>`).join("")}
-${d.obsFinais ? `<tr><td colspan="2"><strong>Observações livres</strong></td><td colspan="2">${d.obsFinais}</td></tr>` : ""}
-</tbody></table>`).join("")}
+<h2>IV. Detalhamento das Respostas por Respondente</h2>
+<p style="font-size:12px;color:#6b7280;margin-bottom:16px">Respostas individuais de cada respondente para as 15 perguntas do instrumento de rastreamento.</p>
+
+${escoresPorDoc.map((d, idx) => {
+      const esc = d.escores;
+      const laudoInd = laudoDSM5(esc);
+      return `
+<div class="resp-block">
+  <div class="resp-header">
+    <div class="nome">${idx + 1}. ${fmtResp(d)}</div>
+    <div class="meta">Respondido em ${fmtData(d)}</div>
+  </div>
+  <div class="escores-mini">
+    <div class="escore-pill"><span>Mania/Hipomania:</span><span class="val" style="background:#fef2f2;color:#dc2626">${esc.bipolarManiaC}/3 C</span>${esc.bipolarManiaB > 0 ? `<span style="color:#d97706">(+${esc.bipolarManiaB} B)</span>` : ""}</div>
+    <div class="escore-pill"><span>Depressão:</span><span class="val" style="background:#ede9fe;color:#7c3aed">${esc.bipolarDepC}/3 C</span>${esc.bipolarDepB > 0 ? `<span style="color:#d97706">(+${esc.bipolarDepB} B)</span>` : ""}</div>
+    <div class="escore-pill"><span>Borderline (TPB):</span><span class="val" style="background:#eff6ff;color:#2563eb">${esc.borderlineC}/9 C</span>${esc.borderlineB > 0 ? `<span style="color:#d97706">(+${esc.borderlineB} B)</span>` : ""}</div>
+  </div>
+  <div class="hipotese-mini">💡 ${laudoInd.hipotese}</div>
+  <div class="legenda">
+    <strong style="color:#374151">Legenda:</strong>
+    ${["A", "B", "C", "D"].map(l => `<div class="legenda-item"><span class="letra" style="background:${LETRA_BG[l]};color:${LETRA_COR[l]}">${l}</span><span style="color:#4b5563">${LETRA_LABEL[l]}</span></div>`).join("")}
+  </div>
+  <table class="resp-table">
+  <thead><tr><th style="width:30px">#</th><th style="width:80px">Eixo</th><th>Pergunta</th><th style="width:90px;text-align:center">Resposta</th></tr></thead>
+  <tbody>
+  ${PERGUNTAS_RASTREAMENTO.map(p => `
+  <tr>
+    <td style="text-align:center;color:#9ca3af;font-size:11px">${p.id.replace("p", "")}</td>
+    <td style="font-size:10px;color:#7B00C4;font-weight:600">${p.bloco.replace("Eixo Bipolar · ", "").replace("Eixo ", "")}</td>
+    <td>${p.texto}</td>
+    <td style="text-align:center"><span class="letra" style="background:${LETRA_BG[d[p.id]] || "#f3f4f6"};color:${LETRA_COR[d[p.id]] || "#6b7280"}">${d[p.id] || "—"}</span>${d[p.id] ? `<div style="font-size:9px;color:${LETRA_COR[d[p.id]] || "#9ca3af"};margin-top:2px">${LETRA_LABEL[d[p.id]] || ""}</div>` : ""}</td>
+  </tr>`).join("")}
+  </tbody></table>
+  ${d.obsFinais ? `<div class="obs-box"><strong>Observações do respondente:</strong> ${d.obsFinais}</div>` : ""}
+</div>`;
+    }).join("")}
 
 <div class="assinatura">
   <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
