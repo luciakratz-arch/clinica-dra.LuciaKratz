@@ -94,6 +94,15 @@
   .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(22,163,74,.4)}
   .btn-save:active{transform:none}
 
+  /* WHATSAPP */
+  .wpp-section{margin-top:16px}
+  .wpp-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:8px}
+  .wpp-row input{flex:1;min-width:200px;font-family:'Inter',sans-serif;font-size:14px;color:#1a2e1a;background:#f8fff8;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 12px;outline:none}
+  .wpp-row input:focus{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.12)}
+  .btn-wpp{background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;width:100%}
+  .btn-wpp:active{opacity:.88}
+  @media(min-width:480px){.btn-wpp{width:auto}}
+
   /* TOAST */
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#14532d;color:#fff;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.18);opacity:0;transition:.35s;z-index:999;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -541,6 +550,15 @@
   <!-- SAVE -->
   <button class="btn-save" onclick="salvar()">💾 Salvar Diagnóstico</button>
 
+  <!-- WHATSAPP -->
+  <div class="wpp-section">
+    <label style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px;display:block">📲 Enviar resumo no WhatsApp</label>
+    <div class="wpp-row">
+      <input type="tel" id="wa-envio" placeholder="(00) 00000-0000 — para onde enviar">
+      <button class="btn-wpp" onclick="enviarWhatsApp()">📲 Enviar no WhatsApp</button>
+    </div>
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -664,6 +682,56 @@
     db.collection('lider_f1_1').doc(wclean).set(data)
       .then(function(){showToast('✅ Diagnóstico salvo com sucesso!');})
       .catch(function(err){showToast('❌ Erro ao salvar: '+err.message);});
+  }
+
+  function gerarTextoWpp(){
+    var total = calcScore();
+    var cat = getCategoria(total);
+    var nome = document.getElementById('nome').value || 'Líder';
+    var cargo = document.getElementById('cargo').value;
+    var setor = document.getElementById('setor').value;
+    var d1=getDimVals(1).reduce(function(a,b){return a+b;},0);
+    var d2=getDimVals(2).reduce(function(a,b){return a+b;},0);
+    var d3=getDimVals(3).reduce(function(a,b){return a+b;},0);
+    var d4=getDimVals(4).reduce(function(a,b){return a+b;},0);
+    var d5=getDimVals(5).reduce(function(a,b){return a+b;},0);
+    var d6=getDimVals(6).reduce(function(a,b){return a+b;},0);
+    var metas = coletarMetas().filter(function(m){return m.meta.trim();}).map(function(m){
+      return '   • '+m.meta+(m.inicio?' ('+m.inicio+' → '+m.termino+')':'');
+    }).join('\n');
+    var fortes = document.getElementById('fortes').value.trim();
+    var melhoria = document.getElementById('melhoria').value.trim();
+    var txt = '🦋 *Diagnóstico de Competências do Líder*\n';
+    txt += '━━━━━━━━━━━━━━━━━\n';
+    txt += '👤 *'+nome+'*';
+    if(cargo) txt += ' — '+cargo;
+    if(setor) txt += ' | '+setor;
+    txt += '\n\n';
+    txt += '📊 *Resultado Total: '+total+'/150 — '+cat+'*\n\n';
+    txt += '📋 *Por Dimensão (0–25):*\n';
+    txt += '  D1 Liderança: '+d1+'/25\n';
+    txt += '  D2 Desenvolvimento: '+d2+'/25\n';
+    txt += '  D3 Retenção de Talentos: '+d3+'/25\n';
+    txt += '  D4 Confiança: '+d4+'/25\n';
+    txt += '  D5 Delegação: '+d5+'/25\n';
+    txt += '  D6 Proatividade: '+d6+'/25\n';
+    if(fortes){txt+='\n✅ *Pontos Fortes:*\n'+fortes+'\n';}
+    if(melhoria){txt+='\n🎯 *Pontos de Melhoria:*\n'+melhoria+'\n';}
+    if(metas){txt+='\n📅 *Metas:*\n'+metas+'\n';}
+    txt += '\n_Diagnóstico gerado pela plataforma A!Equipe · Dra. Lucia Kratz_';
+    return txt;
+  }
+
+  function enviarWhatsApp(){
+    var waEnvio = document.getElementById('wa-envio').value.replace(/\D/g,'');
+    // Tenta também o wa do participante se o destino estiver vazio
+    if(!waEnvio){
+      var waPart = document.getElementById('whatsapp').value.replace(/\D/g,'');
+      if(waPart) waEnvio = waPart;
+    }
+    if(!waEnvio){ showToast('⚠️ Informe o WhatsApp de destino.'); return; }
+    var texto = gerarTextoWpp();
+    window.open('https://wa.me/55'+waEnvio+'?text='+encodeURIComponent(texto),'_blank');
   }
 
   function addVozToField(campo){
