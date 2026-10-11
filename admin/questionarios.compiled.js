@@ -723,6 +723,167 @@ function PainelGrupoDiagnostico({
     } = analise;
     const temAlerta = itens.some(a => a.status && a.status.startsWith("⚠"));
     const fmtData = ts => ts?.seconds ? new Date(ts.seconds * 1000).toLocaleDateString("pt-BR") : "—";
+
+    // Perguntas por coleção para o PDF detalhado
+    const PERGUNTAS_POR_COLECAO = {
+      clinica_rastreamento_bipolar: PERGUNTAS_RASTREAMENTO,
+      clinica_rastreamento_neuro: PERGUNTAS_NEURO ? PERGUNTAS_NEURO : [],
+      clinica_rastreamento_alimentar: (typeof PERGUNTAS_ALIMENTAR !== "undefined" ? PERGUNTAS_ALIMENTAR : []).length > 0 ? PERGUNTAS_ALIMENTAR : Array.from({
+        length: 15
+      }, (_, i) => ({
+        id: "p" + (i + 1),
+        texto: "Pergunta " + (i + 1),
+        eixo: ""
+      })),
+      clinica_rastreamento_dependencia: Array.from({
+        length: 11
+      }, (_, i) => ({
+        id: "p" + (i + 1),
+        texto: "Critério " + (i + 1),
+        eixo: "Dependência Química"
+      })),
+      clinica_rastreamento_jogos: Array.from({
+        length: 9
+      }, (_, i) => ({
+        id: "p" + (i + 1),
+        texto: "Critério " + (i + 1),
+        eixo: "Jogos / Gaming"
+      })),
+      clinica_rastreamento_sexual: Array.from({
+        length: 10
+      }, (_, i) => ({
+        id: "p" + (i + 1),
+        texto: "Critério " + (i + 1),
+        eixo: "Saúde Sexual"
+      }))
+    };
+    function gerarPDFHistorico() {
+      const pacNome = paciente?.nome || "Paciente";
+      const dataHoje = new Date().toLocaleDateString("pt-BR");
+      const LETRA_COR = {
+        A: "#16a34a",
+        B: "#d97706",
+        C: "#dc2626",
+        D: "#7f1d1d"
+      };
+      const LETRA_BG = {
+        A: "#f0fdf4",
+        B: "#fffbeb",
+        C: "#fef2f2",
+        D: "#fef2f2"
+      };
+      const LETRA_LABEL = {
+        A: "Não se aplica",
+        B: "A observar",
+        C: "Critério presente",
+        D: "Intensidade severa"
+      };
+      const blocoRespondente = (doc, idx) => {
+        const a = analisarLegado(doc);
+        const pergs = PERGUNTAS_POR_COLECAO[doc._colecao] || [];
+        const nomeResp = doc.tipoRespondente === "familiar" ? `${doc.nomeRespondente || "Familiar"} (${doc.parentesco || "Familiar"})` : "Próprio paciente";
+        const dataResp = fmtData(doc.createdAt);
+        const corBorda = a.itens.some(x => x.status?.startsWith("⚠")) ? "#fecaca" : "#bbf7d0";
+        const corBg = a.itens.some(x => x.status?.startsWith("⚠")) ? "#fff5f5" : "#f0fdf4";
+        return `
+<div style="border:1px solid ${corBorda};border-radius:10px;margin-bottom:22px;overflow:hidden;page-break-inside:avoid">
+  <div style="background:${corBg};padding:12px 16px;border-bottom:1px solid #e5e7eb">
+    <div style="font-weight:700;font-size:13px;color:#1f2937">${idx + 1}. ${nomeResp}</div>
+    <div style="font-size:11px;color:#6b7280;margin-top:3px">${dataResp} · ${doc._label || ""}</div>
+  </div>
+  <div style="padding:10px 16px;background:#fafafa;border-bottom:1px solid #e5e7eb;display:flex;gap:14px;flex-wrap:wrap">
+    ${a.itens.map(it => `<span style="font-size:11px;font-weight:700;color:${it.cor}">${it.label}: ${it.valor} — ${it.status}</span>`).join(" &nbsp;·&nbsp; ")}
+  </div>
+  <div style="padding:10px 16px;background:#f5f3ff;border-bottom:1px solid #e5e7eb;font-size:12px;color:#3d006a;font-weight:600">
+    💡 ${a.hipotese || "Sem hipótese diagnóstica definida"}
+  </div>
+  ${pergs.length > 0 ? `
+  <div style="padding:8px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;gap:14px;flex-wrap:wrap;font-size:11px">
+    <strong style="color:#374151">Legenda:</strong>
+    ${["A", "B", "C", "D"].map(l => `<span style="background:${LETRA_BG[l]};color:${LETRA_COR[l]};padding:1px 7px;border-radius:10px;font-weight:700">${l}</span> ${LETRA_LABEL[l]}`).join(" &nbsp; ")}
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+    <thead><tr>
+      <th style="background:#ede9fe;padding:6px 10px;text-align:left;font-size:10px;color:#7B00C4;border:1px solid #e5e7eb;width:28px">#</th>
+      <th style="background:#ede9fe;padding:6px 10px;text-align:left;font-size:10px;color:#7B00C4;border:1px solid #e5e7eb;width:80px">Eixo</th>
+      <th style="background:#ede9fe;padding:6px 10px;text-align:left;font-size:10px;color:#7B00C4;border:1px solid #e5e7eb">Pergunta</th>
+      <th style="background:#ede9fe;padding:6px 10px;text-align:center;font-size:10px;color:#7B00C4;border:1px solid #e5e7eb;width:100px">Resposta</th>
+    </tr></thead>
+    <tbody>
+    ${pergs.map((p, pi) => `
+    <tr style="${pi % 2 === 1 ? "background:#fafafa" : ""}">
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;text-align:center;color:#9ca3af;font-size:11px">${p.id.replace("p", "")}</td>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;font-size:10px;color:#7B00C4;font-weight:600">${(p.bloco || p.eixo || "").replace("Eixo Bipolar · ", "").replace("Eixo ", "")}</td>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb">${p.texto}</td>
+      <td style="padding:6px 10px;border:1px solid #e5e7eb;text-align:center">
+        <span style="background:${LETRA_BG[doc[p.id]] || "#f3f4f6"};color:${LETRA_COR[doc[p.id]] || "#6b7280"};padding:2px 9px;border-radius:12px;font-weight:700;font-size:12px">${doc[p.id] || "—"}</span>
+        ${doc[p.id] ? `<div style="font-size:9px;color:${LETRA_COR[doc[p.id]] || "#9ca3af"};margin-top:2px">${LETRA_LABEL[doc[p.id]] || ""}</div>` : ""}
+      </td>
+    </tr>`).join("")}
+    </tbody>
+  </table>` : ""}
+  ${doc.obsFinais ? `<div style="padding:10px 16px;background:#fffbeb;border-top:1px solid #fcd34d;font-size:12px;color:#78350f"><strong>Observações:</strong> ${doc.obsFinais}</div>` : ""}
+</div>`;
+      };
+
+      // Resumo consolidado de todos os respondentes
+      const resumoConsolidado = historicoLegado.map(doc => {
+        const a = analisarLegado(doc);
+        const nomeResp = doc.tipoRespondente === "familiar" ? `${doc.nomeRespondente || "Familiar"} (${doc.parentesco || ""})` : "Próprio paciente";
+        const alerta = a.itens.some(x => x.status?.startsWith("⚠"));
+        return `<tr>
+              <td style="padding:6px 10px;border:1px solid #e5e7eb;font-size:11px">${fmtData(doc.createdAt)}</td>
+              <td style="padding:6px 10px;border:1px solid #e5e7eb;font-size:11px">${nomeResp}</td>
+              <td style="padding:6px 10px;border:1px solid #e5e7eb;font-size:11px;font-weight:700;color:${alerta ? "#dc2626" : "#16a34a"}">${alerta ? "⚠" : "✅"} ${a.hipotese ? a.hipotese.split("—")[0].trim() : alerta ? "Critérios atingidos" : "Sem hipótese definida"}</td>
+            </tr>`;
+      }).join("");
+      const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
+<title>Laudo Histórico de Rastreamento — ${pacNome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;color:#1f2937;padding:32px;max-width:820px;margin:0 auto;font-size:13px;line-height:1.6}
+h1{font-size:20px;color:#3d006a;margin-bottom:4px}
+h2{font-size:14px;color:#7B00C4;margin:22px 0 10px;border-bottom:2px solid #ede9fe;padding-bottom:6px;page-break-after:avoid}
+.header{border-bottom:3px solid #7B00C4;padding-bottom:16px;margin-bottom:24px}
+.sub{font-size:12px;color:#6b7280;margin-top:3px}
+.rodape{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+.assinatura{text-align:center;margin-top:40px}
+.assinatura img{height:60px;opacity:.9}
+.assinatura p{font-size:12px;color:#374151;margin-top:6px}
+@media print{body{padding:16px}.no-print{display:none}}
+</style></head><body>
+<div class="no-print" style="margin-bottom:20px">
+  <button onclick="window.print()" style="background:#7B00C4;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>
+</div>
+<div class="header">
+  <h1>Laudo de Rastreamento Clínico — Histórico Completo</h1>
+  <div class="sub" style="margin-top:6px">Paciente: <strong>${pacNome}</strong> &nbsp;|&nbsp; Data: ${dataHoje} &nbsp;|&nbsp; Dra. Lucia Kratz · CRP 09/20590</div>
+  <div class="sub">Total de respondentes: ${historicoLegado.length} &nbsp;|&nbsp; Formulários do sistema anterior</div>
+</div>
+
+<h2>I. Resumo de Todas as Respostas</h2>
+<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px">
+  <thead><tr>
+    <th style="background:#f5f3ff;padding:7px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #e5e7eb">Data</th>
+    <th style="background:#f5f3ff;padding:7px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #e5e7eb">Respondente</th>
+    <th style="background:#f5f3ff;padding:7px 10px;text-align:left;font-size:10.5px;color:#7B00C4;border:1px solid #e5e7eb">Hipótese / Resultado</th>
+  </tr></thead>
+  <tbody>${resumoConsolidado}</tbody>
+</table>
+
+<h2>II. Detalhamento por Respondente</h2>
+${historicoLegado.map((doc, i) => blocoRespondente(doc, i)).join("")}
+
+<div class="assinatura">
+  <img src="https://luciakratz-arch.github.io/clinica-dra.LuciaKratz/Assinatura Lu%C3%ADcia%20Kratz.png" alt="Assinatura" onerror="this.style.display='none'"/>
+  <p><strong>Dra. Lucia Kratz</strong><br/>Psicóloga · CRP 09/20590<br/>Doutora em Psicologia · TCC · Musicoterapia · Neuromodulação</p>
+</div>
+<div class="rodape">Documento gerado em ${dataHoje} · Uso exclusivo para fins clínicos · Confidencial · LGPD</div>
+</body></html>`;
+      const w = window.open("", "_blank");
+      w.document.write(html);
+      w.document.close();
+    }
     return /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 24
@@ -735,6 +896,14 @@ function PainelGrupoDiagnostico({
         marginBottom: 12,
         display: "flex",
         alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
         gap: 6
       }
     }, /*#__PURE__*/React.createElement("span", null, "📂 Histórico anterior"), /*#__PURE__*/React.createElement("span", {
@@ -743,7 +912,25 @@ function PainelGrupoDiagnostico({
         fontWeight: 400,
         color: "var(--text-muted)"
       }
-    }, "— ", historicoLegado.length, " resposta(s) · formulários do sistema antigo")), /*#__PURE__*/React.createElement("div", {
+    }, "— ", historicoLegado.length, " resposta(s) · formulários do sistema antigo")), /*#__PURE__*/React.createElement("button", {
+      onClick: gerarPDFHistorico,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        background: "#7B00C4",
+        color: "white",
+        border: "none",
+        borderRadius: 8,
+        padding: "6px 14px",
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: "pointer"
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "file-text",
+      size: 13
+    }), " Gerar PDF com detalhamento")), /*#__PURE__*/React.createElement("div", {
       style: {
         border: `1px solid ${temAlerta ? "#fecaca" : "#bbf7d0"}`,
         borderRadius: 12,
