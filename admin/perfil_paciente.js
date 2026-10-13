@@ -1049,7 +1049,10 @@ function AbaEvolucao({ paciente }) {
       .where("tipo","==","roda")
       .get().then(snap=>{
         const docs=snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-        setRodas(docs.slice(0,10));
+        // Deduplicar por data: portal às vezes salva duplicatas na mesma sessão
+        const vistas=new Set(); const uniq=[];
+        docs.forEach(d=>{if(!vistas.has(d.data)){vistas.add(d.data);uniq.push(d);}});
+        setRodas(uniq.slice(0,10));
       }).catch(()=>{});
     return ()=>{ u1(); u2(); u3(); u4(); u5(); u6(); u7(); u8(); };
   },[paciente.id]);
