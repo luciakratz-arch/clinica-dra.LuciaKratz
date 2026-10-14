@@ -20,28 +20,34 @@
 <body>
   <div id="root"></div>
 
-  <!-- Mapas legado → macrocategoria (globais, usados por psifabulas + ferramentas) -->
+  <!-- PSICO_LEGADO_MACRO: categoria legada → macrocategoria (usado pelo psico_ui.compiled.js) -->
   <script>
-    // Fábulas: categoria legada → macrocategoria
-    const FAB_LEGADO_MACRO = {
-      "resiliencia":"macro_habitos", "resiliência":"macro_habitos",
-      "crescimento":"macro_habitos", "mindfulness":"macro_habitos",
-      "perspectiva":"macro_habitos", "habitos":"macro_habitos",
+    const PSICO_LEGADO_MACRO = {
+      "ansiedade":"macro_ansiedade", "tcc":"macro_ansiedade",
+      "autoconhecimento":"macro_ansiedade", "mindfulness":"macro_ansiedade",
+      "distorcoes":"macro_ansiedade", "crencas":"macro_ansiedade",
+      "autocritica":"macro_ansiedade", "procrastinacao":"macro_ansiedade",
+      "humor":"macro_humor", "emocoes":"macro_humor",
+      "autoestima":"macro_humor", "autoconfianca":"macro_humor",
+      "autoconfiança":"macro_humor", "regulacao_emocional":"macro_humor",
+      "regulação emocional":"macro_humor", "burnout":"macro_humor",
+      "vergonha":"macro_humor", "depressao":"macro_humor",
       "esperanca":"macro_humor", "esperança":"macro_humor",
-      "autoconfianca":"macro_humor", "autoconfiança":"macro_humor",
-      "autoestima":"macro_humor", "emocoes":"macro_humor",
-      "expressão emocional":"macro_humor", "expressao emocional":"macro_humor",
-      "regulação emocional":"macro_humor", "regulacao emocional":"macro_humor",
-      "coragem":"macro_humor", "perdao":"macro_humor", "perdão":"macro_humor",
-      "autoconhecimento":"macro_ansiedade", "ansiedade":"macro_ansiedade",
-      "tcc":"macro_ansiedade",
+      "coragem":"macro_humor", "perdao":"macro_humor",
+      "habitos":"macro_habitos", "sono":"macro_habitos",
+      "alimentacao":"macro_habitos", "corpo":"macro_habitos",
+      "saude_mental":"macro_habitos", "autocuidado":"macro_habitos",
+      "autoimagem":"macro_habitos", "nervovago":"macro_habitos",
+      "neuroplasticidade":"macro_habitos", "motivacao":"macro_habitos",
       "relacionamentos":"macro_relacionamentos",
-      "casais":"macro_casais",
-      "corpo":"macro_habitos",
-      "alimentacao":"macro_habitos", "saude_mental":"macro_habitos",
-      "compulsao_ciclo":"macro_compulsao", "compulsao_habitos":"macro_compulsao",
-      "compulsao_emocional":"macro_compulsao", "compulsao_vinculos":"macro_compulsao",
-      "compulsao_aval":"macro_compulsao", "compulsao":"macro_compulsao",
+      "comunicacao":"macro_relacionamentos",
+      "dependencia_emocional":"macro_relacionamentos",
+      "limites":"macro_relacionamentos",
+      "casais":"macro_casais", "sexualidade":"macro_casais",
+      "parentalidade":"macro_casais", "traicao":"macro_casais",
+      "compulsao":"macro_compulsao", "compulsao_ciclo":"macro_compulsao",
+      "compulsao_habitos":"macro_compulsao", "compulsao_emocional":"macro_compulsao",
+      "compulsao_vinculos":"macro_compulsao", "compulsao_aval":"macro_compulsao",
       // novas macrocategorias
       "autoconhecimento_profundo":"macro_autoconhecimento",
       "identidade":"macro_autoconhecimento",
@@ -62,7 +68,6 @@
       "macro_habitos":"macro_habitos",
       "macro_relacionamentos":"macro_relacionamentos",
       "macro_casais":"macro_casais",
-      "macro_corpo":"macro_habitos",
       "macro_compulsao":"macro_compulsao",
       "macro_autoconhecimento":"macro_autoconhecimento",
       "macro_autocuidado":"macro_autocuidado",
