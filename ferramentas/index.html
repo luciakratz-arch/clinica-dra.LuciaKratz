@@ -287,13 +287,18 @@ function FabulaPublica({fabula,user,onConcluido}){
       {/* Card da página — igual ao portal */}
       <div style={{
         background:"linear-gradient(145deg,#4c0094,#7B00C4,#6d28d9)",
-        borderRadius:20,padding:"36px 28px",minHeight:240,marginBottom:20,
+        borderRadius:20,padding:/\.(jpg|jpeg|png|webp|gif)$/i.test(paginas[idx]||"")?"8px":"36px 28px",minHeight:240,marginBottom:20,
         boxShadow:"0 8px 32px rgba(123,0,196,0.35)",
-        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"
+        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden"
       }}>
-        <div style={{fontSize:44,marginBottom:16}}>{fabula.emoji||"📖"}</div>
-        <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"white",marginBottom:12,textAlign:"center"}}>{fabula.titulo}</div>
-        <p style={{fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",fontStyle:"italic",margin:0,textShadow:"0 1px 3px rgba(0,0,0,0.2)"}}>{paginas[idx]}</p>
+        {/\.(jpg|jpeg|png|webp|gif)$/i.test(paginas[idx]||"")
+          ? <img src={paginas[idx]} alt={"Painel "+(idx+1)} style={{width:"100%",display:"block",borderRadius:14,maxHeight:500,objectFit:"contain"}}/>
+          : <>
+              <div style={{fontSize:44,marginBottom:16}}>{fabula.emoji||"📖"}</div>
+              <div style={{fontFamily:"var(--font-display)",fontSize:20,color:"white",marginBottom:12,textAlign:"center"}}>{fabula.titulo}</div>
+              <p style={{fontSize:19,color:"white",lineHeight:1.9,textAlign:"center",fontStyle:"italic",margin:0,textShadow:"0 1px 3px rgba(0,0,0,0.2)"}}>{paginas[idx]}</p>
+            </>
+        }
       </div>
 
       {/* Reflexões na última página */}
