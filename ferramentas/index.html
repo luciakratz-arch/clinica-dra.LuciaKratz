@@ -75,8 +75,45 @@ function Icon({name,size=18,style}){
   return <span ref={ref} style={{display:"inline-flex",alignItems:"center",...(style||{})}}/>;
 }
 function Spinner(){return <div className="spinner"/>;}
-function TextAreaVoz({value,onChange,placeholder,rows=3,style,className}){
-  return <textarea className={className||"form-input"} value={value} onChange={onChange} placeholder={placeholder} rows={rows} style={style}/>;
+function TextAreaVoz({value,onChange,placeholder,rows=3,style,className="form-input"}){
+  const [gravando,setGravando]=React.useState(false);
+  const recRef=React.useRef(null);
+  function toggleVoz(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR)return;
+    if(gravando){recRef.current?.stop();setGravando(false);return;}
+    const rec=new SR();
+    rec.lang="pt-BR";rec.continuous=true;rec.interimResults=true;
+    rec.onresult=e=>{
+      const t=Array.from(e.results).map(r=>r[0].transcript).join(" ");
+      const base=(value||"").replace(/\s*\[\.\.\.]$/,"").trimEnd();
+      onChange({target:{value:base?base+" "+t:t}});
+    };
+    rec.onerror=()=>setGravando(false);
+    rec.onend=()=>setGravando(false);
+    recRef.current=rec;
+    rec.start();
+    setGravando(true);
+  }
+  const SR_SUPPORT=!!(window.SpeechRecognition||window.webkitSpeechRecognition);
+  return(
+    <div style={{position:"relative"}}>
+      <textarea className={className} value={value} onChange={onChange} placeholder={placeholder} rows={rows}
+        style={{...style,paddingRight:SR_SUPPORT?36:undefined,resize:"vertical"}}/>
+      {SR_SUPPORT&&(
+        <button type="button" onClick={toggleVoz} title={gravando?"Parar gravação":"Falar para digitar"}
+          style={{position:"absolute",right:6,bottom:8,background:gravando?"#7B00C4":"#f3e6ff",border:"none",borderRadius:6,padding:"4px 6px",cursor:"pointer",color:gravando?"white":"#7B00C4",fontSize:14,lineHeight:1,boxShadow:gravando?"0 0 0 3px #7B00C430":"none",transition:"all .2s"}}>
+          🎙️
+        </button>
+      )}
+      {gravando&&(
+        <div style={{fontSize:11,color:"#7B00C4",marginTop:3,display:"flex",alignItems:"center",gap:4}}>
+          <span style={{width:6,height:6,borderRadius:"50%",background:"#7B00C4",display:"inline-block"}}/>
+          Gravando... clique 🎙️ para parar
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Ferramenta Árvore da Decisão ──────────────────────────────────────────────
